@@ -1,0 +1,115 @@
+#!/usr/bin/env bash
+# Run the pinned Microbot client in the isolated dev home with the Agent Server on.
+#
+#   mb-client start [--test <Plugin descriptor name>] [-- extra JVM args]
+#   mb-client stop | restart | status | logs [N] | wait [timeoutSec]
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+usage() { sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+wait_ready() {
+	local timeout="${1:-180}" i
+	for ((i = 0; i < timeout; i++)); do
+		mb_client_pid >/dev/null || die "client exited during startup; see: mb-client logs"
+		if [[ -S "$MB_SOCKET" && -s "$MB_TOKEN_FILE" ]] && mb_api GET /state >/dev/null 2>&1; then
+			echo "ready (pid $(mb_client_pid), socket $MB_SOCKET)"
+			return 0
+		fi
+		sleep 1
+	done
+	die "Agent Server not ready after ${timeout}s; see: mb-client logs"
+}
+
+install_bootstrap() {
+	mb_gradle jarDevBootstrapPlugin
+	mkdir -p "$MB_PLUGIN_DIR"
+	install -m644 "$MB_BUILD_PLUGINS/DevBootstrapPlugin.jar" "$MB_PLUGIN_DIR/"
+	# The client deletes non-Hub jars older than 3 days; keep ours fresh.
+	touch "$MB_PLUGIN_DIR"/*.jar 2>/dev/null || true
+}
+
+start() {
+	local test_name=""
+	local extra=()
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+			--test) test_name="$2"; shift 2 ;;
+			--) shift; extra=("$@"); break ;;
+			*) die "unknown option: $1" ;;
+		esac
+	done
+
+	if pid="$(mb_client_pid)"; then
+		echo "already running (pid $pid)"
+		return 0
+	fi
+	[[ -f "$MB_JAR" ]] || die "client jar not found: $MB_JAR"
+	mkdir -p "$MB_RUN" "$MB_RL"
+	install_bootstrap
+	rm -f "$MB_SOCKET"
+
+	local cmd=("$(mb_java)" -Xmx2g -Dfile.encoding=UTF-8
+		"-Duser.home=$MB_DEV_HOME"
+		-Dmicrobot.dev.harness=true
+		-Dmicrobot.disableTelemetry=true)
+	if [[ -n "$test_name" ]]; then
+		cmd+=(-Dmicrobot.test.mode=true "-Dmicrobot.test.script=$test_name"
+			"-Dmicrobot.test.timeout=${MB_TEST_TIMEOUT_MS:-300000}"
+			"-Dmicrobot.test.output=$MB_RL/test-results")
+		[[ -n "${MB_TEST_WORLD:-}" ]] && cmd+=("-Dmicrobot.test.world=$MB_TEST_WORLD")
+	fi
+	cmd+=("${extra[@]}" -jar "$MB_JAR" --disable-telemetry)
+
+	echo "starting Microbot $MB_VERSION (home $MB_DEV_HOME)"
+	nohup "${cmd[@]}" >"$MB_STDOUT" 2>&1 &
+	echo $! >"$MB_PIDFILE"
+	if [[ -z "$test_name" ]]; then
+		wait_ready "${MB_START_TIMEOUT:-180}"
+	else
+		echo "test mode: pid $(cat "$MB_PIDFILE"); results in $MB_RL/test-results"
+	fi
+}
+
+stop() {
+	local pid i
+	if ! pid="$(mb_client_pid)"; then
+		echo "not running"
+		rm -f "$MB_PIDFILE"
+		return 0
+	fi
+	kill "$pid"
+	for ((i = 0; i < 30; i++)); do
+		kill -0 "$pid" 2>/dev/null || break
+		sleep 1
+	done
+	kill -0 "$pid" 2>/dev/null && kill -9 "$pid"
+	rm -f "$MB_PIDFILE"
+	echo "stopped"
+}
+
+status() {
+	local pid
+	if pid="$(mb_client_pid)"; then
+		echo "running (pid $pid)"
+		if [[ -S "$MB_SOCKET" ]]; then
+			mb_api GET /state | jq -c '{loggedIn, gameState, world, player: .player.name}' 2>/dev/null || echo "agent server not answering"
+		else
+			echo "agent socket not up yet"
+		fi
+	else
+		echo "not running"
+		return 1
+	fi
+}
+
+case "${1:-}" in
+	start) shift; start "$@" ;;
+	stop) stop ;;
+	restart) shift; stop; start "$@" ;;
+	status) status ;;
+	wait) wait_ready "${2:-180}" ;;
+	logs) tail -n "${2:-80}" "$MB_CLIENT_LOG" 2>/dev/null || tail -n "${2:-80}" "$MB_STDOUT" ;;
+	-h|--help|"") usage ;;
+	*) usage 1 ;;
+esac

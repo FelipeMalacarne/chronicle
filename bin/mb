@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+# microbot-cli pointed at the dev client. Same commands as upstream (mb state, mb npcs
+# --name Banker, mb screenshot, ...); see vendor/microbot/docs/MICROBOT_CLI.md.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+cli="$MB_REPO/vendor/microbot/microbot-cli"
+[[ -x "$cli" ]] || die "vendor/microbot missing; run: mb-vendor"
+MICROBOT_SOCKET="$MB_SOCKET" MICROBOT_TOKEN_FILE="$MB_TOKEN_FILE" exec "$cli" "$@"

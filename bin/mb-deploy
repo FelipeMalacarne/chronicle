@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+# Hot-deploy a plugin's sources into the running dev client (no restart).
+#
+#   mb-deploy <plugin>            compile + load, or reload if already deployed
+#   mb-deploy --undeploy <plugin> stop and unload it
+#   mb-deploy --list              list deployments
+#
+# <plugin> is the package dir or class name: helloagent, HelloAgent, HelloAgentPlugin.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+case "${1:-}" in
+	--list) mb_api GET /scripts/deploy | jq .; exit 0 ;;
+	--undeploy)
+		read -r pkg _ <<<"$(mb_plugin_dir "${2:?plugin}")" || die "unknown plugin: $2"
+		mb_api POST /scripts/deploy/undeploy "{\"name\":\"$pkg\"}" | jq .
+		exit 0 ;;
+	-h|--help|"") sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+esac
+
+read -r pkg cls <<<"$(mb_plugin_dir "$1")" || die "unknown plugin: $1"
+
+if [[ -f "$MB_PLUGIN_DIR/$cls.jar" ]]; then
+	die "$cls.jar is sideloaded in the dev home; the class would clash. Remove it and restart: rm $MB_PLUGIN_DIR/$cls.jar && mb-client restart"
+fi
+
+# The in-client compiler has no Lombok, so ship delomboked sources.
+mb_gradle delombok
+src="$MB_DELOMBOK_SRC/$pkg"
+[[ -d "$src" ]] || die "no delomboked sources at $src"
+
+if mb_api GET /scripts/deploy | jq -e --arg n "$pkg" '.deployments[]? | select(.name == $n)' >/dev/null; then
+	out="$(mb_api POST /scripts/deploy/reload "{\"name\":\"$pkg\"}")"
+else
+	out="$(mb_api POST /scripts/deploy "{\"name\":\"$pkg\",\"sourcePath\":\"$src\"}")"
+fi
+echo "$out" | jq . 2>/dev/null || echo "$out"
+echo "$out" | jq -e '.error == null' >/dev/null 2>&1

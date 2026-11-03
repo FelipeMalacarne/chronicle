@@ -1,0 +1,138 @@
+{
+ "id": "S",
+ "slug": "sailing",
+ "title": "Sailing Track",
+ "seoTitle": "OSRS Ironman Sailing Guide: Step-by-Step Sailing Track (2026)",
+ "related": [
+  {
+   "href": "/articles/osrs-sailing-guide",
+   "label": "Sailing 1-99 for ironmen"
+  },
+  {
+   "href": "/articles/shipwreck-salvaging-guide",
+   "label": "Shipwreck salvaging"
+  },
+  {
+   "href": "/articles/wyrmscraig-ironman-guide",
+   "label": "Wyrmscraig & Golem Crafting"
+  }
+ ],
+ "track": true,
+ "description": "An optional, parallel track for the Sailing skill (released Nov 2025). Not part of Oziris's original efficiency route - progress it alongside the main guide whenever you want a change of pace. Most of it matures naturally during your 2.0 endgame grind.",
+ "steps": [
+  {
+   "id": "S.1",
+   "location": "Port Sarim",
+   "text": "Unlock Sailing via the Pandemonium quest - this is main-guide step 1.1.78a (Will & Anne on the Port Sarim docks). Everything below is the rest of the Sailing progression.",
+   "sailingRelated": true,
+   "note": "Sailing is NOT required to finish the main guide. Do this track at your own pace. The five Sailing quests together grant 27,500 XP, which alone covers roughly to level 41 - so questing offsets most of the grind below 45."
+  },
+  {
+   "id": "S.2",
+   "location": "Port Sarim",
+   "text": "Train Sailing to 12 via sea charting + courier tasks (~20 min)",
+   "sailingRelated": true,
+   "note": "Pandemonium leaves you around level 4. Charting gives better XP than courier tasks - do courier runs on the way to charting objectives so both progress. Trimming sails and ocean encounters give some passive XP early."
+  },
+  {
+   "id": "S.3",
+   "location": "Various",
+   "text": "Complete Prying Times (Sailing 12, Smithing 30, The Knight's Sword)",
+   "sailingRelated": true,
+   "newQuest": true,
+   "quest": "Prying Times",
+   "questStatus": "complete",
+   "note": "Second Sailing quest; +800 Sailing XP. The Knight's Sword and 30 Smithing are already done from the main guide."
+  },
+  {
+   "id": "S.4",
+   "location": "Various",
+   "text": "Train Sailing to 22 (Barracuda Trials unlock at 30 and are the fastest XP)",
+   "sailingRelated": true,
+   "note": "~40 min. Keep completing sea charting objectives for bonus region-completion XP."
+  },
+  {
+   "id": "S.5",
+   "location": "Various",
+   "text": "Complete Current Affairs (Sailing 22, Fishing 10)",
+   "sailingRelated": true,
+   "newQuest": true,
+   "quest": "Current Affairs",
+   "questStatus": "complete",
+   "note": "Third Sailing quest; +1,400 Sailing XP."
+  },
+  {
+   "id": "S.6",
+   "location": "Various",
+   "text": "Train Sailing to 45 via Barracuda Trials (~2-3 hours - good to chip away during Slayer downtime)",
+   "sailingRelated": true,
+   "note": "Barracuda Trials from level 30 are the fastest method (~19k XP/hr at 30, scaling up). Charting objectives done in parallel shorten this."
+  },
+  {
+   "id": "S.7",
+   "location": "Various",
+   "text": "Complete Troubled Tortugans (Sailing 45, plus 51 Slayer / 48 Construction / 45 Hunter / 40 Woodcutting / 34 Crafting)",
+   "sailingRelated": true,
+   "newQuest": true,
+   "quest": "Troubled Tortugans",
+   "questStatus": "complete",
+   "note": "+10,000 Sailing XP. The 51 Slayer / 48 Construction requirements mean this naturally lands in your 2.0 endgame timeframe."
+  },
+  {
+   "id": "S.8",
+   "location": "Various",
+   "text": "Complete The Red Reef (Sailing 52, Smithing 48)",
+   "sailingRelated": true,
+   "newQuest": true,
+   "quest": "The Red Reef",
+   "questStatus": "complete",
+   "note": "Fifth Sailing quest; +15,000 Sailing XP."
+  },
+  {
+   "id": "S.9",
+   "location": "Various",
+   "text": "Build a teleport focus at Sailing 55 (needs 49 Construction) to unlock Sailing teleports",
+   "sailingRelated": true,
+   "note": "Sailing teleports significantly improve travel. The greater teleport focus (75 Sailing, 69 Construction) enables the full Teleport to Boat spell."
+  },
+  {
+   "id": "S.9a",
+   "location": "Wyrmscraig",
+   "text": "At 62 Sailing, unlock Wyrmscraig and complete Fallen From Grace (also needs 60 Crafting, 53 Mining, 47 Runecraft)",
+   "sailingRelated": true,
+   "newQuest": true,
+   "enhanced": true,
+   "quest": "Fallen From Grace",
+   "questStatus": "complete",
+   "note": "Released 29 July 2026. +12,500 Sailing, 10,000 Crafting, 5,000 Mining, 5,000 Runecraft XP. Unlocks Golem crafting (measured ~120-135k Crafting XP/hr, up to ~150k tick-perfect - beats every glassblowing method and needs no Magic, unlike Superglass Make; use dashing kebbit furs, not goat), Goat hunting (60 Hunter + Sheep Herder; Jagex projected ~80k Hunter XP/hr at 60), the Mad Angel boss (Hallowfell at ~1/127, guaranteed granite dust), and Mortimer the superior-only Slayer master. Bring a raft or skiff (a sloop will NOT fit), and bring boss supplies on the first trip - there is no bank or teleport until the quest is done.",
+   "items": [
+    "Raft or skiff",
+    "Pickaxe",
+    "Chisel",
+    "Hammer (not Imcando)",
+    "Food + prayer potions"
+   ],
+   "links": [
+    {
+     "type": "guide",
+     "url": "/articles/wyrmscraig-ironman-guide",
+     "text": "Full Wyrmscraig ironman guide"
+    }
+   ]
+  },
+  {
+   "id": "S.10",
+   "location": "Various",
+   "text": "Higher milestones: Gwenith Glide Barracuda Trial (72), Crystal Extractor (73), Rosewood Hull (93)",
+   "sailingRelated": true,
+   "note": "The Gwenith Glide is a timed Barracuda Trial (requires Regicide). The Crystal Extractor (73) is a boat facility. The Rosewood Hull (93) is the best ship hull (~+20% speed)."
+  },
+  {
+   "id": "S.11",
+   "location": "Various",
+   "text": "Deep-sea trawling for Marlin -> Extended Stamina potions (85 Herblore + a marlin scale)",
+   "sailingRelated": true,
+   "note": "Deep-sea trawling for marlin is one of the highest-earning skilling activities in the game. Marlin scales make Extended Stamina potions at 85 Herblore - useful for the whole account."
+  }
+ ]
+}

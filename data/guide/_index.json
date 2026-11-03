@@ -1,0 +1,51 @@
+[
+ {
+  "id": "1.1",
+  "slug": "early-game",
+  "title": "Early quests, wintertodt and ardy cloak 1",
+  "steps": 286,
+  "track": false
+ },
+ {
+  "id": "1.2",
+  "slug": "thieving-fishing-mining",
+  "title": "Thieving, fishing and mining",
+  "steps": 33,
+  "track": false
+ },
+ {
+  "id": "1.3",
+  "slug": "fairy-rings-prayer-kingdom",
+  "title": "Fairy rings, 43 prayer, kingdom, 99 thieving",
+  "steps": 111,
+  "track": false
+ },
+ {
+  "id": "1.4",
+  "slug": "skilling-graceful",
+  "title": "Various skilling, agility for graceful",
+  "steps": 50,
+  "track": false
+ },
+ {
+  "id": "1.5",
+  "slug": "diaries-rfd",
+  "title": "Diaries and finishing RFD",
+  "steps": 21,
+  "track": false
+ },
+ {
+  "id": "2.0",
+  "slug": "after-barrows-gloves",
+  "title": "Goals after Barrows gloves",
+  "steps": 63,
+  "track": false
+ },
+ {
+  "id": "S",
+  "slug": "sailing",
+  "title": "Sailing Track",
+  "steps": 12,
+  "track": true
+ }
+]

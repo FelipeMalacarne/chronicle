@@ -1,0 +1,258 @@
+{
+ "id": "1.2",
+ "slug": "thieving-fishing-mining",
+ "title": "Thieving, fishing and mining",
+ "seoTitle": "Ironman Thieving, Fishing & Mining Guide (OSRS Step 1.2)",
+ "related": [
+  {
+   "href": "/articles/osrs-ironman-fishing-guide",
+   "label": "Fishing guide (1-99)"
+  },
+  {
+   "href": "/articles/osrs-ironman-smithing-guide",
+   "label": "Smithing guide (1-99)"
+  },
+  {
+   "href": "/articles/osrs-ironman-fletching-guide",
+   "label": "Fletching guide (1-99)"
+  }
+ ],
+ "description": "Build your core skills. Blackjack to 50+ thieving, fish for food and cooking XP, and mine iron for smithing.",
+ "steps": [
+  {
+   "id": "1.2.1",
+   "location": "Al Kharid",
+   "text": "Start the Feud at Ali Morrisane",
+   "quest": "The Feud",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.2.2",
+   "location": "Al Kharid",
+   "text": "From Ali Morrisane, buy the desert disguise for The Feud quest"
+  },
+  {
+   "id": "1.2.3",
+   "location": "Al Kharid",
+   "text": "Smelt the 5 silver, make a sickle and unstrung holy symbol, keep 3 bars"
+  },
+  {
+   "id": "1.2.4",
+   "location": "Al Kharid",
+   "text": "Give the key imprint and bronze bar to Osman for Prince ali rescue quest"
+  },
+  {
+   "id": "1.2.5",
+   "location": "Pollnivneach",
+   "text": "Do the Feud",
+   "quest": "The Feud",
+   "questStatus": "complete",
+   "note": "HCIM; if you're scared of going to mage bank, unlock the rune shop",
+   "hcim": true
+  },
+  {
+   "id": "1.2.6",
+   "location": "Pollnivneach",
+   "text": "Blackjack until 50 thieving, you can buy wines from the bar to use as food",
+   "skillGoal": {
+    "skill": "thieving",
+    "level": 50
+   },
+   "updateNote": "Stealing Artefacts in Port Piscarilius is a viable alternative to blackjacking from 49 Thieving (~130-200k XP/hr, no favour needed since Jan 2024). Alternatively, Stealing Valuables in Varlamore is available at 50 Thieving and provides 70-105k XP/hr plus 90-150k GP/hr - less XP but great cash generation with lower click intensity."
+  },
+  {
+   "id": "1.2.7",
+   "location": "Lumbridge",
+   "text": "IF you're planning on 3-tick fishing then home tele to lumby and pick up 15+ swamp tar now"
+  },
+  {
+   "id": "1.2.8",
+   "location": "Ardougne",
+   "text": "Ardy cloak tele and take the boat from Ardy to brimhaven"
+  },
+  {
+   "id": "1.2.9",
+   "location": "Shilo Village",
+   "text": "Take the cart to Shilo Village"
+  },
+  {
+   "id": "1.2.10",
+   "location": "Shilo Village",
+   "text": "Cut uncut gems until level 32 crafting",
+   "skillGoal": {
+    "skill": "crafting",
+    "level": 32
+   }
+  },
+  {
+   "id": "1.2.11",
+   "location": "Shilo Village",
+   "text": "Buy 20k feathers from shilo village fishing shop"
+  },
+  {
+   "id": "1.2.12",
+   "location": "Shilo Village",
+   "text": "Get 58 fishing with trout and salmon",
+   "skillGoal": {
+    "skill": "fishing",
+    "level": 58
+   },
+   "note": "Bank the fish for cooking xp. You can pretty easily grow cats while doing this fishing grind since you can just feed it the fish you fish. I recommend raising 10 cats for death runes in total, after that it's up to you if you can be bothered"
+  },
+  {
+   "id": "1.2.13",
+   "location": "Burthorpe",
+   "text": "Minigame tele to Burthrope games' room"
+  },
+  {
+   "id": "1.2.14",
+   "location": "Burthorpe",
+   "text": "Cook all of your trout, don't cook salmon yet"
+  },
+  {
+   "id": "1.2.15",
+   "location": "Barbarian Assault",
+   "text": "Minigame tele to Barb assault"
+  },
+  {
+   "id": "1.2.16",
+   "location": "Barbarian Fishing",
+   "text": "Get 50 agility from barb fishing, should be at 74 fishing",
+   "skillGoal": {
+    "skill": "agility",
+    "level": 50
+   },
+   "note": "You can feed caviar and roe to kitten, bring a knife to cut the fish. I honestly can't recommend any other way to train to 50 agi than fishing"
+  },
+  {
+   "id": "1.2.16a",
+   "location": "Tempoross Cove",
+   "text": "Now that you're 74 Fishing, do a few Tempoross kills for the Fish Barrel and Spirit Flakes",
+   "enhanced": true,
+   "note": "Tempoross is fought at Tempoross Cove, west of the Ruins of Unkah. The fastest way there is Ferryman Sathwood's ferry south of the Al Kharid bank (there is no Tempoross minigame teleport). Rewards: Fish Barrel (extra fish storage), Tackle Box, and Spirit Flakes (50% chance of an extra fish, no extra XP). Since 19 August 2026 the Fish Barrel and Tackle Box can also be bought for 6,000 spirit flakes each at Flakes 'n' Flotsam, so you no longer have to camp for them."
+  },
+  {
+   "id": "1.2.17",
+   "location": "Burthorpe",
+   "text": "After 50 agility, minigame tele to Burthrope"
+  },
+  {
+   "id": "1.2.18",
+   "location": "Rogues' Den",
+   "text": "Do the rogue's den minigame for full rogue outfit",
+   "note": "Cook the salmon to regen run energy after every time you finish 1 attempt of the minigame. Buy 50 lockpicks while you're here"
+  },
+  {
+   "id": "1.2.19",
+   "location": "Pollnivneach",
+   "text": "Equip the set and go back to blackjacking until you have 2.4m GP (around 83 thieving)",
+   "skillGoal": {
+    "skill": "thieving",
+    "level": 83
+   },
+   "note": "If you really just can't stand thieving, you could go do LMS and sell rune arrows to a shop for your GP, but you don't get any XP from that so that's why I don't really recommend it. 75 Thieving is needed for all hard diaries so at least get that before going LMS"
+  },
+  {
+   "id": "1.2.20",
+   "location": "Shantay Pass",
+   "text": "Carpet back to Shantay pass",
+   "items": [
+    "Teleport runes",
+    "Axe",
+    "Pickaxe",
+    "Bird snare",
+    "All the golem quest items"
+   ]
+  },
+  {
+   "id": "1.2.21",
+   "location": "Al Kharid",
+   "text": "If you got any cosmic runes from moss giants, or unlocked Ali's rune shop then make 1 or 2 dueling rings now to speed up next 2 quests"
+  },
+  {
+   "id": "1.2.22",
+   "location": "Uzer",
+   "text": "Start the Golem",
+   "quest": "The Golem",
+   "questStatus": "start",
+   "note": "START ELEMENTAL WORKSHOP 2 BY READING THE BOOK WHILE AT DIGSITE, keep the 2 items in bank"
+  },
+  {
+   "id": "1.2.23",
+   "location": "Uzer",
+   "text": "Finish The Golem, get the gems with chisel and hammer",
+   "quest": "The Golem",
+   "questStatus": "complete",
+   "note": "You can cut the Uzer teak tree, mine 5 clay and catch a golden warbler bird near the desert phoenix for diaries during the quest"
+  },
+  {
+   "id": "1.2.24",
+   "location": "Uzer",
+   "text": "Do Shadow of the storm (should have priest gown and black wizard hat in bank as your black items)",
+   "quest": "Shadow of the Storm",
+   "questStatus": "complete",
+   "note": "10K reward on RANGED. Flinch the demon with rune scimitar, just switch to darklight for the last hit. If you didn't get r scim while training mage, go buy a rune sword from champions guild. Make an attack potion for the fight, speeds it up slightly",
+   "links": [
+    {
+     "type": "image",
+     "url": "https://i.imgur.com/kvn6Mf5.png",
+     "text": "Use the west torch as your safespot"
+    }
+   ]
+  },
+  {
+   "id": "1.2.25",
+   "location": "Edgeville",
+   "text": "Go to Edgeville and talk to Oziach to continue Dragon slayer"
+  },
+  {
+   "id": "1.2.26",
+   "location": "Mage Bank",
+   "text": "Go to mage bank and buy 6k nats, all of the cosmics you can get while buying nats and 10 law runes each world up to 300 laws",
+   "note": "HCIM can buy them from ali morrisane if you don't wanna risk mage bank, although they're more expensive",
+   "hcim": true
+  },
+  {
+   "id": "1.2.27",
+   "location": "Falador",
+   "text": "Teleport to Falador"
+  },
+  {
+   "id": "1.2.28",
+   "location": "Falador",
+   "text": "Get 2 buckets of sap from this tree near falador east bank",
+   "links": [
+    {
+     "type": "image",
+     "url": "http://i.imgur.com/YoH5z70.png",
+     "text": "Tree location"
+    }
+   ]
+  },
+  {
+   "id": "1.2.29",
+   "location": "Falador",
+   "text": "Buy addy and rune picks from the pickaxe shop in the mines"
+  },
+  {
+   "id": "1.2.30",
+   "location": "Varrock",
+   "text": "Complete Varrock easy diary for the armour, makes next step a bit faster",
+   "note": "You can get the kudos requirement by talking to historian Minas on the 2nd floor. Use the museum lamps on herblore. Still not 30 herb, use diary lamp on agility"
+  },
+  {
+   "id": "1.2.30a",
+   "location": "Various",
+   "text": "Buy a Celestial Ring from Dusuri's Star Shop in Falador (2,000 stardust) for a +4 invisible Mining boost",
+   "enhanced": true,
+   "note": "Mine Shooting Stars (they land randomly across Gielinor - use the telescope in your POH or a star-hunting CC) for stardust, then buy the ring at Dusuri's Star Shop. The +4 Mining boost applies whether or not the ring is charged; charging it with stardust adds a separate 1/10 chance of an extra ore (up to adamantite)."
+  },
+  {
+   "id": "1.2.31",
+   "location": "Ardougne Monastery",
+   "text": "Mine 2300 iron ore at ardy monastery, superheat them while walking to Ardy bank and tele back with ardy cloak",
+   "note": "3 ticking makes this a lot faster if you can be bothered. Do medium clues if you get any from mining, might get a yew bow from reward (Comp bow works too, for temple of ikov). There are plenty of ways to get your magic up, i just like this since you get mining, smithing and later fletching xp as well. Don't smith the bars into anything yet",
+   "updateNote": "Consider using Giants' Foundry (from Sleeping Giants quest) for Smithing XP instead of traditional methods. It is significantly more XP/bar and provides Smithing-related rewards."
+  }
+ ]
+}

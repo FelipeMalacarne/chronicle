@@ -1,0 +1,194 @@
+{
+ "id": "1.5",
+ "slug": "diaries-rfd",
+ "title": "Diaries and finishing RFD",
+ "seoTitle": "Ironman Diaries & Recipe for Disaster Guide (OSRS Step 1.5)",
+ "related": [
+  {
+   "href": "/articles/barrows-gloves-ironman-guide",
+   "label": "Barrows gloves (RFD) requirements"
+  },
+  {
+   "href": "/articles/fire-cape-ironman-guide",
+   "label": "Fire cape guide"
+  },
+  {
+   "href": "/articles/avas-assembler-ironman-guide",
+   "label": "Ava's devices guide"
+  }
+ ],
+ "description": "Complete achievement diaries and finish Recipe for Disaster for Barrows gloves - the best-in-slot gloves for most of the game.",
+ "steps": [
+  {
+   "id": "1.5.1",
+   "location": "Various",
+   "text": "Do all of the RFD subquests",
+   "quest": "Recipe for Disaster",
+   "note": "If u didn't fish the 3k karambwans during agility for cook xp, u can leave awowogei's quest until later"
+  },
+  {
+   "id": "1.5.2",
+   "location": "Lumbridge",
+   "text": "Buy a bunch of chocolate dust from the chest and make energy pots"
+  },
+  {
+   "id": "1.5.3",
+   "location": "Various",
+   "text": "Plant some Toadflax seeds, agility potion is needed soon for a quest",
+   "note": "If you don't have toadflax seed for some reason, you can do brimhaven agility arena and buy toadflax with the vouchers you earn (3 vouchers each)"
+  },
+  {
+   "id": "1.5.4",
+   "location": "Various",
+   "text": "Make a mithril grapple"
+  },
+  {
+   "id": "1.5.5",
+   "location": "Various",
+   "text": "Do these quests for QP and diaries: A soul's bane, Another slice of H.A.M, Icthlarin's little helper, Contact!, In search of the Myreque, In aid of the Myreque, Eagles' peak, Enakhra's Lament, Rat catchers, Olaf's quest, Between a rock, Tai bwo wannai trio, Zogre flesh eater",
+   "note": "Contact! (needs Icthlarin's Little Helper + Prince Ali Rescue) is required for Beneath Cursed Sands below. Eagles' Peak is required for At First Light."
+  },
+  {
+   "id": "1.5.5a",
+   "location": "Varlamore",
+   "text": "Complete Perilous Moons quest when you reach 48 Slayer (requires Twilight's Promise done)",
+   "enhanced": true,
+   "newQuest": true,
+   "quest": "Perilous Moons",
+   "questStatus": "complete",
+   "skillGoal": {
+    "skill": "slayer",
+    "level": 48
+   },
+   "note": "Gives ~40k Slayer XP reward. Unlocks access to the Blood Moon, Blue Moon, and Eclipse Moon bosses. Blood Moon drops the Blood Moon armour set (melee) which is very strong for mid-game."
+  },
+  {
+   "id": "1.5.5b",
+   "location": "Various",
+   "text": "Complete Defender of Varrock quest (55 Smithing, 52 Hunter + prerequisites)",
+   "enhanced": true,
+   "newQuest": true,
+   "quest": "Defender of Varrock",
+   "questStatus": "complete",
+   "note": "Gives ~35k XP (15k Smithing, 15k Hunter, 5k antique lamp). Also a prerequisite for While Guthix Sleeps, one of the best quests for ironmen. Unlocks the Zombie Axe at 65 Attack."
+  },
+  {
+   "id": "1.5.5c",
+   "location": "Sophanem",
+   "text": "Complete Beneath Cursed Sands when you reach 62 Agility (requires Contact! done)",
+   "enhanced": true,
+   "newQuest": true,
+   "quest": "Beneath Cursed Sands",
+   "questStatus": "complete",
+   "note": "Unlocks the Keris Partisan weapon and access to Tombs of Amascut (ToA). ToA is one of the best sources of gear upgrades for ironmen, providing Osmumten's Fang, Lightbearer, and more."
+  },
+  {
+   "id": "1.5.5d",
+   "location": "Varlamore",
+   "text": "Complete At First Light quest (now that Eagles' Peak is done; also needs 46 Hunter, 30 Herblore, 27 Construction)",
+   "enhanced": true,
+   "newQuest": true,
+   "quest": "At First Light",
+   "questStatus": "complete",
+   "note": "Moved here because it requires Eagles' Peak (completed in the quest batch above). Unlocks the Hunter Guild and the Rumours hunter training system - the best Hunter training AND a supply engine (loot sacks give herbs, seeds, nests, bones, blessed bone shards). Integrate Rumours alongside birdhouse runs."
+  },
+  {
+   "id": "1.5.6",
+   "location": "Braindeath Island",
+   "text": "Rum deal (Req 42 slayer, you should be close to it. Get a task from Mazchna for Mory diary if you don't have one)",
+   "quest": "Rum Deal",
+   "questStatus": "complete",
+   "note": "For the 47 prayer req, you can use the ancient mace spec to boost"
+  },
+  {
+   "id": "1.5.7",
+   "location": "Mos Le'Harmless",
+   "text": "Cabin fever",
+   "quest": "Cabin Fever",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.5.8",
+   "location": "Various",
+   "text": "One small favour",
+   "quest": "One Small Favour",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.5.9",
+   "location": "Yanille",
+   "text": "Watchtower quest",
+   "quest": "Watchtower",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.5.10",
+   "location": "Various",
+   "text": "Do all easy and medium diaries",
+   "note": "Kourend diaries can be left undone, I dont do them until I have Xerics tally from shamans and staminas for the quests. Wildy and fremmy mediums require higher slayer, leave those for when you go back to slayer. You probably don't have a crystal key for fally medium diary yet so leave that for later as well"
+  },
+  {
+   "id": "1.5.11",
+   "location": "Pest Control",
+   "text": "For Lumby 50 range req I'd recommend ranging at pest control with bone cbow",
+   "skillGoal": {
+    "skill": "ranged",
+    "level": 50
+   },
+   "note": "If you're not 70cb for intermediate boat then go do slayer now, train attack to 60 then defense until 70cb. May as well stay until you get 250pts for void bottoms, good mage def. Need 55 range eventually anyway for red chins"
+  },
+  {
+   "id": "1.5.12",
+   "location": "Various",
+   "text": "Do Slayer until 60 attack",
+   "skillGoal": {
+    "skill": "attack",
+    "level": 60
+   }
+  },
+  {
+   "id": "1.5.13",
+   "location": "Ape Atoll",
+   "text": "Buy Dragon scim",
+   "note": "Normally I have recommended to also buy a Dragon battleaxe, but it's really just not needed anymore due to how easy it is to get kwuarms and limpwurts nowadays with farming contracts"
+  },
+  {
+   "id": "1.5.14",
+   "location": "Trollheim",
+   "text": "Do Eadgar's ruse",
+   "quest": "Eadgar's Ruse",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.5.15",
+   "location": "Trollheim",
+   "text": "Do My arm's big adventure",
+   "quest": "My Arm's Big Adventure",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.5.16",
+   "location": "Various",
+   "text": "Do Desert Treasure",
+   "quest": "Desert Treasure",
+   "questStatus": "complete",
+   "note": "If you didn't get magic logs from Wintertodt, go catch nature implings in puro-puro, you should have 58 hunter easily by now from birdhouses",
+   "updateNote": "If you unlocked GOTR earlier, Runecraft no longer needs to be your lowest skill for Tears of Guthix. Redirect ToG to whichever skill you least enjoy training."
+  },
+  {
+   "id": "1.5.17",
+   "location": "Lumbridge",
+   "text": "Finish RFD, buy B gloves",
+   "quest": "Recipe for Disaster",
+   "questStatus": "complete",
+   "note": "Here's a video of me killing the bosses with stats from following this guide, not too difficult",
+   "links": [
+    {
+     "type": "video",
+     "url": "https://www.youtube.com/watch?v=Yv1h-4grhks",
+     "text": "Video of killing RFD bosses"
+    }
+   ]
+  }
+ ]
+}

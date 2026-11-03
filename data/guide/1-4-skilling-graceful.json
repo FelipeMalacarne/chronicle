@@ -1,0 +1,348 @@
+{
+ "id": "1.4",
+ "slug": "skilling-graceful",
+ "title": "Various skilling, agility for graceful",
+ "seoTitle": "Ironman Skilling & Graceful Guide (OSRS Step 1.4)",
+ "related": [
+  {
+   "href": "/articles/osrs-ironman-construction-guide",
+   "label": "Construction guide (1-99)"
+  },
+  {
+   "href": "/articles/osrs-ironman-fletching-guide",
+   "label": "Fletching guide (1-99)"
+  },
+  {
+   "href": "/articles/osrs-ironman-fishing-guide",
+   "label": "Fishing guide (1-99)"
+  }
+ ],
+ "description": "Train various skills and complete the graceful outfit grind for unlimited run energy restoration.",
+ "steps": [
+  {
+   "id": "1.4.1",
+   "location": "Draynor",
+   "text": "Thieve master farmers for a couple of hours just to get some low level seeds to start farming with, mainly harralanders",
+   "note": "Remember rogue outfit. I recommend thieving in Draynor since the bank is right next to the farmer to grab some food quickly. There is an anti-bot feature for master farmers where the herb seed table scales with your Farming level - you get noticeably fewer good herb seeds below 75 Farming, with rates continuing to improve up to 85. Those seeds aren't important right now so as long as you can get other seeds in good amounts, that's all that matters"
+  },
+  {
+   "id": "1.4.2",
+   "location": "Hosidius",
+   "text": "Get 100% hosidius favour, should have 300 compost in bank",
+   "note": "At 45% do mess hall until 100%",
+   "updateNote": "The Kourend favour system was removed in January 2024, so this step is no longer possible — skip it entirely. All Hosidius content (fruit stalls, farming patches, Tithe Farm, the Mess) is freely accessible now. The Mess still exists as optional Cooking training if you want it."
+  },
+  {
+   "id": "1.4.3",
+   "location": "Various",
+   "text": "Buy pineapples for supercompost from charter ships"
+  },
+  {
+   "id": "1.4.4",
+   "location": "Various",
+   "text": "Put 15 pineapples into each of the compost bins at the allotment patches, remember to close the bin",
+   "note": "Don't do Hosidius patch yet, we'll be doing construction soon which requires house in Rimmington so it's not worth switching house to Kourend for 1 compost run and then switching back"
+  },
+  {
+   "id": "1.4.5",
+   "location": "Gnome Stronghold",
+   "text": "Buy ~200 chocolate from the grand tree food shop, don't buy too much since it's faster later from the RFD chest"
+  },
+  {
+   "id": "1.4.6",
+   "location": "Various",
+   "text": "Make energy pots, should have some harralanders from kingdom if it's been over a day since you did the quest"
+  },
+  {
+   "id": "1.4.7",
+   "location": "Seers Village",
+   "text": "Camelot tele"
+  },
+  {
+   "id": "1.4.8",
+   "location": "Seers Village",
+   "text": "Plant barley seeds at the hops patch northwest of Seers, pay the farmer 3 normal compost to look after them"
+  },
+  {
+   "id": "1.4.9",
+   "location": "Keldagrim",
+   "text": "Minigame tele to blast furnace"
+  },
+  {
+   "id": "1.4.10",
+   "location": "Keldagrim",
+   "text": "Do the Giant Dwarf quest",
+   "quest": "The Giant Dwarf",
+   "questStatus": "complete",
+   "note": "If you need more rubies or emeralds, the gem stall in keldagrim is usually stocked"
+  },
+  {
+   "id": "1.4.11",
+   "location": "Keldagrim",
+   "text": "These next 2 quests have times where you have to wait for stuff to happen, smith iron dart tips while you wait"
+  },
+  {
+   "id": "1.4.12",
+   "location": "Keldagrim",
+   "text": "Forgettable tale of a drunken dwarf quest",
+   "quest": "Forgettable Tale...",
+   "questStatus": "complete",
+   "note": "There's an anvil near the bank in keldagrim. Your barley will be ready when you need it, use it on a range to get the barley malt. Plant jute seeds after harvesting the barley for a diary task, don't need to compost or protect them. Do not waste the 2 dwarven stout(m) that you get as the reward!"
+  },
+  {
+   "id": "1.4.13",
+   "location": "Varrock",
+   "text": "Garden of tranquility quest",
+   "quest": "Garden of Tranquility",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.4.14",
+   "location": "Entrana",
+   "text": "Start Enlightened journey quest",
+   "quest": "Enlightened Journey",
+   "questStatus": "start",
+   "note": "You need 6 willow branches for the falador diary on top of the 12 needed for the quest so get those as well"
+  },
+  {
+   "id": "1.4.15",
+   "location": "Various",
+   "text": "While waiting for the willow trees to grow, do these steps:"
+  },
+  {
+   "id": "1.4.16",
+   "location": "Gnome Stronghold",
+   "text": "Do Eyes of glouphrie and Tower of life",
+   "quest": "The Eyes of Glouphrie",
+   "questStatus": "complete",
+   "note": "Bring a raw chicken and a raw swordfish to kill a Swordchick for Ardy diary after Tower of life"
+  },
+  {
+   "id": "1.4.17",
+   "location": "Various",
+   "text": "Smith the rest of your iron dart tips, leave 20 bars for quests"
+  },
+  {
+   "id": "1.4.18",
+   "location": "Fossil Island",
+   "text": "Mine Volcanic ash for ultracompost, get like 2k so you don't have to constantly come back to mine more"
+  },
+  {
+   "id": "1.4.19",
+   "location": "Various",
+   "text": "Do a farm run of limpwurts, harralanders and ultracompost",
+   "note": "Store 15 supercompost in leprechaun for a quest, make the rest into ultras. Use volcanic ash on the full bin rather than individual buckets of supercompost. I'm not gonna be mentioning farm runs anymore, just do them whenever. Always use ultra compost on herbs, for limps i'd just use normal compost because the seeds are so easy to get"
+  },
+  {
+   "id": "1.4.20",
+   "location": "McGrubor's Wood",
+   "text": "Do Temple of Ikov quest",
+   "quest": "Temple of Ikov",
+   "questStatus": "complete",
+   "note": "Start fletching iron darts while you run around doing quests. If you haven't got a yew bow from medium clues that you may have got from skilling, get a yew long from young implings in puro-puro, find a spawn point and catch them as they spawn"
+  },
+  {
+   "id": "1.4.21",
+   "location": "Entrana",
+   "text": "Finish Enlightened journey and unlock Varrock and Castle wars balloons",
+   "quest": "Enlightened Journey",
+   "questStatus": "complete",
+   "note": "While unlikely, it's possible that you didn't get yew logs from wintertodt to unlock castle wars, in that case you'll just have to run between Varrock east bank and the sawmill instead of doing the method explained just below"
+  },
+  {
+   "id": "1.4.22",
+   "location": "Various",
+   "text": "Construction method: Make 10+ dueling rings, equip whichever axe you got from tree spirits earlier"
+  },
+  {
+   "id": "1.4.23",
+   "location": "Castle Wars",
+   "text": "Start at Castle wars, cut 65 willow logs and deposit them to the log storage next to the balloon"
+  },
+  {
+   "id": "1.4.24",
+   "location": "Varrock",
+   "text": "Balloon to Varrock, cut full inventory of oak logs and turn them into planks at the sawmill",
+   "note": "3-ticking recommended especially if u didn't get a lucky rune axe",
+   "links": [
+    {
+     "type": "image",
+     "url": "https://i.imgur.com/twMOUDE.png",
+     "text": "3 Oaks just next to the balloon"
+    }
+   ]
+  },
+  {
+   "id": "1.4.25",
+   "location": "Castle Wars",
+   "text": "Teleport to Castle wars, repeat until you have 50 construction banked",
+   "note": "You can use minigame tele every 20mins if you want to save a ring charge. 1500 planks not including Wintertodt XP, check xp calculator if you want to get the exact amount"
+  },
+  {
+   "id": "1.4.26",
+   "location": "Rimmington",
+   "text": "Get 50 construction, un-note with Phials at Rimmington general store",
+   "skillGoal": {
+    "skill": "construction",
+    "level": 50
+   },
+   "note": "lvl 22-33, oak dining table in the dining room. lvl 33-50, oak larder in the kitchen",
+   "updateNote": "Mahogany Homes is available from level 1 Construction and provides ~3x more XP per plank than traditional methods. Use it if you prefer a less click-intensive approach."
+  },
+  {
+   "id": "1.4.27",
+   "location": "Great Kourend",
+   "text": "Move your house to kourend now for farm patch"
+  },
+  {
+   "id": "1.4.28",
+   "location": "Various",
+   "text": "Start doing daily tree runs from now on with the seeds you get from birdhouses and later farming contracts as well"
+  },
+  {
+   "id": "1.4.29",
+   "location": "Various",
+   "text": "Do these quests while fletching iron darts: Big chompy bird hunt, Rag and bone man (first part, should have all bones in bank already), Family crest (get goldsmith gauntlets after quest is done), Start Legend's quest (Get vanilla pod for RFD), Death plateau, Troll Stronghold",
+   "quest": "Troll Stronghold",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.4.30",
+   "location": "Various",
+   "text": "I'll assume you have fletched all of them now, if you haven't then finish the rest of them during next step underwater"
+  },
+  {
+   "id": "1.4.31",
+   "location": "Fossil Island",
+   "text": "Go to the small island at fossil island with the bank, where you dive to seaweed patches"
+  },
+  {
+   "id": "1.4.31a",
+   "location": "Varlamore",
+   "text": "Consider Vale Totems for Fletching training (20+ Fletching, Varlamore access)",
+   "enhanced": true,
+   "note": "Vale Totems in Varlamore give roughly 22.5k Fletching XP/hr with oak logs up to about 420k with magic logs (log basket and stringing), per the wiki's ironman Fletching guide. Needs Children of the Sun, 20 Fletching and the Vale Totems miniquest."
+  },
+  {
+   "id": "1.4.32",
+   "location": "Fossil Island",
+   "text": "While underwater: Fletch maple shortbows (u) until 55 fletching",
+   "skillGoal": {
+    "skill": "fletching",
+    "level": 55
+   },
+   "note": "Make sure you fletch all of the darts first. The goal here is to pick up the seaweed spores that spawn every now and then. The spores can spawn north of the anchor so make sure you're checking the minimap and not just your item overlay. Plant seaweed after you get your first 2 spores. You will get a weight warning but you can just ignore that, it makes no difference unless you go to the deep water"
+  },
+  {
+   "id": "1.4.33",
+   "location": "Fossil Island",
+   "text": "Fletch all of your maple logs into maple longbows (u)",
+   "note": "Make sure to leave some logs for birdhouses"
+  },
+  {
+   "id": "1.4.34",
+   "location": "Fossil Island",
+   "text": "Cut all of your uncut gems"
+  },
+  {
+   "id": "1.4.35",
+   "location": "Fossil Island",
+   "text": "If u have any molten glass left, blow all of it into unpowered orbs, make 2 lantern lenses as well"
+  },
+  {
+   "id": "1.4.36",
+   "location": "Fossil Island",
+   "text": "Do seaweed farming every time u do birdhouse run from now on, very important!"
+  },
+  {
+   "id": "1.4.37",
+   "location": "Keldagrim",
+   "text": "Buy 2800 gold ore from blast furnace ore shop, 1 inv per world",
+   "note": "Don't use energy pots for this or the actual smithing part, only run with empty inventory"
+  },
+  {
+   "id": "1.4.38",
+   "location": "Keldagrim",
+   "text": "Get 60 smithing, remember to wear goldsmith gauntlets",
+   "skillGoal": {
+    "skill": "smithing",
+    "level": 60
+   }
+  },
+  {
+   "id": "1.4.39",
+   "location": "Edgeville",
+   "text": "Go to Edgeville"
+  },
+  {
+   "id": "1.4.40",
+   "location": "Edgeville",
+   "text": "Craft the gold bars into gold BRACELETS, leave like 30 bars for teleport jewellery if you need to make more",
+   "note": "Reminder to buy rubies from either keldagrim or kourend castle gem stalls if you run out. The reason we are doing bracelets instead of amulets is the extra 120gp per high alch, which is worth more than 5xp"
+  },
+  {
+   "id": "1.4.41",
+   "location": "Mage Bank",
+   "text": "If you have 60 magic, get mage arena cape while you're here anyway"
+  },
+  {
+   "id": "1.4.42",
+   "location": "Mage Bank",
+   "text": "Buy another 5k nats, get some cosmics too if you need more",
+   "note": "HCIM; if scared, you should still have enough nats to get 63mage with alching, and then you can boost to get into wizard guild",
+   "hcim": true
+  },
+  {
+   "id": "1.4.43",
+   "location": "Canifis/Seers",
+   "text": "Do agility until full graceful, 50-60 at Canifis, 60+ at Seers",
+   "skillGoal": {
+    "skill": "agility",
+    "level": 60
+   },
+   "note": "Alch your gold bracelets and maple bows(u) while doing agility. Loot kingdom and fletch more longbows to alch if you run out. If you're still getting more maples from kingdom then it's not worth doing agility if u run out of alchs, just move to the next step and come back to agility few days later. Make sure you keep at least 500 logs for birdhouses!",
+   "updateNote": "Run energy was reworked in Jan 2025: lower-level regeneration is significantly better and energy drains slower in all scenarios. Full Graceful is less urgent now. Consider getting early Agility breakpoints for quests/diaries and collecting marks opportunistically, then coming back for full Graceful when it aligns with stamina production or long travel grinds."
+  },
+  {
+   "id": "1.4.43a",
+   "location": "Varlamore",
+   "text": "Consider the Colossal Wyrm Agility Course as an AFK-ish alternative (requires Varlamore access)",
+   "enhanced": true,
+   "note": "The Colossal Wyrm course in Varlamore offers competitive Agility XP with lower click intensity than rooftops. Amylase pack cost was halved (200 → 100 termites) in Oct 2024, improving marks-of-grace equivalent rate. Also passively generates small amounts of blessed bone shards for Prayer."
+  },
+  {
+   "id": "1.4.44",
+   "location": "Karamja",
+   "text": "If you want a break from agility, fish 3k raw karambwans. Banking at Zanaris bank is your best option for now"
+  },
+  {
+   "id": "1.4.45",
+   "location": "Various",
+   "text": "Should get to 70+ mage by the time you're done with agility for now",
+   "skillGoal": {
+    "skill": "magic",
+    "level": 70
+   }
+  },
+  {
+   "id": "1.4.46",
+   "location": "Miscellania",
+   "text": "Kingdom reminder! If u haven't already, take out all gp from the coffers after the 7th day, total 6.2k maples"
+  },
+  {
+   "id": "1.4.47",
+   "location": "Isafdar",
+   "text": "Do the Regicide quest",
+   "quest": "Regicide",
+   "questStatus": "complete",
+   "note": "Pick up a few whiteberries just north of the elf tracker"
+  },
+  {
+   "id": "1.4.48",
+   "location": "Yanille",
+   "text": "Do Hand in the sand quest",
+   "quest": "Hand in the Sand",
+   "questStatus": "complete"
+  }
+ ]
+}

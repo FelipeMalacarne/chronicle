@@ -1,0 +1,773 @@
+{
+ "id": "1.3",
+ "slug": "fairy-rings-prayer-kingdom",
+ "title": "Fairy rings, 43 prayer, kingdom, 99 thieving",
+ "seoTitle": "Ironman Fairy Rings, 43 Prayer & Miscellania (OSRS Step 1.3)",
+ "related": [
+  {
+   "href": "/articles/osrs-ironman-prayer-guide",
+   "label": "Prayer guide (1-99)"
+  },
+  {
+   "href": "/articles/osrs-ironman-construction-guide",
+   "label": "Construction guide (1-99)"
+  }
+ ],
+ "description": "Unlock fairy rings for fast travel, get 43 prayer for protection prayers, and set up Miscellania for passive resources.",
+ "steps": [
+  {
+   "id": "1.3.1",
+   "location": "Varrock",
+   "text": "Buy a bronze sword from Varrock sword shop (for Horror from the deep quest)"
+  },
+  {
+   "id": "1.3.2",
+   "location": "Varrock",
+   "text": "Smith 3 bronze wire"
+  },
+  {
+   "id": "1.3.3",
+   "location": "Varrock",
+   "text": "Buy an oak longbow and a regular shortbow from Lowe"
+  },
+  {
+   "id": "1.3.4",
+   "location": "Varrock",
+   "text": "Start Priest in peril",
+   "quest": "Priest in Peril",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.3.5",
+   "location": "Varrock",
+   "text": "Buy 400 steel nails at the sawmill, if every world is bought out then don't bother"
+  },
+  {
+   "id": "1.3.6",
+   "location": "Varrock",
+   "text": "Start Rag and bone man on the way to the temple",
+   "quest": "Rag and Bone Man",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.3.7",
+   "location": "Morytania",
+   "text": "Do priest in peril",
+   "quest": "Priest in Peril",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.8",
+   "location": "Morytania",
+   "text": "Do Nature spirit",
+   "quest": "Nature Spirit",
+   "questStatus": "complete",
+   "note": "After quest, restore prayer at the grotto for a diary task"
+  },
+  {
+   "id": "1.3.9",
+   "location": "Canifis",
+   "text": "Buy 1 raw shark from Canifis food shop"
+  },
+  {
+   "id": "1.3.10",
+   "location": "Canifis",
+   "text": "Do Creature of Fenkenstrain",
+   "quest": "Creature of Fenkenstrain",
+   "questStatus": "complete",
+   "note": "Use port Phasmatys furnace, you should have slime in bank, use it to get 5 ecto-tokens"
+  },
+  {
+   "id": "1.3.11",
+   "location": "Varrock",
+   "text": "Use Chronicle tele",
+   "items": [
+    "Tele runes",
+    "GP",
+    "Rune scim"
+   ]
+  },
+  {
+   "id": "1.3.12",
+   "location": "Champions Guild",
+   "text": "Go champion's guild and continue Dragon slayer, ask every question",
+   "note": "Buy a coif, green dhide chaps and vambs"
+  },
+  {
+   "id": "1.3.13",
+   "location": "Champions Guild",
+   "text": "Kill the nearby ram, bear and unicorn for their bones (Rag and bone man quest)"
+  },
+  {
+   "id": "1.3.14",
+   "location": "Camelot",
+   "text": "Camelot tele"
+  },
+  {
+   "id": "1.3.15",
+   "location": "Catherby",
+   "text": "Kill a giant bat (Rag and bone man) south west of Catherby"
+  },
+  {
+   "id": "1.3.16",
+   "location": "Seers Village",
+   "text": "Do Elemental workshop 2",
+   "quest": "Elemental Workshop II",
+   "questStatus": "complete",
+   "note": "Kill one of each elementals for a diary task"
+  },
+  {
+   "id": "1.3.17",
+   "location": "Lumbridge",
+   "text": "Lumby",
+   "items": [
+    "Axe",
+    "Rope",
+    "Lit candle",
+    "Hammer",
+    "Stake (vampire slayer)",
+    "Spade"
+   ]
+  },
+  {
+   "id": "1.3.18",
+   "location": "Lumbridge",
+   "text": "Get anti-dragon shield from the duke"
+  },
+  {
+   "id": "1.3.19",
+   "location": "Lumbridge",
+   "text": "Kill a goblin for the bone for rag and bone man"
+  },
+  {
+   "id": "1.3.20",
+   "location": "Lumbridge Swamp",
+   "text": "Get big frog leg (you need to go in to the caves), giant rat bone (both for rag and bone man)"
+  },
+  {
+   "id": "1.3.21",
+   "location": "Lumbridge Swamp",
+   "text": "Start Lost city",
+   "quest": "Lost City",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.3.22",
+   "location": "Draynor Manor",
+   "text": "Go to Draynor manor"
+  },
+  {
+   "id": "1.3.23",
+   "location": "Draynor Manor",
+   "text": "Do Ernest the chicken, finish vampire slayer",
+   "quest": "Ernest the Chicken",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.24",
+   "location": "Draynor Manor",
+   "text": "Dig up the skull for fairytale part 1 while you're in the area to save some time later"
+  },
+  {
+   "id": "1.3.25",
+   "location": "Draynor",
+   "text": "Bank at Draynor",
+   "items": [
+    "Fire strike runes",
+    "Food"
+   ]
+  },
+  {
+   "id": "1.3.26",
+   "location": "Entrana",
+   "text": "Talk to the high priest for Holy grail"
+  },
+  {
+   "id": "1.3.27",
+   "location": "Entrana",
+   "text": "Get at least 5 Dramen branches, make 2 staffs"
+  },
+  {
+   "id": "1.3.28",
+   "location": "Entrana",
+   "text": "Finish Lost city",
+   "quest": "Lost City",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.29",
+   "location": "Draynor",
+   "text": "Start Fairytale part 1",
+   "quest": "Fairytale I - Growing Pains",
+   "questStatus": "start",
+   "note": "The quest guide on os.rs.wiki lists where to get the 3 random items. If you get nature tally req, go to abyss with inv of food and kill leeches. Make sure you trap them so only 1 attacks"
+  },
+  {
+   "id": "1.3.30",
+   "location": "Zanaris",
+   "text": "Flinch Tanglefoot in this spot",
+   "quest": "Fairytale I - Growing Pains",
+   "questStatus": "complete",
+   "links": [
+    {
+     "type": "image",
+     "url": "https://i.imgur.com/2Ejgx0h.png",
+     "text": "Tanglefoot flinch spot"
+    }
+   ]
+  },
+  {
+   "id": "1.3.31",
+   "location": "Draynor",
+   "text": "Talk to martin to start Fairytale2",
+   "quest": "Fairytale II - Cure a Queen",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.3.32",
+   "location": "Draynor",
+   "text": "Buy 35 jugs of vinegar"
+  },
+  {
+   "id": "1.3.33",
+   "location": "Draynor",
+   "text": "Buy 1 marigold seed, 3 cabbage seeds, 3 onion seeds from Draynor seed market"
+  },
+  {
+   "id": "1.3.34",
+   "location": "Draynor",
+   "text": "Rescue prince ali from the jail",
+   "quest": "Prince Ali Rescue",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.35",
+   "location": "Lumbridge",
+   "text": "While you wait for Martin's crops for FT2, tele to Lumby"
+  },
+  {
+   "id": "1.3.36",
+   "location": "Lumbridge",
+   "text": "Start Evil Dave subquest for RFD",
+   "quest": "Recipe for Disaster (Evil Dave)",
+   "questStatus": "start",
+   "note": "If you don't have a cat then raise one now"
+  },
+  {
+   "id": "1.3.37",
+   "location": "Lumbridge",
+   "text": "Kill 2 cows and make 1 soft, 1 hard leather"
+  },
+  {
+   "id": "1.3.38",
+   "location": "Lumbridge",
+   "text": "Smelt 1 inv of gold, should have from wintertodt",
+   "note": "If you didn't get any gold then go mine some from the alkharid mine. Make 1 recoil ring, 10 games necks and the rest into dueling rings. From this point just use clan wars tele as your energy recharge before teleporting to a new location"
+  },
+  {
+   "id": "1.3.39",
+   "location": "Draynor",
+   "text": "Speak to Martin for Fairytale 2"
+  },
+  {
+   "id": "1.3.40",
+   "location": "Zanaris",
+   "text": "Go unlock fairy rings at Zanaris",
+   "note": "Travel to these fairy rings to complete diary tasks: BIS, AIR, ALS, CIR, DIS"
+  },
+  {
+   "id": "1.3.41",
+   "location": "Rimmington",
+   "text": "Tele to POH and do Melzar's maze (Dragon slayer quest)",
+   "items": [
+    "GP",
+    "Maze key",
+    "90 steel nails",
+    "3 planks",
+    "Hammer",
+    "Food",
+    "Runes"
+   ]
+  },
+  {
+   "id": "1.3.42",
+   "location": "Port Sarim",
+   "text": "Walk to port Sarim jail and telegrab 2nd map piece for Dragon Slayer"
+  },
+  {
+   "id": "1.3.43",
+   "location": "Port Sarim",
+   "text": "Buy and repair the ship (dragon slayer)"
+  },
+  {
+   "id": "1.3.44",
+   "location": "Falador",
+   "text": "Tele to Fally"
+  },
+  {
+   "id": "1.3.45",
+   "location": "Barbarian Village",
+   "text": "Make unfired bowl at barb village",
+   "items": [
+    "GP",
+    "Runes",
+    "Soft clay",
+    "Wizard mind bomb",
+    "Lobster pot",
+    "Silk"
+   ],
+   "note": "Equip your anti-dragon shield and recoil ring now so you don't forget it later"
+  },
+  {
+   "id": "1.3.46",
+   "location": "Ice Mountain",
+   "text": "Talk to the oracle"
+  },
+  {
+   "id": "1.3.47",
+   "location": "Ice Mountain",
+   "text": "Get the 3rd map piece for dragon slayer"
+  },
+  {
+   "id": "1.3.48",
+   "location": "Lumbridge",
+   "text": "Tele to Lumby"
+  },
+  {
+   "id": "1.3.49",
+   "location": "Draynor",
+   "text": "Get Ned as your captain for dragon slayer",
+   "note": "Make sure you have the anti-dragon shield and recoil ring equipped"
+  },
+  {
+   "id": "1.3.50",
+   "location": "Crandor",
+   "text": "Go to Crandor and open the shortcut to Karamja volcano",
+   "note": "Bring swordfish/karambwans as your food. As soon as you go climb down from Crandor, climb back up for karamja medium diary task"
+  },
+  {
+   "id": "1.3.51",
+   "location": "Crandor",
+   "text": "Kill Elvarg, you can do as many trips as you want",
+   "note": "There are flinch spots in the room, but honestly you shouldn't have any trouble with this fight. Step under Elvarg when eating"
+  },
+  {
+   "id": "1.3.52",
+   "location": "Edgeville",
+   "text": "Finish dragon slayer and buy a green d'hide top from Oziach",
+   "quest": "Dragon Slayer I",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.53",
+   "location": "Edgeville",
+   "text": "Wear gloves and pick up 5 nettles at the yews"
+  },
+  {
+   "id": "1.3.54",
+   "location": "Edgeville",
+   "text": "Make the stew for Evil Dave while you're at Edgeville",
+   "note": "If you don't have a cat then just leave for later, don't bother doing this with a kitten"
+  },
+  {
+   "id": "1.3.55",
+   "location": "Lumbridge",
+   "text": "Tele to Lumby"
+  },
+  {
+   "id": "1.3.56",
+   "location": "Lumbridge",
+   "text": "Fill a bowl with water, put nettles in it and use it on a range (This is for ghosts ahoy quest)"
+  },
+  {
+   "id": "1.3.57",
+   "location": "Lumbridge",
+   "text": "Finish Evil Dave subquest",
+   "quest": "Recipe for Disaster (Evil Dave)",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.58",
+   "location": "Dorgesh-Kaan",
+   "text": "Do Death to the Dorgeshuun. While getting the robes, keep buttons (If you didn't get them while getting the rusty sword)",
+   "quest": "Death to the Dorgeshuun",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.59",
+   "location": "Dorgesh-Kaan",
+   "text": "Buy dorgeshuun crossbow and 4000 bone bolts"
+  },
+  {
+   "id": "1.3.60",
+   "location": "Dorgesh-Kaan",
+   "text": "Buy a Bullseye lantern (empty) from Miltog at the market in Dorgeshkaan"
+  },
+  {
+   "id": "1.3.61",
+   "location": "Dorgesh-Kaan",
+   "text": "Use swamp tar on the lamp still next to Miltog, use your empty lantern on the still to fill it"
+  },
+  {
+   "id": "1.3.62",
+   "location": "Fisher King Realm",
+   "text": "Finish Holy grail",
+   "quest": "Holy Grail",
+   "questStatus": "complete",
+   "note": "Diary steps near Galahad's house: Get a cup of tea from him, cross the log, mine coal at the coal trucks. Diary steps at Karamja: Rope swing to the moss giant island, mine gold at the horse shoe mine"
+  },
+  {
+   "id": "1.3.63",
+   "location": "Lighthouse",
+   "text": "Do Horror from the deep quest",
+   "quest": "Horror from the Deep",
+   "questStatus": "complete",
+   "note": "Complete a lap of Barb agility course for a diary. Just mage the dagannoth and hide when it's weak to melee and range. Turn your run off so you don't get meleed. Use proper food like swordfish and karambwans"
+  },
+  {
+   "id": "1.3.64",
+   "location": "Burthorpe",
+   "text": "Do Turael slayer with dorg cbow until 37 Range and 18 slayer",
+   "skillGoal": {
+    "skill": "slayer",
+    "level": 18
+   },
+   "note": "Use Turael, every 10th task should be done with the highest level slayer master you can use. Even though we are using Turael, the goal is to get slayer xp so you should always kill monsters with higher hp, for example on bird tasks kill terrorbirds. Vannaka has too many bad tasks so I think this is overall better"
+  },
+  {
+   "id": "1.3.64a",
+   "location": "Varlamore",
+   "text": "Complete Twilight's Promise quest (requires Children of the Sun; ~40 combat recommended)",
+   "enhanced": true,
+   "newQuest": true,
+   "quest": "Twilight's Promise",
+   "questStatus": "complete",
+   "note": "Unlocks the Quetzal Transport system for fast travel across Varlamore. Also required for later Varlamore quests including Perilous Moons."
+  },
+  {
+   "id": "1.3.64c",
+   "location": "Varlamore",
+   "text": "Try Calcified Rocks for Mining XP plus bankable Prayer shards (41 Mining, Varlamore access)",
+   "enhanced": true,
+   "note": "Calcified Rocks (Cam Torum mine) require 41 Mining and yield blessed bone shards. Offering shards at the libation bowl in the Teomat gives ~5-6 Prayer XP each and requires 30 Prayer. Shards are stackable and bankable - accumulate them while Mining. Sun-kissed bones (from Hunter Rumours and other Varlamore activities) break into 45 shards each (225 Prayer XP). This shard ecosystem provides safe, bankable Prayer training that integrates with Mining and Hunter progression, reducing reliance on Wilderness altars."
+  },
+  {
+   "id": "1.3.65",
+   "location": "Enchanted Valley",
+   "text": "Kill tree spirits with fire strike for a mithril axe AND either another mith axe, addy axe or a rune axe, whichever is first",
+   "note": "The 2nd axe is for actual WC training, not worth the time camping for rune one unless u get lucky since u can just buy one at 60wc"
+  },
+  {
+   "id": "1.3.66",
+   "location": "Draynor Manor",
+   "text": "Do Animal magnetism",
+   "quest": "Animal Magnetism",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.67",
+   "location": "Varrock",
+   "text": "Buy mithril platebody from Horvik in Varrock"
+  },
+  {
+   "id": "1.3.68",
+   "location": "Al Kharid",
+   "text": "Buy mithril platelegs from al-kharid"
+  },
+  {
+   "id": "1.3.69",
+   "location": "Nardah",
+   "text": "Do Spirits of the Elid quest",
+   "quest": "Spirits of the Elid",
+   "questStatus": "complete",
+   "note": "You can use the mithril armor for tanking the golems, or flinch them if you're taking too much damage"
+  },
+  {
+   "id": "1.3.70",
+   "location": "Underground Pass",
+   "text": "Do the Underground pass quest",
+   "quest": "Underground Pass",
+   "questStatus": "complete",
+   "note": "Use the mithril armour for this quest. HCIM; While this quest might seem like a dangerous one without overheads, it's honestly not. You can trap the paladins behind each other same way as the captain from the tourist trap quest. For the spider, there are 2 skeletons on the east wall, stand between them and then mage the big one with earth blast. Sometimes the little ones attack you but just run a bit north and then back to the same spot, they'll get stuck",
+   "hcim": true,
+   "links": [
+    {
+     "type": "video",
+     "url": "https://www.youtube.com/watch?v=WI2SYhpwIh8",
+     "text": "Video of completing the quest with same combat stats"
+    }
+   ]
+  },
+  {
+   "id": "1.3.71",
+   "location": "Underground Pass",
+   "text": "Upgrade the iban staff"
+  },
+  {
+   "id": "1.3.72",
+   "location": "Burthorpe",
+   "text": "Get 50 attack doing more Turael slayer, remember to get every 10th task from Vannaka",
+   "skillGoal": {
+    "skill": "attack",
+    "level": 50
+   },
+   "note": "If you get a task from Vannaka that you really can't do without melee protect then go kill sand crabs until 50 attack"
+  },
+  {
+   "id": "1.3.73",
+   "location": "Edgeville",
+   "text": "Make an amulet of magic"
+  },
+  {
+   "id": "1.3.74",
+   "location": "Taverley Dungeon",
+   "text": "Kill blue dragons with iban's blast for 43 prayer",
+   "skillGoal": {
+    "skill": "prayer",
+    "level": 43
+   },
+   "note": "We don't have the agility level for shortcut yet so don't bother banking the hides, not worth doing twice as many trips. Add 2400 xp to your current prayer xp and calculate how many bones you need, level 43 requires 50339xp and 1 bone is 288xp with ectofuntus (2.4k pray xp is from ghosts ahoy quest which will be completed before using the bones). Regular ironmen can use the wildy altar if you want to, but either way it's only around 85 bones with ecto so do whichever method. Get at least 1 extra dragon bone on top of 43 prayer, required for the Watchtower quest"
+  },
+  {
+   "id": "1.3.75",
+   "location": "Port Khazard",
+   "text": "Minigame tele to fishing trawler"
+  },
+  {
+   "id": "1.3.76",
+   "location": "Port Khazard",
+   "text": "Buy however many buckets of slime you need for the bones"
+  },
+  {
+   "id": "1.3.77",
+   "location": "Port Khazard",
+   "text": "Equip Ghostspeak amulet"
+  },
+  {
+   "id": "1.3.78",
+   "location": "Port Khazard",
+   "text": "If you didn't prepare the nettle water earlier, do it now"
+  },
+  {
+   "id": "1.3.79",
+   "location": "Port Khazard",
+   "text": "Make sure you have all ghosts ahoy items",
+   "items": [
+    "GP stack",
+    "9 d bones",
+    "9 pot",
+    "9 slime",
+    "General store sells pots if you don't have"
+   ]
+  },
+  {
+   "id": "1.3.80",
+   "location": "Port Phasmatys",
+   "text": "Charter to port Phasmatys"
+  },
+  {
+   "id": "1.3.81",
+   "location": "Port Phasmatys",
+   "text": "Start ghosts ahoy",
+   "quest": "Ghosts Ahoy",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.3.82",
+   "location": "Port Phasmatys",
+   "text": "Grind 9 d bones and offer them, get ecto tokens"
+  },
+  {
+   "id": "1.3.83",
+   "location": "Port Phasmatys",
+   "text": "Finish ghosts ahoy",
+   "quest": "Ghosts Ahoy",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.84",
+   "location": "Port Phasmatys",
+   "text": "Grind the rest of your bones to get 43 prayer"
+  },
+  {
+   "id": "1.3.85",
+   "location": "Ape Atoll",
+   "text": "Do Monkey madness, focus the reward on attack and defense",
+   "quest": "Monkey Madness I",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.86",
+   "location": "Falador",
+   "text": "Do Wanted! quest",
+   "quest": "Wanted!",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.87",
+   "location": "Burthorpe",
+   "text": "Get 40 slayer, Turael slay",
+   "skillGoal": {
+    "skill": "slayer",
+    "level": 40
+   },
+   "note": "Reminder once again, every 10th task from Vannaka (or from chaeldar if you're already 70cb, Konar if 75cb). Prayer flicking is recommended, but Turael tasks are pretty easy so it's not mandatory. Train range to 40 first and then start training Attack"
+  },
+  {
+   "id": "1.3.88",
+   "location": "Mort'ton",
+   "text": "Do Shades of morton quest",
+   "quest": "Shades of Mort'ton",
+   "questStatus": "complete",
+   "note": "IF there's no one else to help you then this quest can be left until later assuming you used the museum lamps on herblore earlier. Take the book to the apothecary in Varrock for some free herb xp"
+  },
+  {
+   "id": "1.3.89",
+   "location": "Various",
+   "text": "Get 25 herblore if you don't have yet",
+   "skillGoal": {
+    "skill": "herblore",
+    "level": 25
+   }
+  },
+  {
+   "id": "1.3.90",
+   "location": "Various",
+   "text": "Do Heroes' quest",
+   "quest": "Heroes' Quest",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.91",
+   "location": "Rellekka",
+   "text": "Do Fremennik trials",
+   "quest": "The Fremennik Trials",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.92",
+   "location": "Miscellania",
+   "text": "Do Throne of miscellania",
+   "quest": "Throne of Miscellania",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.93",
+   "location": "Miscellania",
+   "text": "Do Royal Trouble",
+   "quest": "Royal Trouble",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.94",
+   "location": "Miscellania",
+   "text": "Put at least 750k gp to kingdom, set it on 10 maples and 5 herbs",
+   "note": "We'll be using kingdom for only 7 days at the start, make sure you go get 100% back every day for maximum yield",
+   "updateNote": "Set Kingdom to 10 Hardwood (Teak or Mahogany) + 5 Herbs instead of Maples. Hardwood feeds Construction training and Sailing construction. Maples are much less useful now with many better Fletching methods available."
+  },
+  {
+   "id": "1.3.95",
+   "location": "Pollnivneach",
+   "text": "Go back to blackjacking for a few hours and put more money to kingdom so that it doesn't drop below 750k",
+   "note": "Remember to wear rogue outfit. In total you need 525k on top of the 750k to get all you need from kingdom for now"
+  },
+  {
+   "id": "1.3.96",
+   "location": "Varrock Museum",
+   "text": "Clean finds at the museum until you've found all 5 of the items you can get for kudos AND the ruby necklace"
+  },
+  {
+   "id": "1.3.97",
+   "location": "Varrock",
+   "text": "Do Bone Voyage quest",
+   "quest": "Bone Voyage",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.3.98",
+   "location": "Fossil Island",
+   "text": "Set up your first bird houses",
+   "links": [
+    {
+     "type": "video",
+     "url": "https://www.youtube.com/watch?v=Tf02JEqkUcA",
+     "text": "Video by Alkan showing you how to start"
+    }
+   ]
+  },
+  {
+   "id": "1.3.99",
+   "location": "Various",
+   "text": "Do birdhouse runs every 50mins",
+   "note": "Don't bother waking up every 50mins to do a run, but while playing you should at least try to be consistent with them"
+  },
+  {
+   "id": "1.3.100",
+   "location": "Lumbridge Swamp",
+   "text": "AFTER your first hunter levels from a birdhouse run, RC should be your lowest skill"
+  },
+  {
+   "id": "1.3.101",
+   "location": "Lumbridge Swamp",
+   "text": "Do Tears of guthix quest, do the minigame weekly it's very worth it",
+   "quest": "Tears of Guthix",
+   "questStatus": "complete",
+   "note": "RC should always be your lowest skill when you do this, at least for a very long time"
+  },
+  {
+   "id": "1.3.102",
+   "location": "Keldagrim",
+   "text": "Start The Giant Dwarf quest to unlock Keldagrim",
+   "quest": "The Giant Dwarf",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.3.103",
+   "location": "Keldagrim",
+   "text": "Buy 2 inventories of gold ore from the blast furnace shop"
+  },
+  {
+   "id": "1.3.104",
+   "location": "Edgeville",
+   "text": "Go Edgeville furnace and make plenty of digsite pendants"
+  },
+  {
+   "id": "1.3.105",
+   "location": "Various",
+   "text": "Make molten glass and cut gems until 45 crafting. You'll need 45 for maple birdhouse when you get the 44 hunter",
+   "skillGoal": {
+    "skill": "crafting",
+    "level": 45
+   },
+   "note": "Make all of the molten glass first and if needed, craft fishbowls until 45"
+  },
+  {
+   "id": "1.3.106",
+   "location": "Draynor",
+   "text": "Buy more seeds from Olivia at Draynor for birdhouses if needed",
+   "note": "Later on the farming guild shop is usually better so don't bother spending hours at Olivia, just get like 1-2k for now"
+  },
+  {
+   "id": "1.3.107",
+   "location": "Pollnivneach",
+   "text": "Move your house to Pollnivneach so you can do a birdhouse run every 50 mins and quickly get back to blackjacking",
+   "note": "Entering your POH portal from Pollnivneach portal is a diary task"
+  },
+  {
+   "id": "1.3.108",
+   "location": "Pollnivneach",
+   "text": "Get 88 thieving with blackjacking, should get you about 1.4m GP",
+   "skillGoal": {
+    "skill": "thieving",
+    "level": 88
+   },
+   "note": "Again, LMS can be done instead if you really hate blackjacking. If u want something to AFK during this grind, i'd heavily recommend ammonite crabs to get 60 attack and then focus on either strength with D Scim or range with bone cbow. If you really like blackjacking then feel free to get higher than 88, the extra money should be used for keeping kingdom running for longer, switch to 10herbs and 5maples in that case",
+   "updateNote": "Rushing 88+ Thieving early isn't macroefficient according to the OSRS Wiki ironman money-making guide. Consider milestone Thieving instead: get the GP you need for kingdom and key unlocks (75 for hard diaries), then move on. The time saved can go toward quests and combat progression which compound more. Stealing Valuables in Varlamore provides steady cash later without the high click intensity. For the AFK melee suggestion in the note: Scurrius (Jan 2024, Varrock Sewers) now beats crabs for active mid-level melee training - crabs remain the truly AFK option."
+  },
+  {
+   "id": "1.3.109",
+   "location": "Miscellania",
+   "text": "REMINDER to take out GP from kingdom after the 7th day. This thieving grind could take some people 1 day and for others multiple days so it's up to you to keep track of it. You should have 6.2k maples from kingdom when you stop using it"
+  }
+ ]
+}

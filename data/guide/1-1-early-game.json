@@ -1,0 +1,1949 @@
+{
+ "id": "1.1",
+ "slug": "early-game",
+ "title": "Early quests, wintertodt and ardy cloak 1",
+ "seoTitle": "OSRS Ironman Early Game Guide: Quests, Wintertodt & Ardy Cloak",
+ "related": [
+  {
+   "href": "/articles/osrs-ironman-magic-guide",
+   "label": "Magic guide (1-99)"
+  },
+  {
+   "href": "/articles/osrs-ironman-fishing-guide",
+   "label": "Fishing guide (1-99)"
+  },
+  {
+   "href": "/articles/osrs-ironman-smithing-guide",
+   "label": "Smithing guide (1-99)"
+  }
+ ],
+ "description": "Starting your ironman journey. Complete early quests, get 50+ firemaking at Wintertodt, and unlock the Ardougne cloak 1 for its teleport.",
+ "steps": [
+  {
+   "id": "1.1.1",
+   "text": "Start as a female character, don't forget to make yourself an ironman before leaving tutorial island",
+   "note": "Female char is for Recruitment Drive quest",
+   "updateNote": "The female-character requirement for Recruitment Drive was removed in November 2022 - Sir Leye can now be defeated by any character while unarmed (or with certain specific weapons). Pick whichever character you like."
+  },
+  {
+   "id": "1.1.2",
+   "text": "Use every book and lamp on Herblore UNTIL 77 herb, after that they should be used on prayer (HCIM only), agility or RC, whichever you dislike the most"
+  },
+  {
+   "id": "1.1.3",
+   "text": "Use Authenticator AND 2-step verification on registered e-mail"
+  },
+  {
+   "id": "1.1.4",
+   "location": "Lumbridge",
+   "text": "As soon as you spawn, sell bronze dagger, sword, axe, wooden shield and shortbow to the general store"
+  },
+  {
+   "id": "1.1.5",
+   "location": "Lumbridge",
+   "text": "Buy a spade, start X marks the spot quest",
+   "quest": "X Marks the Spot",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.6",
+   "location": "Lumbridge",
+   "text": "Drop your runes and ask for more from the magic tutor, pick up your runes"
+  },
+  {
+   "id": "1.1.7",
+   "location": "Lumbridge Castle",
+   "text": "Pick up every item spawn in the castle, including the ones in cellar, don't forget the cabbage"
+  },
+  {
+   "id": "1.1.8",
+   "location": "Lumbridge Castle",
+   "text": "Fill a jug with water"
+  },
+  {
+   "id": "1.1.9",
+   "location": "Lumbridge Castle",
+   "text": "Talk to the duke to start Rune mysteries quest",
+   "quest": "Rune Mysteries",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.10",
+   "location": "Lumbridge Castle",
+   "text": "Go to the top of the castle, bank everything"
+  },
+  {
+   "id": "1.1.11",
+   "location": "Lumbridge Castle",
+   "text": "Light the 4 logs until 15 Firemaking",
+   "skillGoal": {
+    "skill": "firemaking",
+    "level": 15
+   }
+  },
+  {
+   "id": "1.1.12",
+   "location": "Lumbridge Castle",
+   "text": "After that fletch the same logs into 1000 arrow shafts"
+  },
+  {
+   "id": "1.1.13",
+   "location": "Lumbridge Castle",
+   "text": "Bank at least 4 ashes"
+  },
+  {
+   "id": "1.1.14",
+   "location": "Lumbridge Castle",
+   "text": "Bank 7 logs for later"
+  },
+  {
+   "id": "1.1.15",
+   "location": "Lumbridge",
+   "text": "Take out GP, Clue (x marks the spot), air talisman, spade, mind/air runes, bread and shrimp from the bank"
+  },
+  {
+   "id": "1.1.16",
+   "location": "Lumbridge",
+   "text": "Thieve men until 5 thieving",
+   "skillGoal": {
+    "skill": "thieving",
+    "level": 5
+   },
+   "note": "HCIMs eat bread/shrimp, quickhop cabbages from basement if needed, normals can just suicide for hp",
+   "hcim": true
+  },
+  {
+   "id": "1.1.17",
+   "location": "Lumbridge",
+   "text": "Dig up the clue north of bob's axes"
+  },
+  {
+   "id": "1.1.18",
+   "location": "Lumbridge",
+   "text": "Buy a steel axe",
+   "note": "Make sure the world is full stock, should cost 200gp"
+  },
+  {
+   "id": "1.1.19",
+   "location": "Lumbridge",
+   "text": "Start Restless ghost by talking to Father Aereck",
+   "quest": "The Restless Ghost",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.20",
+   "location": "Lumbridge",
+   "text": "Dig up the clue behind lumby castle"
+  },
+  {
+   "id": "1.1.21",
+   "location": "West of Lumbridge",
+   "text": "Kill a rat (safespot with wind strike) for its meat",
+   "links": [
+    {
+     "type": "image",
+     "url": "https://i.imgur.com/EJimQCW.png",
+     "text": "Safespot location"
+    }
+   ]
+  },
+  {
+   "id": "1.1.22",
+   "location": "West of Lumbridge",
+   "text": "Hug the fence and run west, make sure you always have at least 15 energy to get gap just incase you get attacked by anything"
+  },
+  {
+   "id": "1.1.23",
+   "location": "Lumbridge Swamp",
+   "text": "Pick up 5 swamp tar around the swamp cave entrance"
+  },
+  {
+   "id": "1.1.24",
+   "location": "Lumbridge Swamp",
+   "text": "Talk to Father Urhney to get the ghostspeak amulet, equip it"
+  },
+  {
+   "id": "1.1.25",
+   "location": "Wizard Tower",
+   "text": "Take the air talisman to wizard tower"
+  },
+  {
+   "id": "1.1.26",
+   "location": "Draynor Village",
+   "text": "Run to draynor village"
+  },
+  {
+   "id": "1.1.27",
+   "location": "Draynor Village",
+   "text": "Dig the next clue for X marks the spot"
+  },
+  {
+   "id": "1.1.28",
+   "location": "Draynor Village",
+   "text": "Pick up 2 cheese at Aggie in Draynor village"
+  },
+  {
+   "id": "1.1.29",
+   "location": "Draynor Village",
+   "text": "Buy 5 wine from Fortunato, use as emergency food if needed"
+  },
+  {
+   "id": "1.1.30",
+   "location": "Draynor Village",
+   "text": "Dig up the casket at draynor pig pen"
+  },
+  {
+   "id": "1.1.31",
+   "location": "Draynor Village",
+   "text": "Finish the X marks the spot quest by talking to Veos",
+   "quest": "X Marks the Spot",
+   "questStatus": "complete",
+   "note": "Don't use the xp lamp on anything yet"
+  },
+  {
+   "id": "1.1.32",
+   "location": "Rimmington",
+   "text": "Walk to rimmington, pick up 1 snape grass near crafting guild at the hobgoblins",
+   "note": "Make sure you have ~10 run energy for this so you can just quickly grab one and get out"
+  },
+  {
+   "id": "1.1.33",
+   "location": "Falador",
+   "text": "Walk to Falador"
+  },
+  {
+   "id": "1.1.34",
+   "location": "Falador",
+   "text": "Start The Knight's sword quest by talking to the squire",
+   "quest": "The Knight's Sword",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.35",
+   "location": "Clan Wars",
+   "text": "Minigame tele to Clan wars"
+  },
+  {
+   "id": "1.1.36",
+   "location": "Ferox Enclave",
+   "text": "Pick up 2 iron bars just northwest of Ferox",
+   "links": [
+    {
+     "type": "image",
+     "url": "https://i.imgur.com/qDB44ko.png",
+     "text": "Map location"
+    }
+   ],
+   "items": [
+    "Steel axe",
+    "GP",
+    "Tinderbox",
+    "Jug of water",
+    "1 normal log",
+    "Jug of wine"
+   ]
+  },
+  {
+   "id": "1.1.37",
+   "location": "Ferox Enclave",
+   "text": "Recharge run energy using the pool of refreshment, then use the green portal to teleport to Castle wars"
+  },
+  {
+   "id": "1.1.38",
+   "location": "Yanille",
+   "text": "Walk to yanille, buy a pie dish at Yanille cooking shop"
+  },
+  {
+   "id": "1.1.39",
+   "location": "Port Khazard",
+   "text": "Walk to port Khazard, buy 1 swamp paste from the general store"
+  },
+  {
+   "id": "1.1.40",
+   "location": "Port Khazard",
+   "text": "Do Monk's friend",
+   "quest": "Monk's Friend",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.41",
+   "location": "Ardougne",
+   "text": "Get 35 woodcutting at oak trees and firemake the logs as you cut them",
+   "skillGoal": {
+    "skill": "woodcutting",
+    "level": 35
+   },
+   "links": [
+    {
+     "type": "image",
+     "url": "http://i.imgur.com/EN5Jpdb.png",
+     "text": "2 Oaks just south of ardy zoo"
+    }
+   ]
+  },
+  {
+   "id": "1.1.42",
+   "location": "Ardougne",
+   "text": "Get 20 thieving with cake",
+   "skillGoal": {
+    "skill": "thieving",
+    "level": 20
+   },
+   "note": "Bank 15 bread and ALL the normal cakes you get, drop chocolates"
+  },
+  {
+   "id": "1.1.43",
+   "location": "Ardougne",
+   "text": "Steal silk until 25 thieving",
+   "skillGoal": {
+    "skill": "thieving",
+    "level": 25
+   }
+  },
+  {
+   "id": "1.1.44",
+   "location": "Ardougne",
+   "text": "Do Sheep herder",
+   "quest": "Sheep Herder",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.45",
+   "location": "Ardougne",
+   "text": "Take out GP, swamp paste and small fishing net"
+  },
+  {
+   "id": "1.1.46",
+   "location": "Ardougne",
+   "text": "Do Sea slug, fish shrimp while doing quest for diary",
+   "quest": "Sea Slug",
+   "questStatus": "complete",
+   "note": "Don't drop quest reward oyster pearls, worth over 500gp in the general store"
+  },
+  {
+   "id": "1.1.47",
+   "location": "Witchaven",
+   "text": "After the quest, buy however many sardine you can fit in your inventory from the fish shop in Witchaven"
+  },
+  {
+   "id": "1.1.48",
+   "location": "Ardougne",
+   "text": "Sell your silk for 60gp each, keep 10 in bank for quests"
+  },
+  {
+   "id": "1.1.49",
+   "location": "Ardougne",
+   "text": "You should have 10k GP at this point. Buy a Player-owned house"
+  },
+  {
+   "id": "1.1.50",
+   "location": "Ardougne",
+   "text": "Use the xp lamp from X marks the spot on Construction"
+  },
+  {
+   "id": "1.1.51",
+   "location": "Ardougne",
+   "text": "Buy 2 ropes, 5 vials, 30 balls of wool and 7 papyrus from ardy general store",
+   "items": [
+    "Rope",
+    "Spade",
+    "GP",
+    "Few cakes"
+   ]
+  },
+  {
+   "id": "1.1.52",
+   "location": "North of Ardougne",
+   "text": "Dig up clue hunter gloves and boots north of Ardy",
+   "links": [
+    {
+     "type": "image",
+     "url": "http://i.imgur.com/sOD5Zhz.png",
+     "text": "Clue hunter location"
+    }
+   ]
+  },
+  {
+   "id": "1.1.53",
+   "location": "North of Ardougne",
+   "text": "Buy greenman's ale from Rasolo"
+  },
+  {
+   "id": "1.1.54",
+   "location": "North of Ardougne",
+   "text": "Do Dwarf cannon until the part where you have to go to Ice mountain",
+   "quest": "Dwarf Cannon",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.55",
+   "location": "Barbarian Outpost",
+   "text": "Pick up 130 planks north of the Barb agility course"
+  },
+  {
+   "id": "1.1.56",
+   "location": "Barbarian Assault",
+   "text": "Do BA tutorial for minigame tele",
+   "note": "You can skip the tutorial nowadays but just make sure you have the teleport unlocked (attempt to minigame tele to BA)"
+  },
+  {
+   "id": "1.1.57",
+   "location": "Barbarian Assault",
+   "text": "Start Barcrawl miniquest",
+   "quest": "Alfred Grimhand's Barcrawl",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.58",
+   "location": "Baxtorian Falls",
+   "text": "Do Waterfall quest until the part where you have to go to the gnome maze, remember to read the book",
+   "quest": "Waterfall Quest",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.59",
+   "location": "Gnome Stronghold",
+   "text": "Walk to Gnome stronghold"
+  },
+  {
+   "id": "1.1.60",
+   "location": "Gnome Stronghold",
+   "text": "Buy a drink from Blurberry for the Barcrawl miniquest"
+  },
+  {
+   "id": "1.1.61",
+   "location": "Gnome Stronghold",
+   "text": "Buy these items from Heckel Funch (east of Blurberry): 1 pineapple, 1 orange, 2 lemons, 1 cocktail shaker, 1 cocktail glass, 1 Dwellberries, 1 bucket of milk, 1 chocolate dust"
+  },
+  {
+   "id": "1.1.62",
+   "location": "Gnome Stronghold",
+   "text": "Buy 1000 bronze arrowheads (100/world for 1gp ea)",
+   "note": "The weapon shop is on 3rd floor south of the ladder. Shops restock gradually over time, so hop worlds to buy your full amount - ironmen have had separate shop stock from mains since 2014"
+  },
+  {
+   "id": "1.1.63",
+   "location": "Gnome Stronghold",
+   "text": "Make the hangover cure for plague city quest"
+  },
+  {
+   "id": "1.1.64",
+   "location": "Ardougne",
+   "text": "Walk to Ardy with rope, dwellberries, hangover cure",
+   "items": [
+    "Rope",
+    "Dwellberries",
+    "Hangover cure"
+   ]
+  },
+  {
+   "id": "1.1.65",
+   "location": "Ardougne",
+   "text": "Do Plague city",
+   "quest": "Plague City",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.66",
+   "location": "Lumbridge",
+   "text": "Home tele to lumby and run north to Varrock east bank",
+   "note": "Equip ghostspeak amulet if you've banked it at some point"
+  },
+  {
+   "id": "1.1.67",
+   "location": "Varrock",
+   "text": "Complete Daddy's home miniquest",
+   "quest": "Daddy's Home",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.68",
+   "location": "Varrock",
+   "text": "Sell the 8 bolts of cloth from the quest reward back to the sawmill"
+  },
+  {
+   "id": "1.1.69",
+   "location": "Varrock",
+   "text": "From sawmill buy 500 bronze nails"
+  },
+  {
+   "id": "1.1.70",
+   "location": "Castle Wars",
+   "text": "Minigame teleport to Clan wars, recharge energy and use the portal to Castle wars"
+  },
+  {
+   "id": "1.1.71",
+   "location": "Castle Wars",
+   "text": "Take steel axe and a tinderbox"
+  },
+  {
+   "id": "1.1.72",
+   "location": "South-west of Castle Wars",
+   "text": "Run south-west of castle wars, cut and firemake teak logs until 50 Firemaking",
+   "skillGoal": {
+    "skill": "firemaking",
+    "level": 50
+   },
+   "links": [
+    {
+     "type": "image",
+     "url": "http://i.imgur.com/cOzCs3x.png",
+     "text": "Teak location"
+    }
+   ]
+  },
+  {
+   "id": "1.1.73",
+   "location": "Lumbridge",
+   "text": "Home tele, Lumby"
+  },
+  {
+   "id": "1.1.74",
+   "location": "Lumbridge",
+   "text": "Talk to the ghost for Restless ghost quest"
+  },
+  {
+   "id": "1.1.75",
+   "location": "Draynor Village",
+   "text": "Run to Draynor bank",
+   "items": [
+    "GP",
+    "Bronze nails",
+    "Hammer",
+    "Saw",
+    "120 noted planks",
+    "1k arrow shafts",
+    "1k bronze arrowheads",
+    "1 house tab"
+   ]
+  },
+  {
+   "id": "1.1.76",
+   "location": "Draynor Village",
+   "text": "Buy a chronicle and 2 teleport cards from Diango"
+  },
+  {
+   "id": "1.1.76a",
+   "location": "Draynor Village",
+   "text": "While at Diango, buy a Rainbow scarf (120gp) as a warm-clothing item for Wintertodt",
+   "enhanced": true,
+   "note": "Counts as warm clothing for Wintertodt (pair it with the Clue Hunter boots/gloves you dug up earlier). Optional: speak to Gilbert in the flower field SE of Barbarian Village to also unlock the free Rainbow jumper (claimed from Diango) - but you don't pass Barb Village until after Wintertodt, so the scarf alone is the practical pickup here."
+  },
+  {
+   "id": "1.1.77",
+   "location": "Rimmington",
+   "text": "Use the housetab and train construction with your planks, make bookcases until out of planks",
+   "note": "Use phials to un-note planks"
+  },
+  {
+   "id": "1.1.78",
+   "location": "Port Sarim",
+   "text": "Walk to port sarim, buy 1000 feathers from the fishing store",
+   "note": "Should just about have enough money, but if you can't afford all of them then it's not a big deal, point is to just get a few fletching levels before WT"
+  },
+  {
+   "id": "1.1.78a",
+   "location": "Port Sarim",
+   "text": "While at Port Sarim, complete the Pandemonium quest (start with Will & Anne on the docks) to unlock the Sailing skill",
+   "enhanced": true,
+   "newQuest": true,
+   "sailingRelated": true,
+   "quest": "Pandemonium",
+   "questStatus": "complete",
+   "note": "Zero requirements; grants 300 Sailing XP. You're already at Port Sarim here so it's a free pickup. Sailing isn't on the main critical path - see the optional Sailing Track for the rest of the questline and training."
+  },
+  {
+   "id": "1.1.79",
+   "location": "Great Kourend",
+   "text": "Take the boat to Great Kourend"
+  },
+  {
+   "id": "1.1.80",
+   "location": "Wintertodt",
+   "text": "Make your way to Wintertodt",
+   "note": "Fletch all 1k bronze arrows while you walk. If you see wolves near wintertodt, you went the wrong way. Shouldn't get hit by anything on the way"
+  },
+  {
+   "id": "1.1.81",
+   "location": "Wintertodt",
+   "text": "Should now have 15 fletching and 20 construction as well, this will increase the xp you get in these skills from wintertodt"
+  },
+  {
+   "id": "1.1.82",
+   "location": "Wintertodt",
+   "text": "Do Wintertodt until 200k cash, get at least 22 fletching at wintertodt as well",
+   "note": "UPDATE (Oct 2024): The Warmth Meter system has replaced HP-based damage entirely. A 10 HP player and a 99 HP player now take identical warmth damage, so there is no longer any advantage to rushing Wintertodt at low HP. Wear 4 warm clothing items for optimal warmth (Clue Hunter boots/gloves + the Rainbow scarf from Diango in Draynor; Gilbert near Barbarian Village unlocks a free Rainbow jumper). Rejuvenation potions now restore 30% Warmth per dose so no external food is needed. Supply crates have been replaced by a Reward Cart with a Big-search option. Bruma Herbs no longer grant Farming XP. Do whatever method you want; solo, mass, fletching the logs. If you want, feel free to get 99 firemaking in one go",
+   "updateNote": "The Warmth Meter (Oct 2024) removed the 10HP rushing advantage entirely. There is no longer any urgency to do Wintertodt before training HP. Focus on getting warm clothing (4 pieces) rather than low HP."
+  },
+  {
+   "id": "1.1.83",
+   "location": "Lumbridge",
+   "text": "Home tele, Lumby",
+   "items": [
+    "GP",
+    "Few cakes",
+    "Chronicle",
+    "ALL of your mind and air runes"
+   ]
+  },
+  {
+   "id": "1.1.84",
+   "location": "Lumbridge",
+   "text": "Drop runes and get more from mage tutor"
+  },
+  {
+   "id": "1.1.85",
+   "location": "Lumbridge",
+   "text": "Buy 3 buckets and 1 bucket pack from the general store"
+  },
+  {
+   "id": "1.1.86",
+   "location": "Fred's Farm",
+   "text": "Walk north to Fred's farm"
+  },
+  {
+   "id": "1.1.87",
+   "location": "Fred's Farm",
+   "text": "Kill a chicken with wind strike for it's meat at Fred's farm"
+  },
+  {
+   "id": "1.1.88",
+   "location": "Fred's Farm",
+   "text": "Pick up egg north of Fred"
+  },
+  {
+   "id": "1.1.89",
+   "location": "Fred's Farm",
+   "text": "Kill 1 cow calf for meat"
+  },
+  {
+   "id": "1.1.90",
+   "location": "Fred's Farm",
+   "text": "Fill 3 buckets with milk",
+   "note": "Dairy cow is north of the windmill"
+  },
+  {
+   "id": "1.1.91",
+   "location": "Barbarian Village",
+   "text": "Walk to Barbarian village (you can walk east of draynor manor by the river, don't walk around through falador or something like that)"
+  },
+  {
+   "id": "1.1.92",
+   "location": "Ice Mountain",
+   "text": "Get ammo mould and the notes for Dwarf cannon (Ice mountain northwest of Barb village)"
+  },
+  {
+   "id": "1.1.93",
+   "location": "Varrock",
+   "text": "Use chronicle tele"
+  },
+  {
+   "id": "1.1.94",
+   "location": "Varrock",
+   "text": "Start Gertrude's cat, pick up doogle leaves, use the leaves on a sardine",
+   "quest": "Gertrude's Cat",
+   "questStatus": "start",
+   "items": [
+    "Bucket",
+    "Barcrawl card",
+    "Rune mysteries package",
+    "GP"
+   ]
+  },
+  {
+   "id": "1.1.95",
+   "location": "Varrock",
+   "text": "Continue gertrude's cat, talk to the kids at Varrock centre"
+  },
+  {
+   "id": "1.1.96",
+   "location": "Varrock",
+   "text": "Talk to Romeo to start Romeo and Juliet quest",
+   "quest": "Romeo & Juliet",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.97",
+   "location": "Varrock",
+   "text": "Start Demon slayer, get the 2 keys in Varrock",
+   "quest": "Demon Slayer",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.98",
+   "location": "Varrock",
+   "text": "Talk to Reldo for the Knight's sword quest"
+  },
+  {
+   "id": "1.1.99",
+   "location": "Varrock",
+   "text": "Do Shield of Arrav on any visit to Varrock",
+   "quest": "Shield of Arrav",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.100",
+   "location": "Varrock",
+   "text": "Buy a fire staff"
+  },
+  {
+   "id": "1.1.101",
+   "location": "Varrock",
+   "text": "Buy a newspaper from Benny"
+  },
+  {
+   "id": "1.1.102",
+   "location": "Varrock",
+   "text": "Buy gloves and pink skirt from clothes shop"
+  },
+  {
+   "id": "1.1.103",
+   "location": "Varrock",
+   "text": "Buy a rotten tomato from the crate near the achievement diary guy"
+  },
+  {
+   "id": "1.1.104",
+   "location": "Varrock",
+   "text": "Get a drink for barcrawl at the bar south of Varrock fountain"
+  },
+  {
+   "id": "1.1.105",
+   "location": "Varrock",
+   "text": "Buy 4 beers from the same bar"
+  },
+  {
+   "id": "1.1.106",
+   "location": "Varrock Museum",
+   "text": "Do museum for 9 Hunter and Slayer",
+   "skillGoal": {
+    "skill": "hunter",
+    "level": 9
+   }
+  },
+  {
+   "id": "1.1.107",
+   "location": "Varrock",
+   "text": "Steal tea from the tea stall"
+  },
+  {
+   "id": "1.1.108",
+   "location": "Varrock",
+   "text": "Give the package to Aubury, talk to him again for the notes"
+  },
+  {
+   "id": "1.1.109",
+   "location": "Varrock",
+   "text": "Buy 100 fire runes, 300 earth and water, 4000 mind, 8000 airs"
+  },
+  {
+   "id": "1.1.110",
+   "location": "Varrock",
+   "text": "Walk to the pub north-east of Varrock",
+   "items": [
+    "GP",
+    "Barcrawl card",
+    "Bucket of milk",
+    "Seasoned sardine",
+    "Axe"
+   ]
+  },
+  {
+   "id": "1.1.111",
+   "location": "Varrock",
+   "text": "Get a drink for the barcrawl"
+  },
+  {
+   "id": "1.1.112",
+   "location": "Varrock Sawmill",
+   "text": "Cut a dying tree at the sawmill and make 1 regular plank for diary tasks"
+  },
+  {
+   "id": "1.1.113",
+   "location": "Lumber Yard",
+   "text": "Continue Gertrude's cat at lumberyard"
+  },
+  {
+   "id": "1.1.114",
+   "location": "Varrock",
+   "text": "Varrock east bank",
+   "items": [
+    "Pickaxe",
+    "Chronicle"
+   ]
+  },
+  {
+   "id": "1.1.115",
+   "location": "Varrock",
+   "text": "Fill 1 inventory of buckets with water, bank them"
+  },
+  {
+   "id": "1.1.116",
+   "location": "Varrock",
+   "text": "Pick cadava berries and 16 redberries",
+   "links": [
+    {
+     "type": "image",
+     "url": "https://i.imgur.com/zS8PIZi.png",
+     "text": "Bush location"
+    }
+   ]
+  },
+  {
+   "id": "1.1.117",
+   "location": "Varrock",
+   "text": "Mine 4 copper ore and 1 iron ore"
+  },
+  {
+   "id": "1.1.118",
+   "location": "Varrock",
+   "text": "Chronicle tele"
+  },
+  {
+   "id": "1.1.119",
+   "location": "Varrock",
+   "text": "Finish Gertrude's cat, raise it with the sardine you bought",
+   "quest": "Gertrude's Cat",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.120",
+   "location": "Varrock",
+   "text": "Talk to juliet"
+  },
+  {
+   "id": "1.1.121",
+   "location": "Varrock",
+   "text": "Varrock west bank",
+   "items": [
+    "GP",
+    "Runes",
+    "Barcrawl card",
+    "Cakes",
+    "Fire staff (equip)"
+   ]
+  },
+  {
+   "id": "1.1.122",
+   "location": "Barbarian Village",
+   "text": "Walk to Barbarian Village via Edgeville, buy bronze med helm"
+  },
+  {
+   "id": "1.1.125",
+   "location": "Barbarian Village",
+   "text": "Pick up 1 cooked meat from the table and burn it on the fire in the bar"
+  },
+  {
+   "id": "1.1.126",
+   "location": "Barbarian Village",
+   "text": "Safespot barbarians in the bar for 13 magic",
+   "skillGoal": {
+    "skill": "magic",
+    "level": 13
+   },
+   "note": "You can skip getting 13 mage here if you know how to safespot the first 2 forms of witch's house boss"
+  },
+  {
+   "id": "1.1.127",
+   "location": "South of Mind Altar",
+   "text": "Use the trees to safespot a bear for its meat south of mind altar"
+  },
+  {
+   "id": "1.1.128",
+   "location": "Falador",
+   "text": "Get a drink from the Falador bar for Barcrawl"
+  },
+  {
+   "id": "1.1.129",
+   "location": "Falador",
+   "text": "Buy 5 wizard mind bombs from the bar"
+  },
+  {
+   "id": "1.1.130",
+   "location": "Falador Park",
+   "text": "Buy 8 woad leaves, offer 20gp to get 2 leaves"
+  },
+  {
+   "id": "1.1.131",
+   "location": "Falador",
+   "text": "Bank",
+   "items": [
+    "GP",
+    "Cheese",
+    "Runes",
+    "All 4 meat for druidic ritual",
+    "18 cakes",
+    "Gloves (equip)"
+   ]
+  },
+  {
+   "id": "1.1.132",
+   "location": "Taverley",
+   "text": "Do Witch's house",
+   "quest": "Witch's House",
+   "questStatus": "complete",
+   "note": "Tank the first 2 phases on the north side of the shed and run to safespot when you need to eat. It's possible to safespot the first 2, but with fire strike you are in no real danger of dying with cakes"
+  },
+  {
+   "id": "1.1.133",
+   "location": "Taverley",
+   "text": "Do Druidic ritual",
+   "quest": "Druidic Ritual",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.134",
+   "location": "Taverley",
+   "text": "Buy 1 PACK of eyes of newt and pestle and mortar in Taverly"
+  },
+  {
+   "id": "1.1.135",
+   "location": "Clan Wars",
+   "text": "Minigame tele to Clan wars",
+   "items": [
+    "GP",
+    "Pickaxe",
+    "Burnt meat",
+    "Eye of newt",
+    "2 iron bars",
+    "Bucket of water",
+    "Pie dish",
+    "10 cakes",
+    "2 House teletabs",
+    "Fally teletab"
+   ]
+  },
+  {
+   "id": "1.1.136",
+   "location": "Rimmington",
+   "text": "House tab to Rimmington"
+  },
+  {
+   "id": "1.1.137",
+   "location": "Rimmington",
+   "text": "Complete witch's potion, onion is just north of the town",
+   "quest": "Witch's Potion",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.138",
+   "location": "Port Sarim",
+   "text": "Run to port sarim"
+  },
+  {
+   "id": "1.1.139",
+   "location": "Port Sarim",
+   "text": "Make redberry pie",
+   "note": "You can buy flour and redberries at port sarim food shop"
+  },
+  {
+   "id": "1.1.140",
+   "location": "Port Sarim",
+   "text": "Get a security book from the Security guard upstairs in port sarim jail for a diary task"
+  },
+  {
+   "id": "1.1.141",
+   "location": "Mudskipper Point",
+   "text": "Give the pie to Thurgo, and ask about Knight's sword"
+  },
+  {
+   "id": "1.1.142",
+   "location": "Mudskipper Point",
+   "text": "Go down the dungeon and mine 2 blurite ore, 1 is for falador diary"
+  },
+  {
+   "id": "1.1.143",
+   "location": "Falador",
+   "text": "Use the falador teletab, talk to the squire and get the portrait from sir Vyvin's room"
+  },
+  {
+   "id": "1.1.144",
+   "location": "Mudskipper Point",
+   "text": "Use house tab and run back to thurgo for the sword, run back to Falador"
+  },
+  {
+   "id": "1.1.145",
+   "location": "Falador",
+   "text": "Finish the Knight's sword quest",
+   "quest": "The Knight's Sword",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.145a",
+   "location": "Giants' Foundry",
+   "text": "Complete Sleeping Giants quest (15 Smithing required, you have 29)",
+   "enhanced": true,
+   "newQuest": true,
+   "quest": "Sleeping Giants",
+   "questStatus": "complete",
+   "note": "Short quest that unlocks Giants' Foundry - a much better Smithing training method than superheating iron. Save your metal bars for Foundry rather than traditional smithing."
+  },
+  {
+   "id": "1.1.146",
+   "location": "Lumbridge",
+   "text": "Home tele and go to al-kharid"
+  },
+  {
+   "id": "1.1.147",
+   "location": "Al Kharid",
+   "text": "Buy 50 thread, 3 needles and all of the moulds from the crafting shop"
+  },
+  {
+   "id": "1.1.148",
+   "location": "Al Kharid",
+   "text": "Start prince ali rescue and talk to Osman",
+   "quest": "Prince Ali Rescue",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.149",
+   "location": "Al Kharid",
+   "text": "Fish anchovies (small fish net) south of the Al-Kharid bank for a diary"
+  },
+  {
+   "id": "1.1.150",
+   "location": "Shantay Pass",
+   "text": "Buy 1 inv of bronze bars for questing from shantay pass"
+  },
+  {
+   "id": "1.1.151",
+   "location": "Desert",
+   "text": "Do the tourist trap",
+   "quest": "The Tourist Trap",
+   "questStatus": "complete",
+   "note": "PUT BOTH XP REWARDS ON AGILITY, HOLD SPACE SO YOU DON'T ACCIDENTALLY PUT ONE ON THIEVING",
+   "links": [
+    {
+     "type": "video",
+     "url": "https://www.youtube.com/watch?v=VFxB4zWqrd8",
+     "text": "Safespot for the captain"
+    }
+   ]
+  },
+  {
+   "id": "1.1.152",
+   "location": "Port Khazard",
+   "text": "Minigame tele to fish trawler"
+  },
+  {
+   "id": "1.1.153",
+   "location": "Port Khazard",
+   "text": "Cook whatever low level raw food you got from wintertodt for 15 cooking on the fire",
+   "skillGoal": {
+    "skill": "cooking",
+    "level": 15
+   }
+  },
+  {
+   "id": "1.1.154",
+   "location": "Port Khazard",
+   "text": "Buy 10 buckets of slime"
+  },
+  {
+   "id": "1.1.155",
+   "location": "Port Khazard",
+   "text": "Buy 10 flour from general store"
+  },
+  {
+   "id": "1.1.156",
+   "location": "Port Khazard",
+   "text": "Buy buckets of sand and soda ash",
+   "note": "You only need to buy around 600 buckets of sand and 600 soda ash, rest of crafting will be done with other methods"
+  },
+  {
+   "id": "1.1.157",
+   "location": "South of Khazard",
+   "text": "Mine 15 clay south of Khazard"
+  },
+  {
+   "id": "1.1.158",
+   "location": "Tower of Life",
+   "text": "Fire strike imps west of the tower of life for all 4 beads",
+   "items": [
+    "Fire strike runes",
+    "Barcrawl card",
+    "Cakes",
+    "Axe"
+   ]
+  },
+  {
+   "id": "1.1.159",
+   "location": "Fight Arena",
+   "text": "Do Fight arena",
+   "quest": "Fight Arena",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.160",
+   "location": "Khazard Battlefield",
+   "text": "Do Tree gnome village, get Glarial's pebble on the way for Waterfall",
+   "quest": "Tree Gnome Village",
+   "questStatus": "complete",
+   "note": "Safespot the khazard warlord, plenty of videos on youtube showing how to if you don't know"
+  },
+  {
+   "id": "1.1.161",
+   "location": "Khazard Battlefield",
+   "text": "Use the spirit tree and go to battlefield of khazard"
+  },
+  {
+   "id": "1.1.162",
+   "location": "ZMI Bank",
+   "text": "Run to ZMI bank and safespot the zamorak warrior until you get a rune scimitar",
+   "note": "Getting the scim is optional but it's not too rare and you're still getting mage xp. You can also buy a rune sword from champion's guild if you don't want to camp for the scimitar"
+  },
+  {
+   "id": "1.1.163",
+   "location": "Ardougne",
+   "text": "Get a drink from Ardy bar for the barcrawl"
+  },
+  {
+   "id": "1.1.164",
+   "location": "Ardougne",
+   "text": "Buy 4 compost pack from the Ardy farming shop"
+  },
+  {
+   "id": "1.1.165",
+   "location": "Fishing Guild",
+   "text": "Train 42 magic at Moss giants near fishing guild",
+   "skillGoal": {
+    "skill": "magic",
+    "level": 42
+   },
+   "note": "Bury the bones"
+  },
+  {
+   "id": "1.1.166",
+   "location": "Ardougne",
+   "text": "Do Hazeel cult",
+   "quest": "Hazeel Cult",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.167",
+   "location": "Brimhaven",
+   "text": "Get a drink for the barcrawl quest from brimhaven bar"
+  },
+  {
+   "id": "1.1.168",
+   "location": "Brimhaven",
+   "text": "Do Tribal totem",
+   "quest": "Tribal Totem",
+   "questStatus": "complete",
+   "note": "Buy some swordfish and karambwans from the food shop where you start the quest at for some of the more difficult quests"
+  },
+  {
+   "id": "1.1.169",
+   "location": "Baxtorian Falls",
+   "text": "Finish dwarf cannon",
+   "quest": "Dwarf Cannon",
+   "questStatus": "complete",
+   "items": [
+    "Glarial's pebble",
+    "Notes for dwarf cannon",
+    "Ammo mould",
+    "Rope",
+    "6 air/water/earth runes",
+    "Cakes"
+   ]
+  },
+  {
+   "id": "1.1.170",
+   "location": "Baxtorian Falls",
+   "text": "Drop runes outside glarial's tomb, get amulet and the urn"
+  },
+  {
+   "id": "1.1.171",
+   "location": "Baxtorian Falls",
+   "text": "Finish waterfall",
+   "quest": "Waterfall Quest",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.172",
+   "location": "Port Khazard",
+   "text": "Minigame tele to fish trawler",
+   "items": [
+    "GP",
+    "Hammer"
+   ]
+  },
+  {
+   "id": "1.1.173",
+   "location": "Port Sarim",
+   "text": "Charter to port sarim"
+  },
+  {
+   "id": "1.1.174",
+   "location": "Great Kourend",
+   "text": "Go to Zeah and get 100 compost and saltpetre",
+   "note": "UPDATE: The Kourend favour system was completely removed in January 2024. All content previously gated behind favour is now freely accessible through skill levels, quests, or diary tasks. No need to earn any favour"
+  },
+  {
+   "id": "1.1.174a",
+   "location": "Varlamore",
+   "text": "While in the Kourend/Zeah region, complete Children of the Sun to unlock Varlamore",
+   "enhanced": true,
+   "newQuest": true,
+   "quest": "Children of the Sun",
+   "questStatus": "complete",
+   "note": "No requirements. Unlocks Varlamore, home to a lot of ironman content used later: Mastering Mixology (Herblore), Vale Totems (Fletching), Calcified Rocks (Mining/Prayer), and the Varlamore questline (Twilight's Promise, Perilous Moons)."
+  },
+  {
+   "id": "1.1.175",
+   "location": "Hosidius",
+   "text": "Train 42 thieving at the fruit stall in a house east of the hosidius marketplace, NOT the stall at the marketplace itself",
+   "skillGoal": {
+    "skill": "thieving",
+    "level": 42
+   },
+   "note": "No favour required anymore. Use strange fruits for energy restoration, they won't last long but you can do a few quests with them"
+  },
+  {
+   "id": "1.1.176",
+   "location": "Lumbridge",
+   "text": "Home tele, Lumby"
+  },
+  {
+   "id": "1.1.177",
+   "location": "Lumbridge",
+   "text": "Do cook's assistant",
+   "quest": "Cook's Assistant",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.178",
+   "location": "Lumbridge",
+   "text": "Start RFD and watch the cutscene to unlock the bank chest",
+   "quest": "Recipe for Disaster",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.179",
+   "location": "Lumbridge",
+   "text": "Make 5 soft clay"
+  },
+  {
+   "id": "1.1.180",
+   "location": "Lumbridge",
+   "text": "Buy 7 buckets of milk"
+  },
+  {
+   "id": "1.1.181",
+   "location": "Fred's Farm",
+   "text": "Do sheep shearer",
+   "quest": "Sheep Shearer",
+   "questStatus": "complete",
+   "items": [
+    "20 Ball of wool",
+    "8 cakes"
+   ]
+  },
+  {
+   "id": "1.1.182",
+   "location": "HAM Hideout",
+   "text": "Pickpocket HAM members for a rusty sword",
+   "note": "If you get them, keep robes, opal and buttons"
+  },
+  {
+   "id": "1.1.183",
+   "location": "Fred's Farm",
+   "text": "Pick up 12 onion at Fred's farm"
+  },
+  {
+   "id": "1.1.184",
+   "location": "Draynor Village",
+   "text": "Make 4 red, 4 blue, 5 yellow dye",
+   "note": "You can just use the ingredient on Aggie to skip all of the dialogue"
+  },
+  {
+   "id": "1.1.185",
+   "location": "Draynor Village",
+   "text": "Get the key imprint, wig and skin paste for Prince ali rescue",
+   "items": [
+    "Soft clay",
+    "3 balls of wool",
+    "Ashes",
+    "Pot of flour",
+    "Bucket of water",
+    "Yellow dye",
+    "Redberries"
+   ]
+  },
+  {
+   "id": "1.1.186",
+   "location": "Draynor Village",
+   "text": "Do 1 lap of the agility course for a diary"
+  },
+  {
+   "id": "1.1.187",
+   "location": "Draynor Village",
+   "text": "Start Vampire slayer, get 3 garlic upstairs from the cupboard",
+   "quest": "Vampire Slayer",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.188",
+   "location": "Draynor Village",
+   "text": "Buy birdhouse seeds from Olivia, get as many as you can be bothered for now, if worlds are bought out then try later"
+  },
+  {
+   "id": "1.1.189",
+   "location": "Draynor Village",
+   "text": "Buy 20 teleports for chronicle"
+  },
+  {
+   "id": "1.1.190",
+   "location": "Wizard Tower",
+   "text": "Finish Imp catcher",
+   "quest": "Imp Catcher",
+   "questStatus": "complete",
+   "items": [
+    "Fire staff (equip)",
+    "Chronicle (equip)",
+    "Fire strike runes",
+    "Rune mysteries notes",
+    "4 beads",
+    "20 bones (kill goblins south of the draynor jail)"
+   ]
+  },
+  {
+   "id": "1.1.191",
+   "location": "Wizard Tower",
+   "text": "Finish Rune mysteries",
+   "quest": "Rune Mysteries",
+   "questStatus": "complete",
+   "note": "Teleport to Essence mines for a diary task"
+  },
+  {
+   "id": "1.1.192",
+   "location": "Wizard Tower",
+   "text": "Get the Ghost's skull in the basement"
+  },
+  {
+   "id": "1.1.193",
+   "location": "Wizard Tower",
+   "text": "Kill 5 chicken/wizards, give 25 bones for demon slayer key"
+  },
+  {
+   "id": "1.1.194",
+   "location": "Varrock",
+   "text": "Chronicle tele",
+   "items": [
+    "GP",
+    "Cadava berries",
+    "Juliet's letter (Item name is just 'message')"
+   ]
+  },
+  {
+   "id": "1.1.195",
+   "location": "Varrock",
+   "text": "Continue Romeo & Juliet, get cadava potion"
+  },
+  {
+   "id": "1.1.196",
+   "location": "Varrock",
+   "text": "Buy iron chainbody from Horvik"
+  },
+  {
+   "id": "1.1.197",
+   "location": "Wilderness",
+   "text": "Walk north from Varrock to the Wilderness (level 4-7) and talk to the Mage of Zamorak to start the Abyss miniquest",
+   "quest": "Enter the Abyss",
+   "questStatus": "start",
+   "note": "Requires Rune Mysteries to be completed. Head to the south edge of the Wilderness near the River Lum"
+  },
+  {
+   "id": "1.1.197a",
+   "location": "Varrock",
+   "text": "Return to Varrock, talk to the Mage of Zamorak at the Chaos Temple to get the scrying orb, then visit Aubury's rune shop to use the ess mine teleport (scrying orb 1/3)"
+  },
+  {
+   "id": "1.1.198",
+   "location": "Varrock",
+   "text": "Finish demon slayer",
+   "quest": "Demon Slayer",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.199",
+   "location": "Varrock",
+   "text": "Get the stake for vampire slayer from the blue moon inn"
+  },
+  {
+   "id": "1.1.200",
+   "location": "Varrock",
+   "text": "Finish romeo and juliet",
+   "quest": "Romeo & Juliet",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.201",
+   "location": "Gnome Stronghold",
+   "text": "Spirit tree to gnome stronghold"
+  },
+  {
+   "id": "1.1.202",
+   "location": "Gnome Stronghold",
+   "text": "Use Brimstails to go to ess mines (scrying orb 2/3, make sure you have it with you)"
+  },
+  {
+   "id": "1.1.203",
+   "location": "Gnome Stronghold",
+   "text": "Start Grand tree",
+   "quest": "The Grand Tree",
+   "questStatus": "start",
+   "items": [
+    "GP",
+    "Chronicle",
+    "Bark sample",
+    "Translation notes",
+    "Barcrawl card",
+    "Small fishing net",
+    "Fire strike runes"
+   ]
+  },
+  {
+   "id": "1.1.204",
+   "location": "Castle Wars",
+   "text": "Clan wars minigame tele, recharge energy and go to castle wars"
+  },
+  {
+   "id": "1.1.205",
+   "location": "Yanille",
+   "text": "Get a drink for barcrawl from Yanille pub"
+  },
+  {
+   "id": "1.1.206",
+   "location": "Yanille",
+   "text": "Buy 2 bird snares, 2 butterfly jars and a butterfly net from the hunter shop"
+  },
+  {
+   "id": "1.1.207",
+   "location": "Hazelmere's Island",
+   "text": "Go to Hazelmere and continue the grand tree until you are at Karamja shipyard"
+  },
+  {
+   "id": "1.1.208",
+   "location": "Karamja",
+   "text": "From Karamja shipyard, charter to Karamja, Musa point"
+  },
+  {
+   "id": "1.1.209",
+   "location": "Port Sarim",
+   "text": "Take boat to Port Sarim"
+  },
+  {
+   "id": "1.1.210",
+   "location": "Port Sarim",
+   "text": "Get a drink from the port sarim bar for barcrawl"
+  },
+  {
+   "id": "1.1.211",
+   "location": "Port Sarim",
+   "text": "Start Pirate's treasure",
+   "quest": "Pirate's Treasure",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.212",
+   "location": "Karamja",
+   "text": "Boat back to Karamja"
+  },
+  {
+   "id": "1.1.213",
+   "location": "Karamja",
+   "text": "Fish shrimp north of banana trees for diary"
+  },
+  {
+   "id": "1.1.214",
+   "location": "Karamja",
+   "text": "Get a drink for barcrawl from the bar south of the Karamja banana trees"
+  },
+  {
+   "id": "1.1.215",
+   "location": "Karamja",
+   "text": "Do Karamja and port sarim parts of the Pirate's treasure quest"
+  },
+  {
+   "id": "1.1.216",
+   "location": "Varrock",
+   "text": "Chronicle tele"
+  },
+  {
+   "id": "1.1.217",
+   "location": "Varrock",
+   "text": "Get pirate's message from Blue moon inn, you can drop it AFTER reading the message"
+  },
+  {
+   "id": "1.1.218",
+   "location": "Gnome Stronghold",
+   "text": "Spirit tree to Gnome stronghold"
+  },
+  {
+   "id": "1.1.219",
+   "location": "Gnome Stronghold",
+   "text": "Finish The Grand tree",
+   "quest": "The Grand Tree",
+   "questStatus": "complete",
+   "note": "This should get you 43 mage, if you didn't get 43 then fire strike some gnome guards",
+   "skillGoal": {
+    "skill": "magic",
+    "level": 43
+   }
+  },
+  {
+   "id": "1.1.220",
+   "location": "Gnome Stronghold",
+   "text": "Buy a premade blurb' sp, 4 vodka, pineapple chunks"
+  },
+  {
+   "id": "1.1.221",
+   "location": "Gnome Stronghold",
+   "text": "Equip Gas mask"
+  },
+  {
+   "id": "1.1.222",
+   "location": "Ardougne",
+   "text": "Spirit tree to ardy"
+  },
+  {
+   "id": "1.1.223",
+   "location": "Ardougne",
+   "text": "Start biohazard, get the plague sample and 3 potions",
+   "quest": "Biohazard",
+   "questStatus": "start",
+   "items": [
+    "GP",
+    "Scrying orb",
+    "Pickaxe",
+    "Fire strike runes",
+    "1 wizard mind bomb",
+    "1 law rune",
+    "Some food"
+   ]
+  },
+  {
+   "id": "1.1.224",
+   "location": "Rimmington",
+   "text": "Take the boat from Ardy docks to Rimmington"
+  },
+  {
+   "id": "1.1.225",
+   "location": "Rimmington",
+   "text": "Get the touch paper from chemist and give the 3 potions to the guys outside"
+  },
+  {
+   "id": "1.1.226",
+   "location": "Ardougne",
+   "text": "Take the boat back to Ardy"
+  },
+  {
+   "id": "1.1.227",
+   "location": "Ardougne",
+   "text": "Visit Ardy ess mines, scrying orb 3/3",
+   "note": "If you didn't bank any breads when getting 25 thieving then buy 15 now from the cake stall owner. If you somehow didn't get any iron ore from wintertodt then mine 2 east of Ardy"
+  },
+  {
+   "id": "1.1.228",
+   "location": "Camelot",
+   "text": "Use mind bomb and camelot tele"
+  },
+  {
+   "id": "1.1.229",
+   "location": "Camelot",
+   "text": "Start Merlin's crystal and talk to Gawain and Lancelot",
+   "quest": "Merlin's Crystal",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.230",
+   "location": "Catherby",
+   "text": "Buy candle, 2 fishing rods, lobster pot"
+  },
+  {
+   "id": "1.1.231",
+   "location": "Catherby",
+   "text": "Buy 15 pineapples from charters"
+  },
+  {
+   "id": "1.1.232",
+   "location": "Catherby",
+   "text": "Put pineapples into the compost bin"
+  },
+  {
+   "id": "1.1.233",
+   "location": "Catherby",
+   "text": "Buy 1 pack of normal compost and all farming tools, store everything in leprechaun"
+  },
+  {
+   "id": "1.1.234",
+   "location": "Catherby",
+   "text": "Start Fishing contest",
+   "quest": "Fishing Contest",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.235",
+   "location": "Keep Le Faye",
+   "text": "Kill Mordred and get bat bones/black candle for Merlin's crystal",
+   "note": "Talk to Sherlock and pick 5 flax for diaries"
+  },
+  {
+   "id": "1.1.236",
+   "location": "Seers Village",
+   "text": "Do Murder mystery",
+   "quest": "Murder Mystery",
+   "questStatus": "complete",
+   "items": [
+    "GP",
+    "Barcrawl card",
+    "Pot",
+    "Spade",
+    "Fishing rod",
+    "Fishing pass",
+    "Garlic"
+   ]
+  },
+  {
+   "id": "1.1.237",
+   "location": "Seers Village",
+   "text": "Get a drink from Seers' bar for the barcrawl"
+  },
+  {
+   "id": "1.1.238",
+   "location": "Seers Village",
+   "text": "Finish Fishing contest",
+   "quest": "Fishing Contest",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.239",
+   "location": "Taverley",
+   "text": "Go under the mountain and speak to Lady of the lake in Taverly",
+   "items": [
+    "6 clay",
+    "4 copper",
+    "2 iron",
+    "5 buckets of sand",
+    "5 soda ash",
+    "Spade",
+    "Fire strike runes"
+   ]
+  },
+  {
+   "id": "1.1.240",
+   "location": "Taverley",
+   "text": "Do Doric's quest",
+   "quest": "Doric's Quest",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.241",
+   "location": "Falador",
+   "text": "Finish Pirate's Treasure",
+   "quest": "Pirate's Treasure",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.242",
+   "location": "Falador",
+   "text": "Make 5 molten glass"
+  },
+  {
+   "id": "1.1.243",
+   "location": "Falador",
+   "text": "Do Black knight's fortress",
+   "quest": "Black Knights' Fortress",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.244",
+   "location": "Falador",
+   "text": "Do Recruitment drive",
+   "quest": "Recruitment Drive",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.245",
+   "location": "Port Sarim",
+   "text": "Run south to Port sarim",
+   "items": [
+    "GP",
+    "1 bread"
+   ]
+  },
+  {
+   "id": "1.1.246",
+   "location": "Port Sarim",
+   "text": "Trade Sarah's farming shop for a falador diary task"
+  },
+  {
+   "id": "1.1.247",
+   "location": "Port Sarim",
+   "text": "Buy a black wizards hat from Betty at port sarim magic store"
+  },
+  {
+   "id": "1.1.248",
+   "location": "Port Sarim",
+   "text": "Port Sarim jewellery store, give the bread to the beggar to get the excalibur"
+  },
+  {
+   "id": "1.1.249",
+   "location": "Castle Wars",
+   "text": "Minigame tele to clan wars, recharge energy and go to castle wars",
+   "items": [
+    "GP",
+    "3 planks",
+    "Bronze bar",
+    "Molten glass",
+    "Ghost's skull",
+    "Runes",
+    "Some food",
+    "10 empty slots for antipoisons"
+   ]
+  },
+  {
+   "id": "1.1.250",
+   "location": "Castle Wars",
+   "text": "Hop worlds for super antipoison(1), decant them until you have like 6 full pots"
+  },
+  {
+   "id": "1.1.251",
+   "location": "Observatory",
+   "text": "Do the Observatory quest",
+   "quest": "Observatory Quest",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.252",
+   "location": "Lumbridge",
+   "text": "HOME TELE, Lumby"
+  },
+  {
+   "id": "1.1.253",
+   "location": "Lumbridge",
+   "text": "Finish The Restless ghost",
+   "quest": "The Restless Ghost",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.254",
+   "location": "Lumbridge",
+   "text": "Start the Lost tribe, do until you need to go to Varrock",
+   "quest": "The Lost Tribe",
+   "questStatus": "start",
+   "items": [
+    "Brooch",
+    "Scrying orb",
+    "GP"
+   ],
+   "updateNote": "Goblin Diplomacy is now required before starting The Lost Tribe. Skip this step and steps 256/279 — instead, complete Goblin Diplomacy at step 278 first, then do The Lost Tribe entirely afterward (Lumbridge → Varrock → Goblin Village → Lumbridge). The extra travel is unavoidable but the guide is otherwise unaffected."
+  },
+  {
+   "id": "1.1.255",
+   "location": "Varrock",
+   "text": "Teleport to Varrock"
+  },
+  {
+   "id": "1.1.256",
+   "location": "Varrock",
+   "text": "Continue Lost tribe until you need to go to the goblin village"
+  },
+  {
+   "id": "1.1.257",
+   "location": "Varrock",
+   "text": "Buy priest robes (keep these after quest), boots, gloves"
+  },
+  {
+   "id": "1.1.258",
+   "location": "Varrock",
+   "text": "Finish abyss miniquest",
+   "quest": "Enter the Abyss",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.258a",
+   "location": "Wizard Tower",
+   "text": "Train Runecraft to 10, then complete Temple of the Eye quest to unlock Guardians of the Rift",
+   "enhanced": true,
+   "newQuest": true,
+   "quest": "Temple of the Eye",
+   "questStatus": "complete",
+   "skillGoal": {
+    "skill": "runecrafting",
+    "level": 10
+   },
+   "note": "GOTR is a massive improvement for RC training on ironmen. The quest gives ~5k Runecraft XP on completion (~9k including in-quest XP). GOTR provides runes, talismans, and the Raiments of the Eye set for bonus runes. This makes RC no longer need to be your lowest skill for Tears of Guthix."
+  },
+  {
+   "id": "1.1.259",
+   "location": "Varrock",
+   "text": "Get the magic words for Merlin's crystal at the altar"
+  },
+  {
+   "id": "1.1.260",
+   "location": "Varrock",
+   "text": "Continue Biohazard"
+  },
+  {
+   "id": "1.1.261",
+   "location": "Digsite",
+   "text": "Do the Digsite quest",
+   "quest": "The Dig Site",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.262",
+   "location": "Champions Guild",
+   "text": "Chronicle tele and start Dragon slayer at champion's guild",
+   "quest": "Dragon Slayer I",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.263",
+   "location": "Khazard Battlefield",
+   "text": "Use the G.E spirit tree and go to battlefield of khazard"
+  },
+  {
+   "id": "1.1.264",
+   "location": "Ardougne",
+   "text": "Finish Biohazard",
+   "quest": "Biohazard",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.265",
+   "location": "Ardougne",
+   "text": "Finish off Ardy easy tasks, and get the cloak",
+   "note": "Use lamp on agility. Not worth holding on to it, we won't be 30herb for a long time still and 2.5k xp isn't that much anyway"
+  },
+  {
+   "id": "1.1.266",
+   "location": "Ardougne",
+   "text": "Trade cat for 200 death runes"
+  },
+  {
+   "id": "1.1.267",
+   "location": "Varrock",
+   "text": "Chronicle tele and buy a new kitten"
+  },
+  {
+   "id": "1.1.268",
+   "location": "Ardougne",
+   "text": "Cloak tele back to Ardy"
+  },
+  {
+   "id": "1.1.269",
+   "location": "Karamja",
+   "text": "Do Jungle potion",
+   "quest": "Jungle Potion",
+   "questStatus": "complete",
+   "note": "Bring a small fish net with u and fish ~100 karambwanji for your kittens, BE CAREFUL of aggressive NPCs"
+  },
+  {
+   "id": "1.1.270",
+   "location": "Shilo Village",
+   "text": "Do Shilo village",
+   "quest": "Shilo Village",
+   "questStatus": "complete",
+   "note": "HCIM; Buy a few karambwans and swordfish from brimhaven food store",
+   "hcim": true
+  },
+  {
+   "id": "1.1.271",
+   "location": "Camelot",
+   "text": "Teleport to Camelot",
+   "items": [
+    "Pickaxe",
+    "Hammer",
+    "Lit candle",
+    "Excalibur",
+    "Bat bones",
+    "Black candle",
+    "Tinderbox",
+    "Knife",
+    "Needle",
+    "Thread",
+    "4 coal"
+   ]
+  },
+  {
+   "id": "1.1.272",
+   "location": "Camelot",
+   "text": "Finish Merlin's crystal",
+   "quest": "Merlin's Crystal",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.273",
+   "location": "Camelot",
+   "text": "Start Holy grail and talk to Merlin",
+   "quest": "Holy Grail",
+   "questStatus": "start"
+  },
+  {
+   "id": "1.1.274",
+   "location": "White Wolf Mountain",
+   "text": "Get boots of lightness",
+   "note": "Play the Church organ in the Seers' Village church for diary task"
+  },
+  {
+   "id": "1.1.275",
+   "location": "Seers Village",
+   "text": "Do Elemental workshop 1",
+   "quest": "Elemental Workshop I",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.276",
+   "location": "Seers Village",
+   "text": "Buy 1 inv of stew from the Seers bar"
+  },
+  {
+   "id": "1.1.277",
+   "location": "Falador",
+   "text": "Falador teleport",
+   "items": [
+    "Lost tribe brooch and book",
+    "Blue/orange dyes"
+   ]
+  },
+  {
+   "id": "1.1.278",
+   "location": "Goblin Village",
+   "text": "Do Goblin diplomacy",
+   "quest": "Goblin Diplomacy",
+   "questStatus": "complete"
+  },
+  {
+   "id": "1.1.279",
+   "location": "Goblin Village",
+   "text": "Continue Lost tribe"
+  },
+  {
+   "id": "1.1.280",
+   "location": "Lumbridge",
+   "text": "Home tele, Lumby"
+  },
+  {
+   "id": "1.1.281",
+   "location": "Lumbridge",
+   "text": "Finish Lost tribe",
+   "quest": "The Lost Tribe",
+   "questStatus": "complete",
+   "items": [
+    "GP",
+    "5 silver ore",
+    "Sickle mould",
+    "Holy mould",
+    "Key imprint",
+    "Bronze bar"
+   ]
+  },
+  {
+   "id": "1.1.282",
+   "location": "Al Kharid",
+   "text": "Go through the gate to Al-Kharid"
+  }
+ ]
+}

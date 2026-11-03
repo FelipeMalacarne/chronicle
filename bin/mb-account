@@ -2,7 +2,9 @@
 # Pick the Jagex Account character the dev client launches with ("Play Now" screen).
 #
 #   mb-account list            characters the Microbot launcher knows (~/.microbot/accounts.json)
-#   mb-account use <name|#>    write the dev home's credentials.properties for that character
+#   mb-account use <name|#> [--as <name>]
+#                              write the dev home's credentials.properties for that character;
+#                              --as names a character the launcher still lists as "Not set"
 #   mb-account show            character the dev client is set to
 #   mb-account clear           remove it (dev client falls back to the username/password screen)
 #
@@ -23,7 +25,11 @@ case "${1:-}" in
 		names | nl -w2 -s'  '
 		;;
 	use)
-		want="${2:?usage: mb-account use <name|#>}"
+		want="${2:?usage: mb-account use <name|#> [--as <name>]}"
+		display=""
+		if [[ "${3:-}" == "--as" ]]; then
+			display="${4:?--as needs a name}"
+		fi
 		[[ -f "$accounts" ]] || die "no launcher accounts at $accounts"
 		if [[ "$want" =~ ^[0-9]+$ ]]; then
 			entry="$(jq -c --argjson i "$((want - 1))" '.[$i] // empty' "$accounts")"
@@ -33,9 +39,11 @@ case "${1:-}" in
 		[[ -n "$entry" ]] || die "no character '$want'; see: mb-account list"
 		mkdir -p "$MB_RL"
 		umask 077
-		jq -r '"JX_SESSION_ID=\(.sessionId)\nJX_CHARACTER_ID=\(.accountId)\nJX_DISPLAY_NAME=\(.displayName // "Not set")"' \
+		# The game logs in by session + character id; the name is what the login screen shows
+		# and what Microbot matches against profile usernames.
+		jq -r --arg d "$display" '"JX_SESSION_ID=\(.sessionId)\nJX_CHARACTER_ID=\(.accountId)\nJX_DISPLAY_NAME=\(if $d != "" then $d else (.displayName // "Not set") end)"' \
 			<<<"$entry" >"$creds"
-		echo "dev client will use: $(jq -r '.displayName // "Not set"' <<<"$entry") (restart it: mb-client restart)"
+		echo "dev client will use: $(sed -n 's/^JX_DISPLAY_NAME=//p' "$creds") (restart it: mb-client restart)"
 		;;
 	show)
 		[[ -f "$creds" ]] || { echo "none (username/password login screen)"; exit 0; }
@@ -45,6 +53,6 @@ case "${1:-}" in
 		rm -f "$creds"
 		echo "cleared"
 		;;
-	-h|--help|"") sed -n '2,11p' "$0" | sed 's/^# \{0,1\}//' ;;
+	-h|--help|"") sed -n '2,13p' "$0" | sed 's/^# \{0,1\}//' ;;
 	*) die "unknown command: $1" ;;
 esac

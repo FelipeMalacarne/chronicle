@@ -75,7 +75,8 @@ start() {
 	echo "starting Microbot $MB_VERSION (home $MB_DEV_HOME)"
 	# Own session: the game must outlive the terminal or agent session that started it.
 	# setsid execs in place here (a background job is not a group leader), so $! is java.
-	setsid nohup "${cmd[@]}" >"$MB_STDOUT" 2>&1 </dev/null &
+	LD_LIBRARY_PATH="${MICROBOT_LD_LIBRARY_PATH:-}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+		setsid nohup "${cmd[@]}" >"$MB_STDOUT" 2>&1 </dev/null &
 	echo $! >"$MB_PIDFILE"
 	if [[ -z "$test_name" ]]; then
 		wait_ready "${MB_START_TIMEOUT:-180}"

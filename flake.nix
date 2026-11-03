@@ -42,6 +42,9 @@
         MICROBOT_VERSION = pin.version;
         MICROBOT_CLIENT_JAR = "${microbot-client}";
         MICROBOT_HWID_AGENT_JAR = "${hwid-agent}";
+        # GPU / 117 HD load libGL.so.1 (libglvnd), which then picks the system driver from
+        # /run/opengl-driver. The launcher's AppImage FHS env provides both; plain java doesn't.
+        MICROBOT_LD_LIBRARY_PATH = "${pkgs.libGL}/lib:/run/opengl-driver/lib";
         shellHook = ''
           export PATH="$PWD/bin:$PATH"
         '';

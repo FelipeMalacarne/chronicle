@@ -16,10 +16,17 @@
         url = "https://github.com/chsami/Microbot/releases/download/${pin.version}/microbot-${pin.version}.jar";
         inherit (pin) hash;
       };
+
+      # The -javaagent the launcher is meant to attach (device ID / random.dat spoofing).
+      hwid-agent = pkgs.fetchurl {
+        name = "hwid-agent-${pin.version}.jar";
+        url = "https://github.com/chsami/Microbot/releases/download/${pin.version}/hwid-agent-${pin.version}.jar";
+        hash = pin.hwidAgentHash;
+      };
     in
     {
       packages.${system} = {
-        inherit microbot-client;
+        inherit microbot-client hwid-agent;
         default = microbot-client;
       };
 
@@ -34,6 +41,7 @@
         JAVA_HOME = "${pkgs.jdk21}";
         MICROBOT_VERSION = pin.version;
         MICROBOT_CLIENT_JAR = "${microbot-client}";
+        MICROBOT_HWID_AGENT_JAR = "${hwid-agent}";
         shellHook = ''
           export PATH="$PWD/bin:$PATH"
         '';

@@ -30,7 +30,10 @@ Personal Microbot plugins, built as sideloadable jars against the pinned officia
 ## Harness (dev client)
 The dev client is the pinned jar running with `user.home=~/.local/share/microbot-dev`, so it
 has its own profiles/config and never touches the everyday client in `~/.runelite`. The Agent
-Server listens on a Unix socket inside that home.
+Server listens on a Unix socket inside that home. Like the launcher, it attaches the release's
+HWID agent; its per-account stores are shared with the everyday client in `~/.runelite`.
+`mb-client start` comes up logged out (AutoLogin is switched off); log in with
+`mb login now --world <w>` only after the user agrees. `mb-test` logs in by itself.
 
 | Command | What it does |
 |---|---|

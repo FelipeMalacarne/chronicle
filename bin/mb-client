@@ -47,6 +47,11 @@ start() {
 	[[ -f "$MB_JAR" ]] || die "client jar not found: $MB_JAR"
 	mkdir -p "$MB_RUN" "$MB_RL"
 	install_bootstrap
+	if [[ -z "$test_name" ]]; then
+		# Test mode enables AutoLogin and leaves it on; outside it, log in only on request.
+		sed -i 's/^runelite\.autologinplugin=true$/runelite.autologinplugin=false/' \
+			"$MB_RL"/microbot-profiles/*.properties 2>/dev/null || true
+	fi
 	rm -f "$MB_SOCKET"
 
 	local cmd=("$(mb_java)" -Xmx2g -Dfile.encoding=UTF-8
@@ -59,6 +64,12 @@ start() {
 			"-Dmicrobot.test.output=$MB_RL/test-results")
 		[[ -n "${MB_TEST_WORLD:-}" ]] && cmd+=("-Dmicrobot.test.world=$MB_TEST_WORLD")
 	fi
+	# Attach the HWID agent like the launcher does. Its per-account stores stay in the real
+	# ~/.runelite so an account keeps one spoofed identity across the dev and everyday clients.
+	[[ -f "$MB_HWID_AGENT" ]] || die "HWID agent jar not found ('$MB_HWID_AGENT'); run inside nix develop"
+	cmd+=("-javaagent:$MB_HWID_AGENT"
+		"-Dmicrobot.hwid.store=$HOME/.runelite/spoofed-device-ids.properties"
+		"-Dmicrobot.hwid.randomdat.store=$HOME/.runelite/spoofed-random-dats.properties")
 	cmd+=("${extra[@]}" -jar "$MB_JAR" --disable-telemetry)
 
 	echo "starting Microbot $MB_VERSION (home $MB_DEV_HOME)"

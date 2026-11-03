@@ -4,6 +4,7 @@
 MB_REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 MB_VERSION="${MICROBOT_VERSION:-$(jq -r .version "$MB_REPO/microbot.json")}"
 MB_JAR="${MICROBOT_CLIENT_JAR:-$HOME/.microbot/microbot-${MB_VERSION}.jar}"
+MB_HWID_AGENT="${MICROBOT_HWID_AGENT_JAR:-}"
 
 # Isolated user.home for the dev client: its own .runelite (profiles, config, plugins,
 # agent socket and token), so the everyday client in ~/.runelite is never touched.

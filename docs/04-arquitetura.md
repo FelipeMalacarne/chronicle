@@ -6,7 +6,7 @@ Data: 2026-11-03. Complementa `00-levantamento-inicial.md`. Artefatos técnicos 
 
 | Tema | Decisão |
 |---|---|
-| Stack | **SvelteKit (adapter-node) + TypeScript + Postgres + Drizzle + Zod**, um único processo Node que serve UI, API, scheduler e rule engine. (Revisado em 2026-11-03: o alvo de deploy é o servidor `saradomin` do dono, que já roda Postgres e Zitadel; SQLite fica só como opção para dev local e testes.) |
+| Stack | **Revisado (seção 9): backend em Go** (um binário com `serve`, CLI e servidor MCP) + Postgres + frontend Svelte embutido no binário. A opção SvelteKit full-stack das seções 1 e 2 fica registrada como alternativa; o que muda está na seção 9. Deploy no `saradomin` com Postgres e Zitadel existentes. |
 | Grafo | Calculado no servidor em memória a partir de `content/` + cache do wiki; renderizado com **Cytoscape.js + ELK** (layout em camadas). |
 | Conteúdo | Arquivos JSON/YAML em `content/guides/<id>/`, validados por Zod no boot e na CI. IDs do ironman.guide preservados (`1.1.76a`). |
 | Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o rule engine. |
@@ -578,3 +578,71 @@ Decisões do dono que substituem o que está acima onde houver conflito:
 - **Backups**: `pg_dump` da database `ironman_planner` dentro da rotina já existente do servidor; o export JSON da app continua como plano B legível.
 
 Tarefas da seção 7.4 afetadas: 1 (compose aponta para Postgres externo), 4 (Drizzle pg), 5 (vira OIDC Zitadel em vez de senha única), 10 (backup via pg_dump), 12 (deploy no saradomin em vez de "máquina limpa").
+
+
+## 9. Revisão de 2026-11-03: Go como núcleo, um binário com vários formatos
+
+Motivo dado pelo dono: quer buildar o mesmo núcleo em vários formatos (servidor web, CLI para usar com agentes, servidor MCP) e manter afinidade com o ecossistema de plugins que já desenvolve. Go atende isso melhor que Node: binário único estático, cross-compile trivial, pouca RAM no `saradomin`, e um `cmd` por formato compartilhando o mesmo pacote de domínio.
+
+### 9.1 O que muda e o que fica
+
+| Tema | Antes (seções 1 a 8) | Agora |
+|---|---|---|
+| Domínio (schema de conteúdo, rule engine, grafo) | TypeScript/Zod compartilhado | Pacote Go `internal/core` (structs + validação por JSON Schema com `santhosh-tekuri/jsonschema`), sem dependência de banco ou HTTP. É o que todo formato importa. |
+| API e scheduler | SvelteKit server routes + croner | `net/http` (mux do Go 1.22+) ou `chi`; scheduler in-process com `robfig/cron/v3` ou ticker próprio; adapters de fonte em `internal/sources/{hiscores,wom,wikisync,wiki}`. |
+| Banco | Drizzle (TS) | `pgx` + `sqlc` (SQL versionado, tipos gerados) e migrations com `goose` ou `golang-migrate`. Postgres via docker também em dev; SQLite sai de cena. |
+| Auth | OIDC no SvelteKit | `coreos/go-oidc` + `golang.org/x/oauth2` (PKCE), sessão com `alexedwards/scs` em cookie; tokens `ipl_` iguais. |
+| Frontend | SvelteKit renderizando no servidor | **Svelte (Vite) como SPA estática**, embutida no binário com `embed.FS` e servida em `/`. Cytoscape + ELK continuam. Tipos TS gerados a partir do Go (`tygo`) ou do JSON Schema para não digitar o schema duas vezes. |
+| Plugin Microbot | Java, HTTP | Igual. Go não roda dentro do Microbot; o que se compartilha é o contrato HTTP (manifest + ingest). Lógica Go no cliente só via sidecar local chamado pelo plugin; não vale a pena agora. |
+| Deploy | imagem Node | imagem `distroless` ou `scratch` com o binário (~20 MB), mesmas variáveis de ambiente. |
+
+### 9.2 Formatos do mesmo binário (`cmd/ironman`)
+
+```
+ironman serve                     # API + SPA + scheduler + ingest (único que fala com o Postgres)
+ironman now [--json]              # próximo passo, itens a levar, bloqueios (cliente da API via IRONMAN_URL e IRONMAN_TOKEN)
+ironman done 1.1.75 | skip | note # marcar passo
+ironman plan barrows-gloves       # plano ordenado de uma meta
+ironman sync [--source hiscores]  # força sync
+ironman state skills|quests|diaries
+ironman mcp                       # servidor MCP por stdio para agentes (tools: get_now, list_steps, mark_step, plan_goal, player_state, search_guide)
+ironman content validate|migrate  # valida content/ e migra o JSON do ironman.guide
+```
+
+Regra: só `serve` abre o banco. CLI e MCP são clientes da API com token, então funcionam de qualquer máquina e o modelo de permissão é um só. O MCP usa o SDK oficial `github.com/modelcontextprotocol/go-sdk`.
+
+### 9.3 Layout do repositório (Go)
+
+```
+cmd/ironman/              main.go, subcomandos (cobra)
+internal/core/            content (schema, loader), rules (engine), graph (grafo, plano, diff), player (estado mesclado)
+internal/sources/         hiscores, wom, wikisync, wiki (bucket + wikitext), ingest (manifest + delta do plugin)
+internal/store/           sqlc queries, migrations, repositórios
+internal/httpapi/         handlers, OIDC, sessões, tokens, SSE para "sync agora"
+internal/mcp/             tools do servidor MCP, finos sobre o client da API
+internal/client/          client Go da API, usado por CLI e MCP
+web/                      Svelte + Vite; build vai para web/dist e é embutido
+content/guides/oziris-main/   JSON do guia (migrado de data/guide/normalized)
+content/reference/        quests.json, diary_tasks.json do wiki (fallback offline)
+plugin-microbot/          plugin Java (ou repositório separado no fork do Microbot)
+docs/
+```
+
+### 9.4 Custos aceitos
+
+- Sem compartilhamento nativo de tipos entre servidor e browser; mitigado com geração de tipos.
+- Mais código de infraestrutura que SvelteKit (roteamento, sessões). Aceitável: a UI é um app logado, não precisa de SSR.
+- Grafo continua em JS no browser; o cálculo (fechamento transitivo, Kahn, caminho crítico) fica em Go e é exposto por `GET /api/plan` e `GET /api/graph`, então CLI e MCP têm o mesmo resultado que a tela.
+
+### 9.5 Sequência de MVP revisada (substitui a 7.4 nos itens afetados)
+
+1. `go mod init`, cobra, `ironman content validate` lendo `data/guide/normalized/guide.json` contra `guide.schema.json`. Migração para `content/guides/oziris-main/`.
+2. `internal/core/rules`: engine puro com testes de tabela (skill_level, quest_state, diary_tier, manual, combinadores, implied).
+3. Postgres: migrations, sqlc para accounts, snapshots, player_state, step_progress, goals, tokens.
+4. `ironman serve`: health, OIDC Zitadel, sessão, `GET /api/now`, `PATCH /api/steps/:id`.
+5. Adapter hiscores + merge + reavaliação + scheduler; `POST /api/sync`.
+6. Ingest: manifest + `POST /api/ingest`; plugin Microbot v0 em paralelo (doc 06).
+7. SPA Svelte: telas Agora e Checklist conforme o canvas de design; embed no binário; Docker `distroless`; deploy no `saradomin`. **Marco: em uso.**
+8. CLI `now/done/plan/state` sobre `internal/client`; `ironman mcp`.
+9. Wiki adapter + grafo em Go + telas Conta, Meta e Grafo.
+10. WOM, export/import, notas, múltiplas contas.

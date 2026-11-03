@@ -31,7 +31,7 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 
 ## Decisões já tomadas (pela equipe de design, revisáveis)
 
-- Stack: SvelteKit + TypeScript + Postgres + Drizzle + Zod, um container no `saradomin`, auth por OIDC no Zitadel já existente, Cytoscape.js + ELK para o grafo. (SQLite só em dev.)
+- Stack: **Go** como núcleo (um binário: `serve`, CLI, servidor MCP) + Postgres (pgx/sqlc) + SPA Svelte embutida, auth por OIDC no Zitadel, deploy no `saradomin`, Cytoscape.js + ELK para o grafo. Ver doc 04, seção 9. A opção SvelteKit full-stack fica registrada como alternativa.
 - IDs dos steps do ironman.guide preservados; progresso nunca tem FK para conteúdo, para sobreviver a edições do guia.
 - Snapshots brutos append-only mais tabela `player_state` mesclada com prioridade plugin > wikisync > hiscores > wom.
 - Rule engine puro com vereditos met / unmet / unknown e evidência; auto_done é pegajoso para regras monotônicas; manual nunca é sobrescrito pelo motor.
@@ -40,7 +40,7 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 
 ## Decisões que ficam com o dono
 
-1. Confirmar SvelteKit como framework (banco e auth já decididos: Postgres e Zitadel no `saradomin`; ver doc 04, seção 8).
+1. Resolvida: Go no backend com CLI e MCP no mesmo binário, Svelte só no front (doc 04, seção 9).
 2. Resolvida: o plugin próprio será feito no Microbot (fork do RuneLite que o dono já usa) e entra no MVP; WikiSync vira fallback opcional. Ver `docs/06-cliente-microbot.md`.
 3. Cascata `implied` já no MVP (recomendado) ou na v1.
 4. Grafo visual na v1 junto com a lista em árvore, ou só a lista primeiro.

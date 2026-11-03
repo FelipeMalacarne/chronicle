@@ -20,6 +20,10 @@ Descoberta e design concluídos (docs 00 a 05). Nenhum código de aplicação ai
 | `docs/05-conteudo-e-normalizacao.md` | O que foi extraído do guia e como vira regras de auto-complete |
 | `docs/06-cliente-microbot.md` | Plugin de leitura no Microbot (fork do RuneLite) como fonte principal de quests e diaries |
 
+## Design
+
+Telas v0 no Claude Design (canvas privado do dono): Agora, Checklist da seção, Conta, Grafo de requisitos, Meta e versão celular, usando o design system Senntisten Shell (Catppuccin Mocha).
+
 ## Dados
 
 - `data/guide/` guia principal extraído (7 seções, 576 passos) e versão normalizada em `data/guide/normalized/`.

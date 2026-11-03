@@ -18,6 +18,7 @@ public class HelloAgentScript extends Script
 {
 	private final HelloAgentConfig config;
 	private int loops;
+	private TestResult testResult;
 
 	@Inject
 	HelloAgentScript(HelloAgentConfig config)
@@ -28,6 +29,7 @@ public class HelloAgentScript extends Script
 	public boolean run()
 	{
 		loops = 0;
+		testResult = isTestMode() ? new TestResult("Hello Agent") : null;
 		mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
 			try
 			{
@@ -45,7 +47,7 @@ public class HelloAgentScript extends Script
 				observation.put("npcsNearby", npcs);
 				ScriptResultStore.submit(HelloAgentPlugin.class.getName(), observation);
 
-				if (isTestMode() && loops >= config.testLoops())
+				if (testResult != null && loops >= config.testLoops())
 				{
 					finishTest(position, npcs);
 				}
@@ -62,14 +64,19 @@ public class HelloAgentScript extends Script
 	// checks, writes result.json and exits; the runner only handles login and timeouts.
 	private void finishTest(WorldPoint position, int npcs)
 	{
-		TestResult result = new TestResult("Hello Agent");
-		result.addCheck("logged in", Microbot.isLoggedIn(), null);
-		result.addCheck("player position known", position != null, "Rs2Player.getWorldLocation() returned null");
-		result.addCheck("npc query ran", npcs >= 0, "negative NPC count");
+		TestResult result = testResult;
+		check(result, "logged in", Microbot.isLoggedIn(), "Microbot.isLoggedIn() is false");
+		check(result, "player position known: " + position, position != null, "Rs2Player.getWorldLocation() returned null");
+		check(result, "npc query ran: " + npcs + " within " + config.npcRadius(), npcs >= 0, "negative NPC count");
 		result.complete("completed");
 		TestResultWriter.write(result);
 		log.info("Hello Agent test finished: {}/{} checks passed", result.passedCount(), result.checks.size());
 		System.exit(result.exitCode);
+	}
+
+	private static void check(TestResult result, String name, boolean passed, String failure)
+	{
+		result.addCheck(name, passed, passed ? null : failure);
 	}
 
 	private static boolean isTestMode()

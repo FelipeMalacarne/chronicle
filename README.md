@@ -18,6 +18,7 @@ Descoberta e design concluídos (docs 00 a 05). Nenhum código de aplicação ai
 | `docs/03-produto-e-features.md` | Jobs-to-be-done, catálogo de features, UX tela a tela |
 | `docs/04-arquitetura.md` | Stack, componentes, schema de conteúdo, banco, grafo, plugin |
 | `docs/05-conteudo-e-normalizacao.md` | O que foi extraído do guia e como vira regras de auto-complete |
+| `docs/06-cliente-microbot.md` | Plugin de leitura no Microbot (fork do RuneLite) como fonte principal de quests e diaries |
 
 ## Dados
 

@@ -41,7 +41,7 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 ## Decisões que ficam com o dono
 
 1. Confirmar a stack SvelteKit ou trocar (as alternativas Go+React e FastAPI+React estão na tabela do doc 04).
-2. WikiSync no MVP como importador opt-in, apesar do pedido do wiki, ou pular direto para o plugin próprio.
+2. Resolvida: o plugin próprio será feito no Microbot (fork do RuneLite que o dono já usa) e entra no MVP; WikiSync vira fallback opcional. Ver `docs/06-cliente-microbot.md`.
 3. Cascata `implied` já no MVP (recomendado) ou na v1.
 4. Grafo visual na v1 junto com a lista em árvore, ou só a lista primeiro.
 5. Modos iniciais: ironman + HCIM; UIM e GIM ficam fora até alguém pedir.

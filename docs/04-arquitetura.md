@@ -1,19 +1,19 @@
 # Ironman Planner — Arquitetura
 
-Data: 2026-11-03. Complementa `00-levantamento-inicial.md`. Artefatos técnicos em `docs/arquitetura/`: `guide.schema.json` (JSON Schema do conteúdo), `schema.sql` (banco, SQLite), `types.ts` (tipos Zod/TS compartilhados, assinaturas do rule engine e contrato do plugin).
+Data: 2026-11-03. Complementa `00-levantamento-inicial.md`. Artefatos técnicos em `docs/arquitetura/`: `guide.schema.json` (JSON Schema do conteúdo), `schema.sql` (banco; escrito em dialeto SQLite, portar para Postgres no Drizzle: `jsonb`, `timestamptz`, `bigint` para xp), `types.ts` (tipos Zod/TS compartilhados, assinaturas do rule engine e contrato do plugin).
 
 ## 0. Decisões em uma página
 
 | Tema | Decisão |
 |---|---|
-| Stack | **SvelteKit (adapter-node) + TypeScript + SQLite (better-sqlite3) + Drizzle + Zod**, um único processo Node que serve UI, API, scheduler e rule engine. |
+| Stack | **SvelteKit (adapter-node) + TypeScript + Postgres + Drizzle + Zod**, um único processo Node que serve UI, API, scheduler e rule engine. (Revisado em 2026-11-03: o alvo de deploy é o servidor `saradomin` do dono, que já roda Postgres e Zitadel; SQLite fica só como opção para dev local e testes.) |
 | Grafo | Calculado no servidor em memória a partir de `content/` + cache do wiki; renderizado com **Cytoscape.js + ELK** (layout em camadas). |
 | Conteúdo | Arquivos JSON/YAML em `content/guides/<id>/`, validados por Zod no boot e na CI. IDs do ironman.guide preservados (`1.1.76a`). |
 | Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o rule engine. |
 | Rule engine | Função pura `(rules, PlayerState) → {verdict, evidence}`; reavaliação completa a cada snapshot (576 steps × regras simples = milissegundos). |
 | Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas, token por cliente. |
-| Deploy | `docker compose up`: 1 container, 1 volume. Postgres só como *profile* opcional, não no MVP. |
-| Auth | Senha única (owner) com cookie de sessão; tokens `ipl_` por conta para o plugin; tokens de API para scripts. |
+| Deploy | Um container da app no compose do `saradomin`, apontando para o Postgres já existente (database própria `ironman_planner`). Sem volume de dados próprio; só backups via `pg_dump`. |
+| Auth | **OIDC via Zitadel** (já rodando no `saradomin`): Authorization Code + PKCE no SvelteKit, sessão em cookie assinado, usuário criado no primeiro login pelo `sub`. Tokens `ipl_` por conta para o plugin Microbot (o plugin não faz OIDC); tokens de API para scripts. Autorização por lista de `sub` permitidos ou por role no Zitadel. |
 
 ## 1. Stack
 
@@ -565,3 +565,16 @@ Cada item é uma sessão de 2 a 4 horas; a ordem respeita dependências. Ao fim 
 22. **WOM adapter** para histórico e gráficos de XP; Postgres como profile opcional (só rodar a suíte com `DATABASE_URL=postgres://`).
 
 Depois disso: anotações ricas por step, múltiplas contas por usuário, convites, reordenação dinâmica do guia pela disponibilidade atual.
+
+
+## 8. Adendo de 2026-11-03: deploy no saradomin, Zitadel e Postgres
+
+Decisões do dono que substituem o que está acima onde houver conflito:
+
+- **Banco: Postgres** existente no `saradomin`. Drizzle com driver `postgres` (porsager). Mudanças no `schema.sql`: `TEXT`/`INTEGER` ficam; JSON bruto de snapshot vira `jsonb`; datas viram `timestamptz`; xp e kc em `bigint`; `player_state` pode usar índice GIN no `jsonb` para consultas por fato. Migrations com `drizzle-kit`. Testes do rule engine continuam puros; testes de repositório rodam contra Postgres em container (testcontainers) ou SQLite em memória se o dialeto for mantido portável.
+- **Auth: Zitadel** via OIDC. Registrar uma aplicação Web (PKCE, sem client secret) com redirect `https://planner.<domínio>/auth/callback`. No SvelteKit, `hooks.server.ts` valida a sessão; `/auth/login` inicia o fluxo; `/auth/callback` troca o código, cria ou atualiza `users` pelo `sub` e grava sessão em cookie `HttpOnly`. Bibliotecas: `arctic` + `oslo` (leves) ou `@auth/sveltekit` com provider OIDC genérico. Autorização: no começo, lista `ALLOWED_SUBS` no `.env`; depois, role `planner-user` no projeto do Zitadel lida do claim de roles.
+- **Plugin Microbot** não faz OIDC: continua com token `ipl_` gerado na UI (escopo por conta), enviado em `Authorization: Bearer`. Opcionalmente, um client credentials do Zitadel para scripts de servidor.
+- **Deploy**: imagem Node (adapter-node) publicada no registry que o `saradomin` já usa; serviço no compose com `DATABASE_URL`, `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `SESSION_SECRET`, `PUBLIC_BASE_URL`; atrás do reverse proxy já existente. Health em `/api/health`. Sem SQLite no deploy.
+- **Backups**: `pg_dump` da database `ironman_planner` dentro da rotina já existente do servidor; o export JSON da app continua como plano B legível.
+
+Tarefas da seção 7.4 afetadas: 1 (compose aponta para Postgres externo), 4 (Drizzle pg), 5 (vira OIDC Zitadel em vez de senha única), 10 (backup via pg_dump), 12 (deploy no saradomin em vez de "máquina limpa").

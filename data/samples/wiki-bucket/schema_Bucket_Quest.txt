@@ -1,0 +1,30 @@
+{
+	"description": {
+		"type": "TEXT"
+	},
+	"enemies_to_defeat": {
+		"type": "TEXT"
+	},
+	"ironman_concerns": {
+		"type": "TEXT"
+	},
+	"items_required": {
+		"type": "TEXT"
+	},
+	"official_difficulty": {
+		"type": "TEXT"
+	},
+	"official_length": {
+		"type": "TEXT"
+	},
+	"requirements": {
+		"type": "TEXT"
+	},
+	"start_point": {
+		"type": "TEXT"
+	},
+	"json": {
+		"type": "TEXT",
+		"index": false
+	}
+}

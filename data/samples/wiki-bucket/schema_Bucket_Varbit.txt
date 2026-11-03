@@ -1,0 +1,11 @@
+{
+	"content": {
+		"type": "PAGE"
+	},
+	"name": {
+		"type": "TEXT"
+	},
+	"index": {
+		"type": "INTEGER"
+	}
+}

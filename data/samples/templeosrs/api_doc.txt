@@ -1,0 +1,1850 @@
+
+API Documentation - TempleOSRS
+TempleOSRS
+Current Top
+Records
+Leaderboards
+New!
+ -->
+Virtual Hiscores
+Skill Hiscores
+Group Iron Man
+Pets
+Collection Log
+New!
+ -->
+Speedruns
+Sailing Race
+New!
+ -->
+Leagues
+Trailblazer Reloaded
+Raging Echoes
+Demonic Pacts
+Community
+New!
+ -->
+competitions
+Competitions
+Fantasy 2020
+Fantasy 2025
+Solace Madness 2026
+groups
+Groups
+other
+Players
+Metrics
+Skilling
+PVM
+Miscellaneous
+Collections
+Tools
+Names
+ Skill Cost Calculator
+Documentation
+FAQ
+API
+Metrics
+Skilling
+PVM
+Miscellaneous
+Collections
+Tools
+Names
+ Skill Cost Calculator
+Documentation
+                            FAQ
+                            API
+Current Top
+Records
+Leaderboards
+Virtual Hiscores
+Skill Hiscores
+Group Iron Man
+Pets
+Collection Log
+New!
+ -->
+Speedruns
+Sailing Race
+Leagues
+Trailblazer Reloaded
+Raging Echoes
+Demonic Pacts
+Competitions
+Competitions
+Fantasy 2020
+Fantasy 2025
+Solace Madness 2026
+groups
+Groups
+community
+Players
+Metrics
+Skilling
+PVM
+Miscellaneous
+Collections
+Tools
+Names
+ Skill Cost Calculator
+Documentation
+                FAQ
+                API
+API Documentation
+        Can't find what you are after? Nearly all API endpoints are made on request!
+        Join our 
+Discord server
+ for #help!
+Table of Contents
+Community
+6 endpoints
+Recent 200ms
+Recent Records
+Top Records
+Current Top
+Skill Hiscores
+EHP By Rank
+Player
+6 endpoints
+Information
+Names
+Stats
+Gains
+Datapoints
+Competitions
+Competitions
+7 endpoints
+Members
+Information V2
+Information
+Deprecated
+Create
+Delete
+New!
+ -->
+Memberlist: Add
+Memberlist: Remove
+Groups
+8 endpoints
+Basic MemberList
+Member Stats
+Information
+Achievements
+Competitions
+Memberlist: Edit
+Memberlist: Add
+Memberlist: Remove
+Pets
+4 endpoints
+Leaderboards
+Hall Of Fame
+Hours
+Count
+Collection Log
+7 endpoints
+Player Collection Log
+Group Collection Log
+Player Recent Collections
+Group Recent Collections
+List: Items
+List: Categories
+List: Category parameters
+Rates
+1 endpoints
+EHB Rates
+Spreadsheet Information
+                Some of the endpoints have alternative formats that are easier to import into your google spreadsheets if you are having trouble with JSON data.
+                You only need to copy the provided the links below to your spreadsheets formula bar and it should work.
+If you are having any trouble you can always ask for help on our discords #help channel. 
+Competition Information V2
+                - Once you have copied the formula below into your spreadsheet you need to change this number 
+id=27764
+ to match your competitions ID to fetch data from it 
+                - You can change what skill/boss/custom category is being used by adding 
+&skill=prayer
+ at the end of the URL 
+                - And view the competition standings as they were for example after day one by adding this 
+&snapshot=1day
+ to the URL
+                - If you want the table to return the competition standings for teams change the parameter 
+&format=table
+ to 
+&format=tableTeams
+                - You can use 
+&format=csv
+ to return the data in a CSV format
+Changelog
+28th September 2026:
+Added 
+tt200m
+ to the Group Member Stats endpoint when 
+details
+ parameter is present
+9th September 2026:
+Added 
+primary_ehp
+ and 
+primary_ehb
+ to the Group Member Stats endpoint when 
+details
+ parameter is present
+16th June 2026:
+Added Player Competitions endpoint and documentation
+Added 
+leagues_vi_points
+ value into Group Member Stats endpoint
+20th March 2026:
+Added 
+game_mode
+, 
+im_ehc
+, 
+im_ehc_gilded
+ values to the Group Collection Log endpoint
+24th February 2026:
+Group Member Stats: Removed untracked names (Appeared as one empty string name), improved performance and fixed a bug that rarely caused non-members to show up 
+22nd December 2025:
+Player Collection Log endpoint now has optional parameter 
+yearlygains
+ to return yearly EHC gains
+5th December 2025:
+Competition Information v2 endpoint now returns unranked skills/bosses as 0 instead of minimum hiscores threshold value due to changes to hiscores
+19th November 2025:
+Added 
+game_mode/ehc_im/ehc_gilded_im
+ to the Player Collection Log endpoint
+30th October 2025:
+Added 
+collections_hiscores_rank
+ to the Player Collection Log endpoint
+9th October 2025:
+Added 
+clog_synced
+ and 
+last_clog_sync
+ to the Group Member Stats endpoint when 
+details
+ parameter is present
+17th August 2025:
+Added 
+includecount
+ parameter to the Group Collection Log endpoint to include item counts for all acquired items
+Added 
+first_sync
+ value to the Group Collection Log endpoint
+31st July 2025:
+Added 
+details
+ parameter to the Group Member Stats endpoint to include all additional values added to this endpoint in the future
+15th July 2025:
+Fixed bug on Player Stats endpoint incorrectly returning HCIM primary EHP as regular EHP
+8th June 2025:
+Added 
+formattedrsn
+ parameter into Player Information endpoint
+29th May 2025:
+Added EHB rates endpoint and listed some collection log data endpoints
+5th May 2025:
+Competition Information V2 format parameter now supports returning CSV format
+2nd May 2025:
+Group Member Stats now returns more sensical values if member has never been tracked 
+29th April 2025:
+Added 
+altunranked
+ parameter into Competition Information V2 endpoint which changes how unranked bosses are returned. This means that instead of being returned as the minimum hiscores threshold, they will be returned as minimum hiscores threshold - 1
+22nd April 2025:
+Due to collection log clue scroll category change some category parameters will cease to work.
+Replaced categories: 
+hard_treasure_trails_rare, elite_treasure_trails_rare, master_treasure_trails_rare
+ New categories: 
+gilded, third_age, mimic
+13th April 2025:
+Added 
+cloginfo
+ parameter into Player Information endpoint
+21st March 2025:
+Added Group Collection Log endpoint
+Added Group Recent Collections endpoint
+Added Player Recent Collections endpoint
+18th March 2025:
+Added alternative team standings to Competition Information V2 spreadsheet format
+12th March 2025:
+Added Player Collection Log endpoint
+Added 
+dateformat
+ parameter into Player Information endpoint
+15th February 2025:
+Added 
+player_name_with_capitalization
+ value into Player Stats endpoint
+6th January 2025:
+Added 
+date
+ parameter into Player Datapoints endpoint
+27th December 2024:
+Added 
+leagues_v_points
+ value into Group Member Stats endpoint
+25th December 2024:
+Group Achievements endpoint now returns achievements by default only from the last six months 
+4th December 2024:
+Player Stats endpoint now has 
+Primary_ehp
+ and 
+Primary_ehb
+ values to indicate players primary EHP/EHB 
+30th November 2024:
+Added new special keyword inputs to time parameter on player_gains endpoint
+25th November 2024:
+Added 
+league_v_competition
+ value into Competition Information V2 endpoint and league_v_comp parameter into Competition: Create for creating league competitions
+13th November 2024:
+Endpoints that were missing EHB-UIM and EHB-1DEF values now include them (Players Gains, Players Stats, Group Information)
+4th November 2024:
+Pet Leaderboards, Pet Hall of Fame and Pet Count endpoints now support gim and hcgim parameters
+22nd October 2024:
+Player Gains endpoint now returns all EHP type gains
+Player Gains endpoint now has 
+Primary_ehp
+ and 
+Primary_ehb
+ values to indicate players primary EHP/EHB 
+Player Gains endpoint now has 
+Player
+ value 
+20th October 2024:
+Added Competition Information V2 endpoint and documentation
+Added Delete Competition endpoint and documentation
+Competition Information is now deprecated and won't receive any further updates
+Added sheet information
+Most endpoints using the POST HTTP method now parse requests better as long as the correct headers are provided
+17th October 2024:
+Added Pet Count endpoint and documentation
+October 2024:
+Introduced API changelog
+Competitive Community Endpoints
+Recent 200ms
+GET
+                This endpoint attempts to retrieve a list of the 25 most recent 200ms in a skill
+                Example: 
+https://templeosrs.com/api/recent_200ms.php?skill=8
+Parameters
+Parameter
+Documentation
+skill
+Skill parameter enumeration, goes in order of which the skills are shown on the hiscores page
+0 = Overall ... 24 = EHP (119 = Sailing)
+Attributes
+Attribute
+Documentation
+data/Username
+The RSN of the player who achieved a 200m
+data/Date
+The timestamp of the data point of which the player achieved a 200m
+data/Skill
+Skill parameter enumeration, goes in order of which the skills are shown on the hiscores page
+0 = Overall ... 24 = EHP (119 = Sailing)
+data/Country
+The country of the player that has been set via the TempleOSRS Discord server
+data/Game Mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+data/Twitter
+The player's Twitter profile link (donation perk)
+data/Rank
+The player's rank for the skill on the official hiscores
+Recent Records
+GET
+                This endpoint attempts to retrieve a list of the 10 most recent records in a skill
+                Example: 
+https://templeosrs.com/api/recent_records.php?skill=24
+Parameters
+Parameter
+Documentation
+skill
+Skill parameter enumeration, goes in order of which the skills are shown on the hiscores page
+0 = Overall ... 24 = EHP (119 = Sailing)
+Attributes
+Attribute
+Documentation
+data/player
+The RSN of the player who achieved a record
+data/skill
+Skill parameter enumeration, goes in order of which the skills are shown on the hiscores page
+0 = Overall ... 24 = EHP (119 = Sailing)
+data/category
+Enumeration for record category
+0 = 5m, 1 = Day, 2 = Week, 3 = Month, 4 = Year
+data/rank
+Rank of the record in the respective category (only top 3 returned)
+data/date
+The timestamp of the data point of which the player achieved a record
+data/xp
+The xp of the skill in which the player received a record
+Top Records
+GET
+                This endpoint attempts to retrieve a list of the top 50 records for each category in a skill
+                Example: 
+https://templeosrs.com/api/records.php?skill=Mining
+Parameters
+Parameter
+Documentation
+skill
+Skill name for the desired skill; 
+this is an outdated endpoint that uses the name of the skill
+country
+Name of country
+build
+Parameter name for account build
+gamemode
+Game mode number 
+group
+Group ID number 
+records
+Whether to display all records instead of only competitive ones
+Accepts only one parameter "all"
+Attributes
+Attribute
+Documentation
+%CATEGORY%/
+The record category in which the next subcategory of information will be part of
+Available categories: "Day","Week","Month","6h","Year"
+%CATEGORY%/%RANK%
+The rank, 1 through 50, in the specific record category for the skill
+%CATEGORY%/%RANK%/player
+The RSN of the account who holds the record
+%CATEGORY%/%RANK%/nickname
+The RSN of the account who holds the record, with custom capitalization
+%CATEGORY%/%RANK%/xp
+The xp gained during the time period of the record
+%CATEGORY%/%RANK%/date
+The timestamp of which the record was obtained
+%CATEGORY%/%RANK%/country
+The country of the player that has been set via the TempleOSRS Discord server
+%CATEGORY%/%RANK%/icon_url
+The icon url of the player's donation perk icon
+%CATEGORY%/%RANK%/icon_desc
+The icon description of the player's donation perk icon
+%CATEGORY%/%RANK%/game_mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+%CATEGORY%/%RANK%/video_url
+The video URL of any proof of skill records captured by the player
+This field is mandatory for any 6h records after August 21st 2021
+Current Top
+GET
+                These endpoints will get you the current top for current day/week/month
+                Examples: 
+Day - 
+https://templeosrs.com/api/current_top/day.php?skill=mining
+Week - 
+https://templeosrs.com/api/current_top/week.php?skill=mining
+ Month - 
+https://templeosrs.com/api/current_top/month.php?skill=mining
+Parameters
+Parameter
+Documentation
+skill
+Skill parameter name (lowercase) OR number for the desired skill
+country
+Name of country
+build
+Parameter name for account build
+gamemode
+Game mode number 
+group
+Group ID number 
+count
+Amount of players (up to 200) returned 
+Attributes
+Attribute
+Documentation
+info/skill
+The skill name of the current top
+info/skill_number
+The skill number of the current top
+info/duration
+Time period of the tracking 
+ Available categories: "Day","Week","Month"
+info/start_date
+Selected time periods starting timestamp in UNIX time
+info/end_date
+Selected time periods ending timestamp in UNIX time
+%PERIOD%/%RANK%/player
+The RSN of the account
+%PERIOD%/%RANK%/nickname
+The RSN of the account formatted like ingame
+%PERIOD%/%RANK%/xp
+The XP gained during the time period
+%PERIOD%/%RANK%/country
+The country of the player that has been set via the TempleOSRS Discord server
+%PERIOD%/%RANK%/icon_url
+The country of the player that has been set via the TempleOSRS Discord server
+%PERIOD%/%RANK%/icon_desc
+The icon description of the player's donation perk icon
+%PERIOD%/%RANK%/game_mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+Skill Hiscores
+GET
+                This endpoint attempts to retrieve a list of players from skill hiscores
+                Examples: 
+https://templeosrs.com/api/skill_hiscores.php?skill=mining
+Parameters
+Parameter
+Documentation
+skill
+Skill parameter name (lowercase) OR number for the desired skill
+country
+Name of country
+build
+Parameter name for account build
+gamemode
+Game mode number 
+group
+Group ID number 
+count
+Amount of players (up to 200) returned 
+page
+Page number
+duration
+XP gain duration
+Attributes
+Attribute
+Documentation
+data/skill
+The skill/boss name of the hiscores
+data/type
+Type of the hiscores (skill, boss or misc)
+data/players/%RANK%/username
+The RSN of the account
+data/players/%RANK%/nickname
+The RSN of the account formatted like ingame
+data/players/%RANK%/xp
+The total XP/KC of the player
+data/players/%RANK%/rank
+The rank of the player on the hiscores
+data/players/%RANK%/gain
+The XP/KC gained during the time period
+data/players/%RANK%/finish_date
+The date in string format when player finished the skill
+data/players/%RANK%/finish_date_unix
+The date in UNIX format when player finished the skill
+data/players/%RANK%/finish_days_ago
+The days elapsed since finishing of the skill
+data/players/%RANK%/country
+The country of the player that has been set via the TempleOSRS Discord server
+data/players/%RANK%/icon_url
+The country of the player that has been set via the TempleOSRS Discord server
+data/players/%RANK%/icon_desc
+The icon description of the player's donation perk icon
+data/players/%RANK%/game_mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+EHP By Rank
+GET
+                This endpoint attempts to retrieve the rank threshold for a specified metric.
+                Examples: 
+https://templeosrs.com/api/ehp_by_rank.php?rank=1000&metric=im
+Parameters
+Parameter
+Documentation
+rank
+The rank that you wish to know the rank threshold value of.
+metric
+                                The metric which you want to get the rank threshold from.
+                                Accepted Values: 
+ehp
+, 
+im
+, 
+uim
+, 
+f2p
+, 
+f2pim
+, 
+f2plvl3
+, 
+lvl3
+, 
+ehb
+, 
+ehbim
+                                Default Value: 
+ehp
+Attributes
+Attribute
+Documentation
+data/metric
+                                Confirmation of the metric parameter.
+                                Returned Values: 
+EHP
+, 
+IM-EHP
+, 
+UIM-EHP
+, 
+F2P-EHP
+, 
+F2P-IM-EHP
+, 
+F2P-LVL3-EHP
+, 
+LVL3-EHP
+, 
+EHB
+, 
+IM-EHB
+data/rank
+Confirmation of the rank parameter.
+data/rank_threshold
+The rank threshold for the specified metric and rank, with four digits of precision.
+Player Specific Endpoints
+Player Information
+GET
+                This endpoint attempts to give you any valuable information from the player's overview page.
+                Example: 
+https://templeosrs.com/api/player_info.php?player=Mikael
+Parameters
+Parameter
+Documentation
+player
+The current RSN of the player you are trying to look up
+dateformat
+Format of the dates returned. Currently only supported value is "unix" for unix timestamp.
+cloginfo
+The response will include additional collection log related information.
+formattedrsn
+The response will include the RSN how it is in-game with proper capitalization and special characters.
+Attributes
+Attribute
+Documentation
+Username
+The current RSN of the player
+player_name_with_capitalization
+The RSN of the participant, with special symbols and capitalization it has ingame.
+ Note: Only present if parameter 
+formattedrsn
+ is included.
+Country
+The country that has been set via the TempleOSRS Discord server
+Game mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+GIM
+Enumeration for group iron man mode; 0 = Not GIM, 12 = Regular 2-player, 13 = Regular 3-player, 14 = Regular 4-player, 15 = Regular 5-player, 22 = HC 2-player, 23 = HC 3-player, 24 = HC 4-player, 25 = HC 5-player
+fresh_start_account
+Bit that marks if the player has been flagged as a fresh start world account
+Cb-3
+Bit that marks if the player has been flagged as a level 3 account
+F2p
+Bit that marks if the player has been flagged as a free-to-play account
+Disqualified
+Bit that marks if the player has been disqualified from the website
+Clan preference
+Custom requested group ID for the verified or featured clan logo present on player page
+Last checked
+Timestamp of the last time the player was attempted to be updated
+Last changed
+Timestamp of the last time the player was updated
+Datapoint Cooldown
+Time in seconds until the player may be attempted to be updated
+collection_log/log_synced
+Boolean (1 or 0) whether player has successfully syncronized their collection log. 
+collection_log/last_checked
+Timestamp of the last time player has syncronized their collection log through the plugin.
+collection_log/last_changed
+Timestamp of the last time player has syncronized their collection log with a new item through the plugin.
+Player Names
+GET
+                This endpoint attempts to give you any valuable information from the player's names page.
+                Example: 
+https://templeosrs.com/api/player/player_names.php?player=Gustav
+Parameters
+Parameter
+Documentation
+player
+The current RSN of the player you are trying to look up
+Attributes
+Attribute
+Documentation
+aliases/%ALIAS%/name
+The name of the %ALIAS%
+aliases/%ALIAS%/last_used
+The number of days since the player has used the %ALIAS%
+aliases/%ALIAS%/last_used_seconds
+The number of seconds since the player has used the %ALIAS%
+aliases/%ALIAS%/ehp_gained
+The amount of EHP the player gained under that %ALIAS%
+aliases/%ALIAS%/time_used
+The number of seconds that the player used the %ALIAS%
+history/name
+Names will be presented as most recent %ALIAS% first
+history/last_date
+The date the player last reported as the name during the period
+history/first_date
+The date the player first reported as the name during the period
+history/seconds
+Time in seconds the player reported as the name during the period
+history/ehp
+The amount of EHP the player gained during the period
+history/xp
+The amount of XP the player gained during the period
+info/total_history_seconds
+Total time in seconds between all names the user has had
+Player Stats
+GET
+                This endpoint attempts to give you any valuable information from the player's stats page.
+                Example: 
+https://templeosrs.com/api/player_stats.php?player=Mikael&date=1613953145&bosses=1
+Parameters
+Parameter
+Documentation
+player
+The current RSN of the player you are trying to look up
+date
+The time since the Unix epoch in which you want to retrieve the player's stats from
+bosses
+If boss data should be included in the request (Value: 1)
+Attributes
+Attribute
+Documentation
+data/info/..
+See the Player Information endpoint documentation
+data/date
+The timestamp of the selected data point
+data/%SKILL%
+The experience recorded on the data point for the selected 
+%SKILL%
+data/%SKILL%_rank
+The rank recorded on the data point for the selected 
+%SKILL%
+data/%SKILL%_level
+The level recorded on the data point for the selected 
+%SKILL%
+data/%SKILL%_ehp
+The level recorded on the data point for the selected 
+%SKILL%
+data/Ehp
+The Main-EHP recorded on the data point for the selected profile
+data/Ehp_rank
+The time to 200m all rank recorded on the data point for the selected profile
+data/Im_ehp
+The IM-EHP recorded on the data point for the selected profile
+data/Lvl3_ehp
+The Lvl3-EHP recorded on the data point for the selected profile
+data/F2p_ehp
+The F2p-EHP recorded on the data point for the selected profile
+data/Uim_ehp
+The UIM-EHP recorded on the data point for the selected profile
+Player Gains
+GET
+                This endpoint attempts to give you recorded player gains from several of the player's pages
+                Example: 
+https://templeosrs.com/api/player_gains.php?player=FasTLT&time=10000000&bosses=1
+Parameters
+Parameter
+Documentation
+player
+The current RSN of the player you are trying to look up
+time
+Number of seconds before the current timestamp to start recording gains from.
+ This variable has special parameters for time in string format: day, week, month, year, cday, cweek, cmonth and cyear.
+ Parameters with c-prefix return calendar date. For example cyear returns the current calendar year 2024-01-01 - 2025-01-01
+bosses
+Bit that marks if you want the server to return non-skill gains
+Attributes
+Attribute
+Documentation
+data/Date
+The timestamp of the start of the selected gains window
+data/Player
+The RSN of the player
+data/Primary_ehp
+The key for players primary EHP type
+data/Primary_ehb
+The key for players primary EHB type
+Note: Only present when boss data is requested
+data/%SKILL%
+The experience recorded on the data point for the selected 
+%SKILL%
+Player Datapoints
+GET
+                This endpoint attempts to return the last 200 datapoints of the player
+                Example: 
+https://templeosrs.com/api/player_datapoints.php?player=Mikael&time=100000000
+Parameters
+Parameter
+Documentation
+player
+The current RSN of the player you are trying to look up
+time
+Number of seconds before the current timestamp to start listing data points from
+date
+Replaces current timestamp with any date in Y-m-d H:i:s format (2025-01-01 00:00:00)
+bosses
+Bit that marks if you want the server to return non-skill gains
+Attributes
+Attribute
+Documentation
+data/..
+Timestamp of the data point
+data/../%SKILL%
+The experience/kc recorded on the data point for the selected 
+%SKILL%
+Player Competitions
+GET
+                This endpoint returns information about the player's competitions.
+                Example: 
+https://templeosrs.com/api/player_competitions.php?player=Mikael
+Parameters
+Parameter
+Documentation
+player
+The current RSN of the player you are trying to look up
+badged
+With parameter 
+&badged=true
+ the response will only include badged competitions.
+Attributes
+Attribute
+Documentation
+data/%COMPETITION%/id
+The ID of the competition, ID is in the URL of the competition's page
+data/%COMPETITION%/name
+The name of the competition
+data/%COMPETITION%/status
+The status enumeration for the competition; 0 = upcoming, 1 = ongoing, 2 = finished
+data/%COMPETITION%/status_text
+The status enumeration's corresponding text for the competition
+data/%COMPETITION%/team_competition
+Bit that marks if the competition was team based
+data/%COMPETITION%/skill
+The default skill's skill enumeration for the competition
+data/%COMPETITION%/skill_name
+The default skill for the competition
+data/%COMPETITION%/start_date
+The starting timestamp for the competition (UTC)
+data/%COMPETITION%/end_date
+The ending timestamp for the competition (UTC)
+data/%COMPETITION%/start_date_unix
+UNIX timestamp for the start date (UTC)
+data/%COMPETITION%/end_date_unix
+UNIX timestamp for the end date (UTC)
+data/%COMPETITION%/participants
+Total number of participants
+data/%COMPETITION%/linked_group_id
+The linked groups ID if set
+data/%COMPETITION%/linked_group_name
+The linked groups name if set
+data/%COMPETITION%/badged
+Boolean if the competition has a badge award
+data/%COMPETITION%/badge_img
+The URL of the badge image if the competition has a badge
+Competition Endpoints
+Competition Members
+GET
+                This endpoint attempts to return a list of players in a competition
+                Example: 
+https://templeosrs.com/api/compmembers.php?id=5488
+Parameters
+Parameter
+Documentation
+id
+The competition ID of the competition, ID is in the URL of the competition's page
+Attributes
+Attribute
+Documentation
+/%RSN%
+This endpoint returns a list of RSNs of those in the competition requested
+Competition Information V2
+GET
+                This endpoint attempts to give you any valuable information about a competition
+                Participants are listed in rank order, by the skill in which the competition defaults to if no skill is defined
+                Example: 
+https://templeosrs.com/api/competition_info_v2.php?id=15025
+Parameters
+Parameter
+Documentation
+id
+The competition ID of the competition, ID is in the URL of the competition's page
+skill
+Skill parameter name (lowercase) OR number for the desired skill
+details
+Just including this parameter with any value will add start and end XP/KC values for each player
+snapshot
+Point in time which you want to view the competition in. For example:
+&snapshot=1day
+ to view the competition standings after first day 
+&snapshot=2week
+ to view the competition standings after two weeks
+format
+Response format. Currently only supported value is 
+&format=table
+ for easier spreadsheet implementations
+altunranked
+Alternative way of returning unranked bosses. Boss KCs are instead of being returned as the minimum hiscores threshold, returned as minimum hiscores threshold - 1.
+Attributes
+Attribute
+Documentation
+data/info/id
+The competition ID for confirmation purposes
+data/info/name
+The competition name
+data/info/status
+The status enumeration for the competition; 0 = upcoming, 1 = ongoing, 2 = finished
+data/info/participant_count
+The number of profiles in the competition
+data/info/team_competition
+Bit that marks if the competition was team based
+data/info/skill_competition
+Bit that marks if the competition is skill based (0 = skill, 1 = boss)
+data/info/skill
+The default skill for the competition
+data/info/skill_index
+The default skill's skill enumeration for the competition
+data/info/start_date
+The starting timestamp for the competition (UTC)
+data/info/end_date
+The ending timestamp for the competition (UTC)
+data/info/now_time
+Current timestamp (UTC)
+data/info/start_date_unix
+UNIX timestamp for the start date (UTC)
+data/info/end_date_unix
+UNIX timestamp for the end date (UTC)
+data/info/now_time_unix
+UNIX timestamp for current time (UTC)
+data/info/linked_group_id
+The linked groups ID if set
+data/info/linked_group_name
+The linked groups name if set
+data/info/group_member_sync
+The status of whether active synchronization of participant list to a group is enabled
+data/info/league_v_competition
+Bit that marks if the competition is a Raging Echoes League competition
+data/participants/%RANK%/username
+The RSN of the participant
+data/participants/%RANK%/player_name_with_capitalization
+The RSN of the participant, with special symbols and capitalization it has ingame
+data/participants/%RANK%/gain
+The xp gained in the competition from the participant
+data/participants/%RANK%/end_xp
+The end xp of the participant
+data/participants/%RANK%/start_xp
+The start xp of the participant
+data/participants/%RANK%/last_checked
+The last time participant was updated
+data/participants/%RANK%/last_changed
+The last time participant was updated with XP or KC gain depending on if its skill or boss competition
+data/participants/%RANK%/last_checked_unix
+The last time participant was updated in UNIX time 
+data/participants/%RANK%/last_changed_unix
+The last time participant was updated in UNIX time with XP or KC gain depending on if its skill or boss competition
+data/participants/%RANK%/start_level
+The start level of the participant
+data/participants/%RANK%/current_level
+The end level of the participant
+ -->
+data/participants/%RANK%/team
+The players team number if team competition
+data/participants/%RANK%/team_name
+The players team name if team competition
+data/participants/%RANK%/has_datapoints
+If the player has been updated at least once during the competition
+data/participants/%RANK%/on_hiscores
+If the player was found on hiscores on last update
+data/teams/%RANK%/name
+The team name
+data/teams/%RANK%/start_xp
+The start xp gained of the team
+data/teams/%RANK%/end_xp
+The end xp gained of the team
+data/teams/%RANK%/gain
+The xp gained in the competition by the team
+data/teams/%RANK%/mvp
+The name of the MVP of the team
+data/teams/%RANK%/members/*
+Array of team members names
+Competition Information
+Deprecated
+GET
+This endpoint is deprecated and will not be updated to include any new content.
+ Use Competition Information V2 instead.
+                This endpoint attempts to give you any valuable information from a competition's page
+                Participants are listed in rank order, by the skill in which the competition defaults to
+                Example: 
+https://templeosrs.com/api/competition_info.php?id=15025
+Parameters
+Parameter
+Documentation
+id
+The competition ID of the competition, ID is in the URL of the competition's page
+skill
+Skill parameter name (lowercase) OR number for the desired skill
+Attributes
+Attribute
+Documentation
+data/info/id
+The competition ID for confirmation purposes
+data/info/name
+The competition name
+data/info/team_competition
+Bit that marks if the competition was team based
+data/info/participant_count
+The number of profiles in the competition
+data/info/skill
+The default skill for the competition
+data/info/skill_index
+The default skill's skill enumeration for the competition
+data/info/start_date
+The starting timestamp for the competition
+data/info/end_date
+The ending timestamp for the competition
+data/info/status
+The status enumeration for the competition
+data/info/status_text
+The status enumeration's corresponding text for the competition
+data/info/linked_group_id
+The linked groups ID if set
+data/info/group_member_sync
+The status of whether active synchronization of participant list to a group is enabled
+data/participants/username
+The RSN of the participant
+data/participants/last_checked
+The last time participant was updated 
+Note: Only present in ongoing competitions
+data/participants/last_changed
+The last time participant was updated with XP or KC gain depending on if its skill or boss competition 
+Note: Only present in ongoing competitions
+data/participants/last_checked_unix
+The last time participant was updated in UNIX time 
+Note: Only present in ongoing competitions
+data/participants/last_changed_unix
+The last time participant was updated in UNIX time with XP or KC gain depending on if its skill or boss competition 
+Note: Only present in ongoing competitions
+data/participants/xp_gained
+The xp gained in the competition from the participant
+data/participants/start_xp
+The start xp gained of the participant
+data/participants/end_xp
+The end xp gained of the participant
+data/participants/start_level
+The start level of the participant
+data/participants/current_level
+The end level of the participant
+data/participants/team_name
+The players team name if team competition
+data/teams/%TEAM%/team_gain
+The xp gained in the competition by the team
+data/teams/%TEAM%/members/*
+Shares same fields with 
+data/participants/
+Competition: Create
+POST
+                This endpoint is used to create a competition
+Note:
+ This is POST endpoint and parameters should be included in the body of the response instead of the URL
+                Example: 
+https://templeosrs.com/api/competition_create.php
+Parameters
+Parameter
+Documentation
+name
+The name for the competition
+skill
+Skill parameter name (lowercase) OR number for the desired skill 
+ Full list of skills and their respective parameters can be found 
+here
+team-comp
+Boolean value for if the competition is a team competition
+participants
+This parameter is for regular competitions!
+The players to be added to the competition in an array 
+Example: 
+["Mikael", "Viore", "Pogba"]
+teams
+This parameter is for team competitions!
+The teams to be added to the competition as JSON object.
+ Key: Team name
+ Value: Comma separated string of team members
+Example: 
+{"The boys": "Mikael, Viore, Harmonei", "Team two": "Bug Stop, Tkarma, Pogba, Buwatt"}
+start-date
+UNIX timestamp for the start date (server time is UTC)
+end-date
+UNIX timestamp for the end date (server time is UTC)
+group-id
+The linked groups ID if set
+group-key
+The linked groups key if set
+group-sync
+Boolean value for if the competition should have synced participant list with linked group
+league-v-comp
+Optional value for if the competition is a Raging Echoes League competition (any value will work as long as the parameter is present)
+Attributes
+Attribute
+Documentation
+name
+The ID of the competition
+name
+The name of the competition
+team_comp
+Whether group is team competition or not
+skill
+The skill number of the competition
+skill-name
+The skill name of the competition
+start-date
+ISO 8601 formatted start date and time for the competition (UTC)
+start-date-unix
+UNIX timestamp for the start date
+end-date
+ISO 8601 formatted end date and time for the competition (UTC)
+end-date-unix
+UNIX timestamp for the end date
+participant-count
+Total number of participants
+key
+The competition's password key, this will not be given to you again
+linked-to-group
+The group ID of a linked group
+synced-group-id
+Boolean value for if the competition participants are synced to the linked group
+league_v_competition
+Bit that marks if the competition is a Raging Echoes League competition
+participants
+An array of the full list of participants in the competition 
+teams
+An array of team objects of all participants in each team. 
+ Key: Team name 
+ Value: Array of participants 
+Competition: Delete
+POST
+                This endpoint is used to delete a competition
+Note:
+ This is POST endpoint and parameters should be included in the body of the response instead of the URL
+                Example: 
+https://templeosrs.com/api/competition_delete.php
+Parameters
+Parameter
+Documentation
+id
+The ID of the competition, ID is in the URL of the competition's page
+key
+The competition's password key, given on creation of the competition
+Attributes
+Attribute
+Documentation
+data/competition_id
+The ID of the deleted competition
+data/message
+Confirmation message that the competition was deleted
+Competition List: Add
+POST
+                This endpoint adds RSNs to the competition's participant list
+Note:
+ This is POST endpoint and parameters should be included in the body of the response instead of the URL
+                Example: 
+https://templeosrs.com/api/competition_add_participant.php
+Parameters
+Parameter
+Documentation
+id
+The ID of the competition, ID is in the URL of the competition's page
+key
+The competition's password key, given on creation of the competition
+players
+The players to be added to the competition, separated by commas
+teams
+The teams for added players in JSON object format. Key = player name, Value = team name 
+ Example:
+{"Buwatt": "The boys", "Vegan Zrax": "The boys", "Bug Stop": "Team two", "Pogba": "Team three"}
+Attributes
+Attribute
+Documentation
+data/added_names_count
+Count of added participants
+data/old_participant_count
+Total participant count in the competition before this operation 
+data/new_participant_count
+New total participant count in the competition after this operation 
+data/added_names_list
+An array of added participant 
+Competition List: Remove
+POST
+                This endpoint removes RSNs from the competition's participant list
+Note:
+ This is POST endpoint and parameters should be included in the body of the response instead of the URL
+                Example: 
+https://templeosrs.com/api/competition_remove_participant.php
+Parameters
+Parameter
+Documentation
+id
+The ID of the competition, ID is in the URL of the competition's page
+key
+The competition's password key, given on creation of the competition
+players
+The players to be removed to the competition, separated by commas
+Attributes
+Attribute
+Documentation
+data/removed_names_count
+Count of removed participants
+data/old_participant_count
+Total participant count in the competition before this operation 
+data/new_participant_count
+New total participant count in the competition after this operation 
+data/removed_names_list
+An array of removed participants 
+Group Endpoints
+Basic Group Memberlist
+GET
+                This endpoint attempts to give you a list of members from the group's page
+                Example: 
+https://templeosrs.com/api/groupmembers.php?id=3
+Parameters
+Parameter
+Documentation
+id
+The ID of the group, ID is in the URL of the group's page
+Attributes
+Attribute
+Documentation
+/%RSN%
+This endpoint returns a list of RSNs of those in the group requested
+Group Member Stats
+GET
+                This endpoint gives you a memberlist with detailed information and stats of each member if requested
+                Example: 
+https://templeosrs.com/api/group_member_info.php?id=3
+Parameters
+Parameter
+Documentation
+id
+The ID of the group, ID is in the URL of the group's page
+skills
+If skill data should be included in the response 
+Any value works as long as the parameter exists in the URL
+bosses
+If boss data should be included in the response 
+Any value works as long as the parameter exists in the URL
+details
+Adds join_date to the response. All new values added to this endpoint will be added here to avoid breaking any existing applications using this endpoint. Only use this parameter if you know that new values being added won't cause any issues for you.
+Attributes
+Attribute
+Documentation
+data/memberlist/player
+The RSN of the member
+data/memberlist/player_name_with_capitalization
+The RSN of the member, with custom capitalization and special characters
+data/memberlist/country
+The country of the member that has been set via the TempleOSRS Discord server
+data/memberlist/game_mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+data/memberlist/level_3
+LVL-3 status of the member
+data/memberlist/free_to_play
+Free-to-play status of the member
+data/memberlist/gim_mode
+Enumeration for group iron man mode; 0 = Not GIM, 12 = Regular 2-player, 13 = Regular 3-player, 14 = Regular 4-player, 15 = Regular 5-player, 22 = HC 2-player, 23 = HC 3-player, 24 = HC 4-player, 25 = HC 5-player
+data/memberlist/leagues_iv_points
+League points reached in Trailblazer Reloaded League
+data/memberlist/on_hiscores
+Whether member was found on hiscores on last update
+data/memberlist/last_checked
+The last time participant was updated
+data/memberlist/last_checked_unix_time
+The last time participant was updated in UNIX format
+data/memberlist/last_changed_xp
+The last time participant was updated with XP gain
+data/memberlist/last_changed_xp_unix_time
+The last time participant was updated with XP gain in UNIX format
+data/memberlist/last_changed_kc
+The last time participant was updated with any KC gain
+data/memberlist/last_changed_kc_unix_time
+The last time participant was updated with any KC gain in UNIX format
+data/memberlist/join_date
+Only present if details parameter is set. The date when player was added to the group
+data/memberlist/join_date_unix_time
+Only present if details parameter is set. The date when player was added to the group in UNIX format
+data/memberlist/clog_synced
+Only present if details parameter is set. Boolean value if collection log data has been synced for the player.
+data/memberlist/last_clog_sync
+Only present if details parameter is set. The date when players collection log was last synced.
+data/memberlist/primary_ehp
+Only present if details parameter is set. The key for players primary EHP type.
+data/memberlist/primary_ehb
+Only present if details parameter is set. The key for players primary EHB type.
+data/memberlist/tt200m
+Only present if details parameter is set. Hours left to 200m all in players primary EHP.
+data/memberlist/%RSN%/skills/%SKILL%
+Experience in the %SKILL% (Includes all EHPs player is qualified for)
+Only if 
+skills
+ variable is provided
+data/memberlist/%RSN%/bosses/%SKILL%
+KC in the %BOSS% (Includes all EHBs player is qualified for)
+Only if 
+bosses
+ variable is provided
+Group Information
+GET
+                This endpoint attempts to give you any valuable information from a group's page
+                Example: 
+https://templeosrs.com/api/group_info.php?id=3
+Parameters
+Parameter
+Documentation
+id
+The group ID of the group, ID is in the URL of the group's page
+achievements
+Set this to any value and group members will have added achievement data
+Attributes
+Attribute
+Documentation
+data/info/id
+The group ID for confirmation purposes
+data/info/name
+The group name
+data/info/youtube_link
+The group's YouTube channel link
+data/info/twitter_link
+The group's Twitter profile link
+data/info/twitch_link
+The group's Twitch profile link
+data/info/discord_link
+The group's Discord server link
+data/info/forum_link
+The group's RSOF recruitment thread link
+data/info/total_xp
+The group's total XP between all members
+data/info/average_xp
+The group's average total XP
+data/info/total_ehp
+The group's total EHP between all members
+data/info/average_ehp
+The group's average EHP
+data/info/total_ehb
+The group's total EHB between all members
+data/info/average_ehb
+The group's average EHB
+data/info/clan_type
+The group's clan type if set
+data/info/clan_type_id
+The group's clan type in number format if set
+data/info/member_count
+The group's running member count
+data/info/members/%RSN%
+This endpoint returns a list of RSNs, 
+who are not leaders
+data/info/leaders/%RSN%
+This endpoint returns a list of RSNs, 
+who are leaders
+Group Achievements
+GET
+                This endpoint attempts to give you any group achievements from a group's page
+                Example: 
+https://templeosrs.com/api/group_achievements.php?id=3
+Parameters
+Parameter
+Documentation
+id
+The group ID of the group, ID is in the URL of the group's page
+Attributes
+Attribute
+Documentation
+data/username
+The RSN of the player who achieved a milestone
+data/Date
+The timestamp of the data point of which the player achieved a milestone
+data/Skill
+The skill in which the player achieved a milestone
+data/Milestone
+The type of the milestone, either level or xp
+data/Type
+The type of skill of the achieved milestone
+data/Xp
+The xp or kc of the achieved milestone
+Group Competitions
+GET
+                This endpoint returns all competitions linked to the group
+                Example: 
+https://templeosrs.com/api/group_competitions.php?id=3
+Parameters
+Parameter
+Documentation
+id
+The group ID of the group, ID is in the URL of the group's page
+Attributes
+Attribute
+Documentation
+data/%INDEX%/id
+The competition ID for confirmation purposes
+data/%INDEX%/name
+The competition name
+data/%INDEX%/skill_index
+The default skill's skill enumeration for the competition
+data/%INDEX%/skill
+The default skill for the competition
+data/%INDEX%/start_date
+The starting timestamp for the competition
+data/%INDEX%/start_date_unix
+UNIX timestamp for the start date
+data/%INDEX%/end_date
+The ending timestamp for the competition
+data/%INDEX%/end_date_unix
+UNIX timestamp for the end date
+data/%INDEX%/status
+The status enumeration for the competition
+data/%INDEX%/status_text
+The status enumeration's corresponding text for the competition
+data/%INDEX%/group_member_sync
+The status of whether active synchronization of participant list to a group is enabled
+data/%INDEX%/participant_count
+The number of profiles in the competition
+data/%INDEX%/team_competition
+Bit that marks if the competition is team based
+Group List: Edit
+POST
+                This endpoint sets the entire group's member list
+Note:
+ This is POST endpoint and parameters should be included in the body of the response instead of the URL
+                Example: 
+https://templeosrs.com/api/edit_group.php
+Parameters
+Parameter
+Documentation
+id
+The group ID of the group, ID is in the URL of the group's page
+key
+The group's password key, given on creation of the group
+memberlist
+The complete member list of all RSNs that are in the group as a comma-separated string
+Group List: Add
+POST
+                This endpoint adds RSNs to the group's member list
+Note:
+ This is POST endpoint and parameters should be included in the body of the response instead of the URL
+                Example: 
+https://templeosrs.com/api/add_group_member.php
+Parameters
+Parameter
+Documentation
+id
+The group ID of the group, ID is in the URL of the group's page
+key
+The group's password key, given on creation of the group
+players
+The players to be added to the group, separated by commas
+Group List: Remove
+POST
+                This endpoint removes RSNs to the group's member list
+Note:
+ This is POST endpoint and parameters should be included in the body of the response instead of the URL
+                Example: 
+https://templeosrs.com/api/remove_group_member.php
+Parameters
+Parameter
+Documentation
+id
+The group ID of the group, ID is in the URL of the group's page
+key
+The group's password key, given on creation of the group
+players
+The players to be removed from the group, separated by commas
+Pet Endpoints
+Pet Leaderboards
+GET
+                This endpoint returns the pet leaderboard
+                Example: 
+https://templeosrs.com/api/pets/leaderboard.php
+Parameters
+Parameter
+Documentation
+gamemode
+Game mode name (im, uim, hcim, gim, hcgim) 
+Attributes
+Attribute
+Documentation
+/%RANK%/rank
+The player's rank on the pet leaderboards
+/%RANK%/player
+The RSN of the player
+/%RANK%/pet_count
+The number of pets player has aqcuired 
+/%RANK%/pet_hours
+The average time taken to reach the pets the player has
+/%RANK%/percentage
+The progress to all pets in string percentage form 
+/%RANK%/all_pets_date
+The date in UNIX format the player achieved all currently available pets 
+/%RANK%/legacy_all_pets_date
+The date in UNIX format the player achieved all pets the first time
+/%RANK%/country
+The country of the player that has been set via the TempleOSRS Discord server
+/%RANK%/icon_name
+The icon url of the player's donation perk icon
+/%RANK%/icon_desc
+The icon description of the player's donation perk icon
+/%RANK%/game_mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+Pet Hall Of Fame
+GET
+                This endpoint returns the pet hall of fame
+                Example: 
+https://templeosrs.com/api/pets/hall_of_fame.php
+Parameters
+Parameter
+Documentation
+gamemode
+Game mode name (im, uim, hcim, gim, hcgim) 
+Attributes
+Attribute
+Documentation
+/%RANK%/rank
+The player's rank on the pet leaderboards
+/%RANK%/player
+The RSN of the player
+/%RANK%/pet_count
+The number of pets player has aqcuired 
+/%RANK%/final_pet
+The last pet player obtained when he reached all pets for the first time
+/%RANK%/date
+The date in UNIX format the player achieved all pets the first time
+/%RANK%/all_pets_date
+The date in UNIX format the player achieved all currently available pets 
+/%RANK%/legacy_all_pets_date
+The date in UNIX format the player achieved all pets the first time
+/%RANK%/country
+The country of the player that has been set via the TempleOSRS Discord server
+/%RANK%/icon_name
+The icon url of the player's donation perk icon
+/%RANK%/icon_desc
+The icon description of the player's donation perk icon
+/%RANK%/game_mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+Pet Hours
+GET
+                This endpoint returns information about each pet
+                Example: 
+https://templeosrs.com/api/pets/hours.php
+Parameters
+Parameter
+Documentation
+None
+-
+Attributes
+Attribute
+Documentation
+%PET%/pet_name
+The name of the pet
+%PET%/drop_rate
+The drop rate for the pet
+%PET%/kills_per_hour
+The average kills/h with the most efficient method
+%PET%/pet_hours
+The average time it takes to acquire the pet using the most efficient method
+Pet Count
+GET
+                This endpoint returns information about players pets
+                Example: 
+https://templeosrs.com/api/pets/pet_count.php
+Parameters
+Parameter
+Documentation
+gamemode
+Game mode name (im, uim, hcim, gim, hcgim) 
+player
+The current RSN of the player you are trying to look up
+group
+Filter by ID of the group, ID is in the URL of the group's page
+count
+Amount of players (up to 200) returned
+page
+Page number (up to 100)
+Attributes
+Attribute
+Documentation
+data/rank
+The player's rank on the pet leaderboards with given parameters
+data/player
+The current RSN of the player
+data/pet_count
+The number of pets player has aqcuired
+data/pet_hours
+Estimated time it took to acquire players pets using the most efficient method
+data/pets/%PET%
+List of all pets: 
+0 = player doesn't have this pet, 1 = player has this pet
+Collection Log Endpoints
+Player Collection Log
+GET
+                Very customisable and flexible endpoint that returns the players collection log items and some related data.
+                Please consider only querying data that you need. If you need to query items for multiple people make a group and use group items endpoint. 
+                Example: 
+https://templeosrs.com/api/collection-log/player_collection_log.php?player=Mikael&categories=champions_challenge,castle_wars
+Parameters
+Parameter
+Documentation
+player
+The current RSN of the player
+categories
+Comma separated list of categories you want to get items for. List of valid categories can be found 
+here
+. 
+includenames
+Boolean (1 or 0) value for if the items name will be included 
+yearlygains
+Boolean (1 or 0) value for if EHC yearly gains will be included 
+categoryhours
+Boolean (1 or 0) value for if data about hours to finishing categories will be included 
+includemissingitems
+Boolean (1 or 0) value for if missing items will be included in the response 
+onlyitems
+Boolean (1 or 0) value for only list of items without separating them under their categories 
+dateformat
+Format of the dates returned. Currently only supported value is "unix" for unix timestamp.
+Attributes
+Attribute
+Documentation
+data/player
+The current RSN of the player
+data/player_name_with_capitalization
+The RSN of the player, with special symbols and capitalization it has ingame
+data/game_mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+data/last_checked
+Last time the player synced their collection
+data/last_changed
+Last time the player synced their collection with new item
+data/total_collections_finished
+Total number of collection logs the player has
+data/total_collections_available
+Total number of items in the collection log currently
+data/total_collections_in_response
+Total number of unique items in this response
+data/ehc
+Players total EHC with third age algorithm
+data/ehc_gilded
+Players total EHC with gilded algorithm
+data/ehc_im
+Players total EHC-IM with third age algorithm
+data/ehc_gilded_im
+Players total EHC-IM with gilded algorithm
+data/total_categories_finished
+Total categories player has finished
+data/total_categories_available
+Total categories currently in the collection log
+data/collections_hiscores_rank
+Players hiscores rank for collections. Returns null if player isn't ranked on hiscores.
+data/items/%ITEM%/id
+ or 
+data/items/%CATEGORY%/%ITEM%/id
+The ID of the item
+data/items/%ITEM%/count
+ or 
+data/items/%CATEGORY%/%ITEM%/count
+Number of times the item has been obtained in the log
+data/items/%ITEM%/date
+ or 
+data/items/%CATEGORY%/%ITEM%/date
+The date item was obtained
+data/category_hours/*
+Optional extra data about hours left in main categories if 
+categoryhours
+ parameter is included
+data/yearly_gains/*
+Optional extra data about hours played in each year if 
+yearlygains
+ parameter is included
+Group Collection Log
+GET
+                Returns all items obtained by group members. Due to the nature of this endpoint returning huge amounts of data, the data provided will be more limited and the user is expected to take it from there.
+                Items are provided as list of item IDs for each user. No categories, names, counts or dates provided. If this isn't something you can manage without, reach out on our discords #help channel and we will help you find solutions.
+To help you with further processing the data here are links to maps that I would use to structure the data:
+Collection Log Items
+Collection Log Categories
+Collection Log Parameters
+                Example: 
+https://templeosrs.com/api/collection-log/group_collection_log.php?group=56&categories=all
+Parameters
+Parameter
+Documentation
+group
+Group ID number 
+dateformat
+Format of the dates returned. Currently only supported value is "unix" for unix timestamp.
+categories
+Comma separated list of categories you want to get items for. List of valid categories can be found 
+here
+. 
+includecount
+Changes the items array to instead of being an array of item IDs, to be a map of item ID -> item count. 
+Attributes
+Attribute
+Documentation
+data/group_id
+Group ID number 
+data/group_name
+Groups name
+data/member_count
+The group's running member count
+data/members_with_items_synced
+Number of members who have synced their items at least once
+data/total_collections_available
+Total number of items in the collection log
+data/total_categories_available
+Total categories currently in the collection log
+data/members/%PLAYER%/player
+The current RSN of the player
+data/members/%PLAYER%/player_name_with_capitalization
+The RSN of the player, with special symbols and capitalization it has ingame
+data/members/%PLAYER%/game_mode
+Enumeration for game mode; 0 = Main, 1 = IM, 2 = UIM, 3 = HCIM
+data/members/%PLAYER%/first_sync
+First time the player synced their collection
+data/members/%PLAYER%/last_checked
+Last time the player synced their collection
+data/members/%PLAYER%/last_changed
+Last time the player synced their collection with new item
+data/members/%PLAYER%/ehc
+Players total EHC with third age algorithm
+data/members/%PLAYER%/ehc_gilded
+Players total EHC with gilded algorithm
+data/members/%PLAYER%/im_ehc
+Players total iron man EHC with third age algorithm
+data/members/%PLAYER%/im_ehc_gilded
+Players total iron man EHC with gilded algorithm
+data/members/%PLAYER%/total_collections_finished
+Total number of collection logs the player has
+data/members/%PLAYER%/total_categories_finished
+Total categories player has finished
+data/members/%PLAYER%/%ITEMS%
+List of all item IDs the player has collected. If 
+includecount
+ parameter is present then this will be ID:Count map.
+Player Recent Collections
+GET
+                Returns the most recent items the player has obtained in the collection log.
+Note: This only returns items obtained after the players initial sync.
+                Example: 
+https://templeosrs.com/api/collection-log/player_recent_items.php?player=Mikael
+Parameters
+Parameter
+Documentation
+player
+The current RSN of the player
+count
+Amount of items (up to 200) returned.
+ Default value: 25
+onlynotable
+Optional boolean value (1 or 0) if you want only notable items to be returned
+Attributes
+Attribute
+Documentation
+data/%ITEM%/id
+The ID of the item
+data/%ITEM%/name
+The name of the item
+data/%ITEM%/date
+Timestamp when the item was acquired
+data/%ITEM%/date_unix
+Timestamp in UNIX format when the item was acquired
+data/%ITEM%/notable_item
+Boolean value for whether the item is notable or not (Pets, rare clue items and in general significant items are marked as notable)
+Group Recent Collections
+GET
+                Returns the most recent items the groups members have obtained in the collection log.
+Note: This only returns items obtained after the players initial sync.
+                Example: 
+https://templeosrs.com/api/collection-log/group_recent_items.php?group=2802
+Parameters
+Parameter
+Documentation
+group
+Group ID number 
+count
+Amount of items (up to 200) returned.
+ Default value: 25
+onlynotable
+Optional boolean value (1 or 0) if you want only notable items to be returned
+Attributes
+Attribute
+Documentation
+data/%ITEM%/id
+The ID of the item
+data/%ITEM%/name
+The name of the item
+data/%ITEM%/player
+The current RSN of the player
+data/%ITEM%/player_name_with_capitalization
+The RSN of the player, with special symbols and capitalization it has ingame
+data/%ITEM%/date
+Timestamp when the item was acquired
+data/%ITEM%/date_unix
+Timestamp in UNIX format when the item was acquired
+data/%ITEM%/notable_item
+Boolean value for whether the item is notable or not (Pets, rare clue items and in general significant items are marked as notable)
+List: Collection Log Items
+GET
+                Returns id to name map of all items currently being tracked in the log.
+                Example: 
+https://templeosrs.com/api/collection-log/items.php
+Parameters
+Parameter
+Documentation
+Attributes
+Attribute
+Documentation
+List: Collection Log Categories
+GET
+                Returns all categories and items they contain currently being tracked.
+                Example: 
+https://templeosrs.com/api/collection-log/categories.php
+Parameters
+Parameter
+Documentation
+Attributes
+Attribute
+Documentation
+List: Collection Log Category Parameters
+GET
+                Returns comma separated list of every available parameter for categories.
+                Example: 
+https://templeosrs.com/api/collection-log/category_parameters.php
+Parameters
+Parameter
+Documentation
+Attributes
+Attribute
+Documentation
+Rate Endpoints
+EHB Rates
+GET
+                Returns EHB rates for each boss.
+ Available parameter values: main, im, uim, 1def
+                Example: 
+https://templeosrs.com/api/rates/ehb_rates.php?rate=im
+Parameters
+Parameter
+Documentation
+rate
+Rate name (main, im, uim, 1def) 
+Attributes
+Attribute
+Documentation
+data/info/last_updated
+Timestamp of the last time the rates were updated
+data/info/last_updated_unix
+UNIX Timestamp of the last time the rates were updated
+data/info/rate_type
+Name of the returned rates
+data/rates/%BOSS%/rate
+EHB rate for the boss
+TempleOSRS
+Old School RuneScape statistics and hiscores tracking - powered by 
+FAQ
+API
+Frequently Asked Questions
+Copyright 2022 TempleOSRS A/S All rights reserved.
+ -->

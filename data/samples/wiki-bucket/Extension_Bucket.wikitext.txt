@@ -1,0 +1,113 @@
+'''Bucket''' is a MediaWiki extension for storing structured data on articles, which can be queried by other articles and APIs. It was developed as a replacement for Weird Gloop's use of Semantic MediaWiki, and is (sort of) in the same general category of extensions as SMW, Cargo, or Wikibase.
+
+The source code for Bucket is available on [https://github.com/weirdgloop/mediawiki-extensions-Bucket GitHub]. Be aware that Bucket is only tested to work with MySQL (''not MariaDB'', or any other RDBMS, although in theory they are supported). Third-party usage of Bucket is currently possible, but not yet recommended as the API is not yet stable.
+
+==Documentation==
+* [[/Usage|Usage in Lua modules]]
+* [[/Api|Usage through api.php]]
+* [[/SMW migration guide|Migrating from SMW to Bucket]]
+
+==Basic usage==
+Data is stored in '''buckets''', which are database tables with specific columns that you can define.
+
+For example, if we wanted to create a bucket for monster drops in a video game called ''drops'' and the columns to include the dropped item, rarity and quantity, we could go to the Bucket:Drops and write the following:
+<syntaxhighlight lang="json">
+{
+    "item": {
+        "type": "PAGE"
+    },
+    "quantity": {
+        "type": "TEXT"
+    },
+    "rarity": {
+        "type": "TEXT"
+    }
+}
+</syntaxhighlight>
+
+Supported types are '''PAGE, TEXT, INTEGER, DOUBLE, and BOOLEAN'''. Fields can be marked as repeated, in which case they are stored in the DB as JSON type, and additionally stored to a supplementary table for queries.
+
+There are a few "reserved" columns that are added to every table, including '''_page_id''', '''_index''', '''page_name''' referring to the page that the bucket "put" call is invoked on, and '''page_name_sub''' which serves to help join data correctly when there are multiple Bucket rows written per page.
+
+The ''only way'' to write and read from a bucket is via Lua calls on the ''bucket'' object. For example, to store data in that bucket via Lua, you'd write:
+
+<syntaxhighlight lang="lua">bucket("drops").put({item="Rune scimitar", quantity="3-5", rarity="1/128"})</syntaxhighlight>
+
+Querying has a lot more options, but the simplest thing would be something like:
+
+<syntaxhighlight lang="lua">
+bucket("drops")
+  .select("page_name", "item", "quantity", "rarity")
+  .where("item", "Rune scimitar")
+  .run()
+</syntaxhighlight>
+
+...which gives you all of the monsters that drop the Rune scimitar.
+
+==Using Bucket==
+Bucket is made up of three main pieces:
+* Table definitions in the "Bucket" namespace, where you define a database table, and can modify it with additional fields
+* Implementation of "bucket.put" that does INSERT and UPDATE queries on those tables
+* Implementation of queries, which translate the Lua syntax into a SELECT statement
+
+===Table definition===
+The extension adds a new namespace called '''Bucket''' (ID: 9592). All pages in this namespace are expected to be valid JSON, which is validated on save. You can define a new table definition by creating a page with a JSON object that has field names as keys, and values as JSON objects with the following keys:
+
+{| class="wikitable"
+|-
+! Key !! Description !! Default !! Valid values
+|-
+| type || '''Required.''' The type of the column, similar to MySQL data types || || PAGE, TEXT, INTEGER, DOUBLE, BOOLEAN
+|-
+| repeated || If true, fields can hold more than one value.
+* bucket.join() cannot join on a repeated field.
+|| <code>false</code> || Boolean
+|-
+| index || Whether to index the column, making queries faster but increasing database size. Must be true if ''repeated'' is true. || <code>true</code> || Boolean
+|}
+
+Creating a new table definition creates a new database table called <code>bucket__[name]</code> with the schema that was defined in the definition. When saving a table definition, the extension validates the following:
+
+* There must be at least one column in the schema
+* Field names must be strings
+* Field names must be only lowercase alphanumeric characters, or _
+* Field names must be unique
+* The '''type''' must be a supported type
+
+If an existing table definition is modified, the extension alters the existing table, adding and dropping columns and indexes as required. Table definitions are also added as an entry to the internal <code>bucket_schemas</code> table, containing a JSON representation of the table's schema.
+
+Buckets that are no longer written to can be deleted, which deletes the database table. Moving a bucket is not supported, although a user can create a new bucket and change the relevant modules to read and write from it, and then delete the old one.
+
+REPEATED fields are stored implemented as the JSON type, with each value additionally stored into a supplementary table for where conditions. All values of a repeated field are returned at once when any value matches the condition.
+
+===Storing data===
+To store data in a bucket, call the <code>bucket.put</code> function from a Lua module. This adds a field to the parser output which is processed when the [https://www.mediawiki.org/wiki/Manual:Hooks/LinksUpdateComplete LinksUpdateComplete] hook runs (on page save, move, delete, or re-parse).
+
+When storing data, we remove any fields that won't be valid columns in the bucket and then insert rows into the relevant table. It also updates the <code>bucket_pages</code> table with all of the puts that are used on each page.
+
+Unlike SMW, Bucket avoids doing INSERTs that are exactly the same as the existing values. SMW doesn't do this, and it's the reason they were responsible for 75% of our database writes. To accomplish this, <code>bucket_pages</code> has a column <code>put_hash</code> which is the SHA256 hash of the put data the last time it was written. Hashes are compared when new data is saved, and writing only continues if they differ.
+
+=== Bucket:bucket issues ===
+Bucket contains a default bucket, '''[[Bucket:Bucket issues|bucket issues]]''', that cannot be modified. Any errors and warnings from <code>bucket.put</code> calls on any page will be surfaced in this bucket.
+
+==Bug Bounty Program==
+If you discover a security vulnerability in Bucket, please send an email to <code>admin (at) weirdgloop.org</code> with step-by-step instructions to reproduce the issue. We'll send you some RuneScape Wiki merch (probably a scarf!) and possibly a bug bounty payout.
+
+Bug bounty payouts are solely at Weird Gloop's discretion, but will usually range between $200 and $2000, depending on the severity and type of vulnerability, and the level of access required to exploit it.
+
+'''Examples of high-severity vulnerabilities:'''
+* Leak of credentials or user data
+* SQL injection
+* Remote code execution/Privilege escalation
+
+'''Examples of moderate-severity vulnerabilities:'''
+* Cross-site scripting
+* Denial-of-service
+
+Bugs in Bucket code that are not security vulnerabilities won't be eligible for the bug bounty program, but we appreciate reports on the [https://github.com/weirdgloop/mediawiki-extensions-Bucket/issues GitHub issues list]. You are welcome to test your vulnerability on our [https://en_rswiki.dev.weirdgloop.org dev wikis]. Please '''do not''' test exploits on our production wikis (runescape.wiki, minecraft.wiki, etc).
+
+Security vulnerabilities in other code used by Weird Gloop (including MediaWiki core, non-Weird Gloop extensions, and other non-Bucket extensions developed by Weird Gloop) are not currently eligible for bug bounty payouts, but if you discover a vulnerability that affects us, we'd still like to hear from you.
+
+==Trivia==
+* The namespace numbers for Bucket: and Bucket talk: (9592 and 9593) are references to the internal ID numbers for the RuneScape items "[[rsw:Magic glue|magic glue]]" and "[[rsw:Weird gloop|weird gloop]]", both of which are unusual substances in buckets.
+{{NavboxBucket}}

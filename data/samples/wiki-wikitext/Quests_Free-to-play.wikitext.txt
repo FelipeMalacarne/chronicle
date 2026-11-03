@@ -1,0 +1,223 @@
+{{External|rs=List of quests by membership status#Free-to-play}}
+<noinclude>{{Otheruses|def=no|a quick way to complete all free-to-play quests|Optimal quest guide/Free-to-play}}</noinclude>
+<includeonly>==Free-to-play quests==
+{{QuestClass|align=right}}</includeonly>
+There are a total of {{globals|quests f2p}} [[free-to-play]] [[quests]] in ''[[Old School RuneScape]]'', offering a total of {{SCP|Quest|{{Globals|quest points f2p}}|link=yes}}.
+<noinclude>
+Below is a list of all [[Quests/Free-to-play|free-to-play quests]]. While the depicted difficulties and lengths are the averages of each quest, these can still vary for every player. Some recommendations presented in quest guides may only represent a single point of view out of many possible strategies. Balance these walkthroughs with your own abilities and your knowledge of ''RuneScape''.
+==Skill requirements==
+The quests requiring the highest skill level are:
+<div style="float:right">
+<tabber>
+|-|
+Regular=
+{| class="diary-table float-right"
+{{DiarySkillStats
+|selectable=yes
+|Mining = 10
+|MiningNotes = {{efn|boostable.|name=qb}}
+|Quest = 32
+}}
+|}
+|-|
+Ironman=
+{| class="diary-table float-right"
+{{DiarySkillStats
+|selectable=yes
+|Mining = 10
+|MiningNotes = {{efn|boostable.|name=qb}}
+|Smithing = 34
+|SmithingNotes = {{efn|boostable.|name=qb}}
+|Cooking = 10
+|CookingNotes = {{efn|boostable.|name=qb}}
+|Crafting = 8
+|CraftingNotes = {{efn|boostable.|name=qb}}
+|Quest = 32
+}}
+|}
+</tabber>
+</div>
+<tabber>
+|-|
+Regular=
+{| class="wikitable lighttable sortable qc-active align-center-3"
+!Skill
+!Quest
+!Lvl
+|-
+|{{SCP|Attack}} [[Attack]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Cooking}} [[Cooking]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Crafting}} [[Crafting]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Defence}} [[Defence]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Firemaking}} [[Firemaking]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Fishing}} [[Fishing]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Hitpoints}} [[Hitpoints]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Magic}} [[Magic]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Mining}} [[Mining]]
+|[[The Knight's Sword]]{{efn|boostable.|name=qb}}
+|10
+|-
+|{{SCP|Prayer}} [[Prayer]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Ranged}} [[Ranged]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Runecraft}} [[Runecraft]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Smithing}} [[Smithing]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Strength}} [[Strength]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Woodcutting}} [[Woodcutting]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Combat}} [[Combat]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Quest}} [[Quest points]]
+|[[Dragon Slayer I]]
+|32
+|}
+|-|
+Ironman=
+{| class="wikitable lighttable sortable qc-active align-center-3"
+!Skill
+!Quest
+!Lvl
+|-
+|{{SCP|Attack}} [[Attack]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Cooking}} [[Cooking]]
+|[[The Knight's Sword]]{{efn|boostable.|name=qb}}
+|10
+|-
+|{{SCP|Crafting}} [[Crafting]]
+|[[Dragon Slayer I]]{{efn|boostable.|name=qb}}
+|8
+|-
+|{{SCP|Defence}} [[Defence]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Firemaking}} [[Firemaking]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Fishing}} [[Fishing]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Hitpoints}} [[Hitpoints]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Magic}} [[Magic]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Mining}} [[Mining]]
+|[[The Knight's Sword]]{{efn|boostable.|name=qb}}
+|10
+|-
+|{{SCP|Prayer}} [[Prayer]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Ranged}} [[Ranged]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Runecraft}} [[Runecraft]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Smithing}} [[Smithing]]
+|[[Dragon Slayer I]]{{efn|boostable.|name=qb}}
+|34
+|-
+|{{SCP|Strength}} [[Strength]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Woodcutting}} [[Woodcutting]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Combat}} [[Combat]]
+|{{NA|N/A}}
+|{{NA|N/A}}
+|-
+|{{SCP|Quest}} [[Quest points]]
+|[[Dragon Slayer I]]
+|32
+|}
+</tabber>
+{{notelist}}
+
+==List of quests==
+</noinclude>
+{{Sync}}
+<dpl>
+ namespace =
+ uses = Template:Infobox Quest
+ uses = Template:Quest rewards
+ order = ascending
+ category = Free-to-play quests
+ notcategory = Future content
+ notcategory = Quick guides
+ include = {Infobox Quest}:number:name,{Quest details}:difficulty:length,{Quest rewards}:qp,{Infobox Quest}:series:release
+ format = {| class="wikitable lighttable sortable qc-active oqg-table sticky-header align-center-1 align-center-5 align-center-6 autosort=1²{comma}²a" | \n! # !! Name !! Difficulty !! Length !! {{SCP|Quest}} !! Series !! Release date,\n|- data-rowid="%PAGE%"\n|,,\n|}
+ tablerow = %%,data-sort-value="²{#dplreplace:²{#dplreplace:%PAGE%|A\s|}²|The\s|}²"|[[%PAGE%]],||data-sort-value="²{#switch:%%|Novice=1|Intermediate=2|Experienced=3|Master=4|Grandmaster=5|Special=6}²"|%%,data-sort-value="²{#switch:%%|Very Short=0|Short=1|Short – Medium=2|Short – Long=3|Medium=4|Medium – Long=5|Long=6|Very Long=7}²"|%%,||%%,||²{#ifeq:%%|None|data-sort-value="" {{NA}}|%%}²,%%,||%%
+</dpl><noinclude>
+
+==See also==
+*[[Quests/Members|Members Quests]]
+*[[Quests/Experience rewards|Quest experience rewards]]
+*[[Quest experience rewards (F2P)]]
+*[[Quests/Requirements|Quest requirements]]
+*[[Quests/Skill requirements|Quest skill requirements]]
+*[[Quests/Series|Quest series]]
+*[[Optimal quest guide]]
+
+{{Free-to-play guides}}
+[[Category:Quests|*]]
+[[Category:Free-to-play quests| ]]
+[[Category:Free-to-play]]
+</noinclude>

@@ -1,0 +1,20 @@
+{
+	"item_id": {
+		"type": "INTEGER"
+	},
+	"item_name": {
+		"type": "TEXT"
+	},
+	"sources": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"rates": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"kinds": {
+		"type": "TEXT",
+		"repeated": true
+	}
+}

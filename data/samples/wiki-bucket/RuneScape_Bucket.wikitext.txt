@@ -1,0 +1,31 @@
+{{external|rs}}'''Bucket''' is the tool that stores semantic data about various items, monsters, and more on the OSRS Wiki. External users can query Bucket's API to get this information, without needing to scrape or parse wiki pages. For technical details on how to use Bucket as a wiki editor, see [[metawg:Extension:Bucket|this page]].
+
+You can get information from Bucket by making a request to <code>https://oldschool.runescape.wiki/api.php?action=bucket</code>. The request should include the <code>query</code> query string parameter.
+
+For more details on the API call, see [[metawg:Extension:Bucket/Api|this page]].
+
+==Migrating from Semantic MediaWiki==
+Before the introduction of Bucket, external tools could make requests to <code>api.php?action=ask</code> on our wiki to get semantic data. This functionality has been '''removed'''. You should update your usage to make calls to the new Bucket API (<code>api.php?action=bucket</code>) instead. However, there are some changes you will need to do to make your request:
+
+* '''First, identify which bucket you would like to query'''. A list of buckets that exist on the wiki can be found on [https://oldschool.runescape.wiki/w/Special:AllPages?from=&to=&namespace=9592 this page].
+* '''Determine what data you need to get'''. Each bucket's page on the wiki (such as [[Bucket:Infobox item]] and [[Bucket:Infobox monster]]) outlines exactly what fields that bucket has, and also shows a preview of the data inside it.
+* '''Build a query string'''. Buckets are queried using simple programmatic syntax which looks like this:
+
+<pre>
+bucket('infobox_item').select('item_id','image','examine').where('item_name','Raw lobster').run()
+</pre>
+
+This will fetch the '''item_id''', '''image''', and '''examine''' of items in the '''infobox_item''' bucket, where the '''item_name''' is ''Raw lobster''.
+
+It is important to note that all bucket and field names in the query should be ''lowercase'', and spaces should be written as ''underscores''.
+
+The example bucket query above is roughly equivalent to this query in Semantic MediaWiki:
+
+<pre>
+[[Uses infobox::Item]][[Item name::Raw lobster]]|?Item ID|?Image|?Examine
+</pre>
+
+* '''Make your request'''. Call <code>api.php?action=bucket</code> with your request. For the example above, you would make this request: [https://oldschool.runescape.wiki/api.php?action=bucket&query=bucket(%27infobox_item%27).select(%27item_id%27,%27image%27,%27examine%27).where(%27item_name%27,%27Raw%20lobster%27).run() '''api.php?action=bucket&query=bucket('infobox_item').select('item_id','image','examine').where('item_name','Raw lobster').run()''']
+
+==Issues and help==
+If you have any issues with using Bucket or migrating from SMW, please contact [[User:Mudscape]] ("mudscape" on Discord), or ask for help in the [https://discord.gg/96a5V2EGh2 OSRS Wiki Discord server].

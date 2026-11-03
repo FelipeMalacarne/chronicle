@@ -1,0 +1,181 @@
+{
+	"default_version": {
+		"type": "BOOLEAN"
+	},
+	"name": {
+		"type": "TEXT"
+	},
+	"image": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"is_members_only": {
+		"type": "BOOLEAN"
+	},
+	"id": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"examine": {
+		"type": "TEXT"
+	},
+	"league_region": {
+		"type": "TEXT"
+	},
+	"release_date": {
+		"type": "TEXT"
+	},
+	"version_anchor": {
+		"type": "TEXT"
+	},
+	"combat_level": {
+		"type": "INTEGER"
+	},
+	"is_aggressive": {
+		"type": "TEXT"
+	},
+	"poisonous": {
+		"type": "TEXT"
+	},
+	"attribute": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"hitpoints": {
+		"type": "INTEGER"
+	},
+	"max_hit": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"slayer_level": {
+		"type": "INTEGER"
+	},
+	"slayer_experience": {
+		"type": "DOUBLE"
+	},
+	"slayer_category": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"uses_skill": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"assigned_by": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"attack_level": {
+		"type": "INTEGER"
+	},
+	"strength_level": {
+		"type": "INTEGER"
+	},
+	"defence_level": {
+		"type": "INTEGER"
+	},
+	"ranged_level": {
+		"type": "INTEGER"
+	},
+	"magic_level": {
+		"type": "INTEGER"
+	},
+	"magic_attack_bonus": {
+		"type": "INTEGER"
+	},
+	"range_attack_bonus": {
+		"type": "INTEGER"
+	},
+	"stab_attack_bonus": {
+		"type": "INTEGER"
+	},
+	"slash_attack_bonus": {
+		"type": "INTEGER"
+	},
+	"crush_attack_bonus": {
+		"type": "INTEGER"
+	},
+	"stab_defence_bonus": {
+		"type": "INTEGER"
+	},
+	"slash_defence_bonus": {
+		"type": "INTEGER"
+	},
+	"crush_defence_bonus": {
+		"type": "INTEGER"
+	},
+	"magic_defence_bonus": {
+		"type": "INTEGER"
+	},
+	"range_defence_bonus": {
+		"type": "INTEGER"
+	},
+	"light_range_defence_bonus": {
+		"type": "INTEGER"
+	},
+	"standard_range_defence_bonus": {
+		"type": "INTEGER"
+	},
+	"heavy_range_defence_bonus": {
+		"type": "INTEGER"
+	},
+	"attack_bonus": {
+		"type": "INTEGER"
+	},
+	"strength_bonus": {
+		"type": "INTEGER"
+	},
+	"range_strength_bonus": {
+		"type": "INTEGER"
+	},
+	"magic_damage_bonus": {
+		"type": "INTEGER"
+	},
+	"poison_resistance": {
+		"type": "TEXT"
+	},
+	"venom_resistance": {
+		"type": "TEXT"
+	},
+	"thrall_immune": {
+		"type": "TEXT"
+	},
+	"cannon_immune": {
+		"type": "TEXT"
+	},
+	"burn_immune": {
+		"type": "TEXT"
+	},
+	"attack_style": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"attack_speed": {
+		"type": "INTEGER"
+	},
+	"respawn_time": {
+		"type": "INTEGER"
+	},
+	"experience_bonus": {
+		"type": "DOUBLE"
+	},
+	"flat_armour": {
+		"type": "INTEGER"
+	},
+	"magic_resistance": {
+		"type": "INTEGER"
+	},
+	"size": {
+		"type": "INTEGER"
+	},
+	"freeze_resistance": {
+		"type": "TEXT"
+	},
+	"elemental_weakness": {
+		"type": "TEXT"
+	},
+	"elemental_weakness_percent": {
+		"type": "INTEGER"
+	}
+}

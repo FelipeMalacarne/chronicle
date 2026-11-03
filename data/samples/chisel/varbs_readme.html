@@ -1,0 +1,35 @@
+<h2>Using the varbs tool</h2>
+
+<h3>index</h3>
+<p>
+Shows a list of all varbs/varps observed in the crowdsourced data and referred to in cs2 scripts and the cache.<br>
+Clicking the index link leads to a display page for the var that gives more detailed information.<br>
+Can be passed the orderBy and dir query parameters to have the server order the table. Otherwise, the table can be sorted by clicking the headers in the table. This sorts via JS and may be slow.<br>
+
+<br>
+orderBy={varindex, valcount, changecount, cs2count, objcount, npccount, interfacecount}<br>
+dir={asc, desc}<br>
+
+<br>
+varindex - Default sort by. Sorts on the index of the varb/varp.<br>
+valcount - Sorts on number of unique values observed in the crowdsourced data.<br>
+changecount - Sorts on number of updates observed in the crowdsourced data.<br>
+cs2count - Sorts on number of references in cs2 scripts.<br>
+objcount - Sorts on number of references to objects in the cache.<br>
+npccount - Sorts on number of references to NPCs in the cache.<br>
+interfacecount - Sorts on number of references to interfaces in the cache.
+</p>
+
+<h3>display</h3>
+<p>
+Shows detailed information for a specific varbit or varplayer.<br>
+A link to edit the wiki page for the varb is given. If there is not a page on the wiki for this varb/varp, a template will be preloaded that you can fill in.<br>
+If you do not know all the information about a given var, you can use the Unknown Var template by putting '{{Unknown Var}}' at the top of the page before saving.<br>
+A maplink will take you to mejrs map indicating where this var has recorded changes in the crowdsourcing data.<br>
+A list of references to this var in cs2 scripts and the cache will be provided, giving information scraped from these sources, as well as links to the relevant scripts and MOID entries.<br>
+A table of new values observed gives a list of all unique values seen as well as the number of times the new value was seen. The linked value will direct you to a map showing the locations where the new value was changed to.<br>
+A table of changes observed gives a list of all unique changes seen as well as the number of times the change was seen.<br>
+
+<br>
+The only supported query params for this endpoint are varbit and varplayer, both of which take the index of the var.<br>
+</p>

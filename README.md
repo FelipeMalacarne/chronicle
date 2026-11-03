@@ -6,13 +6,14 @@ via hiscores, Wise Old Man, WikiSync/plugin RuneLite e dados estruturados do OSR
 
 ## Estado
 
-Fase de descoberta e design. Nenhum código de aplicação ainda.
+Descoberta e design concluídos (docs 00 a 05). Nenhum código de aplicação ainda; a sequência de MVP está em `docs/04-arquitetura.md`, seção 7.4.
 
 ## Documentos
 
 | Arquivo | Conteúdo |
 |---|---|
 | `docs/00-levantamento-inicial.md` | Levantamento inicial: fontes, modelo de dados, fases |
+| `docs/01-sumario-executivo.md` | Consolidação da rodada de design, números e decisões pendentes |
 | `docs/02-fontes-de-dados.md` | APIs verificadas na prática, formatos reais, estratégia de sync |
 | `docs/03-produto-e-features.md` | Jobs-to-be-done, catálogo de features, UX tela a tela |
 | `docs/04-arquitetura.md` | Stack, componentes, schema de conteúdo, banco, grafo, plugin |

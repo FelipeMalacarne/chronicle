@@ -1,0 +1,20 @@
+HTTP/1.1 200 Connection Established
+
+HTTP/2 200 
+date: Tue, 03 Nov 2026 22:50:44 GMT
+content-type: application/json; charset=utf-8
+content-length: 8985
+access-control-allow-origin: *
+alt-svc: h3=":443"; ma=86400
+etag: W/"2319-mrL0WkEvdo+ABrV2ZOX2W6NMGfE"
+ratelimit-limit: 20
+ratelimit-remaining: 19
+ratelimit-reset: 60
+via: 1.1 Caddy
+x-powered-by: Express
+cf-cache-status: DYNAMIC
+nel: {"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}
+report-to: {"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=%2FUJBAE6f5%2BI5FMzRrPc2o3UQSUwPtpapz2W2MCKqvcwlCT17SfPn%2FeQBhBIXimPj1Qv9ocwzaa8UeQFb1VNbi1CvlZS2YHYvaBE8bPmEpy2%2F6oAn6yhk6KgWtaZ%2F3Bk2shmPSg%3D%3D"}]}
+server: cloudflare
+cf-ray: a54ef01b4f61690c-IAD
+

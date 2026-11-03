@@ -1,0 +1,6108 @@
+[
+ {
+  "area": "Ardougne",
+  "tier": "Easy",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Have Wizard Cromperty teleport you to the Rune Essence mine.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Rune Mysteries"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Rune Mysteries]]"
+   },
+   {
+    "n": 2,
+    "task": "Steal a cake from the Ardougne market stalls.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 5
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|5|link=y}}"
+   },
+   {
+    "n": 3,
+    "task": "Sell Silk to Silk trader in Ardougne for 60 coins each.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Silk]]"
+   },
+   {
+    "n": 4,
+    "task": "Use the altar in East Ardougne's church.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 5,
+    "task": "Go out fishing on the Fishing Trawler",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 6,
+    "task": "Enter the Combat Training Camp north of W. Ardougne.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Biohazard"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Biohazard]]"
+   },
+   {
+    "n": 7,
+    "task": "Have Tindel Marchant identify a Rusted Sword for you.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Rusty sword]] and 100 [[coins]]"
+   },
+   {
+    "n": 8,
+    "task": "Use the Ardougne Lever to teleport to the Wilderness.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 9,
+    "task": "View Aleck's Hunter Emporium in Yanille.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 10,
+    "task": "Check what pets you have Insured with Probita in Ardougne.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   }
+  ]
+ },
+ {
+  "area": "Ardougne",
+  "tier": "Medium",
+  "task_count": 12,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Enter the Unicorn pen in Ardougne zoo using Fairy rings.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Fairytale II - Cure a Queen"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Fairytale II - Cure a Queen]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to travel to [[Fairy ring]] code {{Fairycode|bis}}."
+   },
+   {
+    "n": 2,
+    "task": "Grapple over Yanille's south wall.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 39
+     },
+     {
+      "skill": "Strength",
+      "level": 38
+     },
+     {
+      "skill": "Ranged",
+      "level": 21
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|39|link=y}}, {{SCP|Strength|38|link=y}} and {{SCP|Ranged|21|link=y}}\n*[[Mith grapple]]{{efn|[[Ironman Mode|Ironmen]] require either access to the [[Ancient Cavern]] or 59 [[Smithing]] and 59 [[Fletching]] for a [[mith grapple]].}} and any [[Crossbow (weapon)|crossbow]]"
+   },
+   {
+    "n": 3,
+    "task": "Harvest some strawberries from the Ardougne farming patch.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 31
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|31|link=y}}\n*3 [[strawberry seed]]s, [[spade]], [[seed dibber]] (or [[Barbarian Farming]]), and a [[rake]]\n*[[Basket of apples]] recommended to pay the [[Kragen|nearby farmer]] to protect the crop"
+   },
+   {
+    "n": 4,
+    "task": "Cast the Ardougne Teleport spell.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 51
+     }
+    ],
+    "quest_reqs": [
+     "Plague City"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Plague City]]\n*{{SCP|Magic|51|link=y}}\n*Means to cast [[Ardougne Teleport]] ({{RuneReq|Water=2|Law=2}})"
+   },
+   {
+    "n": 5,
+    "task": "Travel to Castlewars by Hot Air Balloon.",
+    "skill_reqs": [
+     {
+      "skill": "Firemaking",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Enlightened Journey"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Enlightened Journey]]\n*{{SCP|Firemaking|50|link=y}}\n*[[Yew log]]\n*If the [[Balloon_transport_system#Castle_Wars|route]] has not been unlocked yet, 11 total [[yew logs]] are required to unlock it before flying ''again'' to [[Castle Wars]] to complete this task. Upon unlocking the route, you may use 1 normal [[Logs|log]] to depart to [[Taverley]] before returning to Castle Wars for the task completion."
+   },
+   {
+    "n": 6,
+    "task": "Claim buckets of sand from Bert in Yanille.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Hand in the Sand"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Hand in the Sand]] (unless playing as [[Ultimate Ironman]])\n* [[Bucket]]"
+   },
+   {
+    "n": 7,
+    "task": "Catch any fish on the Fishing Platform.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Sea Slug"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Sea Slug]]\n*A [[small fishing net]]"
+   },
+   {
+    "n": 8,
+    "task": "Pickpocket the master farmer north of Ardougne.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 38
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|38|link=y}}"
+   },
+   {
+    "n": 9,
+    "task": "Collect some Nightshade from the Skavid Caves.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Watchtower"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Watchtower]]\n*Any [[light source]] and the [[Skavid map]]"
+   },
+   {
+    "n": 10,
+    "task": "Kill a swordchick in the Tower of Life.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Tower of Life"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Tower of Life]]\n*[[Raw chicken]] and [[raw swordfish]]\n*[[Weaponry]]"
+   },
+   {
+    "n": 11,
+    "task": "Equip Iban's upgraded staff or upgrade an Iban staff.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Underground Pass"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Underground Pass]]\n*[[Iban's upgraded staff]], or 200,000 [[coins]] and [[Iban's staff]] to have the [[Dark Mage]] in [[West Ardougne]] upgrade it"
+   },
+   {
+    "n": 12,
+    "task": "Visit the Island East of the Necromancer's Tower.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Fairytale II - Cure a Queen"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Fairytale II - Cure a Queen]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to travel to [[Fairy ring]] code {{Fairycode|air}}"
+   }
+  ]
+ },
+ {
+  "area": "Ardougne",
+  "tier": "Hard",
+  "task_count": 12,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Recharge some Jewellery at the Totem in the Legends Guild.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Legends' Quest"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Legends' Quest]]\n*Less than fully charged [[skills necklace]] or [[combat bracelet]]"
+   },
+   {
+    "n": 2,
+    "task": "Enter the Magic Guild.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 66
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|66|link=y}}"
+   },
+   {
+    "n": 3,
+    "task": "Steal from a chest in Ardougne Castle.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 72
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|72|link=y}}\n*[[Lockpick]] recommended"
+   },
+   {
+    "n": 4,
+    "task": "Have a zookeeper put you in Ardougne Zoo's monkey cage.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of the [[Monkey Madness I]] quest\n* [[Karamjan monkey greegree]]"
+   },
+   {
+    "n": 5,
+    "task": "Teleport to the Watchtower.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 58
+     }
+    ],
+    "quest_reqs": [
+     "Watchtower"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Watchtower]]\n*{{SCP|Magic|58|link=y}}\n*Means to cast the [[Watchtower teleport]] ({{RuneReq|Earth=2|Law=2}})"
+   },
+   {
+    "n": 6,
+    "task": "Catch a Red Salamander.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 59
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|59|link=y}}\n*[[Rope]] and [[small fishing net]]"
+   },
+   {
+    "n": 7,
+    "task": "Check the health of a Palm tree near tree gnome village.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 68
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|68|link=y}}\n*[[Palm sapling]], [[spade]] and a [[rake]]\n*15 [[Papaya fruit]] recommended to pay the [[Gileth|gardener]]"
+   },
+   {
+    "n": 8,
+    "task": "Pick some Poison Ivy berries from the patch south of Ardougne.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|70|link=y}}\n*[[Poison ivy seed]], [[seed dibber]] (or [[Barbarian Farming]]), and a [[rake]]\n''Note: Poison ivy cannot get diseased while growing.''"
+   },
+   {
+    "n": 9,
+    "task": "Smith a Mithril platebody near Ardougne.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 68
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Smithing|68|link=y}}\n*5 [[mithril bar]]s and a [[hammer]]"
+   },
+   {
+    "n": 10,
+    "task": "Enter your POH from Yanille.",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Construction|50|link=y}}{{Boostable|no}}\n*25,000 [[coins]] for an [[estate agent]] to move your house to [[Yanille]]\n''Note: In Deadman Mode, the task is instead \"Ask the Estate Agent to move your house to Yanille.\" This does not cost anything as your house will not be moved.''"
+   },
+   {
+    "n": 11,
+    "task": "Smith a Dragon sq shield in West Ardougne.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [
+     "Plague City"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Plague City]]\n*{{SCP|Smithing|60|link=y}}\n*[[Shield left half]], [[shield right half]] and a [[hammer]]"
+   },
+   {
+    "n": 12,
+    "task": "Craft some Death runes from Essence.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 65
+     }
+    ],
+    "quest_reqs": [
+     "Mourning's End Part II"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Mourning's End Part II]]\n*{{SCP|Runecraft|65|link=y}}\n*[[Pure essence|Pure]] or [[daeyalt essence]]\n**''Note: Crafting runes using [[Guardian essence]] will '''NOT''' complete this achievement''\n*Access to the [[Death Altar]] via the [[Abyss]]"
+   }
+  ]
+ },
+ {
+  "area": "Ardougne",
+  "tier": "Elite",
+  "task_count": 8,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Catch a Manta ray in the Fishing Trawler and cook it in Port Khazard.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 81
+     },
+     {
+      "skill": "Cooking",
+      "level": 91
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|81|link=y}}{{Boostable|no}} and {{SCP|Cooking|91|link=y}}\n*[[Raw manta ray]], multiple recommended in case of [[Burnt manta ray|burning]] one"
+   },
+   {
+    "n": 2,
+    "task": "Picklock the door to the basement of Yanille Agility Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 82
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|82|link=y}}\n*[[Lockpick]]"
+   },
+   {
+    "n": 3,
+    "task": "Pickpocket a Hero.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 80
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|80|link=y}}"
+   },
+   {
+    "n": 4,
+    "task": "Make a rune crossbow yourself from scratch within Witchaven or Yanille.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 10
+     },
+     {
+      "skill": "Smithing",
+      "level": 91
+     },
+     {
+      "skill": "Fletching",
+      "level": 69
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|10|link=y}}, {{SCP|Smithing|91|link=y}} and {{SCP|Fletching|69|link=y}}\n*[[Yew logs]], [[runite bar]], [[hammer]], [[knife]], and [[sinew]] or a [[tree root]]"
+   },
+   {
+    "n": 5,
+    "task": "Imbue a Salve amulet at Nightmare Zone, or equip a Salve amulet that was imbued there.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Completion of the [[Haunted Mine]] \n*Access to the [[Nightmare Zone]]\n*[[Salve amulet(i)]] or [[Salve amulet(ei)]], or 800,000 [[Nightmare_Zone#Upgrades|Nightmare Zone points]] points to imbue the [[Salve amulet|normal one]] (reduced to 400,000 points with the [[Combat_Achievements/Hard|hard tier]] of the {{SCP|combatachievement}} [[Combat Achievements]] completed)"
+   },
+   {
+    "n": 6,
+    "task": "Pick some Torstol from the patch north of Ardougne.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|85|link=y}}\n*[[Torstol seed]], [[seed dibber]] (or [[Barbarian Farming]]), and a [[rake]]\n*[[Ultracompost]] recommended"
+   },
+   {
+    "n": 7,
+    "task": "Complete a lap of Ardougne's rooftop agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 90
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|90|link=y}}"
+   },
+   {
+    "n": 8,
+    "task": "Cast Ice Barrage on another player within Castle Wars.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 94
+     }
+    ],
+    "quest_reqs": [
+     "Desert Treasure I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Desert Treasure I]]\n*{{SCP|Magic|94|link=y}}\n*[[Rune pouch (Castle Wars)]]"
+   }
+  ]
+ },
+ {
+  "area": "Desert",
+  "tier": "Easy",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Catch a Golden Warbler.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 5
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|5|link=y}}\n*[[Bird snare]]\n*[[Necklace of passage]] recommended for quick access to Eagle's Eyrie, near the [[Uzer Hunter area]]"
+   },
+   {
+    "n": 2,
+    "task": "Mine 5 clay in the north-eastern desert.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Any [[pickaxe]]\n*[[Necklace of passage]] recommended for quick access to Eagle's Eyrie, near the [[Uzer mine]]"
+   },
+   {
+    "n": 3,
+    "task": "Enter the Kalphite Hive.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Rope]]"
+   },
+   {
+    "n": 4,
+    "task": "Enter the Desert with a set of Desert robes equipped.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Desert shirt]], [[desert robe]], and [[desert boots]]"
+   },
+   {
+    "n": 5,
+    "task": "Kill a Vulture",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Weaponry]], preferably [[Ranged]] or [[Magic]]"
+   },
+   {
+    "n": 6,
+    "task": "Have the Nardah Herbalist clean a Herb for you.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Any [[grimy herb]] and 200 [[coins]]"
+   },
+   {
+    "n": 7,
+    "task": "Collect 5 Potato Cactus from the Kalphite Hive.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Rope]]\n*[[Antipoison]] and [[food]] recommended if not bringing your own [[potato cactus]]"
+   },
+   {
+    "n": 8,
+    "task": "Sell some artefacts to Simon Templeton.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "* Players must have started [[Icthlarin's Little Helper]] for access to [[Sophanem]].\n\n*Any [[Pyramid_Plunder#Rewards|artefact]] from [[Pyramid Plunder]]."
+   },
+   {
+    "n": 9,
+    "task": "Open the Sarcophagus in the first room of Pyramid Plunder",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 21
+     }
+    ],
+    "quest_reqs": [
+     "Icthlarin's Little Helper"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Icthlarin's Little Helper]]\n*{{SCP|Thieving|21|link=y}}"
+   },
+   {
+    "n": 10,
+    "task": "Cut a desert cactus open to fill a waterskin.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Knife]] or a slash weapon, and an empty [[waterskin]]"
+   },
+   {
+    "n": 11,
+    "task": "Travel from the Shantay Pass to Pollnivneach by Magic Carpet.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*200 [[coins]] and a [[Shantay pass (item)|Shantay Pass]] or another 5 coins."
+   }
+  ]
+ },
+ {
+  "area": "Desert",
+  "tier": "Medium",
+  "task_count": 12,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Climb to the summit of the Agility Pyramid.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|30|link=y}}\n*[[Desert_heat#Protective_clothes_and_gear|Protection against desert heat]] recommended"
+   },
+   {
+    "n": 2,
+    "task": "Slay a desert lizard.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 22
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Slayer|22|link=y}}\n*[[Ice cooler]]"
+   },
+   {
+    "n": 3,
+    "task": "Catch an Orange Salamander.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 47
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|47|link=y}}\n*[[Rope]] and a [[small fishing net]]"
+   },
+   {
+    "n": 4,
+    "task": "Steal a feather from the Desert Phoenix.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 25
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|25|link=y}}"
+   },
+   {
+    "n": 5,
+    "task": "Travel to Uzer via Magic Carpet.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Golem"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Golem]]\n*200 [[coins]] (or 205 [[coins]] if using the [[Shantay Pass]])"
+   },
+   {
+    "n": 6,
+    "task": "Travel to the Desert via Eagle.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Eagles' Peak"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Eagles' Peak]]\n*[[Rope]]"
+   },
+   {
+    "n": 7,
+    "task": "Pray at the Elidinis statuette in Nardah",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Spirits of the Elid"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Spirits of the Elid]]"
+   },
+   {
+    "n": 8,
+    "task": "Create a combat potion in the desert.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 36
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Herblore|36|link=y}}\n*[[Harralander potion (unf)]] and [[goat horn dust]]"
+   },
+   {
+    "n": 9,
+    "task": "Teleport to Enakhra's Temple with the Camulet.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Enakhra's Lament"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Enakhra's Lament]]\n*[[Camulet]]"
+   },
+   {
+    "n": 10,
+    "task": "Visit the Genie.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Spirits of the Elid"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Spirits of the Elid]]\n*[[Rope]] and [[light source]]"
+   },
+   {
+    "n": 11,
+    "task": "Teleport to Pollnivneach with a redirected teleport to house tablet.",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Construction|20|link=y}}\n*[[Scroll of redirection]] and a [[Teleport to house (tablet)|house tablet]]"
+   },
+   {
+    "n": 12,
+    "task": "Chop some Teak Logs near Uzer.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 35
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|35|link=y}}\n*Any [[axe]]"
+   }
+  ]
+ },
+ {
+  "area": "Desert",
+  "tier": "Hard",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Knock out and pickpocket a Menaphite Thug.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 65
+     }
+    ],
+    "quest_reqs": [
+     "The Feud"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[The Feud]]\n*{{SCP|Thieving|65|link=y}}\n*Any [[blackjack]]"
+   },
+   {
+    "n": 2,
+    "task": "Mine some Granite.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 45
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|45|link=y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 3,
+    "task": "Refill your waterskins in the Desert using Lunar magic.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 68
+     }
+    ],
+    "quest_reqs": [
+     "Dream Mentor"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Dream Mentor]]\n*{{SCP|Magic|68|link=y}}\n*[[Lunar spellbook]] selected\n*[[Waterskin]] that isn't full and means to cast [[Humidify]] ({{RuneReq|Astral=1|Fire=1|Water=3}})"
+   },
+   {
+    "n": 4,
+    "task": "Kill the Kalphite Queen.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See the [[Kalphite_Queen/Strategies|strategy guide]]"
+   },
+   {
+    "n": 5,
+    "task": "Complete a lap of the Pollnivneach agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|70|link=y}}"
+   },
+   {
+    "n": 6,
+    "task": "Slay a Dust Devil in the desert cave with a Slayer helmet equipped.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 65
+     },
+     {
+      "skill": "Defence",
+      "level": 10
+     },
+     {
+      "skill": "Crafting",
+      "level": 55
+     }
+    ],
+    "quest_reqs": [
+     "Desert Treasure I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Desert Treasure I]]\n*{{SCP|Slayer|65|link=y}} {{Boostable|y}} and {{SCP|Defence|10|link=y}}\n*[[Slayer helmet]] (requires {{SCP|Crafting|55|link=y}} {{Boostable|y}}) (and {{SCP|Quest}} completion of [[Cabin Fever]] for [[Ironman mode|Ironman accounts]])"
+   },
+   {
+    "n": 7,
+    "task": "Activate Ancient Magicks at the altar in the Jaldraocht Pyramid.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Desert Treasure I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Desert Treasure I]]"
+   },
+   {
+    "n": 8,
+    "task": "Defeat a Locust Rider with Keris.",
+    "skill_reqs": [
+     {
+      "skill": "Attack",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Contact!"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Contact!]]\n*{{SCP|Attack|50|link=y}}\n*[[Keris]] or [[Keris partisan]], and any [[light source]]"
+   },
+   {
+    "n": 9,
+    "task": "Burn some yew logs on the Nardah Mayor's balcony.",
+    "skill_reqs": [
+     {
+      "skill": "Firemaking",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Firemaking|60|link=y}}\n*[[Yew log]] and a [[tinderbox]]"
+   },
+   {
+    "n": 10,
+    "task": "Create a Mithril Platebody in Nardah.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 68
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Smithing|68|link=y}}\n*5 [[mithril bar]]s and a [[hammer]]"
+   }
+  ]
+ },
+ {
+  "area": "Desert",
+  "tier": "Elite",
+  "task_count": 6,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Bake a wild pie at the Nardah Clay Oven.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Cooking|85|link=y}} {{Boostable|y}}\n*[[Raw wild pie]]"
+   },
+   {
+    "n": 2,
+    "task": "Cast Ice Barrage against a foe in the Desert",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 94
+     }
+    ],
+    "quest_reqs": [
+     "Desert Treasure I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Desert Treasure I]]\n*{{SCP|Magic|94|link=y}} {{Boostable|y}}\n*Means to cast [[Ice Barrage]] ({{RuneReq|Death=4|Blood=2|Water=6}})"
+   },
+   {
+    "n": 3,
+    "task": "Fletch some Dragon darts at the Bedabin Camp.",
+    "skill_reqs": [
+     {
+      "skill": "Fletching",
+      "level": 95
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fletching|95|link=y}} {{Boostable|y}}\n*[[Dragon dart tip]] and [[feather]]"
+   },
+   {
+    "n": 4,
+    "task": "Speak to the KQ head in your POH.",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 78
+     }
+    ],
+    "quest_reqs": [
+     "Priest in Peril"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Priest in Peril]]\n*{{SCP|Construction|78|link=y}} {{Boostable|y}}\n*2 [[mahogany plank]]s, 2 [[gold leaves]], [[saw]], and [[hammer]]\n*[[Kq head]] or [[Kq head (tattered)]], and 50,000 [[coins]] to have the [[taxidermist]] [[Stuffed_kq_head|stuff]] it\n*Additional 15,000 [[coins]] to construct a [[Hall_(skill_trophies)|Skill Hall]] if you haven't already"
+   },
+   {
+    "n": 5,
+    "task": "Steal from the Grand Gold Chest in the final room of Pyramid Plunder.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 91
+     }
+    ],
+    "quest_reqs": [
+     "Icthlarin's Little Helper"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Icthlarin's Little Helper]]\n*{{SCP|Thieving|91|link=y}} {{Boostable|n}}"
+   },
+   {
+    "n": 6,
+    "task": "Restore at least 85 Prayer points when praying at the Altar in Sophanem.",
+    "skill_reqs": [
+     {
+      "skill": "Prayer",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [
+     "Icthlarin's Little Helper"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Icthlarin's Little Helper]]\n*{{SCP|Prayer|85|link=y}} {{Boostable|n}}"
+   }
+  ]
+ },
+ {
+  "area": "Falador",
+  "tier": "Easy",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Find out what your family crest is from Sir Renitee",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 16
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Construction|16|link=yes}}"
+   },
+   {
+    "n": 2,
+    "task": "Climb over the western Falador wall.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 5
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|5|link=yes}}"
+   },
+   {
+    "n": 3,
+    "task": "Browse Sarah's farm shop.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 4,
+    "task": "Get a Haircut or a Shave from the Falador Hairdresser.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 5,
+    "task": "Fill a bucket from the pump north of Falador west bank.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Bucket]]"
+   },
+   {
+    "n": 6,
+    "task": "Kill a duck in Falador Park.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*None, though using [[Magic]] or a [[Ranged#Weapons|Ranged weapon]] is recommended"
+   },
+   {
+    "n": 7,
+    "task": "Make a mind tiara.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Tiara]] and a [[mind talisman]]"
+   },
+   {
+    "n": 8,
+    "task": "Take the boat to Entrana.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Have no [[weapons]] or [[armour]] equipped or in your inventory"
+   },
+   {
+    "n": 9,
+    "task": "Repair a broken strut in the Motherlode Mine.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Hammer]] and any [[pickaxe]]"
+   },
+   {
+    "n": 10,
+    "task": "Claim a security book from the Security guard at Port Sarim jail.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 11,
+    "task": "Smith some Blurite Limbs on Doric's anvil.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 10
+     },
+     {
+      "skill": "Smithing",
+      "level": 13
+     }
+    ],
+    "quest_reqs": [
+     "The Knight's Sword"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Knight's Sword]] and [[Doric's Quest]]\n*{{SCP|Mining|10|link=yes}} and {{SCP|Smithing|13|link=yes}}\n*[[Hammer]] and a [[Blurite bar]]"
+   }
+  ]
+ },
+ {
+  "area": "Falador",
+  "tier": "Medium",
+  "task_count": 14,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Light a Bullseye lantern at the Chemist's in Rimmington.",
+    "skill_reqs": [
+     {
+      "skill": "Firemaking",
+      "level": 49
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Firemaking|49|link=yes}}\n*[[Tinderbox]] and a regular [[bullseye lantern]]"
+   },
+   {
+    "n": 2,
+    "task": "Telegrab some Wine of Zamorak at the Chaos Temple by the Wilderness.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 33
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|33|link=yes}}\n*Means to cast [[Telegrab]] ({{RuneReq|Air=1|Law=1}})"
+   },
+   {
+    "n": 3,
+    "task": "Unlock the Crystal chest in Taverley.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Crystal key]]"
+   },
+   {
+    "n": 4,
+    "task": "Place a Scarecrow in the Falador farm flower patch.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 23
+     },
+     {
+      "skill": "Farming",
+      "level": 47
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|23|link=yes}} ([[Ironman mode|Ironman accounts]] require {{SCP|Farming|47|link=yes}} or the ability to kill [[gryphon]]s)\n*[[Bronze spear]], [[watermelon]], and a [[hay sack]] (you can fill an [[empty sack]] with hay at the [[hay bale]] in the chicken coop nearby.)"
+   },
+   {
+    "n": 5,
+    "task": "Kill a Mogre at Mudskipper Point.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 32
+     }
+    ],
+    "quest_reqs": [
+     "Skippy and the Mogres"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Skippy and the Mogres]]\n*{{SCP|Slayer|32|link=yes}}\n*[[Fishing explosive]]. \n* It is not possible to skip having to complete Skippy and the Mogres, or needing a fishing explosive, by killing them through a boat cannon through the Sailing skill."
+   },
+   {
+    "n": 6,
+    "task": "Visit the Port Sarim Rat Pits.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Ratcatchers"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Ratcatchers]]"
+   },
+   {
+    "n": 7,
+    "task": "Grapple up and then jump off the north Falador wall.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 11
+     },
+     {
+      "skill": "Strength",
+      "level": 37
+     },
+     {
+      "skill": "Ranged",
+      "level": 19
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|11|link=yes}}, {{SCP|Strength|37|link=yes}}, and {{SCP|Ranged|19|link=yes}}\n*[[Mith grapple]]{{efn|[[Ironman Mode|Ironmen]] require either access to the [[Ancient Cavern]] or 59 [[Smithing]] and 59 [[Fletching]] for a [[mith grapple]].}} and any [[Crossbow (weapon)|crossbow]]"
+   },
+   {
+    "n": 8,
+    "task": "Pickpocket a Falador guard.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|40|link=yes}}"
+   },
+   {
+    "n": 9,
+    "task": "Pray at the Altar of Guthix in Taverley whilst wearing full Initiate.",
+    "skill_reqs": [
+     {
+      "skill": "Prayer",
+      "level": 10
+     },
+     {
+      "skill": "Defence",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [
+     "Recruitment Drive"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Recruitment Drive]]\n*{{SCP|Prayer|10|link=yes}} and {{SCP|Defence|20|link=yes}}\n*[[Initiate armour]]"
+   },
+   {
+    "n": 10,
+    "task": "Mine some Gold ore at the Crafting Guild.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 40
+     },
+     {
+      "skill": "Mining",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|40|link=yes}} and {{SCP|Mining|40|link=yes}}\n*Any [[pickaxe]] and a [[brown apron]], [[golden apron]], or [[Crafting cape]]"
+   },
+   {
+    "n": 11,
+    "task": "Squeeze through the crevice in the Dwarven mines.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 42
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|42|link=yes}}"
+   },
+   {
+    "n": 12,
+    "task": "Chop and burn some Willow logs in Taverley.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 30
+     },
+     {
+      "skill": "Firemaking",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|30|link=yes}} and {{SCP|Firemaking|30|link=yes}}\n*Any [[axe]] and a [[tinderbox]]"
+   },
+   {
+    "n": 13,
+    "task": "Craft a fruit basket on the Falador Farm loom.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 36
+     },
+     {
+      "skill": "Farming",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|36|link=yes}} (and {{SCP|Farming|30|link=yes}} for [[Ironman mode|Ironman accounts]])\n*6 [[Willow branch]]es"
+   },
+   {
+    "n": 14,
+    "task": "Teleport to Falador.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 37
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|37|link=yes}}\n*Means to cast [[Falador Teleport]] ({{RuneReq|Air=3|Water=1|Law=1}})"
+   }
+  ]
+ },
+ {
+  "area": "Falador",
+  "tier": "Hard",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Craft 140 Mind runes simultaneously from Essence without the use of Extracts.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 56
+     },
+     {
+      "skill": "Runecraft",
+      "level": 42
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|56|link=y}}\n*{{SCP|Runecraft|42|link=y}} with 3+ [[Raiments of the Eye]] pieces\n*28 [[Pure essence|pure]], [[Daeyalt essence|daeyalt]], or [[rune essence]] (less may suffice at higher [[Runecraft]] levels)\n*Access to the [[Mind Altar]] ([[mind talisman]]/[[mind tiara|tiara]], [[catalytic talisman]]/[[Catalytic tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 2,
+    "task": "Change your family crest to the Saradomin symbol.",
+    "skill_reqs": [
+     {
+      "skill": "Prayer",
+      "level": 70
+     },
+     {
+      "skill": "Construction",
+      "level": 16
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Prayer|70|link=yes}} {{Boostable|n}}\n*{{SCP|Construction|16|link=yes}}{{Boostable|y}}\n*5,000 [[coins]] (an additional 5,000 [[coins]] if your randomised [[heraldic crest|family crest]] already is [[Saradomin]], to change to another and back)"
+   },
+   {
+    "n": 3,
+    "task": "Kill the Giant Mole beneath Falador Park.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Spade]] and [[light source]]\n*See the [[Giant Mole/Strategies|strategy guide]]"
+   },
+   {
+    "n": 4,
+    "task": "Kill a Skeletal Wyvern in the Asgarnia Ice Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 72
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Slayer|72|link=yes}} {{Boostable|y}}\n*Protection from the wyvern's [[icy breath]] and [[weapon]]ry to slay it"
+   },
+   {
+    "n": 5,
+    "task": "Complete a lap of the Falador rooftop agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|50|link=yes}} {{Boostable|y}}"
+   },
+   {
+    "n": 6,
+    "task": "Enter the mining guild while wearing a Prospector helmet.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|60|link=yes}}\n*[[Prospector helmet]] or [[golden prospector helmet]]"
+   },
+   {
+    "n": 7,
+    "task": "Kill the Blue Dragon under the Heroes' Guild.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Completion of the [[Heroes' Quest]]\n*Protection from [[dragonfire]] and [[weapon]]ry to slay it"
+   },
+   {
+    "n": 8,
+    "task": "Crack a wall safe within Rogues' Den.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|50|link=yes}}"
+   },
+   {
+    "n": 9,
+    "task": "Recharge your prayer in the Port Sarim church while wearing full Proselyte.",
+    "skill_reqs": [
+     {
+      "skill": "Defence",
+      "level": 30
+     },
+     {
+      "skill": "Prayer",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [
+     "The Slug Menace"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Slug Menace]]\n*{{SCP|Defence|30|link=yes}}\n*{{SCP|Prayer|20|link=yes}}\n*Full [[Proselyte armour]]"
+   },
+   {
+    "n": 10,
+    "task": "Enter the Warriors' Guild.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*130 combined levels in {{SCP|Attack|link=yes}} and {{SCP|Strength|link=yes}}, or level 99 in either"
+   },
+   {
+    "n": 11,
+    "task": "Equip a dwarven helmet within the dwarven mines.",
+    "skill_reqs": [
+     {
+      "skill": "Defence",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Grim Tales"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Grim Tales]]\n*{{SCP|Defence|50|link=yes}}\n*[[Dwarven helmet]]"
+   }
+  ]
+ },
+ {
+  "area": "Falador",
+  "tier": "Elite",
+  "task_count": 6,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Craft 252 Air Runes simultaneously from Essence without the use of Extracts.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 88
+     },
+     {
+      "skill": "Runecraft",
+      "level": 77
+     },
+     {
+      "skill": "Runecraft",
+      "level": 66
+     },
+     {
+      "skill": "Runecraft",
+      "level": 55
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|88|link=y}}\n*{{SCP|Runecraft|77|link=y}} with 2 [[Raiments of the Eye]] pieces or 1 [[Raiments of the Eye]] piece and [[abyssal lantern]] (with willow, magic, or redwood logs)\n*{{SCP|Runecraft|66|link=y}} with 3 [[Raiments of the Eye]] pieces\n*{{SCP|Runecraft|55|link=y}} with 4 [[Raiments of the Eye]] pieces\n*28 [[Pure essence|pure]], [[Daeyalt essence|daeyalt]], or [[rune essence]] (fewer may suffice at higher [[Runecraft]] levels)\n*Access to the [[Air Altar]] ([[air talisman]]/[[air tiara|tiara]], [[elemental talisman]]/[[Elemental tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 2,
+    "task": "Purchase a White 2h Sword from Sir Vyvin.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Wanted!"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Wanted!]]\n*1,920 [[coins]]\n*Rank of [[White equipment#Knight rankings|White Knight Master]] (requires a [[Black Knight]] kill score of 1300 - this rank automatically starts at White Knight Novice, with a kill score of 100)"
+   },
+   {
+    "n": 3,
+    "task": "Find at least 3 magic roots at once when digging up your magic tree in Falador.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 91
+     },
+     {
+      "skill": "Woodcutting",
+      "level": 75
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|91|link=yes}} and {{SCP|Woodcutting|75|link=yes}}\n*[[Magic sapling]], [[spade]] and any [[axe]]"
+   },
+   {
+    "n": 4,
+    "task": "Perform a skillcape or quest cape emote at the top of Falador Castle.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Completion of all [[quest]]s or [[Skill mastery|level 99]] in any skill\n*Any [[Cape of Accomplishment]] (except for [[Cape of Accomplishment#Joke Skillcapes|joke skillcapes]] or the [[Max cape]])"
+   },
+   {
+    "n": 5,
+    "task": "Jump over the strange floor in Taverley dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 80
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|80|link=yes}}"
+   },
+   {
+    "n": 6,
+    "task": "Mix a Saradomin brew in Falador east bank.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 81
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Herblore|81|link=yes}}\n*[[Toadflax potion (unf)]], [[crushed nest]]"
+   }
+  ]
+ },
+ {
+  "area": "Fremennik",
+  "tier": "Easy",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Catch a Cerulean twitch.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 11
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|11|link=y}}\n*[[Bird snare]]"
+   },
+   {
+    "n": 2,
+    "task": "Change your boots at Yrsa's Shoe Store.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Fremennik Trials"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Fremennik Trials]]\n*500 [[coins]] (optional)"
+   },
+   {
+    "n": 3,
+    "task": "Kill 5 Rock crabs.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Weaponry]]"
+   },
+   {
+    "n": 4,
+    "task": "Craft a tiara from scratch in Rellekka.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 23
+     },
+     {
+      "skill": "Mining",
+      "level": 20
+     },
+     {
+      "skill": "Smithing",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [
+     "The Fremennik Trials"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Fremennik Trials]]\n*{{SCP|Crafting|23|link=y}}, {{SCP|Mining|20|link=y}} and {{SCP|Smithing|20|link=y}}\n*Any [[pickaxe]] (can be found north of the [[Rellekka mine]]) and a [[tiara mould]]"
+   },
+   {
+    "n": 5,
+    "task": "Browse the Stonemasons shop.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Giant Dwarf"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[The Giant Dwarf]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] recommended to travel to [[Fairy ring]] code {{Fairycode|dks}} for quick access to the city"
+   },
+   {
+    "n": 6,
+    "task": "Collect 5 Snape grass on Waterbirth Island.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Waterbirth teleport (tablet)|Waterbirth teleport tablet]] to directly access the island, or either 1000 [[coins]] or quest completion of [[The Fremennik Trials]] to travel via [[Jarvald]]"
+   },
+   {
+    "n": 7,
+    "task": "Steal from the Keldagrim crafting or baker's stall.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 5
+     }
+    ],
+    "quest_reqs": [
+     "The Giant Dwarf"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[The Giant Dwarf]]\n*{{SCP|Thieving|5|link=y}}"
+   },
+   {
+    "n": 8,
+    "task": "Fill a bucket with water at the Rellekka well.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Bucket]]"
+   },
+   {
+    "n": 9,
+    "task": "Enter the Troll Stronghold.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of the [[Troll Stronghold]], or completion of the [[Combat Achievements/Easy|Easy Combat Achievements]] for [[Ghommal's hilt 1]]"
+   },
+   {
+    "n": 10,
+    "task": "Chop and burn some oak logs in the Fremennik Province.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 15
+     },
+     {
+      "skill": "Firemaking",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|15|link=y}} and {{SCP|Firemaking|15|link=y}}\n*Any [[axe]] (can be found north of the [[Rellekka mine]]) and a [[tinderbox]]"
+   }
+  ]
+ },
+ {
+  "area": "Fremennik",
+  "tier": "Medium",
+  "task_count": 9,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Slay a Brine rat.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 47
+     }
+    ],
+    "quest_reqs": [
+     "Olaf's Quest"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Olaf's Quest]]\n*{{SCP|Slayer|47|link=y}}\n*[[Weaponry]], and a [[spade]] to enter the [[Brine Rat Cavern]]"
+   },
+   {
+    "n": 2,
+    "task": "Travel to the Snowy Hunter Area via Eagle.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Eagles' Peak"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Eagles' Peak]]\n*[[Rope]]"
+   },
+   {
+    "n": 3,
+    "task": "Mine some coal in Rellekka.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [
+     "The Fremennik Trials"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Fremennik Trials]]\n*{{SCP|Mining|30|link=y}}\n*Any [[pickaxe]] (can be found north of the [[Rellekka mine]])"
+   },
+   {
+    "n": 4,
+    "task": "Steal from the Rellekka Fish stalls.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 42
+     }
+    ],
+    "quest_reqs": [
+     "The Fremennik Trials"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Fremennik Trials]]\n*{{SCP|Thieving|42|link=y}}"
+   },
+   {
+    "n": 5,
+    "task": "Travel to Miscellania by Fairy ring.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Fremennik Trials"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Fremennik Trials]] and having started [[Fairytale II - Cure a Queen]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to travel to [[Fairy ring]] code {{Fairycode|cip}}"
+   },
+   {
+    "n": 6,
+    "task": "Catch a Snowy knight.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 45
+     },
+     {
+      "skill": "Hunter",
+      "level": 35
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|45|link=y}}\n*{{SCP|Hunter|35|link=y}} with a [[butterfly net]] and [[butterfly jar|jar]]"
+   },
+   {
+    "n": 7,
+    "task": "Pick up your Pet Rock from your POH Menagerie.",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 37
+     }
+    ],
+    "quest_reqs": [
+     "The Fremennik Trials"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[The Fremennik Trials]]\n*{{SCP|Construction|37|link=y}}\n*30,000 [[coins]], 4 [[oak plank]]s, [[saw]], and [[hammer]] to construct a [[menagerie]] with a [[Menagerie#Pet house|pet house]], if you haven't already\n*[[Pet rock]]"
+   },
+   {
+    "n": 8,
+    "task": "Visit the Lighthouse from Waterbirth island.",
+    "skill_reqs": [
+     {
+      "skill": "Prayer",
+      "level": 43
+     },
+     {
+      "skill": "Agility",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [
+     "Horror from the Deep"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Horror from the Deep]]\n*[[Food]] and {{SCP|Prayer|43|link=y}} for [[protection prayer]]s recommended\n*Way of getting past the two-man doors at the [[Waterbirth Island Dungeon|dungeon]] entrance (help from another player, [[pet rock]] and [[rune thrownaxe]]s, or {{SCP|Agility|85|link=y}} {{Boostable|y}} for the [[Rocks (Waterbirth Island)|rock shortcut]])"
+   },
+   {
+    "n": 9,
+    "task": "Mine some gold at the Arzinian mine.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 40
+     },
+     {
+      "skill": "Defence",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [
+     "Between a Rock..."
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Between a Rock...]] \n*{{SCP|Mining|40|link=y}}\n*{{SCP|Defence|30|link=y}}\n*Any [[pickaxe]] and the [[gold helmet]]"
+   }
+  ]
+ },
+ {
+  "area": "Fremennik",
+  "tier": "Hard",
+  "task_count": 9,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Teleport to Trollheim.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 61
+     }
+    ],
+    "quest_reqs": [
+     "Eadgar's Ruse"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Eadgar's Ruse]]\n*{{SCP|Magic|61|link=y}}\n*Means to cast [[Trollheim Teleport]] ({{RuneReq|Law=2|Fire=2}})"
+   },
+   {
+    "n": 2,
+    "task": "Catch a Sabre-toothed Kyatt.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 55
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|55|link=y}}\n*[[Teasing stick]], [[logs]], and a [[knife]]"
+   },
+   {
+    "n": 3,
+    "task": "Mix a super defence potion in the Fremennik Province.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 66
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Herblore|66|link=y}}\n*[[Cadantine potion (unf)]] and [[white berries]]"
+   },
+   {
+    "n": 4,
+    "task": "Steal from the Keldagrim Gem Stall.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 75
+     }
+    ],
+    "quest_reqs": [
+     "The Giant Dwarf"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[The Giant Dwarf]]\n*{{SCP|Thieving|75|link=y}}"
+   },
+   {
+    "n": 5,
+    "task": "Craft a Neitiznot shield on Neitiznot.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 56
+     }
+    ],
+    "quest_reqs": [
+     "The Fremennik Isles"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[The Fremennik Isles]]\n*{{SCP|Woodcutting|56|link=y}}\n*[[Hammer]], [[rope]], a set of [[bronze nails]], and 2 [[arctic pine logs]]."
+   },
+   {
+    "n": 6,
+    "task": "Mine 5 Adamantite ores on Jatizso.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [
+     "The Fremennik Isles"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[The Fremennik Isles]]\n*{{SCP|Mining|70|link=y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 7,
+    "task": "Obtain 100% support from your kingdom subjects.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Throne of Miscellania"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Throne of Miscellania]]\n*[[Rake]], [[pickaxe]], [[axe]], [[harpoon]] and/or [[lobster pot]], depending on how you plan to [[Managing_Miscellania#Approval_rating_calculations|gain]] support"
+   },
+   {
+    "n": 8,
+    "task": "Teleport to Waterbirth Island.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 72
+     }
+    ],
+    "quest_reqs": [
+     "Lunar Diplomacy"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Lunar Diplomacy]]\n*{{SCP|Magic|72|link=y}}\n*[[Lunar spellbook]] selected\n*Means to cast [[Waterbirth Teleport]] ({{RuneReq|Law=1|Astral=2|Water=1}})"
+   },
+   {
+    "n": 9,
+    "task": "Obtain the Blast Furnace Foreman's permission to use the Blast Furnace for free.<br/>",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [
+     "The Giant Dwarf"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[The Giant Dwarf]]\n*{{SCP|Smithing|60|link=y}} {{Boostable|n}}"
+   }
+  ]
+ },
+ {
+  "area": "Fremennik",
+  "tier": "Elite",
+  "task_count": 6,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Kill each of the Dagannoth Kings.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*Way of getting past the two-player doors at the [[Waterbirth Island Dungeon|dungeon]] entrance (help from another player, [[pet rock]] and [[rune thrownaxe]]s, or {{SCP|Agility|85|link=y}} {{Boostable|y}} for the [[Rocks (Waterbirth Island)|rock shortcut]])\n*See the [[Dagannoth_Kings/Strategies|strategy guide]]"
+   },
+   {
+    "n": 2,
+    "task": "Craft 56 astral runes simultaneously from Essence without the use of Extracts.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 82
+     }
+    ],
+    "quest_reqs": [
+     "Lunar Diplomacy"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Lunar Diplomacy]]\n*{{SCP|Runecraft|82|link=y}}{{boostable|y}}\n*28 [[Pure essence|pure]] or [[daeyalt essence]] (this task is not bypass-able with [[Raiments of the Eye]])"
+   },
+   {
+    "n": 3,
+    "task": "Create a dragonstone amulet in the Neitiznot furnace.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 80
+     }
+    ],
+    "quest_reqs": [
+     "The Fremennik Isles"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[The Fremennik Isles]]\n*{{SCP|Crafting|80|link=y}}{{boostable|y}}\n*[[Dragonstone]], [[gold bar]], and an [[amulet mould]]"
+   },
+   {
+    "n": 4,
+    "task": "Complete a lap of the Rellekka agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 80
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|80|link=y}} {{boostable|y}}"
+   },
+   {
+    "n": 5,
+    "task": "Kill the generals of Armadyl, Bandos, Saradomin and Zamorak in the God Wars Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 70
+     },
+     {
+      "skill": "Strength",
+      "level": 70
+     },
+     {
+      "skill": "Hitpoints",
+      "level": 70
+     },
+     {
+      "skill": "Ranged",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of the [[Troll Stronghold]], or completion of the {{SCP|combatachievement}} [[Combat Achievements/Easy|Easy Combat Achievements]] for [[Ghommal's hilt 1]]\n*{{SCP|Agility|70|link=y}}, {{SCP|Strength|70|link=y}}, {{SCP|Hitpoints|70|link=y}}, and {{SCP|Ranged|70|link=y}} (only Hitpoints is [[boostable]])\n*See the [[God_Wars_Dungeon#Generals|boss overview]] (or see the individual strategy guides for [[Kree'arra/Strategies|Kree'arra]], [[General Graardor/Strategies|General Graardor]], [[Commander Zilyana/Strategies|Commander Zilyana]], and [[K'ril Tsutsaroth/Strategies|K'ril Tsutsaroth]])"
+   },
+   {
+    "n": 6,
+    "task": "Slay a Spiritual mage within the Godwars Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 83
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of the [[Troll Stronghold]], or completion of the [[Combat Achievements/Easy|Easy Combat Achievements]] for [[Ghommal's hilt 1]]\n*{{SCP|Slayer|83|link=y}}{{boostable|y}}\n*[[Weaponry]]"
+   }
+  ]
+ },
+ {
+  "area": "Kandarin",
+  "tier": "Easy",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Catch a Mackerel at Catherby.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 16
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|16|link=y}}\n*[[Big fishing net]]"
+   },
+   {
+    "n": 2,
+    "task": "Buy a candle from the Chandler in Catherby.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*3 [[coins]]"
+   },
+   {
+    "n": 3,
+    "task": "Collect five Flax from the Seers' flax fields.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 4,
+    "task": "Play the Organ in Seers' church.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 5,
+    "task": "Plant some Jute seeds in the patch north of McGrubor's Wood.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 13
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|13|link=y}}\n*3 [[jute seed]]s, [[rake]], and a [[seed dibber]]"
+   },
+   {
+    "n": 6,
+    "task": "Have Galahad make you a cup of tea.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 7,
+    "task": "Defeat one of each elemental in the workshop.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Elemental Workshop I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Elemental Workshop I]]\n*[[Battered key]] and [[weaponry]]"
+   },
+   {
+    "n": 8,
+    "task": "Get a pet fish from Harry in Catherby.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Fishbowl#Water|Fishbowl with water]]{{efn|[[Ironman Mode|Ironmen]] require either 42 [[Crafting]] or completion of [[Skippy and the Mogres]] with 32 [[Slayer]] for a [[fishbowl]].}}, [[seaweed]], and 10 [[coins]]"
+   },
+   {
+    "n": 9,
+    "task": "Buy a Stew from the Seers' pub.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*20 [[coins]]"
+   },
+   {
+    "n": 10,
+    "task": "Speak to Sherlock.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 11,
+    "task": "Cross the Coal truck log shortcut.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|20|link=y}}"
+   }
+  ]
+ },
+ {
+  "area": "Kandarin",
+  "tier": "Medium",
+  "task_count": 14,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Complete a lap of the Barbarian agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 35
+     }
+    ],
+    "quest_reqs": [
+     "Alfred Grimhand's Barcrawl"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Alfred Grimhand's Barcrawl]]\n*{{SCP|Agility|35|link=y}}"
+   },
+   {
+    "n": 2,
+    "task": "Create a Super Antipoison potion from scratch in the Seers/Catherby Area.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 48
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Herblore|48|link=y}}\n*[[Vial of water]], [[irit leaf]], [[unicorn horn dust]]"
+   },
+   {
+    "n": 3,
+    "task": "Enter the Ranging guild.",
+    "skill_reqs": [
+     {
+      "skill": "Ranged",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Ranged|40|link=y}}"
+   },
+   {
+    "n": 4,
+    "task": "Use the grapple shortcut to get from the water obelisk to Catherby shore.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 36
+     },
+     {
+      "skill": "Strength",
+      "level": 22
+     },
+     {
+      "skill": "Ranged",
+      "level": 39
+     },
+     {
+      "skill": "Agility",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|36|link=y}}, {{SCP|Strength|22|link=y}}, and {{SCP|Ranged|39|link=y}}\n*[[Mith grapple]]{{efn|[[Ironman Mode|Ironmen]] require either access to the [[Ancient Cavern]] or 59 [[Smithing]] and 59 [[Fletching]] for a [[mith grapple]].}} and any [[Crossbow (weapon)|crossbow]]\n*[[Dusty key]] or {{SCP|Agility|70|link=y}}\n*Protection from [[dragonfire]] recommended"
+   },
+   {
+    "n": 5,
+    "task": "Catch and cook a Bass in Catherby.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 46
+     },
+     {
+      "skill": "Cooking",
+      "level": 43
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|46|link=y}} and {{SCP|Cooking|43|link=y}}\n*[[Big fishing net]]"
+   },
+   {
+    "n": 6,
+    "task": "Teleport to Camelot.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 45
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|45|link=y}}\n*Means to cast [[Camelot Teleport]] ({{RuneReq|Air=5|Law=1}})"
+   },
+   {
+    "n": 7,
+    "task": "String a Maple shortbow in Seers' Village bank.",
+    "skill_reqs": [
+     {
+      "skill": "Fletching",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fletching|50|link=y}}\n*[[Maple shortbow (u)]] and [[bow string]]"
+   },
+   {
+    "n": 8,
+    "task": "Pick some Limpwurt root from the farming patch in Catherby.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 26
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|26|link=y}}\n*[[Limpwurt seed]], [[seed dibber]] (or [[Barbarian Farming]]), and a [[rake]]\n*[[Ultracompost]] recommended"
+   },
+   {
+    "n": 9,
+    "task": "Create a Mind helmet.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Elemental Workshop II"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Elemental Workshop II]]"
+   },
+   {
+    "n": 10,
+    "task": "Kill a Fire Giant inside Baxtorian Waterfall.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Waterfall Quest"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Waterfall Quest]]\n*[[Weaponry]]\n*[[Rope]]\n*[[Glarial's amulet]] only if [[Waterfall Quest]] isn't yet completed"
+   },
+   {
+    "n": 11,
+    "task": "Complete a wave of Barbarian Assault.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "* Completion of the [[Barbarian Assault tutorial]] to be able to play the minigame"
+   },
+   {
+    "n": 12,
+    "task": "Steal from the chest in Hemenster.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 47
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|47|link=y}}\n*[[Lockpick]]\n*[[Combat bracelet]] recommended for quick access from the nearby [[Ranging Guild]]"
+   },
+   {
+    "n": 13,
+    "task": "Travel to McGrubor's Wood by Fairy Ring.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Fairytale II - Cure a Queen"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Fairytale II - Cure a Queen]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to travel to [[Fairy ring]] code {{Fairycode|als}}"
+   },
+   {
+    "n": 14,
+    "task": "Mine some coal near the coal trucks.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|30|link=y}}\n*Any [[pickaxe]]"
+   }
+  ]
+ },
+ {
+  "area": "Kandarin",
+  "tier": "Hard",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Catch a Leaping Sturgeon.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 70
+     },
+     {
+      "skill": "Agility",
+      "level": 45
+     },
+     {
+      "skill": "Strength",
+      "level": 45
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*Access to [[Barbarian Fishing]]\n*{{SCP|Fishing|70|link=y}}, {{SCP|Agility|45|link=y}}, and {{SCP|Strength|45|link=y}}\n*[[Barbarian rod]] and suitable bait ([[fishing bait]], [[feather]]s, [[fish offcuts]], [[roe]], or [[caviar]])"
+   },
+   {
+    "n": 2,
+    "task": "Complete a lap of the Seers' Village agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|60|link=y}}"
+   },
+   {
+    "n": 3,
+    "task": "Create a Yew Longbow from scratch around Seers' Village.",
+    "skill_reqs": [
+     {
+      "skill": "Fletching",
+      "level": 70
+     },
+     {
+      "skill": "Woodcutting",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fletching|70|link=y}} and {{SCP|Woodcutting|60|link=y}}\n*Any [[axe]], [[bow string]] (can be spun from [[flax]]), and a [[knife]]"
+   },
+   {
+    "n": 4,
+    "task": "Enter the Seers' Village courthouse with piety turned on.",
+    "skill_reqs": [
+     {
+      "skill": "Prayer",
+      "level": 70
+     },
+     {
+      "skill": "Defence",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [
+     "King's Ransom"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[King's Ransom]] and the [[Knight Waves Training Grounds]]\n*{{SCP|Prayer|70|link=y}} and {{SCP|Defence|70|link=y}} (neither [[Temporary skill boost|boostable]])"
+   },
+   {
+    "n": 5,
+    "task": "Charge a Water Orb.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 56
+     },
+     {
+      "skill": "Agility",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|56|link=y}}\n*[[Dusty key]] or {{SCP|Agility|70|link=y}}\n*[[Unpowered orb]] and means to cast [[Charge Water Orb]] ({{RuneReq|Cosmic=3|Water=30}})\n*Protection from [[dragonfire]] recommended"
+   },
+   {
+    "n": 6,
+    "task": "Burn some Maple logs with a bow in Seers' Village.",
+    "skill_reqs": [
+     {
+      "skill": "Firemaking",
+      "level": 65
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*Access to [[Barbarian Firemaking]]\n*{{SCP|Firemaking|65|link=y}}\n*[[Maple logs]], and any [[bow]] (except the [[Twisted bow|twisted]], [[Cursed goblin bow|cursed]], [[Dark bow|dark]], [[Crystal bow|crystal]], [[ogre bow|ogre]], [[Rain bow|rain]], [[Starter bow|starter]] or [[signed oak bow]])"
+   },
+   {
+    "n": 7,
+    "task": "Kill a Shadow Hound in the Shadow dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 53
+     }
+    ],
+    "quest_reqs": [
+     "Desert Treasure I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Desert Treasure I]]\n*{{SCP|Thieving|53|link=y}}\n*[[Ring of visibility]] (or a [[ring of shadows]]) and [[weapon]]ry"
+   },
+   {
+    "n": 8,
+    "task": "Kill a Mithril Dragon.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Access to [[Barbarian Firemaking]]\n*[[Weaponry]] and protection from [[dragonfire]]"
+   },
+   {
+    "n": 9,
+    "task": "Purchase and equip a granite body from Barbarian Assault.",
+    "skill_reqs": [
+     {
+      "skill": "Strength",
+      "level": 50
+     },
+     {
+      "skill": "Defence",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Strength|50|link=y}} and {{SCP|Defence|50|link=y}}\n*See the [[Barbarian_Assault#Gameplay|gameplay overview]] and the [[Barbarian Assault/Strategies|strategy guide]]\n*95,000 [[coins]] to purchase the [[granite body]]"
+   },
+   {
+    "n": 10,
+    "task": "Have the Seers' estate agent decorate your house with Fancy Stone.",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Construction|50|link=y}} {{Boostable|n}}\n*25,000 [[coins]]\n*Additional 5,000 [[coins]] if already using [[Fancy Stone]], to change to something else and back"
+   },
+   {
+    "n": 11,
+    "task": "Smith an Adamant spear at Otto's Grotto.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 75
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*Access to [[Barbarian Smithing]]\n*{{SCP|Smithing|75|link=y}}\n*[[Yew logs]], [[adamantite bar]], and a [[hammer]]"
+   }
+  ]
+ },
+ {
+  "area": "Kandarin",
+  "tier": "Elite",
+  "task_count": 7,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Read the Blackboard at Barbarian Assault after reaching level 5 in every role.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See the [[Barbarian_Assault#Gameplay|gameplay overview]] and the [[Barbarian Assault/Strategies|strategy guide]]"
+   },
+   {
+    "n": 2,
+    "task": "Pick some Dwarf weed from the herb patch at Catherby.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 79
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|79|link=y}}\n*[[Dwarf weed seed]], [[spade]], [[seed dibber]] (or [[Barbarian Farming]]), and a [[rake]]\n*[[Ultracompost]] recommended"
+   },
+   {
+    "n": 3,
+    "task": "Fish and Cook 5 Sharks in Catherby using the Cooking gauntlets.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 76
+     },
+     {
+      "skill": "Cooking",
+      "level": 80
+     }
+    ],
+    "quest_reqs": [
+     "Family Crest"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Family Crest]]\n*{{SCP|Fishing|76|link=y}} and {{SCP|Cooking|80|link=y}}\n*[[Harpoon]] (or [[Barbarian Training|Barbarian Fishing]]) and [[cooking gauntlets]]"
+   },
+   {
+    "n": 4,
+    "task": "Mix a Stamina Mix on top of the Seers' Village bank.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 86
+     },
+     {
+      "skill": "Agility",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*Access to [[Barbarian Herblore]]\n*{{SCP|Herblore|86|link=y}} and {{SCP|Agility|60|link=y}}\n*[[Stamina potion (2)]] and [[caviar]]{{efn|[[Ironman Mode|Ironmen]] must either have access to [[Fossil Island]] to kill [[Lobstrosity|lobstrosities]] for the [[caviar]], or use a [[knife]] on a [[leaping sturgeon]] (see the first [[#Hard|hard task]] of this diary for the requirements to catch one).}}"
+   },
+   {
+    "n": 5,
+    "task": "Smith a Rune Hasta at Otto's Grotto.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 90
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*Access to [[Barbarian Smithing]]\n*{{SCP|Smithing|90|link=y}} {{boostable|y}}\n*[[Runite bar]], [[magic logs]], and a [[hammer]]"
+   },
+   {
+    "n": 6,
+    "task": "Construct a Pyre ship from Magic Logs.",
+    "skill_reqs": [
+     {
+      "skill": "Firemaking",
+      "level": 85
+     },
+     {
+      "skill": "Crafting",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*Access to [[Barbarian Firemaking]]\n*{{SCP|Firemaking|85|link=y}} {{boostable|y}} and {{SCP|Crafting|85|link=y}} {{boostable|y}} \n*[[Magic logs]], [[chewed bones]], [[tinderbox]], and any [[woodcutting axe]]"
+   },
+   {
+    "n": 7,
+    "task": "Teleport to Catherby.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 87
+     }
+    ],
+    "quest_reqs": [
+     "Lunar Diplomacy"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Lunar Diplomacy]]\n*{{SCP|Magic|87|link=y}}\n*[[Lunar spellbook]] selected\n*Means to cast [[Catherby Teleport]] ({{RuneReq|Law=3|Astral=3|Water=10}})"
+   }
+  ]
+ },
+ {
+  "area": "Karamja",
+  "tier": "Easy",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Pick 5 bananas from the plantation located east of the volcano.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 2,
+    "task": "Use the rope swing to travel to the Moss Giant Island north-west of Karamja.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 10
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|10|link=yes}}"
+   },
+   {
+    "n": 3,
+    "task": "Mine some gold from the rocks on the north-west peninsula of Karamja.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|40|link=yes}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 4,
+    "task": "Travel to Port Sarim via the dock, east of Musa Point.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*30 [[coins]] or a [[Ring of Charos(a)]]\n''This can also be completed by travelling to Port Sarim from [[The Pandemonium]] via [[Seaman Morris]].''"
+   },
+   {
+    "n": 5,
+    "task": "Travel to Ardougne via the port near Brimhaven.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*30 [[coins]] or a [[Ring of Charos(a)]]"
+   },
+   {
+    "n": 6,
+    "task": "Explore Cairn Island to the west of Karamja.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|15|link=yes}}"
+   },
+   {
+    "n": 7,
+    "task": "Use the Fishing spots north of the banana plantation.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Harpoon]] (or [[Barbarian_Training#Barbarian_Fishing|barehanded fishing]]), [[lobster pot]], [[small fishing net]], or a [[fishing rod]] with [[Fishing bait|bait]], depending on the spot you fish at"
+   },
+   {
+    "n": 8,
+    "task": "Collect 5 seaweed from anywhere on Karamja.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Seaweed]] (can be found near [[Jiminua's Jungle Store.|Jiminua's Jungle Store]])"
+   },
+   {
+    "n": 9,
+    "task": "Attempt the TzHaar Fight Pits or Fight Cave.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 10,
+    "task": "Kill a jogre in the Pothole dungeon.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Weaponry]]"
+   }
+  ]
+ },
+ {
+  "area": "Karamja",
+  "tier": "Medium",
+  "task_count": 19,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Claim a ticket from the Agility Arena in Brimhaven.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*200 [[coins]]\n*{{SCP|Agility|40|link=yes}} recommended''"
+   },
+   {
+    "n": 2,
+    "task": "Discover hidden wall in the dungeon below the volcano.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Dragon Slayer I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Dragon Slayer I]]"
+   },
+   {
+    "n": 3,
+    "task": "Visit the Isle of Crandor via the dungeon below the volcano.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Dragon Slayer I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Dragon Slayer I]]"
+   },
+   {
+    "n": 4,
+    "task": "Use Vigroy and Hajedy's cart service.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Shilo Village"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Shilo Village]]\n*200 [[coins]]"
+   },
+   {
+    "n": 5,
+    "task": "Earn 100% favour in the village of Tai Bwo Wannai.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 10
+     }
+    ],
+    "quest_reqs": [
+     "Jungle Potion"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Jungle Potion]]\n*{{SCP|Woodcutting|10|link=yes}}\n*See the [[Tai Bwo Wannai Cleanup#Necessary items|recommendations]]"
+   },
+   {
+    "n": 6,
+    "task": "Cook a spider on a stick.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 16
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Cooking|16|link=yes}}\n*[[Spider carcass]], and a [[skewer stick]] or an [[arrow shaft]]"
+   },
+   {
+    "n": 7,
+    "task": "Charter the Lady of the Waves from Cairn Isle to Port Khazard.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Shilo Village"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Shilo Village]]\n*[[Ship ticket]] or 20-50 [[coins]] (the price is random)"
+   },
+   {
+    "n": 8,
+    "task": "Cut a log from a teak tree.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 35
+     },
+     {
+      "skill": "Agility",
+      "level": 79
+     }
+    ],
+    "quest_reqs": [
+     "Jungle Potion"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Jungle Potion]]\n*{{SCP|Woodcutting|35|link=yes}}\n*Any [[axe]]\n*100 [[trading sticks]] and having helped{{efn|name=Favour|You must have gained some favour by repairing at least one [[village fence]] and then talking to [[Murcaily]] for [[trading sticks]]. Otherwise, you'll not be allowed to chop trees in the [[Hardwood Grove]] or trade for [[machete]]s with [[Safta Doc]].}} in [[Tai Bwo Wannai Cleanup]] (if using the [[Hardwood Grove]]) \n*[[Machete]] or {{SCP|Agility|79|link=yes}}, and having started {{SCP|Quest}} [[Legends' Quest]] (if using the [[Kharazi Jungle]])"
+   },
+   {
+    "n": 9,
+    "task": "Cut a log from a mahogany tree.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 50
+     },
+     {
+      "skill": "Agility",
+      "level": 79
+     }
+    ],
+    "quest_reqs": [
+     "Jungle Potion"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Jungle Potion]]\n*{{SCP|Woodcutting|50|link=yes}}\n*Any [[axe]]\n*100 [[trading sticks]] and having helped{{efn|name=Favour}} in [[Tai Bwo Wannai Cleanup]] (if using the [[Hardwood Grove]]) \n*[[Machete]] or {{SCP|Agility|79|link=yes}}, and having started {{SCP|Quest}} [[Legends' Quest]] (if using the [[Kharazi Jungle]])"
+   },
+   {
+    "n": 10,
+    "task": "Catch a karambwan.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 65
+     }
+    ],
+    "quest_reqs": [
+     "Tai Bwo Wannai Trio"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Tai Bwo Wannai Trio]]\n*{{SCP|Fishing|65|link=yes}}\n*[[Karambwan vessel]], some [[raw karambwanji]], and a [[small fishing net]]"
+   },
+   {
+    "n": 11,
+    "task": "Exchange gems for a machete.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Jungle Potion"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Jungle Potion]]\n*[[Gout tuber]], as well one of the following:\n**300 [[trading stick]]s and 3 [[opal|cut]] or [[uncut opal]]s\n**600 [[trading stick]]s and 3 [[jade|cut]] or [[uncut jade]]s\n**1200 [[trading stick]]s and 3 [[red topaz|cut]] or [[uncut red topaz]]\n*You need to speak to [[Sharimika]] and go through the dialogue options and you must have picked up some trading sticks from a villager as reward before the dialogue options will show up for this diary step."
+   },
+   {
+    "n": 12,
+    "task": "Use the gnome glider to travel to Karamja.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Grand Tree"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Grand Tree]]"
+   },
+   {
+    "n": 13,
+    "task": "Grow a healthy fruit tree in the patch near Brimhaven.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 27
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|27|link=yes}}\n*Any [[fruit tree sapling]], a [[spade]], and a [[rake]]"
+   },
+   {
+    "n": 14,
+    "task": "Trap a horned graahk.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 41
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|41|link=yes}}\n*[[Teasing stick]] or [[Hunter's spear]], [[knife]], and any [[logs]]."
+   },
+   {
+    "n": 15,
+    "task": "Chop the vines to gain deeper access to Brimhaven Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 10
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|10|link=yes}}\n*Any [[axe]] and 875 [[coins]]"
+   },
+   {
+    "n": 16,
+    "task": "Cross the lava using the stepping stones within Brimhaven Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 10
+     },
+     {
+      "skill": "Agility",
+      "level": 12
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|10|link=yes}} and {{SCP|Agility|12|link=yes}}\n*Any [[axe]] and 875 [[coins]]"
+   },
+   {
+    "n": 17,
+    "task": "Climb the stairs within Brimhaven Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 10
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|10|link=yes}}\n*Any [[axe]] and 875 [[coins]]"
+   },
+   {
+    "n": 18,
+    "task": "Charter a ship from the shipyard in the far east of Karamja.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Grand Tree"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[The Grand Tree]]\n*Enough [[coins]] to pay the [[Charter ship#Fares|fare]] for a [[charter ship]]."
+   },
+   {
+    "n": 19,
+    "task": "Mine a red topaz from a gem rock.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [
+     "Jungle Potion"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Jungle Potion]], and either completion of [[Shilo Village]] or [[Tai Bwo Wannai Cleanup#Necessary items|items]] for [[Tai Bwo Wannai Cleanup]]\n*{{SCP|Mining|40|link=yes}}\n*Any [[pickaxe]]"
+   }
+  ]
+ },
+ {
+  "area": "Karamja",
+  "tier": "Hard",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Become the Champion of the Fight Pits.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*At least one other player\n*[[Weapon]]ry, optionally"
+   },
+   {
+    "n": 2,
+    "task": "Kill a Ket-Zek in the Fight Caves.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See the [[TzHaar Fight Cave/Strategies|strategy guide]]"
+   },
+   {
+    "n": 3,
+    "task": "Eat an oomlie wrap.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Cooked oomlie wrap]], or the requirements to make it ({{SCP|Cooking|50|link=yes}} {{boostable|n}}, a [[palm leaf]], and a [[raw oomlie]])"
+   },
+   {
+    "n": 4,
+    "task": "Craft some nature runes from Essence.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 44
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|44|link=yes}}\n*[[Pure essence|Pure]] or [[daeyalt essence]]\n*Access to the [[Nature Altar]] ([[nature talisman]]/[[Nature tiara|tiara]], [[catalytic talisman]]/[[Catalytic tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 5,
+    "task": "Cook a karambwan thoroughly.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [
+     "Tai Bwo Wannai Trio"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Tai Bwo Wannai Trio]] (speak to [[Tinsay]] after the quest) \n*{{SCP|Cooking|30|link=yes}}\n*[[Raw karambwan]], multiple recommended in case of [[Burnt karambwan|burning]] one"
+   },
+   {
+    "n": 6,
+    "task": "Kill a deathwing in the dungeon under the Kharazi Jungle.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 50
+     },
+     {
+      "skill": "Thieving",
+      "level": 50
+     },
+     {
+      "skill": "Mining",
+      "level": 52
+     },
+     {
+      "skill": "Strength",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Legends' Quest"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Legends' Quest]]\n**The quest can be started without all the required skills, but reaching this area requires {{SCP|Agility|50|link=yes}}, {{SCP|Thieving|50|link=yes}}, {{SCP|Mining|52|link=yes}}, and {{SCP|Strength|50|link=yes}} (all boostable).\n*Any [[axe]], any [[Machete (weapon)|machete]], any [[pickaxe]], and a [[lockpick]]"
+   },
+   {
+    "n": 7,
+    "task": "Use the crossbow shortcut south of the volcano.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 53
+     },
+     {
+      "skill": "Ranged",
+      "level": 42
+     },
+     {
+      "skill": "Strength",
+      "level": 21
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|53|link=yes}}, {{SCP|Ranged|42|link=yes}} and {{SCP|Strength|21|link=yes}}\n*[[Mith grapple]]{{efn|[[Ironman Mode|Ironmen]] require either access to the [[Ancient Cavern]] or 59 [[Smithing]] and 59 [[Fletching]] for a [[mith grapple]].}} and any [[Crossbow (weapon)|crossbow]]"
+   },
+   {
+    "n": 8,
+    "task": "Collect 5 palm leaves.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 79
+     }
+    ],
+    "quest_reqs": [
+     "Legends' Quest"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Legends' Quest]]\n*Any [[axe]] and [[Machete (weapon)|machete]], or {{SCP|Agility|79|link=yes}} for the [[Vine (Kharazi Jungle)|vine shortcut]]"
+   },
+   {
+    "n": 9,
+    "task": "Be assigned a Slayer task by the Slayer Master in Shilo Village.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 100
+     },
+     {
+      "skill": "Slayer",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Shilo Village"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Shilo Village]]\n*{{SCP|Combat|100|link=yes}} and {{SCP|Slayer|50|link=yes}}, or a [[Slayer cape]]"
+   },
+   {
+    "n": 10,
+    "task": "Kill a metal dragon in Brimhaven Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 10
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|10|link=yes}}\n*Any [[axe]], protection from [[dragonfire]], and [[weapon]]ry\n*875 [[coins]] (unless you have unlocked permanently free access via either [[Saniboch]] or [[Banisoch]])"
+   }
+  ]
+ },
+ {
+  "area": "Karamja",
+  "tier": "Elite",
+  "task_count": 5,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Craft 56 Nature runes simultaneously from Essence without the use of Extracts.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 91
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|91|link=y}}{{Boostable|yes}}\n*28 [[Pure essence|pure]] or [[daeyalt essence]] (less may suffice with [[Raiments of the Eye]] pieces){{efn|To guarantee the task completes, bring at least 26 essence with 1 piece, 24 with 2 pieces, 22 with 3 pieces, or 19 with the full [[Raiments of the Eye]] set.}}\n*Access to the [[Nature Altar]] ([[nature talisman]]/[[Nature tiara|tiara]], [[catalytic talisman]]/[[Catalytic tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 2,
+    "task": "Equip a Fire Cape or Infernal Cape in Mor Ul Rek.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See the [[TzHaar Fight Cave/Strategies|strategy guide]] for the [[TzHaar Fight Cave]]\n*[[Fire cape]] or [[infernal cape]]"
+   },
+   {
+    "n": 3,
+    "task": "Check the health of a palm tree in Brimhaven.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 68
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|68|link=y}}\n*[[Palm sapling]], [[spade]] and [[rake]]\n*15 [[papaya fruit]] recommended to pay the [[Garth|gardener]]"
+   },
+   {
+    "n": 4,
+    "task": "Create an antivenom potion whilst standing in the horse shoe mine.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 87
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Herblore|87|link=y}}{{Boostable|yes}}\n*[[Antidote++]] and 5-20 [[Zulrah's scales]] (5 per dose)"
+   },
+   {
+    "n": 5,
+    "task": "Check the health of your Calquat tree patch.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 72
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|72|link=y}}\n*[[Calquat sapling]], [[spade]] and [[rake]]\n*8 [[poison ivy berries]] recommended to pay the [[Imiago|gardener]]"
+   }
+  ]
+ },
+ {
+  "area": "Kourend & Kebos",
+  "tier": "Easy",
+  "task_count": 12,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Mine some Iron at the Mount Karuulm mine.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|15|link=y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 2,
+    "task": "Kill a Sandcrab.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 3,
+    "task": "Hand in a book at the Arceuus Library.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 4,
+    "task": "Steal from a Hosidius Food Stall.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 25
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|25|link=y}}"
+   },
+   {
+    "n": 5,
+    "task": "Browse the Warrens General Store.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 6,
+    "task": "Take a boat to Land's End.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 7,
+    "task": "Pray at the Altar in Kourend Castle",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 8,
+    "task": "Dig up some Saltpetre.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Spade]]"
+   },
+   {
+    "n": 9,
+    "task": "Enter your Player Owned House from Hosidius.",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 25
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Construction|25|link=y}} {{Boostable|n}}\n*8,750 [[coins]] for an [[estate agent]] to move your house to [[Hosidius]] (can only be done after you've visited [[Great Kourend]])"
+   },
+   {
+    "n": 10,
+    "task": "Do a lap of either tier of the Shayzien Agility Course.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 11,
+    "task": "Create a Strength potion in the Lovakengj Pub.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 12
+     }
+    ],
+    "quest_reqs": [
+     "Druidic Ritual"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Druidic Ritual]]\n*{{SCP|Herblore|12|link=y}}\n*[[Tarromin potion (unf)]] and [[limpwurt root]]"
+   },
+   {
+    "n": 12,
+    "task": "Fish a Trout from the River Molch.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|20|link=y}}\n*[[Fly fishing rod]] and some [[feather]]s (bring enough feathers to account for fishing raw salmon multiple times before you get a raw trout)\n|-"
+   }
+  ]
+ },
+ {
+  "area": "Kourend & Kebos",
+  "tier": "Medium",
+  "task_count": 13,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Travel to the Fairy Ring south of Mount Karuulm.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Fairytale II - Cure a Queen"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Fairytale II - Cure a Queen]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to travel to [[Fairy ring]] code {{Fairycode|CIR}}"
+   },
+   {
+    "n": 2,
+    "task": "Kill a Lizardman.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Combat gear]]\n*[[Antipoison]] recommended"
+   },
+   {
+    "n": 3,
+    "task": "Use Kharedst's memoirs to teleport to all five cities in Great Kourend.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Depths of Despair"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Depths of Despair]], [[The Queen of Thieves]], [[Tale of the Righteous]], [[The Forsaken Tower]] and [[The Ascent of Arceuus]]\n*[[Kharedst's memoirs]] or the [[Book of the Dead]]"
+   },
+   {
+    "n": 4,
+    "task": "Mine some Volcanic Sulphur.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 42
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|42|link=y}}\n*Any [[pickaxe]]\n*[[Face mask]], [[gas mask]], or [[slayer helmet]]"
+   },
+   {
+    "n": 5,
+    "task": "Enter the Farming Guild.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 45
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|45|link=y}}"
+   },
+   {
+    "n": 6,
+    "task": "Switch to the Necromancy Spellbook at Tyss.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 7,
+    "task": "Repair a Piscarilius crane.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 30
+     },
+     {
+      "skill": "Construction",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|30|link=y}} and {{SCP|Construction|30|link=yes}}\n*[[Hammer]], 3 regular [[planks]], and about 50 [[nail]]s of any variant"
+   },
+   {
+    "n": 8,
+    "task": "Deliver some intelligence to Captain Ginea.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Combat gear]]"
+   },
+   {
+    "n": 9,
+    "task": "Catch a Bluegill on Molch Island.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 43
+     },
+     {
+      "skill": "Hunter",
+      "level": 35
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|43|link=y}} and {{SCP|Hunter|35|link=y}}\n*[[King worm]]s (found on the island) or [[fish offcuts]]"
+   },
+   {
+    "n": 10,
+    "task": "Use the boulder leap shortcut in the Arceuus essence mine.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 49
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|49|link=y}}"
+   },
+   {
+    "n": 11,
+    "task": "Subdue the Wintertodt",
+    "skill_reqs": [
+     {
+      "skill": "Firemaking",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Firemaking|50|link=y}}\n*Any [[axe]], [[tinderbox]], and [[warm clothing]]\n*[[Knife]] and a [[hammer]] or [[Imcando hammer]] recommended to score more points\n*[[Rejuvenation potion]]s recommended for learners (these are made in the minigame's lobby)"
+   },
+   {
+    "n": 12,
+    "task": "Catch a Chinchompa in the Kourend Woodland.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 53
+     }
+    ],
+    "quest_reqs": [
+     "Eagles' Peak"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Eagles' Peak]]\n*{{SCP|Hunter|53|link=y}}\n*[[Box trap]]"
+   },
+   {
+    "n": 13,
+    "task": "Chop some Mahogany logs north of the Farming Guild.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|50|link=y}}\n*Any [[axe]]"
+   }
+  ]
+ },
+ {
+  "area": "Kourend & Kebos",
+  "tier": "Hard",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Enter the Woodcutting Guild.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|60|link=y}}"
+   },
+   {
+    "n": 2,
+    "task": "Smelt an Adamantite bar in The Forsaken Tower.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [
+     "The Forsaken Tower"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[The Forsaken Tower]]\n*{{SCP|Smithing|70|link=y}}\n*[[Adamantite ore]] and 6 [[coal]]"
+   },
+   {
+    "n": 3,
+    "task": "Kill a Lizardman Shaman in the Lizardman Temple.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See the [[Lizardman shaman/Strategies|strategy guide]]"
+   },
+   {
+    "n": 4,
+    "task": "Mine some Lovakite.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 65
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|65|link=y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 5,
+    "task": "Plant some Logavano seeds at the Tithe Farm.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 74
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|74|link=y}}{{Boostable|yes}}\n*[[Seed dibber]]"
+   },
+   {
+    "n": 6,
+    "task": "Kill a Zombie in the Shayzien Crypts.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Combat gear]] and a [[light source]]"
+   },
+   {
+    "n": 7,
+    "task": "Teleport to Xeric's Heart using Xeric's Talisman.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Xeric's talisman]] charged with a [[lizardman fang]], or a [[mounted xeric's talisman]] inside any [[player-owned house]] (see the [[House party]] worlds)"
+   },
+   {
+    "n": 8,
+    "task": "Deliver an artefact to Captain Khaled.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 49
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|49|link=y}}\n*[[Lockpick]]"
+   },
+   {
+    "n": 9,
+    "task": "Kill a Wyrm in the Karuulm Slayer Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 62
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Slayer|62|link=y}}\n*[[Combat gear]]\n*[[Boots of stone]], [[boots of brimstone|brimstone]], or [[granite boots|granite]]"
+   },
+   {
+    "n": 10,
+    "task": "Cast Monster Examine on a Troll south of Mount Quidamortem.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 66
+     }
+    ],
+    "quest_reqs": [
+     "Dream Mentor"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Dream Mentor]]\n*{{SCP|Magic|66|link=y}}\n*[[Lunar spellbook]] selected\n*Means to cast [[Monster Examine]] ({{RuneReq|Astral=1|Mind=1|Cosmic=1}})\n|-"
+   }
+  ]
+ },
+ {
+  "area": "Kourend & Kebos",
+  "tier": "Elite",
+  "task_count": 8,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Craft one or more Blood runes from Dark essence.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 77
+     },
+     {
+      "skill": "Mining",
+      "level": 38
+     },
+     {
+      "skill": "Crafting",
+      "level": 38
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|77|link=y}}, {{SCP|Mining|38|link=y}}, and {{SCP|Crafting|38|link=y}}\n*Any [[pickaxe]] and [[chisel]]"
+   },
+   {
+    "n": 2,
+    "task": "Chop some Redwood logs.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 90
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|90|link=y}}\n*Any [[axe]]"
+   },
+   {
+    "n": 3,
+    "task": "Defeat Skotizo in the Catacombs of Kourend.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Dark totem]]\n*See the [[Skotizo/Strategies|strategy guide]]"
+   },
+   {
+    "n": 4,
+    "task": "Catch an Anglerfish and cook it whilst in Great Kourend.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 82
+     },
+     {
+      "skill": "Cooking",
+      "level": 84
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|82|link=y}} and {{SCP|Cooking|84|link=y}}\n*[[Fishing rod]] and some [[sandworms]]"
+   },
+   {
+    "n": 5,
+    "task": "Kill a Hydra in the Karuulm Slayer Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 95
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Slayer|95|link=y}}\n*[[Weapon]]ry\n*[[Poison#Curing_poison|Antipoison]] recommended"
+   },
+   {
+    "n": 6,
+    "task": "Create an Ape Atoll teleport tablet.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 90
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|90|link=y}}\n*[[Arceuus spellbook]] selected\n*[[Dark essence block]] and the required [[runes]] ({{RuneReq|Soul=2|Blood=2|Law=2}})"
+   },
+   {
+    "n": 7,
+    "task": "Complete a Raid in the Chambers of Xeric.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See the [[Chambers of Xeric/Strategies|strategy guide]]"
+   },
+   {
+    "n": 8,
+    "task": "Create your own Battlestaff from scratch within the Farming Guild.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 85
+     },
+     {
+      "skill": "Fletching",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|85|link=y}} and {{SCP|Fletching|40|link=y}}\n*[[Celastrus sapling]], [[knife]], [[spade]], [[rake]], and any [[axe]]\n*8 [[potato cacti]] recommended to protect your sapling"
+   }
+  ]
+ },
+ {
+  "area": "Lumbridge & Draynor",
+  "tier": "Easy",
+  "task_count": 12,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Complete a lap of the Draynor Village agility course.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 2,
+    "task": "Slay a Cave bug beneath Lumbridge Swamp.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 7
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Slayer|7|link=yes}}\n*[[Light source]]\n*[[Rope]] if the caves haven't been entered yet"
+   },
+   {
+    "n": 3,
+    "task": "Have Sedridor teleport you to the Rune essence mine.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Rune Mysteries"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Rune Mysteries]]"
+   },
+   {
+    "n": 4,
+    "task": "Craft some water runes from Essence.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 5
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|5|link=yes}}\n*[[Pure essence|Pure]], [[Daeyalt essence|daeyalt]], or [[rune essence]]\n*Access to the [[Water Altar]] ([[water talisman]]/[[water tiara|tiara]], [[elemental talisman]]/[[Elemental tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 5,
+    "task": "Learn your age from Hans in Lumbridge.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 6,
+    "task": "Pickpocket a man or woman in Lumbridge.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 7,
+    "task": "Chop and burn some oak logs in Lumbridge.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 15
+     },
+     {
+      "skill": "Firemaking",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|15|link=yes}} and {{SCP|Firemaking|15|link=yes}}\n*Any [[axe]] and [[tinderbox]]"
+   },
+   {
+    "n": 8,
+    "task": "Kill a Zombie in Draynor Sewers.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 9,
+    "task": "Catch some Anchovies in Al Kharid.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|15|link=yes}}\n*[[Small fishing net]]"
+   },
+   {
+    "n": 10,
+    "task": "Bake some Bread on the Lumbridge kitchen range.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 34
+     }
+    ],
+    "quest_reqs": [
+     "Cook's Assistant"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Cook's Assistant]]\n*[[Bread dough]], multiple recommended in case of [[Burnt bread|burning]] one (always successful at {{SCP|Cooking|34|link=yes}})"
+   },
+   {
+    "n": 11,
+    "task": "Mine some Iron ore at the Al Kharid mine.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|15|link=yes}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 12,
+    "task": "Enter the H.A.M. Hideout.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*None, though a [[lockpick]] is recommended"
+   }
+  ]
+ },
+ {
+  "area": "Lumbridge & Draynor",
+  "tier": "Medium",
+  "task_count": 12,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Complete a lap of the Al Kharid agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|20|link=y}}"
+   },
+   {
+    "n": 2,
+    "task": "Grapple across the River Lum.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 8
+     },
+     {
+      "skill": "Strength",
+      "level": 19
+     },
+     {
+      "skill": "Ranged",
+      "level": 37
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|8|link=y}}, {{SCP|Strength|19}} and {{SCP|Ranged|37}}\n*[[Mith grapple]]{{efn|[[Ironman Mode|Ironmen]] require either access to the [[Ancient Cavern]] or 59 [[Smithing]] and 59 [[Fletching]] for a [[mith grapple]].}} and any [[Crossbow (weapon)|crossbow]]"
+   },
+   {
+    "n": 3,
+    "task": "Purchase an upgraded device from Ava.",
+    "skill_reqs": [
+     {
+      "skill": "Ranged",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Animal Magnetism"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Animal Magnetism]]\n*{{SCP|Ranged|50|link=y}}{{Boostable|no}}\n*75 [[steel arrows]] with [[Ava's attractor]], or 75 steel arrows with 999 [[coins]]"
+   },
+   {
+    "n": 4,
+    "task": "Travel to the Wizards' Tower by Fairy ring.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Fairytale II - Cure a Queen"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Fairytale II - Cure a Queen]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to travel to [[Fairy ring]] code {{Fairycode|dis}}"
+   },
+   {
+    "n": 5,
+    "task": "Cast the Teleport to Lumbridge spell.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 31
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|31|link=y}}\n*Means to cast [[Lumbridge Teleport]] ({{RuneReq|Law=1|Air=3|Earth=1}})"
+   },
+   {
+    "n": 6,
+    "task": "Catch some Salmon in Lumbridge.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|30|link=y}}\n*[[Fly fishing rod]] and some [[feather]]s"
+   },
+   {
+    "n": 7,
+    "task": "Craft a coif in the Lumbridge cow pen.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 38
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|38|link=y}}\n*[[Leather]], and a [[needle]] and [[thread]] or the [[costume needle]]"
+   },
+   {
+    "n": 8,
+    "task": "Chop some willow logs in Draynor Village.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|30|link=y}}\n*Any [[axe]]"
+   },
+   {
+    "n": 9,
+    "task": "Pickpocket Martin the Master Gardener.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 38
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|38|link=y}}"
+   },
+   {
+    "n": 10,
+    "task": "Get a slayer task from Chaeldar.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [
+     "Lost City"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Lost City]]\n*{{SCP|Combat|70|link=y}}\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to enter [[Zanaris]]"
+   },
+   {
+    "n": 11,
+    "task": "Catch an Essence or Eclectic impling in Puro-Puro.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 42
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|42|link=y}}\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to enter [[Zanaris]]\n*[[Butterfly net]] and [[impling jar]]"
+   },
+   {
+    "n": 12,
+    "task": "Craft some Lava runes at the fire altar in Al Kharid.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 23
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|23|link=y}}\n*[[Earth talisman]], [[earth runes]], and [[Pure essence|pure]] or [[daeyalt essence]]\n*Access to the [[Fire Altar]] ([[fire talisman]]/[[fire tiara|tiara]], [[elemental talisman]]/[[Elemental tiara|tiara]], or the [[Abyss]])\n*[[Binding necklace]] recommended to guarantee the runes are successfully crafted"
+   }
+  ]
+ },
+ {
+  "area": "Lumbridge & Draynor",
+  "tier": "Hard",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Cast Bones to Peaches in Al Kharid palace.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|60|link=y}}\n*Access to [[Bones to Peaches]] via the [[Mage Training Arena]]\n*[[Bones]] and means to cast [[Bones to Peaches]] ({{RuneReq|Nature=2|Earth=4|Water=4}})"
+   },
+   {
+    "n": 2,
+    "task": "Squeeze past the jutting wall on your way to the cosmic altar.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 46
+     }
+    ],
+    "quest_reqs": [
+     "Lost City"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Lost City]]\n*{{SCP|Agility|46|link=y}}\n*[[Dramen staff|Dramen]] or [[Lunar staff]] to enter [[Zanaris]], or access to the [[Abyss]]"
+   },
+   {
+    "n": 3,
+    "task": "Craft 56 Cosmic runes simultaneously from Essence without the use of Extracts.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 59
+     }
+    ],
+    "quest_reqs": [
+     "Lost City"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Lost City]]\n*{{SCP|Runecraft|59|link=y}}\n*28 [[Pure essence|pure]] or [[daeyalt essence]] (less may suffice with [[Raiments of the Eye]] pieces){{efn|To guarantee the task completes, bring at least 26 essence with 1 piece, 24 with 2 pieces, 22 with 3 pieces, or 19 with the full [[Raiments of the Eye]] set.}}\n*Access to the [[Cosmic Altar]] ([[cosmic talisman]]/[[Cosmic tiara|tiara]], [[catalytic talisman]]/[[Catalytic tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 4,
+    "task": "Travel from Lumbridge to Edgeville on a Waka Canoe.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 57
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|57|link=y}}\n*Any [[axe]]"
+   },
+   {
+    "n": 5,
+    "task": "Collect at least 100 Tears of Guthix in one visit.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Tears of Guthix (quest)"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Tears of Guthix (quest)|Tears of Guthix]]\n*[[Games necklace]] recommended for quick access"
+   },
+   {
+    "n": 6,
+    "task": "Take the train from Dorgesh-Kaan to Keldagrim.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Another Slice of H.A.M."
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Another Slice of H.A.M.]]"
+   },
+   {
+    "n": 7,
+    "task": "Purchase some Barrows gloves from the Lumbridge bank chest.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Full completion of [[Recipe for Disaster]]\n*130,000 [[coins]]"
+   },
+   {
+    "n": 8,
+    "task": "Pick some Belladonna from the farming patch at Draynor Manor.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 63
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|63|link=y}}\n*[[Belladonna seed]], [[seed dibber]], [[spade]], [[rake]] and any [[gloves]]"
+   },
+   {
+    "n": 9,
+    "task": "Light your mining helmet in the Lumbridge castle basement.",
+    "skill_reqs": [
+     {
+      "skill": "Firemaking",
+      "level": 65
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Firemaking|65|link=y}}\n*[[Tinderbox]] and [[mining helmet]]"
+   },
+   {
+    "n": 10,
+    "task": "Recharge your prayer at Emir's Arena with Smite activated.",
+    "skill_reqs": [
+     {
+      "skill": "Prayer",
+      "level": 52
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Prayer|52|link=y}}"
+   },
+   {
+    "n": 11,
+    "task": "Craft, string and enchant an Amulet of Power in Lumbridge.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 70
+     },
+     {
+      "skill": "Magic",
+      "level": 57
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|70|link=y}} and {{SCP|Magic|57|link=y}}\n*[[Gold bar]], [[Diamond|cut diamond]], [[amulet mould]], [[ball of wool]]\n*Means to cast [[Lvl-4 Enchant]] ({{RuneReq|Cosmic=1|Earth=10}})"
+   }
+  ]
+ },
+ {
+  "area": "Lumbridge & Draynor",
+  "tier": "Elite",
+  "task_count": 6,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Steal from a Dorgesh-Kaan rich chest.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 78
+     }
+    ],
+    "quest_reqs": [
+     "Death to the Dorgeshuun"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Death to the Dorgeshuun]]\n*{{SCP|Thieving|78|link=y}}\n*[[Lockpick]]"
+   },
+   {
+    "n": 2,
+    "task": "Grapple across a pylon on the Dorgesh-Kaan Agility Course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 70
+     },
+     {
+      "skill": "Ranged",
+      "level": 70
+     },
+     {
+      "skill": "Strength",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [
+     "Death to the Dorgeshuun"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Death to the Dorgeshuun]]\n*{{SCP|Agility|70|link=y}}, {{SCP|Ranged|70|link=y}} and {{SCP|Strength|70|link=y}}\n*[[Mith grapple]]{{efn|[[Ironman Mode|Ironmen]] require one of: <ul><li>Access to the [[Ancient Cavern]]</li><li>59 [[Smithing]] and 59 [[Fletching]] to make a mith grapple</li><li>99 Fletching for a [[mith grapple]] from the [[Fletching cape]]</li></ul>}}, any [[Crossbow (weapon)|crossbow]], and a [[light source]]"
+   },
+   {
+    "n": 3,
+    "task": "Chop some magic logs at the Mage Training Arena.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 75
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|75|link=y}}\n*Any [[axe]]"
+   },
+   {
+    "n": 4,
+    "task": "Smith an Adamant platebody down Draynor sewer.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 88
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Smithing|88|link=y}}\n*5 [[adamantite bar]]s and a [[hammer]]"
+   },
+   {
+    "n": 5,
+    "task": "Craft 140 or more Water runes simultaneously from Essence without the use of Extracts.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 76
+     },
+     {
+      "skill": "Runecraft",
+      "level": 57
+     },
+     {
+      "skill": "Runecraft",
+      "level": 38
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|76|link=y}}\n*{{SCP|Runecraft|57|link=y}} with 3 [[Raiments of the Eye]] pieces, (2 pieces with [[Abyssal lantern#Magic|Abyssal lantern lit with magic logs]])\n*{{SCP|Runecraft|38|link=y}} with 4 [[Raiments of the Eye]] pieces (random chance, not guaranteed)\n*28 [[Pure essence|pure]], [[Daeyalt essence|daeyalt]], or [[rune essence]] (less may suffice at higher [[Runecraft]] levels)\n*Access to the [[Water Altar]] ([[water talisman]]/[[water tiara|tiara]], [[elemental talisman]]/[[Elemental tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 6,
+    "task": "Perform the Quest cape emote in the Wise Old Man's house.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Completion of all quests\n*[[Quest point cape]]"
+   }
+  ]
+ },
+ {
+  "area": "Morytania",
+  "tier": "Easy",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Craft any Snelm from scratch in Morytania.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|15|link=y}}\n*[[Chisel]] \n*Any [[blamish shell]]"
+   },
+   {
+    "n": 2,
+    "task": "Cook a thin Snail on the Port Phasmatys range.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 12
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Cooking|12|link=y}}\n*[[Thin snail]]\n*2 [[Ecto-tokens]] or quest completion of [[Ghosts Ahoy]] to walk into [[Port Phasmatys]], or enough [[coins]] for a [[charter ship]]."
+   },
+   {
+    "n": 3,
+    "task": "Get a slayer task from the Slayer Master in Canifis.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Combat|20|link=y}}"
+   },
+   {
+    "n": 4,
+    "task": "Kill a Banshee in the Slayer Tower.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Slayer|15|link=y}}\n*[[Earmuffs]] or [[Slayer helmet]] recommended"
+   },
+   {
+    "n": 5,
+    "task": "Have Sbott in Canifis tan something for you.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Any tannable [[hide]] and 2-45 [[coins]] depending on the type of hide"
+   },
+   {
+    "n": 6,
+    "task": "Enter Mort Myre Swamp.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 7,
+    "task": "Kill a Ghoul.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Weaponry]]"
+   },
+   {
+    "n": 8,
+    "task": "Place a Scarecrow in the Morytania flower patch.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 23
+     },
+     {
+      "skill": "Farming",
+      "level": 47
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|23|link=yes}} ([[Ironman mode|Ironman accounts]] require {{SCP|Farming|47|link=yes}} or the ability to kill [[gryphon]]s)\n*[[Bronze spear]], [[watermelon]], and a [[hay sack]]"
+   },
+   {
+    "n": 9,
+    "task": "Offer some bonemeal at the Ectofuntus.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Pot]], [[bucket]], and any [[bones]]"
+   },
+   {
+    "n": 10,
+    "task": "Kill a werewolf in its human form using the Wolfbane Dagger.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Wolfbane]]"
+   },
+   {
+    "n": 11,
+    "task": "Restore your prayer points at the nature altar.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Nature Spirit"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Nature Spirit]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] recommended to travel to [[Fairy ring]] code {{Fairycode|bip}}"
+   }
+  ]
+ },
+ {
+  "area": "Morytania",
+  "tier": "Medium",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Catch a swamp lizard.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 29
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|29|link=y}}\n*[[Rope]] and [[small fishing net]]"
+   },
+   {
+    "n": 2,
+    "task": "Complete a lap of the Canifis agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|40|link=y}}"
+   },
+   {
+    "n": 3,
+    "task": "Obtain some Bark from a Hollow tree.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 45
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|45|link=y}}\n*Any [[axe]]"
+   },
+   {
+    "n": 4,
+    "task": "Travel to Dragontooth Isle.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Ghostspeak amulet]] and 25 [[ecto-token]]s (or 10 with the [[Ring of Charos(a)]])"
+   },
+   {
+    "n": 5,
+    "task": "Kill a Terror Dog.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [
+     "Lair of Tarn Razorlor"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Lair of Tarn Razorlor]]\n*{{SCP|Slayer|40|link=y}}\n*[[Weaponry]]\n*[[Slayer ring]] recommended for quick access to [[Tarn's Lair]]"
+   },
+   {
+    "n": 6,
+    "task": "Complete a game of trouble brewing.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [
+     "Cabin Fever"
+    ],
+    "requirements_raw": "*Completion of [[Cabin Fever]]\n*{{SCP|Cooking|40|link=y}}\n*Empty [[inventory]] and [[Worn_Equipment#Head_slot|head slot]]\n*At least one opposing player to start the game"
+   },
+   {
+    "n": 7,
+    "task": "Board the Swampy boat{{Sic}} at the Hollows.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Quest start of [[Nature Spirit]]\n*[[Dramen staff|Dramen]] or [[Lunar staff]] recommended to travel to [[Fairy ring]] code {{Fairycode|bkr}}"
+   },
+   {
+    "n": 8,
+    "task": "Make a batch of cannonballs at the Port Phasmatys furnace.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 35
+     }
+    ],
+    "quest_reqs": [
+     "Dwarf Cannon"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Dwarf Cannon]]\n*{{SCP|Smithing|35|link=y}}\n*[[Steel bar]] and [[ammo mould]] (or 2 [[steel bar]]s and [[double ammo mould]])"
+   },
+   {
+    "n": 9,
+    "task": "Kill a Fever Spider on Braindeath Island.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 42
+     }
+    ],
+    "quest_reqs": [
+     "Rum Deal"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Rum Deal]]\n*{{SCP|Slayer|42|link=y}}\n*[[Weaponry]] to fight at range, or means to negate [[disease]] (such as [[Slayer gloves]]), recommended"
+   },
+   {
+    "n": 10,
+    "task": "Use an ectophial to return to Port Phasmatys.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Ghosts Ahoy"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Ghosts Ahoy]]\n*[[Ectophial]]"
+   },
+   {
+    "n": 11,
+    "task": "Mix a Guthix Balance potion while in Morytania.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 22
+     }
+    ],
+    "quest_reqs": [
+     "In Aid of the Myreque"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[In Aid of the Myreque]]\n*{{SCP|Herblore|22|link=y}}\n*[[Restore potion]], [[garlic]], and [[silver dust]] (made by using a [[silver bar]] on the [[Bone grinder|Ectofuntus bone grinder]])"
+   }
+  ]
+ },
+ {
+  "area": "Morytania",
+  "tier": "Hard",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Enter the Kharyrll Portal in your POH.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 66
+     },
+     {
+      "skill": "Construction",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Desert Treasure I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Desert Treasure I]]\n*{{SCP|Magic|66|link=y}} and {{SCP|Construction|50|link=y}}\n*100,000 [[coins]], 2 [[limestone brick]]s, 3 [[teak plank]]s, [[hammer]], and [[saw]] to construct a [[portal chamber]] with an activatable [[teak portal]] and [[teleport focus]], if you haven't already\n*200 [[law rune]]s and 100 [[blood rune]]s to direct a portal to [[Kharyrll]], or 2000 law runes and 1000 blood runes if adding the portal to a [[portal nexus]] instead"
+   },
+   {
+    "n": 2,
+    "task": "Climb up the advanced spike chain within Slayer Tower.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 71
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|71|link=y}} {{Boostable|yes}}\n*[[Slayer helmet]] or [[nose peg]] recommended against the [[aberrant spectre]]s, when climbing the [[Spikey_chain_(Slayer_Tower)|spikey chain]] on the {{FloorNumber|uk=0}} as a shortcut to the [[Spikey_chain_(Slayer_Tower)#Advanced|advanced spikey chain]]\n*Only a successful climb (not taking damage) will count as task completed."
+   },
+   {
+    "n": 3,
+    "task": "Harvest some Watermelon from the Allotment patch on Harmony Island.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 47
+     }
+    ],
+    "quest_reqs": [
+     "The Great Brain Robbery"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[The Great Brain Robbery]]\n*{{SCP|Farming|47|link=y}}\n*3 [[watermelon seed]]s, [[spade]], [[seed dibber]] (or [[Barbarian Farming]]), and a [[rake]]\n*[[Ultracompost]] recommended"
+   },
+   {
+    "n": 4,
+    "task": "Chop and burn some mahogany logs on Mos Le'Harmless.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 50
+     },
+     {
+      "skill": "Firemaking",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Cabin Fever"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Cabin Fever]]\n*{{SCP|Woodcutting|50|link=y}} and {{SCP|Firemaking|50|link=y}}\n*Any [[axe]] and a [[tinderbox]]\n*[[Witchwood icon]] and a [[light source]] (if [[Fire of Eternal Light]] has not been built) recommended"
+   },
+   {
+    "n": 5,
+    "task": "Complete a temple trek with a hard companion.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "In Aid of the Myreque"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[In Aid of the Myreque]]\n*See the [[Temple_Trekking#Recommendations|recommendations]]"
+   },
+   {
+    "n": 6,
+    "task": "Kill a Cave Horror.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 58
+     }
+    ],
+    "quest_reqs": [
+     "Cabin Fever"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Cabin Fever]]\n*{{SCP|Slayer|58|link=y}}\n*[[Witchwood icon]] and a [[light source]]"
+   },
+   {
+    "n": 7,
+    "task": "Harvest some Bittercap Mushrooms from the patch in Canifis.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 53
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|53|link=y}}\n*[[Mushroom spore]], [[seed dibber]] (or [[Barbarian Farming]]), and a [[rake]]\n*[[Ultracompost]] recommended"
+   },
+   {
+    "n": 8,
+    "task": "Pray at the Altar of Nature with Piety activated.",
+    "skill_reqs": [
+     {
+      "skill": "Prayer",
+      "level": 70
+     },
+     {
+      "skill": "Defence",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [
+     "Nature Spirit"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Nature Spirit]] and the [[Knight Waves Training Grounds]] (which requires completion of [[King's Ransom]])\n*{{SCP|Prayer|70|link=y}} and {{SCP|Defence|70|link=y}} (neither [[Temporary skill boost|boostable]])\n*[[Dramen staff|Dramen]] or [[Lunar staff]] recommended to travel to [[Fairy ring]] code {{Fairycode|bip}}"
+   },
+   {
+    "n": 9,
+    "task": "Use the shortcut to get to the bridge over the Salve.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 65
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|65|link=y}}"
+   },
+   {
+    "n": 10,
+    "task": "Mine some Mithril ore in the Abandoned Mine.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 55
+     }
+    ],
+    "quest_reqs": [
+     "Haunted Mine"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Haunted Mine]]\n*{{SCP|Mining|55|link=y}}\n*Any [[pickaxe]]\n*[[Crystal-mine key]] recommended (allows use of veins on Level 2, right next to the secret entrance)"
+   }
+  ]
+ },
+ {
+  "area": "Morytania",
+  "tier": "Elite",
+  "task_count": 6,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Catch a shark in Burgh de Rott with your bare hands.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 96
+     },
+     {
+      "skill": "Strength",
+      "level": 76
+     }
+    ],
+    "quest_reqs": [
+     "In Aid of the Myreque"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[In Aid of the Myreque]]\n*Access to [[Barbarian Fishing]]\n*{{SCP|Fishing|96|link=y}} and {{SCP|Strength|76|link=y}} (both are [[Temporary skill boost|boostable]])\n*[[Shark lure]] recommended\n*If you are boosting with the [[Dragon harpoon]] special attack, you need to bank or drop the harpoon before catching the shark, or store it in a [[tackle box]]. Having it in the inventory will use it by default and it will not count as barehanded."
+   },
+   {
+    "n": 2,
+    "task": "Cremate any Shade remains on a Magic or Redwood pyre.",
+    "skill_reqs": [
+     {
+      "skill": "Firemaking",
+      "level": 80
+     }
+    ],
+    "quest_reqs": [
+     "Shades of Mort'ton"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Shades of Mort'ton]]\n*{{SCP|Firemaking|80|link=y}} {{Boostable|yes}}\n*[[Magic pyre logs|Magic]] or [[Redwood pyre logs]], any [[shade remains]], and a [[tinderbox]]"
+   },
+   {
+    "n": 3,
+    "task": "Fertilize the Morytania herb patch using Lunar Magic.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 83
+     }
+    ],
+    "quest_reqs": [
+     "Lunar Diplomacy"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Lunar Diplomacy]]\n*{{SCP|Magic|83|link=y}}\n*[[Lunar spellbook]] selected\n*Means to cast [[Fertile Soil]] ({{RuneReq|Nature=2|Astral=3|Earth=15}})"
+   },
+   {
+    "n": 4,
+    "task": "Craft a Black dragonhide body in Canifis bank.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 84
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|84|link=y}}\n*3 [[black dragon leather]], and a [[needle]] and [[thread]] or the [[costume needle]]"
+   },
+   {
+    "n": 5,
+    "task": "Kill an Abyssal demon in the Slayer Tower.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Slayer|85|link=y}}\n*[[Weaponry]]"
+   },
+   {
+    "n": 6,
+    "task": "Loot the Barrows chest while wearing any complete barrows set.",
+    "skill_reqs": [
+     {
+      "skill": "Defence",
+      "level": 70
+     },
+     {
+      "skill": "Attack",
+      "level": 70
+     },
+     {
+      "skill": "Magic",
+      "level": 70
+     },
+     {
+      "skill": "Attack",
+      "level": 70
+     },
+     {
+      "skill": "Strength",
+      "level": 70
+     },
+     {
+      "skill": "Attack",
+      "level": 70
+     },
+     {
+      "skill": "Ranged",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Defence|70|link=y}}{{boostable|no}} \n*Various other skill requirements depending on the set used, none of which can be [[Temporary skill boost|boosted]]:\n**{{SCP|Attack|70|link=y}} and {{SCP|Magic|70|link=y}} for [[Ahrim the Blighted's equipment|Ahrim's]]\n**{{SCP|Attack|70|link=y}} and {{SCP|Strength|70|link=y}} for [[Dharok the Wretched's equipment|Dharok's]] or [[Torag the Corrupted's equipment|Torag's]]\n**{{SCP|Attack|70|link=y}} for [[Guthan the Infested's equipment|Guthan's]] or [[Verac the Defiled's equipment|Verac's]]\n**{{SCP|Ranged|70|link=y}} for [[Karil the Tainted's equipment|Karil's]]"
+   }
+  ]
+ },
+ {
+  "area": "Varrock",
+  "tier": "Easy",
+  "task_count": 14,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Browse Thessalia's store.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 2,
+    "task": "Have Aubury teleport you to the Essence mine.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Rune Mysteries"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Rune Mysteries]]"
+   },
+   {
+    "n": 3,
+    "task": "Mine some Iron in the south-east mining patch near Varrock.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|15|link=y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 4,
+    "task": "Make a normal plank at the Sawmill.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*100 [[coins]]\n*[[Logs]], obtainable from a [[dying tree]] here with any [[axe]] for another easy task"
+   },
+   {
+    "n": 5,
+    "task": "Enter the second level of the Stronghold of Security.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Food]] recommended at low [[combat level]]s"
+   },
+   {
+    "n": 6,
+    "task": "Jump over the fence south of Varrock.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 13
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|13|link=y}}"
+   },
+   {
+    "n": 7,
+    "task": "Chop down a dying tree in the Lumber Yard.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Any [[axe]]\n*100 [[coins]] recommended, to have the [[Sawmill operator]] turn the [[logs]] from the tree into a [[plank]] for another easy task"
+   },
+   {
+    "n": 8,
+    "task": "Buy a newspaper.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*50 [[coins]]"
+   },
+   {
+    "n": 9,
+    "task": "Give a dog a bone!",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "* [[Bones]]"
+   },
+   {
+    "n": 10,
+    "task": "Spin a bowl on the pottery wheel and fire it in the oven in Barb Village.",
+    "skill_reqs": [
+     {
+      "skill": "Crafting",
+      "level": 8
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Crafting|8|link=y}}\n*[[Soft clay]]"
+   },
+   {
+    "n": 11,
+    "task": "Speak to Haig Halen after obtaining at least 50 Kudos.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See [[Kudos]] for all activities that grant them"
+   },
+   {
+    "n": 12,
+    "task": "Craft some Earth runes from Essence.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 9
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|9|link=y}}\n*[[Pure essence|Pure]], [[Daeyalt essence|daeyalt]], or [[rune essence]]\n*Access to the [[Earth Altar]] ([[earth talisman]]/[[Earth tiara|tiara]], [[elemental talisman]]/[[Elemental tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 13,
+    "task": "Catch some trout in the River Lum at Barbarian Village.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|20|link=y}}\n*[[Fly fishing rod]] and some [[feather]]s"
+   },
+   {
+    "n": 14,
+    "task": "Steal from the Tea stall in Varrock.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 5
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|5|link=y}}"
+   }
+  ]
+ },
+ {
+  "area": "Varrock",
+  "tier": "Medium",
+  "task_count": 13,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Have the Apothecary in Varrock make you a strength potion.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Limpwurt root]], [[red spiders' eggs]], and 5 [[coins]]"
+   },
+   {
+    "n": 2,
+    "task": "Enter the Champions' Guild.",
+    "skill_reqs": [
+     {
+      "skill": "Quest",
+      "level": 32
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest|32|link=y}}"
+   },
+   {
+    "n": 3,
+    "task": "Select a colour for your kitten.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Gertrude's Cat"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Gertrude's Cat]] and partial completion of [[Garden of Tranquillity]]\n*100 [[coins]]\n*Wear a [[Ring of Charos(a)]]"
+   },
+   {
+    "n": 4,
+    "task": "Use the spirit tree north of Varrock.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Tree Gnome Village"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Tree Gnome Village]]"
+   },
+   {
+    "n": 5,
+    "task": "Perform the 4 emotes from the Stronghold of Security.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Jagex Account]] or the older [[RuneScape Authenticator]]\n*[[Food]], [[protection prayers]], and/or enough [[hitpoints]] to run through all four floors of the stronghold"
+   },
+   {
+    "n": 6,
+    "task": "Enter the Tolna dungeon after completing A Soul's Bane.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "A Soul's Bane"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[A Soul's Bane]]"
+   },
+   {
+    "n": 7,
+    "task": "Teleport to the digsite using a Digsite pendant.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 49
+     }
+    ],
+    "quest_reqs": [
+     "The Dig Site"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Dig Site]]\n*[[Digsite pendant]], or a [[mounted digsite pendant]] inside any [[player-owned house]] (see the [[House party]] worlds)\n**Creating the [[digsite pendant]] for the first time requires {{SCP|Magic|49|link=y}}, the [[clean necklace]], and means to cast [[Lvl-3 Enchant]] ({{RuneReq|Fire=5|Cosmic=1}})"
+   },
+   {
+    "n": 8,
+    "task": "Cast the teleport to Varrock spell.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 25
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|25|link=y}}\n*Means to cast [[Varrock Teleport]] ({{RuneReq|Law=1|Air=3|Fire=1}})"
+   },
+   {
+    "n": 9,
+    "task": "Get a Slayer task from Vannaka.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Combat|40|link=y}}"
+   },
+   {
+    "n": 10,
+    "task": "Make 20 Mahogany Planks in one go.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*20 [[mahogany logs]] and 30,000 [[coins]]"
+   },
+   {
+    "n": 11,
+    "task": "Pick a White tree fruit.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 25
+     }
+    ],
+    "quest_reqs": [
+     "Garden of Tranquillity"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Garden of Tranquillity]]\n*{{SCP|Farming|25|link=y}}"
+   },
+   {
+    "n": 12,
+    "task": "Use the balloon to travel from Varrock.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 30
+     },
+     {
+      "skill": "Firemaking",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [
+     "Enlightened Journey"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Enlightened Journey]]\n*{{SCP|Farming|30|link=y}}\n*{{SCP|Firemaking|40|link=y}}\n*One set of [[Logs|normal logs]], [[oak logs]], [[yew logs]], or [[magic logs]], depending on the chosen destination\n*If the starting point in [[Varrock]] has not been unlocked yet, an additional 10 [[willow log]]s are needed to first [[Balloon_transport_system#Varrock|fly towards it]] from [[Entrana]]"
+   },
+   {
+    "n": 13,
+    "task": "Complete a lap of the Varrock Agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 30
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|30|link=y}}"
+   }
+  ]
+ },
+ {
+  "area": "Varrock",
+  "tier": "Hard",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Trade furs with the Fancy Dress Seller for a spottier cape and equip it.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 66
+     },
+     {
+      "skill": "Hunter",
+      "level": 69
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|66|link=y}} {{Boostable|n}}\n*800 [[coins]]\n*2 [[dashing kebbit fur]] (requires {{SCP|Hunter|69|link=y}} {{Boostable|y}} if playing as [[Ironman Mode|Ironman]])"
+   },
+   {
+    "n": 2,
+    "task": "Speak to Orlando Smith when you have achieved 153 Kudos.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See [[Kudos]] for all activities that grant them"
+   },
+   {
+    "n": 3,
+    "task": "Make a Waka canoe near Edgeville.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 57
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|57|link=y}}\n*Any [[axe]]"
+   },
+   {
+    "n": 4,
+    "task": "Teleport to Paddewwa.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 54
+     }
+    ],
+    "quest_reqs": [
+     "Desert Treasure I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Desert Treasure I]]\n*{{SCP|Magic|54|link=y}}\n*[[Ancient Magicks]] selected\n*Means to cast [[Paddewwa Teleport]] ({{RuneReq|Law=2|Air=1|Fire=1}})"
+   },
+   {
+    "n": 5,
+    "task": "Teleport to Barbarian Village with a skull sceptre.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Skull sceptre]], or the required items to [[Skull_sceptre#Creating_the_Sceptre|create]] it"
+   },
+   {
+    "n": 6,
+    "task": "Chop some yew logs in Varrock and burn them at the top of the Varrock church.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 60
+     },
+     {
+      "skill": "Firemaking",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|60|link=y}} and {{SCP|Firemaking|60|link=y}}\n*Any [[axe]] and [[tinderbox]]"
+   },
+   {
+    "n": 7,
+    "task": "Have the Varrock estate agent decorate your house with Fancy Stone.",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Construction|50|link=y}} {{Boostable|n}}\n*25,000 [[coins]]\n*Additional 5,000 [[coins]] if already using [[Fancy Stone]], to change to something else and back"
+   },
+   {
+    "n": 8,
+    "task": "Collect at least 2 yew roots from the Tree patch in Varrock Palace.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 68
+     },
+     {
+      "skill": "Woodcutting",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|68|link=y}} and {{SCP|Woodcutting|60|link=y}}\n*[[Yew sapling]], any [[axe]], and a [[spade]]\n*10 [[cactus spine]]s recommended to pay the [[Treznor|gardener]]''"
+   },
+   {
+    "n": 9,
+    "task": "Pray at the altar in Varrock palace with Smite active.",
+    "skill_reqs": [
+     {
+      "skill": "Prayer",
+      "level": 52
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Prayer|52|link=y}} {{boostable|n}}"
+   },
+   {
+    "n": 10,
+    "task": "Squeeze through the obstacle pipe in Edgeville dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 51
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|51|link=y}}"
+   }
+  ]
+ },
+ {
+  "area": "Varrock",
+  "tier": "Elite",
+  "task_count": 5,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Create a super combat potion in Varrock west bank.",
+    "skill_reqs": [
+     {
+      "skill": "Herblore",
+      "level": 90
+     }
+    ],
+    "quest_reqs": [
+     "Druidic Ritual"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Druidic Ritual]]\n*{{SCP|Herblore|90|link=y}}\n*[[Super attack (4)]], [[super strength (4)]], [[super defence (4)]], and a [[torstol]]"
+   },
+   {
+    "n": 2,
+    "task": "Use Lunar magic to make 20 mahogany planks at the Lumberyard.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 86
+     }
+    ],
+    "quest_reqs": [
+     "Dream Mentor"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Dream Mentor]]\n*{{SCP|Magic|86|link=y}}\n*[[Lunar spellbook]] selected\n*21,000 [[coins]] and 20 [[mahogany logs]]{{efn|name=voucher|You may use ten [[sawmill voucher]]s to halve the required items and runes for the [[Plank Make]] task.}}\n*Means to cast [[Plank Make]] twenty times ({{RuneReq|Nature=20|Astral=40|Earth=300}}){{efn|name=voucher}}"
+   },
+   {
+    "n": 3,
+    "task": "Bake a summer pie in the Cooking Guild.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 95
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Cooking|95|link=y}}\n*[[Raw summer pie]]\n*[[Chef's hat]], [[golden chef's hat]], [[Varrock armour 3]], or [[Cooking cape]]"
+   },
+   {
+    "n": 4,
+    "task": "Smith and fletch ten rune darts within Varrock.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 89
+     },
+     {
+      "skill": "Fletching",
+      "level": 81
+     }
+    ],
+    "quest_reqs": [
+     "The Tourist Trap"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Tourist Trap]]\n*{{SCP|Smithing|89|link=y}} and {{SCP|Fletching|81|link=y}}\n*[[Runite bar]], 10 [[feather]]s and a [[hammer]]"
+   },
+   {
+    "n": 5,
+    "task": "Craft 100 or more earth runes simultaneously from Essence without the use of Extracts.",
+    "skill_reqs": [
+     {
+      "skill": "Runecraft",
+      "level": 78
+     },
+     {
+      "skill": "Runecraft",
+      "level": 52
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Runecraft|78|link=y}}\n*{{SCP|Runecraft|52|link=y}} with 2+ [[Raiments of the Eye]] (1 piece with [[Abyssal lantern#Magic|Abyssal lantern lit with magic logs]])\n*28 [[Pure essence|pure]], [[Daeyalt essence|daeyalt]], or [[rune essence]] (fewer may suffice with more [[Raiments of the Eye]] pieces)\n*Access to the [[Earth Altar]] ([[earth talisman]]/[[Earth tiara|tiara]], [[elemental talisman]]/[[Elemental tiara|tiara]], or the [[Abyss]])"
+   }
+  ]
+ },
+ {
+  "area": "Western Provinces",
+  "tier": "Easy",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Catch a Copper Longtail.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 9
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|9|link=y}}\n*[[Bird snare]]"
+   },
+   {
+    "n": 2,
+    "task": "Complete a novice game of Pest Control.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Combat|40|link=y}}"
+   },
+   {
+    "n": 3,
+    "task": "Mine some Iron Ore near Piscatoris.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|15|link=y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 4,
+    "task": "Complete a lap of the Gnome agility course.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 5,
+    "task": "Score a goal in a Gnomeball match.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 6,
+    "task": "Claim any Chompy bird hat from Rantz.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Big Chompy Bird Hunting"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Big Chompy Bird Hunting]]\n*[[Ogre bellows]], ([[comp ogre bow|comp]]) [[ogre bow]], and [[ogre arrows|ogre]] or [[brutal arrows]]\n*30 [[chompy bird|chompy]] or [[jubbly bird]] kills"
+   },
+   {
+    "n": 7,
+    "task": "Teleport to Pest Control using the Minigame Teleport.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Combat|40|link=y}}"
+   },
+   {
+    "n": 8,
+    "task": "Collect a swamp toad at the Gnome Stronghold.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 9,
+    "task": "Have Brimstail teleport you to the Essence Mine.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Rune Mysteries"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Rune Mysteries]]"
+   },
+   {
+    "n": 10,
+    "task": "Fletch an Oak Shortbow in the Gnome Stronghold.",
+    "skill_reqs": [
+     {
+      "skill": "Fletching",
+      "level": 20
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fletching|20|link=y}}\n*[[Oak shortbow (u)]] and [[bow string]]"
+   },
+   {
+    "n": 11,
+    "task": "Kill a Terrorbird in the Terrorbird enclosure.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Weaponry]]"
+   }
+  ]
+ },
+ {
+  "area": "Western Provinces",
+  "tier": "Medium",
+  "task_count": 13,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Take the agility shortcut from the Grand Tree to Otto's Grotto.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 37
+     }
+    ],
+    "quest_reqs": [
+     "Tree Gnome Village"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Tree Gnome Village]] and [[The Grand Tree]]\n*{{SCP|Agility|37|link=y}}"
+   },
+   {
+    "n": 2,
+    "task": "Travel to the Gnome Stronghold by Spirit Tree.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Tree Gnome Village"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Tree Gnome Village]]"
+   },
+   {
+    "n": 3,
+    "task": "Trap a Spined Larupia.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 31
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|31|link=y}}\n*[[Teasing stick]], [[logs]], and a [[knife]]"
+   },
+   {
+    "n": 4,
+    "task": "Fish some Bass on Ape Atoll.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 46
+     }
+    ],
+    "quest_reqs": [
+     "Monkey Madness I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Monkey Madness I]]\n*{{SCP|Fishing|46|link=y}}\n*[[Big fishing net]]"
+   },
+   {
+    "n": 5,
+    "task": "Chop and burn some teak logs on Ape Atoll.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 35
+     },
+     {
+      "skill": "Firemaking",
+      "level": 35
+     }
+    ],
+    "quest_reqs": [
+     "Monkey Madness I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Monkey Madness I]]\n*{{SCP|Woodcutting|35|link=y}} and {{SCP|Firemaking|35|link=y}}\n*Any [[axe]] and [[tinderbox]]"
+   },
+   {
+    "n": 6,
+    "task": "Complete an intermediate game of Pest Control.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Combat|70|link=y}}"
+   },
+   {
+    "n": 7,
+    "task": "Travel to the Feldip Hills by Gnome Glider.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Grand Tree"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Grand Tree]] and partial completion of [[One Small Favour]]"
+   },
+   {
+    "n": 8,
+    "task": "Claim a Chompy bird hat from Rantz after registering at least 125 kills.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Big Chompy Bird Hunting"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Big Chompy Bird Hunting]]\n*[[Ogre bellows]], ([[comp ogre bow|comp]]) [[ogre bow]], and [[ogre arrows|ogre]] or [[brutal arrows]]\n*125 [[chompy bird|chompy]] or [[jubbly bird]] kills"
+   },
+   {
+    "n": 9,
+    "task": "Travel from Eagles' Peak to the Feldip Hills by Eagle.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Eagles' Peak"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Eagles' Peak]]\n*[[Rope]]"
+   },
+   {
+    "n": 10,
+    "task": "Make a Chocolate Bomb at the Grand Tree.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 42
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Cooking|42|link=y}}\n*[[Gnomebowl mould]], [[Gianne dough]], 4 [[chocolate bar]]s, an [[Equa leaves|equa leaf]], 2 [[Pot of cream|pots of cream]], and [[chocolate dust]] (can all be purchased at [[Grand Tree Groceries]])"
+   },
+   {
+    "n": 11,
+    "task": "Complete a delivery for the Gnome Restaurant.",
+    "skill_reqs": [
+     {
+      "skill": "Cooking",
+      "level": 29
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*Completion of the [[Gnome Restaurant tutorial]]\n*{{SCP|Cooking|29-42|link=y}} (varies per food)"
+   },
+   {
+    "n": 12,
+    "task": "Turn your small crystal seed into a Crystal saw.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "The Eyes of Glouphrie"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Eyes of Glouphrie]]\n*[[Crystal saw seed]]"
+   },
+   {
+    "n": 13,
+    "task": "Mine some Gold ore underneath the Grand Tree.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 40
+     }
+    ],
+    "quest_reqs": [
+     "The Grand Tree"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[The Grand Tree]]\n*{{SCP|Mining|40|link=y}}\n*Any [[pickaxe]]"
+   }
+  ]
+ },
+ {
+  "area": "Western Provinces",
+  "tier": "Hard",
+  "task_count": 13,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Kill an Elf with a Crystal bow.",
+    "skill_reqs": [
+     {
+      "skill": "Ranged",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [
+     "Roving Elves"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Roving Elves]]\n*{{SCP|Ranged|70|link=y}} {{boostable|n}}\n*[[Crystal bow]] or [[Bow of Faerdhinen]]"
+   },
+   {
+    "n": 2,
+    "task": "Catch and cook a Monkfish in Piscatoris.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 62
+     },
+     {
+      "skill": "Cooking",
+      "level": 62
+     }
+    ],
+    "quest_reqs": [
+     "Swan Song"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Swan Song]]\n*{{SCP|Fishing|62|link=y}} and {{SCP|Cooking|62|link=y}}\n*[[Small fishing net]]"
+   },
+   {
+    "n": 3,
+    "task": "Complete a Veteran game of Pest Control.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 100
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Combat|100|link=y}}"
+   },
+   {
+    "n": 4,
+    "task": "Catch a Dashing Kebbit.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 69
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|69|link=y}} {{boostable|y}}\n*500 [[coins]]"
+   },
+   {
+    "n": 5,
+    "task": "Complete a lap of the Ape Atoll agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 48
+     }
+    ],
+    "quest_reqs": [
+     "Monkey Madness I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Monkey Madness I]]\n*{{SCP|Agility|48|link=y}}\n*[[Ninja monkey greegree]] or [[Kruk monkey greegree]] (other [[greegree]]s will cause you to fail the course)"
+   },
+   {
+    "n": 6,
+    "task": "Chop and burn some Mahogany logs on Ape Atoll.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 50
+     },
+     {
+      "skill": "Firemaking",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Monkey Madness I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Monkey Madness I]]\n*{{SCP|Woodcutting|50|link=y}} and {{SCP|Firemaking|50|link=y}}\n*Any [[axe]] (excluding [[felling axe]]s) and a [[tinderbox]]\n*"
+   },
+   {
+    "n": 7,
+    "task": "Mine some Adamantite ore in Tirannwn.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 70
+     }
+    ],
+    "quest_reqs": [
+     "Regicide"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Regicide]]\n*{{SCP|Mining|70|link=y}} {{boostable|y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 8,
+    "task": "Check the health of your Palm tree in Lletya.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 68
+     }
+    ],
+    "quest_reqs": [
+     "Mourning's End Part I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Mourning's End Part I]]\n*{{SCP|Farming|68|link=y}} {{boostable|y}}\n*[[Palm sapling]], [[rake]], and [[spade]]\n*15 [[Papaya fruit|papayas]] recommended to pay the [[Liliwen|gardener]]"
+   },
+   {
+    "n": 9,
+    "task": "Claim a Chompy bird hat from Rantz after registering at least 300 kills.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Big Chompy Bird Hunting"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Big Chompy Bird Hunting]]\n*[[Ogre bellows]], ([[comp ogre bow|comp]]) [[ogre bow]], and [[ogre arrows|ogre]] or [[brutal arrows]]\n*300 [[chompy bird|chompy]] or [[jubbly bird]] kills"
+   },
+   {
+    "n": 10,
+    "task": "Build an Isafdar painting in your POH Quest hall.",
+    "skill_reqs": [
+     {
+      "skill": "Construction",
+      "level": 65
+     }
+    ],
+    "quest_reqs": [
+     "Roving Elves"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Roving Elves]]\n*{{SCP|Construction|65|link=y}} {{boostable|y}}\n*3 [[mahogany plank]]s, [[saw]], and [[hammer]]\n*[[Isafdar painting]] (bought from [[Sir Renitee]] for 2,000 [[coins]])\n*25,000 [[coins]] to construct a [[Hall (quest trophies)|Quest Hall]] if you haven't already"
+   },
+   {
+    "n": 11,
+    "task": "Kill Zulrah.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Regicide"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Regicide]]\n*See the [[Zulrah/Strategies|strategy guide]]"
+   },
+   {
+    "n": 12,
+    "task": "Teleport to Ape Atoll.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 64
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Quest}} Completion of the [[Recipe for Disaster/Freeing King Awowogei|Awowogei subquest]] of [[Recipe for Disaster]] \n*{{SCP|Magic|64|link=y}} {{boostable|y}}\n*Means to cast [[Ape Atoll Teleport (standard)|Ape Atoll Teleport]] ({{RuneReq|Law=2|Fire=2|Water=2|Banana=1}})"
+   },
+   {
+    "n": 13,
+    "task": "Pickpocket a Gnome.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 75
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|75|link=yes}} {{Boostable|y}}"
+   }
+  ]
+ },
+ {
+  "area": "Western Provinces",
+  "tier": "Elite",
+  "task_count": 7,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Fletch a Magic Longbow in Tirannwn.",
+    "skill_reqs": [
+     {
+      "skill": "Fletching",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [
+     "Regicide"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Regicide]]\n*{{SCP|Fletching|85|link=y}} {{boostable|y}}\n*[[Magic longbow (u)]] and a [[bow string]]"
+   },
+   {
+    "n": 2,
+    "task": "Kill the Thermonuclear Smoke Devil.",
+    "skill_reqs": [
+     {
+      "skill": "Slayer",
+      "level": 93
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Slayer|93|link=y}} {{Boostable|n}}\n*See the [[Thermonuclear smoke devil/Strategies|strategy guide]]"
+   },
+   {
+    "n": 3,
+    "task": "Have Prissy Scilla protect your Magic tree.",
+    "skill_reqs": [
+     {
+      "skill": "Farming",
+      "level": 75
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Farming|75|link=y}} {{boostable|y}}\n*[[Magic sapling]], 25 [[coconut]]s, [[rake]], and a [[spade]]"
+   },
+   {
+    "n": 4,
+    "task": "Use the Elven overpass advanced cliffside shortcut.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [
+     "Underground Pass"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Underground Pass]]\n*{{SCP|Agility|85|link=y}} {{Boostable|y}}"
+   },
+   {
+    "n": 5,
+    "task": "Equip any complete void set.",
+    "skill_reqs": [
+     {
+      "skill": "Combat",
+      "level": 40
+     },
+     {
+      "skill": "Prayer",
+      "level": 22
+     },
+     {
+      "skill": "Attack",
+      "level": 42
+     },
+     {
+      "skill": "Strength",
+      "level": 42
+     },
+     {
+      "skill": "Defence",
+      "level": 42
+     },
+     {
+      "skill": "Hitpoints",
+      "level": 42
+     },
+     {
+      "skill": "Ranged",
+      "level": 42
+     },
+     {
+      "skill": "Magic",
+      "level": 42
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Combat|40|link=y}}, {{SCP|Prayer|22|link=y}}, {{SCP|Attack|42|link=y}}, {{SCP|Strength|42|link=y}}, {{SCP|Defence|42|link=y}}, {{SCP|Hitpoints|42|link=y}}, {{SCP|Ranged|42|link=y}}, and {{SCP|Magic|42|link=y}}\n*Any [[Void Knight helmet|void helm]] ([[Void melee helm|melee]], [[Void ranger helm|ranger]], or [[Void mage helm|mage helm]])\n*[[Void knight top]], [[Void knight robe|robe]], and [[Void knight gloves|gloves]]"
+   },
+   {
+    "n": 6,
+    "task": "Claim a Chompy bird hat from Rantz after registering at least 1,000 kills.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Big Chompy Bird Hunting"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Big Chompy Bird Hunting]]\n*[[Ogre bellows]], ([[comp ogre bow|comp]]) [[ogre bow]], and [[ogre arrows|ogre]] or [[brutal arrows]]\n*1,000 [[chompy bird|chompy]] or [[jubbly bird]] kills"
+   },
+   {
+    "n": 7,
+    "task": "Pickpocket an Elf.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 85
+     }
+    ],
+    "quest_reqs": [
+     "Mourning's End Part I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Started [[Mourning's End Part I]]\n*{{SCP|Thieving|85|link=y}} {{Boostable|y}}"
+   }
+  ]
+ },
+ {
+  "area": "Wilderness",
+  "tier": "Easy",
+  "task_count": 12,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Cast Low Alchemy at the Fountain of Rune.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 21
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|21|link=y}}\n*Item that can be [[Value|alchemised]] (nearly any item)"
+   },
+   {
+    "n": 2,
+    "task": "Enter the Wilderness from the Ardougne or Edgeville lever.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 3,
+    "task": "Pray at the Chaos Altar in the Western Wilderness.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 4,
+    "task": "Enter the Chaos Runecrafting temple.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Access to the [[Chaos Altar]] ([[chaos talisman]]/[[Chaos tiara|tiara]], [[catalytic talisman]]/[[Catalytic tiara|tiara]], or the [[Abyss]])"
+   },
+   {
+    "n": 5,
+    "task": "Kill a Mammoth in the Wilderness.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Weaponry]]"
+   },
+   {
+    "n": 6,
+    "task": "Kill an Earth Warrior in the Wilderness beneath Edgeville.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|15|link=y}}\n*[[Weaponry]]"
+   },
+   {
+    "n": 7,
+    "task": "Restore some prayer points at the demonic ruins.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 8,
+    "task": "Enter the King Black Dragon's lair.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 9,
+    "task": "Collect 5 Red spiders' eggs from the Wilderness",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 10,
+    "task": "Mine some Iron ore in the Wilderness.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 15
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|15|link=y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 11,
+    "task": "Have the Mage of Zamorak teleport you to the Abyss.",
+    "skill_reqs": [],
+    "quest_reqs": [
+     "Enter the Abyss"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Enter the Abyss]]"
+   },
+   {
+    "n": 12,
+    "task": "Equip any team cape in the Wilderness.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Any [[team cape]]"
+   }
+  ]
+ },
+ {
+  "area": "Wilderness",
+  "tier": "Medium",
+  "task_count": 11,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Mine some Mithril ore in the wilderness.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 55
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|55|link=y}}\n*Any [[pickaxe]]"
+   },
+   {
+    "n": 2,
+    "task": "Chop some yew logs from a fallen Ent.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 61
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|61|link=y}}{{Boostable|no}}\n*At least [[mithril axe]] and [[weapon]]ry"
+   },
+   {
+    "n": 3,
+    "task": "Enter the Wilderness Godwars Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 60
+     },
+     {
+      "skill": "Strength",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|60|link=y}} or {{SCP|Strength|60|link=y}}\n*[[God_Wars_Dungeon#God-related_protection|God equipment]] recommended if going further inside"
+   },
+   {
+    "n": 4,
+    "task": "Complete a lap of the Wilderness Agility course.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 52
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|52|link=y}}"
+   },
+   {
+    "n": 5,
+    "task": "Kill a Green Dragon.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Protection from [[dragonfire]] recommended if not safe spotting and [[weapon]]ry to slay it"
+   },
+   {
+    "n": 6,
+    "task": "Kill an Ankou in the Wilderness.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Weaponry]], or sufficient combat stats to defeat a level 86 or level 98 [[Ankou]] while unarmed"
+   },
+   {
+    "n": 7,
+    "task": "Charge an Earth Orb.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|60|link=y}}\n*[[Unpowered orb]] and means to cast [[Charge Earth Orb]] ({{RuneReq|Cosmic=3|Earth=30}})"
+   },
+   {
+    "n": 8,
+    "task": "Kill a Bloodveld in the Wilderness Godwars Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 60
+     },
+     {
+      "skill": "Strength",
+      "level": 60
+     },
+     {
+      "skill": "Slayer",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|60|link=y}} or {{SCP|Strength|60|link=y}}, and {{SCP|Slayer|50|link=y}}\n*[[Weaponry]] and [[God_Wars_Dungeon#God-related_protection|god equipment]]"
+   },
+   {
+    "n": 9,
+    "task": "Talk to the Emblem Trader in Edgeville about emblems. (He's just north of the bank)",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "{{NA|None}}"
+   },
+   {
+    "n": 10,
+    "task": "Smith a Golden helmet{{Sic}} in the Resource Area.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 50
+     }
+    ],
+    "quest_reqs": [
+     "Between a Rock..."
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Partial completion of [[Between a Rock...]]\n*{{SCP|Smithing|50|link=y}}\n*7500 [[coins]], 3 [[gold bar]]s, and a [[hammer]]"
+   },
+   {
+    "n": 11,
+    "task": "Open the Muddy Chest in the lava maze.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 82
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*[[Muddy key]]\n*[[Knife]], [[Wilderness sword 1]], or a [[slashing weapon]] (Or with {{SCP|Agility|82|link=y}} using the Stepping Stone shortcut North of the Lava Maze)"
+   }
+  ]
+ },
+ {
+  "area": "Wilderness",
+  "tier": "Hard",
+  "task_count": 10,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Cast any of the 3 God spells against another player in the Wilderness.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 60
+     }
+    ],
+    "quest_reqs": [
+     "Mage Arena I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Mage Arena I]]\n*{{SCP|Magic|60|link=y}} \n*Any [[Staves#God_staves|god staff]] and means to cast its related [[God spells|god spell]] ({{RuneReq|Blood=2|Fire=1-4|Air=1-4}} per cast)"
+   },
+   {
+    "n": 2,
+    "task": "Charge an Air Orb.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 66
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Magic|66|link=y}}\n*[[Unpowered orb]] and means to cast [[Charge Air Orb]] ({{RuneReq|Air=30|Cosmic=3}})"
+   },
+   {
+    "n": 3,
+    "task": "Catch a Black Salamander in the Wilderness.",
+    "skill_reqs": [
+     {
+      "skill": "Hunter",
+      "level": 67
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Hunter|67|link=y}}\n*[[Net trap (item)|Net trap]]"
+   },
+   {
+    "n": 4,
+    "task": "Smith an Adamant scimitar in the Resource Area.",
+    "skill_reqs": [
+     {
+      "skill": "Smithing",
+      "level": 75
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Smithing|75|link=y}}\n*[[Hammer]] and 2 [[adamantite bar]]s\n*6,000-7,500 [[coins]]{{efn|name=FeeHard|The regular fee to enter the [[Resource Area]] is 7,500 [[coins]]. This is reduced to 6,000 [[coins]] when the rewards for the [[#Medium|medium tasks]] are claimed.}}"
+   },
+   {
+    "n": 5,
+    "task": "Kill a Lava Dragon.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Protection from [[dragonfire]] recommended if not safe spotting and [[weapon]]ry to slay it"
+   },
+   {
+    "n": 6,
+    "task": "Kill the Chaos Elemental.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See the [[Chaos Elemental/Strategies|strategy guide]]"
+   },
+   {
+    "n": 7,
+    "task": "Kill the Crazy Arc.<!--do not change is verbatim from in-game-->{{sic|Boss name is shortened from \"Crazy archaeologist\" in-game, this is transcribed verbatim.}}, Chaos Fanatic & Scorpia.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*See the individual strategy guides for the [[Crazy archaeologist/Strategies|Crazy archaeologist]], [[Chaos Fanatic/Strategies|Chaos Fanatic]], and [[Scorpia/Strategies|Scorpia]]"
+   },
+   {
+    "n": 8,
+    "task": "Take the agility shortcut from Trollheim into the Wilderness.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 64
+     }
+    ],
+    "quest_reqs": [
+     "Troll Stronghold"
+    ],
+    "requirements_raw": "*{{SCP|Agility|64|link=y}}\n*{{SCP|Quest}} Partial completion of [[Troll Stronghold]], or completion of the {{SCP|combatachievement}} [[Combat Achievements/Easy|Easy Combat Achievements]] for [[Ghommal's hilt 1]]"
+   },
+   {
+    "n": 9,
+    "task": "Kill a Spiritual warrior in the Wilderness Godwars Dungeon.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 60
+     },
+     {
+      "skill": "Strength",
+      "level": 60
+     },
+     {
+      "skill": "Slayer",
+      "level": 68
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|60|link=y}} or {{SCP|Strength|60|link=y}}, and {{SCP|Slayer|68|link=y}}\n*[[Weaponry]] and [[God_Wars_Dungeon#God-related_protection|god equipment]]"
+   },
+   {
+    "n": 10,
+    "task": "Fish some Raw Lava Eel in the Wilderness.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 53
+     },
+     {
+      "skill": "Herblore",
+      "level": 25
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|53|link=y}} and {{SCP|Herblore|25|link=y}}\n*[[Oily fishing rod]], [[fishing bait]]\n*[[Knife]], [[Wilderness sword 1]] or [[Wilderness sword 2|2]], or a [[slashing weapon]]"
+   }
+  ]
+ },
+ {
+  "area": "Wilderness",
+  "tier": "Elite",
+  "task_count": 7,
+  "tasks": [
+   {
+    "n": 1,
+    "task": "Kill Callisto, Venenatis & Vet'ion.",
+    "skill_reqs": [],
+    "quest_reqs": [],
+    "requirements_raw": "*Completion of the Medium Wilderness diary is required to kill the greater versions, and completion of the Hard Wilderness diary is required to kill the lesser versions\n*See the individual strategy guides for [[Callisto/Strategies|Callisto]], [[Venenatis/Strategies|Venenatis]], and [[Vet'ion/Strategies|Vet'ion]], or those for the weaker bosses [[Artio/Strategies|Artio]], [[Spindel/Strategies|Spindel]], and [[Calvar'ion/Strategies|Calvar'ion]]"
+   },
+   {
+    "n": 2,
+    "task": "Teleport to Ghorrock.",
+    "skill_reqs": [
+     {
+      "skill": "Magic",
+      "level": 96
+     }
+    ],
+    "quest_reqs": [
+     "Desert Treasure I"
+    ],
+    "requirements_raw": "*{{SCP|Quest}} Completion of [[Desert Treasure I]]\n*{{SCP|Magic|96|link=y}}\n*[[Ancient Magicks]] selected\n*Means to cast [[Ghorrock Teleport]] ({{RuneReq|Law=2|Water=8}})"
+   },
+   {
+    "n": 3,
+    "task": "Fish and Cook a Dark Crab in the Resource Area.",
+    "skill_reqs": [
+     {
+      "skill": "Fishing",
+      "level": 85
+     },
+     {
+      "skill": "Cooking",
+      "level": 90
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Fishing|85|link=y}} and {{SCP|Cooking|90|link=y}}\n*[[Lobster pot]] and [[dark fishing bait]]\n*3,750-7,500 [[coins]]{{efn|name=FeeElite|The regular fee to enter the [[Resource Area]] is 7,500 [[coins]]. This is reduced to 6,000 [[coins]] when the rewards for the [[#Medium|medium tasks]] are claimed, and further down to 3,750 [[coins]] with the rewards of the [[#Hard|hard tasks]].}}"
+   },
+   {
+    "n": 4,
+    "task": "Smith a rune scimitar from scratch in the Resource Area.",
+    "skill_reqs": [
+     {
+      "skill": "Mining",
+      "level": 85
+     },
+     {
+      "skill": "Smithing",
+      "level": 90
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Mining|85|link=y}} and {{SCP|Smithing|90|link=y}}\n*[[Weaponry]], any [[pickaxe]], [[hammer]], and 16 [[coal]]\n*3,750-7,500 [[coins]]{{efn|name=FeeElite}}"
+   },
+   {
+    "n": 5,
+    "task": "Steal from the Rogues' chest.",
+    "skill_reqs": [
+     {
+      "skill": "Thieving",
+      "level": 84
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Thieving|84|link=y}}"
+   },
+   {
+    "n": 6,
+    "task": "Slay a spiritual mage inside the wilderness Godwars Dungeon<!--Do not change, is verbatim from in-game.-->.",
+    "skill_reqs": [
+     {
+      "skill": "Agility",
+      "level": 60
+     },
+     {
+      "skill": "Strength",
+      "level": 60
+     },
+     {
+      "skill": "Slayer",
+      "level": 83
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Agility|60|link=y}} or {{SCP|Strength|60|link=y}}, and {{SCP|Slayer|83|link=y}}\n*[[Weaponry]] and [[God_Wars_Dungeon#God-related_protection|god equipment]]"
+   },
+   {
+    "n": 7,
+    "task": "Cut and burn some magic logs in the Resource Area.",
+    "skill_reqs": [
+     {
+      "skill": "Woodcutting",
+      "level": 75
+     },
+     {
+      "skill": "Firemaking",
+      "level": 75
+     }
+    ],
+    "quest_reqs": [],
+    "requirements_raw": "*{{SCP|Woodcutting|75|link=y}} and {{SCP|Firemaking|75|link=y}}\n*Any [[axe]] and [[tinderbox]]\n*3,750-7,500 [[coins]]{{efn|name=FeeElite}}"
+   }
+  ]
+ }
+]

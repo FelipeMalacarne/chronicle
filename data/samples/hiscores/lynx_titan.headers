@@ -1,0 +1,14 @@
+HTTP/1.1 200 Connection Established
+
+HTTP/2 404 
+date: Tue, 03 Nov 2026 22:50:24 GMT
+content-type: text/html
+server: cloudflare
+cache-control: no-cache
+pragma: no-cache
+expires: 0
+strict-transport-security: max-age=31536000;
+cf-cache-status: DYNAMIC
+set-cookie: __cf_bm=9C0LVR_tsDSvq8F97LljTC1Uh0pAwDbi9dds4rWTB7A-1793746224.1743193-1.0.1.1-1hB2X9RWP7Bpqhw77vfUs_DyfPut58AnQAqHb0DlhiayPbfShw3Isxd_jzp5wm59oiKg7_USVz7DRpq3zQtN4de31Cw.dMcgQ.VKKuEZs7WaJancJdTttOiZn2ntjs0KPlF1V3rsWqJym7zqHWyiWQ; HttpOnly; SameSite=None; Secure; Path=/; Domain=runescape.com; Expires=Tue, 03 Nov 2026 23:20:24 GMT
+cf-ray: a54ef00d182de9c2-IAD
+

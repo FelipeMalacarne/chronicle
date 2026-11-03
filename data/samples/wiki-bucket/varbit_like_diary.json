@@ -1,0 +1,1 @@
+{"bucketQuery":"bucket('varbit').select('page_name','content','name','index').where('name','LIKE','%DIARY%').limit(50).run()","error":"Invalid operand for bucket.where(): LIKE."}

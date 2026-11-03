@@ -1,0 +1,924 @@
+{
+ "steps_total": 576,
+ "rule_counts": {
+  "manual": 367,
+  "skill_level": 59,
+  "quest_state": 170,
+  "diary_tier": 5
+ },
+ "rules_inferred_from_text": 43,
+ "track_via": {
+  "manual": 367,
+  "hiscores": 50,
+  "wikisync": 159
+ },
+ "track_via_per_section": {
+  "1.1": {
+   "manual": 196,
+   "hiscores": 13,
+   "wikisync": 77
+  },
+  "1.2": {
+   "wikisync": 7,
+   "manual": 21,
+   "hiscores": 5
+  },
+  "1.3": {
+   "manual": 67,
+   "wikisync": 36,
+   "hiscores": 8
+  },
+  "1.4": {
+   "manual": 34,
+   "wikisync": 10,
+   "hiscores": 6
+  },
+  "1.5": {
+   "wikisync": 15,
+   "manual": 4,
+   "hiscores": 2
+  },
+  "2.0": {
+   "manual": 41,
+   "hiscores": 13,
+   "wikisync": 9
+  },
+  "S": {
+   "manual": 4,
+   "hiscores": 3,
+   "wikisync": 5
+  }
+ },
+ "rule_confidence": [
+  {
+   "type": "diary_tier",
+   "source": "text",
+   "confidence": "high",
+   "count": 3
+  },
+  {
+   "type": "diary_tier",
+   "source": "text",
+   "confidence": "medium",
+   "count": 2
+  },
+  {
+   "type": "manual",
+   "source": null,
+   "confidence": "-",
+   "count": 367
+  },
+  {
+   "type": "quest_state",
+   "source": "quest",
+   "confidence": "medium",
+   "count": 1
+  },
+  {
+   "type": "quest_state",
+   "source": "questStatus",
+   "confidence": "high",
+   "count": 144
+  },
+  {
+   "type": "quest_state",
+   "source": "text",
+   "confidence": "medium",
+   "count": 25
+  },
+  {
+   "type": "skill_level",
+   "source": "skillGoal",
+   "confidence": "high",
+   "count": 47
+  },
+  {
+   "type": "skill_level",
+   "source": "text",
+   "confidence": "high",
+   "count": 3
+  },
+  {
+   "type": "skill_level",
+   "source": "text",
+   "confidence": "medium",
+   "count": 9
+  }
+ ],
+ "layers": {
+  "classic": 538,
+  "enhanced": 38
+ },
+ "tags": {
+  "hcim": 7,
+  "skill": 55,
+  "quest": 155,
+  "diary-task": 11,
+  "sailing": 13,
+  "new-quest": 17,
+  "diary": 4,
+  "phase:mid": 6,
+  "phase:late": 9,
+  "phase:endgame": 7
+ },
+ "locations": [
+  {
+   "location": "Various",
+   "count": 59
+  },
+  {
+   "location": "Varrock",
+   "count": 58
+  },
+  {
+   "location": "Lumbridge",
+   "count": 40
+  },
+  {
+   "location": "Ardougne",
+   "count": 24
+  },
+  {
+   "location": "Falador",
+   "count": 17
+  },
+  {
+   "location": "Port Sarim",
+   "count": 17
+  },
+  {
+   "location": "Draynor Village",
+   "count": 15
+  },
+  {
+   "location": "Gnome Stronghold",
+   "count": 14
+  },
+  {
+   "location": "Port Khazard",
+   "count": 13
+  },
+  {
+   "location": "Al Kharid",
+   "count": 10
+  },
+  {
+   "location": "Draynor",
+   "count": 10
+  },
+  {
+   "location": "Fossil Island",
+   "count": 10
+  },
+  {
+   "location": "Varlamore",
+   "count": 9
+  },
+  {
+   "location": "Edgeville",
+   "count": 9
+  },
+  {
+   "location": "Keldagrim",
+   "count": 9
+  },
+  {
+   "location": "Lumbridge Castle",
+   "count": 8
+  },
+  {
+   "location": "Rimmington",
+   "count": 8
+  },
+  {
+   "location": "Seers Village",
+   "count": 8
+  },
+  {
+   "location": "Castle Wars",
+   "count": 7
+  },
+  {
+   "location": "Fred's Farm",
+   "count": 7
+  },
+  {
+   "location": "Karamja",
+   "count": 7
+  },
+  {
+   "location": "Lumbridge Swamp",
+   "count": 6
+  },
+  {
+   "location": "Wizard Tower",
+   "count": 6
+  },
+  {
+   "location": "Camelot",
+   "count": 6
+  },
+  {
+   "location": "Catherby",
+   "count": 6
+  },
+  {
+   "location": "Pollnivneach",
+   "count": 6
+  },
+  {
+   "location": "Burthorpe",
+   "count": 6
+  },
+  {
+   "location": "Miscellania",
+   "count": 6
+  },
+  {
+   "location": "Yanille",
+   "count": 5
+  },
+  {
+   "location": "Barbarian Village",
+   "count": 5
+  },
+  {
+   "location": "Taverley",
+   "count": 5
+  },
+  {
+   "location": "Shilo Village",
+   "count": 5
+  },
+  {
+   "location": "Entrana",
+   "count": 5
+  },
+  {
+   "location": "Port Phasmatys",
+   "count": 5
+  },
+  {
+   "location": "Barbarian Assault",
+   "count": 4
+  },
+  {
+   "location": "Baxtorian Falls",
+   "count": 4
+  },
+  {
+   "location": "Draynor Manor",
+   "count": 4
+  },
+  {
+   "location": "Dorgesh-Kaan",
+   "count": 4
+  },
+  {
+   "location": null,
+   "count": 3
+  },
+  {
+   "location": "North of Ardougne",
+   "count": 3
+  },
+  {
+   "location": "Great Kourend",
+   "count": 3
+  },
+  {
+   "location": "Wintertodt",
+   "count": 3
+  },
+  {
+   "location": "Ice Mountain",
+   "count": 3
+  },
+  {
+   "location": "Mudskipper Point",
+   "count": 3
+  },
+  {
+   "location": "Khazard Battlefield",
+   "count": 3
+  },
+  {
+   "location": "Hosidius",
+   "count": 3
+  },
+  {
+   "location": "Champions Guild",
+   "count": 3
+  },
+  {
+   "location": "Uzer",
+   "count": 3
+  },
+  {
+   "location": "Mage Bank",
+   "count": 3
+  },
+  {
+   "location": "Ape Atoll",
+   "count": 3
+  },
+  {
+   "location": "Rellekka",
+   "count": 3
+  },
+  {
+   "location": "Pest Control",
+   "count": 3
+  },
+  {
+   "location": "Prifddinas",
+   "count": 3
+  },
+  {
+   "location": "Tombs of Amascut",
+   "count": 3
+  },
+  {
+   "location": "West of Lumbridge",
+   "count": 2
+  },
+  {
+   "location": "Clan Wars",
+   "count": 2
+  },
+  {
+   "location": "Ferox Enclave",
+   "count": 2
+  },
+  {
+   "location": "Varrock Museum",
+   "count": 2
+  },
+  {
+   "location": "Shantay Pass",
+   "count": 2
+  },
+  {
+   "location": "Brimhaven",
+   "count": 2
+  },
+  {
+   "location": "Goblin Village",
+   "count": 2
+  },
+  {
+   "location": "Rogues' Den",
+   "count": 2
+  },
+  {
+   "location": "Morytania",
+   "count": 2
+  },
+  {
+   "location": "Canifis",
+   "count": 2
+  },
+  {
+   "location": "Zanaris",
+   "count": 2
+  },
+  {
+   "location": "Crandor",
+   "count": 2
+  },
+  {
+   "location": "Underground Pass",
+   "count": 2
+  },
+  {
+   "location": "Mos Le'Harmless",
+   "count": 2
+  },
+  {
+   "location": "Trollheim",
+   "count": 2
+  },
+  {
+   "location": "Witchaven",
+   "count": 1
+  },
+  {
+   "location": "Barbarian Outpost",
+   "count": 1
+  },
+  {
+   "location": "South-west of Castle Wars",
+   "count": 1
+  },
+  {
+   "location": "Varrock Sawmill",
+   "count": 1
+  },
+  {
+   "location": "Lumber Yard",
+   "count": 1
+  },
+  {
+   "location": "South of Mind Altar",
+   "count": 1
+  },
+  {
+   "location": "Falador Park",
+   "count": 1
+  },
+  {
+   "location": "Giants' Foundry",
+   "count": 1
+  },
+  {
+   "location": "Desert",
+   "count": 1
+  },
+  {
+   "location": "South of Khazard",
+   "count": 1
+  },
+  {
+   "location": "Tower of Life",
+   "count": 1
+  },
+  {
+   "location": "Fight Arena",
+   "count": 1
+  },
+  {
+   "location": "ZMI Bank",
+   "count": 1
+  },
+  {
+   "location": "Fishing Guild",
+   "count": 1
+  },
+  {
+   "location": "HAM Hideout",
+   "count": 1
+  },
+  {
+   "location": "Wilderness",
+   "count": 1
+  },
+  {
+   "location": "Hazelmere's Island",
+   "count": 1
+  },
+  {
+   "location": "Keep Le Faye",
+   "count": 1
+  },
+  {
+   "location": "Observatory",
+   "count": 1
+  },
+  {
+   "location": "Digsite",
+   "count": 1
+  },
+  {
+   "location": "White Wolf Mountain",
+   "count": 1
+  },
+  {
+   "location": "Barbarian Fishing",
+   "count": 1
+  },
+  {
+   "location": "Tempoross Cove",
+   "count": 1
+  },
+  {
+   "location": "Ardougne Monastery",
+   "count": 1
+  },
+  {
+   "location": "Fisher King Realm",
+   "count": 1
+  },
+  {
+   "location": "Lighthouse",
+   "count": 1
+  },
+  {
+   "location": "Enchanted Valley",
+   "count": 1
+  },
+  {
+   "location": "Nardah",
+   "count": 1
+  },
+  {
+   "location": "Taverley Dungeon",
+   "count": 1
+  },
+  {
+   "location": "Mort'ton",
+   "count": 1
+  },
+  {
+   "location": "McGrubor's Wood",
+   "count": 1
+  },
+  {
+   "location": "Canifis/Seers",
+   "count": 1
+  },
+  {
+   "location": "Isafdar",
+   "count": 1
+  },
+  {
+   "location": "Sophanem",
+   "count": 1
+  },
+  {
+   "location": "Braindeath Island",
+   "count": 1
+  },
+  {
+   "location": "Farming Guild",
+   "count": 1
+  },
+  {
+   "location": "Desert Quarry",
+   "count": 1
+  },
+  {
+   "location": "Warriors Guild",
+   "count": 1
+  },
+  {
+   "location": "Weiss",
+   "count": 1
+  },
+  {
+   "location": "Lunar Isle",
+   "count": 1
+  },
+  {
+   "location": "Mage Arena",
+   "count": 1
+  },
+  {
+   "location": "Royal Titans",
+   "count": 1
+  },
+  {
+   "location": "God Wars Dungeon",
+   "count": 1
+  },
+  {
+   "location": "Tormented Demons",
+   "count": 1
+  },
+  {
+   "location": "Fortis Colosseum",
+   "count": 1
+  },
+  {
+   "location": "Nex",
+   "count": 1
+  },
+  {
+   "location": "Chambers of Xeric",
+   "count": 1
+  },
+  {
+   "location": "Theatre of Blood",
+   "count": 1
+  },
+  {
+   "location": "Yama",
+   "count": 1
+  },
+  {
+   "location": "Doom of Mokhaiotl",
+   "count": 1
+  },
+  {
+   "location": "Wyrmscraig",
+   "count": 1
+  }
+ ],
+ "quests_in_guide": [
+  "A Soul's Bane",
+  "Alfred Grimhand's Barcrawl",
+  "Animal Magnetism",
+  "Another Slice of H.A.M.",
+  "At First Light",
+  "Beneath Cursed Sands",
+  "Between a Rock...",
+  "Big Chompy Bird Hunting",
+  "Biohazard",
+  "Black Knights' Fortress",
+  "Bone Voyage",
+  "Cabin Fever",
+  "Children of the Sun",
+  "Contact!",
+  "Cook's Assistant",
+  "Creature of Fenkenstrain",
+  "Current Affairs",
+  "Daddy's Home",
+  "Death Plateau",
+  "Death to the Dorgeshuun",
+  "Defender of Varrock",
+  "Demon Slayer",
+  "Desert Treasure I",
+  "Desert Treasure II - The Fallen Empire",
+  "Doric's Quest",
+  "Dragon Slayer I",
+  "Dragon Slayer II",
+  "Dream Mentor",
+  "Druidic Ritual",
+  "Dwarf Cannon",
+  "Eadgar's Ruse",
+  "Eagles' Peak",
+  "Elemental Workshop I",
+  "Elemental Workshop II",
+  "Enakhra's Lament",
+  "Enlightened Journey",
+  "Enter the Abyss",
+  "Ernest the Chicken",
+  "Fairytale I - Growing Pains",
+  "Fairytale II - Cure a Queen",
+  "Fallen From Grace",
+  "Family Crest",
+  "Fight Arena",
+  "Fishing Contest",
+  "Forgettable Tale of a Drunken Dwarf",
+  "Garden of Tranquillity",
+  "Gertrude's Cat",
+  "Ghosts Ahoy",
+  "Goblin Diplomacy",
+  "Hand in the Sand",
+  "Hazeel Cult",
+  "Heroes' Quest",
+  "Holy Grail",
+  "Horror from the Deep",
+  "Icthlarin's Little Helper",
+  "Imp Catcher",
+  "In Aid of the Myreque",
+  "In Search of the Myreque",
+  "Jungle Potion",
+  "Legends' Quest",
+  "Lost City",
+  "Lunar Diplomacy",
+  "Making Friends with My Arm",
+  "Merlin's Crystal",
+  "Monk's Friend",
+  "Monkey Madness I",
+  "Murder Mystery",
+  "My Arm's Big Adventure",
+  "Nature Spirit",
+  "Observatory Quest",
+  "One Small Favour",
+  "Pandemonium",
+  "Perilous Moons",
+  "Pirate's Treasure",
+  "Plague City",
+  "Priest in Peril",
+  "Prince Ali Rescue",
+  "Prying Times",
+  "Rag and Bone Man I",
+  "Recipe for Disaster",
+  "Recipe for Disaster/Freeing Evil Dave",
+  "Recruitment Drive",
+  "Regicide",
+  "Romeo & Juliet",
+  "Royal Trouble",
+  "Rum Deal",
+  "Rune Mysteries",
+  "Sea Slug",
+  "Secrets of the North",
+  "Shades of Mort'ton",
+  "Shadow of the Storm",
+  "Sheep Herder",
+  "Sheep Shearer",
+  "Shield of Arrav",
+  "Shilo Village",
+  "Sleeping Giants",
+  "Song of the Elves",
+  "Spirits of the Elid",
+  "Tai Bwo Wannai Trio",
+  "Tears of Guthix",
+  "Temple of Ikov",
+  "Temple of the Eye",
+  "The Dig Site",
+  "The Eyes of Glouphrie",
+  "The Feud",
+  "The Fremennik Trials",
+  "The Giant Dwarf",
+  "The Golem",
+  "The Grand Tree",
+  "The Knight's Sword",
+  "The Lost Tribe",
+  "The Red Reef",
+  "The Restless Ghost",
+  "The Tourist Trap",
+  "Throne of Miscellania",
+  "Tree Gnome Village",
+  "Tribal Totem",
+  "Troll Stronghold",
+  "Troubled Tortugans",
+  "Twilight's Promise",
+  "Underground Pass",
+  "Vampyre Slayer",
+  "Wanted!",
+  "Watchtower",
+  "Waterfall Quest",
+  "While Guthix Sleeps",
+  "Witch's House",
+  "Witch's Potion",
+  "X Marks the Spot"
+ ],
+ "quests_not_in_catalog": [],
+ "quest_catalog_size": 224,
+ "manual_review_top30": [
+  {
+   "id": "1.1.82",
+   "score": 7,
+   "text": "Do Wintertodt until 200k cash, get at least 22 fletching at wintertodt as well",
+   "suggestion": "boss_kc Wintertodt (sem contagem no texto; definir kc alvo); skill_level? (há 'N skill' no texto sem verbo de meta claro); gp_banked (plugin)"
+  },
+  {
+   "id": "1.1.167",
+   "score": 5,
+   "text": "Get a drink for the barcrawl quest from brimhaven bar",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop); quest_state? (menciona quest sem nome reconhecido)"
+  },
+  {
+   "id": "2.0.40a",
+   "score": 5,
+   "text": "Moons of Peril: Farm Blue Moon boss first for its magic-oriented hybrid armour, then Blood Moon for the melee set (requires Perilous Moons quest)",
+   "suggestion": "boss_kc Lunar Chests (sem contagem no texto; definir kc alvo); quest_state? (menciona quest sem nome reconhecido)"
+  },
+  {
+   "id": "2.0.40b",
+   "score": 5,
+   "text": "Farm Royal Titans for Twinflame Staff, Deadeye and Mystic Vigour prayer scrolls (no quest required, duo recommended)",
+   "suggestion": "boss_kc The Royal Titans (sem contagem no texto; definir kc alvo); quest_state? (menciona quest sem nome reconhecido)"
+  },
+  {
+   "id": "2.0.57",
+   "score": 5,
+   "text": "Fortis Colosseum for Dizana's Quiver (BIS ranged cape)",
+   "suggestion": "boss_kc Sol Heredit (sem contagem no texto; definir kc alvo); item/varbit unlock (plugin ou marcação manual)"
+  },
+  {
+   "id": "2.0.61a",
+   "score": 5,
+   "text": "Farm Doom of Mokhaiotl delves for Eye of Ayak and Avernic Treads (requires The Final Dawn quest)",
+   "suggestion": "boss_kc Doom of Mokhaiotl (sem contagem no texto; definir kc alvo); quest_state? (menciona quest sem nome reconhecido)"
+  },
+  {
+   "id": "1.1.140",
+   "score": 4,
+   "text": "Get a security book from the Security guard upstairs in port sarim jail for a diary task",
+   "suggestion": "diary_task (tarefa individual de diário; WikiSync expõe tarefas por área); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.2.16a",
+   "score": 4,
+   "text": "Now that you're 74 Fishing, do a few Tempoross kills for the Fish Barrel and Spirit Flakes",
+   "suggestion": "boss_kc Tempoross (sem contagem no texto; definir kc alvo); prerequisites presentes: fishing 74"
+  },
+  {
+   "id": "S.1",
+   "score": 4,
+   "text": "Unlock Sailing via the Pandemonium quest - this is main-guide step 1.1.78a (Will & Anne on the Port Sarim docks). Everything below is the rest of the Sailing progression.",
+   "suggestion": "item/varbit unlock (plugin ou marcação manual); quest_state? (menciona quest sem nome reconhecido)"
+  },
+  {
+   "id": "1.1.104",
+   "score": 3,
+   "text": "Get a drink for barcrawl at the bar south of Varrock fountain",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.111",
+   "score": 3,
+   "text": "Get a drink for the barcrawl",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.128",
+   "score": 3,
+   "text": "Get a drink from the Falador bar for Barcrawl",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.163",
+   "score": 3,
+   "text": "Get a drink from Ardy bar for the barcrawl",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.205",
+   "score": 3,
+   "text": "Get a drink for barcrawl from Yanille pub",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.210",
+   "score": 3,
+   "text": "Get a drink from the port sarim bar for barcrawl",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.214",
+   "score": 3,
+   "text": "Get a drink for barcrawl from the bar south of the Karamja banana trees",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.237",
+   "score": 3,
+   "text": "Get a drink from Seers' bar for the barcrawl",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.60",
+   "score": 3,
+   "text": "Buy a drink from Blurberry for the Barcrawl miniquest",
+   "suggestion": "sub-passo do Alfred Grimhand's Barcrawl (varbit por bar via plugin; ou quest_state IN_PROGRESS); quest_state? (menciona quest sem nome reconhecido)"
+  },
+  {
+   "id": "1.3.13",
+   "score": 3,
+   "text": "Kill the nearby ram, bear and unicorn for their bones (Rag and bone man quest)",
+   "suggestion": "kill_count 'nearby ram' (não existe no hiscores; só com plugin próprio); quest_state? (menciona quest sem nome reconhecido)"
+  },
+  {
+   "id": "1.4.41",
+   "score": 3,
+   "text": "If you have 60 magic, get mage arena cape while you're here anyway",
+   "suggestion": "item/varbit unlock (plugin ou marcação manual); prerequisites presentes: magic 60"
+  },
+  {
+   "id": "2.0.41",
+   "score": 3,
+   "text": "By far the best thing to do next is to camp Corrupted Gauntlet until 2 enhanced weapon seeds to make both of the weapons and 6 armor seeds for full crystal",
+   "suggestion": "boss_kc The Corrupted Gauntlet (sem contagem no texto; definir kc alvo)"
+  },
+  {
+   "id": "2.0.53",
+   "score": 3,
+   "text": "Farm DT2 bosses: Vardorvis first for Ultor Ring + Soulreaper Axe",
+   "suggestion": "boss_kc Vardorvis (sem contagem no texto; definir kc alvo)"
+  },
+  {
+   "id": "2.0.58",
+   "score": 3,
+   "text": "Nex masses for Torva armour",
+   "suggestion": "boss_kc Nex (sem contagem no texto; definir kc alvo)"
+  },
+  {
+   "id": "2.0.59",
+   "score": 3,
+   "text": "Chambers of Xeric for Twisted Bow, Dragon Hunter Crossbow, and other uniques",
+   "suggestion": "boss_kc Chambers of Xeric (sem contagem no texto; definir kc alvo)"
+  },
+  {
+   "id": "2.0.60",
+   "score": 3,
+   "text": "Theatre of Blood for Scythe of Vitur, Rapier, and Sanguinesti Staff",
+   "suggestion": "boss_kc Theatre of Blood (sem contagem no texto; definir kc alvo)"
+  },
+  {
+   "id": "S.9",
+   "score": 3,
+   "text": "Build a teleport focus at Sailing 55 (needs 49 Construction) to unlock Sailing teleports",
+   "suggestion": "item/varbit unlock (plugin ou marcação manual); prerequisites presentes: construction 49, sailing 55"
+  },
+  {
+   "id": "1.1.103",
+   "score": 2,
+   "text": "Buy a rotten tomato from the crate near the achievement diary guy",
+   "suggestion": "diary_task (tarefa individual de diário; WikiSync expõe tarefas por área)"
+  },
+  {
+   "id": "1.1.112",
+   "score": 2,
+   "text": "Cut a dying tree at the sawmill and make 1 regular plank for diary tasks",
+   "suggestion": "diary_task (tarefa individual de diário; WikiSync expõe tarefas por área)"
+  },
+  {
+   "id": "1.1.130",
+   "score": 2,
+   "text": "Buy 8 woad leaves, offer 20gp to get 2 leaves",
+   "suggestion": "item_obtained / item_count (inventário ou banco via plugin; collection log se for drop)"
+  },
+  {
+   "id": "1.1.142",
+   "score": 2,
+   "text": "Go down the dungeon and mine 2 blurite ore, 1 is for falador diary",
+   "suggestion": "diary_task (tarefa individual de diário; WikiSync expõe tarefas por área)"
+  }
+ ],
+ "manual_review_total_candidates": 80,
+ "steps_with_prerequisites": 20,
+ "quest_pairs_linked": 31
+}

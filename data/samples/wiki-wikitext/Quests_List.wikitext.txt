@@ -1,0 +1,20 @@
+This page lists all [[quests]] and [[miniquests]] available within ''Old School RuneScape''.
+{{:Quests/Free-to-play}}
+{{:Quests/Members}}
+{{:Miniquests}}
+
+==See also==
+*[[Quests/Free-to-play|Free-to-play quests]]
+*[[Quests/Members|Members-only quests]]
+*[[Miniquests]]
+*[[Optimal quest guide]]
+*[[Optimal quest guide/Free-to-play]]
+*[[Optimal quest guide/Ironman]]
+*[[Quests/Requirements|Overall requirements for quests]]
+*[[Quests/Skill requirements|Quests by skill requirements]]
+*[[Quests/Experience rewards|Quest by skill experience rewards]]
+*[[Quests/Series|Quest series]]
+*[[Quest Speedrunning]]
+
+[[Category:Quests|*]]
+[[Category:List]]

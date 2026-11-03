@@ -1,0 +1,35 @@
+Bucket provides a [https://www.mediawiki.org/wiki/API:Main_page MediaWiki API] action for external users to access the data stored in Buckets.
+
+The [[osw:|Old School RuneScape Wiki]] will be used for real world examples of API usage.
+
+== api.php?action=bucket ==
+* <code>query</code> - A fully valid Bucket lua string.
+
+=== Output ===
+The returned object consists of the following properties:
+* <code>bucketQuery</code> - The lua string that was run to produce the output.
+* <code>bucket</code> - The result of the lua string. The format is identical to the normal [[Extension:Bucket#bucket.run|bucket.run()]] call.
+* <code>error</code> - Present if an error has occurred, contains text describing the error.
+
+=== Example ===
+[https://oldschool.runescape.wiki/api.php?action=bucket&query=bucket(%27infobox_item%27).select(%27item_id%27,%27image%27,%27examine%27).where(%27item_name%27,%27Raw%20lobster%27).run() api.php?action=bucket&query=bucket('infobox_item').select('item_id','image','examine').where('item_name','Raw lobster').run()]
+<syntaxhighlight lang="json">
+{
+    "bucketQuery": "bucket('infobox_item').select('item_id','image','examine').where('item_name','Raw lobster').run()",
+    "bucket": [
+        {
+            "item_id": [
+                "377"
+            ],
+            "image": [
+                "File:Raw lobster.png"
+            ],
+            "examine": "I should try cooking this."
+        }
+    ]
+}
+</syntaxhighlight>
+
+== See also ==
+* [[osw:RuneScape:Bucket|OSRS Wiki bucket guide]]
+{{NavboxBucket}}

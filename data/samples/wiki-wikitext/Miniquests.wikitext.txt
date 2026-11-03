@@ -1,0 +1,148 @@
+{{External|rs}}
+<includeonly>==Miniquests==</includeonly>
+[[Miniquests]] are groups of objectives that, unlike [[quests]], have no [[icon]] on the [[world map]] and offer no [[quest points]] upon completion. There will also be no indication of starting nor completing a miniquest, other than what is written in the corresponding [[Quest List]] journal entry. There are a total of 19 miniquests, which are all [[members]]-only.<noinclude>
+
+==List of miniquests==
+</noinclude>
+{{Sync}}
+<dpl>
+ namespace =
+ uses = Template:Infobox Miniquest
+ order = ascending
+ category = Miniquests
+ notcategory = Future content
+ notcategory = Quick guides
+ notcategory = Discontinued content
+ notcategory = Sailing alpha content
+ notcategory = Sailing beta content
+ include = {Infobox Miniquest}:name,{Quest details}:difficulty:length,{Infobox Miniquest}:series:release,{Quest details}:leagueRegion
+ format = {| class="wikitable lighttable sortable qc-active oqg-table sticky-header align-center-4 autosort=1²{comma}²a" | \n! Name !! Difficulty !! Length !! Series !! Release date !! class="leagues-global-flag" | Leagues region,\n|- data-rowid="²{#dplreplace:%PAGE%|\s\(miniquest\)|}²"\n|,,\n|}
+ tablerow = data-sort-value="²{#dplreplace:²{#dplreplace:%PAGE%|A\s|}²|The\s|}²"|[[%PAGE%|²{#dplreplace:%PAGE%|\s\(miniquest\)|}²]],||data-sort-value="²{#switch:%%|Novice=1|Intermediate=2|Experienced=3|Master=4|Grandmaster=5|Special=6|#default=%%}²"|²{#switch:%%|1=Novice|2=Intermediate|3=Experienced|4=Master|5=Grandmaster|6=Special|#default=%%}²,data-sort-value="²{#switch:%%|Very Short=0|Short=1|Short – Medium=2|Short – Long=3|Medium=4|Medium – Long=5|Long=6|Very Long=7}²"|%%,||²{#ifeq:%%|None|data-sort-value="" {{NA}}|%%}²,%%,|| class="leagues-global-flag" | %%
+</dpl><noinclude>
+
+==One-off content without miniquest designation==
+There are several more coherent objectives that can be considered miniquests, yet do not appear on the [[Quest List]]. These "unofficial miniquests" can only be done once, and will permanently unlock either an item, a location, or a method of trade or training.
+
+===Training or trade unlocks===
+{| class="wikitable lighttable"
+! Name
+! Requirements
+! Length
+! Unlock
+! How to start
+|-
+| [[Sacred Bone Burner]] restoration
+|
+* Five unnoted [[dragonstone]]s
+* 100 ([[Babydragon bones|baby]])[[dragon bones]], or 200 (baby)dragon bones
+| Medium
+| The [[Sacred Bone Burner]] and a shortcut
+| Talk to [[Olbertus]] in the [[Forthos Dungeon]]
+|-
+|[[Rogue Trader]]
+|
+* [[The Feud]]
+* [[Rune Mysteries]]
+* [[Icthlarin's Little Helper]]
+|Short - Medium
+|[[Ali Morrisane|Ali Morrisane's]] rune, blackjack, and clothing stores
+|Speak to [[Ali Morrisane]] in [[Al Kharid]]
+|}
+
+===Item or ability unlocks===
+{| class="wikitable lighttable"
+! Name
+! Requirements
+! Length
+! Unlock
+! How to start
+|-
+| [[Knight Waves Training Ground]]
+| [[King's Ransom]]
+| Long
+| The prayers [[Chivalry]] and [[Piety]]
+| Talk to the [[Squire (Camelot)|Squire]] on the top floor of [[Camelot Castle]]
+|-
+|[[Natural History Quiz]]
+| {{NA|None}}
+|Short
+|Unique [[Varrock Museum]] [[kudos]]
+|Speak to [[Orlando Smith]] located in the basement of the [[Varrock Museum]]
+|-
+|Obtaining the [[Ancient key (Tombs of Amascut)|ancient key]]
+|[[Into the Tombs]]
+|Short
+|An [[Ancient key (Tombs of Amascut)|ancient key]] to obtain the [[mask of rebirth]]
+|Use a [[camulet]] on the [[Bank Camel|bank camel]] in the tombs' lobby
+|-
+|Obtaining the [[amulet of rancour (s)]]
+|
+* [[Priest in Peril]]
+* 92 [[Slayer]]
+|Short
+|The [[amulet of rancour (s)]], a silver variant of the [[amulet of rancour]]
+|Read the [[venom-riddled note]] inside the [[Morytania Spider Cave]]
+|-
+|[[White equipment#Knight rankings|White Knight master rank]]
+|[[Wanted!]]
+|Long
+|Ability to buy all [[white equipment]]
+|Kill [[Black Knight]]s
+|-
+|Obtaining the [[medallion of the deep]]
+|63 [[Sailing]]
+|Short
+|The [[medallion of the deep]], equivalent to [[diving equipment]]
+|Obtain the [[waterlogged journal]] from a crate near [[Henderson]] on the [[Pandemonium]]
+|-
+|Bringing a [[Wyrmscraig Goat]] to the mainland
+|
+* [[Sheep Herder]]
+* 62 [[Sailing]]
+* 60 [[Hunter]]
+|Short
+|
+*1,000 Sailing experience
+*A [[Wyrmscraig Goat]] roaming the mainland
+|Prod a [[Wyrmscraig Goat]] to the gangplank on [[Wyrmcraig]] where your boat is docked
+|-
+|Obtaining the 9 additional [[Puppy|puppies]]
+|
+* [[A Ruff Situation]]
+* 45 [[Sailing]]
+* Partial completion of [[Troubled Tortugans]] 
+|Short
+|Additional pet [[Puppy|puppies]] you can use as pets
+|Complete [[A Ruff Situation]]
+|}
+
+===Lore===
+{| class="wikitable lighttable"
+! Name
+! Requirements
+! Length
+! Unlock
+! How to start
+|-
+| Recovering [[Copper's crimson collar]]
+| Completion of [[Client of Kourend]]
+| Short
+| None
+| Use [[wolf bones]] on [[Veos]] after completing [[Client of Kourend]], but before progressing too far in [[A Kingdom Divided]].
+|-
+| [[Spirit of Adventure]]
+| [[Ghostspeak amulet]] or [[Morytania legs 2]] or above
+| Short
+| None
+| Talk to the [[Ghost (Bernina)]] near the [[Auburn Valley]] coast wearing a [[ghostspeak amulet]].
+|-
+| [[Lost Lover]]
+| None
+| Short
+| None
+| Talk to either [[Fabia]] or [[Xilo]] in the [[Tlati Rainforest]].
+|}
+{{Miniquests}}
+</noinclude>
+
+[[Category:Members]]

@@ -1,0 +1,10 @@
+{
+	"require": {
+		"type": "PAGE",
+		"repeated": true
+	},
+	"load_data": {
+		"type": "PAGE",
+		"repeated": true
+	}
+}

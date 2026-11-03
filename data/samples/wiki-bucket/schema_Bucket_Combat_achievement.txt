@@ -1,0 +1,23 @@
+{
+	"id": {
+		"type": "INTEGER"
+	},
+	"name": {
+		"type": "TEXT"
+	},
+	"monster": {
+		"type": "PAGE"
+	},
+	"task": {
+		"type": "TEXT"
+	},
+	"tier": {
+		"type": "TEXT"
+	},
+	"type": {
+		"type": "TEXT"
+	},
+	"league_region": {
+		"type": "TEXT"
+	}
+}

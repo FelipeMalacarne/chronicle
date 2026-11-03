@@ -1,0 +1,19 @@
+HTTP/1.1 200 Connection Established
+
+HTTP/2 200 
+date: Tue, 03 Nov 2026 22:43:48 GMT
+content-type: text/html; charset=ISO-8859-1
+server: cloudflare
+set-cookie: JGSTAFFNAME=; version=1; path=/; domain=.runescape.com; secure;
+set-cookie: JGSTAFFPASS=; version=1; path=/; domain=.runescape.com; secure;
+set-cookie: __cf_bm=eAZ0h2Errflns_AOwQieEo2iDWcXdWYy0DCuYt54dQ8-1793745828.0336156-1.0.1.1-xNrEHfILmf4be0xJOyjgIGcycUA9eBz3dhaTUWPdMVgkkcl2C7PbF3v5Y5iRnZVkeKmg4KSNTdidnwRNhS5mkb9H9nqLf_GKKOWXsa2999I2O1T6HnTUo90ih0RscLiVf_EY0iHEHOrR6Y4ZzGECeQ; HttpOnly; SameSite=None; Secure; Path=/; Domain=runescape.com; Expires=Tue, 03 Nov 2026 23:13:48 GMT
+cache-control: no-cache
+pragma: no-cache
+expires: Thu, 01-Jan-1970 00:00:00 GMT
+content-security-policy: frame-ancestors https://*.runescape.com:* https://*.jagex.com:*
+x-frame-options: sameorigin
+strict-transport-security: max-age=31536000;
+vary: accept-encoding
+cf-cache-status: DYNAMIC
+cf-ray: a54ee6612fc4cba9-IAD
+

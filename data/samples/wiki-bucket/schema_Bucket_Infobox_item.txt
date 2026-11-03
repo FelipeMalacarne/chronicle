@@ -1,0 +1,52 @@
+{
+	"item_name": {
+		"type": "TEXT"
+	},
+	"image": {
+		"type": "PAGE",
+		"repeated": true
+	},
+	"is_members_only": {
+		"type": "BOOLEAN"
+	},
+	"item_id": {
+		"type": "TEXT",
+		"repeated": true
+	},
+	"examine": {
+		"type": "TEXT"
+	},
+	"high_alchemy_value": {
+		"type": "INTEGER"
+	},
+	"league_region": {
+		"type": "TEXT"
+	},
+	"release_date": {
+		"type": "TEXT"
+	},
+	"removal_date": {
+		"type": "TEXT"
+	},
+	"value": {
+		"type": "INTEGER"
+	},
+	"weight": {
+		"type": "DOUBLE"
+	},
+	"version_anchor": {
+		"type": "TEXT"
+	},
+	"buy_limit": {
+		"type": "INTEGER"
+	},
+	"default_version": {
+		"type": "BOOLEAN"
+	},
+	"quest": {
+		"type": "TEXT"
+	},
+	"tradeable": {
+		"type": "BOOLEAN"
+	}
+}

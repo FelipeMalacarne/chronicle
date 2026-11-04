@@ -82,7 +82,7 @@ O resto do desenho continua válido e não muda:
 Uma coisa do mundo, com id estável no catálogo (`content/reference/`):
 
 - **Tipos atuais**: `quest`, `item`, `skill`, `diary`, `ca`, `boss`.
-- **Tipos novos**:
+- **Tipos novos** (decididos; entram já nesta revisão):
   - `unlock`: fairy rings, spellbooks, teleportes, acesso a áreas. São requisitos frequentes no grafo e
     raramente uma quest.
   - `location`: Draynor, Port Sarim. Serve para agrupar passos, "itens dos próximos passos no mesmo lugar"
@@ -189,7 +189,8 @@ Status do passo, avaliado em ordem:
 1. Marca manual da rota (`manual_done`, `skipped`, `pinned_open`). O motor nunca a sobrescreve.
 2. Todos os objetivos `completes`/`starts` estão `met`, com evidência ⇒ `auto_done` (evidência = a dos
    objetivos).
-3. Cascata `implied` (F1) dentro da seção, visualmente distinta e confirmável.
+3. Cascata `implied` (F1): só dentro da seção e só na rota ativa, visualmente distinta e confirmável
+   (seção 9.1).
 4. Senão, `pending`. Um passo sem objetivo concluível é checkbox, como hoje.
 
 Com isso o progresso é compartilhado entre as rotas por construção: o mesmo `objective_key` aparece cumprido
@@ -378,18 +379,27 @@ Nenhuma dessas mudanças altera o contrato de ingest (doc 04, seção 6.4) nem o
 - **Consulta interativa**: o dono acompanha a extração e o agente pergunta sempre que precisar (seção
   6.4). Não existe estado "sugerido" na aplicação: o que entra no conteúdo é explícito ou confirmado pelo
   dono e pode concluir passos com evidência; o que ficar em aberto fica fora do `guide.json`.
+- **`unlock` e `location` entram já nesta revisão**: no schema e no registry desde o passo 2 da
+  sequência, com catálogos povoados pelo que a extração encontrar (cada entrada nova confirmada pelo
+  dono), não pela wiki inteira.
+- **Cascata `implied` (F1)**: quando um passo conclui por evidência, os passos **manuais** anteriores
+  ainda `pending` viram `done_implied`. Limites:
+  - só **dentro da mesma seção**;
+  - só na **rota ativa**: o passo que dispara precisa ter concluído enquanto aquela rota é a seguida
+    (cursor ativo). Um objetivo cumprido seguindo o Oziris não dispara cascata no BRUHsailer;
+  - nunca em **tracks** paralelas;
+  - `done_implied` aponta para o passo que disparou como evidência, tem visual próprio e só vira feito
+    com a confirmação do dono ("confirmar tudo"). Nunca é `auto_done`.
 
 ### 9.2 Em aberto (dono)
 
-1. `unlock` e `location` entram nesta revisão ou depois do MVP? Recomendação: entrar no schema já, e
-   povoar com o que a extração encontrar.
-2. A cascata `implied` atravessa seções? (Já em aberto no doc 03, F1; proposta: não.)
+Nenhuma. O planejamento do modelo está fechado; a execução segue a seção 10.
 
 ## 10. Sequência
 
 | # | Entrega | Pronto quando |
 |---|---|---|
-| 1 | Este doc revisado e decisões 9.2 fechadas | dono aprova |
+| 1 | Este doc revisado e decisões fechadas | **feito** (2026-11-04) |
 | 2 | Schema: `objectives`, `ItemRequirement`, tipos `unlock`/`location`; loader converte `complete_when` | `content validate` passa nos dois guias, readiness verde |
 | 3 | Catálogo de itens gerado | ambíguos e não resolvidos do Oziris caem de forma mensurável |
 | 4 | `internal/core/annotate` (lote, verificação, merge), `ironman content mcp`, `content annotate verify/merge` e a skill `annotate-guide` | testes de tabela das checagens; o MCP responde a um lote de exemplo |

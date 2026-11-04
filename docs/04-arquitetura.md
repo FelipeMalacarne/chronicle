@@ -750,7 +750,7 @@ controle do Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Mic
 Sequência vigente. Os itens da seção 10 que ainda não foram feitos continuam valendo, mas a API de progresso passa a
 depender do modelo de objetivos (doc 09):
 
-1. Doc 09: fechar as decisões em aberto (9.2).
+1. ~~Doc 09: fechar as decisões em aberto.~~ Feito: modelo de objetivos, progresso compartilhado, `unlock`/`location`, extração interativa por agente e cascata por seção na rota ativa.
 2. Schema de objetivos e `ItemRequirement`; tipos `unlock` e `location` (doc 09, seção 10, itens 2 e 3).
 3. Catálogo de itens gerado a partir da wiki.
 4. Extração estruturada dos guias: `internal/core/annotate`, `ironman content mcp` (stdio, só `content/`) e a skill `annotate-guide`; piloto com o agente no Claude Code (Oziris 1.1, BRUHsailer 1.1), depois os dois guias inteiros (doc 09, seção 6).

@@ -66,7 +66,7 @@ Fases: **MVP** (jogável por uma pessoa, 1-2 semanas), **v1** (tracking completo
 - **Comportamento:** cada step tem `status ∈ {pending, done_auto, done_manual, done_implied, skipped}` + `evidence` (fonte, timestamp, valor). Regras `complete_when` avaliadas a cada snapshot novo. Clique do usuário sempre vence: um step marcado manualmente nunca é desmarcado pelo sync; um step auto-concluído pode ser "reaberto" pelo usuário e vira `pending` com flag `pinned_open` (o sync não insiste). Desmarcar não apaga evidência.
 - **Cascata:** quando um step com evidência forte (quest, skill, diary) conclui, os steps anteriores da mesma seção ainda `pending` viram `done_implied`, com visual próprio e ação "confirmar tudo" em um clique. Sem isso, 63% do guia continua manual.
 - **Dados:** guia (regras), `player_snapshot`, `step_progress`.
-- **Em aberto:** cascata atravessa seções? (Proposta: não; o usuário pode ter pulado a seção inteira.) Boosts de skill não aparecem no hiscores: regra de skill considera só level base, e isso está certo para o guia.
+- **Resolvido (doc 09, 9.1):** a cascata não atravessa seções e só dispara na rota ativa; um objetivo cumprido em outra rota não gera `implied` nesta. Boosts de skill não aparecem no hiscores: regra de skill considera só level base, e isso está certo para o guia.
 
 ### F2 Modo foco "Agora" (MVP)
 - **Problema:** achar "onde eu estava" numa lista de 286 itens.

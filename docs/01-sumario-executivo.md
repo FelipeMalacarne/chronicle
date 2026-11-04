@@ -54,7 +54,7 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 
 1. Resolvida: Go no backend com CLI e MCP no mesmo binário, Svelte só no front (doc 04, seção 9).
 2. Resolvida: o plugin próprio será feito no Microbot (fork do RuneLite que o dono já usa) e entra no MVP; WikiSync vira fallback opcional. Ver `docs/06-cliente-microbot.md`.
-3. Cascata `implied` já no MVP (recomendado) ou na v1.
+3. Resolvida: cascata `implied` no modelo de objetivos, só dentro da seção e só na rota ativa, sempre confirmável (doc 09, 9.1).
 4. Grafo visual na v1 junto com a lista em árvore, ou só a lista primeiro.
 5. Modos iniciais: ironman + HCIM; UIM e GIM ficam fora até alguém pedir.
 6. Mobile como PWA instalável (recomendado).
@@ -62,7 +62,7 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 8. Repositório público ou privado. Público exige resolver a licença do texto do Oziris/ironman.guide antes.
 9. Nome da conta ironman para testar o sync real desde a primeira sessão de código.
 10. Resolvida: o dono acompanha a extração e o agente o consulta sempre que precisar; só entra no conteúdo o que for explícito ou confirmado pelo dono (doc 09, seção 6.4).
-11. Tipos `unlock` e `location` já nesta revisão do modelo ou depois do MVP? (doc 09, 9.2)
+11. Resolvida: tipos `unlock` e `location` entram já nesta revisão do modelo, povoados pela extração (doc 09, 9.1).
 
 ## Modo de execução
 

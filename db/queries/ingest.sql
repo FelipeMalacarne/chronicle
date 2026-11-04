@@ -72,7 +72,7 @@ WHERE EXCLUDED.observed_at >= player_state.observed_at;
 -- Latest accepted observation per item container, plus whether a full push
 -- observed the container in that same state and live epoch. Without such a
 -- baseline the merged item facts only prove presence, never absence.
-SELECT f.container, f.state, f.observed_at, f.revision, f.live_epoch,
+SELECT f.container, f.state, f.observed_at, f.revision, f.live_epoch, f.snapshot_id,
   EXISTS (
     SELECT 1
     FROM snapshot_item_containers c

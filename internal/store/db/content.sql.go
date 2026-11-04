@@ -24,45 +24,17 @@ func (q *Queries) DeleteContentStepsByGuide(ctx context.Context, guideID string)
 	return result.RowsAffected(), nil
 }
 
-const insertContentVersion = `-- name: InsertContentVersion :one
-
-INSERT INTO content_versions (id, content_hash, git_sha, guide_version, step_count)
-VALUES ($1, $2, $3, $4, $5)
-RETURNING id, content_hash, git_sha, guide_version, loaded_at, step_count
-`
-
-type InsertContentVersionParams struct {
-	ID           string      `json:"id"`
-	ContentHash  string      `json:"content_hash"`
-	GitSha       pgtype.Text `json:"git_sha"`
-	GuideVersion pgtype.Text `json:"guide_version"`
-	StepCount    int32       `json:"step_count"`
-}
-
-// Persistence helpers for the loaded content index. Local ids are always
-// paired with guide_id; callers must never synthesize a global step id.
-func (q *Queries) InsertContentVersion(ctx context.Context, arg InsertContentVersionParams) (ContentVersion, error) {
-	row := q.db.QueryRow(ctx, insertContentVersion,
-		arg.ID,
-		arg.ContentHash,
-		arg.GitSha,
-		arg.GuideVersion,
-		arg.StepCount,
-	)
-	var i ContentVersion
-	err := row.Scan(
-		&i.ID,
-		&i.ContentHash,
-		&i.GitSha,
-		&i.GuideVersion,
-		&i.LoadedAt,
-		&i.StepCount,
-	)
-	return i, err
+type InsertContentStepsParams struct {
+	GuideID          string `json:"guide_id"`
+	StepID           string `json:"step_id"`
+	SectionID        string `json:"section_id"`
+	Position         int32  `json:"position"`
+	TextHash         string `json:"text_hash"`
+	ContentVersionID string `json:"content_version_id"`
 }
 
 const listContentStepsByGuide = `-- name: ListContentStepsByGuide :many
-SELECT step_id, guide_id, section_id, position, rule_hash, is_manual, layers, modes, content_version_id FROM content_steps
+SELECT step_id, guide_id, section_id, position, content_version_id, text_hash FROM content_steps
 WHERE guide_id = $1
 ORDER BY position, step_id
 `
@@ -81,11 +53,8 @@ func (q *Queries) ListContentStepsByGuide(ctx context.Context, guideID string) (
 			&i.GuideID,
 			&i.SectionID,
 			&i.Position,
-			&i.RuleHash,
-			&i.IsManual,
-			&i.Layers,
-			&i.Modes,
 			&i.ContentVersionID,
+			&i.TextHash,
 		); err != nil {
 			return nil, err
 		}
@@ -95,6 +64,52 @@ func (q *Queries) ListContentStepsByGuide(ctx context.Context, guideID string) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const listPendingStepIDAliases = `-- name: ListPendingStepIDAliases :many
+SELECT old_step_id, new_step_id, applied_at, guide_id FROM step_id_aliases
+WHERE guide_id = $1 AND applied_at IS NULL
+ORDER BY old_step_id
+`
+
+func (q *Queries) ListPendingStepIDAliases(ctx context.Context, guideID string) ([]StepIDAlias, error) {
+	rows, err := q.db.Query(ctx, listPendingStepIDAliases, guideID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []StepIDAlias{}
+	for rows.Next() {
+		var i StepIDAlias
+		if err := rows.Scan(
+			&i.OldStepID,
+			&i.NewStepID,
+			&i.AppliedAt,
+			&i.GuideID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markStepIDAliasApplied = `-- name: MarkStepIDAliasApplied :exec
+UPDATE step_id_aliases SET applied_at = now()
+WHERE guide_id = $1 AND old_step_id = $2
+`
+
+type MarkStepIDAliasAppliedParams struct {
+	GuideID   string `json:"guide_id"`
+	OldStepID string `json:"old_step_id"`
+}
+
+func (q *Queries) MarkStepIDAliasApplied(ctx context.Context, arg MarkStepIDAliasAppliedParams) error {
+	_, err := q.db.Exec(ctx, markStepIDAliasApplied, arg.GuideID, arg.OldStepID)
+	return err
 }
 
 const resolveStepIDAlias = `-- name: ResolveStepIDAlias :one
@@ -119,83 +134,65 @@ func (q *Queries) ResolveStepIDAlias(ctx context.Context, arg ResolveStepIDAlias
 	return i, err
 }
 
-const upsertContentStep = `-- name: UpsertContentStep :one
-INSERT INTO content_steps (
-  guide_id, step_id, section_id, position, rule_hash, is_manual, layers, modes, content_version_id
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-ON CONFLICT (guide_id, step_id) DO UPDATE SET
-  section_id         = EXCLUDED.section_id,
-  position           = EXCLUDED.position,
-  rule_hash          = EXCLUDED.rule_hash,
-  is_manual          = EXCLUDED.is_manual,
-  layers             = EXCLUDED.layers,
-  modes              = EXCLUDED.modes,
-  content_version_id = EXCLUDED.content_version_id
-RETURNING step_id, guide_id, section_id, position, rule_hash, is_manual, layers, modes, content_version_id
+const upsertContentVersion = `-- name: UpsertContentVersion :one
+
+INSERT INTO content_versions (id, content_hash, git_sha, summary)
+VALUES ($1, $2, $3, $4)
+ON CONFLICT (content_hash) DO UPDATE SET
+  git_sha   = EXCLUDED.git_sha,
+  summary   = EXCLUDED.summary,
+  loaded_at = now()
+RETURNING id, content_hash, git_sha, loaded_at, summary
 `
 
-type UpsertContentStepParams struct {
-	GuideID          string          `json:"guide_id"`
-	StepID           string          `json:"step_id"`
-	SectionID        string          `json:"section_id"`
-	Position         int32           `json:"position"`
-	RuleHash         string          `json:"rule_hash"`
-	IsManual         bool            `json:"is_manual"`
-	Layers           json.RawMessage `json:"layers"`
-	Modes            json.RawMessage `json:"modes"`
-	ContentVersionID string          `json:"content_version_id"`
+type UpsertContentVersionParams struct {
+	ID          string          `json:"id"`
+	ContentHash string          `json:"content_hash"`
+	GitSha      pgtype.Text     `json:"git_sha"`
+	Summary     json.RawMessage `json:"summary"`
 }
 
-func (q *Queries) UpsertContentStep(ctx context.Context, arg UpsertContentStepParams) (ContentStep, error) {
-	row := q.db.QueryRow(ctx, upsertContentStep,
-		arg.GuideID,
-		arg.StepID,
-		arg.SectionID,
-		arg.Position,
-		arg.RuleHash,
-		arg.IsManual,
-		arg.Layers,
-		arg.Modes,
-		arg.ContentVersionID,
+// Persistence helpers for the loaded content index. Local ids are always
+// paired with guide_id; callers must never synthesize a global step id.
+// The same bundle loaded again keeps its id and only refreshes loaded_at.
+func (q *Queries) UpsertContentVersion(ctx context.Context, arg UpsertContentVersionParams) (ContentVersion, error) {
+	row := q.db.QueryRow(ctx, upsertContentVersion,
+		arg.ID,
+		arg.ContentHash,
+		arg.GitSha,
+		arg.Summary,
 	)
-	var i ContentStep
+	var i ContentVersion
 	err := row.Scan(
-		&i.StepID,
-		&i.GuideID,
-		&i.SectionID,
-		&i.Position,
-		&i.RuleHash,
-		&i.IsManual,
-		&i.Layers,
-		&i.Modes,
-		&i.ContentVersionID,
+		&i.ID,
+		&i.ContentHash,
+		&i.GitSha,
+		&i.LoadedAt,
+		&i.Summary,
 	)
 	return i, err
 }
 
 const upsertStepIDAlias = `-- name: UpsertStepIDAlias :one
-INSERT INTO step_id_aliases (guide_id, old_step_id, new_step_id, applied_at)
-VALUES ($1, $2, $3, $4)
+INSERT INTO step_id_aliases (guide_id, old_step_id, new_step_id)
+VALUES ($1, $2, $3)
 ON CONFLICT (guide_id, old_step_id) DO UPDATE SET
   new_step_id = EXCLUDED.new_step_id,
-  applied_at  = EXCLUDED.applied_at
+  applied_at  = CASE WHEN step_id_aliases.new_step_id = EXCLUDED.new_step_id
+                     THEN step_id_aliases.applied_at END
 RETURNING old_step_id, new_step_id, applied_at, guide_id
 `
 
 type UpsertStepIDAliasParams struct {
-	GuideID   string             `json:"guide_id"`
-	OldStepID string             `json:"old_step_id"`
-	NewStepID string             `json:"new_step_id"`
-	AppliedAt pgtype.Timestamptz `json:"applied_at"`
+	GuideID   string `json:"guide_id"`
+	OldStepID string `json:"old_step_id"`
+	NewStepID string `json:"new_step_id"`
 }
 
+// Declared by a step's `replaces`. Declaring the same mapping again keeps
+// applied_at; pointing the old id somewhere else applies it again.
 func (q *Queries) UpsertStepIDAlias(ctx context.Context, arg UpsertStepIDAliasParams) (StepIDAlias, error) {
-	row := q.db.QueryRow(ctx, upsertStepIDAlias,
-		arg.GuideID,
-		arg.OldStepID,
-		arg.NewStepID,
-		arg.AppliedAt,
-	)
+	row := q.db.QueryRow(ctx, upsertStepIDAlias, arg.GuideID, arg.OldStepID, arg.NewStepID)
 	var i StepIDAlias
 	err := row.Scan(
 		&i.OldStepID,

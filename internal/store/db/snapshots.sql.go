@@ -17,7 +17,8 @@ DELETE FROM snapshots s
 WHERE s.account_id = $1
   AND s.fetched_at < $2
   AND NOT EXISTS (SELECT 1 FROM player_state ps WHERE ps.snapshot_id = s.id)
-  AND NOT EXISTS (SELECT 1 FROM step_progress sp WHERE sp.evidence_snapshot_id = s.id)
+  AND NOT EXISTS (SELECT 1 FROM objective_progress op WHERE op.evidence_snapshot_id = s.id)
+  AND NOT EXISTS (SELECT 1 FROM ingest_container_freshness f WHERE f.snapshot_id = s.id)
 `
 
 type DeleteSnapshotsOlderThanParams struct {
@@ -25,8 +26,9 @@ type DeleteSnapshotsOlderThanParams struct {
 	FetchedAt pgtype.Timestamptz `json:"fetched_at"`
 }
 
-// Retention job. player_state and step_progress keep FKs to snapshots, so only
-// snapshots not referenced by them are removed.
+// Retention job. player_state, objective_progress and the item-container
+// provenance keep FKs to snapshots, so only snapshots not referenced by them
+// are removed.
 func (q *Queries) DeleteSnapshotsOlderThan(ctx context.Context, arg DeleteSnapshotsOlderThanParams) (int64, error) {
 	result, err := q.db.Exec(ctx, deleteSnapshotsOlderThan, arg.AccountID, arg.FetchedAt)
 	if err != nil {

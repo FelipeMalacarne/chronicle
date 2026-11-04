@@ -59,26 +59,26 @@ Table content_steps {
   step_id text [not null]
   guide_id text [not null]
   section_id text [not null]
-  position integer [not null, note: 'global order in the guide']
-  rule_hash text [not null, note: 'sha256(canonical complete_when); change => re-evaluate']
-  is_manual boolean [not null]
-  layers jsonb [not null]
-  modes jsonb [not null]
+  position integer [not null, note: 'order of the step in the guide']
   content_version_id text [not null]
+  text_hash text [not null, note: 'content.StepTextHash; pins the step\'s annotation']
 
   indexes {
     (guide_id, step_id) [pk]
     (guide_id, position) [name: 'content_steps_guide_idx']
   }
+
+  Note: '''
+  Minimal index of the loaded steps for event joins and orphan detection; written at boot.
+  '''
 }
 
 Table content_versions {
   id text [pk]
   content_hash text [not null, unique, note: 'sha256 of the canonical bundle']
   git_sha text
-  guide_version text
   loaded_at timestamptz [not null, default: `now()`]
-  step_count integer [not null]
+  summary jsonb [not null, note: '{guide_id: {version, steps, objectives, annotated_steps}}']
 
   Note: '''
   Every content bundle that was ever loaded by `ironman serve`.
@@ -88,7 +88,7 @@ Table content_versions {
 Table goals {
   id text [pk]
   account_id text [not null]
-  ref text [not null, note: '\'quest:Dragon Slayer II\' | \'item:Barrows gloves\' | \'skill:agility:70\' | \'step:1.5.21\'']
+  objective_key text [not null, note: 'canonical objective key (entities.ObjectiveKey), e.g. quest:dragon_slayer_ii@finished']
   label text [not null]
   priority integer [not null, default: `100`]
   status text [not null, default: `'active'::text`]
@@ -136,6 +136,48 @@ Table ingest_container_freshness {
   '''
 }
 
+Table objective_progress {
+  account_id text [not null]
+  objective_key text [not null, note: 'canonical key (entities.ObjectiveKey), e.g. skill:agility>=70']
+  verdict text [not null]
+  evidence_snapshot_id text [note: 'snapshot of the newest fact behind a met verdict']
+  evidence jsonb [note: '[{rule, verdict, observed, reason, facts:[{facet, key, source, snapshot_id, observed_at}]}]']
+  first_met_at timestamptz
+  met_in_guide_id text [note: 'active guide when it became met; gates the implied cascade']
+  regressed_at timestamptz [note: 'the facts stopped holding after met; the verdict stays met']
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, objective_key) [pk]
+  }
+
+  Note: '''
+  Verdict per account and objective, shared by every guide. A met verdict is latched with the evidence of the snapshot that proved it.
+  objective_progress_met_has_evidence: CHECK (((verdict <> 'met'::text) OR ((evidence_snapshot_id IS NOT NULL) AND (evidence IS NOT NULL) AND (jsonb_typeof(evidence) = 'array'::text) AND (first_met_at IS NOT NULL))))
+  objective_progress_verdict_check: CHECK ((verdict = ANY (ARRAY['met'::text, 'unmet'::text, 'unknown'::text])))
+  '''
+}
+
+Table objective_progress_events {
+  id text [pk]
+  account_id text [not null]
+  objective_key text [not null]
+  from_verdict text
+  to_verdict text [not null]
+  snapshot_id text
+  at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, at) [name: 'objective_progress_events_account_time_idx']
+  }
+
+  Note: '''
+  Verdict transitions per objective (F6 for objectives).
+  objective_progress_events_from_verdict_check: CHECK ((from_verdict = ANY (ARRAY['met'::text, 'unmet'::text, 'unknown'::text])))
+  objective_progress_events_to_verdict_check: CHECK ((to_verdict = ANY (ARRAY['met'::text, 'unmet'::text, 'unknown'::text])))
+  '''
+}
+
 Table player_state {
   account_id text [not null]
   facet text [not null]
@@ -148,7 +190,6 @@ Table player_state {
   indexes {
     (account_id, facet, key) [pk]
     (account_id, facet, observed_at) [name: 'player_state_observed_idx']
-    `value jsonb_path_ops` [name: 'player_state_value_gin_idx']
   }
 
   Note: '''
@@ -171,12 +212,29 @@ Table plugin_ingest_tokens {
   revoked_at timestamptz
 
   indexes {
-    (account_id) [name: 'pit_account_idx']
+    (account_id) [name: 'plugin_ingest_tokens_account_idx']
   }
 
   Note: '''
   Bearer tokens used by the Microbot plugin to push snapshots (docs/06).
   plugin_ingest_tokens_scopes_array: CHECK ((jsonb_typeof(scopes) = 'array'::text))
+  '''
+}
+
+Table route_cursor {
+  account_id text [not null]
+  guide_id text [not null]
+  step_id text [not null]
+  cause text [not null]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, guide_id) [pk]
+  }
+
+  Note: '''
+  Current step per guide; switching guides keeps the place. accounts.guide_id stays the active guide.
+  route_cursor_cause_check: CHECK ((cause = ANY (ARRAY['pin'::text, 'auto'::text])))
   '''
 }
 
@@ -373,49 +431,48 @@ Table step_id_aliases {
   }
 }
 
-Table step_progress {
+Table step_marks {
   account_id text [not null]
-  step_id text [not null, note: 'no FK: progress survives steps removed from content']
-  status text [not null]
-  completed_at timestamptz
-  evidence_snapshot_id text
-  evidence jsonb [note: '[{rule, observed, satisfied, source, observed_at}]']
-  rule_hash text [note: 'hash of the rule that produced auto_done']
-  manual_locked boolean [not null, default: `false`, note: 'true = user pinned the status; engine must not touch it']
-  manual_at timestamptz
-  regressed_at timestamptz [note: 'engine saw the rule stop holding after auto_done']
-  user_note text
-  updated_at timestamptz [not null, default: `now()`]
   guide_id text [not null]
+  step_id text [not null, note: 'no FK: a mark survives steps removed from content']
+  kind text [not null]
+  implied_by_step_id text [note: 'step whose completion produced the implied mark']
+  implied_at timestamptz
+  note text
+  marked_at timestamptz [not null, default: `now()`]
 
   indexes {
     (account_id, guide_id, step_id) [pk]
-    (account_id, guide_id, status) [name: 'step_progress_status_idx']
   }
 
   Note: '''
-  Status per (account, guide, local step id); identical ids in other guides are independent.
-  step_progress_status_check: CHECK ((status = ANY (ARRAY['pending'::text, 'auto_done'::text, 'manual_done'::text, 'skipped'::text])))
+  The owner's mark per guide; the engine never overrides it. Only the implied cascade writes kind implied.
+  step_marks_implied_shape: CHECK (((kind = 'implied'::text) = ((implied_by_step_id IS NOT NULL) AND (implied_at IS NOT NULL))))
+  step_marks_kind_check: CHECK ((kind = ANY (ARRAY['manual_done'::text, 'skipped'::text, 'pinned_open'::text, 'implied'::text])))
   '''
 }
 
-Table step_progress_events {
+Table step_status_events {
   id text [pk]
   account_id text [not null]
+  guide_id text [not null]
   step_id text [not null]
   from_status text
   to_status text [not null]
   cause text [not null]
   snapshot_id text
-  created_at timestamptz [not null, default: `now()`]
-  guide_id text [not null]
+  at timestamptz [not null, default: `now()`]
 
   indexes {
-    (account_id, guide_id, created_at) [name: 'spe_account_guide_time_idx']
+    (account_id, at) [name: 'step_status_events_account_time_idx']
+    (account_id, guide_id, step_id, at) [name: 'step_status_events_step_time_idx']
   }
 
   Note: '''
-  step_progress_events_cause_check: CHECK ((cause = ANY (ARRAY['engine'::text, 'user'::text, 'migration'::text, 'import'::text])))
+  Derived step status transitions for every guide (docs/09 decision D2). The newest row per step is the last known status.
+  step_status_events_cause_check: CHECK ((cause = ANY (ARRAY['engine'::text, 'user'::text, 'implied'::text, 'migration'::text, 'import'::text])))
+  step_status_events_from_status_check: CHECK ((from_status = ANY (ARRAY['pending'::text, 'auto_done'::text, 'manual_done'::text, 'skipped'::text, 'pinned_open'::text, 'implied'::text])))
+  step_status_events_to_status_check: CHECK ((to_status = ANY (ARRAY['pending'::text, 'auto_done'::text, 'manual_done'::text, 'skipped'::text, 'pinned_open'::text, 'implied'::text])))
   '''
 }
 
@@ -486,9 +543,13 @@ Ref goals_account_id_fkey: goals.account_id > accounts.id [delete: cascade]
 Ref graph_cache_content_version_id_fkey: graph_cache.content_version_id > content_versions.id
 Ref ingest_container_freshness_account_id_fkey: ingest_container_freshness.account_id > accounts.id [delete: cascade]
 Ref ingest_container_freshness_snapshot_id_fkey: ingest_container_freshness.snapshot_id > snapshots.id
+Ref objective_progress_account_id_fkey: objective_progress.account_id > accounts.id [delete: cascade]
+Ref objective_progress_evidence_snapshot_id_fkey: objective_progress.evidence_snapshot_id > snapshots.id
+Ref objective_progress_events_account_id_fkey: objective_progress_events.account_id > accounts.id [delete: cascade]
 Ref player_state_account_id_fkey: player_state.account_id > accounts.id [delete: cascade]
 Ref player_state_snapshot_id_fkey: player_state.snapshot_id > snapshots.id
 Ref plugin_ingest_tokens_account_id_fkey: plugin_ingest_tokens.account_id > accounts.id [delete: cascade]
+Ref route_cursor_account_id_fkey: route_cursor.account_id > accounts.id [delete: cascade]
 Ref settings_account_id_fkey: settings.account_id > accounts.id [delete: cascade]
 Ref snapshot_activities_snapshot_id_fkey: snapshot_activities.snapshot_id > snapshots.id [delete: cascade]
 Ref snapshot_collection_log_snapshot_id_fkey: snapshot_collection_log.snapshot_id > snapshots.id [delete: cascade]
@@ -501,9 +562,8 @@ Ref snapshot_skills_snapshot_id_fkey: snapshot_skills.snapshot_id > snapshots.id
 Ref snapshot_vars_snapshot_id_fkey: snapshot_vars.snapshot_id > snapshots.id [delete: cascade]
 Ref snapshots_account_id_fkey: snapshots.account_id > accounts.id [delete: cascade]
 Ref snapshots_ingest_token_id_fkey: snapshots.ingest_token_id > plugin_ingest_tokens.id [delete: set null]
-Ref step_progress_account_id_fkey: step_progress.account_id > accounts.id [delete: cascade]
-Ref step_progress_evidence_snapshot_id_fkey: step_progress.evidence_snapshot_id > snapshots.id
-Ref step_progress_events_account_id_fkey: step_progress_events.account_id > accounts.id [delete: cascade]
+Ref step_marks_account_id_fkey: step_marks.account_id > accounts.id [delete: cascade]
+Ref step_status_events_account_id_fkey: step_status_events.account_id > accounts.id [delete: cascade]
 Ref sync_runs_account_id_fkey: sync_runs.account_id > accounts.id [delete: cascade]
 
 TableGroup identidade {
@@ -540,9 +600,12 @@ TableGroup conteudo_indexado {
   step_id_aliases
 }
 
-TableGroup progresso_atual {
-  step_progress
-  step_progress_events
+TableGroup progresso {
+  objective_progress
+  objective_progress_events
+  step_marks
+  step_status_events
+  route_cursor
 }
 
 TableGroup metas_e_caches {
@@ -551,106 +614,12 @@ TableGroup metas_e_caches {
   graph_cache
 }
 
-// Views (fora do DBML): v_current_quests, v_current_skills, v_step_board
+// Views (fora do DBML): v_current_quests, v_current_skills
 
 // ===== PLANEJADO (doc 09) =====
-// Escrito à mão: tabelas da próxima migration (docs/09-modelo-de-dominio.md, seção 5). Ao
-// implementar, a migration nova passa a gerar estas tabelas na parte de cima; apague daqui o que
-// já existir lá.
-
-Table objective_progress {
-  account_id text [not null]
-  objective_key text [not null, note: 'chave canônica do objetivo, ex.: quest:x_marks_the_spot@finished, skill:agility>=70, item:960x120; vem do conteúdo, não de uma tabela']
-  verdict text [not null, note: 'met | unmet | unknown']
-  evidence_snapshot_id text [note: 'obrigatório quando verdict = met (CLAUDE.md, regra 2)']
-  evidence jsonb [note: '[{rule, observed, source, observed_at}]']
-  first_met_at timestamptz
-  met_in_guide_id text [note: 'rota ativa quando ficou met; alimenta a cascata implied (só na rota ativa)']
-  regressed_at timestamptz [note: 'deixou de valer depois de met (item_owned, varbit eq)']
-  updated_at timestamptz [not null, default: `now()`]
-
-  indexes {
-    (account_id, objective_key) [pk]
-  }
-
-  Note: '''
-  Veredito por conta e objetivo, compartilhado entre todas as rotas (progresso compartilhado).
-  '''
-}
-
-Table objective_progress_events {
-  id text [pk]
-  account_id text [not null]
-  objective_key text [not null]
-  from_verdict text
-  to_verdict text [not null]
-  snapshot_id text
-  at timestamptz [not null, default: `now()`]
-
-  Note: '''
-  Transições de veredito por objetivo; fonte do F6 (log de sessões) para objetivos.
-  '''
-}
-
-Table step_marks {
-  account_id text [not null]
-  guide_id text [not null]
-  step_id text [not null, note: 'sem FK: a marca sobrevive a passos removidos; aliases aplicados no boot']
-  kind text [not null, note: 'manual_done | skipped | pinned_open | implied']
-  implied_by_step_id text [note: 'passo cuja conclusão gerou a marca implied']
-  implied_at timestamptz
-  note text
-  marked_at timestamptz [not null, default: `now()`]
-
-  indexes {
-    (account_id, guide_id, step_id) [pk]
-  }
-
-  Note: '''
-  Marca do dono por rota; o motor nunca a sobrescreve. Substitui step_progress. O status auto_done
-  NÃO é armazenado: é derivado na leitura dos objetivos completes/starts do passo (internal/core/progress).
-  '''
-}
-
-Table step_status_events {
-  id text [pk]
-  account_id text [not null]
-  guide_id text [not null]
-  step_id text [not null]
-  from_status text
-  to_status text [not null]
-  cause text [not null, note: 'engine | user | implied | migration | import']
-  snapshot_id text
-  at timestamptz [not null, default: `now()`]
-
-  Note: '''
-  Transições do status derivado, gravadas para todos os guias quando mudam (decisão D2 do doc 09).
-  Substitui step_progress_events. steps_changed da resposta do ingest é o número dessas linhas.
-  '''
-}
-
-Table route_cursor {
-  account_id text [not null]
-  guide_id text [not null]
-  step_id text [not null]
-  cause text [not null, note: 'pin | auto']
-  updated_at timestamptz [not null, default: `now()`]
-
-  indexes {
-    (account_id, guide_id) [pk]
-  }
-
-  Note: '''
-  Posição em cada rota; trocar de rota preserva o lugar. accounts.guide_id continua sendo a rota ativa.
-  '''
-}
-
-Ref objective_progress_account_fk: objective_progress.account_id > accounts.id [delete: cascade]
-Ref objective_progress_snapshot_fk: objective_progress.evidence_snapshot_id > snapshots.id
-Ref objective_progress_events_account_fk: objective_progress_events.account_id > accounts.id [delete: cascade]
-Ref step_marks_account_fk: step_marks.account_id > accounts.id [delete: cascade]
-Ref step_status_events_account_fk: step_status_events.account_id > accounts.id [delete: cascade]
-Ref route_cursor_account_fk: route_cursor.account_id > accounts.id [delete: cascade]
+// Escrito à mão: tabelas das próximas migrations. Ao implementar, a migration nova passa a gerar
+// estas tabelas na parte de cima; apague daqui o que já existir lá. O progresso sobre objetivos
+// (item 8 da sequência) já está acima, na migration 0004.
 
 Table snapshot_facts {
   snapshot_id text [not null]
@@ -673,14 +642,6 @@ Table snapshot_facts {
 
 Ref snapshot_facts_snapshot_fk: snapshot_facts.snapshot_id > snapshots.id [delete: cascade]
 
-TableGroup progresso_planejado {
-  objective_progress
-  objective_progress_events
-  step_marks
-  step_status_events
-  route_cursor
-}
-
 TableGroup snapshots_planejado {
   snapshot_facts
 }
@@ -692,17 +653,6 @@ Migration do item 7 (contrato com quests):
 - player_state.facet ganha 'diary' (tier completa, derivada dos varbits de referência).
 - snapshot_items aceitava 'poh' e as tabelas de container não: o domínio de container passa a ser
   um só (bank | inventory | equipment).
-
-Migration do item 8 (progresso sobre objetivos):
-- goals.ref (TEXT livre) passa a goals.objective_key (chave canônica do objetivo).
-- step_progress, step_progress_events e a view v_step_board são DERRUBADAS depois de copiar
-  manual_done/skipped para step_marks e o histórico para step_status_events.
-- content_steps perde rule_hash, is_manual, layers e modes e ganha text_hash; é gravado no boot
-  (seção, posição, hash) para joins de eventos e órfãos.
-- content_versions troca guide_version/step_count por um resumo por guia (jsonb).
-- step_id_aliases é aplicado pelo loader no boot a step_marks, step_status_events e route_cursor.
-- índice player_state_value_gin_idx sai (nenhuma query usa jsonb_path_ops); índices pit_* e spe_*
-  ganham nomes por extenso.
 
 Ficam como estão, por decisão do dono (2026-11-04): wiki_cache e graph_cache, vazias até o adapter
 do wiki e o grafo existirem.

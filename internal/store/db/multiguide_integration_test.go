@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -77,65 +76,46 @@ func TestMultiGuideMigrationAndQueryIsolation(t *testing.T) {
 	}
 
 	applyMigration(t, ctx, pool, "0003_multiguide_identity.sql")
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO step_progress (account_id, guide_id, step_id, status, manual_locked, user_note)
+		VALUES ('account-1', 'bruhsailer-main', 'shared-step', 'skipped', true, 'later'),
+		       ('account-1', 'oziris-main', 'auto-step', 'auto_done', false, NULL);
+	`); err != nil {
+		t.Fatalf("insert multi-guide progress: %v", err)
+	}
+	applyMigration(t, ctx, pool, "0004_objective_progress.sql")
 	queries := New(pool)
-	legacy, err := queries.GetStepProgress(ctx, GetStepProgressParams{
-		AccountID: "account-1", GuideID: "oziris-main", StepID: "shared-step",
-	})
-	if err != nil || legacy.Status != "manual_done" {
-		t.Fatalf("legacy progress = %+v, %v", legacy, err)
+
+	for _, tc := range []struct {
+		guide, kind, note string
+	}{
+		{guide: "oziris-main", kind: "manual_done"},
+		{guide: "bruhsailer-main", kind: "skipped", note: "later"},
+	} {
+		marks, err := queries.ListStepMarksByGuide(ctx, ListStepMarksByGuideParams{AccountID: "account-1", GuideID: tc.guide})
+		if err != nil || len(marks) != 1 || marks[0].StepID != "shared-step" || marks[0].Kind != tc.kind || marks[0].Note.String != tc.note {
+			t.Fatalf("%s marks = %+v, %v", tc.guide, marks, err)
+		}
+	}
+	last, err := queries.ListLastStepStatusesByGuide(ctx, ListLastStepStatusesByGuideParams{AccountID: "account-1", GuideID: "oziris-main"})
+	if err != nil || len(last) != 1 || last[0].StepID != "shared-step" || last[0].ToStatus != "manual_done" {
+		t.Fatalf("legacy events = %+v, %v", last, err)
 	}
 	legacyAlias, err := queries.ResolveStepIDAlias(ctx, ResolveStepIDAliasParams{GuideID: "oziris-main", OldStepID: "old-shared"})
 	if err != nil || legacyAlias.NewStepID != "shared-step" {
 		t.Fatalf("legacy alias = %+v, %v", legacyAlias, err)
 	}
-	legacyEvents, err := queries.ListRecentStepProgressEvents(ctx, ListRecentStepProgressEventsParams{
-		AccountID: "account-1", GuideID: "oziris-main",
-		CreatedAt: pgtype.Timestamptz{Time: time.Unix(0, 0), Valid: true}, Limit: 10,
-	})
-	if err != nil || len(legacyEvents) != 1 || legacyEvents[0].GuideID != "oziris-main" {
-		t.Fatalf("legacy events = %+v, %v", legacyEvents, err)
-	}
 
-	if _, err := queries.InsertContentVersion(ctx, InsertContentVersionParams{
-		ID: "version-b", ContentHash: "hash-b", GuideVersion: pgtype.Text{String: "imported", Valid: true}, StepCount: 1,
-	}); err != nil {
-		t.Fatal(err)
-	}
-	if _, err := queries.UpsertContentStep(ctx, UpsertContentStepParams{
-		GuideID: "bruhsailer-main", StepID: "shared-step", SectionID: "shared-section", Position: 1,
-		RuleHash: "rule-b", IsManual: true, Layers: []byte(`[]`), Modes: []byte(`[]`), ContentVersionID: "version-b",
-	}); err != nil {
-		t.Fatalf("insert colliding content step: %v", err)
-	}
-	if _, err := queries.SetStepManualStatus(ctx, SetStepManualStatusParams{
-		AccountID: "account-1", GuideID: "bruhsailer-main", StepID: "shared-step", Status: "skipped", ManualLocked: true,
-	}); err != nil {
-		t.Fatalf("insert BruhSailer progress: %v", err)
-	}
-
-	oziris, err := queries.GetStepProgress(ctx, GetStepProgressParams{AccountID: "account-1", GuideID: "oziris-main", StepID: "shared-step"})
+	version, err := queries.UpsertContentVersion(ctx, UpsertContentVersionParams{ID: "version-b", ContentHash: "hash-b", Summary: []byte(`{}`)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	bruh, err := queries.GetStepProgress(ctx, GetStepProgressParams{AccountID: "account-1", GuideID: "bruhsailer-main", StepID: "shared-step"})
-	if err != nil {
-		t.Fatal(err)
+	if _, err := queries.InsertContentSteps(ctx, []InsertContentStepsParams{
+		{GuideID: "oziris-main", StepID: "shared-step", SectionID: "shared-section", Position: 1, TextHash: "sha256:o", ContentVersionID: version.ID},
+		{GuideID: "bruhsailer-main", StepID: "shared-step", SectionID: "shared-section", Position: 1, TextHash: "sha256:b", ContentVersionID: version.ID},
+	}); err != nil {
+		t.Fatalf("insert colliding content steps: %v", err)
 	}
-	if oziris.Status != "manual_done" || bruh.Status != "skipped" {
-		t.Fatalf("cross-guide progress leaked: oziris=%q bruh=%q", oziris.Status, bruh.Status)
-	}
-	for _, tc := range []struct {
-		guide, want string
-	}{
-		{guide: "oziris-main", want: "manual_done"},
-		{guide: "bruhsailer-main", want: "skipped"},
-	} {
-		board, err := queries.ListStepBoard(ctx, ListStepBoardParams{AccountID: "account-1", GuideID: tc.guide})
-		if err != nil || len(board) != 1 || board[0].StepID != "shared-step" || board[0].Status != tc.want {
-			t.Fatalf("%s board = %+v, %v", tc.guide, board, err)
-		}
-	}
-
 	if _, err := queries.UpsertStepIDAlias(ctx, UpsertStepIDAliasParams{
 		GuideID: "bruhsailer-main", OldStepID: "old-shared", NewStepID: "shared-step",
 	}); err != nil {
@@ -144,6 +124,12 @@ func TestMultiGuideMigrationAndQueryIsolation(t *testing.T) {
 	aliases := 0
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM step_id_aliases WHERE old_step_id = 'old-shared'`).Scan(&aliases); err != nil || aliases != 2 {
 		t.Fatalf("colliding aliases = %d, %v", aliases, err)
+	}
+	for _, guide := range []string{"oziris-main", "bruhsailer-main"} {
+		orphans, err := queries.ListOrphanStepMarks(ctx, ListOrphanStepMarksParams{AccountID: "account-1", GuideID: guide})
+		if err != nil || len(orphans) != 0 {
+			t.Fatalf("%s orphans = %+v, %v", guide, orphans, err)
+		}
 	}
 }
 

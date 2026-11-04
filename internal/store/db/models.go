@@ -37,38 +37,39 @@ type ApiToken struct {
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
 }
 
+// Minimal index of the loaded steps for event joins and orphan detection; written at boot.
 type ContentStep struct {
-	StepID           string          `json:"step_id"`
-	GuideID          string          `json:"guide_id"`
-	SectionID        string          `json:"section_id"`
-	Position         int32           `json:"position"`
-	RuleHash         string          `json:"rule_hash"`
-	IsManual         bool            `json:"is_manual"`
-	Layers           json.RawMessage `json:"layers"`
-	Modes            json.RawMessage `json:"modes"`
-	ContentVersionID string          `json:"content_version_id"`
+	StepID    string `json:"step_id"`
+	GuideID   string `json:"guide_id"`
+	SectionID string `json:"section_id"`
+	// order of the step in the guide
+	Position         int32  `json:"position"`
+	ContentVersionID string `json:"content_version_id"`
+	// content.StepTextHash; pins the step's annotation
+	TextHash string `json:"text_hash"`
 }
 
 // Every content bundle that was ever loaded by `ironman serve`.
 type ContentVersion struct {
-	ID           string             `json:"id"`
-	ContentHash  string             `json:"content_hash"`
-	GitSha       pgtype.Text        `json:"git_sha"`
-	GuideVersion pgtype.Text        `json:"guide_version"`
-	LoadedAt     pgtype.Timestamptz `json:"loaded_at"`
-	StepCount    int32              `json:"step_count"`
+	ID          string             `json:"id"`
+	ContentHash string             `json:"content_hash"`
+	GitSha      pgtype.Text        `json:"git_sha"`
+	LoadedAt    pgtype.Timestamptz `json:"loaded_at"`
+	// {guide_id: {version, steps, objectives, annotated_steps}}
+	Summary json.RawMessage `json:"summary"`
 }
 
 type Goal struct {
-	ID         string             `json:"id"`
-	AccountID  string             `json:"account_id"`
-	Ref        string             `json:"ref"`
-	Label      string             `json:"label"`
-	Priority   int32              `json:"priority"`
-	Status     string             `json:"status"`
-	PlanCache  json.RawMessage    `json:"plan_cache"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	AchievedAt pgtype.Timestamptz `json:"achieved_at"`
+	ID        string `json:"id"`
+	AccountID string `json:"account_id"`
+	// canonical objective key (entities.ObjectiveKey), e.g. quest:dragon_slayer_ii@finished
+	ObjectiveKey string             `json:"objective_key"`
+	Label        string             `json:"label"`
+	Priority     int32              `json:"priority"`
+	Status       string             `json:"status"`
+	PlanCache    json.RawMessage    `json:"plan_cache"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	AchievedAt   pgtype.Timestamptz `json:"achieved_at"`
 }
 
 type GraphCache struct {
@@ -90,6 +91,30 @@ type IngestContainerFreshness struct {
 	LiveEpoch  pgtype.Text        `json:"live_epoch"`
 	SnapshotID string             `json:"snapshot_id"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+// Verdict per account and objective, shared by every guide. A met verdict is latched with the evidence of the snapshot that proved it.
+type ObjectiveProgress struct {
+	AccountID          string             `json:"account_id"`
+	ObjectiveKey       string             `json:"objective_key"`
+	Verdict            string             `json:"verdict"`
+	EvidenceSnapshotID pgtype.Text        `json:"evidence_snapshot_id"`
+	Evidence           json.RawMessage    `json:"evidence"`
+	FirstMetAt         pgtype.Timestamptz `json:"first_met_at"`
+	MetInGuideID       pgtype.Text        `json:"met_in_guide_id"`
+	RegressedAt        pgtype.Timestamptz `json:"regressed_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+}
+
+// Verdict transitions per objective (F6 for objectives).
+type ObjectiveProgressEvent struct {
+	ID           string             `json:"id"`
+	AccountID    string             `json:"account_id"`
+	ObjectiveKey string             `json:"objective_key"`
+	FromVerdict  pgtype.Text        `json:"from_verdict"`
+	ToVerdict    string             `json:"to_verdict"`
+	SnapshotID   pgtype.Text        `json:"snapshot_id"`
+	At           pgtype.Timestamptz `json:"at"`
 }
 
 // Current merged fact per (account, facet, key). Rewritten after every snapshot.
@@ -116,6 +141,15 @@ type PluginIngestToken struct {
 	LastIp          pgtype.Text        `json:"last_ip"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+}
+
+// Current step per guide; switching guides keeps the place. accounts.guide_id stays the active guide.
+type RouteCursor struct {
+	AccountID string             `json:"account_id"`
+	GuideID   string             `json:"guide_id"`
+	StepID    string             `json:"step_id"`
+	Cause     string             `json:"cause"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 // HTTP sessions (scs pgxstore layout). Cleaned up by the session manager.
@@ -221,33 +255,29 @@ type StepIDAlias struct {
 	GuideID   string             `json:"guide_id"`
 }
 
-// Status per (account, guide, local step id); identical ids in other guides are independent.
-type StepProgress struct {
-	AccountID          string             `json:"account_id"`
-	StepID             string             `json:"step_id"`
-	Status             string             `json:"status"`
-	CompletedAt        pgtype.Timestamptz `json:"completed_at"`
-	EvidenceSnapshotID pgtype.Text        `json:"evidence_snapshot_id"`
-	Evidence           json.RawMessage    `json:"evidence"`
-	RuleHash           pgtype.Text        `json:"rule_hash"`
-	ManualLocked       bool               `json:"manual_locked"`
-	ManualAt           pgtype.Timestamptz `json:"manual_at"`
-	RegressedAt        pgtype.Timestamptz `json:"regressed_at"`
-	UserNote           pgtype.Text        `json:"user_note"`
-	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
-	GuideID            string             `json:"guide_id"`
+// The owner's mark per guide; the engine never overrides it. Only the implied cascade writes kind implied.
+type StepMark struct {
+	AccountID       string             `json:"account_id"`
+	GuideID         string             `json:"guide_id"`
+	StepID          string             `json:"step_id"`
+	Kind            string             `json:"kind"`
+	ImpliedByStepID pgtype.Text        `json:"implied_by_step_id"`
+	ImpliedAt       pgtype.Timestamptz `json:"implied_at"`
+	Note            pgtype.Text        `json:"note"`
+	MarkedAt        pgtype.Timestamptz `json:"marked_at"`
 }
 
-type StepProgressEvent struct {
+// Derived step status transitions for every guide (docs/09 decision D2). The newest row per step is the last known status.
+type StepStatusEvent struct {
 	ID         string             `json:"id"`
 	AccountID  string             `json:"account_id"`
+	GuideID    string             `json:"guide_id"`
 	StepID     string             `json:"step_id"`
 	FromStatus pgtype.Text        `json:"from_status"`
 	ToStatus   string             `json:"to_status"`
 	Cause      string             `json:"cause"`
 	SnapshotID pgtype.Text        `json:"snapshot_id"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	GuideID    string             `json:"guide_id"`
+	At         pgtype.Timestamptz `json:"at"`
 }
 
 // One row per sync attempt (scheduler, manual, plugin push).
@@ -295,19 +325,6 @@ type VCurrentSkill struct {
 	Xp         int64              `json:"xp"`
 	Source     string             `json:"source"`
 	ObservedAt pgtype.Timestamptz `json:"observed_at"`
-}
-
-type VStepBoard struct {
-	GuideID      string             `json:"guide_id"`
-	SectionID    string             `json:"section_id"`
-	Position     int32              `json:"position"`
-	StepID       string             `json:"step_id"`
-	IsManual     bool               `json:"is_manual"`
-	AccountID    pgtype.Text        `json:"account_id"`
-	Status       string             `json:"status"`
-	CompletedAt  pgtype.Timestamptz `json:"completed_at"`
-	ManualLocked pgtype.Bool        `json:"manual_locked"`
-	RegressedAt  pgtype.Timestamptz `json:"regressed_at"`
 }
 
 type WikiCache struct {

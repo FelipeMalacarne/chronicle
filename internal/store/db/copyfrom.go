@@ -9,6 +9,43 @@ import (
 	"context"
 )
 
+// iteratorForInsertContentSteps implements pgx.CopyFromSource.
+type iteratorForInsertContentSteps struct {
+	rows                 []InsertContentStepsParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertContentSteps) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertContentSteps) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].GuideID,
+		r.rows[0].StepID,
+		r.rows[0].SectionID,
+		r.rows[0].Position,
+		r.rows[0].TextHash,
+		r.rows[0].ContentVersionID,
+	}, nil
+}
+
+func (r iteratorForInsertContentSteps) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertContentSteps(ctx context.Context, arg []InsertContentStepsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"content_steps"}, []string{"guide_id", "step_id", "section_id", "position", "text_hash", "content_version_id"}, &iteratorForInsertContentSteps{rows: arg})
+}
+
 // iteratorForInsertSnapshotActivities implements pgx.CopyFromSource.
 type iteratorForInsertSnapshotActivities struct {
 	rows                 []InsertSnapshotActivitiesParams

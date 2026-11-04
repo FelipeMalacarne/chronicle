@@ -32,13 +32,15 @@ ORDER BY fetched_at DESC
 LIMIT $2 OFFSET $3;
 
 -- name: DeleteSnapshotsOlderThan :execrows
--- Retention job. player_state and step_progress keep FKs to snapshots, so only
--- snapshots not referenced by them are removed.
+-- Retention job. player_state, objective_progress and the item-container
+-- provenance keep FKs to snapshots, so only snapshots not referenced by them
+-- are removed.
 DELETE FROM snapshots s
 WHERE s.account_id = $1
   AND s.fetched_at < $2
   AND NOT EXISTS (SELECT 1 FROM player_state ps WHERE ps.snapshot_id = s.id)
-  AND NOT EXISTS (SELECT 1 FROM step_progress sp WHERE sp.evidence_snapshot_id = s.id);
+  AND NOT EXISTS (SELECT 1 FROM objective_progress op WHERE op.evidence_snapshot_id = s.id)
+  AND NOT EXISTS (SELECT 1 FROM ingest_container_freshness f WHERE f.snapshot_id = s.id);
 
 -- Normalized rows. Bulk inserts use pgx CopyFrom (sqlc :copyfrom).
 

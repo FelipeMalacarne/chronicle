@@ -129,7 +129,7 @@ func (q *Queries) InsertSnapshotItemContainer(ctx context.Context, arg InsertSna
 }
 
 const listItemContainerFreshness = `-- name: ListItemContainerFreshness :many
-SELECT f.container, f.state, f.observed_at, f.revision, f.live_epoch,
+SELECT f.container, f.state, f.observed_at, f.revision, f.live_epoch, f.snapshot_id,
   EXISTS (
     SELECT 1
     FROM snapshot_item_containers c
@@ -152,6 +152,7 @@ type ListItemContainerFreshnessRow struct {
 	ObservedAt  pgtype.Timestamptz `json:"observed_at"`
 	Revision    pgtype.Int8        `json:"revision"`
 	LiveEpoch   pgtype.Text        `json:"live_epoch"`
+	SnapshotID  string             `json:"snapshot_id"`
 	HasBaseline bool               `json:"has_baseline"`
 }
 
@@ -173,6 +174,7 @@ func (q *Queries) ListItemContainerFreshness(ctx context.Context, accountID stri
 			&i.ObservedAt,
 			&i.Revision,
 			&i.LiveEpoch,
+			&i.SnapshotID,
 			&i.HasBaseline,
 		); err != nil {
 			return nil, err

@@ -61,7 +61,7 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 7. Metas pré-definidas iniciais: títulos das 7 seções, Barrows gloves, Fire cape, Quest cape, Bowfa.
 8. Repositório público ou privado. Público exige resolver a licença do texto do Oziris/ironman.guide antes.
 9. Nome da conta ironman para testar o sync real desde a primeira sessão de código.
-10. Objetivo inferido de texto com confiança média conclui o passo sozinho ou só sugere? (doc 09, 9.2)
+10. Resolvida: o dono acompanha a extração e o agente o consulta sempre que precisar; só entra no conteúdo o que for explícito ou confirmado pelo dono (doc 09, seção 6.4).
 11. Tipos `unlock` e `location` já nesta revisão do modelo ou depois do MVP? (doc 09, 9.2)
 
 ## Modo de execução

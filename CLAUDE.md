@@ -89,7 +89,10 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
    Bank actions are guide instructions and are never marked done (docs/04 section 6.4.1).
 9. **Generated content is not hand-edited.** Fix the importer/normalizer and regenerate. LLM/agent
    extraction output is a proposal: it enters `content/` only after deterministic verification (exact
-   quote, resolver-assigned refs, schema), per docs/09 section 6.
+   quote, resolver-assigned refs, schema), per docs/09 section 6. During extraction the owner watches
+   live: ask them (AskUserQuestion) whenever an objective is inferred, a name is ambiguous, the taxonomy
+   does not fit or the verifier rejects something non-obvious; record answers as `confirmed_by: owner`
+   and general rules in `annotations/decisions.json`. Never commit an unconfirmed inference.
 10. Account-addressed routes (`/api/guides/{guide}/readiness?account=`) are registered only in
     `AUTH_MODE=dev` until session auth exists.
 

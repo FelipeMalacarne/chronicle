@@ -51,7 +51,8 @@ O resto do desenho continua válido e não muda:
 3. **Um id por coisa.** Toda referência é um `Ref` canônico do registry (`internal/core/entities`), e o
    nome é só exibição.
 4. **Nunca concluir sem evidência** (regra 2 do CLAUDE.md). Um objetivo só fica `met` com evidência
-   observada. Um objetivo inferido de texto carrega a confiança e não força conclusão sozinho (seção 9).
+   observada. Inferências do texto não entram no conteúdo sem confirmação do dono durante a extração
+   (seção 6.4).
 5. **Extração por LLM é proposta, nunca autoridade.** Código determinístico verifica cada proposta antes
    de ela entrar em `content/` (seção 6).
 
@@ -167,6 +168,8 @@ Um passo do Oziris com objetivos explícitos:
   com o `span` das menções.
 - `source.method` ∈ `explicit` (campo estruturado da fonte), `derived` (regra determinística), `llm`
   (proposta de agente verificada) e `manual` (curadoria humana).
+- `source.confirmed_by: "owner"` marca o que foi decidido pelo dono durante a extração (seção 6.4); a
+  pergunta e a resposta ficam no registro de decisões da anotação.
 - `complete_when` continua aceito no schema durante a migração e é convertido para `objectives` pelo
   loader. Depois sai.
 
@@ -258,11 +261,41 @@ texto nos dois guias (Oziris ~16 mil, BRUHsailer ~80 mil).
 O agente devolve **nomes**. O ref final é sempre o que o resolvedor atribui no `submit`; o que não
 resolver vai para o relatório, sem id.
 
-### 6.4 Artefatos versionados
+### 6.4 Consulta interativa ao dono
+
+O dono acompanha a extração o tempo todo. O agente **pergunta sempre que precisar**, em vez de deixar a
+dúvida para um estado "sugerido" na aplicação. Pela skill, o agente pergunta quando:
+
+- **o objetivo é inferido**: "do Waterfall" = concluir? "grab the gloves" = item possuído ou só usado?
+- **o nome é ambíguo** ou não resolve: qual "Axe"? "prayer potions" = família ou dose específica?
+- **a taxonomia não cobre o caso**: unlock novo, local novo, papel incerto entre `starts` e `completes`;
+- **o texto contradiz o catálogo ou outro passo**: por exemplo, uma quest concluída antes de iniciada;
+- **o verificador rejeita** e a correção não é óbvia.
+
+Como perguntar:
+
+- Agrupar as dúvidas por passo, ou por lote quando forem do mesmo tipo.
+- Mostrar a citação exata e oferecer opções concretas, com a recomendação em primeiro lugar.
+- Não perguntar o que o texto já diz explicitamente.
+
+Cada resposta é gravada:
+
+- **No item anotado**, como `confirmed_by: "owner"`.
+- **Quando a resposta vale como regra geral** (por exemplo, "'Axe' sem qualificador = qualquer axe, o
+  melhor disponível"), também em `content/guides/<id>/annotations/decisions.json`. O agente aplica a
+  regra nos lotes seguintes sem perguntar de novo e cita a decisão quando a usar.
+
+O MCP expõe `record_decision` e `list_decisions` para isso.
+
+Consequência: o que entra no `content/` está sempre resolvido. Ou é explícito (`high`), ou foi confirmado
+pelo dono. O que o dono deixar em aberto fica fora do `guide.json` e aparece só no relatório.
+
+### 6.5 Artefatos versionados
 
 | Artefato | Papel |
 |---|---|
-| `.claude/skills/annotate-guide/SKILL.md` | procedimento, taxonomia fechada, exemplos positivos e negativos |
+| `.claude/skills/annotate-guide/SKILL.md` | procedimento, taxonomia fechada, exemplos positivos e negativos, quando e como consultar o dono |
+| `content/guides/<id>/annotations/decisions.json` | decisões gerais do dono (pergunta, resposta, escopo), reaplicadas nos lotes seguintes |
 | `internal/core/annotate` | lote, verificação e merge: puro, testado por tabela, sem LLM |
 | `ironman content mcp` | servidor MCP stdio sobre `internal/core/annotate` e o registry |
 | `ironman content annotate verify` / `merge` | os mesmos verificadores por CLI; o `verify` roda na CI sobre o que está commitado |
@@ -279,7 +312,7 @@ Alternativa considerada: a skill sozinha, com o agente gravando JSON e rodando
 descobriria erros no fim do lote. Como o núcleo (`internal/core/annotate`) é o mesmo nos dois casos, o
 MCP é uma camada fina por cima.
 
-### 6.5 Piloto e critério de aceite
+### 6.6 Piloto e critério de aceite
 
 1. **Oziris 1.1** (286 passos): já tem cerca de 120 regras determinísticas para medir concordância.
 2. **BRUHsailer 1.1** (18 passos longos): o caso difícil.
@@ -290,16 +323,19 @@ Aceite:
 - concordância alta com as regras existentes (cada divergência explicada no relatório);
 - relatório de revisão curto o bastante para leitura humana.
 
-No piloto o dono acompanha cada lote e pode aprovar ou corrigir antes do `merge`. Só depois disso roda o
+O dono acompanha cada lote, responde as consultas (seção 6.4) e pode aprovar ou corrigir antes do
+`merge`. Uma meta do piloto é medir quantas perguntas por seção a skill gera e ajustar a taxonomia e as
+decisões gerais para que o volume caia nas seções seguintes. Só depois disso roda o
 resto, cerca de 13 seções.
 
-### 6.6 Riscos
+### 6.7 Riscos
 
 | Risco | Mitigação |
 |---|---|
 | Objetivo inventado | Citação literal obrigatória |
 | Extrair demais ("talk to Hans" não é objetivo) | Taxonomia fechada com exemplos negativos |
-| Inferência implícita ("do Waterfall") | `confidence: medium`, tratada conforme a decisão aberta 9.2 |
+| Inferência implícita ("do Waterfall") | O agente pergunta ao dono na hora; a resposta vira `confirmed_by: owner` ou uma decisão geral |
+| Perguntas demais cansam o dono | Agrupar por passo ou lote, decisões gerais reaplicadas, métrica de perguntas por seção no piloto |
 | Variação entre lotes | Prompt fixo, lotes por seção, métrica de concordância |
 | Item fora do catálogo | Gerar o catálogo de itens **antes** do piloto (seção 7) |
 | Texto do guia sai da máquina | Aceito: uso pessoal; o texto vai só para a Claude, nunca para terceiros |
@@ -339,15 +375,15 @@ Nenhuma dessas mudanças altera o contrato de ingest (doc 04, seção 6.4) nem o
 - **MCP stdio local (`ironman content mcp`) + skill** como interface do agente; saída em JSON
   commitado, e a app já sobe com esse conteúdo (sem seed de banco à parte).
 - **Objetivo** como unidade rastreável e **Ref canônico** como identidade única.
+- **Consulta interativa**: o dono acompanha a extração e o agente pergunta sempre que precisar (seção
+  6.4). Não existe estado "sugerido" na aplicação: o que entra no conteúdo é explícito ou confirmado pelo
+  dono e pode concluir passos com evidência; o que ficar em aberto fica fora do `guide.json`.
 
 ### 9.2 Em aberto (dono)
 
-1. Um objetivo inferido de texto (confiança média) pode levar o passo a `auto_done` quando cumprido, ou só
-   sugerir e pedir confirmação? Recomendação: auto quando o objetivo é `explicit`/`high`; sugestão para
-   `medium`/`low`.
-2. `unlock` e `location` entram nesta revisão ou depois do MVP? Recomendação: entrar no schema já, e
+1. `unlock` e `location` entram nesta revisão ou depois do MVP? Recomendação: entrar no schema já, e
    povoar com o que a extração encontrar.
-3. A cascata `implied` atravessa seções? (Já em aberto no doc 03, F1; proposta: não.)
+2. A cascata `implied` atravessa seções? (Já em aberto no doc 03, F1; proposta: não.)
 
 ## 10. Sequência
 
@@ -357,7 +393,7 @@ Nenhuma dessas mudanças altera o contrato de ingest (doc 04, seção 6.4) nem o
 | 2 | Schema: `objectives`, `ItemRequirement`, tipos `unlock`/`location`; loader converte `complete_when` | `content validate` passa nos dois guias, readiness verde |
 | 3 | Catálogo de itens gerado | ambíguos e não resolvidos do Oziris caem de forma mensurável |
 | 4 | `internal/core/annotate` (lote, verificação, merge), `ironman content mcp`, `content annotate verify/merge` e a skill `annotate-guide` | testes de tabela das checagens; o MCP responde a um lote de exemplo |
-| 5 | Piloto (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code | critérios da seção 6.5 |
+| 5 | Piloto (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code | critérios da seção 6.6 |
 | 6 | Extração completa dos dois guias | relatório revisado pelo dono |
 | 7 | Migration de progresso + API (`objective_progress`, `step_marks`, `route_cursor`) | `PATCH` de marca e reavaliação por snapshot testados no Postgres |
 | 8 | Web e `/compare` sobre objetivos; metas (F9) | marcos vindos da API, progresso igual nos dois guias |

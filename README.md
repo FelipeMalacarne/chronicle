@@ -77,6 +77,7 @@ passo em `docs/07-ambiente-e-ferramental.md`, seção 3.3.
 | `docs/09-modelo-de-dominio.md` | Objetivos, entidades e progresso compartilhado; extração dos guias por agente (aprovado; decisões em 9.1 e 9.3) |
 | `docs/ui/brief-ui-ux.md` | Brief de UI/UX para o agente de design |
 | `docs/arquitetura/types.ts` | Contrato de ingest e tipos de readiness em Zod, só como referência para clientes TS |
+| `docs/arquitetura/modelo-de-dados.dbml` | Modelo do banco em DBML (abre no dbdiagram.io): atual, gerado por `just dbml`, mais as tabelas planejadas do doc 09 |
 
 ## Design
 

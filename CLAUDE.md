@@ -36,6 +36,7 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `go run ./cmd/ironman content migrate` | regenerate `content/guides/oziris-main` from `data/guide/normalized` |
 | `go run ./cmd/ironman content import-bruhsailer` | regenerate `content/guides/bruhsailer-main` from the pinned DOCX in `data/sources/bruhsailer` |
 | `just migrate-up` / `migrate-status` / `migrate-new <name>` | goose against `DATABASE_URL` |
+| `just dbml` | regenerate `docs/arquitetura/modelo-de-dados.dbml` from the migrated `DATABASE_URL` |
 | `just sqlc` | regenerate `internal/store/db` from `db/queries/*.sql` |
 | `just up` / `just down` / `just logs` | prod-like stack from `compose.yaml` (Postgres + app image) |
 
@@ -132,3 +133,6 @@ plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso comp
 agente; decisões em 9.1 e 9.3) · `docs/ui/brief-ui-ux.md` (brief de UI/UX).
 `docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.
+`docs/arquitetura/modelo-de-dados.dbml` is the DB model in DBML: the part above the PLANNED marker is
+generated from the migrations (`just migrate-up && just dbml`, needs `psql`); after every new migration,
+regenerate it and drop from the planned block whatever now exists.

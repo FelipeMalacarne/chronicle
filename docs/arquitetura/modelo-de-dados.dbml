@@ -1,0 +1,673 @@
+// Modelo de dados do ironman-planner (PostgreSQL 17).
+// Parte atual GERADA por tools/schema_to_dbml.py a partir das migrations aplicadas;
+// não edite à mão acima do marcador PLANEJADO. Regenere com `just dbml`.
+// Abra em https://dbdiagram.io ou com qualquer ferramenta DBML.
+
+Project ironman_planner {
+  database_type: 'PostgreSQL'
+  Note: '''
+  Conteúdo dos guias vive em content/ (JSON versionado); o banco só o indexa (CLAUDE.md, regra 3).
+  Snapshots são append-only; player_state é o estado mesclado que o motor de regras lê.
+  Seções e regras de negócio: docs/04-arquitetura.md (seção 4) e docs/09-modelo-de-dominio.md.
+  '''
+}
+
+Table accounts {
+  id text [pk]
+  user_id text [not null]
+  rsn text [not null, note: 'current name as shown on hiscores']
+  rsn_normalized text [not null, note: 'lower-case, spaces -> \'_\' (lookup key)']
+  mode text [not null]
+  guide_id text [not null, note: 'active guide (content/)']
+  layer text [not null, default: `'enhanced'::text`]
+  wom_player_id bigint [note: 'Wise Old Man id, when linked']
+  name_history jsonb [not null, default: `'[]'::jsonb`, note: '[{rsn, from, to, detected_by}]']
+  active boolean [not null, default: `true`]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, rsn_normalized) [unique]
+  }
+
+  Note: '''
+  OSRS accounts tracked by a user. One user may track several accounts.
+  accounts_layer_check: CHECK ((layer = ANY (ARRAY['classic'::text, 'enhanced'::text])))
+  accounts_mode_check: CHECK ((mode = ANY (ARRAY['ironman'::text, 'hcim'::text, 'uim'::text, 'gim'::text])))
+  '''
+}
+
+Table api_tokens {
+  id text [pk]
+  user_id text [not null]
+  token_hash text [not null, unique, note: 'sha256 of the token, shown once']
+  label text
+  created_at timestamptz [not null, default: `now()`]
+  last_used_at timestamptz
+  revoked_at timestamptz
+
+  indexes {
+    (user_id) [name: 'api_tokens_user_idx']
+  }
+
+  Note: '''
+  Bearer tokens for the CLI/MCP clients (not for the Microbot plugin).
+  '''
+}
+
+Table content_steps {
+  step_id text [not null]
+  guide_id text [not null]
+  section_id text [not null]
+  position integer [not null, note: 'global order in the guide']
+  rule_hash text [not null, note: 'sha256(canonical complete_when); change => re-evaluate']
+  is_manual boolean [not null]
+  layers jsonb [not null]
+  modes jsonb [not null]
+  content_version_id text [not null]
+
+  indexes {
+    (guide_id, step_id) [pk]
+    (guide_id, position) [name: 'content_steps_guide_idx']
+  }
+}
+
+Table content_versions {
+  id text [pk]
+  content_hash text [not null, unique, note: 'sha256 of the canonical bundle']
+  git_sha text
+  guide_version text
+  loaded_at timestamptz [not null, default: `now()`]
+  step_count integer [not null]
+
+  Note: '''
+  Every content bundle that was ever loaded by `ironman serve`.
+  '''
+}
+
+Table goals {
+  id text [pk]
+  account_id text [not null]
+  ref text [not null, note: '\'quest:Dragon Slayer II\' | \'item:Barrows gloves\' | \'skill:agility:70\' | \'step:1.5.21\'']
+  label text [not null]
+  priority integer [not null, default: `100`]
+  status text [not null, default: `'active'::text`]
+  plan_cache jsonb [note: 'last computed topological plan']
+  created_at timestamptz [not null, default: `now()`]
+  achieved_at timestamptz
+
+  indexes {
+    (account_id, status, priority) [name: 'goals_account_idx']
+  }
+
+  Note: '''
+  goals_status_check: CHECK ((status = ANY (ARRAY['active'::text, 'achieved'::text, 'abandoned'::text])))
+  '''
+}
+
+Table graph_cache {
+  id text [pk]
+  content_version_id text [not null]
+  wiki_fingerprint text [not null, note: 'hash of the wiki_cache rows used']
+  built_at timestamptz [not null, default: `now()`]
+  nodes_json jsonb [not null]
+  edges_json jsonb [not null]
+}
+
+Table ingest_container_freshness {
+  account_id text [not null]
+  container text [not null]
+  state text [not null]
+  observed_at timestamptz [not null]
+  revision bigint
+  live_epoch text
+  snapshot_id text [not null]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, container) [pk]
+  }
+
+  Note: '''
+  Latest accepted item-container observation; restored is never promoted to live.
+  ingest_container_freshness_container_check: CHECK ((container = ANY (ARRAY['bank'::text, 'inventory'::text, 'equipment'::text])))
+  ingest_container_freshness_shape: CHECK ((((state = 'unavailable'::text) AND (revision IS NULL) AND (live_epoch IS NULL)) OR ((state = 'restored'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (live_epoch IS NULL)) OR ((state = 'live'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (length(live_epoch) > 0))))
+  ingest_container_freshness_state_check: CHECK ((state = ANY (ARRAY['unavailable'::text, 'restored'::text, 'live'::text])))
+  '''
+}
+
+Table player_state {
+  account_id text [not null]
+  facet text [not null]
+  key text [not null, note: '\'agility\' | \'Zulrah\' | \'Lost City\' | \'Ardougne:easy:3\' | \'12345\' | \'bank:4151\'']
+  value jsonb [not null, note: '{"level":56,"xp":...} | {"score":120} | {"state":"FINISHED"} | {"done":true} | {"qty":1} | {"value":1}']
+  source text [not null]
+  snapshot_id text [not null]
+  observed_at timestamptz [not null]
+
+  indexes {
+    (account_id, facet, key) [pk]
+    (account_id, facet, observed_at) [name: 'player_state_observed_idx']
+    `value jsonb_path_ops` [name: 'player_state_value_gin_idx']
+  }
+
+  Note: '''
+  Current merged fact per (account, facet, key). Rewritten after every snapshot.
+  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
+  '''
+}
+
+Table plugin_ingest_tokens {
+  id text [pk]
+  account_id text [not null]
+  token_hash text [not null, unique, note: 'sha256 of the \'ipl_...\' token (shown once)']
+  label text [note: '\'desktop\', \'laptop\'']
+  scopes jsonb [not null, default: `'["state:write"]'::jsonb`, note: '\'bank\',\'inventory\',\'equipment\' are opt-in']
+  manifest_version integer [not null, default: `0`, note: 'last manifest version delivered to this client']
+  last_seq bigint [not null, default: `0`, note: 'last accepted client_seq (idempotency/order)']
+  last_seen_at timestamptz
+  last_ip text
+  created_at timestamptz [not null, default: `now()`]
+  revoked_at timestamptz
+
+  indexes {
+    (account_id) [name: 'pit_account_idx']
+  }
+
+  Note: '''
+  Bearer tokens used by the Microbot plugin to push snapshots (docs/06).
+  plugin_ingest_tokens_scopes_array: CHECK ((jsonb_typeof(scopes) = 'array'::text))
+  '''
+}
+
+Table sessions {
+  token text [pk]
+  data bytea [not null]
+  expiry timestamptz [not null]
+
+  indexes {
+    (expiry) [name: 'sessions_expiry_idx']
+  }
+
+  Note: '''
+  HTTP sessions (scs pgxstore layout). Cleaned up by the session manager.
+  '''
+}
+
+Table settings {
+  account_id text
+  key text [not null]
+  value jsonb [not null]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, key) [unique]
+  }
+
+  Note: '''
+  Key/value settings; account_id NULL means global.
+  '''
+}
+
+Table snapshot_activities {
+  snapshot_id text [not null]
+  activity text [not null, note: 'canonical hiscores name']
+  score bigint [not null, note: '-1 = unranked']
+  rank bigint
+
+  indexes {
+    (snapshot_id, activity) [pk]
+  }
+}
+
+Table snapshot_collection_log {
+  snapshot_id text [not null]
+  item_id integer [not null]
+  qty integer [not null, default: `1`]
+
+  indexes {
+    (snapshot_id, item_id) [pk]
+  }
+}
+
+Table snapshot_combat_achievements {
+  snapshot_id text [not null]
+  ca_id integer [not null]
+  done boolean [not null]
+
+  indexes {
+    (snapshot_id, ca_id) [pk]
+  }
+}
+
+Table snapshot_diary_tasks {
+  snapshot_id text [not null]
+  area text [not null]
+  tier text [not null]
+  task_index integer [not null]
+  done boolean [not null]
+
+  indexes {
+    (snapshot_id, area, tier, task_index) [pk]
+  }
+
+  Note: '''
+  snapshot_diary_tasks_tier_check: CHECK ((tier = ANY (ARRAY['easy'::text, 'medium'::text, 'hard'::text, 'elite'::text])))
+  '''
+}
+
+Table snapshot_item_containers {
+  snapshot_id text [not null]
+  container text [not null]
+  state text [not null]
+  observed_at timestamptz [not null]
+  revision bigint
+  live_epoch text
+
+  indexes {
+    (snapshot_id, container) [pk]
+  }
+
+  Note: '''
+  Immutable per-snapshot availability and provenance for item containers.
+  snapshot_item_containers_container_check: CHECK ((container = ANY (ARRAY['bank'::text, 'inventory'::text, 'equipment'::text])))
+  snapshot_item_containers_freshness: CHECK ((((state = 'unavailable'::text) AND (revision IS NULL) AND (live_epoch IS NULL)) OR ((state = 'restored'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (live_epoch IS NULL)) OR ((state = 'live'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (length(live_epoch) > 0))))
+  snapshot_item_containers_state_check: CHECK ((state = ANY (ARRAY['unavailable'::text, 'restored'::text, 'live'::text])))
+  '''
+}
+
+Table snapshot_items {
+  snapshot_id text [not null]
+  container text [not null]
+  item_id integer [not null]
+  qty integer [not null]
+
+  indexes {
+    (snapshot_id, container, item_id) [pk]
+  }
+
+  Note: '''
+  snapshot_items_container_check: CHECK ((container = ANY (ARRAY['bank'::text, 'inventory'::text, 'equipment'::text, 'poh'::text])))
+  snapshot_items_qty_nonnegative: CHECK ((qty >= 0))
+  '''
+}
+
+Table snapshot_quests {
+  snapshot_id text [not null]
+  quest text [not null, note: 'canonical wiki name']
+  state text [not null]
+
+  indexes {
+    (snapshot_id, quest) [pk]
+  }
+
+  Note: '''
+  snapshot_quests_state_check: CHECK ((state = ANY (ARRAY['NOT_STARTED'::text, 'IN_PROGRESS'::text, 'FINISHED'::text])))
+  '''
+}
+
+Table snapshot_skills {
+  snapshot_id text [not null]
+  skill text [not null]
+  level integer [not null]
+  xp bigint
+  rank bigint
+  boosted integer [note: 'plugin only (boosted level)']
+
+  indexes {
+    (snapshot_id, skill) [pk]
+  }
+}
+
+Table snapshot_vars {
+  snapshot_id text [not null]
+  kind text [not null]
+  var_id integer [not null]
+  value integer [not null]
+
+  indexes {
+    (snapshot_id, kind, var_id) [pk]
+  }
+
+  Note: '''
+  snapshot_vars_kind_check: CHECK ((kind = ANY (ARRAY['varbit'::text, 'varp'::text])))
+  '''
+}
+
+Table snapshots {
+  id text [pk]
+  account_id text [not null]
+  source text [not null]
+  kind text [not null, default: `'full'::text`]
+  fetched_at timestamptz [not null]
+  raw jsonb [not null, note: 'payload as received (re-processable)']
+  raw_hash text [not null, note: 'sha256(raw) for dedupe']
+  adapter_version integer [not null, note: 'normalizer version used']
+  client_seq bigint [note: 'plugin only']
+  created_at timestamptz [not null, default: `now()`]
+  ingest_token_id text [note: 'Plugin idempotency is sequence-based. The old account/source/raw_hash']
+
+  indexes {
+    (account_id, source, fetched_at) [name: 'snapshots_account_source_time_idx']
+    (account_id, fetched_at) [name: 'snapshots_account_time_idx']
+    `account_id, source, raw_hash) WHERE (source <> 'plugin'::text` [name: 'snapshots_nonplugin_raw_hash_idx', unique]
+    `ingest_token_id, client_seq) WHERE ((source = 'plugin'::text) AND (ingest_token_id IS NOT NULL) AND (client_seq IS NOT NULL)` [name: 'snapshots_plugin_client_seq_idx', unique]
+  }
+
+  Note: '''
+  Immutable raw snapshots per source. Normalized rows live in snapshot_* tables.
+  snapshots_kind_check: CHECK ((kind = ANY (ARRAY['full'::text, 'delta'::text])))
+  snapshots_source_check: CHECK ((source = ANY (ARRAY['hiscores'::text, 'wom'::text, 'wikisync'::text, 'plugin'::text, 'import'::text])))
+  '''
+}
+
+Table step_id_aliases {
+  old_step_id text [not null]
+  new_step_id text [not null]
+  applied_at timestamptz
+  guide_id text [not null]
+
+  indexes {
+    (guide_id, old_step_id) [pk]
+    (guide_id, new_step_id) [name: 'step_id_aliases_guide_new_idx']
+  }
+}
+
+Table step_progress {
+  account_id text [not null]
+  step_id text [not null, note: 'no FK: progress survives steps removed from content']
+  status text [not null]
+  completed_at timestamptz
+  evidence_snapshot_id text
+  evidence jsonb [note: '[{rule, observed, satisfied, source, observed_at}]']
+  rule_hash text [note: 'hash of the rule that produced auto_done']
+  manual_locked boolean [not null, default: `false`, note: 'true = user pinned the status; engine must not touch it']
+  manual_at timestamptz
+  regressed_at timestamptz [note: 'engine saw the rule stop holding after auto_done']
+  user_note text
+  updated_at timestamptz [not null, default: `now()`]
+  guide_id text [not null]
+
+  indexes {
+    (account_id, guide_id, step_id) [pk]
+    (account_id, guide_id, status) [name: 'step_progress_status_idx']
+  }
+
+  Note: '''
+  Status per (account, guide, local step id); identical ids in other guides are independent.
+  step_progress_status_check: CHECK ((status = ANY (ARRAY['pending'::text, 'auto_done'::text, 'manual_done'::text, 'skipped'::text])))
+  '''
+}
+
+Table step_progress_events {
+  id text [pk]
+  account_id text [not null]
+  step_id text [not null]
+  from_status text
+  to_status text [not null]
+  cause text [not null]
+  snapshot_id text
+  created_at timestamptz [not null, default: `now()`]
+  guide_id text [not null]
+
+  indexes {
+    (account_id, guide_id, created_at) [name: 'spe_account_guide_time_idx']
+  }
+
+  Note: '''
+  step_progress_events_cause_check: CHECK ((cause = ANY (ARRAY['engine'::text, 'user'::text, 'migration'::text, 'import'::text])))
+  '''
+}
+
+Table sync_runs {
+  id text [pk]
+  account_id text [note: 'NULL for global jobs (wiki bucket)']
+  source text [not null]
+  trigger_kind text [not null]
+  status text [not null]
+  started_at timestamptz
+  finished_at timestamptz
+  http_status integer
+  error text
+  snapshot_id text [note: 'set when a new snapshot was produced']
+  steps_changed integer [not null, default: `0`, note: 'how many steps changed status on re-evaluation']
+  next_allowed_at timestamptz [note: 'backoff after 429/5xx']
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, source, created_at) [name: 'sync_runs_account_source_idx']
+  }
+
+  Note: '''
+  One row per sync attempt (scheduler, manual, plugin push).
+  sync_runs_source_check: CHECK ((source = ANY (ARRAY['hiscores'::text, 'wom'::text, 'wikisync'::text, 'plugin'::text, 'wiki_bucket'::text, 'import'::text])))
+  sync_runs_status_check: CHECK ((status = ANY (ARRAY['queued'::text, 'running'::text, 'ok'::text, 'unchanged'::text, 'skipped'::text, 'rate_limited'::text, 'error'::text])))
+  sync_runs_trigger_kind_check: CHECK ((trigger_kind = ANY (ARRAY['scheduled'::text, 'manual'::text, 'push'::text, 'boot'::text])))
+  '''
+}
+
+Table users {
+  id text [pk]
+  subject text [not null, unique, note: 'OIDC `sub` (Zitadel) or \'dev\' in AUTH_MODE=dev']
+  issuer text [note: 'OIDC issuer URL; NULL in dev mode']
+  username text [not null, unique, note: 'preferred_username claim or \'dev\'']
+  email text
+  display_name text
+  role text [not null, default: `'owner'::text`]
+  created_at timestamptz [not null, default: `now()`]
+  last_login_at timestamptz
+
+  Note: '''
+  Application users; one row per OIDC subject (or the single dev user).
+  users_role_check: CHECK ((role = ANY (ARRAY['owner'::text, 'member'::text])))
+  '''
+}
+
+Table wiki_cache {
+  kind text [not null]
+  key text [not null, note: 'canonical name']
+  value jsonb [not null, note: 'normalized by the adapter']
+  fetched_at timestamptz [not null, default: `now()`]
+  etag text
+
+  indexes {
+    (kind, key) [pk]
+  }
+
+  Note: '''
+  wiki_cache_kind_check: CHECK ((kind = ANY (ARRAY['quest'::text, 'diary'::text, 'item'::text, 'boss'::text, 'varbit_map'::text, 'ca'::text])))
+  '''
+}
+
+Ref accounts_user_id_fkey: accounts.user_id > users.id [delete: cascade]
+Ref api_tokens_user_id_fkey: api_tokens.user_id > users.id [delete: cascade]
+Ref content_steps_content_version_id_fkey: content_steps.content_version_id > content_versions.id
+Ref goals_account_id_fkey: goals.account_id > accounts.id [delete: cascade]
+Ref graph_cache_content_version_id_fkey: graph_cache.content_version_id > content_versions.id
+Ref ingest_container_freshness_account_id_fkey: ingest_container_freshness.account_id > accounts.id [delete: cascade]
+Ref ingest_container_freshness_snapshot_id_fkey: ingest_container_freshness.snapshot_id > snapshots.id
+Ref player_state_account_id_fkey: player_state.account_id > accounts.id [delete: cascade]
+Ref player_state_snapshot_id_fkey: player_state.snapshot_id > snapshots.id
+Ref plugin_ingest_tokens_account_id_fkey: plugin_ingest_tokens.account_id > accounts.id [delete: cascade]
+Ref settings_account_id_fkey: settings.account_id > accounts.id [delete: cascade]
+Ref snapshot_activities_snapshot_id_fkey: snapshot_activities.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_collection_log_snapshot_id_fkey: snapshot_collection_log.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_combat_achievements_snapshot_id_fkey: snapshot_combat_achievements.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_diary_tasks_snapshot_id_fkey: snapshot_diary_tasks.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_item_containers_snapshot_id_fkey: snapshot_item_containers.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_items_snapshot_id_fkey: snapshot_items.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_quests_snapshot_id_fkey: snapshot_quests.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_skills_snapshot_id_fkey: snapshot_skills.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_vars_snapshot_id_fkey: snapshot_vars.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshots_account_id_fkey: snapshots.account_id > accounts.id [delete: cascade]
+Ref snapshots_ingest_token_id_fkey: snapshots.ingest_token_id > plugin_ingest_tokens.id [delete: set null]
+Ref step_progress_account_id_fkey: step_progress.account_id > accounts.id [delete: cascade]
+Ref step_progress_evidence_snapshot_id_fkey: step_progress.evidence_snapshot_id > snapshots.id
+Ref step_progress_events_account_id_fkey: step_progress_events.account_id > accounts.id [delete: cascade]
+Ref sync_runs_account_id_fkey: sync_runs.account_id > accounts.id [delete: cascade]
+
+TableGroup identidade {
+  users
+  sessions
+  api_tokens
+  accounts
+  settings
+}
+
+TableGroup ingest_e_snapshots {
+  plugin_ingest_tokens
+  sync_runs
+  snapshots
+  snapshot_skills
+  snapshot_activities
+  snapshot_quests
+  snapshot_diary_tasks
+  snapshot_combat_achievements
+  snapshot_collection_log
+  snapshot_vars
+  snapshot_items
+  snapshot_item_containers
+}
+
+TableGroup estado_da_conta {
+  player_state
+  ingest_container_freshness
+}
+
+TableGroup conteudo_indexado {
+  content_versions
+  content_steps
+  step_id_aliases
+}
+
+TableGroup progresso_atual {
+  step_progress
+  step_progress_events
+}
+
+TableGroup metas_e_caches {
+  goals
+  wiki_cache
+  graph_cache
+}
+
+// Views (fora do DBML): v_current_quests, v_current_skills, v_step_board
+
+// ===== PLANEJADO (doc 09) =====
+// Escrito à mão: tabelas da próxima migration (docs/09-modelo-de-dominio.md, seção 5). Ao
+// implementar, a migration nova passa a gerar estas tabelas na parte de cima; apague daqui o que
+// já existir lá.
+
+Table objective_progress {
+  account_id text [not null]
+  objective_key text [not null, note: 'chave canônica do objetivo, ex.: quest:x_marks_the_spot@finished, skill:agility>=70, item:960x120; vem do conteúdo, não de uma tabela']
+  verdict text [not null, note: 'met | unmet | unknown']
+  evidence_snapshot_id text [note: 'obrigatório quando verdict = met (CLAUDE.md, regra 2)']
+  evidence jsonb [note: '[{rule, observed, source, observed_at}]']
+  first_met_at timestamptz
+  met_in_guide_id text [note: 'rota ativa quando ficou met; alimenta a cascata implied (só na rota ativa)']
+  regressed_at timestamptz [note: 'deixou de valer depois de met (item_owned, varbit eq)']
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, objective_key) [pk]
+  }
+
+  Note: '''
+  Veredito por conta e objetivo, compartilhado entre todas as rotas (progresso compartilhado).
+  '''
+}
+
+Table objective_progress_events {
+  id text [pk]
+  account_id text [not null]
+  objective_key text [not null]
+  from_verdict text
+  to_verdict text [not null]
+  snapshot_id text
+  at timestamptz [not null, default: `now()`]
+
+  Note: '''
+  Transições de veredito por objetivo; fonte do F6 (log de sessões) para objetivos.
+  '''
+}
+
+Table step_marks {
+  account_id text [not null]
+  guide_id text [not null]
+  step_id text [not null, note: 'sem FK: a marca sobrevive a passos removidos; aliases aplicados no boot']
+  kind text [not null, note: 'manual_done | skipped | pinned_open | implied']
+  implied_by_step_id text [note: 'passo cuja conclusão gerou a marca implied']
+  implied_at timestamptz
+  note text
+  marked_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, guide_id, step_id) [pk]
+  }
+
+  Note: '''
+  Marca do dono por rota; o motor nunca a sobrescreve. Substitui step_progress. O status auto_done
+  NÃO é armazenado: é derivado na leitura dos objetivos completes/starts do passo (internal/core/progress).
+  '''
+}
+
+Table step_status_events {
+  id text [pk]
+  account_id text [not null]
+  guide_id text [not null]
+  step_id text [not null]
+  from_status text
+  to_status text [not null]
+  cause text [not null, note: 'engine | user | implied | migration | import']
+  snapshot_id text
+  at timestamptz [not null, default: `now()`]
+
+  Note: '''
+  Transições do status derivado, gravadas para todos os guias quando mudam (decisão D2 do doc 09).
+  Substitui step_progress_events. steps_changed da resposta do ingest é o número dessas linhas.
+  '''
+}
+
+Table route_cursor {
+  account_id text [not null]
+  guide_id text [not null]
+  step_id text [not null]
+  cause text [not null, note: 'pin | auto']
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, guide_id) [pk]
+  }
+
+  Note: '''
+  Posição em cada rota; trocar de rota preserva o lugar. accounts.guide_id continua sendo a rota ativa.
+  '''
+}
+
+Ref objective_progress_account_fk: objective_progress.account_id > accounts.id [delete: cascade]
+Ref objective_progress_snapshot_fk: objective_progress.evidence_snapshot_id > snapshots.id
+Ref objective_progress_events_account_fk: objective_progress_events.account_id > accounts.id [delete: cascade]
+Ref step_marks_account_fk: step_marks.account_id > accounts.id [delete: cascade]
+Ref step_status_events_account_fk: step_status_events.account_id > accounts.id [delete: cascade]
+Ref route_cursor_account_fk: route_cursor.account_id > accounts.id [delete: cascade]
+
+TableGroup progresso_planejado {
+  objective_progress
+  objective_progress_events
+  step_marks
+  step_status_events
+  route_cursor
+}
+
+Note mudancas_planejadas {
+'''
+Mudanças em tabelas existentes na mesma migration (doc 09, seção 5):
+- goals.ref (TEXT livre) passa a goals.objective_key (chave canônica do objetivo).
+- step_progress e step_progress_events são substituídas por step_marks e step_status_events;
+  a migration copia manual_done/skipped e o histórico.
+- content_steps é gravado no boot (seção, posição, hash do texto) para joins de eventos e órfãos;
+  rule_hash e is_manual perdem o sentido com objetivos.
+- step_id_aliases é aplicado pelo loader no boot a step_marks, step_status_events e route_cursor.
+'''
+}

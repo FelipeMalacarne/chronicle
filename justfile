@@ -117,6 +117,10 @@ migrate-down:
 migrate-status:
     {{goose}} -dir db/migrations postgres "{{database_url}}" status
 
+# Regenerate docs/arquitetura/modelo-de-dados.dbml from DATABASE_URL (run after migrate-up)
+dbml:
+    DATABASE_URL="{{database_url}}" python3 tools/schema_to_dbml.py
+
 # Create a new migration file: just migrate-new add_goal_notes
 migrate-new name:
     {{goose}} -dir db/migrations -s create {{name}} sql

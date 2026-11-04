@@ -5,7 +5,8 @@ Data: 2026-11-03. Reescrito em 2026-11-04 como a arquitetura vigente, em Go. As 
 ficam no histórico do git (versões deste arquivo até o commit `17887c3`). Artefatos técnicos que valem:
 `content/schema/guide.schema.json` (schema do conteúdo, embutido no binário), `db/migrations/` (goose,
 Postgres), `docs/arquitetura/types.ts` (contrato de ingest e tipos de readiness em Zod, só como
-referência para clientes TS). O modelo de domínio por objetivos está no doc 09 e prevalece sobre este
+referência para clientes TS), `docs/arquitetura/modelo-de-dados.dbml` (modelo do banco em DBML:
+parte atual gerada das migrations por `just dbml`, mais as tabelas planejadas do doc 09). O modelo de domínio por objetivos está no doc 09 e prevalece sobre este
 documento onde houver conflito.
 
 ## 0. Decisões em uma página

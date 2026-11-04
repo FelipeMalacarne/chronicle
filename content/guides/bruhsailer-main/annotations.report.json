@@ -1,0 +1,441 @@
+{
+  "schema_version": 1,
+  "kind": "report",
+  "guide_id": "bruhsailer-main",
+  "summary": {
+    "steps": 226,
+    "annotated": 18,
+    "stale": 0,
+    "pending": 208,
+    "submitted": 18,
+    "first_submit_accepted": 17,
+    "owner_confirmed": 13,
+    "decisions_applied": 24
+  },
+  "sections": [
+    {
+      "section_id": "bruh-1.1",
+      "steps": 18,
+      "annotated": 18,
+      "stale": 0,
+      "pending": 0,
+      "submitted": 18,
+      "first_submit_accepted": 17,
+      "owner_confirmed": 13,
+      "decisions_applied": 24
+    },
+    {
+      "section_id": "bruh-1.2",
+      "steps": 15,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 15,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "bruh-1.3",
+      "steps": 31,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 31,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "bruh-1.4",
+      "steps": 34,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 34,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "bruh-2.1",
+      "steps": 46,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 46,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "bruh-2.2",
+      "steps": 39,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 39,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "bruh-2.3",
+      "steps": 14,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 14,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "bruh-3.1",
+      "steps": 16,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 16,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "bruh-3.2",
+      "steps": 13,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 13,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    }
+  ],
+  "rule_agreement": {
+    "rules": 0,
+    "reproduced": 0,
+    "divergent": []
+  },
+  "rejected": [],
+  "inferred": [
+    {
+      "step_id": "bruh-1.1-3a5b6bfcb581",
+      "what": "quest:misthalin_mystery@finished completes",
+      "quote": "do Misthalin Mystery",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "bruh-1.1-3a5b6bfcb581",
+      "what": "item:552x1 completes",
+      "quote": "get a ghostspeak amulet"
+    },
+    {
+      "step_id": "bruh-1.1-f70212c4aaa1",
+      "what": "quest:sheep_herder@finished completes",
+      "quote": "Do Sheep Herder",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "bruh-1.1-91287e926276",
+      "what": "item:1511x10 uses",
+      "quote": "make sure to leave 10 in the bank for future quests",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "bruh-1.1-91287e926276",
+      "what": "quest:sea_slug@finished completes",
+      "quote": "do the Sea Slug quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "bruh-1.1-91287e926276",
+      "what": "item:950x11 uses",
+      "quote": "leave 11 in the bank",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "bruh-1.1-c5dd0c60297b",
+      "what": "item:1511x10 uses",
+      "quote": "make sure to leave 10 in the bank",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "bruh-1.1-c5dd0c60297b",
+      "what": "item ghostspeak amulet = family ghostspeak_amulet",
+      "quote": "ghostspeak amulet",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "bruh-1.1-c5dd0c60297b",
+      "what": "item treasure scroll = family treasure_scroll",
+      "quote": "treasure scroll",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:431x1 completes",
+      "quote": "get the rum from the crate",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:314x1600 completes",
+      "quote": "Open the packs"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:2142x1 completes",
+      "quote": "cook one beef",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:2146x1 completes",
+      "quote": "burn one beef",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:432x1 completes",
+      "quote": "get the pirate’s key"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:5418x9 completes",
+      "quote": "buy 9 sacks",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:5325x1 completes",
+      "quote": "trowel"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:5350x3 completes",
+      "quote": "3 plant pots",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.1-bcb19ce4fe00",
+      "what": "item:5340x1 completes",
+      "quote": "1 watering can"
+    },
+    {
+      "step_id": "bruh-1.1-85bf543d26ab",
+      "what": "item:1573x1 completes",
+      "quote": "pick up some doogle leaves",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item:558x100 completes",
+      "quote": "Buy 100 mind",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item:556x100 completes",
+      "quote": "100 air",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item:555x50 completes",
+      "quote": "50 water",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item:557x50 completes",
+      "quote": "50 earth",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item:24938x1 completes",
+      "quote": "collect the waxwood logs from the crates",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item:1917x1 uses",
+      "quote": "Buy an extra beer for later",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item chest key = item:432",
+      "quote": "Pirates’ Treasure key"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item air runes = item:556",
+      "quote": "30 air/mind runes"
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "what": "item mind runes = item:558",
+      "quote": "30 air/mind runes"
+    },
+    {
+      "step_id": "bruh-1.1-3ab88e812f9c",
+      "what": "item:1511x10 uses",
+      "quote": "all but 10 of your logs",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "bruh-1.1-5fa116cc2c88",
+      "what": "item air runes = item:556",
+      "quote": "100 air/mind runes"
+    },
+    {
+      "step_id": "bruh-1.1-5fa116cc2c88",
+      "what": "item mind runes = item:558",
+      "quote": "100 air/mind runes"
+    },
+    {
+      "step_id": "bruh-1.1-8b1563b2fd77",
+      "what": "item:53x1500 completes",
+      "quote": "Adding feathers to arrow shafts",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "bruh-1.1-8b1563b2fd77",
+      "what": "quest:client_of_kourend@started starts",
+      "quote": "Do the Client of Kourend quest up to and including the point where you activate the orb",
+      "decision": "do-quest-up-to-starts"
+    },
+    {
+      "step_id": "bruh-1.1-8b1563b2fd77",
+      "what": "item:1017x1 completes",
+      "quote": "a black wizard’s hat",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.1-2a46d8b587d2",
+      "what": "skill:fletching>=46 completes",
+      "quote": "as well as 46 fletching"
+    },
+    {
+      "step_id": "bruh-1.1-2a46d8b587d2",
+      "what": "skill:construction>=30 completes",
+      "quote": "30 construction (more is better, 30 is essential)"
+    },
+    {
+      "step_id": "bruh-1.1-2a46d8b587d2",
+      "what": "item:995x128000 completes",
+      "quote": "we assume that you have exactly 128k GP as a baseline"
+    }
+  ],
+  "steps": {
+    "bruh-1.1-26cbe64705fd": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "\"Pickpocket men to 235 gp total\" fica fora: o gp é gasto no mesmo passo (GP after step: 0 gp). Arrow shafts sem quantidade; starter runes e o dig de X Marks the Spot são ações no meio da quest."
+    },
+    "bruh-1.1-2a46d8b587d2": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Objetivos do dono: Fletching 46 e Coins 128k (baseline que o guia assume) e Construction 30 (\"essential\"); a nota \"GP after step: 280 gp\" não conta o loot. Demais metas \"strongly recommend\" (60 WC, gemas, logs, ores, seeds, essence) no comment. \"4 pieces of warm clothing\" = as quatro peças nomeadas no texto, equipadas. Cakes opcionais: o texto diz \"do not use your banked cakes\" para warmth."
+    },
+    "bruh-1.1-3a5b6bfcb581": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ghostspeak amulet: o Urhney dá o Normal (item:552), confirmado pelo dono."
+    },
+    "bruh-1.1-3ab88e812f9c": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Alternativa de 2t oaks é opcional, sem objetivo."
+    },
+    "bruh-1.1-3f2c951740ac": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "/items/6 \"wax logs\" = waxwood logs do texto. 5 bolts of cloth, 100 steel nails e as waxwood planks são gastos no conserto da casa (Daddy's Home) no mesmo passo, sem completes. Passos no meio de Romeo & Juliet sem objetivo."
+    },
+    "bruh-1.1-5fa116cc2c88": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Treino de construction sem nível alvo, sem objetivo. \"100 air/mind runes\" = Air e Mind sem quantidade (dono). Bolts of cloth noted pelo texto (\"5 noted bolts of cloth\"); 18 planks pelo texto."
+    },
+    "bruh-1.1-698825e36f25": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Rat poison, blanket e cogs são itens no meio da Clock Tower, sem objetivo."
+    },
+    "bruh-1.1-85bf543d26ab": {
+      "section_id": "bruh-1.1",
+      "submits": 2,
+      "comment": "\"Romeo and Juliet\" enviado pelo nome do catálogo \"Romeo & Juliet\" (o resolver não casa \"and\" com \"&\"). A key da Demon Slayer (\"collect the key\") tem 3 Silverlight key no catálogo; fica fora como item no meio da quest. O bucket of water é usado no dreno no mesmo passo."
+    },
+    "bruh-1.1-860c6b8369ac": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "\"side with Hazeel\" é escolha dentro da quest, sem objetivo."
+    },
+    "bruh-1.1-8b1563b2fd77": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Headless arrows x1500 = produto de juntar feathers aos 1500 shafts. \"black wizard's hat\" = Black wizard hat (alias a adicionar). Lap de Shayzien agility (diary) e lamp sem objetivo."
+    },
+    "bruh-1.1-91287e926276": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "/items/3 \"fishing net\" = small fishing net (texto: \"a small fishing net\"). \"Fish an anchovy or shrimp\" é alternativa para o Ardy diary, sem objetivo. Venda de silk e pearls sem objetivo."
+    },
+    "bruh-1.1-9d433fcccc12": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Shield of Arrav: o passo mistura o caminho Phoenix (report, Weapon store key, metade do shield) e o Black Arm (Charlie the Tramp, Katrine); dono decidiu sem objetivos de nenhum dos dois, pois dependem da escolha. \"30 air/mind runes\" = Air e Mind sem quantidade (dono). Optional 5 attack sem objetivo. \"100 mind, 100 air, 50 water, 50 earth\" pelo nome do catálogo (abreviação)."
+    },
+    "bruh-1.1-bcb19ce4fe00": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Raw beef: das 3 compradas, 1 fica crua, 1 cozida e 1 queimada no mesmo passo. Feathers x1600 = 16 feather packs abertos (dono). \"pirate's key\" = Chest key 432 e \"trowel\" = Gardening trowel 5325 (dono); \"sacks\" = Empty sack, \"plant pots\" = Empty plant pot, \"rum\" = Karamjan rum (aliases a adicionar). \"grab your coins, raw sardine and chronicle\" em Falador sem bank action explícita. Fish at Musa point (diary) sem objetivo."
+    },
+    "bruh-1.1-c5dd0c60297b": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ghostspeak amulet e Treasure scroll como family (qualquer variante serve no requisito). Passos no meio de X Marks the Spot e Restless Ghost sem objetivo."
+    },
+    "bruh-1.1-e8d3227fd203": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conselhos (aparência, 2FA, lamps em Herblore) sem objetivo. \"bank 5 ashes\" só como deposit, como no Oziris 1.1.13. Items needed: none."
+    },
+    "bruh-1.1-f70212c4aaa1": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "bruh-1.1-f7e685efb210": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Iron bar x7 é o caminho principal (dono escolheu x7); quem fizer o opcional \"only grab 2 iron bars\" não cumpre. Alavancas do Wilderness e o passo do diary sem objetivo."
+    },
+    "bruh-1.1-f8baf3a43446": {
+      "section_id": "bruh-1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "/items/1 (\"will need to bank while buying from Aemad and while stealing cakes/silk\") é prosa, não item. Cakes sem quantidade (\"as many cakes as you get\") ficam fora; prayer e pets sem objetivo."
+    }
+  }
+}

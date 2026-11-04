@@ -467,6 +467,19 @@ reanotação depois do catálogo completo):
 - o piloto expôs que o catálogo de itens precisava cobrir o jogo inteiro (seção 7) e faltava corrigir
   entradas já propostas (`revise_entity`).
 
+**Resultado do BRUHsailer 1.1** (2026-11-04, `annotate-guide@2`, 3 lotes):
+
+- aceitação no primeiro envio: 17 de 18 (94,4%), logo abaixo da meta. A rejeição foi "Romeo and
+  Juliet", que o resolver não casava com "Romeo & Juliet" (virou alias);
+- concordância com as regras: não se mede, porque o BRUHsailer não tem regras determinísticas (0 de 0);
+- perguntas: 13 em 3 lotes (4, 5 e 4). Cada passo junta de 5 a 30 itens e várias quests. O guia adotou
+  as 11 decisões gerais do Oziris e ganhou duas próprias (`no-step-location`, `do-quest-up-to-starts`);
+  das 37 entradas medium, 24 aplicam decisão e 13 foram confirmadas pelo dono;
+- o piloto expôs dois defeitos, corrigidos: o importador cortava a linha "Items needed:" dentro de
+  parênteses e no meio de frases, e itens inobteníveis ou de animação resolviam por nome (seção 7).
+  O que ficou fora vai no comment: prosa na linha de itens, compras gastas no mesmo passo, os dois
+  caminhos da Shield of Arrav e as metas apenas recomendadas do Wintertodt.
+
 ### 6.7 Riscos
 
 | Risco | Mitigação |

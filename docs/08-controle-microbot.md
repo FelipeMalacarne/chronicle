@@ -53,21 +53,36 @@ Endpoints do Agent Server que o módulo usa (referência completa em
 
 ## Arquitetura
 
+O cliente do jogo roda no `zaros`; o planner roda no `zaros` agora (doc 04, seção 10) e no
+`saradomin` depois. Para os dois casos funcionarem igual, o controle passa sempre por um **agent** no
+`zaros`, que é o mesmo binário (`ironman agent`) rodando como serviço systemd do usuário, declarado no
+`nix-config` ao lado do módulo do Microbot.
+
 ```
-navegador ──HTTPS/sessão──> ironman serve ──UDS + token──> Agent Server (cliente Microbot no Xvfb)
-   │                            │
-   │  noVNC (websocket) ────────┤──TCP 127.0.0.1:5999──> x11vnc ──> Xvfb :99
-   │                            │
-   │                            └──exec──> mb-client start|stop --headless (dono do processo do jogo)
+navegador ──Zitadel (OIDC) + papel──> ironman serve (saradomin; ou zaros no modo local-first)
+                                            ▲
+                                            │ websocket de SAÍDA, dentro do Tailscale,
+                                            │ token de máquina; carrega comandos, eventos e o VNC
+                                            │
+                                 ironman agent (zaros, serviço systemd do usuário)
+                                            ├── UDS + token ──> Agent Server (cliente Microbot no Xvfb)
+                                            ├── TCP 127.0.0.1:5999 ──> x11vnc ──> Xvfb :99
+                                            └── exec ──> mb-client start|stop --headless
 ```
 
+- **Só conexão de saída**: o agent conecta no `serve`; o `zaros` não abre porta nenhuma. A mesma
+  conexão multiplexa comandos, eventos (estado do cliente e dos scripts) e o fluxo do VNC. No modo
+  local-first o agent conecta em `localhost`, sem mudar código.
 - **`internal/microbot`**: client Go tipado do Agent Server (HTTP sobre o socket Unix, token lido do
-  arquivo a cada requisição, porque muda quando o cliente reinicia). Sem dependência de banco.
-- **Ciclo de vida do cliente**: o planner não reimplementa o launch. Ele chama o `mb-client` do
+  arquivo a cada requisição, porque muda quando o cliente reinicia). Usado só pelo agent.
+- **`internal/agent`**: o executor do lado do `zaros`. Recebe comandos tipados, valida contra a
+  lista fechada (ver Segurança), executa e devolve resultado e eventos.
+- **Ciclo de vida do cliente**: o agent não reimplementa o launch. Ele chama o `mb-client` do
   harness (caminho em `MICROBOT_HARNESS_DIR`), que já cuida de JDK, hash do jar, HWID agent,
   `user.home` isolado, Xvfb e VNC. Uma fonte de verdade para como o jogo sobe.
-- **VNC no navegador**: o servidor faz proxy de websocket para TCP (`/api/microbot/vnc` ↔
-  `127.0.0.1:5999`), no lugar do `websockify`; a SPA usa o noVNC (`@novnc/novnc`).
+- **VNC no navegador**: o navegador abre `/api/microbot/vnc` no `serve`, que repassa os bytes pela
+  conexão do agent até `127.0.0.1:5999`; no lugar do `websockify`. A SPA usa o noVNC
+  (`@novnc/novnc`).
 - **Toggle "só dashboard"**: com ele ligado, a tela não abre o websocket do VNC; mostra estado
   (`/state`), estado da state machine do plugin ativo, screenshot a cada poucos segundos e a posição
   num mapa. A preferência fica na sessão do usuário.
@@ -93,14 +108,32 @@ da regra 2 do CLAUDE.md).
 
 ## Segurança
 
-Quem controla este módulo controla a conta do jogo e executa código no cliente.
+Quem controla este módulo controla a conta do jogo. Tailscale resolve a rede e o Zitadel resolve
+quem é o usuário; as camadas abaixo cobrem o resto.
 
-- Desligado por padrão (`MICROBOT_CONTROL=off`); rotas `/api/microbot/*` só existem quando ligado.
-- Exige sessão autenticada, inclusive o websocket do VNC. Em `AUTH_MODE=dev` o servidor só pode
-  escutar em loopback ou na interface do Tailscale.
-- O token do Agent Server e o VNC nunca saem da máquina; o navegador só fala com o planner.
-- Rotas que alteram estado exigem proteção contra CSRF (sessão em cookie).
-- Auditoria de toda ação de controle e de toda execução de rotina (`run_event`).
+1. **Desligado por padrão** (`MICROBOT_CONTROL=off`); rotas `/api/microbot/*` só existem quando ligado.
+2. **Autorização, não só autenticação**: toda rota de controle exige o papel `microbot:control`
+   atribuído no Zitadel (claim de roles). Em `AUTH_MODE=dev` o servidor só escuta em loopback ou na
+   interface do Tailscale.
+3. **Credencial de máquina para o agent**: o agent não usa OIDC. Usa um token próprio (escopo só de
+   agent, rotacionável, guardado com sops no `nix-config`). Reforço: o `serve` confere pela
+   identidade do Tailscale (`WhoIs`) que a conexão vem do `zaros`.
+4. **Lista fechada de comandos no agent** (a camada mais importante): o agent nunca repassa
+   requisições cruas ao Agent Server. Só executa comandos tipados: abrir e fechar o cliente,
+   login/logout, instalar/remover plugin do Hub, iniciar/parar/pausar script, ler estado, ler e gravar
+   configuração, screenshot e a sessão de VNC. Ficam **fora**: `/scripts/deploy` (compila e executa
+   Java arbitrário), teclado e widgets crus, e qualquer exec além do `mb-client`. Assim, mesmo um
+   `saradomin` comprometido não consegue executar código no `zaros`.
+5. **ACL do Tailscale**: o `zaros` alcança só o `saradomin` na porta do planner; nada na tailnet
+   inicia conexão para o `zaros`.
+6. **Controle local**: `systemctl --user stop ironman-agent` (ou `ironman agent pause`) corta tudo
+   no `zaros`. O agent não inicia ações enquanto o Microbot indicar input humano (o dono jogando).
+7. **Web**: sessão exigida também no websocket do VNC, checagem de `Origin`, proteção contra CSRF
+   nas rotas que alteram estado.
+8. **Segredos fora do navegador**: o token do Agent Server e o VNC nunca saem do `zaros`; o
+   navegador só fala com o `serve`.
+9. **Auditoria**: toda ação de controle e toda execução de rotina (`run_event`), com usuário, origem
+   e resultado.
 
 ## Lacunas conhecidas
 
@@ -108,21 +141,21 @@ Quem controla este módulo controla a conta do jogo e executa código no cliente
   opções de um plugin (nome, tipo, valores, seções). V1: edição chave/valor crua mais presets salvos
   por plugin. V2: endpoint de descritores de config (`ConfigDescriptor`), de preferência como PR
   upstream no Agent Server, ou num plugin companheiro no `microbot-plugins`.
-- **Deploy no saradomin** (doc 04, seção 10): o cliente roda no zaros. Lá, o `serve` não alcança o
-  socket local; precisará de uma ponte no zaros (`ironman bridge`) com conexão de saída para o
-  servidor. Fora do escopo até o deploy.
 - **GPU no modo headless**: desligada. Uma saída headless do Hyprland com `wayvnc` daria GPU real,
   mas depende da sessão gráfica aberta; fica como modo opcional futuro.
 
 ## Fases
 
-1. `internal/microbot` (client do Agent Server), status do cliente, iniciar/parar via `mb-client`,
-   login/logout, screenshot; tela **Microbot** com o toggle e o modo só dashboard.
-2. VNC ao vivo: proxy websocket no `serve` e noVNC na SPA.
+1. `internal/microbot` (client do Agent Server) e `ironman agent` com a lista fechada de comandos,
+   conectando no `serve` local; status do cliente, iniciar/parar via `mb-client`, login/logout,
+   screenshot; tela **Microbot** com o toggle e o modo só dashboard; papel e auditoria.
+2. VNC ao vivo: fluxo pela conexão do agent e noVNC na SPA.
 3. Plugins: listar, instalar do Hub, iniciar/parar, status/saúde/resultados, snapshot da state
    machine, config chave/valor.
 4. Rotinas: modelo, executor com lock, agendamento, histórico com screenshots.
-5. Ponte remota para o saradomin.
+5. Agent remoto: serviço systemd no `nix-config`, token de máquina via sops, `WhoIs` do Tailscale e
+   ACL; junto com o deploy do planner no `saradomin`. Como o agent existe desde a fase 1, aqui muda
+   só configuração.
 
 ## Impacto nos outros docs
 

@@ -183,10 +183,11 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/ingest/manifest`, `POST /api/ingest` | feita | plugin (seção 6.4) |
 | `POST /api/dev/ingest-token` | feita (dev) | bootstrap de token sem UI |
 | `GET /api/guides/{guide}/readiness?account=&step=`, `GET /api/guides/{guide}/segments/{segment}/readiness?account=` | feita (dev) | readiness do trecho (seção 6.4.1) |
-| `GET /api/guides/{guide}/board?account=` | planejada | status derivado por passo, marcas, frescor |
-| `PATCH /api/guides/{guide}/steps/{id}/mark` | planejada | `{kind: manual_done\|skipped\|pinned_open\|confirm_implied\|clear, note}` |
-| `PUT /api/guides/{guide}/cursor` | planejada | fixar o passo atual |
-| `GET /api/objectives?account=` | planejada | vereditos compartilhados (marcos do `/compare`, dashboard) |
+| `GET /api/guides/{guide}/board?account=` | feita (dev) | status derivado e veredito por objetivo de cada passo, marcas, cursor, contagens, órfãos; frescor fica para o item 9 |
+| `PATCH /api/guides/{guide}/steps/{id}/mark?account=` | feita (dev) | `{kind: manual_done\|skipped\|pinned_open\|confirm_implied\|clear, note}`; `note` ausente mantém, `""` limpa |
+| `POST /api/guides/{guide}/implied/confirm?account=` | feita (dev) | "confirmar tudo": toda marca `implied` do guia vira `manual_done` |
+| `PUT /api/guides/{guide}/cursor?account=` | feita (dev) | `{step_id}` fixa o passo atual (passo feito é recusado); `{step_id: null}` volta ao automático |
+| `GET /api/objectives?account=` | feita (dev) | vereditos compartilhados com evidência (marcos do `/compare`, dashboard) |
 | `GET /api/state?account=`, `POST /api/sync/now`, `GET /api/sync/runs` | planejadas | estado e sync |
 | `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=`, `GET/POST /api/goals` | planejadas | grafo e metas |
 | `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
@@ -273,7 +274,7 @@ Marcas (`step_marks`), eventos de passo e cursor são chaveados por `(account_id
 2. Dividir, fundir ou renumerar: o importador grava os aliases (`step_id_aliases`, por guia). O loader
    aplica os aliases uma única vez às marcas, aos eventos e ao cursor, com evento `cause='migration'`.
 3. Mudar só o texto não muda o id; muda o `fingerprint`, o que invalida a anotação daquele passo e o
-   `rule_hash`, e o motor reavalia só ele.
+   `text_hash` de `content_steps`; o boot reavalia tudo.
 4. Progresso órfão (id que não existe mais e não tem alias) aparece em `/account/orphans` para o dono
    decidir.
 
@@ -378,11 +379,10 @@ Semântica:
    `step_status_events`. Também reavalia no reload de conteúdo para objetivos cuja regra mudou.
 4. **Status do passo, marcas e cascata**: definidos uma vez no doc 09 (seção 5 e decisão 9.1) e
    implementados em `internal/core/progress`; este documento não os repete.
-5. **Regressão.** Objetivo `met` cuja regra é monotônica (`skill_*`, `quest_state`, `diary_*`,
-   `combat_achievement`, `boss_kc`, `activity_score`, `collection_log_item`, `varbit`/`varp` com `min`)
-   continua `met` e marca `regressed_at` quando o fato regride (dado provavelmente errado ou snapshot
-   parcial; a UI alerta). Regra não monotônica (`item_owned`, `varbit`/`varp` com `eq`/`bit`) volta a
-   `unmet`, e os passos derivados voltam a `pending` com evento `engine`.
+5. **Regressão.** Objetivo `met` continua `met`, com a evidência do snapshot que o provou, para
+   qualquer alvo; quando o fato deixa de valer, `regressed_at` registra, e volta a `NULL` se ele valer
+   de novo (a UI alerta). Vale também para item: gastar as penas não reabre o passo "compre 120
+   feathers" (decisão do dono, 2026-11-04, item 8). A readiness continua lendo o estado atual.
 6. **Stale.** Cada passo tem `freshness` calculada na leitura, não armazenada: pega as facetas que seus
    objetivos tocam, acha o `observed_at` mais antigo e compara com o limite por fonte (hiscores 24 h,
    plugin 72 h). `stale` não muda status; muda a cor e destaca "sync now". Passos manuais nunca ficam
@@ -724,9 +724,17 @@ Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/mic
 | Catálogos gerados: todos os itens do jogo com página na wiki (14.870 ids), XP de recompensa de 167 quests, varbits de referência (48 diaries + quest points); `locations.json` (57 locais) e `unlocks.json` (Player-owned house) povoados pela extração | `tools/extract_wiki_items.py` → `data/wiki/items.json`; `data/wiki/scripts/build_quests.py` → `data/wiki/quests.json`; `internal/core/entities/catalogbuild` | `catalogbuild -update` sem rede; o catálogo contém os 856 ids do anterior com o mesmo nome; nenhum ref já resolvido nos guias mudou de id |
 | Anotações do Oziris 1.1: 286 passos com objetivos, itens, ações de banco e local verificados; 11 decisões gerais do dono | `content/guides/oziris-main/annotations/` | `content validate`; `annotations.report.json` (doc 09, seção 6.6) |
 
-Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, progresso persistido (as queries de `step_progress` existem no sqlc, sem chamador; a
-web mostra 0 feitos), indexação de conteúdo no boot (`content_versions`/`content_steps`) e aplicação de
-`step_id_aliases`, faceta de quest e diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de
+Progresso sobre objetivos (item 8, branch `feat/progresso`): migration 0004 (objetivos, marcas, eventos
+de status, cursor; derruba `step_progress`, `step_progress_events` e `v_step_board`),
+`internal/core/progress` (avaliação da chave, veredito travado, status, cascata, cursor; testes de
+tabela), `internal/store/progress` (reavaliação na transação do ingest com `steps_changed`, marcas,
+cursor, board, indexação de `content_versions`/`content_steps` e dos aliases de `step.replaces` no
+boot; teste de integração no Postgres 17) e as rotas dev do board, das marcas e do cursor. Contas de
+teste: `just account-create`/`account-guide`. Hoje só skill e item saem de `unknown`: quest, diary,
+unlock, CA e `qp` esperam o item 7.
+
+Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, a web sobre o progresso (mostra 0
+feitos), faceta de quest e diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de
 hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de controle do
 Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Microbot; as refs dessas fixtures
 ainda estão na gramática antiga (`quest:cooks-assistant`, `skill:cooking:10`) e passam para `entityRef` e
@@ -744,7 +752,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6. **Oziris 1.1 feito** (2026-11-04): 99,3% aceitos no primeiro envio; 88 de 95 objetivos de regra reproduzidos (abaixo dos 95%, as 7 divergências explicadas no doc 09, seção 6.6); levou ao catálogo de itens completo, ao XP de quest na ordem e ao `revise_entity`. **BRUHsailer 1.1 feito** (2026-11-04): 17 de 18 aceitos no primeiro envio, 13 perguntas em 3 lotes; expôs o corte da linha "Items needed:" no importador e os itens inobteníveis resolvidos por nome, ambos corrigidos |
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
 | 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado |
-| 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado |
+| 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web e `/compare` sobre objetivos; metas (F9) | marcos vindos da API; progresso igual nos dois guias |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros** |
 | 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |

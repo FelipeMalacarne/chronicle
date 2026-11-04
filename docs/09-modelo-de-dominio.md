@@ -192,9 +192,10 @@ requisito `any_of` é `met` quando qualquer id da lista satisfaz a quantidade; `
 lugar, e o `/compare` mostra as duas posições. "Agora" (F2) passa a ser o cursor da rota ativa.
 
 Regra do cursor: o dono pode fixar qualquer passo (`cause = pin`); sem fixação, o cursor é o primeiro
-passo da rota principal que não está `done` (auto, manual ou `implied` confirmado) nem `skipped`,
-recalculado a cada reavaliação e a cada marca (`cause = auto`). Um pin é descartado quando o passo fixado
-é concluído.
+passo visível (layer e modo da conta) da rota principal que não está `done` (auto, manual ou `implied`)
+nem `skipped`, recalculado a cada reavaliação e a cada marca (`cause = auto`). Para o cursor, `implied`
+conta como feito mesmo antes da confirmação, para a cascata não puxá-lo de volta (decisão do dono,
+2026-11-04). Um pin é descartado quando o passo fixado é concluído.
 
 ## 4. Formato no conteúdo
 
@@ -289,7 +290,7 @@ Tabelas novas e alteradas (uma migration goose; nunca editar a 0001–0003):
 | `route_cursor` | `(account_id, guide_id)` | passo atual, `cause ∈ {pin, auto}`, `updated_at` |
 | `goals` | — | `objective_key` no lugar de `ref TEXT` |
 | `content_steps` | `(guide_id, step_id)` | índice mínimo (seção, posição, hash do texto) para joins de eventos e detecção de órfãos; gravado no boot junto com `content_versions` |
-| `step_id_aliases` | `(guide_id, old_step_id)` | aplicado pelo loader no boot a `step_marks`, `step_status_events` e `route_cursor` |
+| `step_id_aliases` | `(guide_id, old_step_id)` | declarado pelo `replaces` de cada passo do `guide.json` (decisão do dono, 2026-11-04) e aplicado uma vez no boot a `step_marks`, `step_status_events` e `route_cursor` |
 
 O status automático do passo **não é armazenado**: é uma função pura em `internal/core/progress`
 (objetivos do passo + vereditos + marcas do guia) e é calculado na leitura e na reavaliação. A ordem:
@@ -298,6 +299,9 @@ O status automático do passo **não é armazenado**: é uma função pura em `i
 2. Todos os objetivos `completes`/`starts` estão `met`, com evidência ⇒ `auto_done` (evidência = a dos
    objetivos).
 3. Senão, `pending`. Um passo sem objetivo concluível é checkbox, como hoje.
+
+Um objetivo `met` fica travado com a evidência do snapshot que o provou, inclusive item gasto depois;
+`regressed_at` registra que o fato deixou de valer (decisão do dono, 2026-11-04; doc 04, seção 4.3).
 
 A reavaliação por snapshot faz, nesta ordem: avalia todos os objetivos referenciados por qualquer guia
 (qualquer papel) → grava `objective_progress` e os eventos de objetivo → recalcula o status derivado de

@@ -38,6 +38,29 @@ type EventsView struct {
 	Objectives []ObjectiveEventView `json:"objectives"`
 }
 
+// SourceView is the newest observation of one fact source.
+type SourceView struct {
+	Source         string    `json:"source"`
+	LastObservedAt time.Time `json:"last_observed_at"`
+	Facts          int64     `json:"facts"`
+}
+
+// Sources returns, per source, the newest fact it reported for the account.
+func (r *Repository) Sources(ctx context.Context, accountID string) ([]SourceView, error) {
+	if _, err := getAccount(ctx, r.queries, accountID); err != nil {
+		return nil, err
+	}
+	rows, err := r.queries.GetPlayerStateFreshness(ctx, accountID)
+	if err != nil {
+		return nil, fmt.Errorf("player state freshness: %w", err)
+	}
+	out := make([]SourceView, 0, len(rows))
+	for _, row := range rows {
+		out = append(out, SourceView{Source: row.Source, LastObservedAt: row.LastObservedAt.Time, Facts: row.Facts})
+	}
+	return out, nil
+}
+
 // Events returns the latest changes, at most limit of each kind.
 func (r *Repository) Events(ctx context.Context, accountID, guideID string, limit int) (EventsView, error) {
 	out := EventsView{Guide: guideID, Account: accountID, Steps: []StepEventView{}, Objectives: []ObjectiveEventView{}}

@@ -77,11 +77,12 @@ type guideOut struct {
 	Version  string           `json:"version,omitempty"`
 	Source   *content.Source  `json:"source,omitempty"`
 	Steps    int              `json:"steps"`
+	Segments int              `json:"segments"`
 	Sections []sectionSummary `json:"sections"`
 }
 
 func guideOutput(g *content.Guide) guideOut {
-	item := guideOut{ID: g.ID, Slug: g.Slug, Title: g.Title, Version: g.Version, Source: g.Source, Steps: g.StepCount()}
+	item := guideOut{ID: g.ID, Slug: g.Slug, Title: g.Title, Version: g.Version, Source: g.Source, Steps: g.StepCount(), Segments: len(g.Segments())}
 	for _, sec := range g.Sections {
 		item.Sections = append(item.Sections, summarize(g, sec))
 	}

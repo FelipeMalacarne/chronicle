@@ -186,6 +186,11 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 		t.Fatalf("objective event source = %q", events.Objectives[0].Source)
 	}
 
+	sources, err := repo.Sources(ctx, "account-1")
+	if err != nil || len(sources) != 1 || sources[0].Source != "plugin" || sources[0].Facts == 0 {
+		t.Fatalf("sources = %+v, %v", sources, err)
+	}
+
 	// Switching the active route keeps every cursor and reevaluates.
 	if err = repo.SetActiveGuide(ctx, "account-1", "g2"); err != nil {
 		t.Fatal(err)

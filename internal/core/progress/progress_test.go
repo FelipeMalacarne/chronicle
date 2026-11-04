@@ -658,7 +658,7 @@ func TestBuildBoard(t *testing.T) {
 	}
 	// Completing objectives of the visible main route: agility, feathers and
 	// Cook's Assistant; two are met. Checkboxes: a1, a2, a4 and b1.
-	if b.Coverage != (Coverage{Objectives: 3, Met: 2, Checkbox: 4}) {
+	if b.Coverage != (Coverage{Objectives: 3, Met: 2, Checkbox: 4, CheckboxDone: 1, CheckboxSkipped: 1}) {
 		t.Fatalf("coverage = %+v", b.Coverage)
 	}
 	if len(b.Sections) != 3 || b.Sections[0].Counts.Total != 6 || b.Sections[1].Counts.Total != 2 ||

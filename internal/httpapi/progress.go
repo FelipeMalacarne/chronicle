@@ -21,27 +21,34 @@ type ProgressService interface {
 	Objectives(ctx context.Context, accountID string) ([]storeprogress.ObjectiveView, error)
 	Events(ctx context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error)
 	SetActiveGuide(ctx context.Context, accountID, guideID string) error
+	Sources(ctx context.Context, accountID string) ([]storeprogress.SourceView, error)
 }
 
 // routeSummary is one route of the Rotas list: its cursor, counts per section
 // and how much of it the account's facts answer.
 type routeSummary struct {
-	Guide    string                       `json:"guide"`
-	Title    string                       `json:"title"`
-	Version  string                       `json:"version,omitempty"`
-	Source   *content.Source              `json:"source,omitempty"`
-	Steps    int                          `json:"steps"`
-	Active   bool                         `json:"active"`
-	Cursor   *storeprogress.Cursor        `json:"cursor"`
-	Counts   coreprogress.Counts          `json:"counts"`
-	Coverage coreprogress.Coverage        `json:"coverage"`
-	Sections []coreprogress.SectionCounts `json:"sections"`
+	Guide    string                `json:"guide"`
+	Title    string                `json:"title"`
+	Version  string                `json:"version,omitempty"`
+	Source   *content.Source       `json:"source,omitempty"`
+	Steps    int                   `json:"steps"`
+	Segments int                   `json:"segments"`
+	Active   bool                  `json:"active"`
+	Cursor   *storeprogress.Cursor `json:"cursor"`
+	// CursorRef and CursorSection locate the cursor without the guide's
+	// content: the author's reference and the section id.
+	CursorRef     string                       `json:"cursor_ref,omitempty"`
+	CursorSection string                       `json:"cursor_section,omitempty"`
+	Counts        coreprogress.Counts          `json:"counts"`
+	Coverage      coreprogress.Coverage        `json:"coverage"`
+	Sections      []coreprogress.SectionCounts `json:"sections"`
 }
 
 type progressResponse struct {
-	Account string         `json:"account"`
-	Active  string         `json:"active_guide"`
-	Routes  []routeSummary `json:"routes"`
+	Account string                     `json:"account"`
+	Active  string                     `json:"active_guide"`
+	Routes  []routeSummary             `json:"routes"`
+	Sources []storeprogress.SourceView `json:"sources"`
 }
 
 type activeGuideRequest struct {
@@ -138,7 +145,12 @@ func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) writeProgressSummary(w http.ResponseWriter, r *http.Request, account string) {
-	out := progressResponse{Account: account, Routes: []routeSummary{}}
+	sources, err := s.opts.Progress.Sources(r.Context(), account)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	out := progressResponse{Account: account, Routes: []routeSummary{}, Sources: sources}
 	for _, g := range s.opts.Content.Guides {
 		board, err := s.opts.Progress.Board(r.Context(), account, g.ID)
 		if err != nil {
@@ -148,10 +160,16 @@ func (s *Server) writeProgressSummary(w http.ResponseWriter, r *http.Request, ac
 		if board.Active {
 			out.Active = g.ID
 		}
-		out.Routes = append(out.Routes, routeSummary{
-			Guide: g.ID, Title: g.Title, Version: g.Version, Source: g.Source, Steps: g.StepCount(),
+		route := routeSummary{
+			Guide: g.ID, Title: g.Title, Version: g.Version, Source: g.Source, Steps: g.StepCount(), Segments: len(g.Segments()),
 			Active: board.Active, Cursor: board.Cursor, Counts: board.Counts, Coverage: board.Coverage, Sections: board.Sections,
-		})
+		}
+		if board.Cursor != nil {
+			if st, ok := g.Step(board.Cursor.StepID); ok {
+				route.CursorRef, route.CursorSection = authorRef(st), st.SectionID
+			}
+		}
+		out.Routes = append(out.Routes, route)
 	}
 	writeJSON(w, http.StatusOK, out)
 }

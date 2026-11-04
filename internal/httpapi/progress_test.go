@@ -69,6 +69,13 @@ func (f *fakeProgress) Events(_ context.Context, accountID, guideID string, limi
 	return storeprogress.EventsView{Guide: guideID, Account: accountID, Steps: make([]storeprogress.StepEventView, limit), Objectives: []storeprogress.ObjectiveEventView{}}, nil
 }
 
+func (f *fakeProgress) Sources(_ context.Context, accountID string) ([]storeprogress.SourceView, error) {
+	if accountID != "acc-1" {
+		return nil, storeprogress.ErrAccountNotFound
+	}
+	return []storeprogress.SourceView{{Source: "plugin", Facts: 3}}, nil
+}
+
 func (f *fakeProgress) SetActiveGuide(_ context.Context, accountID, guideID string) error {
 	f.call, f.step = "active", guideID
 	if guideID != "oziris-main" {

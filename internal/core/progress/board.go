@@ -54,7 +54,9 @@ type Coverage struct {
 	Met        int `json:"met"`
 	// Checkbox counts the visible main steps without a completing objective;
 	// only a mark (or the cascade) completes them.
-	Checkbox int `json:"checkbox"`
+	Checkbox        int `json:"checkbox"`
+	CheckboxDone    int `json:"checkbox_done"`
+	CheckboxSkipped int `json:"checkbox_skipped"`
 }
 
 // Board is the derived status of every step of one guide.
@@ -105,6 +107,12 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 		out.Counts.add(s.Status)
 		if s.Manual {
 			out.Coverage.Checkbox++
+			switch {
+			case s.Status.Done():
+				out.Coverage.CheckboxDone++
+			case s.Status == Skipped:
+				out.Coverage.CheckboxSkipped++
+			}
 		}
 		for _, o := range Completing(st) {
 			objectives[o.Key.String()] = true

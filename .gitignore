@@ -1,5 +1,35 @@
+# Node / web
 node_modules/
+# web/dist is embedded by Go (web/embed.go); only the placeholder is tracked
+web/dist/*
+!web/dist/.gitkeep
+web/.svelte-kit/
+web/build/
+
+# Go
+bin/
+tmp/
+*.test
+*.out
+coverage.*
+
+# Env and local data
 .env
+.env.*
+!.env.example
 *.db
 *.sqlite
+*.log
+
+# Python helpers in tools/
 __pycache__/
+
+# Nix / direnv
+.direnv/
+result
+result-*
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store

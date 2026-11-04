@@ -1,0 +1,34 @@
+# air live reload for `ironman serve` (used by `just dev` when air is installed).
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/ironman ./cmd/ironman"
+  bin = "./tmp/ironman"
+  args_bin = ["serve"]
+  # Rebuild on Go sources, SQL (sqlc output changes) and content JSON.
+  include_ext = ["go", "sql", "json"]
+  exclude_dir = ["web/node_modules", "web/src", "web/dist", "web/.svelte-kit", "node_modules", "tmp", "bin", "data", "docs", "db", ".git", ".direnv"]
+  exclude_regex = ["_test\\.go$"]
+  exclude_unchanged = true
+  delay = 800
+  stop_on_error = true
+  send_interrupt = true
+  kill_delay = "1s"
+  log = "tmp/build-errors.log"
+
+[log]
+  time = true
+  main_only = false
+
+[color]
+  main = "magenta"
+  watcher = "cyan"
+  build = "yellow"
+  runner = "green"
+
+[misc]
+  clean_on_exit = true
+
+[screen]
+  clear_on_rebuild = false

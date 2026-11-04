@@ -1,0 +1,66 @@
+# Prod-like local stack: Postgres 17 + the app image built from this repo.
+#
+#   cp .env.example .env     # edit POSTGRES_PASSWORD / SESSION_SECRET
+#   just up                  # docker compose up -d --build
+#   just migrate-up          # goose against 127.0.0.1:${POSTGRES_PORT}
+#   open http://localhost:8080
+#
+# Variables come from .env (compose reads it for interpolation, the app gets
+# it through env_file). The app's DATABASE_URL is composed here with host
+# `postgres` so the same .env works for host dev (localhost) and compose.
+#
+# On saradomin (existing Postgres + Zitadel) only the `app` service is used:
+# set DATABASE_URL, AUTH_MODE=oidc and the OIDC_* vars in .env and drop the
+# `postgres` service / depends_on. See docs/07-ambiente-e-ferramental.md.
+
+name: ironman-planner
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-ironman}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-ironman_planner}
+    ports:
+      # Bound to loopback only: lets `just migrate-up` / `just db-shell` reach it.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 10s
+
+  app:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-dev}
+    image: ironman-planner:${VERSION:-dev}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - path: .env
+        required: false   # compose still interpolates ${...} from .env when present
+    environment:
+      IRONMAN_ADDR: ":8080"
+      CONTENT_DIR: /app/content
+      DATABASE_URL: postgres://${POSTGRES_USER:-ironman}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ironman_planner}?sslmode=disable
+    ports:
+      - "${IRONMAN_PORT:-8080}:8080"
+    # The image is distroless (no shell/curl). If the binary grows a
+    # `health` subcommand, enable:
+    # healthcheck:
+    #   test: ["CMD", "/ironman", "health", "--url", "http://127.0.0.1:8080/api/health"]
+    #   interval: 30s
+    #   timeout: 5s
+    #   retries: 3
+
+volumes:
+  pgdata:

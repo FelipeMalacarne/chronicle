@@ -1,0 +1,144 @@
+# ironman-planner task runner. `just` lists targets; `just <target>`.
+# Works from the Nix dev shell or from any machine with go, node/pnpm, docker.
+
+set dotenv-load := true
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+# Version embedded in the binary and used as image tag.
+version := `git describe --tags --always --dirty 2>/dev/null || echo dev`
+
+# `docker compose` (plugin) with fallback to the standalone binary.
+compose := if `docker compose version >/dev/null 2>&1 && echo yes || echo no` == "yes" { "docker compose" } else { "docker-compose" }
+
+# Tools run through `go run` so they work without Nix. Pin here when needed.
+goose := "go run github.com/pressly/goose/v3/cmd/goose@latest"
+sqlc := "go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest"
+
+# Falls back to the compose.dev.yaml defaults when .env is absent.
+database_url := env("DATABASE_URL", "postgres://ironman:ironman@localhost:5432/ironman_planner?sslmode=disable")
+
+# Version symbol is internal/buildinfo.Version (falls back to the VCS revision when unset).
+ldflags := "-s -w -X github.com/FelipeMalacarne/ironman-planner/internal/buildinfo.Version=" + version
+
+# List targets
+default:
+    @just --list --unsorted
+
+# --- setup -----------------------------------------------------------------
+
+# Install web deps, download Go modules and build web/dist once (go:embed needs it)
+setup:
+    cd web && pnpm install
+    go mod download
+    cd web && pnpm build
+    @test -f .env || (cp .env.example .env && echo "created .env from .env.example; review it")
+
+# --- dev -------------------------------------------------------------------
+
+# Start Postgres (compose.dev.yaml) and run the API with live reload (air) or `go run`
+dev: db-up
+    @echo "DATABASE_URL={{database_url}}"
+    @echo "SPA with hot reload: run 'just web-dev' in another terminal (Vite on :5173, proxied to :8080)."
+    @echo "Without it the server serves the last 'pnpm build' embedded from web/dist."
+    if command -v air >/dev/null 2>&1; then air; else go run ./cmd/ironman serve; fi
+
+# Vite dev server for the SPA
+web-dev:
+    cd web && pnpm dev
+
+# Only Postgres from compose.dev.yaml, detached
+db-up:
+    {{compose}} -f compose.dev.yaml up -d --wait
+
+# Stop the dev Postgres (data kept in the volume)
+db-down:
+    {{compose}} -f compose.dev.yaml down
+
+# psql against DATABASE_URL
+db-shell:
+    psql "{{database_url}}"
+
+# --- build -----------------------------------------------------------------
+
+# Build the SPA into web/dist
+web-build:
+    cd web && pnpm build
+
+# Build web then the Go binary into bin/ironman (version from git describe)
+build: web-build
+    CGO_ENABLED=0 go build -trimpath -ldflags "{{ldflags}}" -o bin/ironman ./cmd/ironman
+    @echo "built bin/ironman ({{version}})"
+
+# Build the Docker image (tagged with the git version and latest)
+docker-build:
+    docker build --build-arg VERSION={{version}} -t ironman-planner:{{version}} -t ironman-planner:latest .
+
+# --- quality ---------------------------------------------------------------
+
+# go test ./... and `pnpm check` when the web project defines it
+test:
+    go test ./...
+    if [ -f web/package.json ] && grep -q '"check"' web/package.json; then (cd web && pnpm check); fi
+
+# golangci-lint, gofmt check and `pnpm lint` when defined
+lint:
+    golangci-lint run ./...
+    @unformatted="$(gofmt -l $(git ls-files '*.go' 2>/dev/null || find . -name '*.go' -not -path './web/*'))"; \
+    if [ -n "$unformatted" ]; then echo "gofmt needed:"; echo "$unformatted"; exit 1; fi
+    if [ -f web/package.json ] && grep -q '"lint"' web/package.json; then (cd web && pnpm lint); fi
+
+# gofmt + goimports in place
+fmt:
+    gofmt -w $(git ls-files '*.go')
+    if command -v goimports >/dev/null 2>&1; then goimports -w -local github.com/FelipeMalacarne/ironman-planner $(git ls-files '*.go'); fi
+
+# --- content ---------------------------------------------------------------
+
+# Validate content/ against content/schema/guide.schema.json
+content-validate:
+    go run ./cmd/ironman content validate
+
+# Migrate data/guide/normalized into content/guides (idempotent)
+content-migrate:
+    go run ./cmd/ironman content migrate
+
+# --- database --------------------------------------------------------------
+
+# Apply pending migrations (goose) to DATABASE_URL
+migrate-up:
+    {{goose}} -dir db/migrations postgres "{{database_url}}" up
+
+# Roll back the last migration
+migrate-down:
+    {{goose}} -dir db/migrations postgres "{{database_url}}" down
+
+# Show migration status
+migrate-status:
+    {{goose}} -dir db/migrations postgres "{{database_url}}" status
+
+# Create a new migration file: just migrate-new add_goal_notes
+migrate-new name:
+    {{goose}} -dir db/migrations -s create {{name}} sql
+
+# Generate Go code from db/queries into internal/store/db
+sqlc:
+    {{sqlc}} generate
+
+# --- compose (prod-like local) ---------------------------------------------
+
+# Build and start Postgres + app from compose.yaml
+up:
+    VERSION={{version}} {{compose}} up -d --build
+
+# Stop the compose stack (volumes kept)
+down:
+    {{compose}} down
+
+# Follow logs (default: app). Example: just logs postgres
+logs service="app":
+    {{compose}} logs -f {{service}}
+
+# Remove containers AND volumes of both stacks (destroys local data)
+nuke:
+    {{compose}} down -v
+    {{compose}} -f compose.dev.yaml down -v

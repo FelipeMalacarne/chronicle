@@ -1,0 +1,372 @@
+/* Senntisten Shell — tokens (Catppuccin Mocha). Só tema escuro por enquanto. */
+:root {
+	color-scheme: dark;
+
+	/* Cores */
+	--bg: #11111b;
+	--surface: #1e1e2e;
+	--elevated: #313244;
+	--overlay: #45475a;
+	--border: #45475a;
+	--divider: #45475a80;
+	--text: #cdd6f4;
+	--muted: #a6adc8;
+	--subtle: #7f849c;
+	--accent: #cba6f7;
+	--accent-text: #181825;
+	--success: #a6e3a1;
+	--warning: #f9e2af;
+	--error: #f38ba8;
+	--accent-tint: #cba6f726;
+	--success-tint: #a6e3a126;
+	--warning-tint: #f9e2af26;
+	--error-tint: #f38ba826;
+
+	/* Fontes do sistema (não empacotadas) */
+	--font-sans: 'DejaVu Sans', 'Noto Sans', sans-serif;
+	--font-serif: 'DejaVu Serif', Georgia, serif;
+	--font-mono: 'DejaVu Sans Mono', monospace;
+
+	/* Escala tipográfica */
+	--fs-display: 32px;
+	--fs-heading: 25px;
+	--fs-body: 14px;
+	--fs-control: 13px;
+	--fs-label: 12px;
+	--fs-caption: 11px;
+	--fs-micro: 10px;
+	--fs-eyebrow: 10px;
+	--fs-data: 11px;
+
+	/* Raios */
+	--r-chip: 8px;
+	--r-button: 10px;
+	--r-row: 11px;
+	--r-tile: 12px;
+	--r-card: 14px;
+	--r-panel: 21px;
+
+	/* Alturas */
+	--h-button: 36px;
+	--h-compact: 32px;
+	--h-chip: 30px;
+	--h-row: 56px;
+
+	/* Espaçamento */
+	--sp-1: 4px;
+	--sp-2: 8px;
+	--sp-3: 12px;
+	--sp-4: 16px;
+	--sp-5: 20px;
+	--sp-6: 24px;
+	--sp-8: 32px;
+
+	--focus-ring: 0 0 0 2px var(--accent);
+	--topbar-h: 56px;
+	--bottombar-h: 60px;
+}
+
+*,
+*::before,
+*::after {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+	min-height: 100%;
+}
+
+body {
+	background: var(--bg);
+	color: var(--text);
+	font-family: var(--font-sans);
+	font-size: var(--fs-body);
+	line-height: 1.5;
+	-webkit-font-smoothing: antialiased;
+	text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+	margin: 0;
+	font-family: var(--font-serif);
+	font-weight: 500;
+	line-height: 1.2;
+	color: var(--text);
+}
+
+p {
+	margin: 0;
+}
+
+a {
+	color: var(--accent);
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+button,
+input,
+select,
+textarea {
+	font: inherit;
+	color: inherit;
+}
+
+button {
+	cursor: pointer;
+	background: none;
+	border: 0;
+	padding: 0;
+}
+
+button:disabled {
+	cursor: not-allowed;
+}
+
+:focus {
+	outline: none;
+}
+
+:focus-visible {
+	outline: none;
+	box-shadow: var(--focus-ring);
+	border-radius: var(--r-chip);
+}
+
+::selection {
+	background: var(--accent-tint);
+}
+
+/* Utilitários tipográficos */
+.display {
+	font-family: var(--font-serif);
+	font-size: var(--fs-display);
+}
+
+.heading {
+	font-family: var(--font-serif);
+	font-size: var(--fs-heading);
+}
+
+.eyebrow {
+	font-family: var(--font-mono);
+	font-size: var(--fs-eyebrow);
+	letter-spacing: 1px;
+	text-transform: uppercase;
+	color: var(--subtle);
+}
+
+.data {
+	font-family: var(--font-mono);
+	font-size: var(--fs-data);
+}
+
+.label {
+	font-size: var(--fs-label);
+	color: var(--muted);
+}
+
+.caption {
+	font-size: var(--fs-caption);
+	color: var(--subtle);
+}
+
+.muted {
+	color: var(--muted);
+}
+
+.subtle {
+	color: var(--subtle);
+}
+
+.visually-hidden {
+	position: absolute !important;
+	width: 1px;
+	height: 1px;
+	padding: 0;
+	margin: -1px;
+	overflow: hidden;
+	clip: rect(0, 0, 0, 0);
+	white-space: nowrap;
+	border: 0;
+}
+
+/* Superfícies */
+.card {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--r-card);
+	padding: var(--sp-5);
+}
+
+.panel {
+	background: var(--surface);
+	border: 1px solid var(--border);
+	border-radius: var(--r-panel);
+	padding: var(--sp-6);
+}
+
+/* Controles */
+.btn {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--sp-2);
+	height: var(--h-button);
+	padding: 0 var(--sp-4);
+	border-radius: var(--r-button);
+	font-size: var(--fs-control);
+	font-weight: 500;
+	background: var(--elevated);
+	color: var(--text);
+	border: 1px solid transparent;
+	white-space: nowrap;
+	transition:
+		background 120ms ease,
+		border-color 120ms ease;
+}
+
+.btn:hover:not(:disabled) {
+	background: var(--overlay);
+}
+
+.btn:focus-visible {
+	box-shadow: var(--focus-ring);
+	border-radius: var(--r-button);
+}
+
+.btn:disabled {
+	opacity: 0.55;
+}
+
+.btn-accent {
+	background: var(--accent);
+	color: var(--accent-text);
+}
+
+.btn-accent:hover:not(:disabled) {
+	background: #d8bbfa;
+}
+
+.btn-ghost {
+	background: transparent;
+	border-color: var(--border);
+}
+
+.btn-compact {
+	height: var(--h-compact);
+	padding: 0 var(--sp-3);
+}
+
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+	height: var(--h-chip);
+	padding: 0 var(--sp-3);
+	border-radius: var(--r-chip);
+	background: var(--elevated);
+	border: 1px solid var(--border);
+	font-size: var(--fs-label);
+	color: var(--text);
+	white-space: nowrap;
+}
+
+.chip-mono {
+	font-family: var(--font-mono);
+	font-size: var(--fs-data);
+	background: var(--bg);
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	height: 20px;
+	padding: 0 7px;
+	border-radius: 6px;
+	font-family: var(--font-mono);
+	font-size: var(--fs-micro);
+	letter-spacing: 0.6px;
+	text-transform: uppercase;
+	background: var(--elevated);
+	color: var(--muted);
+	white-space: nowrap;
+}
+
+.badge-accent {
+	background: var(--accent-tint);
+	color: var(--accent);
+}
+
+.badge-success {
+	background: var(--success-tint);
+	color: var(--success);
+}
+
+.badge-warning {
+	background: var(--warning-tint);
+	color: var(--warning);
+}
+
+.badge-error {
+	background: var(--error-tint);
+	color: var(--error);
+}
+
+.input {
+	height: var(--h-compact);
+	padding: 0 var(--sp-3);
+	border-radius: var(--r-button);
+	background: var(--bg);
+	border: 1px solid var(--border);
+	color: var(--text);
+	font-size: var(--fs-control);
+	min-width: 0;
+}
+
+.input::placeholder {
+	color: var(--subtle);
+}
+
+.input:focus-visible {
+	box-shadow: var(--focus-ring);
+	border-color: var(--accent);
+	border-radius: var(--r-button);
+}
+
+.divider {
+	height: 1px;
+	background: var(--divider);
+	border: 0;
+	margin: 0;
+}
+
+.kbd {
+	display: inline-block;
+	padding: 1px 6px;
+	border-radius: 5px;
+	border: 1px solid var(--border);
+	background: var(--elevated);
+	font-family: var(--font-mono);
+	font-size: var(--fs-micro);
+	color: var(--muted);
+	line-height: 1.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		transition: none !important;
+		animation: none !important;
+	}
+}

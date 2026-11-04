@@ -1,0 +1,10 @@
+{
+	"extends": "$app/tsconfig",
+	"include": ["src", "test", "*"],
+	"exclude": ["src/service-worker"],
+	"compilerOptions": {
+		"strict": true,
+		"sourceMap": true,
+		"types": ["$app/types", "vite/client", "node"]
+	}
+}

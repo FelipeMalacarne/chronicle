@@ -1,0 +1,117 @@
+# golangci-lint v2 configuration. Run with `just lint` or `golangci-lint run ./...`.
+version: "2"
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  default: none
+  enable:
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - ineffassign
+    - misspell
+    - gocritic
+    - revive
+
+  settings:
+    errcheck:
+      check-type-assertions: true
+      exclude-functions:
+        - (io.Closer).Close
+        - (*os.File).Close
+        - (net/http.ResponseWriter).Write
+        - fmt.Fprintf
+        - fmt.Fprintln
+        - fmt.Fprint
+
+    govet:
+      enable:
+        - nilness
+        - shadow
+      settings:
+        shadow:
+          strict: false
+
+    misspell:
+      locale: US
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+      disabled-checks:
+        - hugeParam      # structs are passed by value on purpose in the rule engine
+        - rangeValCopy
+        - unnamedResult
+
+    revive:
+      severity: warning
+      # Relaxed set: no doc-comment enforcement on exported identifiers.
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: if-return
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: var-declaration
+        - name: var-naming
+          arguments:
+            - [] # allowlist
+            - [] # blocklist
+            - - skip-package-name-checks: true
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - std-error-handling
+    paths:
+      - internal/store/db   # sqlc output
+      - web
+      - third_party$
+    rules:
+      - path: _test\.go
+        linters:
+          - errcheck
+          - gocritic
+      - path: cmd/
+        linters:
+          - gocritic
+        text: "exitAfterDefer"
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/FelipeMalacarne/ironman-planner
+  exclusions:
+    generated: lax
+    paths:
+      - internal/store/db
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

@@ -256,3 +256,47 @@ Checagens: ids únicos e com prefixo da seção; skills canônicas e níveis 1�
 2. Importar `guide.json` e `quest-order.json` no app (validação Zod a partir do schema v0.1) e implementar os avaliadores `skill_level`, `quest_state`, `diary_tier` (+ `all`), `boss_kc`.
 3. Tabela de locais canônicos (unificar os pares listados em 6.4) para o filtro "o que posso fazer aqui".
 4. Cruzar `quest-order.json` (requisitos de skill e quests por quest) com o Bucket do wiki para montar o grafo de requisitos.
+
+## 10. Mapeamento para o schema canônico (Go)
+
+`ironman content migrate` (pacote `internal/core/content/migrate`) lê `data/guide/normalized/guide.json` (schema v0.1 acima) e escreve `content/guides/oziris-main/guide.json` no schema canônico `content/schema/guide.schema.json`, validando a saída antes de gravar. A saída é determinística (mesmo input ⇒ mesmos bytes) e deve ser regenerada, não editada à mão. Mapeamento campo a campo:
+
+| v0.1 (normalizador) | Canônico | Regra |
+|---|---|---|
+| `guide.id` = `oziris-efficiency` | `id`/`slug` = `oziris-main`; `source.original_id` guarda o id antigo | id do diretório é o canônico |
+| `guide.source {url, author, maintainer, extracted_at, license_note}` | `source {origin: ironman.guide, url, author, license: license_note, imported_at: extracted_at}`; `maintainer` vai para `description` | `source` não tem campo `maintainer`; não valeu a pena estender |
+| — | `schema_version: 1`, `version: "2026.11.0"`, `default_modes` (4), `default_layers` (`classic`,`enhanced`) | fixos no migrador (`--content-version`) |
+| `section.track: true/false` | `section.kind: track/main` | explícito em todas as seções |
+| `section.seo_title` | descartado | — |
+| `section.related` | igual | hrefs relativos mantidos |
+| `step.note` | `notes[{kind: hcim \| tip}]` | `hcim` quando a tag `hcim` está presente, senão `tip` |
+| `step.update_note` | `notes[{kind: update}]` | — |
+| `step.items[]` (strings) | `items[]` (forma string) | — |
+| `step.links[]` | `links[]` | URL relativa (`/articles/...`) vira absoluta em `https://ironman.guide` |
+| `step.quest {name, status, wiki}` | `links[{type: wiki, url, text: name}]` | o estado em si já está em `complete_when`; `status` não é repetido |
+| `step.layer: classic` | `layers: [classic, enhanced]` | passo original aparece nos dois modos |
+| `step.layer: enhanced` | `layers: [enhanced]` | — |
+| `step.modes` | `modes` | sempre os quatro |
+| `step.phase` | `phase` | — |
+| `step.tags` | `tags` | normalizadas para `^[a-z0-9][a-z0-9:_-]*$`: `boss:The Corrupted Gauntlet` → `boss:the-corrupted-gauntlet`; `new-quest` → `new-content` (vocabulário do doc 04) |
+| `complete_when: [{type: manual}]` | `complete_when` **ausente** | o schema define "ausente/vazio ⇒ manual"; 367 passos |
+| regra `skill_level {skill, level}` | igual | — |
+| regra `quest_state {state: FINISHED}` | igual, sem `op` (default `gte`) | — |
+| regra `quest_state {state: IN_PROGRESS, or_finished: true}` | `{state: IN_PROGRESS, op: gte}` | — |
+| regra `diary_tier {area, tier}` | igual; `area: all` mantido | o engine expande `all` para as 12 áreas |
+| regra `boss_kc {boss, kc}` | igual | nenhuma ocorrência hoje |
+| regra `.source/.inferred/.confidence/.match` | `meta {origin, inferred, confidence, match}` | **extensão do schema** (abaixo) |
+| `step.prerequisites[]` | `prerequisites[]` (lista de regras com `meta`) | **extensão do schema** (abaixo); informativo, não entra em `complete_when` |
+| `step.requires: ["1.1.5"]` | `requires: ["step:1.1.5"]` | formato `ref` do schema; o loader verifica que o id existe |
+| `step.completes_in` | descartado | redundante: é o inverso de `requires` do passo de conclusão |
+| `step.track_via` | descartado | derivável dos tipos de regra |
+| todos os passos | `source {origin: ironman.guide, original_id: id, imported_at: 2026-11-03}` | — |
+
+### Extensões feitas no schema canônico
+
+Ambas aditivas e opcionais; `additionalProperties: false` continua em todos os objetos.
+
+1. **`$defs/ruleMeta`** e a propriedade **`meta`** em todas as 13 regras atômicas (`skill_level` … `manual`): `{origin: string, inferred: boolean, confidence: high|medium|low, match: string}`. Guarda a proveniência da regra (campo estruturado do site vs. inferida do texto) sem influenciar a avaliação. A UI deve tratar `confidence: medium` como sugestão a confirmar (ressalva da seção 8).
+2. **`step.prerequisites`**: array de regras (mesmo `$defs/rule`), informativo: o que o texto diz que você precisa antes do passo. Não bloqueia conclusão; o grafo pode derivar arestas suaves daí. 20 passos.
+
+Resultado da migração: 7 seções, 576 passos, 209 com regra automática (170 `quest_state`, 59 `skill_level`, 5 `diary_tier`, com sobreposição por passo), 367 manuais; `ironman content validate` passa com 0 erros.

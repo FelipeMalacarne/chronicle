@@ -1,0 +1,31 @@
+# Build context for the Dockerfile. Keep it small: the image needs the Go
+# sources, web/ sources (dist is rebuilt inside the image) and content/.
+.git
+.github
+.direnv
+.env
+.env.*
+!.env.example
+
+# Dependencies and build outputs (rebuilt in their stages)
+node_modules
+**/node_modules
+web/dist
+web/.svelte-kit
+bin
+tmp
+result
+result-*
+
+# Extracted data and samples: not needed at runtime (content/ is the source)
+data
+
+# Documentation; keep markdown that lives inside content/ (guide notes)
+docs
+*.md
+!content/**/*.md
+
+# Local tooling
+.vscode
+.idea
+*.log

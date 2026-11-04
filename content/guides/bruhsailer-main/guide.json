@@ -893,6 +893,7 @@
                   },
                   {
                     "name": "fishing net",
+                    "item_id": 303,
                     "source_text": "fishing net"
                   }
                 ],
@@ -959,6 +960,13 @@
                       "field": "/items/2",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:303",
+                      "source_text": "fishing net",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "quest:tribal_totem",
@@ -1229,6 +1237,7 @@
                   },
                   {
                     "name": "fishing net",
+                    "item_id": 303,
                     "source_text": "fishing net"
                   },
                   {
@@ -1290,6 +1299,13 @@
                       "ref": "item:995",
                       "source_text": "3445 gp",
                       "field": "/items/0",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
+                      "ref": "item:303",
+                      "source_text": "fishing net",
+                      "field": "/items/1",
                       "method": "item",
                       "match": "alias"
                     },
@@ -1474,6 +1490,17 @@
                       ],
                       "method": "text",
                       "match": "name"
+                    },
+                    {
+                      "ref": "quest:romeo_and_juliet",
+                      "source_text": "Romeo and Juliet",
+                      "field": "/text",
+                      "span": [
+                        254,
+                        270
+                      ],
+                      "method": "text",
+                      "match": "alias"
                     },
                     {
                       "ref": "quest:gertrudes_cat",
@@ -1973,6 +2000,7 @@
                   },
                   {
                     "name": "wax logs",
+                    "item_id": 24938,
                     "source_text": "wax logs"
                   }
                 ],
@@ -2070,6 +2098,13 @@
                       "field": "/items/5",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:24938",
+                      "source_text": "wax logs",
+                      "field": "/items/6",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "quest:rag_and_bone_man_i",
@@ -13376,6 +13411,7 @@
                   },
                   {
                     "name": "plant pot",
+                    "item_id": 5350,
                     "qty": 1,
                     "source_text": "1 plant pot"
                   },
@@ -13623,6 +13659,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:5350",
+                      "source_text": "1 plant pot",
+                      "field": "/items/19",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
                       "ref": "item:5324",
                       "source_text": "6 cabbage seeds",
                       "field": "/items/20",
@@ -13844,6 +13887,13 @@
                       "field": "/items/8",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:5350",
+                      "source_text": "plant pot",
+                      "field": "/items/9",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "item:5331",
@@ -15274,6 +15324,13 @@
                       "ref": "item:5313",
                       "source_text": "3 willow seeds",
                       "field": "/items/1",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:5350",
+                      "source_text": "3 plant pots",
+                      "field": "/items/2",
                       "method": "item",
                       "match": "plural"
                     },

@@ -11,7 +11,7 @@
     "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 684,
+    "resolved": 686,
     "ambiguous": 20,
     "unresolved": 97,
     "by_kind": {
@@ -26,7 +26,7 @@
         "unresolved": 50
       },
       "quest": {
-        "resolved": 455,
+        "resolved": 457,
         "ambiguous": 7,
         "unresolved": 47
       },

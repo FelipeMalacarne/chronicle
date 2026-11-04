@@ -50,6 +50,11 @@
       "text": "OSF",
       "quest": "One Small Favour",
       "note": "common abbreviation"
+    },
+    {
+      "text": "Romeo and Juliet",
+      "quest": "Romeo & Juliet",
+      "note": "spelled out in BRUHsailer"
     }
   ],
   "quest_text_ambiguous": [
@@ -259,6 +264,41 @@
       "text": "onions",
       "item_id": 1957,
       "note": "guide plural; the Onions page is the onion sack family"
+    },
+    {
+      "text": "sack",
+      "item_id": 5418,
+      "note": "BRUHsailer 1.1 shorthand (extraction pilot)"
+    },
+    {
+      "text": "plant pot",
+      "item_id": 5350,
+      "note": "BRUHsailer 1.1 shorthand (extraction pilot)"
+    },
+    {
+      "text": "black wizard's hat",
+      "item_id": 1017,
+      "note": "BRUHsailer 1.1 shorthand (extraction pilot)"
+    },
+    {
+      "text": "wax logs",
+      "item_id": 24938,
+      "note": "BRUHsailer 1.1 shorthand (extraction pilot)"
+    },
+    {
+      "text": "fishing net",
+      "item_id": 303,
+      "note": "BRUHsailer 1.1 shorthand (extraction pilot)"
+    },
+    {
+      "text": "pirate's key",
+      "item_id": 432,
+      "note": "BRUHsailer 1.1 shorthand (extraction pilot)"
+    },
+    {
+      "text": "Pirates' Treasure key",
+      "item_id": 432,
+      "note": "BRUHsailer 1.1 shorthand (extraction pilot)"
     }
   ],
   "item_ambiguous": [

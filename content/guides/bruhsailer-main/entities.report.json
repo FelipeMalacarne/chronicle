@@ -11,9 +11,9 @@
     "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 1891,
+    "resolved": 1898,
     "ambiguous": 184,
-    "unresolved": 585,
+    "unresolved": 579,
     "by_kind": {
       "ca": {
         "resolved": 4,
@@ -26,9 +26,9 @@
         "unresolved": 0
       },
       "item": {
-        "resolved": 1436,
+        "resolved": 1442,
         "ambiguous": 153,
-        "unresolved": 312
+        "unresolved": 306
       },
       "link": {
         "resolved": 0,
@@ -36,15 +36,15 @@
         "unresolved": 12
       },
       "quest": {
-        "resolved": 391,
+        "resolved": 392,
         "ambiguous": 30,
         "unresolved": 261
       }
     },
     "loadout_items": {
-      "resolved": 737,
+      "resolved": 741,
       "ambiguous": 68,
-      "unresolved": 142
+      "unresolved": 138
     }
   },
   "ambiguous": [
@@ -3133,14 +3133,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-1.1-91287e926276",
-      "field": "/items/3",
-      "source_text": "fishing net",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.1-c5dd0c60297b",
       "field": "/text",
       "span": [
@@ -3184,14 +3176,6 @@
       "candidates": [
         "quest:the_restless_ghost"
       ]
-    },
-    {
-      "step_id": "bruh-1.1-bcb19ce4fe00",
-      "field": "/items/1",
-      "source_text": "fishing net",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.1-85bf543d26ab",
@@ -3253,14 +3237,6 @@
       "candidates": [
         "quest:shield_of_arrav"
       ]
-    },
-    {
-      "step_id": "bruh-1.1-3f2c951740ac",
-      "field": "/items/6",
-      "source_text": "wax logs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.1-3f2c951740ac",
@@ -5288,14 +5264,6 @@
     },
     {
       "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/19",
-      "source_text": "1 plant pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
       "field": "/text",
       "span": [
         380,
@@ -5368,14 +5336,6 @@
       "candidates": [
         "quest:dwarf_cannon"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-85c07ce8189e",
-      "field": "/items/9",
-      "source_text": "plant pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-85c07ce8189e",
@@ -5592,14 +5552,6 @@
       "candidates": [
         "quest:icthlarins_little_helper"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-1f257947c836",
-      "field": "/items/2",
-      "source_text": "3 plant pots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-b491172fe629",

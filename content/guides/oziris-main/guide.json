@@ -3732,6 +3732,17 @@
                       "field": "/links/0/url",
                       "method": "link",
                       "match": "wiki_key"
+                    },
+                    {
+                      "ref": "quest:romeo_and_juliet",
+                      "source_text": "Romeo and Juliet",
+                      "field": "/text",
+                      "span": [
+                        23,
+                        39
+                      ],
+                      "method": "text",
+                      "match": "alias"
                     }
                   ]
                 },
@@ -8136,6 +8147,17 @@
                       "field": "/links/0/url",
                       "method": "link",
                       "match": "wiki_key"
+                    },
+                    {
+                      "ref": "quest:romeo_and_juliet",
+                      "source_text": "romeo and juliet",
+                      "field": "/text",
+                      "span": [
+                        7,
+                        23
+                      ],
+                      "method": "text",
+                      "match": "alias"
                     }
                   ]
                 },

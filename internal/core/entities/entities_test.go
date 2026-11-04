@@ -246,10 +246,11 @@ func TestResolveItems(t *testing.T) {
 		"1k bronze arrowheads": {Resolved, "item:39", MatchAlias, "", false},
 		"law rune":             {Resolved, "item:563", MatchName, "", false},
 		"Some food":            {Unresolved, "", "", ReasonNotInCatalog, false},
-		// Only an unobtainable item is named "Plant pot"; animation-only
-		// copies of Rope never compete with the real one.
-		"3 plant pots": {Unresolved, "", "", ReasonNotInCatalog, false},
+		// Only unobtainable items are named "Cooking pot" and "Plant pot" (the
+		// latter resolves through the curated alias, never to item 5356);
+		// animation-only copies of Rope never compete with the real one.
 		"Cooking pot":  {Unresolved, "", "", ReasonNotInCatalog, false},
+		"3 plant pots": {Resolved, "item:5350", MatchPlural, "", false},
 		"rope":         {Resolved, "item:954", MatchName, "", false},
 	} {
 		res, p := r.ResolveItem(phrase)

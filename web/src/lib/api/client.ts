@@ -1,4 +1,5 @@
 import type { Health, Now, Section, SectionSummary, Step } from './types';
+import type { ApiGuide, ApiReadiness, ApiSection } from '../planner/apimap';
 import { untrack } from 'svelte';
 import { sync, markOk, markFail } from './sync.svelte';
 
@@ -66,7 +67,17 @@ export const api = {
 	guide: () => request<SectionSummary[]>('/guide'),
 	section: (section: string) => request<Section>(`/guide/${encodeURIComponent(section)}`),
 	step: (id: string) => request<Step>(`/steps/${encodeURIComponent(id)}`),
-	now: () => request<Now>('/now')
+	now: () => request<Now>('/now'),
+	guides: () => request<{ guides: ApiGuide[] }>('/guides'),
+	guideById: (guide: string) => request<ApiGuide>(`/guides/${encodeURIComponent(guide)}`),
+	guideSection: (guide: string, section: string) =>
+		request<ApiSection>(
+			`/guides/${encodeURIComponent(guide)}/sections/${encodeURIComponent(section)}`
+		),
+	readiness: (guide: string, account: string) =>
+		request<ApiReadiness>(
+			`/guides/${encodeURIComponent(guide)}/readiness?account=${encodeURIComponent(account)}`
+		)
 };
 
 /** "sincronizado há 2 min" / "há 3 h" / "agora". */

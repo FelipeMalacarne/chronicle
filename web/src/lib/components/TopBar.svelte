@@ -2,13 +2,17 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { sync, relativeTime } from '#lib/api/client';
+	import { guideSwitch } from '#lib/planner/header.svelte';
+	import GuideSelector from './GuideSelector.svelte';
 	import Icon, { type IconName } from './Icon.svelte';
 
 	const nav = [
-		{ href: '/', label: 'Agora', icon: 'home', phone: true },
+		{ href: '/', label: 'Agora', icon: 'clock', phone: true },
+		{ href: '/plan', label: 'Plano', icon: 'note', phone: true },
 		{ href: '/guide', label: 'Guia', icon: 'book', phone: true },
+		{ href: '/compare', label: 'Comparar', icon: 'columns', phone: true },
 		{ href: '/account', label: 'Conta', icon: 'user', phone: true },
-		{ href: '/goals', label: 'Metas', icon: 'target', phone: true },
+		{ href: '/goals', label: 'Metas', icon: 'target', phone: false },
 		{ href: '/graph', label: 'Grafo', icon: 'graph', phone: false }
 	] as const satisfies readonly { href: string; label: string; icon: IconName; phone: boolean }[];
 
@@ -41,7 +45,16 @@
 </script>
 
 <header class="topbar">
-	<a class="brand eyebrow" href={resolve('/')}>Ironman Planner</a>
+	<a class="brand" href={resolve('/')}>IRONMAN PLANNER</a>
+
+	{#if guideSwitch.onchange && guideSwitch.guides.length > 1}
+		<GuideSelector
+			guides={guideSwitch.guides}
+			value={guideSwitch.value}
+			label="Guia ativo"
+			onchange={guideSwitch.onchange}
+		/>
+	{/if}
 
 	<nav class="pills" aria-label="Principal">
 		{#each nav as item (item.href)}
@@ -68,7 +81,7 @@
 			href={resolve(item.href)}
 			aria-current={isActive(item.href) ? 'page' : undefined}
 		>
-			<Icon name={item.icon} size={20} />
+			<Icon name={item.icon} size={18} />
 			<span>{item.label}</span>
 		</a>
 	{/each}
@@ -79,19 +92,20 @@
 		position: sticky;
 		top: 0;
 		z-index: 10;
-		display: grid;
-		grid-template-columns: 1fr auto 1fr;
+		display: flex;
+		flex-wrap: wrap;
 		align-items: center;
-		gap: var(--sp-4);
-		height: var(--topbar-h);
-		padding: 0 var(--sp-6);
-		background: color-mix(in srgb, var(--bg) 88%, transparent);
-		backdrop-filter: blur(10px);
+		gap: 6px var(--sp-6);
+		min-height: var(--topbar-h);
+		padding: 6px var(--sp-6);
+		background: var(--surface);
 		border-bottom: 1px solid var(--divider);
 	}
 	.brand {
-		color: var(--muted);
-		justify-self: start;
+		font-family: var(--font-mono);
+		font-size: var(--fs-eyebrow);
+		letter-spacing: 1px;
+		color: var(--accent);
 	}
 	.brand:hover {
 		text-decoration: none;
@@ -99,18 +113,15 @@
 	}
 	.pills {
 		display: flex;
+		flex-wrap: wrap;
 		gap: 4px;
-		padding: 3px;
-		border-radius: var(--r-button);
-		background: var(--surface);
-		border: 1px solid var(--border);
 	}
 	.pill {
 		display: inline-flex;
 		align-items: center;
-		height: 28px;
+		height: 30px;
 		padding: 0 var(--sp-3);
-		border-radius: var(--r-chip);
+		border-radius: 15px;
 		font-size: var(--fs-control);
 		font-weight: 500;
 		color: var(--muted);
@@ -118,18 +129,18 @@
 	.pill:hover {
 		text-decoration: none;
 		color: var(--text);
-		background: var(--elevated);
 	}
 	.pill[aria-current='page'] {
-		background: var(--accent);
-		color: var(--accent-text);
+		background: var(--elevated);
+		color: var(--text);
 	}
 	.sync {
-		justify-self: end;
+		margin-left: auto;
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
-		font-size: var(--fs-caption);
+		font-family: var(--font-mono);
+		font-size: var(--fs-data);
 		color: var(--muted);
 		white-space: nowrap;
 	}
@@ -138,23 +149,18 @@
 		height: 8px;
 		border-radius: 50%;
 		background: var(--subtle);
-		box-shadow: 0 0 0 3px color-mix(in srgb, var(--subtle) 20%, transparent);
 	}
 	.sync[data-state='ok'] .dot {
 		background: var(--success);
-		box-shadow: 0 0 0 3px var(--success-tint);
 	}
 	.sync[data-state='stale'] .dot {
 		background: var(--warning);
-		box-shadow: 0 0 0 3px var(--warning-tint);
 	}
 	.sync[data-state='offline'] .dot {
 		background: var(--error);
-		box-shadow: 0 0 0 3px var(--error-tint);
 	}
 	.sync[data-state='loading'] .dot {
 		background: var(--accent);
-		box-shadow: 0 0 0 3px var(--accent-tint);
 	}
 
 	.bottombar {
@@ -163,14 +169,14 @@
 
 	@media (max-width: 719px) {
 		.topbar {
-			grid-template-columns: 1fr auto;
-			padding: 0 var(--sp-4);
+			padding: 6px var(--sp-4);
+			gap: 6px var(--sp-3);
 		}
 		.pills {
 			display: none;
 		}
 		.sync-text {
-			max-width: 46vw;
+			max-width: 40vw;
 			overflow: hidden;
 			text-overflow: ellipsis;
 		}
@@ -180,26 +186,34 @@
 			right: 0;
 			bottom: 0;
 			z-index: 10;
-			display: grid;
-			grid-template-columns: repeat(4, 1fr);
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
 			height: calc(var(--bottombar-h) + env(safe-area-inset-bottom));
-			padding-bottom: env(safe-area-inset-bottom);
+			padding: 0 var(--sp-2) env(safe-area-inset-bottom);
 			background: var(--surface);
-			border-top: 1px solid var(--border);
+			border-top: 1px solid var(--divider);
 		}
 		.tab {
+			width: 64px;
+			height: 44px;
+			border-radius: var(--r-tile);
 			display: flex;
 			flex-direction: column;
 			align-items: center;
 			justify-content: center;
-			gap: 3px;
-			font-size: var(--fs-caption);
+			gap: 2px;
+			font-size: var(--fs-micro);
 			color: var(--muted);
 		}
 		.tab:hover {
 			text-decoration: none;
 		}
 		.tab[aria-current='page'] {
+			background: var(--elevated);
+			color: var(--text);
+		}
+		.tab[aria-current='page'] :global(svg) {
 			color: var(--accent);
 		}
 	}

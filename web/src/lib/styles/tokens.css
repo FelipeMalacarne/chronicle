@@ -14,6 +14,7 @@
 	--subtle: #7f849c;
 	--accent: #cba6f7;
 	--accent-text: #181825;
+	--mantle: #181825;
 	--success: #a6e3a1;
 	--warning: #f9e2af;
 	--error: #f38ba8;
@@ -62,7 +63,7 @@
 	--sp-8: 32px;
 
 	--focus-ring: 0 0 0 2px var(--accent);
-	--topbar-h: 56px;
+	--topbar-h: 44px;
 	--bottombar-h: 60px;
 }
 

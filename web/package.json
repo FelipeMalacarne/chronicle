@@ -16,6 +16,7 @@
 		"postbuild": "node -e \"require('node:fs').writeFileSync('dist/.gitkeep','')\"",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"test": "node --test src/lib/planner/*.test.ts",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},

@@ -14,7 +14,10 @@
 		| 'chevron'
 		| 'external'
 		| 'alert'
-		| 'bag';
+		| 'bag'
+		| 'clock'
+		| 'columns'
+		| 'swap';
 
 	let { name, size = 16, label }: { name: IconName; size?: number; label?: string } = $props();
 
@@ -33,7 +36,10 @@
 		chevron: 'M9 6l6 6-6 6',
 		external: 'M14 4h6v6 M20 4l-9 9 M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5',
 		alert: 'M12 3l10 18H2L12 3z M12 10v5 M12 18h.01',
-		bag: 'M5 8h14l-1 12H6L5 8z M9 8V6a3 3 0 0 1 6 0v2'
+		bag: 'M5 8h14l-1 12H6L5 8z M9 8V6a3 3 0 0 1 6 0v2',
+		clock: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2',
+		columns: 'M7 4v16 M17 4v16 M7 12h10',
+		swap: 'M7 7h13l-3-3 M17 17H4l3 3'
 	};
 </script>
 

@@ -33,12 +33,12 @@
 		left: 8px;
 	}
 	.shell {
-		max-width: 1180px;
+		max-width: 1360px;
 		margin: 0 auto;
-		padding: var(--sp-8) var(--sp-6) var(--sp-8);
+		padding: var(--sp-6);
 	}
 	.foot {
-		max-width: 1180px;
+		max-width: 1360px;
 		margin: 0 auto;
 		padding: 0 var(--sp-6) var(--sp-8);
 	}

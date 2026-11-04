@@ -319,6 +319,41 @@
       "text": "addy pick",
       "item_id": 1271,
       "note": "guide shorthand (extraction, oziris-main 1.2)"
+    },
+    {
+      "text": "regular shortbow",
+      "item_id": 841,
+      "note": "guide shorthand (extraction, oziris-main 1.3)"
+    },
+    {
+      "text": "rune scim",
+      "item_id": 1333,
+      "note": "guide shorthand (extraction, oziris-main 1.3)"
+    },
+    {
+      "text": "soft leather",
+      "item_id": 1741,
+      "note": "guide shorthand (extraction, oziris-main 1.3)"
+    },
+    {
+      "text": "green d'hide top",
+      "item_id": 1135,
+      "note": "guide shorthand (extraction, oziris-main 1.3)"
+    },
+    {
+      "text": "dorg cbow",
+      "item_id": 8880,
+      "note": "guide shorthand (extraction, oziris-main 1.3)"
+    },
+    {
+      "text": "d bones",
+      "item_id": 536,
+      "note": "guide shorthand (extraction, oziris-main 1.3)"
+    },
+    {
+      "text": "GP stack",
+      "item_id": 995,
+      "note": "guide shorthand (extraction, oziris-main 1.3)"
     }
   ],
   "item_ambiguous": [

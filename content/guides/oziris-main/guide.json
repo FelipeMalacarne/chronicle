@@ -13800,6 +13800,13 @@
                       "field": "/items/1",
                       "method": "item",
                       "match": "alias"
+                    },
+                    {
+                      "ref": "item:1333",
+                      "source_text": "Rune scim",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "alias"
                     }
                   ]
                 },
@@ -16546,6 +16553,20 @@
                     "imported_at": "2026-11-03"
                   },
                   "entities": [
+                    {
+                      "ref": "item:995",
+                      "source_text": "GP stack",
+                      "field": "/items/0",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
+                      "ref": "item:536",
+                      "source_text": "9 d bones",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "alias"
+                    },
                     {
                       "ref": "item:1931",
                       "source_text": "9 pot",

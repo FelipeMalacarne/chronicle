@@ -16106,6 +16106,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:995",
+                      "source_text": "GP stack",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
                       "ref": "item:1785",
                       "source_text": "glassblowing pipe",
                       "field": "/items/3",
@@ -28141,6 +28148,13 @@
                       "field": "/items/7",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1741",
+                      "source_text": "soft leather",
+                      "field": "/items/8",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "item:373",

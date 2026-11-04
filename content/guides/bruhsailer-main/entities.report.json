@@ -11,9 +11,9 @@
     "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 1898,
+    "resolved": 1900,
     "ambiguous": 184,
-    "unresolved": 579,
+    "unresolved": 577,
     "by_kind": {
       "ca": {
         "resolved": 4,
@@ -26,9 +26,9 @@
         "unresolved": 0
       },
       "item": {
-        "resolved": 1442,
+        "resolved": 1444,
         "ambiguous": 153,
-        "unresolved": 306
+        "unresolved": 304
       },
       "link": {
         "resolved": 0,
@@ -5692,14 +5692,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-1.4-5fcc565b7ed8",
-      "field": "/items/2",
-      "source_text": "GP stack",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.4-fdc177159a82",
       "field": "/items/10",
       "source_text": "climbing bars",
@@ -8077,14 +8069,6 @@
       "step_id": "bruh-2.2-9b5e1c730252",
       "field": "/items/3",
       "source_text": "penguin suit",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/8",
-      "source_text": "soft leather",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"

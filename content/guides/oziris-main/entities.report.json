@@ -11,9 +11,9 @@
     "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 686,
+    "resolved": 689,
     "ambiguous": 20,
-    "unresolved": 97,
+    "unresolved": 94,
     "by_kind": {
       "diary": {
         "resolved": 4,
@@ -21,9 +21,9 @@
         "unresolved": 0
       },
       "item": {
-        "resolved": 131,
+        "resolved": 134,
         "ambiguous": 13,
-        "unresolved": 50
+        "unresolved": 47
       },
       "quest": {
         "resolved": 457,
@@ -838,14 +838,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "1.3.11",
-      "field": "/items/2",
-      "source_text": "Rune scim",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "1.3.15",
       "field": "/text",
       "span": [
@@ -1027,22 +1019,6 @@
       "candidates": [
         "quest:children_of_the_sun"
       ]
-    },
-    {
-      "step_id": "1.3.79",
-      "field": "/items/0",
-      "source_text": "GP stack",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.3.79",
-      "field": "/items/1",
-      "source_text": "9 d bones",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "1.3.79",

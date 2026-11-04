@@ -67,10 +67,27 @@ WHERE account_id = $1 AND guide_id = $2
 ORDER BY step_id, at DESC;
 
 -- name: ListRecentStepStatusEvents :many
-SELECT * FROM step_status_events
-WHERE account_id = $1 AND guide_id = $2
-ORDER BY at DESC
+-- With the source of the snapshot that caused an engine change (hiscores,
+-- plugin), for "what changed in this session".
+SELECT e.id, e.guide_id, e.step_id, e.from_status, e.to_status, e.cause, e.snapshot_id, e.at,
+       COALESCE(s.source, '')::text AS source
+FROM step_status_events e
+LEFT JOIN snapshots s ON s.id = e.snapshot_id
+WHERE e.account_id = $1 AND e.guide_id = $2
+ORDER BY e.at DESC
 LIMIT $3;
+
+-- name: ListRecentObjectiveProgressEvents :many
+SELECT e.id, e.objective_key, e.from_verdict, e.to_verdict, e.snapshot_id, e.at,
+       COALESCE(s.source, '')::text AS source
+FROM objective_progress_events e
+LEFT JOIN snapshots s ON s.id = e.snapshot_id
+WHERE e.account_id = $1
+ORDER BY e.at DESC
+LIMIT $2;
+
+-- name: SetAccountGuide :exec
+UPDATE accounts SET guide_id = $2, updated_at = now() WHERE id = $1;
 
 -- name: ListRouteCursors :many
 SELECT * FROM route_cursor WHERE account_id = $1 ORDER BY guide_id;

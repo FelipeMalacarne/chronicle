@@ -178,6 +178,26 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 		t.Fatalf("objectives = %+v, %v", objectives, err)
 	}
 
+	events, err := repo.Events(ctx, "account-1", "g1", 50)
+	if err != nil || len(events.Steps) == 0 || len(events.Objectives) != 2 {
+		t.Fatalf("events = %+v, %v", events, err)
+	}
+	if events.Objectives[0].Source != "plugin" {
+		t.Fatalf("objective event source = %q", events.Objectives[0].Source)
+	}
+
+	// Switching the active route keeps every cursor and reevaluates.
+	if err = repo.SetActiveGuide(ctx, "account-1", "g2"); err != nil {
+		t.Fatal(err)
+	}
+	g2, err = repo.Board(ctx, "account-1", "g2")
+	if err != nil || !g2.Active || g2.Cursor.StepID != "c1" {
+		t.Fatalf("g2 after switch = active %v cursor %+v, %v", g2.Active, g2.Cursor, err)
+	}
+	if err = repo.SetActiveGuide(ctx, "account-1", "nope"); !errors.Is(err, ErrGuideNotFound) {
+		t.Fatalf("switch to an unknown guide: %v", err)
+	}
+
 	for name, err := range map[string]error{
 		"unknown guide":   errOf(repo.Board(ctx, "account-1", "nope")),
 		"unknown account": errOf(repo.Board(ctx, "nobody", "g1")),

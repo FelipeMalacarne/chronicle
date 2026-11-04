@@ -38,10 +38,31 @@ type Counts struct {
 	Remaining int `json:"remaining"`
 }
 
+// SectionCounts summarizes the visible steps of one section (tracks
+// included; the guide's Counts leave them out).
+type SectionCounts struct {
+	ID     string `json:"id"`
+	Title  string `json:"title"`
+	Track  bool   `json:"track"`
+	Counts Counts `json:"counts"`
+}
+
+// Coverage is how much of the route the account's facts answer: the distinct
+// completing objectives of the visible main route and how many are met.
+type Coverage struct {
+	Objectives int `json:"objectives"`
+	Met        int `json:"met"`
+	// Checkbox counts the visible main steps without a completing objective;
+	// only a mark (or the cascade) completes them.
+	Checkbox int `json:"checkbox"`
+}
+
 // Board is the derived status of every step of one guide.
 type Board struct {
-	Steps  []StepState `json:"steps"`
-	Counts Counts      `json:"counts"`
+	Steps    []StepState     `json:"steps"`
+	Counts   Counts          `json:"counts"`
+	Sections []SectionCounts `json:"sections"`
+	Coverage Coverage        `json:"coverage"`
 }
 
 // BuildBoard derives the board of one guide; regressed lists the met
@@ -49,7 +70,15 @@ type Board struct {
 func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 	steps, main := guideSteps(in.Guide)
 	status := in.statuses(nil)
-	out := Board{Steps: make([]StepState, 0, len(steps))}
+	out := Board{Steps: make([]StepState, 0, len(steps)), Sections: []SectionCounts{}}
+	sections := map[string]*SectionCounts{}
+	for _, sec := range in.Guide.Sections {
+		out.Sections = append(out.Sections, SectionCounts{ID: sec.ID, Title: sec.Title, Track: sec.IsTrack()})
+	}
+	for i := range out.Sections {
+		sections[out.Sections[i].ID] = &out.Sections[i]
+	}
+	objectives := map[string]bool{}
 	for _, st := range steps {
 		s := StepState{
 			ID: st.ID, SectionID: st.SectionID, Status: status[st.ID],
@@ -64,8 +93,27 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 			s.Objectives = append(s.Objectives, ObjectiveState{Key: key, Role: o.Role, Verdict: in.Verdicts.Of(key), Regressed: regressed[key]})
 		}
 		out.Steps = append(out.Steps, s)
-		if s.Main && s.Visible {
-			out.Counts.add(s.Status)
+		if !s.Visible {
+			continue
+		}
+		if sc, ok := sections[st.SectionID]; ok {
+			sc.Counts.add(s.Status)
+		}
+		if !s.Main {
+			continue
+		}
+		out.Counts.add(s.Status)
+		if s.Manual {
+			out.Coverage.Checkbox++
+		}
+		for _, o := range Completing(st) {
+			objectives[o.Key.String()] = true
+		}
+	}
+	for key := range objectives {
+		out.Coverage.Objectives++
+		if in.Verdicts.Of(key) == rules.Met {
+			out.Coverage.Met++
 		}
 	}
 	return out

@@ -4,8 +4,10 @@ import (
 	"context"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 )
@@ -17,6 +19,33 @@ type ProgressService interface {
 	ConfirmImplied(ctx context.Context, accountID, guideID string) (storeprogress.BoardView, error)
 	PinCursor(ctx context.Context, accountID, guideID, stepID string) (storeprogress.BoardView, error)
 	Objectives(ctx context.Context, accountID string) ([]storeprogress.ObjectiveView, error)
+	Events(ctx context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error)
+	SetActiveGuide(ctx context.Context, accountID, guideID string) error
+}
+
+// routeSummary is one route of the Rotas list: its cursor, counts per section
+// and how much of it the account's facts answer.
+type routeSummary struct {
+	Guide    string                       `json:"guide"`
+	Title    string                       `json:"title"`
+	Version  string                       `json:"version,omitempty"`
+	Source   *content.Source              `json:"source,omitempty"`
+	Steps    int                          `json:"steps"`
+	Active   bool                         `json:"active"`
+	Cursor   *storeprogress.Cursor        `json:"cursor"`
+	Counts   coreprogress.Counts          `json:"counts"`
+	Coverage coreprogress.Coverage        `json:"coverage"`
+	Sections []coreprogress.SectionCounts `json:"sections"`
+}
+
+type progressResponse struct {
+	Account string         `json:"account"`
+	Active  string         `json:"active_guide"`
+	Routes  []routeSummary `json:"routes"`
+}
+
+type activeGuideRequest struct {
+	GuideID string `json:"guide_id"`
 }
 
 type markRequest struct {
@@ -98,6 +127,71 @@ func (s *Server) handleObjectives(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, objectivesResponse{Account: account, Objectives: objectives})
+}
+
+func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	s.writeProgressSummary(w, r, account)
+}
+
+func (s *Server) writeProgressSummary(w http.ResponseWriter, r *http.Request, account string) {
+	out := progressResponse{Account: account, Routes: []routeSummary{}}
+	for _, g := range s.opts.Content.Guides {
+		board, err := s.opts.Progress.Board(r.Context(), account, g.ID)
+		if err != nil {
+			s.writeProgressError(w, err)
+			return
+		}
+		if board.Active {
+			out.Active = g.ID
+		}
+		out.Routes = append(out.Routes, routeSummary{
+			Guide: g.ID, Title: g.Title, Version: g.Version, Source: g.Source, Steps: g.StepCount(),
+			Active: board.Active, Cursor: board.Cursor, Counts: board.Counts, Coverage: board.Coverage, Sections: board.Sections,
+		})
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Server) handleActiveGuide(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	var req activeGuideRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	if err := s.opts.Progress.SetActiveGuide(r.Context(), account, strings.TrimSpace(req.GuideID)); err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	s.writeProgressSummary(w, r, account)
+}
+
+func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	limit := 20
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 || n > 200 {
+			writeError(w, http.StatusBadRequest, "limit must be between 1 and 200")
+			return
+		}
+		limit = n
+	}
+	events, err := s.opts.Progress.Events(r.Context(), account, r.PathValue("guide"), limit)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, events)
 }
 
 func accountParam(w http.ResponseWriter, r *http.Request) (string, bool) {

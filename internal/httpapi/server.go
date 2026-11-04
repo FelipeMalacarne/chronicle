@@ -55,9 +55,10 @@ type Options struct {
 
 // Server is the HTTP handler.
 type Server struct {
-	opts Options
-	log  *slog.Logger
-	mux  *http.ServeMux
+	opts  Options
+	log   *slog.Logger
+	mux   *http.ServeMux
+	index *contentIndex
 }
 
 // New builds the handler with all routes registered.
@@ -65,7 +66,7 @@ func New(opts Options) *Server {
 	if opts.Logger == nil {
 		opts.Logger = slog.Default()
 	}
-	s := &Server{opts: opts, log: opts.Logger, mux: http.NewServeMux()}
+	s := &Server{opts: opts, log: opts.Logger, mux: http.NewServeMux(), index: buildContentIndex(opts.Content)}
 	s.routes()
 	return s
 }
@@ -110,6 +111,9 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("POST /api/guides/{guide}/implied/confirm", s.handleConfirmImplied)
 		s.mux.HandleFunc("PUT /api/guides/{guide}/cursor", s.handleCursor)
 		s.mux.HandleFunc("GET /api/objectives", s.handleObjectives)
+		s.mux.HandleFunc("GET /api/guides/{guide}/events", s.handleEvents)
+		s.mux.HandleFunc("GET /api/progress", s.handleProgress)
+		s.mux.HandleFunc("PUT /api/account/guide", s.handleActiveGuide)
 	}
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")

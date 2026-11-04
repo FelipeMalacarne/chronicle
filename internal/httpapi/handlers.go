@@ -107,7 +107,9 @@ func (s *Server) handleGuide(w http.ResponseWriter, r *http.Request) {
 
 type sectionOut struct {
 	*content.Section
-	Guide string `json:"guide"`
+	Guide string            `json:"guide"`
+	Steps []stepOut         `json:"-"`
+	Names map[string]string `json:"-"`
 }
 
 // MarshalJSON keeps the section endpoint's established flattened `steps`
@@ -125,6 +127,7 @@ func (s sectionOut) MarshalJSON() ([]byte, error) {
 	}
 	out["guide"] = s.Guide
 	out["steps"] = s.Steps
+	out["names"] = s.Names
 	return json.Marshal(out)
 }
 
@@ -138,19 +141,37 @@ func (s *Server) writeSection(w http.ResponseWriter, guideID, sectionID string) 
 		writeError(w, http.StatusNotFound, "section not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, sectionOut{Section: sec, Guide: guideID})
+	out := sectionOut{Section: sec, Guide: guideID, Steps: make([]stepOut, 0, len(sec.Steps)), Names: map[string]string{}}
+	for _, st := range sec.Steps {
+		out.Steps = append(out.Steps, s.outStep(st))
+	}
+	sectionNames(sec, s.opts.Catalog, out.Names)
+	writeJSON(w, http.StatusOK, out)
 }
 
-// stepOut is a step plus its position for API consumers.
+// stepOut is a step plus its position for API consumers: the author's
+// reference, the position in the main route, the display names of the refs it
+// uses and where the other routes complete the same entities.
 type stepOut struct {
 	*content.Step
-	Section string `json:"section"`
-	Guide   string `json:"guide"`
-	Manual  bool   `json:"manual"`
+	Section  string                  `json:"section"`
+	Guide    string                  `json:"guide"`
+	Manual   bool                    `json:"manual"`
+	Ref      string                  `json:"ref"`
+	Position int                     `json:"position,omitempty"`
+	Total    int                     `json:"total"`
+	Names    map[string]string       `json:"names"`
+	Also     map[string][]occurrence `json:"also,omitempty"`
 }
 
-func outStep(st *content.Step) stepOut {
-	return stepOut{Step: st, Section: st.SectionID, Guide: st.GuideID, Manual: st.IsManual()}
+func (s *Server) outStep(st *content.Step) stepOut {
+	out := stepOut{
+		Step: st, Section: st.SectionID, Guide: st.GuideID, Manual: st.IsManual(),
+		Ref: authorRef(st), Position: s.index.position[guideStep{st.GuideID, st.ID}], Total: s.index.total[st.GuideID],
+		Names: map[string]string{}, Also: s.index.also(st),
+	}
+	stepNames(st, s.opts.Catalog, out.Names)
+	return out
 }
 
 func (s *Server) handleStep(w http.ResponseWriter, r *http.Request) {
@@ -163,7 +184,7 @@ func (s *Server) writeStep(w http.ResponseWriter, guideID, stepID string) {
 		writeError(w, http.StatusNotFound, "step not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, outStep(st))
+	writeJSON(w, http.StatusOK, s.outStep(st))
 }
 
 type nowResponse struct {
@@ -200,10 +221,10 @@ func (s *Server) writeNow(w http.ResponseWriter, guideID string) {
 	}
 	resp := nowResponse{Guide: guideID, Next: []stepOut{}, Progress: progress{Done: 0, Total: len(main)}}
 	if len(main) > 0 {
-		cur := outStep(main[0])
+		cur := s.outStep(main[0])
 		resp.Current = &cur
 		for _, st := range main[1:min(len(main), 1+lookahead)] {
-			resp.Next = append(resp.Next, outStep(st))
+			resp.Next = append(resp.Next, s.outStep(st))
 		}
 	}
 	writeJSON(w, http.StatusOK, resp)

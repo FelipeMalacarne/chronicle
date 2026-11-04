@@ -322,10 +322,66 @@ func (q *Queries) ListOrphanStepMarks(ctx context.Context, arg ListOrphanStepMar
 	return items, nil
 }
 
+const listRecentObjectiveProgressEvents = `-- name: ListRecentObjectiveProgressEvents :many
+SELECT e.id, e.objective_key, e.from_verdict, e.to_verdict, e.snapshot_id, e.at,
+       COALESCE(s.source, '')::text AS source
+FROM objective_progress_events e
+LEFT JOIN snapshots s ON s.id = e.snapshot_id
+WHERE e.account_id = $1
+ORDER BY e.at DESC
+LIMIT $2
+`
+
+type ListRecentObjectiveProgressEventsParams struct {
+	AccountID string `json:"account_id"`
+	Limit     int32  `json:"limit"`
+}
+
+type ListRecentObjectiveProgressEventsRow struct {
+	ID           string             `json:"id"`
+	ObjectiveKey string             `json:"objective_key"`
+	FromVerdict  pgtype.Text        `json:"from_verdict"`
+	ToVerdict    string             `json:"to_verdict"`
+	SnapshotID   pgtype.Text        `json:"snapshot_id"`
+	At           pgtype.Timestamptz `json:"at"`
+	Source       string             `json:"source"`
+}
+
+func (q *Queries) ListRecentObjectiveProgressEvents(ctx context.Context, arg ListRecentObjectiveProgressEventsParams) ([]ListRecentObjectiveProgressEventsRow, error) {
+	rows, err := q.db.Query(ctx, listRecentObjectiveProgressEvents, arg.AccountID, arg.Limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListRecentObjectiveProgressEventsRow{}
+	for rows.Next() {
+		var i ListRecentObjectiveProgressEventsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.ObjectiveKey,
+			&i.FromVerdict,
+			&i.ToVerdict,
+			&i.SnapshotID,
+			&i.At,
+			&i.Source,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRecentStepStatusEvents = `-- name: ListRecentStepStatusEvents :many
-SELECT id, account_id, guide_id, step_id, from_status, to_status, cause, snapshot_id, at FROM step_status_events
-WHERE account_id = $1 AND guide_id = $2
-ORDER BY at DESC
+SELECT e.id, e.guide_id, e.step_id, e.from_status, e.to_status, e.cause, e.snapshot_id, e.at,
+       COALESCE(s.source, '')::text AS source
+FROM step_status_events e
+LEFT JOIN snapshots s ON s.id = e.snapshot_id
+WHERE e.account_id = $1 AND e.guide_id = $2
+ORDER BY e.at DESC
 LIMIT $3
 `
 
@@ -335,18 +391,31 @@ type ListRecentStepStatusEventsParams struct {
 	Limit     int32  `json:"limit"`
 }
 
-func (q *Queries) ListRecentStepStatusEvents(ctx context.Context, arg ListRecentStepStatusEventsParams) ([]StepStatusEvent, error) {
+type ListRecentStepStatusEventsRow struct {
+	ID         string             `json:"id"`
+	GuideID    string             `json:"guide_id"`
+	StepID     string             `json:"step_id"`
+	FromStatus pgtype.Text        `json:"from_status"`
+	ToStatus   string             `json:"to_status"`
+	Cause      string             `json:"cause"`
+	SnapshotID pgtype.Text        `json:"snapshot_id"`
+	At         pgtype.Timestamptz `json:"at"`
+	Source     string             `json:"source"`
+}
+
+// With the source of the snapshot that caused an engine change (hiscores,
+// plugin), for "what changed in this session".
+func (q *Queries) ListRecentStepStatusEvents(ctx context.Context, arg ListRecentStepStatusEventsParams) ([]ListRecentStepStatusEventsRow, error) {
 	rows, err := q.db.Query(ctx, listRecentStepStatusEvents, arg.AccountID, arg.GuideID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []StepStatusEvent{}
+	items := []ListRecentStepStatusEventsRow{}
 	for rows.Next() {
-		var i StepStatusEvent
+		var i ListRecentStepStatusEventsRow
 		if err := rows.Scan(
 			&i.ID,
-			&i.AccountID,
 			&i.GuideID,
 			&i.StepID,
 			&i.FromStatus,
@@ -354,6 +423,7 @@ func (q *Queries) ListRecentStepStatusEvents(ctx context.Context, arg ListRecent
 			&i.Cause,
 			&i.SnapshotID,
 			&i.At,
+			&i.Source,
 		); err != nil {
 			return nil, err
 		}
@@ -545,6 +615,20 @@ type MoveStepStatusEventsParams struct {
 
 func (q *Queries) MoveStepStatusEvents(ctx context.Context, arg MoveStepStatusEventsParams) error {
 	_, err := q.db.Exec(ctx, moveStepStatusEvents, arg.NewStepID, arg.GuideID, arg.OldStepID)
+	return err
+}
+
+const setAccountGuide = `-- name: SetAccountGuide :exec
+UPDATE accounts SET guide_id = $2, updated_at = now() WHERE id = $1
+`
+
+type SetAccountGuideParams struct {
+	ID      string `json:"id"`
+	GuideID string `json:"guide_id"`
+}
+
+func (q *Queries) SetAccountGuide(ctx context.Context, arg SetAccountGuideParams) error {
+	_, err := q.db.Exec(ctx, setAccountGuide, arg.ID, arg.GuideID)
 	return err
 }
 

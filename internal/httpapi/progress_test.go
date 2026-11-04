@@ -61,6 +61,22 @@ func (f *fakeProgress) Objectives(_ context.Context, accountID string) ([]storep
 	return []storeprogress.ObjectiveView{{Key: "skill:agility>=10", Verdict: "met"}}, nil
 }
 
+func (f *fakeProgress) Events(_ context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error) {
+	f.call = "events"
+	if accountID != "acc-1" {
+		return storeprogress.EventsView{}, storeprogress.ErrAccountNotFound
+	}
+	return storeprogress.EventsView{Guide: guideID, Account: accountID, Steps: make([]storeprogress.StepEventView, limit), Objectives: []storeprogress.ObjectiveEventView{}}, nil
+}
+
+func (f *fakeProgress) SetActiveGuide(_ context.Context, accountID, guideID string) error {
+	f.call, f.step = "active", guideID
+	if guideID != "oziris-main" {
+		return storeprogress.ErrGuideNotFound
+	}
+	return nil
+}
+
 func newProgressServer(t *testing.T, devMode bool, fake *fakeProgress) *httptest.Server {
 	t.Helper()
 	g := &content.Guide{ID: "oziris-main", Title: "Oziris", Sections: []*content.Section{{ID: "s", Slug: "s", Steps: []*content.Step{{ID: "1", Text: "x"}}}}}
@@ -101,6 +117,9 @@ func TestProgressRoutesAreDevOnly(t *testing.T) {
 		{"POST", "/api/guides/oziris-main/implied/confirm?account=acc-1", ""},
 		{"PUT", "/api/guides/oziris-main/cursor?account=acc-1", `{"step_id":"1"}`},
 		{"GET", "/api/objectives?account=acc-1", ""},
+		{"GET", "/api/guides/oziris-main/events?account=acc-1", ""},
+		{"GET", "/api/progress?account=acc-1", ""},
+		{"PUT", "/api/account/guide?account=acc-1", `{"guide_id":"oziris-main"}`},
 	} {
 		if status, _ := do(t, r.method, server.URL+r.path, r.body); status != http.StatusNotFound && status != http.StatusMethodNotAllowed {
 			t.Fatalf("%s %s outside dev mode = %d", r.method, r.path, status)
@@ -150,6 +169,22 @@ func TestProgressRoutes(t *testing.T) {
 	}
 	if status, body := do(t, "GET", base+"/objectives?account=acc-1", ""); status != http.StatusOK || len(body["objectives"].([]any)) != 1 {
 		t.Fatalf("objectives = %d %v", status, body)
+	}
+
+	if status, body := do(t, "GET", base+"/progress?account=acc-1", ""); status != http.StatusOK || len(body["routes"].([]any)) != 1 {
+		t.Fatalf("progress = %d %v", status, body)
+	}
+	if status, body := do(t, "GET", base+"/guides/oziris-main/events?account=acc-1&limit=3", ""); status != http.StatusOK || len(body["steps"].([]any)) != 3 {
+		t.Fatalf("events = %d %v", status, body)
+	}
+	if status, _ := do(t, "GET", base+"/guides/oziris-main/events?account=acc-1&limit=0", ""); status != http.StatusBadRequest {
+		t.Fatalf("events limit 0 = %d", status)
+	}
+	if status, _ := do(t, "PUT", base+"/account/guide?account=acc-1", `{"guide_id":"oziris-main"}`); status != http.StatusOK || fake.call != "board" {
+		t.Fatalf("switch route = %d last call %s", status, fake.call)
+	}
+	if status, _ := do(t, "PUT", base+"/account/guide?account=acc-1", `{"guide_id":"nope"}`); status != http.StatusNotFound {
+		t.Fatalf("switch to unknown route = %d", status)
 	}
 
 	for _, tc := range []struct {

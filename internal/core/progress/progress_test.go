@@ -656,6 +656,15 @@ func TestBuildBoard(t *testing.T) {
 	if len(b.Steps) != 11 {
 		t.Fatalf("steps = %d", len(b.Steps))
 	}
+	// Completing objectives of the visible main route: agility, feathers and
+	// Cook's Assistant; two are met. Checkboxes: a1, a2, a4 and b1.
+	if b.Coverage != (Coverage{Objectives: 3, Met: 2, Checkbox: 4}) {
+		t.Fatalf("coverage = %+v", b.Coverage)
+	}
+	if len(b.Sections) != 3 || b.Sections[0].Counts.Total != 6 || b.Sections[1].Counts.Total != 2 ||
+		!b.Sections[2].Track || b.Sections[2].Counts.Total != 2 {
+		t.Fatalf("sections = %+v", b.Sections)
+	}
 	var a5 StepState
 	for _, s := range b.Steps {
 		if s.ID == "a5" {

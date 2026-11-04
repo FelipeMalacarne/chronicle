@@ -2135,28 +2135,32 @@
       "name": "Locating crystal",
       "wiki_key": "Locating crystal (unobtainable item)",
       "family": "Locating crystal (unobtainable item)",
-      "variant": "1"
+      "variant": "1",
+      "unobtainable": true
     },
     {
       "id": 613,
       "name": "Locating crystal",
       "wiki_key": "Locating crystal (unobtainable item)",
       "family": "Locating crystal (unobtainable item)",
-      "variant": "2"
+      "variant": "2",
+      "unobtainable": true
     },
     {
       "id": 614,
       "name": "Locating crystal",
       "wiki_key": "Locating crystal (unobtainable item)",
       "family": "Locating crystal (unobtainable item)",
-      "variant": "3"
+      "variant": "3",
+      "unobtainable": true
     },
     {
       "id": 615,
       "name": "Locating crystal",
       "wiki_key": "Locating crystal (unobtainable item)",
       "family": "Locating crystal (unobtainable item)",
-      "variant": "4"
+      "variant": "4",
+      "unobtainable": true
     },
     {
       "id": 616,
@@ -2406,7 +2410,8 @@
     {
       "id": 678,
       "name": "Panning tray",
-      "wiki_key": "Panning tray (unobtainable item)"
+      "wiki_key": "Panning tray (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 679,
@@ -3004,17 +3009,20 @@
     {
       "id": 796,
       "name": "{{Null name}}",
-      "wiki_key": "Exploding vial (animation item)"
+      "wiki_key": "Exploding vial (animation item)",
+      "unobtainable": true
     },
     {
       "id": 797,
       "name": "Herb bowl",
-      "wiki_key": "Herb bowl (animation item)"
+      "wiki_key": "Herb bowl (animation item)",
+      "unobtainable": true
     },
     {
       "id": 798,
       "name": "Grinder",
-      "wiki_key": "Grinder (animation item)"
+      "wiki_key": "Grinder (animation item)",
+      "unobtainable": true
     },
     {
       "id": 799,
@@ -3700,7 +3708,8 @@
       "id": 943,
       "name": "Worm",
       "wiki_key": "Worm (unobtainable item)",
-      "noted_id": 944
+      "noted_id": 944,
+      "unobtainable": true
     },
     {
       "id": 945,
@@ -3787,7 +3796,8 @@
     {
       "id": 972,
       "name": "Papyrus",
-      "wiki_key": "Papyrus (unobtainable item)"
+      "wiki_key": "Papyrus (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 973,
@@ -3806,12 +3816,14 @@
       "id": 977,
       "name": "Cooking pot",
       "wiki_key": "Cooking pot (unobtainable item)",
-      "noted_id": 978
+      "noted_id": 978,
+      "unobtainable": true
     },
     {
       "id": 979,
       "name": "Highwayman mask",
-      "wiki_key": "Highwayman mask (unobtainable item)"
+      "wiki_key": "Highwayman mask (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 981,
@@ -4719,7 +4731,8 @@
       "noted_id": 1236,
       "family": "Poisoned dagger (unobtainable item)",
       "variant": "Poison",
-      "equipment_slot": "weapon"
+      "equipment_slot": "weapon",
+      "unobtainable": true
     },
     {
       "id": 1237,
@@ -5383,19 +5396,22 @@
       "id": 1413,
       "name": "Halberd",
       "wiki_key": "Halberd (unobtainable item)",
-      "noted_id": 1414
+      "noted_id": 1414,
+      "unobtainable": true
     },
     {
       "id": 1415,
       "name": "Warhammer",
       "wiki_key": "Warhammer (unobtainable item)",
-      "noted_id": 1416
+      "noted_id": 1416,
+      "unobtainable": true
     },
     {
       "id": 1417,
       "name": "Javelin",
       "wiki_key": "Javelin (unobtainable item)",
-      "noted_id": 1418
+      "noted_id": 1418,
+      "unobtainable": true
     },
     {
       "id": 1419,
@@ -5550,7 +5566,8 @@
     {
       "id": 1465,
       "name": "Weapon poison",
-      "wiki_key": "Weapon poison (unobtainable item)"
+      "wiki_key": "Weapon poison (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 1466,
@@ -8742,7 +8759,8 @@
     {
       "id": 2425,
       "name": "Vorkath's head",
-      "wiki_key": "Vorkath's head (unobtainable item)"
+      "wiki_key": "Vorkath's head (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 2426,
@@ -12273,371 +12291,424 @@
     {
       "id": 3271,
       "name": "Compost bin",
-      "wiki_key": "Compost bin (unobtainable item)"
+      "wiki_key": "Compost bin (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 3273,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Wind Strike"
+      "variant": "Wind Strike",
+      "unobtainable": true
     },
     {
       "id": 3274,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Confuse"
+      "variant": "Confuse",
+      "unobtainable": true
     },
     {
       "id": 3275,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Water Strike"
+      "variant": "Water Strike",
+      "unobtainable": true
     },
     {
       "id": 3276,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lvl-1 Enchant"
+      "variant": "Lvl-1 Enchant",
+      "unobtainable": true
     },
     {
       "id": 3277,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Earth Strike"
+      "variant": "Earth Strike",
+      "unobtainable": true
     },
     {
       "id": 3278,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Weaken"
+      "variant": "Weaken",
+      "unobtainable": true
     },
     {
       "id": 3279,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Fire Strike"
+      "variant": "Fire Strike",
+      "unobtainable": true
     },
     {
       "id": 3280,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Bones to Bananas"
+      "variant": "Bones to Bananas",
+      "unobtainable": true
     },
     {
       "id": 3281,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Wind Bolt"
+      "variant": "Wind Bolt",
+      "unobtainable": true
     },
     {
       "id": 3282,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Curse"
+      "variant": "Curse",
+      "unobtainable": true
     },
     {
       "id": 3283,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Bind"
+      "variant": "Bind",
+      "unobtainable": true
     },
     {
       "id": 3284,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Low Level Alchemy"
+      "variant": "Low Level Alchemy",
+      "unobtainable": true
     },
     {
       "id": 3285,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Water Bolt"
+      "variant": "Water Bolt",
+      "unobtainable": true
     },
     {
       "id": 3286,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Varrock Teleport"
+      "variant": "Varrock Teleport",
+      "unobtainable": true
     },
     {
       "id": 3287,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lvl-2 Enchant"
+      "variant": "Lvl-2 Enchant",
+      "unobtainable": true
     },
     {
       "id": 3288,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Earth Bolt"
+      "variant": "Earth Bolt",
+      "unobtainable": true
     },
     {
       "id": 3289,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lumbridge Teleport"
+      "variant": "Lumbridge Teleport",
+      "unobtainable": true
     },
     {
       "id": 3290,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Telekinetic Grab"
+      "variant": "Telekinetic Grab",
+      "unobtainable": true
     },
     {
       "id": 3291,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Fire Bolt"
+      "variant": "Fire Bolt",
+      "unobtainable": true
     },
     {
       "id": 3292,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Falador Teleport"
+      "variant": "Falador Teleport",
+      "unobtainable": true
     },
     {
       "id": 3293,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Crumble Undead"
+      "variant": "Crumble Undead",
+      "unobtainable": true
     },
     {
       "id": 3294,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Wind Blast"
+      "variant": "Wind Blast",
+      "unobtainable": true
     },
     {
       "id": 3295,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Superheat Item"
+      "variant": "Superheat Item",
+      "unobtainable": true
     },
     {
       "id": 3296,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Camelot Teleport"
+      "variant": "Camelot Teleport",
+      "unobtainable": true
     },
     {
       "id": 3297,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Water Blast"
+      "variant": "Water Blast",
+      "unobtainable": true
     },
     {
       "id": 3298,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lvl-3 Enchant"
+      "variant": "Lvl-3 Enchant",
+      "unobtainable": true
     },
     {
       "id": 3299,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Iban Blast"
+      "variant": "Iban Blast",
+      "unobtainable": true
     },
     {
       "id": 3300,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Snare"
+      "variant": "Snare",
+      "unobtainable": true
     },
     {
       "id": 3301,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ardougne Teleport"
+      "variant": "Ardougne Teleport",
+      "unobtainable": true
     },
     {
       "id": 3302,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Earth Blast"
+      "variant": "Earth Blast",
+      "unobtainable": true
     },
     {
       "id": 3303,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "High Level Alchemy"
+      "variant": "High Level Alchemy",
+      "unobtainable": true
     },
     {
       "id": 3304,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Charge Water Orb"
+      "variant": "Charge Water Orb",
+      "unobtainable": true
     },
     {
       "id": 3305,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lvl-4 Enchant"
+      "variant": "Lvl-4 Enchant",
+      "unobtainable": true
     },
     {
       "id": 3306,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Watchtower Teleport"
+      "variant": "Watchtower Teleport",
+      "unobtainable": true
     },
     {
       "id": 3307,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Fire Blast"
+      "variant": "Fire Blast",
+      "unobtainable": true
     },
     {
       "id": 3308,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Charge Earth Orb"
+      "variant": "Charge Earth Orb",
+      "unobtainable": true
     },
     {
       "id": 3309,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Claws of Guthix"
+      "variant": "Claws of Guthix",
+      "unobtainable": true
     },
     {
       "id": 3310,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Flames of Zamorak"
+      "variant": "Flames of Zamorak",
+      "unobtainable": true
     },
     {
       "id": 3311,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Saradomin Strike"
+      "variant": "Saradomin Strike",
+      "unobtainable": true
     },
     {
       "id": 3312,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Trollheim Teleport"
+      "variant": "Trollheim Teleport",
+      "unobtainable": true
     },
     {
       "id": 3313,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Wind Wave"
+      "variant": "Wind Wave",
+      "unobtainable": true
     },
     {
       "id": 3314,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Charge Fire Orb"
+      "variant": "Charge Fire Orb",
+      "unobtainable": true
     },
     {
       "id": 3315,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Water Wave"
+      "variant": "Water Wave",
+      "unobtainable": true
     },
     {
       "id": 3316,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Charge Air Orb"
+      "variant": "Charge Air Orb",
+      "unobtainable": true
     },
     {
       "id": 3317,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Vulnerability"
+      "variant": "Vulnerability",
+      "unobtainable": true
     },
     {
       "id": 3318,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lvl-5 Enchant"
+      "variant": "Lvl-5 Enchant",
+      "unobtainable": true
     },
     {
       "id": 3319,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Earth Wave"
+      "variant": "Earth Wave",
+      "unobtainable": true
     },
     {
       "id": 3320,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Enfeeble"
+      "variant": "Enfeeble",
+      "unobtainable": true
     },
     {
       "id": 3321,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Fire Wave"
+      "variant": "Fire Wave",
+      "unobtainable": true
     },
     {
       "id": 3322,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Entangle"
+      "variant": "Entangle",
+      "unobtainable": true
     },
     {
       "id": 3323,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Charge"
+      "variant": "Charge",
+      "unobtainable": true
     },
     {
       "id": 3324,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Stun"
+      "variant": "Stun",
+      "unobtainable": true
     },
     {
       "id": 3325,
@@ -15888,7 +15959,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Magic Dart"
+      "variant": "Magic Dart",
+      "unobtainable": true
     },
     {
       "id": 4178,
@@ -17070,13 +17142,15 @@
     {
       "id": 4498,
       "name": "Rope",
-      "wiki_key": "Rope (animation item)"
+      "wiki_key": "Rope (animation item)",
+      "unobtainable": true
     },
     {
       "id": 4500,
       "name": "Pole",
       "wiki_key": "Pole (animation item)",
-      "variant": "Normal"
+      "variant": "Normal",
+      "unobtainable": true
     },
     {
       "id": 4502,
@@ -17308,28 +17382,32 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Teleother Lumbridge"
+      "variant": "Teleother Lumbridge",
+      "unobtainable": true
     },
     {
       "id": 4554,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Teleother Falador"
+      "variant": "Teleother Falador",
+      "unobtainable": true
     },
     {
       "id": 4555,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Tele Block"
+      "variant": "Tele Block",
+      "unobtainable": true
     },
     {
       "id": 4556,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Teleother Camelot"
+      "variant": "Teleother Camelot",
+      "unobtainable": true
     },
     {
       "id": 4557,
@@ -17412,7 +17490,8 @@
     {
       "id": 4572,
       "name": "Pages",
-      "wiki_key": "Pages (unobtainable item)"
+      "wiki_key": "Pages (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 4573,
@@ -17548,7 +17627,8 @@
     {
       "id": 4602,
       "name": "Ugthanki dung",
-      "wiki_key": "Ugthanki dung (unobtainable item)"
+      "wiki_key": "Ugthanki dung (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 4603,
@@ -17658,173 +17738,198 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Smoke Rush"
+      "variant": "Smoke Rush",
+      "unobtainable": true
     },
     {
       "id": 4630,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Shadow Rush"
+      "variant": "Shadow Rush",
+      "unobtainable": true
     },
     {
       "id": 4631,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Paddewwa Teleport"
+      "variant": "Paddewwa Teleport",
+      "unobtainable": true
     },
     {
       "id": 4632,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Blood Rush"
+      "variant": "Blood Rush",
+      "unobtainable": true
     },
     {
       "id": 4633,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ice Rush"
+      "variant": "Ice Rush",
+      "unobtainable": true
     },
     {
       "id": 4634,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Senntisten Teleport"
+      "variant": "Senntisten Teleport",
+      "unobtainable": true
     },
     {
       "id": 4635,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Smoke Burst"
+      "variant": "Smoke Burst",
+      "unobtainable": true
     },
     {
       "id": 4636,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Shadow Burst"
+      "variant": "Shadow Burst",
+      "unobtainable": true
     },
     {
       "id": 4637,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Kharyrll Teleport"
+      "variant": "Kharyrll Teleport",
+      "unobtainable": true
     },
     {
       "id": 4638,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Blood Burst"
+      "variant": "Blood Burst",
+      "unobtainable": true
     },
     {
       "id": 4639,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ice Burst"
+      "variant": "Ice Burst",
+      "unobtainable": true
     },
     {
       "id": 4640,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lassar Teleport"
+      "variant": "Lassar Teleport",
+      "unobtainable": true
     },
     {
       "id": 4641,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Smoke Blitz"
+      "variant": "Smoke Blitz",
+      "unobtainable": true
     },
     {
       "id": 4642,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Shadow Blitz"
+      "variant": "Shadow Blitz",
+      "unobtainable": true
     },
     {
       "id": 4643,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Dareeyak Teleport"
+      "variant": "Dareeyak Teleport",
+      "unobtainable": true
     },
     {
       "id": 4644,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Blood Blitz"
+      "variant": "Blood Blitz",
+      "unobtainable": true
     },
     {
       "id": 4645,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ice Blitz"
+      "variant": "Ice Blitz",
+      "unobtainable": true
     },
     {
       "id": 4646,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Carrallanger Teleport"
+      "variant": "Carrallanger Teleport",
+      "unobtainable": true
     },
     {
       "id": 4647,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Smoke Barrage"
+      "variant": "Smoke Barrage",
+      "unobtainable": true
     },
     {
       "id": 4648,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Shadow Barrage"
+      "variant": "Shadow Barrage",
+      "unobtainable": true
     },
     {
       "id": 4649,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Annakarl Teleport"
+      "variant": "Annakarl Teleport",
+      "unobtainable": true
     },
     {
       "id": 4650,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Blood Barrage"
+      "variant": "Blood Barrage",
+      "unobtainable": true
     },
     {
       "id": 4651,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ice Barrage"
+      "variant": "Ice Barrage",
+      "unobtainable": true
     },
     {
       "id": 4652,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ghorrock Teleport"
+      "variant": "Ghorrock Teleport",
+      "unobtainable": true
     },
     {
       "id": 4653,
       "name": "Fire",
-      "wiki_key": "Fire (unobtainable item)"
+      "wiki_key": "Fire (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 4654,
@@ -18030,7 +18135,8 @@
     {
       "id": 4692,
       "name": "Gold leaf",
-      "wiki_key": "Gold leaf (unobtainable item)"
+      "wiki_key": "Gold leaf (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 4693,
@@ -19581,7 +19687,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Enchant Crossbow Bolt"
+      "variant": "Enchant Crossbow Bolt",
+      "unobtainable": true
     },
     {
       "id": 5001,
@@ -19837,14 +19944,16 @@
       "name": "Dwarven battleaxe",
       "wiki_key": "Dwarven battleaxe (animation item)",
       "family": "Dwarven battleaxe (animation item)",
-      "variant": "Rusty"
+      "variant": "Rusty",
+      "unobtainable": true
     },
     {
       "id": 5061,
       "name": "Dwarven battleaxe",
       "wiki_key": "Dwarven battleaxe (animation item)",
       "family": "Dwarven battleaxe (animation item)",
-      "variant": "Sharpened"
+      "variant": "Sharpened",
+      "unobtainable": true
     },
     {
       "id": 5062,
@@ -20396,7 +20505,8 @@
     {
       "id": 5356,
       "name": "Plant pot",
-      "wiki_key": "Plant pot (unobtainable item)"
+      "wiki_key": "Plant pot (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 5358,
@@ -21342,42 +21452,48 @@
       "name": "Gear",
       "wiki_key": "Gear (unobtainable item)",
       "family": "Gear (unobtainable item)",
-      "variant": "1"
+      "variant": "1",
+      "unobtainable": true
     },
     {
       "id": 5563,
       "name": "Gear",
       "wiki_key": "Gear (unobtainable item)",
       "family": "Gear (unobtainable item)",
-      "variant": "2"
+      "variant": "2",
+      "unobtainable": true
     },
     {
       "id": 5564,
       "name": "Gear",
       "wiki_key": "Gear (unobtainable item)",
       "family": "Gear (unobtainable item)",
-      "variant": "3"
+      "variant": "3",
+      "unobtainable": true
     },
     {
       "id": 5565,
       "name": "Gear",
       "wiki_key": "Gear (unobtainable item)",
       "family": "Gear (unobtainable item)",
-      "variant": "4"
+      "variant": "4",
+      "unobtainable": true
     },
     {
       "id": 5566,
       "name": "Gear",
       "wiki_key": "Gear (unobtainable item)",
       "family": "Gear (unobtainable item)",
-      "variant": "5"
+      "variant": "5",
+      "unobtainable": true
     },
     {
       "id": 5567,
       "name": "Gear",
       "wiki_key": "Gear (unobtainable item)",
       "family": "Gear (unobtainable item)",
-      "variant": "6"
+      "variant": "6",
+      "unobtainable": true
     },
     {
       "id": 5568,
@@ -21627,7 +21743,8 @@
     {
       "id": 5614,
       "name": "Magic carpet",
-      "wiki_key": "Magic carpet (animation item)"
+      "wiki_key": "Magic carpet (animation item)",
+      "unobtainable": true
     },
     {
       "id": 5615,
@@ -22181,7 +22298,8 @@
       "noted_id": 5685,
       "family": "Poisoned dagger (unobtainable item)",
       "variant": "Poison+",
-      "equipment_slot": "weapon"
+      "equipment_slot": "weapon",
+      "unobtainable": true
     },
     {
       "id": 5686,
@@ -22262,7 +22380,8 @@
       "noted_id": 5703,
       "family": "Poisoned dagger (unobtainable item)",
       "variant": "Poison++",
-      "equipment_slot": "weapon"
+      "equipment_slot": "weapon",
+      "unobtainable": true
     },
     {
       "id": 5704,
@@ -22394,7 +22513,8 @@
       "id": 5732,
       "name": "Stool",
       "wiki_key": "Stool (animation item)",
-      "noted_id": 6060
+      "noted_id": 6060,
+      "unobtainable": true
     },
     {
       "id": 5733,
@@ -25380,7 +25500,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lvl-6 Enchant"
+      "variant": "Lvl-6 Enchant",
+      "unobtainable": true
     },
     {
       "id": 6568,
@@ -25981,7 +26102,8 @@
     {
       "id": 6717,
       "name": "Karamthulhu",
-      "wiki_key": "Karamthulhu (unobtainable item)"
+      "wiki_key": "Karamthulhu (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 6718,
@@ -26488,7 +26610,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Bones to Peaches"
+      "variant": "Bones to Peaches",
+      "unobtainable": true
     },
     {
       "id": 6885,
@@ -26963,7 +27086,8 @@
     {
       "id": 7004,
       "name": "Chisel",
-      "wiki_key": "Chisel (animation item)"
+      "wiki_key": "Chisel (animation item)",
+      "unobtainable": true
     },
     {
       "id": 7051,
@@ -27233,7 +27357,8 @@
     {
       "id": 7118,
       "name": "Canister",
-      "wiki_key": "Canister (animation item)"
+      "wiki_key": "Canister (animation item)",
+      "unobtainable": true
     },
     {
       "id": 7119,
@@ -27248,7 +27373,8 @@
     {
       "id": 7121,
       "name": "Repair plank",
-      "wiki_key": "Repair plank (animation item)"
+      "wiki_key": "Repair plank (animation item)",
+      "unobtainable": true
     },
     {
       "id": 7122,
@@ -27354,7 +27480,8 @@
     {
       "id": 7147,
       "name": "Cannon balls",
-      "wiki_key": "Cannon balls (unobtainable item)"
+      "wiki_key": "Cannon balls (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 7148,
@@ -28977,7 +29104,8 @@
     {
       "id": 7519,
       "name": "Crab meat",
-      "wiki_key": "Crab meat (unobtainable item)"
+      "wiki_key": "Crab meat (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 7520,
@@ -29306,7 +29434,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ape Atoll Teleport"
+      "variant": "Ape Atoll Teleport",
+      "unobtainable": true
     },
     {
       "id": 7622,
@@ -29603,13 +29732,15 @@
       "id": 7682,
       "name": "Hoop",
       "wiki_key": "Hoop (animation item)",
-      "noted_id": 7683
+      "noted_id": 7683,
+      "unobtainable": true
     },
     {
       "id": 7684,
       "name": "Dart",
       "wiki_key": "Dart (unobtainable item)",
-      "noted_id": 7685
+      "noted_id": 7685,
+      "unobtainable": true
     },
     {
       "id": 7686,
@@ -29890,7 +30021,8 @@
     {
       "id": 7758,
       "name": "Rusty sword",
-      "wiki_key": "Rusty sword (animation item)"
+      "wiki_key": "Rusty sword (animation item)",
+      "unobtainable": true
     },
     {
       "id": 7759,
@@ -31115,7 +31247,8 @@
     {
       "id": 7974,
       "name": "Servant bell",
-      "wiki_key": "Servant bell (unobtainable item)"
+      "wiki_key": "Servant bell (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 7975,
@@ -32528,7 +32661,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Teleport to House"
+      "variant": "Teleport to House",
+      "unobtainable": true
     },
     {
       "id": 8837,
@@ -32628,7 +32762,8 @@
     {
       "id": 8857,
       "name": "Shot",
-      "wiki_key": "Shot (animation item)"
+      "wiki_key": "Shot (animation item)",
+      "unobtainable": true
     },
     {
       "id": 8858,
@@ -32761,21 +32896,24 @@
       "name": "Zanik",
       "wiki_key": "Zanik (unobtainable item)",
       "family": "Zanik (unobtainable item)",
-      "variant": "Normal"
+      "variant": "Normal",
+      "unobtainable": true
     },
     {
       "id": 8888,
       "name": "Zanik (ham)",
       "wiki_key": "Zanik (unobtainable item)",
       "family": "Zanik (unobtainable item)",
-      "variant": "H.A.M."
+      "variant": "H.A.M.",
+      "unobtainable": true
     },
     {
       "id": 8889,
       "name": "Zanik (showdown)",
       "wiki_key": "Zanik (unobtainable item)",
       "family": "Zanik (unobtainable item)",
-      "variant": "Showdown"
+      "variant": "Showdown",
+      "unobtainable": true
     },
     {
       "id": 8890,
@@ -33188,12 +33326,14 @@
     {
       "id": 8986,
       "name": "Bucket",
-      "wiki_key": "Bucket (animation item)"
+      "wiki_key": "Bucket (animation item)",
+      "unobtainable": true
     },
     {
       "id": 8987,
       "name": "Torch",
-      "wiki_key": "Torch (animation item, Trouble Brewing)"
+      "wiki_key": "Torch (animation item, Trouble Brewing)",
+      "unobtainable": true
     },
     {
       "id": 8988,
@@ -33208,7 +33348,8 @@
     {
       "id": 8990,
       "name": "Brewin' guide",
-      "wiki_key": "Brewin' guide (unobtainable item)"
+      "wiki_key": "Brewin' guide (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 8991,
@@ -33731,217 +33872,248 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Bake Pie"
+      "variant": "Bake Pie",
+      "unobtainable": true
     },
     {
       "id": 9108,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Cure Plant"
+      "variant": "Cure Plant",
+      "unobtainable": true
     },
     {
       "id": 9109,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "NPC Contact"
+      "variant": "NPC Contact",
+      "unobtainable": true
     },
     {
       "id": 9110,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Cure Other"
+      "variant": "Cure Other",
+      "unobtainable": true
     },
     {
       "id": 9111,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Moonclan Teleport"
+      "variant": "Moonclan Teleport",
+      "unobtainable": true
     },
     {
       "id": 9112,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Tele Group Moonclan"
+      "variant": "Tele Group Moonclan",
+      "unobtainable": true
     },
     {
       "id": 9113,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Cure Me"
+      "variant": "Cure Me",
+      "unobtainable": true
     },
     {
       "id": 9114,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Waterbirth Teleport"
+      "variant": "Waterbirth Teleport",
+      "unobtainable": true
     },
     {
       "id": 9115,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Tele Group Waterbirth"
+      "variant": "Tele Group Waterbirth",
+      "unobtainable": true
     },
     {
       "id": 9116,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Cure Group"
+      "variant": "Cure Group",
+      "unobtainable": true
     },
     {
       "id": 9117,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Barbarian Teleport"
+      "variant": "Barbarian Teleport",
+      "unobtainable": true
     },
     {
       "id": 9118,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Tele Group Barbarian"
+      "variant": "Tele Group Barbarian",
+      "unobtainable": true
     },
     {
       "id": 9119,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Superglass Make"
+      "variant": "Superglass Make",
+      "unobtainable": true
     },
     {
       "id": 9120,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Khazard Teleport"
+      "variant": "Khazard Teleport",
+      "unobtainable": true
     },
     {
       "id": 9121,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Tele Group Khazard"
+      "variant": "Tele Group Khazard",
+      "unobtainable": true
     },
     {
       "id": 9122,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "String Jewellery"
+      "variant": "String Jewellery",
+      "unobtainable": true
     },
     {
       "id": 9123,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Stat Restore Pot Share"
+      "variant": "Stat Restore Pot Share",
+      "unobtainable": true
     },
     {
       "id": 9124,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Magic Imbue"
+      "variant": "Magic Imbue",
+      "unobtainable": true
     },
     {
       "id": 9125,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Fertile Soil"
+      "variant": "Fertile Soil",
+      "unobtainable": true
     },
     {
       "id": 9126,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Boost Potion Share"
+      "variant": "Boost Potion Share",
+      "unobtainable": true
     },
     {
       "id": 9127,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Fishing Guild Teleport"
+      "variant": "Fishing Guild Teleport",
+      "unobtainable": true
     },
     {
       "id": 9128,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Tele Group Fishing Guild"
+      "variant": "Tele Group Fishing Guild",
+      "unobtainable": true
     },
     {
       "id": 9129,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Catherby Teleport"
+      "variant": "Catherby Teleport",
+      "unobtainable": true
     },
     {
       "id": 9130,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Tele Group Catherby"
+      "variant": "Tele Group Catherby",
+      "unobtainable": true
     },
     {
       "id": 9131,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ice Plateau Teleport"
+      "variant": "Ice Plateau Teleport",
+      "unobtainable": true
     },
     {
       "id": 9132,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Tele Group Ice Plateau"
+      "variant": "Tele Group Ice Plateau",
+      "unobtainable": true
     },
     {
       "id": 9133,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Energy Transfer"
+      "variant": "Energy Transfer",
+      "unobtainable": true
     },
     {
       "id": 9134,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Heal Other"
+      "variant": "Heal Other",
+      "unobtainable": true
     },
     {
       "id": 9135,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Vengeance Other"
+      "variant": "Vengeance Other",
+      "unobtainable": true
     },
     {
       "id": 9136,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Vengeance"
+      "variant": "Vengeance",
+      "unobtainable": true
     },
     {
       "id": 9137,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Heal Group"
+      "variant": "Heal Group",
+      "unobtainable": true
     },
     {
       "id": 9139,
@@ -34468,7 +34640,8 @@
     {
       "id": 9415,
       "name": "Grapple",
-      "wiki_key": "Grapple (animation item)"
+      "wiki_key": "Grapple (animation item)",
+      "unobtainable": true
     },
     {
       "id": 9416,
@@ -34870,7 +35043,8 @@
     {
       "id": 9590,
       "name": "Dossier",
-      "wiki_key": "Dossier (animation item)"
+      "wiki_key": "Dossier (animation item)",
+      "unobtainable": true
     },
     {
       "id": 9591,
@@ -35228,7 +35402,8 @@
     {
       "id": 9665,
       "name": "Torch",
-      "wiki_key": "Torch (animation item, Sea Slug)"
+      "wiki_key": "Torch (animation item, Sea Slug)",
+      "unobtainable": true
     },
     {
       "id": 9666,
@@ -35379,14 +35554,16 @@
     {
       "id": 9702,
       "name": "Stick",
-      "wiki_key": "Stick (animation item)"
+      "wiki_key": "Stick (animation item)",
+      "unobtainable": true
     },
     {
       "id": 9712,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lumbridge Home Teleport"
+      "variant": "Lumbridge Home Teleport",
+      "unobtainable": true
     },
     {
       "id": 9715,
@@ -35396,7 +35573,8 @@
     {
       "id": 9716,
       "name": "Rock",
-      "wiki_key": "Rock (unobtainable item)"
+      "wiki_key": "Rock (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 9717,
@@ -36353,7 +36531,8 @@
     {
       "id": 9951,
       "name": "Footprint",
-      "wiki_key": "Footprint (unobtainable item)"
+      "wiki_key": "Footprint (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 9978,
@@ -38401,12 +38580,14 @@
     {
       "id": 10485,
       "name": "Scroll",
-      "wiki_key": "Scroll (animation item)"
+      "wiki_key": "Scroll (animation item)",
+      "unobtainable": true
     },
     {
       "id": 10486,
       "name": "Empty sack",
-      "wiki_key": "Empty sack (animation item)"
+      "wiki_key": "Empty sack (animation item)",
+      "unobtainable": true
     },
     {
       "id": 10487,
@@ -38499,7 +38680,8 @@
     {
       "id": 10509,
       "name": "Snowball",
-      "wiki_key": "Snowball (animation item)"
+      "wiki_key": "Snowball (animation item)",
+      "unobtainable": true
     },
     {
       "id": 10512,
@@ -38838,7 +39020,8 @@
     {
       "id": 10566,
       "name": "Fire cape",
-      "wiki_key": "Fire cape (animation item)"
+      "wiki_key": "Fire cape (animation item)",
+      "unobtainable": true
     },
     {
       "id": 10567,
@@ -39168,14 +39351,16 @@
       "name": "{{Null name}}",
       "wiki_key": "Tea flask (animation item)",
       "family": "Tea flask (animation item)",
-      "variant": "1"
+      "variant": "1",
+      "unobtainable": true
     },
     {
       "id": 10861,
       "name": "{{Null name}}",
       "wiki_key": "Tea flask (animation item)",
       "family": "Tea flask (animation item)",
-      "variant": "2"
+      "variant": "2",
+      "unobtainable": true
     },
     {
       "id": 10862,
@@ -39291,7 +39476,8 @@
     {
       "id": 10886,
       "name": "Prayer book",
-      "wiki_key": "Prayer book (animation item)"
+      "wiki_key": "Prayer book (animation item)",
+      "unobtainable": true
     },
     {
       "id": 10887,
@@ -39529,22 +39715,26 @@
     {
       "id": 10946,
       "name": "Pushup",
-      "wiki_key": "Pushup (unobtainable item)"
+      "wiki_key": "Pushup (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 10947,
       "name": "Run",
-      "wiki_key": "Run (unobtainable item)"
+      "wiki_key": "Run (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 10948,
       "name": "Situp",
-      "wiki_key": "Situp (unobtainable item)"
+      "wiki_key": "Situp (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 10949,
       "name": "Starjump",
-      "wiki_key": "Starjump (unobtainable item)"
+      "wiki_key": "Starjump (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 10952,
@@ -39883,7 +40073,8 @@
     {
       "id": 11044,
       "name": "Rotten barrel",
-      "wiki_key": "Rotten barrel (unobtainable item)"
+      "wiki_key": "Rotten barrel (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 11045,
@@ -39985,7 +40176,8 @@
       "name": "Zanik (slice)",
       "wiki_key": "Zanik (unobtainable item)",
       "family": "Zanik (unobtainable item)",
-      "variant": "Slice"
+      "variant": "Slice",
+      "unobtainable": true
     },
     {
       "id": 11065,
@@ -40288,63 +40480,72 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Edgeville Home Teleport"
+      "variant": "Edgeville Home Teleport",
+      "unobtainable": true
     },
     {
       "id": 11143,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lunar Home Teleport"
+      "variant": "Lunar Home Teleport",
+      "unobtainable": true
     },
     {
       "id": 11144,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Monster Examine"
+      "variant": "Monster Examine",
+      "unobtainable": true
     },
     {
       "id": 11145,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Humidify"
+      "variant": "Humidify",
+      "unobtainable": true
     },
     {
       "id": 11146,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Hunter Kit"
+      "variant": "Hunter Kit",
+      "unobtainable": true
     },
     {
       "id": 11147,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Stat Spy"
+      "variant": "Stat Spy",
+      "unobtainable": true
     },
     {
       "id": 11148,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Dream"
+      "variant": "Dream",
+      "unobtainable": true
     },
     {
       "id": 11149,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Plank Make"
+      "variant": "Plank Make",
+      "unobtainable": true
     },
     {
       "id": 11150,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Spellbook Swap"
+      "variant": "Spellbook Swap",
+      "unobtainable": true
     },
     {
       "id": 11151,
@@ -40402,19 +40603,22 @@
       "name": "Phoenix crossbow",
       "wiki_key": "Phoenix crossbow (unobtainable item)",
       "family": "Phoenix crossbow (unobtainable item)",
-      "variant": "1"
+      "variant": "1",
+      "unobtainable": true
     },
     {
       "id": 11167,
       "name": "Phoenix crossbow",
       "wiki_key": "Phoenix crossbow (unobtainable item)",
       "family": "Phoenix crossbow (unobtainable item)",
-      "variant": "2"
+      "variant": "2",
+      "unobtainable": true
     },
     {
       "id": 11169,
       "name": "Newspaper",
-      "wiki_key": "Newspaper (unobtainable item)"
+      "wiki_key": "Newspaper (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 11171,
@@ -43293,7 +43497,8 @@
     {
       "id": 11997,
       "name": "Easter",
-      "wiki_key": "Easter (unobtainable item)"
+      "wiki_key": "Easter (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 11998,
@@ -50427,7 +50632,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Lvl-7 Enchant"
+      "variant": "Lvl-7 Enchant",
+      "unobtainable": true
     },
     {
       "id": 19476,
@@ -53267,7 +53473,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Spin Flax"
+      "variant": "Spin Flax",
+      "unobtainable": true
     },
     {
       "id": 20590,
@@ -53674,7 +53881,8 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Ourania Teleport"
+      "variant": "Ourania Teleport",
+      "unobtainable": true
     },
     {
       "id": 20760,
@@ -55324,7 +55532,8 @@
     {
       "id": 21186,
       "name": "Fire max cape",
-      "wiki_key": "Fire max cape (animation item)"
+      "wiki_key": "Fire max cape (animation item)",
+      "unobtainable": true
     },
     {
       "id": 21187,
@@ -55450,14 +55659,16 @@
       "name": "Farmer's strawhat",
       "wiki_key": "Farmer's strawhat (animation item)",
       "family": "Farmer's strawhat (animation item)",
-      "variant": "Male"
+      "variant": "Male",
+      "unobtainable": true
     },
     {
       "id": 21254,
       "name": "Farmer's strawhat",
       "wiki_key": "Farmer's strawhat (animation item)",
       "family": "Farmer's strawhat (animation item)",
-      "variant": "Female"
+      "variant": "Female",
+      "unobtainable": true
     },
     {
       "id": 21255,
@@ -55553,7 +55764,8 @@
     {
       "id": 21284,
       "name": "Infernal max cape",
-      "wiki_key": "Infernal max cape (animation item)"
+      "wiki_key": "Infernal max cape (animation item)",
+      "unobtainable": true
     },
     {
       "id": 21285,
@@ -55584,7 +55796,8 @@
     {
       "id": 21297,
       "name": "Infernal cape",
-      "wiki_key": "Infernal cape (animation item)"
+      "wiki_key": "Infernal cape (animation item)",
+      "unobtainable": true
     },
     {
       "id": 21298,
@@ -57052,14 +57265,16 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Arceuus Home Teleport"
+      "variant": "Arceuus Home Teleport",
+      "unobtainable": true
     },
     {
       "id": 21836,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Kourend Castle Teleport"
+      "variant": "Kourend Castle Teleport",
+      "unobtainable": true
     },
     {
       "id": 21837,
@@ -57126,28 +57341,32 @@
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Wind Surge"
+      "variant": "Wind Surge",
+      "unobtainable": true
     },
     {
       "id": 21877,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Water Surge"
+      "variant": "Water Surge",
+      "unobtainable": true
     },
     {
       "id": 21878,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Earth Surge"
+      "variant": "Earth Surge",
+      "unobtainable": true
     },
     {
       "id": 21879,
       "name": "Spell",
       "wiki_key": "Spell (unobtainable item)",
       "family": "Spell (unobtainable item)",
-      "variant": "Fire Surge"
+      "variant": "Fire Surge",
+      "unobtainable": true
     },
     {
       "id": 21880,
@@ -57901,7 +58120,8 @@
     {
       "id": 22092,
       "name": "Dragon key",
-      "wiki_key": "Dragon key (unobtainable item)"
+      "wiki_key": "Dragon key (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 22093,
@@ -59222,14 +59442,16 @@
       "name": "Cabbage",
       "wiki_key": "Cabbage (unobtainable item)",
       "family": "Cabbage (unobtainable item)",
-      "variant": "Twitch July 2018 buy"
+      "variant": "Twitch July 2018 buy",
+      "unobtainable": true
     },
     {
       "id": 22520,
       "name": "Cabbage",
       "wiki_key": "Cabbage (unobtainable item)",
       "family": "Cabbage (unobtainable item)",
-      "variant": "Twitch July 2018 unbuy"
+      "variant": "Twitch July 2018 unbuy",
+      "unobtainable": true
     },
     {
       "id": 22521,
@@ -60003,7 +60225,8 @@
     {
       "id": 22778,
       "name": "Dark altar",
-      "wiki_key": "Dark altar (unobtainable item)"
+      "wiki_key": "Dark altar (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 22780,
@@ -60097,7 +60320,8 @@
       "wiki_key": "Dragon knife (animation item)",
       "stackable": true,
       "family": "Dragon knife (animation item)",
-      "variant": "Normal"
+      "variant": "Normal",
+      "unobtainable": true
     },
     {
       "id": 22814,
@@ -60105,7 +60329,8 @@
       "wiki_key": "Dragon knife (animation item)",
       "stackable": true,
       "family": "Dragon knife (animation item)",
-      "variant": "Poisoned"
+      "variant": "Poisoned",
+      "unobtainable": true
     },
     {
       "id": 22816,
@@ -61852,7 +62077,8 @@
     {
       "id": 23489,
       "name": "Wine of Zamorak",
-      "wiki_key": "Wine of Zamorak (unobtainable item)"
+      "wiki_key": "Wine of Zamorak (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 23490,
@@ -62681,7 +62907,8 @@
     {
       "id": 23783,
       "name": "Green crystal",
-      "wiki_key": "Green crystal (unobtainable)"
+      "wiki_key": "Green crystal (unobtainable)",
+      "unobtainable": true
     },
     {
       "id": 23784,
@@ -64338,7 +64565,8 @@
       "name": "Gravestone",
       "wiki_key": "Gravestone (unobtainable item)",
       "family": "Gravestone (unobtainable item)",
-      "variant": "Basic"
+      "variant": "Basic",
+      "unobtainable": true
     },
     {
       "id": 24419,
@@ -64554,14 +64782,16 @@
     {
       "id": 24523,
       "name": "Death's Coffer",
-      "wiki_key": "Death's Coffer (unobtainable item)"
+      "wiki_key": "Death's Coffer (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 24524,
       "name": "Gravestone",
       "wiki_key": "Gravestone (unobtainable item)",
       "family": "Gravestone (unobtainable item)",
-      "variant": "Angel"
+      "variant": "Angel",
+      "unobtainable": true
     },
     {
       "id": 24525,
@@ -64618,7 +64848,8 @@
     {
       "id": 24554,
       "name": "Pyromancer set",
-      "wiki_key": "Pyromancer set (unobtainable item)"
+      "wiki_key": "Pyromancer set (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 24555,
@@ -68738,7 +68969,8 @@
     {
       "id": 25956,
       "name": "Combat achievements",
-      "wiki_key": "Combat achievements (unobtainable item)"
+      "wiki_key": "Combat achievements (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 25958,
@@ -70555,7 +70787,8 @@
       "name": "Zanik",
       "wiki_key": "Zanik (unobtainable item)",
       "family": "Zanik (unobtainable item)",
-      "variant": "Land of the Goblins"
+      "variant": "Land of the Goblins",
+      "unobtainable": true
     },
     {
       "id": 26649,
@@ -82085,19 +82318,22 @@
       "id": 30302,
       "name": "Torva full helm",
       "wiki_key": "Torva full helm (unobtainable item)",
-      "equipment_slot": "head"
+      "equipment_slot": "head",
+      "unobtainable": true
     },
     {
       "id": 30303,
       "name": "Torva platebody",
       "wiki_key": "Torva platebody (unobtainable item)",
-      "equipment_slot": "body"
+      "equipment_slot": "body",
+      "unobtainable": true
     },
     {
       "id": 30304,
       "name": "Torva platelegs",
       "wiki_key": "Torva platelegs (unobtainable item)",
-      "equipment_slot": "legs"
+      "equipment_slot": "legs",
+      "unobtainable": true
     },
     {
       "id": 30305,
@@ -82836,7 +83072,8 @@
     {
       "id": 30576,
       "name": "Bounty supply crate",
-      "wiki_key": "Bounty supply crate (unobtainable item)"
+      "wiki_key": "Bounty supply crate (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 30579,
@@ -83579,7 +83816,8 @@
     {
       "id": 30940,
       "name": "Gus (dog tag)",
-      "wiki_key": "Dog tag (unobtainable item)"
+      "wiki_key": "Dog tag (unobtainable item)",
+      "unobtainable": true
     },
     {
       "id": 30941,

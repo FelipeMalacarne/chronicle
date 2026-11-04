@@ -246,6 +246,11 @@ func TestResolveItems(t *testing.T) {
 		"1k bronze arrowheads": {Resolved, "item:39", MatchAlias, "", false},
 		"law rune":             {Resolved, "item:563", MatchName, "", false},
 		"Some food":            {Unresolved, "", "", ReasonNotInCatalog, false},
+		// Only an unobtainable item is named "Plant pot"; animation-only
+		// copies of Rope never compete with the real one.
+		"3 plant pots": {Unresolved, "", "", ReasonNotInCatalog, false},
+		"Cooking pot":  {Unresolved, "", "", ReasonNotInCatalog, false},
+		"rope":         {Resolved, "item:954", MatchName, "", false},
 	} {
 		res, p := r.ResolveItem(phrase)
 		if res.Status != w.status || res.Reason != w.reason || p.Noted != w.noted {
@@ -258,6 +263,17 @@ func TestResolveItems(t *testing.T) {
 		if w.status == Ambiguous && len(res.Candidates) < 2 {
 			t.Errorf("ResolveItem(%q): ambiguous without candidates", phrase)
 		}
+	}
+}
+
+func TestUnobtainableItemsResolveByID(t *testing.T) {
+	r := registry(t)
+	it, ok := r.Item(5356)
+	if !ok || !it.Unobtainable {
+		t.Fatalf("item 5356 = %+v, %v; want the unobtainable Plant pot", it, ok)
+	}
+	if res := r.ResolveItemID(5356); res.Status != Resolved {
+		t.Errorf("ResolveItemID(5356) = %+v, want resolved", res)
 	}
 }
 

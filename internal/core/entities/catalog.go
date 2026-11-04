@@ -99,8 +99,12 @@ type ItemEntry struct {
 	Variant   string  `json:"variant,omitempty"`
 	// EquipmentSlot is the wiki's equipment slot ("weapon", "head", ...) of
 	// equipable items.
-	EquipmentSlot string   `json:"equipment_slot,omitempty"`
-	Aliases       []string `json:"aliases,omitempty"`
+	EquipmentSlot string `json:"equipment_slot,omitempty"`
+	// Unobtainable marks ids the wiki documents as unobtainable or
+	// animation-only items ("Plant pot (unobtainable item)"): they resolve by
+	// id, never by name, so a name never lands on an item no player can hold.
+	Unobtainable bool     `json:"unobtainable,omitempty"`
+	Aliases      []string `json:"aliases,omitempty"`
 }
 
 // SkillCatalog is content/reference/skills.json.
@@ -410,10 +414,14 @@ func Load(fsys fs.FS) (*Registry, error) {
 			}
 		}
 		id := strconv.Itoa(it.ID)
-		r.itemNames.add(it.Name, id, MatchName)
 		for _, a := range it.Aliases {
 			r.itemNames.add(a, id, MatchAlias)
 		}
+		r.addWiki(it.WikiKey, ItemRef(it.ID))
+		if it.Unobtainable {
+			continue
+		}
+		r.itemNames.add(it.Name, id, MatchName)
 		if it.Family != "" {
 			k := NormalizeName(it.Family)
 			r.itemFamily[k] = append(r.itemFamily[k], it.ID)
@@ -423,7 +431,6 @@ func Load(fsys fs.FS) (*Registry, error) {
 			}
 			r.familyBySlug[slug] = k
 		}
-		r.addWiki(it.WikiKey, ItemRef(it.ID))
 	}
 	for i := range ic.Ambiguous {
 		a := &ic.Ambiguous[i]

@@ -14,16 +14,18 @@ type ItemForm struct {
 	// Stackable is true when one inventory slot holds any quantity; noted
 	// forms are always stackable.
 	Stackable bool
+	// Unobtainable is true for ids no player can hold (catalog field).
+	Unobtainable bool
 }
 
 // Item describes an item id listed in the catalog, unnoted or noted.
 func (r *Registry) Item(id int) (ItemForm, bool) {
 	if it, ok := r.items[id]; ok {
-		return ItemForm{ID: id, BaseID: id, Name: it.Name, Family: it.Family, Variant: it.Variant, WikiKey: it.WikiKey, Stackable: it.Stackable}, true
+		return ItemForm{ID: id, BaseID: id, Name: it.Name, Family: it.Family, Variant: it.Variant, WikiKey: it.WikiKey, Stackable: it.Stackable, Unobtainable: it.Unobtainable}, true
 	}
 	if base, ok := r.notedBase[id]; ok {
 		it := r.items[base]
-		return ItemForm{ID: id, BaseID: base, Noted: true, Name: it.Name, Family: it.Family, Variant: it.Variant, WikiKey: it.WikiKey, Stackable: true}, true
+		return ItemForm{ID: id, BaseID: base, Noted: true, Name: it.Name, Family: it.Family, Variant: it.Variant, WikiKey: it.WikiKey, Stackable: true, Unobtainable: it.Unobtainable}, true
 	}
 	return ItemForm{}, false
 }

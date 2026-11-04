@@ -11,9 +11,9 @@
     "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 1894,
+    "resolved": 1891,
     "ambiguous": 184,
-    "unresolved": 582,
+    "unresolved": 585,
     "by_kind": {
       "ca": {
         "resolved": 4,
@@ -26,9 +26,9 @@
         "unresolved": 0
       },
       "item": {
-        "resolved": 1439,
+        "resolved": 1436,
         "ambiguous": 153,
-        "unresolved": 309
+        "unresolved": 312
       },
       "link": {
         "resolved": 0,
@@ -42,9 +42,9 @@
       }
     },
     "loadout_items": {
-      "resolved": 738,
+      "resolved": 737,
       "ambiguous": 68,
-      "unresolved": 141
+      "unresolved": 142
     }
   },
   "ambiguous": [
@@ -5288,6 +5288,14 @@
     },
     {
       "step_id": "bruh-1.4-3cb1982b6327",
+      "field": "/items/19",
+      "source_text": "1 plant pot",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "bruh-1.4-3cb1982b6327",
       "field": "/text",
       "span": [
         380,
@@ -5360,6 +5368,14 @@
       "candidates": [
         "quest:dwarf_cannon"
       ]
+    },
+    {
+      "step_id": "bruh-1.4-85c07ce8189e",
+      "field": "/items/9",
+      "source_text": "plant pot",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-85c07ce8189e",
@@ -5576,6 +5592,14 @@
       "candidates": [
         "quest:icthlarins_little_helper"
       ]
+    },
+    {
+      "step_id": "bruh-1.4-1f257947c836",
+      "field": "/items/2",
+      "source_text": "3 plant pots",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-b491172fe629",

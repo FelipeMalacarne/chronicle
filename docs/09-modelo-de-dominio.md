@@ -572,6 +572,12 @@ Claude Code, fora do MCP; o relatório conta só as respostas registradas.
   inteiro. São 19 passos corrigidos, e os itens do BRUHsailer ficam em 1439 resolvidos e 309 sem
   resolução. Os ids dos passos não mudam. A prosa que o autor escreveu na linha de itens ("will need
   to bank while buying from Aemad…") fica para a extração.
+
+  Itens que a wiki documenta como inobteníveis ou só de animação (238 ids, páginas
+  "(unobtainable item)" e "(animation item)") ficam no catálogo com `unobtainable: true`, mas resolvem
+  só por id, nunca por nome. Antes, 36 nomes caíam só nesses itens: "plant pot" resolvia para
+  "Plant pot (unobtainable item)" (5356), em três menções do BRUHsailer, e não para Empty plant pot.
+  Agora esses nomes ficam sem resolução (BRUHsailer: 1436 itens resolvidos, 312 sem resolução).
 - **XP de recompensa de quest.** `data/wiki/scripts/build_quests.py` lê do `{{Quest rewards}}` o XP fixo
   de cada quest (`{{SCP|Skill|N}}`; linhas de lamp e de escolha ficam de fora) para `xp_rewards` em
   `data/wiki/quests.json`, e o `catalogbuild` leva isso ao `quests.json` de referência: 167 das 225

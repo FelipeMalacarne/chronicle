@@ -358,6 +358,10 @@ func buildCAs(raw rawCAs) (*entities.CombatAchievementCatalog, error) {
 	return cc, nil
 }
 
+// unobtainablePage matches the wiki pages of items no player can hold:
+// "Plant pot (unobtainable item)", "Torch (animation item, Sea Slug)".
+var unobtainablePage = regexp.MustCompile(`(?i)\((?:unobtainable(?: item)?|animation item)(?:, [^()]*)?\)$`)
+
 // buildItems converts the wiki extract into the item catalog and applies the
 // curated aliases and ambiguous names.
 func buildItems(raw rawItems, cur curated) (*entities.ItemCatalog, error) {
@@ -384,6 +388,7 @@ func buildItems(raw rawItems, cur curated) (*entities.ItemCatalog, error) {
 		if it.EquipmentSlot != nil {
 			e.EquipmentSlot = *it.EquipmentSlot
 		}
+		e.Unobtainable = unobtainablePage.MatchString(it.WikiKey)
 		at[it.ID] = len(ic.Items)
 		ic.Items = append(ic.Items, e)
 	}

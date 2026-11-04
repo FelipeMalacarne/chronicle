@@ -11,6 +11,7 @@
 		routeLabel,
 		routesLine,
 		sectionLabel,
+		sourceBand,
 		segmentsOf,
 		statusView
 	} from '#lib/progress/view';
@@ -50,6 +51,44 @@
 	const goals = createResource(() =>
 		account ? progressApi.goals(account) : Promise.resolve(null)
 	);
+	const runs = createResource(() =>
+		account ? progressApi.syncRuns(account, 1).catch(() => null) : Promise.resolve(null)
+	);
+	const hiscoresAt = $derived.by(() => {
+		const s = session.summary?.sources.find((x) => x.source === 'hiscores');
+		return s ? Date.parse(s.last_observed_at) : undefined;
+	});
+	const band = $derived(sourceBand(runs.data?.runs[0], hiscoresAt, Date.now()));
+	let syncing = $state(false);
+	async function syncNow() {
+		if (!account || syncing) return;
+		syncing = true;
+		failure = null;
+		try {
+			const run = await progressApi.sync(account);
+			toast =
+				run.status === 'ok'
+					? { title: 'Hiscores', text: `${run.steps_changed} passos mudaram`, undo: false }
+					: run.status === 'unchanged'
+						? { title: 'Hiscores', text: 'nada mudou desde o último sync', undo: false }
+						: { title: 'Hiscores', text: run.error ?? 'falhou', undo: false };
+			board.reload();
+			events.reload();
+			goals.reload();
+			void loadSummary(account);
+		} catch (e) {
+			const tooSoon =
+				e instanceof Error && 'status' in e && (e as { status: number }).status === 429;
+			toast = {
+				title: 'Hiscores',
+				text: tooSoon ? 'aguarde: um sync por minuto, e nunca durante o recuo' : String(e),
+				undo: false
+			};
+		} finally {
+			syncing = false;
+			runs.reload();
+		}
+	}
 	const pinned = $derived((goals.data?.goals ?? []).filter((g) => g.status === 'active'));
 	const events = createResource(() =>
 		account && guideId ? progressApi.events(guideId, account, 30) : Promise.resolve(null)
@@ -213,9 +252,22 @@
 			{/if}
 		</div>
 		<div class="acts">
+			<button class="btn btn-s" type="button" disabled={syncing} onclick={syncNow}
+				>{syncing ? 'Sincronizando…' : 'Sincronizar'}</button
+			>
 			<a class="btn btn-g btn-s" href={resolve('/rotas')}>Trocar rota</a>
 		</div>
 	</header>
+
+	{#if band}
+		<div class="band" class:failed={band.kind === 'failed'}>
+			<Glyph name={band.kind === 'failed' ? 'alert' : 'clock'} />
+			<span>{band.text}</span>
+			<button class="btn btn-s push" type="button" disabled={syncing} onclick={syncNow}
+				>{band.kind === 'failed' ? 'Tentar agora' : 'Sincronizar agora'}</button
+			>
+		</div>
+	{/if}
 
 	{#if failure}
 		<div class="band"><Glyph name="alert" /><span>A marca não foi gravada: {failure}</span></div>
@@ -447,6 +499,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+	}
+	.band.failed {
+		border-color: var(--not-started);
+	}
+	.band.failed :global(svg) {
+		color: var(--not-started);
 	}
 	.goal {
 		display: flex;

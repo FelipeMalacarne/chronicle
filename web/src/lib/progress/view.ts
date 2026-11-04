@@ -16,6 +16,7 @@ import type {
 	Role,
 	SegmentReadiness,
 	StepStatus,
+	SyncRun,
 	Verdict
 } from './types.ts';
 
@@ -623,4 +624,50 @@ export function routesLine(
 	label: (guide: string) => string
 ): string {
 	return routes.map((r) => `${label(r.guide)} ${r.ref}`).join(' · ');
+}
+
+/* ------------------------------------------------------------------ fontes (V4Vazios) */
+
+export const STALE_SOURCE_MS = 24 * 3600_000;
+
+export interface SourceBand {
+	kind: 'failed' | 'stale';
+	text: string;
+}
+
+/**
+ * Faixa do topo do Agora: a última tentativa do hiscores falhou ("fonte falhou"), ou o último
+ * dado bom tem mais de 24 h ("fonte velha"). Nenhuma das duas muda veredito.
+ */
+export function sourceBand(
+	last: SyncRun | undefined,
+	lastObserved: number | undefined,
+	now: number
+): SourceBand | null {
+	const hhmm = (at: number) => {
+		const d = new Date(at);
+		return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+	};
+	const good = lastObserved ? ` Os níveis são do último snapshot bom, ${hhmm(lastObserved)}.` : '';
+	if (last && (last.status === 'error' || last.status === 'rate_limited')) {
+		const at = Date.parse(last.finished_at ?? last.created_at);
+		if (last.http_status === 404 && last.error?.includes('renomeou')) {
+			return { kind: 'failed', text: `Hiscores: ${last.error}` };
+		}
+		const why = last.http_status ? `HTTP ${last.http_status}` : 'sem resposta';
+		const retry = last.next_allowed_at
+			? ` Nova tentativa às ${hhmm(Date.parse(last.next_allowed_at))}.`
+			: '';
+		return {
+			kind: 'failed',
+			text: `Hiscores indisponível desde ${hhmm(at)} (${why}).${good}${retry}`
+		};
+	}
+	if (lastObserved && now - lastObserved > STALE_SOURCE_MS) {
+		return {
+			kind: 'stale',
+			text: `Dados do hiscores ${ago(lastObserved, now)}: os requisitos de nível podem estar errados.`
+		};
+	}
+	return null;
 }

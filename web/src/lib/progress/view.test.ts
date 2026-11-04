@@ -19,6 +19,7 @@ import {
 	routesLine,
 	sectionLabel,
 	segmentsOf,
+	sourceBand,
 	stateLabel,
 	statusView,
 	unknownHint,
@@ -376,4 +377,39 @@ test('world helpers: state labels, main key, entity verdict', () => {
 		),
 		'Oziris 1.5.17 · BRUHsailer CH2.72'
 	);
+});
+
+test('source band: failed beats stale, rename alert passes through', () => {
+	const now = Date.parse('2026-11-04T20:30:00');
+	const run = (extra: object) => ({
+		id: 'r',
+		source: 'hiscores',
+		trigger: 'scheduled' as const,
+		steps_changed: 0,
+		created_at: '2026-11-04T20:02:00',
+		...extra
+	});
+	assert.equal(sourceBand(run({ status: 'ok' }) as never, now - 3600_000, now), null);
+	const failed = sourceBand(
+		run({
+			status: 'rate_limited',
+			http_status: 503,
+			next_allowed_at: '2026-11-04T20:12:00'
+		}) as never,
+		Date.parse('2026-11-04T19:47:00'),
+		now
+	);
+	assert.equal(failed?.kind, 'failed');
+	assert.match(failed?.text ?? '', /desde 20:02 \(HTTP 503\).*19:47.*20:12/);
+	const renamed = sourceBand(
+		run({
+			status: 'error',
+			http_status: 404,
+			error: 'conta não encontrada no hiscores 3 vezes seguidas; renomeou ou ainda não ranqueia?'
+		}) as never,
+		undefined,
+		now
+	);
+	assert.match(renamed?.text ?? '', /renomeou/);
+	assert.equal(sourceBand(undefined, now - 3 * 86400_000, now)?.kind, 'stale');
 });

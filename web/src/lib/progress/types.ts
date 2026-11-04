@@ -347,3 +347,20 @@ export interface WorldEntity {
 	objectives: WorldObjective[];
 	routes: Occurrence[];
 }
+
+/* ------------------------------------------------------------------ sync (hiscores) */
+
+export interface SyncRun {
+	id: string;
+	source: string;
+	trigger: 'scheduled' | 'manual' | 'push' | 'boot';
+	status: 'queued' | 'running' | 'ok' | 'unchanged' | 'skipped' | 'rate_limited' | 'error';
+	started_at?: string;
+	finished_at?: string;
+	http_status?: number;
+	error?: string;
+	snapshot_id?: string;
+	steps_changed: number;
+	next_allowed_at?: string;
+	created_at: string;
+}

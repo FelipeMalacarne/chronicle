@@ -4,13 +4,13 @@
   "guide_id": "oziris-main",
   "summary": {
     "steps": 576,
-    "annotated": 286,
+    "annotated": 319,
     "stale": 0,
-    "pending": 290,
-    "submitted": 286,
-    "first_submit_accepted": 284,
-    "owner_confirmed": 25,
-    "decisions_applied": 107
+    "pending": 257,
+    "submitted": 319,
+    "first_submit_accepted": 317,
+    "owner_confirmed": 41,
+    "decisions_applied": 125
   },
   "sections": [
     {
@@ -27,13 +27,13 @@
     {
       "section_id": "1.2",
       "steps": 33,
-      "annotated": 0,
+      "annotated": 33,
       "stale": 0,
-      "pending": 33,
-      "submitted": 0,
-      "first_submit_accepted": 0,
-      "owner_confirmed": 0,
-      "decisions_applied": 0
+      "pending": 0,
+      "submitted": 33,
+      "first_submit_accepted": 33,
+      "owner_confirmed": 16,
+      "decisions_applied": 18
     },
     {
       "section_id": "1.3",
@@ -92,8 +92,8 @@
     }
   ],
   "rule_agreement": {
-    "rules": 95,
-    "reproduced": 88,
+    "rules": 110,
+    "reproduced": 101,
     "divergent": [
       {
         "step_id": "1.1.95",
@@ -136,6 +136,18 @@
         "key": "quest:biohazard@started",
         "role": "starts",
         "comment": "Diverge da regra (quest:biohazard@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.223."
+      },
+      {
+        "step_id": "1.2.16",
+        "key": "skill:fishing>=74",
+        "role": "requires",
+        "comment": "Rule gives Fishing 74 as requires; barb fishing trains it during this step, so it is a checkpoint (completes). Location 'Barbarian Fishing' is an activity, not a place: left out. Knife from the tip note is advice."
+      },
+      {
+        "step_id": "1.2.25",
+        "key": "quest:dragon_slayer_i@started",
+        "role": "starts",
+        "comment": "Diverges from the derived rule (starts Dragon Slayer I): the text says 'continue', and the quest was started in 1.1.262. Mid-quest talk, no objective."
       }
     ]
   },
@@ -788,6 +800,194 @@
       "step_id": "1.1.281",
       "what": "item Key print = item:2423",
       "quote": "Key imprint",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.3",
+      "what": "item:2961x1 completes",
+      "quote": "make a sickle",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.3",
+      "what": "item:1714x1 completes",
+      "quote": "unstrung holy symbol",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.3",
+      "what": "item:2355x3 uses",
+      "quote": "keep 3 bars",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "1.2.3",
+      "what": "item Silver ore = item:442 x5",
+      "quote": "the 5 silver",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.4",
+      "what": "item Key print = item:2423 x1",
+      "quote": "the key imprint",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.4",
+      "what": "item Bronze bar = item:2349 x1",
+      "quote": "bronze bar",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "1.2.5",
+      "what": "quest:the_feud@finished completes",
+      "quote": "Do the Feud",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.2.8",
+      "what": "item Ardougne cloak 1 = item:13121 x1",
+      "quote": "Ardy cloak tele",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.14",
+      "what": "item Raw trout = item:335",
+      "quote": "all of your trout",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.16",
+      "what": "skill:fishing>=74 completes",
+      "quote": "should be at 74 fishing",
+      "decision": "should-now-have-is-checkpoint"
+    },
+    {
+      "step_id": "1.2.16a",
+      "what": "item:25582x1 completes",
+      "quote": "for the Fish Barrel"
+    },
+    {
+      "step_id": "1.2.18",
+      "what": "item:5554x1 completes",
+      "quote": "full rogue outfit"
+    },
+    {
+      "step_id": "1.2.18",
+      "what": "item:5553x1 completes",
+      "quote": "full rogue outfit"
+    },
+    {
+      "step_id": "1.2.18",
+      "what": "item:5555x1 completes",
+      "quote": "full rogue outfit"
+    },
+    {
+      "step_id": "1.2.18",
+      "what": "item:5556x1 completes",
+      "quote": "full rogue outfit"
+    },
+    {
+      "step_id": "1.2.18",
+      "what": "item:5557x1 completes",
+      "quote": "full rogue outfit"
+    },
+    {
+      "step_id": "1.2.19",
+      "what": "skill:thieving>=83 completes",
+      "quote": "around 83 thieving"
+    },
+    {
+      "step_id": "1.2.19",
+      "what": "item Rogue mask = item:5554",
+      "quote": "Equip the set"
+    },
+    {
+      "step_id": "1.2.19",
+      "what": "item Rogue top = item:5553",
+      "quote": "Equip the set"
+    },
+    {
+      "step_id": "1.2.19",
+      "what": "item Rogue trousers = item:5555",
+      "quote": "Equip the set"
+    },
+    {
+      "step_id": "1.2.19",
+      "what": "item Rogue gloves = item:5556",
+      "quote": "Equip the set"
+    },
+    {
+      "step_id": "1.2.19",
+      "what": "item Rogue boots = item:5557",
+      "quote": "Equip the set"
+    },
+    {
+      "step_id": "1.2.20",
+      "what": "item Axe = any_of [1359 1357 1355 1361 1353 1349 1351]",
+      "quote": "Axe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.2.20",
+      "what": "item Pickaxe = any_of [1275 1271 1273 12297 1269 1267 1265]",
+      "quote": "Pickaxe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.2.22",
+      "what": "quest:elemental_workshop_ii@started starts",
+      "quote": "START ELEMENTAL WORKSHOP 2"
+    },
+    {
+      "step_id": "1.2.24",
+      "what": "quest:shadow_of_the_storm@finished completes",
+      "quote": "Do Shadow of the storm",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.2.24",
+      "what": "item Priest gown = item:426",
+      "quote": "priest gown"
+    },
+    {
+      "step_id": "1.2.24",
+      "what": "item Priest gown = item:428",
+      "quote": "priest gown"
+    },
+    {
+      "step_id": "1.2.26",
+      "what": "item:561x6000 completes",
+      "quote": "buy 6k nats",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.29",
+      "what": "item:1271x1 completes",
+      "quote": "addy",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.29",
+      "what": "item:1275x1 completes",
+      "quote": "rune picks",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.2.30a",
+      "what": "item:25539x1 completes",
+      "quote": "Buy a Celestial Ring"
+    },
+    {
+      "step_id": "1.2.31",
+      "what": "item:2351x2300 completes",
+      "quote": "Mine 2300 iron ore at ardy monastery, superheat them",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "1.2.31",
+      "what": "item Ardougne cloak 1 = item:13121",
+      "quote": "ardy cloak",
       "decision": "item-shorthand-to-catalog-name"
     }
   ],
@@ -2406,6 +2606,202 @@
       "submits": 1,
       "first_submit_accepted": true,
       "comment": "'on any visit to Varrock': instrução flutuante (precisa de parceiro), mas conclui a quest."
+    },
+    "1.2.1": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.2.10": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'uncut gems' is generic (any gem, no quantity); left out of items."
+    },
+    "1.2.11": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.2.12": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip note (bank fish, raise cats) is advice; rod/feathers not named."
+    },
+    "1.2.13": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Travel only."
+    },
+    "1.2.14": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'trout' -> Raw trout. Product (Trout) left out: 'all' has no clear quantity (decision action-product-item)."
+    },
+    "1.2.15": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Travel only."
+    },
+    "1.2.16": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Rule gives Fishing 74 as requires; barb fishing trains it during this step, so it is a checkpoint (completes). Location 'Barbarian Fishing' is an activity, not a place: left out. Knife from the tip note is advice."
+    },
+    "1.2.16a": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'a few Tempoross kills' has no number: no boss objective. Spirit flakes have no quantity."
+    },
+    "1.2.17": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Travel only."
+    },
+    "1.2.18": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip note (cook salmon, buy 50 lockpicks) left out as advice."
+    },
+    "1.2.19": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'the set' = the rogue outfit of 1.2.18 (owner confirmed the outfit). Tip note (LMS, 75 Thieving for hard diaries) is advice."
+    },
+    "1.2.2": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest purchase for The Feud; no quest objective."
+    },
+    "1.2.20": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Travel only. 'Teleport runes' and 'All the golem quest items' are generic: left out of items."
+    },
+    "1.2.21": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional (only with cosmic runes or Ali's rune shop): dueling rings left out (decision conditional-step-no-objectives)."
+    },
+    "1.2.22": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'keep the 2 items in bank' does not name the items: no uses objective."
+    },
+    "1.2.23": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip note (teak, clay, golden warbler for diaries) is advice."
+    },
+    "1.2.24": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Black items: priest gown top and bottom plus black wizard hat (owner). Tip note (rune scimitar, darklight, attack potion) is advice."
+    },
+    "1.2.25": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverges from the derived rule (starts Dragon Slayer I): the text says 'continue', and the quest was started in 1.1.262. Mid-quest talk, no objective."
+    },
+    "1.2.26": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'nats' -> Nature rune. 'all of the cosmics you can get' is vague: left out. HCIM note is an alternative."
+    },
+    "1.2.27": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Travel only."
+    },
+    "1.2.28": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Buckets and knife are not named: left out of items."
+    },
+    "1.2.29": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'addy and rune picks' -> Adamant pickaxe, Rune pickaxe."
+    },
+    "1.2.3": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Shorthand: 'silver' -> Silver ore, 'sickle' -> Silver sickle, 'unstrung holy symbol' -> Unstrung symbol. Moulds not named in the text."
+    },
+    "1.2.30": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip note (kudos, lamps on herblore/agility) is advice."
+    },
+    "1.2.30a": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "The shop sells the uncharged ring (25539); owner chose that id. /location is 'Various' (stardust gathering); the purchase is in Falador per the text."
+    },
+    "1.2.31": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Superheated ore ends as Iron bar x2300 (the tip says not to smith them yet). Pickaxe and runes are not named. Tip/update notes (3-tick, clues, Giants' Foundry) are advice."
+    },
+    "1.2.4": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest action of Prince Ali Rescue; no quest objective. Shorthand: 'key imprint' -> Key print."
+    },
+    "1.2.5": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "HCIM note (rune shop) is advice."
+    },
+    "1.2.6": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Wines as food and the update note's alternatives are advice."
+    },
+    "1.2.7": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional (only for 3-tick fishing): 15+ swamp tar left out (decision conditional-step-no-objectives)."
+    },
+    "1.2.8": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Travel only. 'Ardy cloak' -> Ardougne cloak 1 (as 1.1.268)."
+    },
+    "1.2.9": {
+      "section_id": "1.2",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Travel only."
     }
   }
 }

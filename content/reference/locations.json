@@ -23,6 +23,15 @@
       "note": "decision named-places-enter-catalog; covers East and West Ardougne (owner, 2026-11-04)"
     },
     {
+      "id": "ardougne_monastery",
+      "name": "Ardougne Monastery",
+      "wiki_key": "Ardougne Monastery",
+      "aliases": [
+        "ardy monastery"
+      ],
+      "note": "Decision named-places-enter-catalog (Oziris 1.2.31)"
+    },
+    {
       "id": "barbarian_assault",
       "name": "Barbarian Assault",
       "wiki_key": "Barbarian Assault",
@@ -57,6 +66,15 @@
       "name": "Brimhaven",
       "wiki_key": "Brimhaven",
       "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "burthorpe",
+      "name": "Burthorpe",
+      "wiki_key": "Burthorpe",
+      "aliases": [
+        "Burthrope"
+      ],
+      "note": "Decision named-places-enter-catalog (Oziris 1.2.13)"
     },
     {
       "id": "camelot",
@@ -105,6 +123,12 @@
       "name": "Draynor Village",
       "wiki_key": "Draynor Village",
       "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "edgeville",
+      "name": "Edgeville",
+      "wiki_key": "Edgeville",
+      "note": "Decision named-places-enter-catalog (Oziris 1.2.25)"
     },
     {
       "id": "falador",
@@ -251,6 +275,15 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "mage_bank",
+      "name": "Mage Bank",
+      "wiki_key": "Mage Arena bank",
+      "aliases": [
+        "mage bank"
+      ],
+      "note": "Decision named-places-enter-catalog (Oziris 1.2.26)"
+    },
+    {
       "id": "mudskipper_point",
       "name": "Mudskipper Point",
       "wiki_key": "Mudskipper Point",
@@ -273,6 +306,12 @@
       "note": "decision named-places-enter-catalog; the guide's 'ZMI Bank' is the Ourania Altar bank"
     },
     {
+      "id": "pollnivneach",
+      "name": "Pollnivneach",
+      "wiki_key": "Pollnivneach",
+      "note": "Decision named-places-enter-catalog (Oziris 1.2.5)"
+    },
+    {
       "id": "port_khazard",
       "name": "Port Khazard",
       "wiki_key": "Port Khazard",
@@ -289,6 +328,15 @@
       "name": "Rimmington",
       "wiki_key": "Rimmington",
       "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "rogues_den",
+      "name": "Rogues' Den",
+      "wiki_key": "Rogues' Den",
+      "aliases": [
+        "rogue's den"
+      ],
+      "note": "Decision named-places-enter-catalog (Oziris 1.2.18)"
     },
     {
       "id": "seers_village",
@@ -318,6 +366,12 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "tempoross_cove",
+      "name": "Tempoross Cove",
+      "wiki_key": "Tempoross Cove",
+      "note": "Decision named-places-enter-catalog (Oziris 1.2.16a)"
+    },
+    {
       "id": "tower_of_life",
       "name": "Tower of Life",
       "note": "decision named-places-enter-catalog; no wiki_key: the wiki describes the place on the Tower of Life quest page"
@@ -330,6 +384,12 @@
         "Gnome Stronghold"
       ],
       "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "uzer",
+      "name": "Uzer",
+      "wiki_key": "Uzer",
+      "note": "Decision named-places-enter-catalog (Oziris 1.2.22)"
     },
     {
       "id": "varlamore",

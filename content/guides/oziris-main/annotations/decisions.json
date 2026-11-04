@@ -123,6 +123,16 @@
         "1.1.256",
         "1.1.279"
       ]
+    },
+    {
+      "id": "conditional-step-no-objectives",
+      "question": "Passo condicional (\"IF you're planning on 3-tick fishing ... pick up 15+ swamp tar now\"): o que ele obtém vira objetivo?",
+      "answer": "Não: passo que só vale sob uma condição opcional do jogador (\"IF you're planning...\", \"if you want...\") fica sem objetivos, com a condição no comment.",
+      "scope": "oziris-main, todas as seções: passos condicionais/opcionais",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.2.7"
+      ]
     }
   ]
 }

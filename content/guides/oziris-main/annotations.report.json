@@ -4,13 +4,13 @@
   "guide_id": "oziris-main",
   "summary": {
     "steps": 576,
-    "annotated": 430,
+    "annotated": 480,
     "stale": 0,
-    "pending": 146,
-    "submitted": 430,
-    "first_submit_accepted": 425,
-    "owner_confirmed": 45,
-    "decisions_applied": 165
+    "pending": 96,
+    "submitted": 480,
+    "first_submit_accepted": 474,
+    "owner_confirmed": 53,
+    "decisions_applied": 188
   },
   "sections": [
     {
@@ -49,13 +49,13 @@
     {
       "section_id": "1.4",
       "steps": 50,
-      "annotated": 0,
+      "annotated": 50,
       "stale": 0,
-      "pending": 50,
-      "submitted": 0,
-      "first_submit_accepted": 0,
-      "owner_confirmed": 0,
-      "decisions_applied": 0
+      "pending": 0,
+      "submitted": 50,
+      "first_submit_accepted": 49,
+      "owner_confirmed": 8,
+      "decisions_applied": 23
     },
     {
       "section_id": "1.5",
@@ -92,8 +92,8 @@
     }
   ],
   "rule_agreement": {
-    "rules": 157,
-    "reproduced": 144,
+    "rules": 179,
+    "reproduced": 164,
     "divergent": [
       {
         "step_id": "1.1.95",
@@ -180,6 +180,20 @@
         "key": "skill:herblore>=25",
         "role": "completes",
         "comment": "Conditional ('if you don't have yet'; conditional-step-no-objectives): Herblore 77 is already completed at 1.1.2, so the rule (completes herblore>=25, explicit) is already met; harmless, not suppressed. Location 'Various' is not a place."
+      },
+      {
+        "step_id": "1.4.25",
+        "key": "skill:construction>=50",
+        "role": "completes",
+        "suppressed": true,
+        "reason": "'50 construction banked' means enough planks for the level; the level is reached at 1.4.26.",
+        "comment": "Suppresses the rule (completes construction>=50, derived): planks banked here, level at 1.4.26. Tip: ~1500 planks."
+      },
+      {
+        "step_id": "1.4.41",
+        "key": "skill:magic>=60",
+        "role": "requires",
+        "comment": "Conditional ('If you have 60 magic'; conditional-step-no-objectives): no mage arena cape objective. The rule requires magic>=60 matches the condition and stays."
       }
     ]
   },
@@ -1280,6 +1294,184 @@
       "step_id": "1.3.101",
       "what": "quest:tears_of_guthix@finished completes",
       "quote": "Do Tears of guthix quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.5",
+      "what": "item:1973x200 completes",
+      "quote": "Buy ~200 chocolate",
+      "decision": "approximate-quantity-is-target"
+    },
+    {
+      "step_id": "1.4.6",
+      "what": "item:3010x1 completes",
+      "quote": "Make energy pots",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "1.4.10",
+      "what": "quest:the_giant_dwarf@finished completes",
+      "quote": "Do the Giant Dwarf quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.12",
+      "what": "quest:forgettable_tale@finished completes",
+      "quote": "Forgettable tale of a drunken dwarf quest",
+      "decision": "bare-quest-name-means-finish"
+    },
+    {
+      "step_id": "1.4.13",
+      "what": "quest:garden_of_tranquillity@finished completes",
+      "quote": "Garden of tranquility quest",
+      "decision": "bare-quest-name-means-finish"
+    },
+    {
+      "step_id": "1.4.16",
+      "what": "quest:the_eyes_of_glouphrie@finished completes",
+      "quote": "Do Eyes of glouphrie",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.16",
+      "what": "quest:tower_of_life@finished completes",
+      "quote": "Tower of life",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.17",
+      "what": "item:2351x20 uses",
+      "quote": "leave 20 bars for quests",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "1.4.18",
+      "what": "item:21622x2000 completes",
+      "quote": "get like 2k",
+      "decision": "approximate-quantity-is-target"
+    },
+    {
+      "step_id": "1.4.20",
+      "what": "quest:temple_of_ikov@finished completes",
+      "quote": "Do Temple of Ikov quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.22",
+      "what": "item:2552x10 completes",
+      "quote": "Make 10+ dueling rings",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "1.4.22",
+      "what": "item Axe = any_of [1359 1357 1355 1361 1353 1349 1351]",
+      "quote": "equip whichever axe you got from tree spirits earlier",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.4.25",
+      "what": "suppresses skill:construction>=50 completes",
+      "quote": "'50 construction banked' means enough planks for the level; the level is reached at 1.4.26.",
+      "decision": "gather-for-level-completes-where-trained"
+    },
+    {
+      "step_id": "1.4.29",
+      "what": "quest:big_chompy_bird_hunting@finished completes",
+      "quote": "Big chompy bird hunt",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.29",
+      "what": "quest:rag_and_bone_man_i@finished completes",
+      "quote": "Rag and bone man (first part"
+    },
+    {
+      "step_id": "1.4.29",
+      "what": "quest:family_crest@finished completes",
+      "quote": "Family crest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.29",
+      "what": "item:776x1 completes",
+      "quote": "get goldsmith gauntlets after quest is done",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.4.29",
+      "what": "item:7465x1 completes",
+      "quote": "Get vanilla pod for RFD",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.4.29",
+      "what": "quest:death_plateau@finished completes",
+      "quote": "Death plateau",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.29",
+      "what": "quest:troll_stronghold@finished completes",
+      "quote": "Troll Stronghold",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.40",
+      "what": "item:2357x30 uses",
+      "quote": "leave like 30 bars for teleport jewellery",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "1.4.42",
+      "what": "item:561x5000 completes",
+      "quote": "Buy another 5k nats"
+    },
+    {
+      "step_id": "1.4.43",
+      "what": "item:11850x1 completes",
+      "quote": "full graceful"
+    },
+    {
+      "step_id": "1.4.43",
+      "what": "item:11852x1 completes",
+      "quote": "full graceful"
+    },
+    {
+      "step_id": "1.4.43",
+      "what": "item:11854x1 completes",
+      "quote": "full graceful"
+    },
+    {
+      "step_id": "1.4.43",
+      "what": "item:11856x1 completes",
+      "quote": "full graceful"
+    },
+    {
+      "step_id": "1.4.43",
+      "what": "item:11858x1 completes",
+      "quote": "full graceful"
+    },
+    {
+      "step_id": "1.4.43",
+      "what": "item:11860x1 completes",
+      "quote": "full graceful"
+    },
+    {
+      "step_id": "1.4.45",
+      "what": "skill:magic>=70 completes",
+      "quote": "Should get to 70+ mage",
+      "decision": "should-now-have-is-checkpoint"
+    },
+    {
+      "step_id": "1.4.47",
+      "what": "quest:regicide@finished completes",
+      "quote": "Do the Regicide quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.4.48",
+      "what": "quest:the_hand_in_the_sand@finished completes",
+      "quote": "Do Hand in the sand quest",
       "decision": "do-quest-means-finish"
     }
   ],
@@ -3731,6 +3923,300 @@
       "submits": 1,
       "first_submit_accepted": true,
       "comment": "Ongoing routine (birdhouse runs every 50 mins); no objective. Location 'Various' is not a place."
+    },
+    "1.4.1": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'a couple of hours', 'some low level seeds' are vague. Tip: rogue outfit, master farmer seed table."
+    },
+    "1.4.10": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.4.11": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Advice (smith iron dart tips while waiting); no quantity."
+    },
+    "1.4.12": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: keep the 2 dwarven stout(m) reward; jute for a diary task."
+    },
+    "1.4.13": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.4.14": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: 6 extra willow branches for the Falador diary (tip)."
+    },
+    "1.4.15": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Header for the next steps. Location 'Various'."
+    },
+    "1.4.16": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: raw chicken + raw swordfish for a Swordchick (Ardougne diary task)."
+    },
+    "1.4.17": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'bars' -> Iron bar (iron dart tips context, item-shorthand-to-catalog-name); kept for quests = uses. Location 'Various'."
+    },
+    "1.4.18": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.4.19": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Farm run; patch state not catalogued. Tip: store 15 supercompost in the leprechaun for a quest. Location 'Various'."
+    },
+    "1.4.2": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Update note: Kourend favour was removed, skip this step (update-note-overrides-text). No rule objectives. '300 compost in bank' is a reference amount."
+    },
+    "1.4.20": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: fletch iron darts, yew longbow from implings (advice)."
+    },
+    "1.4.21": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Balloon unlocks added (owner). Tip: without yew logs Castle Wars cannot be unlocked yet."
+    },
+    "1.4.22": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Made dueling rings are (8), 2552. Location 'Various'."
+    },
+    "1.4.23": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "65 willow logs go into the balloon log storage (not catalogued state). The derived 'deposit' bank action comes from 'deposit them to the log storage', which is not a bank: derive false positive, cannot be removed by an annotation."
+    },
+    "1.4.24": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'full inventory of oak logs' is not a clear quantity (action-product-item); planks not counted."
+    },
+    "1.4.25": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Suppresses the rule (completes construction>=50, derived): planks banked here, level at 1.4.26. Tip: ~1500 planks."
+    },
+    "1.4.26": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip (furniture by level) and update note (Mahogany Homes) are advice."
+    },
+    "1.4.27": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "House location is configuration, not an unlock (same as the owner's answer at 1.3.107)."
+    },
+    "1.4.28": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ongoing routine (daily tree runs). Location 'Various'."
+    },
+    "1.4.29": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Quest list under 'Do these quests'. 'first part' = Rag and Bone Man I (owner). Iron darts fletching has no quantity. Location 'Various'."
+    },
+    "1.4.3": {
+      "section_id": "1.4",
+      "submits": 2,
+      "comment": "'Buy pineapples' has no number; x1 would repeat 1.1.61 (Pineapple x1), so no objective. 1.4.4 needs 15 per bin. Location 'Various'."
+    },
+    "1.4.30": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional reminder (finish darts if not done). Location 'Various'."
+    },
+    "1.4.31": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Movement only."
+    },
+    "1.4.31a": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Consider Vale Totems' is a suggestion; no objectives."
+    },
+    "1.4.32": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: seaweed spores, plant after 2 spores (advice)."
+    },
+    "1.4.33": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'all of your maple logs' has no number; no objective. Tip: leave logs for birdhouses."
+    },
+    "1.4.34": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'all of your uncut gems' has no number."
+    },
+    "1.4.35": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('If u have any molten glass left'; conditional-step-no-objectives), including the 2 lantern lenses."
+    },
+    "1.4.36": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ongoing routine (seaweed farming)."
+    },
+    "1.4.37": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: no energy pots (advice)."
+    },
+    "1.4.38": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.4.39": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Movement only."
+    },
+    "1.4.4": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Compost bin state is not catalogued; 15 per bin, bins not counted. Tip about Hosidius patch is advice. Location 'Various'."
+    },
+    "1.4.40": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Bars kept for later = uses; 'like 30' read as 30 (approximate-quantity-is-target). Gold bracelets have no number. Tip: rubies from gem stalls."
+    },
+    "1.4.41": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('If you have 60 magic'; conditional-step-no-objectives): no mage arena cape objective. The rule requires magic>=60 matches the condition and stays."
+    },
+    "1.4.42": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "At least 5k held after buying (owner). Cosmics are conditional ('if you need more'). HCIM note is advice."
+    },
+    "1.4.43": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Full graceful = the 6 inventory ids (owner); worn or recoloured pieces do not count (known gap: no any_of/family in objectives). Tip: alch bracelets and bows, keep 500 logs. Update note on run energy is advice. Location 'Canifis/Seers' is two places."
+    },
+    "1.4.43a": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Consider the Colossal Wyrm Agility Course' is a suggestion."
+    },
+    "1.4.44": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('If you want a break'; conditional-step-no-objectives): no Raw karambwan x3000."
+    },
+    "1.4.45": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Checkpoint. Location 'Various'."
+    },
+    "1.4.46": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Reminder; '6.2k maples' is a reference amount (and the 1.3.94 update note switched to hardwood)."
+    },
+    "1.4.47": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: a few whiteberries (vague)."
+    },
+    "1.4.48": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.4.5": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'chocolate' -> Chocolate bar (1973); alias candidate."
+    },
+    "1.4.6": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Made energy potions are 3-dose (3010); no number, so x1 (unnumbered-acquire-is-one). Harralanders from kingdom are conditional. Location 'Various'."
+    },
+    "1.4.7": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport only."
+    },
+    "1.4.8": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Patch state is not catalogued."
+    },
+    "1.4.9": {
+      "section_id": "1.4",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport only."
     }
   }
 }

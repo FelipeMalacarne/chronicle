@@ -5,6 +5,24 @@
   "notes": "id is a lower-case slug. Entries are added only when the owner confirms a proposal during extraction (docs/09 section 3.1), never by importing the whole wiki. proof is the varbit/varp that shows the unlock; without it the unlock can only be marked by the owner.",
   "unlocks": [
     {
+      "id": "balloon_castle_wars",
+      "name": "Balloon to Castle Wars",
+      "wiki_key": "Balloon transport system",
+      "aliases": [
+        "Castle wars balloon"
+      ],
+      "note": "Owner confirmed at oziris-main 1.4.21 (2026-11-04). No proof varbit recorded yet."
+    },
+    {
+      "id": "balloon_varrock",
+      "name": "Balloon to Varrock",
+      "wiki_key": "Balloon transport system",
+      "aliases": [
+        "Varrock balloon"
+      ],
+      "note": "Owner confirmed at oziris-main 1.4.21 (2026-11-04). No proof varbit recorded yet."
+    },
+    {
       "id": "fairy_rings",
       "name": "Fairy rings",
       "wiki_key": "Fairy ring",

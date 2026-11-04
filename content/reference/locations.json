@@ -281,6 +281,12 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "isafdar",
+      "name": "Isafdar",
+      "wiki_key": "Isafdar",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "karamja",
       "name": "Karamja",
       "wiki_key": "Karamja",
@@ -357,6 +363,12 @@
         "mage bank"
       ],
       "note": "Decision named-places-enter-catalog (Oziris 1.2.26)"
+    },
+    {
+      "id": "mcgrubors_wood",
+      "name": "McGrubor's Wood",
+      "wiki_key": "McGrubor's Wood",
+      "note": "decision named-places-enter-catalog"
     },
     {
       "id": "miscellania",

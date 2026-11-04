@@ -102,6 +102,14 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
    and general rules in `annotations/decisions.json`. Never commit an unconfirmed inference.
 10. Account-addressed routes (`/api/guides/{guide}/readiness?account=`) are registered only in
     `AUTH_MODE=dev` until session auth exists.
+11. **The Claude Design canvas is the reference for every screen.** Before implementing or changing
+    any screen or component in `web/`, read the canvas "Ironman Planner — Telas"
+    (https://claude.ai/artifact/NqmKesmqCJH1gnSowjJFbQ) with the Artifact tool: `project/canvas.json`
+    to find the artboards of the most recent approved page, then those artboards' `.dc.html`. Implement
+    what the canvas shows (layout, states, copy, tokens of its design system) and say which artboard you
+    followed. If the screen or state is not designed there, or the code must diverge from it, stop and
+    ask the owner: designing it in the canvas first is the default. Never edit the canvas while
+    implementing; design changes go through the design agent (`docs/ui/brief-ui-ux.md`).
 
 ## Environment variables
 

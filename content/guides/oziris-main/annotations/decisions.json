@@ -133,6 +133,38 @@
       "step_ids": [
         "1.2.7"
       ]
+    },
+    {
+      "id": "skippable-if-unavailable",
+      "question": "Passo que o próprio texto deixa pular se a loja estiver vazia ou o item indisponível (\"Buy 400 steel nails ..., if every world is bought out then don't bother\"): o que ele obtém vira objetivo?",
+      "answer": "Não: fica sem objetivos, como os passos condicionais (conditional-step-no-objectives), e a condição vai no comment.",
+      "scope": "oziris-main, todas as seções: passos que o texto permite pular por falta de estoque ou disponibilidade",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.3.5"
+      ]
+    },
+    {
+      "id": "final-quest-action-completes",
+      "question": "O passo descreve a ação final de uma quest sem dizer finish (\"Flinch Tanglefoot in this spot\", \"Rescue prince ali from the jail\"), e a regra diz completes @finished. Marco como concluída?",
+      "answer": "Sim: completes @finished (medium, com esta decisão), concordando com a regra, quando a ação é a última da quest (o chefe final, o resgate) ou o passo seguinte já pressupõe a quest concluída.",
+      "scope": "oziris-main, todas as seções: quests cuja ação final aparece sem o verbo finish, quando a regra diz finished",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.3.30",
+        "1.3.34"
+      ]
+    },
+    {
+      "id": "gather-for-level-completes-where-trained",
+      "question": "Um passo junta recursos \"for N <skill>\" (\"Kill blue dragons ... for 43 prayer\") e um passo posterior é onde o nível de fato sobe (\"Grind the rest of your bones to get 43 prayer\"). Onde fica o completes?",
+      "answer": "Só no passo onde o nível sobe. O passo que só junta os recursos fica sem esse completes (divergência da regra explicada no comment).",
+      "scope": "oziris-main, todas as seções: níveis citados num passo de coleta e atingidos num passo posterior",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.3.74",
+        "1.3.84"
+      ]
     }
   ]
 }

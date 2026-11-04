@@ -3,7 +3,7 @@
   "kind": "section",
   "guide_id": "oziris-main",
   "section_id": "1.1",
-  "skill_version": "annotate-guide@1",
+  "skill_version": "annotate-guide@3",
   "steps": [
     {
       "step_id": "1.1.1",
@@ -12343,6 +12343,20 @@
     {
       "step_id": "1.1.254",
       "text_hash": "sha256:9c382773935e3f5e958f5ac5f66435a514c6f61715aaf65c8d111b57ed652af9",
+      "suppressed": [
+        {
+          "key": "quest:the_lost_tribe@started",
+          "role": "starts",
+          "reason": "The update note says to skip this step: Goblin Diplomacy is now required, and The Lost Tribe starts at 1.1.279.",
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "update-note-overrides-text"
+          }
+        }
+      ],
       "location": {
         "ref": "location:lumbridge",
         "evidence": {
@@ -12356,7 +12370,7 @@
         "source": {
           "method": "llm",
           "confidence": "high",
-          "skill_version": "annotate-guide@1"
+          "skill_version": "annotate-guide@3"
         }
       }
     },
@@ -12383,6 +12397,20 @@
     {
       "step_id": "1.1.256",
       "text_hash": "sha256:77e1fb22547118edd603feb7fa584d7de9bd411a0304eed001fefb1f2e7d5470",
+      "suppressed": [
+        {
+          "key": "quest:the_lost_tribe@started",
+          "role": "starts",
+          "reason": "The 1.1.254 update note says to skip this step; The Lost Tribe starts at 1.1.279.",
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "update-note-overrides-text"
+          }
+        }
+      ],
       "location": {
         "ref": "location:varrock",
         "evidence": {
@@ -12396,7 +12424,7 @@
         "source": {
           "method": "llm",
           "confidence": "high",
-          "skill_version": "annotate-guide@1"
+          "skill_version": "annotate-guide@3"
         }
       }
     },

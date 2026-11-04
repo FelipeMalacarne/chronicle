@@ -4,13 +4,13 @@
   "guide_id": "oziris-main",
   "summary": {
     "steps": 576,
-    "annotated": 319,
+    "annotated": 430,
     "stale": 0,
-    "pending": 257,
-    "submitted": 319,
-    "first_submit_accepted": 317,
-    "owner_confirmed": 41,
-    "decisions_applied": 125
+    "pending": 146,
+    "submitted": 430,
+    "first_submit_accepted": 425,
+    "owner_confirmed": 45,
+    "decisions_applied": 165
   },
   "sections": [
     {
@@ -22,7 +22,7 @@
       "submitted": 286,
       "first_submit_accepted": 284,
       "owner_confirmed": 25,
-      "decisions_applied": 107
+      "decisions_applied": 109
     },
     {
       "section_id": "1.2",
@@ -38,13 +38,13 @@
     {
       "section_id": "1.3",
       "steps": 111,
-      "annotated": 0,
+      "annotated": 111,
       "stale": 0,
-      "pending": 111,
-      "submitted": 0,
-      "first_submit_accepted": 0,
-      "owner_confirmed": 0,
-      "decisions_applied": 0
+      "pending": 0,
+      "submitted": 111,
+      "first_submit_accepted": 108,
+      "owner_confirmed": 4,
+      "decisions_applied": 38
     },
     {
       "section_id": "1.4",
@@ -92,8 +92,8 @@
     }
   ],
   "rule_agreement": {
-    "rules": 110,
-    "reproduced": 101,
+    "rules": 157,
+    "reproduced": 144,
     "divergent": [
       {
         "step_id": "1.1.95",
@@ -123,13 +123,17 @@
         "step_id": "1.1.254",
         "key": "quest:the_lost_tribe@started",
         "role": "starts",
-        "comment": "Diverge da regra (quest:the_lost_tribe@started, explicit): a nota de update manda pular este passo porque Goblin Diplomacy virou requisito; a Lost Tribe começa em 1.1.279 (update-note-overrides-text). Itens (Brooch, Scrying orb, GP) também ficam fora."
+        "suppressed": true,
+        "reason": "The update note says to skip this step: Goblin Diplomacy is now required, and The Lost Tribe starts at 1.1.279.",
+        "comment": "Suppresses the rule (starts the_lost_tribe, explicit): the update note says to skip this step; The Lost Tribe starts at 1.1.279 (update-note-overrides-text). Items (Brooch, Scrying orb, GP) also left out."
       },
       {
         "step_id": "1.1.256",
         "key": "quest:the_lost_tribe@started",
         "role": "starts",
-        "comment": "Diverge da regra (quest:the_lost_tribe@started, derived): 'Continue' e a nota de update de 1.1.254 manda pular este passo (update-note-overrides-text)."
+        "suppressed": true,
+        "reason": "The 1.1.254 update note says to skip this step; The Lost Tribe starts at 1.1.279.",
+        "comment": "Suppresses the rule (starts the_lost_tribe, derived): the 1.1.254 update note says to skip this step (update-note-overrides-text)."
       },
       {
         "step_id": "1.1.260",
@@ -148,6 +152,34 @@
         "key": "quest:dragon_slayer_i@started",
         "role": "starts",
         "comment": "Diverges from the derived rule (starts Dragon Slayer I): the text says 'continue', and the quest was started in 1.1.262. Mid-quest talk, no objective."
+      },
+      {
+        "step_id": "1.3.12",
+        "key": "quest:dragon_slayer_i@started",
+        "role": "starts",
+        "comment": "Diverges from the rule (starts DS1, derived): Dragon Slayer I was already started in 1.1.262; 'continue' is mid-quest. Tip to buy coif, green d'hide chaps and vambs left out (tip)."
+      },
+      {
+        "step_id": "1.3.64c",
+        "key": "skill:mining>=41",
+        "role": "requires",
+        "suppressed": true,
+        "reason": "Optional suggestion ('Try') placed before the route reaches 41 Mining (2.0.9).",
+        "comment": "Suppresses the rule (requires mining>=41, derived): the route only reaches 41 Mining at 2.0.9 and 'Try' makes the step optional (owner). Prayer shards vague."
+      },
+      {
+        "step_id": "1.3.74",
+        "key": "skill:prayer>=43",
+        "role": "completes",
+        "suppressed": true,
+        "reason": "This step only gathers dragon bones; the level is reached at 1.3.84.",
+        "comment": "Suppresses the rule (completes prayer>=43, explicit): bones gathered here, level at 1.3.84 (owner). Tip: ~85 bones plus 1 extra for Watchtower. Iban's staff implied by 'iban's blast'."
+      },
+      {
+        "step_id": "1.3.89",
+        "key": "skill:herblore>=25",
+        "role": "completes",
+        "comment": "Conditional ('if you don't have yet'; conditional-step-no-objectives): Herblore 77 is already completed at 1.1.2, so the rule (completes herblore>=25, explicit) is already met; harmless, not suppressed. Location 'Various' is not a place."
       }
     ]
   },
@@ -718,6 +750,18 @@
       "decision": "do-quest-means-finish"
     },
     {
+      "step_id": "1.1.254",
+      "what": "suppresses quest:the_lost_tribe@started starts",
+      "quote": "The update note says to skip this step: Goblin Diplomacy is now required, and The Lost Tribe starts at 1.1.279.",
+      "decision": "update-note-overrides-text"
+    },
+    {
+      "step_id": "1.1.256",
+      "what": "suppresses quest:the_lost_tribe@started starts",
+      "quote": "The 1.1.254 update note says to skip this step; The Lost Tribe starts at 1.1.279.",
+      "decision": "update-note-overrides-text"
+    },
+    {
       "step_id": "1.1.257",
       "what": "item:426x1 completes",
       "quote": "Buy priest robes"
@@ -989,6 +1033,254 @@
       "what": "item Ardougne cloak 1 = item:13121",
       "quote": "ardy cloak",
       "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.3",
+      "what": "item:841x1 completes",
+      "quote": "a regular shortbow",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.7",
+      "what": "quest:priest_in_peril@finished completes",
+      "quote": "Do priest in peril",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.8",
+      "what": "quest:nature_spirit@finished completes",
+      "quote": "Do Nature spirit",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.10",
+      "what": "quest:creature_of_fenkenstrain@finished completes",
+      "quote": "Do Creature of Fenkenstrain",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.11",
+      "what": "item Rune scimitar = item:1333",
+      "quote": "Rune scim",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.16",
+      "what": "quest:elemental_workshop_ii@finished completes",
+      "quote": "Do Elemental workshop 2",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.17",
+      "what": "item Axe = any_of [1359 1357 1355 1361 1353 1349 1351]",
+      "quote": "Axe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.3.18",
+      "what": "item:1540x1 completes",
+      "quote": "Get anti-dragon shield",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.3.23",
+      "what": "quest:ernest_the_chicken@finished completes",
+      "quote": "Do Ernest the chicken",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.27",
+      "what": "item:771x3 completes",
+      "quote": "Get at least 5 Dramen branches, make 2 staffs"
+    },
+    {
+      "step_id": "1.3.30",
+      "what": "quest:fairytale_i_growing_pains@finished completes",
+      "quote": "Flinch Tanglefoot",
+      "decision": "final-quest-action-completes"
+    },
+    {
+      "step_id": "1.3.34",
+      "what": "quest:prince_ali_rescue@finished completes",
+      "quote": "Rescue prince ali",
+      "decision": "final-quest-action-completes"
+    },
+    {
+      "step_id": "1.3.37",
+      "what": "item:1741x1 completes",
+      "quote": "1 soft",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.38",
+      "what": "item Gold ore = item:444",
+      "quote": "1 inv of gold",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.45",
+      "what": "item:1791x1 completes",
+      "quote": "Make unfired bowl",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.3.52",
+      "what": "item:1135x1 completes",
+      "quote": "buy a green d'hide top",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.56",
+      "what": "item:4239x1 completes",
+      "quote": "use it on a range"
+    },
+    {
+      "step_id": "1.3.58",
+      "what": "quest:death_to_the_dorgeshuun@finished completes",
+      "quote": "Do Death to the Dorgeshuun",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.61",
+      "what": "item:4548x1 completes",
+      "quote": "use your empty lantern on the still to fill it"
+    },
+    {
+      "step_id": "1.3.63",
+      "what": "quest:horror_from_the_deep@finished completes",
+      "quote": "Do Horror from the deep quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.64",
+      "what": "item Dorgeshuun crossbow = item:8880",
+      "quote": "dorg cbow",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.64c",
+      "what": "suppresses skill:mining>=41 requires",
+      "quote": "Optional suggestion ('Try') placed before the route reaches 41 Mining (2.0.9)."
+    },
+    {
+      "step_id": "1.3.66",
+      "what": "quest:animal_magnetism@finished completes",
+      "quote": "Do Animal magnetism",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.67",
+      "what": "item:1121x1 completes",
+      "quote": "Buy mithril platebody",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.3.68",
+      "what": "item:1071x1 completes",
+      "quote": "Buy mithril platelegs",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.3.69",
+      "what": "quest:spirits_of_the_elid@finished completes",
+      "quote": "Do Spirits of the Elid quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.70",
+      "what": "quest:underground_pass@finished completes",
+      "quote": "Do the Underground pass quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.71",
+      "what": "item:12658x1 completes",
+      "quote": "Upgrade the iban staff",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "1.3.74",
+      "what": "suppresses skill:prayer>=43 completes",
+      "quote": "This step only gathers dragon bones; the level is reached at 1.3.84.",
+      "decision": "gather-for-level-completes-where-trained"
+    },
+    {
+      "step_id": "1.3.77",
+      "what": "item Ghostspeak amulet = family ghostspeak_amulet",
+      "quote": "Equip Ghostspeak amulet",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "1.3.79",
+      "what": "item Dragon bones = item:536 x9",
+      "quote": "9 d bones",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.79",
+      "what": "item Bucket of slime = item:4286 x9",
+      "quote": "9 slime",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.82",
+      "what": "item Dragon bones = item:536 x9",
+      "quote": "9 d bones",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.3.85",
+      "what": "quest:monkey_madness_i@finished completes",
+      "quote": "Do Monkey madness",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.86",
+      "what": "quest:wanted@finished completes",
+      "quote": "Do Wanted! quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.88",
+      "what": "quest:shades_of_mortton@finished completes",
+      "quote": "Do Shades of morton quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.90",
+      "what": "quest:heroes_quest@finished completes",
+      "quote": "Do Heroes' quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.91",
+      "what": "quest:the_fremennik_trials@finished completes",
+      "quote": "Do Fremennik trials",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.92",
+      "what": "quest:throne_of_miscellania@finished completes",
+      "quote": "Do Throne of miscellania",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.93",
+      "what": "quest:royal_trouble@finished completes",
+      "quote": "Do Royal Trouble",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.97",
+      "what": "quest:bone_voyage@finished completes",
+      "quote": "Do Bone Voyage quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.3.101",
+      "what": "quest:tears_of_guthix@finished completes",
+      "quote": "Do Tears of guthix quest",
+      "decision": "do-quest-means-finish"
     }
   ],
   "steps": {
@@ -1967,9 +2259,9 @@
     },
     "1.1.254": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Diverge da regra (quest:the_lost_tribe@started, explicit): a nota de update manda pular este passo porque Goblin Diplomacy virou requisito; a Lost Tribe começa em 1.1.279 (update-note-overrides-text). Itens (Brooch, Scrying orb, GP) também ficam fora."
+      "comment": "Suppresses the rule (starts the_lost_tribe, explicit): the update note says to skip this step; The Lost Tribe starts at 1.1.279 (update-note-overrides-text). Items (Brooch, Scrying orb, GP) also left out."
     },
     "1.1.255": {
       "section_id": "1.1",
@@ -1979,9 +2271,9 @@
     },
     "1.1.256": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Diverge da regra (quest:the_lost_tribe@started, derived): 'Continue' e a nota de update de 1.1.254 manda pular este passo (update-note-overrides-text)."
+      "comment": "Suppresses the rule (starts the_lost_tribe, derived): the 1.1.254 update note says to skip this step (update-note-overrides-text)."
     },
     "1.1.257": {
       "section_id": "1.1",
@@ -2802,6 +3094,643 @@
       "submits": 1,
       "first_submit_accepted": true,
       "comment": "Travel only."
+    },
+    "1.3.1": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Bronze sword not_in_catalog (out of objectives). Horror from the Deep is only the reason, done later."
+    },
+    "1.3.10": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: slime and ecto-tokens are advice; left out."
+    },
+    "1.3.100": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Advice for Tears of Guthix (RC lowest skill); no objective."
+    },
+    "1.3.101": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Weekly minigame is advice."
+    },
+    "1.3.102": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'to unlock Keldagrim' is the effect of starting the quest; no separate unlock."
+    },
+    "1.3.103": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'2 inventories of gold ore' is not a clear quantity (action-product-item precedent for '1 inv'); no Gold ore objective."
+    },
+    "1.3.104": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'plenty of digsite pendants' is a vague quantity; gold bars not named."
+    },
+    "1.3.105": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Molten glass and gems are inputs not quantified. 44 Hunter is a later goal. Location 'Various' is not a place."
+    },
+    "1.3.106": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('if needed'; conditional-step-no-objectives). Tip: 1-2k seeds."
+    },
+    "1.3.107": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "House location is configuration, not an unlock (owner). Tip: entering the POH portal is a diary task."
+    },
+    "1.3.108": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Update note only suggests milestone Thieving ('Consider'); 88 kept (owner). ~1.4m GP is a reference amount."
+    },
+    "1.3.109": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Reminder; '6.2k maples' is a reference amount and the 1.3.94 update note switched kingdom to hardwood."
+    },
+    "1.3.11": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport only. 'Tele runes' is vague (not in catalog). 'Rune scim' -> Rune scimitar 1333; alias candidate."
+    },
+    "1.3.12": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverges from the rule (starts DS1, derived): Dragon Slayer I was already started in 1.1.262; 'continue' is mid-quest. Tip to buy coif, green d'hide chaps and vambs left out (tip)."
+    },
+    "1.3.13": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest action (Rag and Bone Man I bones); no objectives."
+    },
+    "1.3.14": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport only."
+    },
+    "1.3.15": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest action (giant bat bone for Rag and Bone Man I); no objectives."
+    },
+    "1.3.16": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: kill one of each elemental for a diary task (task, not tier)."
+    },
+    "1.3.17": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport/travel only; items carried for the next steps."
+    },
+    "1.3.18": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.19": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest action (goblin bone for Rag and Bone Man I); no objectives."
+    },
+    "1.3.2": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Bronze bars implied but not named; left out."
+    },
+    "1.3.20": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest actions (big frog leg, giant rat bone for Rag and Bone Man I); no objectives."
+    },
+    "1.3.21": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.22": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Movement only."
+    },
+    "1.3.23": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.24": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Pre-collects a Fairytale I quest item (skull) ahead of the quest; no objectives."
+    },
+    "1.3.25": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Bank leg start; derived bank_setup kept. Items 'Fire strike runes' and 'Food' are vague (runes for Fire Strike = air/mind/fire, not named); left out."
+    },
+    "1.3.26": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest talk (Holy Grail); no start/finish stated."
+    },
+    "1.3.27": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "5 branches cut, 2 turned into staffs: 3 branches remain (owner)."
+    },
+    "1.3.28": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.29": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip about the 3 random items and leeches is advice."
+    },
+    "1.3.3": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'regular shortbow' -> Shortbow (841); alias candidate."
+    },
+    "1.3.30": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.31": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.32": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.33": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.34": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.35": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport while waiting for Martin's crops."
+    },
+    "1.3.36": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: raise a cat if you don't have one (advice)."
+    },
+    "1.3.37": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'soft leather' -> Leather (1741); alias candidate. Cowhides implied, not named."
+    },
+    "1.3.38": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "action-product-item: '1 inv' is not a clear quantity, so no Gold bar objective; 'gold' -> Gold ore (input). Tip (recoil ring, 10 games necklaces, dueling rings; clan wars energy) left out as tip."
+    },
+    "1.3.39": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest talk (Fairytale II)."
+    },
+    "1.3.4": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.40": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: fairy-ring diary tasks (BIS, AIR, ALS, CIR, DIS) are tasks, not tiers."
+    },
+    "1.3.41": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest (Melzar's maze, Dragon Slayer I); no objectives. 'Food' and 'Runes' vague."
+    },
+    "1.3.42": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest (DS1 map piece)."
+    },
+    "1.3.43": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest (DS1 ship)."
+    },
+    "1.3.44": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport only."
+    },
+    "1.3.45": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Runes' vague. Tip to equip anti-dragon shield and recoil ring left out (tip)."
+    },
+    "1.3.46": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest talk (DS1)."
+    },
+    "1.3.47": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest (DS1 map piece)."
+    },
+    "1.3.48": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport only."
+    },
+    "1.3.49": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest (DS1 captain). Tip to have shield and recoil ring equipped left out (tip)."
+    },
+    "1.3.5": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "skippable-if-unavailable: 'if every world is bought out then don't bother' -> no Steel nails x400 objective (owner)."
+    },
+    "1.3.50": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Crandor-Karamja shortcut: mid-quest and a diary task, not an unlock (owner). Tip: food, climb back up for a Karamja medium task."
+    },
+    "1.3.51": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Elvarg kill is mid-quest; the quest finishes in 1.3.52."
+    },
+    "1.3.52": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'green d'hide top' -> Green d'hide body (1135); alias candidate."
+    },
+    "1.3.53": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'gloves' has no type; left out of items."
+    },
+    "1.3.54": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mid-quest (RFD Evil Dave stew); the tip makes it conditional on having a cat."
+    },
+    "1.3.55": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport only."
+    },
+    "1.3.56": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Product Nettle tea, plain variant 4239 (not milky 4240), owner. For Ghosts Ahoy later."
+    },
+    "1.3.57": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.58": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'keep buttons (If you didn't get them ...)' is conditional (conditional-step-no-objectives)."
+    },
+    "1.3.59": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.6": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.60": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.61": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Filled lantern = Bullseye lantern Unlit 4548 (owner)."
+    },
+    "1.3.62": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip lists diary tasks (Galahad's tea, log, coal trucks, Karamja rope swing, gold); tasks, not tiers."
+    },
+    "1.3.63": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: Barbarian agility lap is a diary task; fight advice."
+    },
+    "1.3.64": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'dorg cbow' -> Dorgeshuun crossbow (8880); alias candidate. Bone bolts implied, not named here."
+    },
+    "1.3.64a": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "~40 combat is a recommendation. Tip: unlocks Quetzal Transport (effect of the quest, not added as unlock)."
+    },
+    "1.3.64c": {
+      "section_id": "1.3",
+      "submits": 3,
+      "comment": "Suppresses the rule (requires mining>=41, derived): the route only reaches 41 Mining at 2.0.9 and 'Try' makes the step optional (owner). Prayer shards vague."
+    },
+    "1.3.65": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Second axe ('either another mith axe, addy axe or a rune axe, whichever is first') cannot be an objective: objective keys have no any_of (docs/09 3.2, owner kept the model). Known gap."
+    },
+    "1.3.66": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.67": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.68": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.69": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip about tanking golems in mithril armour is advice."
+    },
+    "1.3.7": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.70": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "HCIM note (use mithril armour, trap paladins) is advice."
+    },
+    "1.3.71": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Product of upgrading = Iban's staff (u) 12658. Input staff/coins not named."
+    },
+    "1.3.72": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: sand crabs fallback is advice."
+    },
+    "1.3.73": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Inputs (sapphire amulet, cosmic rune) not named."
+    },
+    "1.3.74": {
+      "section_id": "1.3",
+      "submits": 3,
+      "first_submit_accepted": true,
+      "comment": "Suppresses the rule (completes prayer>=43, explicit): bones gathered here, level at 1.3.84 (owner). Tip: ~85 bones plus 1 extra for Watchtower. Iban's staff implied by 'iban's blast'."
+    },
+    "1.3.75": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleport only."
+    },
+    "1.3.76": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'however many buckets of slime you need' is a vague quantity (unnumbered-acquire-is-one excludes it)."
+    },
+    "1.3.77": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Either Ghostspeak variant (normal/enchanted) serves, so family."
+    },
+    "1.3.78": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('If you didn't prepare the nettle water earlier'); conditional-step-no-objectives."
+    },
+    "1.3.79": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Check step. 'GP stack' not in catalog (alias candidate -> Coins); 'd bones' -> Dragon bones, 'slime' -> Bucket of slime (alias candidates). /items/4 is a tip, not an item."
+    },
+    "1.3.8": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: restore prayer at the grotto for a diary task (diary task, not a tier completion)."
+    },
+    "1.3.80": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Travel only."
+    },
+    "1.3.81": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.82": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ecto-tokens not in catalog (spent in Ghosts Ahoy); left out."
+    },
+    "1.3.83": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.84": {
+      "section_id": "1.3",
+      "submits": 3,
+      "comment": "Level reached here, not at 1.3.74 (owner, gather-for-level-completes-where-trained)."
+    },
+    "1.3.85": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Reward choice (attack/defence) is advice."
+    },
+    "1.3.86": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.87": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: train range to 40 first (advice, no level target for this step)."
+    },
+    "1.3.88": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip allows leaving it for later if no one can help (tip, the step text is unconditional)."
+    },
+    "1.3.89": {
+      "section_id": "1.3",
+      "submits": 2,
+      "comment": "Conditional ('if you don't have yet'; conditional-step-no-objectives): Herblore 77 is already completed at 1.1.2, so the rule (completes herblore>=25, explicit) is already met; harmless, not suppressed. Location 'Various' is not a place."
+    },
+    "1.3.9": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.90": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various' is not a place."
+    },
+    "1.3.91": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.92": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.93": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.94": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Kingdom coffer/workers are not a catalogued state; no objectives. Update note changes the setup to 10 hardwood + 5 herbs (no objective either way)."
+    },
+    "1.3.95": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'a few hours' and 'more money' are vague; kingdom coffer not catalogued. Tip: wear rogue outfit, 525k on top of 750k."
+    },
+    "1.3.96": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'all 5 of the items you can get for kudos' is vague (museum display finds, kudos not catalogued)."
+    },
+    "1.3.97": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.3.98": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Birdhouse placement is not a catalogued state."
+    },
+    "1.3.99": {
+      "section_id": "1.3",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ongoing routine (birdhouse runs every 50 mins); no objective. Location 'Various' is not a place."
     }
   }
 }

@@ -1,0 +1,4216 @@
+{
+  "schema_version": 1,
+  "kind": "section",
+  "guide_id": "oziris-main",
+  "section_id": "1.3",
+  "skill_version": "annotate-guide@3",
+  "steps": [
+    {
+      "step_id": "1.3.1",
+      "text_hash": "sha256:1909652e37d988a1869bda9edeba6c99e58aae9a209d19636d29410f8caac440",
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.2",
+      "text_hash": "sha256:b61694ad22bd98e31b51f32a973ec7ce95a3ceb5f0580ffb9ee662785e3b03a6",
+      "objectives": [
+        {
+          "key": "item:1794x3",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Smith 3 bronze wire",
+            "span": [
+              0,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.3",
+      "text_hash": "sha256:e1231303b68c0bc313c1160d7d8439494d099f6d072ce1f15ed40ae57351f121",
+      "objectives": [
+        {
+          "key": "item:845x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "an oak longbow",
+            "span": [
+              4,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "key": "item:841x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a regular shortbow",
+            "span": [
+              23,
+              41
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.4",
+      "text_hash": "sha256:a9262d2c61956626ae9483b8e0be0eb0786fc26e34fb760a92b722d3a2d96a79",
+      "objectives": [
+        {
+          "key": "quest:priest_in_peril@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Priest in peril",
+            "span": [
+              0,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.5",
+      "text_hash": "sha256:7837ece9afba34a92db7d0cc150765a51e005c26e7dff632a87082d624698a51",
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.6",
+      "text_hash": "sha256:1b0c278073fea037e0cfea0b348ee8aec4d07ced6c05ed3d0772e9cf7b7008fd",
+      "objectives": [
+        {
+          "key": "quest:rag_and_bone_man_i@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Rag and bone man",
+            "span": [
+              0,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.7",
+      "text_hash": "sha256:327609697437a23151d946ad9d1639349df0f1a7c5a4aeaf4e2ea6f7127c764f",
+      "objectives": [
+        {
+          "key": "quest:priest_in_peril@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do priest in peril",
+            "span": [
+              0,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:morytania",
+        "evidence": {
+          "field": "/location",
+          "quote": "Morytania",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.8",
+      "text_hash": "sha256:02ce329e42ddf4a586703af70d6b1f19718807821eea3dec1e297591d41dfbd3",
+      "objectives": [
+        {
+          "key": "quest:nature_spirit@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Nature spirit",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:morytania",
+        "evidence": {
+          "field": "/location",
+          "quote": "Morytania",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.9",
+      "text_hash": "sha256:8b387929143e7e8d5c199b5de59347170d6f7c938c08c26ecad2a12e564819d1",
+      "objectives": [
+        {
+          "key": "item:383x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 1 raw shark",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:canifis",
+        "evidence": {
+          "field": "/location",
+          "quote": "Canifis",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.10",
+      "text_hash": "sha256:ad5df2b71740dba193c258aee7f6bbd843b4ebc0f0e544960e643fd43b790116",
+      "objectives": [
+        {
+          "key": "quest:creature_of_fenkenstrain@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Creature of Fenkenstrain",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:canifis",
+        "evidence": {
+          "field": "/location",
+          "quote": "Canifis",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.11",
+      "text_hash": "sha256:ef211ad15ec4c3e588dbc14d179b75c21d3374202eab8a06e613c26bb5bba5fb",
+      "items": [
+        {
+          "name": "GP",
+          "item_id": 995,
+          "source_text": "GP",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "GP",
+            "span": [
+              0,
+              2
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Rune scimitar",
+          "item_id": 1333,
+          "source_text": "Rune scim",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "Rune scim",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "Chronicle",
+          "item_id": 13660,
+          "source_text": "Chronicle",
+          "evidence": {
+            "field": "/text",
+            "quote": "Chronicle",
+            "span": [
+              4,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.12",
+      "text_hash": "sha256:3c451405ccadb9beee7a7d155f6a6472c1d1be19939e4cb139526baf1d6806d3",
+      "location": {
+        "ref": "location:champions_guild",
+        "evidence": {
+          "field": "/location",
+          "quote": "Champions Guild",
+          "span": [
+            0,
+            15
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.13",
+      "text_hash": "sha256:3294331a1f8179c9e3f039e8630f3b0f5983c65d2b2cbfb2e4c7326bafe75d4e",
+      "location": {
+        "ref": "location:champions_guild",
+        "evidence": {
+          "field": "/location",
+          "quote": "Champions Guild",
+          "span": [
+            0,
+            15
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.14",
+      "text_hash": "sha256:069fd3cced1435898864821ca89a121f497ef371c1ea8f4d1cc12ea196341b60",
+      "location": {
+        "ref": "location:camelot",
+        "evidence": {
+          "field": "/location",
+          "quote": "Camelot",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.15",
+      "text_hash": "sha256:de3a7f24d05fd11964131d1b1b8a1e34a92cd9cb7a6c6aa55e61e6df4a21f733",
+      "location": {
+        "ref": "location:catherby",
+        "evidence": {
+          "field": "/location",
+          "quote": "Catherby",
+          "span": [
+            0,
+            8
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.16",
+      "text_hash": "sha256:0a456d741f31a20fa424bbf9fb44e87787da5f8d1efebe61f3547e06d3ff53e8",
+      "objectives": [
+        {
+          "key": "quest:elemental_workshop_ii@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Elemental workshop 2",
+            "span": [
+              0,
+              23
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:seers_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Seers Village",
+          "span": [
+            0,
+            13
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.17",
+      "text_hash": "sha256:d9671ebd924573ffedae63ee3744d713cdcf8e301ab6c86707feb03098b159b5",
+      "items": [
+        {
+          "name": "Axe",
+          "any_of": [
+            1359,
+            1357,
+            1355,
+            1361,
+            1353,
+            1349,
+            1351
+          ],
+          "source_text": "Axe",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "Axe",
+            "span": [
+              0,
+              3
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "axe-means-best-axe"
+          }
+        },
+        {
+          "name": "Rope",
+          "item_id": 954,
+          "source_text": "Rope",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "Rope",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Lit candle",
+          "item_id": 33,
+          "source_text": "Lit candle",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "Lit candle",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "Hammer",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "Hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Stake",
+          "item_id": 1549,
+          "source_text": "Stake (vampire slayer)",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "Stake (vampire slayer)",
+            "span": [
+              0,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Spade",
+          "item_id": 952,
+          "source_text": "Spade",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "Spade",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.18",
+      "text_hash": "sha256:b2e9523ad82fad460396d6fd9824a77febf463a4b6a77dd3cc5118f6220ab7e0",
+      "objectives": [
+        {
+          "key": "item:1540x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get anti-dragon shield",
+            "span": [
+              0,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.19",
+      "text_hash": "sha256:adea8101f7613f95c423af0b12a178c56f426aaf9fc77a72da2a47629ce17eac",
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.20",
+      "text_hash": "sha256:055a6d41fe12640d490ffc4e9d6f56262c54eff1aa3748f1854ef9ba126cc1e8",
+      "location": {
+        "ref": "location:lumbridge_swamp",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge Swamp",
+          "span": [
+            0,
+            15
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.21",
+      "text_hash": "sha256:0374881c98ce52842d29e088fb80f0705167431d84752783b95fe6c989339184",
+      "objectives": [
+        {
+          "key": "quest:lost_city@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Lost city",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge_swamp",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge Swamp",
+          "span": [
+            0,
+            15
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.22",
+      "text_hash": "sha256:cd59fd772976aaf4fae47faf3de306a9c9fe49db6701cce5dfc312bb9734e33c",
+      "location": {
+        "ref": "location:draynor_manor",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor Manor",
+          "span": [
+            0,
+            13
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.23",
+      "text_hash": "sha256:d909aa58467dc99351d35113e7ceca43ac0626e34fcfa32f3e0bf0c6424936e4",
+      "objectives": [
+        {
+          "key": "quest:ernest_the_chicken@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Ernest the chicken",
+            "span": [
+              0,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:vampyre_slayer@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "finish vampire slayer",
+            "span": [
+              23,
+              44
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:draynor_manor",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor Manor",
+          "span": [
+            0,
+            13
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.24",
+      "text_hash": "sha256:84e443d49e39e88fe12d31f4871c5df7494923d684e92e81ca378609ee957116",
+      "location": {
+        "ref": "location:draynor_manor",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor Manor",
+          "span": [
+            0,
+            13
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.25",
+      "text_hash": "sha256:837aef6add21c473b3542fcac02c6ba11d793e2204a1714908d5d15d66b45545",
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.26",
+      "text_hash": "sha256:ba5292c95d91d4a9da5bed29859a8abd9a19e625d990e2b466cef253943c5491",
+      "location": {
+        "ref": "location:entrana",
+        "evidence": {
+          "field": "/location",
+          "quote": "Entrana",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.27",
+      "text_hash": "sha256:13e5dbf4fc30b31197793a5fab16c006c07c0d6460e744815605725fc65e8e33",
+      "objectives": [
+        {
+          "key": "item:772x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make 2 staffs",
+            "span": [
+              32,
+              45
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "key": "item:771x3",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get at least 5 Dramen branches, make 2 staffs",
+            "span": [
+              0,
+              45
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:entrana",
+        "evidence": {
+          "field": "/location",
+          "quote": "Entrana",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.28",
+      "text_hash": "sha256:bc05be4ede881f55f5964a55a80e36383b2bdf942eba8002b6384a837d38f566",
+      "objectives": [
+        {
+          "key": "quest:lost_city@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Finish Lost city",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:entrana",
+        "evidence": {
+          "field": "/location",
+          "quote": "Entrana",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.29",
+      "text_hash": "sha256:e98a24c92aec0087184065cee85e76dd2f13ee71a347364548638792c3e7fee8",
+      "objectives": [
+        {
+          "key": "quest:fairytale_i_growing_pains@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Fairytale part 1",
+            "span": [
+              0,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.30",
+      "text_hash": "sha256:62f17803f50b0bdb63f5aca951bec71b988ef43ced441edeb124779ccbc87bfe",
+      "objectives": [
+        {
+          "key": "quest:fairytale_i_growing_pains@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Flinch Tanglefoot",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "final-quest-action-completes"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:zanaris",
+        "evidence": {
+          "field": "/location",
+          "quote": "Zanaris",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.31",
+      "text_hash": "sha256:a179d8d672dc3e4e597f0b617d6774e44cd2f69c63695c001a7682ff5d0cd9e1",
+      "objectives": [
+        {
+          "key": "quest:fairytale_ii_cure_a_queen@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "start Fairytale2",
+            "span": [
+              18,
+              34
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.32",
+      "text_hash": "sha256:bdc4189ff6fb735598851484747e159bbe471a40142578cf6881eab3e7b8c868",
+      "objectives": [
+        {
+          "key": "item:7810x35",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 35 jugs of vinegar",
+            "span": [
+              0,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.33",
+      "text_hash": "sha256:ef03e6c4e913a4c376612a5d4a41dce79139fd4bfaf60cfa88c602bc5ab7583d",
+      "objectives": [
+        {
+          "key": "item:5096x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 marigold seed",
+            "span": [
+              4,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "key": "item:5324x3",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3 cabbage seeds",
+            "span": [
+              21,
+              36
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "key": "item:5319x3",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3 onion seeds",
+            "span": [
+              38,
+              51
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.34",
+      "text_hash": "sha256:cc45c568152d0b36dd3c1ddb6404a1ffbdd67661c9c3c4463ba294c0eb65cb60",
+      "objectives": [
+        {
+          "key": "quest:prince_ali_rescue@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Rescue prince ali",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "final-quest-action-completes"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.35",
+      "text_hash": "sha256:a6420d6714a9d5c1ce369cbaa931483f72ad79f9a497fb293ca19fe6f75b888b",
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.36",
+      "text_hash": "sha256:b4c43d2f7f2e5c28233aa0f7c52a1e3246c3b77ab39a1f245f73717d55b09aac",
+      "objectives": [
+        {
+          "key": "quest:recipe_for_disaster_freeing_evil_dave@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Evil Dave subquest for RFD",
+            "span": [
+              0,
+              32
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.37",
+      "text_hash": "sha256:8c9d02c236b2bb4d01715a4b397cbf498124ab9e86a9ab916ddb9ce2d649a430",
+      "objectives": [
+        {
+          "key": "item:1741x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 soft",
+            "span": [
+              21,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "key": "item:1743x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 hard leather",
+            "span": [
+              29,
+              43
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.38",
+      "text_hash": "sha256:a182c142ff7998c86a24a151ab73f1e108f51cf0418bb6561c1c023a68716009",
+      "items": [
+        {
+          "name": "Gold ore",
+          "item_id": 444,
+          "source_text": "1 inv of gold",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 inv of gold",
+            "span": [
+              6,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.39",
+      "text_hash": "sha256:27d20884ea3fac372212f3d98788a99a849c392c4202ef09b727fc99c18dd431",
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.40",
+      "text_hash": "sha256:c9a9205f9d2aee15736130546e0df201da6713ae2e5e04bc36b230381c6cf177",
+      "objectives": [
+        {
+          "key": "unlock:fairy_rings@done",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "unlock fairy rings",
+            "span": [
+              3,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:zanaris",
+        "evidence": {
+          "field": "/location",
+          "quote": "Zanaris",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.41",
+      "text_hash": "sha256:5941662f5b091e541e21e14634230aff91e84b658142023f1bc89011707d1573",
+      "items": [
+        {
+          "name": "GP",
+          "item_id": 995,
+          "source_text": "GP",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "GP",
+            "span": [
+              0,
+              2
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Maze key",
+          "item_id": 1542,
+          "source_text": "Maze key",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "Maze key",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Steel nails",
+          "item_id": 1539,
+          "qty": 90,
+          "source_text": "90 steel nails",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "90 steel nails",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Plank",
+          "item_id": 960,
+          "qty": 3,
+          "source_text": "3 planks",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "3 planks",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "Hammer",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "Hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:rimmington",
+        "evidence": {
+          "field": "/location",
+          "quote": "Rimmington",
+          "span": [
+            0,
+            10
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.42",
+      "text_hash": "sha256:9dfc1453e5b574ca3eb7879adc4a7aa2f36fa3d3ce20329aed0b0c92b2a23b10",
+      "location": {
+        "ref": "location:port_sarim",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Sarim",
+          "span": [
+            0,
+            10
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.43",
+      "text_hash": "sha256:3619909d422e1fc8b3613a5a0ed1141a13dc6d192c0d3c0030cf27ce5d534112",
+      "location": {
+        "ref": "location:port_sarim",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Sarim",
+          "span": [
+            0,
+            10
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.44",
+      "text_hash": "sha256:3077677d8b3fc109e120d0299217eb4415f5b8018e17bc9742045bd9a22194ca",
+      "location": {
+        "ref": "location:falador",
+        "evidence": {
+          "field": "/location",
+          "quote": "Falador",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.45",
+      "text_hash": "sha256:41c7d44406d324eb863236d611fc468d1f37aa48f294b38d5448964cfd614a34",
+      "objectives": [
+        {
+          "key": "item:1791x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make unfired bowl",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "GP",
+          "item_id": 995,
+          "source_text": "GP",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "GP",
+            "span": [
+              0,
+              2
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Soft clay",
+          "item_id": 1761,
+          "source_text": "Soft clay",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "Soft clay",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Wizard mind bomb",
+          "item_id": 1907,
+          "source_text": "Wizard mind bomb",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "Wizard mind bomb",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Lobster pot",
+          "item_id": 301,
+          "source_text": "Lobster pot",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "Lobster pot",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Silk",
+          "item_id": 950,
+          "source_text": "Silk",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "Silk",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:barbarian_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Barbarian Village",
+          "span": [
+            0,
+            17
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.46",
+      "text_hash": "sha256:c9807d199c947c6fdf515b433cf4526c26c0d2676d602663907040d9e3014eac",
+      "location": {
+        "ref": "location:ice_mountain",
+        "evidence": {
+          "field": "/location",
+          "quote": "Ice Mountain",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.47",
+      "text_hash": "sha256:fb61a3ccba84ae02662c46a06ee7a0f25c8c2635096238481d5bdd48ea241863",
+      "location": {
+        "ref": "location:ice_mountain",
+        "evidence": {
+          "field": "/location",
+          "quote": "Ice Mountain",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.48",
+      "text_hash": "sha256:94f8285f9ee3141763cf3bd4ef30cb8c8c457a6889e2b643e060b97c95c189af",
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.49",
+      "text_hash": "sha256:709f7f12dd6cebc2aa8e39fe0d2e795040bad5de872666daec8d249c57c3e736",
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.50",
+      "text_hash": "sha256:bd0569b44535b10239a57bf02e62ea0a97e679bf9ff5da4e4b03f124fa05c7ac",
+      "location": {
+        "ref": "location:crandor",
+        "evidence": {
+          "field": "/location",
+          "quote": "Crandor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.51",
+      "text_hash": "sha256:b51c385f1a79566f749c230b0906e0af9ac7e817f101be7dedd5cb12da05f4b9",
+      "location": {
+        "ref": "location:crandor",
+        "evidence": {
+          "field": "/location",
+          "quote": "Crandor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.52",
+      "text_hash": "sha256:114cbfc08c7347ab60db78dacf4113ca95e537c010ad09a7439917210dc15fde",
+      "objectives": [
+        {
+          "key": "quest:dragon_slayer_i@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Finish dragon slayer",
+            "span": [
+              0,
+              20
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "key": "item:1135x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a green d'hide top",
+            "span": [
+              25,
+              47
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:edgeville",
+        "evidence": {
+          "field": "/location",
+          "quote": "Edgeville",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.53",
+      "text_hash": "sha256:fa3befac1855bc3754b954b904d1e11fbf27c2aadd7e4c68eff54ed83d180eae",
+      "objectives": [
+        {
+          "key": "item:4241x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "pick up 5 nettles",
+            "span": [
+              16,
+              33
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:edgeville",
+        "evidence": {
+          "field": "/location",
+          "quote": "Edgeville",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.54",
+      "text_hash": "sha256:6df4917c1a7366176f213afa197f601aebc376eb1499fa3a6179c732d8df32cd",
+      "location": {
+        "ref": "location:edgeville",
+        "evidence": {
+          "field": "/location",
+          "quote": "Edgeville",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.55",
+      "text_hash": "sha256:94f8285f9ee3141763cf3bd4ef30cb8c8c457a6889e2b643e060b97c95c189af",
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.56",
+      "text_hash": "sha256:32cd0b2ef82897aa8a78df6fecbfbaf7db06ed69a9c3ccf64a554f9aebc870f0",
+      "objectives": [
+        {
+          "key": "item:4239x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "use it on a range",
+            "span": [
+              46,
+              63
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Bowl",
+          "item_id": 1923,
+          "source_text": "a bowl",
+          "evidence": {
+            "field": "/text",
+            "quote": "a bowl",
+            "span": [
+              5,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Nettles",
+          "item_id": 4241,
+          "source_text": "nettles",
+          "evidence": {
+            "field": "/text",
+            "quote": "nettles",
+            "span": [
+              28,
+              35
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.57",
+      "text_hash": "sha256:78ff5e2c977b0c9d694204b6a192fd59bb819556a4afeff1988d7eb6082eddef",
+      "objectives": [
+        {
+          "key": "quest:recipe_for_disaster_freeing_evil_dave@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Finish Evil Dave subquest",
+            "span": [
+              0,
+              25
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.58",
+      "text_hash": "sha256:87af571a00b868f822de9d27b94bc167ffa6e6a136940c63a6524bcbc74d3958",
+      "objectives": [
+        {
+          "key": "quest:death_to_the_dorgeshuun@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Death to the Dorgeshuun",
+            "span": [
+              0,
+              26
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:dorgesh_kaan",
+        "evidence": {
+          "field": "/location",
+          "quote": "Dorgesh-Kaan",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.59",
+      "text_hash": "sha256:3ed75290e2ad0dcd67585062bb29b55e0f1777b3f27530e8be07e0ec219f7239",
+      "objectives": [
+        {
+          "key": "item:8880x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy dorgeshuun crossbow",
+            "span": [
+              0,
+              23
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "key": "item:8882x4000",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "4000 bone bolts",
+            "span": [
+              28,
+              43
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:dorgesh_kaan",
+        "evidence": {
+          "field": "/location",
+          "quote": "Dorgesh-Kaan",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.60",
+      "text_hash": "sha256:9157d4af18e2e297bbf80cba6b7c3d0813c5cca87b188bbbdd57a80e18e6b007",
+      "objectives": [
+        {
+          "key": "item:4546x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy a Bullseye lantern (empty)",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:dorgesh_kaan",
+        "evidence": {
+          "field": "/location",
+          "quote": "Dorgesh-Kaan",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.61",
+      "text_hash": "sha256:f9a645bbc0c5a9e7895ae9872db6b2b7f74a91877eb4d403f5f5b2d0ea5acd0f",
+      "objectives": [
+        {
+          "key": "item:4548x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "use your empty lantern on the still to fill it",
+            "span": [
+              48,
+              94
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Swamp tar",
+          "item_id": 1939,
+          "source_text": "swamp tar",
+          "evidence": {
+            "field": "/text",
+            "quote": "swamp tar",
+            "span": [
+              4,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Bullseye lantern (empty)",
+          "item_id": 4546,
+          "source_text": "your empty lantern",
+          "evidence": {
+            "field": "/text",
+            "quote": "your empty lantern",
+            "span": [
+              52,
+              70
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:dorgesh_kaan",
+        "evidence": {
+          "field": "/location",
+          "quote": "Dorgesh-Kaan",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.62",
+      "text_hash": "sha256:38df92684a9c7e66c18a8d6cd85af6f94e442704d51240c3e391444767726e08",
+      "objectives": [
+        {
+          "key": "quest:holy_grail@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Finish Holy grail",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:fisher_realm",
+        "evidence": {
+          "field": "/location",
+          "quote": "Fisher King Realm",
+          "span": [
+            0,
+            17
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.63",
+      "text_hash": "sha256:ed7daddb7dc5b9415a64c5a62e8c5673d68744d27825ecee6c1ac61a03ff5a09",
+      "objectives": [
+        {
+          "key": "quest:horror_from_the_deep@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Horror from the deep quest",
+            "span": [
+              0,
+              29
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lighthouse",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lighthouse",
+          "span": [
+            0,
+            10
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.64",
+      "text_hash": "sha256:9372d1efd591bcc98327cdf1466ab827b0a1dfaf7d36bc2f97f543ec65a1c6a1",
+      "objectives": [
+        {
+          "key": "skill:ranged>=37",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "until 37 Range",
+            "span": [
+              32,
+              46
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "key": "skill:slayer>=18",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "18 slayer",
+            "span": [
+              51,
+              60
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Dorgeshuun crossbow",
+          "item_id": 8880,
+          "source_text": "dorg cbow",
+          "slot": "equipment",
+          "evidence": {
+            "field": "/text",
+            "quote": "dorg cbow",
+            "span": [
+              22,
+              31
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:burthorpe",
+        "evidence": {
+          "field": "/location",
+          "quote": "Burthorpe",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.64a",
+      "text_hash": "sha256:f768cf43d879a53995ecbca420f840ec5a61e63fdf226c7b0bc570c7e6e7499e",
+      "objectives": [
+        {
+          "key": "quest:twilights_promise@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Twilight's Promise quest",
+            "span": [
+              0,
+              33
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "key": "quest:children_of_the_sun@finished",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "requires Children of the Sun",
+            "span": [
+              35,
+              63
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varlamore",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varlamore",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.64c",
+      "text_hash": "sha256:2fcc28c4dd0846d7c3c6cd759dea29b77a96069f3c7574b7f2a9672ab663d19a",
+      "suppressed": [
+        {
+          "key": "skill:mining>=41",
+          "role": "requires",
+          "reason": "Optional suggestion ('Try') placed before the route reaches 41 Mining (2.0.9).",
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varlamore",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varlamore",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.65",
+      "text_hash": "sha256:719d0bc936e32079fe3014a284a0829693aa47252ee15f3d66445447a59b95e2",
+      "objectives": [
+        {
+          "key": "item:1355x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for a mithril axe",
+            "span": [
+              35,
+              52
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:enchanted_valley",
+        "evidence": {
+          "field": "/location",
+          "quote": "Enchanted Valley",
+          "span": [
+            0,
+            16
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.66",
+      "text_hash": "sha256:3e9291d8f9afff86bc738079b4393a641ad23c9d87dd7ac88087501c1a9d5036",
+      "objectives": [
+        {
+          "key": "quest:animal_magnetism@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Animal magnetism",
+            "span": [
+              0,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:draynor_manor",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor Manor",
+          "span": [
+            0,
+            13
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.67",
+      "text_hash": "sha256:e3e4f075c117580d72d5a56cb7ba645f9c8b5640ff57c0eac42c5477698860d1",
+      "objectives": [
+        {
+          "key": "item:1121x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy mithril platebody",
+            "span": [
+              0,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.68",
+      "text_hash": "sha256:94b88ffe8d7bc01aaaf2a86a936d0926851e48d2d9ad0aeef6896ebc65145923",
+      "objectives": [
+        {
+          "key": "item:1071x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy mithril platelegs",
+            "span": [
+              0,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:al_kharid",
+        "evidence": {
+          "field": "/location",
+          "quote": "Al Kharid",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.69",
+      "text_hash": "sha256:a30756e64141242c7d17a20b0ed28dc95e45bf96289fc9a52731c51d0db96dd0",
+      "objectives": [
+        {
+          "key": "quest:spirits_of_the_elid@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Spirits of the Elid quest",
+            "span": [
+              0,
+              28
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:nardah",
+        "evidence": {
+          "field": "/location",
+          "quote": "Nardah",
+          "span": [
+            0,
+            6
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.70",
+      "text_hash": "sha256:ef5dab9ce0a76ae43a01b5306f72146b59290eaf21ff60d82a07e49651b533fb",
+      "objectives": [
+        {
+          "key": "quest:underground_pass@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do the Underground pass quest",
+            "span": [
+              0,
+              29
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:underground_pass",
+        "evidence": {
+          "field": "/location",
+          "quote": "Underground Pass",
+          "span": [
+            0,
+            16
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.71",
+      "text_hash": "sha256:4ff15714803b303d7bfeb8f8f106394bcc13ddab285d153332f22eee36f8de20",
+      "objectives": [
+        {
+          "key": "item:12658x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Upgrade the iban staff",
+            "span": [
+              0,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "action-product-item"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:underground_pass",
+        "evidence": {
+          "field": "/location",
+          "quote": "Underground Pass",
+          "span": [
+            0,
+            16
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.72",
+      "text_hash": "sha256:def90819f4f826f0a2e659cd608741435ca90c9f81cc3344a05dca8f742e9621",
+      "objectives": [
+        {
+          "key": "skill:attack>=50",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get 50 attack",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:burthorpe",
+        "evidence": {
+          "field": "/location",
+          "quote": "Burthorpe",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.73",
+      "text_hash": "sha256:11fd2931a44e56638c7260da323b332b80f8810ca1534b353d2b7fdbd3ceee26",
+      "objectives": [
+        {
+          "key": "item:1727x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make an amulet of magic",
+            "span": [
+              0,
+              23
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:edgeville",
+        "evidence": {
+          "field": "/location",
+          "quote": "Edgeville",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.74",
+      "text_hash": "sha256:c71f29c8307e4b04d02d26dae7dbda0c243f1710c6d41ecae1fcd08506e0b1dc",
+      "suppressed": [
+        {
+          "key": "skill:prayer>=43",
+          "role": "completes",
+          "reason": "This step only gathers dragon bones; the level is reached at 1.3.84.",
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "gather-for-level-completes-where-trained"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:taverley_dungeon",
+        "evidence": {
+          "field": "/location",
+          "quote": "Taverley Dungeon",
+          "span": [
+            0,
+            16
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.75",
+      "text_hash": "sha256:32e78a68742d04958c2e81bc506dfded007daa6784424ba7cc8daf2ad92833da",
+      "location": {
+        "ref": "location:port_khazard",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Khazard",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.76",
+      "text_hash": "sha256:0013e1afe50428a13985186e98a76cf230e552d482f84ab7cec4ab1d49698c72",
+      "location": {
+        "ref": "location:port_khazard",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Khazard",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.77",
+      "text_hash": "sha256:a03f48f29b4ccf3a71f82d55a2f0c233e1390822dfc317292dc12ddd9748e4c2",
+      "items": [
+        {
+          "name": "Ghostspeak amulet",
+          "family": "ghostspeak_amulet",
+          "source_text": "Equip Ghostspeak amulet",
+          "slot": "equipment",
+          "evidence": {
+            "field": "/text",
+            "quote": "Equip Ghostspeak amulet",
+            "span": [
+              0,
+              23
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "ambiguous-variant-by-context"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:port_khazard",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Khazard",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.78",
+      "text_hash": "sha256:c997ec247de1ff40b48c7197e6449ecdd4c85815aee6d3c50428264cbe2198f7",
+      "location": {
+        "ref": "location:port_khazard",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Khazard",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.79",
+      "text_hash": "sha256:ff3b99d626d62d27fd36fc8ab2b7952edbcd7773777c0ed14b44c4b340d23bff",
+      "items": [
+        {
+          "name": "Dragon bones",
+          "item_id": 536,
+          "qty": 9,
+          "source_text": "9 d bones",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "9 d bones",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "Pot",
+          "item_id": 1931,
+          "qty": 9,
+          "source_text": "9 pot",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "9 pot",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        },
+        {
+          "name": "Bucket of slime",
+          "item_id": 4286,
+          "qty": 9,
+          "source_text": "9 slime",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "9 slime",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:port_khazard",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Khazard",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.80",
+      "text_hash": "sha256:656b5f1fc75136b31da8b5a97f0bf488ac05087094bfc9f7b256b0299a54ffa3",
+      "location": {
+        "ref": "location:port_phasmatys",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Phasmatys",
+          "span": [
+            0,
+            14
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.81",
+      "text_hash": "sha256:c95b16573da105fab7d506231188c8ee14e240c9f2835912d40cef9117d4e2b0",
+      "objectives": [
+        {
+          "key": "quest:ghosts_ahoy@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start ghosts ahoy",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:port_phasmatys",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Phasmatys",
+          "span": [
+            0,
+            14
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.82",
+      "text_hash": "sha256:1c5c3bb765c77efd43c132e4be3cdb47770993fa05c73bc46b5ed3e2dd6a69e2",
+      "items": [
+        {
+          "name": "Dragon bones",
+          "item_id": 536,
+          "qty": 9,
+          "source_text": "9 d bones",
+          "evidence": {
+            "field": "/text",
+            "quote": "9 d bones",
+            "span": [
+              6,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:port_phasmatys",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Phasmatys",
+          "span": [
+            0,
+            14
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.83",
+      "text_hash": "sha256:a79d4b67beedbab890e3eb00f25207d7a5272cb06baebba873e3e575e472b15e",
+      "objectives": [
+        {
+          "key": "quest:ghosts_ahoy@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Finish ghosts ahoy",
+            "span": [
+              0,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:port_phasmatys",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Phasmatys",
+          "span": [
+            0,
+            14
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.84",
+      "text_hash": "sha256:68b57e715c8cdb0f842f65bc154ddefd994016964931dd1e3f063589629e53d6",
+      "objectives": [
+        {
+          "key": "skill:prayer>=43",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to get 43 prayer",
+            "span": [
+              29,
+              45
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:port_phasmatys",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Phasmatys",
+          "span": [
+            0,
+            14
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.85",
+      "text_hash": "sha256:53ceda0aaea2df6e3b85abd4394435627515f58fbd8cf29ca77a854ff8a0fd67",
+      "objectives": [
+        {
+          "key": "quest:monkey_madness_i@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Monkey madness",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:ape_atoll",
+        "evidence": {
+          "field": "/location",
+          "quote": "Ape Atoll",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.86",
+      "text_hash": "sha256:39903f8cebb61b2372ca777687e07203935cac5eb3312e4e94471433891eb143",
+      "objectives": [
+        {
+          "key": "quest:wanted@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Wanted! quest",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:falador",
+        "evidence": {
+          "field": "/location",
+          "quote": "Falador",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.87",
+      "text_hash": "sha256:582fd2f32e4f5310a8c8e80b043739e49ec44045def789ce148a13c4bae71202",
+      "objectives": [
+        {
+          "key": "skill:slayer>=40",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get 40 slayer",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:burthorpe",
+        "evidence": {
+          "field": "/location",
+          "quote": "Burthorpe",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.88",
+      "text_hash": "sha256:ef75b0a3be4cd0b432d7fd975f3a0106268783f212db592d529e70e8a723a69b",
+      "objectives": [
+        {
+          "key": "quest:shades_of_mortton@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Shades of morton quest",
+            "span": [
+              0,
+              25
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:mortton",
+        "evidence": {
+          "field": "/location",
+          "quote": "Mort'ton",
+          "span": [
+            0,
+            8
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.89",
+      "text_hash": "sha256:537d05b6db1b1250dd852e45bc59f7e041df11a96291439dad338fa95007fc46"
+    },
+    {
+      "step_id": "1.3.90",
+      "text_hash": "sha256:9eb86016a01efaaa184bf44eadc43fcdc86773b774484d8bfde7c0155737ba19",
+      "objectives": [
+        {
+          "key": "quest:heroes_quest@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Heroes' quest",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.3.91",
+      "text_hash": "sha256:b55a9932f004bfd560040034ce8b4bd0e599d7a608023d4be0624137287aba40",
+      "objectives": [
+        {
+          "key": "quest:the_fremennik_trials@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Fremennik trials",
+            "span": [
+              0,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:rellekka",
+        "evidence": {
+          "field": "/location",
+          "quote": "Rellekka",
+          "span": [
+            0,
+            8
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.92",
+      "text_hash": "sha256:357a3dfe23f8a76cbbb8096a0bf79eae22a118acf8382b0d0b47ba35eb82e3e7",
+      "objectives": [
+        {
+          "key": "quest:throne_of_miscellania@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Throne of miscellania",
+            "span": [
+              0,
+              24
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:miscellania",
+        "evidence": {
+          "field": "/location",
+          "quote": "Miscellania",
+          "span": [
+            0,
+            11
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.93",
+      "text_hash": "sha256:98c0723d8b323d217d0c50f6673014d48ed2560748fa29d7d5c286205a22d192",
+      "objectives": [
+        {
+          "key": "quest:royal_trouble@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Royal Trouble",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@2",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:miscellania",
+        "evidence": {
+          "field": "/location",
+          "quote": "Miscellania",
+          "span": [
+            0,
+            11
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.94",
+      "text_hash": "sha256:d6cb9a48e368f461e8e80592488924e9df1f53ca02e97f1394a332eb405d96a3",
+      "items": [
+        {
+          "name": "GP",
+          "item_id": 995,
+          "qty": 750000,
+          "source_text": "at least 750k gp",
+          "evidence": {
+            "field": "/text",
+            "quote": "at least 750k gp",
+            "span": [
+              4,
+              20
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@2"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:miscellania",
+        "evidence": {
+          "field": "/location",
+          "quote": "Miscellania",
+          "span": [
+            0,
+            11
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@2"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.95",
+      "text_hash": "sha256:eb3c87e01bc8ea5b525ce3f0a105794a62516074158409cd8f4f246b3440dc3e",
+      "location": {
+        "ref": "location:pollnivneach",
+        "evidence": {
+          "field": "/location",
+          "quote": "Pollnivneach",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.96",
+      "text_hash": "sha256:71c7920fd3bba878a82329b0d7e78e8f94b708c1d5db5f1885f94372b8e38c0a",
+      "objectives": [
+        {
+          "key": "item:1660x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the ruby necklace",
+            "span": [
+              90,
+              107
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varrock_museum",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock Museum",
+          "span": [
+            0,
+            14
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.97",
+      "text_hash": "sha256:dee9ca4bbcafd95715b7cbd49502d5bb5c01155947074a5d6cb01b9cc74fbd35",
+      "objectives": [
+        {
+          "key": "quest:bone_voyage@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Bone Voyage quest",
+            "span": [
+              0,
+              20
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.98",
+      "text_hash": "sha256:aa9e688684a771465ca5f4d5278d361bcb9514fe96d31c532ebdedea7118fa48",
+      "location": {
+        "ref": "location:fossil_island",
+        "evidence": {
+          "field": "/location",
+          "quote": "Fossil Island",
+          "span": [
+            0,
+            13
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.99",
+      "text_hash": "sha256:3adbef0a662ae6112a3c15e32382738cf107c8747fdb27bade17704efeaec7e5"
+    },
+    {
+      "step_id": "1.3.100",
+      "text_hash": "sha256:259f1a6ea91a003f2eaa26af9a4bd5a9f2a78e1a34755de25834ba08da2e6cf1",
+      "location": {
+        "ref": "location:lumbridge_swamp",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge Swamp",
+          "span": [
+            0,
+            15
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.101",
+      "text_hash": "sha256:c73ef4aea186c81b9835e720a69effebf12b73457ef28dc6585f506db93aee91",
+      "objectives": [
+        {
+          "key": "quest:tears_of_guthix@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Tears of guthix quest",
+            "span": [
+              0,
+              24
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge_swamp",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge Swamp",
+          "span": [
+            0,
+            15
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.102",
+      "text_hash": "sha256:509e3914910e11b09df1b686bdf9fe9132e890242c01d77d49d835acc69fe887",
+      "objectives": [
+        {
+          "key": "quest:the_giant_dwarf@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start The Giant Dwarf quest",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:keldagrim",
+        "evidence": {
+          "field": "/location",
+          "quote": "Keldagrim",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.103",
+      "text_hash": "sha256:73e76e7fe77eb089b1bc1974527f8926cf0faa30d9f5aa69926f7fec5fc4ad60",
+      "location": {
+        "ref": "location:keldagrim",
+        "evidence": {
+          "field": "/location",
+          "quote": "Keldagrim",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.104",
+      "text_hash": "sha256:581d005409d8ebc2f564c1d60ec8d7a5d0534268119b7a6925e02ef4db815644",
+      "location": {
+        "ref": "location:edgeville",
+        "evidence": {
+          "field": "/location",
+          "quote": "Edgeville",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.105",
+      "text_hash": "sha256:64bb397c151884bccac178149ad25c9120371abe27c0ac626b4c9c5bb602c3cf",
+      "objectives": [
+        {
+          "key": "skill:crafting>=45",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "until 45 crafting",
+            "span": [
+              31,
+              48
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.3.106",
+      "text_hash": "sha256:10239693371ce21b6ed5063f1b69d595cae11f65b17165e6806f837e83a24694",
+      "location": {
+        "ref": "location:draynor_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Draynor",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.107",
+      "text_hash": "sha256:4b83ea2a4d798d7416add04bb0f7ef44f2db8e7f7248eb2a156c33f92108339a",
+      "location": {
+        "ref": "location:pollnivneach",
+        "evidence": {
+          "field": "/location",
+          "quote": "Pollnivneach",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.108",
+      "text_hash": "sha256:49d2997fed7ca1823cefb390671518c221dd783147757647fa2070396c542d42",
+      "objectives": [
+        {
+          "key": "skill:thieving>=88",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get 88 thieving",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:pollnivneach",
+        "evidence": {
+          "field": "/location",
+          "quote": "Pollnivneach",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.3.109",
+      "text_hash": "sha256:3329831aefc0cc659e1f4a270a4575f26c9b060b1693f5e67d034446152371f9",
+      "location": {
+        "ref": "location:miscellania",
+        "evidence": {
+          "field": "/location",
+          "quote": "Miscellania",
+          "span": [
+            0,
+            11
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    }
+  ]
+}

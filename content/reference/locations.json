@@ -14,6 +14,12 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "ape_atoll",
+      "name": "Ape Atoll",
+      "wiki_key": "Ape Atoll",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "ardougne",
       "name": "Ardougne",
       "wiki_key": "Ardougne",
@@ -83,6 +89,12 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "canifis",
+      "name": "Canifis",
+      "wiki_key": "Canifis",
+      "note": "named-places-enter-catalog (oziris-main 1.3.9)"
+    },
+    {
       "id": "castle_wars",
       "name": "Castle Wars",
       "wiki_key": "Castle Wars",
@@ -110,6 +122,12 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "crandor",
+      "name": "Crandor",
+      "wiki_key": "Crandor",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "digsite",
       "name": "Digsite",
       "wiki_key": "Digsite",
@@ -119,9 +137,27 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "dorgesh_kaan",
+      "name": "Dorgesh-Kaan",
+      "wiki_key": "Dorgesh-Kaan",
+      "aliases": [
+        "Dorgeshkaan"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "draynor_manor",
+      "name": "Draynor Manor",
+      "wiki_key": "Draynor Manor",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "draynor_village",
       "name": "Draynor Village",
       "wiki_key": "Draynor Village",
+      "aliases": [
+        "Draynor"
+      ],
       "note": "decision named-places-enter-catalog"
     },
     {
@@ -129,6 +165,18 @@
       "name": "Edgeville",
       "wiki_key": "Edgeville",
       "note": "Decision named-places-enter-catalog (Oziris 1.2.25)"
+    },
+    {
+      "id": "enchanted_valley",
+      "name": "Enchanted Valley",
+      "wiki_key": "Enchanted Valley",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "entrana",
+      "name": "Entrana",
+      "wiki_key": "Entrana",
+      "note": "decision named-places-enter-catalog"
     },
     {
       "id": "falador",
@@ -158,9 +206,24 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "fisher_realm",
+      "name": "Fisher Realm",
+      "wiki_key": "Fisher Realm",
+      "aliases": [
+        "Fisher King Realm"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "fishing_guild",
       "name": "Fishing Guild",
       "wiki_key": "Fishing Guild",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "fossil_island",
+      "name": "Fossil Island",
+      "wiki_key": "Fossil Island",
       "note": "decision named-places-enter-catalog"
     },
     {
@@ -230,6 +293,12 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "keldagrim",
+      "name": "Keldagrim",
+      "wiki_key": "Keldagrim",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "kharidian_desert",
       "name": "Kharidian Desert",
       "wiki_key": "Kharidian Desert",
@@ -245,6 +314,12 @@
       "aliases": [
         "Battlefield of Khazard"
       ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "lighthouse",
+      "name": "Lighthouse",
+      "wiki_key": "Lighthouse",
       "note": "decision named-places-enter-catalog"
     },
     {
@@ -284,9 +359,33 @@
       "note": "Decision named-places-enter-catalog (Oziris 1.2.26)"
     },
     {
+      "id": "miscellania",
+      "name": "Miscellania",
+      "wiki_key": "Miscellania",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "mortton",
+      "name": "Mort'ton",
+      "wiki_key": "Mort'ton",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "morytania",
+      "name": "Morytania",
+      "wiki_key": "Morytania",
+      "note": "named-places-enter-catalog (oziris-main 1.3.7)"
+    },
+    {
       "id": "mudskipper_point",
       "name": "Mudskipper Point",
       "wiki_key": "Mudskipper Point",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "nardah",
+      "name": "Nardah",
+      "wiki_key": "Nardah",
       "note": "decision named-places-enter-catalog"
     },
     {
@@ -318,9 +417,21 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "port_phasmatys",
+      "name": "Port Phasmatys",
+      "wiki_key": "Port Phasmatys",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "port_sarim",
       "name": "Port Sarim",
       "wiki_key": "Port Sarim",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "rellekka",
+      "name": "Rellekka",
+      "wiki_key": "Rellekka",
       "note": "decision named-places-enter-catalog"
     },
     {
@@ -366,6 +477,12 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "taverley_dungeon",
+      "name": "Taverley Dungeon",
+      "wiki_key": "Taverley Dungeon",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "tempoross_cove",
       "name": "Tempoross Cove",
       "wiki_key": "Tempoross Cove",
@@ -383,6 +500,12 @@
       "aliases": [
         "Gnome Stronghold"
       ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "underground_pass",
+      "name": "Underground Pass",
+      "wiki_key": "Underground Pass (location)",
       "note": "decision named-places-enter-catalog"
     },
     {
@@ -455,6 +578,12 @@
       "id": "yanille",
       "name": "Yanille",
       "wiki_key": "Yanille",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "zanaris",
+      "name": "Zanaris",
+      "wiki_key": "Zanaris",
       "note": "decision named-places-enter-catalog"
     }
   ]

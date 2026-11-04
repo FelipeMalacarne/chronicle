@@ -1,6 +1,6 @@
 # 09 — Modelo de domínio: objetivos, entidades e progresso compartilhado
 
-Data: 2026-11-04. Estado: **direção aprovada pelo dono**; detalhes em aberto na seção 9. Este documento
+Data: 2026-11-04. Estado: **aprovado pelo dono**; todas as decisões estão na seção 9. Este documento
 vem antes da API de progresso, porque ela é a primeira peça que grava estado da conta sobre o modelo de
 conteúdo.
 

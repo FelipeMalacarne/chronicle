@@ -20,8 +20,13 @@ esac
 
 read -r pkg cls <<<"$(mb_plugin_dir "$1")" || die "unknown plugin: $1"
 
-if [[ -f "$MB_PLUGIN_DIR/$cls.jar" ]]; then
-	die "$cls.jar is sideloaded in the dev home; the class would clash. Remove it and restart: rm $MB_PLUGIN_DIR/$cls.jar && mb-client restart"
+jar="$MB_PLUGIN_DIR/$cls.jar"
+if [[ -f "$jar" ]]; then
+	# Sideloaded jars load only at client start; one newer than the pidfile is not loaded yet.
+	if [[ -f "$MB_PIDFILE" && "$jar" -ot "$MB_PIDFILE" ]]; then
+		die "$cls.jar was sideloaded when the dev client started; the class would clash. Remove it and restart: rm $jar && mb-client restart"
+	fi
+	echo "warning: $jar will load on the next client start and clash with this deploy; remove it before restarting" >&2
 fi
 
 # The in-client compiler has no Lombok, so ship delomboked sources.

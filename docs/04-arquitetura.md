@@ -36,7 +36,7 @@ por formato compartilhando o mesmo pacote de domínio.
 | API e scheduler | `net/http` com o mux da biblioteca padrão; scheduler in-process; adapters de fonte em `internal/sources/{hiscores,wom,wiki}`. |
 | Banco | Postgres 17 em todos os ambientes; `pgx` + `sqlc` (queries em `db/queries`, tipos gerados em `internal/store/db`) + `goose` (`db/migrations`). |
 | Auth | `AUTH_MODE=dev` ou `oidc` (`coreos/go-oidc` + `golang.org/x/oauth2`, PKCE; sessão `alexedwards/scs` com `pgxstore`). |
-| Frontend | Svelte 5 + SvelteKit `adapter-static` + Vite em `web/`; `web/dist` embutido com `embed.FS`; Cytoscape + ELK para o grafo. Tipos TS espelham o contrato HTTP à mão (`web/src/lib/planner/apimap.ts`). |
+| Frontend | Svelte 5 + SvelteKit `adapter-static` + Vite em `web/`; `web/dist` embutido com `embed.FS`; Cytoscape + ELK para o grafo. Tipos TS espelham o contrato HTTP à mão (`web/src/lib/progress/types.ts`). |
 | Plugin | Java no Microbot, repositório `microbot-plugins`; só o contrato HTTP é compartilhado. |
 | Deploy | Imagem `distroless` não-root com o binário; `docker compose`. |
 
@@ -52,7 +52,7 @@ resultado.
 ```mermaid
 flowchart LR
   subgraph Browser
-    UI[SPA Svelte<br/>plan, compare, guia, conta, metas, grafo]
+    UI[SPA Svelte<br/>Agora, Rotas, Mundo, Conta]
   end
   subgraph Bin["ironman serve (1 processo)"]
     API[API HTTP<br/>/api/*]
@@ -88,9 +88,10 @@ flowchart LR
 
 Responsabilidades:
 
-- **SPA**: `/plan` (rota ativa), `/compare` (duas rotas lado a lado), `/guide/[section]`, `/account`,
-  `/goals`, `/graph`. Svelte 5, sem estado global além do que vem do servidor; grafo, metas, conta e
-  Microbot ainda usam fixtures.
+- **SPA**: telas da página v4 do canvas, tema Pergaminho: `/` (Agora, o cursor da rota ativa),
+  `/rotas` (lista com cobertura), `/rotas/[guia]/[seção]` (a seção por trecho de banco), `/mundo` e
+  `/conta` (ainda "em breve"). Sem tela de comparação (decisão 1 do v4): o cruzamento entre rotas é o
+  "também na rota X" do passo e a cobertura da lista. Os caminhos antigos redirecionam.
 - **API**: handlers em `internal/httpapi` sob `/api`, JSON. Hoje sem sessão: rotas por conta só em
   `AUTH_MODE=dev`. Lista na seção 2.5.
 - **Content loader**: no boot lê `content/guides/*/guide.json` e os sidecars `annotations/`, valida contra
@@ -187,7 +188,10 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `PATCH /api/guides/{guide}/steps/{id}/mark?account=` | feita (dev) | `{kind: manual_done\|skipped\|pinned_open\|confirm_implied\|clear, note}`; `note` ausente mantém, `""` limpa |
 | `POST /api/guides/{guide}/implied/confirm?account=` | feita (dev) | "confirmar tudo": toda marca `implied` do guia vira `manual_done` |
 | `PUT /api/guides/{guide}/cursor?account=` | feita (dev) | `{step_id}` fixa o passo atual (passo feito é recusado); `{step_id: null}` volta ao automático |
-| `GET /api/objectives?account=` | feita (dev) | vereditos compartilhados com evidência (marcos do `/compare`, dashboard) |
+| `GET /api/objectives?account=` | feita (dev) | vereditos compartilhados com evidência |
+| `GET /api/progress?account=` | feita (dev) | resumo das rotas: rota ativa, cursor (com a referência do autor), contagens por seção, cobertura, fontes |
+| `GET /api/guides/{guide}/events?account=&limit=` | feita (dev) | o que mudou: eventos de passo do guia e de objetivo da conta, com a fonte do snapshot |
+| `PUT /api/account/guide?account=` | feita (dev) | troca a rota ativa e reavalia na mesma transação |
 | `GET /api/state?account=`, `POST /api/sync/now`, `GET /api/sync/runs` | planejadas | estado e sync |
 | `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=`, `GET/POST /api/goals` | planejadas | grafo e metas |
 | `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
@@ -394,7 +398,7 @@ Semântica:
 
 ### 5.1 Nós e arestas
 
-Os nós são **chaves de objetivo** (doc 09, seção 3.2), então o grafo, as metas e o `/compare` falam a
+Os nós são **chaves de objetivo** (doc 09, seção 3.2), então o grafo, as metas e as rotas falam a
 mesma língua:
 
 | Tipo de nó | Chave | Origem | "Feito" quando |
@@ -650,7 +654,7 @@ internal/importer/    bruhsailer (DOCX pinados → guia canônico)
 internal/store/       repositórios (ingest); internal/store/db é saída do sqlc
 internal/httpapi/     handlers; planejados: internal/sources, internal/client
 internal/mcp/         servidor MCP stdio mínimo (JSON-RPC, só tools), usado por content mcp e pelo mcp da conta
-web/                  SPA Svelte; web/src/lib/planner é o view-model (apimap.ts puro e testado em node)
+web/                  SPA Svelte; web/src/lib/progress é o view-model (view.ts puro e testado em node)
 content/              guides/<id>/{guide.json, README.md, entities.report.json, annotations/},
                       schema/, reference/ (catálogos)
 db/migrations, db/queries, sqlc.yaml
@@ -682,7 +686,7 @@ Regra de dependência: `internal/core` não importa banco nem HTTP; CLI e MCP n�
 | Motor | tabelas por tipo de regra, `any/all/not`, `unknown`, `op: gte`; posse e readiness com holdings sintéticos (`restored` vs `live`, baseline); progresso: derivação de status, cascata e cursor por tabela |
 | Ingest | contrato (sequência fora de ordem, manifest antigo ⇒ `409`, token revogado ⇒ `401`, escopo sem bank ⇒ `403`), integração no Postgres (`DATABASE_URL` definido; `just db-up`) |
 | HTTP | handlers com `httptest`, incluindo um teste ponta a ponta com o binário real |
-| Web | `apimap.ts` e `compare.ts` em `node --test`; `pnpm check`; renderização headless das telas |
+| Web | `view.ts` em `node --test`; `pnpm check`; conferência das telas no navegador contra o canvas |
 | Plugin | JUnit no repositório `microbot-plugins` (diff, baseline, frescor, ACK/retry, backoff); `mb-test` no jogo |
 
 ## 8. Deploy: local-first no zaros, depois saradomin
@@ -733,12 +737,14 @@ boot; teste de integração no Postgres 17) e as rotas dev do board, das marcas 
 teste: `just account-create`/`account-guide`. Hoje só skill e item saem de `unknown`: quest, diary,
 unlock, CA e `qp` esperam o item 7.
 
-Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, a web sobre o progresso (mostra 0
-feitos), faceta de quest e diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de
-hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de controle do
-Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Microbot; as refs dessas fixtures
-ainda estão na gramática antiga (`quest:cooks-assistant`, `skill:cooking:10`) e passam para `entityRef` e
-chave de objetivo quando essas telas forem para a API (item 9).
+Web v4 (item 9, branch `feat/progresso`): Agora, Rotas e Rota no tema Pergaminho, sobre o progresso
+real; a API devolve por passo a referência do autor, a posição, os nomes dos refs e o "também em"; os
+ícones do jogo vêm de `tools/fetch_wiki_icons.py` para `web/static/icons`.
+
+Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, metas (F9), faceta de quest e
+diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de hiscores e scheduler, CLI/MCP sobre
+o cliente, grafo, tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
+antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
 
 Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam para cá. A ordem dos itens
 2 a 9 foi decidida pelo dono (doc 09, decisão D7): extração completa antes do progresso persistido.
@@ -753,7 +759,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
 | 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado |
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
-| 9 | Web e `/compare` sobre objetivos; metas (F9) | marcos vindos da API; progresso igual nos dois guias |
+| 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; sem `/compare`, decisão 1 do v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Telas feitas** (2026-11-04, `feat/progresso`); metas pendentes |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros** |
 | 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
 

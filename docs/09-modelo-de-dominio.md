@@ -503,7 +503,7 @@ commit. Só depois disso roda o resto, cerca de 13 seções.
 
 ### 9.2 Em aberto (dono)
 
-Nenhuma. O planejamento do modelo está fechado; a execução segue a seção 10.
+Nenhuma. O planejamento do modelo está fechado; a execução segue o doc 04, seção 9.
 
 ### 9.3 Decisões da revisão crítica (2026-11-04)
 
@@ -522,16 +522,6 @@ Nenhuma. O planejamento do modelo está fechado; a execução segue a seção 10
 
 ## 10. Sequência
 
-| # | Entrega | Pronto quando |
-|---|---|---|
-| 1 | Este doc revisado e decisões fechadas | **feito** (2026-11-04) |
-| 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`; schema dos sidecars; loader converte `complete_when` e compõe anotações | `content validate` passa nos dois guias; readiness continua verde nos loadouts exatos e avalia `any_of`/`family` com testes de tabela |
-| 3 | Dados e catálogos: `data/wiki/items.json` (script em `tools/`), `content/reference/items.json` gerado, `unlocks.json`, `locations.json` e `varbits.json` iniciais | ambíguos e não resolvidos de item do Oziris (11 e 96) caem de forma mensurável; `catalogbuild -update` regenera tudo sem rede |
-| 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars e a skill `annotate-guide` | testes de tabela das checagens (citação dobrada, refs, hash, ordem); o MCP responde a um lote de exemplo |
-| 5 | Piloto (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code | critérios da seção 6.6 |
-| 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
-| 7 | Contrato v1 com `data.quest`, varbits de referência no manifest, normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo | teste de integração no Postgres com um `full` que contém quests; quest do Oziris sai de `unknown` com o plugin real |
-| 8 | Migration de progresso + API (`objective_progress`, `step_marks`, `route_cursor`, eventos), `internal/core/progress`, indexação e aliases no boot | `PATCH` de marca, cascata e reavaliação por snapshot testados no Postgres; `steps_changed` correto |
-| 9 | Web e `/compare` sobre objetivos; metas (F9) | marcos vindos da API, progresso igual nos dois guias |
-
-Hiscores, CLI/MCP de conta, grafo e o controle do Microbot continuam na sequência do doc 04, seção 10.
+A sequência do projeto, com os critérios de "pronto quando" de cada item, está só no doc 04, seção 9.
+Os itens deste modelo são o 2 (schema), o 3 (dados e catálogos), o 4 (ferramental de extração), o 5
+(piloto), o 6 (extração completa), o 7 (contrato com `data.quest`) e o 8 (progresso sobre objetivos).

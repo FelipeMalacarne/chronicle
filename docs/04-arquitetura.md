@@ -367,25 +367,13 @@ Semântica:
 3. **Reavaliação total a cada snapshot.** Barata (milissegundos). Só objetivos cujo veredito mudou geram
    escrita e evento; o status derivado dos passos é recalculado em seguida e só as transições geram
    `step_status_events`. Também reavalia no reload de conteúdo para objetivos cuja regra mudou.
-4. **Manual × automático** (`internal/core/progress`, por passo):
-
-| Marca da rota | Objetivos `completes`/`starts` | Status |
-|---|---|---|
-| `manual_done`, `skipped` | qualquer | a marca; se tudo `met`, a UI mostra "também confirmado automaticamente" |
-| `pinned_open` | qualquer | `pending`; o motor não insiste, a evidência fica visível |
-| `implied` (não confirmada) | qualquer | `implied`; "confirmar" vira `manual_done` com `cause='implied'` |
-| nenhuma | todos `met` | `auto_done`, `completed_at` = `first_met_at` mais recente |
-| nenhuma | algum `unmet`/`unknown` | `pending` |
-
-Objetivo `met` que regride: se a regra é monotônica (`skill_*`, `quest_state`, `diary_*`,
-`combat_achievement`, `boss_kc`, `activity_score`, `collection_log_item`, `varbit`/`varp` com `min`),
-o objetivo fica `met` e marca `regressed_at` (dado provavelmente errado ou snapshot parcial; a UI
-alerta). Se não é (`item_owned`, `varbit`/`varp` com `eq`/`bit`), volta a `unmet` e os passos derivados
-voltam a `pending` com evento `engine`.
-
-5. **Cascata `implied`** (doc 09, seção 9.1): quando um passo da rota ativa vira `auto_done` por
-   objetivo cumprido nessa rota (`met_in_guide_id`), os passos manuais anteriores da mesma seção ainda
-   `pending` ganham a marca `implied`. Nunca atravessa seção nem track, nunca em outra rota.
+4. **Status do passo, marcas e cascata**: definidos uma vez no doc 09 (seção 5 e decisão 9.1) e
+   implementados em `internal/core/progress`; este documento não os repete.
+5. **Regressão.** Objetivo `met` cuja regra é monotônica (`skill_*`, `quest_state`, `diary_*`,
+   `combat_achievement`, `boss_kc`, `activity_score`, `collection_log_item`, `varbit`/`varp` com `min`)
+   continua `met` e marca `regressed_at` quando o fato regride (dado provavelmente errado ou snapshot
+   parcial; a UI alerta). Regra não monotônica (`item_owned`, `varbit`/`varp` com `eq`/`bit`) volta a
+   `unmet`, e os passos derivados voltam a `pending` com evento `engine`.
 6. **Stale.** Cada passo tem `freshness` calculada na leitura, não armazenada: pega as facetas que seus
    objetivos tocam, acha o `observed_at` mais antigo e compara com o limite por fonte (hiscores 24 h,
    plugin 72 h). `stale` não muda status; muda a cor e destaca "sync now". Passos manuais nunca ficam
@@ -727,25 +715,21 @@ web mostra 0 feitos), indexação de conteúdo no boot (`content_versions`/`cont
 hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de controle do
 Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Microbot.
 
-Sequência vigente (os itens 2 a 9 são os do doc 09, seção 10, na ordem decidida pelo dono):
+Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam para cá. A ordem dos itens
+2 a 9 foi decidida pelo dono (doc 09, decisão D7): extração completa antes do progresso persistido.
 
-1. ~~Doc 09: fechar as decisões.~~ Feito e revisado em 2026-11-04 (doc 09, seções 9.1 e 9.3).
-2. Schema de objetivos, `ItemRequirement`, `unlock`/`location`, `entityRef` no lugar de `ref`, schema dos
-   sidecars; loader converte `complete_when` e compõe anotações.
-3. Dados e catálogos: itens extraídos do wiki (`data/wiki/items.json` → `content/reference/items.json`),
-   `unlocks.json`, `locations.json`, `varbits.json`.
-4. `internal/core/annotate`, `ironman content mcp`, `.mcp.json`, `content validate` cobrindo os sidecars,
-   skill `annotate-guide`.
-5. Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code.
-6. Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais.
-7. Contrato v1 com `data.quest` e varbits de referência; normalizador gravando `quest` e `diary`; plugin
-   1.1.0; teste do plugin no jogo (`mb-test`).
-8. Progresso sobre objetivos: migration, `internal/core/progress`, API de marcas, cursor e board,
-   reavaliação por snapshot, indexação e aliases no boot.
-9. Web e `/compare` sobre objetivos; metas (F9).
-10. Hiscores: adapter, snapshots, scheduler, `POST /api/sync`. **Marco: em uso no zaros.**
-11. CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin;
-    depois o controle do Microbot (doc 08, cinco fases, nasce desligado com `MICROBOT_CONTROL=off`).
+| # | Entrega | Pronto quando |
+|---|---|---|
+| 1 | Doc 09 revisado e decisões fechadas | **feito** (2026-11-04; doc 09, seções 9.1 e 9.3) |
+| 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`, schema dos sidecars; loader converte `complete_when` e compõe anotações; readiness e posse avaliam as variantes de item | `content validate` passa nos dois guias; readiness continua verde nos loadouts exatos e avalia `any_of`/`family` com testes de tabela |
+| 3 | Dados e catálogos: script em `tools/` extrai do bucket do wiki os itens citados pelos guias mais famílias para `data/wiki/items.json`; `catalogbuild` gera `content/reference/items.json`; `unlocks.json`, `locations.json` e `varbits.json` iniciais | ambíguos e não resolvidos de item do Oziris (11 e 96) caem de forma mensurável; `catalogbuild -update` regenera tudo sem rede |
+| 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | testes de tabela das checagens (citação dobrada, refs, hash, ordem); o MCP responde a um lote de exemplo |
+| 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6 |
+| 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
+| 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real |
+| 8 | Progresso sobre objetivos: migration, `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto |
+| 9 | Web e `/compare` sobre objetivos; metas (F9) | marcos vindos da API; progresso igual nos dois guias |
+| 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros** |
+| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
 
-Revisão de integração entre os dois repositórios (contrato, frescor, plugin somente leitura, chaves por
-guia) roda junto com o item 7.
+Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.

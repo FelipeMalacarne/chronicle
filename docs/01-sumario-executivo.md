@@ -1,8 +1,8 @@
 # Sumário executivo e registro de decisões
 
-Data: 2026-11-03; atualizado em 2026-11-04. Consolida os documentos 00 a 09 e é o **registro único das
-decisões** do projeto: cada decisão aparece uma vez aqui, com estado e onde está detalhada. Os docs 03
-e 09 apontam para esta lista em vez de manter listas próprias.
+Data: 2026-11-03; atualizado em 2026-11-04. É o **registro único das decisões** do projeto: cada
+decisão aparece uma vez aqui, com estado e onde está detalhada. Os docs 03 e 09 apontam para esta lista
+em vez de manter listas próprias. Estado do código e sequência de construção: doc 04, seção 9, e só lá.
 
 ## O que já existe no repositório
 
@@ -15,11 +15,9 @@ e 09 apontam para esta lista em vez de manter listas próprias.
 | 225 quests do wiki com requisitos de skill e quest, QP, série, aliases para WikiSync | `data/wiki/quests.json` | gerado por `data/wiki/scripts/build_quests.py` |
 | 492 tasks de achievement diary por área e tier | `data/wiki/diary_tasks.json` | gerado |
 | 124 respostas reais de API (hiscores, WOM, WikiSync, Bucket, chisel, TempleOSRS, RuneLite) | `data/samples/` | salvas |
-| Guia BRUHsailer, rota independente (9 seções, 226 passos) | `content/guides/bruhsailer-main/` | importado dos DOCX pinados (2026-11-04) |
-| Segmentos de banco, loadouts e entidades canônicas dos dois guias | `content/guides/*`, `content/reference/` | gerados e validados |
-| Núcleo Go: conteúdo, regras, ingest v1, readiness; API por guia; web `/plan` e `/compare` | `internal/`, `web/` | na `main`, testado (doc 04, seção 9) |
-| Plugin Microbot Ironman Planner 1.0.0 | repositório `microbot-plugins` | testado em JUnit, ainda não rodou no jogo |
-| Modelo de domínio por objetivos | `docs/09-modelo-de-dominio.md` | aprovado e revisado (2026-11-04); implementação começa pelo item 2 da sequência |
+| DOCX pinados do BRUHsailer com checksums | `data/sources/bruhsailer/` | entrada de `content import-bruhsailer` |
+
+O estado do código, do conteúdo gerado e do plugin está só no doc 04, seção 9.
 
 ## Números que importam
 
@@ -84,9 +82,7 @@ por padrão, com risco aceito conscientemente. Ver doc 08.
 
 ## Próximo passo
 
-Seguir a sequência do doc 04, seção 9: schema de objetivos (item 2), dados e catálogos (3), ferramental
-de extração (4), piloto e extração completa (5 e 6), contrato com a faceta de quests e teste do plugin
-no jogo (7), progresso sobre objetivos (8), web (9) e hiscores (10, marco "em uso no zaros").
+Seguir a sequência do doc 04, seção 9, a partir do item 2.
 
 ## Discrepâncias e ressalvas
 

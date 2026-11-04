@@ -299,6 +299,26 @@
       "text": "Pirates' Treasure key",
       "item_id": 432,
       "note": "BRUHsailer 1.1 shorthand (extraction pilot)"
+    },
+    {
+      "text": "ardy cloak",
+      "item_id": 13121,
+      "note": "guide shorthand (extraction, oziris-main 1.2)"
+    },
+    {
+      "text": "nat",
+      "item_id": 561,
+      "note": "guide shorthand (extraction, oziris-main 1.2)"
+    },
+    {
+      "text": "rune pick",
+      "item_id": 1275,
+      "note": "guide shorthand (extraction, oziris-main 1.2)"
+    },
+    {
+      "text": "addy pick",
+      "item_id": 1271,
+      "note": "guide shorthand (extraction, oziris-main 1.2)"
     }
   ],
   "item_ambiguous": [

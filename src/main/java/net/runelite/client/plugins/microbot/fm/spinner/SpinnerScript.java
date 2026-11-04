@@ -12,6 +12,7 @@ import net.runelite.api.gameval.ItemID;
 import net.runelite.api.gameval.NpcID;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.agentserver.handler.ScriptResultStore;
+import net.runelite.client.plugins.microbot.api.npc.models.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.statemachine.StateMachineScript;
 import net.runelite.client.plugins.microbot.statemachine.Transition;
 import net.runelite.client.plugins.microbot.testing.TestResult;
@@ -66,10 +67,11 @@ public class SpinnerScript extends StateMachineScript<SpinnerScript.State>
 	@Override
 	protected State initialState()
 	{
-		// Resume a trip in progress instead of banking a full inventory of unspun wool.
-		if (Rs2Inventory.hasItem(ItemID.SHEARS) && Rs2Inventory.isFull() && Rs2Inventory.hasItem(ItemID.WOOL))
+		// Resume a trip in progress (a restart or redeploy mid-trip) instead of banking the wool.
+		if (Rs2Inventory.hasItem(ItemID.SHEARS)
+			&& Rs2Inventory.count() == 1 + Rs2Inventory.count(ItemID.WOOL))
 		{
-			return State.SPIN;
+			return Rs2Inventory.isFull() ? State.SPIN : State.SHEAR;
 		}
 		return State.BANK;
 	}
@@ -212,7 +214,8 @@ public class SpinnerScript extends StateMachineScript<SpinnerScript.State>
 
 	private void shear()
 	{
-		if (Rs2Player.isMoving() || Rs2Player.isAnimating())
+		// The wool lands when the shearing animation starts, so don't wait the animation out.
+		if (Rs2Player.isMoving())
 		{
 			return;
 		}
@@ -230,13 +233,26 @@ public class SpinnerScript extends StateMachineScript<SpinnerScript.State>
 
 		Microbot.status = "Spinner: shearing (" + Rs2Inventory.count(ItemID.WOOL) + " wool)";
 		int wool = Rs2Inventory.count(ItemID.WOOL);
-		boolean clicked = Microbot.getRs2NpcCache().query()
+		long t0 = System.currentTimeMillis();
+		// The field is fenced and open inside, so nearest by distance is reachable; this skips
+		// nearestReachable()'s per-candidate reachability pass.
+		Rs2NpcModel sheep = Microbot.getRs2NpcCache().query()
 			.withIds(UNSHEARED_SHEEP)
 			.within(SHEEP_FIELD, SHEEP_FIELD_RADIUS + 4)
-			.interact("Shear");
-		if (clicked)
+			.nearestOnClientThread();
+		long t1 = System.currentTimeMillis();
+		if (sheep == null)
 		{
-			sleepUntil(() -> Rs2Inventory.count(ItemID.WOOL) > wool, 6000);
+			return;
+		}
+		boolean clicked = sheep.click("Shear");
+		long t2 = System.currentTimeMillis();
+		boolean gotWool = clicked && sleepUntil(() -> Rs2Inventory.count(ItemID.WOOL) > wool, 3000);
+		long t3 = System.currentTimeMillis();
+		if (t3 - t0 > 1000)
+		{
+			log.info("Spinner shear timing: query={}ms click={}ms wait={}ms clicked={} gotWool={}",
+				t1 - t0, t2 - t1, t3 - t2, clicked, gotWool);
 		}
 	}
 

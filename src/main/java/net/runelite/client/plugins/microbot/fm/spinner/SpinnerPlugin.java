@@ -25,7 +25,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 @Slf4j
 public class SpinnerPlugin extends Plugin
 {
-	static final String VERSION = "1.0.1";
+	static final String VERSION = "1.0.2";
 
 	@Inject
 	private SpinnerConfig config;

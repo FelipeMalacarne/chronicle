@@ -34,7 +34,13 @@ mb_gradle delombok
 src="$MB_DELOMBOK_SRC/$pkg"
 [[ -d "$src" ]] || die "no delomboked sources at $src"
 
-if mb_api GET /scripts/deploy | jq -e --arg n "$pkg" '.deployments[]? | select(.name == $n)' >/dev/null; then
+deployed_from="$(mb_api GET /scripts/deploy | jq -r --arg n "$pkg" '.deployments[]? | select(.name == $n) | .sourcePath')"
+if [[ -n "$deployed_from" && "$deployed_from" != "$src" ]]; then
+	# Reload recompiles from the original path; after the repo moves, deploy afresh.
+	mb_api POST /scripts/deploy/undeploy "{\"name\":\"$pkg\"}" >/dev/null
+	deployed_from=""
+fi
+if [[ -n "$deployed_from" ]]; then
 	out="$(mb_api POST /scripts/deploy/reload "{\"name\":\"$pkg\"}")"
 else
 	out="$(mb_api POST /scripts/deploy "{\"name\":\"$pkg\",\"sourcePath\":\"$src\"}")"

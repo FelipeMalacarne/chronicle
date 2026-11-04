@@ -70,3 +70,9 @@ cliente, e scripts em `ScheduledExecutorService` próprio.
 - Doc 04, seção 7.4: as tarefas 16 e 17 (ingest endpoint e plugin v0) sobem para logo depois da 8
   (adapter de hiscores), antes do dashboard.
 - Doc 01, decisão 2 (WikiSync no MVP): resolvida pelo plugin no Microbot.
+
+## Adendo de 2026-11-04: controle do cliente
+
+O dono decidiu controlar o Microbot pelo webapp (ver o jogo ao vivo, iniciar e parar plugins,
+rotinas). Isso vive num módulo de controle separado, desligado por padrão, descrito no doc 08. O
+plugin de tracking deste doc continua somente leitura.

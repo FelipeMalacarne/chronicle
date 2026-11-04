@@ -86,5 +86,6 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 
 00 levantamento inicial · 01 sumário executivo · 02 fontes de dados (APIs reais) · 03 produto e
 features · 04 arquitetura (seções 8 e 9 são as decisões atuais: Postgres, Zitadel, Go) · 05 conteúdo
-e normalização · 06 cliente Microbot (plugin, contrato de ingest) · 07 ambiente e ferramental.
+e normalização · 06 cliente Microbot (plugin, contrato de ingest) · 07 ambiente e ferramental · 08 controle do
+Microbot pelo planner (headless, VNC, plugins, rotinas).
 `docs/arquitetura/` holds `schema.sql` (SQLite original), `guide.schema.json`, `types.ts`.

@@ -11,12 +11,11 @@
 	},
 	"scripts": {
 		"dev": "vite dev",
-		"dev:mock": "MOCK_API=1 vite dev",
 		"build": "vite build",
 		"postbuild": "node -e \"require('node:fs').writeFileSync('dist/.gitkeep','')\"",
 		"preview": "vite preview",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
-		"test": "node --test src/lib/planner/*.test.ts",
+		"test": "node --test src/lib/progress/*.test.ts",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write ."
 	},

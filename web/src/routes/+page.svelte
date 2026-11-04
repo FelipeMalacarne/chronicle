@@ -1,409 +1,453 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { api } from '#lib/api/client';
+	import { progressApi } from '#lib/api/client';
 	import { createResource } from '#lib/api/resource.svelte';
-	import { skillMilestones } from '#lib/api/rules';
-	import type { Now, Section, SectionSummary, Step } from '#lib/api/types';
-	import Icon from '#lib/components/Icon.svelte';
-	import StepRow from '#lib/components/StepRow.svelte';
-	import ErrorState from '#lib/components/ErrorState.svelte';
-	import Skeleton from '#lib/components/Skeleton.svelte';
+	import { loadSummary, session } from '#lib/progress/session.svelte';
+	import { ICON_ATTRIBUTION } from '#lib/progress/icons';
+	import {
+		chipsOf,
+		eventLines,
+		pct,
+		routeLabel,
+		sectionLabel,
+		segmentsOf,
+		statusView
+	} from '#lib/progress/view';
+	import type { Board, BoardStep, Mark, MarkAction } from '#lib/progress/types';
+	import BankPanel from '#lib/v4/BankPanel.svelte';
+	import CurrentStep from '#lib/v4/CurrentStep.svelte';
+	import Glyph from '#lib/v4/Glyph.svelte';
+	import ObjectiveChip from '#lib/v4/ObjectiveChip.svelte';
+	import PinDialog from '#lib/v4/PinDialog.svelte';
+	import Toast from '#lib/v4/Toast.svelte';
 
-	const nowRes = createResource<Now>(() => api.now());
-	const guideRes = createResource<SectionSummary[]>(() => api.guide());
+	/*
+	 * Agora (V4AgoraOziris / V4AgoraBruh): o cursor da rota ativa como card, o banco do trecho
+	 * em três colunas, os próximos passos do trecho e o que mudou na sessão. Painéis sem fonte
+	 * de dados (metas fixadas, fora da rota ativa, recorrentes, ⌘K) entram nos itens seguintes.
+	 */
+	const account = $derived(session.account);
+	const route = $derived(
+		session.summary?.routes.find((r) => r.active) ?? session.summary?.routes[0] ?? null
+	);
+	const guideId = $derived(route?.guide);
 
-	// Pular é só local até o banco existir: avança a fila na tela.
-	let skipped = $state<string[]>([]);
-	const queue = $derived.by<Step[]>(() => {
-		const n = nowRes.data;
-		if (!n) return [];
-		return [n.current, ...n.next].filter((s) => !skipped.includes(s.id));
-	});
-	const current = $derived(queue[0] ?? null);
-	const next = $derived(queue.slice(1, 6));
-
-	const sectionId = $derived(current ? current.id.split('.').slice(0, -1).join('.') : '');
-	const section = $derived(guideRes.data?.find((s) => s.id === sectionId) ?? null);
-
-	// Índice do passo dentro da seção (precisa da lista da seção; refaz só quando o slug muda).
-	const sectionRes = createResource<Section | null>(() => {
-		const slug = section?.slug;
-		return slug ? api.section(slug) : Promise.resolve(null);
-	});
-	const indexInSection = $derived.by(() => {
-		const steps = sectionRes.data?.steps;
-		const id = current?.id;
-		if (!steps || !id) return null;
-		const i = steps.findIndex((x) => x.id === id);
-		return i >= 0 ? i + 1 : null;
-	});
-
-	const eyebrow = $derived.by(() => {
-		const parts = ['Agora'];
-		if (sectionId) parts.push(`seção ${sectionId}`);
-		if (indexInSection && section) parts.push(`passo ${indexInSection} de ${section.steps}`);
-		return parts.join(' · ');
-	});
-
-	// Marcos de skill: varre o resto da seção a partir do passo atual (ou só a fila, se a seção não carregou).
-	const milestones = $derived(
-		skillMilestones(
-			sectionRes.data ? sectionRes.data.steps.slice((indexInSection ?? 1) - 1) : queue
-		)
+	const board = createResource(() =>
+		account && guideId ? progressApi.board(guideId, account) : Promise.resolve(null)
+	);
+	const cursorId = $derived(board.data?.cursor?.step_id);
+	const boardById = $derived(new Map((board.data?.steps ?? []).map((s) => [s.id, s])));
+	const sectionId = $derived(cursorId ? boardById.get(cursorId)?.section_id : undefined);
+	const section = createResource(() =>
+		guideId && sectionId ? progressApi.section(guideId, sectionId) : Promise.resolve(null)
+	);
+	const readiness = createResource(() =>
+		account && guideId && cursorId
+			? progressApi.readiness(guideId, account, cursorId).catch(() => null)
+			: Promise.resolve(null)
+	);
+	const events = createResource(() =>
+		account && guideId ? progressApi.events(guideId, account, 30) : Promise.resolve(null)
 	);
 
-	// Anotar: rascunho por passo, só neste navegador (localStorage).
-	let noting = $state(false);
-	let noteText = $state('');
-	function noteKey(id: string) {
-		return `ironman-planner:note:${id}`;
-	}
-	$effect(() => {
-		const id = current?.id;
-		noting = false;
-		if (!id) return;
-		try {
-			noteText = localStorage.getItem(noteKey(id)) ?? '';
-		} catch {
-			noteText = '';
-		}
+	const step = $derived(section.data?.steps.find((s) => s.id === cursorId) ?? null);
+	const segments = $derived(section.data ? segmentsOf(section.data) : []);
+	const segment = $derived(segments.find((g) => g.steps.some((s) => s.id === cursorId)) ?? null);
+	const mainSteps = $derived((board.data?.steps ?? []).filter((s) => s.main && s.visible));
+	const cursorIndex = $derived(mainSteps.findIndex((s) => s.id === cursorId));
+	const prev = $derived(
+		cursorIndex > 0
+			? mainSteps
+					.slice(Math.max(0, cursorIndex - 2), cursorIndex)
+					.filter((s) => s.status !== 'pending')
+			: []
+	);
+	const next = $derived.by(() => {
+		if (!section.data || !step) return [];
+		const pool = segment && segment.steps.length > 1 ? segment.steps : section.data.steps;
+		const i = pool.findIndex((s) => s.id === step.id);
+		return pool.slice(i + 1, i + 7);
 	});
-	function saveNote() {
-		if (!current) return;
+	const sectionCounts = $derived(board.data?.sections.find((s) => s.id === sectionId)?.counts);
+	const others = $derived(
+		(session.summary?.routes ?? [])
+			.filter((r) => r.guide !== guideId)
+			.map((r) => ({ guide: r.guide, label: routeLabel(r.guide, r.title) }))
+	);
+	const where = $derived.by(() => {
+		if (!step) return '';
+		const steps = section.data?.steps ?? [];
+		const parts = [`${steps.findIndex((s) => s.id === step.id) + 1} de ${steps.length}`];
+		if (step.location) parts.push(step.location);
+		if (segment?.kind === 'bank_leg') parts.push(`trecho de banco ${segment.range}`);
+		return parts.join(' · ');
+	});
+	const lines = $derived(
+		events.data
+			? eventLines(events.data, (id) => boardById.get(id)?.ref ?? id, section.data?.names ?? {})
+			: []
+	);
+	const rotaBase = $derived(
+		guideId && sectionId
+			? resolve('/rotas/[guide]/[section]', { guide: guideId, section: sectionId })
+			: resolve('/rotas')
+	);
+	const rotaHref = $derived(cursorId ? `${rotaBase}#passo-${cursorId}` : rotaBase);
+
+	/* Feito / Pular / Desfazer: marcas do dono pela API; o motor nunca as sobrescreve. */
+	let busy = $state(false);
+	let undo = $state<{ step: string; ref: string; prev?: Mark }[]>([]);
+	let toast = $state<{ title: string; text: string; undo: boolean } | null>(null);
+	let pinning = $state(false);
+	let failure = $state<string | null>(null);
+
+	async function write(run: () => Promise<Board>) {
+		busy = true;
+		failure = null;
 		try {
-			if (noteText.trim()) localStorage.setItem(noteKey(current.id), noteText);
-			else localStorage.removeItem(noteKey(current.id));
-		} catch {
-			/* armazenamento indisponível: rascunho fica só em memória */
+			board.set(await run());
+			events.reload();
+			void loadSummary(account);
+		} catch (e) {
+			failure = e instanceof Error ? e.message : String(e);
+		} finally {
+			busy = false;
 		}
-		noting = false;
 	}
-	function skip() {
-		if (current) skipped = [...skipped, current.id];
+
+	function mark(kind: MarkAction) {
+		if (!account || !guideId || !step || busy) return;
+		const current: BoardStep | undefined = boardById.get(step.id);
+		const id = step.id;
+		const ref = step.ref;
+		undo = [...undo, { step: id, ref, prev: current?.mark }];
+		toast = {
+			title: kind === 'manual_done' ? 'Feito' : 'Pulado',
+			text: `${ref} marcado`,
+			undo: true
+		};
+		void write(() => progressApi.mark(guideId, id, account, kind));
 	}
-	function onKey(e: KeyboardEvent) {
+
+	function undoLast() {
+		const last = undo[undo.length - 1];
+		if (!last || !account || !guideId || busy) return;
+		undo = undo.slice(0, -1);
+		// Uma marca implied não volta pela API: desfazer limpa a marca e o motor decide.
+		const kind: MarkAction =
+			last.prev && last.prev.kind !== 'implied' ? (last.prev.kind as MarkAction) : 'clear';
+		toast = { title: 'Desfeito', text: `${last.ref} voltou`, undo: false };
+		void write(() => progressApi.mark(guideId, last.step, account, kind, last.prev?.note));
+	}
+
+	function pin(stepId: string) {
+		if (!account || !guideId) return;
+		pinning = false;
+		const ref = boardById.get(stepId)?.ref ?? stepId;
+		toast = { title: 'Fixado', text: `${ref} é o passo atual`, undo: false };
+		void write(() => progressApi.pin(guideId, account, stepId));
+	}
+
+	function keys(e: KeyboardEvent) {
+		if (pinning || e.metaKey || e.ctrlKey || e.altKey) return;
 		const t = e.target as HTMLElement | null;
 		if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
-		if (e.key === 'k' || e.key === 'K') {
-			e.preventDefault();
-			skip();
-		}
-		// J (feito) fica reservado: precisa do banco.
+		if (e.key === 'j' || e.key === 'J') mark('manual_done');
+		else if (e.key === 'k' || e.key === 'K') mark('skipped');
+		else if (e.key === 'u' || e.key === 'U') undoLast();
 	}
-
-	const sources = [
-		{ name: 'Plugin RuneLite', detail: 'quests, diaries, banco', state: 'off' },
-		{ name: 'Hiscores', detail: 'skills, kc', state: 'off' },
-		{ name: 'OSRS Wiki', detail: 'requisitos, dados estruturados', state: 'off' }
-	] as const;
 </script>
 
-<svelte:window onkeydown={onKey} />
-
+<svelte:window onkeydown={keys} />
 <svelte:head>
-	<title>Agora · Ironman Planner</title>
+	<title>Agora{route ? ` · ${routeLabel(route.guide, route.title)}` : ''} · Ironman Planner</title>
 </svelte:head>
 
-<div class="layout">
-	<section class="col-main" aria-labelledby="agora-title">
-		{#if nowRes.error}
-			<ErrorState error={nowRes.error} retry={nowRes.reload} />
-		{:else if nowRes.loading || !current}
-			<div class="panel">
-				<Skeleton lines={4} height={18} />
-			</div>
-		{:else}
-			<article class="panel now">
-				<p class="eyebrow">{eyebrow}</p>
-				<h1 id="agora-title" class="display title">{current.text}</h1>
-
-				<div class="meta">
-					{#if current.location}
-						<span class="chip"><Icon name="pin" size={14} /> {current.location}</span>
-					{/if}
-					{#if current.layer === 'enhanced'}
-						<span class="badge badge-accent">enhanced</span>
-					{/if}
-					{#if current.quest}
-						<span class="chip">{current.quest.name} · {current.quest.status}</span>
-					{/if}
-				</div>
-
-				{#if current.items?.length}
-					<div class="block">
-						<p class="eyebrow">Levar</p>
-						<ul class="chips" aria-label="Itens para levar">
-							{#each current.items as it (it)}
-								<li class="chip chip-mono">{it}</li>
-							{/each}
-						</ul>
+{#if !account}
+	<div class="band">
+		<Glyph name="alert" />
+		<span>
+			Sem conta, nada é verificado nem gravado. Crie uma com <code
+				>just account-create &lt;rsn&gt;</code
+			>
+			e abra com <code>?account=acc_&lt;rsn&gt;</code> (modo dev).
+		</span>
+		<a class="btn btn-s push" href={resolve('/rotas')}>Ver as rotas</a>
+	</div>
+{:else if session.error || board.error}
+	<div class="band">
+		<Glyph name="alert" />
+		<span>Não deu para carregar o progresso: {(session.error ?? board.error)?.message}</span>
+		<button
+			class="btn btn-s push"
+			type="button"
+			onclick={() => (loadSummary(account), board.reload())}>Tentar de novo</button
+		>
+	</div>
+{:else if !route || !board.data}
+	<p class="su" aria-busy="true">Carregando a rota ativa…</p>
+{:else}
+	<header class="top">
+		<a class="sel" href={resolve('/rotas')}
+			>{route.title} <small>▾ {route.active ? 'rota ativa' : 'rota'}</small></a
+		>
+		<div class="sec">
+			{#if section.data}
+				<span class="small"
+					><span class="mono su tiny">{sectionLabel(section.data.id)}</span> &nbsp;{section.data
+						.title}</span
+				>
+			{/if}
+			{#if sectionCounts}
+				<div class="prog">
+					<div class="xp">
+						<span style="width: {pct(sectionCounts.done, sectionCounts.total)}%"></span>
 					</div>
-				{/if}
-
-				{#if current.note}
-					<p class="note muted">{current.note}</p>
-				{/if}
-				{#if current.update_note}
-					<p class="note muted">
-						<span class="badge badge-warning">atualização</span>
-						{current.update_note}
-					</p>
-				{/if}
-
-				{#if noting}
-					<form class="noteform" onsubmit={(e) => (e.preventDefault(), saveNote())}>
-						<label class="label" for="nota">Anotação (fica só neste navegador)</label>
-						<textarea id="nota" class="input area" bind:value={noteText} rows="3"></textarea>
-						<div class="actions">
-							<button class="btn btn-accent btn-compact" type="submit">Salvar</button>
-							<button
-								class="btn btn-ghost btn-compact"
-								type="button"
-								onclick={() => (noting = false)}>Cancelar</button
-							>
-						</div>
-					</form>
-				{:else if noteText}
-					<p class="note own"><span class="eyebrow">Sua nota</span> {noteText}</p>
-				{/if}
-
-				<div class="actions">
-					<span class="tip" data-tip="em breve: precisa do banco">
-						<button class="btn btn-accent" type="button" disabled aria-describedby="feito-tip">
-							<Icon name="check" size={16} /> Feito
-						</button>
-						<span id="feito-tip" role="tooltip" class="visually-hidden"
-							>em breve: precisa do banco</span
-						>
-					</span>
-					<button class="btn" type="button" onclick={skip} disabled={queue.length < 2}>
-						<Icon name="skip" size={16} /> Pular
-					</button>
-					<button
-						class="btn btn-ghost"
-						type="button"
-						aria-pressed={noting}
-						onclick={() => (noting = !noting)}
-					>
-						<Icon name="note" size={16} /> Anotar
-					</button>
-					<span class="hints caption">
-						<span class="kbd">J</span> feito · <span class="kbd">K</span> pular
-					</span>
+					<span class="mono su tiny">{sectionCounts.done} / {sectionCounts.total} feitos</span>
 				</div>
-			</article>
+			{/if}
+		</div>
+		<div class="acts">
+			<a class="btn btn-g btn-s" href={resolve('/rotas')}>Trocar rota</a>
+		</div>
+	</header>
 
-			<section class="list" aria-labelledby="seguida">
-				<p id="seguida" class="eyebrow">Em seguida</p>
-				{#if next.length === 0}
-					<p class="muted">Fim da fila carregada.</p>
+	{#if failure}
+		<div class="band"><Glyph name="alert" /><span>A marca não foi gravada: {failure}</span></div>
+	{/if}
+
+	{#if !cursorId}
+		<section class="panel done">
+			<div class="plaque">Rota concluída</div>
+			<p class="mu pad">
+				Todos os passos da rota principal estão feitos, presumidos ou pulados. Fixe um passo na rota
+				para voltar a ele.
+			</p>
+		</section>
+	{:else}
+		<div class="grid">
+			<div class="mainc">
+				{#if step}
+					<CurrentStep
+						{step}
+						board={boardById.get(step.id)}
+						{prev}
+						{where}
+						{others}
+						{rotaHref}
+						{busy}
+						canUndo={undo.length > 0}
+						ondone={() => mark('manual_done')}
+						onskip={() => mark('skipped')}
+						onundo={undoLast}
+						onpin={() => (pinning = true)}
+					/>
 				{:else}
-					<div class="rows">
-						{#each next as s (s.id)}
-							<StepRow
-								step={s}
-								href={section
-									? `${resolve('/guide/[section]', { section: section.slug })}#step-${s.id}`
-									: undefined}
-							/>
+					<p class="su" aria-busy="true">Carregando o passo atual…</p>
+				{/if}
+
+				{#if segment && (segment.bankActions.length || segment.loadout?.inventory?.length || segment.loadout?.equipment?.length)}
+					<BankPanel
+						readiness={readiness.data?.current ?? null}
+						range={segment.range}
+						loadout={segment.loadout}
+						bankActions={segment.bankActions}
+						firstRef={segment.steps[0]?.ref ?? ''}
+					/>
+				{/if}
+
+				{#if next.length}
+					<section class="next">
+						<div class="nh">
+							<h2 class="ey">
+								Em seguida{segment && segment.steps.length > 1 ? ' · mesmo trecho' : ''}
+							</h2>
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaHref = resolve() + âncora -->
+							<a href={rotaHref} class="push small">abrir a seção</a>
+						</div>
+						<div class="rows">
+							{#each next as s (s.id)}
+								{@const b = boardById.get(s.id)}
+								{@const v = statusView(b?.status)}
+								{@const rowChips = chipsOf(s, b).filter((c) => c.role !== 'uses')}
+								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaBase vem de resolve() -->
+								<a class="row" href={`${rotaBase}#passo-${s.id}`}>
+									<span class="st {v.st}"></span><span class="id">{s.ref}</span>
+									<span class="tx">{b?.title ?? s.text}</span>
+									{#if s.layers?.length === 1 && s.layers[0] === 'enhanced'}<span class="badge"
+											>enhanced</span
+										>{/if}
+									{#each rowChips.slice(0, 2) as c (c.role + c.key)}
+										<ObjectiveChip chip={c} small hint={false} />
+									{/each}
+									{#if rowChips.length > 2}<span class="badge">+{rowChips.length - 2}</span>{/if}
+									{#if s.location}<span class="loc">{s.location}</span>{/if}
+								</a>
+							{/each}
+						</div>
+					</section>
+				{/if}
+			</div>
+
+			<aside class="side-c">
+				<section class="panel">
+					<div class="plaque">Nesta sessão<span class="r">{lines.length} mudanças</span></div>
+					<div class="pad list">
+						{#each lines as l, i (i)}
+							<div class="rec">
+								{#if l.st === 'badge'}
+									<span class="badge badge-auto">{l.right.split(' · ')[0] || 'fonte'}</span>
+								{:else}
+									<span class="st {l.st} dot12"></span>
+								{/if}
+								{l.text}<span class="w"
+									>{l.st === 'badge' ? l.right.split(' · ').slice(1).join(' · ') : l.right}</span
+								>
+							</div>
+						{:else}
+							<span class="su small"
+								>Nada mudou ainda nesta rota. Marque um passo ou sincronize uma fonte.</span
+							>
 						{/each}
 					</div>
-				{/if}
-				{#if nowRes.data}
-					<p class="caption progress">
-						{nowRes.data.progress.done} de {nowRes.data.progress.total} passos concluídos
-					</p>
-				{/if}
-			</section>
-		{/if}
-	</section>
+				</section>
+				<section class="panel">
+					<div class="plaque off">Microbot<span class="r">desligado</span></div>
+					<div class="pad">
+						<span class="su small"
+							>Controle do cliente desligado (MICROBOT_CONTROL=off). O plugin de leitura continua
+							enviando dados.</span
+						>
+					</div>
+				</section>
+			</aside>
+		</div>
+	{/if}
 
-	<aside class="col-aside">
-		<section class="card" aria-labelledby="fontes">
-			<p id="fontes" class="eyebrow">Fontes</p>
-			<ul class="sources">
-				{#each sources as src (src.name)}
-					<li>
-						<span class="sdot {src.state}" aria-hidden="true"></span>
-						<span class="sname">{src.name}</span>
-						<span class="caption sdetail">não conectado</span>
-					</li>
-				{/each}
-			</ul>
-		</section>
+	<footer class="su tiny">
+		{#if route.guide.startsWith('oziris')}Guia por OzirisLoL, versão interativa de ironman.guide.{:else}Guia
+			por So Iron BRUH e ParasailerOSRS.{/if}
+		Uso pessoal; atribuição mantida. {ICON_ATTRIBUTION}.
+	</footer>
+{/if}
 
-		<section class="card" aria-labelledby="marcos">
-			<p id="marcos" class="eyebrow">Próximos marcos de skill</p>
-			{#if milestones.length === 0}
-				<p class="caption">Nenhuma regra de skill nos próximos passos.</p>
-			{:else}
-				<ul class="milestones">
-					{#each milestones as m (m.skill)}
-						<li>
-							<span class="mskill">{m.skill}</span>
-							<span class="data mlevel">≥ {m.level}</span>
-							<span class="caption mstep" title={m.stepText}>{m.stepId}</span>
-						</li>
-					{/each}
-				</ul>
-			{/if}
-		</section>
-	</aside>
-</div>
+{#if pinning && board.data}
+	<PinDialog
+		guideLabel={route ? routeLabel(route.guide, route.title) : ''}
+		steps={mainSteps}
+		{cursorId}
+		onpin={pin}
+		onclose={() => (pinning = false)}
+	/>
+{/if}
+{#if toast}
+	<Toast
+		title={toast.title}
+		text={toast.text}
+		action={toast.undo ? 'desfazer' : undefined}
+		onaction={undoLast}
+		onclose={() => (toast = null)}
+	/>
+{/if}
 
 <style>
-	.layout {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) 300px;
-		gap: var(--sp-6);
-		align-items: start;
-	}
-	.col-aside {
-		display: grid;
-		gap: var(--sp-4);
-		position: sticky;
-		top: calc(var(--topbar-h) + var(--sp-6));
-	}
-	.now {
-		display: grid;
-		gap: var(--sp-4);
-	}
-	.title {
-		line-height: 1.25;
-	}
-	.meta,
-	.chips {
-		display: flex;
-		flex-wrap: wrap;
-		gap: var(--sp-2);
-		margin: 0;
-		padding: 0;
-		list-style: none;
-	}
-	.block {
-		display: grid;
-		gap: var(--sp-2);
-	}
-	.note {
-		max-width: 70ch;
-	}
-	.note .badge {
-		vertical-align: 1px;
-		margin-right: 4px;
-	}
-	.own {
-		padding: 10px 12px;
-		border-radius: var(--r-chip);
-		background: var(--bg);
-	}
-	.own .eyebrow {
-		display: block;
-		margin-bottom: 4px;
-	}
-	.noteform {
-		display: grid;
-		gap: var(--sp-2);
-	}
-	.area {
-		height: auto;
-		padding: 8px 12px;
-		resize: vertical;
-	}
-	.actions {
+	.top {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: var(--sp-2);
+		gap: 12px 20px;
 	}
-	.hints {
-		margin-left: auto;
+	.sec {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		flex: 1 1 320px;
+		min-width: 0;
 	}
-	.tip {
-		position: relative;
-		display: inline-flex;
+	.prog {
+		display: flex;
+		align-items: center;
+		gap: 10px;
 	}
-	.tip::after {
-		content: attr(data-tip);
-		position: absolute;
-		left: 50%;
-		bottom: calc(100% + 8px);
-		transform: translateX(-50%);
-		padding: 5px 9px;
-		border-radius: var(--r-chip);
-		background: var(--elevated);
-		border: 1px solid var(--border);
-		color: var(--text);
-		font-size: var(--fs-caption);
-		white-space: nowrap;
-		opacity: 0;
-		pointer-events: none;
-		transition: opacity 120ms ease;
+	.prog .xp {
+		flex: 1;
+		max-width: 360px;
 	}
-	.tip:hover::after,
-	.tip:focus-within::after {
-		opacity: 1;
+	.acts {
+		display: flex;
+		gap: 8px;
+		align-items: center;
 	}
-	.list {
-		margin-top: var(--sp-6);
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
-		gap: var(--sp-2);
+	.grid {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 20px;
+		align-items: flex-start;
+	}
+	.mainc {
+		flex: 999 1 460px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 20px;
+	}
+	.side-c {
+		flex: 1 1 300px;
+		max-width: 340px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+	.next {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+	}
+	.nh {
+		display: flex;
+		align-items: baseline;
+		gap: 12px;
+		padding: 0 12px;
 	}
 	.rows {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr);
+		display: flex;
+		flex-direction: column;
 		gap: 2px;
 	}
-	.progress {
-		padding-left: var(--sp-4);
+	.pad {
+		padding: 10px 12px;
 	}
-	.sources,
-	.milestones {
-		list-style: none;
-		margin: var(--sp-3) 0 0;
-		padding: 0;
-		display: grid;
-		gap: var(--sp-3);
-	}
-	.sources li,
-	.milestones li {
+	.list {
 		display: flex;
-		align-items: center;
-		gap: var(--sp-2);
+		flex-direction: column;
+		gap: 2px;
 	}
-	.sdot {
-		width: 8px;
-		height: 8px;
-		border-radius: 50%;
-		background: var(--subtle);
+	.dot12 {
+		width: 12px;
+		height: 12px;
 	}
-	.sname,
-	.mskill {
-		flex: 1;
-		text-transform: capitalize;
+	.off {
+		color: var(--on-frame-muted);
 	}
-	.sdetail {
-		white-space: nowrap;
+	.push {
+		margin-left: auto;
 	}
-	.mlevel {
-		color: var(--accent);
+	.small {
+		font-size: 12px;
 	}
-	.mstep {
-		min-width: 46px;
-		text-align: right;
+	.tiny {
+		font-size: 11px;
 	}
-	@media (max-width: 719px) {
-		.layout {
-			grid-template-columns: minmax(0, 1fr);
-		}
-		.col-aside {
-			position: static;
-		}
-		.title {
-			font-size: var(--fs-heading);
-		}
-		.hints {
-			display: none;
-		}
+	.done {
+		display: flex;
+		flex-direction: column;
+	}
+	.done p {
+		margin: 0;
+	}
+	code {
+		font-family: 'JetBrains Mono', monospace;
+		font-size: 12px;
 	}
 </style>

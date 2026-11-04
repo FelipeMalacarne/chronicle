@@ -1,5 +1,12 @@
-import type { Health, Now, Section, SectionSummary, Step } from './types';
-import type { ApiGuide, ApiReadiness, ApiSection } from '../planner/apimap';
+import type {
+	Board,
+	ContentSection,
+	EventsView,
+	GuideInfo,
+	MarkAction,
+	ProgressSummary,
+	Readiness
+} from '../progress/types';
 import { untrack } from 'svelte';
 import { sync, markOk, markFail } from './sync.svelte';
 
@@ -34,7 +41,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 		try {
 			res = await fetch(url, {
 				...init,
-				headers: { accept: 'application/json', ...init?.headers }
+				headers: { accept: 'application/json', ...(init?.headers as Record<string, string>) }
 			});
 		} catch (e) {
 			throw new ApiError(e instanceof Error ? e.message : 'falha de rede', 0, url);
@@ -62,33 +69,42 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	}
 }
 
-export const api = {
-	health: () => request<Health>('/health'),
-	guide: () => request<SectionSummary[]>('/guide'),
-	section: (section: string) => request<Section>(`/guide/${encodeURIComponent(section)}`),
-	step: (id: string) => request<Step>(`/steps/${encodeURIComponent(id)}`),
-	now: () => request<Now>('/now'),
-	guides: () => request<{ guides: ApiGuide[] }>('/guides'),
-	guideById: (guide: string) => request<ApiGuide>(`/guides/${encodeURIComponent(guide)}`),
-	guideSection: (guide: string, section: string) =>
-		request<ApiSection>(
-			`/guides/${encodeURIComponent(guide)}/sections/${encodeURIComponent(section)}`
+const enc = encodeURIComponent;
+const json = (method: string, body?: unknown): RequestInit => ({
+	method,
+	headers: { 'content-type': 'application/json' },
+	body: body === undefined ? undefined : JSON.stringify(body)
+});
+
+/** Progresso sobre objetivos (docs/04, seção 2.5). Rotas por conta: só em AUTH_MODE=dev até existir sessão. */
+export const progressApi = {
+	guides: () => request<{ guides: GuideInfo[] }>('/guides'),
+	section: (guide: string, section: string) =>
+		request<ContentSection>(`/guides/${enc(guide)}/sections/${enc(section)}`),
+	summary: (account: string) => request<ProgressSummary>(`/progress?account=${enc(account)}`),
+	board: (guide: string, account: string) =>
+		request<Board>(`/guides/${enc(guide)}/board?account=${enc(account)}`),
+	events: (guide: string, account: string, limit = 20) =>
+		request<EventsView>(`/guides/${enc(guide)}/events?account=${enc(account)}&limit=${limit}`),
+	readiness: (guide: string, account: string, step?: string) =>
+		request<Readiness>(
+			`/guides/${enc(guide)}/readiness?account=${enc(account)}${step ? `&step=${enc(step)}` : ''}`
 		),
-	readiness: (guide: string, account: string) =>
-		request<ApiReadiness>(
-			`/guides/${encodeURIComponent(guide)}/readiness?account=${encodeURIComponent(account)}`
+	mark: (guide: string, step: string, account: string, kind: MarkAction, note?: string) =>
+		request<Board>(
+			`/guides/${enc(guide)}/steps/${enc(step)}/mark?account=${enc(account)}`,
+			json('PATCH', note === undefined ? { kind } : { kind, note })
+		),
+	confirmImplied: (guide: string, account: string) =>
+		request<Board>(`/guides/${enc(guide)}/implied/confirm?account=${enc(account)}`, json('POST')),
+	pin: (guide: string, account: string, step: string | null) =>
+		request<Board>(
+			`/guides/${enc(guide)}/cursor?account=${enc(account)}`,
+			json('PUT', { step_id: step })
+		),
+	setActiveGuide: (account: string, guide: string) =>
+		request<ProgressSummary>(
+			`/account/guide?account=${enc(account)}`,
+			json('PUT', { guide_id: guide })
 		)
 };
-
-/** "sincronizado há 2 min" / "há 3 h" / "agora". */
-export function relativeTime(at: number | null, now: number = Date.now()): string {
-	if (!at) return 'nunca';
-	const s = Math.max(0, Math.round((now - at) / 1000));
-	if (s < 10) return 'agora';
-	if (s < 60) return `há ${s} s`;
-	const m = Math.round(s / 60);
-	if (m < 60) return `há ${m} min`;
-	const h = Math.round(m / 60);
-	if (h < 48) return `há ${h} h`;
-	return `há ${Math.round(h / 24)} d`;
-}

@@ -45,6 +45,13 @@ export function createResource<T>(fetcher: () => Promise<T>) {
 		get loading() {
 			return loading;
 		},
-		reload: () => untrack(() => run(fetcher()))
+		reload: () => untrack(() => run(fetcher())),
+		/** Troca o dado pela resposta de uma escrita (PATCH devolve o board novo). */
+		set: (d: T) => {
+			seq++;
+			data = d;
+			error = null;
+			loading = false;
+		}
 	};
 }

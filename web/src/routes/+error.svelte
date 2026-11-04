@@ -1,12 +1,28 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
-	import PageHead from '#lib/components/PageHead.svelte';
 </script>
 
-<PageHead
-	eyebrow={`Erro · ${page.status}`}
-	title={page.status === 404 ? 'Página não encontrada' : 'Algo deu errado'}
-	description={page.error?.message}
-/>
-<a class="btn btn-ghost" href={resolve('/')}>Voltar para Agora</a>
+<header class="head">
+	<p class="ey">Erro · {page.status}</p>
+	<h1 class="sr">{page.status === 404 ? 'Página não encontrada' : 'Algo deu errado'}</h1>
+	{#if page.error?.message}<p class="mu">{page.error.message}</p>{/if}
+</header>
+<a class="btn btn-s" href={resolve('/')}>Voltar para Agora</a>
+
+<style>
+	.head {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	h1 {
+		font-size: 30px;
+	}
+	p {
+		margin: 0;
+	}
+	.btn {
+		align-self: flex-start;
+	}
+</style>

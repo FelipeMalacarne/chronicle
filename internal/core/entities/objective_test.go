@@ -108,13 +108,24 @@ func TestUnlockLocationAndVarCatalogs(t *testing.T) {
 	fsys[UnlocksFile] = &fstest.MapFile{Data: []byte(`{"catalog":"unlocks","version":"t","source":"t","unlocks":[
 		{"id":"fairy_rings","name":"Fairy rings","wiki_key":"Fairy ring","proof":{"var":"varbit","id":1,"min":1}}]}`)}
 	fsys[LocationsFile] = &fstest.MapFile{Data: []byte(`{"catalog":"locations","version":"t","source":"t","locations":[
-		{"id":"draynor_village","name":"Draynor Village","wiki_key":"Draynor Village"}]}`)}
+		{"id":"draynor_village","name":"Draynor Village","wiki_key":"Draynor Village","aliases":["Draynor"]}]}`)}
 	reg, err := Load(fsys)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if name, ok := reg.Display(MustParseRef("location:draynor_village")); !ok || name != "Draynor Village" {
 		t.Errorf("location display = %q %v", name, ok)
+	}
+	for name, want := range map[string]string{"draynor village": "location:draynor_village", "Draynor": "location:draynor_village"} {
+		if res := reg.ResolveLocation(name); res.Status != Resolved || res.Ref.String() != want {
+			t.Errorf("ResolveLocation(%q) = %+v", name, res)
+		}
+	}
+	if res := reg.ResolveUnlock("fairy rings"); res.Status != Resolved || res.Ref.String() != "unlock:fairy_rings" {
+		t.Errorf("ResolveUnlock = %+v", res)
+	}
+	if res := reg.ResolveLocation("Lumbridge"); res.Status != Unresolved {
+		t.Errorf("unknown location resolved: %+v", res)
 	}
 	if msg := reg.KnownObjective(MustParseObjectiveKey("unlock:fairy_rings@done")); msg != "" {
 		t.Errorf("fairy rings unlock: %s", msg)

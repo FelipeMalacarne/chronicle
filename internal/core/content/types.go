@@ -239,13 +239,15 @@ type ObjectiveEvidence struct {
 }
 
 // ObjectiveSource is the provenance of an objective. ConfirmedBy "owner" marks
-// what the owner decided during extraction; SkillVersion identifies the
-// extraction skill for llm objectives.
+// what the owner decided during extraction; Decision names the general rule
+// of annotations/decisions.json it applies, when one does; SkillVersion
+// identifies the extraction skill for llm objectives.
 type ObjectiveSource struct {
 	Method       string `json:"method"`
 	Confidence   string `json:"confidence"`
 	SkillVersion string `json:"skill_version,omitempty"`
 	ConfirmedBy  string `json:"confirmed_by,omitempty"`
+	Decision     string `json:"decision,omitempty"`
 }
 
 // ConfirmedByOwner is the only ObjectiveSource.ConfirmedBy value.

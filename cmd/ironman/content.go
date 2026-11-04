@@ -16,7 +16,7 @@ func newContentCmd() *cobra.Command {
 		Use:   "content",
 		Short: "Validate and migrate guide content",
 	}
-	cmd.AddCommand(newContentValidateCmd(), newContentMigrateCmd(), newContentImportBruhsailerCmd())
+	cmd.AddCommand(newContentValidateCmd(), newContentMigrateCmd(), newContentImportBruhsailerCmd(), newContentMCPCmd())
 	return cmd
 }
 

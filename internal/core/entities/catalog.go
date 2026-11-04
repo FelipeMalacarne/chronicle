@@ -247,9 +247,11 @@ type Registry struct {
 	cas     map[int]*CombatAchievementEntry
 	caNames nameIndex
 
-	unlocks   map[string]*UnlockEntry
-	locations map[string]*LocationEntry
-	vars      []VarEntry
+	unlocks       map[string]*UnlockEntry
+	unlockNames   nameIndex
+	locations     map[string]*LocationEntry
+	locationNames nameIndex
+	vars          []VarEntry
 
 	familyBySlug map[string]string
 
@@ -330,7 +332,8 @@ func Load(fsys fs.FS) (*Registry, error) {
 		skills: map[string]*SkillEntry{}, skillNames: nameIndex{},
 		diaries: map[string]*DiaryEntry{}, diaryAreas: map[string]string{}, diaryByArea: map[string][]string{},
 		cas: map[int]*CombatAchievementEntry{}, caNames: nameIndex{},
-		unlocks: map[string]*UnlockEntry{}, locations: map[string]*LocationEntry{},
+		unlocks: map[string]*UnlockEntry{}, unlockNames: nameIndex{},
+		locations: map[string]*LocationEntry{}, locationNames: nameIndex{},
 		familyBySlug: map[string]string{},
 		byWiki:       map[WikiKey][]Ref{},
 	}
@@ -496,6 +499,10 @@ func Load(fsys fs.FS) (*Registry, error) {
 			}
 		}
 		r.unlocks[u.ID] = u
+		r.unlockNames.add(u.Name, u.ID, MatchName)
+		for _, a := range u.Aliases {
+			r.unlockNames.add(a, u.ID, MatchAlias)
+		}
 		r.addWiki(u.WikiKey, ref)
 	}
 	for i := range lc.Locations {
@@ -510,6 +517,10 @@ func Load(fsys fs.FS) (*Registry, error) {
 			continue
 		}
 		r.locations[l.ID] = l
+		r.locationNames.add(l.Name, l.ID, MatchName)
+		for _, a := range l.Aliases {
+			r.locationNames.add(a, l.ID, MatchAlias)
+		}
 		r.addWiki(l.WikiKey, ref)
 	}
 	seenVar := map[string]bool{}

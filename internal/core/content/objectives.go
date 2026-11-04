@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
@@ -196,16 +197,9 @@ func checkObjective(st *Step, doc any, o Objective, reg *entities.Registry) []st
 // verifyQuote checks that ev.Field is a string of the step and ev.Span selects
 // ev.Quote in it, up to case, whitespace and typographic punctuation.
 func verifyQuote(doc any, ev ObjectiveEvidence) string {
-	val, ok := jsonPointer(doc, ev.Field)
-	if !ok {
-		return fmt.Sprintf("field %q does not exist in the step", ev.Field)
-	}
-	s, isString := val.(string)
-	if obj, isObj := val.(map[string]any); isObj {
-		s, isString = obj["name"].(string)
-	}
-	if !isString {
-		return fmt.Sprintf("field %q is not text", ev.Field)
+	s, msg := fieldText(doc, ev.Field)
+	if msg != "" {
+		return msg
 	}
 	if len(ev.Span) != 2 {
 		return "quoted evidence needs a span"
@@ -218,6 +212,39 @@ func verifyQuote(doc any, ev ObjectiveEvidence) string {
 		return fmt.Sprintf("quote %q is not in %s", ev.Quote, ev.Field)
 	}
 	return ""
+}
+
+// fieldText returns the text a pointer addresses in a step document: a
+// string, or the name of an object (an item).
+func fieldText(doc any, field string) (string, string) {
+	val, ok := jsonPointer(doc, field)
+	if !ok {
+		return "", fmt.Sprintf("field %q does not exist in the step", field)
+	}
+	s, isString := val.(string)
+	if obj, isObj := val.(map[string]any); isObj {
+		s, isString = obj["name"].(string)
+	}
+	if !isString {
+		return "", fmt.Sprintf("field %q is not text", field)
+	}
+	return s, ""
+}
+
+// QuoteSpan locates quote in the step field addressed by field (/text,
+// /location, /notes/0/text, /items/2) the way the verifier compares them and
+// returns the exact [start, end) of the original, so evidence can be built
+// from a quote alone. The first occurrence wins.
+func QuoteSpan(st *Step, field, quote string) ([]int, error) {
+	s, msg := fieldText(stepDoc(st), field)
+	if msg != "" {
+		return nil, errors.New(msg)
+	}
+	start, end, found := entities.FindQuote(s, quote)
+	if !found {
+		return nil, fmt.Errorf("quote %q is not in %s", quote, field)
+	}
+	return []int{start, end}, nil
 }
 
 // stepDoc is the step as decoded JSON, the document evidence pointers address.

@@ -1528,6 +1528,11 @@
         "confirmed_by": {
           "const": "owner",
           "description": "Decidido pelo dono durante a extração (doc 09 seção 6.4)."
+        },
+        "decision": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$",
+          "description": "Id da decisão geral de annotations/decisions.json que o item aplica; implica confirmed_by owner."
         }
       }
     },

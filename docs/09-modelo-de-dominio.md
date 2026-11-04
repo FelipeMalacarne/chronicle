@@ -208,7 +208,7 @@ Um passo do Oziris com objetivos explícitos, como o loader entrega ao motor e a
   "text": "Buy a spade, start X marks the spot quest",
   "objectives": [
     { "key": "quest:x_marks_the_spot@started", "role": "starts",
-      "evidence": { "field": "/text", "quote": "start X marks the spot quest", "span": [14, 42] },
+      "evidence": { "field": "/text", "quote": "start X marks the spot quest", "span": [13, 41] },
       "source": { "method": "explicit", "confidence": "high" } },
     { "key": "item:952x1", "role": "uses",
       "evidence": { "field": "/text", "quote": "Buy a spade", "span": [0, 11] },
@@ -226,7 +226,10 @@ Um passo do Oziris com objetivos explícitos, como o loader entrega ao motor e a
   (proposta de agente verificada) e `manual` (curadoria humana). As constantes de `content.Provenance`
   ganham os dois últimos.
 - `source.confirmed_by: "owner"` marca o que foi decidido pelo dono durante a extração (seção 6.4); a
-  pergunta e a resposta ficam no registro de decisões da anotação. `skill_version` identifica a versão
+  pergunta e a resposta ficam no registro de decisões da anotação. `source.decision` cita a decisão geral
+  de `decisions.json` aplicada, quando houver, e implica `confirmed_by: "owner"`. Toda entrada de
+  sidecar com `confidence` diferente de `high` precisa de `confirmed_by: "owner"`; o loader rejeita o
+  contrário, e também uma decisão citada que não exista. `skill_version` identifica a versão
   da skill; o agente não sabe o próprio id de modelo com confiança, então ele não é gravado.
 
 ### 4.2 Onde cada coisa vive em disco
@@ -259,8 +262,10 @@ Detalhes da composição, como implementados (item 2 da sequência):
   `manual` não vira objetivo.
 - Itens e ações de banco da anotação substituem o loadout e as ações derivadas do segmento quando o
   passo anotado é o primeiro do segmento (é dele que `derive` tira os dois). Num passo do meio do
-  segmento, ficam no próprio passo (`requirements`, `bank_actions`); se isso pedir novo corte de
-  segmentos, a decisão fica para o item 4 (ferramental de extração).
+  segmento, ficam no próprio passo (`requirements`, `bank_actions`). O ferramental de extração (item 4)
+  não recorta segmentos: `next_batch` diz ao agente se o passo abre o segmento (`starts_here`) e mostra o
+  loadout e as ações derivadas, para ele saber o que vai substituir. Se o piloto mostrar que falta um
+  corte, isso volta como correção do `derive`, não da anotação.
 - `content.LoadGuideFile`/`ParseGuide` validam tudo isso, mas não alteram o guia (ele recodifica para o
   mesmo `guide.json`); só `content.Load` compõe.
 
@@ -459,6 +464,53 @@ commit. Só depois disso roda o resto, cerca de 13 seções.
 | Item fora do catálogo | Gerar o catálogo de itens **antes** do piloto (seção 7) |
 | Unlock ou local fora do catálogo | `propose_entity` com confirmação do dono, no mesmo ciclo |
 | Texto do guia sai da máquina | Aceito: uso pessoal; o texto vai só para a Claude, nunca para terceiros |
+
+### 6.8 Contrato das tools (como implementado, item 4)
+
+`ironman content mcp` (servidor `ironman-content` no `.mcp.json`, roda com `go run`) é uma camada fina
+sobre `internal/core/annotate`; o protocolo é o MCP stdio (JSON-RPC por linha, só tools) de
+`internal/mcp`. Argumentos com campo desconhecido são recusados, para um erro de digitação não sumir
+calado.
+
+| Tool | Faz |
+|---|---|
+| `status(guide?)` | cobertura por guia e seção: anotados, desatualizados (hash mudou), pendentes |
+| `next_batch(guide, section, limit?)` | próximos passos sem anotação atual, na ordem do guia (8 por padrão; um lote fecha antes de passar de 12 mil caracteres, mas leva sempre um passo): campos citáveis, menções já resolvidas, objetivos vindos das regras, segmento (`starts_here`, loadout e ações derivados) e as decisões do guia |
+| `resolve_entity(kind, name, tier?)` | resolve como o `submit` vai resolver: `resolved` com ref, `ambiguous` com candidatos, `unresolved` com motivo; para item, diz a família quando o nome cobre uma |
+| `propose_entity(kind, name, ..., confirmed_by: owner)` | só `unlock` e `location`; grava em `content/reference` e recarrega o registry; recusa nome ou alias que já resolve |
+| `submit(guide, section, skill_version, steps)` | verifica e grava; cada passo entra inteiro ou é rejeitado com todos os motivos |
+| `record_decision` / `list_decisions` | `decisions.json`; mesmo id substitui (o dono mudou de ideia) |
+| `report(guide)` | o relatório, também gravado em `annotations.report.json` |
+
+O agente manda **nomes e citações**, nunca refs nem spans. O `submit`:
+
+1. resolve cada nome pelo registry lido do disco (não o embutido, então uma entrada recém-proposta já
+   resolve). `id` só escolhe entre os candidatos de um nome ambíguo, e nome sem resolução nunca ganha id;
+2. localiza a citação no campo indicado (`/text` por padrão, ou `/location`, `/notes/<i>/text`,
+   `/items/<i>`) com a mesma dobra do verificador e grava o span exato do original (primeira ocorrência);
+3. exige `confidence` `high` ou `medium`, e `medium` só com `confirmed_by: owner` ou `decision`;
+4. roda `Guide.CheckStepAnnotation`, a mesma checagem do loader, então o MCP aceita exatamente o que o
+   `content validate` aceita;
+5. confere a ordem da rota contra os objetivos das regras e as anotações atuais, só entre passos da
+   mesma variante e nunca entre uma track e o resto: quest iniciada depois de concluída, quest concluída
+   antes de iniciar, algo concluído duas vezes (inclui nível menor depois de um maior), requisito que a
+   rota só cumpre depois;
+6. grava os passos aceitos em `annotations/<seção>.json`, na ordem do guia, depois de validar o arquivo
+   inteiro contra o schema (escrita atômica).
+
+O relatório guarda o histórico por passo (`steps`: envios, aceito no primeiro envio, motivos da última
+rejeição, comentário do agente) e recalcula a cada envio:
+
+- a cobertura;
+- a aceitação no primeiro envio;
+- o que o dono confirmou e as decisões aplicadas;
+- a concordância com as regras (objetivo de regra repetido com a mesma chave e papel; cada divergência
+  com o comentário do passo);
+- as rejeições abertas;
+- tudo o que entrou com confiança `medium`.
+
+Essas são as métricas do piloto (seção 6.6), exceto as perguntas por seção. As perguntas acontecem no
+Claude Code, fora do MCP; o relatório conta só as respostas registradas.
 
 ## 7. Catálogos
 

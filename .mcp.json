@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ironman-content": {
+      "type": "stdio",
+      "command": "go",
+      "args": ["run", "./cmd/ironman", "content", "mcp", "--content-dir", "content"]
+    }
+  }
+}

@@ -209,6 +209,8 @@ func TestAnnotationsRejected(t *testing.T) {
 		{"unknown location", "1.1.json", "a", `"location":{"ref":"location:lumbridge","evidence":{"field":"/location","quote":"Lumbridge","span":[0,9]},"source":` + llm + `}`, "unknown entity location:lumbridge"},
 		{"unknown family", "1.1.json", "b", `"items":[{"name":"x","family":"not_a_family","evidence":{"field":"/text","quote":"an axe","span":[15,21]},"source":` + llm + `}]`, "unknown item family"},
 		{"step of another section", "1.2.json", "a", `"objectives":[]`, "belongs to section"},
+		{"unconfirmed inference", "1.1.json", "a", `"objectives":[{"key":"item:952x1","role":"uses","evidence":{"field":"/text","quote":"buy a spade","span":[0,11]},"source":{"method":"llm","confidence":"medium"}}]`, "needs confirmed_by owner"},
+		{"unknown decision", "1.1.json", "a", `"objectives":[{"key":"item:952x1","role":"uses","evidence":{"field":"/text","quote":"buy a spade","span":[0,11]},"source":{"method":"llm","confidence":"medium","confirmed_by":"owner","decision":"spade-rule"}}]`, "unknown decision \"spade-rule\""},
 		{"rule source in sidecar", "1.1.json", "a", `"objectives":[{"key":"item:952x1","role":"uses","evidence":{"field":"/text","quote":"buy a spade","span":[0,11]},"source":{"method":"explicit","confidence":"high"}}]`, "value must be one of"},
 	}
 	for _, tc := range cases {

@@ -641,14 +641,15 @@ ainda não há sessão, só são registradas com `AUTH_MODE=dev`.
 ### 7.1 Layout
 
 ```
-cmd/ironman/          cobra: serve, content (validate, migrate, import-bruhsailer; mcp planejado),
+cmd/ironman/          cobra: serve, content (validate, migrate, import-bruhsailer, mcp),
                       stubs now/done/plan/sync/state/mcp
 internal/core/        domínio puro: content (loader, schema, derive, migrate), entities (registry,
                       catálogos, resolver, enrich, catalogbuild), ingest (contrato), rules, planning;
-                      planejados: annotate, progress, graph
+                      annotate (extração por agente); planejados: progress, graph
 internal/importer/    bruhsailer (DOCX pinados → guia canônico)
 internal/store/       repositórios (ingest); internal/store/db é saída do sqlc
-internal/httpapi/     handlers; planejados: internal/sources, internal/client, internal/mcp
+internal/httpapi/     handlers; planejados: internal/sources, internal/client
+internal/mcp/         servidor MCP stdio mínimo (JSON-RPC, só tools), usado por content mcp e pelo mcp da conta
 web/                  SPA Svelte; web/src/lib/planner é o view-model (apimap.ts puro e testado em node)
 content/              guides/<id>/{guide.json, README.md, entities.report.json, annotations/},
                       schema/, reference/ (catálogos)
@@ -719,10 +720,10 @@ Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/mic
 | Plugin Microbot Ironman Planner 1.0.0 (somente leitura) | `microbot-plugins`: `fm/ironmanplanner` | 36 testes JUnit; **nunca rodou no jogo** |
 | Objetivos no conteúdo: `entities.ObjectiveKey`, tipos `unlock`/`location`, `ItemRequirement` (`item_id`/`any_of`/`family`, `noted`), `entityRef`/`objectiveKey`/`graphRef` no schema, sidecars de anotação (`annotations.schema.json`) lidos, verificados e compostos pelo loader; `complete_when`/`prerequisites` viram objetivos no `content.Load` | `internal/core/entities/objective.go`, `internal/core/content/{objectives,annotations}.go`, `content/schema/` | testes de tabela (chaves, conversão das 269 regras, citação dobrada, hash, composição, rejeições); `content validate` |
 | Posse e readiness sobre as variantes de item | `rules.OwnsFamily`/`OwnsAnyOf`, `planning.evaluateItem` | testes de tabela |
+| Ferramental de extração: `ironman content mcp` (stdio, offline) com `status`, `next_batch`, `resolve_entity`, `propose_entity`, `submit`, `record_decision`, `list_decisions`, `report`; `.mcp.json`; skill `annotate-guide@1`; o loader passa a exigir `confirmed_by: owner` em toda inferência e decisões citadas existentes | `internal/core/annotate`, `internal/mcp`, `cmd/ironman/content_mcp.go`, `.claude/skills/annotate-guide` | testes de tabela (resolução de nomes, requisitos de item, checagens do submit, ordem da rota, ida e volta pelo loader, hash desatualizado, `propose_entity`); lote de exemplo do Oziris 1.1 pelo stdio |
 | Catálogos gerados: itens da wiki (856 ids), varbits de referência (48 diaries + quest points); `unlocks.json` e `locations.json` vazios até a extração | `tools/extract_wiki_items.py` → `data/wiki/items.json`; `internal/core/entities/catalogbuild` | `catalogbuild -update` sem rede; concordância com o catálogo curado antigo (fixture) |
 
-Ainda não existe: anotações (o diretório `annotations/` de cada guia nasce no item 5), o MCP de
-extração, progresso persistido (as queries de `step_progress` existem no sqlc, sem chamador; a
+Ainda não existe: anotações (o diretório `annotations/` de cada guia nasce no item 5), progresso persistido (as queries de `step_progress` existem no sqlc, sem chamador; a
 web mostra 0 feitos), indexação de conteúdo no boot (`content_versions`/`content_steps`) e aplicação de
 `step_id_aliases`, faceta de quest e diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de
 hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de controle do
@@ -738,7 +739,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 1 | Doc 09 revisado e decisões fechadas | **feito** (2026-11-04; doc 09, seções 9.1 e 9.3) |
 | 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`, schema dos sidecars; loader converte `complete_when` e compõe anotações; readiness e posse avaliam as variantes de item | **feito** (2026-11-04; detalhes da composição no doc 09, seção 4.2) |
 | 3 | Dados e catálogos: script em `tools/` extrai da wiki os itens citados pelos guias mais famílias para `data/wiki/items.json`; `catalogbuild` gera `content/reference/items.json`; `unlocks.json`, `locations.json` e `varbits.json` iniciais | **feito** (2026-11-04). Itens do Oziris sem resolução 96 → 62 e resolvidos 87 → 119; os ambíguos subiram de 11 para 13, porque nomes antes desconhecidos agora caem em vários ids (doc 09, seção 7) |
-| 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | testes de tabela das checagens (citação dobrada, refs, hash, ordem); o MCP responde a um lote de exemplo |
+| 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | **feito** (2026-11-04; contrato das tools no doc 09, seção 6.8) |
 | 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6 |
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
 | 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado |

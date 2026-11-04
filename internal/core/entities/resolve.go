@@ -145,6 +145,22 @@ func (r *Registry) ResolveCombatAchievement(name string) Resolution {
 	return unresolved(ReasonNotInCatalog)
 }
 
+// ResolveUnlock resolves an unlock by name or alias.
+func (r *Registry) ResolveUnlock(name string) Resolution {
+	if res, ok := fromHits(KindUnlock, r.unlockNames[NormalizeName(name)]); ok {
+		return res
+	}
+	return unresolved(ReasonNotInCatalog)
+}
+
+// ResolveLocation resolves a location by name or alias.
+func (r *Registry) ResolveLocation(name string) Resolution {
+	if res, ok := fromHits(KindLocation, r.locationNames[NormalizeName(name)]); ok {
+		return res
+	}
+	return unresolved(ReasonNotInCatalog)
+}
+
 // ResolveItemID checks a source-provided item id against the catalog.
 func (r *Registry) ResolveItemID(id int) Resolution {
 	if _, ok := r.Item(id); ok {

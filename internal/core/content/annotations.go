@@ -120,7 +120,14 @@ func loadAnnotations(guideDir string, g *Guide, reg *entities.Registry) (*Annota
 	if err != nil || len(files) == 0 {
 		return nil, nil, nil
 	}
-	sort.Strings(files)
+	// decisions.json first: section annotations cite its decisions.
+	sort.Slice(files, func(i, j int) bool {
+		di, dj := filepath.Base(files[i]) == DecisionsFileName, filepath.Base(files[j]) == DecisionsFileName
+		if di != dj {
+			return di
+		}
+		return files[i] < files[j]
+	})
 	out := &Annotations{}
 	var issues, warnings Errors
 	seenStep := map[string]string{}
@@ -156,7 +163,7 @@ func loadAnnotations(guideDir string, g *Guide, reg *entities.Registry) (*Annota
 			issues = append(issues, Issue{File: f, Message: "decode: " + err.Error()})
 			continue
 		}
-		fileIssues, fileWarnings := g.checkAnnotationFile(f, &a, seenStep, stale, reg)
+		fileIssues, fileWarnings := g.checkAnnotationFile(f, &a, out.Decisions, seenStep, stale, reg)
 		issues = append(issues, fileIssues...)
 		warnings = append(warnings, fileWarnings...)
 		if len(fileIssues) == 0 {
@@ -179,7 +186,7 @@ func loadAnnotations(guideDir string, g *Guide, reg *entities.Registry) (*Annota
 
 // checkAnnotationFile validates one section sidecar against the guide and
 // records the ids of stale steps in stale.
-func (g *Guide) checkAnnotationFile(file string, a *AnnotationFile, seenStep map[string]string, stale map[string]bool, reg *entities.Registry) (Errors, Errors) {
+func (g *Guide) checkAnnotationFile(file string, a *AnnotationFile, decisions *DecisionsFile, seenStep map[string]string, stale map[string]bool, reg *entities.Registry) (Errors, Errors) {
 	var issues, warnings Errors
 	add := func(ptr, format string, args ...any) {
 		issues = append(issues, Issue{File: file, Pointer: ptr, Message: fmt.Sprintf(format, args...)})
@@ -199,7 +206,8 @@ func (g *Guide) checkAnnotationFile(file string, a *AnnotationFile, seenStep map
 	if want := a.SectionID + ".json"; filepath.Base(file) != want {
 		add("/section_id", "section %q must live in %s", a.SectionID, want)
 	}
-	for i, sa := range a.Steps {
+	for i := range a.Steps {
+		sa := &a.Steps[i]
 		ptr := fmt.Sprintf("/steps/%d", i)
 		st, ok := g.stepsByID[sa.StepID]
 		if !ok {
@@ -214,51 +222,102 @@ func (g *Guide) checkAnnotationFile(file string, a *AnnotationFile, seenStep map
 			continue
 		}
 		seenStep[sa.StepID] = file
-		if sa.TextHash != StepTextHash(st) {
+		stepIssues, isStale := g.CheckStepAnnotation(sa, decisions, reg)
+		if isStale {
 			warnings = append(warnings, Issue{File: file, Pointer: ptr + "/text_hash",
 				Message: fmt.Sprintf("annotation of step %q is stale (text_hash differs); reprocess the step", sa.StepID)})
 			stale[sa.StepID] = true
 			continue
 		}
-		doc := stepDoc(st)
-		for j, o := range sa.Objectives {
-			oPtr := fmt.Sprintf("%s/objectives/%d", ptr, j)
-			if o.Evidence == nil || o.Evidence.Quote == "" {
-				add(oPtr+"/evidence", "annotated objectives need a quote")
-			}
-			for _, msg := range checkObjective(st, doc, o, reg) {
-				add(oPtr, "%s", msg)
-			}
-		}
-		for j, it := range sa.Items {
-			iPtr := fmt.Sprintf("%s/items/%d", ptr, j)
-			for _, msg := range checkRequirement(it.ItemRequirement, reg) {
-				add(iPtr, "%s", msg)
-			}
-			if it.Variant() == RequireUnresolved {
-				add(iPtr, "annotated items must be resolved (item_id, any_of or family)")
-			}
-			if msg := verifyQuote(doc, it.Evidence); msg != "" {
-				add(iPtr+"/evidence", "%s", msg)
-			}
-		}
-		for j, ba := range sa.BankActions {
-			if msg := verifyQuote(doc, ba.Evidence); msg != "" {
-				add(fmt.Sprintf("%s/bank_actions/%d/evidence", ptr, j), "%s", msg)
-			}
-		}
-		if sa.Location != nil {
-			if sa.Location.Ref.Kind != entities.KindLocation {
-				add(ptr+"/location/ref", "location must be a location ref, got %s", sa.Location.Ref)
-			} else if !reg.Known(sa.Location.Ref) {
-				add(ptr+"/location/ref", "unknown entity %s", sa.Location.Ref)
-			}
-			if msg := verifyQuote(doc, sa.Location.Evidence); msg != "" {
-				add(ptr+"/location/evidence", "%s", msg)
-			}
+		for _, is := range stepIssues {
+			issues = append(issues, Issue{File: file, Pointer: ptr + is.Pointer, Message: is.Message})
 		}
 	}
 	return issues, warnings
+}
+
+// CheckStepAnnotation verifies one step annotation against the current step:
+// every quote, every ref, the role of each objective, that inferences were
+// confirmed by the owner and that the decisions it cites exist. stale reports
+// a text hash that differs from the step's, in which case nothing else is
+// checked. Pointers are relative to the annotation. `ironman content mcp`
+// runs it on every submit, so it accepts exactly what the loader accepts.
+func (g *Guide) CheckStepAnnotation(sa *StepAnnotation, decisions *DecisionsFile, reg *entities.Registry) (issues Errors, stale bool) {
+	add := func(ptr, format string, args ...any) {
+		issues = append(issues, Issue{Pointer: ptr, Message: fmt.Sprintf(format, args...)})
+	}
+	st, ok := g.stepsByID[sa.StepID]
+	if !ok {
+		add("/step_id", "unknown step %q", sa.StepID)
+		return issues, false
+	}
+	if sa.TextHash != StepTextHash(st) {
+		return nil, true
+	}
+	checkSource := func(ptr string, src ObjectiveSource) {
+		if src.Confidence != ConfidenceHigh && src.ConfirmedBy != ConfirmedByOwner {
+			add(ptr, "confidence %q is an inference: it needs confirmed_by owner", src.Confidence)
+		}
+		if src.Decision != "" && !decisions.Has(src.Decision) {
+			add(ptr+"/decision", "unknown decision %q", src.Decision)
+		}
+	}
+	doc := stepDoc(st)
+	for j, o := range sa.Objectives {
+		oPtr := fmt.Sprintf("/objectives/%d", j)
+		if o.Evidence == nil || o.Evidence.Quote == "" {
+			add(oPtr+"/evidence", "annotated objectives need a quote")
+		}
+		for _, msg := range checkObjective(st, doc, o, reg) {
+			add(oPtr, "%s", msg)
+		}
+		checkSource(oPtr+"/source", o.Source)
+	}
+	for j, it := range sa.Items {
+		iPtr := fmt.Sprintf("/items/%d", j)
+		for _, msg := range checkRequirement(it.ItemRequirement, reg) {
+			add(iPtr, "%s", msg)
+		}
+		if it.Variant() == RequireUnresolved {
+			add(iPtr, "annotated items must be resolved (item_id, any_of or family)")
+		}
+		if msg := verifyQuote(doc, it.Evidence); msg != "" {
+			add(iPtr+"/evidence", "%s", msg)
+		}
+		checkSource(iPtr+"/source", it.Source)
+	}
+	for j, ba := range sa.BankActions {
+		bPtr := fmt.Sprintf("/bank_actions/%d", j)
+		if msg := verifyQuote(doc, ba.Evidence); msg != "" {
+			add(bPtr+"/evidence", "%s", msg)
+		}
+		checkSource(bPtr+"/source", ba.Source)
+	}
+	if sa.Location != nil {
+		if sa.Location.Ref.Kind != entities.KindLocation {
+			add("/location/ref", "location must be a location ref, got %s", sa.Location.Ref)
+		} else if !reg.Known(sa.Location.Ref) {
+			add("/location/ref", "unknown entity %s", sa.Location.Ref)
+		}
+		if msg := verifyQuote(doc, sa.Location.Evidence); msg != "" {
+			add("/location/evidence", "%s", msg)
+		}
+		checkSource("/location/source", sa.Location.Source)
+	}
+	return issues, false
+}
+
+// Has reports whether d records a decision with the given id.
+func (d *DecisionsFile) Has(id string) bool {
+	if d == nil {
+		return false
+	}
+	for _, x := range d.Decisions {
+		if x.ID == id {
+			return true
+		}
+	}
+	return false
 }
 
 // composeStep overlays a verified annotation on its step. Objectives merge

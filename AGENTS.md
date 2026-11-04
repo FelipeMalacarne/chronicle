@@ -35,9 +35,15 @@ HWID agent; its per-account stores are shared with the everyday client in `~/.ru
 `mb-client start` comes up logged out (AutoLogin is switched off); log in with
 `mb login now --world <w>` only after the user agrees. `mb-test` logs in by itself.
 
+Prefer `mb-client start --headless` for anything that runs unattended: the game gets its own
+Xvfb display (`:99`) shared over VNC on `127.0.0.1:5999`, GPU and 117 HD are switched off
+(no GPU there). A desktop window that is hidden or minimized throttles the client to about one
+frame per second, which makes every action, walk and wait crawl (measured: Agent Server calls
+~1000 ms windowed-hidden vs ~18 ms headless, logged in).
+
 | Command | What it does |
 |---|---|
-| `mb-client start\|stop\|restart\|status\|logs [N]` | Run the dev client; `start` waits for the Agent Server |
+| `mb-client start [--headless]\|stop\|restart\|status\|logs [N]` | Run the dev client; `start` waits for the Agent Server; `--headless` uses Xvfb + VNC |
 | `mb-account list\|use <name\|#>\|show\|clear` | Jagex Account character the dev client launches with (from the launcher's accounts) |
 | `mb-deploy <plugin>` | Hot compile + load (or reload) a plugin, no restart. `--undeploy`, `--list` |
 | `mb <cli args>` | Upstream `microbot-cli` against the dev client (`mb state`, `mb npcs --name X`, `mb screenshot save --dir D`) |

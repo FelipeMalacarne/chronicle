@@ -1,12 +1,68 @@
 #!/usr/bin/env bash
 # Run the pinned Microbot client in the isolated dev home with the Agent Server on.
 #
-#   mb-client start [--test <Plugin descriptor name>] [-- extra JVM args]
+#   mb-client start [--headless] [--test <Plugin descriptor name>] [-- extra JVM args]
 #   mb-client stop | restart | status | logs [N] | wait [timeoutSec]
+#
+# --headless runs the game on its own Xvfb display (MB_HEADLESS_DISPLAY, default :99) instead
+# of a window on the desktop, and shares it over VNC on 127.0.0.1:MB_VNC_PORT (default 5999).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-usage() { sed -n '2,6p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,9p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+MB_HEADLESS_DISPLAY="${MB_HEADLESS_DISPLAY:-:99}"
+MB_VNC_PORT="${MB_VNC_PORT:-5999}"
+MB_XVFB_PIDFILE="$MB_RUN/xvfb.pid"
+MB_VNC_PIDFILE="$MB_RUN/vnc.pid"
+
+pid_alive() { [[ -f "$1" ]] && kill -0 "$(cat "$1")" 2>/dev/null; }
+
+kill_pidfile() {
+	local file="$1" pid i
+	pid_alive "$file" || { rm -f "$file"; return 0; }
+	pid="$(cat "$file")"
+	kill "$pid"
+	for ((i = 0; i < 10; i++)); do
+		kill -0 "$pid" 2>/dev/null || break
+		sleep 1
+	done
+	kill -0 "$pid" 2>/dev/null && kill -9 "$pid"
+	rm -f "$file"
+}
+
+# Xvfb is always "visible", so the client never throttles rendering the way a hidden or
+# minimized desktop window does; x11vnc lets a browser (noVNC) watch and drive it.
+start_display() {
+	command -v Xvfb >/dev/null || die "Xvfb not found; run inside nix develop"
+	command -v x11vnc >/dev/null || die "x11vnc not found; run inside nix develop"
+	local n="${MB_HEADLESS_DISPLAY#:}" i
+	if ! pid_alive "$MB_XVFB_PIDFILE"; then
+		[[ -e "/tmp/.X11-unix/X$n" ]] && die "display $MB_HEADLESS_DISPLAY is taken by another X server; set MB_HEADLESS_DISPLAY"
+		setsid nohup Xvfb "$MB_HEADLESS_DISPLAY" -screen 0 "${MB_HEADLESS_SIZE:-1280x900x24}" -nolisten tcp \
+			>"$MB_RUN/xvfb.out" 2>&1 </dev/null &
+		echo $! >"$MB_XVFB_PIDFILE"
+		for ((i = 0; i < 50; i++)); do
+			[[ -S "/tmp/.X11-unix/X$n" ]] && break
+			sleep 0.2
+		done
+		[[ -S "/tmp/.X11-unix/X$n" ]] || die "Xvfb did not come up; see $MB_RUN/xvfb.out"
+	fi
+	if ! pid_alive "$MB_VNC_PIDFILE"; then
+		# Loopback only and no password: whatever exposes it (the planner) must authenticate.
+		# x11vnc refuses to run when it sees a Wayland session, even for an Xvfb display.
+		env -u WAYLAND_DISPLAY XDG_SESSION_TYPE=x11 \
+			setsid nohup x11vnc -display "$MB_HEADLESS_DISPLAY" -localhost -rfbport "$MB_VNC_PORT" \
+			-forever -shared -nopw >"$MB_RUN/vnc.out" 2>&1 </dev/null &
+		echo $! >"$MB_VNC_PIDFILE"
+	fi
+	echo "headless display $MB_HEADLESS_DISPLAY, VNC on 127.0.0.1:$MB_VNC_PORT"
+}
+
+stop_display() {
+	kill_pidfile "$MB_VNC_PIDFILE"
+	kill_pidfile "$MB_XVFB_PIDFILE"
+}
 
 wait_ready() {
 	local timeout="${1:-180}" i
@@ -30,10 +86,11 @@ install_bootstrap() {
 }
 
 start() {
-	local test_name=""
+	local test_name="" headless=""
 	local extra=()
 	while [[ $# -gt 0 ]]; do
 		case "$1" in
+			--headless) headless=1; shift ;;
 			--test) test_name="$2"; shift 2 ;;
 			--) shift; extra=("$@"); break ;;
 			*) die "unknown option: $1" ;;
@@ -72,9 +129,22 @@ start() {
 		"-Dmicrobot.hwid.randomdat.store=$HOME/.runelite/spoofed-random-dats.properties")
 	cmd+=("${extra[@]}" -jar "$MB_JAR" --disable-telemetry)
 
+	local display="${DISPLAY:-}"
+	if [[ -n "$headless" ]]; then
+		# Xvfb has no GPU: GPU and 117 HD would fall back to software GL and eat the CPU.
+		local profile
+		for profile in "$MB_RL"/microbot-profiles/*.properties; do
+			[[ -f "$profile" ]] || continue
+			sed -i -E 's/^runelite\.(gpuplugin|hdplugin)=true$/runelite.\1=false/' "$profile"
+		done
+		start_display
+		display="$MB_HEADLESS_DISPLAY"
+	fi
+
 	echo "starting Microbot $MB_VERSION (home $MB_DEV_HOME)"
 	# Own session: the game must outlive the terminal or agent session that started it.
 	# setsid execs in place here (a background job is not a group leader), so $! is java.
+	DISPLAY="$display" \
 	LD_LIBRARY_PATH="${MICROBOT_LD_LIBRARY_PATH:-}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
 		setsid nohup "${cmd[@]}" >"$MB_STDOUT" 2>&1 </dev/null &
 	echo $! >"$MB_PIDFILE"
@@ -87,25 +157,26 @@ start() {
 
 stop() {
 	local pid i
-	if ! pid="$(mb_client_pid)"; then
+	if pid="$(mb_client_pid)"; then
+		kill "$pid"
+		for ((i = 0; i < 30; i++)); do
+			kill -0 "$pid" 2>/dev/null || break
+			sleep 1
+		done
+		kill -0 "$pid" 2>/dev/null && kill -9 "$pid"
+		echo "stopped"
+	else
 		echo "not running"
-		rm -f "$MB_PIDFILE"
-		return 0
 	fi
-	kill "$pid"
-	for ((i = 0; i < 30; i++)); do
-		kill -0 "$pid" 2>/dev/null || break
-		sleep 1
-	done
-	kill -0 "$pid" 2>/dev/null && kill -9 "$pid"
 	rm -f "$MB_PIDFILE"
-	echo "stopped"
+	stop_display
 }
 
 status() {
 	local pid
 	if pid="$(mb_client_pid)"; then
 		echo "running (pid $pid)"
+		pid_alive "$MB_XVFB_PIDFILE" && echo "headless on $MB_HEADLESS_DISPLAY, VNC 127.0.0.1:$MB_VNC_PORT"
 		if [[ -S "$MB_SOCKET" ]]; then
 			mb_api GET /state | jq -c '{loggedIn, gameState, world, player: .player.name}' 2>/dev/null || echo "agent server not answering"
 		else

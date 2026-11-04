@@ -37,6 +37,9 @@
           pkgs.jq
           pkgs.curl
           pkgs.git
+          # mb-client --headless: own X display + VNC for remote viewing
+          pkgs.xvfb
+          pkgs.x11vnc
         ];
         JAVA_HOME = "${pkgs.jdk21}";
         MICROBOT_VERSION = pin.version;

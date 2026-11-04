@@ -1,0 +1,18 @@
+[
+  {
+    "id": "g1",
+    "title": "Route",
+    "default_variant": "main",
+    "variants": [
+      { "id": "main", "title": "Main", "sections": [
+        { "id": "s1", "slug": "s1", "title": "Section 1", "steps": [
+          { "id": "a1", "text": "talk to Hans" },
+          { "id": "a2", "text": "train attack to 40",
+            "objectives": [ { "key": "skill:attack>=40", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] },
+          { "id": "a3", "text": "train fletching to 10",
+            "objectives": [ { "key": "skill:fletching>=10", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] }
+        ] }
+      ] }
+    ]
+  }
+]

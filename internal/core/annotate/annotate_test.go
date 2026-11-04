@@ -56,6 +56,14 @@ func workspace(t *testing.T) (*Workspace, string) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	// The extraction fills unlocks and locations over time; the tests start
+	// from empty catalogs so they do not depend on what was proposed so far.
+	for _, name := range []string{"unlocks", "locations"} {
+		empty := `{"catalog": "` + name + `", "version": "test", "` + name + `": []}`
+		if err = os.WriteFile(filepath.Join(ref, name+".json"), []byte(empty), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
 	gdir := filepath.Join(dir, content.GuidesSubdir, "t")
 	if err = os.MkdirAll(gdir, 0o755); err != nil {
 		t.Fatal(err)
@@ -99,6 +107,8 @@ func TestObjectiveKey(t *testing.T) {
 		{ObjectiveProposal{Kind: "item", Name: "spade", N: 1}, "item:952x1", ""},
 		{ObjectiveProposal{Kind: "item", Name: "axe", N: 1}, "", "ambiguous"},
 		{ObjectiveProposal{Kind: "item", Name: "axe", ID: "1359", N: 1}, "item:1359x1", ""},
+		{ObjectiveProposal{Kind: "item", Name: "axe", ID: "item:1359", N: 1}, "item:1359x1", ""},
+		{ObjectiveProposal{Kind: "item", Name: "spade", ID: "item:952", N: 1}, "item:952x1", ""},
 		{ObjectiveProposal{Kind: "item", Name: "axe", ID: "952", N: 1}, "", "not a candidate"},
 		{ObjectiveProposal{Kind: "item", Name: "spade", ID: "1359", N: 1}, "", "resolves to item:952"},
 		{ObjectiveProposal{Kind: "item", Name: "noted spade", N: 1}, "", "noted"},
@@ -139,6 +149,8 @@ func TestItemRequirement(t *testing.T) {
 		{ItemProposal{Name: "noted chisel", Qty: 5}, "noted chisel = item:1755 x5 noted", ""},
 		{ItemProposal{Name: "axe"}, "", "use any_of / family"},
 		{ItemProposal{Name: "axe", ID: "1351"}, "axe = item:1351", ""},
+		{ItemProposal{Name: "axe", ID: "item:1351"}, "axe = item:1351", ""},
+		{ItemProposal{Name: "axe", AnyOf: []string{"item:1359", "Iron axe"}}, "axe = any_of [1359 1349]", ""},
 		{ItemProposal{Name: "axe", AnyOf: []string{"1359", "Iron axe"}}, "axe = any_of [1359 1349]", ""},
 		{ItemProposal{Name: "axe", AnyOf: []string{"952"}}, "", "not a candidate"},
 		{ItemProposal{Name: "axe", AnyOf: []string{"Rune axe", "1359"}}, "", "twice"},

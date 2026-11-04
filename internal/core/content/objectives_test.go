@@ -206,7 +206,7 @@ func TestAnnotationsRejected(t *testing.T) {
 		{"span off", "1.1.json", "a", `"objectives":[{"key":"item:952x1","role":"uses","evidence":{"field":"/text","quote":"a spade","span":[0,7]},"source":` + llm + `}]`, "it is at [4, 11]"},
 		{"unknown quest", "1.1.json", "a", `"objectives":[{"key":"quest:not_a_quest@finished","role":"completes","evidence":{"field":"/text","quote":"start X marks","span":[13,26]},"source":` + llm + `}]`, "unknown entity quest:not_a_quest"},
 		{"role mismatch", "1.1.json", "a", `"objectives":[{"key":"quest:x_marks_the_spot@finished","role":"uses","evidence":{"field":"/text","quote":"start X marks","span":[13,26]},"source":` + llm + `}]`, "role uses needs an item key"},
-		{"unknown location", "1.1.json", "a", `"location":{"ref":"location:lumbridge","evidence":{"field":"/location","quote":"Lumbridge","span":[0,9]},"source":` + llm + `}`, "unknown entity location:lumbridge"},
+		{"unknown location", "1.1.json", "a", `"location":{"ref":"location:not_a_place","evidence":{"field":"/location","quote":"Lumbridge","span":[0,9]},"source":` + llm + `}`, "unknown entity location:not_a_place"},
 		{"unknown family", "1.1.json", "b", `"items":[{"name":"x","family":"not_a_family","evidence":{"field":"/text","quote":"an axe","span":[15,21]},"source":` + llm + `}]`, "unknown item family"},
 		{"step of another section", "1.2.json", "a", `"objectives":[]`, "belongs to section"},
 		{"unconfirmed inference", "1.1.json", "a", `"objectives":[{"key":"item:952x1","role":"uses","evidence":{"field":"/text","quote":"buy a spade","span":[0,11]},"source":{"method":"llm","confidence":"medium"}}]`, "needs confirmed_by owner"},

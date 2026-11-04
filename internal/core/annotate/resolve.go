@@ -99,11 +99,12 @@ func resolveName(reg *entities.Registry, kind, name, tier string) (entities.Reso
 
 // pick turns a resolution into one ref. id chooses among the candidates of
 // an ambiguous name and must agree with a resolved one; an unresolved name
-// never gets an id.
+// never gets an id. id is the bare id ("552") or the full ref ("item:552"),
+// the form resolve_entity and the rejection reasons print.
 func pick(res entities.Resolution, kind, name, id string) (entities.Ref, error) {
 	switch res.Status {
 	case entities.Resolved:
-		if id != "" && id != res.Ref.ID {
+		if id != "" && !sameRef(res.Ref, id) {
 			return entities.Ref{}, fmt.Errorf("%s %q resolves to %s, not id %q", kind, name, res.Ref, id)
 		}
 		return res.Ref, nil
@@ -112,7 +113,7 @@ func pick(res entities.Resolution, kind, name, id string) (entities.Ref, error) 
 			return entities.Ref{}, fmt.Errorf("%s %q is ambiguous (%s): choose an id among %s", kind, name, res.Reason, refList(res.Candidates))
 		}
 		for _, c := range res.Candidates {
-			if c.ID == id {
+			if sameRef(c, id) {
 				return c, nil
 			}
 		}
@@ -123,6 +124,11 @@ func pick(res entities.Resolution, kind, name, id string) (entities.Ref, error) 
 		hint = "; ask the owner and propose_entity it"
 	}
 	return entities.Ref{}, fmt.Errorf("%s %q does not resolve (%s)%s", kind, name, res.Reason, hint)
+}
+
+// sameRef reports whether id names r, as a bare id or as the full ref.
+func sameRef(r entities.Ref, id string) bool {
+	return id == r.ID || id == r.String()
 }
 
 func refList(refs []entities.Ref) string {
@@ -378,9 +384,11 @@ func itemRequirement(reg *entities.Registry, ip ItemProposal) (content.ItemRequi
 }
 
 // anyOfID resolves one any_of entry: an item name that resolves to one item,
-// or an id among the candidates of the proposal's own name.
+// or an id (bare or as an item ref) among the candidates of the proposal's own
+// name.
 func anyOfID(reg *entities.Registry, own entities.Resolution, ownName, alt string) (int, error) {
-	if id, err := strconv.Atoi(alt); err == nil {
+	if id, err := strconv.Atoi(strings.TrimPrefix(alt, string(entities.KindItem)+":")); err == nil {
+		alt = strconv.Itoa(id)
 		cands := own.Candidates
 		if own.Status == entities.Resolved {
 			cands = []entities.Ref{own.Ref}

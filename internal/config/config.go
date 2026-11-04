@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strconv"
 	"strings"
 )
 
@@ -64,6 +65,11 @@ type Config struct {
 	// redirect. Optional; defaults to http://localhost<Addr> semantics in the UI.
 	// Env: PUBLIC_BASE_URL.
 	PublicBaseURL string
+
+	// SyncHiscoresMinutes is the cadence of the hiscores scheduler per
+	// account (docs/04 section 6.1); 0 disables it (POST /api/sync still works).
+	// Env: SYNC_HISCORES_MINUTES. Default 30.
+	SyncHiscoresMinutes int
 }
 
 // Defaults applied when a variable is unset or empty.
@@ -72,6 +78,8 @@ const (
 	DefaultAuthMode   = "dev"
 	DefaultContentDir = "content"
 	DefaultLogLevel   = "info"
+
+	DefaultSyncHiscoresMinutes = 30
 )
 
 // Auth modes accepted in AUTH_MODE.
@@ -106,6 +114,11 @@ func FromLookup(lookup func(string) (string, bool)) (Config, error) {
 		LogLevel:        strings.ToLower(get("LOG_LEVEL", DefaultLogLevel)),
 		PublicBaseURL:   strings.TrimRight(get("PUBLIC_BASE_URL", ""), "/"),
 	}
+	minutes, err := strconv.Atoi(get("SYNC_HISCORES_MINUTES", strconv.Itoa(DefaultSyncHiscoresMinutes)))
+	if err != nil || minutes < 0 {
+		return c, fmt.Errorf("config: SYNC_HISCORES_MINUTES must be a whole number of minutes, 0 or more")
+	}
+	c.SyncHiscoresMinutes = minutes
 	if err := c.Validate(); err != nil {
 		return c, err
 	}

@@ -86,6 +86,7 @@ Lidas pelo binário (`ironman serve` é o único comando que abre o banco):
 | `CONTENT_DIR` | `content` | diretório dos guias; `/app/content` na imagem |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
 | `PUBLIC_BASE_URL` | — | usada em links e no manifest do plugin Microbot |
+| `SYNC_HISCORES_MINUTES` | `30` | cadência do sync do hiscores por conta (jitter de ±5 min); `0` desliga o scheduler, o botão Sincronizar continua |
 
 Só para o compose: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`,
 `IRONMAN_PORT`, `VERSION`. O `compose.yaml` monta o `DATABASE_URL` do container com host `postgres`,

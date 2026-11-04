@@ -39,6 +39,8 @@ type Options struct {
 	// Progress serves the board, marks, cursor and objective verdicts. nil
 	// disables those routes.
 	Progress ProgressService
+	// Sync runs the hiscores on demand and lists the runs. nil disables it.
+	Sync SyncService
 	// Catalog relates noted/unnoted item ids and knows stackability for the
 	// readiness evaluator; nil compares ids exactly.
 	Catalog *entities.Registry
@@ -118,6 +120,10 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("POST /api/goals", s.handleAddGoal)
 		s.mux.HandleFunc("DELETE /api/goals/{id}", s.handleRemoveGoal)
 		s.mux.HandleFunc("GET /api/world", s.handleWorld)
+	}
+	if s.opts.Sync != nil && s.opts.DevMode {
+		s.mux.HandleFunc("POST /api/sync", s.handleSync)
+		s.mux.HandleFunc("GET /api/sync/runs", s.handleSyncRuns)
 	}
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")

@@ -21,8 +21,10 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 	"github.com/FelipeMalacarne/ironman-planner/internal/httpapi"
+	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
 	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
+	"github.com/FelipeMalacarne/ironman-planner/internal/store/syncrun"
 	"github.com/FelipeMalacarne/ironman-planner/web"
 )
 
@@ -69,6 +71,7 @@ func runServe(parent context.Context) error {
 	var ingestService storeingest.Service
 	var holdings httpapi.HoldingsSource
 	var progressService httpapi.ProgressService
+	var syncService httpapi.SyncService
 	if cfg.DatabaseURL != "" {
 		pool, dbErr := connectDB(ctx, cfg, logger)
 		if dbErr != nil {
@@ -86,6 +89,16 @@ func runServe(parent context.Context) error {
 			}
 			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt)).WithReevaluator(progressRepo)
 			ingestService, holdings, progressService = repo, repo, progressRepo
+			syncRepo := syncrun.New(pool, hiscores.New(), progressRepo)
+			syncService = syncRepo
+			if cfg.SyncHiscoresMinutes > 0 {
+				scheduler := &syncrun.Scheduler{
+					Repo: syncRepo, Interval: time.Duration(cfg.SyncHiscoresMinutes) * time.Minute,
+					Jitter: 5 * time.Minute, Log: logger,
+				}
+				go scheduler.Run(ctx)
+				logger.Info("sync: hiscores scheduler on", "minutes", cfg.SyncHiscoresMinutes)
+			}
 		}
 	} else {
 		logger.Info("no DATABASE_URL set; running without a database")
@@ -104,6 +117,7 @@ func runServe(parent context.Context) error {
 		Ingest:         ingestService,
 		Holdings:       holdings,
 		Progress:       progressService,
+		Sync:           syncService,
 		Catalog:        catalog,
 		DevMode:        cfg.IsDev(),
 		Static:         static,

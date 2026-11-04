@@ -46,3 +46,22 @@ func TestOIDCRequiresFields(t *testing.T) {
 		t.Error("bad log level accepted")
 	}
 }
+
+func TestSyncHiscoresMinutes(t *testing.T) {
+	for _, tc := range []struct {
+		raw     string
+		want    int
+		wantErr bool
+	}{
+		{raw: "", want: 30},
+		{raw: "0", want: 0},
+		{raw: "10", want: 10},
+		{raw: "-1", wantErr: true},
+		{raw: "half", wantErr: true},
+	} {
+		c, err := FromLookup(lookup(map[string]string{"SYNC_HISCORES_MINUTES": tc.raw}))
+		if (err != nil) != tc.wantErr || (!tc.wantErr && c.SyncHiscoresMinutes != tc.want) {
+			t.Errorf("%q = %d, %v", tc.raw, c.SyncHiscoresMinutes, err)
+		}
+	}
+}

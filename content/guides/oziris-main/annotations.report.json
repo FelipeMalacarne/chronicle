@@ -1,0 +1,2328 @@
+{
+  "schema_version": 1,
+  "kind": "report",
+  "guide_id": "oziris-main",
+  "summary": {
+    "steps": 576,
+    "annotated": 286,
+    "stale": 0,
+    "pending": 290,
+    "submitted": 286,
+    "first_submit_accepted": 284,
+    "owner_confirmed": 112,
+    "decisions_applied": 100
+  },
+  "sections": [
+    {
+      "section_id": "1.1",
+      "steps": 286,
+      "annotated": 286,
+      "stale": 0,
+      "pending": 0,
+      "submitted": 286,
+      "first_submit_accepted": 284,
+      "owner_confirmed": 112,
+      "decisions_applied": 100
+    },
+    {
+      "section_id": "1.2",
+      "steps": 33,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 33,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "1.3",
+      "steps": 111,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 111,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "1.4",
+      "steps": 50,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 50,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "1.5",
+      "steps": 21,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 21,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "2.0",
+      "steps": 63,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 63,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    },
+    {
+      "section_id": "S",
+      "steps": 12,
+      "annotated": 0,
+      "stale": 0,
+      "pending": 12,
+      "submitted": 0,
+      "first_submit_accepted": 0,
+      "owner_confirmed": 0,
+      "decisions_applied": 0
+    }
+  ],
+  "rule_agreement": {
+    "rules": 95,
+    "reproduced": 87,
+    "divergent": [
+      {
+        "step_id": "1.1.95",
+        "key": "quest:gertrudes_cat@started",
+        "role": "starts",
+        "comment": "Diverge da regra (quest:gertrudes_cat@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.94."
+      },
+      {
+        "step_id": "1.1.113",
+        "key": "quest:gertrudes_cat@started",
+        "role": "starts",
+        "comment": "Diverge da regra (quest:gertrudes_cat@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.94."
+      },
+      {
+        "step_id": "1.1.145a",
+        "key": "skill:smithing>=15",
+        "role": "requires",
+        "comment": "Diverge da regra (skill:smithing>=15 requires, derived): o verificador de ordem recusa porque a rota só conclui Smithing em 1.4.38/2.0.32; o nível 15/29 vem do XP de The Knight's Sword, que não é objetivo. O dono decidiu tirar o requires."
+      },
+      {
+        "step_id": "1.1.195",
+        "key": "quest:romeo_and_juliet@started",
+        "role": "starts",
+        "comment": "Diverge da regra (quest:romeo_and_juliet@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.96."
+      },
+      {
+        "step_id": "1.1.207",
+        "key": "quest:the_grand_tree@started",
+        "role": "starts",
+        "comment": "Diverge da regra (quest:the_grand_tree@started, derived): 'continue the grand tree' é o meio da quest, iniciada em 1.1.203."
+      },
+      {
+        "step_id": "1.1.254",
+        "key": "quest:the_lost_tribe@started",
+        "role": "starts",
+        "comment": "Diverge da regra (quest:the_lost_tribe@started, explicit): a nota de update manda pular este passo porque Goblin Diplomacy virou requisito; a Lost Tribe começa em 1.1.279 (update-note-overrides-text). Itens (Brooch, Scrying orb, GP) também ficam fora."
+      },
+      {
+        "step_id": "1.1.256",
+        "key": "quest:the_lost_tribe@started",
+        "role": "starts",
+        "comment": "Diverge da regra (quest:the_lost_tribe@started, derived): 'Continue' e a nota de update de 1.1.254 manda pular este passo (update-note-overrides-text)."
+      },
+      {
+        "step_id": "1.1.260",
+        "key": "quest:biohazard@started",
+        "role": "starts",
+        "comment": "Diverge da regra (quest:biohazard@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.223."
+      }
+    ]
+  },
+  "rejected": [],
+  "inferred": [
+    {
+      "step_id": "1.1.2",
+      "what": "skill:herblore>=77 completes",
+      "quote": "Use every book and lamp on Herblore UNTIL 77 herb"
+    },
+    {
+      "step_id": "1.1.14",
+      "what": "item:1511x7 uses",
+      "quote": "Bank 7 logs for later",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "1.1.15",
+      "what": "item Shrimps = item:315",
+      "quote": "shrimp",
+      "decision": "singular-of-plural-catalog-name"
+    },
+    {
+      "step_id": "1.1.29",
+      "what": "item:1993x5 completes",
+      "quote": "Buy 5 wine from Fortunato",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.40",
+      "what": "quest:monks_friend@finished completes",
+      "quote": "Do Monk's friend",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.44",
+      "what": "quest:sheep_herder@finished completes",
+      "quote": "Do Sheep herder",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.46",
+      "what": "quest:sea_slug@finished completes",
+      "quote": "Do Sea slug",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.48",
+      "what": "item:950x10 uses",
+      "quote": "keep 10 in bank for quests",
+      "decision": "consumed-items-as-requirements"
+    },
+    {
+      "step_id": "1.1.51",
+      "what": "item:1759x30 completes",
+      "quote": "30 balls of wool",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.54",
+      "what": "quest:dwarf_cannon@started starts",
+      "quote": "Do Dwarf cannon until the part where you have to go to Ice mountain",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.58",
+      "what": "quest:waterfall_quest@started starts",
+      "quote": "Do Waterfall quest until the part where you have to go to the gnome maze",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.62",
+      "what": "item:39x1000 completes",
+      "quote": "Buy 1000 bronze arrowheads",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.65",
+      "what": "quest:plague_city@finished completes",
+      "quote": "Do Plague city",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.68",
+      "what": "item Bolt of cloth = item:8790 x8",
+      "quote": "8 bolts of cloth",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.75",
+      "what": "item Bronze arrowtips = item:39 x1000",
+      "quote": "1k bronze arrowheads",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.77",
+      "what": "item Teleport to house = item:8013 x1",
+      "quote": "the housetab",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.81",
+      "what": "skill:fletching>=15 completes",
+      "quote": "Should now have 15 fletching",
+      "decision": "should-now-have-is-checkpoint"
+    },
+    {
+      "step_id": "1.1.81",
+      "what": "skill:construction>=20 completes",
+      "quote": "20 construction",
+      "decision": "should-now-have-is-checkpoint"
+    },
+    {
+      "step_id": "1.1.82",
+      "what": "item:995x200000 completes",
+      "quote": "Do Wintertodt until 200k cash"
+    },
+    {
+      "step_id": "1.1.89",
+      "what": "item:2132x1 completes",
+      "quote": "Kill 1 cow calf for meat"
+    },
+    {
+      "step_id": "1.1.92",
+      "what": "item:3x1 completes",
+      "quote": "the notes for Dwarf cannon",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.94",
+      "what": "item Research package = item:290",
+      "quote": "Rune mysteries package",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.99",
+      "what": "quest:shield_of_arrav@finished completes",
+      "quote": "Do Shield of Arrav",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.100",
+      "what": "item:1387x1 completes",
+      "quote": "Buy a fire staff",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.102",
+      "what": "item:1059x1 completes",
+      "quote": "Buy gloves"
+    },
+    {
+      "step_id": "1.1.107",
+      "what": "item:1978x1 completes",
+      "quote": "Steal tea from the tea stall",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.108",
+      "what": "item:291x1 completes",
+      "quote": "talk to him again for the notes",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.108",
+      "what": "item Research package = item:290 x1",
+      "quote": "the package",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.109",
+      "what": "item:557x300 completes",
+      "quote": "300 earth and water",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.109",
+      "what": "item:555x300 completes",
+      "quote": "300 earth and water",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.109",
+      "what": "item:558x4000 completes",
+      "quote": "4000 mind",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.109",
+      "what": "item:556x8000 completes",
+      "quote": "8000 airs",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.110",
+      "what": "item Axe = any_of [1359 1357 1355 1361 1353 1349 1351]",
+      "quote": "Axe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.1.114",
+      "what": "item Pickaxe = any_of [1275 1271 1273 12297 1269 1267 1265]",
+      "quote": "Pickaxe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.1.116",
+      "what": "item:753x1 completes",
+      "quote": "Pick cadava berries",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.1.121",
+      "what": "item Staff of fire = item:1387",
+      "quote": "Fire staff (equip)",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.125",
+      "what": "item:2146x1 completes",
+      "quote": "Pick up 1 cooked meat from the table and burn it",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "1.1.131",
+      "what": "item Leather gloves = item:1059",
+      "quote": "Gloves (equip)"
+    },
+    {
+      "step_id": "1.1.132",
+      "what": "quest:witchs_house@finished completes",
+      "quote": "Do Witch's house",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.133",
+      "what": "quest:druidic_ritual@finished completes",
+      "quote": "Do Druidic ritual",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.134",
+      "what": "item:233x1 completes",
+      "quote": "pestle and mortar",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.1.135",
+      "what": "item Pickaxe = any_of [1275 1271 1273 12297 1269 1267 1265]",
+      "quote": "Pickaxe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.1.135",
+      "what": "item Teleport to house = item:8013 x2",
+      "quote": "2 House teletabs",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.135",
+      "what": "item Falador teleport = item:8009 x1",
+      "quote": "Fally teletab",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.141",
+      "what": "item Redberry pie = item:2325 x1",
+      "quote": "the pie",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.143",
+      "what": "item Falador teleport = item:8009 x1",
+      "quote": "the falador teletab",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.149",
+      "what": "item Small fishing net = item:303 x1",
+      "quote": "small fish net",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.151",
+      "what": "quest:the_tourist_trap@finished completes",
+      "quote": "Do the tourist trap",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.154",
+      "what": "item:4286x10 completes",
+      "quote": "Buy 10 buckets of slime",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.155",
+      "what": "item:1933x10 completes",
+      "quote": "Buy 10 flour",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.158",
+      "what": "item Axe = any_of [1359 1357 1355 1361 1353 1349 1351]",
+      "quote": "Axe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.1.159",
+      "what": "quest:fight_arena@finished completes",
+      "quote": "Do Fight arena",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.160",
+      "what": "quest:tree_gnome_village@finished completes",
+      "quote": "Do Tree gnome village",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.166",
+      "what": "quest:hazeel_cult@finished completes",
+      "quote": "Do Hazeel cult",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.168",
+      "what": "quest:tribal_totem@finished completes",
+      "quote": "Do Tribal totem",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.169",
+      "what": "item Nulodion's notes = item:3",
+      "quote": "Notes for dwarf cannon",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.177",
+      "what": "quest:cooks_assistant@finished completes",
+      "quote": "Do cook's assistant",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.180",
+      "what": "item:1927x7 completes",
+      "quote": "Buy 7 buckets of milk",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.181",
+      "what": "quest:sheep_shearer@finished completes",
+      "quote": "Do sheep shearer",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.185",
+      "what": "item:2423x1 completes",
+      "quote": "Get the key imprint",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.185",
+      "what": "item:2419x1 completes",
+      "quote": "wig"
+    },
+    {
+      "step_id": "1.1.185",
+      "what": "item:2424x1 completes",
+      "quote": "skin paste",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.185",
+      "what": "item Ball of wool = item:1759 x3",
+      "quote": "3 balls of wool",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.190",
+      "what": "item Staff of fire = item:1387",
+      "quote": "Fire staff (equip)",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.190",
+      "what": "item Research notes = item:291",
+      "quote": "Rune mysteries notes",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.197a",
+      "what": "item:5519x1 completes",
+      "quote": "get the scrying orb"
+    },
+    {
+      "step_id": "1.1.202",
+      "what": "item scrying orb = family scrying_orb",
+      "quote": "make sure you have it with you"
+    },
+    {
+      "step_id": "1.1.223",
+      "what": "item Scrying orb = family scrying_orb",
+      "quote": "Scrying orb",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "1.1.223",
+      "what": "item Pickaxe = any_of [1275 1271 1273 12297 1269 1267 1265]",
+      "quote": "Pickaxe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.1.227",
+      "what": "item:5518x1 completes",
+      "quote": "scrying orb 3/3"
+    },
+    {
+      "step_id": "1.1.228",
+      "what": "item Wizard's mind bomb = item:1907 x1",
+      "quote": "mind bomb",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.230",
+      "what": "item:36x1 completes",
+      "quote": "Buy candle",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.1.230",
+      "what": "item:301x1 completes",
+      "quote": "lobster pot",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.1.235",
+      "what": "item:530x1 completes",
+      "quote": "get bat bones",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.1.235",
+      "what": "item:38x1 completes",
+      "quote": "black candle",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.1.236",
+      "what": "quest:murder_mystery@finished completes",
+      "quote": "Do Murder mystery",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.239",
+      "what": "item Copper ore = item:436 x4",
+      "quote": "4 copper",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.239",
+      "what": "item Iron ore = item:440 x2",
+      "quote": "2 iron",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.239",
+      "what": "item Bucket of sand = item:1783 x5",
+      "quote": "5 buckets of sand",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.240",
+      "what": "quest:dorics_quest@finished completes",
+      "quote": "Do Doric's quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.243",
+      "what": "quest:black_knights_fortress@finished completes",
+      "quote": "Do Black knight's fortress",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.244",
+      "what": "quest:recruitment_drive@finished completes",
+      "quote": "Do Recruitment drive",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.247",
+      "what": "item:1017x1 completes",
+      "quote": "Buy a black wizards hat",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.251",
+      "what": "quest:observatory_quest@finished completes",
+      "quote": "Do the Observatory quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.261",
+      "what": "quest:the_dig_site@finished completes",
+      "quote": "Do the Digsite quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.268",
+      "what": "item Ardougne cloak 1 = item:13121 x1",
+      "quote": "Cloak tele",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.269",
+      "what": "quest:jungle_potion@finished completes",
+      "quote": "Do Jungle potion",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.270",
+      "what": "quest:shilo_village@finished completes",
+      "quote": "Do Shilo village",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.271",
+      "what": "item Pickaxe = any_of [1275 1271 1273 12297 1269 1267 1265]",
+      "quote": "Pickaxe",
+      "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.1.274",
+      "what": "item:88x1 completes",
+      "quote": "Get boots of lightness"
+    },
+    {
+      "step_id": "1.1.275",
+      "what": "quest:elemental_workshop_i@finished completes",
+      "quote": "Do Elemental workshop 1",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.277",
+      "what": "item Brooch = item:5008",
+      "quote": "Lost tribe brooch",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.278",
+      "what": "quest:goblin_diplomacy@finished completes",
+      "quote": "Do Goblin diplomacy",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.279",
+      "what": "quest:the_lost_tribe@started starts",
+      "quote": "Continue Lost tribe",
+      "decision": "update-note-overrides-text"
+    },
+    {
+      "step_id": "1.1.281",
+      "what": "item Key print = item:2423",
+      "quote": "Key imprint",
+      "decision": "item-shorthand-to-catalog-name"
+    }
+  ],
+  "steps": {
+    "1.1.1": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Criação do personagem e modo ironman: nada na taxonomia. A nota de update diz que o requisito de personagem feminino do Recruitment Drive caiu em 2022."
+    },
+    "1.1.10": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.100": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'fire staff' → Staff of fire."
+    },
+    "1.1.101": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'newspaper' fora do catálogo."
+    },
+    "1.1.102": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'gloves' da loja da Thessalia = Leather gloves (dono)."
+    },
+    "1.1.103": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.104": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.105": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.106": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.107": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'tea' → Cup of tea; sem número = x1 (unnumbered-acquire-is-one)."
+    },
+    "1.1.108": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'the package'/'the notes' de Rune Mysteries → Research package/Research notes; ação no meio da quest."
+    },
+    "1.1.109": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'earth/water/mind/airs' → as runas correspondentes (contexto 'fire runes')."
+    },
+    "1.1.11": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tinderbox não é citado; fica fora."
+    },
+    "1.1.110": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.111": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.112": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'for diary tasks': tarefa do diary, não conclui tier."
+    },
+    "1.1.113": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverge da regra (quest:gertrudes_cat@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.94."
+    },
+    "1.1.114": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.115": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'1 inventory' não dá quantidade clara: só o insumo, sem Bucket of water (action-product-item)."
+    },
+    "1.1.116": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.117": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.118": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.119": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.12": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Knife não é citado; quantidade de logs não informada."
+    },
+    "1.1.120": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de Romeo & Juliet."
+    },
+    "1.1.121": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Runes' genérico fica fora; 'Fire staff' → Staff of fire."
+    },
+    "1.1.122": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'bronze med helm' fora do catálogo."
+    },
+    "1.1.125": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "O insumo (Cooked meat) é pego no próprio passo, então não entra como requisito."
+    },
+    "1.1.126": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.127": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'South of Mind Altar' relativa."
+    },
+    "1.1.128": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.129": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.13": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.130": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.131": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Runes' e 'All 4 meat for druidic ritual' genéricos ficam fora; Gloves = Leather gloves (dono, só neste passo)."
+    },
+    "1.1.132": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.133": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.134": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'1 PACK of eyes of newt' (Eye of newt pack) fora do catálogo."
+    },
+    "1.1.135": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Itens de /items; 'House teletabs' → Teleport to house, 'Fally teletab' → Falador teleport."
+    },
+    "1.1.136": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.137": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Onion não está no catálogo como objetivo do passo; dica de onde pegar."
+    },
+    "1.1.138": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.139": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.14": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.140": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'security book' fora do catálogo; 'for a diary task' não conclui tier."
+    },
+    "1.1.141": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de The Knight's Sword; 'the pie' → Redberry pie."
+    },
+    "1.1.142": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'blurite ore' fora do catálogo (o objetivo x2 fica fora)."
+    },
+    "1.1.143": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'portrait' fora do catálogo; ação no meio de The Knight's Sword."
+    },
+    "1.1.144": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'the sword' (Blurite sword) fora do catálogo; ação no meio da quest."
+    },
+    "1.1.145": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.145a": {
+      "section_id": "1.1",
+      "submits": 2,
+      "comment": "Diverge da regra (skill:smithing>=15 requires, derived): o verificador de ordem recusa porque a rota só conclui Smithing em 1.4.38/2.0.32; o nível 15/29 vem do XP de The Knight's Sword, que não é objetivo. O dono decidiu tirar o requires."
+    },
+    "1.1.146": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.147": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'all of the moulds' é vago (quais/quantos): fica fora."
+    },
+    "1.1.148": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.149": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Raw anchovies fora do catálogo (só Anchovies cozido está); 'for a diary' não conclui tier. 'small fish net' → Small fishing net."
+    },
+    "1.1.15": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Fora do catálogo, fora de items: 'Clue (x marks the spot)' (Treasure scroll) e 'air talisman'. Quantidades não informadas."
+    },
+    "1.1.150": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'1 inv of bronze bars' sem quantidade clara: fora (unnumbered-acquire-is-one)."
+    },
+    "1.1.151": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "A nota manda pôr as duas lâmpadas em Agility, sem nível alvo."
+    },
+    "1.1.152": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleporte de minigame."
+    },
+    "1.1.153": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.154": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'buckets of slime' → Bucket of slime."
+    },
+    "1.1.155": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'flour' → Pot of flour."
+    },
+    "1.1.156": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Buckets of sand e soda ash: o texto não dá número e a nota fala em 'around 600' ao longo da rota; quantidade vaga, fica fora."
+    },
+    "1.1.157": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'South of Khazard' relativa."
+    },
+    "1.1.158": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "As 4 beads (red/yellow/black/white) estão fora do catálogo; 'Fire strike runes' é genérico."
+    },
+    "1.1.159": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.16": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.160": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.161": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Spirit tree: movimento."
+    },
+    "1.1.162": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "A nota diz que o scim é opcional; o dono manteve o objetivo (pular = marca manual)."
+    },
+    "1.1.163": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.164": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'compost pack' fora do catálogo."
+    },
+    "1.1.165": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.166": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.167": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.168": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Swordfish/karambwans da nota sem quantidade: conselho."
+    },
+    "1.1.169": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "/items cobre Dwarf Cannon e Waterfall; 'Notes for dwarf cannon' → Nulodion's notes."
+    },
+    "1.1.17": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de X Marks the Spot: nem início nem conclusão. Spade não é citado neste passo."
+    },
+    "1.1.170": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Glarial's amulet e Glarial's urn fora do catálogo; ação no meio de Waterfall."
+    },
+    "1.1.171": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.172": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.173": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Charter: movimento."
+    },
+    "1.1.174": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'saltpetre' (100) fora do catálogo. Nota do favour é update informativo."
+    },
+    "1.1.174a": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'unlock Varlamore' é efeito da quest, coberto por ela."
+    },
+    "1.1.175": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.176": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.177": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.178": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "O bank chest (Culinaromancer's Chest) vem com o início da quest; sem unlock separado."
+    },
+    "1.1.179": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Clay e água não são citados."
+    },
+    "1.1.18": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.180": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.181": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.182": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'rusty sword' fora do catálogo; a nota (robes, opal, buttons) é condicional."
+    },
+    "1.1.183": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.184": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.185": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'key imprint' → Key print; 'skin paste' → Paste; wig = 2419 Dyed (dono, ambiguous-variant-by-context). Ação no meio de Prince Ali Rescue."
+    },
+    "1.1.186": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tarefa de diary (1 lap), não conclui tier."
+    },
+    "1.1.187": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.188": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Birdhouse seeds sem quantidade ('as many as you can be bothered'): vago, fora."
+    },
+    "1.1.189": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "20 cargas de Chronicle (teleport cards) fora do catálogo."
+    },
+    "1.1.19": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.190": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Fire strike runes' genérico e '4 beads' fora do catálogo."
+    },
+    "1.1.191": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleporte para a essence mine é tarefa de diary."
+    },
+    "1.1.192": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.193": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "A key de Demon Slayer (Silverlight key) não é nomeada; os bones vêm em parte do próprio passo."
+    },
+    "1.1.194": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Juliet's letter ('message') fora do catálogo."
+    },
+    "1.1.195": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverge da regra (quest:romeo_and_juliet@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.96."
+    },
+    "1.1.196": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.197": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.197a": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Scrying orb 5519 = Empty, o que o Mage entrega (dono, ambiguous-variant-by-context)."
+    },
+    "1.1.198": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.199": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.2": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Instrução contínua; o dono confirmou que o passo conclui com Herblore 77 (repete a regra derivada)."
+    },
+    "1.1.20": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de X Marks the Spot."
+    },
+    "1.1.200": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.201": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Spirit tree: movimento."
+    },
+    "1.1.202": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Orb em carga (2/3): family scrying_orb (dono)."
+    },
+    "1.1.203": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Translation notes' fora do catálogo; 'Fire strike runes' genérico."
+    },
+    "1.1.204": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.205": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.206": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.207": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverge da regra (quest:the_grand_tree@started, derived): 'continue the grand tree' é o meio da quest, iniciada em 1.1.203."
+    },
+    "1.1.208": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Charter: movimento."
+    },
+    "1.1.209": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.21": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'West of Lumbridge' é relativa: fica sem location (named-places-enter-catalog)."
+    },
+    "1.1.210": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.211": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.212": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.213": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tarefa de diary; Raw shrimps fora do catálogo."
+    },
+    "1.1.214": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.215": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Partes de Pirate's Treasure: nem início nem fim."
+    },
+    "1.1.216": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.217": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'pirate's message' fora do catálogo (e descartável depois de ler)."
+    },
+    "1.1.218": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Spirit tree: movimento."
+    },
+    "1.1.219": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.22": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Movimento e conselho. Location 'West of Lumbridge' relativa (named-places-enter-catalog)."
+    },
+    "1.1.220": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'pineapple chunks' fora do catálogo."
+    },
+    "1.1.221": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Gas mask' fora do catálogo."
+    },
+    "1.1.222": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Spirit tree: movimento."
+    },
+    "1.1.223": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Os 3 potions não são nomeados; 'Fire strike runes' e 'Some food' genéricos."
+    },
+    "1.1.224": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Barco: movimento."
+    },
+    "1.1.225": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Entrega dos potions: ação no meio de Biohazard."
+    },
+    "1.1.226": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Barco: movimento."
+    },
+    "1.1.227": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "No 3º teleporte o orb fica cheio: 5518 Full (dono). Bread/iron ore da nota são condicionais."
+    },
+    "1.1.228": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'mind bomb' → Wizard's mind bomb; runas do teleporte não citadas."
+    },
+    "1.1.229": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.23": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.230": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.231": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'pineapples' (15) fora do catálogo."
+    },
+    "1.1.232": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Pineapples fora do catálogo; compost bin sem objetivo."
+    },
+    "1.1.233": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'1 pack of normal compost' (pack fora do catálogo) e 'all farming tools' (vago): fora."
+    },
+    "1.1.234": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.235": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de Merlin's Crystal. A nota manda pegar 5 flax, mas Flax está fora do catálogo."
+    },
+    "1.1.236": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.237": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl."
+    },
+    "1.1.238": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.239": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de Merlin's Crystal; itens de /items para Doric's Quest e molten glass. 'copper/iron' → ores; 'Fire strike runes' genérico."
+    },
+    "1.1.24": {
+      "section_id": "1.1",
+      "submits": 2,
+      "comment": "Father Urhney dá o amuleto comum (552), não o encantado de Ghosts Ahoy (4250)."
+    },
+    "1.1.240": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.241": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.242": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.243": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.244": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.245": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.246": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tarefa de diary, não conclui tier."
+    },
+    "1.1.247": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'black wizards hat' → Wizard hat (1017, o preto da Betty)."
+    },
+    "1.1.248": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.249": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Runes', 'Some food' e '10 empty slots' genéricos."
+    },
+    "1.1.25": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de Rune Mysteries. 'air talisman' fora do catálogo."
+    },
+    "1.1.250": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'like 6 full pots' de superantipoison é quantidade vaga: fora (unnumbered-acquire-is-one)."
+    },
+    "1.1.251": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.252": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.253": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.254": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverge da regra (quest:the_lost_tribe@started, explicit): a nota de update manda pular este passo porque Goblin Diplomacy virou requisito; a Lost Tribe começa em 1.1.279 (update-note-overrides-text). Itens (Brooch, Scrying orb, GP) também ficam fora."
+    },
+    "1.1.255": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.256": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverge da regra (quest:the_lost_tribe@started, derived): 'Continue' e a nota de update de 1.1.254 manda pular este passo (update-note-overrides-text)."
+    },
+    "1.1.257": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'priest robes' fora do catálogo (o 'keep these after quest' seria uses); 'boots, gloves' ambíguos e sem contexto: fora."
+    },
+    "1.1.258": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.258a": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'unlock Guardians of the Rift' é efeito da quest."
+    },
+    "1.1.259": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de Merlin's Crystal."
+    },
+    "1.1.26": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.260": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverge da regra (quest:biohazard@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.223."
+    },
+    "1.1.261": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.262": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.263": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Spirit tree: movimento."
+    },
+    "1.1.264": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.265": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "A nota da lamp em Agility não dá nível alvo."
+    },
+    "1.1.266": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.267": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'a new kitten': a cor do Pet kitten não é fixa e objetivo não aceita família; fica fora."
+    },
+    "1.1.268": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Cloak' → Ardougne cloak 1 (obtido em 1.1.265)."
+    },
+    "1.1.269": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'~100 karambwanji' da nota é vago e Raw karambwanji está fora do catálogo."
+    },
+    "1.1.27": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de X Marks the Spot."
+    },
+    "1.1.270": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.271": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.272": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.273": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.274": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "88 = variant Inventory (dono). Church organ da nota é tarefa de diary."
+    },
+    "1.1.275": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.276": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'1 inv of stew' sem quantidade clara: fora."
+    },
+    "1.1.277": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "O 'book' da Lost Tribe está fora do catálogo. 'Falador teleport' aqui é o deslocamento (tab ou spell não fixado)."
+    },
+    "1.1.278": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.279": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Pela nota de update de 1.1.254, a Lost Tribe começa aqui, depois de Goblin Diplomacy (dono)."
+    },
+    "1.1.28": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.280": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.281": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "/items cobre também o que vem depois (Prince Ali, silver); 'Key imprint' → Key print."
+    },
+    "1.1.282": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.29": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'wine' → Jug of wine (item-shorthand-to-catalog-name); 'use as emergency food' é conselho."
+    },
+    "1.1.3": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conselho de segurança da conta, sem estado de jogo."
+    },
+    "1.1.30": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de X Marks the Spot."
+    },
+    "1.1.31": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "A nota sobre a xp lamp é conselho."
+    },
+    "1.1.32": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'snape grass' fora do catálogo de itens: o objetivo item (1 snape grass, completes) fica fora."
+    },
+    "1.1.33": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.34": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.35": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Teleporte de minigame: sem estado novo."
+    },
+    "1.1.36": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Itens da lista /items do passo (o que levar para a Wilderness)."
+    },
+    "1.1.37": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Pool of refreshment e portal: movimento."
+    },
+    "1.1.38": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.39": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.4": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Venda dos itens iniciais na general store: sem objetivo."
+    },
+    "1.1.40": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.41": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Axe e tinderbox não são citados."
+    },
+    "1.1.42": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.43": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.44": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.45": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.46": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'fish shrimp ... for diary' é uma tarefa do diary, não conclui um tier. A nota das oyster pearls é conselho."
+    },
+    "1.1.47": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Sardinhas sem quantidade ('however many ... you can fit'): sem objetivo item."
+    },
+    "1.1.48": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.49": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'You should have 10k GP' é referência de progresso, não requisito (dono). Unlock POH proposto com confirmação do dono."
+    },
+    "1.1.5": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.50": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Lamp em Construction sem nível alvo: sem objetivo."
+    },
+    "1.1.51": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'balls of wool' → Ball of wool (item-shorthand-to-catalog-name)."
+    },
+    "1.1.52": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'clue hunter gloves and boots' fora do catálogo de itens. Location 'North of Ardougne' é relativa (named-places-enter-catalog)."
+    },
+    "1.1.53": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'North of Ardougne' relativa."
+    },
+    "1.1.54": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'until the part' = só parte da quest: started (exceção da decisão). Location 'North of Ardougne' relativa."
+    },
+    "1.1.55": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.56": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tutorial opcional e teleporte sem prova no catálogo: sem objetivo (dono)."
+    },
+    "1.1.57": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.58": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'until the part' = started (exceção da decisão)."
+    },
+    "1.1.59": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.6": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Runas do magic tutor: sem quantidade nem objetivo verificável."
+    },
+    "1.1.60": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio do Barcrawl; o drink não tem nome."
+    },
+    "1.1.61": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Fora do catálogo: pineapple, lemon (2), cocktail shaker, cocktail glass, chocolate dust."
+    },
+    "1.1.62": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'bronze arrowheads' → Bronze arrowtips (item-shorthand-to-catalog-name)."
+    },
+    "1.1.63": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Plague City só é citada como destino do item, sem início/fim."
+    },
+    "1.1.64": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.65": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.66": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Movimento até o banco de Varrock; nota do ghostspeak é conselho."
+    },
+    "1.1.67": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.68": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'bolts of cloth' → Bolt of cloth (item-shorthand-to-catalog-name); venda sem objetivo."
+    },
+    "1.1.69": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.7": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Os demais spawns do castelo não são nomeados; só o cabbage vira objetivo."
+    },
+    "1.1.70": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.71": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Take' não diz que é do banco: sem bank action."
+    },
+    "1.1.72": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'South-west of Castle Wars' relativa (named-places-enter-catalog)."
+    },
+    "1.1.73": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.74": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de The Restless Ghost."
+    },
+    "1.1.75": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Loadout do segmento a partir de /items; 'bronze arrowheads' → Bronze arrowtips."
+    },
+    "1.1.76": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'teleport cards' (2) fora do catálogo."
+    },
+    "1.1.76a": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Rainbow scarf' fora do catálogo: o objetivo item fica fora."
+    },
+    "1.1.77": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'housetab' → Teleport to house. Construction sem nível alvo ('until out of planks'); o nível 20 aparece como checkpoint em 1.1.81."
+    },
+    "1.1.78": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "O dono confirmou x1000 apesar da nota que flexibiliza a quantidade."
+    },
+    "1.1.78a": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'unlock the Sailing skill' é efeito da quest, coberto por ela."
+    },
+    "1.1.79": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.8": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.80": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "A nota manda fletch '1k bronze arrows' no caminho, mas Bronze arrow está fora do catálogo."
+    },
+    "1.1.81": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.82": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "200k cash = Coins x200000 (dono). Notas de update do Warmth Meter são conselho."
+    },
+    "1.1.83": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Itens da lista /items; teleporte sem objetivo."
+    },
+    "1.1.84": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Runas do magic tutor sem quantidade."
+    },
+    "1.1.85": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'bucket pack' fora do catálogo."
+    },
+    "1.1.86": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.87": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.88": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.89": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'meat' do cow calf = Raw beef (dono)."
+    },
+    "1.1.9": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.90": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.91": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Só movimento."
+    },
+    "1.1.92": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'the notes for Dwarf cannon' → Nulodion's notes; ação no meio de Dwarf Cannon."
+    },
+    "1.1.93": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.94": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Rune mysteries package' → Research package. Doogle leaves/sardine são ações da quest (o sardine é ambíguo raw/cozido), fora."
+    },
+    "1.1.95": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Diverge da regra (quest:gertrudes_cat@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.94."
+    },
+    "1.1.96": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.1.97": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "As 2 keys (Silverlight key) não são nomeadas."
+    },
+    "1.1.98": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ação no meio de The Knight's Sword."
+    },
+    "1.1.99": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'on any visit to Varrock': instrução flutuante (precisa de parceiro), mas conclui a quest."
+    }
+  }
+}

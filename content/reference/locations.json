@@ -3,5 +3,400 @@
   "version": "2026.11.0",
   "source": "Owner-confirmed proposals from guide extraction (ironman content mcp, propose_entity).",
   "notes": "id is a lower-case slug (location:draynor_village). Entries are added only when the owner confirms a proposal during extraction (docs/09 section 3.1); the free-text step.location of the Oziris guide is evidence for proposals, not a catalog.",
-  "locations": []
+  "locations": [
+    {
+      "id": "al_kharid",
+      "name": "Al Kharid",
+      "wiki_key": "Al Kharid",
+      "aliases": [
+        "Al-Kharid"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "ardougne",
+      "name": "Ardougne",
+      "wiki_key": "Ardougne",
+      "aliases": [
+        "Ardy"
+      ],
+      "note": "decision named-places-enter-catalog; covers East and West Ardougne (owner, 2026-11-04)"
+    },
+    {
+      "id": "barbarian_assault",
+      "name": "Barbarian Assault",
+      "wiki_key": "Barbarian Assault",
+      "aliases": [
+        "BA"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "barbarian_outpost",
+      "name": "Barbarian Outpost",
+      "wiki_key": "Barbarian Outpost",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "barbarian_village",
+      "name": "Barbarian Village",
+      "wiki_key": "Barbarian Village",
+      "aliases": [
+        "Barb village"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "baxtorian_falls",
+      "name": "Baxtorian Falls",
+      "wiki_key": "Baxtorian Falls",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "brimhaven",
+      "name": "Brimhaven",
+      "wiki_key": "Brimhaven",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "camelot",
+      "name": "Camelot",
+      "wiki_key": "Camelot",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "castle_wars",
+      "name": "Castle Wars",
+      "wiki_key": "Castle Wars",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "catherby",
+      "name": "Catherby",
+      "wiki_key": "Catherby",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "champions_guild",
+      "name": "Champions' Guild",
+      "wiki_key": "Champions' Guild",
+      "aliases": [
+        "Champions Guild"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "clan_wars",
+      "name": "Clan Wars",
+      "wiki_key": "Clan Wars",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "digsite",
+      "name": "Digsite",
+      "wiki_key": "Digsite",
+      "aliases": [
+        "Dig Site"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "draynor_village",
+      "name": "Draynor Village",
+      "wiki_key": "Draynor Village",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "falador",
+      "name": "Falador",
+      "wiki_key": "Falador",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "falador_park",
+      "name": "Falador Park",
+      "wiki_key": "Falador Park",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "ferox_enclave",
+      "name": "Ferox Enclave",
+      "wiki_key": "Ferox Enclave",
+      "aliases": [
+        "Ferox"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "fight_arena",
+      "name": "Fight Arena",
+      "wiki_key": "Fight Arena",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "fishing_guild",
+      "name": "Fishing Guild",
+      "wiki_key": "Fishing Guild",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "freds_farm",
+      "name": "Fred's Farm",
+      "wiki_key": "Fred the Farmer",
+      "note": "Owner confirmed at oziris-main 1.1.86 (2026-11-04); no own wiki page, wiki_key points to the NPC."
+    },
+    {
+      "id": "giants_foundry",
+      "name": "Giants' Foundry",
+      "wiki_key": "Giants' Foundry",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "goblin_village",
+      "name": "Goblin Village",
+      "wiki_key": "Goblin Village",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "great_kourend",
+      "name": "Great Kourend",
+      "wiki_key": "Great Kourend",
+      "aliases": [
+        "Kourend"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "h_a_m_hideout",
+      "name": "H.A.M. Hideout",
+      "wiki_key": "H.A.M. Hideout",
+      "aliases": [
+        "HAM Hideout"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "hazelmeres_island",
+      "name": "Hazelmere's Island",
+      "wiki_key": "Hazelmere's Island",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "hosidius",
+      "name": "Hosidius",
+      "wiki_key": "Hosidius",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "ice_mountain",
+      "name": "Ice Mountain",
+      "wiki_key": "Ice Mountain",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "karamja",
+      "name": "Karamja",
+      "wiki_key": "Karamja",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "keep_le_faye",
+      "name": "Keep Le Faye",
+      "wiki_key": "Keep Le Faye",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "kharidian_desert",
+      "name": "Kharidian Desert",
+      "wiki_key": "Kharidian Desert",
+      "aliases": [
+        "Desert"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "khazard_battlefield",
+      "name": "Khazard Battlefield",
+      "wiki_key": "Khazard Battlefield",
+      "aliases": [
+        "Battlefield of Khazard"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "lumber_yard",
+      "name": "Lumber Yard",
+      "wiki_key": "Lumber Yard",
+      "aliases": [
+        "lumberyard"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "lumbridge",
+      "name": "Lumbridge",
+      "wiki_key": "Lumbridge",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "lumbridge_castle",
+      "name": "Lumbridge Castle",
+      "wiki_key": "Lumbridge Castle",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "lumbridge_swamp",
+      "name": "Lumbridge Swamp",
+      "wiki_key": "Lumbridge Swamp",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "mudskipper_point",
+      "name": "Mudskipper Point",
+      "wiki_key": "Mudskipper Point",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "observatory",
+      "name": "Observatory",
+      "wiki_key": "Observatory",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "ourania_altar",
+      "name": "Ourania Altar",
+      "wiki_key": "Ourania Altar",
+      "aliases": [
+        "ZMI Bank",
+        "ZMI"
+      ],
+      "note": "decision named-places-enter-catalog; the guide's 'ZMI Bank' is the Ourania Altar bank"
+    },
+    {
+      "id": "port_khazard",
+      "name": "Port Khazard",
+      "wiki_key": "Port Khazard",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "port_sarim",
+      "name": "Port Sarim",
+      "wiki_key": "Port Sarim",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "rimmington",
+      "name": "Rimmington",
+      "wiki_key": "Rimmington",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "seers_village",
+      "name": "Seers' Village",
+      "wiki_key": "Seers' Village",
+      "aliases": [
+        "Seers Village"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "shantay_pass",
+      "name": "Shantay Pass",
+      "wiki_key": "Shantay Pass",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "shilo_village",
+      "name": "Shilo Village",
+      "wiki_key": "Shilo Village (location)",
+      "note": "decision named-places-enter-catalog; the quest of the same name is quest:shilo_village"
+    },
+    {
+      "id": "taverley",
+      "name": "Taverley",
+      "wiki_key": "Taverley",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "tower_of_life",
+      "name": "Tower of Life",
+      "wiki_key": "Tower of Life",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "tree_gnome_stronghold",
+      "name": "Tree Gnome Stronghold",
+      "wiki_key": "Tree Gnome Stronghold",
+      "aliases": [
+        "Gnome Stronghold"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "varlamore",
+      "name": "Varlamore",
+      "wiki_key": "Varlamore",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "varrock",
+      "name": "Varrock",
+      "wiki_key": "Varrock",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "varrock_museum",
+      "name": "Varrock Museum",
+      "wiki_key": "Varrock Museum",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "varrock_sawmill",
+      "name": "Varrock Sawmill",
+      "wiki_key": "Sawmill",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "white_wolf_mountain",
+      "name": "White Wolf Mountain",
+      "wiki_key": "White Wolf Mountain",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "wilderness",
+      "name": "Wilderness",
+      "wiki_key": "Wilderness",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "wintertodt",
+      "name": "Wintertodt",
+      "wiki_key": "Wintertodt",
+      "aliases": [
+        "WT"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "witchaven",
+      "name": "Witchaven",
+      "wiki_key": "Witchaven",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "wizards_tower",
+      "name": "Wizards' Tower",
+      "wiki_key": "Wizards' Tower",
+      "aliases": [
+        "Wizard Tower"
+      ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "yanille",
+      "name": "Yanille",
+      "wiki_key": "Yanille",
+      "note": "decision named-places-enter-catalog"
+    }
+  ]
 }

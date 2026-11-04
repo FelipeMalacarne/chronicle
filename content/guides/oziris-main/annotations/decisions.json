@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "kind": "decisions",
+  "guide_id": "oziris-main",
+  "decisions": [
+    {
+      "id": "named-places-enter-catalog",
+      "question": "Quais valores de /location (ou do texto) entram no catálogo de locais?",
+      "answer": "Todo lugar com nome próprio e página na wiki (cidade, castelo, guilda, minigame, região: Lumbridge, Lumbridge Castle, Draynor Village, Wintertodt) entra via propose_entity sem perguntar um a um, com wiki_key = título da página da wiki e as grafias do guia em aliases. Descrições relativas (\"West of Lumbridge\", \"North of Ardougne\", \"South of Khazard\") ficam sem location e vão no comment.",
+      "scope": "oziris-main, todas as seções: location dos passos",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.4",
+        "1.1.5"
+      ]
+    },
+    {
+      "id": "consumed-items-as-requirements",
+      "question": "Itens que o passo consome ou usa (\"Light the 4 logs\", \"Fill a jug with water\"): items, objetivo uses ou ambos?",
+      "answer": "Só em items (requisito de inventário, com a quantidade do texto). Objetivo uses apenas quando o texto manda guardar o item para depois (\"Bank 7 logs for later\").",
+      "scope": "oziris-main, todas as seções: itens consumidos ou usados no passo",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.8",
+        "1.1.11"
+      ]
+    },
+    {
+      "id": "singular-of-plural-catalog-name",
+      "question": "O texto usa o singular de um item cujo nome no catálogo é plural (\"shrimp\" → \"Shrimps\"), e o resolver não casa singular→plural. Uso o nome do catálogo?",
+      "answer": "Sim: name = nome do catálogo (ex.: \"Shrimps\", item:315), citação com a grafia do texto. A lacuna do resolver vai para a lista de defeitos do ferramental no fim do piloto.",
+      "scope": "oziris-main, todas as seções: itens",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.15"
+      ]
+    },
+    {
+      "id": "do-quest-means-finish",
+      "question": "\"Do <quest>\" sem outro verbo significa concluir a quest?",
+      "answer": "Sim: completes @finished. Exceção: quando o texto diz que faz só parte da quest (\"up to\", \"until\", \"start\").",
+      "scope": "oziris-main, todas as seções: quests",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.40",
+        "1.1.44"
+      ]
+    },
+    {
+      "id": "item-shorthand-to-catalog-name",
+      "question": "Nome de item que não resolve, mas casa com um único item óbvio do catálogo: abreviação (\"wine\" → Jug of wine), plural do núcleo (\"balls of wool\" → Ball of wool) ou sinônimo (\"bronze arrowheads\" → Bronze arrowtips)?",
+      "answer": "Usar o nome do catálogo (medium, com esta decisão), registrar no comment e listar no fim como alias a adicionar ao resolver. Com mais de um candidato plausível, perguntar ao dono.",
+      "scope": "oziris-main, todas as seções: itens",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.29",
+        "1.1.51",
+        "1.1.62"
+      ]
+    },
+    {
+      "id": "should-now-have-is-checkpoint",
+      "question": "\"Should now have X\" (níveis) é objetivo do passo?",
+      "answer": "Sim: é um checkpoint, completes nos níveis citados (concorda com a regra derivada). Não vale para dinheiro de referência (\"You should have 10k GP at this point\", 1.1.49), que fica sem objetivo.",
+      "scope": "oziris-main, todas as seções: checkpoints de nível (\"Should now have/be <nível> <skill>\")",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.81"
+      ]
+    },
+    {
+      "id": "axe-means-best-axe",
+      "question": "\"Axe\"/\"Pickaxe\" sem qualificador: qual item?",
+      "answer": "any_of, melhor primeiro: Rune → Adamant → Mithril → Black → Steel → Iron → Bronze (axe ou pickaxe). Qualquer um serve; o primeiro é o preferido.",
+      "scope": "oziris-main, todas as seções: itens \"axe\"/\"pickaxe\" sem tier",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.110",
+        "1.1.114"
+      ]
+    },
+    {
+      "id": "action-product-item",
+      "question": "Item que é o produto de uma ação explícita sem o nome no texto (\"burn the cooked meat\" → Burnt meat; \"fill buckets with water\" → Bucket of water)?",
+      "answer": "Quando a ação define o produto e o catálogo tem exatamente esse item: completes no produto (medium, com esta decisão) e o insumo em items. Sem quantidade clara (\"1 inventory\"), só o insumo.",
+      "scope": "oziris-main, todas as seções: itens produzidos no passo",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.115",
+        "1.1.125"
+      ]
+    },
+    {
+      "id": "unnumbered-acquire-is-one",
+      "question": "Item sem quantidade num verbo de obter (\"Pick cadava berries\")?",
+      "answer": "Pelo menos 1: completes x1 (medium, com esta decisão). Quantidades vagas (\"however many you can fit\") continuam fora.",
+      "scope": "oziris-main, todas as seções: objetivos item sem número",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.116"
+      ]
+    },
+    {
+      "id": "ambiguous-variant-by-context",
+      "question": "Item com o mesmo nome e ids diferentes (Wig 2419/2421, Scrying orb 5518/5519), quando o texto não fixa a variante?",
+      "answer": "Escolher o id pelo contexto do passo, usando o campo variant de data/wiki/items.json (Wig 2419 = Dyed, 2421 = Grey; Scrying orb 5518 = Full, 5519 = Empty), e confirmar com o dono (confirmed_by owner). Em requisitos de items, family quando qualquer variante serve.",
+      "scope": "oziris-main, todas as seções: itens com variantes de mesmo nome",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.185",
+        "1.1.197a",
+        "1.1.202"
+      ]
+    },
+    {
+      "id": "update-note-overrides-text",
+      "question": "Quando uma nota de update contradiz o texto do passo (ex.: 1.1.254, Goblin Diplomacy virou requisito da Lost Tribe e a nota manda pular 254/256 e fazer a quest depois de 1.1.278), o que vale?",
+      "answer": "Vale a nota de update: o passo que ela manda pular fica sem objetivos (divergência da regra explicada no comment), e o objetivo vai para o passo onde a nota diz que a ação acontece (medium, confirmed_by owner).",
+      "scope": "oziris-main, todas as seções: notas kind update que reordenam ou anulam o passo",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.1.254",
+        "1.1.256",
+        "1.1.279"
+      ]
+    }
+  ]
+}

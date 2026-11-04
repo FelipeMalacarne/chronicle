@@ -1,0 +1,374 @@
+package progress
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
+	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
+	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+)
+
+func TestProgressPostgresLifecycle(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO users (id, subject, username) VALUES ('user-1', 'dev-progress-test', 'dev-progress-test');
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
+		VALUES ('account-1', 'user-1', 'Example', 'example', 'ironman', 'g1', 'classic');
+		-- Progress recorded under an id the guide now declares as replaced.
+		INSERT INTO step_marks (account_id, guide_id, step_id, kind, note) VALUES ('account-1', 'g1', 'a2-old', 'manual_done', 'by hand');
+		INSERT INTO step_status_events (id, account_id, guide_id, step_id, from_status, to_status, cause)
+		VALUES ('sse-legacy', 'account-1', 'g1', 'a2-old', 'pending', 'manual_done', 'user');
+		INSERT INTO route_cursor (account_id, guide_id, step_id, cause) VALUES ('account-1', 'g1', 'a2-old', 'pin');
+	`); err != nil {
+		t.Fatalf("insert fixtures: %v", err)
+	}
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(pool, loadContent(t), catalog)
+
+	// Boot: index the content and apply the alias once.
+	report, err := repo.IndexContent(ctx, "test")
+	if err != nil || report.Steps != 8 || report.AliasesApplied != 1 || len(report.Warnings) != 0 {
+		t.Fatalf("index = %+v, %v", report, err)
+	}
+	if got := count(ctx, t, pool, `SELECT count(*) FROM step_marks WHERE guide_id = 'g1' AND step_id = 'a2' AND note = 'by hand'`); got != 1 {
+		t.Fatalf("mark not moved: %d", got)
+	}
+	if got := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE step_id = 'a2-old'`); got != 0 {
+		t.Fatalf("events left behind: %d", got)
+	}
+	if got := count(ctx, t, pool, `SELECT count(*) FROM route_cursor WHERE step_id = 'a2' AND cause = 'pin'`); got != 1 {
+		t.Fatalf("cursor not moved: %d", got)
+	}
+	again, err := repo.IndexContent(ctx, "test")
+	if err != nil || again.AliasesApplied != 0 || again.ContentVersionID != report.ContentVersionID {
+		t.Fatalf("second index = %+v, %v", again, err)
+	}
+	if got := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE cause = 'migration'`); got != 1 {
+		t.Fatalf("migration events = %d, want 1 (alias applied once)", got)
+	}
+	if got := count(ctx, t, pool, `SELECT count(*) FROM content_versions`); got != 1 {
+		t.Fatalf("content versions = %d", got)
+	}
+
+	// Reevaluation without facts: nothing is met; the pin on a done step drops.
+	if n, reErr := repo.ReevaluateAll(ctx); reErr != nil || n != 1 {
+		t.Fatalf("reevaluate all = %d, %v", n, reErr)
+	}
+	if got := count(ctx, t, pool, `SELECT count(*) FROM objective_progress`); got != 0 {
+		t.Fatalf("unknown objectives were written: %d", got)
+	}
+	assertCursor(ctx, t, repo, "g1", "a1", coreprogress.CursorAuto)
+
+	// A plugin push reevaluates both guides in the ingest transaction.
+	ingest := storeingest.New(pool, storeingest.Definition{
+		Version: 7, Varbits: []int64{}, Varps: []int64{}, Collections: []int64{}, IntervalSeconds: 10,
+	}).WithReevaluator(repo)
+	token, err := ingest.CreateToken(ctx, "account-1", "desktop", []coreingest.TokenScope{coreingest.ScopeItemsBank})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = ingest.Manifest(ctx, token.Token); err != nil {
+		t.Fatal(err)
+	}
+	resp := push(ctx, t, ingest, token.Token, fullPush(1, map[string]int64{"agility": 10}, map[string]int64{"314": 120}))
+	if resp.StepsChanged == nil || *resp.StepsChanged != 3 {
+		t.Fatalf("steps_changed = %v, want 3 (a3, a5 in g1 and c2 in g2)", resp.StepsChanged)
+	}
+	firstSnapshot := latestSnapshot(ctx, t, pool)
+	var (
+		verdict, snapshot, metIn string
+		evidence                 []byte
+	)
+	if err = pool.QueryRow(ctx, `
+		SELECT verdict, evidence_snapshot_id, met_in_guide_id, evidence FROM objective_progress
+		WHERE account_id = 'account-1' AND objective_key = 'skill:agility>=10'
+	`).Scan(&verdict, &snapshot, &metIn, &evidence); err != nil {
+		t.Fatal(err)
+	}
+	if verdict != "met" || snapshot != firstSnapshot || metIn != "g1" || !strings.Contains(string(evidence), `"facet": "skill"`) {
+		t.Fatalf("agility = %s %s %s %s", verdict, snapshot, metIn, evidence)
+	}
+	assertMarks(ctx, t, pool, "g1", map[string]string{"a1": "implied:a3", "a2": "manual_done", "a4": "implied:a5"})
+	assertMarks(ctx, t, pool, "g2", map[string]string{})
+	assertCursor(ctx, t, repo, "g1", "a6", coreprogress.CursorAuto)
+	assertCursor(ctx, t, repo, "g2", "c1", coreprogress.CursorAuto)
+	if got := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE cause = 'engine' AND snapshot_id = '`+firstSnapshot+`'`); got != 3 {
+		t.Fatalf("engine events = %d", got)
+	}
+
+	// The same facts again change nothing.
+	resp = push(ctx, t, ingest, token.Token, fullPush(2, map[string]int64{"agility": 10}, map[string]int64{"314": 120}))
+	if resp.StepsChanged == nil || *resp.StepsChanged != 0 {
+		t.Fatalf("steps_changed on an identical push = %v", resp.StepsChanged)
+	}
+
+	// Spending the feathers keeps a5 done and marks the objective regressed.
+	resp = push(ctx, t, ingest, token.Token, fullPush(3, map[string]int64{"agility": 10}, map[string]int64{"314": 3}))
+	if resp.StepsChanged == nil || *resp.StepsChanged != 0 {
+		t.Fatalf("steps_changed after spending items = %v", resp.StepsChanged)
+	}
+	var regressed *time.Time
+	if err = pool.QueryRow(ctx, `
+		SELECT verdict, evidence_snapshot_id, regressed_at FROM objective_progress
+		WHERE account_id = 'account-1' AND objective_key = 'item:314x120'
+	`).Scan(&verdict, &snapshot, &regressed); err != nil {
+		t.Fatal(err)
+	}
+	if verdict != "met" || snapshot != firstSnapshot || regressed == nil {
+		t.Fatalf("feathers = %s %s %v", verdict, snapshot, regressed)
+	}
+
+	// Owner marks.
+	board, err := repo.Mark(ctx, "account-1", "g1", "a6", coreprogress.ActionManualDone, nil)
+	if err != nil || board.Cursor != nil || board.Counts.Done != 6 {
+		t.Fatalf("mark a6 = cursor %+v counts %+v, %v", board.Cursor, board.Counts, err)
+	}
+	board, err = repo.Mark(ctx, "account-1", "g1", "a6", coreprogress.ActionClear, nil)
+	if err != nil || board.Cursor == nil || board.Cursor.StepID != "a6" {
+		t.Fatalf("clear a6 = %+v, %v", board.Cursor, err)
+	}
+	if _, err = repo.Mark(ctx, "account-1", "g1", "a6", coreprogress.ActionConfirmImplied, nil); !errors.Is(err, coreprogress.ErrNotImplied) {
+		t.Fatalf("confirm on a checkbox: %v", err)
+	}
+	board, err = repo.ConfirmImplied(ctx, "account-1", "g1")
+	if err != nil || board.Counts.Implied != 0 || board.Counts.Manual != 3 {
+		t.Fatalf("confirm all = %+v, %v", board.Counts, err)
+	}
+	assertMarks(ctx, t, pool, "g1", map[string]string{"a1": "manual_done", "a2": "manual_done", "a4": "manual_done"})
+	if got := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE cause = 'user' AND from_status = 'implied' AND to_status = 'manual_done'`); got != 2 {
+		t.Fatalf("confirm events = %d", got)
+	}
+	board, err = repo.PinCursor(ctx, "account-1", "g1", "a6")
+	if err != nil || board.Cursor == nil || board.Cursor.Cause != coreprogress.CursorPin {
+		t.Fatalf("pin = %+v, %v", board.Cursor, err)
+	}
+	if _, err = repo.PinCursor(ctx, "account-1", "g1", "a3"); !errors.Is(err, coreprogress.ErrStepDone) {
+		t.Fatalf("pin a done step: %v", err)
+	}
+	board, err = repo.PinCursor(ctx, "account-1", "g1", "")
+	if err != nil || board.Cursor == nil || board.Cursor.Cause != coreprogress.CursorAuto {
+		t.Fatalf("unpin = %+v, %v", board.Cursor, err)
+	}
+
+	// The other route shares the verdict but keeps its own marks and cursor.
+	g2, err := repo.Board(ctx, "account-1", "g2")
+	if err != nil || g2.Active || g2.Counts.AutoDone != 1 || g2.Counts.Done != 1 || g2.Cursor.StepID != "c1" {
+		t.Fatalf("g2 board = %+v, %v", g2, err)
+	}
+	objectives, err := repo.Objectives(ctx, "account-1")
+	if err != nil || len(objectives) != 2 {
+		t.Fatalf("objectives = %+v, %v", objectives, err)
+	}
+
+	for name, err := range map[string]error{
+		"unknown guide":   errOf(repo.Board(ctx, "account-1", "nope")),
+		"unknown account": errOf(repo.Board(ctx, "nobody", "g1")),
+		"unknown step":    errOf(repo.Mark(ctx, "account-1", "g1", "zz", coreprogress.ActionManualDone, nil)),
+	} {
+		want := map[string]error{"unknown guide": ErrGuideNotFound, "unknown account": ErrAccountNotFound, "unknown step": coreprogress.ErrStepNotFound}[name]
+		if !errors.Is(err, want) {
+			t.Fatalf("%s: %v", name, err)
+		}
+	}
+}
+
+func errOf(_ BoardView, err error) error { return err }
+
+func loadContent(t *testing.T) *content.Content {
+	t.Helper()
+	raw, err := os.ReadFile(filepath.Join("testdata", "guides.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var guides []*content.Guide
+	if err := json.Unmarshal(raw, &guides); err != nil {
+		t.Fatal(err)
+	}
+	for _, g := range guides {
+		g.Index()
+	}
+	return &content.Content{Guides: guides}
+}
+
+func push(ctx context.Context, t *testing.T, repo *storeingest.Repository, token string, p coreingest.Push) coreingest.Response {
+	t.Helper()
+	raw, err := json.Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := repo.Accept(ctx, token, "127.0.0.1", raw, p)
+	if err != nil || !resp.OK {
+		t.Fatalf("accept seq %d = %+v, %v", p.ClientSeq, resp, err)
+	}
+	return resp
+}
+
+func fullPush(seq int64, levels, bank map[string]int64) coreingest.Push {
+	sentAt := time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC).Add(time.Duration(seq) * time.Minute)
+	revision := seq
+	quantities := coreingest.QuantityMap(bank)
+	empty := coreingest.IntMap{}
+	lv := coreingest.IntMap(levels)
+	unavailable := func() *coreingest.ItemObservation {
+		return &coreingest.ItemObservation{State: coreingest.ItemUnavailable, ObservedAt: sentAt.Add(-time.Second)}
+	}
+	return coreingest.Push{
+		ContractVersion: coreingest.ContractVersion,
+		Username:        "Example",
+		Profile:         "STANDARD",
+		ManifestVersion: 7,
+		ClientSeq:       seq,
+		Kind:            coreingest.PushFull,
+		SentAt:          sentAt,
+		Data: coreingest.PushData{
+			Varbits: &empty, Varps: &empty, Levels: &lv, XP: &empty, Boosted: &empty,
+			Items: &coreingest.ItemContainers{
+				Bank: &coreingest.ItemObservation{
+					State: coreingest.ItemLive, Revision: &revision, LiveEpoch: "login-1",
+					ObservedAt: sentAt.Add(-time.Second), Quantities: &quantities,
+				},
+				Inventory: unavailable(), Equipment: unavailable(),
+			},
+		},
+	}
+}
+
+func assertMarks(ctx context.Context, t *testing.T, pool *pgxpool.Pool, guide string, want map[string]string) {
+	t.Helper()
+	rows, err := pool.Query(ctx, `SELECT step_id, kind, COALESCE(implied_by_step_id, '') FROM step_marks WHERE account_id = 'account-1' AND guide_id = $1`, guide)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := map[string]string{}
+	for rows.Next() {
+		var step, kind, by string
+		if err := rows.Scan(&step, &kind, &by); err != nil {
+			t.Fatal(err)
+		}
+		if by != "" {
+			kind += ":" + by
+		}
+		got[step] = kind
+	}
+	if fmt.Sprint(sorted(got)) != fmt.Sprint(sorted(want)) {
+		t.Fatalf("%s marks = %v, want %v", guide, got, want)
+	}
+}
+
+func sorted(m map[string]string) []string {
+	out := make([]string, 0, len(m))
+	for k, v := range m {
+		out = append(out, k+"="+v)
+	}
+	sort.Strings(out)
+	return out
+}
+
+func assertCursor(ctx context.Context, t *testing.T, repo *Repository, guide, step, cause string) {
+	t.Helper()
+	board, err := repo.Board(ctx, "account-1", guide)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if board.Cursor == nil || board.Cursor.StepID != step || board.Cursor.Cause != cause {
+		t.Fatalf("%s cursor = %+v, want %s (%s)", guide, board.Cursor, step, cause)
+	}
+}
+
+func latestSnapshot(ctx context.Context, t *testing.T, pool *pgxpool.Pool) string {
+	t.Helper()
+	var id string
+	if err := pool.QueryRow(ctx, `SELECT id FROM snapshots ORDER BY created_at DESC, fetched_at DESC LIMIT 1`).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	return id
+}
+
+func count(ctx context.Context, t *testing.T, pool *pgxpool.Pool, query string) int {
+	t.Helper()
+	var n int
+	if err := pool.QueryRow(ctx, query).Scan(&n); err != nil {
+		t.Fatalf("%s: %v", query, err)
+	}
+	return n
+}
+
+// testPool opens a schema of its own with every migration applied.
+func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
+	t.Helper()
+	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
+	if databaseURL == "" {
+		t.Skip("DATABASE_URL not set; PostgreSQL progress integration test skipped")
+	}
+	admin, err := pgxpool.New(ctx, databaseURL)
+	if err != nil {
+		t.Fatalf("open admin database: %v", err)
+	}
+	if err = admin.Ping(ctx); err != nil {
+		admin.Close()
+		t.Fatalf("ping admin database: %v", err)
+	}
+	schema := fmt.Sprintf("progress_test_%d_%d", os.Getpid(), time.Now().UnixNano())
+	identifier := pgx.Identifier{schema}.Sanitize()
+	if _, err = admin.Exec(ctx, "CREATE SCHEMA "+identifier); err != nil {
+		admin.Close()
+		t.Fatalf("create test schema: %v", err)
+	}
+	var pool *pgxpool.Pool
+	t.Cleanup(func() {
+		if pool != nil {
+			pool.Close()
+		}
+		if _, dropErr := admin.Exec(context.Background(), "DROP SCHEMA "+identifier+" CASCADE"); dropErr != nil {
+			t.Errorf("drop test schema: %v", dropErr)
+		}
+		admin.Close()
+	})
+	config, err := pgxpool.ParseConfig(databaseURL)
+	if err != nil {
+		t.Fatalf("parse test database config: %v", err)
+	}
+	config.ConnConfig.RuntimeParams["search_path"] = schema
+	config.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+	pool, err = pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		t.Fatalf("open test database: %v", err)
+	}
+	files, err := filepath.Glob(filepath.Join("..", "..", "..", "db", "migrations", "*.sql"))
+	if err != nil || len(files) == 0 {
+		t.Fatalf("migrations: %v", err)
+	}
+	sort.Strings(files)
+	for _, f := range files {
+		raw, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatal(err)
+		}
+		up, _, found := strings.Cut(string(raw), "-- +goose Down")
+		if !found {
+			t.Fatalf("%s has no goose Down marker", f)
+		}
+		if _, err := pool.Exec(ctx, up); err != nil {
+			t.Fatalf("apply %s: %v", f, err)
+		}
+	}
+	return pool
+}

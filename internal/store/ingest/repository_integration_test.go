@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -233,8 +234,13 @@ func TestRepositoryPostgresIngestLifecycle(t *testing.T) {
 
 func applyTestMigrations(ctx context.Context, t *testing.T, pool *pgxpool.Pool) {
 	t.Helper()
-	for _, name := range []string{"0001_init.sql", "0002_ingest_container_freshness.sql"} {
-		path := filepath.Join("..", "..", "..", "db", "migrations", name)
+	paths, err := filepath.Glob(filepath.Join("..", "..", "..", "db", "migrations", "*.sql"))
+	if err != nil || len(paths) == 0 {
+		t.Fatalf("list migrations: %v", err)
+	}
+	sort.Strings(paths)
+	for _, path := range paths {
+		name := filepath.Base(path)
 		raw, err := os.ReadFile(path)
 		if err != nil {
 			t.Fatalf("read %s: %v", name, err)

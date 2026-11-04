@@ -1,0 +1,35 @@
+[
+  {
+    "id": "g1",
+    "title": "Active route",
+    "default_variant": "main",
+    "variants": [
+      { "id": "main", "title": "Main", "sections": [
+        { "id": "s1", "slug": "s1", "title": "Section 1", "steps": [
+          { "id": "a1", "text": "talk to Hans" },
+          { "id": "a2", "text": "walk east", "replaces": ["a2-old"] },
+          { "id": "a3", "text": "train agility to 10",
+            "objectives": [ { "key": "skill:agility>=10", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] },
+          { "id": "a4", "text": "bank" },
+          { "id": "a5", "text": "buy 120 feathers",
+            "objectives": [ { "key": "item:314x120", "role": "completes", "source": { "method": "llm", "confidence": "high" } } ] },
+          { "id": "a6", "text": "head to Draynor" }
+        ] }
+      ] }
+    ]
+  },
+  {
+    "id": "g2",
+    "title": "Other route",
+    "default_variant": "main",
+    "variants": [
+      { "id": "main", "title": "Main", "sections": [
+        { "id": "s1", "slug": "s1", "title": "Section 1", "steps": [
+          { "id": "c1", "text": "talk to the cook" },
+          { "id": "c2", "text": "agility 10",
+            "objectives": [ { "key": "skill:agility>=10", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] }
+        ] }
+      ] }
+    ]
+  }
+]

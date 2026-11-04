@@ -27,15 +27,29 @@ type Service interface {
 	CreateToken(context.Context, string, string, []coreingest.TokenScope) (CreatedToken, error)
 }
 
+// Reevaluator reevaluates an account's progress inside the ingest
+// transaction and returns how many steps changed status (steps_changed).
+type Reevaluator interface {
+	Reevaluate(ctx context.Context, tx pgx.Tx, accountID, snapshotID string) (int, error)
+}
+
 // Repository implements Service with PostgreSQL transactions.
 type Repository struct {
-	pool       *pgxpool.Pool
-	queries    *storedb.Queries
-	definition Definition
+	pool        *pgxpool.Pool
+	queries     *storedb.Queries
+	definition  Definition
+	reevaluator Reevaluator
 }
 
 func New(pool *pgxpool.Pool, definition Definition) *Repository {
 	return &Repository{pool: pool, queries: storedb.New(pool), definition: definition}
+}
+
+// WithReevaluator makes every accepted push reevaluate the account's progress
+// in the same transaction, so a push and its step changes commit together.
+func (r *Repository) WithReevaluator(re Reevaluator) *Repository {
+	r.reevaluator = re
+	return r
 }
 
 func (r *Repository) Manifest(ctx context.Context, plaintextToken string) (coreingest.Manifest, error) {
@@ -143,10 +157,19 @@ func (r *Repository) Accept(ctx context.Context, plaintextToken, remoteIP string
 	}); err != nil {
 		return coreingest.Response{}, fmt.Errorf("advance ingest token: %w", err)
 	}
+	resp = responseFor(r.definition, push.ClientSeq, true, false)
+	if r.reevaluator != nil {
+		changed, err := r.reevaluator.Reevaluate(ctx, tx, token.AccountID, snapshotID)
+		if err != nil {
+			return coreingest.Response{}, fmt.Errorf("reevaluate progress: %w", err)
+		}
+		n := int64(changed)
+		resp.StepsChanged = &n
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return coreingest.Response{}, fmt.Errorf("commit ingest transaction: %w", err)
 	}
-	return responseFor(r.definition, push.ClientSeq, true, false), nil
+	return resp, nil
 }
 
 func timestamptz(value time.Time) pgtype.Timestamptz {

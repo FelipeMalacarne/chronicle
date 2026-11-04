@@ -50,9 +50,13 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 8. Repositório público ou privado. Público exige resolver a licença do texto do Oziris/ironman.guide antes.
 9. Nome da conta ironman para testar o sync real desde a primeira sessão de código.
 
+## Modo de execução
+
+Local-first: o MVP roda no `zaros` com Docker Compose (Postgres + binário) e `AUTH_MODE=dev`. O deploy no `saradomin` com Zitadel vem depois do marco "em uso", com a mesma imagem. Toolchain: Go 1.27, Node 22, pnpm, Nix flake, Docker. Ver doc 04, seção 10, e doc 07.
+
 ## Próximo passo proposto
 
-Executar a sequência de MVP do doc 04, seção 7.4: 22 tarefas de 2 a 4 horas, com algo usável diariamente ao fim da tarefa 12 (checklist persistente, sync de hiscores, dashboard, Docker). Os itens 1 a 4 (bootstrap, schema, migração do guia, banco) podem ser feitos nesta mesma sessão assim que a stack for confirmada.
+Executar a sequência vigente do doc 04, seção 10: o harness (tarefa 1) está pronto; seguem rule engine, Postgres, hiscores e ingest, com o marco "em uso no zaros" na tarefa 5.
 
 ## Discrepâncias e ressalvas
 

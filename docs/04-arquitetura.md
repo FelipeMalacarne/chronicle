@@ -221,6 +221,8 @@ Rotas principais:
 
 Schema completo em `docs/arquitetura/guide.schema.json`; tipos Zod equivalentes em `types.ts`. Hierarquia: `Guide → Section[] → Step[]`.
 
+> **Schema canônico (2026-11-04):** a cópia que vale é `content/schema/guide.schema.json`, embutida no binário Go (`content/schema` → `internal/core/content`) e usada por `ironman content validate`. `docs/arquitetura/guide.schema.json` fica como referência histórica e pode divergir; as extensões feitas na migração para Go (`meta` nas regras atômicas, `prerequisites` no step) estão listadas em `docs/05-conteudo-e-normalizacao.md`, seção "Mapeamento para o schema canônico (Go)".
+
 ### 3.1 O que um step carrega
 
 ```jsonc
@@ -646,3 +648,27 @@ docs/
 8. CLI `now/done/plan/state` sobre `internal/client`; `ironman mcp`.
 9. Wiki adapter + grafo em Go + telas Conta, Meta e Grafo.
 10. WOM, export/import, notas, múltiplas contas.
+
+
+## 10. Revisão de 2026-11-04: local-first no zaros, deploy depois
+
+Decisão do dono: o MVP roda na estação de trabalho (`zaros`), onde o Microbot também roda; o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis de ambiente.
+
+- **Execução local**: `docker compose` com Postgres e o binário (`compose.yaml`), ou só o Postgres (`compose.dev.yaml`) com `go run ./cmd/ironman serve` e `pnpm dev` no host. Acesso em `localhost:8080`; celular pela rede local ou Tailscale.
+- **Auth**: `AUTH_MODE=dev` loga um usuário fixo sem OIDC. É o modo dos testes e da CI, então não é código descartável. `AUTH_MODE=oidc` com Zitadel entra na tarefa de deploy.
+- **Dados**: volume do Postgres local; `pg_dump` manual ou via `just`. Para o saradomin, `pg_dump` e `pg_restore`, sem migração de formato.
+- **Plugin Microbot**: `serverUrl=http://localhost:8080`, token `ipl_` gerado na UI local. Como o servidor sobe junto com a máquina de jogo, os dados do cliente chegam sempre que há sessão.
+- **O que fica fora do caminho crítico**: OIDC (antiga tarefa 4 da seção 9.5) e deploy (antiga tarefa 7) viram uma única tarefa "subir no saradomin" depois do marco "em uso".
+- **Toolchain**: Go 1.27 (última estável em 2026-11), Node 22, pnpm, SvelteKit com adapter-static embutido no binário, Nix flake para o ambiente de desenvolvimento, Docker para rodar e para o deploy. Detalhes em `docs/07-ambiente-e-ferramental.md`.
+
+Sequência de MVP vigente (substitui 9.5):
+
+1. Harness: módulo Go, `content migrate|validate`, API mínima (`/api/health`, `/api/guide`, `/api/now` sem banco), SPA embutida com as telas Agora e Checklist em modo leitura, flake, Docker, compose, justfile, CI. **Feito nesta rodada.**
+2. Rule engine completo com testes e cascata `implied`.
+3. Postgres: migrations, sqlc, repositórios; `step_progress` e `PATCH /api/steps/:id` com `AUTH_MODE=dev`.
+4. Hiscores: adapter, snapshots, `player_state`, reavaliação, scheduler, `POST /api/sync`. Dashboard mínimo.
+5. Ingest: manifest e `POST /api/ingest`; plugin Microbot v0 em paralelo (doc 06). **Marco: em uso no zaros.**
+6. CLI `now/done/plan/state` e `ironman mcp`.
+7. Wiki adapter, grafo em Go, telas Conta, Meta e Grafo.
+8. Zitadel OIDC e deploy no saradomin.
+9. WOM, export/import, notas, múltiplas contas.

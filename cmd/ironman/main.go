@@ -31,6 +31,7 @@ func newRoot() *cobra.Command {
 		newServeCmd(),
 		newContentCmd(),
 		newVersionCmd(),
+		newHealthCmd(),
 	)
 	root.AddCommand(stubCommands()...)
 	return root

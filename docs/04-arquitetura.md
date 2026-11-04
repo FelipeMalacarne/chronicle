@@ -144,7 +144,7 @@ sequenceDiagram
   alt nada mudou
     S->>DB: sync_runs.status = unchanged
   else novo
-    S->>DB: INSERT snapshot_* normalizados
+    S->>DB: INSERT snapshot_facts (histórico normalizado)
     S->>M: patch = normalize(raw)
     M->>DB: UPSERT player_state (facet, key) se observed_at mais novo
     M->>R: avaliar todos os objetivos de todos os guias
@@ -288,8 +288,12 @@ Marcas (`step_marks`), eventos de passo e cursor são chaveados por `(account_id
 ## 4. Banco de dados e avaliação
 
 DDL em `db/migrations/` (goose, Postgres); `0001_init.sql` é o schema base, `0002` o frescor do ingest,
-`0003` a identidade por guia. As tabelas de objetivos (doc 09, seção 5) entram na migration do item 8 da
-sequência.
+`0003` a identidade por guia. O modelo em DBML, com a parte atual gerada e a planejada à mão, está em
+`docs/arquitetura/modelo-de-dados.dbml`, e é lá que as mudanças de schema de cada item ficam listadas. Em
+resumo: a migration do item 7 colapsa as nove tabelas `snapshot_*` tipadas numa `snapshot_facts` com o
+shape de `player_state` (decisão do dono, 2026-11-04); a do item 8 cria as tabelas de objetivos (doc 09,
+seção 5), derruba `step_progress`, `step_progress_events` e `v_step_board` depois de copiar as marcas, e
+reduz `content_steps` ao índice mínimo. `wiki_cache` e `graph_cache` ficam, vazias, até terem uso.
 
 ### 4.1 Grupos de tabelas
 
@@ -307,18 +311,18 @@ erDiagram
   accounts ||--o{ step_marks : "marks per guide"
   accounts ||--o{ route_cursor : "cursor per guide"
   accounts ||--o{ goals : wants
-  snapshots ||--o{ snapshot_skills : normalizes
-  snapshots ||--o{ snapshot_vars : normalizes
-  snapshots ||--o{ snapshot_items : normalizes
-  snapshots ||--o{ snapshot_item_containers : normalizes
+  snapshots ||--o{ snapshot_facts : "normalized history"
+  snapshots ||--o{ snapshot_item_containers : "container provenance"
   content_versions ||--o{ content_steps : indexes
   objective_progress ||--o{ objective_progress_events : history
   step_marks ||--o{ step_status_events : "derived status history"
 ```
 
 - **`snapshots`** é append-only com `raw` bruto; dedupe por `raw_hash` para fontes de polling e por
-  `(ingest_token_id, client_seq)` para o plugin. Tabelas `snapshot_*` são a normalização por snapshot:
-  histórico para gráficos e diffs. Um `adapter_version` por snapshot permite re-normalizar o passado.
+  `(ingest_token_id, client_seq)` para o plugin. **`snapshot_facts`** `(snapshot_id, facet, key, value)`
+  é a normalização por snapshot, com o mesmo shape de `player_state`: histórico para gráficos e diffs
+  sem uma tabela por faceta (hoje ainda são as nove `snapshot_*` da migration 0001, quatro delas sem
+  escritor; o colapso é o item 7). Um `adapter_version` por snapshot permite re-normalizar o passado.
 - **`player_state`**: uma linha por fato `(facet, key)` com `value` JSON, fonte e `observed_at`. Facetas:
   `skill`, `activity`, `quest`, `diary_task`, `combat_achievement`, `collection_log`, `varbit`, `varp`,
   `item`; a faceta `diary` (tier completa, a partir dos varbits de referência) entra com o item 7 da
@@ -727,8 +731,8 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | testes de tabela das checagens (citação dobrada, refs, hash, ordem); o MCP responde a um lote de exemplo |
 | 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6 |
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
-| 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real |
-| 8 | Progresso sobre objetivos: migration, `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto |
+| 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado |
+| 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado |
 | 9 | Web e `/compare` sobre objetivos; metas (F9) | marcos vindos da API; progresso igual nos dois guias |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros** |
 | 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |

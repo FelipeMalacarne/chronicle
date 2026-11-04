@@ -652,6 +652,27 @@ Ref step_marks_account_fk: step_marks.account_id > accounts.id [delete: cascade]
 Ref step_status_events_account_fk: step_status_events.account_id > accounts.id [delete: cascade]
 Ref route_cursor_account_fk: route_cursor.account_id > accounts.id [delete: cascade]
 
+Table snapshot_facts {
+  snapshot_id text [not null]
+  facet text [not null, note: 'mesmo domínio de player_state.facet: skill | activity | quest | diary | diary_task | combat_achievement | collection_log | varbit | varp | item']
+  key text [not null]
+  value jsonb [not null]
+
+  indexes {
+    (snapshot_id, facet, key) [pk]
+  }
+
+  Note: '''
+  Histórico normalizado por snapshot, com o mesmo shape de player_state (decisão do dono, 2026-11-04).
+  Substitui snapshot_skills, snapshot_activities, snapshot_quests, snapshot_diary_tasks,
+  snapshot_combat_achievements, snapshot_collection_log, snapshot_vars e snapshot_items.
+  snapshot_item_containers fica: é proveniência do container, não um fato. Entra no item 7 da
+  sequência (doc 04, seção 9), junto com a faceta quest.
+  '''
+}
+
+Ref snapshot_facts_snapshot_fk: snapshot_facts.snapshot_id > snapshots.id [delete: cascade]
+
 TableGroup progresso_planejado {
   objective_progress
   objective_progress_events
@@ -660,14 +681,30 @@ TableGroup progresso_planejado {
   route_cursor
 }
 
+TableGroup snapshots_planejado {
+  snapshot_facts
+}
+
 Note mudancas_planejadas {
 '''
-Mudanças em tabelas existentes na mesma migration (doc 09, seção 5):
+Migration do item 7 (contrato com quests):
+- as nove snapshot_* tipadas viram snapshot_facts (acima); snapshot_item_containers fica.
+- player_state.facet ganha 'diary' (tier completa, derivada dos varbits de referência).
+- snapshot_items aceitava 'poh' e as tabelas de container não: o domínio de container passa a ser
+  um só (bank | inventory | equipment).
+
+Migration do item 8 (progresso sobre objetivos):
 - goals.ref (TEXT livre) passa a goals.objective_key (chave canônica do objetivo).
-- step_progress e step_progress_events são substituídas por step_marks e step_status_events;
-  a migration copia manual_done/skipped e o histórico.
-- content_steps é gravado no boot (seção, posição, hash do texto) para joins de eventos e órfãos;
-  rule_hash e is_manual perdem o sentido com objetivos.
+- step_progress, step_progress_events e a view v_step_board são DERRUBADAS depois de copiar
+  manual_done/skipped para step_marks e o histórico para step_status_events.
+- content_steps perde rule_hash, is_manual, layers e modes e ganha text_hash; é gravado no boot
+  (seção, posição, hash) para joins de eventos e órfãos.
+- content_versions troca guide_version/step_count por um resumo por guia (jsonb).
 - step_id_aliases é aplicado pelo loader no boot a step_marks, step_status_events e route_cursor.
+- índice player_state_value_gin_idx sai (nenhuma query usa jsonb_path_ops); índices pit_* e spe_*
+  ganham nomes por extenso.
+
+Ficam como estão, por decisão do dono (2026-11-04): wiki_cache e graph_cache, vazias até o adapter
+do wiki e o grafo existirem.
 '''
 }

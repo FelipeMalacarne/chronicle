@@ -464,13 +464,15 @@ commit. Só depois disso roda o resto, cerca de 13 seções.
 | `prerequisites` | objetivos com papel `requires` |
 | `$defs/ref` do schema (`quest:<nome wiki>`, `skill:<skill>:<nível>`) em `requires`/`recommended_after`/`unlocks` | `entityRef` e chave de objetivo; o grafo do doc 04 e as fixtures da web adotam a mesma gramática |
 | `items` + `Loadout.inventory/equipment` (`LoadoutItem`) | `ItemRequirement` (seção 3.4); readiness e posse avaliam as variantes |
-| `step_progress` (por guia) | `objective_progress` (por conta) + `step_marks` (por guia); migration copia `manual_*` e `skipped` |
+| `step_progress` (por guia) | `objective_progress` (por conta) + `step_marks` (por guia); a migration copia `manual_*` e `skipped` e **derruba** `step_progress`, `step_progress_events` e `v_step_board` |
 | `step_progress_events` | `objective_progress_events` + `step_status_events` por guia |
+| nove tabelas `snapshot_*` tipadas (quatro sem escritor) | uma `snapshot_facts(snapshot_id, facet, key, value)` com o shape de `player_state`; `snapshot_item_containers` fica; feito no item 7, junto com a faceta `quest` |
 | `accounts.guide_id` (rota única) | continua como rota ativa; `route_cursor` por guia |
 | `goals.ref TEXT` | `goals.objective_key` |
 | `manual_ok` | sai; o clique do dono sempre vence |
 | ids do BRUHsailer por hash do texto | ids posicionais da numeração upstream (`bruh-1.1-05` de `CH1.5`), hash do texto em `source.fingerprint`; aliases gerados pelo importador quando a numeração muda |
-| `content_versions`/`content_steps`/`step_id_aliases` só como queries sqlc | gravados e aplicados pelo loader no boot |
+| `content_versions`/`content_steps`/`step_id_aliases` só como queries sqlc | gravados e aplicados pelo loader no boot; `content_steps` perde `rule_hash`, `is_manual`, `layers` e `modes` e ganha `text_hash`; `content_versions` troca `guide_version`/`step_count` por um resumo por guia |
+| `wiki_cache` e `graph_cache` sem uso | ficam no schema até o adapter do wiki e o grafo existirem (decisão do dono, 2026-11-04) |
 | marcos do `/compare` (heurística no cliente) | objetivos compartilhados servidos pela API |
 | contrato de ingest v1 sem quests | mesmo `contract_version: 1`, com a faceta opcional `data.quest` e os varbits de referência no manifest (doc 04, seção 6.4); o servidor sobe antes do plugin porque rejeita campos desconhecidos |
 

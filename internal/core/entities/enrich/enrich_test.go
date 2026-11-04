@@ -122,10 +122,10 @@ func TestCounts(t *testing.T) {
 			item:     enrich.Tally{Resolved: 131, Ambiguous: 13, Unresolved: 50},
 		},
 		"bruhsailer-main": {
-			total:    enrich.Tally{Resolved: 1889, Ambiguous: 184, Unresolved: 592},
-			loadouts: enrich.Tally{Resolved: 735, Ambiguous: 68, Unresolved: 144},
+			total:    enrich.Tally{Resolved: 1894, Ambiguous: 184, Unresolved: 582},
+			loadouts: enrich.Tally{Resolved: 738, Ambiguous: 68, Unresolved: 141},
 			quest:    enrich.Tally{Resolved: 391, Ambiguous: 30, Unresolved: 261},
-			item:     enrich.Tally{Resolved: 1434, Ambiguous: 153, Unresolved: 319},
+			item:     enrich.Tally{Resolved: 1439, Ambiguous: 153, Unresolved: 309},
 		},
 	}
 	for id, w := range want {
@@ -352,7 +352,7 @@ func TestImportersRegenerateCommittedContent(t *testing.T) {
 			t.Errorf("%s is stale; regenerate with `ironman content migrate` / `ironman content import-bruhsailer`", path)
 		}
 	}
-	if result.Entities != (enrich.Tally{Resolved: 1889, Ambiguous: 184, Unresolved: 592}) {
+	if result.Entities != (enrich.Tally{Resolved: 1894, Ambiguous: 184, Unresolved: 582}) {
 		t.Errorf("bruhsailer result tally = %+v", result.Entities)
 	}
 }

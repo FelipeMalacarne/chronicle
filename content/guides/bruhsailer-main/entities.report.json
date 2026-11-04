@@ -11,9 +11,9 @@
     "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 1889,
+    "resolved": 1894,
     "ambiguous": 184,
-    "unresolved": 592,
+    "unresolved": 582,
     "by_kind": {
       "ca": {
         "resolved": 4,
@@ -26,9 +26,9 @@
         "unresolved": 0
       },
       "item": {
-        "resolved": 1434,
+        "resolved": 1439,
         "ambiguous": 153,
-        "unresolved": 319
+        "unresolved": 309
       },
       "link": {
         "resolved": 0,
@@ -42,9 +42,9 @@
       }
     },
     "loadout_items": {
-      "resolved": 735,
+      "resolved": 738,
       "ambiguous": 68,
-      "unresolved": 144
+      "unresolved": 141
     }
   },
   "ambiguous": [
@@ -459,7 +459,7 @@
     },
     {
       "step_id": "bruh-1.3-029eac528407",
-      "field": "/items/2",
+      "field": "/items/1",
       "source_text": "ghostspeak amulet",
       "kind": "item",
       "method": "item",
@@ -471,7 +471,7 @@
     },
     {
       "step_id": "bruh-1.3-029eac528407",
-      "field": "/items/10",
+      "field": "/items/9",
       "source_text": "druid pouch",
       "kind": "item",
       "method": "item",
@@ -661,7 +661,7 @@
     },
     {
       "step_id": "bruh-1.4-88c3fb48ae7f",
-      "field": "/items/10",
+      "field": "/items/11",
       "source_text": "games necklace",
       "kind": "item",
       "method": "item",
@@ -1177,7 +1177,7 @@
     },
     {
       "step_id": "bruh-2.1-f578b1e34d33",
-      "field": "/items/13",
+      "field": "/items/12",
       "source_text": "energy potions",
       "kind": "item",
       "method": "item",
@@ -1191,7 +1191,7 @@
     },
     {
       "step_id": "bruh-2.1-f578b1e34d33",
-      "field": "/items/14",
+      "field": "/items/13",
       "source_text": "prayer potions",
       "kind": "item",
       "method": "item",
@@ -1205,7 +1205,7 @@
     },
     {
       "step_id": "bruh-2.1-f578b1e34d33",
-      "field": "/items/15",
+      "field": "/items/14",
       "source_text": "dueling ring",
       "kind": "item",
       "method": "item",
@@ -1776,7 +1776,7 @@
     },
     {
       "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/25",
+      "field": "/items/24",
       "source_text": "scorpion cage",
       "kind": "item",
       "method": "item",
@@ -1904,7 +1904,7 @@
     },
     {
       "step_id": "bruh-2.2-63c1597a7863",
-      "field": "/items/5",
+      "field": "/items/4",
       "source_text": "energy potions",
       "kind": "item",
       "method": "item",
@@ -1918,7 +1918,7 @@
     },
     {
       "step_id": "bruh-2.2-63c1597a7863",
-      "field": "/items/6",
+      "field": "/items/5",
       "source_text": "prayer potions",
       "kind": "item",
       "method": "item",
@@ -4210,16 +4210,24 @@
     },
     {
       "step_id": "bruh-1.3-0f6a40a78607",
-      "field": "/items/9",
-      "source_text": "dwarven stout. If you get asked for a bar that you cannot smith you can reset them. If you do this too often you will be sent back for more ore tasks",
+      "field": "/items/10",
+      "source_text": "If you get asked for a bar that you cannot smith you can reset them",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.3-0f6a40a78607",
-      "field": "/items/10",
-      "source_text": "but it is still the fastest way of progressing this quest.",
+      "field": "/items/11",
+      "source_text": "If you do this too often you will be sent back for more ore tasks",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "bruh-1.3-0f6a40a78607",
+      "field": "/items/12",
+      "source_text": "but it is still the fastest way of progressing this quest",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4351,22 +4359,14 @@
     {
       "step_id": "bruh-1.3-029eac528407",
       "field": "/items/0",
-      "source_text": "5241 gp (set aside 5k for Shades of Mort’ton materials",
+      "source_text": "5241 gp (set aside 5k for Shades of Mort’ton materials, let’s say)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.3-029eac528407",
-      "field": "/items/1",
-      "source_text": "let’s say)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-029eac528407",
-      "field": "/items/4",
+      "field": "/items/3",
       "source_text": "law runes (telegrab)",
       "kind": "item",
       "method": "item",
@@ -4742,8 +4742,8 @@
     },
     {
       "step_id": "bruh-1.3-7d180b5735ca",
-      "field": "/items/4",
-      "source_text": "1 iron bar; rest after creating bank: rune pickaxe",
+      "field": "/items/5",
+      "source_text": "rest after creating bank: rune pickaxe",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5081,15 +5081,7 @@
     {
       "step_id": "bruh-1.4-88c3fb48ae7f",
       "field": "/items/1",
-      "source_text": "bank as needed. 202224 gp",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-88c3fb48ae7f",
-      "field": "/items/3",
-      "source_text": "ranged gear plus arrows",
+      "source_text": "bank as needed",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5097,6 +5089,14 @@
     {
       "step_id": "bruh-1.4-88c3fb48ae7f",
       "field": "/items/4",
+      "source_text": "ranged gear plus arrows",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "bruh-1.4-88c3fb48ae7f",
+      "field": "/items/5",
       "source_text": "wind strikes",
       "kind": "item",
       "method": "item",
@@ -5104,7 +5104,7 @@
     },
     {
       "step_id": "bruh-1.4-88c3fb48ae7f",
-      "field": "/items/12",
+      "field": "/items/13",
       "source_text": "face mask",
       "kind": "item",
       "method": "item",
@@ -5112,8 +5112,8 @@
     },
     {
       "step_id": "bruh-1.4-88c3fb48ae7f",
-      "field": "/items/15",
-      "source_text": "Getting Ahead items can all be found in the region.",
+      "field": "/items/16",
+      "source_text": "Getting Ahead items can all be found in the region",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5533,22 +5533,14 @@
     {
       "step_id": "bruh-1.4-5ac241c01adc",
       "field": "/items/0",
-      "source_text": "22150 GP (10k for the foreman plus gold ore costs",
+      "source_text": "22150 GP (10k for the foreman plus gold ore costs, estimated)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-5ac241c01adc",
-      "field": "/items/1",
-      "source_text": "estimated)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-5ac241c01adc",
-      "field": "/items/7",
+      "field": "/items/6",
       "source_text": "more GP if you actually need to buy ores (but maybe WT covers it all)",
       "kind": "item",
       "method": "item",
@@ -6277,15 +6269,7 @@
     {
       "step_id": "bruh-2.1-f578b1e34d33",
       "field": "/items/7",
-      "source_text": "wind bolt spells (wind staff",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-f578b1e34d33",
-      "field": "/items/8",
-      "source_text": "chaos runes)",
+      "source_text": "wind bolt spells (wind staff, chaos runes)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6396,14 +6380,6 @@
       "step_id": "bruh-2.1-72a11f040f2d",
       "field": "/items/2",
       "source_text": "light source",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-72a11f040f2d",
-      "field": "/items/15",
-      "source_text": "3500 gp.",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7158,7 +7134,7 @@
     {
       "step_id": "bruh-2.1-2d6456708c19",
       "field": "/items/5",
-      "source_text": "etc.",
+      "source_text": "etc",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7182,7 +7158,7 @@
     {
       "step_id": "bruh-2.1-5288472eda47",
       "field": "/items/10",
-      "source_text": "premade chocolate bombs(/other high healing food",
+      "source_text": "premade chocolate bombs(/other high healing food, if you have any)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7190,14 +7166,6 @@
     {
       "step_id": "bruh-2.1-5288472eda47",
       "field": "/items/11",
-      "source_text": "if you have any)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/12",
       "source_text": "etc. (standard Rex gear)",
       "kind": "item",
       "method": "item",
@@ -7205,7 +7173,7 @@
     },
     {
       "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/18",
+      "field": "/items/17",
       "source_text": "bronze sword",
       "kind": "item",
       "method": "item",
@@ -7436,7 +7404,7 @@
     {
       "step_id": "bruh-2.2-63c1597a7863",
       "field": "/items/1",
-      "source_text": "bullseye lantern (might still be a sapphire lantern from Tears of Guthix",
+      "source_text": "bullseye lantern (might still be a sapphire lantern from Tears of Guthix, just swap it out)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7444,14 +7412,6 @@
     {
       "step_id": "bruh-2.2-63c1597a7863",
       "field": "/items/2",
-      "source_text": "just swap it out)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-63c1597a7863",
-      "field": "/items/3",
       "source_text": "melee gear",
       "kind": "item",
       "method": "item",
@@ -7459,7 +7419,7 @@
     },
     {
       "step_id": "bruh-2.2-63c1597a7863",
-      "field": "/items/7",
+      "field": "/items/6",
       "source_text": "clean guam",
       "kind": "item",
       "method": "item",
@@ -7467,7 +7427,7 @@
     },
     {
       "step_id": "bruh-2.2-63c1597a7863",
-      "field": "/items/8",
+      "field": "/items/7",
       "source_text": "clean marrentill",
       "kind": "item",
       "method": "item",
@@ -7507,14 +7467,6 @@
       "step_id": "bruh-2.2-ad3e9b4a072f",
       "field": "/items/7",
       "source_text": "multiple logs or one axe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-ad3e9b4a072f",
-      "field": "/items/28",
-      "source_text": "abyssal book.",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8033,7 +7985,7 @@
     {
       "step_id": "bruh-2.2-7ddf391d4fd0",
       "field": "/items/13",
-      "source_text": "fancy/fighter boots (to imbue the sceptre).",
+      "source_text": "fancy/fighter boots (to imbue the sceptre)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8188,15 +8140,7 @@
     {
       "step_id": "bruh-2.2-9b5e1c730252",
       "field": "/items/22",
-      "source_text": "dueling ring (to get to Castle Wars for the first step in Making History",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/23",
-      "source_text": "but also rebank at Ferox)",
+      "source_text": "dueling ring (to get to Castle Wars for the first step in Making History, but also rebank at Ferox)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8266,7 +8210,7 @@
     {
       "step_id": "bruh-2.2-be44b6bcb4ba",
       "field": "/items/4",
-      "source_text": "pickaxe (for Wildy med diary",
+      "source_text": "pickaxe (for Wildy med diary, so addy instead of rune for example)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8274,14 +8218,6 @@
     {
       "step_id": "bruh-2.2-be44b6bcb4ba",
       "field": "/items/5",
-      "source_text": "so addy instead of rune for example)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-be44b6bcb4ba",
-      "field": "/items/6",
       "source_text": "melee gear",
       "kind": "item",
       "method": "item",
@@ -8289,7 +8225,7 @@
     },
     {
       "step_id": "bruh-2.2-be44b6bcb4ba",
-      "field": "/items/7",
+      "field": "/items/6",
       "source_text": "prayer pots",
       "kind": "item",
       "method": "item",
@@ -8793,15 +8729,7 @@
     {
       "step_id": "bruh-2.2-eebcc93d77e7",
       "field": "/items/11",
-      "source_text": "a lot of money (obtained during the step",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-eebcc93d77e7",
-      "field": "/items/12",
-      "source_text": "spent during the step).",
+      "source_text": "a lot of money (obtained during the step, spent during the step)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8832,15 +8760,7 @@
     {
       "step_id": "bruh-2.2-da5e9c05eae9",
       "field": "/items/8",
-      "source_text": "a lot of money (obtained during the step",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-da5e9c05eae9",
-      "field": "/items/9",
-      "source_text": "spent during the step).",
+      "source_text": "a lot of money (obtained during the step, spent during the step)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8909,15 +8829,7 @@
     {
       "step_id": "bruh-2.2-c9ca0e75b4b5",
       "field": "/items/8",
-      "source_text": "a lot of money (obtained during the step",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-c9ca0e75b4b5",
-      "field": "/items/9",
-      "source_text": "spent during the step).",
+      "source_text": "a lot of money (obtained during the step, spent during the step)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9172,7 +9084,15 @@
     {
       "step_id": "bruh-2.3-867ab9cc404b",
       "field": "/items/0",
-      "source_text": "follow the wiki; the entire quest line is basically linear (no choice)",
+      "source_text": "follow the wiki",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "bruh-2.3-867ab9cc404b",
+      "field": "/items/1",
+      "source_text": "the entire quest line is basically linear (no choice)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9439,7 +9359,7 @@
     {
       "step_id": "bruh-3.1-51716d9d3889",
       "field": "/items/5",
-      "source_text": "red dragonhide shield optional.",
+      "source_text": "red dragonhide shield optional",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"

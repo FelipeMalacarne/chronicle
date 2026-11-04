@@ -253,6 +253,7 @@ var (
 	sectionPattern = regexp.MustCompile(`^\s*(\d+\.\d+)\s*:\s*(\S.*)$`)
 	eocPattern     = regexp.MustCompile(`(?i)^=*\s*end of chapter`)
 	sectionReject  = regexp.MustCompile(`(?i)(start of section|for section|of section)`)
+	sentenceEnd    = regexp.MustCompile(`^\.\s+[A-Z0-9]`)
 	metaPatterns   = []struct {
 		key string
 		re  *regexp.Regexp
@@ -495,11 +496,7 @@ func appendMetadata(step *Step, metadata map[string]string, counts *MetadataCoun
 		step.Notes = append(step.Notes, Note{Kind: "tip", Text: "Items needed: " + value})
 		counts.Items++
 		if !isEmptyItemValue(value) {
-			for _, item := range strings.Split(value, ",") {
-				if item = strings.TrimSpace(item); item != "" {
-					step.Items = append(step.Items, item)
-				}
-			}
+			step.Items = append(step.Items, splitItems(value)...)
 		}
 	}
 	if value := metadata["skills"]; value != "" {
@@ -510,6 +507,38 @@ func appendMetadata(step *Step, metadata map[string]string, counts *MetadataCoun
 		step.Notes = append(step.Notes, Note{Kind: "tip", Text: "Total time: " + value})
 		counts.Time++
 	}
+}
+
+// splitItems splits an "Items needed" value into items. Commas and
+// semicolons separate items only outside parentheses, so a parenthetical
+// remark stays with its item; a sentence end (". " before a capital or a
+// digit) separates too, and a trailing period is dropped.
+func splitItems(value string) []string {
+	var (
+		items []string
+		start int
+		depth int
+	)
+	add := func(item string) {
+		item = strings.TrimSpace(strings.TrimRight(strings.TrimSpace(item), "."))
+		if item != "" {
+			items = append(items, item)
+		}
+	}
+	for i, r := range value {
+		switch {
+		case r == '(':
+			depth++
+		case r == ')':
+			depth = max(depth-1, 0)
+		case depth > 0:
+		case r == ',' || r == ';' || r == '.' && sentenceEnd.MatchString(value[i:]):
+			add(value[start:i])
+			start = i + 1
+		}
+	}
+	add(value[start:])
+	return items
 }
 
 func isEmptyItemValue(value string) bool {

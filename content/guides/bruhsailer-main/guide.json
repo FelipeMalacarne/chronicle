@@ -7771,8 +7771,10 @@
                     "1 redberry pie",
                     "1 iron bar",
                     "2 beers (buy)",
-                    "dwarven stout. If you get asked for a bar that you cannot smith you can reset them. If you do this too often you will be sent back for more ore tasks",
-                    "but it is still the fastest way of progressing this quest."
+                    "dwarven stout",
+                    "If you get asked for a bar that you cannot smith you can reset them",
+                    "If you do this too often you will be sent back for more ore tasks",
+                    "but it is still the fastest way of progressing this quest"
                   ],
                   "source": {
                     "origin": "other",
@@ -7818,6 +7820,13 @@
                       "ref": "item:2351",
                       "source_text": "1 iron bar",
                       "field": "/items/7",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:1913",
+                      "source_text": "dwarven stout",
+                      "field": "/items/9",
                       "method": "item",
                       "match": "name"
                     },
@@ -8661,13 +8670,9 @@
                 "status": "partial",
                 "inventory": [
                   {
-                    "name": "gp (set aside 5k for Shades of Mort’ton materials",
+                    "name": "gp (set aside 5k for Shades of Mort’ton materials, let’s say)",
                     "qty": 5241,
-                    "source_text": "5241 gp (set aside 5k for Shades of Mort’ton materials"
-                  },
-                  {
-                    "name": "let’s say)",
-                    "source_text": "let’s say)"
+                    "source_text": "5241 gp (set aside 5k for Shades of Mort’ton materials, let’s say)"
                   },
                   {
                     "name": "ghostspeak amulet",
@@ -8786,8 +8791,7 @@
                     }
                   ],
                   "items": [
-                    "5241 gp (set aside 5k for Shades of Mort’ton materials",
-                    "let’s say)",
+                    "5241 gp (set aside 5k for Shades of Mort’ton materials, let’s say)",
                     "ghostspeak amulet",
                     "spade",
                     "law runes (telegrab)",
@@ -8812,84 +8816,84 @@
                     {
                       "ref": "item:952",
                       "source_text": "spade",
-                      "field": "/items/3",
+                      "field": "/items/2",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1733",
                       "source_text": "needle",
-                      "field": "/items/5",
+                      "field": "/items/4",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1734",
                       "source_text": "5 thread",
-                      "field": "/items/6",
+                      "field": "/items/5",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:2355",
                       "source_text": "silver bar",
-                      "field": "/items/7",
+                      "field": "/items/6",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:2347",
                       "source_text": "hammer",
-                      "field": "/items/8",
+                      "field": "/items/7",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1289",
                       "source_text": "rune sword",
-                      "field": "/items/9",
+                      "field": "/items/8",
                       "method": "item",
                       "match": "alias"
                     },
                     {
                       "ref": "item:227",
                       "source_text": "2 vials of water",
-                      "field": "/items/11",
+                      "field": "/items/10",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:1353",
                       "source_text": "steel axe",
-                      "field": "/items/12",
+                      "field": "/items/11",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:590",
                       "source_text": "tinderbox",
-                      "field": "/items/13",
+                      "field": "/items/12",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:592",
                       "source_text": "2 ashes",
-                      "field": "/items/14",
+                      "field": "/items/13",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1794",
                       "source_text": "3 bronze wires",
-                      "field": "/items/15",
+                      "field": "/items/14",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:329",
                       "source_text": "salmon",
-                      "field": "/items/16",
+                      "field": "/items/15",
                       "method": "item",
                       "match": "name"
                     },
@@ -10464,9 +10468,14 @@
                     "source_text": "5 steel nails"
                   },
                   {
-                    "name": "iron bar; rest after creating bank: rune pickaxe",
+                    "name": "iron bar",
+                    "item_id": 2351,
                     "qty": 1,
-                    "source_text": "1 iron bar; rest after creating bank: rune pickaxe"
+                    "source_text": "1 iron bar"
+                  },
+                  {
+                    "name": "rest after creating bank: rune pickaxe",
+                    "source_text": "rest after creating bank: rune pickaxe"
                   },
                   {
                     "name": "steel axe",
@@ -10598,7 +10607,8 @@
                     "hammer",
                     "2 oak planks",
                     "5 steel nails",
-                    "1 iron bar; rest after creating bank: rune pickaxe",
+                    "1 iron bar",
+                    "rest after creating bank: rune pickaxe",
                     "steel axe",
                     "4 clockworks",
                     "4 logs",
@@ -10656,107 +10666,114 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:2351",
+                      "source_text": "1 iron bar",
+                      "field": "/items/4",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:1353",
                       "source_text": "steel axe",
-                      "field": "/items/5",
+                      "field": "/items/6",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:8792",
                       "source_text": "4 clockworks",
-                      "field": "/items/6",
+                      "field": "/items/7",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:1511",
                       "source_text": "4 logs",
-                      "field": "/items/7",
+                      "field": "/items/8",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:2347",
                       "source_text": "hammer",
-                      "field": "/items/8",
+                      "field": "/items/9",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1755",
                       "source_text": "chisel",
-                      "field": "/items/9",
+                      "field": "/items/10",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:5305",
                       "source_text": "40 barley seeds",
-                      "field": "/items/10",
+                      "field": "/items/11",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:960",
                       "source_text": "5 planks",
-                      "field": "/items/11",
+                      "field": "/items/12",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:8778",
                       "source_text": "8 oak planks",
-                      "field": "/items/12",
+                      "field": "/items/13",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:1539",
                       "source_text": "20 steel nails",
-                      "field": "/items/13",
+                      "field": "/items/14",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1761",
                       "source_text": "3 soft clay",
-                      "field": "/items/14",
+                      "field": "/items/15",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:3727",
                       "source_text": "empty bucket",
-                      "field": "/items/15",
+                      "field": "/items/16",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:590",
                       "source_text": "tinderbox",
-                      "field": "/items/16",
+                      "field": "/items/17",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:954",
                       "source_text": "1 rope",
-                      "field": "/items/17",
+                      "field": "/items/18",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:2351",
                       "source_text": "1 iron bar",
-                      "field": "/items/18",
+                      "field": "/items/19",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1511",
                       "source_text": "2 logs",
-                      "field": "/items/19",
+                      "field": "/items/20",
                       "method": "item",
                       "match": "name"
                     }
@@ -12386,8 +12403,14 @@
                     "source_text": "Each segment has its own item requirements"
                   },
                   {
-                    "name": "bank as needed. 202224 gp",
-                    "source_text": "bank as needed. 202224 gp"
+                    "name": "bank as needed",
+                    "source_text": "bank as needed"
+                  },
+                  {
+                    "name": "gp",
+                    "item_id": 995,
+                    "qty": 202224,
+                    "source_text": "202224 gp"
                   },
                   {
                     "name": "rune pickaxe",
@@ -12453,8 +12476,8 @@
                     "source_text": "100 steel nails"
                   },
                   {
-                    "name": "Getting Ahead items can all be found in the region.",
-                    "source_text": "Getting Ahead items can all be found in the region."
+                    "name": "Getting Ahead items can all be found in the region",
+                    "source_text": "Getting Ahead items can all be found in the region"
                   }
                 ],
                 "source": {
@@ -12498,7 +12521,8 @@
                   ],
                   "items": [
                     "Each segment has its own item requirements",
-                    "bank as needed. 202224 gp",
+                    "bank as needed",
+                    "202224 gp",
                     "rune pickaxe",
                     "ranged gear plus arrows",
                     "wind strikes",
@@ -12512,7 +12536,7 @@
                     "face mask",
                     "3 planks",
                     "100 steel nails",
-                    "Getting Ahead items can all be found in the region."
+                    "Getting Ahead items can all be found in the region"
                   ],
                   "source": {
                     "origin": "other",
@@ -12520,65 +12544,72 @@
                   },
                   "entities": [
                     {
+                      "ref": "item:995",
+                      "source_text": "202224 gp",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
                       "ref": "item:1275",
                       "source_text": "rune pickaxe",
-                      "field": "/items/2",
+                      "field": "/items/3",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:954",
                       "source_text": "rope",
-                      "field": "/items/5",
+                      "field": "/items/6",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:590",
                       "source_text": "tinderbox",
-                      "field": "/items/6",
+                      "field": "/items/7",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:563",
                       "source_text": "law runes",
-                      "field": "/items/7",
+                      "field": "/items/8",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:557",
                       "source_text": "earth runes",
-                      "field": "/items/8",
+                      "field": "/items/9",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:554",
                       "source_text": "fire runes",
-                      "field": "/items/9",
+                      "field": "/items/10",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:772",
                       "source_text": "dramen staff",
-                      "field": "/items/11",
+                      "field": "/items/12",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:960",
                       "source_text": "3 planks",
-                      "field": "/items/13",
+                      "field": "/items/14",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:1539",
                       "source_text": "100 steel nails",
-                      "field": "/items/14",
+                      "field": "/items/15",
                       "method": "item",
                       "match": "name"
                     },
@@ -14798,8 +14829,7 @@
                     }
                   ],
                   "items": [
-                    "22150 GP (10k for the foreman plus gold ore costs",
-                    "estimated)",
+                    "22150 GP (10k for the foreman plus gold ore costs, estimated)",
                     "27 iron ore",
                     "27 coal",
                     "silver ores",
@@ -14815,35 +14845,35 @@
                     {
                       "ref": "item:440",
                       "source_text": "27 iron ore",
-                      "field": "/items/2",
+                      "field": "/items/1",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:453",
                       "source_text": "27 coal",
-                      "field": "/items/3",
+                      "field": "/items/2",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:442",
                       "source_text": "silver ores",
-                      "field": "/items/4",
+                      "field": "/items/3",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:444",
                       "source_text": "108 gold ores",
-                      "field": "/items/5",
+                      "field": "/items/4",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:6465",
                       "source_text": "ring of charos(a)",
-                      "field": "/items/6",
+                      "field": "/items/5",
                       "method": "item",
                       "match": "name"
                     }
@@ -20078,8 +20108,7 @@
                     "chisel",
                     "tinderbox",
                     "rune pickaxe",
-                    "wind bolt spells (wind staff",
-                    "chaos runes)",
+                    "wind bolt spells (wind staff, chaos runes)",
                     "molten glass",
                     "law runes",
                     "gold bar",
@@ -20132,35 +20161,35 @@
                     {
                       "ref": "item:1775",
                       "source_text": "molten glass",
-                      "field": "/items/9",
+                      "field": "/items/8",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:563",
                       "source_text": "law runes",
-                      "field": "/items/10",
+                      "field": "/items/9",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:2357",
                       "source_text": "gold bar",
-                      "field": "/items/11",
+                      "field": "/items/10",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:373",
                       "source_text": "swordfish",
-                      "field": "/items/12",
+                      "field": "/items/11",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:4568",
                       "source_text": "dwarven lore",
-                      "field": "/items/16",
+                      "field": "/items/15",
                       "method": "item",
                       "match": "name"
                     },
@@ -21000,7 +21029,7 @@
                     "games necklace",
                     "antipoison",
                     "digsite pendant",
-                    "3500 gp."
+                    "3500 gp"
                   ],
                   "source": {
                     "origin": "other",
@@ -21055,6 +21084,13 @@
                       "field": "/items/11",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:995",
+                      "source_text": "3500 gp",
+                      "field": "/items/15",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "quest:icthlarins_little_helper",
@@ -24294,7 +24330,7 @@
                     "rune sword",
                     "amulet of strength",
                     "berserker helm",
-                    "etc."
+                    "etc"
                   ],
                   "source": {
                     "origin": "other",
@@ -24436,8 +24472,7 @@
                     "berserker helm",
                     "amulet of magic",
                     "antipoisons",
-                    "premade chocolate bombs(/other high healing food",
-                    "if you have any)",
+                    "premade chocolate bombs(/other high healing food, if you have any)",
                     "etc. (standard Rex gear)",
                     "air staff",
                     "earth runes",
@@ -24529,77 +24564,77 @@
                     {
                       "ref": "item:1381",
                       "source_text": "air staff",
-                      "field": "/items/13",
+                      "field": "/items/12",
                       "method": "item",
                       "match": "alias"
                     },
                     {
                       "ref": "item:557",
                       "source_text": "earth runes",
-                      "field": "/items/14",
+                      "field": "/items/13",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:555",
                       "source_text": "water runes",
-                      "field": "/items/15",
+                      "field": "/items/14",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:554",
                       "source_text": "fire runes",
-                      "field": "/items/16",
+                      "field": "/items/15",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:562",
                       "source_text": "chaos runes",
-                      "field": "/items/17",
+                      "field": "/items/16",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:886",
                       "source_text": "steel arrow",
-                      "field": "/items/19",
+                      "field": "/items/18",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1775",
                       "source_text": "molten glass",
-                      "field": "/items/20",
+                      "field": "/items/19",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:590",
                       "source_text": "tinderbox",
-                      "field": "/items/21",
+                      "field": "/items/20",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:2347",
                       "source_text": "hammer",
-                      "field": "/items/22",
+                      "field": "/items/21",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1539",
                       "source_text": "60 steel nails",
-                      "field": "/items/23",
+                      "field": "/items/22",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:1939",
                       "source_text": "1 swamp tar",
-                      "field": "/items/24",
+                      "field": "/items/23",
                       "method": "item",
                       "match": "name"
                     },
@@ -25248,8 +25283,7 @@
                   ],
                   "items": [
                     "tinderbox",
-                    "bullseye lantern (might still be a sapphire lantern from Tears of Guthix",
-                    "just swap it out)",
+                    "bullseye lantern (might still be a sapphire lantern from Tears of Guthix, just swap it out)",
                     "melee gear",
                     "swordfish",
                     "energy potions",
@@ -25274,21 +25308,21 @@
                     {
                       "ref": "item:373",
                       "source_text": "swordfish",
-                      "field": "/items/4",
+                      "field": "/items/3",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:233",
                       "source_text": "pestle and mortar",
-                      "field": "/items/9",
+                      "field": "/items/8",
                       "method": "item",
                       "match": "name"
                     },
                     {
                       "ref": "item:772",
                       "source_text": "dramen staff",
-                      "field": "/items/10",
+                      "field": "/items/9",
                       "method": "item",
                       "match": "name"
                     },
@@ -25602,8 +25636,9 @@
                     "source_text": "chisel"
                   },
                   {
-                    "name": "abyssal book.",
-                    "source_text": "abyssal book."
+                    "name": "abyssal book",
+                    "item_id": 5520,
+                    "source_text": "abyssal book"
                   }
                 ],
                 "source": {
@@ -25674,7 +25709,7 @@
                     "astral runes",
                     "staff of air",
                     "chisel",
-                    "abyssal book."
+                    "abyssal book"
                   ],
                   "source": {
                     "origin": "other",
@@ -25839,6 +25874,13 @@
                       "ref": "item:1755",
                       "source_text": "chisel",
                       "field": "/items/27",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:5520",
+                      "source_text": "abyssal book",
+                      "field": "/items/28",
                       "method": "item",
                       "match": "name"
                     },
@@ -27584,7 +27626,7 @@
                     "fire runes",
                     "herbal tincture (reclaim from Apothecary instead)",
                     "5 pigeon cages",
-                    "fancy/fighter boots (to imbue the sceptre)."
+                    "fancy/fighter boots (to imbue the sceptre)"
                   ],
                   "source": {
                     "origin": "other",
@@ -28014,8 +28056,7 @@
                     "law runes",
                     "water staff",
                     "enchanted key",
-                    "dueling ring (to get to Castle Wars for the first step in Making History",
-                    "but also rebank at Ferox)",
+                    "dueling ring (to get to Castle Wars for the first step in Making History, but also rebank at Ferox)",
                     "air runes",
                     "earth rune"
                   ],
@@ -28111,14 +28152,14 @@
                     {
                       "ref": "item:556",
                       "source_text": "air runes",
-                      "field": "/items/24",
+                      "field": "/items/23",
                       "method": "item",
                       "match": "plural"
                     },
                     {
                       "ref": "item:557",
                       "source_text": "earth rune",
-                      "field": "/items/25",
+                      "field": "/items/24",
                       "method": "item",
                       "match": "name"
                     },
@@ -28350,8 +28391,7 @@
                     "3 gold bars",
                     "slash item/weapon",
                     "hammer",
-                    "pickaxe (for Wildy med diary",
-                    "so addy instead of rune for example)",
+                    "pickaxe (for Wildy med diary, so addy instead of rune for example)",
                     "melee gear",
                     "prayer pots",
                     "swordfish"
@@ -28378,7 +28418,7 @@
                     {
                       "ref": "item:373",
                       "source_text": "swordfish",
-                      "field": "/items/8",
+                      "field": "/items/7",
                       "method": "item",
                       "match": "name"
                     }
@@ -30273,8 +30313,7 @@
                     "hammer",
                     "fire staff",
                     "nature runes",
-                    "a lot of money (obtained during the step",
-                    "spent during the step)."
+                    "a lot of money (obtained during the step, spent during the step)"
                   ],
                   "links": [
                     {
@@ -30505,8 +30544,7 @@
                     "hammer",
                     "fire staff",
                     "nature runes",
-                    "a lot of money (obtained during the step",
-                    "spent during the step)."
+                    "a lot of money (obtained during the step, spent during the step)"
                   ],
                   "links": [
                     {
@@ -30789,12 +30827,8 @@
                     "source_text": "nature runes"
                   },
                   {
-                    "name": "a lot of money (obtained during the step",
-                    "source_text": "a lot of money (obtained during the step"
-                  },
-                  {
-                    "name": "spent during the step).",
-                    "source_text": "spent during the step)."
+                    "name": "a lot of money (obtained during the step, spent during the step)",
+                    "source_text": "a lot of money (obtained during the step, spent during the step)"
                   }
                 ],
                 "source": {
@@ -30845,8 +30879,7 @@
                     "hammer",
                     "fire staff",
                     "nature runes",
-                    "a lot of money (obtained during the step",
-                    "spent during the step)."
+                    "a lot of money (obtained during the step, spent during the step)"
                   ],
                   "links": [
                     {
@@ -31945,7 +31978,8 @@
                     }
                   ],
                   "items": [
-                    "follow the wiki; the entire quest line is basically linear (no choice)"
+                    "follow the wiki",
+                    "the entire quest line is basically linear (no choice)"
                   ],
                   "links": [
                     {
@@ -32721,7 +32755,7 @@
                     "ranging pots",
                     "glory",
                     "shayzien boots 5",
-                    "red dragonhide shield optional."
+                    "red dragonhide shield optional"
                   ],
                   "links": [
                     {

@@ -565,6 +565,13 @@ Claude Code, fora do MCP; o relatório conta só as respostas registradas.
   resolvidos 1391 → 1434, sem resolução 369 → 319, ambíguos 146 → 153 (nomes genéricos como "key" e
   "diary", que antes nem resolviam). O que ainda fica sem resolução é texto que não nomeia item
   ("Runes", "Some food", "All 4 meat for druidic ritual").
+
+  O importador do BRUHsailer separa a linha "Items needed:" por vírgula e ponto e vírgula só fora de
+  parênteses, e também no fim de frase (". " antes de maiúscula ou dígito). Antes, ele cortava
+  "5241 gp (set aside 5k for …, let’s say)" em dois itens e deixava "dwarven stout. If you get asked…"
+  inteiro. São 19 passos corrigidos, e os itens do BRUHsailer ficam em 1439 resolvidos e 309 sem
+  resolução. Os ids dos passos não mudam. A prosa que o autor escreveu na linha de itens ("will need
+  to bank while buying from Aemad…") fica para a extração.
 - **XP de recompensa de quest.** `data/wiki/scripts/build_quests.py` lê do `{{Quest rewards}}` o XP fixo
   de cada quest (`{{SCP|Skill|N}}`; linhas de lamp e de escolha ficam de fora) para `xp_rewards` em
   `data/wiki/quests.json`, e o `catalogbuild` leva isso ao `quests.json` de referência: 167 das 225

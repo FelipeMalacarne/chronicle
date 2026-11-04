@@ -193,7 +193,9 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/guides/{guide}/events?account=&limit=` | feita (dev) | o que mudou: eventos de passo do guia e de objetivo da conta, com a fonte do snapshot |
 | `PUT /api/account/guide?account=` | feita (dev) | troca a rota ativa e reavalia na mesma transação |
 | `GET /api/state?account=`, `POST /api/sync/now`, `GET /api/sync/runs` | planejadas | estado e sync |
-| `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=`, `GET/POST /api/goals` | planejadas | grafo e metas |
+| `GET/POST /api/goals?account=`, `DELETE /api/goals/{id}?account=` | feita (dev) | metas: objetivo fixado (chave canônica validada no registry); alcançada quando o objetivo vira met |
+| `GET /api/world?account=` | feita (dev) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
+| `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=` | planejadas | grafo e plano da meta (esperam os requisitos de quest no catálogo) |
 | `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
 
 ### 2.6 Backups e export
@@ -741,7 +743,11 @@ Web v4 (item 9, branch `feat/progresso`): Agora, Rotas e Rota no tema Pergaminho
 real; a API devolve por passo a referência do autor, a posição, os nomes dos refs e o "também em"; os
 ícones do jogo vêm de `tools/fetch_wiki_icons.py` para `web/static/icons`.
 
-Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, metas (F9), faceta de quest e
+Metas (F9, parte A): fixar um objetivo do Mundo, veredito, onde cada rota o conclui e o painel no
+Agora. A parte B (plano da meta) precisa de `requires`, `skill_reqs` e `quest_points_required` em
+`content/reference/quests.json`, pedido à sessão de extração.
+
+Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, plano da meta, faceta de quest e
 diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de hiscores e scheduler, CLI/MCP sobre
 o cliente, grafo, tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
 antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
@@ -759,7 +765,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
 | 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado |
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
-| 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; sem `/compare`, decisão 1 do v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Telas feitas** (2026-11-04, `feat/progresso`); metas pendentes |
+| 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; sem `/compare`, decisão 1 do v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Telas e metas (parte A) feitas** (2026-11-04, `feat/progresso`); gargalos, requisitos e ordem da meta esperam os requisitos de quest no catálogo (parte B) |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros** |
 | 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
 

@@ -19,7 +19,7 @@ Canvas: **Ironman Planner — Telas**, https://claude.ai/artifact/NqmKesmqCJH1gn
 4. **Não mexa no código** (`web/`, Go) nem nos docs numerados. Ao terminar, entregue no chat uma lista
    das decisões de UI tomadas com o dono, para virar documento depois.
 5. Leia antes: `docs/09-modelo-de-dominio.md` (modelo de dados que a UI deve refletir), `docs/03-produto-e-features.md`
-   (features e telas originais) e `docs/04-arquitetura.md`, seções 6.4.1 e 11. Este brief resume o que importa
+   (features e telas originais) e `docs/04-arquitetura.md`, seções 6.4.1 e 9. Este brief resume o que importa
    deles para a UI.
 
 ## 1. Produto e momentos de uso
@@ -56,7 +56,7 @@ UI em PT-BR; termos do jogo em inglês (nomes de quest, skill, item, diary).
 | **Objetivo** | Unidade **rastreável**: entidade + estado-alvo (`quest:x_marks_the_spot@finished`, `skill:agility>=70`, `item:960x120`, `unlock:fairy_rings@done`). Papel no passo: `completes`, `starts`, `requires`, `uses` | Chips sob o passo, com estado (✓/○/?) e evidência; o mesmo objetivo aparece igual nas duas rotas |
 | **Entidade** | Coisa do mundo com id canônico: quest, item, skill, diary, CA, boss, **unlock**, **location** | Nome legível, ícone por tipo, link para a wiki, página/painel da entidade |
 | **Progresso compartilhado** | Fatos da conta valem para as duas rotas; marca manual e posição (cursor) são por rota | Ao trocar de rota, o que já foi feito aparece feito; a posição de cada rota é preservada |
-| **Status do passo** | `auto_done` (objetivos cumpridos, com evidência), `manual_done`, `done_implied` (cascata: só na seção e na rota ativa, aguardando confirmação), `skipped`, `pending`, bloqueado (requisito não cumprido), `regressed` | Forma, não só cor; evidência (fonte e hora) acessível; "implícito" claramente diferente de "feito" com ação "confirmar tudo" |
+| **Status do passo** | `auto_done` (objetivos cumpridos, com evidência), `manual_done`, `implied` (cascata: só na seção e na rota ativa, aguardando confirmação), `skipped`, `pending`, bloqueado (requisito não cumprido), `regressed` | Forma, não só cor; evidência (fonte e hora) acessível; "implícito" claramente diferente de "feito" com ação "confirmar tudo" |
 | **Veredito** | `met` / `unmet` / **`unknown`** | **`unknown` não é `unmet`**: "não sabemos" (sem plugin, sem leitura) precisa de visual próprio |
 | **Frescor** | Cada container de itens é `live`, `restored` (espelho salvo, possivelmente velho) ou `unavailable`; cada fonte tem idade | `restored` sempre visível como desatualizado; idade da fonte ao lado de dados derivados |
 | **Posse × setup × ação de banco** | Três perguntas distintas: "tenho o item?" (qualquer container), "estou carregando o setup do trecho?" (inventário/equipamento ao vivo), "o que o guia manda fazer no banco?" (instrução, nunca concluída) | Não fundir: "no banco 1", "com você ✓", "deposite tudo" são coisas diferentes |

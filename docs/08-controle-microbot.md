@@ -53,7 +53,7 @@ Endpoints do Agent Server que o módulo usa (referência completa em
 
 ## Arquitetura
 
-O cliente do jogo roda no `zaros`; o planner roda no `zaros` agora (doc 04, seção 10) e no
+O cliente do jogo roda no `zaros`; o planner roda no `zaros` agora (doc 04, seção 8) e no
 `saradomin` depois. Para os dois casos funcionarem igual, o controle passa sempre por um **agent** no
 `zaros`, que é o mesmo binário (`ironman agent`) rodando como serviço systemd do usuário, declarado no
 `nix-config` ao lado do módulo do Microbot.
@@ -160,5 +160,5 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 ## Impacto nos outros docs
 
 - Doc 06: adendo apontando para este doc; o plugin de tracking continua somente leitura.
-- Doc 04, seção 10: as fases acima entram depois do marco "em uso no zaros" (tarefa 5), sem
+- Doc 04, seção 9: as fases acima entram depois do marco "em uso no zaros" (item 10), sem
   bloquear o caminho crítico do planner.

@@ -1,6 +1,8 @@
 # Ironman Planner self-hosted — levantamento e plano
 
-Data: 2026-11-03
+Data: 2026-11-03. **Histórico**: foi o primeiro levantamento, feito sem acesso às fontes. Está superado
+pelos docs 02 (fontes verificadas), 03 (produto), 04 (arquitetura) e 09 (modelo de domínio); fica como
+registro do ponto de partida e não é mantido.
 
 ## 1. O que descobri (e o que não consegui ver)
 

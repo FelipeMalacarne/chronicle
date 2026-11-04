@@ -29,8 +29,8 @@ do repositório de plugins que ele já mantém.
 | Dado | Como ler no cliente | Quando enviar |
 |---|---|---|
 | Skills (level real, xp, boosted) | `client.getRealSkillLevel`, `getSkillExperience`, evento `StatChanged` | no evento, com debounce de alguns segundos |
-| Quests (NOT_STARTED, IN_PROGRESS, FINISHED) | `Quest.values()` + `quest.getState(client)` na thread do cliente | login e a cada `VarbitChanged` que bata no manifest |
-| Diaries por task e por tier | varbits do manifest (o servidor manda a lista, como no WikiSync) | em `VarbitChanged` |
+| Quests (NOT_STARTED, IN_PROGRESS, FINISHED) | `Quest.values()` + `quest.getState(client)` na thread do cliente, enviados na faceta `data.quest` do contrato v1 (doc 04, seção 6.4). **Ainda não implementado**: entra na versão 1.1.0 (doc 09, item 7) | todos no `full`; em `delta` só os que mudaram |
+| Diaries por tier | varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` de `content/reference/varbits.json`, pedidos pelo manifest (hoje o manifest sai vazio porque o conteúdo não tem regras `varbit`) | em `VarbitChanged` |
 | Combat achievements | varbits/cs2 do manifest | em `VarbitChanged` |
 | Collection log | `collectionLogSlots` via enums/structs do chisel, como o WikiSync faz | login e ao abrir o log |
 | Banco, inventário, equipamento | `ItemContainerChanged` para `live`; cache `Rs2Bank`/`Rs2Inventory` apenas como `restored` | ao fechar o banco, ao logar; opt-in separado por container |
@@ -73,7 +73,8 @@ thread do cliente; o envio assíncrono não segura referências mutáveis do cac
 
 ## Bônus que só o Microbot permite
 
-- Painel in-client com o próximo step do guia e botão "feito", conversando com `PATCH /api/steps/:id`.
+- Painel in-client com o próximo step do guia e botão "feito", conversando com
+  `PATCH /api/guides/{guide}/steps/{id}/mark` (doc 04, seção 2.5).
 - Overlay de "itens que o guia manda guardar" ao abrir o banco, comparando com `data/guide` `items`.
 - Detecção de contexto: se o jogador está perto do NPC ou região de um step pendente, destacar na UI web.
 - Em fase bem posterior, opcional e separado: scripts de rotina (ex.: ir ao banco e pegar o inventário
@@ -81,9 +82,8 @@ thread do cliente; o envio assíncrono não segura referências mutáveis do cac
 
 ## Impacto nos outros docs
 
-- Doc 03: F8 (plugin próprio) passa de "S v1, M v2" para "M MVP". F7 (WikiSync) cai para "C" ou sai.
-- Doc 04, seção 7.4: as tarefas 16 e 17 (ingest endpoint e plugin v0) sobem para logo depois da 8
-  (adapter de hiscores), antes do dashboard.
+- Doc 03: F8 (plugin próprio) passou para "M MVP" e F7 (WikiSync) para "C v2" (aplicado em 2026-11-04).
+- Doc 04, seção 9: o ingest e o plugin entraram antes do progresso persistido.
 - Doc 01, decisão 2 (WikiSync no MVP): resolvida pelo plugin no Microbot.
 
 ## Adendo de 2026-11-04: controle do cliente
@@ -115,6 +115,9 @@ Comportamento implementado (contrato v1, doc 04, seção 6.4):
 - Um 409 faz o plugin renumerar e mandar `full`.
 - O token e o username nunca aparecem em log, e o plugin não executa nenhuma ação no jogo.
 - O log de coleção (opcional no contrato) ainda não é enviado.
+- **Quests e diaries ainda não chegam ao servidor**: o plugin lê só os varbits do manifest (vazio, porque
+  o conteúdo não tem regras `varbit`) e as skills; não há leitura de `Quest.getState` nem faceta `quest`
+  no contrato. É o item 7 da sequência do doc 09 (versão 1.1.0 do plugin, junto com o servidor).
 
 Verificação: 36 testes JUnit (diff, baseline, frescor, ACK/retry, backoff) e o jar compilado contra o
 cliente pinado. **Ainda não rodou no jogo** (`mb-test` pendente). O painel lateral com o "próximo passo"

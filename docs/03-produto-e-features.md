@@ -10,6 +10,11 @@ Data: 2026-11-03. Autor: design de produto. Escopo: um planner self-hosted para 
 > derivado dos objetivos), F2 (cursor por rota), F9 (meta = objetivo) e F10 (nós = objetivos) são
 > implementados, sem mudar o comportamento descrito aqui.
 
+> Revisão de 2026-11-04: F7 e F8 alinhados ao doc 06 (plugin próprio no MVP, WikiSync fora); nomes de
+> status alinhados ao doc 09 (`pending`, `auto_done`, `manual_done`, `implied`, `skipped`); "passo atual"
+> é o cursor da rota (doc 09, seção 3.5); as decisões em aberto da seção 6 passam a ser acompanhadas no
+> doc 01. O sitemap da seção 3 é o desenho original; as rotas implementadas estão anotadas lá.
+
 ## 0. Fatos sobre o conteúdo que moldam o produto
 
 | Fato (dados reais) | Consequência de produto |
@@ -49,8 +54,8 @@ Fases: **MVP** (jogável por uma pessoa, 1-2 semanas), **v1** (tracking completo
 | F4 Import/export JSON (inclui localStorage do ironman.guide) | M | | | manual | arquivo |
 | F5 Dashboard da conta | S | M | | auto | hiscores, WikiSync, Bucket |
 | F6 Log de sessões / diff entre syncs | S | M | | auto | snapshots |
-| F7 Import WikiSync (quests, diaries, CA, clog) | S | M | | auto | WikiSync |
-| F8 Plugin RuneLite próprio (varbits, banco, posição) | | S | M | auto | plugin |
+| F7 Import WikiSync (quests, diaries, CA, clog) | | | C | auto | WikiSync; substituído pelo F8 (doc 06) |
+| F8 Plugin próprio no Microbot (quests, varbits, banco, posição) | M | | | auto | plugin (doc 06) |
 | F9 Planner de metas ("quero X") | | M | | auto+manual | Bucket + guia + estado |
 | F10 Explorador do grafo de requisitos | | S | M | auto | Bucket + guia |
 | F11 Camadas do guia (base/enhanced/modo/pessoal) | S | M | | manual | git |
@@ -63,14 +68,14 @@ Fases: **MVP** (jogável por uma pessoa, 1-2 semanas), **v1** (tracking completo
 
 ### F1 Checklist persistente com auto-complete e override manual (MVP)
 - **Problema:** hoje o progresso vive em localStorage e cada check é manual; 576 checks à mão é o motivo de o guia ser abandonado.
-- **Comportamento:** cada step tem `status ∈ {pending, done_auto, done_manual, done_implied, skipped}` + `evidence` (fonte, timestamp, valor). Regras `complete_when` avaliadas a cada snapshot novo. Clique do usuário sempre vence: um step marcado manualmente nunca é desmarcado pelo sync; um step auto-concluído pode ser "reaberto" pelo usuário e vira `pending` com flag `pinned_open` (o sync não insiste). Desmarcar não apaga evidência.
-- **Cascata:** quando um step com evidência forte (quest, skill, diary) conclui, os steps anteriores da mesma seção ainda `pending` viram `done_implied`, com visual próprio e ação "confirmar tudo" em um clique. Sem isso, 63% do guia continua manual.
-- **Dados:** guia (regras), `player_snapshot`, `step_progress`.
+- **Comportamento:** cada step tem `status ∈ {pending, auto_done, manual_done, implied, skipped}` + `evidence` (fonte, timestamp, valor). O status automático é derivado dos objetivos do passo, avaliados a cada snapshot novo (doc 09, seção 5). Clique do usuário sempre vence: um step marcado manualmente nunca é desmarcado pelo sync; um step auto-concluído pode ser "reaberto" pelo usuário e vira `pending` com a marca `pinned_open` (o sync não insiste). Desmarcar não apaga evidência.
+- **Cascata:** quando um step com evidência forte (quest, skill, diary) conclui, os steps anteriores da mesma seção ainda `pending` viram `implied`, com visual próprio e ação "confirmar tudo" em um clique. Sem isso, 63% do guia continua manual.
+- **Dados:** guia (objetivos), `player_state`, `objective_progress`, `step_marks`.
 - **Resolvido (doc 09, 9.1):** a cascata não atravessa seções e só dispara na rota ativa; um objetivo cumprido em outra rota não gera `implied` nesta. Boosts de skill não aparecem no hiscores: regra de skill considera só level base, e isso está certo para o guia.
 
 ### F2 Modo foco "Agora" (MVP)
 - **Problema:** achar "onde eu estava" numa lista de 286 itens.
-- **Comportamento:** passo atual = primeiro `pending` da seção ativa (ou um step fixado pelo usuário). Mostra texto, `note`, `location`, itens (do step e dos próximos N na mesma location), requisito faltando (level/quest) com distância ("faltam 3 levels de Agility"), links do wiki gerados por quest/skill/item, próximos 5 steps colapsados, botões: Feito, Pular, Fixar outro, Abrir no guia. Atualiza sozinho quando o sync conclui o step (toast "1.1.43 detectado: 25 Thieving").
+- **Comportamento:** passo atual = cursor da rota ativa (`route_cursor`, doc 09, seção 3.5): o step fixado pelo usuário ou, sem fixação, o primeiro step da rota principal que não está feito nem pulado. Mostra texto, `note`, `location`, itens (do step e dos próximos N na mesma location), requisito faltando (level/quest) com distância ("faltam 3 levels de Agility"), links do wiki gerados por quest/skill/item, próximos 5 steps colapsados, botões: Feito, Pular, Fixar outro, Abrir no guia. Atualiza sozinho quando o sync conclui o step (toast "1.1.43 detectado: 25 Thieving").
 - **Dados:** guia + F1 + último snapshot.
 - **Em aberto:** quando o guia manda fazer algo "em paralelo" (birdhouses a cada 50 min, kingdom), mostrar como "tarefas recorrentes" fixas no topo? Proposta: sim, como pílulas, em v1.
 
@@ -79,7 +84,7 @@ Fases: **MVP** (jogável por uma pessoa, 1-2 semanas), **v1** (tracking completo
 - **Em aberto:** conta precisa estar ranqueada em cada skill para aparecer (level < 15 em algumas skills não aparece no hiscores). Tratar "ausente" como desconhecido, não como 1.
 
 ### F4 Import/export (MVP)
-- Importar o JSON do localStorage do ironman.guide (mapeando ids `1.1.31` → mesmos ids, já que o extrator preservou), marcar como `done_manual` com fonte `import`. Exportar tudo (estado + snapshots) em JSON. É o seguro contra perder dados e o caminho para migrar hoje mesmo.
+- Importar o JSON do localStorage do ironman.guide (mapeando ids `1.1.31` → mesmos ids, já que o extrator preservou), marcar como `manual_done` com causa `import`. Exportar tudo (estado + snapshots) em JSON. É o seguro contra perder dados e o caminho para migrar hoje mesmo.
 
 ### F5 Dashboard da conta (S no MVP, M v1)
 - **Problema:** ver de relance "onde a conta está" em relação ao guia, não em absoluto.
@@ -90,12 +95,12 @@ Fases: **MVP** (jogável por uma pessoa, 1-2 semanas), **v1** (tracking completo
 - **Comportamento:** cada snapshot novo gera um diff: skills que subiram (com XP), KC, quests que mudaram de estado, steps concluídos por auto/cascata, steps que ficaram **disponíveis** (requisitos agora atendidos), metas que avançaram (%). Agrupa em "sessões" (gap > 90 min fecha uma sessão). Lista cronológica + detalhe.
 - **Em aberto:** com polling de 15 min o diff é grosseiro; o plugin (F8) pode mandar evento ao fechar o cliente. Suficiente.
 
-### F7 Import WikiSync (S MVP, M v1)
-- Importador opcional com aviso claro do pedido do wiki; polling baixo (a cada sync manual + 1×/h). Alimenta `quest`, `quest_start`, `diary`, `diary_task`, `combat_achievement`, `collection_log_item`. Projetado para ser trocado pelo F8 sem mudar regras: ambos produzem o mesmo snapshot normalizado `{quests, diaries, ca, clog, varbits}`.
+### F7 Import WikiSync (C v2; substituído pelo F8)
+- Fora do plano desde o doc 06: o wiki pede para não usar a API em projetos de terceiros e o plugin próprio cobre tudo que ela daria. Fica como ideia para quem não usa o Microbot; se um dia existir, produz o mesmo snapshot normalizado do F8.
 
-### F8 Plugin RuneLite próprio (S v1, M v2)
-- Copia o modelo do WikiSync: baixa manifest de varbits do seu servidor, envia deltas com token. Acrescenta: itens no banco/inventário (só os ids que o guia referencia, não o banco inteiro), região atual, evento de logout. É o que leva o auto-tracking de ~42% para ~70% (seção 5).
-- **Em aberto:** sideload vs. Plugin Hub (Hub exige revisão e licença; sideload basta para uso pessoal).
+### F8 Plugin próprio no Microbot (M MVP)
+- Copia o modelo do WikiSync: baixa manifest de varbits do seu servidor, envia deltas com token. Acrescenta: estado de quests (`Quest.getState`), itens no banco/inventário/equipamento (opt-in duplo), `full` no login e no logout. É o que leva o auto-tracking de ~42% para ~70% (seção 5). Implementado como leitura pura em `microbot-plugins` (doc 06); a faceta de quests entra na versão 1.1.0 (doc 09, item 7).
+- **Resolvido:** sideload no Microbot, sem Plugin Hub.
 
 ### F9 Planner de metas (M v1)
 - **Problema:** "quero Barrows gloves" exige 10 subquests, ~20 quests pré-requisito, levels, itens; o ironman.guide só oferece a ordem fixa.
@@ -152,6 +157,10 @@ Fases: **MVP** (jogável por uma pessoa, 1-2 semanas), **v1** (tracking completo
 /settings         Fontes (hiscores, WikiSync, plugin token), camadas, export, Discord
 /editor           (v1) edição de steps / relatório de conteúdo
 ```
+Rotas implementadas na SPA em 2026-11-04: `/plan` (faz o papel de `/now` para a rota ativa, com
+seletor de guia), `/compare` (duas rotas lado a lado), `/guide` e `/guide/[section]`, `/account`,
+`/goals` e `/graph` (as três últimas ainda sobre fixtures).
+
 Navegação principal (desktop): barra lateral fixa com 7 itens + status do sync no rodapé. Mobile: barra inferior com **Agora, Guia, Conta, Mais**.
 
 ### Tela 1 — Agora (`/now`)
@@ -263,10 +272,10 @@ Conta (RSN, modo iron/HCIM/UIM/GIM, endpoint detectado), Fontes (hiscores on/off
 **Estados de conclusão (visual)**
 | Estado | Checkbox | Badge | Tooltip/evidência |
 |---|---|---|---|
-| `done_auto` | ✓ cheio verde | ● + fonte (HS / WS / RL) | "Thieving 25 via hiscores, 03/11 14:20" |
-| `done_manual` | ✓ cheio verde com glifo de mão | manual | "marcado por você, 02/11" |
-| `done_implied` | ✓ pontilhado, verde apagado | presumido | "presumido porque 1.1.31 foi detectado" + [confirmar] |
-| `done_auto` + stale | ✓ verde dessaturado | ◷ | "última verificação há 3 dias" |
+| `auto_done` | ✓ cheio verde | ● + fonte (HS / RL) | "Thieving 25 via hiscores, 03/11 14:20" |
+| `manual_done` | ✓ cheio verde com glifo de mão | manual | "marcado por você, 02/11" |
+| `implied` | ✓ pontilhado, verde apagado | presumido | "presumido porque 1.1.31 foi detectado" + [confirmar] |
+| `auto_done` + stale | ✓ verde dessaturado | ◷ | "última verificação há 3 dias" |
 | conflito | ✓ verde + contorno âmbar | ! | "você marcou, mas o hiscores mostra 23/25" |
 | `skipped` | — tachado cinza | pulado | motivo opcional |
 | `pending` disponível | ○ | | |
@@ -292,7 +301,7 @@ Contagem sobre os 576 steps (campos explícitos; a terceira coluna vem de uma cl
 | instrução pura (vender, dropar, falar, cavar clue, usar lamp) | ~118 | nenhuma | `manual` + cascata |
 | combat achievement | 0 hoje (2.0 Jad/Inferno candidatos) | WikiSync ou plugin | `combat_achievement` |
 
-Meta-regras necessárias além dessas: `all`/`any` (composição), `implied_by_successor` (cascata dentro da seção), `manual_ok` (padrão true), `never_auto` (steps tipo "use authenticator").
+Meta-regras necessárias além dessas: `all`/`any` (composição) e a cascata `implied` dentro da seção e só na rota ativa (doc 09, 9.1). `manual_ok` e `never_auto` saíram do modelo: o clique do dono sempre vence (decisão D10 do doc 09).
 
 **Cobertura acumulada estimada**
 
@@ -322,11 +331,8 @@ Trabalho de conteúdo implícito nesses números: anotar `skillGoal` em ~17 step
 | Contas abaixo do rank mínimo não aparecem no hiscores | skills "desconhecidas" | tratar ausente como desconhecido e permitir manual |
 
 **Decisões para o dono**
-1. **Cascata no MVP** (recomendado) ou só a partir da v1?
-2. **WikiSync no MVP** apesar do pedido do wiki, ou pular direto para plugin próprio (adia quests em semanas)?
-3. Grafo: começar pela **lista em árvore** (v1) e deixar a visualização para v2, ou os dois juntos?
-4. Qual o conjunto inicial de **metas pré-definidas** (sugestão: os títulos das 7 seções + B-gloves, Fire cape, Quest cape, Bowfa)?
-5. Modos: só **ironman + HCIM** no início (6 steps já anotados) e UIM/GIM "won't" até alguém pedir?
-6. Tempo estimado: entra em v1 como "could" com tabela de rates mantida à mão, ou fica fora até o tracking estar confiável?
-7. Mobile: PWA instalável (recomendado, zero custo extra) ou só site responsivo?
-8. Publicar o projeto como open source desde o início (implica resolver a licença do conteúdo do guia antes) ou manter privado enquanto for de uso pessoal?
+
+Registradas e acompanhadas no doc 01 (registro de decisões). Resolvidas: cascata no MVP (doc 09, 9.1) e
+plugin próprio em vez de WikiSync (doc 06). Em aberto: grafo visual na v1 ou só lista em árvore; conjunto
+inicial de metas pré-definidas; modos iniciais (ironman + HCIM); estimativas de tempo na v1; PWA
+instalável; repositório público ou privado.

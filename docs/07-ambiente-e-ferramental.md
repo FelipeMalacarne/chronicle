@@ -1,6 +1,6 @@
 # Ambiente e ferramental
 
-Data: 2026-11-04. Complementa o doc 04 (seções 8 e 9). Descreve o que cada ferramenta faz, os dois
+Data: 2026-11-04. Complementa o doc 04 (seções 1 e 8). Descreve o que cada ferramenta faz, os dois
 modos de execução (local-first no `zaros` e deploy no `saradomin`), as variáveis de ambiente, o CI e
 os problemas mais comuns.
 

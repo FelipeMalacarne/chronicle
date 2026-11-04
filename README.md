@@ -14,9 +14,9 @@ Old Man, um plugin próprio no Microbot (RuneLite) e dados estruturados do OSRS 
   - API por guia;
   - web `/plan` e `/compare` sobre a API real.
 - **Plugin Microbot** 1.0.0 (somente leitura) no repositório `microbot-plugins`, ainda não testado no jogo.
-- **Em revisão**: o modelo de domínio passa a ter o objetivo como unidade rastreável, com progresso
-  compartilhado entre rotas (`docs/09-modelo-de-dominio.md`). A API de progresso espera essa revisão.
-- **Estado detalhado e sequência vigente**: `docs/04-arquitetura.md`, seção 11.
+- **Modelo de domínio aprovado** (`docs/09-modelo-de-dominio.md`): o objetivo é a unidade rastreável,
+  com progresso compartilhado entre rotas; a API de progresso é construída sobre ele.
+- **Estado detalhado e sequência vigente**: `docs/04-arquitetura.md`, seção 9. Decisões: `docs/01`.
 
 Roda primeiro na estação do dono (local-first, `docker compose`, `AUTH_MODE=dev`). O deploy no
 `saradomin` usa a mesma imagem com outras variáveis de ambiente.
@@ -58,23 +58,25 @@ Detalhes, variáveis de ambiente e troubleshooting em `docs/07-ambiente-e-ferram
 
 Mesma imagem, `.env` diferente: `DATABASE_URL` do Postgres existente, `AUTH_MODE=oidc` com
 `OIDC_ISSUER`, `OIDC_CLIENT_ID` e `OIDC_REDIRECT_URL` do Zitadel, `SESSION_SECRET` novo e
-`PUBLIC_BASE_URL` atrás do reverse proxy. Decisões em `docs/04-arquitetura.md` (seções 8 e 9) e passo a
+`PUBLIC_BASE_URL` atrás do reverse proxy. Decisões em `docs/04-arquitetura.md` (seções 1 e 8) e passo a
 passo em `docs/07-ambiente-e-ferramental.md`, seção 3.3.
 
 ## Documentos
 
 | Arquivo | Conteúdo |
 |---|---|
-| `docs/00-levantamento-inicial.md` | Levantamento inicial: fontes, modelo de dados, fases |
-| `docs/01-sumario-executivo.md` | Consolidação da rodada de design, números e decisões pendentes |
+| `docs/00-levantamento-inicial.md` | Levantamento inicial (histórico, superado pelos docs 02 a 04) |
+| `docs/01-sumario-executivo.md` | Sumário executivo e registro de decisões (abertas e resolvidas) |
 | `docs/02-fontes-de-dados.md` | APIs verificadas na prática, formatos reais, estratégia de sync |
 | `docs/03-produto-e-features.md` | Jobs-to-be-done, catálogo de features, UX tela a tela |
-| `docs/04-arquitetura.md` | Stack, componentes, schema de conteúdo, banco, grafo, plugin |
+| `docs/04-arquitetura.md` | Arquitetura vigente em Go: componentes, conteúdo, banco, grafo, ingest, estado e sequência (seção 9) |
 | `docs/05-conteudo-e-normalizacao.md` | O que foi extraído do guia e como vira regras de auto-complete |
 | `docs/06-cliente-microbot.md` | Plugin de leitura no Microbot (fork do RuneLite) como fonte principal de quests, diaries e itens |
 | `docs/07-ambiente-e-ferramental.md` | Ferramentas, modos local-first e saradomin, variáveis de ambiente, CI e troubleshooting |
 | `docs/08-controle-microbot.md` | Controle do cliente Microbot pelo planner: agent no zaros, VNC, plugins, rotinas |
-| `docs/09-modelo-de-dominio.md` | Objetivos, entidades e progresso compartilhado; extração dos guias por agente |
+| `docs/09-modelo-de-dominio.md` | Objetivos, entidades e progresso compartilhado; extração dos guias por agente (aprovado; decisões em 9.1 e 9.3) |
+| `docs/ui/brief-ui-ux.md` | Brief de UI/UX para o agente de design |
+| `docs/arquitetura/types.ts` | Contrato de ingest e tipos de readiness em Zod, só como referência para clientes TS |
 
 ## Design
 

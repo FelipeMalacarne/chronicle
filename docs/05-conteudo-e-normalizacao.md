@@ -240,7 +240,7 @@ Checagens: ids únicos e com prefixo da seção; skills canônicas e níveis 1�
 
 **Licença e atribuição.** O guia é texto de OzirisLoL (originalmente um Google Doc público), republicado, reorganizado e estendido pelo ironman.guide (passos `enhanced`, `updateNote`, páginas companheiras, cujos dados por sua vez citam o OSRS Wiki, CC BY-NC-SA). Não há licença explícita em nenhuma das camadas. Tratar tudo como **conteúdo para uso pessoal self-hosted**: manter `guide.source` (autor, mantenedor, URL) e o front matter dos `.md`, exibir a atribuição na UI, não redistribuir publicamente nem usar comercialmente. Se um dia o planner for publicado, o caminho é pedir autorização ou trocar o conteúdo por um guia do wiki (CC BY-NC-SA) ou próprio.
 
-**Qualidade da inferência.** As 43 regras `inferred` foram revisadas uma a uma nesta rodada (falsos positivos conhecidos foram corrigidos: "Do Slayer until 60 attack", "when you reach 62 Agility", "Dragon slayer 2" → DS I, "RFD subquests" como FINISHED). Ainda assim são heurísticas: na UI, trate `confidence: medium` como sugestão que o usuário confirma, e permita marcar qualquer passo manualmente mesmo quando há regra (`manual_ok` implícito).
+**Qualidade da inferência.** As 43 regras `inferred` foram revisadas uma a uma nesta rodada (falsos positivos conhecidos foram corrigidos: "Do Slayer until 60 attack", "when you reach 62 Agility", "Dragon slayer 2" → DS I, "RFD subquests" como FINISHED). Ainda assim são heurísticas: na UI, trate `confidence: medium` como sugestão que o usuário confirma, e permita marcar qualquer passo manualmente mesmo quando há regra (o clique do dono sempre vence; doc 09, decisão D10).
 
 **Cobertura.** Nenhum passo gera `boss_kc` porque o guia nunca dá contagem alvo; os bosses de endgame ficaram como tags `boss:<nome>` esperando um kc definido por quem revisar. Também não há `combat_achievement`. A regra `diary_tier area=all` (1.5.10) precisa de um avaliador que itere todas as áreas.
 
@@ -252,10 +252,9 @@ Checagens: ids únicos e com prefixo da seção; skills canônicas e níveis 1�
 
 ## 9. Próximos passos sugeridos
 
-1. Revisar o top 30 acima e fixar kc alvo para os bosses de 2.0 (um `complete_when` manual no JSON ou uma camada de *overrides* em `data/guide/overrides.yaml` para não perder na próxima regeneração).
-2. Importar `guide.json` e `quest-order.json` no app (validação Zod a partir do schema v0.1) e implementar os avaliadores `skill_level`, `quest_state`, `diary_tier` (+ `all`), `boss_kc`.
-3. Tabela de locais canônicos (unificar os pares listados em 6.4) para o filtro "o que posso fazer aqui".
-4. Cruzar `quest-order.json` (requisitos de skill e quests por quest) com o Bucket do wiki para montar o grafo de requisitos.
+Superados em 2026-11-04. O top 30 e os bosses sem kc entram na extração por agente; locais canônicos
+viram o catálogo `location`; o grafo usa `data/wiki/quests.json` e chaves de objetivo. Tudo no doc 09 e no
+doc 04, seção 9.
 
 ## 10. Mapeamento para o schema canônico (Go)
 

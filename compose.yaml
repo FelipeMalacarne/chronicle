@@ -1,19 +1,28 @@
-# Prod-like local stack: Postgres 17 + the app image built from this repo.
+# Local stack on zaros: Postgres 17 + migrations + the app image built from this repo.
 #
-#   cp .env.example .env     # edit POSTGRES_PASSWORD / SESSION_SECRET
-#   just up                  # docker compose up -d --build
-#   just migrate-up          # goose against 127.0.0.1:${POSTGRES_PORT}
-#   open http://localhost:8080
+#   cp .env.example .env              # set POSTGRES_PASSWORD
+#   just up                           # build, migrate, start
+#   just stack-account-create "<RSN>" # once: the account (id acc_<rsn>)
+#   open http://localhost:8080/?account=acc_<rsn>
 #
-# Variables come from .env (compose reads it for interpolation, the app gets
-# it through env_file). The app's DATABASE_URL is composed here with host
-# `postgres` so the same .env works for host dev (localhost) and compose.
+# - `migrate` applies db/migrations with goose and exits; `app` starts only after it succeeded
+#   (the server never migrates: only `ironman serve` opens the database, CLAUDE.md rule 1).
+# - The app listens on 127.0.0.1 only: AUTH_MODE=dev has no login, so whoever reaches the port
+#   reads and writes progress. Set IRONMAN_BIND=0.0.0.0 in .env only on purpose (phone, Tailscale).
+# - content/ is mounted read-only: a newly extracted section shows up after `just restart`.
+# - Postgres has no host port (it would clash with compose.dev.yaml); use `just stack-psql`,
+#   `just db-backup` and the stack-account recipes, which go through `docker compose exec`.
 #
-# On saradomin (existing Postgres + Zitadel) only the `app` service is used:
-# set DATABASE_URL, AUTH_MODE=oidc and the OIDC_* vars in .env and drop the
-# `postgres` service / depends_on. See docs/07-ambiente-e-ferramental.md.
+# Variables come from .env (compose reads it for interpolation, the app gets it through
+# env_file). DATABASE_URL is composed here with host `postgres`, so the same .env keeps
+# working for host dev against compose.dev.yaml (localhost).
+#
+# On saradomin (existing Postgres + Zitadel) only the `app` service would be used, with
+# AUTH_MODE=oidc; that needs session auth first (docs/04 section 9, item 11).
 
 name: ironman-planner
+
+x-database-url: &database-url postgres://${POSTGRES_USER:-ironman}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-ironman_planner}?sslmode=disable
 
 services:
   postgres:
@@ -23,9 +32,6 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-ironman}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-ironman_planner}
-    ports:
-      # Bound to loopback only: lets `just migrate-up` / `just db-shell` reach it.
-      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -35,9 +41,22 @@ services:
       retries: 12
       start_period: 10s
 
+  migrate:
+    build:
+      context: .
+      target: migrate
+    image: ironman-planner-migrate:${VERSION:-dev}
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      GOOSE_DBSTRING: *database-url
+
   app:
     build:
       context: .
+      target: runtime
       args:
         VERSION: ${VERSION:-dev}
     image: ironman-planner:${VERSION:-dev}
@@ -45,22 +64,25 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     env_file:
       - path: .env
         required: false   # compose still interpolates ${...} from .env when present
     environment:
       IRONMAN_ADDR: ":8080"
       CONTENT_DIR: /app/content
-      DATABASE_URL: postgres://${POSTGRES_USER:-ironman}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-ironman_planner}?sslmode=disable
+      DATABASE_URL: *database-url
     ports:
-      - "${IRONMAN_PORT:-8080}:8080"
-    # The image is distroless (no shell/curl). If the binary grows a
-    # `health` subcommand, enable:
-    # healthcheck:
-    #   test: ["CMD", "/ironman", "health", "--url", "http://127.0.0.1:8080/api/health"]
-    #   interval: 30s
-    #   timeout: 5s
-    #   retries: 3
+      - "${IRONMAN_BIND:-127.0.0.1}:${IRONMAN_PORT:-8080}:8080"
+    volumes:
+      - ./content:/app/content:ro
+    healthcheck:
+      test: ["CMD", "/ironman", "health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
 volumes:
   pgdata:

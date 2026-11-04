@@ -43,7 +43,9 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `python3 data/wiki/scripts/build_quests.py data/samples/wiki-bucket/quest_all_p1.json 'data/samples/wiki-wikitext/quest_pages/batch*.json' <guide-list> data/wiki/quests.json` | rebuild `data/wiki/quests.json` (requirements, QP, quest XP rewards) offline from the saved bucket and wikitext; `<guide-list>` is a file of quest names to cross-check (may be empty) |
 | `go run ./cmd/ironman content mcp` | extraction MCP server on stdio (Claude Code starts it from `.mcp.json`; skill `annotate-guide`) |
 | `just sqlc` | regenerate `internal/store/db` from `db/queries/*.sql` |
-| `just up` / `just down` / `just logs` | prod-like stack from `compose.yaml` (Postgres + app image) |
+| `just up` / `just down` / `just logs` / `just restart` | the stack used on zaros (`compose.yaml`): Postgres + one-shot `migrate` (goose) + app on 127.0.0.1 with `content/` mounted read-only; `restart` reloads content |
+| `just stack-account-create <rsn>` / `stack-account-guide` / `stack-accounts` / `stack-psql` / `db-backup` | accounts, psql and `pg_dump` (to `backups/`) inside the stack's Postgres, which has no host port |
+| `ironman health` | GET `/api/health` of a running server (container healthcheck; never opens the database) |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
 

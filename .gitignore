@@ -33,3 +33,6 @@ result-*
 .vscode/
 .idea/
 .DS_Store
+
+# Database dumps of the local stack (just db-backup)
+backups/

@@ -123,26 +123,13 @@ dbml:
 
 # Create an account for AUTH_MODE=dev until the account screen exists (id: acc_<rsn>): just account-create "Iron Man"
 account-create rsn mode="ironman" guide="oziris-main" layer="enhanced":
-    #!/usr/bin/env bash
-    set -euo pipefail
-    test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
-    psql "{{database_url}}" -v ON_ERROR_STOP=1 -v rsn="{{rsn}}" -v mode="{{mode}}" -v guide="{{guide}}" -v layer="{{layer}}" <<'SQL'
-    INSERT INTO users (id, subject, username) VALUES ('dev', 'dev', 'dev') ON CONFLICT DO NOTHING;
-    INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
-    VALUES ('acc_' || replace(lower(trim(:'rsn')), ' ', '_'), 'dev', trim(:'rsn'),
-            replace(lower(trim(:'rsn')), ' ', '_'), :'mode', :'guide', :'layer')
-    RETURNING id, rsn, mode, guide_id, layer;
-    SQL
+    @test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
+    psql "{{database_url}}" -v ON_ERROR_STOP=1 -v rsn="{{rsn}}" -v mode="{{mode}}" -v guide="{{guide}}" -v layer="{{layer}}" -f db/scripts/account_create.sql
 
 # Switch the active route of an account (applies from the next reevaluation): just account-guide acc_iron_man bruhsailer-main
 account-guide id guide:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
-    psql "{{database_url}}" -v ON_ERROR_STOP=1 -v id="{{id}}" -v guide="{{guide}}" <<'SQL'
-    UPDATE accounts SET guide_id = :'guide', updated_at = now() WHERE id = :'id'
-    RETURNING id, rsn, guide_id, layer;
-    SQL
+    @test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
+    psql "{{database_url}}" -v ON_ERROR_STOP=1 -v id="{{id}}" -v guide="{{guide}}" -f db/scripts/account_guide.sql
 
 # List accounts
 accounts:
@@ -156,19 +143,53 @@ migrate-new name:
 sqlc:
     {{sqlc}} generate
 
-# --- compose (prod-like local) ---------------------------------------------
+# --- compose (local stack on zaros) ------------------------------------------
 
-# Build and start Postgres + app from compose.yaml
+# psql inside the stack's Postgres container (it has no host port)
+stack_psql := compose + " exec -T postgres sh -c 'psql -v ON_ERROR_STOP=1 -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" \"$@\"' psql"
+
+# Build, migrate (one-shot `migrate` service) and start Postgres + app from compose.yaml
 up:
     VERSION={{version}} {{compose}} up -d --build
+
+# Restart the app: picks up content/ changes (mounted read-only) without a rebuild
+restart:
+    {{compose}} restart app
 
 # Stop the compose stack (volumes kept)
 down:
     {{compose}} down
 
-# Follow logs (default: app). Example: just logs postgres
+# Follow logs (default: app). Example: just logs migrate
 logs service="app":
     {{compose}} logs -f {{service}}
+
+# Create an account in the stack (id: acc_<rsn>): just stack-account-create "Iron Man"
+stack-account-create rsn mode="ironman" guide="oziris-main" layer="enhanced":
+    @test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
+    {{stack_psql}} -v rsn="{{rsn}}" -v mode="{{mode}}" -v guide="{{guide}}" -v layer="{{layer}}" < db/scripts/account_create.sql
+
+# Switch the active route of an account in the stack
+stack-account-guide id guide:
+    @test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
+    {{stack_psql}} -v id="{{id}}" -v guide="{{guide}}" < db/scripts/account_guide.sql
+
+# List the stack's accounts
+stack-accounts:
+    {{stack_psql}} -c "SELECT id, rsn, mode, guide_id, layer, active FROM accounts ORDER BY created_at"
+
+# Interactive psql in the stack's Postgres
+stack-psql:
+    {{compose}} exec postgres sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
+
+# pg_dump of the stack's database to backups/ (custom format; restore with pg_restore)
+db-backup:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    mkdir -p backups
+    out="backups/ironman_planner-$(date +%Y%m%d-%H%M%S).dump"
+    {{compose}} exec -T postgres sh -c 'pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$out"
+    echo "wrote $out ($(du -h "$out" | cut -f1))"
 
 # Remove containers AND volumes of both stacks (destroys local data)
 nuke:

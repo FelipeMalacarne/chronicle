@@ -52,13 +52,28 @@ just migrate-up          # aplica db/migrations (se o serve não aplicar sozinho
 
 Sem `just web-dev`, o servidor entrega a última build embutida de `web/dist`.
 
-### 3.2 Stack completa (prod-like) na estação
+### 3.2 Stack no zaros (Docker)
+
+É a forma de uso no zaros (decisão do dono, 2026-11-04): Postgres 17, um serviço `migrate` que roda
+o goose e sai, e o app (imagem distroless), que só sobe depois da migração.
 
 ```
-just up                  # docker compose up -d --build (imagem distroless + Postgres 17)
-just migrate-up          # Postgres do compose fica em 127.0.0.1:${POSTGRES_PORT}
-just logs                # logs do app
+cp .env.example .env                 # POSTGRES_PASSWORD
+just up                              # build, migrate, start
+just stack-account-create "<RSN>"    # uma vez: conta acc_<rsn> (modo ironman, rota Oziris)
+open http://localhost:8080/?account=acc_<rsn>
+just restart                         # recarrega content/ (montado só leitura) sem rebuild
+just logs                            # logs do app; `just logs migrate` mostra a migração
+just db-backup                       # pg_dump em backups/ (fora do git)
+just stack-accounts / stack-account-guide <id> <guia> / stack-psql
 ```
+
+- O app escuta só em `127.0.0.1`: em `AUTH_MODE=dev` não há login. `IRONMAN_BIND=0.0.0.0` no `.env`
+  abre para a rede (celular, Tailscale), de propósito.
+- O Postgres da stack não tem porta no host, então não conflita com o `compose.dev.yaml`; as receitas
+  `stack-*` e o `db-backup` entram pelo `docker compose exec`.
+- Healthcheck: `/ironman health`, que só faz GET em `/api/health` e falha se o banco não responde.
+- Código novo pede `just up` (rebuild); conteúdo novo da extração, só `just restart`.
 
 ### 3.3 saradomin
 

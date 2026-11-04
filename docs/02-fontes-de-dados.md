@@ -215,12 +215,14 @@ api.php?action=query&prop=revisions&rvprop=content&rvslots=main&format=json&form
 
 ### Resultado: `data/wiki/quests.json`
 
-Gerado por `data/wiki/scripts/build_quests.py` (Bucket + wikitext). 225 entradas (205 quests com `number` + 20 miniquests), 138 com `skill_reqs`, 132 com `quest_reqs`, 198 com `quest_points` inteiro. Formato:
+Gerado por `data/wiki/scripts/build_quests.py` (Bucket + wikitext; `xp_rewards` é o XP fixo de
+`{{Quest rewards}}`, sem lamps nem escolhas, em 167 quests). 225 entradas (205 quests com `number` + 20 miniquests), 138 com `skill_reqs`, 132 com `quest_reqs`, 198 com `quest_points` inteiro. Formato:
 
 ```json
 {
   "name": "Dragon Slayer II", "number": "136", "difficulty": "Grandmaster", "length": "Very Long",
-  "quest_points": 5, "quest_points_required": 200, "series": "Dragonkin, #3",
+  "quest_points": 5, "quest_points_required": 200, "xp_rewards": [{"skill": "Agility", "xp": 50000}, {"skill": "Mining", "xp": 60000}, "..."],
+  "series": "Dragonkin, #3",
   "members": true, "release_date": "4 January 2018", "is_miniquest": false,
   "aliases": {"wikisync": "Dragon Slayer II", "runelite": "Dragon Slayer II"},
   "skill_reqs": [{"skill": "Magic", "level": 75, "boostable": false, "required_to_start": true}, "..."],

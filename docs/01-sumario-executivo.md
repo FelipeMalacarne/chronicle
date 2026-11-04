@@ -12,7 +12,8 @@ em vez de manter listas próprias. Estado do código e sequência de construçã
 | Guia normalizado com regras `complete_when` e prerequisites | `data/guide/normalized/guide.json`, `stats.json` | gerado por `tools/normalize_guide.py`, validado sem erros |
 | Ordem de quests do site (215 quests, 6 fases, 60 marcos) | `data/guide/normalized/quest-order.json` | gerado |
 | 30 páginas companheiras do site em Markdown (gear, bosses, hcim, uim, gim, money, afk, 18 artigos) | `data/raw/ironman-guide/pages/` | extraído |
-| 225 quests do wiki com requisitos de skill e quest, QP, série, aliases para WikiSync | `data/wiki/quests.json` | gerado por `data/wiki/scripts/build_quests.py` |
+| 225 quests do wiki com requisitos de skill e quest, QP, série, XP de recompensa, aliases para WikiSync | `data/wiki/quests.json` | gerado por `data/wiki/scripts/build_quests.py` |
+| Todos os itens do jogo com página na wiki: 14.870 ids com nome, forma noteada, slot, família e variante | `data/wiki/items.json` | gerado por `tools/extract_wiki_items.py` |
 | 492 tasks de achievement diary por área e tier | `data/wiki/diary_tasks.json` | gerado |
 | 124 respostas reais de API (hiscores, WOM, WikiSync, Bucket, chisel, TempleOSRS, RuneLite) | `data/samples/` | salvas |
 | DOCX pinados do BRUHsailer com checksums | `data/sources/bruhsailer/` | entrada de `content import-bruhsailer` |
@@ -61,6 +62,9 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 15 | Estimativas de tempo na v1 como "could" com tabela de rates à mão, ou depois do tracking confiável | **aberta** | doc 03, F14 |
 | 16 | Repositório público ou privado; público exige resolver a licença dos textos dos guias antes | **aberta** | doc 05, seção 8 |
 | 17 | Nome da conta ironman para testar o sync real desde a primeira sessão | **aberta** | doc 04, seção 6.1 |
+| 18 | Catálogo de itens com o jogo inteiro (toda página de item da wiki), não só o que os guias citam; por nome vale o item da página com aquele título | resolvida (2026-11-04) | doc 09, seção 7 (substitui o escopo de D8) |
+| 19 | Checagem de ordem da extração conta o XP fixo de recompensa das quests como fonte de nível | resolvida (2026-11-04) | doc 09, seções 6.8 e 7 |
+| 20 | Entradas de `unlock`/`location` corrigidas só pela tool `revise_entity`, com confirmação do dono | resolvida (2026-11-04) | doc 09, seção 6.8 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais

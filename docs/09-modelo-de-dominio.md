@@ -451,6 +451,22 @@ Aceite, medido pelo `report`:
 O dono acompanha cada lote, responde as consultas (seção 6.4) e pode aprovar ou corrigir antes do
 commit. Só depois disso roda o resto, cerca de 13 seções.
 
+**Resultado do Oziris 1.1** (2026-11-04, `annotate-guide@1`, 13 lotes, commit `1728570` e
+reanotação depois do catálogo completo):
+
+- aceitação no primeiro envio: 284 de 286 (99,3%). As duas rejeições foram um defeito do ferramental
+  (`id` com ref completo, corrigido) e um requisito de Smithing que a rota só atinge pelo XP da The
+  Knight's Sword, o que levou a modelar o XP de quest na checagem de ordem (seção 6.8);
+- concordância com as regras: 88 de 95 objetivos de regra (92,6%; o relatório conta objetivos, por isso
+  95 e não as 94 regras), abaixo da meta. As 7 divergências estão explicadas: 6 são "Continue <quest>"
+  (1.1.95, 113, 195, 207, 256, 260), em que a regra derivou `started` num passo do meio da quest, e 1 é a
+  nota de update de 1.1.254, que manda fazer a Lost Tribe depois do Goblin Diplomacy. Nas seis primeiras
+  quem erra é a derivação da regra, não o texto;
+- perguntas: cerca de 3 por lote nos 7 primeiros e 1 por lote nos 6 últimos, com 11 decisões gerais em
+  `decisions.json`;
+- o piloto expôs que o catálogo de itens precisava cobrir o jogo inteiro (seção 7) e faltava corrigir
+  entradas já propostas (`revise_entity`).
+
 ### 6.7 Riscos
 
 | Risco | Mitigação |
@@ -470,14 +486,17 @@ commit. Só depois disso roda o resto, cerca de 13 seções.
 `ironman content mcp` (servidor `ironman-content` no `.mcp.json`, roda com `go run`) é uma camada fina
 sobre `internal/core/annotate`; o protocolo é o MCP stdio (JSON-RPC por linha, só tools) de
 `internal/mcp`. Argumentos com campo desconhecido são recusados, para um erro de digitação não sumir
-calado.
+calado. Antes de cada tool o servidor relê o registry se algum arquivo de `content/reference` mudou no
+disco (um `catalogbuild -update`, uma edição); guias e sidecars são lidos na subida, então regenerar um
+`guide.json` pede reconectar o servidor.
 
 | Tool | Faz |
 |---|---|
 | `status(guide?)` | cobertura por guia e seção: anotados, desatualizados (hash mudou), pendentes |
 | `next_batch(guide, section, limit?)` | próximos passos sem anotação atual, na ordem do guia (8 por padrão; um lote fecha antes de passar de 12 mil caracteres, mas leva sempre um passo): campos citáveis, menções já resolvidas, objetivos vindos das regras, segmento (`starts_here`, loadout e ações derivados) e as decisões do guia |
-| `resolve_entity(kind, name, tier?)` | resolve como o `submit` vai resolver: `resolved` com ref, `ambiguous` com candidatos, `unresolved` com motivo; para item, diz a família quando o nome cobre uma |
+| `resolve_entity(kind, name, tier?)` | resolve como o `submit` vai resolver: `resolved` com ref, `ambiguous` com candidatos (com `variant` e `page`, que distinguem itens de mesmo nome), `unresolved` com motivo; para item, diz a família quando o nome cobre uma |
 | `propose_entity(kind, name, ..., confirmed_by: owner)` | só `unlock` e `location`; grava em `content/reference` e recarrega o registry; recusa nome ou alias que já resolve |
+| `revise_entity(kind, id, new_id?, name?, wiki_key?, aliases?, note?, remove?, confirmed_by: owner)` | corrige uma entrada de `unlock` ou `location`: `new_id` renomeia e reescreve os refs nos sidecars de todos os guias; `wiki_key`, `aliases` e `note` substituem (vazio limpa); `remove` só sem uso em sidecar ou regra |
 | `submit(guide, section, skill_version, steps)` | verifica e grava; cada passo entra inteiro ou é rejeitado com todos os motivos |
 | `record_decision` / `list_decisions` | `decisions.json`; mesmo id substitui (o dono mudou de ideia) |
 | `report(guide)` | o relatório, também gravado em `annotations.report.json` |
@@ -494,16 +513,21 @@ O agente manda **nomes e citações**, nunca refs nem spans. O `submit`:
 5. confere a ordem da rota contra os objetivos das regras e as anotações atuais, só entre passos da
    mesma variante e nunca entre uma track e o resto: quest iniciada depois de concluída, quest concluída
    antes de iniciar, algo concluído duas vezes (inclui nível menor depois de um maior), requisito que a
-   rota só cumpre depois;
+   rota só cumpre depois. Um requisito de skill conta como cumprido quando o XP fixo das quests que a
+   rota conclui antes do passo (`xp_rewards` de `quests.json`, sem lamps nem escolhas), somado ao XP
+   inicial (Hitpoints 10), já dá o nível; treino não é modelado, então isso só aceita, nunca recusa;
 6. grava os passos aceitos em `annotations/<seção>.json`, na ordem do guia, depois de validar o arquivo
    inteiro contra o schema (escrita atômica).
 
 O relatório guarda o histórico por passo (`steps`: envios, aceito no primeiro envio, motivos da última
-rejeição, comentário do agente) e recalcula a cada envio:
+rejeição, comentário do agente; um envio aceito substitui o comentário, mesmo vazio) e recalcula a cada
+envio:
 
 - a cobertura;
 - a aceitação no primeiro envio;
-- o que o dono confirmou e as decisões aplicadas;
+- o que o dono confirmou e as decisões aplicadas (`owner_confirmed` conta só as respostas dadas para a
+  entrada; a que cita uma decisão entra em `decisions_applied`, embora também carregue
+  `confirmed_by: owner`);
 - a concordância com as regras (objetivo de regra repetido com a mesma chave e papel; cada divergência
   com o comentário do passo);
 - as rejeições abertas;
@@ -514,24 +538,37 @@ Claude Code, fora do MCP; o relatório conta só as respostas registradas.
 
 ## 7. Catálogos
 
-- **Itens** (feito em 2026-11-04). `tools/extract_wiki_items.py` extrai os itens citados pelos dois
-  guias mais as famílias que eles tocam (poções, runas, machados, picaretas, comida, joias com carga,
-  tabs) para `data/wiki/items.json`: 856 ids de 567 páginas, com nome, forma noteada, empilhável, slot de
-  equipamento, família e variante. O bucket `infobox_item` não tem forma noteada nem empilhável, então
-  o script lê o wikitext do `{{Infobox Item}}`/`{{Infobox Bonuses}}` pela API da wiki e tira o id noteado
-  da classe `Cert` do `gameval/ItemID.java` do RuneLite, num commit fixado (gravado em `source`). Só
-  esse script usa a rede; `catalogbuild` gera `content/reference/items.json` a partir do extrato mais
-  os aliases e nomes ambíguos curados de `data/wiki/entity_aliases.json`. O catálogo curado antigo
-  (133 ids) virou fixture de teste: o gerado concorda com ele, salvo duas correções (o id 371 é
-  "Raw swordfish", não "Swordfish"; "Rune sword" virou "Rune shortsword" e ficou como alias). O nome
-  do guia só decide o que buscar; a resolução continua exata (nome, alias curado, plural). O cache
-  inteiro (~30 mil ids) fica fora: não há sinal de que vá ser preciso.
+- **Itens** (feito em 2026-11-04; ampliado para o jogo inteiro no mesmo dia, depois do piloto).
+  `tools/extract_wiki_items.py` lista toda página que usa `{{Infobox Item}}` (API `list=embeddedin`,
+  12.547 páginas) e grava em `data/wiki/items.json` todos os itens com id: **14.870 ids de 10.941
+  páginas**, com nome, forma noteada, empilhável, slot de equipamento, família e variante. As citações dos
+  guias só preenchem `cited_as` e `not_found` e acrescentam títulos candidatos (redirects, abreviações).
+  Ficam de fora versões históricas, de beta, Last Man Standing, Leagues e removidas, páginas sem id (itens
+  só propostos, itens de interface) e o id 0 (Dwarf remains), porque ref de item é positivo. O bucket
+  `infobox_item` não tem forma noteada nem empilhável, então o script lê o wikitext do
+  `{{Infobox Item}}`/`{{Infobox Bonuses}}` e tira o id noteado da classe `Cert` do `gameval/ItemID.java`
+  do RuneLite, num commit fixado (gravado em `source`). Só esse script usa a rede, e o cache torna a
+  rodada seguinte offline; `catalogbuild` gera `content/reference/items.json` (2,2 MB) a partir do extrato
+  mais os aliases e nomes ambíguos curados de `data/wiki/entity_aliases.json`. Os 856 ids do catálogo
+  anterior estão todos lá, com o mesmo nome. O catálogo completo também serve aos módulos seguintes
+  (Microbot, banco), que precisam de qualquer id.
 
-  Efeito nos relatórios de entidades: no Oziris, itens resolvidos 87 → 119 e sem resolução 96 → 62;
-  ambíguos 11 → 13, porque nomes antes desconhecidos agora caem em duas ou mais ids com o mesmo nome
-  (Scrying orb cheio/vazio). No BRUHsailer: resolvidos 1023 → 1391, sem resolução 798 → 369, ambíguos
-  85 → 146 pelo mesmo motivo (famílias sem variante, como "necklace of passage", e nomes repetidos). Ambíguo
-  é o estado certo para esses casos: a extração escolhe com `any_of` ou `family`.
+  Com o jogo inteiro, cópias de minigame e de quest ("Law rune (Barbarian Assault)", "Tinderbox (Cabin
+  Fever)", "Logs (Tutorial Island)") têm o mesmo nome do item normal e id próprio. A resolução por nome
+  continua exata (nome, alias curado, outro número do nome: "shrimp" → Shrimps, "balls of wool" → Ball of
+  wool, "woad leaves" → Woad leaf), mas, quando vários ids casam, vale o item da página com aquele
+  título; as cópias só resolvem por id. Variantes da mesma página (doses, cheio/vazio) continuam
+  ambíguas, e `resolve_entity` mostra `variant` e `page` para escolher.
+
+  Efeito nos relatórios de entidades em relação ao catálogo anterior, sem nenhum ref resolvido mudar de
+  id: no Oziris, itens resolvidos 119 → 131, sem resolução 62 → 50, ambíguos 13 → 13; no BRUHsailer,
+  resolvidos 1391 → 1434, sem resolução 369 → 319, ambíguos 146 → 153 (nomes genéricos como "key" e
+  "diary", que antes nem resolviam). O que ainda fica sem resolução é texto que não nomeia item
+  ("Runes", "Some food", "All 4 meat for druidic ritual").
+- **XP de recompensa de quest.** `data/wiki/scripts/build_quests.py` lê do `{{Quest rewards}}` o XP fixo
+  de cada quest (`{{SCP|Skill|N}}`; linhas de lamp e de escolha ficam de fora) para `xp_rewards` em
+  `data/wiki/quests.json`, e o `catalogbuild` leva isso ao `quests.json` de referência: 167 das 225
+  quests. A checagem de ordem da extração usa esse XP (seção 6.8).
 - **Unlocks e locais.** Catálogos novos, começando pelo que os guias citam (lista sai da extração via
   `propose_entity`), não pela wiki inteira. `unlocks.json` e `locations.json` existem e começam vazios: o
   `location` em texto livre do Oziris (119 valores, como "Draynor" e "Draynor Village", "Various") é
@@ -603,7 +640,7 @@ Nenhuma. O planejamento do modelo está fechado; a execução segue o doc 04, se
 | D5 | `content_steps` | fica como índice mínimo, gravado pelo loader |
 | D6 | Ids do BRUHsailer | posicionais da numeração upstream, com fingerprint do texto |
 | D7 | Ordem da sequência | mantida: extração completa antes do progresso persistido; o contrato (D1) entra como item próprio antes do progresso |
-| D8 | Catálogo de itens | itens citados pelos guias mais famílias, extraídos da wiki para `data/wiki/items.json` (wikitext do infobox, porque o bucket não traz forma noteada nem empilhável; seção 7) |
+| D8 | Catálogo de itens | itens citados pelos guias mais famílias, extraídos da wiki para `data/wiki/items.json` (wikitext do infobox, porque o bucket não traz forma noteada nem empilhável; seção 7). Ampliado depois do piloto para o jogo inteiro (doc 01, decisão 18) |
 | D9 | Documentação | doc 04 reescrito como arquitetura atual; seções superadas e artefatos SQLite/Zod removidos (o git guarda o histórico); doc 01 vira registro de decisões |
 | D10 | `manual_ok` | sai do modelo |
 

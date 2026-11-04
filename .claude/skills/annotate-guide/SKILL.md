@@ -5,7 +5,7 @@ description: Extract objectives, item requirements, bank actions and locations f
 
 # annotate-guide
 
-Skill version: **`annotate-guide@1`**. Pass it as `skill_version` on every `submit`. Bump the number
+Skill version: **`annotate-guide@2`**. Pass it as `skill_version` on every `submit`. Bump the number
 here whenever the taxonomy or procedure below changes.
 
 You turn guide text into structured annotations (docs/09 section 6). The output is committed in
@@ -130,9 +130,17 @@ requirements of that step.
 
 Positive example: "Take out GP, Clue (x marks the spot), air talisman, spade, mind/air runes, bread and
 shrimp from the bank" lists items to withdraw, plus a `withdraw` bank action. "GP" resolves to Coins and
-"mind/air runes" is two items. The item catalog only holds what the guides cite, so check each name with
-`resolve_entity`: one that is `not_in_catalog` (today "air talisman" and "shrimp") stays out of `items`
-and goes in `comment`, which the report keeps for review.
+"mind/air runes" is two items. The item catalog holds every item page of the wiki, so a real item name
+resolves; `not_in_catalog` is left for text that names no item ("Runes", "Some food"), which stays out of
+`items` and goes in `comment`. Check each name with `resolve_entity` **before** reaching for a decision:
+aliases ("fire staff" → Staff of fire) and other numbers of the name ("shrimp" → Shrimps, "balls of
+wool" → Ball of wool) already resolve, and then the entry is `high`.
+
+Same-name items: a bare name means the item of the wiki page titled with it; minigame and quest copies
+("Law rune (Barbarian Assault)") are never picked by name. When a name is still ambiguous, the
+candidates carry `variant` (variants of one page: doses, "Dyed"/"Grey", "Full"/"Empty") and `page` (items
+on pages of their own: "Message (Romeo & Juliet)"). Choose by the step's context and confirm with the
+owner, or use `family` when any variant serves.
 
 ### Bank actions (`bank_actions`)
 
@@ -146,11 +154,18 @@ Only what the text says, typed precisely, with `position` (`start`, `within`, `e
 ### Location (`location`)
 
 Only when the step says where it happens (`/location` or the text). Locations come from
-`content/reference/locations.json`, which starts empty. When a location does not resolve, ask the owner
+`content/reference/locations.json`, filled by the extraction. When a location does not resolve, ask the owner
 whether it deserves a catalog entry ("Draynor Village" yes; "West of Lumbridge" probably not). On yes,
 call `propose_entity` with `confirmed_by: "owner"` (`wiki_key` is the wiki page title, and spellings the
 guides use go in `aliases`), then resubmit. Unlocks work the same way (fairy rings, spellbooks, a
-teleport, access to an area).
+teleport, access to an area). Use the place's own page as `wiki_key`, never the page of a quest with the
+same name ("Fight Arena (location)", not "Fight Arena"); when the wiki has no page for the place, leave
+`wiki_key` out.
+
+To fix an entry already proposed (a wrong id, `wiki_key` or alias), ask the owner and call
+`revise_entity` with `confirmed_by: "owner"`: `new_id` renames it and rewrites its refs in every
+sidecar, an empty `wiki_key` clears it, and `remove` is refused while anything still uses it. Never edit
+the catalogs by hand.
 
 ## Asking the owner
 
@@ -174,6 +189,9 @@ Record every answer:
   asking.
 - When the owner leaves something open, it stays out of the sidecar. Put it in `comment`.
 
+A resubmitted step replaces its annotation and its `comment`: write the comment again for what the new
+annotation says.
+
 ## Rejections you will see
 
 - `quote ... is not in /text`: quote the words exactly, or point `field` at the note or item that
@@ -181,8 +199,10 @@ Record every answer:
 - `is ambiguous ... choose an id among ...`: pick one only if the text says which. Otherwise use
   `any_of` or `family`, or ask the owner.
 - `does not resolve`: check spelling with `resolve_entity`. Unlocks and locations may need
-  `propose_entity`. Items outside the catalog stay out; mention them in `comment`.
+  `propose_entity`. Text that names no item stays out; mention it in `comment`.
 - `needs confirmed_by owner`: you sent an inference. Ask first.
 - `order: ...`: the objective contradicts the route (a quest started after it is finished, something
   completed twice, a requirement the route only meets later). Usually the role or state is wrong.
-  Otherwise ask the owner.
+  A skill requirement counts as met when the fixed experience of the quests the route finishes before
+  the step reaches the level ("15 Smithing required" after The Knight's Sword); lamps and training are
+  not counted. Otherwise ask the owner.

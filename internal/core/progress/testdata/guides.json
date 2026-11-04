@@ -1,0 +1,81 @@
+[
+  {
+    "id": "g1",
+    "title": "Active route",
+    "default_variant": "main",
+    "variants": [
+      {
+        "id": "main",
+        "title": "Main",
+        "sections": [
+          {
+            "id": "s1",
+            "slug": "s1",
+            "title": "Section 1",
+            "steps": [
+              { "id": "a1", "text": "talk to Hans" },
+              { "id": "a2", "text": "walk east" },
+              { "id": "a3", "text": "train agility to 10",
+                "objectives": [ { "key": "skill:agility>=10", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] },
+              { "id": "a4", "text": "bank" },
+              { "id": "a5", "text": "buy 120 feathers with a tinderbox",
+                "objectives": [
+                  { "key": "item:314x120", "role": "completes", "source": { "method": "llm", "confidence": "high" } },
+                  { "key": "item:590x1", "role": "uses", "source": { "method": "llm", "confidence": "high" } }
+                ] },
+              { "id": "a6", "text": "start Cook's Assistant",
+                "objectives": [ { "key": "quest:cooks_assistant@started", "role": "starts", "source": { "method": "explicit", "confidence": "high" } } ] }
+            ]
+          },
+          {
+            "id": "s2",
+            "slug": "s2",
+            "title": "Section 2",
+            "steps": [
+              { "id": "b0", "text": "enhanced-only detour", "layers": ["enhanced"] },
+              { "id": "b1", "text": "run to Draynor" },
+              { "id": "b2", "text": "agility 10 again",
+                "objectives": [ { "key": "skill:agility>=10", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] }
+            ]
+          },
+          {
+            "id": "t",
+            "slug": "t",
+            "title": "Track",
+            "kind": "track",
+            "steps": [
+              { "id": "t1", "text": "sail" },
+              { "id": "t2", "text": "fishing 20",
+                "objectives": [ { "key": "skill:fishing>=20", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "id": "g2",
+    "title": "Other route",
+    "default_variant": "main",
+    "variants": [
+      {
+        "id": "main",
+        "title": "Main",
+        "sections": [
+          {
+            "id": "s1",
+            "slug": "s1",
+            "title": "Section 1",
+            "steps": [
+              { "id": "c1", "text": "talk to the cook" },
+              { "id": "c2", "text": "agility 10",
+                "objectives": [ { "key": "skill:agility>=10", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] },
+              { "id": "c3", "text": "fishing 20",
+                "objectives": [ { "key": "skill:fishing>=20", "role": "completes", "source": { "method": "explicit", "confidence": "high" } } ] }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+]

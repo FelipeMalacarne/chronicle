@@ -66,10 +66,11 @@ internal/core/        PURE domain (no DB/HTTP imports):
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
 internal/store/       repositories (ingest: tokens, pushes, holdings; progress: reevaluation, marks,
-                      cursor, board, content index and step id aliases at boot; state: PlayerState
-                      from player_state); internal/store/db is sqlc OUTPUT
+                      cursor, board, goals, content index and step id aliases at boot; state:
+                      PlayerState from player_state; syncrun: hiscores runs, backoff, scheduler); internal/store/db is sqlc OUTPUT
 internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, dev-only readiness and token bootstrap
-                      planned: internal/sources (hiscores, wom, wiki), internal/client
+internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
+                      planned: internal/client
 web/                  Svelte SPA; web/embed.go embeds web/dist (`//go:embed all:dist`);
                       web/src/lib/progress: view-model (view.ts is pure and node-tested), API types;
                       web/src/lib/v4: components of the v4 screens (Pergaminho design system)
@@ -130,7 +131,7 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
 
 Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
 (`dev` | `oidc`, default `dev`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL`, `SESSION_SECRET`,
-`CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`. `.env.example` documents each one;
+`CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler). `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 
 - **local-first (workstation "zaros")**: `compose.yaml`/`compose.dev.yaml` Postgres, `AUTH_MODE=dev`.

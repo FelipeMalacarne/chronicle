@@ -192,7 +192,9 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/progress?account=` | feita (dev) | resumo das rotas: rota ativa, cursor (com a referência do autor), contagens por seção, cobertura, fontes |
 | `GET /api/guides/{guide}/events?account=&limit=` | feita (dev) | o que mudou: eventos de passo do guia e de objetivo da conta, com a fonte do snapshot |
 | `PUT /api/account/guide?account=` | feita (dev) | troca a rota ativa e reavalia na mesma transação |
-| `GET /api/state?account=`, `POST /api/sync/now`, `GET /api/sync/runs` | planejadas | estado e sync |
+| `POST /api/sync?account=` | feita (dev) | sync do hiscores agora; 429 com `retry_at` no debounce de 60 s ou no recuo |
+| `GET /api/sync/runs?account=&limit=` | feita (dev) | tentativas de sync (status, HTTP, erro, `steps_changed`, `next_allowed_at`) |
+| `GET /api/state?account=` | planejada | estado da conta |
 | `GET/POST /api/goals?account=`, `DELETE /api/goals/{id}?account=` | feita (dev) | metas: objetivo fixado (chave canônica validada no registry); alcançada quando o objetivo vira met |
 | `GET /api/world?account=` | feita (dev) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
 | `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=` | planejadas | grafo e plano da meta (esperam os requisitos de quest no catálogo) |
@@ -471,11 +473,11 @@ Todos em `internal/core/graph`, puros, recebendo `(grafo, vereditos, marcas)`:
 
 | Fonte | Cadência | Condição | Observações |
 |---|---|---|---|
-| Hiscores | a cada 30 min (jitter ±5) | conta ativa; acelera para 10 min por 2 h após "sync now" ou após um ingest do plugin | 404 ⇒ `rsn` não ranqueado ou renomeado; 3 seguidas ⇒ alerta na UI |
+| Hiscores | a cada 30 min (jitter ±5; `SYNC_HISCORES_MINUTES`, 0 desliga) | conta ativa com nome; a aceleração para 10 min ainda não existe | tabela do modo, com a normal de reserva num 404; skill sem rank fica de fora (não sabemos); fatos iguais (sem ranks) ⇒ `unchanged`; 404 três vezes seguidas ⇒ alerta na UI |
 | Wise Old Man | a cada 6 h | `SYNC_WOM_HOURS > 0` | Lê histórico; opcionalmente `POST /players/:name` para pedir update, no máximo 1×/h |
 | Wiki Bucket | semanal + no boot se cache vazio | global, não por conta | Alimenta `wiki_cache` e invalida `graph_cache` |
 | Plugin | push | token válido | Define `last_seen_at` do token |
-| Manual | `POST /api/sync/now` | debounce 60 s por (conta, fonte) | Responde com `sync_run_id`; UI faz polling |
+| Manual | `POST /api/sync` | debounce 60 s por (conta, fonte) | Responde com o `sync_run` terminado (o sync é síncrono) |
 
 WikiSync não é fonte: o wiki pede para não usar a API em projetos de terceiros (doc 02, seção 3) e o
 plugin próprio cobre tudo que ela daria. O scheduler roda a cada minuto, decide o que está vencido
@@ -654,7 +656,7 @@ internal/core/        domínio puro: content (loader, schema, derive, migrate), 
                       annotate (extração por agente); planejados: progress, graph
 internal/importer/    bruhsailer (DOCX pinados → guia canônico)
 internal/store/       repositórios (ingest); internal/store/db é saída do sqlc
-internal/httpapi/     handlers; planejados: internal/sources, internal/client
+internal/httpapi/     handlers; internal/sources/hiscores é o adapter do hiscores; planejado: internal/client
 internal/mcp/         servidor MCP stdio mínimo (JSON-RPC, só tools), usado por content mcp e pelo mcp da conta
 web/                  SPA Svelte; web/src/lib/progress é o view-model (view.ts puro e testado em node)
 content/              guides/<id>/{guide.json, README.md, entities.report.json, annotations/},
@@ -743,12 +745,15 @@ Web v4 (item 9, branch `feat/progresso`): Agora, Rotas e Rota no tema Pergaminho
 real; a API devolve por passo a referência do autor, a posição, os nomes dos refs e o "também em"; os
 ícones do jogo vêm de `tools/fetch_wiki_icons.py` para `web/static/icons`.
 
+Hiscores (item 10, branch `feat/progresso`): adapter puro testado com as amostras do doc 02, sync
+com `sync_runs`, snapshot, fatos e reavaliação numa transação, recuo exponencial e scheduler no `serve`.
+
 Metas (F9, parte A): fixar um objetivo do Mundo, veredito, onde cada rota o conclui e o painel no
 Agora. A parte B (plano da meta) precisa de `requires`, `skill_reqs` e `quest_points_required` em
 `content/reference/quests.json`, pedido à sessão de extração.
 
 Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, plano da meta, faceta de quest e
-diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de hiscores e scheduler, CLI/MCP sobre
+diary no `player_state` (doc 09, seção 1), sessão/OIDC, CLI/MCP sobre
 o cliente, grafo, tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
 antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
 
@@ -766,7 +771,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado |
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; sem `/compare`, decisão 1 do v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Telas e metas (parte A) feitas** (2026-11-04, `feat/progresso`); gargalos, requisitos e ordem da meta esperam os requisitos de quest no catálogo (parte B) |
-| 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros** |
+| 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. Código feito (2026-11-04, `feat/progresso`: `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora); falta o merge e o uso no zaros |
 | 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
 
 Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.

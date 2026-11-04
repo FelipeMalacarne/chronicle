@@ -3,6 +3,7 @@ package httpapi
 import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 )
 
 // occurrence is where a route completes (or starts) an entity.
@@ -101,14 +102,8 @@ func entityOf(k entities.ObjectiveKey) string {
 	return k.Ref.String()
 }
 
-// authorRef is the step reference the author uses ("1.1.75", "CH1.6"); the
-// internal id is shown only when the source has none.
-func authorRef(st *content.Step) string {
-	if st.Source != nil && st.Source.OriginalID != "" {
-		return st.Source.OriginalID
-	}
-	return st.ID
-}
+// authorRef is the step reference the author uses ("1.1.75", "CH1.6").
+func authorRef(st *content.Step) string { return coreprogress.AuthorRef(st) }
 
 // stepNames returns the display name of every canonical ref the step uses:
 // objective refs, its location and its item requirements.

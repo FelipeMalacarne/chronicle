@@ -671,7 +671,7 @@ func TestBuildBoard(t *testing.T) {
 			a5 = s
 		}
 	}
-	if a5.Status != AutoDone || a5.Manual || len(a5.Objectives) != 2 || !a5.Objectives[0].Regressed || a5.Objectives[1].Verdict != rules.Unknown {
+	if a5.Ref != "a5" || a5.Title != "buy 120 feathers with a tinderbox" || a5.Status != AutoDone || a5.Manual || len(a5.Objectives) != 2 || !a5.Objectives[0].Regressed || a5.Objectives[1].Verdict != rules.Unknown {
 		t.Fatalf("a5 = %+v", a5)
 	}
 }

@@ -1,6 +1,11 @@
 package progress
 
-import "github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
+import (
+	"strings"
+
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
+)
 
 // ObjectiveState is the verdict of one objective of a step.
 type ObjectiveState struct {
@@ -13,7 +18,11 @@ type ObjectiveState struct {
 
 // StepState is one step of the board.
 type StepState struct {
-	ID        string `json:"id"`
+	ID string `json:"id"`
+	// Ref is the author's reference ("1.1.75", "CH1.6"); Title is the start of
+	// the text, enough to pick the step in a list.
+	Ref       string `json:"ref"`
+	Title     string `json:"title"`
 	SectionID string `json:"section_id"`
 	Status    Status `json:"status"`
 	Mark      *Mark  `json:"mark,omitempty"`
@@ -83,7 +92,7 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 	objectives := map[string]bool{}
 	for _, st := range steps {
 		s := StepState{
-			ID: st.ID, SectionID: st.SectionID, Status: status[st.ID],
+			ID: st.ID, Ref: AuthorRef(st), Title: title(st.Text), SectionID: st.SectionID, Status: status[st.ID],
 			Manual: IsManual(st), Main: main[st.ID], Visible: Visible(st, in.Account),
 			Objectives: make([]ObjectiveState, 0, len(st.Objectives)),
 		}
@@ -125,6 +134,25 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 		}
 	}
 	return out
+}
+
+// AuthorRef is the step reference the author uses; the internal id only when
+// the source has none (BRUHsailer ids are hashes and are never shown).
+func AuthorRef(st *content.Step) string {
+	if st.Source != nil && st.Source.OriginalID != "" {
+		return st.Source.OriginalID
+	}
+	return st.ID
+}
+
+const titleRunes = 140
+
+func title(text string) string {
+	text = strings.Join(strings.Fields(strings.TrimLeft(strings.TrimSpace(text), "-• ")), " ")
+	if r := []rune(text); len(r) > titleRunes {
+		return strings.TrimSpace(string(r[:titleRunes])) + "…"
+	}
+	return text
 }
 
 func (c *Counts) add(s Status) {

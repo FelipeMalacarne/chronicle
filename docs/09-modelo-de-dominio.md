@@ -1,8 +1,8 @@
 # 09 — Modelo de domínio: objetivos, entidades e progresso compartilhado
 
-Data: 2026-11-04. Estado: **aprovado pelo dono**; todas as decisões estão na seção 9. Este documento
-vem antes da API de progresso, porque ela é a primeira peça que grava estado da conta sobre o modelo de
-conteúdo.
+Data: 2026-11-04. Estado: **aprovado pelo dono** e revisado criticamente no mesmo dia (as decisões da
+revisão estão na seção 9.3). Este documento vem antes da API de progresso, porque ela é a primeira peça
+que grava estado da conta sobre o modelo de conteúdo.
 
 ## 1. Por que revisar agora
 
@@ -13,6 +13,7 @@ Com dois guias carregados, o passo (`step`) como única unidade rastreável deix
 | Passos | 576 | 226 |
 | Tamanho médio do texto | 53 caracteres | 1097 caracteres (maior: 7492) |
 | Passos com `complete_when` | 209 (36%) | **0** |
+| Passos com `location` | 573 | **0** |
 | Metadados estruturados da fonte | quest, skillGoal, items | "GP after step", "Total time", "Items needed", "Skills / quests: yes" |
 
 Consequências do modelo atual:
@@ -24,14 +25,20 @@ Consequências do modelo atual:
 - **Três identidades para a mesma coisa.**
   - As regras usam o nome (`"quest": "X Marks the Spot"`).
   - As menções usam o ref canônico (`quest:x_marks_the_spot`).
-  - O exemplo do schema de `goals.ref` usa um terceiro formato (`'quest:Dragon Slayer II'`).
+  - O `$defs/ref` do schema, o grafo do doc 04 e o comentário de `goals.ref` usam um terceiro formato
+    (`quest:Dragon Slayer II`, `skill:agility:70`), e as fixtures da web um quarto (`quest:cooks-assistant`).
 - **Metas (F9), grafo (F10) e marcos do `/compare` resolvem o mesmo conceito de três jeitos.** O conceito
   é "quest concluída", "skill ≥ 70" ou "item possuído".
+- **Fatos de quest e diary não chegam ao `player_state`.** O contrato de ingest v1 não tem faceta de
+  quest, o manifest só pede varbits que apareçam em regras `varbit` do conteúdo (hoje nenhuma) e o
+  normalizador grava só `varbit`, `varp`, `skill`, `collection_log` e `item`. As 170 regras `quest_state`
+  do Oziris nunca saem de `unknown`. Corrigido pela seção 3.2 e pelo item 7 da sequência.
 - **Requisitos de item genéricos não cabem no loadout.** Exemplos: "Axe", "Pickaxe", "prayer potions",
   "food", "1k arrow shafts". O loadout só aceita um `item_id` exato. No Oziris, 11 itens ficaram ambíguos e
   96 sem resolução; o catálogo de itens tem cerca de 130 ids curados à mão.
-- **Ids do BRUHsailer são hash do texto.** Uma edição upstream muda o id e deixa o progresso órfão. A
-  tabela `step_id_aliases` existe, mas o importador não gera aliases.
+- **Ids do BRUHsailer são hash do texto.** O id inclui todos os bullets e metadados do passo, então
+  qualquer retoque de redação muda o id e deixa o progresso órfão. A tabela `step_id_aliases` existe, mas
+  o importador não gera aliases e o loader não os aplica.
 
 O resto do desenho continua válido e não muda:
 
@@ -55,6 +62,8 @@ O resto do desenho continua válido e não muda:
    (seção 6.4).
 5. **Extração por LLM é proposta, nunca autoridade.** Código determinístico verifica cada proposta antes
    de ela entrar em `content/` (seção 6).
+6. **Todo alvo de objetivo tem uma fonte de fato definida.** Um alvo sem faceta e sem fonte que a
+   preencha não entra no modelo (seção 3.2).
 
 ## 3. Conceitos
 
@@ -70,10 +79,10 @@ O resto do desenho continua válido e não muda:
                 │ avaliado contra player_state                │
  CONTA          ▼                                             ▼
  ┌────────────────────────────────────────────────────────────────────────────┐
- │ objective_progress (1× por conta)   step_marks (manual/skip/pin por guia)   │
- │ route_cursor (conta × guia)         goals → Objective                       │
+ │ objective_progress (1× por conta)   step_marks (manual/skip/pin/implied    │
+ │ route_cursor (conta × guia)          por guia)      goals → Objective       │
  └────────────────────────────────────────────────────────────────────────────┘
-   status do passo = derivado(objetivos `completes`) ⊕ marca manual do guia
+   status do passo = derivado(objetivos `completes`) ⊕ marca da rota
                                                          * tipos novos
 ```
 
@@ -84,32 +93,58 @@ Uma coisa do mundo, com id estável no catálogo (`content/reference/`):
 - **Tipos atuais**: `quest`, `item`, `skill`, `diary`, `ca`, `boss`.
 - **Tipos novos** (decididos; entram já nesta revisão):
   - `unlock`: fairy rings, spellbooks, teleportes, acesso a áreas. São requisitos frequentes no grafo e
-    raramente uma quest.
+    raramente uma quest. Id: slug (`unlock:fairy_rings`); catálogo `content/reference/unlocks.json`, com
+    `wiki_key` e, quando houver, o varbit ou varp que prova o unlock.
   - `location`: Draynor, Port Sarim. Serve para agrupar passos, "itens dos próximos passos no mesmo lugar"
-    (F2) e "próximo banco".
+    (F2) e "próximo banco". Id: slug (`location:draynor_village`); catálogo
+    `content/reference/locations.json`. O BRUHsailer não tem `location` em nenhum passo hoje, então a
+    extração (seção 6) é pré-requisito do F2 nessa rota.
+
+Os dois tipos entram em `entities.Kinds`, ganham `Validate` e `HasCatalog`, e o verificador da
+extração só aceita refs conhecidos. Entradas novas nascem pela tool `propose_entity` com confirmação do
+dono (seção 6.2), nunca pela wiki inteira.
 
 ### 3.2 Objective
 
 O estado verificável de uma entidade. A identidade do objetivo é derivada do ref e do alvo, então o mesmo
-objetivo em dois guias é literalmente a mesma chave:
+objetivo em dois guias é literalmente a mesma chave. A chave é a forma canônica abaixo, implementada
+como `entities.ObjectiveKey` (parse, validação e `String()`), e é o que `objective_progress` e `goals`
+armazenam.
 
 ```
- quest:x_marks_the_spot@finished        quest:rune_mysteries@started
- skill:agility>=70                      diary:ardougne_easy@complete
- item:960x120                           unlock:fairy_rings@done
+ chave      := ref alvo
+ alvo       := "@" estado | ">=" inteiro | "x" inteiro
+ estado     := started | finished            (quest)
+             | complete                      (diary)
+             | done                          (unlock, ca)
+ ">=" N     := skill (nível), boss (kill count), qp (quest points)
+ "x" N      := item exato; N ≥ 1 sempre explícito na chave (item:952x1, nunca item:952)
 ```
 
-Cada tipo de alvo mapeia para uma regra que o motor já sabe avaliar, ou que precisa ganhar:
+Exemplos: `quest:x_marks_the_spot@finished`, `quest:rune_mysteries@started`, `skill:agility>=70`,
+`diary:ardougne:easy@complete`, `item:960x120`, `unlock:fairy_rings@done`, `boss:zulrah>=50`,
+`ca:574@done`, `qp>=107`.
 
-| Alvo | Regra |
-|---|---|
-| `@started` / `@finished` | `quest_state` |
-| `>=N` | `skill_level` |
-| `xN` | `item_owned` |
-| `@complete` | `diary_tier` |
-| `@done` (unlock) | varbit/varp ou manual |
+Cada alvo mapeia para uma regra do motor e para a faceta do `player_state` que a sustenta. A fonte de
+cada faceta é parte do modelo (princípio 6):
 
-O objetivo é avaliado **uma vez por conta** e não por guia.
+| Alvo | Regra | Faceta | Fonte do fato |
+|---|---|---|---|
+| `quest@started` / `quest@finished` | `quest_state` | `quest` | plugin, faceta `data.quest` do contrato v1 (item 7 da sequência); hiscores não sabe |
+| `skill>=N` | `skill_level` | `skill` | plugin (`level`) ou hiscores |
+| `item xN` | `item_owned` | `item` | plugin, containers opt-in (doc 04, seção 6.4.1) |
+| `diary@complete` | `diary_tier` | `diary` | plugin, varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` listados em `content/reference/varbits.json` e pedidos no manifest |
+| `unlock@done` | `varbit`/`varp` do catálogo, senão só manual | `varbit`/`varp` | plugin, varbit do catálogo de unlocks no manifest |
+| `boss>=N` | `boss_kc` | `activity` | hiscores (plugin não vê KC) |
+| `ca@done` | `combat_achievement` | `combat_achievement` | plugin, varps do manifest (fase posterior; fora do piloto) |
+| `qp>=N` | `varp` 101 (`QUEST_POINTS`) | `varp` | plugin; fallback: soma dos QP das quests concluídas pelo catálogo |
+
+O manifest do ingest passa a ser construído a partir dessas tabelas de referência (varbits de diary,
+varbits de unlock, varp 101) mais o que as regras do conteúdo pedirem, e não só das regras.
+
+O objetivo é avaliado **uma vez por conta** e não por guia. Requisitos de item não exatos (`any_of`,
+`family`, seção 3.4) **não têm chave de objetivo**: vivem só em loadouts e no papel `uses`, e são avaliados
+pela readiness e pela posse, nunca persistidos em `objective_progress`.
 
 ### 3.3 Papel do objetivo no passo
 
@@ -121,88 +156,140 @@ O objetivo é avaliado **uma vez por conta** e não por guia.
 | `uses` | consome ou usa (item, runa) | não conclui; alimenta "não venda/não drope" (F13) |
 
 Hoje o `complete_when` do Oziris corresponde a `completes`/`starts` e o `prerequisites` a `requires`. A
-migração é quase direta (seção 8).
+migração é quase direta (seção 8). Objetivos de qualquer papel são avaliados: `requires` precisa de
+veredito para o "bloqueado" do F2 e para o fechamento das metas (F9).
 
 ### 3.4 ItemRequirement (loadout e `uses`)
 
 Substitui o `LoadoutItem` de id único:
 
 ```
- exact     { item: item:2347 }                         Hammer
- any_of    { any_of: [item:1351, item:1353, …],        "Axe": qualquer um, preferindo o melhor
-             prefer: best }
- family    { family: prayer_potion }                   qualquer dose, noteada ou não
- category  { category: food, min: 10 }                 categoria do catálogo
+ exact     { item: item:2347 }                           Hammer
+ any_of    { any_of: [item:1359, item:1357, …] }         "Axe": qualquer um; a lista vem em ordem de
+                                                         preferência (o primeiro é o melhor), decidida na
+                                                         extração, não por um tier no catálogo
+ family    { family: prayer_potion }                     qualquer dose, noteada ou não (campo `family`
+                                                         que o catálogo já tem)
  qty       número; "1k" → 1000; ausente = "não informado pelo guia" (já existe: qty_stated)
  noted     flag explícita quando o guia diz "noted"
 ```
 
-A readiness (`internal/core/planning`) passa a avaliar cada variante; a regra de comparação exata para
-o setup carregado continua valendo dentro de cada variante.
+`category` ("food", "teleport") fica fora desta revisão: o catálogo não tem categorias e não há fonte
+limpa para elas na wiki. "Food" entra como `family` curada quando aparecer na extração.
+
+A readiness (`internal/core/planning`) e a posse (`rules.Owns`) passam a avaliar cada variante: um
+requisito `any_of` é `met` quando qualquer id da lista satisfaz a quantidade; `family` usa
+`CompareFamily`. A comparação exata para o setup carregado continua valendo dentro de cada variante.
 
 ### 3.5 Posição na rota
 
 `route_cursor (conta, guia)` guarda o passo atual de cada rota. Permite alternar de guia sem perder o
 lugar, e o `/compare` mostra as duas posições. "Agora" (F2) passa a ser o cursor da rota ativa.
 
-## 4. Formato no conteúdo (rascunho do schema)
+Regra do cursor: o dono pode fixar qualquer passo (`cause = pin`); sem fixação, o cursor é o primeiro
+passo da rota principal que não está `done` (auto, manual ou `implied` confirmado) nem `skipped`,
+recalculado a cada reavaliação e a cada marca (`cause = auto`). Um pin é descartado quando o passo fixado
+é concluído.
 
-Um passo do Oziris com objetivos explícitos:
+## 4. Formato no conteúdo
+
+### 4.1 O passo em memória e na API
+
+Um passo do Oziris com objetivos explícitos, como o loader entrega ao motor e a API ao cliente:
 
 ```json
 {
   "id": "1.1.5",
   "text": "Buy a spade, start X marks the spot quest",
   "objectives": [
-    { "ref": "quest:x_marks_the_spot", "target": "started", "role": "starts",
-      "evidence": { "quote": "start X marks the spot quest", "field": "/text" },
+    { "key": "quest:x_marks_the_spot@started", "role": "starts",
+      "evidence": { "field": "/text", "quote": "start X marks the spot quest", "span": [14, 42] },
       "source": { "method": "explicit", "confidence": "high" } },
-    { "ref": "item:952", "target": "owned", "qty": 1, "role": "uses",
-      "evidence": { "quote": "Buy a spade", "field": "/text" },
-      "source": { "method": "llm", "confidence": "high", "model": "<id>", "prompt": "annotate-v1" } }
+    { "key": "item:952x1", "role": "uses",
+      "evidence": { "field": "/text", "quote": "Buy a spade", "span": [0, 11] },
+      "source": { "method": "llm", "confidence": "high", "skill_version": "annotate-guide@1",
+                  "confirmed_by": "owner" } }
   ]
 }
 ```
 
-- `evidence.quote` precisa ser uma substring exata do campo citado. O loader verifica isso, como já faz
-  com o `span` das menções.
+- `evidence.quote` precisa corresponder a uma substring do campo citado. O verificador compara depois de
+  dobrar caixa, espaços e pontuação tipográfica (como `entities.foldText` faz para as menções), porque os
+  textos têm aspas curvas ("Monk’s Friend") que um agente tende a normalizar; o `span` gravado é sempre o
+  trecho exato do original.
 - `source.method` ∈ `explicit` (campo estruturado da fonte), `derived` (regra determinística), `llm`
-  (proposta de agente verificada) e `manual` (curadoria humana).
+  (proposta de agente verificada) e `manual` (curadoria humana). As constantes de `content.Provenance`
+  ganham os dois últimos.
 - `source.confirmed_by: "owner"` marca o que foi decidido pelo dono durante a extração (seção 6.4); a
-  pergunta e a resposta ficam no registro de decisões da anotação.
-- `complete_when` continua aceito no schema durante a migração e é convertido para `objectives` pelo
-  loader. Depois sai.
+  pergunta e a resposta ficam no registro de decisões da anotação. `skill_version` identifica a versão
+  da skill; o agente não sabe o próprio id de modelo com confiança, então ele não é gravado.
+
+### 4.2 Onde cada coisa vive em disco
+
+Os importadores continuam donos de `guide.json`; os objetivos extraídos ficam num sidecar lido pelo
+loader. Nunca há dois escritores para o mesmo arquivo (decisão D3, seção 9.3).
+
+| Arquivo | Escritor | Conteúdo |
+|---|---|---|
+| `content/guides/<id>/guide.json` | `content migrate` / `content import-bruhsailer` | texto, segmentos, `complete_when`, `prerequisites`, `items`, menções; regenerável a qualquer momento |
+| `content/guides/<id>/annotations/<section>.json` | `ironman content mcp` (a cada `submit` aceito) | por passo: `step_id`, `text_hash`, `objectives[]`, `items[]`, `bank_actions[]`, `location`; `skill_version`; schema `content/schema/annotations.schema.json` |
+| `content/guides/<id>/annotations/decisions.json` | `ironman content mcp` (`record_decision`) | decisões gerais do dono |
+| `content/guides/<id>/annotations.report.json` | `ironman content mcp` | rejeitados, ambíguos, baixa confiança, pendências |
+
+O loader compõe os dois: converte `complete_when`/`prerequisites` em objetivos com
+`source.method: explicit` e `derived`, e sobrepõe a anotação do passo (objetivos, requisitos de item,
+local e ações de banco; a anotação vence a derivação de `internal/core/content/derive` para o passo
+anotado). `content validate` valida `guide.json` e as anotações juntas: schema, `text_hash` igual ao
+hash do texto atual, citação verificável e refs conhecidos. Hash diferente é erro no `validate` (a CI
+falha) e aviso no `serve`, que ignora a anotação desatualizada e segue; reprocessar só esse passo
+resolve.
+
+`complete_when` continua aceito no schema durante a migração. Sai quando os importadores passarem a
+emitir objetivos diretamente.
 
 ## 5. Progresso e persistência
 
-Tabelas novas (uma migration goose; nunca editar a 0001–0003):
+Tabelas novas e alteradas (uma migration goose; nunca editar a 0001–0003):
 
 | Tabela | Chave | Conteúdo |
 |---|---|---|
-| `objective_progress` | `(account_id, objective_key)` | veredito, `evidence_snapshot_id`, `evidence` JSON, `first_met_at`, `regressed_at` |
-| `step_marks` | `(account_id, guide_id, step_id)` | `manual_done`, `skipped`, `pinned_open`, nota (evolui `step_progress`) |
-| `route_cursor` | `(account_id, guide_id)` | passo atual, `updated_at`, causa |
+| `objective_progress` | `(account_id, objective_key)` | veredito, `evidence_snapshot_id`, `evidence` JSON, `first_met_at`, `met_in_guide_id` (rota ativa no momento em que ficou `met`; alimenta a cascata), `regressed_at` |
+| `objective_progress_events` | id | `(account_id, objective_key, from, to, snapshot_id, at)`; fonte do F6 para objetivos |
+| `step_marks` | `(account_id, guide_id, step_id)` | `kind ∈ {manual_done, skipped, pinned_open, implied}`, `implied_by_step_id`, `implied_at`, `note`, `marked_at` (evolui `step_progress`) |
+| `step_status_events` | id | `(account_id, guide_id, step_id, from, to, cause ∈ {engine, user, implied, migration, import}, snapshot_id, at)`; gravada para **todos** os guias quando o status derivado muda (decisão D2) |
+| `route_cursor` | `(account_id, guide_id)` | passo atual, `cause ∈ {pin, auto}`, `updated_at` |
 | `goals` | — | `objective_key` no lugar de `ref TEXT` |
+| `content_steps` | `(guide_id, step_id)` | índice mínimo (seção, posição, hash do texto) para joins de eventos e detecção de órfãos; gravado no boot junto com `content_versions` |
+| `step_id_aliases` | `(guide_id, old_step_id)` | aplicado pelo loader no boot a `step_marks`, `step_status_events` e `route_cursor` |
 
-Status do passo, avaliado em ordem:
+O status automático do passo **não é armazenado**: é uma função pura em `internal/core/progress`
+(objetivos do passo + vereditos + marcas do guia) e é calculado na leitura e na reavaliação. A ordem:
 
-1. Marca manual da rota (`manual_done`, `skipped`, `pinned_open`). O motor nunca a sobrescreve.
+1. Marca da rota (`manual_done`, `skipped`, `pinned_open`, `implied`). O motor nunca a sobrescreve.
 2. Todos os objetivos `completes`/`starts` estão `met`, com evidência ⇒ `auto_done` (evidência = a dos
    objetivos).
-3. Cascata `implied` (F1): só dentro da seção e só na rota ativa, visualmente distinta e confirmável
-   (seção 9.1).
-4. Senão, `pending`. Um passo sem objetivo concluível é checkbox, como hoje.
+3. Senão, `pending`. Um passo sem objetivo concluível é checkbox, como hoje.
 
-Com isso o progresso é compartilhado entre as rotas por construção: o mesmo `objective_key` aparece cumprido
-nos dois guias, enquanto marcas e cursor continuam por guia. A readiness não muda de natureza: continua
-lendo `player_state`. A posse (`item_owned`) vira só mais um alvo de objetivo.
+A reavaliação por snapshot faz, nesta ordem: avalia todos os objetivos referenciados por qualquer guia
+(qualquer papel) → grava `objective_progress` e os eventos de objetivo → recalcula o status derivado de
+cada passo de cada guia e grava `step_status_events` para o que mudou (`steps_changed` da resposta do
+ingest é esse número) → aplica a cascata (seção 9.1) só na rota ativa, gravando marcas `implied` →
+recalcula os cursores `auto`.
+
+Com isso o progresso é compartilhado entre as rotas por construção: o mesmo `objective_key` aparece
+cumprido nos dois guias, enquanto marcas, eventos de passo e cursor continuam por guia. A readiness não
+muda de natureza: continua lendo `player_state`. A posse (`item_owned`) vira só mais um alvo de objetivo.
+
+`manual_ok` sai do modelo: o clique do dono sempre vence (doc 03, princípio 4), então não existe passo
+que não possa ser marcado à mão.
 
 ## 6. Extração dos guias por agente no Claude Code
 
 Decisão do dono: a estruturação dos textos é uma **operação única feita por um agente no Claude Code**,
-acompanhada ao vivo pelo dono. Não há script nem chave de API. O resultado é um JSON commitado em
-`content/`, que passa a ser a fonte estruturada das rotas. O volume é pequeno: cerca de 96 mil tokens de
-texto nos dois guias (Oziris ~16 mil, BRUHsailer ~80 mil).
+acompanhada ao vivo pelo dono. Não há script nem chave de API. O resultado é JSON commitado em
+`content/` (os sidecars da seção 4.2), que passa a ser a fonte estruturada das rotas. O volume é pequeno:
+cerca de 96 mil tokens de texto nos dois guias (Oziris ~16 mil, BRUHsailer ~80 mil; a maior seção,
+BRUHsailer 1.4, tem 45 mil caracteres).
 
 ### 6.1 Por que Claude Code com um MCP local
 
@@ -210,14 +297,14 @@ texto nos dois guias (Oziris ~16 mil, BRUHsailer ~80 mil).
   e corrigir; um script batch não ofereceria isso.
 - **A reprodutibilidade menor não importa aqui.** O resultado fica commitado e verificado, e só passos
   com texto alterado são reprocessados.
-- **Ferramentas em vez de edição livre.** O agente fala com um **MCP stdio local** (`ironman content mcp`)
-  e segue uma **skill**. O MCP:
+- **Ferramentas em vez de edição livre.** O agente fala com um **MCP stdio local** (`ironman content mcp`,
+  declarado em `.mcp.json` na raiz do repositório) e segue uma **skill**. O MCP:
   - entrega lotes pequenos, sem o agente ler o `guide.json` inteiro;
   - expõe o resolvedor de entidades, então o agente não inventa ids;
   - verifica cada envio na hora e devolve os erros, para o agente corrigir no mesmo ciclo;
-  - guarda o estado, então dá para parar e retomar em outra sessão.
+  - guarda o estado nos sidecars, então dá para parar e retomar em outra sessão.
 
-  O agente nunca escreve no `guide.json`.
+  O agente nunca escreve no `guide.json` nem nos sidecars diretamente.
 - **Não viola a regra 1 do CLAUDE.md.** `ironman content mcp` trabalha só sobre `content/`: sem banco e
   sem rede. É distinto do `ironman mcp` futuro, que é de progresso da conta e fala com a API.
 
@@ -232,30 +319,34 @@ texto nos dois guias (Oziris ~16 mil, BRUHsailer ~80 mil).
  │    │      ◀── passos: id, hash, texto, notas, itens, contexto ──              │
  │    │                                                                         │
  │    ├──resolve_entity(kind, nome)──────▶ registry → candidatos / ambíguo       │
- │    │                                                                         │
+ │    ├──propose_entity(kind, nome, wiki) ▶ entrada nova em unlocks/locations,   │
+ │    │                                     só com confirmação do dono           │
  │    ├──submit(guide, section, anotações)▶ verificador determinístico          │
  │    │      ◀── aceitos / rejeitados com motivo (citação, ref, schema, ordem) ─ │
  │    │      (corrige e reenvia os rejeitados)                                  │
- │    │                                                                         │
+ │    ├──record_decision / list_decisions ▶ decisions.json                      │
  │    └──status(guide) / report(guide) ──▶ cobertura, baixa confiança, pendências│
  └──────────────────────────────────────────────────────────────────────────────┘
           │ grava a cada submit aceito
           ▼
- content/guides/<id>/annotations/<section>.json      (saída verificada + hash por passo)
-          │ ironman content annotate merge   (determinístico, sem LLM)
-          ▼
- content/guides/<id>/guide.json  ──▶ ironman content validate ──▶ commit
+ content/guides/<id>/annotations/<section>.json   (saída verificada + hash por passo)
           │
-          ▼ boot do serve: carrega e indexa (content_versions/content_steps por hash);
-            objetivos avaliados contra player_state. A app já sobe "seedada" pelo conteúdo,
-            sem seed de banco à parte (regra 3: o banco só indexa).
+          ▼ ironman content validate (guide.json + anotações) ──▶ commit
+          │
+          ▼ boot do serve: o loader compõe guide.json + anotações, indexa
+            content_versions/content_steps e aplica aliases; objetivos avaliados
+            contra player_state. A app já sobe "seedada" pelo conteúdo, sem seed
+            de banco à parte (regra 3: o banco só indexa).
 ```
+
+Não existe etapa de merge: o sidecar é a forma final (seção 4.2).
 
 ### 6.3 O que o agente devolve, por passo
 
 - Objetivos com papel e alvo, cada um com a citação do texto.
 - Requisitos de item no formato da seção 3.4, com quantidade interpretada ("1k" → 1000).
 - Ações de banco com o tipo correto. Por exemplo, "bank everything" é `deposit_all`, não `open_bank`.
+  A anotação vence a derivação determinística para o passo anotado.
 - Local do passo, quando o texto disser.
 - Confiança por item: `high` quando explícito no texto, `medium` quando inferido.
 
@@ -289,81 +380,99 @@ Cada resposta é gravada:
 O MCP expõe `record_decision` e `list_decisions` para isso.
 
 Consequência: o que entra no `content/` está sempre resolvido. Ou é explícito (`high`), ou foi confirmado
-pelo dono. O que o dono deixar em aberto fica fora do `guide.json` e aparece só no relatório.
+pelo dono. O que o dono deixar em aberto fica fora dos sidecars e aparece só no relatório.
 
 ### 6.5 Artefatos versionados
 
 | Artefato | Papel |
 |---|---|
-| `.claude/skills/annotate-guide/SKILL.md` | procedimento, taxonomia fechada, exemplos positivos e negativos, quando e como consultar o dono |
+| `.mcp.json` | declara `ironman content mcp` como servidor stdio para o Claude Code |
+| `.claude/skills/annotate-guide/SKILL.md` | procedimento, taxonomia fechada, exemplos positivos e negativos, quando e como consultar o dono; versão em `skill_version` |
+| `content/schema/annotations.schema.json` | schema dos sidecars, embutido no binário como o do guia |
+| `content/reference/unlocks.json`, `locations.json`, `varbits.json` | catálogos novos (seções 3.1 e 7) |
 | `content/guides/<id>/annotations/decisions.json` | decisões gerais do dono (pergunta, resposta, escopo), reaplicadas nos lotes seguintes |
-| `internal/core/annotate` | lote, verificação e merge: puro, testado por tabela, sem LLM |
+| `internal/core/annotate` | lote, verificação e composição: puro, testado por tabela, sem LLM |
 | `ironman content mcp` | servidor MCP stdio sobre `internal/core/annotate` e o registry |
-| `ironman content annotate verify` / `merge` | os mesmos verificadores por CLI; o `verify` roda na CI sobre o que está commitado |
-| `content/guides/<id>/annotations/<section>.json` | saída aceita, com hash do texto de cada passo, modelo e versão da skill |
+| `ironman content validate` | valida `guide.json` e os sidecars juntos; roda na CI sobre o que está commitado |
+| `content/guides/<id>/annotations/<section>.json` | saída aceita, com hash do texto de cada passo e versão da skill |
 | `content/guides/<id>/annotations.report.json` | rejeitados, ambíguos, baixa confiança |
 
 A CI nunca chama LLM: só verifica que o que está commitado continua consistente com o texto e o
-catálogo. Reprocessar é necessário só para passos cujo hash mudou. Isso também resolve a estabilidade
-de ids do BRUHsailer: o importador gera `step_id_aliases` casando o passo antigo e o novo pelos
-objetivos, quando o texto muda pouco.
+catálogo. Reprocessar é necessário só para passos cujo hash mudou. Como os ids do BRUHsailer passam a ser
+posicionais (decisão D6, seção 9.3), uma edição de texto upstream mantém o id e invalida só a anotação
+daquele passo; uma inserção renumera os passos seguintes e o importador grava os aliases.
 
 Alternativa considerada: a skill sozinha, com o agente gravando JSON e rodando
-`content annotate verify` pelo Bash. Funciona, mas o agente precisaria ler arquivos grandes e só
+`content validate` pelo Bash. Funciona, mas o agente precisaria ler arquivos grandes e só
 descobriria erros no fim do lote. Como o núcleo (`internal/core/annotate`) é o mesmo nos dois casos, o
 MCP é uma camada fina por cima.
 
 ### 6.6 Piloto e critério de aceite
 
-1. **Oziris 1.1** (286 passos): já tem cerca de 120 regras determinísticas para medir concordância.
-2. **BRUHsailer 1.1** (18 passos longos): o caso difícil.
+1. **Oziris 1.1** (286 passos): já tem 90 passos com regras determinísticas (94 regras: 76 `quest_state`,
+   17 `skill_level`, 1 `diary_tier`) para medir concordância.
+2. **BRUHsailer 1.1** (18 passos longos, 20 mil caracteres): o caso difícil.
 
-Aceite:
+Aceite, medido pelo `report`:
 
-- ≥ 95% das citações verificadas;
-- concordância alta com as regras existentes (cada divergência explicada no relatório);
+- ≥ 95% das propostas aceitas no primeiro `submit` (o verificador rejeita o resto, então "citações
+  verificadas" é 100% por construção e não serve de métrica);
+- ≥ 95% das 94 regras existentes reproduzidas como objetivo com o mesmo ref e alvo; cada divergência
+  explicada no relatório;
+- perguntas ao dono por passo medidas por seção, com a meta de cair nas seções seguintes conforme as
+  decisões gerais se acumulam;
 - relatório de revisão curto o bastante para leitura humana.
 
 O dono acompanha cada lote, responde as consultas (seção 6.4) e pode aprovar ou corrigir antes do
-`merge`. Uma meta do piloto é medir quantas perguntas por seção a skill gera e ajustar a taxonomia e as
-decisões gerais para que o volume caia nas seções seguintes. Só depois disso roda o
-resto, cerca de 13 seções.
+commit. Só depois disso roda o resto, cerca de 13 seções.
 
 ### 6.7 Riscos
 
 | Risco | Mitigação |
 |---|---|
 | Objetivo inventado | Citação literal obrigatória |
+| Citação "quase igual" (aspas curvas, espaços) rejeitada em massa | Verificador compara dobrado e grava o span exato (seção 4.1) |
 | Extrair demais ("talk to Hans" não é objetivo) | Taxonomia fechada com exemplos negativos |
 | Inferência implícita ("do Waterfall") | O agente pergunta ao dono na hora; a resposta vira `confirmed_by: owner` ou uma decisão geral |
 | Perguntas demais cansam o dono | Agrupar por passo ou lote, decisões gerais reaplicadas, métrica de perguntas por seção no piloto |
 | Variação entre lotes | Prompt fixo, lotes por seção, métrica de concordância |
 | Item fora do catálogo | Gerar o catálogo de itens **antes** do piloto (seção 7) |
+| Unlock ou local fora do catálogo | `propose_entity` com confirmação do dono, no mesmo ciclo |
 | Texto do guia sai da máquina | Aceito: uso pessoal; o texto vai só para a Claude, nunca para terceiros |
 
 ## 7. Catálogos
 
-- **Itens.** Gerar `content/reference/items.json` a partir dos dados da wiki (ids, nome, forma noteada,
-  empilhável, slot de equipamento, família/variante, categorias como food e teleport). O gerador fica em
-  `internal/core/entities/catalogbuild`, como os de quests e diaries. O catálogo curado atual (~130 ids)
-  fica só como teste.
-- **Unlocks e locais.** Catálogos novos, começando pelo que os guias citam (lista sai da extração), não
-  pela wiki inteira.
+- **Itens.** Não existe extração local de itens da wiki hoje (`data/wiki` tem só quests, diaries e
+  aliases) e `catalogbuild` lê só arquivos locais. Entra uma tarefa de dado: um script em `tools/` extrai
+  do bucket do wiki os itens citados pelos dois guias mais as famílias que eles tocam (poções, runas,
+  machados, picaretas, comida), algumas centenas de ids, para `data/wiki/items.json` (ids, nome, forma
+  noteada, empilhável, slot de equipamento, família e variante). O gerador fica em
+  `internal/core/entities/catalogbuild`, como os de quests e diaries, e escreve
+  `content/reference/items.json`. O catálogo curado atual (~130 ids) fica só como teste. O cache inteiro
+  (~30 mil ids) fica fora: não há sinal de que vá ser preciso.
+- **Unlocks e locais.** Catálogos novos, começando pelo que os guias citam (lista sai da extração via
+  `propose_entity`), não pela wiki inteira.
+- **Varbits de referência** (`content/reference/varbits.json`): os `DIARY_<ÁREA>_<TIER>_COMPLETED` por
+  diary (doc 02, seção 5), os varbits/varps dos unlocks e o varp 101 (quest points). É o que o manifest
+  do ingest passa a pedir além das regras do conteúdo (seção 3.2).
 
 ## 8. Migração do que existe
 
 | Hoje | Depois |
 |---|---|
-| `complete_when` com nome de quest | `objectives` com `Ref`; conversão automática no loader e no `content migrate` |
+| `complete_when` com nome de quest | `objectives` com chave canônica; conversão automática no loader |
 | `prerequisites` | objetivos com papel `requires` |
-| `items` + `Loadout.inventory/equipment` (`LoadoutItem`) | `ItemRequirement` (seção 3.4); a readiness avalia as variantes |
+| `$defs/ref` do schema (`quest:<nome wiki>`, `skill:<skill>:<nível>`) em `requires`/`recommended_after`/`unlocks` | `entityRef` e chave de objetivo; o grafo do doc 04 e as fixtures da web adotam a mesma gramática |
+| `items` + `Loadout.inventory/equipment` (`LoadoutItem`) | `ItemRequirement` (seção 3.4); readiness e posse avaliam as variantes |
 | `step_progress` (por guia) | `objective_progress` (por conta) + `step_marks` (por guia); migration copia `manual_*` e `skipped` |
+| `step_progress_events` | `objective_progress_events` + `step_status_events` por guia |
 | `accounts.guide_id` (rota única) | continua como rota ativa; `route_cursor` por guia |
 | `goals.ref TEXT` | `goals.objective_key` |
-| ids do BRUHsailer por hash | iguais, mais `step_id_aliases` gerado no reimport |
+| `manual_ok` | sai; o clique do dono sempre vence |
+| ids do BRUHsailer por hash do texto | ids posicionais da numeração upstream (`bruh-1.1-05` de `CH1.5`), hash do texto em `source.fingerprint`; aliases gerados pelo importador quando a numeração muda |
+| `content_versions`/`content_steps`/`step_id_aliases` só como queries sqlc | gravados e aplicados pelo loader no boot |
 | marcos do `/compare` (heurística no cliente) | objetivos compartilhados servidos pela API |
-
-Nenhuma dessas mudanças altera o contrato de ingest (doc 04, seção 6.4) nem o plugin.
+| contrato de ingest v1 sem quests | mesmo `contract_version: 1`, com a faceta opcional `data.quest` e os varbits de referência no manifest (doc 04, seção 6.4); o servidor sobe antes do plugin porque rejeita campos desconhecidos |
 
 ## 9. Decisões
 
@@ -378,32 +487,51 @@ Nenhuma dessas mudanças altera o contrato de ingest (doc 04, seção 6.4) nem o
 - **Objetivo** como unidade rastreável e **Ref canônico** como identidade única.
 - **Consulta interativa**: o dono acompanha a extração e o agente pergunta sempre que precisar (seção
   6.4). Não existe estado "sugerido" na aplicação: o que entra no conteúdo é explícito ou confirmado pelo
-  dono e pode concluir passos com evidência; o que ficar em aberto fica fora do `guide.json`.
+  dono e pode concluir passos com evidência; o que ficar em aberto fica fora dos sidecars.
 - **`unlock` e `location` entram já nesta revisão**: no schema e no registry desde o passo 2 da
   sequência, com catálogos povoados pelo que a extração encontrar (cada entrada nova confirmada pelo
   dono), não pela wiki inteira.
 - **Cascata `implied` (F1)**: quando um passo conclui por evidência, os passos **manuais** anteriores
-  ainda `pending` viram `done_implied`. Limites:
+  ainda `pending` viram `implied`. Limites:
   - só **dentro da mesma seção**;
   - só na **rota ativa**: o passo que dispara precisa ter concluído enquanto aquela rota é a seguida
-    (cursor ativo). Um objetivo cumprido seguindo o Oziris não dispara cascata no BRUHsailer;
+    (`met_in_guide_id` do objetivo = rota ativa). Um objetivo cumprido seguindo o Oziris não dispara
+    cascata no BRUHsailer;
   - nunca em **tracks** paralelas;
-  - `done_implied` aponta para o passo que disparou como evidência, tem visual próprio e só vira feito
-    com a confirmação do dono ("confirmar tudo"). Nunca é `auto_done`.
+  - a marca `implied` aponta para o passo que disparou (`implied_by_step_id`), tem visual próprio e só
+    vira feito com a confirmação do dono ("confirmar tudo"). Nunca é `auto_done`.
 
 ### 9.2 Em aberto (dono)
 
 Nenhuma. O planejamento do modelo está fechado; a execução segue a seção 10.
+
+### 9.3 Decisões da revisão crítica (2026-11-04)
+
+| # | Decisão | Escolha do dono |
+|---|---|---|
+| D1 | Como quest e diary chegam ao `player_state` | faceta `data.quest` no contrato v1 (aditiva) e varbits de diary de referência no manifest; não mapear varbit → quest no servidor |
+| D2 | Eventos de status de passo | para todos os guias, não só a rota ativa |
+| D3 | Onde vivem as anotações | sidecar canônico lido pelo loader; sem comando `merge` |
+| D4 | Requisitos de item não exatos | sem chave de objetivo; `category` fora desta revisão |
+| D5 | `content_steps` | fica como índice mínimo, gravado pelo loader |
+| D6 | Ids do BRUHsailer | posicionais da numeração upstream, com fingerprint do texto |
+| D7 | Ordem da sequência | mantida: extração completa antes do progresso persistido; o contrato (D1) entra como item próprio antes do progresso |
+| D8 | Catálogo de itens | itens citados pelos guias mais famílias, extraídos do bucket do wiki para `data/wiki/items.json` |
+| D9 | Documentação | doc 04 reescrito como arquitetura atual; seções superadas e artefatos SQLite/Zod removidos (o git guarda o histórico); doc 01 vira registro de decisões |
+| D10 | `manual_ok` | sai do modelo |
 
 ## 10. Sequência
 
 | # | Entrega | Pronto quando |
 |---|---|---|
 | 1 | Este doc revisado e decisões fechadas | **feito** (2026-11-04) |
-| 2 | Schema: `objectives`, `ItemRequirement`, tipos `unlock`/`location`; loader converte `complete_when` | `content validate` passa nos dois guias, readiness verde |
-| 3 | Catálogo de itens gerado | ambíguos e não resolvidos do Oziris caem de forma mensurável |
-| 4 | `internal/core/annotate` (lote, verificação, merge), `ironman content mcp`, `content annotate verify/merge` e a skill `annotate-guide` | testes de tabela das checagens; o MCP responde a um lote de exemplo |
+| 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`; schema dos sidecars; loader converte `complete_when` e compõe anotações | `content validate` passa nos dois guias; readiness continua verde nos loadouts exatos e avalia `any_of`/`family` com testes de tabela |
+| 3 | Dados e catálogos: `data/wiki/items.json` (script em `tools/`), `content/reference/items.json` gerado, `unlocks.json`, `locations.json` e `varbits.json` iniciais | ambíguos e não resolvidos de item do Oziris (11 e 96) caem de forma mensurável; `catalogbuild -update` regenera tudo sem rede |
+| 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars e a skill `annotate-guide` | testes de tabela das checagens (citação dobrada, refs, hash, ordem); o MCP responde a um lote de exemplo |
 | 5 | Piloto (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code | critérios da seção 6.6 |
-| 6 | Extração completa dos dois guias | relatório revisado pelo dono |
-| 7 | Migration de progresso + API (`objective_progress`, `step_marks`, `route_cursor`) | `PATCH` de marca e reavaliação por snapshot testados no Postgres |
-| 8 | Web e `/compare` sobre objetivos; metas (F9) | marcos vindos da API, progresso igual nos dois guias |
+| 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
+| 7 | Contrato v1 com `data.quest`, varbits de referência no manifest, normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo | teste de integração no Postgres com um `full` que contém quests; quest do Oziris sai de `unknown` com o plugin real |
+| 8 | Migration de progresso + API (`objective_progress`, `step_marks`, `route_cursor`, eventos), `internal/core/progress`, indexação e aliases no boot | `PATCH` de marca, cascata e reavaliação por snapshot testados no Postgres; `steps_changed` correto |
+| 9 | Web e `/compare` sobre objetivos; metas (F9) | marcos vindos da API, progresso igual nos dois guias |
+
+Hiscores, CLI/MCP de conta, grafo e o controle do Microbot continuam na sequência do doc 04, seção 10.

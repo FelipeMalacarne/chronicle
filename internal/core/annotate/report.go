@@ -54,12 +54,16 @@ type RuleAgreement struct {
 }
 
 // Divergence is a rule objective an annotated step does not repeat. Comment
-// is the agent's explanation for the step, when it gave one.
+// is the agent's explanation for the step, when it gave one. A suppressed
+// divergence was dropped from the step with the owner (Reason); the others
+// still apply to the step.
 type Divergence struct {
-	StepID  string `json:"step_id"`
-	Key     string `json:"key"`
-	Role    string `json:"role"`
-	Comment string `json:"comment,omitempty"`
+	StepID     string `json:"step_id"`
+	Key        string `json:"key"`
+	Role       string `json:"role"`
+	Suppressed bool   `json:"suppressed,omitempty"`
+	Reason     string `json:"reason,omitempty"`
+	Comment    string `json:"comment,omitempty"`
 }
 
 // InferredEntry is one medium-confidence entry of a sidecar.
@@ -151,6 +155,11 @@ func (gs *guideState) refreshReport(reg *entities.Registry) {
 					continue
 				}
 				d := Divergence{StepID: st.ID, Key: o.Key.String(), Role: o.Role}
+				for _, s := range sa.Suppressed {
+					if s.Key == o.Key && s.Role == o.Role {
+						d.Suppressed, d.Reason = true, s.Reason
+					}
+				}
 				if l := r.Steps[st.ID]; l != nil {
 					d.Comment = l.Comment
 				}
@@ -183,6 +192,9 @@ func (gs *guideState) tally(s *SectionReport, st *content.Step, sa *content.Step
 	}
 	for _, o := range sa.Objectives {
 		count(fmt.Sprintf("%s %s", o.Key, o.Role), *o.Evidence, o.Source)
+	}
+	for _, x := range sa.Suppressed {
+		count(fmt.Sprintf("suppresses %s %s", x.Key, x.Role), content.ObjectiveEvidence{Quote: x.Reason}, x.Source)
 	}
 	for _, it := range sa.Items {
 		count("item "+describeItem(it.ItemRequirement), it.Evidence, it.Source)

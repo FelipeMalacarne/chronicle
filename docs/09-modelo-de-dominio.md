@@ -257,7 +257,11 @@ Detalhes da composição, como implementados (item 2 da sequência):
 - `text_hash` é `sha256:` do JSON de `text`, `location`, `notes` e `items` do passo: tudo o que uma
   anotação pode citar (`content.StepTextHash`).
 - Objetivos: os do `guide.json` (se houver), depois os convertidos das regras, depois os da anotação; a
-  mesma chave com o mesmo papel é substituída no lugar. A conversão rejeita, sem aproximar, o que não
+  mesma chave com o mesmo papel é substituída no lugar. A anotação pode suprimir um objetivo das regras
+  do passo (`suppressed`: chave, papel, motivo e `confirmed_by: owner` ou `decision`), quando o texto,
+  uma nota de update ou a ordem da rota o contradiz; o loader o remove antes de compor, a checagem de
+  ordem do `submit` o ignora e o relatório marca a divergência como `suppressed`. Sem supressão, uma
+  divergência só aparece no relatório e o objetivo da regra continua valendo. A conversão rejeita, sem aproximar, o que não
   tem alvo de objetivo (`any`/`not`, `op: eq`, varbit, `item_owned` com containers restritos); a regra
   `manual` não vira objetivo.
 - Itens e ações de banco da anotação substituem o loadout e as ações derivadas do segmento quando o

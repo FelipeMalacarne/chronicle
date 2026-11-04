@@ -112,7 +112,7 @@ func TestObjectiveKey(t *testing.T) {
 		{ObjectiveProposal{Kind: "item", Name: "axe", ID: "952", N: 1}, "", "not a candidate"},
 		{ObjectiveProposal{Kind: "item", Name: "spade", ID: "1359", N: 1}, "", "resolves to item:952"},
 		{ObjectiveProposal{Kind: "item", Name: "noted spade", N: 1}, "", "noted"},
-		{ObjectiveProposal{Kind: "unlock", Name: "Fairy rings"}, "", "propose_entity"},
+		{ObjectiveProposal{Kind: "unlock", Name: "Not an unlock"}, "", "propose_entity"},
 		{ObjectiveProposal{Kind: "planet", Name: "x"}, "", "unknown kind"},
 	}
 	for _, c := range cases {
@@ -275,6 +275,84 @@ func TestSubmitOrder(t *testing.T) {
 		if c.want != "" && !strings.Contains(got, c.want) {
 			t.Errorf("%s: reasons %q, want %q", c.step.StepID, got, c.want)
 		}
+	}
+}
+
+// TestSuppress: a suppressed rule objective needs the owner, must be one of
+// the step's rules, leaves the route order and the composed step, and is
+// reported as a suppressed divergence.
+func TestSuppress(t *testing.T) {
+	w, dir := workspace(t)
+	owner := content.ConfirmedByOwner
+	cases := []struct {
+		name string
+		step StepProposal
+		want string
+	}{
+		{"without the owner", StepProposal{StepID: "b", Suppress: []SuppressProposal{{Key: "skill:woodcutting>=30", Role: "completes", Reason: "x"}}},
+			"needs confirmed_by owner"},
+		{"not a rule of the step", StepProposal{StepID: "b", Suppress: []SuppressProposal{{Key: "skill:woodcutting>=31", Role: "completes", Reason: "x", ConfirmedBy: owner}}},
+			"is not an objective of the step's rules"},
+		{"other role", StepProposal{StepID: "b", Suppress: []SuppressProposal{{Key: "skill:woodcutting>=30", Role: "requires", Reason: "x", ConfirmedBy: owner}}},
+			"is not an objective of the step's rules"},
+		{"without a reason", StepProposal{StepID: "b", Suppress: []SuppressProposal{{Key: "skill:woodcutting>=30", Role: "completes", ConfirmedBy: owner}}},
+			"needs a reason"},
+		{"suppressed and annotated", StepProposal{StepID: "b",
+			Objectives: []ObjectiveProposal{objective("completes", "skill", "Woodcutting", "", 30, "30 woodcutting", hi)},
+			Suppress:   []SuppressProposal{{Key: "skill:woodcutting>=30", Role: "completes", Reason: "x", ConfirmedBy: owner}}},
+			"both annotated and suppressed"},
+		{"bad key", StepProposal{StepID: "b", Suppress: []SuppressProposal{{Key: "woodcutting 30", Role: "completes", Reason: "x", ConfirmedBy: owner}}},
+			"rule objective key"},
+	}
+	for _, c := range cases {
+		res := submit(t, w, "1.1", c.step)
+		if got := reasons(res, c.step.StepID); !strings.Contains(got, c.want) {
+			t.Errorf("%s: reasons %q, want %q", c.name, got, c.want)
+		}
+	}
+
+	// b's rule completes woodcutting>=30, so c cannot complete 20 ...
+	if got := reasons(submit(t, w, "1.1", StepProposal{StepID: "c", Objectives: []ObjectiveProposal{
+		objective("completes", "skill", "Woodcutting", "", 20, "Do the Cook", hi)}}), "c"); !strings.Contains(got, "already completed by step b") {
+		t.Fatalf("before suppressing: %q", got)
+	}
+	// ... until b suppresses it, in the same submit or an earlier one.
+	res := submit(t, w, "1.1",
+		StepProposal{StepID: "b", Suppress: []SuppressProposal{{Key: "skill:woodcutting>=30", Role: "completes", Reason: "only chops; the level comes at c", Decision: "gather-later"}}},
+		StepProposal{StepID: "c", Objectives: []ObjectiveProposal{objective("completes", "skill", "Woodcutting", "", 20, "Do the Cook", hi)}},
+	)
+	if got := reasons(res, "b"); !strings.Contains(got, "unknown decision") {
+		t.Fatalf("unknown decision: %q", got)
+	}
+	if _, err := w.RecordDecision("t", content.Decision{ID: "gather-later", Question: "q", Answer: "a", Scope: "s"}); err != nil {
+		t.Fatal(err)
+	}
+	res = submit(t, w, "1.1",
+		StepProposal{StepID: "b", Suppress: []SuppressProposal{{Key: "skill:woodcutting>=30", Role: "completes", Reason: "only chops; the level comes at c", Decision: "gather-later"}}},
+		StepProposal{StepID: "c", Objectives: []ObjectiveProposal{objective("completes", "skill", "Woodcutting", "", 20, "Do the Cook", hi)}},
+	)
+	if len(res.Accepted) != 2 || len(res.Accepted[0].Suppressed) != 1 {
+		t.Fatalf("submit = %+v", res)
+	}
+
+	c, err := content.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, _ := c.Guide("t")
+	if b, _ := g.Step("b"); len(b.Objectives) != 0 {
+		t.Errorf("composed b = %+v", b.Objectives)
+	}
+	r, err := w.Report("t")
+	if err != nil {
+		t.Fatal(err)
+	}
+	d := r.RuleAgreement.Divergent
+	if len(d) != 1 || d[0].StepID != "b" || !d[0].Suppressed || d[0].Reason == "" {
+		t.Errorf("divergent = %+v", d)
+	}
+	if r.Summary.DecisionsApplied != 1 {
+		t.Errorf("summary = %+v", r.Summary)
 	}
 }
 

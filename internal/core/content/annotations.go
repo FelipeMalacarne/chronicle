@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strings"
 	"sync"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
@@ -43,14 +44,40 @@ type AnnotationFile struct {
 
 // StepAnnotation is the extraction output of one step, pinned to the hash of
 // the step text it was made from. Items and BankActions, when present,
-// replace what internal/core/content/derive derived for the step.
+// replace what internal/core/content/derive derived for the step. Suppressed
+// lists rule objectives the step does not have.
 type StepAnnotation struct {
 	StepID      string                `json:"step_id"`
 	TextHash    string                `json:"text_hash"`
 	Objectives  []Objective           `json:"objectives,omitempty"`
+	Suppressed  []SuppressedObjective `json:"suppressed,omitempty"`
 	Items       []AnnotatedItem       `json:"items,omitempty"`
 	BankActions []AnnotatedBankAction `json:"bank_actions,omitempty"`
 	Location    *AnnotatedLocation    `json:"location,omitempty"`
+}
+
+// SuppressedObjective is an objective converted from the step's rules that
+// the owner decided the step does not have (the text, an update note or the
+// route order contradicts it). The loader drops it from the step. It always
+// needs the owner: confirmed_by owner or a decision.
+type SuppressedObjective struct {
+	Key    entities.ObjectiveKey `json:"key"`
+	Role   string                `json:"role"`
+	Reason string                `json:"reason"`
+	Source ObjectiveSource       `json:"source"`
+}
+
+// Suppresses reports whether sa drops the objective with o's key and role.
+func (sa *StepAnnotation) Suppresses(o Objective) bool {
+	if sa == nil {
+		return false
+	}
+	for _, s := range sa.Suppressed {
+		if s.Key == o.Key && s.Role == o.Role {
+			return true
+		}
+	}
+	return false
 }
 
 // AnnotatedItem is an item requirement read from the step text. Slot is
@@ -273,6 +300,32 @@ func (g *Guide) CheckStepAnnotation(sa *StepAnnotation, decisions *DecisionsFile
 		}
 		checkSource(oPtr+"/source", o.Source)
 	}
+	if len(sa.Suppressed) > 0 {
+		rules, _ := RuleObjectives(st, reg)
+		seen := map[string]bool{}
+		for j, s := range sa.Suppressed {
+			sPtr := fmt.Sprintf("/suppressed/%d", j)
+			o := Objective{Key: s.Key, Role: s.Role}
+			if !slices.ContainsFunc(rules, func(r Objective) bool { return r.Key == s.Key && r.Role == s.Role }) {
+				add(sPtr, "%s %s is not an objective of the step's rules", s.Key, s.Role)
+			}
+			if annotated := slices.ContainsFunc(sa.Objectives, func(x Objective) bool { return x.Key == o.Key && x.Role == o.Role }); annotated {
+				add(sPtr, "%s %s is both annotated and suppressed", s.Key, s.Role)
+			}
+			if k := s.Key.String() + "|" + s.Role; seen[k] {
+				add(sPtr, "%s %s is suppressed twice", s.Key, s.Role)
+			} else {
+				seen[k] = true
+			}
+			if strings.TrimSpace(s.Reason) == "" {
+				add(sPtr+"/reason", "a suppressed objective needs a reason")
+			}
+			if s.Source.ConfirmedBy != ConfirmedByOwner {
+				add(sPtr+"/source", "suppressing a rule objective needs confirmed_by owner or a decision")
+			}
+			checkSource(sPtr+"/source", s.Source)
+		}
+	}
 	for j, it := range sa.Items {
 		iPtr := fmt.Sprintf("/items/%d", j)
 		for _, msg := range checkRequirement(it.ItemRequirement, reg) {
@@ -320,8 +373,9 @@ func (d *DecisionsFile) Has(id string) bool {
 	return false
 }
 
-// composeStep overlays a verified annotation on its step. Objectives merge
-// (the annotation wins for the same key and role); the location ref is set.
+// composeStep overlays a verified annotation on its step. Suppressed rule
+// objectives are dropped, then objectives merge (the annotation wins for the
+// same key and role); the location ref is set.
 // Items and bank actions replace the derived loadout and bank actions of the
 // step's segment when the step starts it, since derive builds both from a
 // segment's first step; otherwise they stay on the step.
@@ -331,6 +385,14 @@ func (g *Guide) composeStep(sa *StepAnnotation, skillVersion string) {
 		if sa.Objectives[i].Source.SkillVersion == "" && sa.Objectives[i].Source.Method == ProvenanceLLM {
 			sa.Objectives[i].Source.SkillVersion = skillVersion
 		}
+	}
+	for i := range sa.Suppressed {
+		if sa.Suppressed[i].Source.SkillVersion == "" && sa.Suppressed[i].Source.Method == ProvenanceLLM {
+			sa.Suppressed[i].Source.SkillVersion = skillVersion
+		}
+	}
+	if len(sa.Suppressed) > 0 {
+		st.Objectives = slices.DeleteFunc(st.Objectives, sa.Suppresses)
 	}
 	st.Objectives = mergeObjectives(st.Objectives, sa.Objectives)
 	if sa.Location != nil {

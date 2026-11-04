@@ -5,7 +5,7 @@ description: Extract objectives, item requirements, bank actions and locations f
 
 # annotate-guide
 
-Skill version: **`annotate-guide@2`**. Pass it as `skill_version` on every `submit`. Bump the number
+Skill version: **`annotate-guide@3`**. Pass it as `skill_version` on every `submit`. Bump the number
 here whenever the taxonomy or procedure below changes.
 
 You turn guide text into structured annotations (docs/09 section 6). The output is committed in
@@ -108,6 +108,14 @@ Ask the owner (inferred, so `medium`):
 supports it (that is the agreement metric). When the text contradicts a rule objective, do not repeat
 it, and say why in `comment`: the report lists every divergence.
 
+A divergence alone does not remove the rule objective: the loader still composes it into the step. When
+the rule objective must not apply (it would leave the step pending until a later step, block it with a
+requirement the route only meets later, or make a later step's objective "already completed"), ask the
+owner, then list it in `suppress` with its `key` and `role` exactly as `rule_objectives` shows them, a
+`reason`, and `confirmed_by: "owner"` or the `decision` that covers it. The loader then drops it, the
+route-order check ignores it and the report marks the divergence `suppressed`. A harmless divergence
+(a "Continue <quest>" step whose rule says `starts` for a quest already started) needs no suppression.
+
 ### Item requirements (`items`)
 
 Items the step needs in the inventory (`slot: "inventory"`, the default) or worn (`"equipment"`). `name`
@@ -205,4 +213,6 @@ annotation says.
   completed twice, a requirement the route only meets later). Usually the role or state is wrong.
   A skill requirement counts as met when the fixed experience of the quests the route finishes before
   the step reaches the level ("15 Smithing required" after The Knight's Sword); lamps and training are
-  not counted. Otherwise ask the owner.
+  not counted. When the conflicting objective is a rule objective of another step that the text
+  contradicts ("already completed by step X" where X only gathers resources), ask the owner whether
+  to suppress it on X. Otherwise ask the owner.

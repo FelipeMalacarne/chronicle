@@ -3,6 +3,7 @@ package annotate
 import (
 	"fmt"
 	"path/filepath"
+	"slices"
 	"sort"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
@@ -26,6 +27,7 @@ type SubmitResult struct {
 type AcceptedStep struct {
 	StepID      string          `json:"step_id"`
 	Objectives  []ObjectiveView `json:"objectives,omitempty"`
+	Suppressed  []string        `json:"suppressed,omitempty"`
 	Items       []string        `json:"items,omitempty"`
 	BankActions []string        `json:"bank_actions,omitempty"`
 	Location    string          `json:"location,omitempty"`
@@ -126,6 +128,9 @@ func accepted(sa content.StepAnnotation) AcceptedStep {
 	for _, o := range sa.Objectives {
 		a.Objectives = append(a.Objectives, view(o))
 	}
+	for _, s := range sa.Suppressed {
+		a.Suppressed = append(a.Suppressed, s.Key.String()+" "+s.Role)
+	}
 	for _, it := range sa.Items {
 		a.Items = append(a.Items, describeItem(it.ItemRequirement))
 	}
@@ -209,10 +214,14 @@ func (gs *guideState) orderIssues(reg *entities.Registry, candidates map[string]
 	for _, st := range gs.guide.Steps() {
 		sec, _ := gs.guide.Section(st.SectionID)
 		objs, _ := content.RuleObjectives(st, reg)
-		if sa, ok := candidates[st.ID]; ok {
-			objs = append(objs, sa.Objectives...)
-		} else if sa := gs.annotation(st); sa != nil && sa.TextHash == content.StepTextHash(st) {
-			objs = append(objs, sa.Objectives...)
+		var sa *content.StepAnnotation
+		if c, ok := candidates[st.ID]; ok {
+			sa = &c
+		} else if cur := gs.annotation(st); cur != nil && cur.TextHash == content.StepTextHash(st) {
+			sa = cur
+		}
+		if sa != nil {
+			objs = append(slices.DeleteFunc(objs, sa.Suppresses), sa.Objectives...)
 		}
 		// A rule objective the annotation repeats is placed once, so its
 		// conflicts are reported once.

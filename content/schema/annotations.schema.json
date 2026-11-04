@@ -72,6 +72,12 @@
             "$ref": "#/$defs/annotatedObjective"
           }
         },
+        "suppressed": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/suppressedObjective"
+          }
+        },
         "items": {
           "type": "array",
           "items": {
@@ -131,6 +137,55 @@
               "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource"
             },
             {
+              "properties": {
+                "method": {
+                  "enum": [
+                    "llm",
+                    "manual"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "suppressedObjective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "role",
+        "reason",
+        "source"
+      ],
+      "description": "Objetivo convertido das regras do passo que o dono decidiu que o passo não tem (o texto, uma nota de update ou a ordem da rota o contradiz); o loader o remove do passo. Sempre exige o dono (confirmed_by owner ou decision).",
+      "properties": {
+        "key": {
+          "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveKey"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "completes",
+            "starts",
+            "requires",
+            "uses"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource"
+            },
+            {
+              "required": [
+                "confirmed_by"
+              ],
               "properties": {
                 "method": {
                   "enum": [

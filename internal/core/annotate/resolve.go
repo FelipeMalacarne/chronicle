@@ -173,9 +173,22 @@ type StepProposal struct {
 	Items       []ItemProposal       `json:"items,omitempty"`
 	BankActions []BankActionProposal `json:"bank_actions,omitempty"`
 	Location    *LocationProposal    `json:"location,omitempty"`
+	// Suppress drops rule objectives the step does not have.
+	Suppress []SuppressProposal `json:"suppress,omitempty"`
 	// Comment goes to the report only: why the step has no objectives, why it
 	// diverges from a rule, what was asked.
 	Comment string `json:"comment,omitempty"`
+}
+
+// SuppressProposal names a rule objective of the step (Key and Role as
+// next_batch lists it in rule_objectives) that the step does not have, with
+// the reason. It always needs the owner: ConfirmedBy "owner" or a Decision.
+type SuppressProposal struct {
+	Key         string `json:"key"`
+	Role        string `json:"role"`
+	Reason      string `json:"reason"`
+	ConfirmedBy string `json:"confirmed_by,omitempty"`
+	Decision    string `json:"decision,omitempty"`
 }
 
 // Evidence is the quote that supports a proposal. Field is a JSON pointer in
@@ -265,6 +278,24 @@ func build(reg *entities.Registry, st *content.Step, p StepProposal, skillVersio
 			continue
 		}
 		sa.Objectives = append(sa.Objectives, content.Objective{Key: key, Role: op.Role, Evidence: &ev, Source: src})
+	}
+	for i, sp := range p.Suppress {
+		where := fmt.Sprintf("suppress[%d]", i)
+		key, err := entities.ParseObjectiveKey(sp.Key)
+		if err != nil {
+			fail(where, fmt.Errorf("key must be a rule objective key from next_batch: %w", err))
+			continue
+		}
+		if sp.ConfirmedBy != "" && sp.ConfirmedBy != content.ConfirmedByOwner {
+			fail(where, fmt.Errorf("confirmed_by can only be %q", content.ConfirmedByOwner))
+			continue
+		}
+		src := content.ObjectiveSource{Method: content.ProvenanceLLM, Confidence: content.ConfidenceMedium, SkillVersion: skillVersion,
+			ConfirmedBy: sp.ConfirmedBy, Decision: sp.Decision}
+		if sp.Decision != "" {
+			src.ConfirmedBy = content.ConfirmedByOwner
+		}
+		sa.Suppressed = append(sa.Suppressed, content.SuppressedObjective{Key: key, Role: sp.Role, Reason: strings.TrimSpace(sp.Reason), Source: src})
 	}
 	for i, ip := range p.Items {
 		where := fmt.Sprintf("items[%d]", i)

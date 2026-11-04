@@ -159,7 +159,8 @@ func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
 				Name: "submit",
 				Description: "Verify and store annotations for steps of one section. Each step is accepted whole or rejected with every reason " +
 					"(name does not resolve or is ambiguous, quote not in the field, inference without the owner's confirmation, wrong role, route order). " +
-					"Accepted steps are written to the section sidecar; resubmitting a step replaces its annotation. Submit a step with no objectives to record that it has none.",
+					"Accepted steps are written to the section sidecar; resubmitting a step replaces its annotation. Submit a step with no objectives to record that it has none. " +
+					"A rule objective the step does not have stays in force unless it is listed in suppress (with the owner's confirmation).",
 				InputSchema: schema(submitSchema),
 				Handler: func(_ context.Context, raw json.RawMessage) (any, error) {
 					var a struct {
@@ -286,6 +287,11 @@ const submitSchema = `{"type":"object","additionalProperties":false,"required":[
   "location":{"type":"object","additionalProperties":false,"required":["name","quote","confidence"],"properties":{
    "name":{"type":"string"},"id":{"type":"string"},
    "field":{"$ref":"#/$defs/field"},"quote":{"$ref":"#/$defs/quote"},
-   "confidence":{"$ref":"#/$defs/confidence"},"confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}}
+   "confidence":{"$ref":"#/$defs/confidence"},"confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}},
+  "suppress":{"type":"array","description":"rule objectives the step does not have (the loader drops them); always needs the owner","items":{"type":"object","additionalProperties":false,"required":["key","role","reason"],"properties":{
+   "key":{"type":"string","description":"key of one of the step's rule_objectives, as next_batch lists it"},
+   "role":{"type":"string","enum":["completes","starts","requires","uses"]},
+   "reason":{"type":"string","minLength":1,"description":"why the step does not have it"},
+   "confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}}}
  }}}
 }}`

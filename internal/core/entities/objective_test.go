@@ -73,7 +73,7 @@ func TestKnownObjective(t *testing.T) {
 		"item:1511x1":                     true,
 		"item:999999x1":                   false,
 		"boss:zulrah>=50":                 true, // no boss catalog: syntax only
-		"unlock:fairy_rings@done":         false,
+		"unlock:not_an_unlock@done":       false,
 		"qp>=107":                         true,
 	}
 	for s, want := range cases {

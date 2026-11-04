@@ -74,6 +74,15 @@ func (r *Repository) Reevaluate(ctx context.Context, tx pgx.Tx, accountID, snaps
 	if in.Cursors, err = loadCursors(ctx, q, accountID); err != nil {
 		return 0, err
 	}
+	goals, err := q.ListGoalsByAccount(ctx, accountID)
+	if err != nil {
+		return 0, fmt.Errorf("list goals: %w", err)
+	}
+	for _, g := range goals {
+		if g.Status == "active" {
+			in.Goals = append(in.Goals, g.ObjectiveKey)
+		}
+	}
 	plan := coreprogress.Reevaluate(in)
 	if err := writePlan(ctx, q, accountID, snapshotID, in.Now, plan); err != nil {
 		return 0, err
@@ -216,6 +225,17 @@ func writePlan(ctx context.Context, q *storedb.Queries, accountID, snapshotID st
 			FromVerdict: text(string(c.From)), ToVerdict: string(c.To), SnapshotID: text(snap),
 		}); err != nil {
 			return fmt.Errorf("insert objective event %s: %w", c.Key, err)
+		}
+	}
+	var achieved []string
+	for _, c := range plan.ObjectiveEvents {
+		if c.To == rules.Met {
+			achieved = append(achieved, c.Key)
+		}
+	}
+	if len(achieved) > 0 {
+		if err := q.AchieveGoals(ctx, storedb.AchieveGoalsParams{AccountID: accountID, Keys: achieved}); err != nil {
+			return fmt.Errorf("achieve goals: %w", err)
 		}
 	}
 	for _, w := range plan.Marks {

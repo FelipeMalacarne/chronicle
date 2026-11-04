@@ -22,8 +22,11 @@ type Input struct {
 	// each step; a step without events was Pending.
 	LastStatus map[StepRef]Status
 	Cursors    map[string]CursorRecord
-	Account    Account
-	Now        time.Time
+	// Goals are extra objective keys to evaluate: the account's goals may
+	// name objectives no step uses.
+	Goals   []string
+	Account Account
+	Now     time.Time
 }
 
 // StepEvent is one step_status_events row.
@@ -73,7 +76,7 @@ func Reevaluate(in Input) Plan {
 			met[key] = rec
 		}
 	}
-	for _, key := range objectiveKeys(in.Guides) {
+	for _, key := range objectiveKeys(in.Guides, in.Goals) {
 		k, err := entities.ParseObjectiveKey(key)
 		if err != nil {
 			continue
@@ -203,9 +206,13 @@ func hasMark(marks map[StepRef]Mark, ref StepRef) bool {
 	return ok
 }
 
-// objectiveKeys returns the sorted keys of every objective of every guide.
-func objectiveKeys(guides []*content.Guide) []string {
+// objectiveKeys returns the sorted keys of every objective of every guide,
+// plus the extra ones (goals).
+func objectiveKeys(guides []*content.Guide, extra []string) []string {
 	seen := map[string]bool{}
+	for _, k := range extra {
+		seen[k] = true
+	}
 	for _, g := range guides {
 		for _, st := range g.Steps() {
 			for _, o := range st.Objectives {

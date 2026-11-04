@@ -22,6 +22,9 @@ type ProgressService interface {
 	Events(ctx context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error)
 	SetActiveGuide(ctx context.Context, accountID, guideID string) error
 	Sources(ctx context.Context, accountID string) ([]storeprogress.SourceView, error)
+	Goals(ctx context.Context, accountID string) ([]storeprogress.GoalView, error)
+	AddGoal(ctx context.Context, accountID, key, label string) (storeprogress.GoalView, error)
+	RemoveGoal(ctx context.Context, accountID, goalID string) error
 }
 
 // routeSummary is one route of the Rotas list: its cursor, counts per section
@@ -243,6 +246,10 @@ func (s *Server) writeProgress(w http.ResponseWriter, board storeprogress.BoardV
 }
 
 func (s *Server) writeProgressError(w http.ResponseWriter, err error) {
+	if status, ok := isGoalError(err); ok {
+		writeError(w, status, err.Error())
+		return
+	}
 	switch {
 	case errors.Is(err, storeprogress.ErrAccountNotFound):
 		writeError(w, http.StatusNotFound, "account not found")

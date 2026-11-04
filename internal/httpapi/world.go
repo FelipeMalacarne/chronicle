@@ -1,0 +1,198 @@
+package httpapi
+
+import (
+	"errors"
+	"net/http"
+	"sort"
+	"strings"
+
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
+)
+
+// worldObjective is one objective of an entity with the account's verdict.
+type worldObjective struct {
+	Key       string `json:"key"`
+	Verdict   string `json:"verdict"`
+	Regressed bool   `json:"regressed,omitempty"`
+}
+
+// worldEntity is an entity the routes touch (the Mundo, V4Mundo): its
+// objectives and where each route does them.
+type worldEntity struct {
+	Ref        string           `json:"ref"`
+	Kind       string           `json:"kind"`
+	Name       string           `json:"name"`
+	Wiki       string           `json:"wiki,omitempty"`
+	Objectives []worldObjective `json:"objectives"`
+	Routes     []occurrence     `json:"routes"`
+}
+
+type worldResponse struct {
+	Account  string        `json:"account"`
+	Entities []worldEntity `json:"entities"`
+}
+
+// maxRouteOccurrences caps "onde cada rota faz isso" per guide: items such as
+// coins appear in dozens of steps.
+const maxRouteOccurrences = 6
+
+func (s *Server) handleWorld(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	verdicts, err := s.verdicts(r, account)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	out := worldResponse{Account: account, Entities: make([]worldEntity, 0, len(s.index.entities))}
+	for _, entity := range s.index.entities {
+		out.Entities = append(out.Entities, s.worldEntity(entity, verdicts))
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Server) worldEntity(entity string, verdicts map[string]storeprogress.ObjectiveView) worldEntity {
+	e := worldEntity{Ref: entity, Kind: entities.QuestPoints, Name: "quest points", Objectives: []worldObjective{}, Routes: []occurrence{}}
+	if entity != entities.QuestPoints {
+		if ref, err := entities.ParseRef(entity); err == nil {
+			e.Kind, e.Name = string(ref.Kind), ref.ID
+			if s.opts.Catalog != nil {
+				if name, ok := s.opts.Catalog.Display(ref); ok {
+					e.Name = name
+				}
+				if url, ok := s.opts.Catalog.WikiURL(ref); ok {
+					e.Wiki = url
+				}
+			}
+		}
+	}
+	keys := map[string]bool{}
+	perGuide := map[string]int{}
+	for _, occ := range s.index.touched[entity] {
+		keys[occ.Key] = true
+		if perGuide[occ.Guide] < maxRouteOccurrences {
+			perGuide[occ.Guide]++
+			e.Routes = append(e.Routes, occ)
+		}
+	}
+	sorted := make([]string, 0, len(keys))
+	for k := range keys {
+		sorted = append(sorted, k)
+	}
+	sort.Strings(sorted)
+	for _, k := range sorted {
+		v := verdicts[k]
+		verdict := v.Verdict
+		if verdict == "" {
+			verdict = "unknown"
+		}
+		e.Objectives = append(e.Objectives, worldObjective{Key: k, Verdict: verdict, Regressed: v.RegressedAt != nil})
+	}
+	return e
+}
+
+func (s *Server) verdicts(r *http.Request, account string) (map[string]storeprogress.ObjectiveView, error) {
+	list, err := s.opts.Progress.Objectives(r.Context(), account)
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]storeprogress.ObjectiveView, len(list))
+	for _, o := range list {
+		out[o.Key] = o
+	}
+	return out, nil
+}
+
+// goalOut is a goal with its display name and where each route completes it.
+type goalOut struct {
+	storeprogress.GoalView
+	Name   string       `json:"name"`
+	Ref    string       `json:"ref"`
+	Kind   string       `json:"kind"`
+	Routes []occurrence `json:"routes"`
+}
+
+type goalsResponse struct {
+	Account string    `json:"account"`
+	Goals   []goalOut `json:"goals"`
+}
+
+type addGoalRequest struct {
+	ObjectiveKey string `json:"objective_key"`
+	Label        string `json:"label,omitempty"`
+}
+
+func (s *Server) goalOut(g storeprogress.GoalView) goalOut {
+	out := goalOut{GoalView: g, Routes: []occurrence{}}
+	k, err := entities.ParseObjectiveKey(g.Key)
+	if err != nil {
+		return out
+	}
+	entity := entityOf(k)
+	e := s.worldEntity(entity, nil)
+	out.Name, out.Ref, out.Kind = e.Name, entity, e.Kind
+	if out.Label == "" {
+		out.Label = e.Name
+	}
+	out.Routes = append(out.Routes, s.index.byEntity[entity]...)
+	return out
+}
+
+func (s *Server) handleGoals(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	goals, err := s.opts.Progress.Goals(r.Context(), account)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	out := goalsResponse{Account: account, Goals: make([]goalOut, 0, len(goals))}
+	for _, g := range goals {
+		out.Goals = append(out.Goals, s.goalOut(g))
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+func (s *Server) handleAddGoal(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	var req addGoalRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	g, err := s.opts.Progress.AddGoal(r.Context(), account, strings.TrimSpace(req.ObjectiveKey), strings.TrimSpace(req.Label))
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusCreated, s.goalOut(g))
+}
+
+func (s *Server) handleRemoveGoal(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	if err := s.opts.Progress.RemoveGoal(r.Context(), account, r.PathValue("id")); err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+func isGoalError(err error) (int, bool) {
+	switch {
+	case errors.Is(err, storeprogress.ErrInvalidGoal):
+		return http.StatusBadRequest, true
+	case errors.Is(err, storeprogress.ErrGoalNotFound):
+		return http.StatusNotFound, true
+	}
+	return 0, false
+}

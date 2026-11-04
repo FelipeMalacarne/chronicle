@@ -675,3 +675,28 @@ func TestBuildBoard(t *testing.T) {
 		t.Fatalf("a5 = %+v", a5)
 	}
 }
+
+func TestReevaluateEvaluatesGoalsOutsideTheContent(t *testing.T) {
+	g1, _ := loadGuides(t)
+	plan := Reevaluate(Input{
+		Guides:       []*content.Guide{g1},
+		Registry:     registry(t),
+		State:        rules.PlayerState{Skills: skills(map[string]int{"attack": 40})},
+		Observations: obs(t0, "snap-1", Fact{"skill", "attack"}),
+		Goals:        []string{"skill:attack>=40"},
+		Account:      Account{ActiveGuideID: "g1"},
+		Now:          t1,
+	})
+	var found bool
+	for _, c := range plan.ObjectiveEvents {
+		if c.Key == "skill:attack>=40" && c.To == rules.Met {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("goal objective not evaluated: %+v", plan.ObjectiveEvents)
+	}
+	if plan.StepsChanged != 0 {
+		t.Fatalf("a goal changed steps: %d", plan.StepsChanged)
+	}
+}

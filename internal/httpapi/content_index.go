@@ -29,10 +29,15 @@ type contentIndex struct {
 	// byEntity lists, per entity ref (or "qp"), the first completing step of
 	// each guide in route order.
 	byEntity map[string][]occurrence
+	// touched lists, per entity, every objective occurrence of every role in
+	// route order (the Mundo's "onde cada rota faz isso"); entities keeps the
+	// first-seen order.
+	touched  map[string][]occurrence
+	entities []string
 }
 
 func buildContentIndex(cnt *content.Content) *contentIndex {
-	idx := &contentIndex{position: map[guideStep]int{}, total: map[string]int{}, byEntity: map[string][]occurrence{}}
+	idx := &contentIndex{position: map[guideStep]int{}, total: map[string]int{}, byEntity: map[string][]occurrence{}, touched: map[string][]occurrence{}}
 	if cnt == nil {
 		return idx
 	}
@@ -56,10 +61,18 @@ func buildContentIndex(cnt *content.Content) *contentIndex {
 		seen := map[string]bool{}
 		for _, st := range g.Steps() {
 			for _, o := range st.Objectives {
+				entity := entityOf(o.Key)
+				if _, known := idx.touched[entity]; !known {
+					idx.entities = append(idx.entities, entity)
+				}
+				idx.touched[entity] = append(idx.touched[entity], occurrence{
+					Guide: g.ID, Step: st.ID, Ref: authorRef(st), Section: st.SectionID,
+					Position: idx.position[guideStep{g.ID, st.ID}], Total: idx.total[g.ID],
+					Key: o.Key.String(), Role: o.Role,
+				})
 				if !o.Completing() {
 					continue
 				}
-				entity := entityOf(o.Key)
 				if seen[entity] {
 					continue
 				}

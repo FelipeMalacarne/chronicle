@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
@@ -58,7 +59,7 @@ func (f *fakeProgress) Objectives(_ context.Context, accountID string) ([]storep
 	if accountID != "acc-1" {
 		return nil, storeprogress.ErrAccountNotFound
 	}
-	return []storeprogress.ObjectiveView{{Key: "skill:agility>=10", Verdict: "met"}}, nil
+	return []storeprogress.ObjectiveView{{Key: "skill:agility>=10", Verdict: "met"}, {Key: "quest:monks_friend@finished", Verdict: "met"}}, nil
 }
 
 func (f *fakeProgress) Events(_ context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error) {
@@ -80,6 +81,29 @@ func (f *fakeProgress) SetActiveGuide(_ context.Context, accountID, guideID stri
 	f.call, f.step = "active", guideID
 	if guideID != "oziris-main" {
 		return storeprogress.ErrGuideNotFound
+	}
+	return nil
+}
+
+func (f *fakeProgress) Goals(_ context.Context, accountID string) ([]storeprogress.GoalView, error) {
+	if accountID != "acc-1" {
+		return nil, storeprogress.ErrAccountNotFound
+	}
+	return []storeprogress.GoalView{{ID: "goal_1", Key: "quest:monks_friend@finished", Status: "active", Verdict: "unknown"}}, nil
+}
+
+func (f *fakeProgress) AddGoal(_ context.Context, _, key, label string) (storeprogress.GoalView, error) {
+	f.call, f.step = "addGoal", key
+	if !strings.Contains(key, "@") && !strings.Contains(key, ">=") {
+		return storeprogress.GoalView{}, storeprogress.ErrInvalidGoal
+	}
+	return storeprogress.GoalView{ID: "goal_2", Key: key, Label: label, Status: "active", Verdict: "unknown"}, nil
+}
+
+func (f *fakeProgress) RemoveGoal(_ context.Context, _, goalID string) error {
+	f.call, f.step = "removeGoal", goalID
+	if goalID != "goal_1" {
+		return storeprogress.ErrGoalNotFound
 	}
 	return nil
 }
@@ -174,7 +198,7 @@ func TestProgressRoutes(t *testing.T) {
 	if status, _ := do(t, "PUT", base+"/guides/oziris-main/cursor?account=acc-1", `{"step_id":" "}`); status != http.StatusBadRequest {
 		t.Fatalf("blank step = %d", status)
 	}
-	if status, body := do(t, "GET", base+"/objectives?account=acc-1", ""); status != http.StatusOK || len(body["objectives"].([]any)) != 1 {
+	if status, body := do(t, "GET", base+"/objectives?account=acc-1", ""); status != http.StatusOK || len(body["objectives"].([]any)) != 2 {
 		t.Fatalf("objectives = %d %v", status, body)
 	}
 

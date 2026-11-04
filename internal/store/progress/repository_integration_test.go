@@ -174,7 +174,7 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 		t.Fatalf("g2 board = %+v, %v", g2, err)
 	}
 	objectives, err := repo.Objectives(ctx, "account-1")
-	if err != nil || len(objectives) != 2 {
+	if err != nil || len(objectives) < 2 {
 		t.Fatalf("objectives = %+v, %v", objectives, err)
 	}
 
@@ -184,6 +184,44 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 	}
 	if events.Objectives[0].Source != "plugin" {
 		t.Fatalf("objective event source = %q", events.Objectives[0].Source)
+	}
+
+	// Goals (F9): canonical keys of catalog entries only; one per objective;
+	// achieved when the objective is met, now or at a later reevaluation.
+	if _, err = repo.AddGoal(ctx, "account-1", "quest:nope@finished", ""); !errors.Is(err, ErrInvalidGoal) {
+		t.Fatalf("unknown entity goal: %v", err)
+	}
+	if _, err = repo.AddGoal(ctx, "account-1", "skill:agility:70", ""); !errors.Is(err, ErrInvalidGoal) {
+		t.Fatalf("old grammar goal: %v", err)
+	}
+	metGoal, err := repo.AddGoal(ctx, "account-1", "skill:agility>=10", "Agility 10")
+	if err != nil || metGoal.Status != "achieved" || metGoal.Verdict != "met" {
+		t.Fatalf("goal already met = %+v, %v", metGoal, err)
+	}
+	attack, err := repo.AddGoal(ctx, "account-1", "skill:attack>=5", "")
+	if err != nil || attack.Status != "active" || attack.Verdict != "unknown" {
+		t.Fatalf("open goal = %+v, %v", attack, err)
+	}
+	sameGoal, err := repo.AddGoal(ctx, "account-1", "skill:attack>=5", "")
+	if err != nil || sameGoal.ID != attack.ID {
+		t.Fatalf("pinning twice = %+v, %v", sameGoal, err)
+	}
+	pushLevels := fullPush(4, map[string]int64{"agility": 10, "attack": 6}, map[string]int64{"314": 3})
+	push(ctx, t, ingest, token.Token, pushLevels)
+	goals, err := repo.Goals(ctx, "account-1")
+	if err != nil || len(goals) != 2 {
+		t.Fatalf("goals = %+v, %v", goals, err)
+	}
+	for _, g := range goals {
+		if g.Status != "achieved" || g.AchievedAt == nil {
+			t.Fatalf("goal not achieved by the push: %+v", g)
+		}
+	}
+	if err = repo.RemoveGoal(ctx, "account-1", attack.ID); err != nil {
+		t.Fatal(err)
+	}
+	if err = repo.RemoveGoal(ctx, "account-1", attack.ID); !errors.Is(err, ErrGoalNotFound) {
+		t.Fatalf("removing twice: %v", err)
 	}
 
 	sources, err := repo.Sources(ctx, "account-1")

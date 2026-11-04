@@ -114,6 +114,10 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("GET /api/guides/{guide}/events", s.handleEvents)
 		s.mux.HandleFunc("GET /api/progress", s.handleProgress)
 		s.mux.HandleFunc("PUT /api/account/guide", s.handleActiveGuide)
+		s.mux.HandleFunc("GET /api/goals", s.handleGoals)
+		s.mux.HandleFunc("POST /api/goals", s.handleAddGoal)
+		s.mux.HandleFunc("DELETE /api/goals/{id}", s.handleRemoveGoal)
+		s.mux.HandleFunc("GET /api/world", s.handleWorld)
 	}
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")

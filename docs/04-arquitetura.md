@@ -1,80 +1,83 @@
 # Ironman Planner — Arquitetura
 
-Data: 2026-11-03. Complementa `00-levantamento-inicial.md`. Artefatos técnicos em `docs/arquitetura/`: `guide.schema.json` (JSON Schema do conteúdo), `schema.sql` (banco; escrito em dialeto SQLite, portar para Postgres no Drizzle: `jsonb`, `timestamptz`, `bigint` para xp), `types.ts` (tipos Zod/TS compartilhados, assinaturas do rule engine e contrato do plugin).
+Data: 2026-11-03. Reescrito em 2026-11-04 como a arquitetura vigente, em Go. As opções descartadas
+(SvelteKit full-stack, SQLite, Drizzle, Zod como fonte da verdade) e as sequências anteriores de MVP
+ficam no histórico do git (versões deste arquivo até o commit `17887c3`). Artefatos técnicos que valem:
+`content/schema/guide.schema.json` (schema do conteúdo, embutido no binário), `db/migrations/` (goose,
+Postgres), `docs/arquitetura/types.ts` (contrato de ingest e tipos de readiness em Zod, só como
+referência para clientes TS). O modelo de domínio por objetivos está no doc 09 e prevalece sobre este
+documento onde houver conflito.
 
 ## 0. Decisões em uma página
 
 | Tema | Decisão |
 |---|---|
-| Stack | **Revisado (seção 9): backend em Go** (um binário com `serve`, CLI e servidor MCP) + Postgres + frontend Svelte embutido no binário. A opção SvelteKit full-stack das seções 1 e 2 fica registrada como alternativa; o que muda está na seção 9. Deploy no `saradomin` com Postgres e Zitadel existentes. |
-| Grafo | Calculado no servidor em memória a partir de `content/` + cache do wiki; renderizado com **Cytoscape.js + ELK** (layout em camadas). |
-| Conteúdo | Arquivos JSON em `content/guides/<id>/` (hoje `oziris-main` e `bruhsailer-main`, rotas independentes), validados contra `content/schema/guide.schema.json` pelo loader Go no boot e na CI. IDs do ironman.guide preservados (`1.1.76a`); ids sempre escopados por guia. |
-| Domínio | **Revisado (doc 09):** o objetivo (entidade canônica + estado-alvo) é a unidade rastreável e o passo é a unidade de navegação; progresso da conta compartilhado entre rotas, marca manual e posição por guia. |
-| Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o rule engine. |
-| Rule engine | Função pura `(rules, PlayerState) → {verdict, evidence}`; reavaliação completa a cada snapshot (576 steps × regras simples = milissegundos). |
-| Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas, token por cliente. |
-| Deploy | Um container da app no compose do `saradomin`, apontando para o Postgres já existente (database própria `ironman_planner`). Sem volume de dados próprio; só backups via `pg_dump`. |
-| Auth | **OIDC via Zitadel** (já rodando no `saradomin`): Authorization Code + PKCE no SvelteKit, sessão em cookie assinado, usuário criado no primeiro login pelo `sub`. Tokens `ipl_` por conta para o plugin Microbot (o plugin não faz OIDC); tokens de API para scripts. Autorização por lista de `sub` permitidos ou por role no Zitadel. |
+| Stack | **Go** como núcleo: um binário (`ironman`) com `serve`, CLI e servidor MCP; Postgres 17 via pgx + sqlc + goose; SPA Svelte 5 embutida no binário. Toolchain no doc 07. |
+| Domínio | **Objetivo** (entidade canônica + alvo) é a unidade rastreável e o passo é a unidade de navegação; progresso da conta compartilhado entre rotas, marcas e cursor por guia (doc 09). |
+| Conteúdo | JSON em `content/guides/<id>/` (`oziris-main` e `bruhsailer-main`, rotas independentes), gerado por importadores e validado contra `content/schema/guide.schema.json` no boot e na CI; objetivos extraídos em sidecars `annotations/` (doc 09, seção 4.2). Ids sempre escopados por guia. |
+| Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o motor. |
+| Motor | Função pura `(regras, PlayerState) → {veredito, evidência}` em `internal/core/rules`; status do passo derivado dos objetivos em `internal/core/progress`; reavaliação completa a cada snapshot. |
+| Grafo | Calculado no servidor em memória a partir de `content/` + catálogos + cache do wiki; renderizado com **Cytoscape.js + ELK**. Nós são chaves de objetivo. |
+| Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas, token `ipl_` por cliente; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06). |
+| Execução | Local-first na estação `zaros` com `AUTH_MODE=dev`; depois a mesma imagem no `saradomin` com Postgres e Zitadel existentes (seção 8). |
+| Auth | `AUTH_MODE=dev` (usuário fixo) hoje; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs`) na tarefa de deploy. Tokens `ipl_` por conta para o plugin; tokens de API para CLI e MCP. |
 
 ## 1. Stack
 
-### 1.1 Três opções
+Motivo da escolha (decisão do dono, 2026-11-03): buildar o mesmo núcleo em vários formatos (servidor
+web, CLI para usar com agentes, servidor MCP) e manter afinidade com o ecossistema de plugins que ele
+já desenvolve. Go dá binário único estático, cross-compile trivial, pouca RAM no `saradomin` e um `cmd`
+por formato compartilhando o mesmo pacote de domínio.
 
-| Critério | A. SvelteKit + SQLite/Drizzle (TS full-stack) | B. Go API + React SPA | C. FastAPI + React |
-|---|---|---|---|
-| Um container, um processo | Sim: `node build` serve UI + API + cron. | Sim para o binário, mas o SPA precisa ser embutido (`embed`) e há dois toolchains. | Dois toolchains; uvicorn + build estático; scheduler (APScheduler/arq) separado ou in-process. |
-| Compartilhar tipos conteúdo ↔ server ↔ client | Nativo: um schema Zod gera tipos TS, JSON Schema e validação nos três lugares. | Tipos Go ≠ TS; precisa de OpenAPI codegen e duplicar o schema do conteúdo. | Pydantic → OpenAPI → TS: funciona, mas o schema do conteúdo vive em Python e o front consome uma cópia. |
-| Jobs em background | Cron in-process (`croner`) + fila em tabela; Node é single-thread mas os jobs são IO-bound e raros. | Melhor do grupo: goroutines, robusto. | Bom (asyncio), mas APScheduler in-process em uvicorn multi-worker dá dor de cabeça. |
-| Bibliotecas de grafo | Cytoscape.js é framework-agnóstico; funciona perfeitamente em Svelte. React Flow não (React-only). | React Flow ou Cytoscape, sem restrição. | Idem B. |
-| Produtividade para 1 dev | Alta: um repo, um `pnpm dev`, HMR em tudo, rotas `+server.ts` para API. | Média: duas bases de código, dois servidores em dev. | Média. |
-| Migrar para Postgres depois | Drizzle troca dialeto; schema já escrito portável. | sqlc/pgx: fácil. | SQLAlchemy: fácil. |
-| Risco | Node single-process: um bug no job trava a UI por alguns ms; mitigado por timeouts e `AbortSignal`. | Mais código para a mesma feature. | Tipagem do conteúdo duplicada é fonte de drift. |
+| Camada | Escolha |
+|---|---|
+| Domínio | `internal/core` em Go puro: conteúdo (structs + validação por JSON Schema com `santhosh-tekuri/jsonschema`), entidades, regras, planning, progresso, grafo. Sem dependência de banco ou HTTP; todo formato importa daqui. |
+| API e scheduler | `net/http` com o mux da biblioteca padrão; scheduler in-process; adapters de fonte em `internal/sources/{hiscores,wom,wiki}`. |
+| Banco | Postgres 17 em todos os ambientes; `pgx` + `sqlc` (queries em `db/queries`, tipos gerados em `internal/store/db`) + `goose` (`db/migrations`). |
+| Auth | `AUTH_MODE=dev` ou `oidc` (`coreos/go-oidc` + `golang.org/x/oauth2`, PKCE; sessão `alexedwards/scs` com `pgxstore`). |
+| Frontend | Svelte 5 + SvelteKit `adapter-static` + Vite em `web/`; `web/dist` embutido com `embed.FS`; Cytoscape + ELK para o grafo. Tipos TS espelham o contrato HTTP à mão (`web/src/lib/planner/apimap.ts`). |
+| Plugin | Java no Microbot, repositório `microbot-plugins`; só o contrato HTTP é compartilhado. |
+| Deploy | Imagem `distroless` não-root com o binário; `docker compose`. |
 
-### 1.2 Escolha: **A — SvelteKit + SQLite + Drizzle + Zod**
+Custos aceitos: sem compartilhamento nativo de tipos entre servidor e browser; mais código de
+infraestrutura que um framework full-stack (a UI é um app logado, não precisa de SSR); o grafo é
+calculado em Go e exposto por `GET /api/plan` e `GET /api/graph`, então CLI, MCP e tela têm o mesmo
+resultado.
 
-Por quê, em ordem de peso:
-
-1. **Um schema, três consumidores.** O coração do projeto é o modelo de conteúdo (`Step`, `Rule`) e a função que avalia regras. Com Zod, esse código roda igual na CI (validar `content/`), no servidor (avaliar snapshots) e no browser (pré-visualizar "o que falta" sem round-trip). Em B e C isso vira duas implementações para manter em sincronia.
-2. **Deploy trivial.** `adapter-node` produz um `build/index.js`; o Dockerfile é 15 linhas; não há proxy entre front e back, nem CORS, nem dois processos para supervisionar.
-3. **Grafo.** Cytoscape.js (layouts via `cytoscape-elk`/`cytoscape-dagre`, compound nodes para colapsar seções, estilos por estado) é a biblioteca mais madura para grafos de dependência interativos e não depende de React. d3-dag é só layout (bom como fallback server-side para gerar SVG estático); Sigma.js é para grafos de dezenas de milhares de nós com WebGL, overkill aqui; React Flow é ótimo mas amarra o front ao React e é pensado para editores de nó, não para exploração de DAGs.
-4. **SvelteKit, não Next.js.** Next.js assume serverless/edge; scheduler in-process é gambiarra (`instrumentation.ts`), e o App Router adiciona complexidade de RSC que não compra nada aqui. SvelteKit com `adapter-node` é um servidor Node comum: `hooks.server.ts` inicia o scheduler, `+server.ts` são handlers HTTP, `+page.server.ts` carrega dados com acesso direto ao banco.
-5. **SQLite via better-sqlite3** é síncrono, rápido (dezenas de milhares de leituras/s), e com WAL aguenta leitura concorrente da UI enquanto o worker grava. Para 1 a 5 usuários é a escolha óbvia; backup é copiar um arquivo.
-
-Bibliotecas fixadas: `drizzle-orm` + `drizzle-kit` (migrations), `zod`, `croner` (cron), `argon2` (senha), `ulid`, `cytoscape` + `cytoscape-elk`, `vitest`, `fast-check`, `playwright` (poucos e2e), `yaml` (conteúdo em YAML opcional), `pino` (logs).
-
-## 2. Arquitetura do sistema
+## 2. Componentes e fluxo
 
 ### 2.1 Componentes
 
 ```mermaid
 flowchart LR
   subgraph Browser
-    UI[SvelteKit UI<br/>checklist, grafo, goals]
+    UI[SPA Svelte<br/>plan, compare, guia, conta, metas, grafo]
   end
-  subgraph App["Container app (Node, 1 processo)"]
+  subgraph Bin["ironman serve (1 processo)"]
     API[API HTTP<br/>/api/*]
-    CL[Content Loader<br/>valida Zod, indexa, migra IDs]
-    RE[Rule Engine<br/>puro]
-    GS[Graph Service<br/>build + consultas]
-    SW[Sync Worker<br/>croner + fila em tabela]
-    ING[Ingest Endpoint<br/>manifest + POST deltas]
-    AD[Adapters<br/>hiscores, WOM, WikiSync, Bucket]
-    DB[(SQLite /data/planner.db)]
+    CL[Content loader<br/>valida, compõe anotações, indexa, aplica aliases]
+    RE[Motor<br/>objetivos → status derivado]
+    GS[Grafo<br/>build + consultas]
+    SW[Scheduler<br/>sync_runs em série]
+    ING[Ingest<br/>manifest + POST deltas]
+    AD[Adapters<br/>hiscores, WOM, wiki]
+    DB[(Postgres 17)]
   end
   subgraph Externo
     HS[Hiscores JSON]
     WOM[Wise Old Man v2]
-    WS[WikiSync player API<br/>opcional]
     BK[Wiki Bucket API]
-    RL[RuneLite + plugin próprio]
+    RL[Microbot + plugin próprio]
   end
   CONTENT[(content/ no git)]
+  CLI[ironman now/done/plan/state<br/>ironman mcp]
   UI <--> API
+  CLI <--> API
   API --> RE & GS & DB
   CL --> CONTENT
   CL --> DB
   SW --> AD
-  AD --> HS & WOM & WS & BK
+  AD --> HS & WOM & BK
   AD --> DB
   SW --> RE
   RL --> ING --> DB
@@ -84,145 +87,126 @@ flowchart LR
 
 Responsabilidades:
 
-- **Web app (UI)**: páginas `/` (dashboard), `/guide/[section]` (checklist), `/graph` (grafo), `/goals`, `/account` (sync, tokens, export). Svelte 5, Tailwind, sem estado global além do que vem do servidor.
-- **API**: rotas `+server.ts` sob `/api`. JSON, autenticadas por cookie de sessão ou `Authorization: Bearer`. Lista completa na seção 2.5.
-- **Content Loader**: no boot e via `POST /api/admin/reload-content`, lê `content/guides/*/`, valida com `Guide` (Zod), calcula `content_hash`, grava `content_versions` + `content_steps`, aplica `step_id_aliases` (campo `replaces`) ao `step_progress`, e dispara reavaliação dos steps cujo `rule_hash` mudou.
-- **Rule Engine**: módulo puro em `src/lib/core/rules/`. Sem IO. Seção 4.3.
-- **Graph Service**: constrói o grafo de requisitos a partir de conteúdo + `wiki_cache`, guarda em `graph_cache`, responde consultas ("o que falta para X", "destravou agora"). Seção 5.
-- **Sync Worker**: scheduler in-process. Cada tick enfileira `sync_runs` por (conta, fonte) respeitando cadência e backoff; um executor único consome a fila em série (evita estourar rate limit). Seção 6.
-- **Ingest Endpoint**: `GET /api/ingest/manifest` e `POST /api/ingest`, autenticados por token `ipl_`. Seção 6.4.
-- **Adapters**: um módulo por fonte com `fetch(raw)` e `normalize(raw) → StatePatch` (interface em `types.ts`). Só o adapter conhece o shape externo; quando o outro agente fechar os shapes exatos, só esses arquivos mudam.
+- **SPA**: `/plan` (rota ativa), `/compare` (duas rotas lado a lado), `/guide/[section]`, `/account`,
+  `/goals`, `/graph`. Svelte 5, sem estado global além do que vem do servidor; grafo, metas, conta e
+  Microbot ainda usam fixtures.
+- **API**: handlers em `internal/httpapi` sob `/api`, JSON. Hoje sem sessão: rotas por conta só em
+  `AUTH_MODE=dev`. Lista na seção 2.5.
+- **Content loader**: no boot lê `content/guides/*/guide.json` e os sidecars `annotations/`, valida contra
+  os schemas embutidos, compõe os objetivos, calcula o hash do conteúdo, grava `content_versions` +
+  `content_steps`, aplica `step_id_aliases` às marcas e dispara reavaliação. Hoje só carrega e valida;
+  o resto é o item 8 da sequência (seção 9).
+- **Motor**: `internal/core/rules` (veredito com evidência por regra), `internal/core/planning`
+  (readiness do trecho) e `internal/core/progress` (status derivado do passo, cascata, cursor). Puros.
+- **Grafo**: `internal/core/graph` constrói o grafo de requisitos a partir do conteúdo, dos catálogos e
+  do `wiki_cache`, guarda em `graph_cache` e responde "o que falta para X" e "destravou agora".
+- **Scheduler**: in-process; cada tick enfileira `sync_runs` por (conta, fonte) respeitando cadência e
+  backoff; um executor único consome em série.
+- **Ingest**: `GET /api/ingest/manifest` e `POST /api/ingest` com token `ipl_`; `internal/store/ingest`
+  valida, persiste o snapshot, normaliza para `player_state` e registra o frescor dos containers.
+- **Adapters**: um pacote por fonte com `fetch` e `normalize`; só o adapter conhece o shape externo.
 
-### 2.2 Fluxo: snapshot → status dos steps
+### 2.2 Formatos do mesmo binário (`cmd/ironman`)
+
+```
+ironman serve                        # API + SPA + scheduler + ingest (único que abre o Postgres)
+ironman content validate [path]      # schema + checagens semânticas de guide.json e anotações
+ironman content migrate              # data/guide/normalized → content/guides/oziris-main
+ironman content import-bruhsailer    # DOCX pinados → content/guides/bruhsailer-main
+ironman content mcp                  # servidor MCP stdio da extração, só sobre content/ (doc 09, seção 6)
+ironman now [--json]                 # próximo passo, itens a levar, bloqueios (cliente da API)
+ironman done <step> | skip | note    # marcar passo
+ironman plan <meta>                  # plano ordenado de uma meta
+ironman sync [--source hiscores]     # força sync
+ironman state skills|quests|diaries
+ironman mcp                          # servidor MCP por stdio para agentes, sobre a API da conta
+```
+
+Regra: só `serve` abre o banco. CLI e `ironman mcp` são clientes da API com token (`IRONMAN_URL`,
+`IRONMAN_TOKEN`), então funcionam de qualquer máquina e o modelo de permissão é um só. O MCP usa o SDK
+oficial `github.com/modelcontextprotocol/go-sdk`. `now`, `done`, `plan`, `sync`, `state` e `mcp` ainda
+são stubs.
+
+### 2.3 Fluxo: snapshot → objetivos → status dos passos
 
 ```mermaid
 sequenceDiagram
-  participant S as Scheduler
-  participant A as Adapter (hiscores)
-  participant DB as SQLite
-  participant M as StateMerger
-  participant R as RuleEngine
+  participant S as Scheduler / Ingest
+  participant A as Adapter
+  participant DB as Postgres
+  participant M as Merge
+  participant R as Motor
   participant U as UI
-  S->>A: fetch(rsn, mode)
-  A-->>S: raw JSON, 200
-  S->>DB: INSERT snapshots (dedupe por raw_hash)
-  alt hash já existe
+  S->>A: fetch(rsn) ou POST do plugin
+  A-->>S: raw
+  S->>DB: INSERT snapshots (dedupe por raw_hash ou client_seq)
+  alt nada mudou
     S->>DB: sync_runs.status = unchanged
   else novo
-    S->>DB: INSERT snapshot_skills / snapshot_activities
-    S->>M: patch = adapter.normalize(raw)
-    M->>DB: UPSERT player_state (facet,key) se observed_at mais novo
-    M->>R: evaluateAll(steps, PlayerState)
-    R-->>M: [{step_id, evaluation}]
-    M->>DB: reconcileStep → UPDATE step_progress + INSERT step_progress_events
+    S->>DB: INSERT snapshot_* normalizados
+    S->>M: patch = normalize(raw)
+    M->>DB: UPSERT player_state (facet, key) se observed_at mais novo
+    M->>R: avaliar todos os objetivos de todos os guias
+    R-->>M: vereditos + evidência
+    M->>DB: UPSERT objective_progress + objective_progress_events
+    M->>R: status derivado por passo e guia; cascata na rota ativa; cursores
+    M->>DB: step_status_events, step_marks(implied), route_cursor
     M->>DB: sync_runs.status = ok, steps_changed = n
   end
-  U->>DB: GET /api/steps (v_step_board + freshness)
+  U->>DB: GET /api/guides/{guide}/board?account= (status derivado + frescor)
 ```
 
-### 2.3 Deploy
+### 2.4 Configuração
 
-```mermaid
-flowchart TB
-  subgraph Host["VPS / homelab"]
-    subgraph compose["docker compose"]
-      APP[app: node:22-alpine<br/>porta 3000]
-      VOL[(volume planner-data<br/>/data: planner.db, backups/, content-cache/)]
-      CADDY[caddy opcional<br/>TLS automático]
-      PG[(postgres opcional<br/>profile 'pg')]
-    end
-  end
-  APP --- VOL
-  CADDY --> APP
-  APP -. profile pg .-> PG
-```
-
-`docker-compose.yml` (essência):
-
-```yaml
-services:
-  app:
-    build: .
-    image: ironman-planner:latest
-    restart: unless-stopped
-    ports: ["3000:3000"]
-    env_file: .env
-    volumes:
-      - planner-data:/data
-      - ./content:/app/content:ro     # opcional: editar conteúdo sem rebuild
-    healthcheck: { test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"], interval: 30s }
-  caddy:
-    image: caddy:2
-    profiles: ["tls"]
-    ports: ["80:80", "443:443"]
-    volumes: ["./Caddyfile:/etc/caddy/Caddyfile", "caddy-data:/data"]
-  postgres:
-    image: postgres:16-alpine
-    profiles: ["pg"]
-    environment: { POSTGRES_DB: planner, POSTGRES_USER: planner, POSTGRES_PASSWORD: ${PG_PASSWORD} }
-    volumes: ["pg-data:/var/lib/postgresql/data"]
-volumes: { planner-data: {}, caddy-data: {}, pg-data: {} }
-```
-
-Dockerfile multi-stage: `pnpm install --frozen-lockfile` → `pnpm build` → imagem final com `build/`, `node_modules` de produção, `content/` e `drizzle/` (migrations rodam no boot). O conteúdo vai dentro da imagem por padrão; o bind-mount é para quem quer editar o guia sem rebuild.
-
-### 2.4 Configuração (`.env`)
-
-| Variável | Default | Função |
-|---|---|---|
-| `DATABASE_URL` | `file:/data/planner.db` | SQLite; `postgres://…` ativa o dialeto Postgres. |
-| `ADMIN_USERNAME` / `ADMIN_PASSWORD` | — | Criam o usuário owner no primeiro boot (depois ignorados). |
-| `SESSION_SECRET` | — | 32+ bytes aleatórios; assina cookies. |
-| `PUBLIC_BASE_URL` | `http://localhost:3000` | Usado no manifest do plugin e em links. |
-| `CONTENT_DIR` | `./content` | Onde o loader lê guias. |
-| `SYNC_ENABLED` | `true` | Desliga o scheduler (útil em dev/teste). |
-| `SYNC_HISCORES_MINUTES` | `30` | Cadência base do hiscores. |
-| `SYNC_WOM_HOURS` | `6` | Cadência do Wise Old Man (`0` desliga). |
-| `WIKISYNC_IMPORT_ENABLED` | `false` | Liga o importador opcional (com aviso na UI). |
-| `WIKI_BUCKET_REFRESH_DAYS` | `7` | Renova cache de quests/diaries. |
-| `STALE_AFTER_HOURS` | `24` | Idade a partir da qual um status vira `stale`. |
-| `BACKUP_KEEP_DAYS` | `14` | Retenção de `VACUUM INTO` noturno. |
-| `LOG_LEVEL` | `info` | pino. |
-
-Configurações por conta (tabela `settings`): layer ativa, modo, fontes habilitadas, horas de stale por fonte, se bank sync está autorizado.
+Variáveis lidas por `internal/config`: `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
+(`dev` | `oidc`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL`, `SESSION_SECRET`, `CONTENT_DIR`
+(`content`), `LOG_LEVEL`, `PUBLIC_BASE_URL`. `.env.example` documenta cada uma; detalhes, modos e
+troubleshooting no doc 07. Configurações por conta (tabela `settings`): layer ativa, modo, fontes
+habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 
 ### 2.5 Auth e API
 
-- **Login**: `POST /api/auth/login` com usuário/senha → cookie `sid` HttpOnly, SameSite=Lax, 30 dias, hash em `sessions`. `hooks.server.ts` resolve `event.locals.user`. Sem OAuth, sem e-mail. Rate limit de 5 tentativas/min por IP.
-- **Multiusuário futuro**: `users.role`, `accounts.user_id` já existem; adicionar convite por link é um endpoint.
-- **Tokens de API** (`api_tokens`): `Authorization: Bearer apk_…`, para scripts de export e CLI.
-- **Tokens do plugin** (`plugin_ingest_tokens`): `Authorization: Bearer ipl_…`, escopo = uma conta, criados em `/account/tokens`, mostrados uma vez, armazenados como sha256, revogáveis, com `scopes` (bank/inventory/equipment são opt-in explícito).
+- **Hoje**: `AUTH_MODE=dev` loga um usuário fixo sem OIDC; é o modo dos testes e da CI. Rotas que
+  expõem dados por id de conta (`?account=`) só existem nesse modo.
+- **Depois**: OIDC Zitadel (seção 8); `users.role`, `accounts.user_id` já existem para multiusuário.
+- **Tokens de API** (`api_tokens`): `Authorization: Bearer apk_…`, para CLI, MCP e scripts.
+- **Tokens do plugin** (`plugin_ingest_tokens`): `Authorization: Bearer ipl_…`, escopo = uma conta,
+  mostrados uma vez, sha256 no banco, revogáveis, com `scopes` (`state:write`; `items:*` são opt-in).
 
-Rotas principais:
-
-| Rota | Função |
-|---|---|
-| `GET /api/health` | liveness + versão do conteúdo + idade do último sync |
-| `GET /api/guide` / `GET /api/guide/:section` | conteúdo filtrado por modo/layer da conta |
-| `GET /api/steps?account=` | board: status, freshness, evidência resumida |
-| `PATCH /api/steps/:id` | `{status: manual_done\|skipped\|pending, locked, note}` |
-| `GET /api/state?account=` | `PlayerState` atual |
-| `POST /api/sync/now` | `{source?}` enfileira com debounce de 60 s |
-| `GET /api/sync/runs` | histórico |
-| `GET /api/graph?focus=ref&depth=n` | subgrafo para render |
-| `GET /api/plan?goal=ref` | plano topológico |
-| `GET/POST /api/goals` | metas |
-| `GET /api/export` / `POST /api/import` | JSON completo da conta |
-| `GET /api/ingest/manifest`, `POST /api/ingest` | plugin |
-| `POST /api/admin/reload-content` | recarrega `content/` |
+| Rota | Estado | Função |
+|---|---|---|
+| `GET /api/health`, `GET /api/version` | feita | liveness, versão, contagem de conteúdo, estado do banco |
+| `GET /api/guides`, `GET /api/guides/{guide}` | feita | guias carregados e sumário de seções |
+| `GET /api/guides/{guide}/sections/{section}`, `GET /api/guides/{guide}/steps/{id}` | feita | conteúdo (steps planos e segmentos) |
+| `GET /api/guides/{guide}/now` | stub | primeiro passo e os cinco seguintes; vira o cursor da rota |
+| `GET /api/ingest/manifest`, `POST /api/ingest` | feita | plugin (seção 6.4) |
+| `POST /api/dev/ingest-token` | feita (dev) | bootstrap de token sem UI |
+| `GET /api/guides/{guide}/readiness?account=&step=`, `GET /api/guides/{guide}/segments/{segment}/readiness?account=` | feita (dev) | readiness do trecho (seção 6.4.1) |
+| `GET /api/guides/{guide}/board?account=` | planejada | status derivado por passo, marcas, frescor |
+| `PATCH /api/guides/{guide}/steps/{id}/mark` | planejada | `{kind: manual_done\|skipped\|pinned_open\|confirm_implied\|clear, note}` |
+| `PUT /api/guides/{guide}/cursor` | planejada | fixar o passo atual |
+| `GET /api/objectives?account=` | planejada | vereditos compartilhados (marcos do `/compare`, dashboard) |
+| `GET /api/state?account=`, `POST /api/sync/now`, `GET /api/sync/runs` | planejadas | estado e sync |
+| `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=`, `GET/POST /api/goals` | planejadas | grafo e metas |
+| `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
 
 ### 2.6 Backups e export
 
-- **Automático**: job noturno `VACUUM INTO '/data/backups/planner-YYYYMMDD.db'`, retenção `BACKUP_KEEP_DAYS`. É um arquivo consistente mesmo com WAL ativo.
-- **Export lógico**: `GET /api/export` devolve `{schema_version, account, settings, step_progress, step_progress_events, goals, snapshots?: 'latest'|'all'}`. Import reaplica com `cause='import'`. Esse JSON é também o formato de migração entre instâncias e o seguro contra qualquer mudança de schema.
+- **Banco**: `pg_dump` da database `ironman_planner` (manual ou via `just` no zaros; rotina existente no
+  saradomin). Restore com `pg_restore`.
+- **Export lógico** (planejado): `GET /api/export` devolve `{schema_version, account, settings,
+  objective_progress, step_marks, route_cursor, goals, snapshots?: 'latest'|'all'}`; o import reaplica
+  com `cause='import'`. É o formato de migração entre instâncias e o seguro contra mudança de schema.
 - **Conteúdo**: está no git; nada a fazer.
-- **Restore**: parar o container, copiar o `.db` para o volume, subir.
 
 ## 3. Modelo de conteúdo
 
-Schema completo em `docs/arquitetura/guide.schema.json`; tipos Zod equivalentes em `types.ts`. Hierarquia: `Guide → Section[] → Step[]`.
-
-> **Schema canônico (2026-11-04):** a cópia que vale é `content/schema/guide.schema.json`, embutida no binário Go (`content/schema` → `internal/core/content`) e usada por `ironman content validate`. `docs/arquitetura/guide.schema.json` fica como referência histórica e pode divergir; as extensões feitas na migração para Go (`meta` nas regras atômicas, `prerequisites` no step) estão listadas em `docs/05-conteudo-e-normalizacao.md`, seção "Mapeamento para o schema canônico (Go)".
+Schema canônico: `content/schema/guide.schema.json`, embutido no binário (`content/schema` →
+`internal/core/content`) e usado por `ironman content validate` e pelo loader. Hierarquia:
+`Guide → Variant → Section → Segment → Step`. Segmentos são `bank_leg` (começa numa ação de banco
+explícita) ou `sequence`, com `bank_actions` e `loadout` (`known`/`partial`/`unknown`), sempre com
+proveniência (doc 05, seção 11). Os objetivos de cada passo vêm de `complete_when` (convertido pelo
+loader) e dos sidecars de anotação (doc 09, seção 4).
 
 ### 3.1 O que um step carrega
 
@@ -232,12 +216,15 @@ Schema completo em `docs/arquitetura/guide.schema.json`; tipos Zod equivalentes 
   "text": "Train Runecraft to 10, then complete Temple of the Eye quest to unlock Guardians of the Rift",
   "location": "Wizard Tower",
   "notes": [{ "kind": "tip", "text": "GOTR is a massive improvement for RC training..." }],
-  "complete_when": [                     // AND implícito
-    { "type": "skill_level", "skill": "runecraft", "level": 10 },
+  "complete_when": [                     // AND implícito; o loader converte em objetivos `completes`
+    { "type": "skill_level", "skill": "runecraft", "level": 10, "meta": { "origin": "skillGoal", "confidence": "high" } },
     { "type": "quest_state", "quest": "Temple of the Eye", "state": "FINISHED" }
   ],
-  "requires": ["quest:Enter the Abyss"], // aresta dura; o loader também deriva requisitos da wiki
-  "unlocks": ["item:Guardians of the Rift access"],
+  "prerequisites": [],                   // regras informativas; viram objetivos `requires`
+  "requires": ["step:1.1.257"],          // aresta dura para outro passo do mesmo guia
+  "entities": [                          // menções resolvidas pelo registry, com citação e posição
+    { "ref": "quest:temple_of_the_eye", "source_text": "Temple of the Eye", "field": "/complete_when/1/quest", "method": "rule", "match": "name" }
+  ],
   "tags": ["new-content", "runecraft"],
   "layers": ["enhanced"],                // só aparece no Enhanced Mode
   "modes": ["ironman", "hcim", "uim", "gim"],
@@ -247,61 +234,61 @@ Schema completo em `docs/arquitetura/guide.schema.json`; tipos Zod equivalentes 
 
 Pontos de design:
 
-- **`complete_when` é uma lista de regras com AND implícito**; `{any: [...]}`, `{all: [...]}`, `{not: ...}` dão expressividade sem virar linguagem. Ausente ou vazio ⇒ step **manual** (checkbox). `manual_ok: true` (default) permite marcar na mão mesmo com regras automáticas; `false` reserva para steps em que a mão não faz sentido (ex.: "Quest cape").
-- **Tipos de regra**: `skill_level`, `skill_xp`, `quest_state` (com `op: gte|eq`), `diary_task`, `diary_tier`, `combat_achievement`, `boss_kc`, `activity_score`, `collection_log_item`, `varbit`, `varp`, `item_owned`, `manual`. Cada regra declara implicitamente de qual **faceta** do `PlayerState` depende, o que dá o `stale` por step e a lista de fontes necessárias ("esse step precisa do plugin").
-- **`layers`**: `classic` é o guia original do Oziris; `enhanced` são os 38 steps adicionados pelo site (GOTR, Sleeping Giants, Pandemonium...). Um step com `["classic","enhanced"]` aparece sempre; `["enhanced"]` só no modo enhanced. A conta escolhe a layer; trocar não perde progresso.
-- **`modes`**: filtra steps que não fazem sentido para UIM (banco) ou GIM. Notas específicas de HCIM ficam como `notes[kind=hcim]`, não como modo, porque o step em si vale para todos.
-- **`tags`** são livres mas com namespace sugerido: `phase:mid`, `sailing`, `new-content`, `skill:thieving`, `region:kandarin`.
-- **`section.kind = track`** modela a Sailing Track (`"track": true` no `_index.json`): trilha paralela, não entra no "próximo passo" do guia principal, mas entra no grafo.
-- **`source`** por step e por guia: origem, ID original, autor, licença. Serve para atribuição e para o diff quando o site atualizar.
-- **`unlocks`** declara o que o step entrega; junto com `requires` vira aresta no grafo (seção 5).
+- **`complete_when` é uma lista de regras com AND implícito**; `{any}`, `{all}` e `{not}` dão
+  expressividade sem virar linguagem. Ausente ou vazio ⇒ passo **manual** (checkbox). Cada regra atômica
+  pode levar `meta` com proveniência (`origin`, `inferred`, `confidence`, `match`). O campo continua
+  aceito durante a migração para objetivos e sai quando os importadores emitirem objetivos.
+- **Tipos de regra**: `skill_level`, `skill_xp`, `quest_state` (com `op: gte|eq`), `diary_task`,
+  `diary_tier`, `combat_achievement`, `boss_kc`, `activity_score`, `collection_log_item`, `varbit`,
+  `varp`, `item_owned`, `manual`. Cada regra declara implicitamente de qual **faceta** do `PlayerState`
+  depende, o que dá o `stale` por passo e a lista de fontes necessárias ("esse passo precisa do plugin").
+- **Referências**: `requires` e `recommended_after` usam `entityRef` (`step:<id>` dentro do guia,
+  `step:<guia>/<id>` entre guias, ou um ref do registry); o formato antigo `quest:<nome wiki>` e
+  `skill:<skill>:<nível>` sai no item 2 da sequência do doc 09. O grafo usa chaves de objetivo.
+- **`layers`**: `classic` é o guia original do Oziris; `enhanced` são os 38 passos adicionados pelo site.
+  Um passo com `["classic","enhanced"]` aparece sempre; `["enhanced"]` só no modo enhanced. A conta escolhe
+  a layer; trocar não perde progresso.
+- **`modes`**: filtra passos que não fazem sentido para UIM ou GIM. Notas de HCIM ficam como
+  `notes[kind=hcim]`, porque o passo em si vale para todos.
+- **`tags`** são livres com namespace sugerido: `phase:mid`, `sailing`, `new-content`, `skill:thieving`.
+- **`section.kind = track`** modela a Sailing Track: trilha paralela, não entra no "próximo passo" nem na
+  cascata, mas entra no grafo.
+- **`source`** por passo e por guia: origem, id original, autor, licença. Serve para atribuição (regra 6
+  do CLAUDE.md) e para o diff quando a fonte atualizar.
 
-### 3.2 IDs estáveis e sobrevivência do progresso
+### 3.2 Ids estáveis e sobrevivência do progresso
 
-`step_progress` é chaveado por `(account_id, step_id)` **sem FK** para `content_steps`: remover um step do guia não apaga progresso. Regras de edição (verificadas na CI):
+Marcas (`step_marks`), eventos de passo e cursor são chaveados por `(account_id, guide_id, step_id)`
+**sem FK** para `content_steps`: remover um passo do guia não apaga progresso. Regras:
 
-1. ID nunca muda e nunca é reutilizado. Steps novos entre `1.1.76` e `1.1.77` ganham `1.1.76b`, `1.1.76c` (padrão já usado pelo site) ou um ID descritivo (`1.1.gotr-prep`).
-2. Dividir ou fundir steps: o step novo declara `replaces: ["id-antigo"]`. O loader grava `step_id_aliases` e, uma única vez, copia o progresso (`manual_done`/`skipped` migram; `auto_done` é reavaliado). Evento com `cause='migration'`.
-3. Mudar só o texto não muda nada. Mudar `complete_when` muda o `rule_hash` ⇒ o engine reavalia só esses steps.
-4. Progresso órfão (step_id que não existe mais e não tem alias) aparece em `/account/orphans` para o usuário decidir.
+1. Id nunca muda e nunca é reutilizado. No Oziris, passos novos entre `1.1.76` e `1.1.77` ganham
+   `1.1.76b`, `1.1.76c` (padrão do site). No BRUHsailer o id é posicional da numeração upstream
+   (`bruh-1.1-05` de `CH1.5`), com o hash do texto em `source.fingerprint` para detectar edição (doc 09,
+   decisão D6).
+2. Dividir, fundir ou renumerar: o importador grava os aliases (`step_id_aliases`, por guia). O loader
+   aplica os aliases uma única vez às marcas, aos eventos e ao cursor, com evento `cause='migration'`.
+3. Mudar só o texto não muda o id; muda o `fingerprint`, o que invalida a anotação daquele passo e o
+   `rule_hash`, e o motor reavalia só ele.
+4. Progresso órfão (id que não existe mais e não tem alias) aparece em `/account/orphans` para o dono
+   decidir.
 
-### 3.3 Migração do shape extraído
+### 3.3 Importadores, derivação e sidecars
 
-Script `scripts/migrate-ironman-guide.ts` lê `data/guide/*.json` e emite `content/guides/oziris-main/sections/*.json`. Mapeamento campo a campo:
+- `ironman content migrate` lê `data/guide/normalized/guide.json` (normalizador Python do doc 05) e
+  escreve `content/guides/oziris-main/`; mapeamento campo a campo no doc 05, seção 10.
+- `ironman content import-bruhsailer` lê os DOCX pinados em `data/sources/bruhsailer/` e escreve
+  `content/guides/bruhsailer-main/`; proveniência no README do guia.
+- Os dois passam por `internal/core/content/derive` (segmentos, ações de banco, loadouts) e por
+  `internal/core/entities/enrich` (menções resolvidas; o resto vai para `entities.report.json`).
+- Saída determinística: mesmo input ⇒ mesmos bytes. `guide.json` nunca é editado à mão (regra 9).
+- Os objetivos extraídos pelo agente vivem em `content/guides/<id>/annotations/*.json`, escritos só por
+  `ironman content mcp` e compostos pelo loader; os importadores nunca os tocam (doc 09, seção 4.2).
 
-| Campo extraído | Destino | Regra |
-|---|---|---|
-| `id` | `id` | igual |
-| `text`, `location` | `text`, `location` | igual |
-| `note` | `notes[]` | `kind: hcim` se `hcim: true`, senão `tip` |
-| `updateNote` | `notes[]` | `kind: update` |
-| `quest` + `questStatus: complete` | `complete_when` | `{type: quest_state, quest, state: FINISHED}` |
-| `quest` + `questStatus: start` | `complete_when` | `{type: quest_state, quest, state: IN_PROGRESS, op: gte}` — satisfeito por IN_PROGRESS **ou** FINISHED (quem terminou a quest obviamente começou) |
-| `skillGoal {skill, level}` | `complete_when` | `{type: skill_level, skill, level}`; `runecrafting` → `runecraft` (nome do hiscores) |
-| quest + skillGoal no mesmo step (ex.: `1.1.219`, `1.1.258a`) | `complete_when` | ambas as regras (AND) |
-| `items[]` | `items[]` | strings como estão; `"(equip)"` no texto vira `{name, equip: true}` quando trivial, senão fica string |
-| `links[{type,url,text}]` | `links[]` | `image/video/guide` mapeiam 1:1 |
-| `enhanced: true` | `layers` | `["enhanced"]`; ausente ⇒ default `["classic","enhanced"]` |
-| `hcim: true` | `notes[kind]` + `tags` | nota vira `hcim`; adiciona tag `hcim-note` |
-| `phase` | `phase` + `tags` | `phase: mid` e tag `phase:mid` |
-| `newQuest: true` | `tags` | `new-content` |
-| `sailingRelated: true` | `tags` | `sailing` |
-| seção `track: true` | `section.kind` | `track` |
-| seção `related`, `description` | iguais | `seoTitle` descartado |
-| sem `quest` nem `skillGoal` (≈400 steps) | `complete_when: []` | **manual** |
-| todos | `source` | `{origin: "ironman.guide", original_id: id, imported_at}` |
+## 4. Banco de dados e avaliação
 
-Derivações automáticas feitas pelo mesmo script (gravadas no arquivo, não calculadas em runtime, para ficarem revisáveis no diff):
-
-- Step `quest X complete` ganha `requires: ["step:<id do step 'start' da mesma quest>"]` quando esse step existe (33 casos de `start`).
-- Step cujo texto contém "Finish/Complete <quest>" e cujo `quest` é outra ⇒ nada; não adivinhar.
-- `estimate_minutes` fica vazio; é preenchido à mão depois.
-
-Resultado esperado: 576 steps, ~190 com regra automática (144 quest + 47 skill, com sobreposição), ~385 manuais. Steps manuais continuam úteis: são o checklist persistente que o site não oferece, e muitos podem ganhar regra `varbit` depois (ex.: "Unlock fairy rings" → varbit de Fairytale II parcial) via PR no conteúdo.
-
-## 4. Banco de dados e rule engine
-
-DDL completa em `docs/arquitetura/schema.sql` (compila em SQLite; 28 tabelas/views).
+DDL em `db/migrations/` (goose, Postgres); `0001_init.sql` é o schema base, `0002` o frescor do ingest,
+`0003` a identidade por guia. As tabelas de objetivos (doc 09, seção 5) entram na migration do item 8 da
+sequência.
 
 ### 4.1 Grupos de tabelas
 
@@ -309,112 +296,170 @@ DDL completa em `docs/arquitetura/schema.sql` (compila em SQLite; 28 tabelas/vie
 erDiagram
   users ||--o{ accounts : owns
   users ||--o{ sessions : has
+  users ||--o{ api_tokens : issues
   accounts ||--o{ plugin_ingest_tokens : issues
   accounts ||--o{ snapshots : receives
   accounts ||--o{ sync_runs : logs
   accounts ||--o{ player_state : "current facts"
-  accounts ||--o{ step_progress : tracks
+  accounts ||--o{ ingest_container_freshness : "item freshness"
+  accounts ||--o{ objective_progress : "verdict per objective"
+  accounts ||--o{ step_marks : "marks per guide"
+  accounts ||--o{ route_cursor : "cursor per guide"
   accounts ||--o{ goals : wants
   snapshots ||--o{ snapshot_skills : normalizes
-  snapshots ||--o{ snapshot_quests : normalizes
   snapshots ||--o{ snapshot_vars : normalizes
   snapshots ||--o{ snapshot_items : normalizes
+  snapshots ||--o{ snapshot_item_containers : normalizes
   content_versions ||--o{ content_steps : indexes
-  content_steps ||--o{ step_progress : "by step_id (no FK)"
-  step_progress ||--o{ step_progress_events : history
+  objective_progress ||--o{ objective_progress_events : history
+  step_marks ||--o{ step_status_events : "derived status history"
 ```
 
-- **`snapshots`** é append-only com `raw` bruto e `UNIQUE(account_id, source, raw_hash)` (idempotência: puxar duas vezes o mesmo hiscores não gera nada). Tabelas `snapshot_*` são a normalização por snapshot: histórico para gráficos e diffs. Um `adapter_version` por snapshot permite re-normalizar o passado quando o adapter corrigir um bug.
-- **`player_state`** é a novidade em relação ao levantamento: uma linha por fato `(facet, key)` com `value` JSON, fonte e `observed_at`. Hiscores só sabe skills e KC; plugin sabe tudo; WOM sabe skills com histórico. O merge é "observação mais nova vence dentro da faceta", com prioridade `plugin > wikisync > hiscores > wom` em empate. O rule engine só lê essa tabela, carregada em memória como `PlayerState`.
-- **`step_progress`** guarda o status atual, `evidence` (JSON com a regra, o valor observado, a fonte e o snapshot) e `manual_locked`. **`step_progress_events`** guarda transições; é daí que sai "você concluiu 7 steps hoje".
-- **`content_steps`** é só um índice do conteúdo carregado (posição, `rule_hash`, layers, modes) para que SQL consiga montar o board sem parsear JSON.
-- **`goals`** guarda a referência tipada (`quest:…`, `item:…`, `skill:agility:70`) e um `plan_cache`.
+- **`snapshots`** é append-only com `raw` bruto; dedupe por `raw_hash` para fontes de polling e por
+  `(ingest_token_id, client_seq)` para o plugin. Tabelas `snapshot_*` são a normalização por snapshot:
+  histórico para gráficos e diffs. Um `adapter_version` por snapshot permite re-normalizar o passado.
+- **`player_state`**: uma linha por fato `(facet, key)` com `value` JSON, fonte e `observed_at`. Facetas:
+  `skill`, `activity`, `quest`, `diary_task`, `combat_achievement`, `collection_log`, `varbit`, `varp`,
+  `item`; a faceta `diary` (tier completa, a partir dos varbits de referência) entra com o item 7 da
+  sequência. O merge é "observação mais nova vence dentro da faceta", com prioridade
+  `plugin > wikisync > hiscores > wom` em empate. O motor só lê essa tabela, carregada em memória como
+  `rules.PlayerState`.
+- **`ingest_container_freshness`** e **`snapshot_item_containers`**: estado (`unavailable`/`restored`/
+  `live`), `revision` e `live_epoch` por container; `restored` nunca vira `live` (seção 6.4).
+- **`objective_progress`** guarda o veredito por `(conta, chave de objetivo)` com evidência, snapshot,
+  `first_met_at`, `met_in_guide_id` e `regressed_at`; **`objective_progress_events`** as transições.
+- **`step_marks`** guarda a marca do dono por `(conta, guia, passo)`: `manual_done`, `skipped`,
+  `pinned_open` ou `implied` (com `implied_by_step_id`). O status automático **não é armazenado**: é
+  derivado dos objetivos na leitura; **`step_status_events`** registra as transições do status derivado
+  por guia (fonte do F6 e de `steps_changed`).
+- **`route_cursor`**: passo atual por `(conta, guia)`, com causa `pin` ou `auto`.
+- **`content_versions`** e **`content_steps`**: índice mínimo do conteúdo carregado (seção, posição,
+  hash) para joins de eventos e detecção de órfãos; **`step_id_aliases`** por guia.
+- **`goals`** guarda a chave de objetivo e um `plan_cache`.
 - **`wiki_cache`** e **`graph_cache`** são caches reconstruíveis.
 
-### 4.2 Por que SQLite aguenta
+### 4.2 Dimensionamento
 
-576 steps × 1 conta × 1 snapshot a cada 30 min = 48 reavaliações/dia, cada uma lendo ~1.500 linhas de `player_state` e escrevendo poucas dezenas. Snapshots brutos do hiscores têm ~10 KB; um ano são ~175 MB se guardar todos; a política default guarda todos os snapshots com mudança (`unchanged` não grava) e um job mensal compacta snapshots de hiscores com mais de 90 dias para um por dia.
+802 passos × 1 conta × 1 snapshot a cada 30 min = 48 reavaliações/dia, cada uma lendo ~1.500 linhas de
+`player_state` e escrevendo poucas dezenas; com o plugin, um delta a cada 10 s só quando algo mudou.
+Snapshots brutos do hiscores têm ~10 KB; um ano são ~175 MB se guardar todos. Política: guardar todos os
+snapshots com mudança (`unchanged` não grava) e um job mensal compacta snapshots de hiscores com mais de
+90 dias para um por dia. Nada disso pressiona o Postgres.
 
-### 4.3 Rule engine
+### 4.3 Motor de regras e status derivado
 
-Contrato (em `types.ts`):
+Contrato (Go, `internal/core/rules`):
 
-```ts
-evaluateRules(rules: Rule[], state: PlayerState, opts): Evaluation
-// Evaluation = { verdict: 'met'|'unmet'|'unknown', evidence: Evidence[], oldest_observed_at?, monotonic }
-reconcileStep(step, previous: StepProgressRow | undefined, evaluation, ctx): { row, changed }
+```go
+rules.Evaluate(rules []content.Rule, ps rules.PlayerState) rules.Result
+// Result = {Verdict: met|unmet|unknown, Evidence []Evidence, Monotonic bool}
 ```
 
 Semântica:
 
-1. **Três veredictos, não dois.** `unknown` significa que a faceta nunca foi observada para a conta (ex.: regra `quest_state` sem plugin nem WikiSync). A UI mostra "precisa de plugin/WikiSync" em vez de "não feito". `all` com qualquer `unmet` ⇒ `unmet`; `all` só com `met`/`unknown` ⇒ `unknown` se houver algum `unknown`; `any` com um `met` ⇒ `met`.
-2. **Evidência sempre.** Cada regra atômica devolve `{rule, verdict, observed, source, observed_at, snapshot_id}`. O step guarda a evidência do momento em que virou `auto_done`, então "por que isso está marcado?" tem resposta mesmo meses depois.
-3. **Reavaliação total a cada snapshot.** Simples e barato (ms). Só steps cujo `changed === true` geram escrita e evento. Também reavalia no reload de conteúdo para steps com `rule_hash` alterado.
-4. **Manual × automático** (`reconcileStep`):
+1. **Três veredictos, não dois.** `unknown` significa que a faceta nunca foi observada para a conta (ex.:
+   `quest_state` sem plugin). A UI mostra "precisa do plugin" em vez de "não feito". `all` com qualquer
+   `unmet` ⇒ `unmet`; `all` só com `met`/`unknown` ⇒ `unknown` se houver algum `unknown`; `any` com um
+   `met` ⇒ `met`.
+2. **Evidência sempre.** Cada regra atômica devolve `{rule, verdict, observed, reason, stale}`; o
+   objetivo guarda a evidência e o snapshot do momento em que virou `met`, então "por que isso está
+   marcado?" tem resposta meses depois.
+3. **Reavaliação total a cada snapshot.** Barata (milissegundos). Só objetivos cujo veredito mudou geram
+   escrita e evento; o status derivado dos passos é recalculado em seguida e só as transições geram
+   `step_status_events`. Também reavalia no reload de conteúdo para objetivos cuja regra mudou.
+4. **Manual × automático** (`internal/core/progress`, por passo):
 
-| Estado anterior | Avaliação | Resultado |
+| Marca da rota | Objetivos `completes`/`starts` | Status |
 |---|---|---|
-| ausente / `pending` | `met` | `auto_done`, `completed_at = observed_at` da evidência mais recente |
-| `pending` | `unmet`/`unknown` | fica `pending` |
-| `auto_done` | `met` | sem mudança (evidência não é reescrita; `rule_hash` sim, se mudou) |
-| `auto_done` monotônica | `unmet` | fica `auto_done`, marca `regressed_at` (dado provavelmente errado ou snapshot parcial); UI mostra alerta |
-| `auto_done` não monotônica (`item_owned`, `varbit` sem `min`) | `unmet` | volta a `pending`, evento `engine` |
-| `manual_done` / `skipped` | qualquer | **intocado**; se `met`, a UI mostra "também confirmado automaticamente" (evidência salva, status não muda) |
-| qualquer com `manual_locked = 1` | qualquer | intocado. `locked` é o que o usuário usa para dizer "não marque isso sozinho" (ex.: desmarcou um `auto_done` de propósito) |
+| `manual_done`, `skipped` | qualquer | a marca; se tudo `met`, a UI mostra "também confirmado automaticamente" |
+| `pinned_open` | qualquer | `pending`; o motor não insiste, a evidência fica visível |
+| `implied` (não confirmada) | qualquer | `implied`; "confirmar" vira `manual_done` com `cause='implied'` |
+| nenhuma | todos `met` | `auto_done`, `completed_at` = `first_met_at` mais recente |
+| nenhuma | algum `unmet`/`unknown` | `pending` |
 
-Regras monotônicas: `skill_level`, `skill_xp`, `quest_state`, `diary_*`, `combat_achievement`, `boss_kc`, `activity_score`, `collection_log_item`, `varbit`/`varp` com `min`. Não monotônicas: `item_owned`, `varbit`/`varp` com `eq`/`bit`.
+Objetivo `met` que regride: se a regra é monotônica (`skill_*`, `quest_state`, `diary_*`,
+`combat_achievement`, `boss_kc`, `activity_score`, `collection_log_item`, `varbit`/`varp` com `min`),
+o objetivo fica `met` e marca `regressed_at` (dado provavelmente errado ou snapshot parcial; a UI
+alerta). Se não é (`item_owned`, `varbit`/`varp` com `eq`/`bit`), volta a `unmet` e os passos derivados
+voltam a `pending` com evento `engine`.
 
-5. **Stale.** Cada step tem `freshness` calculada na leitura, não armazenada: pega as facetas que suas regras tocam, acha o `observed_at` mais antigo entre elas e compara com `STALE_AFTER_HOURS` (configurável por fonte: hiscores 24 h, plugin 72 h, pois o jogador pode simplesmente não ter logado). `stale` não muda status; muda a cor e habilita "sync now" em destaque. Steps manuais nunca ficam stale. Se nenhuma faceta foi observada ⇒ `unknown`.
-
-6. **Determinismo.** `now` é parâmetro; nada de `Date.now()` dentro do engine. Isso é o que torna os testes de fixture triviais.
+5. **Cascata `implied`** (doc 09, seção 9.1): quando um passo da rota ativa vira `auto_done` por
+   objetivo cumprido nessa rota (`met_in_guide_id`), os passos manuais anteriores da mesma seção ainda
+   `pending` ganham a marca `implied`. Nunca atravessa seção nem track, nunca em outra rota.
+6. **Stale.** Cada passo tem `freshness` calculada na leitura, não armazenada: pega as facetas que seus
+   objetivos tocam, acha o `observed_at` mais antigo e compara com o limite por fonte (hiscores 24 h,
+   plugin 72 h). `stale` não muda status; muda a cor e destaca "sync now". Passos manuais nunca ficam
+   stale. Se nenhuma faceta foi observada ⇒ `unknown`.
+7. **Determinismo.** `now` é parâmetro; nada de relógio dentro do motor. Testes de tabela com fixtures em
+   `internal/core/.../testdata`.
 
 ## 5. Grafo de requisitos
 
 ### 5.1 Nós e arestas
 
-| Tipo de nó | ID (`Ref`) | Origem | "Feito" quando |
+Os nós são **chaves de objetivo** (doc 09, seção 3.2), então o grafo, as metas e o `/compare` falam a
+mesma língua:
+
+| Tipo de nó | Chave | Origem | "Feito" quando |
 |---|---|---|---|
-| quest | `quest:Lost City` | Bucket `quest` | `player_state.quest = FINISHED` |
-| skill (um nó por skill; **níveis são atributos de aresta**, não nós) | `skill:agility` | implícito | n/a (satisfação é por aresta) |
-| diary tier | `diary:Ardougne:easy` | Bucket/diary cache | todas as tasks `done` |
-| diary task | `diary_task:Ardougne:easy:3` | idem | `done` |
-| item / unlock | `item:Barrows gloves`, `item:Fairy rings` | `unlocks` do guia + manual | `item_owned` ou step que o entrega concluído |
-| boss | `boss:Zulrah` | hiscores | KC ≥ limiar da aresta |
-| combat achievement | `ca:…` | plugin | `done` |
-| guide step | `step:1.1.258a` | conteúdo | `step_progress` done |
-| goal | `goal:<ulid>` | usuário | nó alvo; aponta para um `Ref` |
+| quest | `quest:lost_city@finished`, `quest:lost_city@started` | catálogo + Bucket `quest` | `objective_progress` = `met` |
+| skill (um nó por skill; **níveis são atributos de aresta**) | `skill:agility` | implícito | n/a (satisfação é por aresta, `>= N`) |
+| diary tier | `diary:ardougne:easy@complete` | catálogo | `met` |
+| item | `item:7462x1` | extração do guia + wiki | `met` (posse) |
+| unlock | `unlock:fairy_rings@done` | catálogo de unlocks | `met` (varbit) ou marca manual |
+| boss | `boss:zulrah>=N` | hiscores | `met` |
+| combat achievement | `ca:574@done` | catálogo | `met` |
+| quest points | `qp>=N` | varp 101 ou soma do catálogo | `met` |
+| passo | `step:<guia>/<id>` | conteúdo | status derivado do passo |
+| meta | `goal:<ulid>` | usuário | nó alvo; aponta para uma chave |
 
-Arestas `A -requires-> B` com atributos `{kind: hard|soft, threshold?: number, source: wiki|guide|derived}`:
+Arestas `A -requires-> B` com atributos `{kind: hard|soft, threshold?, source: wiki|guide|derived}`:
 
-- **wiki → hard**: `quest X requires quest Y`, `quest X requires skill S ≥ n` (atributo `threshold`), `diary tier requires quest/skill`. Vem do Bucket (`quest.requirements`, `quest.skill_requirements`), cacheado em `wiki_cache`.
-- **guia → hard**: `step.requires`.
-- **guia → soft**: `step.recommended_after` e a ordem do guia (step N recomendado após N−1 na mesma seção), usada só para desempate topológico.
-- **derivadas**: `step.complete_when` com `quest_state FINISHED` ⇒ `step -requires-> quest` (hard); com `skill_level` ⇒ `step -requires-> skill (threshold)`; `step.unlocks` ⇒ `item -requires-> step` (o item depende do step que o entrega).
+- **wiki → hard**: `quest X requires quest Y`, `quest X requires skill S ≥ n`, `diary tier requires
+  quest/skill`. Vem de `data/wiki/quests.json` e `diary_tasks.json` (Bucket), cacheado em `wiki_cache`.
+- **guia → hard**: objetivos `requires` do passo e `step.requires`.
+- **guia → soft**: `recommended_after` e a ordem do guia (passo N depois de N−1 na mesma seção), usada
+  só para desempate topológico.
+- **derivadas**: objetivo `completes` ⇒ `step -requires-> objetivo`; objetivo `uses` de item ⇒ aresta
+  suave para a posse.
 
 Skill-por-aresta é o que evita a explosão: 24 nós de skill em vez de 24 × 99.
 
 ### 5.2 Armazenamento
 
-Em memória, reconstruído de `content/` + `wiki_cache` quando qualquer um muda; serializado em `graph_cache` para boot rápido. Não há tabela de adjacência editável: o grafo é derivado, nunca fonte da verdade. Tamanho estimado: ~170 quests + 24 skills + 48 diary tiers + ~500 tasks + 576 steps + itens ⇒ < 2.000 nós, < 6.000 arestas. Cabe em um `Map`.
+Em memória, reconstruído de `content/` + catálogos + `wiki_cache` quando qualquer um muda; serializado
+em `graph_cache` para boot rápido. Não há tabela de adjacência editável: o grafo é derivado, nunca fonte
+da verdade. Tamanho: ~225 quests + 24 skills + 48 diary tiers + 802 passos + itens e unlocks ⇒ menos de
+3.000 nós e 8.000 arestas. Cabe em um mapa.
 
 ### 5.3 Algoritmos
 
-Todos em `src/lib/core/graph/`, puros, recebendo `(graph, PlayerState, progress)`:
+Todos em `internal/core/graph`, puros, recebendo `(grafo, vereditos, marcas)`:
 
-- **Satisfação de aresta**: `isSatisfied(edge, state)` — para nó quest compara estado; para skill compara `level ≥ threshold`; para step olha `step_progress`.
-- **"O que falta para X"**: BFS reverso a partir do alvo seguindo só arestas `hard` cuja satisfação é falsa; nós já satisfeitos cortam a busca (não expandem). Resultado = subgrafo pendente. Depois **Kahn** sobre esse subgrafo com desempate por (fase do guia, posição do step, menor custo estimado) ⇒ plano linear. Ciclos (raros, por erro de dado) são detectados e reportados como aviso, nunca travam.
-- **"Destravou agora"**: `available(state) = {n : todas as arestas hard de saída satisfeitas e n não feito}`; diff entre `available(snapshot B)` e `available(snapshot A)` é a lista. Rodado no fim de cada reavaliação e gravado como evento de resumo.
-- **Caminho crítico**: no subgrafo pendente, peso de aresta = `estimate_minutes` do step destino (ou XP faltante ÷ taxa configurável para arestas de skill); caminho mais longo em DAG (ordem topológica + relaxamento). É o que a tela de goal destaca.
-- **Caminho recomendado do guia**: filtra o plano para manter só steps, reordena pela ordem do guia quando a topologia permite (ordenação topológica estável com a posição como prioridade).
+- **Satisfação de aresta**: para nó de objetivo compara o veredito; para skill compara
+  `level ≥ threshold`; para passo olha o status derivado.
+- **"O que falta para X"**: BFS reverso a partir do alvo seguindo só arestas `hard` não satisfeitas; nós
+  satisfeitos cortam a busca. Resultado = subgrafo pendente. Depois **Kahn** com desempate por (fase do
+  guia, posição do passo na rota ativa, menor custo estimado) ⇒ plano linear. Ciclos (erro de dado) são
+  reportados como aviso, nunca travam.
+- **"Destravou agora"**: `available(estado) = {n : todas as arestas hard de saída satisfeitas e n não
+  feito}`; diff entre dois snapshots é a lista. Rodado no fim de cada reavaliação e gravado como evento.
+- **Caminho crítico**: no subgrafo pendente, peso = `estimate_minutes` do passo destino (ou XP faltante ÷
+  taxa configurável para arestas de skill); caminho mais longo em DAG.
+- **Caminho recomendado do guia**: filtra o plano para manter só passos e reordena pela ordem da rota
+  ativa quando a topologia permite.
 
 ### 5.4 Render sem hairball
 
-- **Focus + context**: a tela nunca renderiza o grafo todo. Entra sempre por um foco (goal, quest ou step) e mostra ancestrais pendentes até `depth` (default 3), com os satisfeitos colapsados em um nó-resumo "12 requisitos concluídos" expansível.
-- **Compound nodes por seção**: steps viram filhos de um nó composto da seção; seção colapsada vira um único retângulo com contagem feito/total.
-- **Skills como badges**: aresta `step → skill:agility (56)` é desenhada como etiqueta "Agility 56" no nó do step com cor verde/vermelha, não como aresta para um nó distante. Só vira nó quando o usuário foca em uma skill ("tudo que precisa de Agility").
-- **Layout ELK `layered`**, direção esquerda→direita, com `nodePlacement.strategy: NETWORK_SIMPLEX`; recalculado só ao expandir/colapsar.
-- **Cores por estado**: feito (cinza), disponível (verde), bloqueado (vermelho com contador do que falta), stale (hachurado), manual pendente (amarelo).
-- **Limite duro** de ~150 nós visíveis; acima disso, aumenta a agregação automaticamente.
+- **Focus + context**: a tela nunca renderiza o grafo todo. Entra sempre por um foco (meta, quest ou
+  passo) e mostra ancestrais pendentes até `depth` (default 3), com os satisfeitos colapsados em um
+  nó-resumo "12 requisitos concluídos" expansível.
+- **Compound nodes por seção**: passos viram filhos de um nó composto da seção.
+- **Skills como badges**: `step → skill:agility (56)` é uma etiqueta no nó do passo, não uma aresta para um
+  nó distante. Só vira nó quando o usuário foca em uma skill.
+- **Layout ELK `layered`**, esquerda→direita, recalculado só ao expandir/colapsar.
+- **Cores por estado**: feito, disponível, bloqueado (com contador do que falta), stale, manual pendente.
+- **Limite duro** de ~150 nós visíveis; acima disso, aumenta a agregação.
 - Vista alternativa em lista (o plano topológico), porque para executar é mais útil que o grafo.
 
 ## 6. Estratégia de sync
@@ -423,78 +468,117 @@ Todos em `src/lib/core/graph/`, puros, recebendo `(graph, PlayerState, progress)
 
 | Fonte | Cadência | Condição | Observações |
 |---|---|---|---|
-| Hiscores | a cada 30 min (jitter ±5) | conta ativa; acelera para 10 min por 2 h após "sync now" ou após um ingest do plugin (o jogador está jogando) | 404 ⇒ `rsn` não ranqueado ou renomeado; 3 seguidas ⇒ alerta na UI |
+| Hiscores | a cada 30 min (jitter ±5) | conta ativa; acelera para 10 min por 2 h após "sync now" ou após um ingest do plugin | 404 ⇒ `rsn` não ranqueado ou renomeado; 3 seguidas ⇒ alerta na UI |
 | Wise Old Man | a cada 6 h | `SYNC_WOM_HOURS > 0` | Lê histórico; opcionalmente `POST /players/:name` para pedir update, no máximo 1×/h |
-| WikiSync | a cada 6 h | `WIKISYNC_IMPORT_ENABLED` e consentimento na UI | Importador, não base; UI exibe o aviso da wiki |
 | Wiki Bucket | semanal + no boot se cache vazio | global, não por conta | Alimenta `wiki_cache` e invalida `graph_cache` |
-| Plugin | push | token válido | Define `account.last_plugin_seen_at` |
+| Plugin | push | token válido | Define `last_seen_at` do token |
 | Manual | `POST /api/sync/now` | debounce 60 s por (conta, fonte) | Responde com `sync_run_id`; UI faz polling |
 
-O scheduler roda a cada minuto, decide o que está vencido (`next_allowed_at` ≤ agora), enfileira `sync_runs(status=queued)` e um único executor processa em série com `AbortSignal` de 15 s por chamada. Nunca há duas chamadas simultâneas à mesma fonte.
+WikiSync não é fonte: o wiki pede para não usar a API em projetos de terceiros (doc 02, seção 3) e o
+plugin próprio cobre tudo que ela daria. O scheduler roda a cada minuto, decide o que está vencido
+(`next_allowed_at` ≤ agora), enfileira `sync_runs(status=queued)` e um único executor processa em
+série com timeout de 15 s por chamada.
 
 ### 6.2 Rate limit, backoff e idempotência
 
-- Por fonte, `rateLimit: {minIntervalSec, maxPerHour}` no adapter; o executor respeita antes de chamar.
-- `429`/`503` ⇒ `status=rate_limited`, `next_allowed_at = now + 2^n × 5 min` (n = falhas consecutivas, teto 6 h). `5xx` outros ⇒ `error` com backoff igual. Sucesso zera.
-- Idempotência de leitura: `raw_hash`. Idempotência de escrita no `player_state`: só atualiza se `observed_at` novo ≥ existente (ou fonte de maior prioridade com mesmo timestamp). Reprocessar um snapshot antigo nunca regride o estado.
-- Reavaliação é idempotente por construção (função pura + `changed` flag).
+- Por fonte, `minInterval` e `maxPerHour` no adapter; o executor respeita antes de chamar.
+- `429`/`503` ⇒ `status=rate_limited`, `next_allowed_at = now + 2^n × 5 min` (n = falhas consecutivas,
+  teto 6 h). Outros `5xx` ⇒ `error` com backoff igual. Sucesso zera.
+- Idempotência de leitura: `raw_hash`. Idempotência de escrita no `player_state`: só atualiza se
+  `observed_at` novo ≥ existente. Reprocessar um snapshot antigo nunca regride o estado.
+- Reavaliação é idempotente por construção (função pura + eventos só nas transições).
 
 ### 6.3 Mudança de nome
 
-- O plugin é a fonte autoritativa: ele envia `username`; se diferir de `accounts.rsn` para aquele token, o servidor registra em `name_history`, atualiza `rsn`/`rsn_normalized` e segue (o token identifica a conta, não o nome).
-- Sem plugin: hiscores 404 três vezes seguidas ⇒ alerta "conta não encontrada; renomeou?" com campo para o nome novo; WOM tem endpoint de name change e o adapter tenta resolver automaticamente antes de alertar.
+- O plugin é a fonte autoritativa: ele envia `username`; se diferir de `accounts.rsn` para aquele token,
+  o servidor registra em `name_history`, atualiza `rsn`/`rsn_normalized` e segue.
+- Sem plugin: hiscores 404 três vezes seguidas ⇒ alerta "conta não encontrada; renomeou?"; WOM tem
+  endpoint de name change e o adapter tenta resolver antes de alertar.
 - `rsn_normalized` (lowercase, espaços → `_`) é a chave de busca em todas as fontes.
 
-### 6.4 Plugin RuneLite: contrato de ingestão
+### 6.4 Plugin Microbot: contrato de ingestão
 
-Modelo: WikiSync (BSD-2). Lá, o plugin baixa `GET /runelite/manifest` (`{version, varbits[], varps[], collections[]}`) a cada 20 min, a cada 10 s lê todos os varbits/varps do manifest e níveis, faz `subtract(novo, último_enviado)` e só envia o delta em `POST /runelite/submit` com `{username, profile, data:{varb, varp, level, collectionLogSlots, collectionLogItemCount}}`; backoff quadrático em falha; o cache local só avança após `200`. Copiamos isso e estendemos:
+Modelo: WikiSync (BSD-2). Lá, o plugin baixa `GET /runelite/manifest` a cada 20 min, a cada 10 s lê os
+varbits/varps do manifest e os níveis, calcula o delta e só envia o que mudou; backoff quadrático em
+falha; o cache local só avança após `200`. Copiamos isso e estendemos. Implementação: `internal/core/ingest`
+(tipos e validação), `internal/store/ingest` (manifest, aceitação, normalização, frescor) e o plugin
+`fm/ironmanplanner` no repositório `microbot-plugins` (doc 06).
 
 ```mermaid
 sequenceDiagram
-  participant P as Plugin (RuneLite)
+  participant P as Plugin (Microbot)
   participant S as Servidor (/api/ingest)
   P->>S: GET /api/ingest/manifest  (Bearer ipl_…)
-  S-->>P: {contract_version:1, manifest_version:7, token_scopes:["state:write"], items:{bank:false,…}, resync:true}
+  S-->>P: {contract_version:1, manifest_version:7, token_scopes:["state:write"], varbits:[…], items:{bank:false,…}, resync:true}
   Note over P: login → lê tudo que o manifest pede
   P->>S: POST /api/ingest {contract_version:1, kind:"full", client_seq:1, manifest_version:7, data:{…}}
   S-->>P: {contract_version:1, ok:true, accepted_seq:1, resync:false, manifest_version:7}
   loop a cada 10 s, se algo mudou
-    P->>S: POST /api/ingest {kind:"delta", client_seq:n, data:{varb:{…só mudados}, level:{…}}}
+    P->>S: POST /api/ingest {kind:"delta", client_seq:n, data:{varb:{…só mudados}, level:{…}, quest:{…}}}
     S-->>P: {ok, accepted_seq:n, steps_changed:2}
   end
-  Note over S: manifest muda (novo varbit em regra) → version 8
+  Note over S: manifest muda (novo varbit de referência) → version 8
   P->>S: POST (manifest_version:7)
-  S-->>P: {ok, resync:true, manifest_version:8}
+  S-->>P: 409 {ok:false, resync:true, manifest_version:8}
   P->>S: GET manifest; POST kind:"full"
 ```
 
-Detalhes do contrato (schemas Zod em `types.ts`: `IngestManifest`, `IngestPayload`, `IngestResponse`):
+Detalhes do contrato (tipos Go em `internal/core/ingest/contract.go`; espelho Zod em
+`docs/arquitetura/types.ts`):
 
-- **Versões**: `contract_version` é literalmente `1`; mudança incompatível cria outro contrato. `manifest_version` é o hash truncado do conjunto gerado pelo servidor: união dos `varbit`/`varp` usados em `complete_when`, mapeamentos de quests/diaries e `collections` (item ids em ordem fixa para o bitset). Manifest diferente exige novo `full`.
-- **Escopos**: todo token de ingestão anuncia `state:write`; dados privados usam `items:bank`, `items:inventory` e `items:equipment`. Os booleanos homônimos de `items` no manifest são a permissão efetiva e devem corresponder aos escopos. Ainda há o segundo opt-in no cliente; os três toggles locais começam desligados. `only_item_ids`, quando presente, limita as chaves aceitas.
-- **Formato Java-friendly**: mapas são objetos JSON, não listas de pares. IDs numéricos são chaves decimais canônicas (`"4151"`), portanto o cliente pode usar `Map<String, Long>` do Gson sem adaptador de chave.
-- **Full versus delta**: `full` contém os mapas `varb`, `varp`, `level`, `xp` e `boosted`, mesmo que vazios, e uma observação explícita para cada um de `bank`, `inventory` e `equipment`. Em `delta`, facetas e containers inalterados são omitidos. `collectionLogSlots` continua bitset base64 completo (o clog só cresce; ~1 KB).
-- **Ordem e idempotência**: `client_seq` monotônico por token; servidor rejeita `seq ≤ last_seq` com `ok:false, accepted_seq:last_seq` (cliente então faz `full`). Cada POST aceito vira um `snapshots(kind=delta|full, raw=payload, client_seq)` e um merge em `player_state`.
-- **Resync**: `resync:true` no manifest ou na resposta manda o cliente atualizar o manifest e fazer `full` no ciclo seguinte. Isso ocorre se não existe baseline `full`, a versão mudou ou a sequência deixou de ser aproveitável. Login também dispara `full`.
-- **Cadência**: 10 s de verificação local, envio só se houver delta, backoff quadrático como no original, timeout 3 s. O plugin também envia `full` ao deslogar (último estado conhecido).
-- **Config do plugin**: URL do servidor, token, toggles por categoria (bank/inventory/equipment desligados por default), indicador de último envio.
+- **Versões**: `contract_version` é literalmente `1`; campos novos opcionais não mudam a versão, mudança
+  incompatível cria outro contrato. `manifest_version` é um hash truncado do conjunto gerado pelo servidor:
+  varbits/varps de referência (`content/reference/varbits.json`: diaries, unlocks, varp 101) mais os
+  usados em regras do conteúdo, `collections` (item ids em ordem fixa para o bitset) e `only_item_ids`.
+  Manifest diferente exige novo `full`.
+- **Facetas** de `data`: `varb`, `varp`, `level`, `xp`, `boosted` (mapas id → valor), `collectionLogSlots`
+  (bitset base64) e `items`. **Nova (item 7 da sequência do doc 09)**: `quest`, mapa nome RuneLite →
+  `NOT_STARTED | IN_PROGRESS | FINISHED`, lido com `Quest.getState` na thread do cliente (doc 02, seção 6);
+  obrigatório em `full`, só os que mudaram em `delta`. O servidor resolve o nome pelo registry (aliases
+  do WikiSync cobrem os nomes divergentes) e grava a faceta `quest`. O servidor rejeita campos
+  desconhecidos (`DisallowUnknownFields`), então ele sobe antes do plugin.
+- **Escopos**: todo token anuncia `state:write`; dados privados usam `items:bank`, `items:inventory` e
+  `items:equipment`. Os booleanos de `items` no manifest são a permissão efetiva e devem corresponder aos
+  escopos. Ainda há o segundo opt-in no cliente; os três toggles locais começam desligados.
+  `only_item_ids`, quando presente, limita as chaves aceitas.
+- **Formato Java-friendly**: mapas são objetos JSON com chaves decimais canônicas (`"4151"`), portanto
+  o cliente usa `Map<String, Long>` do Gson sem adaptador.
+- **Full versus delta**: `full` contém todos os mapas, mesmo vazios, e uma observação explícita para cada
+  um de `bank`, `inventory` e `equipment`. Em `delta`, facetas e containers inalterados são omitidos.
+  `collectionLogSlots` é sempre o bitset completo.
+- **Ordem e idempotência**: `client_seq` monotônico por token; o servidor responde `409` com
+  `ok:false, accepted_seq:last_seq, resync:true` para `seq ≤ last_seq` ou manifest antigo, e o cliente
+  renumera e manda `full`. Cada POST aceito vira um `snapshots(kind, raw, client_seq)` e um merge em
+  `player_state`.
+- **Resync**: `resync:true` no manifest ou na resposta manda o cliente atualizar o manifest e fazer `full`
+  no ciclo seguinte. Login e logout também disparam `full` (o de logout leva o último estado conhecido).
+- **Cadência**: 10 s de verificação local, envio só se houver delta, backoff quadrático, timeout 3 s com
+  retry no mesmo `client_seq`.
 
-Cada container de itens é uma observação discriminada; um mapa persistido nunca pode ter o mesmo shape de um evento ao vivo:
+Cada container de itens é uma observação discriminada; um mapa persistido nunca pode ter o mesmo shape
+de um evento ao vivo:
 
 | `state` | Campos obrigatórios | Campos proibidos | Semântica |
 |---|---|---|---|
-| `unavailable` | `observed_at` | `revision`, `live_epoch`, `quantities` | o plugin confirmou naquele instante que não podia ler o container (sem escopo, toggle desligado, logout/cache ausente etc.); não equivale a vazio |
+| `unavailable` | `observed_at` | `revision`, `live_epoch`, `quantities` | o plugin confirmou naquele instante que não podia ler o container (sem escopo, toggle desligado, logout/cache ausente); não equivale a vazio |
 | `restored` | `observed_at`, `revision`, `quantities` | `live_epoch` | espelho completo recuperado de persistência; só é aceito em `full` e não prova que o banco foi aberto nesta sessão |
 | `live` | `observed_at`, `revision`, `live_epoch`, `quantities` | — | leitura/evento do cliente na sessão corrente; pode aparecer em `full` ou `delta` |
 
-`observed_at` é RFC 3339 com offset, representa quando o conteúdo foi realmente observado (não quando um cache foi recarregado) e não pode ser posterior a `sent_at`. `revision` é inteiro não negativo e monotônico dentro da origem; em `live`, ele é comparado somente dentro do mesmo `live_epoch`, identificador opaco criado por login/sessão. O servidor **não** promove `restored` a `live`: a ausência deliberada de `live_epoch` preserva a proveniência do espelho.
+`observed_at` é RFC 3339 com offset, representa quando o conteúdo foi realmente observado e não pode ser
+posterior a `sent_at`. `revision` é inteiro não negativo e monotônico dentro da origem; em `live`, é
+comparado só dentro do mesmo `live_epoch`, identificador opaco criado por login. O servidor **não**
+promove `restored` a `live`.
 
-`quantities` usa `item_id → qty`. Em `full`, é a imagem inteira do container: mapa vazio significa container observado vazio e toda quantidade presente deve ser `> 0`. Em `delta`, é patch de um container `live`: quantidade positiva substitui o total daquele item e `0` é tombstone (remoção). Quantidade negativa é sempre inválida. A observação `unavailable` não leva `quantities`, para não confundir "não li" com "li e estava vazio".
+`quantities` usa `item_id → qty`. Em `full`, é a imagem inteira do container: mapa vazio significa
+container observado vazio e toda quantidade presente deve ser `> 0`. Em `delta`, é patch de um container
+`live`: quantidade positiva substitui o total e `0` é tombstone. A observação `unavailable` não leva
+`quantities`, para não confundir "não li" com "li e estava vazio".
 
-Exemplo abreviado de itens em um `full`:
+Exemplo abreviado de um `full`:
 
 ```json
 {
+  "quest": {"Cook's Assistant": "FINISHED", "X Marks the Spot": "IN_PROGRESS"},
   "items": {
     "bank": {
       "state": "restored",
@@ -506,7 +590,7 @@ Exemplo abreviado de itens em um `full`:
       "state": "live",
       "observed_at": "2026-11-04T12:00:00Z",
       "revision": 3,
-      "live_epoch": "login-2026-11-04T11:59:20Z",
+      "live_epoch": "session-5b1c…",
       "quantities": {"995": 1200}
     },
     "equipment": {
@@ -519,218 +603,112 @@ Exemplo abreviado de itens em um `full`:
 
 ### 6.4.1 Posse, prontidão do trecho e ações de banco
 
-Os containers ingeridos alimentam três perguntas distintas, que nunca se misturam (`internal/core/rules` e `internal/core/planning`):
+Os containers ingeridos alimentam três perguntas distintas, que nunca se misturam (`internal/core/rules`
+e `internal/core/planning`):
 
-- **Posse** (`item_owned`, `rules.Owns`): a conta tem `qty` do item em algum dos containers pedidos. Forma noteada e não noteada contam como o mesmo item; doses/cargas não. Um banco `restored` pode sustentar `met`, mas com `stale: true`. Ausência só é provada por container `live` com baseline `full`; `restored`, `unavailable`, container nunca observado (sem escopo ou opt-in) e deltas sem baseline resultam em `unknown`.
-- **Prontidão do trecho** (`planning.EvaluateSegment`): o inventário e o equipamento **live** batem com o loadout do segmento. Ids comparados de forma exata (planks noteadas ≠ planks). Item de inventário pode estar empunhado; item de equipamento precisa estar no equipamento. Status: `ready` (loadout `known` todo verificado), `listed_ready` (loadout `partial`: só os itens listados foram verificados), `not_ready`, `unknown`, `no_loadout`. Slots livres são um intervalo `free_min..free_max`, porque a empilhabilidade de itens fora do catálogo é desconhecida.
-- **Ações de banco**: instruções do guia (`bank_actions`), devolvidas como texto com proveniência. Nunca são marcadas como concluídas nem inferidas do estado.
+- **Posse** (`item_owned`, `rules.Owns`): a conta tem `qty` do item em algum dos containers pedidos.
+  Forma noteada e não noteada contam como o mesmo item; doses/cargas não. Um banco `restored` pode
+  sustentar `met`, mas com `stale: true`. Ausência só é provada por container `live` com baseline `full`;
+  `restored`, `unavailable`, container nunca observado e deltas sem baseline resultam em `unknown`.
+- **Prontidão do trecho** (`planning.EvaluateSegment`): o inventário e o equipamento **live** batem com
+  o loadout do segmento. Ids comparados de forma exata dentro de cada variante de `ItemRequirement`
+  (planks noteadas ≠ planks); `any_of` aceita qualquer id da lista e `family` qualquer variante da
+  família. Item de inventário pode estar empunhado; item de equipamento precisa estar no equipamento.
+  Status: `ready`, `listed_ready` (loadout `partial`), `not_ready`, `unknown`, `no_loadout`. Slots livres
+  são um intervalo `free_min..free_max`, porque a empilhabilidade de itens fora do catálogo é desconhecida.
+- **Ações de banco**: instruções do guia (`bank_actions`), devolvidas como texto com proveniência. Nunca
+  são marcadas como concluídas nem inferidas do estado.
 
-Baseline: o servidor considera um container completo só quando existe um snapshot `full` que o observou no mesmo `state` e no mesmo `live_epoch` da observação atual (`ListItemContainerFreshness`). Fatos de item de outro estado ou epoch são descartados na leitura. O plugin já força `full` em qualquer troca de estado ou de epoch.
+Baseline: o servidor considera um container completo só quando existe um snapshot `full` que o observou
+no mesmo `state` e no mesmo `live_epoch` da observação atual (`ListItemContainerFreshness`). Fatos de
+item de outro estado ou epoch são descartados na leitura. O plugin já força `full` em qualquer troca de
+estado ou de epoch.
 
-Rotas: `GET /api/guides/{guide}/readiness?account=&step=` (segmento que contém o step e o próximo `bank_leg` da mesma variante, sem atravessar tracks) e `GET /api/guides/{guide}/segments/{segment}/readiness?account=`. Como expõem o banco por id de conta e ainda não há sessão, só são registradas com `AUTH_MODE=dev`. Tipos em `docs/arquitetura/types.ts`.
+Rotas: `GET /api/guides/{guide}/readiness?account=&step=` (segmento que contém o passo e o próximo
+`bank_leg` da mesma variante, sem atravessar tracks) e
+`GET /api/guides/{guide}/segments/{segment}/readiness?account=`. Como expõem o banco por id de conta e
+ainda não há sessão, só são registradas com `AUTH_MODE=dev`.
 
 ### 6.5 Privacidade
 
 - Tudo fica no servidor do dono; nenhum terceiro recebe dados do plugin.
-- O manifest limita o que o cliente lê: o plugin não varre todos os varbits, só os pedidos — e o usuário pode ver o manifest em `/account/tokens`.
-- Banco/inventário/equipamento são opt-in duplo (escopo do token + toggle no plugin); regras `item_owned` aparecem como `unknown` sem isso.
-- WikiSync como importador exige aceite explícito na UI, mostrando o texto da política da wiki, e roda no máximo 4×/dia.
+- O manifest limita o que o cliente lê: o plugin não varre todos os varbits, só os pedidos, e o usuário
+  pode ver o manifest em `/account/tokens`.
+- Banco/inventário/equipamento são opt-in duplo (escopo do token + toggle no plugin); regras `item_owned`
+  aparecem como `unknown` sem isso.
 - Tokens são hash no banco; revogação é imediata; `last_ip` e `last_seen_at` ficam visíveis.
 - Exports contêm snapshots brutos (incluindo banco, se habilitado); a UI avisa ao exportar.
 
-## 7. Repositório, workflow, testes e sequência de MVP
+## 7. Repositório, workflow e testes
 
 ### 7.1 Layout
 
 ```
-ironman-planner/
-├─ content/
-│  ├─ guides/oziris-main/
-│  │  ├─ guide.json                 # metadados + ordem das seções
-│  │  └─ sections/1-1-early-game.json … S-sailing.json
-│  ├─ migrations/2026-11-initial-ids.json   # replaces/aliases
-│  └─ reference/                    # overrides manuais do wiki (varbits, nomes canônicos)
-├─ data/guide/                      # extração original (somente leitura; fonte do script de migração)
-├─ docs/
-├─ drizzle/                         # migrations SQL geradas
-├─ plugin/                          # projeto Gradle do plugin RuneLite (fase 2)
-├─ scripts/
-│  ├─ migrate-ironman-guide.ts      # data/guide → content/
-│  ├─ validate-content.ts           # CI: schema + IDs únicos + refs resolvíveis
-│  ├─ seed-dev.ts                   # conta fake + snapshots de fixture
-│  └─ export-json-schema.ts         # Zod → guide.schema.json
-├─ src/
-│  ├─ lib/core/                     # PURO: schema (Zod), rules/, graph/, content/ (parse+merge)
-│  ├─ lib/server/                   # db/ (drizzle), adapters/, sync/, ingest/, auth/, backup/
-│  ├─ lib/ui/                       # componentes Svelte (StepRow, GraphView, Freshness)
-│  ├─ routes/                       # páginas + /api/**/+server.ts
-│  └─ hooks.server.ts               # auth, boot (migrate, load content, start scheduler)
-├─ tests/
-│  ├─ fixtures/player_states/*.json, fixtures/http/*.json
-│  ├─ core/*.test.ts, server/*.test.ts, e2e/*.spec.ts
-├─ Dockerfile, docker-compose.yml, Caddyfile, .env.example
-└─ package.json, pnpm-lock.yaml, svelte.config.js, drizzle.config.ts, vitest.config.ts
+cmd/ironman/          cobra: serve, content (validate, migrate, import-bruhsailer; mcp planejado),
+                      stubs now/done/plan/sync/state/mcp
+internal/core/        domínio puro: content (loader, schema, derive, migrate), entities (registry,
+                      catálogos, resolver, enrich, catalogbuild), ingest (contrato), rules, planning;
+                      planejados: annotate, progress, graph
+internal/importer/    bruhsailer (DOCX pinados → guia canônico)
+internal/store/       repositórios (ingest); internal/store/db é saída do sqlc
+internal/httpapi/     handlers; planejados: internal/sources, internal/client, internal/mcp
+web/                  SPA Svelte; web/src/lib/planner é o view-model (apimap.ts puro e testado em node)
+content/              guides/<id>/{guide.json, README.md, entities.report.json, annotations/},
+                      schema/, reference/ (catálogos)
+db/migrations, db/queries, sqlc.yaml
+data/                 extração original (guide/, sources/bruhsailer/, wiki/, samples/); tools/ (Python)
+docs/
 ```
 
-Regra de dependência (lint via `eslint-plugin-import` com `no-restricted-paths`): `core` não importa de `server` nem de `$app`; `ui` não importa de `server`.
+Regra de dependência: `internal/core` não importa banco nem HTTP; CLI e MCP não importam
+`internal/store` (regra 1 do CLAUDE.md).
 
-### 7.2 Workflow de desenvolvimento
+### 7.2 Workflow
 
-- `pnpm dev` sobe tudo com SQLite em `./dev.db`; `pnpm seed` cria conta de teste com snapshots de fixture (sem bater em API externa).
-- **CI (GitHub Actions)** em todo PR: `pnpm validate:content` (schema, IDs únicos, `replaces` apontando para IDs que existiram, `requires` resolvíveis, nenhum `quest` fora do `wiki_cache` versionado em `content/reference/quests.json`), `pnpm test`, `pnpm check` (svelte-check), build da imagem. PR de conteúdo mostra o diff do JSON, que é legível porque o script de migração emite chaves em ordem canônica.
-- Alterar o guia = editar JSON (ou YAML) e abrir PR; o container recarrega via `POST /api/admin/reload-content` ou no próximo deploy.
+- `just` lista os alvos: `setup`, `dev` (Postgres do `compose.dev.yaml` + `air`), `web-dev`, `build`,
+  `test`, `lint`, `content-validate`, `migrate-*`, `sqlc`, `up`/`down`/`logs`.
+- **CI (GitHub Actions)** em todo PR: web (`pnpm check`, `pnpm test`, build), Go (build, vet,
+  golangci-lint, `go test -race`, `ironman content validate`), migrations (goose up/down/up no Postgres
+  17) e build da imagem na `main`.
+- Alterar o conteúdo = corrigir o importador ou o normalizador e regenerar (regra 9); o diff do JSON é
+  legível porque a saída é determinística com chaves em ordem canônica. Objetivos extraídos mudam só via
+  `ironman content mcp` (doc 09, seção 6).
 - Versionamento: `guide.version` segue `AAAA.MM.N`; o changelog é o git log de `content/`.
 
 ### 7.3 Testes
 
 | Camada | Abordagem |
 |---|---|
-| Rule engine | **Tabela de fixtures**: `tests/fixtures/player_states/<caso>.json` + `expected.json` por step; cobre cada tipo de regra, `any/all/not`, `unknown`, `op: gte`. **Propriedades** com fast-check: monotonicidade (aumentar level/KC/quest state nunca leva `met → unmet`), idempotência de `reconcileStep`, `manual_locked` nunca alterado. Golden test: os 576 steps migrados contra 3 estados sintéticos (fresh account, mid-game, maxed) com contagens esperadas. |
-| Adapters | `normalize()` testado com respostas HTTP gravadas em `tests/fixtures/http/`; quando o outro agente entregar os shapes exatos, eles viram fixtures. `fetch()` testado com `undici` MockAgent para 200/404/429/timeout. |
-| Merge de estado | Casos de prioridade por fonte, timestamp antigo não regride, delta do plugin com `qty: 0`. |
-| Grafo | Grafos pequenos construídos à mão: transitive requirements, ciclo detectado, diff de "destravou", caminho crítico. Snapshot test do grafo gerado a partir do conteúdo real (contagem de nós/arestas) para pegar regressões no loader. |
-| Ingest | Testes de contrato: seq fora de ordem, manifest desatualizado ⇒ `resync`, token revogado ⇒ 401, escopo sem bank ⇒ items ignorados. |
-| E2E | 3 fluxos Playwright: login → marcar step manual → recarregar persiste; sync now com adapter mockado → step vira auto_done; export → import em banco vazio reproduz board. |
+| Conteúdo | loader e schema contra fixtures em `internal/core/content/testdata`; importadores com regeneração byte a byte e contagens; `content validate` na CI |
+| Entidades | resolver com casos de nome, alias, plural, link wiki, ambíguo; catálogos regenerados por `catalogbuild -update` e checados na CI |
+| Motor | tabelas por tipo de regra, `any/all/not`, `unknown`, `op: gte`; posse e readiness com holdings sintéticos (`restored` vs `live`, baseline); progresso: derivação de status, cascata e cursor por tabela |
+| Ingest | contrato (sequência fora de ordem, manifest antigo ⇒ `409`, token revogado ⇒ `401`, escopo sem bank ⇒ `403`), integração no Postgres (`DATABASE_URL` definido; `just db-up`) |
+| HTTP | handlers com `httptest`, incluindo um teste ponta a ponta com o binário real |
+| Web | `apimap.ts` e `compare.ts` em `node --test`; `pnpm check`; renderização headless das telas |
+| Plugin | JUnit no repositório `microbot-plugins` (diff, baseline, frescor, ACK/retry, backoff); `mb-test` no jogo |
 
-### 7.4 Sequência de construção do MVP
+## 8. Deploy: local-first no zaros, depois saradomin
 
-Cada item é uma sessão de 2 a 4 horas; a ordem respeita dependências. Ao fim do item 12 já existe algo usável diariamente.
+Decisão do dono (2026-11-04): o MVP roda na estação de trabalho (`zaros`), onde o Microbot também roda;
+o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis de ambiente.
 
-1. **Bootstrap**: `pnpm create svelte` (TS, Vitest, Playwright), Tailwind, ESLint com regra de camadas, `.env.example`, Dockerfile + compose, `GET /api/health`. Commit inicial.
-2. **Core schema**: portar `types.ts` para `src/lib/core/schema/`, script `export-json-schema.ts`, `validate-content.ts` com IDs únicos e refs.
-3. **Migração do guia**: `migrate-ironman-guide.ts` conforme tabela 3.3; gerar `content/guides/oziris-main/`; validar 576 steps; snapshot test das contagens. Revisar à mão os 33 `start`.
-4. **Banco**: Drizzle schema a partir de `schema.sql`, migrations, boot com PRAGMAs, `content_versions`/`content_steps` no loader; `POST /api/admin/reload-content`.
-5. **Auth**: usuário owner do `.env`, login/logout, cookie, `hooks.server.ts`, rate limit de login, página `/login`.
-6. **Checklist manual**: páginas `/guide` e `/guide/[section]` com filtro por layer/modo, `PATCH /api/steps/:id` (manual_done/skipped/pending/locked/nota), `step_progress_events`. Persistência real desde já.
-7. **Rule engine v1**: `evaluateRules` para `skill_level`, `skill_xp`, `boss_kc`, `activity_score`, `manual`, combinadores; `reconcileStep` com a tabela 4.3; fixtures e propriedades.
-8. **Adapter hiscores + merge**: `fetch/normalize`, `snapshots` + `snapshot_skills/activities`, `player_state` merge, reavaliação, `sync_runs`. Botão "sync now" e página `/account/sync`.
-9. **Scheduler**: `croner`, fila, backoff, jitter, aceleração pós-atividade, `SYNC_ENABLED`. Freshness/stale na UI.
-10. **Export/import JSON** + backup noturno `VACUUM INTO`. Testar restore.
-11. **Dashboard**: próximos steps disponíveis (ordem do guia, só pendentes, filtrados), concluídos hoje (eventos), skills com delta desde ontem, alertas (404, stale, regressed).
-12. **Docker end-to-end**: build da imagem, `docker compose up` em máquina limpa, volume, healthcheck, README de instalação. **Marco: MVP em uso.**
-13. **Wiki Bucket adapter**: quests (requisitos de skill/quest), diaries; `wiki_cache`; `content/reference/quests.json` versionado como fallback offline para a CI.
-14. **Rule engine v2**: `quest_state`, `diary_task`, `diary_tier`, `combat_achievement`, `collection_log_item`, `varbit/varp`, `item_owned`; veredito `unknown` na UI ("precisa de plugin").
-15. **Importador WikiSync** (opt-in com aviso) usando o adapter de normalização que o plugin próprio também usará (mesmo `StatePatch`).
-16. **Ingest endpoint**: manifest gerado do conteúdo + wiki cache, `POST /api/ingest` com seq/resync/escopos, tokens `ipl_` na UI. Testes de contrato.
-17. **Plugin RuneLite v0**: fork conceitual do WikiSync (manifest, poll de 10 s, subtract, backoff), config de URL/token, envio de `level/xp/varb/varp/collectionLogSlots`. Sideload local.
-18. **Plugin v1**: bank/inventory/equipment com toggles, `full` no login/logout, tratamento de `resync`.
-19. **Grafo: build + consultas**: `src/lib/core/graph/` (nós, arestas derivadas, satisfação, "o que falta", Kahn, diff de destravados), `graph_cache`, `GET /api/graph` e `GET /api/plan`.
-20. **Grafo: UI**: Cytoscape + ELK, foco+contexto, compound por seção, badges de skill, lista do plano ao lado.
-21. **Goals**: CRUD, plano por goal, caminho crítico com `estimate_minutes`, "destravou agora" no dashboard.
-22. **WOM adapter** para histórico e gráficos de XP; Postgres como profile opcional (só rodar a suíte com `DATABASE_URL=postgres://`).
+- **Local-first**: `docker compose` com Postgres e o binário (`compose.yaml`), ou só o Postgres
+  (`compose.dev.yaml`) com `go run ./cmd/ironman serve` e `pnpm dev` no host. Acesso em `localhost:8080`;
+  celular pela rede local ou Tailscale. `AUTH_MODE=dev`. Plugin com `serverUrl=http://localhost:8080` e
+  token `ipl_` gerado localmente. `pg_dump` manual ou via `just`.
+- **saradomin** (decisão de 2026-11-03): Postgres existente (database `ironman_planner`), Zitadel via
+  OIDC com uma aplicação Web (PKCE, sem client secret) e redirect `https://planner.<domínio>/auth/callback`;
+  `/auth/login` inicia o fluxo, `/auth/callback` troca o código, cria ou atualiza `users` pelo `sub` e
+  grava a sessão em cookie `HttpOnly`. Autorização: lista de `sub` permitidos no `.env`, depois role no
+  projeto do Zitadel. O plugin continua com token `ipl_`. Imagem publicada no registry que o servidor já
+  usa, serviço no compose existente, atrás do reverse proxy; health em `/api/health`; `pg_dump` na rotina
+  do servidor.
+- Nada no código distingue os dois ambientes além da configuração (doc 07).
 
-Depois disso: anotações ricas por step, múltiplas contas por usuário, convites, reordenação dinâmica do guia pela disponibilidade atual.
+## 9. Estado em 2026-11-04 e sequência vigente
 
-
-## 8. Adendo de 2026-11-03: deploy no saradomin, Zitadel e Postgres
-
-Decisões do dono que substituem o que está acima onde houver conflito:
-
-- **Banco: Postgres** existente no `saradomin`. Drizzle com driver `postgres` (porsager). Mudanças no `schema.sql`: `TEXT`/`INTEGER` ficam; JSON bruto de snapshot vira `jsonb`; datas viram `timestamptz`; xp e kc em `bigint`; `player_state` pode usar índice GIN no `jsonb` para consultas por fato. Migrations com `drizzle-kit`. Testes do rule engine continuam puros; testes de repositório rodam contra Postgres em container (testcontainers) ou SQLite em memória se o dialeto for mantido portável.
-- **Auth: Zitadel** via OIDC. Registrar uma aplicação Web (PKCE, sem client secret) com redirect `https://planner.<domínio>/auth/callback`. No SvelteKit, `hooks.server.ts` valida a sessão; `/auth/login` inicia o fluxo; `/auth/callback` troca o código, cria ou atualiza `users` pelo `sub` e grava sessão em cookie `HttpOnly`. Bibliotecas: `arctic` + `oslo` (leves) ou `@auth/sveltekit` com provider OIDC genérico. Autorização: no começo, lista `ALLOWED_SUBS` no `.env`; depois, role `planner-user` no projeto do Zitadel lida do claim de roles.
-- **Plugin Microbot** não faz OIDC: continua com token `ipl_` gerado na UI (escopo por conta), enviado em `Authorization: Bearer`. Opcionalmente, um client credentials do Zitadel para scripts de servidor.
-- **Deploy**: imagem Node (adapter-node) publicada no registry que o `saradomin` já usa; serviço no compose com `DATABASE_URL`, `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `SESSION_SECRET`, `PUBLIC_BASE_URL`; atrás do reverse proxy já existente. Health em `/api/health`. Sem SQLite no deploy.
-- **Backups**: `pg_dump` da database `ironman_planner` dentro da rotina já existente do servidor; o export JSON da app continua como plano B legível.
-
-Tarefas da seção 7.4 afetadas: 1 (compose aponta para Postgres externo), 4 (Drizzle pg), 5 (vira OIDC Zitadel em vez de senha única), 10 (backup via pg_dump), 12 (deploy no saradomin em vez de "máquina limpa").
-
-
-## 9. Revisão de 2026-11-03: Go como núcleo, um binário com vários formatos
-
-Motivo dado pelo dono: quer buildar o mesmo núcleo em vários formatos (servidor web, CLI para usar com agentes, servidor MCP) e manter afinidade com o ecossistema de plugins que já desenvolve. Go atende isso melhor que Node: binário único estático, cross-compile trivial, pouca RAM no `saradomin`, e um `cmd` por formato compartilhando o mesmo pacote de domínio.
-
-### 9.1 O que muda e o que fica
-
-| Tema | Antes (seções 1 a 8) | Agora |
-|---|---|---|
-| Domínio (schema de conteúdo, rule engine, grafo) | TypeScript/Zod compartilhado | Pacote Go `internal/core` (structs + validação por JSON Schema com `santhosh-tekuri/jsonschema`), sem dependência de banco ou HTTP. É o que todo formato importa. |
-| API e scheduler | SvelteKit server routes + croner | `net/http` (mux do Go 1.22+) ou `chi`; scheduler in-process com `robfig/cron/v3` ou ticker próprio; adapters de fonte em `internal/sources/{hiscores,wom,wikisync,wiki}`. |
-| Banco | Drizzle (TS) | `pgx` + `sqlc` (SQL versionado, tipos gerados) e migrations com `goose` ou `golang-migrate`. Postgres via docker também em dev; SQLite sai de cena. |
-| Auth | OIDC no SvelteKit | `coreos/go-oidc` + `golang.org/x/oauth2` (PKCE), sessão com `alexedwards/scs` em cookie; tokens `ipl_` iguais. |
-| Frontend | SvelteKit renderizando no servidor | **Svelte (Vite) como SPA estática**, embutida no binário com `embed.FS` e servida em `/`. Cytoscape + ELK continuam. Tipos TS gerados a partir do Go (`tygo`) ou do JSON Schema para não digitar o schema duas vezes. |
-| Plugin Microbot | Java, HTTP | Igual. Go não roda dentro do Microbot; o que se compartilha é o contrato HTTP (manifest + ingest). Lógica Go no cliente só via sidecar local chamado pelo plugin; não vale a pena agora. |
-| Deploy | imagem Node | imagem `distroless` ou `scratch` com o binário (~20 MB), mesmas variáveis de ambiente. |
-
-### 9.2 Formatos do mesmo binário (`cmd/ironman`)
-
-```
-ironman serve                     # API + SPA + scheduler + ingest (único que fala com o Postgres)
-ironman now [--json]              # próximo passo, itens a levar, bloqueios (cliente da API via IRONMAN_URL e IRONMAN_TOKEN)
-ironman done 1.1.75 | skip | note # marcar passo
-ironman plan barrows-gloves       # plano ordenado de uma meta
-ironman sync [--source hiscores]  # força sync
-ironman state skills|quests|diaries
-ironman mcp                       # servidor MCP por stdio para agentes (tools: get_now, list_steps, mark_step, plan_goal, player_state, search_guide)
-ironman content validate|migrate  # valida content/ e migra o JSON do ironman.guide
-```
-
-Regra: só `serve` abre o banco. CLI e MCP são clientes da API com token, então funcionam de qualquer máquina e o modelo de permissão é um só. O MCP usa o SDK oficial `github.com/modelcontextprotocol/go-sdk`.
-
-### 9.3 Layout do repositório (Go)
-
-```
-cmd/ironman/              main.go, subcomandos (cobra)
-internal/core/            content (schema, loader), rules (engine), graph (grafo, plano, diff), player (estado mesclado)
-internal/sources/         hiscores, wom, wikisync, wiki (bucket + wikitext), ingest (manifest + delta do plugin)
-internal/store/           sqlc queries, migrations, repositórios
-internal/httpapi/         handlers, OIDC, sessões, tokens, SSE para "sync agora"
-internal/mcp/             tools do servidor MCP, finos sobre o client da API
-internal/client/          client Go da API, usado por CLI e MCP
-web/                      Svelte + Vite; build vai para web/dist e é embutido
-content/guides/oziris-main/   JSON do guia (migrado de data/guide/normalized)
-content/reference/        quests.json, diary_tasks.json do wiki (fallback offline)
-plugin-microbot/          plugin Java (ou repositório separado no fork do Microbot)
-docs/
-```
-
-### 9.4 Custos aceitos
-
-- Sem compartilhamento nativo de tipos entre servidor e browser; mitigado com geração de tipos.
-- Mais código de infraestrutura que SvelteKit (roteamento, sessões). Aceitável: a UI é um app logado, não precisa de SSR.
-- Grafo continua em JS no browser; o cálculo (fechamento transitivo, Kahn, caminho crítico) fica em Go e é exposto por `GET /api/plan` e `GET /api/graph`, então CLI e MCP têm o mesmo resultado que a tela.
-
-### 9.5 Sequência de MVP revisada (substitui a 7.4 nos itens afetados)
-
-1. `go mod init`, cobra, `ironman content validate` lendo `data/guide/normalized/guide.json` contra `guide.schema.json`. Migração para `content/guides/oziris-main/`.
-2. `internal/core/rules`: engine puro com testes de tabela (skill_level, quest_state, diary_tier, manual, combinadores, implied).
-3. Postgres: migrations, sqlc para accounts, snapshots, player_state, step_progress, goals, tokens.
-4. `ironman serve`: health, OIDC Zitadel, sessão, `GET /api/now`, `PATCH /api/steps/:id`.
-5. Adapter hiscores + merge + reavaliação + scheduler; `POST /api/sync`.
-6. Ingest: manifest + `POST /api/ingest`; plugin Microbot v0 em paralelo (doc 06).
-7. SPA Svelte: telas Agora e Checklist conforme o canvas de design; embed no binário; Docker `distroless`; deploy no `saradomin`. **Marco: em uso.**
-8. CLI `now/done/plan/state` sobre `internal/client`; `ironman mcp`.
-9. Wiki adapter + grafo em Go + telas Conta, Meta e Grafo.
-10. WOM, export/import, notas, múltiplas contas.
-
-
-## 10. Revisão de 2026-11-04: local-first no zaros, deploy depois
-
-Decisão do dono: o MVP roda na estação de trabalho (`zaros`), onde o Microbot também roda; o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis de ambiente.
-
-- **Execução local**: `docker compose` com Postgres e o binário (`compose.yaml`), ou só o Postgres (`compose.dev.yaml`) com `go run ./cmd/ironman serve` e `pnpm dev` no host. Acesso em `localhost:8080`; celular pela rede local ou Tailscale.
-- **Auth**: `AUTH_MODE=dev` loga um usuário fixo sem OIDC. É o modo dos testes e da CI, então não é código descartável. `AUTH_MODE=oidc` com Zitadel entra na tarefa de deploy.
-- **Dados**: volume do Postgres local; `pg_dump` manual ou via `just`. Para o saradomin, `pg_dump` e `pg_restore`, sem migração de formato.
-- **Plugin Microbot**: `serverUrl=http://localhost:8080`, token `ipl_` gerado na UI local. Como o servidor sobe junto com a máquina de jogo, os dados do cliente chegam sempre que há sessão.
-- **O que fica fora do caminho crítico**: OIDC (antiga tarefa 4 da seção 9.5) e deploy (antiga tarefa 7) viram uma única tarefa "subir no saradomin" depois do marco "em uso".
-- **Toolchain**: Go 1.27 (última estável em 2026-11), Node 22, pnpm, SvelteKit com adapter-static embutido no binário, Nix flake para o ambiente de desenvolvimento, Docker para rodar e para o deploy. Detalhes em `docs/07-ambiente-e-ferramental.md`.
-
-Sequência de MVP de 2026-11-04 (substitui 9.5; o estado e a sequência atual estão na seção 11):
-
-1. Harness: módulo Go, `content migrate|validate`, API mínima (`/api/health`, `/api/guide`, `/api/now` sem banco), SPA embutida com as telas Agora e Checklist em modo leitura, flake, Docker, compose, justfile, CI. **Feito nesta rodada.**
-2. Rule engine completo com testes e cascata `implied`.
-3. Postgres: migrations, sqlc, repositórios; `step_progress` e `PATCH /api/steps/:id` com `AUTH_MODE=dev`.
-4. Hiscores: adapter, snapshots, `player_state`, reavaliação, scheduler, `POST /api/sync`. Dashboard mínimo.
-5. Ingest: manifest e `POST /api/ingest`; plugin Microbot v0 em paralelo (doc 06). **Marco: em uso no zaros.**
-6. CLI `now/done/plan/state` e `ironman mcp`.
-7. Wiki adapter, grafo em Go, telas Conta, Meta e Grafo.
-8. Zitadel OIDC e deploy no saradomin.
-9. WOM, export/import, notas, múltiplas contas.
-
-Controle do cliente Microbot (doc 08: agent no zaros, VNC, plugins, rotinas): suas cinco fases entram depois do marco da tarefa 5, em paralelo às tarefas 6 a 9, sem bloquear o caminho crítico do planner. O módulo nasce desligado (`MICROBOT_CONTROL=off`).
-
-## 11. Estado em 2026-11-04 e sequência vigente (substitui a da seção 10)
-
-Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/microbot-plugins`, commit `68fc1c6`):
+Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/microbot-plugins`, commit
+`68fc1c6`):
 
 | Peça | Onde | Verificação |
 |---|---|---|
@@ -743,21 +721,31 @@ Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/mic
 | Web `/plan` e `/compare` sobre a API real, card da perna de banco | `web/src/lib/planner`, `web/src/routes/{plan,compare}` | `pnpm test`, `pnpm check`, build, renderização headless |
 | Plugin Microbot Ironman Planner 1.0.0 (somente leitura) | `microbot-plugins`: `fm/ironmanplanner` | 36 testes JUnit; **nunca rodou no jogo** |
 
-Ainda não existe: progresso persistido (`step_progress` sem API; a web mostra 0 feitos), sessão/OIDC,
-adapter de hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de
-controle do Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Microbot.
+Ainda não existe: progresso persistido (as queries de `step_progress` existem no sqlc, sem chamador; a
+web mostra 0 feitos), indexação de conteúdo no boot (`content_versions`/`content_steps`) e aplicação de
+`step_id_aliases`, faceta de quest e diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de
+hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de controle do
+Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Microbot.
 
-Sequência vigente. Os itens da seção 10 que ainda não foram feitos continuam valendo, mas a API de progresso passa a
-depender do modelo de objetivos (doc 09):
+Sequência vigente (os itens 2 a 9 são os do doc 09, seção 10, na ordem decidida pelo dono):
 
-1. ~~Doc 09: fechar as decisões em aberto.~~ Feito: modelo de objetivos, progresso compartilhado, `unlock`/`location`, extração interativa por agente e cascata por seção na rota ativa.
-2. Schema de objetivos e `ItemRequirement`; tipos `unlock` e `location` (doc 09, seção 10, itens 2 e 3).
-3. Catálogo de itens gerado a partir da wiki.
-4. Extração estruturada dos guias: `internal/core/annotate`, `ironman content mcp` (stdio, só `content/`) e a skill `annotate-guide`; piloto com o agente no Claude Code (Oziris 1.1, BRUHsailer 1.1), depois os dois guias inteiros (doc 09, seção 6).
-5. Progresso sobre objetivos: migration, `objective_progress`, `step_marks`, `route_cursor`, API e reavaliação por snapshot.
-6. Hiscores: adapter, snapshots, scheduler, `POST /api/sync`.
-7. Teste do plugin no jogo (`mb-test`) e uso no zaros. **Marco: em uso no zaros.**
-8. CLI `now/done/plan/state` e `ironman mcp`; depois grafo, metas e conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08).
+1. ~~Doc 09: fechar as decisões.~~ Feito e revisado em 2026-11-04 (doc 09, seções 9.1 e 9.3).
+2. Schema de objetivos, `ItemRequirement`, `unlock`/`location`, `entityRef` no lugar de `ref`, schema dos
+   sidecars; loader converte `complete_when` e compõe anotações.
+3. Dados e catálogos: itens extraídos do wiki (`data/wiki/items.json` → `content/reference/items.json`),
+   `unlocks.json`, `locations.json`, `varbits.json`.
+4. `internal/core/annotate`, `ironman content mcp`, `.mcp.json`, `content validate` cobrindo os sidecars,
+   skill `annotate-guide`.
+5. Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code.
+6. Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais.
+7. Contrato v1 com `data.quest` e varbits de referência; normalizador gravando `quest` e `diary`; plugin
+   1.1.0; teste do plugin no jogo (`mb-test`).
+8. Progresso sobre objetivos: migration, `internal/core/progress`, API de marcas, cursor e board,
+   reavaliação por snapshot, indexação e aliases no boot.
+9. Web e `/compare` sobre objetivos; metas (F9).
+10. Hiscores: adapter, snapshots, scheduler, `POST /api/sync`. **Marco: em uso no zaros.**
+11. CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin;
+    depois o controle do Microbot (doc 08, cinco fases, nasce desligado com `MICROBOT_CONTROL=off`).
 
 Revisão de integração entre os dois repositórios (contrato, frescor, plugin somente leitura, chaves por
-guia) fica pendente e roda antes do marco 7.
+guia) roda junto com o item 7.

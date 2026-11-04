@@ -30,7 +30,7 @@ func (f fakeHoldings) ItemHoldings(_ context.Context, accountID string) (rules.I
 // readinessGuide builds a route whose local ids ("1", "2", "leg-1", "leg-2")
 // are shared by both test guides; only the loadout item differs.
 func readinessGuide(id string, itemID int) *content.Guide {
-	lo := &content.Loadout{Status: content.LoadoutPartial, Inventory: []content.LoadoutItem{{Name: "tool", ItemID: &itemID}}}
+	lo := &content.Loadout{Status: content.LoadoutPartial, Inventory: []content.ItemRequirement{{Name: "tool", ItemID: &itemID}}}
 	g := &content.Guide{ID: id, Title: id, Sections: []*content.Section{{ID: "s", Slug: "s", Segments: []*content.Segment{
 		{ID: "leg-1", Kind: content.SegmentBankLeg, Steps: []*content.Step{{ID: "1", Text: "bank"}}},
 		{ID: "leg-2", Kind: content.SegmentBankLeg, Loadout: lo,

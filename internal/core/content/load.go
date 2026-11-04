@@ -30,11 +30,18 @@ const GuideFileName = "guide.json"
 type Content struct {
 	Dir    string
 	Guides []*Guide
+	// Annotations holds the sidecars read for each guide, by guide id.
+	Annotations map[string]*Annotations
+	// Warnings are problems that do not stop the content from loading: stale
+	// annotations, which the loader skips. `content validate` fails on them.
+	Warnings Errors
 }
 
 // Load reads <dir>/guides/*/guide.json, validates each file against the
-// schema, decodes it and builds the indexes. All problems across all files
-// are collected and returned together as an Errors value.
+// schema, decodes it, builds the indexes, then reads, verifies and composes
+// the annotation sidecars of each guide (docs/09 section 4.2). All problems
+// across all files are collected and returned together as an Errors value;
+// stale annotations are skipped and reported in Content.Warnings.
 func Load(dir string) (*Content, error) {
 	pattern := filepath.Join(dir, GuidesSubdir, "*", GuideFileName)
 	files, err := filepath.Glob(pattern)
@@ -46,8 +53,12 @@ func Load(dir string) (*Content, error) {
 	}
 	sort.Strings(files)
 
-	c := &Content{Dir: dir}
+	c := &Content{Dir: dir, Annotations: map[string]*Annotations{}}
 	var issues Errors
+	reg, regErr := entities.Default()
+	if regErr != nil {
+		return nil, fmt.Errorf("content: %w", regErr)
+	}
 	for _, f := range files {
 		g, err := LoadGuideFile(f)
 		if err != nil {
@@ -61,6 +72,13 @@ func Load(dir string) (*Content, error) {
 			if prev.ID == g.ID {
 				issues = append(issues, Issue{File: f, Pointer: "/id", Message: fmt.Sprintf("duplicate guide id %q (also in %s)", g.ID, prev.File)})
 			}
+		}
+		g.composeRuleObjectives(reg)
+		ann, annIssues, annWarnings := loadAnnotations(filepath.Dir(f), g, reg)
+		issues = append(issues, annIssues...)
+		c.Warnings = append(c.Warnings, annWarnings...)
+		if ann != nil {
+			c.Annotations[g.ID] = ann
 		}
 		c.Guides = append(c.Guides, g)
 	}
@@ -216,8 +234,10 @@ func (g *Guide) check(name string) Errors {
 		} else {
 			seenStep[st.ID] = ptr
 		}
+		st.TextHash = StepTextHash(st)
 		if reg != nil {
 			issues = append(issues, g.checkStepEntities(name, ptr, st, reg)...)
+			issues = append(issues, g.checkStepObjectives(name, ptr, st, reg)...)
 		}
 		// References to other steps must resolve (quests/skills/items are
 		// resolved later by the graph builder against the wiki).

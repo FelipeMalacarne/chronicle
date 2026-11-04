@@ -28,7 +28,9 @@ func newContentValidateCmd() *cobra.Command {
 semantic checks of the loader (unique ids, resolvable step references).
 
 path may be a content directory (default: $CONTENT_DIR or "content"), which
-is loaded exactly as the server loads it, or a single guide.json file.`,
+is loaded exactly as the server loads it (guides plus annotation sidecars; a
+stale annotation is an error here and only a warning in serve), or a single
+guide.json file.`,
 		Args: cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			path := ""
@@ -58,8 +60,16 @@ is loaded exactly as the server loads it, or a single guide.json file.`,
 			if err != nil {
 				return reportIssues(cmd, err)
 			}
+			if len(c.Warnings) > 0 {
+				// The server skips stale annotations; committed content must not have any.
+				return reportIssues(cmd, c.Warnings)
+			}
 			for _, g := range c.Guides {
-				fmt.Fprintf(out, "ok: %s: guide %q, %d sections, %d steps\n", g.File, g.ID, len(g.Sections), g.StepCount())
+				n := 0
+				if a := c.Annotations[g.ID]; a != nil {
+					n = len(a.Sections)
+				}
+				fmt.Fprintf(out, "ok: %s: guide %q, %d sections, %d steps, %d annotated sections\n", g.File, g.ID, len(g.Sections), g.StepCount(), n)
 			}
 			fmt.Fprintf(out, "ok: %d guide(s), %d steps, 0 errors\n", len(c.Guides), c.StepCount())
 			return nil

@@ -1,0 +1,454 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ironman-planner.local/schemas/annotations.schema.json",
+  "title": "Ironman Planner Guide Annotations",
+  "description": "Sidecars de anotação de um guia (doc 09 seções 4.2 e 6): content/guides/<guide-id>/annotations/<section-id>.json com a saída aceita da extração por seção, e annotations/decisions.json com as decisões gerais do dono. Escritos só por `ironman content mcp`; o loader os compõe com guide.json e `ironman content validate` os verifica (hash do texto, citação, refs).",
+  "oneOf": [
+    {
+      "$ref": "#/$defs/sectionFile"
+    },
+    {
+      "$ref": "#/$defs/decisionsFile"
+    }
+  ],
+  "$defs": {
+    "sectionFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "guide_id",
+        "section_id",
+        "skill_version",
+        "steps"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "section"
+        },
+        "guide_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "section_id": {
+          "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/stableId"
+        },
+        "skill_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Versão da skill annotate-guide que produziu o arquivo (ex.: 'annotate-guide@1')."
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/stepAnnotation"
+          }
+        }
+      }
+    },
+    "stepAnnotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "step_id",
+        "text_hash"
+      ],
+      "properties": {
+        "step_id": {
+          "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/stableId"
+        },
+        "text_hash": {
+          "type": "string",
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "description": "Hash do texto do passo (text, location, notes, items) no momento da anotação; diferente do atual = anotação desatualizada."
+        },
+        "objectives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/annotatedObjective"
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/annotatedItem"
+          }
+        },
+        "bank_actions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/annotatedBankAction"
+          }
+        },
+        "location": {
+          "$ref": "#/$defs/annotatedLocation"
+        }
+      }
+    },
+    "annotatedObjective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "role",
+        "evidence",
+        "source"
+      ],
+      "properties": {
+        "key": {
+          "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveKey"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "completes",
+            "starts",
+            "requires",
+            "uses"
+          ]
+        },
+        "evidence": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveEvidence"
+            },
+            {
+              "required": [
+                "field",
+                "quote",
+                "span"
+              ]
+            }
+          ]
+        },
+        "source": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource"
+            },
+            {
+              "properties": {
+                "method": {
+                  "enum": [
+                    "llm",
+                    "manual"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "annotatedItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "evidence",
+        "source"
+      ],
+      "description": "Requisito de item lido do texto; já resolvido (item_id, any_of ou family).",
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "required": [
+                "item_id"
+              ]
+            },
+            {
+              "required": [
+                "any_of"
+              ]
+            },
+            {
+              "required": [
+                "family"
+              ]
+            }
+          ]
+        },
+        {
+          "not": {
+            "required": [
+              "item_id",
+              "any_of"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "item_id",
+              "family"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "any_of",
+              "family"
+            ]
+          }
+        }
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "item_id": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "any_of": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          }
+        },
+        "family": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$"
+        },
+        "qty": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "noted": {
+          "type": "boolean"
+        },
+        "optional": {
+          "type": "boolean"
+        },
+        "source_text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "slot": {
+          "type": "string",
+          "enum": [
+            "inventory",
+            "equipment"
+          ]
+        },
+        "evidence": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveEvidence"
+            },
+            {
+              "required": [
+                "field",
+                "quote",
+                "span"
+              ]
+            }
+          ]
+        },
+        "source": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource"
+            },
+            {
+              "properties": {
+                "method": {
+                  "enum": [
+                    "llm",
+                    "manual"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "annotatedBankAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "position",
+        "evidence",
+        "source"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "open_bank",
+            "deposit_all",
+            "deposit",
+            "withdraw",
+            "bank_setup",
+            "close_bank"
+          ]
+        },
+        "position": {
+          "type": "string",
+          "enum": [
+            "start",
+            "within",
+            "end"
+          ]
+        },
+        "evidence": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveEvidence"
+            },
+            {
+              "required": [
+                "field",
+                "quote",
+                "span"
+              ]
+            }
+          ]
+        },
+        "source": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource"
+            },
+            {
+              "properties": {
+                "method": {
+                  "enum": [
+                    "llm",
+                    "manual"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "annotatedLocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "evidence",
+        "source"
+      ],
+      "properties": {
+        "ref": {
+          "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/locationRef"
+        },
+        "evidence": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveEvidence"
+            },
+            {
+              "required": [
+                "field",
+                "quote",
+                "span"
+              ]
+            }
+          ]
+        },
+        "source": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource"
+            },
+            {
+              "properties": {
+                "method": {
+                  "enum": [
+                    "llm",
+                    "manual"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "decisionsFile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema_version",
+        "kind",
+        "guide_id",
+        "decisions"
+      ],
+      "properties": {
+        "schema_version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "decisions"
+        },
+        "guide_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "decisions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/decision"
+          }
+        }
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "question",
+        "answer",
+        "scope",
+        "decided_at"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$"
+        },
+        "question": {
+          "type": "string",
+          "minLength": 1
+        },
+        "answer": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scope": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Onde a decisão vale (ex.: 'guia inteiro', 'seção 1.1', 'itens genéricos de comida')."
+        },
+        "decided_at": {
+          "type": "string",
+          "format": "date"
+        },
+        "step_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/stableId"
+          }
+        }
+      }
+    }
+  }
+}

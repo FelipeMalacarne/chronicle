@@ -314,9 +314,12 @@ Resultado da migração: 7 seções, 576 passos, 209 com regra automática (170 
 - **Entidades**: `internal/core/entities` resolve menções a quest, item, skill, diary e CA por match
   exato contra os catálogos em `content/reference/` e grava `Step.entities` com citação e posição. O que
   é ambíguo ou não resolve vai para `content/guides/<id>/entities.report.json`. No Oziris:
-  640 resolvidas, 18 ambíguas, 143 sem resolução. No BRUHsailer: 1478, 115 e 1072.
+  672 resolvidas, 20 ambíguas, 109 sem resolução. No BRUHsailer: 1846, 176 e 643. O catálogo de
+  itens é gerado da wiki (cerca de 850 ids: os itens citados pelos dois guias mais as famílias que eles
+  tocam; doc 09, seção 7).
 - **Limites conhecidos**:
-  - o catálogo de itens tem cerca de 130 ids curados à mão;
+  - itens que a fonte nomeia de outro jeito que o jogo ("Juliet's letter", "Rune scim") continuam sem
+    resolução; a extração por agente (doc 09, seção 6) os resolve com confirmação do dono;
   - quantidades como "1k" não são interpretadas;
   - requisitos genéricos ("Axe", "food") ficam ambíguos;
   - algumas ações de banco são mal classificadas ("bank everything" vira `open_bank`).

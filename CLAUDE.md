@@ -37,6 +37,8 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `go run ./cmd/ironman content import-bruhsailer` | regenerate `content/guides/bruhsailer-main` from the pinned DOCX in `data/sources/bruhsailer` |
 | `just migrate-up` / `migrate-status` / `migrate-new <name>` | goose against `DATABASE_URL` |
 | `just dbml` | regenerate `docs/arquitetura/modelo-de-dados.dbml` from the migrated `DATABASE_URL` |
+| `go test ./internal/core/entities/catalogbuild -update` | regenerate the derived catalogs in `content/reference` (offline) |
+| `python3 tools/extract_wiki_items.py` | refresh `data/wiki/items.json` from the OSRS wiki (the only step that uses the network); then `-update` above and re-run both importers |
 | `just sqlc` | regenerate `internal/store/db` from `db/queries/*.sql` |
 | `just up` / `just down` / `just logs` | prod-like stack from `compose.yaml` (Postgres + app image) |
 

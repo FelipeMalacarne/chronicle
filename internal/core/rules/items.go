@@ -96,6 +96,57 @@ type Ownership struct {
 // Owns evaluates ownership of qty of itemID across containers. Noted and
 // unnoted forms count as the same item; variants (doses, charges) do not.
 func Owns(h ItemHoldings, catalog *entities.Registry, itemID int, qty int64, containers []string) Ownership {
+	return owns(h, qty, containers, func(name string) int64 {
+		return h.Count(name, itemID, entities.CompareIgnoreNoted, catalog)
+	})
+}
+
+// OwnsFamily evaluates ownership of qty units of any variant of an item
+// family (docs/09 section 3.4): every dose or charge, noted or not, adds up.
+// An unknown family is never met.
+func OwnsFamily(h ItemHoldings, catalog *entities.Registry, family string, qty int64, containers []string) Ownership {
+	var ids []int
+	if catalog != nil {
+		ids, _ = catalog.Family(family)
+	}
+	if len(ids) == 0 {
+		return Ownership{Verdict: Unknown, Required: max(qty, 1), Containers: map[string]ContainerEvidence{}, Reason: "unknown item family " + family}
+	}
+	return owns(h, qty, containers, func(name string) int64 {
+		return h.Count(name, ids[0], entities.CompareFamily, catalog)
+	})
+}
+
+// OwnsAnyOf evaluates "qty of any one of ids" (an any_of requirement): one id
+// must reach qty on its own. It returns the best outcome (met, then met only
+// through a restored container, then unknown, then unmet) and the id that
+// produced it, preferring earlier ids on ties.
+func OwnsAnyOf(h ItemHoldings, catalog *entities.Registry, ids []int, qty int64, containers []string) (Ownership, int) {
+	rank := func(o Ownership) int {
+		switch {
+		case o.Verdict == Met && !o.Stale:
+			return 3
+		case o.Verdict == Met:
+			return 2
+		case o.Verdict == Unknown:
+			return 1
+		}
+		return 0
+	}
+	var (
+		best   Ownership
+		bestID int
+	)
+	for i, id := range ids {
+		o := Owns(h, catalog, id, qty, containers)
+		if i == 0 || rank(o) > rank(best) {
+			best, bestID = o, id
+		}
+	}
+	return best, bestID
+}
+
+func owns(h ItemHoldings, qty int64, containers []string, count func(string) int64) Ownership {
 	if qty < 1 {
 		qty = 1
 	}
@@ -113,7 +164,7 @@ func Owns(h ItemHoldings, catalog *entities.Registry, itemID int, qty int64, con
 			ev.ObservedAt = &at
 		}
 		if observed && c.Readable() {
-			ev.Qty = h.Count(name, itemID, entities.CompareIgnoreNoted, catalog)
+			ev.Qty = count(name)
 			out.Held += ev.Qty
 			if c.State == ingest.ItemLive {
 				live += ev.Qty

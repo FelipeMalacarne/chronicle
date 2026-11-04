@@ -2380,6 +2380,20 @@
                       "field": "/items/0",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:2126",
+                      "source_text": "Dwellberries",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:1504",
+                      "source_text": "Hangover cure",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
                     }
                   ]
                 },
@@ -2813,6 +2827,7 @@
                   },
                   {
                     "name": "1k arrow shafts",
+                    "item_id": 52,
                     "source_text": "1k arrow shafts"
                   },
                   {
@@ -2906,6 +2921,13 @@
                       "ref": "item:961",
                       "source_text": "120 noted planks",
                       "field": "/items/4",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:52",
+                      "source_text": "1k arrow shafts",
+                      "field": "/items/5",
                       "method": "item",
                       "match": "plural"
                     },
@@ -4159,6 +4181,13 @@
                       "field": "/items/2",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1552",
+                      "source_text": "Seasoned sardine",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "name"
                     }
                   ]
                 },
@@ -4876,6 +4905,7 @@
                   },
                   {
                     "name": "Cheese",
+                    "item_id": 1985,
                     "source_text": "Cheese"
                   },
                   {
@@ -4951,6 +4981,13 @@
                       "field": "/items/0",
                       "method": "item",
                       "match": "alias"
+                    },
+                    {
+                      "ref": "item:1985",
+                      "source_text": "Cheese",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "name"
                     },
                     {
                       "ref": "item:1891",
@@ -5163,6 +5200,20 @@
                       "match": "alias"
                     },
                     {
+                      "ref": "item:2146",
+                      "source_text": "Burnt meat",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:221",
+                      "source_text": "Eye of newt",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:2351",
                       "source_text": "2 iron bars",
                       "field": "/items/4",
@@ -5173,6 +5224,13 @@
                       "ref": "item:1929",
                       "source_text": "Bucket of water",
                       "field": "/items/5",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:2313",
+                      "source_text": "Pie dish",
+                      "field": "/items/6",
                       "method": "item",
                       "match": "name"
                     },
@@ -6578,6 +6636,20 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:294",
+                      "source_text": "Glarial's pebble",
+                      "field": "/items/0",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:4",
+                      "source_text": "Ammo mould",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:954",
                       "source_text": "Rope",
                       "field": "/items/3",
@@ -7172,6 +7244,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:1759",
+                      "source_text": "20 Ball of wool",
+                      "field": "/items/0",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:1891",
                       "source_text": "8 cakes",
                       "field": "/items/1",
@@ -7310,6 +7389,13 @@
                       "ref": "item:592",
                       "source_text": "Ashes",
                       "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:1933",
+                      "source_text": "Pot of flour",
+                      "field": "/items/3",
                       "method": "item",
                       "match": "name"
                     },
@@ -7681,6 +7767,13 @@
                       "field": "/items/0",
                       "method": "item",
                       "match": "alias"
+                    },
+                    {
+                      "ref": "item:753",
+                      "source_text": "Cadava berries",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "name"
                     }
                   ]
                 },
@@ -8105,6 +8198,13 @@
                       "ref": "item:13660",
                       "source_text": "Chronicle",
                       "field": "/items/1",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:783",
+                      "source_text": "Bark sample",
+                      "field": "/items/2",
                       "method": "item",
                       "match": "name"
                     },
@@ -9212,6 +9312,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:1931",
+                      "source_text": "Pot",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:952",
                       "source_text": "Spade",
                       "field": "/items/3",
@@ -9222,6 +9329,13 @@
                       "ref": "item:307",
                       "source_text": "Fishing rod",
                       "field": "/items/4",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:27",
+                      "source_text": "Fishing pass",
+                      "field": "/items/5",
                       "method": "item",
                       "match": "name"
                     },
@@ -9372,6 +9486,20 @@
                     "imported_at": "2026-11-03"
                   },
                   "entities": [
+                    {
+                      "ref": "item:434",
+                      "source_text": "6 clay",
+                      "field": "/items/0",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:1781",
+                      "source_text": "5 soda ash",
+                      "field": "/items/4",
+                      "method": "item",
+                      "match": "name"
+                    },
                     {
                       "ref": "item:952",
                       "source_text": "Spade",
@@ -9825,6 +9953,13 @@
                       "field": "/items/3",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:553",
+                      "source_text": "Ghost's skull",
+                      "field": "/items/4",
+                      "method": "item",
+                      "match": "name"
                     }
                   ]
                 },
@@ -10065,6 +10200,13 @@
                       "source_text": "The Lost Tribe",
                       "field": "/complete_when/0/quest",
                       "method": "rule",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:5008",
+                      "source_text": "Brooch",
+                      "field": "/items/0",
+                      "method": "item",
                       "match": "name"
                     },
                     {
@@ -10937,6 +11079,34 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:33",
+                      "source_text": "Lit candle",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:35",
+                      "source_text": "Excalibur",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:530",
+                      "source_text": "Bat bones",
+                      "field": "/items/4",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:38",
+                      "source_text": "Black candle",
+                      "field": "/items/5",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:590",
                       "source_text": "Tinderbox",
                       "field": "/items/6",
@@ -11450,6 +11620,27 @@
                       "field": "/items/0",
                       "method": "item",
                       "match": "alias"
+                    },
+                    {
+                      "ref": "item:442",
+                      "source_text": "5 silver ore",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:2976",
+                      "source_text": "Sickle mould",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:1599",
+                      "source_text": "Holy mould",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "name"
                     },
                     {
                       "ref": "item:2349",
@@ -12314,7 +12505,16 @@
                     "origin": "ironman.guide",
                     "original_id": "1.2.20",
                     "imported_at": "2026-11-03"
-                  }
+                  },
+                  "entities": [
+                    {
+                      "ref": "item:10006",
+                      "source_text": "Bird snare",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "name"
+                    }
+                  ]
                 },
                 {
                   "id": "1.2.21",
@@ -13745,6 +13945,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:33",
+                      "source_text": "Lit candle",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:2347",
                       "source_text": "Hammer",
                       "field": "/items/3",
@@ -14707,6 +14914,13 @@
                       "match": "alias"
                     },
                     {
+                      "ref": "item:1542",
+                      "source_text": "Maze key",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:1539",
                       "source_text": "90 steel nails",
                       "field": "/items/2",
@@ -14845,6 +15059,13 @@
                       "ref": "item:1761",
                       "source_text": "Soft clay",
                       "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:301",
+                      "source_text": "Lobster pot",
+                      "field": "/items/4",
                       "method": "item",
                       "match": "name"
                     },
@@ -16223,7 +16444,16 @@
                     "origin": "ironman.guide",
                     "original_id": "1.3.79",
                     "imported_at": "2026-11-03"
-                  }
+                  },
+                  "entities": [
+                    {
+                      "ref": "item:1931",
+                      "source_text": "9 pot",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
+                    }
+                  ]
                 },
                 {
                   "id": "1.3.80",

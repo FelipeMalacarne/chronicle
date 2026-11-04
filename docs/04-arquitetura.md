@@ -243,9 +243,13 @@ Pontos de design:
   `diary_tier`, `combat_achievement`, `boss_kc`, `activity_score`, `collection_log_item`, `varbit`,
   `varp`, `item_owned`, `manual`. Cada regra declara implicitamente de qual **faceta** do `PlayerState`
   depende, o que dá o `stale` por passo e a lista de fontes necessárias ("esse passo precisa do plugin").
-- **Referências**: `requires` e `recommended_after` usam `entityRef` (`step:<id>` dentro do guia,
-  `step:<guia>/<id>` entre guias, ou um ref do registry); o formato antigo `quest:<nome wiki>` e
-  `skill:<skill>:<nível>` sai no item 2 da sequência do doc 09. O grafo usa chaves de objetivo.
+- **Referências**: `requires`, `recommended_after` e `unlocks` usam `graphRef`: um `entityRef`
+  (`step:<id>` dentro do guia, `step:<guia>/<id>` entre guias, ou um ref do registry) ou uma chave de
+  objetivo (`quest:<slug>@finished`, `skill:<skill>>=<nível>`). O formato antigo `quest:<nome wiki>` e
+  `skill:<skill>:<nível>` saiu do schema no item 2. O grafo usa chaves de objetivo.
+- **`objectives`**: o passo carrega objetivos (doc 09, seções 3.2 a 4.2). `content.Load` junta os do
+  `guide.json`, os convertidos de `complete_when`/`prerequisites` e os dos sidecars em
+  `content/guides/<id>/annotations/`, verificados contra o texto (hash e citação) e o catálogo.
 - **`layers`**: `classic` é o guia original do Oziris; `enhanced` são os 38 passos adicionados pelo site.
   Um passo com `["classic","enhanced"]` aparece sempre; `["enhanced"]` só no modo enhanced. A conta escolhe
   a layer; trocar não perde progresso.
@@ -713,12 +717,18 @@ Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/mic
 | API por guia `/api/guides/{guide}/...` | `internal/httpapi` | testes HTTP |
 | Web `/plan` e `/compare` sobre a API real, card da perna de banco | `web/src/lib/planner`, `web/src/routes/{plan,compare}` | `pnpm test`, `pnpm check`, build, renderização headless |
 | Plugin Microbot Ironman Planner 1.0.0 (somente leitura) | `microbot-plugins`: `fm/ironmanplanner` | 36 testes JUnit; **nunca rodou no jogo** |
+| Objetivos no conteúdo: `entities.ObjectiveKey`, tipos `unlock`/`location`, `ItemRequirement` (`item_id`/`any_of`/`family`, `noted`), `entityRef`/`objectiveKey`/`graphRef` no schema, sidecars de anotação (`annotations.schema.json`) lidos, verificados e compostos pelo loader; `complete_when`/`prerequisites` viram objetivos no `content.Load` | `internal/core/entities/objective.go`, `internal/core/content/{objectives,annotations}.go`, `content/schema/` | testes de tabela (chaves, conversão das 269 regras, citação dobrada, hash, composição, rejeições); `content validate` |
+| Posse e readiness sobre as variantes de item | `rules.OwnsFamily`/`OwnsAnyOf`, `planning.evaluateItem` | testes de tabela |
+| Catálogos gerados: itens da wiki (856 ids), varbits de referência (48 diaries + quest points); `unlocks.json` e `locations.json` vazios até a extração | `tools/extract_wiki_items.py` → `data/wiki/items.json`; `internal/core/entities/catalogbuild` | `catalogbuild -update` sem rede; concordância com o catálogo curado antigo (fixture) |
 
-Ainda não existe: progresso persistido (as queries de `step_progress` existem no sqlc, sem chamador; a
+Ainda não existe: anotações (o diretório `annotations/` de cada guia nasce no item 5), o MCP de
+extração, progresso persistido (as queries de `step_progress` existem no sqlc, sem chamador; a
 web mostra 0 feitos), indexação de conteúdo no boot (`content_versions`/`content_steps`) e aplicação de
 `step_id_aliases`, faceta de quest e diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de
 hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de controle do
-Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Microbot.
+Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Microbot; as refs dessas fixtures
+ainda estão na gramática antiga (`quest:cooks-assistant`, `skill:cooking:10`) e passam para `entityRef` e
+chave de objetivo quando essas telas forem para a API (item 9).
 
 Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam para cá. A ordem dos itens
 2 a 9 foi decidida pelo dono (doc 09, decisão D7): extração completa antes do progresso persistido.
@@ -726,8 +736,8 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | # | Entrega | Pronto quando |
 |---|---|---|
 | 1 | Doc 09 revisado e decisões fechadas | **feito** (2026-11-04; doc 09, seções 9.1 e 9.3) |
-| 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`, schema dos sidecars; loader converte `complete_when` e compõe anotações; readiness e posse avaliam as variantes de item | `content validate` passa nos dois guias; readiness continua verde nos loadouts exatos e avalia `any_of`/`family` com testes de tabela |
-| 3 | Dados e catálogos: script em `tools/` extrai do bucket do wiki os itens citados pelos guias mais famílias para `data/wiki/items.json`; `catalogbuild` gera `content/reference/items.json`; `unlocks.json`, `locations.json` e `varbits.json` iniciais | ambíguos e não resolvidos de item do Oziris (11 e 96) caem de forma mensurável; `catalogbuild -update` regenera tudo sem rede |
+| 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`, schema dos sidecars; loader converte `complete_when` e compõe anotações; readiness e posse avaliam as variantes de item | **feito** (2026-11-04; detalhes da composição no doc 09, seção 4.2) |
+| 3 | Dados e catálogos: script em `tools/` extrai da wiki os itens citados pelos guias mais famílias para `data/wiki/items.json`; `catalogbuild` gera `content/reference/items.json`; `unlocks.json`, `locations.json` e `varbits.json` iniciais | **feito** (2026-11-04). Itens do Oziris sem resolução 96 → 62 e resolvidos 87 → 119; os ambíguos subiram de 11 para 13, porque nomes antes desconhecidos agora caem em vários ids (doc 09, seção 7) |
 | 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | testes de tabela das checagens (citação dobrada, refs, hash, ordem); o MCP responde a um lote de exemplo |
 | 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6 |
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |

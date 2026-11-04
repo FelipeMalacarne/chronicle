@@ -174,6 +174,11 @@ Substitui o `LoadoutItem` de id único:
  noted     flag explícita quando o guia diz "noted"
 ```
 
+No conteúdo, `family` é o slug da família do catálogo (`entities.FamilySlug`, que escreve "+" como
+`plus`: `antidote_plus_plus`), e as três variantes são exclusivas (`item_id`, `any_of` ou `family`).
+Com `noted`, o setup carregado exige o id noteado. Em `any_of`, cada id precisa atingir a quantidade
+sozinho; quantidades de ids diferentes não somam.
+
 `category` ("food", "teleport") fica fora desta revisão: o catálogo não tem categorias e não há fonte
 limpa para elas na wiki. "Food" entra como `family` curada quando aparecer na extração.
 
@@ -243,6 +248,21 @@ anotado). `content validate` valida `guide.json` e as anotações juntas: schema
 hash do texto atual, citação verificável e refs conhecidos. Hash diferente é erro no `validate` (a CI
 falha) e aviso no `serve`, que ignora a anotação desatualizada e segue; reprocessar só esse passo
 resolve.
+
+Detalhes da composição, como implementados (item 2 da sequência):
+
+- `text_hash` é `sha256:` do JSON de `text`, `location`, `notes` e `items` do passo: tudo o que uma
+  anotação pode citar (`content.StepTextHash`).
+- Objetivos: os do `guide.json` (se houver), depois os convertidos das regras, depois os da anotação; a
+  mesma chave com o mesmo papel é substituída no lugar. A conversão rejeita, sem aproximar, o que não
+  tem alvo de objetivo (`any`/`not`, `op: eq`, varbit, `item_owned` com containers restritos); a regra
+  `manual` não vira objetivo.
+- Itens e ações de banco da anotação substituem o loadout e as ações derivadas do segmento quando o
+  passo anotado é o primeiro do segmento (é dele que `derive` tira os dois). Num passo do meio do
+  segmento, ficam no próprio passo (`requirements`, `bank_actions`); se isso pedir novo corte de
+  segmentos, a decisão fica para o item 4 (ferramental de extração).
+- `content.LoadGuideFile`/`ParseGuide` validam tudo isso, mas não alteram o guia (ele recodifica para o
+  mesmo `guide.json`); só `content.Load` compõe.
 
 `complete_when` continua aceito no schema durante a migração. Sai quando os importadores passarem a
 emitir objetivos diretamente.
@@ -442,19 +462,32 @@ commit. Só depois disso roda o resto, cerca de 13 seções.
 
 ## 7. Catálogos
 
-- **Itens.** Não existe extração local de itens da wiki hoje (`data/wiki` tem só quests, diaries e
-  aliases) e `catalogbuild` lê só arquivos locais. Entra uma tarefa de dado: um script em `tools/` extrai
-  do bucket do wiki os itens citados pelos dois guias mais as famílias que eles tocam (poções, runas,
-  machados, picaretas, comida), algumas centenas de ids, para `data/wiki/items.json` (ids, nome, forma
-  noteada, empilhável, slot de equipamento, família e variante). O gerador fica em
-  `internal/core/entities/catalogbuild`, como os de quests e diaries, e escreve
-  `content/reference/items.json`. O catálogo curado atual (~130 ids) fica só como teste. O cache inteiro
-  (~30 mil ids) fica fora: não há sinal de que vá ser preciso.
+- **Itens** (feito em 2026-11-04). `tools/extract_wiki_items.py` extrai os itens citados pelos dois
+  guias mais as famílias que eles tocam (poções, runas, machados, picaretas, comida, joias com carga,
+  tabs) para `data/wiki/items.json`: 856 ids de 567 páginas, com nome, forma noteada, empilhável, slot de
+  equipamento, família e variante. O bucket `infobox_item` não tem forma noteada nem empilhável, então
+  o script lê o wikitext do `{{Infobox Item}}`/`{{Infobox Bonuses}}` pela API da wiki e tira o id noteado
+  da classe `Cert` do `gameval/ItemID.java` do RuneLite, num commit fixado (gravado em `source`). Só
+  esse script usa a rede; `catalogbuild` gera `content/reference/items.json` a partir do extrato mais
+  os aliases e nomes ambíguos curados de `data/wiki/entity_aliases.json`. O catálogo curado antigo
+  (133 ids) virou fixture de teste: o gerado concorda com ele, salvo duas correções (o id 371 é
+  "Raw swordfish", não "Swordfish"; "Rune sword" virou "Rune shortsword" e ficou como alias). O nome
+  do guia só decide o que buscar; a resolução continua exata (nome, alias curado, plural). O cache
+  inteiro (~30 mil ids) fica fora: não há sinal de que vá ser preciso.
+
+  Efeito nos relatórios de entidades: no Oziris, itens resolvidos 87 → 119 e sem resolução 96 → 62;
+  ambíguos 11 → 13, porque nomes antes desconhecidos agora caem em duas ou mais ids com o mesmo nome
+  (Scrying orb cheio/vazio). No BRUHsailer: resolvidos 1023 → 1391, sem resolução 798 → 369, ambíguos
+  85 → 146 pelo mesmo motivo (famílias sem variante, como "necklace of passage", e nomes repetidos). Ambíguo
+  é o estado certo para esses casos: a extração escolhe com `any_of` ou `family`.
 - **Unlocks e locais.** Catálogos novos, começando pelo que os guias citam (lista sai da extração via
-  `propose_entity`), não pela wiki inteira.
-- **Varbits de referência** (`content/reference/varbits.json`): os `DIARY_<ÁREA>_<TIER>_COMPLETED` por
-  diary (doc 02, seção 5), os varbits/varps dos unlocks e o varp 101 (quest points). É o que o manifest
-  do ingest passa a pedir além das regras do conteúdo (seção 3.2).
+  `propose_entity`), não pela wiki inteira. `unlocks.json` e `locations.json` existem e começam vazios: o
+  `location` em texto livre do Oziris (119 valores, como "Draynor" e "Draynor Village", "Various") é
+  evidência para as propostas, não um catálogo.
+- **Varbits de referência** (`content/reference/varbits.json`, gerado): os 48
+  `DIARY_<ÁREA>_<TIER>_COMPLETED` por diary (doc 02, seção 5) e o varp 101 (quest points). Os
+  varbits/varps dos unlocks ficam no próprio `unlocks.json` (`proof`). É o que o manifest do ingest passa
+  a pedir além das regras do conteúdo (seção 3.2; item 7 da sequência).
 
 ## 8. Migração do que existe
 
@@ -518,7 +551,7 @@ Nenhuma. O planejamento do modelo está fechado; a execução segue o doc 04, se
 | D5 | `content_steps` | fica como índice mínimo, gravado pelo loader |
 | D6 | Ids do BRUHsailer | posicionais da numeração upstream, com fingerprint do texto |
 | D7 | Ordem da sequência | mantida: extração completa antes do progresso persistido; o contrato (D1) entra como item próprio antes do progresso |
-| D8 | Catálogo de itens | itens citados pelos guias mais famílias, extraídos do bucket do wiki para `data/wiki/items.json` |
+| D8 | Catálogo de itens | itens citados pelos guias mais famílias, extraídos da wiki para `data/wiki/items.json` (wikitext do infobox, porque o bucket não traz forma noteada nem empilhável; seção 7) |
 | D9 | Documentação | doc 04 reescrito como arquitetura atual; seções superadas e artefatos SQLite/Zod removidos (o git guarda o histórico); doc 01 vira registro de decisões |
 | D10 | `manual_ok` | sai do modelo |
 

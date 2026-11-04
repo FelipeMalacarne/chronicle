@@ -235,7 +235,7 @@ func loadoutFromStep(step *content.Step) *content.Loadout {
 	return loadout
 }
 
-func loadoutItem(item content.Item) (content.LoadoutItem, bool) {
+func loadoutItem(item content.Item) (content.ItemRequirement, bool) {
 	sourceText := strings.TrimSpace(item.Name)
 	name := sourceText
 	equipped := item.Equip || equipPattern.MatchString(name)
@@ -252,7 +252,7 @@ func loadoutItem(item content.Item) (content.LoadoutItem, bool) {
 			}
 		}
 	}
-	return content.LoadoutItem{
+	return content.ItemRequirement{
 		Name:       strings.TrimSpace(name),
 		ItemID:     item.ItemID,
 		Qty:        qty,

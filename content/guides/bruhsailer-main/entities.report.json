@@ -5,13 +5,15 @@
     "ca": "2026.11.0",
     "diary": "2026.11.0",
     "item": "2026.11.0",
+    "location": "2026.11.0",
     "quest": "2026.11.0",
-    "skill": "2026.11.0"
+    "skill": "2026.11.0",
+    "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 1478,
-    "ambiguous": 115,
-    "unresolved": 1072,
+    "resolved": 1846,
+    "ambiguous": 176,
+    "unresolved": 643,
     "by_kind": {
       "ca": {
         "resolved": 4,
@@ -24,9 +26,9 @@
         "unresolved": 0
       },
       "item": {
-        "resolved": 1023,
-        "ambiguous": 85,
-        "unresolved": 798
+        "resolved": 1391,
+        "ambiguous": 146,
+        "unresolved": 369
       },
       "link": {
         "resolved": 0,
@@ -40,12 +42,24 @@
       }
     },
     "loadout_items": {
-      "resolved": 543,
-      "ambiguous": 38,
-      "unresolved": 366
+      "resolved": 715,
+      "ambiguous": 64,
+      "unresolved": 168
     }
   },
   "ambiguous": [
+    {
+      "step_id": "bruh-1.1-c5dd0c60297b",
+      "field": "/items/1",
+      "source_text": "ghostspeak amulet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:552",
+        "item:4250"
+      ]
+    },
     {
       "step_id": "bruh-1.2-b63ba9348b08",
       "field": "/items/10",
@@ -237,6 +251,21 @@
       ]
     },
     {
+      "step_id": "bruh-1.3-8ab026e97122",
+      "field": "/items/0",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
+      ]
+    },
+    {
       "step_id": "bruh-1.3-80e9203f5c43",
       "field": "/text",
       "span": [
@@ -280,6 +309,140 @@
       ]
     },
     {
+      "step_id": "bruh-1.3-ffd94c28254c",
+      "field": "/items/1",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-0f6a40a78607",
+      "field": "/items/1",
+      "source_text": "dwarven battleaxe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:5056",
+        "item:5057",
+        "item:5058",
+        "item:5059"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-9c60757b38e7",
+      "field": "/items/2",
+      "source_text": "scrying orb",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:5518",
+        "item:5519"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-4c7daf877fc6",
+      "field": "/items/4",
+      "source_text": "Silverlight",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:2402",
+        "item:6745"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-4c7daf877fc6",
+      "field": "/items/10",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-4f2af9af2cc0",
+      "field": "/items/0",
+      "source_text": "1 digsite pendant",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:11190",
+        "item:11191",
+        "item:11192",
+        "item:11193",
+        "item:11194"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-4f2af9af2cc0",
+      "field": "/items/5",
+      "source_text": "ghostspeak amulet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:552",
+        "item:4250"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-029eac528407",
+      "field": "/items/2",
+      "source_text": "ghostspeak amulet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:552",
+        "item:4250"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-029eac528407",
+      "field": "/items/10",
+      "source_text": "druid pouch",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:2957",
+        "item:2958"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-b1f58ecada03",
+      "field": "/items/4",
+      "source_text": "digsite pendant",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:11190",
+        "item:11191",
+        "item:11192",
+        "item:11193",
+        "item:11194"
+      ]
+    },
+    {
       "step_id": "bruh-1.3-19498ceed1c8",
       "field": "/text",
       "span": [
@@ -302,6 +465,18 @@
         "quest:recipe_for_disaster_freeing_the_goblin_generals",
         "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
         "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-3ef671dc2287",
+      "field": "/items/6",
+      "source_text": "1 dwarven rock cake",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:7509",
+        "item:7510"
       ]
     },
     {
@@ -331,6 +506,21 @@
     },
     {
       "step_id": "bruh-1.3-aa4ae9967d70",
+      "field": "/items/9",
+      "source_text": "digsite pendant",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:11190",
+        "item:11191",
+        "item:11192",
+        "item:11193",
+        "item:11194"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-aa4ae9967d70",
       "field": "/items/10",
       "source_text": "axe",
       "kind": "item",
@@ -343,6 +533,45 @@
         "item:1355",
         "item:1357",
         "item:1359"
+      ]
+    },
+    {
+      "step_id": "bruh-1.4-9072abedf424",
+      "field": "/items/0",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
+      ]
+    },
+    {
+      "step_id": "bruh-1.4-8d119be147f2",
+      "field": "/items/1",
+      "source_text": "Silverlight",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:2402",
+        "item:6745"
+      ]
+    },
+    {
+      "step_id": "bruh-1.4-f5be032f82bc",
+      "field": "/items/7",
+      "source_text": "wig",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:2419",
+        "item:2421"
       ]
     },
     {
@@ -379,6 +608,30 @@
         "item:3863",
         "item:3865",
         "item:3867"
+      ]
+    },
+    {
+      "step_id": "bruh-1.4-0ec2b71188ef",
+      "field": "/items/5",
+      "source_text": "scrying orb",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:5518",
+        "item:5519"
+      ]
+    },
+    {
+      "step_id": "bruh-1.4-486c2e267485",
+      "field": "/items/6",
+      "source_text": "scrying orb",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:5518",
+        "item:5519"
       ]
     },
     {
@@ -537,6 +790,30 @@
     },
     {
       "step_id": "bruh-1.4-8bbdaf04c7bd",
+      "field": "/items/14",
+      "source_text": "boots of lightness",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:88",
+        "item:89"
+      ]
+    },
+    {
+      "step_id": "bruh-1.4-8bbdaf04c7bd",
+      "field": "/items/29",
+      "source_text": "sled",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:4083",
+        "item:4084"
+      ]
+    },
+    {
+      "step_id": "bruh-1.4-8bbdaf04c7bd",
       "field": "/items/35",
       "source_text": "prayer potions",
       "kind": "item",
@@ -561,6 +838,21 @@
         "item:177",
         "item:179",
         "item:2446"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-998e961ab51a",
+      "field": "/items/9",
+      "source_text": "digsite pendant",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:11190",
+        "item:11191",
+        "item:11192",
+        "item:11193",
+        "item:11194"
       ]
     },
     {
@@ -609,6 +901,18 @@
         "item:141",
         "item:143",
         "item:2434"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-043882e243c2",
+      "field": "/items/13",
+      "source_text": "ghostspeak amulet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:552",
+        "item:4250"
       ]
     },
     {
@@ -721,6 +1025,18 @@
     },
     {
       "step_id": "bruh-2.1-a7b6f2292e47",
+      "field": "/items/6",
+      "source_text": "mining helmet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:5013",
+        "item:5014"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-a7b6f2292e47",
       "field": "/text",
       "span": [
         40,
@@ -742,6 +1058,18 @@
         "quest:recipe_for_disaster_freeing_the_goblin_generals",
         "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
         "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-f578b1e34d33",
+      "field": "/items/1",
+      "source_text": "bullseye lantern",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:4548",
+        "item:4550"
       ]
     },
     {
@@ -851,6 +1179,21 @@
     },
     {
       "step_id": "bruh-2.1-a35ead38ca03",
+      "field": "/items/9",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-a35ead38ca03",
       "field": "/items/22",
       "source_text": "prayer potions",
       "kind": "item",
@@ -939,6 +1282,21 @@
       ]
     },
     {
+      "step_id": "bruh-2.1-72a11f040f2d",
+      "field": "/items/14",
+      "source_text": "digsite pendant",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:11190",
+        "item:11191",
+        "item:11192",
+        "item:11193",
+        "item:11194"
+      ]
+    },
+    {
       "step_id": "bruh-2.1-5d6413257d18",
       "field": "/items/9",
       "source_text": "axe",
@@ -952,6 +1310,24 @@
         "item:1355",
         "item:1357",
         "item:1359"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-5d6413257d18",
+      "field": "/items/11",
+      "source_text": "scorpion cage",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:456",
+        "item:457",
+        "item:458",
+        "item:459",
+        "item:460",
+        "item:461",
+        "item:462",
+        "item:463"
       ]
     },
     {
@@ -983,6 +1359,77 @@
       ]
     },
     {
+      "step_id": "bruh-2.1-5d6413257d18",
+      "field": "/items/20",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-e70c612b2be2",
+      "field": "/items/0",
+      "source_text": "cat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:1561",
+        "item:1562",
+        "item:1563",
+        "item:1564",
+        "item:1565",
+        "item:1566"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-6959a1b72bfe",
+      "field": "/items/5",
+      "source_text": "cat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:1561",
+        "item:1562",
+        "item:1563",
+        "item:1564",
+        "item:1565",
+        "item:1566"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-0f6d2a3f24dc",
+      "field": "/items/3",
+      "source_text": "ghostspeak amulet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:552",
+        "item:4250"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-86c9ed8c8686",
+      "field": "/items/3",
+      "source_text": "druid pouch",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:2957",
+        "item:2958"
+      ]
+    },
+    {
       "step_id": "bruh-2.1-86c9ed8c8686",
       "field": "/items/11",
       "source_text": "prayer potions",
@@ -994,6 +1441,30 @@
         "item:141",
         "item:143",
         "item:2434"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-4197aeaa19f0",
+      "field": "/items/5",
+      "source_text": "ghostspeak amulet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:552",
+        "item:4250"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-47a8fa581b17",
+      "field": "/items/2",
+      "source_text": "ghostspeak amulet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:552",
+        "item:4250"
       ]
     },
     {
@@ -1026,6 +1497,24 @@
         "item:177",
         "item:179",
         "item:2446"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-470c9603b23b",
+      "field": "/items/11",
+      "source_text": "scorpion cage",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:456",
+        "item:457",
+        "item:458",
+        "item:459",
+        "item:460",
+        "item:461",
+        "item:462",
+        "item:463"
       ]
     },
     {
@@ -1183,6 +1672,39 @@
       ]
     },
     {
+      "step_id": "bruh-2.1-5288472eda47",
+      "field": "/items/25",
+      "source_text": "scorpion cage",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:456",
+        "item:457",
+        "item:458",
+        "item:459",
+        "item:460",
+        "item:461",
+        "item:462",
+        "item:463"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-568d9176f7bc",
+      "field": "/items/6",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
+      ]
+    },
+    {
       "step_id": "bruh-2.1-cb5f137b66c4",
       "field": "/items/7",
       "source_text": "energy potions",
@@ -1307,6 +1829,22 @@
     },
     {
       "step_id": "bruh-2.2-00b571d0ee0f",
+      "field": "/items/0",
+      "source_text": "cat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:1561",
+        "item:1562",
+        "item:1563",
+        "item:1564",
+        "item:1565",
+        "item:1566"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-00b571d0ee0f",
       "field": "/text",
       "span": [
         149,
@@ -1359,6 +1897,30 @@
       ]
     },
     {
+      "step_id": "bruh-2.2-ad3e9b4a072f",
+      "field": "/items/22",
+      "source_text": "medium pouch",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:5510",
+        "item:5511"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-ad3e9b4a072f",
+      "field": "/items/23",
+      "source_text": "large pouch",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:5512",
+        "item:5513"
+      ]
+    },
+    {
       "step_id": "bruh-2.2-912a85abde7b",
       "field": "/items/4",
       "source_text": "energy potions",
@@ -1384,6 +1946,53 @@
         "item:141",
         "item:143",
         "item:2434"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-912a85abde7b",
+      "field": "/items/9",
+      "source_text": "scorpion cage",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:456",
+        "item:457",
+        "item:458",
+        "item:459",
+        "item:460",
+        "item:461",
+        "item:462",
+        "item:463"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-f55110ed5551",
+      "field": "/items/1",
+      "source_text": "emerald lantern",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:9064",
+        "item:9065",
+        "item:20722"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-f55110ed5551",
+      "field": "/items/16",
+      "source_text": "cat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:1561",
+        "item:1562",
+        "item:1563",
+        "item:1564",
+        "item:1565",
+        "item:1566"
       ]
     },
     {
@@ -1426,6 +2035,18 @@
         "item:177",
         "item:179",
         "item:2446"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-be2ac6d66b8a",
+      "field": "/items/1",
+      "source_text": "karambwan vessel",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:3157",
+        "item:3159"
       ]
     },
     {
@@ -1487,6 +2108,21 @@
         "item:177",
         "item:179",
         "item:2446"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-39f76eab7532",
+      "field": "/items/13",
+      "source_text": "hellcat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:7581",
+        "item:7582",
+        "item:7583",
+        "item:7584",
+        "item:7585"
       ]
     },
     {
@@ -1558,6 +2194,36 @@
       ]
     },
     {
+      "step_id": "bruh-2.2-214d11574fb1",
+      "field": "/items/3",
+      "source_text": "hellcat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:7581",
+        "item:7582",
+        "item:7583",
+        "item:7584",
+        "item:7585"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9ff8a6700210",
+      "field": "/items/7",
+      "source_text": "hellcat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:7581",
+        "item:7582",
+        "item:7583",
+        "item:7584",
+        "item:7585"
+      ]
+    },
+    {
       "step_id": "bruh-2.2-d19339e3dfb2",
       "field": "/items/6",
       "source_text": "prayer potions",
@@ -1615,6 +2281,18 @@
         "item:3010",
         "item:3012",
         "item:3014"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-7ddf391d4fd0",
+      "field": "/items/12",
+      "source_text": "5 pigeon cages",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:424",
+        "item:425"
       ]
     },
     {
@@ -1744,6 +2422,21 @@
     },
     {
       "step_id": "bruh-2.2-03b67e72a240",
+      "field": "/items/2",
+      "source_text": "hellcat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:7581",
+        "item:7582",
+        "item:7583",
+        "item:7584",
+        "item:7585"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-03b67e72a240",
       "field": "/text",
       "span": [
         82,
@@ -1807,6 +2500,45 @@
       ]
     },
     {
+      "step_id": "bruh-2.2-9b5e1c730252",
+      "field": "/items/14",
+      "source_text": "Ectophial",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:4251",
+        "item:4252"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9b5e1c730252",
+      "field": "/items/15",
+      "source_text": "ghostspeak amulet",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:552",
+        "item:4250"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9b5e1c730252",
+      "field": "/items/18",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
+      ]
+    },
+    {
       "step_id": "bruh-2.2-9849f0d8fc91",
       "field": "/items/4",
       "source_text": "waterskins",
@@ -1819,6 +2551,36 @@
         "item:1827",
         "item:1829",
         "item:1831"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9849f0d8fc91",
+      "field": "/items/6",
+      "source_text": "hellcat",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:7581",
+        "item:7582",
+        "item:7583",
+        "item:7584",
+        "item:7585"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-31164de7dfc7",
+      "field": "/items/20",
+      "source_text": "necklace of passage",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:21146",
+        "item:21149",
+        "item:21151",
+        "item:21153",
+        "item:21155"
       ]
     },
     {
@@ -2025,6 +2787,70 @@
       ]
     },
     {
+      "step_id": "bruh-2.2-9c59a66bedd7",
+      "field": "/items/1",
+      "source_text": "looting bag",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:11941",
+        "item:22586"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-c3ccb2b3f486",
+      "field": "/items/2",
+      "source_text": "silvthrill rod",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:7637",
+        "item:7638"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-eebcc93d77e7",
+      "field": "/items/4",
+      "source_text": "salve amulet(ei)",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:12018",
+        "item:25278"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-da5e9c05eae9",
+      "field": "/items/2",
+      "source_text": "agility potions",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:3032",
+        "item:3034",
+        "item:3036",
+        "item:3038"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-c9ca0e75b4b5",
+      "field": "/items/2",
+      "source_text": "agility potions",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:3032",
+        "item:3034",
+        "item:3036",
+        "item:3038"
+      ]
+    },
+    {
       "step_id": "bruh-2.3-86638eb5666c",
       "field": "/items/1",
       "source_text": "prayer potions",
@@ -2057,6 +2883,18 @@
       ]
     },
     {
+      "step_id": "bruh-2.3-bccf72bc6e8a",
+      "field": "/items/0",
+      "source_text": "Ectophial",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:4251",
+        "item:4252"
+      ]
+    },
+    {
       "step_id": "bruh-3.1-51716d9d3889",
       "field": "/items/3",
       "source_text": "glory",
@@ -2068,7 +2906,9 @@
         "item:1706",
         "item:1708",
         "item:1710",
-        "item:1712"
+        "item:1712",
+        "item:11976",
+        "item:11978"
       ]
     }
   ],
@@ -2303,30 +3143,6 @@
       ]
     },
     {
-      "step_id": "bruh-1.1-3ab88e812f9c",
-      "field": "/items/4",
-      "source_text": "forestry kit",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-3f2c951740ac",
-      "field": "/items/3",
-      "source_text": "raw sardine",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-3f2c951740ac",
-      "field": "/items/4",
-      "source_text": "doogle leaves",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.1-3f2c951740ac",
       "field": "/items/6",
       "source_text": "wax logs",
@@ -2351,30 +3167,6 @@
     },
     {
       "step_id": "bruh-1.1-5fa116cc2c88",
-      "field": "/items/4",
-      "source_text": "burnt meat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-5fa116cc2c88",
-      "field": "/items/5",
-      "source_text": "eye of newt",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-5fa116cc2c88",
-      "field": "/items/6",
-      "source_text": "onion",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-5fa116cc2c88",
       "field": "/items/7",
       "source_text": "100 air/mind runes",
       "kind": "item",
@@ -2393,22 +3185,6 @@
       "step_id": "bruh-1.1-5fa116cc2c88",
       "field": "/items/10",
       "source_text": "50gp",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-8b1563b2fd77",
-      "field": "/items/2",
-      "source_text": "1500 arrow shafts",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-8b1563b2fd77",
-      "field": "/items/5",
-      "source_text": "beer",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -2529,24 +3305,8 @@
     },
     {
       "step_id": "bruh-1.2-61ac68a4f552",
-      "field": "/items/5",
-      "source_text": "6 onions",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-61ac68a4f552",
       "field": "/items/6",
       "source_text": "2 woad leaves",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-61ac68a4f552",
-      "field": "/items/7",
-      "source_text": "pie dish",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -2555,14 +3315,6 @@
       "step_id": "bruh-1.2-8d771b72bcd5",
       "field": "/items/1",
       "source_text": "3 pots of flour",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-8d771b72bcd5",
-      "field": "/items/3",
-      "source_text": "pie dish",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -2581,22 +3333,6 @@
       "candidates": [
         "quest:desert_treasure_i"
       ]
-    },
-    {
-      "step_id": "bruh-1.2-e20dc116045b",
-      "field": "/items/1",
-      "source_text": "stew",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/1",
-      "source_text": "7 soda ash",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.2-3b82582ee229",
@@ -2624,80 +3360,8 @@
     },
     {
       "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/8",
-      "source_text": "raw bear meat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/9",
-      "source_text": "raw beef",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/10",
-      "source_text": "raw chicken",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
       "field": "/items/11",
       "source_text": "rat meat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/12",
-      "source_text": "red dye",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/14",
-      "source_text": "blue dye",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/16",
-      "source_text": "2 iron ore",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/17",
-      "source_text": "4 copper ore",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/18",
-      "source_text": "6 clay",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/19",
-      "source_text": "2 cheese",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -2832,22 +3496,6 @@
     },
     {
       "step_id": "bruh-1.2-b63ba9348b08",
-      "field": "/items/1",
-      "source_text": "shears",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-b63ba9348b08",
-      "field": "/items/9",
-      "source_text": "Shantay pass",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-b63ba9348b08",
       "field": "/items/12",
       "source_text": "knife (to slash cacti)",
       "kind": "item",
@@ -2866,14 +3514,6 @@
       "step_id": "bruh-1.2-93715f553218",
       "field": "/items/3",
       "source_text": "light source or tinderbox",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-93715f553218",
-      "field": "/items/5",
-      "source_text": "fly fishing rod",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -2915,30 +3555,6 @@
       "candidates": [
         "quest:fishing_contest"
       ]
-    },
-    {
-      "step_id": "bruh-1.2-6092b29396cf",
-      "field": "/items/4",
-      "source_text": "necklace mould",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-6092b29396cf",
-      "field": "/items/5",
-      "source_text": "sickle mould",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-6092b29396cf",
-      "field": "/items/7",
-      "source_text": "sapphire",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.2-6092b29396cf",
@@ -3019,14 +3635,6 @@
     },
     {
       "step_id": "bruh-1.2-4196de54f07d",
-      "field": "/items/1",
-      "source_text": "Glarial’s pebble",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-4196de54f07d",
       "field": "/items/3",
       "source_text": "water strikes",
       "kind": "item",
@@ -3037,14 +3645,6 @@
       "step_id": "bruh-1.2-4196de54f07d",
       "field": "/items/4",
       "source_text": "all your feathers",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-ccdfb374312f",
-      "field": "/items/1",
-      "source_text": "willow blackjack",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3096,24 +3696,8 @@
     },
     {
       "step_id": "bruh-1.2-2028455e49a1",
-      "field": "/items/1",
-      "source_text": "willow blackjack",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-2028455e49a1",
       "field": "/items/2",
       "source_text": "an initial set of wines (buy in Pollnivneach from Faisal the Barman)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-0c8068961e4e",
-      "field": "/items/8",
-      "source_text": "fly fishing rod",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3226,14 +3810,6 @@
     },
     {
       "step_id": "bruh-1.3-66399bbbcf31",
-      "field": "/items/5",
-      "source_text": "bucket of wax",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-66399bbbcf31",
       "field": "/text",
       "span": [
         665,
@@ -3259,22 +3835,6 @@
       "step_id": "bruh-1.3-886f0784d3aa",
       "field": "/items/8",
       "source_text": "leather boots (from Step 1!)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-886f0784d3aa",
-      "field": "/items/10",
-      "source_text": "vial",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-886f0784d3aa",
-      "field": "/items/11",
-      "source_text": "charcoal",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3416,54 +3976,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-1.3-de6f39e70583",
-      "field": "/items/6",
-      "source_text": "ring mould",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-de6f39e70583",
-      "field": "/items/7",
-      "source_text": "necklace mould",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-de6f39e70583",
-      "field": "/items/8",
-      "source_text": "eye of newt",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-de6f39e70583",
-      "field": "/items/9",
-      "source_text": "greenman’s ale",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-de6f39e70583",
-      "field": "/items/10",
-      "source_text": "rotten tomato",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-de6f39e70583",
-      "field": "/items/11",
-      "source_text": "fruit blast",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.3-792a43e8b277",
       "field": "/items/8",
       "source_text": "3 cut sapphires",
@@ -3475,14 +3987,6 @@
       "step_id": "bruh-1.3-792a43e8b277",
       "field": "/items/12",
       "source_text": "empty bucket",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-792a43e8b277",
-      "field": "/items/13",
-      "source_text": "beer",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3519,14 +4023,6 @@
     },
     {
       "step_id": "bruh-1.3-f70731ae83d5",
-      "field": "/items/1",
-      "source_text": "4 Asgarnian ales",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-f70731ae83d5",
       "field": "/text",
       "span": [
         128,
@@ -3542,24 +4038,8 @@
     },
     {
       "step_id": "bruh-1.3-8ab026e97122",
-      "field": "/items/0",
-      "source_text": "necklace of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-8ab026e97122",
       "field": "/items/1",
       "source_text": "bronze/adamant pickaxe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-8ab026e97122",
-      "field": "/items/2",
-      "source_text": "bird snare",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3574,48 +4054,8 @@
     },
     {
       "step_id": "bruh-1.3-8ab026e97122",
-      "field": "/items/4",
-      "source_text": "papyrus",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-8ab026e97122",
-      "field": "/items/5",
-      "source_text": "strange implement",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-8ab026e97122",
-      "field": "/items/6",
-      "source_text": "phoenix feather",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-8ab026e97122",
-      "field": "/items/9",
-      "source_text": "1 black mushroom",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-8ab026e97122",
       "field": "/items/11",
       "source_text": "vial (should get your vial back after emptying the chemical compound during Dig Site)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/3",
-      "source_text": "2 eggs",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3646,56 +4086,8 @@
     },
     {
       "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/11",
-      "source_text": "1 orange",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/13",
-      "source_text": "purple dye",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/14",
-      "source_text": "spice",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/16",
-      "source_text": "charcoal",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
       "field": "/items/17",
       "source_text": "1 fishing bait (from Step 9!)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/18",
-      "source_text": "1 blurite bar",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/19",
-      "source_text": "4 asgoldian ales",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3732,14 +4124,6 @@
     },
     {
       "step_id": "bruh-1.3-ffd94c28254c",
-      "field": "/items/1",
-      "source_text": "necklace of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-ffd94c28254c",
       "field": "/items/2",
       "source_text": "notes",
       "kind": "item",
@@ -3756,14 +4140,6 @@
     },
     {
       "step_id": "bruh-1.3-ffd94c28254c",
-      "field": "/items/4",
-      "source_text": "25 bones",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-ffd94c28254c",
       "field": "/items/6",
       "source_text": "3 balls of wool",
       "kind": "item",
@@ -3774,14 +4150,6 @@
       "step_id": "bruh-1.3-ffd94c28254c",
       "field": "/items/13",
       "source_text": "8 woad leaves",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-ffd94c28254c",
-      "field": "/items/14",
-      "source_text": "pot of flour",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3818,40 +4186,8 @@
     },
     {
       "step_id": "bruh-1.3-0f6a40a78607",
-      "field": "/items/1",
-      "source_text": "dwarven battleaxe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-0f6a40a78607",
-      "field": "/items/2",
-      "source_text": "exquisite clothes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-0f6a40a78607",
-      "field": "/items/3",
-      "source_text": "exquisite boots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-0f6a40a78607",
       "field": "/items/5",
       "source_text": "various ores/bars (bought with the gp)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-0f6a40a78607",
-      "field": "/items/6",
-      "source_text": "1 redberry pie",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3905,14 +4241,6 @@
     },
     {
       "step_id": "bruh-1.3-9c60757b38e7",
-      "field": "/items/2",
-      "source_text": "scrying orb",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-9c60757b38e7",
       "field": "/text",
       "span": [
         528,
@@ -3930,22 +4258,6 @@
       "step_id": "bruh-1.3-4c7daf877fc6",
       "field": "/items/1",
       "source_text": "addy pickaxe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-4c7daf877fc6",
-      "field": "/items/4",
-      "source_text": "Silverlight",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-4c7daf877fc6",
-      "field": "/items/5",
-      "source_text": "1 black mushroom",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3970,22 +4282,6 @@
       "step_id": "bruh-1.3-4c7daf877fc6",
       "field": "/items/9",
       "source_text": "black priest gown top/bottom",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-4c7daf877fc6",
-      "field": "/items/10",
-      "source_text": "necklace of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-4c7daf877fc6",
-      "field": "/items/11",
-      "source_text": "key print",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4046,14 +4342,6 @@
     },
     {
       "step_id": "bruh-1.3-899bab1deb77",
-      "field": "/items/0",
-      "source_text": "1600 soda ash",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-899bab1deb77",
       "field": "/items/1",
       "source_text": "1600 buckets of sand",
       "kind": "item",
@@ -4072,22 +4360,6 @@
       "step_id": "bruh-1.3-899bab1deb77",
       "field": "/items/4",
       "source_text": "matching gold bars for the gems",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-899bab1deb77",
-      "field": "/items/5",
-      "source_text": "glassblowing pipe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-4f2af9af2cc0",
-      "field": "/items/0",
-      "source_text": "1 digsite pendant",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4126,24 +4398,8 @@
     },
     {
       "step_id": "bruh-1.3-029eac528407",
-      "field": "/items/10",
-      "source_text": "druid pouch",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-029eac528407",
       "field": "/items/11",
       "source_text": "2 vials of water",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-029eac528407",
-      "field": "/items/15",
-      "source_text": "3 bronze wires",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4180,48 +4436,8 @@
     },
     {
       "step_id": "bruh-1.3-d5efce343ca4",
-      "field": "/items/1",
-      "source_text": "black candle",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-d5efce343ca4",
-      "field": "/items/2",
-      "source_text": "bat bones",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-d5efce343ca4",
-      "field": "/items/3",
-      "source_text": "Excalibur",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-d5efce343ca4",
-      "field": "/items/4",
-      "source_text": "golden fleece",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-d5efce343ca4",
       "field": "/items/7",
       "source_text": "8(/12) coal",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-d5efce343ca4",
-      "field": "/items/8",
-      "source_text": "battered key",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4238,54 +4454,6 @@
       "step_id": "bruh-1.3-d5efce343ca4",
       "field": "/items/10",
       "source_text": "2/3 elemental bars (from Step 40)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-b1f58ecada03",
-      "field": "/items/4",
-      "source_text": "digsite pendant",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-b1f58ecada03",
-      "field": "/items/5",
-      "source_text": "sawmill agreement",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-b1f58ecada03",
-      "field": "/items/6",
-      "source_text": "20 mahogany logs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-19498ceed1c8",
-      "field": "/items/2",
-      "source_text": "2 raw cods",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-19498ceed1c8",
-      "field": "/items/6",
-      "source_text": "empty fishbowl",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-19498ceed1c8",
-      "field": "/items/7",
-      "source_text": "3 bronze wires",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4323,56 +4491,8 @@
     },
     {
       "step_id": "bruh-1.3-067f80951f41",
-      "field": "/items/10",
-      "source_text": "1 raw shark",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-067f80951f41",
-      "field": "/items/12",
-      "source_text": "tiara mould",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-067f80951f41",
-      "field": "/items/13",
-      "source_text": "dramen branch",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-067f80951f41",
       "field": "/items/15",
       "source_text": "premade gnome food",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-067f80951f41",
-      "field": "/items/16",
-      "source_text": "2 sapphire rings",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-067f80951f41",
-      "field": "/items/17",
-      "source_text": "lyre",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-067f80951f41",
-      "field": "/items/18",
-      "source_text": "tankard",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4399,22 +4519,6 @@
       "candidates": [
         "quest:holy_grail"
       ]
-    },
-    {
-      "step_id": "bruh-1.3-3ef671dc2287",
-      "field": "/items/6",
-      "source_text": "1 dwarven rock cake",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-3ef671dc2287",
-      "field": "/items/7",
-      "source_text": "slop of compromise",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.3-3ef671dc2287",
@@ -4457,32 +4561,8 @@
     },
     {
       "step_id": "bruh-1.3-23186d9745a8",
-      "field": "/items/5",
-      "source_text": "fishing bait",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-23186d9745a8",
       "field": "/items/6",
       "source_text": "trout/salmon",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-23186d9745a8",
-      "field": "/items/9",
-      "source_text": "stake",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-23186d9745a8",
-      "field": "/items/12",
-      "source_text": "holy table napkin",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4534,24 +4614,8 @@
     },
     {
       "step_id": "bruh-1.3-d3777eb19fe9",
-      "field": "/items/3",
-      "source_text": "Excalibur",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-d3777eb19fe9",
       "field": "/items/4",
       "source_text": "trout/salmon",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-d3777eb19fe9",
-      "field": "/items/5",
-      "source_text": "magic whistle",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4596,14 +4660,6 @@
     },
     {
       "step_id": "bruh-1.3-aa4ae9967d70",
-      "field": "/items/2",
-      "source_text": "barley seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-aa4ae9967d70",
       "field": "/items/3",
       "source_text": "4 compost (from Step 21)",
       "kind": "item",
@@ -4612,24 +4668,8 @@
     },
     {
       "step_id": "bruh-1.3-aa4ae9967d70",
-      "field": "/items/7",
-      "source_text": "brooch",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-aa4ae9967d70",
       "field": "/items/8",
       "source_text": "diary",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-aa4ae9967d70",
-      "field": "/items/9",
-      "source_text": "digsite pendant",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4654,22 +4694,6 @@
       "step_id": "bruh-1.3-aa4ae9967d70",
       "field": "/items/17",
       "source_text": "marrentill potion(unf)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-aa4ae9967d70",
-      "field": "/items/18",
-      "source_text": "2 vodkas",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-aa4ae9967d70",
-      "field": "/items/19",
-      "source_text": "cadava berries",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4774,22 +4798,6 @@
     },
     {
       "step_id": "bruh-1.3-7d180b5735ca",
-      "field": "/items/6",
-      "source_text": "4 clockworks",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-7d180b5735ca",
-      "field": "/items/10",
-      "source_text": "40 barley seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-7d180b5735ca",
       "field": "/items/15",
       "source_text": "empty bucket",
       "kind": "item",
@@ -4810,14 +4818,6 @@
       "candidates": [
         "quest:song_of_the_elves"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-6d47910ed022",
-      "field": "/items/4",
-      "source_text": "1 asgarnian ale",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-6d47910ed022",
@@ -4890,14 +4890,6 @@
     },
     {
       "step_id": "bruh-1.4-df580f263cb3",
-      "field": "/items/5",
-      "source_text": "magic gold feather",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-df580f263cb3",
       "field": "/text",
       "span": [
         51,
@@ -4957,38 +4949,6 @@
       ]
     },
     {
-      "step_id": "bruh-1.4-9072abedf424",
-      "field": "/items/0",
-      "source_text": "necklace of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-9072abedf424",
-      "field": "/items/5",
-      "source_text": "brooch",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-7d1f60aae6e6",
-      "field": "/items/5",
-      "source_text": "brown apron",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-7d1f60aae6e6",
-      "field": "/items/6",
-      "source_text": "maze key",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.4-7d1f60aae6e6",
       "field": "/items/7",
       "source_text": "wind strike runes",
@@ -5008,22 +4968,6 @@
       "step_id": "bruh-1.4-7d1f60aae6e6",
       "field": "/items/10",
       "source_text": "secateurs (from Step 11)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-7d1f60aae6e6",
-      "field": "/items/11",
-      "source_text": "symptoms list",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-7d1f60aae6e6",
-      "field": "/items/12",
-      "source_text": "Draynor skull",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5061,32 +5005,8 @@
     },
     {
       "step_id": "bruh-1.4-8d119be147f2",
-      "field": "/items/1",
-      "source_text": "Silverlight",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8d119be147f2",
       "field": "/items/2",
       "source_text": "“evil gear” (Step 50)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8d119be147f2",
-      "field": "/items/7",
-      "source_text": "demonic sigil",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8d119be147f2",
-      "field": "/items/8",
-      "source_text": "demonic tome",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5105,38 +5025,6 @@
       "candidates": [
         "quest:holy_grail"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-f5be032f82bc",
-      "field": "/items/5",
-      "source_text": "pink skirt",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-f5be032f82bc",
-      "field": "/items/6",
-      "source_text": "paste",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-f5be032f82bc",
-      "field": "/items/7",
-      "source_text": "wig",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-f5be032f82bc",
-      "field": "/items/8",
-      "source_text": "3 beers",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-f5be032f82bc",
@@ -5170,24 +5058,8 @@
     },
     {
       "step_id": "bruh-1.4-cf9f5c41086b",
-      "field": "/items/0",
-      "source_text": "4 kelda seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-cf9f5c41086b",
       "field": "/items/4",
       "source_text": "the Forgettable Tale… item (if not delivered yet)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-cf9f5c41086b",
-      "field": "/items/5",
-      "source_text": "white pearl seed",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5210,32 +5082,8 @@
     },
     {
       "step_id": "bruh-1.4-cf9f5c41086b",
-      "field": "/items/11",
-      "source_text": "maple logs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-cf9f5c41086b",
       "field": "/items/12",
       "source_text": "a plank",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-cf9f5c41086b",
-      "field": "/items/13",
-      "source_text": "climbing boots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-cf9f5c41086b",
-      "field": "/items/16",
-      "source_text": "leather",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5262,14 +5110,6 @@
       "candidates": [
         "quest:troll_stronghold"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-e48ffb9700ee",
-      "field": "/items/3",
-      "source_text": "leather",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-e48ffb9700ee",
@@ -5426,14 +5266,6 @@
     },
     {
       "step_id": "bruh-1.4-989566c72b27",
-      "field": "/items/1",
-      "source_text": "2 barley malt",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-989566c72b27",
       "field": "/items/2",
       "source_text": "2 buckets of water",
       "kind": "item",
@@ -5444,14 +5276,6 @@
       "step_id": "bruh-1.4-989566c72b27",
       "field": "/items/3",
       "source_text": "holy grail",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-1db0f3a29da9",
-      "field": "/items/1",
-      "source_text": "forestry kit",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5470,30 +5294,6 @@
       "candidates": [
         "quest:the_graveyard"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-0ec2b71188ef",
-      "field": "/items/0",
-      "source_text": "lumber order",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-0ec2b71188ef",
-      "field": "/items/5",
-      "source_text": "scrying orb",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-0ec2b71188ef",
-      "field": "/items/6",
-      "source_text": "kharedst’s memoirs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-0ec2b71188ef",
@@ -5551,38 +5351,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-1.4-486c2e267485",
-      "field": "/items/5",
-      "source_text": "cadava potion",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-486c2e267485",
-      "field": "/items/6",
-      "source_text": "scrying orb",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/5",
-      "source_text": "ring of charos",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/6",
-      "source_text": "seaweed",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.4-3cb1982b6327",
       "field": "/items/7",
       "source_text": "fishbowl (with water)",
@@ -5592,104 +5360,8 @@
     },
     {
       "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/8",
-      "source_text": "1 marigold seed",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/9",
-      "source_text": "3 harralander seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/12",
-      "source_text": "fly fishing rod",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/17",
-      "source_text": "magic secateurs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/18",
-      "source_text": "1 gardening trowel",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
       "field": "/items/19",
       "source_text": "1 plant pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/20",
-      "source_text": "6 cabbage seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/21",
-      "source_text": "6 onion seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/22",
-      "source_text": "compost",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/24",
-      "source_text": "iron chainbody",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/25",
-      "source_text": "watering can",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/26",
-      "source_text": "raw swordfish",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/27",
-      "source_text": "raw chicken",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5771,56 +5443,8 @@
     },
     {
       "step_id": "bruh-1.4-85c07ce8189e",
-      "field": "/items/1",
-      "source_text": "fly fishing rod",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-85c07ce8189e",
-      "field": "/items/5",
-      "source_text": "iron chainbody",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-85c07ce8189e",
-      "field": "/items/8",
-      "source_text": "magic secateurs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-85c07ce8189e",
       "field": "/items/9",
       "source_text": "plant pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-85c07ce8189e",
-      "field": "/items/10",
-      "source_text": "watering can",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-85c07ce8189e",
-      "field": "/items/16",
-      "source_text": "lobster pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-85c07ce8189e",
-      "field": "/items/18",
-      "source_text": "wizard’s mind bomb",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5887,22 +5511,6 @@
     },
     {
       "step_id": "bruh-1.4-9c23f9524b54",
-      "field": "/items/0",
-      "source_text": "ring of charos(a)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-9c23f9524b54",
-      "field": "/items/5",
-      "source_text": "2 plant cures",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-9c23f9524b54",
       "field": "/text",
       "span": [
         500,
@@ -5918,40 +5526,8 @@
     },
     {
       "step_id": "bruh-1.4-0a7a65caad28",
-      "field": "/items/4",
-      "source_text": "drunk parrot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-0a7a65caad28",
-      "field": "/items/11",
-      "source_text": "climbing boots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-0a7a65caad28",
       "field": "/items/12",
       "source_text": "good food",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-0a7a65caad28",
-      "field": "/items/14",
-      "source_text": "secateurs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/8",
-      "source_text": "gnome amulet",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5960,30 +5536,6 @@
       "step_id": "bruh-1.4-b41048ba5ebd",
       "field": "/items/9",
       "source_text": "mithril armour",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/12",
-      "source_text": "5 compost",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/13",
-      "source_text": "3 harralander seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/14",
-      "source_text": "watering can",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6006,22 +5558,6 @@
     },
     {
       "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/21",
-      "source_text": "5 raw chickens",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/22",
-      "source_text": "10 grain",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
       "field": "/items/25",
       "source_text": "a ranarr potion (unf)",
       "kind": "item",
@@ -6038,32 +5574,8 @@
     },
     {
       "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/28",
-      "source_text": "climbing boots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
       "field": "/items/29",
       "source_text": "varrock teleport runes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/30",
-      "source_text": "plague sample",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b41048ba5ebd",
-      "field": "/items/31",
-      "source_text": "touch paper",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6124,38 +5636,6 @@
     },
     {
       "step_id": "bruh-1.4-5ac241c01adc",
-      "field": "/items/2",
-      "source_text": "27 iron ore",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-5ac241c01adc",
-      "field": "/items/4",
-      "source_text": "silver ores",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-5ac241c01adc",
-      "field": "/items/5",
-      "source_text": "108 gold ores",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-5ac241c01adc",
-      "field": "/items/6",
-      "source_text": "ring of charos(a)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-5ac241c01adc",
       "field": "/items/7",
       "source_text": "more GP if you actually need to buy ores (but maybe WT covers it all)",
       "kind": "item",
@@ -6164,24 +5644,8 @@
     },
     {
       "step_id": "bruh-1.4-9e184c2c912d",
-      "field": "/items/0",
-      "source_text": "41 emeralds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-9e184c2c912d",
       "field": "/items/1",
       "source_text": "51 rubies",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-9e184c2c912d",
-      "field": "/items/2",
-      "source_text": "16 sapphires",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6198,38 +5662,6 @@
       "step_id": "bruh-1.4-9e184c2c912d",
       "field": "/items/6",
       "source_text": "108 cosmics",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-9e184c2c912d",
-      "field": "/items/8",
-      "source_text": "half a mushroom pie",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b64460ef9890",
-      "field": "/items/1",
-      "source_text": "ring of charos(a)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b64460ef9890",
-      "field": "/items/5",
-      "source_text": "bucket of sap",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b64460ef9890",
-      "field": "/items/6",
-      "source_text": "mud rune",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6259,48 +5691,8 @@
     },
     {
       "step_id": "bruh-1.4-1f257947c836",
-      "field": "/items/1",
-      "source_text": "3 willow seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-1f257947c836",
       "field": "/items/2",
       "source_text": "3 plant pots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-1f257947c836",
-      "field": "/items/3",
-      "source_text": "watering can",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-1f257947c836",
-      "field": "/items/4",
-      "source_text": "3 compost",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b491172fe629",
-      "field": "/items/0",
-      "source_text": "‘perfect’ necklace",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b491172fe629",
-      "field": "/items/1",
-      "source_text": "‘perfect’ ring",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6385,14 +5777,6 @@
     },
     {
       "step_id": "bruh-1.4-d946724ab321",
-      "field": "/items/4",
-      "source_text": "lizardkickers",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-d946724ab321",
       "field": "/items/5",
       "source_text": "food",
       "kind": "item",
@@ -6446,22 +5830,6 @@
     },
     {
       "step_id": "bruh-1.4-f4094588deb7",
-      "field": "/items/8",
-      "source_text": "amulet of magic",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-f4094588deb7",
-      "field": "/items/11",
-      "source_text": "anti-dragon shield",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-f4094588deb7",
       "field": "/text",
       "span": [
         753,
@@ -6477,40 +5845,8 @@
     },
     {
       "step_id": "bruh-1.4-2865faf1ac70",
-      "field": "/items/0",
-      "source_text": "magic secateurs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-2865faf1ac70",
-      "field": "/items/1",
-      "source_text": "3 papyrus",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-2865faf1ac70",
-      "field": "/items/2",
-      "source_text": "1 ball of wool",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-2865faf1ac70",
       "field": "/items/3",
       "source_text": "1 sack of 10 potatoes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-2865faf1ac70",
-      "field": "/items/4",
-      "source_text": "8 empty sacks",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6533,32 +5869,8 @@
     },
     {
       "step_id": "bruh-1.4-5fcc565b7ed8",
-      "field": "/items/0",
-      "source_text": "Kharedst’s memoirs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-5fcc565b7ed8",
       "field": "/items/2",
       "source_text": "GP stack",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-5fcc565b7ed8",
-      "field": "/items/3",
-      "source_text": "glassblowing pipe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-fdc177159a82",
-      "field": "/items/5",
-      "source_text": "amulet of accuracy",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6567,22 +5879,6 @@
       "step_id": "bruh-1.4-fdc177159a82",
       "field": "/items/10",
       "source_text": "climbing bars",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-fdc177159a82",
-      "field": "/items/12",
-      "source_text": "dragon bones",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-fdc177159a82",
-      "field": "/items/15",
-      "source_text": "guam leaf",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6607,14 +5903,6 @@
       "step_id": "bruh-1.4-fdc177159a82",
       "field": "/items/21",
       "source_text": "spade + rake + seed dibbe + plant cure (buy these four in Trollheim)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-fdc177159a82",
-      "field": "/items/22",
-      "source_text": "3 Ugthanki dung",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6679,30 +5967,6 @@
       "candidates": [
         "quest:rag_and_bone_man_ii"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-f29fb6065a73",
-      "field": "/items/2",
-      "source_text": "15 watering cans",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-f29fb6065a73",
-      "field": "/items/4",
-      "source_text": "glassblowing pipe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-f29fb6065a73",
-      "field": "/items/7",
-      "source_text": "ultracompost",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-f29fb6065a73",
@@ -6780,30 +6044,6 @@
       ]
     },
     {
-      "step_id": "bruh-1.4-ced13b8f991a",
-      "field": "/items/5",
-      "source_text": "11 yew logs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-ced13b8f991a",
-      "field": "/items/6",
-      "source_text": "10 willow logs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/2",
-      "source_text": "butterfly net",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.4-8bbdaf04c7bd",
       "field": "/items/3",
       "source_text": "several impling jars",
@@ -6821,24 +6061,8 @@
     },
     {
       "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/8",
-      "source_text": "20 limpwurt roots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
       "field": "/items/9",
       "source_text": "candle (or FM cape/bruma torch)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/14",
-      "source_text": "boots of lightness",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6853,64 +6077,8 @@
     },
     {
       "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/16",
-      "source_text": "12 magic logs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/20",
-      "source_text": "charcoal",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/22",
-      "source_text": "1 bones",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/26",
-      "source_text": "spice",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/29",
-      "source_text": "sled",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/30",
-      "source_text": "chocolate cake",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
       "field": "/items/31",
       "source_text": "spiked climbing boots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-8bbdaf04c7bd",
-      "field": "/items/32",
-      "source_text": "facemask",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6972,14 +6140,6 @@
     },
     {
       "step_id": "bruh-1.4-3898b8985437",
-      "field": "/items/5",
-      "source_text": "1590 unpowered orbs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3898b8985437",
       "field": "/items/6",
       "source_text": "many Wizard Mind Bombs",
       "kind": "item",
@@ -7020,32 +6180,8 @@
     },
     {
       "step_id": "bruh-1.4-373214d0df64",
-      "field": "/items/3",
-      "source_text": "white berries",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-373214d0df64",
       "field": "/items/4",
       "source_text": "lantern lens (blow from molten glass)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5feeed266369",
-      "field": "/items/1",
-      "source_text": "100 earth orbs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-998e961ab51a",
-      "field": "/items/0",
-      "source_text": "Kharedst’s memoirs",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7068,24 +6204,8 @@
     },
     {
       "step_id": "bruh-2.1-998e961ab51a",
-      "field": "/items/3",
-      "source_text": "earth orbs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-998e961ab51a",
       "field": "/items/4",
       "source_text": "battlestaves (obtained during the step)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-998e961ab51a",
-      "field": "/items/9",
-      "source_text": "digsite pendant",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7104,30 +6224,6 @@
       "candidates": [
         "quest:family_crest"
       ]
-    },
-    {
-      "step_id": "bruh-2.1-f94d01f9d6ac",
-      "field": "/items/6",
-      "source_text": "forestry kit",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0e156ee3bbec",
-      "field": "/items/1",
-      "source_text": "Crandor map",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0e156ee3bbec",
-      "field": "/items/3",
-      "source_text": "anti-dragon shield",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-2.1-0e156ee3bbec",
@@ -7184,30 +6280,6 @@
       ]
     },
     {
-      "step_id": "bruh-2.1-6456852fe14d",
-      "field": "/items/4",
-      "source_text": "teak planks",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-043882e243c2",
-      "field": "/items/4",
-      "source_text": "yew longbow",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-043882e243c2",
-      "field": "/items/5",
-      "source_text": "10 steel arrows",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-2.1-043882e243c2",
       "field": "/items/7",
       "source_text": "food (swordfish?)",
@@ -7232,41 +6304,9 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-2.1-043882e243c2",
-      "field": "/items/12",
-      "source_text": "ring of visibility",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-2.1-abcfa0457f68",
       "field": "/items/3",
       "source_text": "bracelets of clay",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-abcfa0457f68",
-      "field": "/items/7",
-      "source_text": "crystal saw",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-abcfa0457f68",
-      "field": "/items/8",
-      "source_text": "2 mahogany planks",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-abcfa0457f68",
-      "field": "/items/9",
-      "source_text": "gold leaf",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7304,24 +6344,8 @@
     },
     {
       "step_id": "bruh-2.1-51f63ebcd43e",
-      "field": "/items/4",
-      "source_text": "2k stardust",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-51f63ebcd43e",
       "field": "/items/5",
       "source_text": "full initiate",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-51f63ebcd43e",
-      "field": "/items/7",
-      "source_text": "1 enchanted gem",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7343,22 +6367,6 @@
     },
     {
       "step_id": "bruh-2.1-0df7e3567b4f",
-      "field": "/items/1",
-      "source_text": "lit candle",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0df7e3567b4f",
-      "field": "/items/3",
-      "source_text": "bronze wire",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0df7e3567b4f",
       "field": "/items/10",
       "source_text": "Crumble Undead runes",
       "kind": "item",
@@ -7369,14 +6377,6 @@
       "step_id": "bruh-2.1-0df7e3567b4f",
       "field": "/items/11",
       "source_text": "4 rogue kits (optional)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0df7e3567b4f",
-      "field": "/items/13",
-      "source_text": "gout tuber",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7412,65 +6412,9 @@
       ]
     },
     {
-      "step_id": "bruh-2.1-79790af7d69d",
-      "field": "/items/1",
-      "source_text": "ice gloves",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-79790af7d69d",
-      "field": "/items/2",
-      "source_text": "blunt axe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-9950c3fa69ed",
-      "field": "/items/0",
-      "source_text": "blamish snail slime",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-9950c3fa69ed",
-      "field": "/items/1",
-      "source_text": "harralander",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-9950c3fa69ed",
-      "field": "/items/5",
-      "source_text": "jade",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-9950c3fa69ed",
-      "field": "/items/6",
-      "source_text": "necklace mould",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-2.1-9950c3fa69ed",
       "field": "/items/10",
       "source_text": "swordfish/cake/wines",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-9950c3fa69ed",
-      "field": "/items/12",
-      "source_text": "empty sack",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7507,30 +6451,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-2.1-a7b6f2292e47",
-      "field": "/items/6",
-      "source_text": "mining helmet",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-f578b1e34d33",
-      "field": "/items/1",
-      "source_text": "bullseye lantern",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-f578b1e34d33",
-      "field": "/items/2",
-      "source_text": "lantern lens",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-2.1-f578b1e34d33",
       "field": "/items/3",
       "source_text": "cut sapphire",
@@ -7556,14 +6476,6 @@
     },
     {
       "step_id": "bruh-2.1-f578b1e34d33",
-      "field": "/items/16",
-      "source_text": "dwarven lore",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-f578b1e34d33",
       "field": "/text",
       "span": [
         264,
@@ -7579,24 +6491,8 @@
     },
     {
       "step_id": "bruh-2.1-09dde0dda0c4",
-      "field": "/items/2",
-      "source_text": "ammo mould",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-09dde0dda0c4",
       "field": "/items/8",
       "source_text": "bread/cake",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-09dde0dda0c4",
-      "field": "/items/10",
-      "source_text": "candle",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7635,24 +6531,8 @@
     },
     {
       "step_id": "bruh-2.1-09dde0dda0c4",
-      "field": "/items/23",
-      "source_text": "celestial ring",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-09dde0dda0c4",
       "field": "/items/24",
       "source_text": "varrock body 2",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-09dde0dda0c4",
-      "field": "/items/25",
-      "source_text": "Efaritay’s aid",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7674,22 +6554,6 @@
     },
     {
       "step_id": "bruh-2.1-a35ead38ca03",
-      "field": "/items/5",
-      "source_text": "yew logs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-a35ead38ca03",
-      "field": "/items/6",
-      "source_text": "grimy harralander",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-a35ead38ca03",
       "field": "/items/8",
       "source_text": "pestle+mortar",
       "kind": "item",
@@ -7698,32 +6562,8 @@
     },
     {
       "step_id": "bruh-2.1-a35ead38ca03",
-      "field": "/items/9",
-      "source_text": "necklace of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-a35ead38ca03",
       "field": "/items/14",
       "source_text": "light source",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-a35ead38ca03",
-      "field": "/items/17",
-      "source_text": "yew longbow",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-a35ead38ca03",
-      "field": "/items/18",
-      "source_text": "steel arrows",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7762,32 +6602,8 @@
     },
     {
       "step_id": "bruh-2.1-72a11f040f2d",
-      "field": "/items/4",
-      "source_text": "bag of salt",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-72a11f040f2d",
       "field": "/items/5",
       "source_text": "willow log",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-72a11f040f2d",
-      "field": "/items/6",
-      "source_text": "bucket of sap",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-72a11f040f2d",
-      "field": "/items/14",
-      "source_text": "digsite pendant",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7812,86 +6628,6 @@
       "step_id": "bruh-2.1-5d6413257d18",
       "field": "/items/1",
       "source_text": "full initiate",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/4",
-      "source_text": "oily fishing rod",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/5",
-      "source_text": "fishing bait",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/6",
-      "source_text": "tarromin potion (unf)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/7",
-      "source_text": "limpwurt root",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/10",
-      "source_text": "ice gloves",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/11",
-      "source_text": "scorpion cage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/13",
-      "source_text": "anti-dragon shield",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/17",
-      "source_text": "Commorb",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/18",
-      "source_text": "Kharedst’s memoirs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "field": "/items/20",
-      "source_text": "necklace of passage",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7941,14 +6677,6 @@
       "candidates": [
         "quest:rag_and_bone_man_ii"
       ]
-    },
-    {
-      "step_id": "bruh-2.1-e70c612b2be2",
-      "field": "/items/0",
-      "source_text": "cat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-2.1-e70c612b2be2",
@@ -8012,22 +6740,6 @@
     },
     {
       "step_id": "bruh-2.1-6959a1b72bfe",
-      "field": "/items/2",
-      "source_text": "Commorb",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-6959a1b72bfe",
-      "field": "/items/5",
-      "source_text": "cat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-6959a1b72bfe",
       "field": "/text",
       "span": [
         32,
@@ -8043,32 +6755,8 @@
     },
     {
       "step_id": "bruh-2.1-3f6980cb1e0a",
-      "field": "/items/6",
-      "source_text": "commorb",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-3f6980cb1e0a",
-      "field": "/items/7",
-      "source_text": "Dorgesh-Kaan spheres",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-3f6980cb1e0a",
       "field": "/items/8",
       "source_text": "green dhide leather",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-3f6980cb1e0a",
-      "field": "/items/10",
-      "source_text": "earmuffs",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8108,30 +6796,6 @@
       "step_id": "bruh-2.1-0f6d2a3f24dc",
       "field": "/items/5",
       "source_text": "8 buckets of slime",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0f6d2a3f24dc",
-      "field": "/items/6",
-      "source_text": "8 bones",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0f6d2a3f24dc",
-      "field": "/items/8",
-      "source_text": "ice coolers",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0f6d2a3f24dc",
-      "field": "/items/10",
-      "source_text": "plank sack",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8206,22 +6870,6 @@
     },
     {
       "step_id": "bruh-2.1-86c9ed8c8686",
-      "field": "/items/3",
-      "source_text": "druid pouch",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-86c9ed8c8686",
-      "field": "/items/6",
-      "source_text": "ring of charos(a)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-86c9ed8c8686",
       "field": "/items/7",
       "source_text": "blessed silver sickle",
       "kind": "item",
@@ -8238,32 +6886,8 @@
     },
     {
       "step_id": "bruh-2.1-86c9ed8c8686",
-      "field": "/items/17",
-      "source_text": "swamp paste",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-86c9ed8c8686",
       "field": "/items/19",
       "source_text": "4 tinderboxes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-86c9ed8c8686",
-      "field": "/items/25",
-      "source_text": "silver dust",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-86c9ed8c8686",
-      "field": "/items/26",
-      "source_text": "harralander",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8316,22 +6940,6 @@
     },
     {
       "step_id": "bruh-2.1-4197aeaa19f0",
-      "field": "/items/6",
-      "source_text": "Ecto-tokens",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-4197aeaa19f0",
-      "field": "/items/7",
-      "source_text": "nettle tea",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-4197aeaa19f0",
       "field": "/text",
       "span": [
         55,
@@ -8344,30 +6952,6 @@
       "candidates": [
         "quest:ghosts_ahoy"
       ]
-    },
-    {
-      "step_id": "bruh-2.1-47a8fa581b17",
-      "field": "/items/1",
-      "source_text": "oak longbow",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-47a8fa581b17",
-      "field": "/items/3",
-      "source_text": "bucket of slime",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-47a8fa581b17",
-      "field": "/items/4",
-      "source_text": "thin snail",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-2.1-47a8fa581b17",
@@ -8386,49 +6970,9 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-2.1-47a8fa581b17",
-      "field": "/items/11",
-      "source_text": "holy symbol",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-47a8fa581b17",
-      "field": "/items/12",
-      "source_text": "hard leather",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-47a8fa581b17",
-      "field": "/items/13",
-      "source_text": "polished buttons",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-2.1-470c9603b23b",
       "field": "/items/6",
       "source_text": "2 crest pieces",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-470c9603b23b",
-      "field": "/items/9",
-      "source_text": "lava eel",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-470c9603b23b",
-      "field": "/items/11",
-      "source_text": "scorpion cage",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8473,32 +7017,8 @@
     },
     {
       "step_id": "bruh-2.1-c22061fa2e7d",
-      "field": "/items/5",
-      "source_text": "ball of wool",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-c22061fa2e7d",
       "field": "/items/7",
       "source_text": "wind staff",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-c22061fa2e7d",
-      "field": "/items/15",
-      "source_text": "big fishing net",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-c22061fa2e7d",
-      "field": "/items/16",
-      "source_text": "bow string",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8603,22 +7123,6 @@
     },
     {
       "step_id": "bruh-2.1-48a59fd10d49",
-      "field": "/items/3",
-      "source_text": "ball of wool",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-48a59fd10d49",
-      "field": "/items/8",
-      "source_text": "premade choc bombs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-48a59fd10d49",
       "field": "/text",
       "span": [
         23,
@@ -8650,14 +7154,6 @@
     },
     {
       "step_id": "bruh-2.1-ee011a2788f9",
-      "field": "/items/5",
-      "source_text": "fire feather",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-ee011a2788f9",
       "field": "/items/6",
       "source_text": "cooked lava eel",
       "kind": "item",
@@ -8666,40 +7162,8 @@
     },
     {
       "step_id": "bruh-2.1-ee011a2788f9",
-      "field": "/items/7",
-      "source_text": "black platebody",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-ee011a2788f9",
-      "field": "/items/8",
-      "source_text": "black full helm",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-ee011a2788f9",
       "field": "/items/9",
       "source_text": "black platelegs (Black Arm Gang)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-88a164ca2aa0",
-      "field": "/items/11",
-      "source_text": "rogue’s purse",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-88a164ca2aa0",
-      "field": "/items/12",
-      "source_text": "snake weed",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8925,40 +7389,8 @@
     },
     {
       "step_id": "bruh-2.1-2d6456708c19",
-      "field": "/items/3",
-      "source_text": "amulet of strength",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-2d6456708c19",
-      "field": "/items/4",
-      "source_text": "berserker helm",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-2d6456708c19",
       "field": "/items/5",
       "source_text": "etc.",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-a8abd0bb2335",
-      "field": "/items/1",
-      "source_text": "amulet of strength",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-a8abd0bb2335",
-      "field": "/items/2",
-      "source_text": "berserker helm",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -8973,40 +7405,8 @@
     },
     {
       "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/2",
-      "source_text": "granite body",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/3",
-      "source_text": "rune platelegs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5288472eda47",
       "field": "/items/4",
       "source_text": "Iban staff",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/7",
-      "source_text": "berserker helm",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/8",
-      "source_text": "amulet of magic",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9039,22 +7439,6 @@
       "step_id": "bruh-2.1-5288472eda47",
       "field": "/items/18",
       "source_text": "bronze sword",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/19",
-      "source_text": "steel arrow",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-5288472eda47",
-      "field": "/items/25",
-      "source_text": "scorpion cage",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9108,46 +7492,6 @@
       "step_id": "bruh-2.1-568d9176f7bc",
       "field": "/items/1",
       "source_text": "melee gear (incl. torso/ring now)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-568d9176f7bc",
-      "field": "/items/2",
-      "source_text": "Commorb",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-568d9176f7bc",
-      "field": "/items/3",
-      "source_text": "swamp paste",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-568d9176f7bc",
-      "field": "/items/6",
-      "source_text": "necklace of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-568d9176f7bc",
-      "field": "/items/10",
-      "source_text": "ardougne cloak 1",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-568d9176f7bc",
-      "field": "/items/11",
-      "source_text": "bird snare",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9246,14 +7590,6 @@
     },
     {
       "step_id": "bruh-2.1-8d2899a29d62",
-      "field": "/items/6",
-      "source_text": "crystal-mine key",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-8d2899a29d62",
       "field": "/text",
       "span": [
         2,
@@ -9315,14 +7651,6 @@
     },
     {
       "step_id": "bruh-2.2-e6dbda977d38",
-      "field": "/items/3",
-      "source_text": "6 mithril ore",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-e6dbda977d38",
       "field": "/items/8",
       "source_text": "bronze nail",
       "kind": "item",
@@ -9349,22 +7677,6 @@
       "step_id": "bruh-2.2-e6dbda977d38",
       "field": "/items/14",
       "source_text": "cut sapphire",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-e6dbda977d38",
-      "field": "/items/15",
-      "source_text": "mithril bar",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-e6dbda977d38",
-      "field": "/items/17",
-      "source_text": "rod mould",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9411,94 +7723,6 @@
     },
     {
       "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/0",
-      "source_text": "cat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/1",
-      "source_text": "9 stews",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/2",
-      "source_text": "tiara",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/3",
-      "source_text": "mind talisman",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/5",
-      "source_text": "binding necklace",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/6",
-      "source_text": "earth talisman",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/9",
-      "source_text": "blank air rune",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/10",
-      "source_text": "blank water rune",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/11",
-      "source_text": "blank earth rune",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/12",
-      "source_text": "blank fire rune",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
-      "field": "/items/13",
-      "source_text": "blank mind rune",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-00b571d0ee0f",
       "field": "/text",
       "span": [
         63,
@@ -9537,54 +7761,6 @@
     },
     {
       "step_id": "bruh-2.2-ad3e9b4a072f",
-      "field": "/items/8",
-      "source_text": "seal of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-ad3e9b4a072f",
-      "field": "/items/10",
-      "source_text": "bowl of water",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-ad3e9b4a072f",
-      "field": "/items/15",
-      "source_text": "4 suqah hide",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-ad3e9b4a072f",
-      "field": "/items/21",
-      "source_text": "small pouch",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-ad3e9b4a072f",
-      "field": "/items/22",
-      "source_text": "medium pouch",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-ad3e9b4a072f",
-      "field": "/items/23",
-      "source_text": "large pouch",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-ad3e9b4a072f",
       "field": "/items/28",
       "source_text": "abyssal book.",
       "kind": "item",
@@ -9608,40 +7784,8 @@
     },
     {
       "step_id": "bruh-2.2-912a85abde7b",
-      "field": "/items/0",
-      "source_text": "bowl of hot water",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-912a85abde7b",
-      "field": "/items/1",
-      "source_text": "1 harralander",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-912a85abde7b",
       "field": "/items/2",
       "source_text": "2 guam",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-912a85abde7b",
-      "field": "/items/3",
-      "source_text": "2 marrentill",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-912a85abde7b",
-      "field": "/items/9",
-      "source_text": "scorpion cage",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9693,56 +7837,8 @@
     },
     {
       "step_id": "bruh-2.2-f55110ed5551",
-      "field": "/items/1",
-      "source_text": "emerald lantern",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f55110ed5551",
-      "field": "/items/2",
-      "source_text": "lantern lens",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f55110ed5551",
-      "field": "/items/9",
-      "source_text": "butterfly net",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f55110ed5551",
-      "field": "/items/10",
-      "source_text": "butterfly jar",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f55110ed5551",
       "field": "/items/13",
       "source_text": "any log",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f55110ed5551",
-      "field": "/items/16",
-      "source_text": "cat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f55110ed5551",
-      "field": "/items/17",
-      "source_text": "ardougne cloak 1",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9765,32 +7861,8 @@
     },
     {
       "step_id": "bruh-2.2-53e9444e522d",
-      "field": "/items/5",
-      "source_text": "raw karambwanji",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-53e9444e522d",
-      "field": "/items/6",
-      "source_text": "anti-dragon shield",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-53e9444e522d",
       "field": "/items/7",
       "source_text": "melee gear",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-53e9444e522d",
-      "field": "/items/12",
-      "source_text": "steel spear",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9888,14 +7960,6 @@
     },
     {
       "step_id": "bruh-2.2-be2ac6d66b8a",
-      "field": "/items/1",
-      "source_text": "karambwan vessel",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-be2ac6d66b8a",
       "field": "/items/2",
       "source_text": "Iban staff",
       "kind": "item",
@@ -9922,38 +7986,6 @@
       "step_id": "bruh-2.2-be2ac6d66b8a",
       "field": "/items/8",
       "source_text": "banana-rum",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-be2ac6d66b8a",
-      "field": "/items/9",
-      "source_text": "seaweed",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-be2ac6d66b8a",
-      "field": "/items/10",
-      "source_text": "monkey skin",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-be2ac6d66b8a",
-      "field": "/items/11",
-      "source_text": "jogre bones",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-be2ac6d66b8a",
-      "field": "/items/12",
-      "source_text": "raw karambwanji",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -10006,22 +8038,6 @@
     },
     {
       "step_id": "bruh-2.2-39f76eab7532",
-      "field": "/items/3",
-      "source_text": "Camulet",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-39f76eab7532",
-      "field": "/items/4",
-      "source_text": "stone scarab",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-39f76eab7532",
       "field": "/items/5",
       "source_text": "air runes (or staff)",
       "kind": "item",
@@ -10046,38 +8062,6 @@
     },
     {
       "step_id": "bruh-2.2-39f76eab7532",
-      "field": "/items/13",
-      "source_text": "hellcat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-39f76eab7532",
-      "field": "/items/17",
-      "source_text": "chocolate cake",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-39f76eab7532",
-      "field": "/items/18",
-      "source_text": "shears",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-39f76eab7532",
-      "field": "/items/21",
-      "source_text": "4 potato seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-39f76eab7532",
       "field": "/text",
       "span": [
         41,
@@ -10093,24 +8077,8 @@
     },
     {
       "step_id": "bruh-2.2-6f26d7191bf5",
-      "field": "/items/1",
-      "source_text": "stodgy mattress",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-6f26d7191bf5",
       "field": "/items/2",
       "source_text": "semi-precious gems",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-6f26d7191bf5",
-      "field": "/items/3",
-      "source_text": "sapphires",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -10156,30 +8124,6 @@
     },
     {
       "step_id": "bruh-2.2-214d11574fb1",
-      "field": "/items/0",
-      "source_text": "stodgy mattress",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-214d11574fb1",
-      "field": "/items/3",
-      "source_text": "hellcat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-214d11574fb1",
-      "field": "/items/4",
-      "source_text": "4 cheese",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-214d11574fb1",
       "field": "/items/5",
       "source_text": "empty vial",
       "kind": "item",
@@ -10196,40 +8140,8 @@
     },
     {
       "step_id": "bruh-2.2-214d11574fb1",
-      "field": "/items/7",
-      "source_text": "kwuarm",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-214d11574fb1",
-      "field": "/items/8",
-      "source_text": "marrentill",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-214d11574fb1",
-      "field": "/items/9",
-      "source_text": "unicorn horn dust",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-214d11574fb1",
       "field": "/items/11",
       "source_text": "karambwanji or other fish (for cat)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-214d11574fb1",
-      "field": "/items/12",
-      "source_text": "limpwurt root",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -10289,30 +8201,6 @@
     },
     {
       "step_id": "bruh-2.2-9ff8a6700210",
-      "field": "/items/7",
-      "source_text": "hellcat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9ff8a6700210",
-      "field": "/items/9",
-      "source_text": "pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9ff8a6700210",
-      "field": "/items/10",
-      "source_text": "weeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9ff8a6700210",
       "field": "/items/12",
       "source_text": "golden cannonball",
       "kind": "item",
@@ -10344,14 +8232,6 @@
     },
     {
       "step_id": "bruh-2.2-d19339e3dfb2",
-      "field": "/items/0",
-      "source_text": "doctor’s hat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-d19339e3dfb2",
       "field": "/items/1",
       "source_text": "desert shirt/robe",
       "kind": "item",
@@ -10362,14 +8242,6 @@
       "step_id": "bruh-2.2-d19339e3dfb2",
       "field": "/items/5",
       "source_text": "melee gear + rune pickaxe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-d19339e3dfb2",
-      "field": "/items/8",
-      "source_text": "ring of charos(a)",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -10410,14 +8282,6 @@
       "step_id": "bruh-2.2-7ddf391d4fd0",
       "field": "/items/11",
       "source_text": "herbal tincture (reclaim from Apothecary instead)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-7ddf391d4fd0",
-      "field": "/items/12",
-      "source_text": "5 pigeon cages",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -10501,56 +8365,8 @@
     },
     {
       "step_id": "bruh-2.2-03b67e72a240",
-      "field": "/items/1",
-      "source_text": "chicken cages",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-03b67e72a240",
-      "field": "/items/2",
-      "source_text": "hellcat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-03b67e72a240",
-      "field": "/items/4",
-      "source_text": "snake charm",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-03b67e72a240",
       "field": "/items/5",
       "source_text": "charos(a)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-03b67e72a240",
-      "field": "/items/7",
-      "source_text": "egg",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-03b67e72a240",
-      "field": "/items/8",
-      "source_text": "pot of flour",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-03b67e72a240",
-      "field": "/items/9",
-      "source_text": "cake tin",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -10587,22 +8403,6 @@
     },
     {
       "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/1",
-      "source_text": "ring of charos(a)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/2",
-      "source_text": "sharpened axe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
       "field": "/items/3",
       "source_text": "penguin suit",
       "kind": "item",
@@ -10613,14 +8413,6 @@
       "step_id": "bruh-2.2-9b5e1c730252",
       "field": "/items/6",
       "source_text": "mission report",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/7",
-      "source_text": "mahogany plank",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -10651,40 +8443,8 @@
     },
     {
       "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/14",
-      "source_text": "Ectophial",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/16",
-      "source_text": "sapphire amulet",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
       "field": "/items/17",
       "source_text": "Fremennik boots 1",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/18",
-      "source_text": "necklace of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/21",
-      "source_text": "enchanted key",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -10752,22 +8512,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-2.2-9849f0d8fc91",
-      "field": "/items/5",
-      "source_text": "Camulet",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9849f0d8fc91",
-      "field": "/items/6",
-      "source_text": "hellcat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-2.2-be44b6bcb4ba",
       "field": "/items/0",
       "source_text": "cash stack (only take 7.5k into Wildy)",
@@ -10817,54 +8561,6 @@
     },
     {
       "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/0",
-      "source_text": "eagle cape",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/1",
-      "source_text": "fake beak",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/3",
-      "source_text": "10 mist runes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/4",
-      "source_text": "10 lava runes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/6",
-      "source_text": "airtight pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/11",
-      "source_text": "ring of charos(a)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
       "field": "/items/13",
       "source_text": "Ardy Cloak 1",
       "kind": "item",
@@ -10897,40 +8593,8 @@
     },
     {
       "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/20",
-      "source_text": "necklace of passage",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
       "field": "/items/22",
       "source_text": "energy pots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/24",
-      "source_text": "box trap",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-31164de7dfc7",
-      "field": "/items/25",
-      "source_text": "rabbit snare",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-06f9f2ccf951",
-      "field": "/items/2",
-      "source_text": "barbarian rod",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -11077,22 +8741,6 @@
     },
     {
       "step_id": "bruh-2.2-4b907585b095",
-      "field": "/items/5",
-      "source_text": "volcanic sulphur",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-4b907585b095",
-      "field": "/items/7",
-      "source_text": "dark essence block",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-4b907585b095",
       "field": "/items/8",
       "source_text": "an axe",
       "kind": "item",
@@ -11132,14 +8780,6 @@
     },
     {
       "step_id": "bruh-2.2-9c59a66bedd7",
-      "field": "/items/1",
-      "source_text": "looting bag",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9c59a66bedd7",
       "field": "/items/2",
       "source_text": "cheese potatoes",
       "kind": "item",
@@ -11158,14 +8798,6 @@
       "step_id": "bruh-2.2-9c59a66bedd7",
       "field": "/items/4",
       "source_text": "runes for thralls or gp to buy them",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-113470bd76c7",
-      "field": "/items/0",
-      "source_text": "1.4k bones",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -11194,65 +8826,9 @@
       ]
     },
     {
-      "step_id": "bruh-2.2-f67c5d8b717f",
-      "field": "/items/0",
-      "source_text": "green dragonhides",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f67c5d8b717f",
-      "field": "/items/4",
-      "source_text": "maple logs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f67c5d8b717f",
-      "field": "/items/8",
-      "source_text": "Kharedst’s memoirs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-f67c5d8b717f",
-      "field": "/items/9",
-      "source_text": "log basket",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-c3ccb2b3f486",
-      "field": "/items/2",
-      "source_text": "silvthrill rod",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-2.2-c3ccb2b3f486",
       "field": "/items/6",
       "source_text": "8 nails",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-c3ccb2b3f486",
-      "field": "/items/9",
-      "source_text": "emerald",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-c3ccb2b3f486",
-      "field": "/items/15",
-      "source_text": "ruby",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -11464,32 +9040,8 @@
     },
     {
       "step_id": "bruh-2.2-eebcc93d77e7",
-      "field": "/items/1",
-      "source_text": "box traps",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-eebcc93d77e7",
-      "field": "/items/4",
-      "source_text": "salve amulet(ei)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-eebcc93d77e7",
       "field": "/items/5",
       "source_text": "whatever other ranged gear you can scrounge up",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-eebcc93d77e7",
-      "field": "/items/6",
-      "source_text": "crossbow",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -11535,32 +9087,8 @@
     },
     {
       "step_id": "bruh-2.2-da5e9c05eae9",
-      "field": "/items/0",
-      "source_text": "crossbow",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-da5e9c05eae9",
       "field": "/items/1",
       "source_text": "Sara items",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-da5e9c05eae9",
-      "field": "/items/2",
-      "source_text": "agility potions",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-da5e9c05eae9",
-      "field": "/items/4",
-      "source_text": "mithril nails",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -11628,32 +9156,8 @@
     },
     {
       "step_id": "bruh-2.2-c9ca0e75b4b5",
-      "field": "/items/0",
-      "source_text": "crossbow",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-c9ca0e75b4b5",
       "field": "/items/1",
       "source_text": "Sara items",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-c9ca0e75b4b5",
-      "field": "/items/2",
-      "source_text": "agility potions",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-c9ca0e75b4b5",
-      "field": "/items/3",
-      "source_text": "teak planks",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -11688,14 +9192,6 @@
       "source_text": "https://oldschool.runescape.wiki/w/Flower_Girl",
       "kind": "link",
       "method": "link",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bb8092b5f6ef",
-      "field": "/items/0",
-      "source_text": "crystal saw",
-      "kind": "item",
-      "method": "item",
       "reason": "not_in_catalog"
     },
     {
@@ -11829,22 +9325,6 @@
     },
     {
       "step_id": "bruh-2.3-86638eb5666c",
-      "field": "/items/2",
-      "source_text": "mirror shield",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-86638eb5666c",
-      "field": "/items/6",
-      "source_text": "fishing explosives",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-86638eb5666c",
       "field": "/text",
       "span": [
         25,
@@ -11883,14 +9363,6 @@
     },
     {
       "step_id": "bruh-2.3-1d9f930a812d",
-      "field": "/items/1",
-      "source_text": "2 tarromins",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-1d9f930a812d",
       "field": "/items/4",
       "source_text": "cheese potatoes",
       "kind": "item",
@@ -11917,14 +9389,6 @@
       "step_id": "bruh-2.3-1d9f930a812d",
       "field": "/items/13",
       "source_text": "energy pots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "field": "/items/0",
-      "source_text": "Ectophial",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -11973,62 +9437,6 @@
       "step_id": "bruh-2.3-bccf72bc6e8a",
       "field": "/items/6",
       "source_text": "fishbowl helmet + diving apparatus",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "field": "/items/8",
-      "source_text": "10 bear fur",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "field": "/items/10",
-      "source_text": "holy symbol",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "field": "/items/11",
-      "source_text": "ring of charos(a)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "field": "/items/12",
-      "source_text": "bowl",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "field": "/items/18",
-      "source_text": "fremennik boots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "field": "/items/19",
-      "source_text": "watermelon seeds",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "field": "/items/20",
-      "source_text": "ultracompost",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"

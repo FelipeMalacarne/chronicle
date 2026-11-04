@@ -19,12 +19,14 @@ const (
 	KindDiary             Kind = "diary"
 	KindBoss              Kind = "boss"
 	KindCombatAchievement Kind = "ca"
+	KindUnlock            Kind = "unlock"
+	KindLocation          Kind = "location"
 	KindGoal              Kind = "goal"
 	KindStep              Kind = "step"
 )
 
 // Kinds lists every entity kind in a stable order.
-var Kinds = []Kind{KindQuest, KindItem, KindSkill, KindDiary, KindBoss, KindCombatAchievement, KindGoal, KindStep}
+var Kinds = []Kind{KindQuest, KindItem, KindSkill, KindDiary, KindBoss, KindCombatAchievement, KindUnlock, KindLocation, KindGoal, KindStep}
 
 // DiaryTiers are the achievement diary tiers in ascending order.
 var DiaryTiers = []string{"easy", "medium", "hard", "elite"}
@@ -43,6 +45,7 @@ var (
 // Id formats per kind:
 //
 //	quest, skill, boss, goal  lower-case slug            quest:the_restless_ghost
+//	unlock, location          lower-case slug            unlock:fairy_rings, location:draynor_village
 //	item                      OSRS/RuneLite item id      item:1511 (item:1512 is the noted form)
 //	diary                     <area slug>:<tier>         diary:ardougne:easy
 //	ca                        combat achievement id      ca:574
@@ -89,7 +92,7 @@ func (r Ref) IsZero() bool { return r.Kind == "" && r.ID == "" }
 func (r Ref) Validate() error {
 	ok := false
 	switch r.Kind {
-	case KindQuest, KindSkill, KindBoss, KindGoal:
+	case KindQuest, KindSkill, KindBoss, KindGoal, KindUnlock, KindLocation:
 		ok = slugPattern.MatchString(r.ID)
 	case KindItem, KindCombatAchievement:
 		n, err := strconv.Atoi(r.ID)

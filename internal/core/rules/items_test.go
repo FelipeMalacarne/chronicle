@@ -125,3 +125,38 @@ func TestOwnsReportsEveryRequestedContainer(t *testing.T) {
 		t.Fatal("unobserved bank reported as observed")
 	}
 }
+
+func TestOwnsFamilyAndAnyOf(t *testing.T) {
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	notedPot3, ok := catalog.NotedID(prayerPot3)
+	if !ok {
+		t.Fatal("prayer potion(3) has no noted form in the catalog")
+	}
+	h := ItemHoldings{
+		ContainerBank:      live(true, map[int]int64{notedPot3: 5}),
+		ContainerInventory: live(true, map[int]int64{prayerPot4: 1}),
+		ContainerEquipment: live(true, nil),
+	}
+	if o := OwnsFamily(h, catalog, "prayer_potion", 6, nil); o.Verdict != Met || o.Held != 6 {
+		t.Errorf("family across doses and noted forms = %+v", o)
+	}
+	if o := OwnsFamily(h, catalog, "prayer_potion", 7, nil); o.Verdict != Unmet {
+		t.Errorf("family short = %+v", o)
+	}
+	if o := OwnsFamily(h, catalog, "not_a_family", 1, nil); o.Verdict != Unknown {
+		t.Errorf("unknown family = %+v", o)
+	}
+	if o, id := OwnsAnyOf(h, catalog, []int{plank, prayerPot4}, 1, nil); o.Verdict != Met || id != prayerPot4 {
+		t.Errorf("any_of = %+v %d", o, id)
+	}
+	if o, id := OwnsAnyOf(h, catalog, []int{plank, prayerPot4}, 2, nil); o.Verdict != Unmet || id != plank {
+		t.Errorf("any_of does not sum ids and keeps the first on ties: %+v %d", o, id)
+	}
+	restored := ItemHoldings{ContainerBank: {State: ingest.ItemRestored, Complete: true, Quantities: map[int]int64{plank: 1}}}
+	if o, id := OwnsAnyOf(restored, catalog, []int{prayerPot4, plank}, 1, []string{ContainerBank}); o.Verdict != Met || !o.Stale || id != plank {
+		t.Errorf("any_of through a restored mirror = %+v %d", o, id)
+	}
+}

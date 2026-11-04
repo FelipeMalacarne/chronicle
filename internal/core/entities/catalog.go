@@ -19,6 +19,9 @@ const (
 	SkillsFile             = "skills.json"
 	DiariesFile            = "diaries.json"
 	CombatAchievementsFile = "combat_achievements.json"
+	UnlocksFile            = "unlocks.json"
+	LocationsFile          = "locations.json"
+	VarbitsFile            = "varbits.json"
 )
 
 // CatalogHeader versions a catalog file.
@@ -78,14 +81,17 @@ type ItemCatalog struct {
 // Variants of one item (potion doses, jewelry charges) are separate ids
 // that share Family; Variant describes the difference.
 type ItemEntry struct {
-	ID        int      `json:"id"`
-	Name      string   `json:"name"`
-	WikiKey   WikiKey  `json:"wiki_key"`
-	NotedID   *int     `json:"noted_id,omitempty"`
-	Stackable bool     `json:"stackable,omitempty"`
-	Family    string   `json:"family,omitempty"`
-	Variant   string   `json:"variant,omitempty"`
-	Aliases   []string `json:"aliases,omitempty"`
+	ID        int     `json:"id"`
+	Name      string  `json:"name"`
+	WikiKey   WikiKey `json:"wiki_key"`
+	NotedID   *int    `json:"noted_id,omitempty"`
+	Stackable bool    `json:"stackable,omitempty"`
+	Family    string  `json:"family,omitempty"`
+	Variant   string  `json:"variant,omitempty"`
+	// EquipmentSlot is the wiki's equipment slot ("weapon", "head", ...) of
+	// equipable items.
+	EquipmentSlot string   `json:"equipment_slot,omitempty"`
+	Aliases       []string `json:"aliases,omitempty"`
 }
 
 // SkillCatalog is content/reference/skills.json.
@@ -136,6 +142,87 @@ type CombatAchievementEntry struct {
 	WikiKey WikiKey `json:"wiki_key"`
 }
 
+// UnlockCatalog is content/reference/unlocks.json. Entries are added only
+// through owner-confirmed proposals during guide extraction (docs/09 section
+// 3.1), never by importing the whole wiki.
+type UnlockCatalog struct {
+	CatalogHeader
+	Unlocks []UnlockEntry `json:"unlocks"`
+}
+
+// UnlockEntry is one unlock (fairy rings, a spellbook, a teleport, access to
+// an area). Proof is the var that shows it, when one is known; without it the
+// unlock can only be marked by the owner.
+type UnlockEntry struct {
+	ID      string   `json:"id"`
+	Name    string   `json:"name"`
+	WikiKey WikiKey  `json:"wiki_key,omitempty"`
+	Proof   *VarTest `json:"proof,omitempty"`
+	Aliases []string `json:"aliases,omitempty"`
+	Note    string   `json:"note,omitempty"`
+}
+
+// VarTest is a check on one varbit or varp: equal to Eq or at least Min.
+type VarTest struct {
+	Var VarKind `json:"var"`
+	ID  int     `json:"id"`
+	Eq  *int    `json:"eq,omitempty"`
+	Min *int    `json:"min,omitempty"`
+}
+
+// VarKind is "varbit" or "varp".
+type VarKind string
+
+// Var kinds.
+const (
+	Varbit VarKind = "varbit"
+	Varp   VarKind = "varp"
+)
+
+// LocationCatalog is content/reference/locations.json. Like unlocks, entries
+// come from owner-confirmed proposals during extraction.
+type LocationCatalog struct {
+	CatalogHeader
+	Locations []LocationEntry `json:"locations"`
+}
+
+// LocationEntry is one place steps can be grouped by.
+type LocationEntry struct {
+	ID      string   `json:"id"`
+	Name    string   `json:"name"`
+	WikiKey WikiKey  `json:"wiki_key,omitempty"`
+	Aliases []string `json:"aliases,omitempty"`
+	Note    string   `json:"note,omitempty"`
+}
+
+// VarCatalog is content/reference/varbits.json: the reference vars the ingest
+// manifest asks the plugin for besides those named by content rules
+// (docs/09 sections 3.2 and 7).
+type VarCatalog struct {
+	CatalogHeader
+	Vars []VarEntry `json:"vars"`
+}
+
+// VarEntry is one varbit or varp and what it proves. Subject is the objective
+// subject it measures: a ref ("diary:ardougne:easy", "unlock:fairy_rings") or
+// "qp". Semantics "flag" means Test decides the state; "count" means the
+// value itself is the measured number (quest points).
+type VarEntry struct {
+	Var       VarKind  `json:"var"`
+	ID        int      `json:"id"`
+	Name      string   `json:"name"`
+	Subject   string   `json:"subject"`
+	Semantics string   `json:"semantics"`
+	Test      *VarTest `json:"test,omitempty"`
+	Source    string   `json:"source,omitempty"`
+}
+
+// Var semantics.
+const (
+	VarFlag  = "flag"
+	VarCount = "count"
+)
+
 // Registry indexes every catalog. It is immutable after Load.
 type Registry struct {
 	Versions map[Kind]string
@@ -159,6 +246,12 @@ type Registry struct {
 
 	cas     map[int]*CombatAchievementEntry
 	caNames nameIndex
+
+	unlocks   map[string]*UnlockEntry
+	locations map[string]*LocationEntry
+	vars      []VarEntry
+
+	familyBySlug map[string]string
 
 	byWiki map[WikiKey][]Ref
 
@@ -210,8 +303,14 @@ func Load(fsys fs.FS) (*Registry, error) {
 		sc  SkillCatalog
 		dc  DiaryCatalog
 		cac CombatAchievementCatalog
+		uc  UnlockCatalog
+		lc  LocationCatalog
+		vc  VarCatalog
 	)
-	for name, into := range map[string]any{QuestsFile: &qc, ItemsFile: &ic, SkillsFile: &sc, DiariesFile: &dc, CombatAchievementsFile: &cac} {
+	for name, into := range map[string]any{
+		QuestsFile: &qc, ItemsFile: &ic, SkillsFile: &sc, DiariesFile: &dc, CombatAchievementsFile: &cac,
+		UnlocksFile: &uc, LocationsFile: &lc, VarbitsFile: &vc,
+	} {
 		data, err := fs.ReadFile(fsys, name)
 		if err != nil {
 			return nil, fmt.Errorf("entities: %w", err)
@@ -224,13 +323,16 @@ func Load(fsys fs.FS) (*Registry, error) {
 		Versions: map[Kind]string{
 			KindQuest: qc.Version, KindItem: ic.Version, KindSkill: sc.Version,
 			KindDiary: dc.Version, KindCombatAchievement: cac.Version,
+			KindUnlock: uc.Version, KindLocation: lc.Version,
 		},
 		quests: map[string]*QuestEntry{}, questNames: nameIndex{}, questText: map[string]*AmbiguousName{},
 		items: map[int]*ItemEntry{}, notedBase: map[int]int{}, itemNames: nameIndex{}, itemFamily: map[string][]int{}, itemAmbig: map[string]*AmbiguousName{},
 		skills: map[string]*SkillEntry{}, skillNames: nameIndex{},
 		diaries: map[string]*DiaryEntry{}, diaryAreas: map[string]string{}, diaryByArea: map[string][]string{},
 		cas: map[int]*CombatAchievementEntry{}, caNames: nameIndex{},
-		byWiki: map[WikiKey][]Ref{},
+		unlocks: map[string]*UnlockEntry{}, locations: map[string]*LocationEntry{},
+		familyBySlug: map[string]string{},
+		byWiki:       map[WikiKey][]Ref{},
 	}
 	var errs []string
 	fail := func(format string, args ...any) { errs = append(errs, fmt.Sprintf(format, args...)) }
@@ -303,6 +405,11 @@ func Load(fsys fs.FS) (*Registry, error) {
 		if it.Family != "" {
 			k := NormalizeName(it.Family)
 			r.itemFamily[k] = append(r.itemFamily[k], it.ID)
+			slug := FamilySlug(it.Family)
+			if prev, ok := r.familyBySlug[slug]; ok && prev != k {
+				fail("%s: families %q and %q share slug %q", ItemsFile, prev, it.Family, slug)
+			}
+			r.familyBySlug[slug] = k
 		}
 		r.addWiki(it.WikiKey, ItemRef(it.ID))
 	}
@@ -372,6 +479,78 @@ func Load(fsys fs.FS) (*Registry, error) {
 		r.addWiki(c.WikiKey, Ref{Kind: KindCombatAchievement, ID: strconv.Itoa(c.ID)})
 	}
 
+	for i := range uc.Unlocks {
+		u := &uc.Unlocks[i]
+		ref := Ref{Kind: KindUnlock, ID: u.ID}
+		if err := ref.Validate(); err != nil {
+			fail("%s: %v", UnlocksFile, err)
+			continue
+		}
+		if _, dup := r.unlocks[u.ID]; dup {
+			fail("%s: duplicate unlock id %q", UnlocksFile, u.ID)
+			continue
+		}
+		if u.Proof != nil {
+			if msg := u.Proof.check(); msg != "" {
+				fail("%s: unlock %q: %s", UnlocksFile, u.ID, msg)
+			}
+		}
+		r.unlocks[u.ID] = u
+		r.addWiki(u.WikiKey, ref)
+	}
+	for i := range lc.Locations {
+		l := &lc.Locations[i]
+		ref := Ref{Kind: KindLocation, ID: l.ID}
+		if err := ref.Validate(); err != nil {
+			fail("%s: %v", LocationsFile, err)
+			continue
+		}
+		if _, dup := r.locations[l.ID]; dup {
+			fail("%s: duplicate location id %q", LocationsFile, l.ID)
+			continue
+		}
+		r.locations[l.ID] = l
+		r.addWiki(l.WikiKey, ref)
+	}
+	seenVar := map[string]bool{}
+	for _, v := range vc.Vars {
+		key := fmt.Sprintf("%s/%d", v.Var, v.ID)
+		switch {
+		case v.Var != Varbit && v.Var != Varp:
+			fail("%s: %s: unknown var kind %q", VarbitsFile, key, v.Var)
+		case seenVar[key]:
+			fail("%s: duplicate %s", VarbitsFile, key)
+		case v.Semantics == VarFlag && v.Test == nil:
+			fail("%s: %s: flag vars need a test", VarbitsFile, key)
+		case v.Semantics != VarFlag && v.Semantics != VarCount:
+			fail("%s: %s: unknown semantics %q", VarbitsFile, key, v.Semantics)
+		}
+		if v.Test != nil {
+			if msg := v.Test.check(); msg != "" {
+				fail("%s: %s: %s", VarbitsFile, key, msg)
+			} else if v.Test.Var != v.Var || v.Test.ID != v.ID {
+				fail("%s: %s: test checks another var", VarbitsFile, key)
+			}
+		}
+		seenVar[key] = true
+		if v.Subject != QuestPoints {
+			ref, err := ParseRef(v.Subject)
+			if err != nil {
+				fail("%s: %s: %v", VarbitsFile, key, err)
+				continue
+			}
+			if ref.Kind != KindUnlock && !r.Known(ref) {
+				fail("%s: %s: unknown subject %s", VarbitsFile, key, ref)
+			}
+		}
+		r.vars = append(r.vars, v)
+	}
+	for _, v := range r.vars {
+		if ref, err := ParseRef(v.Subject); err == nil && ref.Kind == KindUnlock && !r.Known(ref) {
+			fail("%s: %s/%d: unknown subject %s", VarbitsFile, v.Var, v.ID, ref)
+		}
+	}
+
 	if len(errs) > 0 {
 		sort.Strings(errs)
 		return nil, fmt.Errorf("entities: invalid catalogs:\n  %s", strings.Join(errs, "\n  "))
@@ -405,7 +584,7 @@ func aliasTexts(as []Alias) []string {
 // validated against the guide that contains them.
 func (r *Registry) HasCatalog(k Kind) bool {
 	switch k {
-	case KindQuest, KindItem, KindSkill, KindDiary, KindCombatAchievement:
+	case KindQuest, KindItem, KindSkill, KindDiary, KindCombatAchievement, KindUnlock, KindLocation:
 		return true
 	}
 	return false
@@ -438,8 +617,81 @@ func (r *Registry) Known(ref Ref) bool {
 		}
 		_, ok = r.cas[n]
 		return ok
+	case KindUnlock:
+		_, ok := r.unlocks[ref.ID]
+		return ok
+	case KindLocation:
+		_, ok := r.locations[ref.ID]
+		return ok
 	}
 	return false
+}
+
+// DiaryAreaIDs returns every diary area id, sorted.
+func (r *Registry) DiaryAreaIDs() []string {
+	out := make([]string, 0, len(r.diaryByArea))
+	for a := range r.diaryByArea {
+		out = append(out, a)
+	}
+	sort.Strings(out)
+	return out
+}
+
+// Unlock returns an unlock entry by id.
+func (r *Registry) Unlock(id string) (*UnlockEntry, bool) {
+	u, ok := r.unlocks[id]
+	return u, ok
+}
+
+// Location returns a location entry by id.
+func (r *Registry) Location(id string) (*LocationEntry, bool) {
+	l, ok := r.locations[id]
+	return l, ok
+}
+
+// Vars returns the reference vars in catalog order.
+func (r *Registry) Vars() []VarEntry { return append([]VarEntry(nil), r.vars...) }
+
+// VarsFor returns the reference vars that measure subject ("qp" or a ref).
+func (r *Registry) VarsFor(subject string) []VarEntry {
+	var out []VarEntry
+	for _, v := range r.vars {
+		if v.Subject == subject {
+			out = append(out, v)
+		}
+	}
+	return out
+}
+
+// Family returns the unnoted ids of an item family by its slug
+// ("prayer_potion", see FamilySlug), in catalog order.
+func (r *Registry) Family(slug string) ([]int, bool) {
+	k, ok := r.familyBySlug[slug]
+	if !ok {
+		return nil, false
+	}
+	return append([]int(nil), r.itemFamily[k]...), true
+}
+
+// FamilyOf returns the family slug of an item id (noted or unnoted).
+func (r *Registry) FamilyOf(id int) (string, bool) {
+	f, ok := r.Item(id)
+	if !ok || f.Family == "" {
+		return "", false
+	}
+	return FamilySlug(f.Family), true
+}
+
+func (t VarTest) check() string {
+	switch {
+	case t.Var != Varbit && t.Var != Varp:
+		return fmt.Sprintf("unknown var kind %q", t.Var)
+	case t.ID < 0:
+		return fmt.Sprintf("invalid var id %d", t.ID)
+	case (t.Eq == nil) == (t.Min == nil):
+		return "a var test needs exactly one of eq and min"
+	}
+	return ""
 }
 
 // Quest returns a quest entry by id.
@@ -496,6 +748,14 @@ func (r *Registry) Display(ref Ref) (string, bool) {
 				return c.Name, true
 			}
 		}
+	case KindUnlock:
+		if u, ok := r.unlocks[ref.ID]; ok {
+			return u.Name, true
+		}
+	case KindLocation:
+		if l, ok := r.locations[ref.ID]; ok {
+			return l.Name, true
+		}
 	}
 	return "", false
 }
@@ -527,6 +787,14 @@ func (r *Registry) WikiKeyOf(ref Ref) (WikiKey, bool) {
 			if c, ok := r.cas[n]; ok {
 				k = c.WikiKey
 			}
+		}
+	case KindUnlock:
+		if u, ok := r.unlocks[ref.ID]; ok {
+			k = u.WikiKey
+		}
+	case KindLocation:
+		if l, ok := r.locations[ref.ID]; ok {
+			k = l.WikiKey
 		}
 	}
 	return k, k != ""

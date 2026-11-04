@@ -1,0 +1,7 @@
+{
+  "catalog": "locations",
+  "version": "2026.11.0",
+  "source": "Owner-confirmed proposals from guide extraction (ironman content mcp, propose_entity).",
+  "notes": "id is a lower-case slug (location:draynor_village). Entries are added only when the owner confirms a proposal during extraction (docs/09 section 3.1); the free-text step.location of the Oziris guide is evidence for proposals, not a catalog.",
+  "locations": []
+}

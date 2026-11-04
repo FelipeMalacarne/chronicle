@@ -116,16 +116,16 @@ func TestCounts(t *testing.T) {
 		quest, item     enrich.Tally
 	}{
 		"oziris-main": {
-			total:    enrich.Tally{Resolved: 640, Ambiguous: 18, Unresolved: 143},
-			loadouts: enrich.Tally{Resolved: 12, Ambiguous: 1, Unresolved: 10},
+			total:    enrich.Tally{Resolved: 672, Ambiguous: 20, Unresolved: 109},
+			loadouts: enrich.Tally{Resolved: 14, Ambiguous: 1, Unresolved: 8},
 			quest:    enrich.Tally{Resolved: 455, Ambiguous: 7, Unresolved: 47},
-			item:     enrich.Tally{Resolved: 87, Ambiguous: 11, Unresolved: 96},
+			item:     enrich.Tally{Resolved: 119, Ambiguous: 13, Unresolved: 62},
 		},
 		"bruhsailer-main": {
-			total:    enrich.Tally{Resolved: 1478, Ambiguous: 115, Unresolved: 1072},
-			loadouts: enrich.Tally{Resolved: 543, Ambiguous: 38, Unresolved: 366},
+			total:    enrich.Tally{Resolved: 1846, Ambiguous: 176, Unresolved: 643},
+			loadouts: enrich.Tally{Resolved: 715, Ambiguous: 64, Unresolved: 168},
 			quest:    enrich.Tally{Resolved: 391, Ambiguous: 30, Unresolved: 261},
-			item:     enrich.Tally{Resolved: 1023, Ambiguous: 85, Unresolved: 798},
+			item:     enrich.Tally{Resolved: 1391, Ambiguous: 146, Unresolved: 369},
 		},
 	}
 	for id, w := range want {
@@ -352,7 +352,7 @@ func TestImportersRegenerateCommittedContent(t *testing.T) {
 			t.Errorf("%s is stale; regenerate with `ironman content migrate` / `ironman content import-bruhsailer`", path)
 		}
 	}
-	if result.Entities != (enrich.Tally{Resolved: 1478, Ambiguous: 115, Unresolved: 1072}) {
+	if result.Entities != (enrich.Tally{Resolved: 1846, Ambiguous: 176, Unresolved: 643}) {
 		t.Errorf("bruhsailer result tally = %+v", result.Entities)
 	}
 }

@@ -1,0 +1,7 @@
+{
+  "catalog": "unlocks",
+  "version": "2026.11.0",
+  "source": "Owner-confirmed proposals from guide extraction (ironman content mcp, propose_entity).",
+  "notes": "id is a lower-case slug. Entries are added only when the owner confirms a proposal during extraction (docs/09 section 3.1), never by importing the whole wiki. proof is the varbit/varp that shows the unlock; without it the unlock can only be marked by the owner.",
+  "unlocks": []
+}

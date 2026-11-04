@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ironman-planner.local/schemas/guide.schema.json",
   "title": "Ironman Planner Guide",
-  "description": "Um guia contém variantes ordenadas; cada variante contém seções, segmentos/pernas e steps. O formato legado com sections na raiz continua aceito para migração. Arquivo: content/guides/<guide-id>/guide.json. Cópia canônica: content/schema/guide.schema.json (embutida no binário Go); docs/arquitetura/guide.schema.json é referência histórica.",
+  "description": "Um guia contém variantes ordenadas; cada variante contém seções, segmentos/pernas e steps. O formato legado com sections na raiz continua aceito para migração. Arquivo: content/guides/<guide-id>/guide.json. Cópia canônica: content/schema/guide.schema.json (embutida no binário Go). Os objetivos extraídos por agente ficam nos sidecars de content/guides/<guide-id>/annotations/ (annotations.schema.json).",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -177,11 +177,6 @@
         "late",
         "endgame"
       ]
-    },
-    "ref": {
-      "type": "string",
-      "description": "Referência tipada a um nó do grafo. Formatos: 'step:<id>', 'quest:<nome wiki>', 'skill:<skill>:<nível>', 'diary:<área>:<tier>', 'diary_task:<área>:<tier>:<n>', 'item:<nome ou id>', 'boss:<nome>', 'ca:<nome>', 'goal:<id>'.",
-      "pattern": "^(step|quest|skill|diary|diary_task|item|boss|ca|goal):[^\\n]+$"
     },
     "source": {
       "type": "object",
@@ -871,6 +866,9 @@
         "location": {
           "type": "string"
         },
+        "location_ref": {
+          "$ref": "#/$defs/locationRef"
+        },
         "notes": {
           "type": "array",
           "items": {
@@ -909,7 +907,7 @@
           "type": "array",
           "uniqueItems": true,
           "items": {
-            "$ref": "#/$defs/ref"
+            "$ref": "#/$defs/graphRef"
           },
           "description": "Arestas duras do grafo. Além destas, o loader deriva arestas de quests (wiki) e de skill_level."
         },
@@ -917,7 +915,7 @@
           "type": "array",
           "uniqueItems": true,
           "items": {
-            "$ref": "#/$defs/ref"
+            "$ref": "#/$defs/graphRef"
           },
           "description": "Arestas suaves (ordem sugerida, não bloqueiam)."
         },
@@ -925,9 +923,9 @@
           "type": "array",
           "uniqueItems": true,
           "items": {
-            "$ref": "#/$defs/ref"
+            "$ref": "#/$defs/graphRef"
           },
-          "description": "O que este step entrega (ex.: 'item:Graceful set'). Vira aresta step -> nó."
+          "description": "O que este step entrega (entidade ou objetivo, ex.: 'unlock:fairy_rings'). Vira aresta step -> nó."
         },
         "tags": {
           "type": "array",
@@ -970,6 +968,13 @@
             "$ref": "#/$defs/entityMention"
           },
           "description": "Entidades resolvidas deterministicamente pelo enriquecimento (internal/core/entities/enrich). Menções ambíguas ou não resolvidas ficam fora daqui, no entities.report.json do guia."
+        },
+        "objectives": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/objective"
+          },
+          "description": "Objetivos explícitos do passo. O loader acrescenta os convertidos de complete_when/prerequisites e os das anotações (doc 09 seção 4.2)."
         }
       }
     },
@@ -986,7 +991,9 @@
           "type": "string",
           "enum": [
             "explicit",
-            "derived"
+            "derived",
+            "llm",
+            "manual"
           ]
         },
         "confidence": {
@@ -1011,40 +1018,10 @@
         }
       }
     },
-    "loadoutItem": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "name"
-      ],
-      "properties": {
-        "name": {
-          "type": "string",
-          "minLength": 1
-        },
-        "item_id": {
-          "type": "integer",
-          "minimum": 1,
-          "description": "Id OSRS/RuneLite exato do item como aparece no inventário (forma noted tem id próprio). Só é preenchido quando o nome resolve sem ambiguidade."
-        },
-        "qty": {
-          "type": "integer",
-          "minimum": 1
-        },
-        "optional": {
-          "type": "boolean",
-          "default": false
-        },
-        "source_text": {
-          "type": "string",
-          "minLength": 1
-        }
-      }
-    },
     "loadoutItemList": {
       "type": "array",
       "items": {
-        "$ref": "#/$defs/loadoutItem"
+        "$ref": "#/$defs/itemRequirement"
       }
     },
     "loadoutKnown": {
@@ -1108,14 +1085,14 @@
           "type": "array",
           "minItems": 1,
           "items": {
-            "$ref": "#/$defs/loadoutItem"
+            "$ref": "#/$defs/itemRequirement"
           }
         },
         "equipment": {
           "type": "array",
           "minItems": 1,
           "items": {
-            "$ref": "#/$defs/loadoutItem"
+            "$ref": "#/$defs/itemRequirement"
           }
         },
         "empty_slots": {
@@ -1402,8 +1379,8 @@
     },
     "entityRef": {
       "type": "string",
-      "description": "Identidade canônica tipada de uma entidade (internal/core/entities.Ref): 'quest:<slug>', 'item:<id OSRS/RuneLite>' (o id noted é outro id), 'skill:<skill>', 'diary:<área>:<tier>', 'ca:<id da task>', 'boss:<slug>', 'goal:<slug>', 'step:[<guia>/]<id>'. Nunca é uma URL nem um nome de exibição; nomes e URLs da wiki derivam do catálogo em content/reference.",
-      "pattern": "^(?:(?:quest|skill|boss|goal):[a-z0-9]+(?:_[a-z0-9]+)*|item:[1-9][0-9]*|ca:(?:0|[1-9][0-9]*)|diary:[a-z0-9]+(?:_[a-z0-9]+)*:(?:easy|medium|hard|elite)|step:(?:[A-Za-z0-9][A-Za-z0-9._-]{0,63}/)?[A-Za-z0-9][A-Za-z0-9._-]{0,63})$"
+      "description": "Identidade canônica tipada de uma entidade (internal/core/entities.Ref): 'quest:<slug>', 'item:<id OSRS/RuneLite>' (o id noted é outro id), 'skill:<skill>', 'diary:<área>:<tier>', 'ca:<id da task>', 'boss:<slug>', 'unlock:<slug>', 'location:<slug>', 'goal:<slug>', 'step:[<guia>/]<id>'. Nunca é uma URL nem um nome de exibição; nomes e URLs da wiki derivam do catálogo em content/reference.",
+      "pattern": "^(?:(?:quest|skill|boss|goal|unlock|location):[a-z0-9]+(?:_[a-z0-9]+)*|item:[1-9][0-9]*|ca:(?:0|[1-9][0-9]*)|diary:[a-z0-9]+(?:_[a-z0-9]+)*:(?:easy|medium|hard|elite)|step:(?:[A-Za-z0-9][A-Za-z0-9._-]{0,63}/)?[A-Za-z0-9][A-Za-z0-9._-]{0,63})$"
     },
     "entityMention": {
       "type": "object",
@@ -1461,6 +1438,205 @@
           ]
         }
       }
+    },
+    "objectiveKey": {
+      "type": "string",
+      "description": "Chave canônica de objetivo (internal/core/entities.ObjectiveKey, doc 09 seção 3.2): ref + alvo. '@started'/'@finished' (quest), '@complete' (diary), '@done' (unlock, ca), '>=N' (skill 1..99, boss, qp), 'xN' (item exato, N sempre explícito). Ex.: 'quest:x_marks_the_spot@finished', 'skill:agility>=70', 'item:960x120', 'qp>=107'.",
+      "pattern": "^(?:qp>=[1-9][0-9]*|quest:[a-z0-9]+(?:_[a-z0-9]+)*@(?:started|finished)|diary:[a-z0-9]+(?:_[a-z0-9]+)*:(?:easy|medium|hard|elite)@complete|unlock:[a-z0-9]+(?:_[a-z0-9]+)*@done|ca:(?:0|[1-9][0-9]*)@done|skill:[a-z0-9]+(?:_[a-z0-9]+)*>=(?:[1-9]|[1-9][0-9])|boss:[a-z0-9]+(?:_[a-z0-9]+)*>=[1-9][0-9]*|item:[1-9][0-9]*x[1-9][0-9]*)$"
+    },
+    "graphRef": {
+      "description": "Referência de aresta do grafo: uma entidade (entityRef, inclusive 'step:<id>') ou um objetivo (objectiveKey).",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/entityRef"
+        },
+        {
+          "$ref": "#/$defs/objectiveKey"
+        }
+      ]
+    },
+    "locationRef": {
+      "type": "string",
+      "description": "Ref canônico de local ('location:<slug>'), do catálogo content/reference/locations.json.",
+      "pattern": "^location:[a-z0-9]+(?:_[a-z0-9]+)*$"
+    },
+    "objectiveEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field"
+      ],
+      "description": "Onde está a evidência do objetivo no passo. 'field' é um JSON pointer relativo ao passo; 'quote' e 'span' existem para objetivos lidos do texto ('span' é o trecho exato do original, em bytes; a citação é comparada depois de dobrar caixa, espaços e pontuação tipográfica).",
+      "properties": {
+        "field": {
+          "type": "string",
+          "pattern": "^(?:/(?:[^~/]|~[01])*)+$"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1
+        },
+        "span": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        }
+      },
+      "dependentRequired": {
+        "quote": [
+          "span"
+        ],
+        "span": [
+          "quote"
+        ]
+      }
+    },
+    "objectiveSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "confidence"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "explicit",
+            "derived",
+            "llm",
+            "manual"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "skill_version": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Versão da skill de extração (ex.: 'annotate-guide@1'); só em method llm."
+        },
+        "confirmed_by": {
+          "const": "owner",
+          "description": "Decidido pelo dono durante a extração (doc 09 seção 6.4)."
+        }
+      }
+    },
+    "objective": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "role",
+        "source"
+      ],
+      "description": "Objetivo do passo (doc 09 seções 3.2 e 3.3): completes/starts concluem o passo, requires e uses não.",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/objectiveKey"
+        },
+        "role": {
+          "type": "string",
+          "enum": [
+            "completes",
+            "starts",
+            "requires",
+            "uses"
+          ]
+        },
+        "evidence": {
+          "$ref": "#/$defs/objectiveEvidence"
+        },
+        "source": {
+          "$ref": "#/$defs/objectiveSource"
+        }
+      }
+    },
+    "itemRequirement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "item_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Id OSRS/RuneLite exato do item como aparece no inventário (forma noted tem id própria)."
+        },
+        "any_of": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "description": "Qualquer um dos ids satisfaz; o primeiro é o preferido (ordem decidida na extração)."
+        },
+        "family": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:_[a-z0-9]+)*$",
+          "description": "Slug da família do catálogo de itens (ex.: 'prayer_potion'): qualquer dose ou carga."
+        },
+        "qty": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "noted": {
+          "type": "boolean",
+          "default": false,
+          "description": "O guia pede a forma noteada."
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "source_text": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "description": "Requisito de item (doc 09 seção 3.4). Depois de resolvido, exatamente uma variante: 'item_id' (exato), 'any_of' (qualquer um dos ids, em ordem de preferência) ou 'family' (qualquer variante da família do catálogo, noteada ou não). Nenhuma = nome ainda não resolvido. Requisitos não exatos não têm chave de objetivo.",
+      "allOf": [
+        {
+          "not": {
+            "required": [
+              "item_id",
+              "any_of"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "item_id",
+              "family"
+            ]
+          }
+        },
+        {
+          "not": {
+            "required": [
+              "any_of",
+              "family"
+            ]
+          }
+        }
+      ]
     }
   }
 }

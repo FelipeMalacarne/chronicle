@@ -21,14 +21,17 @@ const (
 	logs       = 1511
 	notedLogs  = 1512
 	notCatalog = 999_999
+	ironAxe    = 1349
+	prayerPot4 = 2434
+	prayerPot3 = 139
 )
 
 var at = time.Date(2026, 11, 4, 12, 0, 0, 0, time.UTC)
 
 func ip(i int) *int { return &i }
 
-func item(name string, id *int, qty *int) content.LoadoutItem {
-	return content.LoadoutItem{Name: name, ItemID: id, Qty: qty, SourceText: name}
+func item(name string, id *int, qty *int) content.ItemRequirement {
+	return content.ItemRequirement{Name: name, ItemID: id, Qty: qty, SourceText: name}
 }
 
 func live(complete bool, q map[int]int64) rules.ContainerItems {
@@ -59,10 +62,10 @@ func TestEvaluateSegment(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	known := func(inv []content.LoadoutItem, equip []content.LoadoutItem, empty *int) *content.Loadout {
+	known := func(inv []content.ItemRequirement, equip []content.ItemRequirement, empty *int) *content.Loadout {
 		return &content.Loadout{Status: content.LoadoutKnown, Inventory: inv, Equipment: equip, EmptySlots: empty}
 	}
-	partial := func(inv ...content.LoadoutItem) *content.Loadout {
+	partial := func(inv ...content.ItemRequirement) *content.Loadout {
 		return &content.Loadout{Status: content.LoadoutPartial, Inventory: inv}
 	}
 	cases := []struct {
@@ -74,7 +77,7 @@ func TestEvaluateSegment(t *testing.T) {
 	}{
 		{"no loadout", nil, holdings(nil, nil), NoLoadout, nil},
 		{"unknown loadout", &content.Loadout{Status: content.LoadoutUnknown}, holdings(nil, nil), NoLoadout, nil},
-		{"known loadout carried", known([]content.LoadoutItem{item("Hammer", ip(hammer), nil)}, nil, nil),
+		{"known loadout carried", known([]content.ItemRequirement{item("Hammer", ip(hammer), nil)}, nil, nil),
 			holdings(map[int]int64{hammer: 1}, nil), Ready, nil},
 		{"partial loadout carried is only listed_ready", partial(item("Hammer", ip(hammer), nil)),
 			holdings(map[int]int64{hammer: 1}, nil), ListedReady, nil},
@@ -131,14 +134,14 @@ func TestEvaluateSegment(t *testing.T) {
 			holdings(map[int]int64{notedPlank: 119}, nil), NotReady, nil},
 		{"unresolved name is unknown", partial(item("1k arrow shafts", nil, nil)),
 			holdings(map[int]int64{}, nil), Unknown, nil},
-		{"optional item does not block", &content.Loadout{Status: content.LoadoutKnown, Inventory: []content.LoadoutItem{
+		{"optional item does not block", &content.Loadout{Status: content.LoadoutKnown, Inventory: []content.ItemRequirement{
 			item("Hammer", ip(hammer), nil), {Name: "Logs", ItemID: ip(logs), Optional: true},
 		}}, holdings(map[int]int64{hammer: 1}, nil), Ready, nil},
 		{"inventory tool may be wielded", partial(item("Bronze axe", ip(bronzeAxe), nil)),
 			holdings(map[int]int64{}, map[int]int64{bronzeAxe: 1}), ListedReady, nil},
-		{"equipment item in inventory is not worn", known(nil, []content.LoadoutItem{item("Bronze axe", ip(bronzeAxe), nil)}, nil),
+		{"equipment item in inventory is not worn", known(nil, []content.ItemRequirement{item("Bronze axe", ip(bronzeAxe), nil)}, nil),
 			holdings(map[int]int64{bronzeAxe: 1}, map[int]int64{}), NotReady, nil},
-		{"empty slots met with stackables", known([]content.LoadoutItem{item("Coins", ip(coins), nil)}, nil, ip(27)),
+		{"empty slots met with stackables", known([]content.ItemRequirement{item("Coins", ip(coins), nil)}, nil, ip(27)),
 			holdings(map[int]int64{coins: 50_000}, nil), Ready, nil},
 		{"empty slots unmet", known(nil, nil, ip(20)),
 			holdings(map[int]int64{hammer: 1, logs: 1, bronzeAxe: 1, notedLogs: 1, coins: 1, plank: 4, notCatalog: 1}, nil), NotReady,
@@ -157,6 +160,32 @@ func TestEvaluateSegment(t *testing.T) {
 		{"empty slots need a live baseline", known(nil, nil, ip(1)),
 			rules.ItemHoldings{rules.ContainerInventory: live(false, nil)}, Unknown, nil},
 		{"partial loadout without items", &content.Loadout{Status: content.LoadoutPartial}, holdings(nil, nil), NoLoadout, nil},
+		{"any_of met by a later id", partial(content.ItemRequirement{Name: "Axe", AnyOf: []int{ironAxe, bronzeAxe}}),
+			holdings(map[int]int64{bronzeAxe: 1}, nil), ListedReady, func(t *testing.T, s Segment) {
+				if it := s.Items[0]; it.Variant != content.RequireAnyOf || it.MatchedID == nil || *it.MatchedID != bronzeAxe {
+					t.Fatalf("item = %+v", it)
+				}
+			}},
+		{"any_of missing everywhere", partial(content.ItemRequirement{Name: "Axe", AnyOf: []int{ironAxe, bronzeAxe}}),
+			holdings(map[int]int64{}, nil), NotReady, nil},
+		{"any_of quantities are not summed across ids", partial(content.ItemRequirement{Name: "Axe", AnyOf: []int{ironAxe, bronzeAxe}, Qty: ip(2)}),
+			holdings(map[int]int64{ironAxe: 1, bronzeAxe: 1}, nil), NotReady, nil},
+		{"any_of without a live inventory", partial(content.ItemRequirement{Name: "Axe", AnyOf: []int{ironAxe, bronzeAxe}}),
+			rules.ItemHoldings{}, Unknown, nil},
+		{"family adds up doses", partial(content.ItemRequirement{Name: "prayer potions", Family: "prayer_potion", Qty: ip(2)}),
+			holdings(map[int]int64{prayerPot4: 1, prayerPot3: 1}, nil), ListedReady, func(t *testing.T, s Segment) {
+				if it := s.Items[0]; it.Carried != 2 || it.Owned == nil || it.Owned.Verdict != rules.Met {
+					t.Fatalf("item = %+v owned %+v", it, it.Owned)
+				}
+			}},
+		{"family short", partial(content.ItemRequirement{Name: "prayer potions", Family: "prayer_potion", Qty: ip(3)}),
+			holdings(map[int]int64{prayerPot4: 1, hammer: 2}, nil), NotReady, nil},
+		{"unknown family is unknown", partial(content.ItemRequirement{Name: "x", Family: "not_a_family"}),
+			holdings(map[int]int64{}, nil), Unknown, nil},
+		{"noted requirement needs the noted stack", partial(content.ItemRequirement{Name: "planks", ItemID: ip(plank), Qty: ip(120), Noted: true}),
+			holdings(map[int]int64{notedPlank: 120}, nil), ListedReady, nil},
+		{"unnoted stack does not satisfy noted", partial(content.ItemRequirement{Name: "planks", ItemID: ip(plank), Qty: ip(2), Noted: true}),
+			holdings(map[int]int64{plank: 2}, nil), NotReady, nil},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -181,8 +210,8 @@ func TestEvaluateSegment(t *testing.T) {
 func TestEvaluateSegmentGuideIsolation(t *testing.T) {
 	// Two routes with the same local segment and step ids but different
 	// loadouts: each guide is evaluated against its own setup only.
-	oz, ozSeg := guideWith("oziris-main", &content.Loadout{Status: content.LoadoutPartial, Inventory: []content.LoadoutItem{item("Hammer", ip(hammer), nil)}})
-	bruh, bruhSeg := guideWith("bruhsailer-main", &content.Loadout{Status: content.LoadoutPartial, Inventory: []content.LoadoutItem{item("Logs", ip(logs), nil)}})
+	oz, ozSeg := guideWith("oziris-main", &content.Loadout{Status: content.LoadoutPartial, Inventory: []content.ItemRequirement{item("Hammer", ip(hammer), nil)}})
+	bruh, bruhSeg := guideWith("bruhsailer-main", &content.Loadout{Status: content.LoadoutPartial, Inventory: []content.ItemRequirement{item("Logs", ip(logs), nil)}})
 	h := holdings(map[int]int64{hammer: 1}, nil)
 
 	if got, ok := oz.Segment("seg-a"); !ok || got != ozSeg {

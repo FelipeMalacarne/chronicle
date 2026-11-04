@@ -1,0 +1,884 @@
+{
+  "catalog": "items",
+  "version": "2026.11.0",
+  "source": "Curated by hand from the OSRS cache item ids used by RuneLite (net.runelite.api.ItemID / gameval ItemID).",
+  "notes": "Curated subset covering the items both guides name most often; an item not listed stays unresolved (not_in_catalog) instead of being guessed. id is always the unnoted form; noted_id is the noted form (a different id the plugin reports for noted stacks). Variants that differ in doses or charges are distinct ids sharing family; a family name alone is ambiguous (variant_unspecified). ambiguous lists names that must never resolve to one id.",
+  "items": [
+    {
+      "id": 139,
+      "name": "Prayer potion(3)",
+      "wiki_key": "Prayer potion",
+      "family": "Prayer potion",
+      "variant": "3 doses"
+    },
+    {
+      "id": 141,
+      "name": "Prayer potion(2)",
+      "wiki_key": "Prayer potion",
+      "family": "Prayer potion",
+      "variant": "2 doses"
+    },
+    {
+      "id": 143,
+      "name": "Prayer potion(1)",
+      "wiki_key": "Prayer potion",
+      "family": "Prayer potion",
+      "variant": "1 dose"
+    },
+    {
+      "id": 175,
+      "name": "Antipoison(3)",
+      "wiki_key": "Antipoison",
+      "family": "Antipoison",
+      "variant": "3 doses"
+    },
+    {
+      "id": 177,
+      "name": "Antipoison(2)",
+      "wiki_key": "Antipoison",
+      "family": "Antipoison",
+      "variant": "2 doses"
+    },
+    {
+      "id": 179,
+      "name": "Antipoison(1)",
+      "wiki_key": "Antipoison",
+      "family": "Antipoison",
+      "variant": "1 dose"
+    },
+    {
+      "id": 227,
+      "name": "Vial of water",
+      "wiki_key": "Vial of water"
+    },
+    {
+      "id": 233,
+      "name": "Pestle and mortar",
+      "wiki_key": "Pestle and mortar",
+      "aliases": [
+        "pestle/mortar"
+      ]
+    },
+    {
+      "id": 303,
+      "name": "Small fishing net",
+      "wiki_key": "Small fishing net"
+    },
+    {
+      "id": 307,
+      "name": "Fishing rod",
+      "wiki_key": "Fishing rod"
+    },
+    {
+      "id": 314,
+      "name": "Feather",
+      "wiki_key": "Feather",
+      "stackable": true
+    },
+    {
+      "id": 329,
+      "name": "Salmon",
+      "wiki_key": "Salmon",
+      "noted_id": 330
+    },
+    {
+      "id": 333,
+      "name": "Trout",
+      "wiki_key": "Trout",
+      "noted_id": 334
+    },
+    {
+      "id": 371,
+      "name": "Swordfish",
+      "wiki_key": "Swordfish",
+      "noted_id": 372
+    },
+    {
+      "id": 379,
+      "name": "Lobster",
+      "wiki_key": "Lobster",
+      "noted_id": 380
+    },
+    {
+      "id": 385,
+      "name": "Shark",
+      "wiki_key": "Shark",
+      "noted_id": 386
+    },
+    {
+      "id": 453,
+      "name": "Coal",
+      "wiki_key": "Coal",
+      "noted_id": 454
+    },
+    {
+      "id": 455,
+      "name": "Barcrawl card",
+      "wiki_key": "Barcrawl card"
+    },
+    {
+      "id": 552,
+      "name": "Ghostspeak amulet",
+      "wiki_key": "Ghostspeak amulet"
+    },
+    {
+      "id": 554,
+      "name": "Fire rune",
+      "wiki_key": "Fire rune",
+      "stackable": true
+    },
+    {
+      "id": 555,
+      "name": "Water rune",
+      "wiki_key": "Water rune",
+      "stackable": true
+    },
+    {
+      "id": 556,
+      "name": "Air rune",
+      "wiki_key": "Air rune",
+      "stackable": true
+    },
+    {
+      "id": 557,
+      "name": "Earth rune",
+      "wiki_key": "Earth rune",
+      "stackable": true
+    },
+    {
+      "id": 558,
+      "name": "Mind rune",
+      "wiki_key": "Mind rune",
+      "stackable": true
+    },
+    {
+      "id": 559,
+      "name": "Body rune",
+      "wiki_key": "Body rune",
+      "stackable": true
+    },
+    {
+      "id": 560,
+      "name": "Death rune",
+      "wiki_key": "Death rune",
+      "stackable": true
+    },
+    {
+      "id": 561,
+      "name": "Nature rune",
+      "wiki_key": "Nature rune",
+      "stackable": true
+    },
+    {
+      "id": 562,
+      "name": "Chaos rune",
+      "wiki_key": "Chaos rune",
+      "stackable": true
+    },
+    {
+      "id": 563,
+      "name": "Law rune",
+      "wiki_key": "Law rune",
+      "stackable": true
+    },
+    {
+      "id": 564,
+      "name": "Cosmic rune",
+      "wiki_key": "Cosmic rune",
+      "stackable": true
+    },
+    {
+      "id": 565,
+      "name": "Blood rune",
+      "wiki_key": "Blood rune",
+      "stackable": true
+    },
+    {
+      "id": 566,
+      "name": "Soul rune",
+      "wiki_key": "Soul rune",
+      "stackable": true
+    },
+    {
+      "id": 590,
+      "name": "Tinderbox",
+      "wiki_key": "Tinderbox"
+    },
+    {
+      "id": 592,
+      "name": "Ashes",
+      "wiki_key": "Ashes"
+    },
+    {
+      "id": 772,
+      "name": "Dramen staff",
+      "wiki_key": "Dramen staff"
+    },
+    {
+      "id": 946,
+      "name": "Knife",
+      "wiki_key": "Knife"
+    },
+    {
+      "id": 950,
+      "name": "Silk",
+      "wiki_key": "Silk"
+    },
+    {
+      "id": 952,
+      "name": "Spade",
+      "wiki_key": "Spade"
+    },
+    {
+      "id": 954,
+      "name": "Rope",
+      "wiki_key": "Rope"
+    },
+    {
+      "id": 960,
+      "name": "Plank",
+      "wiki_key": "Plank",
+      "noted_id": 961
+    },
+    {
+      "id": 995,
+      "name": "Coins",
+      "wiki_key": "Coins",
+      "stackable": true,
+      "aliases": [
+        "gp",
+        "coin",
+        "cash stack"
+      ]
+    },
+    {
+      "id": 1059,
+      "name": "Leather gloves",
+      "wiki_key": "Leather gloves"
+    },
+    {
+      "id": 1061,
+      "name": "Leather boots",
+      "wiki_key": "Leather boots"
+    },
+    {
+      "id": 1265,
+      "name": "Bronze pickaxe",
+      "wiki_key": "Bronze pickaxe"
+    },
+    {
+      "id": 1267,
+      "name": "Iron pickaxe",
+      "wiki_key": "Iron pickaxe"
+    },
+    {
+      "id": 1269,
+      "name": "Steel pickaxe",
+      "wiki_key": "Steel pickaxe"
+    },
+    {
+      "id": 1271,
+      "name": "Adamant pickaxe",
+      "wiki_key": "Adamant pickaxe"
+    },
+    {
+      "id": 1273,
+      "name": "Mithril pickaxe",
+      "wiki_key": "Mithril pickaxe"
+    },
+    {
+      "id": 1275,
+      "name": "Rune pickaxe",
+      "wiki_key": "Rune pickaxe"
+    },
+    {
+      "id": 1289,
+      "name": "Rune sword",
+      "wiki_key": "Rune sword"
+    },
+    {
+      "id": 1349,
+      "name": "Iron axe",
+      "wiki_key": "Iron axe"
+    },
+    {
+      "id": 1351,
+      "name": "Bronze axe",
+      "wiki_key": "Bronze axe"
+    },
+    {
+      "id": 1353,
+      "name": "Steel axe",
+      "wiki_key": "Steel axe"
+    },
+    {
+      "id": 1355,
+      "name": "Mithril axe",
+      "wiki_key": "Mithril axe"
+    },
+    {
+      "id": 1357,
+      "name": "Adamant axe",
+      "wiki_key": "Adamant axe"
+    },
+    {
+      "id": 1359,
+      "name": "Rune axe",
+      "wiki_key": "Rune axe"
+    },
+    {
+      "id": 1381,
+      "name": "Staff of air",
+      "wiki_key": "Staff of air",
+      "aliases": [
+        "air staff"
+      ]
+    },
+    {
+      "id": 1383,
+      "name": "Staff of water",
+      "wiki_key": "Staff of water",
+      "aliases": [
+        "water staff"
+      ]
+    },
+    {
+      "id": 1385,
+      "name": "Staff of earth",
+      "wiki_key": "Staff of earth",
+      "aliases": [
+        "earth staff"
+      ]
+    },
+    {
+      "id": 1387,
+      "name": "Staff of fire",
+      "wiki_key": "Staff of fire",
+      "aliases": [
+        "fire staff"
+      ]
+    },
+    {
+      "id": 1436,
+      "name": "Rune essence",
+      "wiki_key": "Rune essence",
+      "noted_id": 1437
+    },
+    {
+      "id": 1511,
+      "name": "Logs",
+      "wiki_key": "Logs",
+      "noted_id": 1512,
+      "aliases": [
+        "normal log",
+        "normal logs",
+        "log"
+      ]
+    },
+    {
+      "id": 1521,
+      "name": "Oak logs",
+      "wiki_key": "Oak logs",
+      "noted_id": 1522,
+      "aliases": [
+        "oak log"
+      ]
+    },
+    {
+      "id": 1523,
+      "name": "Lockpick",
+      "wiki_key": "Lockpick"
+    },
+    {
+      "id": 1539,
+      "name": "Steel nails",
+      "wiki_key": "Steel nails",
+      "stackable": true
+    },
+    {
+      "id": 1550,
+      "name": "Garlic",
+      "wiki_key": "Garlic"
+    },
+    {
+      "id": 1704,
+      "name": "Amulet of glory",
+      "wiki_key": "Amulet of glory",
+      "family": "Amulet of glory",
+      "variant": "uncharged"
+    },
+    {
+      "id": 1706,
+      "name": "Amulet of glory(1)",
+      "wiki_key": "Amulet of glory",
+      "family": "Amulet of glory",
+      "variant": "1 charge"
+    },
+    {
+      "id": 1708,
+      "name": "Amulet of glory(2)",
+      "wiki_key": "Amulet of glory",
+      "family": "Amulet of glory",
+      "variant": "2 charges"
+    },
+    {
+      "id": 1710,
+      "name": "Amulet of glory(3)",
+      "wiki_key": "Amulet of glory",
+      "family": "Amulet of glory",
+      "variant": "3 charges"
+    },
+    {
+      "id": 1712,
+      "name": "Amulet of glory(4)",
+      "wiki_key": "Amulet of glory",
+      "family": "Amulet of glory",
+      "variant": "4 charges"
+    },
+    {
+      "id": 1733,
+      "name": "Needle",
+      "wiki_key": "Needle"
+    },
+    {
+      "id": 1734,
+      "name": "Thread",
+      "wiki_key": "Thread"
+    },
+    {
+      "id": 1755,
+      "name": "Chisel",
+      "wiki_key": "Chisel"
+    },
+    {
+      "id": 1761,
+      "name": "Soft clay",
+      "wiki_key": "Soft clay",
+      "noted_id": 1762
+    },
+    {
+      "id": 1765,
+      "name": "Yellow dye",
+      "wiki_key": "Yellow dye"
+    },
+    {
+      "id": 1775,
+      "name": "Molten glass",
+      "wiki_key": "Molten glass",
+      "noted_id": 1776
+    },
+    {
+      "id": 1823,
+      "name": "Waterskin(4)",
+      "wiki_key": "Waterskin",
+      "family": "Waterskin",
+      "variant": "4 doses"
+    },
+    {
+      "id": 1825,
+      "name": "Waterskin(3)",
+      "wiki_key": "Waterskin",
+      "family": "Waterskin",
+      "variant": "3 doses"
+    },
+    {
+      "id": 1827,
+      "name": "Waterskin(2)",
+      "wiki_key": "Waterskin",
+      "family": "Waterskin",
+      "variant": "2 doses"
+    },
+    {
+      "id": 1829,
+      "name": "Waterskin(1)",
+      "wiki_key": "Waterskin",
+      "family": "Waterskin",
+      "variant": "1 dose"
+    },
+    {
+      "id": 1831,
+      "name": "Waterskin(0)",
+      "wiki_key": "Waterskin",
+      "family": "Waterskin",
+      "variant": "0 doses"
+    },
+    {
+      "id": 1891,
+      "name": "Cake",
+      "wiki_key": "Cake"
+    },
+    {
+      "id": 1925,
+      "name": "Bucket",
+      "wiki_key": "Bucket"
+    },
+    {
+      "id": 1927,
+      "name": "Bucket of milk",
+      "wiki_key": "Bucket of milk"
+    },
+    {
+      "id": 1929,
+      "name": "Bucket of water",
+      "wiki_key": "Bucket of water"
+    },
+    {
+      "id": 1935,
+      "name": "Jug",
+      "wiki_key": "Jug"
+    },
+    {
+      "id": 1937,
+      "name": "Jug of water",
+      "wiki_key": "Jug of water"
+    },
+    {
+      "id": 1939,
+      "name": "Swamp tar",
+      "wiki_key": "Swamp tar"
+    },
+    {
+      "id": 1951,
+      "name": "Redberries",
+      "wiki_key": "Redberries"
+    },
+    {
+      "id": 1965,
+      "name": "Cabbage",
+      "wiki_key": "Cabbage"
+    },
+    {
+      "id": 1993,
+      "name": "Jug of wine",
+      "wiki_key": "Jug of wine"
+    },
+    {
+      "id": 2309,
+      "name": "Bread",
+      "wiki_key": "Bread"
+    },
+    {
+      "id": 2347,
+      "name": "Hammer",
+      "wiki_key": "Hammer"
+    },
+    {
+      "id": 2349,
+      "name": "Bronze bar",
+      "wiki_key": "Bronze bar"
+    },
+    {
+      "id": 2351,
+      "name": "Iron bar",
+      "wiki_key": "Iron bar",
+      "noted_id": 2352
+    },
+    {
+      "id": 2353,
+      "name": "Steel bar",
+      "wiki_key": "Steel bar",
+      "noted_id": 2354
+    },
+    {
+      "id": 2355,
+      "name": "Silver bar",
+      "wiki_key": "Silver bar",
+      "noted_id": 2356
+    },
+    {
+      "id": 2357,
+      "name": "Gold bar",
+      "wiki_key": "Gold bar",
+      "noted_id": 2358
+    },
+    {
+      "id": 2434,
+      "name": "Prayer potion(4)",
+      "wiki_key": "Prayer potion",
+      "family": "Prayer potion",
+      "variant": "4 doses"
+    },
+    {
+      "id": 2446,
+      "name": "Antipoison(4)",
+      "wiki_key": "Antipoison",
+      "family": "Antipoison",
+      "variant": "4 doses"
+    },
+    {
+      "id": 2552,
+      "name": "Ring of dueling(8)",
+      "wiki_key": "Ring of dueling",
+      "family": "Ring of dueling",
+      "variant": "8 charges"
+    },
+    {
+      "id": 2554,
+      "name": "Ring of dueling(7)",
+      "wiki_key": "Ring of dueling",
+      "family": "Ring of dueling",
+      "variant": "7 charges"
+    },
+    {
+      "id": 2556,
+      "name": "Ring of dueling(6)",
+      "wiki_key": "Ring of dueling",
+      "family": "Ring of dueling",
+      "variant": "6 charges"
+    },
+    {
+      "id": 2558,
+      "name": "Ring of dueling(5)",
+      "wiki_key": "Ring of dueling",
+      "family": "Ring of dueling",
+      "variant": "5 charges"
+    },
+    {
+      "id": 2560,
+      "name": "Ring of dueling(4)",
+      "wiki_key": "Ring of dueling",
+      "family": "Ring of dueling",
+      "variant": "4 charges"
+    },
+    {
+      "id": 2562,
+      "name": "Ring of dueling(3)",
+      "wiki_key": "Ring of dueling",
+      "family": "Ring of dueling",
+      "variant": "3 charges"
+    },
+    {
+      "id": 2564,
+      "name": "Ring of dueling(2)",
+      "wiki_key": "Ring of dueling",
+      "family": "Ring of dueling",
+      "variant": "2 charges"
+    },
+    {
+      "id": 2566,
+      "name": "Ring of dueling(1)",
+      "wiki_key": "Ring of dueling",
+      "family": "Ring of dueling",
+      "variant": "1 charge"
+    },
+    {
+      "id": 3008,
+      "name": "Energy potion(4)",
+      "wiki_key": "Energy potion",
+      "family": "Energy potion",
+      "variant": "4 doses"
+    },
+    {
+      "id": 3010,
+      "name": "Energy potion(3)",
+      "wiki_key": "Energy potion",
+      "family": "Energy potion",
+      "variant": "3 doses"
+    },
+    {
+      "id": 3012,
+      "name": "Energy potion(2)",
+      "wiki_key": "Energy potion",
+      "family": "Energy potion",
+      "variant": "2 doses"
+    },
+    {
+      "id": 3014,
+      "name": "Energy potion(1)",
+      "wiki_key": "Energy potion",
+      "family": "Energy potion",
+      "variant": "1 dose"
+    },
+    {
+      "id": 3853,
+      "name": "Games necklace(8)",
+      "wiki_key": "Games necklace",
+      "family": "Games necklace",
+      "variant": "8 charges"
+    },
+    {
+      "id": 3855,
+      "name": "Games necklace(7)",
+      "wiki_key": "Games necklace",
+      "family": "Games necklace",
+      "variant": "7 charges"
+    },
+    {
+      "id": 3857,
+      "name": "Games necklace(6)",
+      "wiki_key": "Games necklace",
+      "family": "Games necklace",
+      "variant": "6 charges"
+    },
+    {
+      "id": 3859,
+      "name": "Games necklace(5)",
+      "wiki_key": "Games necklace",
+      "family": "Games necklace",
+      "variant": "5 charges"
+    },
+    {
+      "id": 3861,
+      "name": "Games necklace(4)",
+      "wiki_key": "Games necklace",
+      "family": "Games necklace",
+      "variant": "4 charges"
+    },
+    {
+      "id": 3863,
+      "name": "Games necklace(3)",
+      "wiki_key": "Games necklace",
+      "family": "Games necklace",
+      "variant": "3 charges"
+    },
+    {
+      "id": 3865,
+      "name": "Games necklace(2)",
+      "wiki_key": "Games necklace",
+      "family": "Games necklace",
+      "variant": "2 charges"
+    },
+    {
+      "id": 3867,
+      "name": "Games necklace(1)",
+      "wiki_key": "Games necklace",
+      "family": "Games necklace",
+      "variant": "1 charge"
+    },
+    {
+      "id": 4677,
+      "name": "Catspeak amulet",
+      "wiki_key": "Catspeak amulet"
+    },
+    {
+      "id": 4819,
+      "name": "Bronze nails",
+      "wiki_key": "Bronze nails",
+      "stackable": true
+    },
+    {
+      "id": 5341,
+      "name": "Rake",
+      "wiki_key": "Rake"
+    },
+    {
+      "id": 5343,
+      "name": "Seed dibber",
+      "wiki_key": "Seed dibber"
+    },
+    {
+      "id": 6333,
+      "name": "Teak logs",
+      "wiki_key": "Teak logs",
+      "noted_id": 6334,
+      "aliases": [
+        "teak log"
+      ]
+    },
+    {
+      "id": 7936,
+      "name": "Pure essence",
+      "wiki_key": "Pure essence",
+      "noted_id": 7937
+    },
+    {
+      "id": 8013,
+      "name": "Teleport to house",
+      "wiki_key": "Teleport to house",
+      "aliases": [
+        "house tab",
+        "poh tab",
+        "house teleport tab"
+      ]
+    },
+    {
+      "id": 8778,
+      "name": "Oak plank",
+      "wiki_key": "Oak plank",
+      "noted_id": 8779
+    },
+    {
+      "id": 8794,
+      "name": "Saw",
+      "wiki_key": "Saw"
+    },
+    {
+      "id": 9075,
+      "name": "Astral rune",
+      "wiki_key": "Astral rune",
+      "stackable": true
+    },
+    {
+      "id": 10029,
+      "name": "Teasing stick",
+      "wiki_key": "Teasing stick"
+    },
+    {
+      "id": 13660,
+      "name": "Chronicle",
+      "wiki_key": "Chronicle"
+    }
+  ],
+  "ambiguous": [
+    {
+      "text": "pickaxe",
+      "candidates": [
+        "1265",
+        "1267",
+        "1269",
+        "1271",
+        "1273",
+        "1275"
+      ],
+      "reason": "pickaxe tier unspecified"
+    },
+    {
+      "text": "axe",
+      "candidates": [
+        "1349",
+        "1351",
+        "1353",
+        "1355",
+        "1357",
+        "1359"
+      ],
+      "reason": "axe tier unspecified"
+    },
+    {
+      "text": "Amulet of glory",
+      "candidates": [
+        "1704",
+        "1706",
+        "1708",
+        "1710",
+        "1712"
+      ],
+      "reason": "in-game name of the uncharged amulet, but guides use it for any charge"
+    },
+    {
+      "text": "glory",
+      "candidates": [
+        "1704",
+        "1706",
+        "1708",
+        "1710",
+        "1712"
+      ],
+      "reason": "charge unspecified"
+    },
+    {
+      "text": "dueling ring",
+      "candidates": [
+        "2552",
+        "2554",
+        "2556",
+        "2558",
+        "2560",
+        "2562",
+        "2564",
+        "2566"
+      ],
+      "reason": "charge unspecified"
+    }
+  ]
+}

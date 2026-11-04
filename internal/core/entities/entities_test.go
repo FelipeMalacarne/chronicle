@@ -235,7 +235,8 @@ func TestResolveItems(t *testing.T) {
 		"games necklace":       {Ambiguous, "", "", ReasonVariantUnspecified, false},
 		"pickaxe":              {Ambiguous, "", "", ReasonAmbiguousName, false},
 		"Amulet of glory":      {Ambiguous, "", "", ReasonAmbiguousName, false},
-		"noted chisel":         {Unresolved, "", "", ReasonNotedFormUnknown, true},
+		"noted chisel":         {Resolved, "item:1756", MatchName, "", true},
+		"noted fishing pass":   {Unresolved, "", "", ReasonNotedFormUnknown, true},
 		"Few cakes":            {Unresolved, "", "", ReasonNotInCatalog, false},
 		"1k bronze arrowheads": {Unresolved, "", "", ReasonNotInCatalog, false},
 	} {

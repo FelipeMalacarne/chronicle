@@ -73,5 +73,133 @@
     "Kourend": "Kourend & Kebos",
     "Lumbridge": "Lumbridge & Draynor",
     "Wildy": "Wilderness"
-  }
+  },
+  "item_aliases": [
+    {
+      "text": "pestle/mortar",
+      "item_id": 233,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "gp",
+      "item_id": 995,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "coin",
+      "item_id": 995,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "cash stack",
+      "item_id": 995,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "air staff",
+      "item_id": 1381,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "water staff",
+      "item_id": 1383,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "earth staff",
+      "item_id": 1385,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "fire staff",
+      "item_id": 1387,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "normal log",
+      "item_id": 1511,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "normal logs",
+      "item_id": 1511,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "log",
+      "item_id": 1511,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "oak log",
+      "item_id": 1521,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "teak log",
+      "item_id": 6333,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "house tab",
+      "item_id": 8013,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "poh tab",
+      "item_id": 8013,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "house teleport tab",
+      "item_id": 8013,
+      "note": "guide shorthand (from the curated catalog)"
+    },
+    {
+      "text": "Rune sword",
+      "item_id": 1289,
+      "note": "name before the wiki renamed it to Rune shortsword"
+    }
+  ],
+  "item_ambiguous": [
+    {
+      "text": "pickaxe",
+      "reason": "pickaxe tier unspecified",
+      "item_ids": [
+        1265,
+        1267,
+        1269,
+        1271,
+        1273,
+        1275
+      ]
+    },
+    {
+      "text": "axe",
+      "reason": "axe tier unspecified",
+      "item_ids": [
+        1349,
+        1351,
+        1353,
+        1355,
+        1357,
+        1359
+      ]
+    },
+    {
+      "text": "Amulet of glory",
+      "reason": "in-game name of the uncharged amulet, but guides use it for any charge",
+      "family": "Amulet of glory"
+    },
+    {
+      "text": "glory",
+      "reason": "charge unspecified",
+      "family": "Amulet of glory"
+    },
+    {
+      "text": "dueling ring",
+      "reason": "charge unspecified",
+      "family": "Ring of dueling"
+    }
+  ]
 }

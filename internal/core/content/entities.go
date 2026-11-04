@@ -51,23 +51,60 @@ func (g *Guide) checkStepEntities(name, ptr string, st *Step, reg *entities.Regi
 	return issues
 }
 
-// checkLoadoutItemIDs validates resolved loadout item ids against the item catalog.
+// checkLoadoutItemIDs validates the resolved loadout requirements against
+// the item catalog.
 func checkLoadoutItemIDs(name, ptr string, l *Loadout, reg *entities.Registry) Errors {
 	if l == nil {
 		return nil
 	}
 	var issues Errors
-	for field, list := range map[string][]LoadoutItem{"inventory": l.Inventory, "equipment": l.Equipment} {
-		for i, it := range list {
-			if it.ItemID == nil {
-				continue
-			}
-			if !reg.Known(entities.ItemRef(*it.ItemID)) {
-				issues = append(issues, Issue{File: name, Pointer: fmt.Sprintf("%s/loadout/%s/%d/item_id", ptr, field, i), Message: fmt.Sprintf("unknown item id %d", *it.ItemID)})
+	for _, field := range []struct {
+		name string
+		list []ItemRequirement
+	}{{"inventory", l.Inventory}, {"equipment", l.Equipment}} {
+		for i, it := range field.list {
+			for _, msg := range checkRequirement(it, reg) {
+				issues = append(issues, Issue{File: name, Pointer: fmt.Sprintf("%s/loadout/%s/%d", ptr, field.name, i), Message: msg})
 			}
 		}
 	}
 	return issues
+}
+
+// checkRequirement validates one item requirement: at most one variant, and
+// every id and family known to the catalog.
+func checkRequirement(it ItemRequirement, reg *entities.Registry) []string {
+	var msgs []string
+	set := 0
+	if it.ItemID != nil {
+		set++
+		if !reg.Known(entities.ItemRef(*it.ItemID)) {
+			msgs = append(msgs, fmt.Sprintf("unknown item id %d", *it.ItemID))
+		}
+	}
+	if len(it.AnyOf) > 0 {
+		set++
+		seen := map[int]bool{}
+		for _, id := range it.AnyOf {
+			if seen[id] {
+				msgs = append(msgs, fmt.Sprintf("any_of lists item %d twice", id))
+			}
+			seen[id] = true
+			if !reg.Known(entities.ItemRef(id)) {
+				msgs = append(msgs, fmt.Sprintf("unknown item id %d in any_of", id))
+			}
+		}
+	}
+	if it.Family != "" {
+		set++
+		if _, ok := reg.Family(it.Family); !ok {
+			msgs = append(msgs, fmt.Sprintf("unknown item family %q", it.Family))
+		}
+	}
+	if set > 1 {
+		msgs = append(msgs, "set only one of item_id, any_of and family")
+	}
+	return msgs
 }
 
 func (g *Guide) checkRef(ref entities.Ref, reg *entities.Registry) string {

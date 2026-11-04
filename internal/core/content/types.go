@@ -146,11 +146,11 @@ const (
 // Loadout distinguishes explicitly complete, partial and unknown setups.
 // Unknown is represented by Status=unknown, never by empty item arrays.
 type Loadout struct {
-	Status     string        `json:"status"`
-	Inventory  []LoadoutItem `json:"inventory,omitempty"`
-	Equipment  []LoadoutItem `json:"equipment,omitempty"`
-	EmptySlots *int          `json:"empty_slots,omitempty"`
-	Source     *Provenance   `json:"source,omitempty"`
+	Status     string            `json:"status"`
+	Inventory  []ItemRequirement `json:"inventory,omitempty"`
+	Equipment  []ItemRequirement `json:"equipment,omitempty"`
+	EmptySlots *int              `json:"empty_slots,omitempty"`
+	Source     *Provenance       `json:"source,omitempty"`
 }
 
 const (
@@ -159,15 +159,97 @@ const (
 	LoadoutUnknown = "unknown"
 )
 
-// LoadoutItem is one required inventory/equipment item. Qty is nil when the
-// source names an item but does not state a quantity; Optional defaults false.
-type LoadoutItem struct {
+// ItemRequirement is one required item of a loadout or a step (docs/09
+// section 3.4). Once resolved, exactly one variant is set:
+//
+//	exact   ItemID     that id ("Hammer")
+//	any_of  AnyOf      any one of the ids, in preference order ("Axe")
+//	family  Family     any variant of a catalog family, noted or not, by
+//	                   family slug ("prayer_potion")
+//
+// None set means the name is not resolved to an item yet. Qty is nil when the
+// source does not state a quantity; Noted means the guide asks for the noted
+// form; Optional defaults false. Non-exact requirements have no objective key:
+// they are evaluated by readiness and ownership only.
+type ItemRequirement struct {
 	Name       string `json:"name"`
 	ItemID     *int   `json:"item_id,omitempty"`
+	AnyOf      []int  `json:"any_of,omitempty"`
+	Family     string `json:"family,omitempty"`
 	Qty        *int   `json:"qty,omitempty"`
+	Noted      bool   `json:"noted,omitempty"`
 	Optional   bool   `json:"optional,omitempty"`
 	SourceText string `json:"source_text,omitempty"`
 }
+
+// Item requirement variants.
+const (
+	RequireExact      = "exact"
+	RequireAnyOf      = "any_of"
+	RequireFamily     = "family"
+	RequireUnresolved = "unresolved"
+)
+
+// Variant names the requirement's variant; RequireUnresolved when none is set.
+func (r ItemRequirement) Variant() string {
+	switch {
+	case r.ItemID != nil:
+		return RequireExact
+	case len(r.AnyOf) > 0:
+		return RequireAnyOf
+	case r.Family != "":
+		return RequireFamily
+	}
+	return RequireUnresolved
+}
+
+// Objective is one objective of a step: a canonical key, the role it plays in
+// the step and where it came from (docs/09 sections 3.2, 3.3 and 4.1).
+type Objective struct {
+	Key      entities.ObjectiveKey `json:"key"`
+	Role     string                `json:"role"`
+	Evidence *ObjectiveEvidence    `json:"evidence,omitempty"`
+	Source   ObjectiveSource       `json:"source"`
+}
+
+// Objective roles.
+const (
+	// RoleCompletes: the step completes the objective.
+	RoleCompletes = "completes"
+	// RoleStarts: the step starts a quest; counts as completes of @started.
+	RoleStarts = "starts"
+	// RoleRequires: must hold before the step; never completes it.
+	RoleRequires = "requires"
+	// RoleUses: the step consumes or uses it (items, runes).
+	RoleUses = "uses"
+)
+
+// Completing reports whether the role makes the step auto_done when met.
+func (o Objective) Completing() bool { return o.Role == RoleCompletes || o.Role == RoleStarts }
+
+// ObjectiveEvidence points at the step value that supports an objective.
+// Field is a JSON pointer relative to the step; Quote and Span are set for
+// objectives read from text (Span is the exact [start, end) bytes of the
+// original). Objectives converted from rules point at the rule and carry no
+// quote.
+type ObjectiveEvidence struct {
+	Field string `json:"field"`
+	Quote string `json:"quote,omitempty"`
+	Span  []int  `json:"span,omitempty"`
+}
+
+// ObjectiveSource is the provenance of an objective. ConfirmedBy "owner" marks
+// what the owner decided during extraction; SkillVersion identifies the
+// extraction skill for llm objectives.
+type ObjectiveSource struct {
+	Method       string `json:"method"`
+	Confidence   string `json:"confidence"`
+	SkillVersion string `json:"skill_version,omitempty"`
+	ConfirmedBy  string `json:"confirmed_by,omitempty"`
+}
+
+// ConfirmedByOwner is the only ObjectiveSource.ConfirmedBy value.
+const ConfirmedByOwner = "owner"
 
 // Provenance describes how structured segment metadata was obtained.
 type Provenance struct {
@@ -180,9 +262,13 @@ type Provenance struct {
 const (
 	ProvenanceExplicit = "explicit"
 	ProvenanceDerived  = "derived"
-	ConfidenceHigh     = "high"
-	ConfidenceMedium   = "medium"
-	ConfidenceLow      = "low"
+	// ProvenanceLLM is an agent proposal that passed deterministic verification.
+	ProvenanceLLM = "llm"
+	// ProvenanceManual is human curation.
+	ProvenanceManual = "manual"
+	ConfidenceHigh   = "high"
+	ConfidenceMedium = "medium"
+	ConfidenceLow    = "low"
 )
 
 // Step is one actionable line of the guide.
@@ -210,6 +296,23 @@ type Step struct {
 	// Entities are the exactly resolved entity references of the step,
 	// written by internal/core/entities/enrich.
 	Entities []EntityMention `json:"entities,omitempty"`
+	// Objectives are the step's objectives. guide.json may state them; the
+	// loader adds those converted from complete_when/prerequisites and those
+	// of the step's annotation (docs/09 section 4.2).
+	Objectives []Objective `json:"objectives,omitempty"`
+	// LocationRef is the canonical location of the step (from guide.json or
+	// its annotation); Location stays the source text.
+	LocationRef *entities.Ref `json:"location_ref,omitempty"`
+	// Requirements and BankActions come only from annotations. Requirements
+	// are the items the step needs; BankActions are the annotated bank
+	// actions that could not replace a segment's own (the step does not start
+	// its segment). Both are composed by the loader, never read from guide.json.
+	Requirements []ItemRequirement `json:"requirements,omitempty"`
+	BankActions  []BankAction      `json:"bank_actions,omitempty"`
+	// TextHash is the hash of the step's source text the annotations are
+	// pinned to (set by the loader; see StepTextHash). It is never encoded:
+	// guide.json does not store it.
+	TextHash string `json:"-"`
 
 	// SectionID is the id of the section that contains the step (set by the loader).
 	SectionID string `json:"-"`
@@ -221,9 +324,20 @@ type Step struct {
 	SegmentID string `json:"-"`
 }
 
-// IsManual reports whether the step has no automatic completion rule
-// (absent or empty complete_when ⇒ checkbox).
-func (s *Step) IsManual() bool { return len(s.CompleteWhen) == 0 }
+// IsManual reports whether the step has nothing that completes it
+// automatically: no complete_when rule and no completing objective
+// (checkbox).
+func (s *Step) IsManual() bool {
+	if len(s.CompleteWhen) > 0 {
+		return false
+	}
+	for _, o := range s.Objectives {
+		if o.Completing() {
+			return false
+		}
+	}
+	return true
+}
 
 // EntityMention is one entity reference of a step that resolved with exact
 // confidence. Ref is the identity; SourceText (the original text as written)

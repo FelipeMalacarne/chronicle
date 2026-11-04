@@ -1,7 +1,7 @@
 // Package enrich attaches canonical entity refs to imported guide steps.
 //
 // Only exact, deterministic mappings are written into the guide
-// (Step.Entities, LoadoutItem.ItemID). Everything else — ambiguous names,
+// (Step.Entities, ItemRequirement.ItemID). Everything else — ambiguous names,
 // names missing from the catalogs, bare quest names without quest context —
 // goes to a machine-readable Report so it can be curated, never guessed.
 // Enrichment reads the source fields but never rewrites them, and it never
@@ -112,7 +112,7 @@ func Guide(g *content.Guide, reg *entities.Registry) *Report {
 		if seg.Loadout == nil {
 			continue
 		}
-		for _, list := range [][]content.LoadoutItem{seg.Loadout.Inventory, seg.Loadout.Equipment} {
+		for _, list := range [][]content.ItemRequirement{seg.Loadout.Inventory, seg.Loadout.Equipment} {
 			for i := range list {
 				it := &list[i]
 				text := it.SourceText

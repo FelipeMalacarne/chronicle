@@ -66,10 +66,17 @@ type Segment struct {
 
 // Item is the readiness of one loadout item. Carried is about the live
 // inventory/equipment; Owned is ownership anywhere, so the UI can say "it is
-// in the bank" without implying that the player is ready.
+// in the bank" without implying that the player is ready. Variant is the
+// requirement variant (exact, any_of, family, unresolved); for any_of,
+// MatchedID is the id that satisfied (or came closest to) the requirement.
 type Item struct {
 	Name       string           `json:"name"`
+	Variant    string           `json:"variant"`
 	ItemID     *int             `json:"item_id,omitempty"`
+	AnyOf      []int            `json:"any_of,omitempty"`
+	Family     string           `json:"family,omitempty"`
+	Noted      bool             `json:"noted,omitempty"`
+	MatchedID  *int             `json:"matched_id,omitempty"`
 	Slot       string           `json:"slot"`
 	Required   int64            `json:"required"`
 	QtyStated  bool             `json:"qty_stated"`
@@ -166,29 +173,108 @@ func EvaluateSegment(g *content.Guide, seg *content.Segment, h rules.ItemHolding
 	return out
 }
 
-func evaluateItem(li content.LoadoutItem, slot string, h rules.ItemHoldings, catalog *entities.Registry) Item {
+func evaluateItem(li content.ItemRequirement, slot string, h rules.ItemHoldings, catalog *entities.Registry) Item {
 	it := Item{
-		Name: li.Name, ItemID: li.ItemID, Slot: slot, Required: 1, QtyStated: li.Qty != nil,
-		Optional: li.Optional, SourceText: li.SourceText, Verdict: rules.Unknown,
+		Name: li.Name, Variant: li.Variant(), ItemID: li.ItemID, AnyOf: li.AnyOf, Family: li.Family, Noted: li.Noted,
+		Slot: slot, Required: 1, QtyStated: li.Qty != nil, Optional: li.Optional, SourceText: li.SourceText, Verdict: rules.Unknown,
 	}
 	if li.Qty != nil && *li.Qty > 0 {
 		it.Required = int64(*li.Qty)
 	}
-	if li.ItemID == nil {
-		it.Reason = "item name not resolved to an item id"
-		return it
-	}
-	id := *li.ItemID
-	owned := rules.Owns(h, catalog, id, it.Required, nil)
-	it.Owned = &owned
-
 	// An inventory item may also be wielded (axes, pickaxes); an equipment
-	// item must be worn. Ids compare exactly: a noted stack is not the
-	// unnoted item it notes, and doses are distinct items.
+	// item must be worn.
 	carriers := []string{rules.ContainerEquipment}
 	if slot == SlotInventory {
 		carriers = []string{rules.ContainerInventory, rules.ContainerEquipment}
 	}
+	switch it.Variant {
+	case content.RequireExact:
+		id, ok := carriedID(*li.ItemID, li.Noted, catalog)
+		if !ok {
+			it.Reason = "the noted form of the item is not in the catalog"
+			return it
+		}
+		owned := rules.Owns(h, catalog, *li.ItemID, it.Required, nil)
+		it.Owned = &owned
+		// Ids compare exactly: a noted stack is not the unnoted item it notes,
+		// and doses are distinct items.
+		it.Carried, it.Verdict, it.Reason = carried(h, carriers, it.Required, func(got int) bool { return got == id })
+	case content.RequireAnyOf:
+		owned, ownedID := rules.OwnsAnyOf(h, catalog, li.AnyOf, it.Required, nil)
+		it.Owned = &owned
+		// Each id must reach the quantity on its own; the first that does wins.
+		var results []rules.Verdict
+		for _, candidate := range li.AnyOf {
+			id, ok := carriedID(candidate, li.Noted, catalog)
+			if !ok {
+				results = append(results, rules.Unknown)
+				continue
+			}
+			n, v, reason := carried(h, carriers, it.Required, func(got int) bool { return got == id })
+			results = append(results, v)
+			if v == rules.Met {
+				it.Carried, it.Verdict, it.Reason, it.MatchedID = n, v, "", &candidate
+				return it
+			}
+			it.Carried = max(it.Carried, n)
+			if it.Reason == "" {
+				it.Reason = reason
+			}
+		}
+		it.Verdict = rules.Unmet
+		for _, v := range results {
+			if v == rules.Unknown {
+				it.Verdict = rules.Unknown
+			}
+		}
+		if it.Verdict == rules.Unmet {
+			it.Reason = ""
+		}
+		it.MatchedID = &ownedID
+	case content.RequireFamily:
+		owned := rules.OwnsFamily(h, catalog, li.Family, it.Required, nil)
+		it.Owned = &owned
+		if catalog == nil {
+			it.Reason = "no item catalog to expand the family"
+			return it
+		}
+		ids, ok := catalog.Family(li.Family)
+		if !ok {
+			it.Reason = "unknown item family " + li.Family
+			return it
+		}
+		// Any dose or charge of the family, noted or not (docs/09 section 3.4).
+		it.Carried, it.Verdict, it.Reason = carried(h, carriers, it.Required, func(got int) bool {
+			return catalog.SameItem(got, ids[0], entities.CompareFamily)
+		})
+	default:
+		it.Reason = "item name not resolved to an item id"
+	}
+	return it
+}
+
+// carriedID is the id a carried stack must have: the noted form when the
+// guide asks for noted items.
+func carriedID(id int, noted bool, catalog *entities.Registry) (int, bool) {
+	if !noted {
+		return id, true
+	}
+	if catalog == nil {
+		return 0, false
+	}
+	if n, ok := catalog.NotedID(id); ok {
+		return n, true
+	}
+	if f, ok := catalog.Item(id); ok && f.Noted {
+		return id, true
+	}
+	return 0, false
+}
+
+// carried sums the live quantities of matching ids in carriers. Absence is
+// proven only when every carrier is live with a full baseline.
+func carried(h rules.ItemHoldings, carriers []string, required int64, match func(int) bool) (int64, rules.Verdict, string) {
+	var n int64
 	provesAbsence := true
 	for _, name := range carriers {
 		c, ok := h[name]
@@ -196,20 +282,22 @@ func evaluateItem(li content.LoadoutItem, slot string, h rules.ItemHoldings, cat
 			provesAbsence = false
 			continue
 		}
-		it.Carried += c.Quantities[id]
+		for id, qty := range c.Quantities {
+			if match(id) {
+				n += qty
+			}
+		}
 		if !c.Complete {
 			provesAbsence = false
 		}
 	}
 	switch {
-	case it.Carried >= it.Required:
-		it.Verdict = rules.Met
+	case n >= required:
+		return n, rules.Met, ""
 	case provesAbsence:
-		it.Verdict = rules.Unmet
-	default:
-		it.Reason = carrierReason(h, carriers)
+		return n, rules.Unmet, ""
 	}
-	return it
+	return n, rules.Unknown, carrierReason(h, carriers)
 }
 
 func carrierReason(h rules.ItemHoldings, carriers []string) string {

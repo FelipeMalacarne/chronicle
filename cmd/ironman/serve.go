@@ -55,6 +55,9 @@ func runServe(parent context.Context) error {
 		return fmt.Errorf("load content from %s: %w", cfg.ContentDir, err)
 	}
 	logger.Info("content loaded", "dir", cfg.ContentDir, "guides", len(cnt.Guides), "steps", cnt.StepCount())
+	for _, w := range cnt.Warnings {
+		logger.Warn("annotation skipped", "issue", w.Error())
+	}
 
 	var db httpapi.DBPinger
 	var ingestService storeingest.Service

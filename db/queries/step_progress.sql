@@ -2,9 +2,9 @@
 -- Written by the rule engine after re-evaluation. Rows with manual_locked = true
 -- are left untouched: the user pinned the status.
 INSERT INTO step_progress (
-  account_id, step_id, status, completed_at, evidence_snapshot_id, evidence, rule_hash, regressed_at, updated_at
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
-ON CONFLICT (account_id, step_id) DO UPDATE SET
+  account_id, guide_id, step_id, status, completed_at, evidence_snapshot_id, evidence, rule_hash, regressed_at, updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
+ON CONFLICT (account_id, guide_id, step_id) DO UPDATE SET
   status               = EXCLUDED.status,
   completed_at         = EXCLUDED.completed_at,
   evidence_snapshot_id = EXCLUDED.evidence_snapshot_id,
@@ -18,9 +18,9 @@ RETURNING *;
 -- name: SetStepManualStatus :one
 -- Written by the user (UI, CLI, MCP). cause='user' event must be inserted by the caller.
 INSERT INTO step_progress (
-  account_id, step_id, status, completed_at, manual_locked, manual_at, user_note, updated_at
-) VALUES ($1, $2, $3, $4, $5, now(), $6, now())
-ON CONFLICT (account_id, step_id) DO UPDATE SET
+  account_id, guide_id, step_id, status, completed_at, manual_locked, manual_at, user_note, updated_at
+) VALUES ($1, $2, $3, $4, $5, $6, now(), $7, now())
+ON CONFLICT (account_id, guide_id, step_id) DO UPDATE SET
   status        = EXCLUDED.status,
   completed_at  = EXCLUDED.completed_at,
   manual_locked = EXCLUDED.manual_locked,
@@ -30,14 +30,16 @@ ON CONFLICT (account_id, step_id) DO UPDATE SET
 RETURNING *;
 
 -- name: GetStepProgress :one
-SELECT * FROM step_progress WHERE account_id = $1 AND step_id = $2;
+SELECT * FROM step_progress WHERE account_id = $1 AND guide_id = $2 AND step_id = $3;
 
 -- name: ListStepProgressByAccount :many
-SELECT * FROM step_progress WHERE account_id = $1 ORDER BY step_id;
+SELECT * FROM step_progress
+WHERE account_id = $1 AND guide_id = $2
+ORDER BY step_id;
 
 -- name: ListStepProgressByStatus :many
 SELECT * FROM step_progress
-WHERE account_id = $1 AND status = $2
+WHERE account_id = $1 AND guide_id = $2 AND status = $3
 ORDER BY updated_at DESC;
 
 -- name: ListStepBoard :many
@@ -47,22 +49,23 @@ SELECT cs.step_id, cs.section_id, cs.position, cs.is_manual, cs.layers, cs.modes
        COALESCE(sp.status, 'pending')::text AS status,
        sp.completed_at, sp.manual_locked, sp.regressed_at, sp.user_note
 FROM content_steps cs
-LEFT JOIN step_progress sp ON sp.step_id = cs.step_id AND sp.account_id = $1
+LEFT JOIN step_progress sp
+  ON sp.guide_id = cs.guide_id AND sp.step_id = cs.step_id AND sp.account_id = $1
 WHERE cs.guide_id = $2
 ORDER BY cs.position;
 
 -- name: CountStepProgressByStatus :many
 SELECT status, count(*) AS total
 FROM step_progress
-WHERE account_id = $1
+WHERE account_id = $1 AND guide_id = $2
 GROUP BY status;
 
 -- name: InsertStepProgressEvent :exec
-INSERT INTO step_progress_events (id, account_id, step_id, from_status, to_status, cause, snapshot_id)
-VALUES ($1, $2, $3, $4, $5, $6, $7);
+INSERT INTO step_progress_events (id, account_id, guide_id, step_id, from_status, to_status, cause, snapshot_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8);
 
 -- name: ListRecentStepProgressEvents :many
 SELECT * FROM step_progress_events
-WHERE account_id = $1 AND created_at >= $2
+WHERE account_id = $1 AND guide_id = $2 AND created_at >= $3
 ORDER BY created_at DESC
-LIMIT $3;
+LIMIT $4;

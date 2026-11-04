@@ -1,6 +1,8 @@
 package migrate
 
 import (
+	"bytes"
+	"os"
 	"testing"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
@@ -21,6 +23,20 @@ func TestConvertRealNormalizedGuide(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	checkedIn, err := os.ReadFile("../../../../content/guides/oziris-main/guide.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(data, checkedIn) {
+		t.Fatal("checked-in Oziris guide differs from deterministic migration; run `go run ./cmd/ironman content migrate`")
+	}
+	checkedReadme, err := os.ReadFile("../../../../content/guides/oziris-main/README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := readmeFor(n, g, "data/guide/normalized/guide.json"); string(checkedReadme) != want {
+		t.Fatal("checked-in Oziris README differs from deterministic migration")
+	}
 	parsed, err := content.ParseGuide("guide.json", data)
 	if err != nil {
 		t.Fatalf("output invalid against canonical schema: %v", err)
@@ -30,6 +46,18 @@ func TestConvertRealNormalizedGuide(t *testing.T) {
 	}
 	if parsed.ID != "oziris-main" || parsed.SchemaVersion != 1 {
 		t.Errorf("header = %q v%d", parsed.ID, parsed.SchemaVersion)
+	}
+	if parsed.DefaultVariant != "main" || len(parsed.Variants) != 1 {
+		t.Fatalf("variants = default %q, count %d; want main, 1", parsed.DefaultVariant, len(parsed.Variants))
+	}
+	bankLegs := 0
+	for _, segment := range parsed.Segments() {
+		if segment.Kind == content.SegmentBankLeg {
+			bankLegs++
+		}
+	}
+	if len(parsed.Segments()) != 32 || bankLegs != 25 {
+		t.Fatalf("segments = %d, bank legs = %d; want 32, 25", len(parsed.Segments()), bankLegs)
 	}
 	withRules := 0
 	for _, st := range parsed.Steps() {
@@ -55,6 +83,26 @@ func TestConvertRealNormalizedGuide(t *testing.T) {
 	sail, _ := parsed.Section("S")
 	if !sail.IsTrack() {
 		t.Error("section S should be kind track")
+	}
+	bank, ok := parsed.Step("1.1.131")
+	if !ok {
+		t.Fatal("representative bank step 1.1.131 missing")
+	}
+	segment, ok := parsed.Segment(bank.SegmentID)
+	if !ok || segment.Kind != content.SegmentBankLeg {
+		t.Fatalf("1.1.131 segment = %#v, %v", segment, ok)
+	}
+	if segment.Loadout == nil || segment.Loadout.Status != content.LoadoutPartial || len(segment.Loadout.Inventory) != 5 || len(segment.Loadout.Equipment) != 1 {
+		t.Fatalf("1.1.131 loadout = %#v", segment.Loadout)
+	}
+	if got := segment.Loadout.Inventory[4]; got.Name != "cakes" || got.Qty == nil || *got.Qty != 18 || got.SourceText != "18 cakes" {
+		t.Errorf("1.1.131 cake requirement = %#v", got)
+	}
+	if got := segment.Loadout.Equipment[0]; got.Name != "Gloves" || got.SourceText != "Gloves (equip)" {
+		t.Errorf("1.1.131 equipment = %#v", got)
+	}
+	if source := segment.Loadout.Source; source == nil || source.Method != content.ProvenanceExplicit || len(source.StepIDs) != 1 || source.StepIDs[0] != bank.ID {
+		t.Errorf("1.1.131 loadout provenance = %#v", source)
 	}
 }
 

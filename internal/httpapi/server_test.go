@@ -24,11 +24,18 @@ func newTestServer(t *testing.T, db DBPinger) *httptest.Server {
 	if err != nil {
 		t.Fatalf("load content: %v", err)
 	}
+	return newTestServerWithContent(t, c, db)
+}
+
+func newTestServerWithContent(t *testing.T, c *content.Content, db DBPinger) *httptest.Server {
+	t.Helper()
 	static := fstest.MapFS{
 		"index.html":   {Data: []byte("<html>spa</html>")},
 		"assets/a.css": {Data: []byte("body{}")},
 	}
-	srv := httptest.NewServer(New(Options{Version: "test", Content: c, DB: db, Static: static}))
+	srv := httptest.NewServer(New(Options{
+		Version: "test", Content: c, DefaultGuideID: "oziris-main", DB: db, Static: static,
+	}))
 	t.Cleanup(srv.Close)
 	return srv
 }
@@ -65,7 +72,7 @@ func TestHealth(t *testing.T) {
 	if resp.StatusCode != 200 || h.Status != "ok" || h.Version != "test" {
 		t.Errorf("health = %d %+v", resp.StatusCode, h)
 	}
-	if h.Content.Guides != 1 || h.Content.Steps != 576 {
+	if h.Content.Guides != 2 || h.Content.Steps != 802 {
 		t.Errorf("content counts = %+v", h.Content)
 	}
 	if h.DB != DBNotConfigured {
@@ -95,6 +102,7 @@ func TestHealthDBStatus(t *testing.T) {
 func TestNow(t *testing.T) {
 	srv := newTestServer(t, nil)
 	var now struct {
+		Guide   string `json:"guide"`
 		Current struct {
 			ID      string `json:"id"`
 			Section string `json:"section"`
@@ -109,7 +117,7 @@ func TestNow(t *testing.T) {
 		} `json:"progress"`
 	}
 	getJSON(t, srv.URL+"/api/now", &now)
-	if now.Current.ID == "" || now.Current.Section != "1.1" {
+	if now.Guide != "oziris-main" || now.Current.ID == "" || now.Current.Section != "1.1" {
 		t.Errorf("current = %+v", now.Current)
 	}
 	if len(now.Next) != 5 {
@@ -134,11 +142,31 @@ func TestGuideSectionStep(t *testing.T) {
 			} `json:"sections"`
 		} `json:"guides"`
 	}
-	getJSON(t, srv.URL+"/api/guide", &guide)
-	if len(guide.Guides) != 1 || len(guide.Guides[0].Sections) != 7 {
+	getJSON(t, srv.URL+"/api/guides", &guide)
+	if len(guide.Guides) != 2 {
 		t.Fatalf("guide = %+v", guide)
 	}
-	if s := guide.Guides[0].Sections[6]; s.ID != "S" || !s.Track || s.Steps != 12 {
+	var oziris, bruh *struct {
+		ID       string `json:"id"`
+		Sections []struct {
+			ID    string `json:"id"`
+			Slug  string `json:"slug"`
+			Steps int    `json:"steps"`
+			Track bool   `json:"track"`
+		} `json:"sections"`
+	}
+	for index := range guide.Guides {
+		switch guide.Guides[index].ID {
+		case "oziris-main":
+			oziris = &guide.Guides[index]
+		case "bruhsailer-main":
+			bruh = &guide.Guides[index]
+		}
+	}
+	if oziris == nil || bruh == nil || len(oziris.Sections) != 7 || len(bruh.Sections) == 0 {
+		t.Fatalf("missing guide summaries: %+v", guide.Guides)
+	}
+	if s := oziris.Sections[6]; s.ID != "S" || !s.Track || s.Steps != 12 {
 		t.Errorf("sailing summary = %+v", s)
 	}
 
@@ -147,11 +175,11 @@ func TestGuideSectionStep(t *testing.T) {
 		Guide string           `json:"guide"`
 		Steps []map[string]any `json:"steps"`
 	}
-	getJSON(t, srv.URL+"/api/guide/1.1", &sec)
+	getJSON(t, srv.URL+"/api/guides/oziris-main/sections/1.1", &sec)
 	if sec.ID != "1.1" || sec.Guide != "oziris-main" || len(sec.Steps) != 286 {
 		t.Errorf("section 1.1 = %s %s %d steps", sec.ID, sec.Guide, len(sec.Steps))
 	}
-	getJSON(t, srv.URL+"/api/guide/sailing", &sec)
+	getJSON(t, srv.URL+"/api/guides/oziris-main/sections/sailing", &sec)
 	if sec.ID != "S" {
 		t.Errorf("section by slug = %q", sec.ID)
 	}
@@ -161,7 +189,7 @@ func TestGuideSectionStep(t *testing.T) {
 		Section      string           `json:"section"`
 		CompleteWhen []map[string]any `json:"complete_when"`
 	}
-	getJSON(t, srv.URL+"/api/steps/1.1.258a", &step)
+	getJSON(t, srv.URL+"/api/guides/oziris-main/steps/1.1.258a", &step)
 	if step.ID != "1.1.258a" || step.Section != "1.1" || len(step.CompleteWhen) != 2 {
 		t.Errorf("step = %+v", step)
 	}
@@ -169,11 +197,108 @@ func TestGuideSectionStep(t *testing.T) {
 	var e struct {
 		Error string `json:"error"`
 	}
-	if resp := getJSON(t, srv.URL+"/api/steps/nope", &e); resp.StatusCode != 404 || e.Error == "" {
+	if resp := getJSON(t, srv.URL+"/api/guides/oziris-main/steps/nope", &e); resp.StatusCode != 404 || e.Error == "" {
 		t.Errorf("missing step = %d %+v", resp.StatusCode, e)
+	}
+	if resp := getJSON(t, srv.URL+"/api/guides/no-such-guide", &e); resp.StatusCode != 404 {
+		t.Errorf("missing guide = %d %+v", resp.StatusCode, e)
+	}
+
+	// Legacy paths deterministically select Oziris instead of searching or
+	// concatenating every loaded route.
+	getJSON(t, srv.URL+"/api/guide/1.1", &sec)
+	if sec.Guide != "oziris-main" {
+		t.Errorf("legacy section selected %q", sec.Guide)
+	}
+	getJSON(t, srv.URL+"/api/steps/1.1.258a", &step)
+	if step.ID != "1.1.258a" {
+		t.Errorf("legacy step = %+v", step)
 	}
 	if resp := getJSON(t, srv.URL+"/api/whatever", &e); resp.StatusCode != 404 {
 		t.Errorf("unknown api route = %d", resp.StatusCode)
+	}
+}
+
+func TestGuideScopedRoutesIsolateCollidingLocalIDs(t *testing.T) {
+	c, err := content.Load("../../content")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		guide, label string
+	}{
+		{guide: "oziris-main", label: "Oziris collision"},
+		{guide: "bruhsailer-main", label: "BruhSailer collision"},
+	} {
+		guide, ok := c.Guide(tc.guide)
+		if !ok {
+			t.Fatalf("guide %s not loaded", tc.guide)
+		}
+		section := &content.Section{
+			ID: "shared-section", Slug: "shared-section", Title: tc.label,
+			Steps: []*content.Step{{ID: "shared-step", Text: tc.label}},
+		}
+		if len(guide.Variants) > 0 {
+			guide.Variants[0].Sections = append(guide.Variants[0].Sections, section)
+		} else {
+			guide.Sections = append(guide.Sections, section)
+		}
+		guide.Index()
+	}
+	srv := newTestServerWithContent(t, c, nil)
+
+	for _, tc := range []struct {
+		guide, label string
+	}{
+		{guide: "oziris-main", label: "Oziris collision"},
+		{guide: "bruhsailer-main", label: "BruhSailer collision"},
+	} {
+		var section struct {
+			Guide string `json:"guide"`
+			Title string `json:"title"`
+			Steps []struct {
+				ID   string `json:"id"`
+				Text string `json:"text"`
+			} `json:"steps"`
+		}
+		getJSON(t, srv.URL+"/api/guides/"+tc.guide+"/sections/shared-section", &section)
+		if section.Guide != tc.guide || section.Title != tc.label || len(section.Steps) != 1 || section.Steps[0].Text != tc.label {
+			t.Errorf("%s section leaked: %+v", tc.guide, section)
+		}
+		var step struct {
+			Guide string `json:"guide"`
+			ID    string `json:"id"`
+			Text  string `json:"text"`
+		}
+		getJSON(t, srv.URL+"/api/guides/"+tc.guide+"/steps/shared-step", &step)
+		if step.Guide != tc.guide || step.ID != "shared-step" || step.Text != tc.label {
+			t.Errorf("%s step leaked: %+v", tc.guide, step)
+		}
+	}
+	var legacy struct {
+		Guide string `json:"guide"`
+		Text  string `json:"text"`
+	}
+	getJSON(t, srv.URL+"/api/steps/shared-step", &legacy)
+	if legacy.Guide != "oziris-main" || legacy.Text != "Oziris collision" {
+		t.Fatalf("legacy collision resolution = %+v", legacy)
+	}
+}
+
+func TestGuideScopedNowDoesNotConcatenateRoutes(t *testing.T) {
+	srv := newTestServer(t, nil)
+	for _, tc := range []struct {
+		guide string
+		total int
+	}{
+		{guide: "oziris-main", total: 564},
+		{guide: "bruhsailer-main", total: 226},
+	} {
+		var now nowResponse
+		getJSON(t, srv.URL+"/api/guides/"+tc.guide+"/now", &now)
+		if now.Guide != tc.guide || now.Current == nil || now.Current.Guide != tc.guide || now.Progress.Total != tc.total {
+			t.Errorf("%s now = %+v", tc.guide, now)
+		}
 	}
 }
 

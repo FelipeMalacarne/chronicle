@@ -16,7 +16,7 @@ func newContentCmd() *cobra.Command {
 		Use:   "content",
 		Short: "Validate and migrate guide content",
 	}
-	cmd.AddCommand(newContentValidateCmd(), newContentMigrateCmd())
+	cmd.AddCommand(newContentValidateCmd(), newContentMigrateCmd(), newContentImportBruhsailerCmd())
 	return cmd
 }
 
@@ -99,7 +99,8 @@ content/guides/<id>/guide.json plus README.md (attribution and provenance).`,
 				return reportIssues(cmd, err)
 			}
 			w := cmd.OutOrStdout()
-			fmt.Fprintf(w, "wrote %s (%d sections, %d steps: %d with rules, %d manual)\n", res.GuideFile, res.Sections, res.Steps, res.WithRules, res.Manual)
+			fmt.Fprintf(w, "wrote %s (%d variants, %d sections, %d segments, %d bank legs, %d steps: %d with rules, %d manual)\n",
+				res.GuideFile, res.Variants, res.Sections, res.Segments, res.BankLegs, res.Steps, res.WithRules, res.Manual)
 			fmt.Fprintf(w, "wrote %s\n", res.ReadmeFile)
 			return nil
 		},

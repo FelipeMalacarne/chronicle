@@ -17,6 +17,7 @@ import (
 	"golang.org/x/text/message"
 
 	"github.com/FelipeMalacarne/ironman-planner/content/schema"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 )
 
 // GuidesSubdir is the directory under the content dir that holds one folder per guide.
@@ -29,8 +30,6 @@ const GuideFileName = "guide.json"
 type Content struct {
 	Dir    string
 	Guides []*Guide
-
-	steps map[string]*Step
 }
 
 // Load reads <dir>/guides/*/guide.json, validates each file against the
@@ -47,7 +46,7 @@ func Load(dir string) (*Content, error) {
 	}
 	sort.Strings(files)
 
-	c := &Content{Dir: dir, steps: map[string]*Step{}}
+	c := &Content{Dir: dir}
 	var issues Errors
 	for _, f := range files {
 		g, err := LoadGuideFile(f)
@@ -62,13 +61,6 @@ func Load(dir string) (*Content, error) {
 			if prev.ID == g.ID {
 				issues = append(issues, Issue{File: f, Pointer: "/id", Message: fmt.Sprintf("duplicate guide id %q (also in %s)", g.ID, prev.File)})
 			}
-		}
-		for _, st := range g.Steps() {
-			if prev, dup := c.steps[st.ID]; dup {
-				issues = append(issues, Issue{File: f, Pointer: "", Message: fmt.Sprintf("step id %q already used by guide %q", st.ID, prev.GuideID)})
-				continue
-			}
-			c.steps[st.ID] = st
 		}
 		c.Guides = append(c.Guides, g)
 	}
@@ -115,45 +107,131 @@ func ParseGuide(name string, data []byte) (*Guide, error) {
 // check runs semantic validation on an indexed guide.
 func (g *Guide) check(name string) Errors {
 	var issues Errors
-	seenSec := map[string]int{}
-	seenSlug := map[string]int{}
+	seenVariant := map[string]string{}
+	seenSec := map[string]string{}
+	seenSlug := map[string]string{}
+	seenSegment := map[string]string{}
 	seenStep := map[string]string{}
-	for si, sec := range g.Sections {
-		secPtr := fmt.Sprintf("/sections/%d", si)
-		if j, dup := seenSec[sec.ID]; dup {
-			issues = append(issues, Issue{File: name, Pointer: secPtr + "/id", Message: fmt.Sprintf("duplicate section id %q (first at /sections/%d)", sec.ID, j)})
-		}
-		seenSec[sec.ID] = si
-		if j, dup := seenSlug[sec.Slug]; dup {
-			issues = append(issues, Issue{File: name, Pointer: secPtr + "/slug", Message: fmt.Sprintf("duplicate section slug %q (first at /sections/%d)", sec.Slug, j)})
-		}
-		seenSlug[sec.Slug] = si
-		for ti, st := range sec.Steps {
-			ptr := fmt.Sprintf("%s/steps/%d", secPtr, ti)
-			if first, dup := seenStep[st.ID]; dup {
-				issues = append(issues, Issue{File: name, Pointer: ptr + "/id", Message: fmt.Sprintf("duplicate step id %q (first at %s)", st.ID, first)})
+	type sectionAt struct {
+		section *Section
+		pointer string
+	}
+	type stepAt struct {
+		step    *Step
+		pointer string
+	}
+	var sections []sectionAt
+	if len(g.Variants) > 0 {
+		for vi, variant := range g.Variants {
+			variantPtr := fmt.Sprintf("/variants/%d", vi)
+			if first, dup := seenVariant[variant.ID]; dup {
+				issues = append(issues, Issue{File: name, Pointer: variantPtr + "/id", Message: fmt.Sprintf("duplicate variant id %q (first at %s)", variant.ID, first)})
 			} else {
-				seenStep[st.ID] = ptr
+				seenVariant[variant.ID] = variantPtr
+			}
+			for si, sec := range variant.Sections {
+				sections = append(sections, sectionAt{section: sec, pointer: fmt.Sprintf("%s/sections/%d", variantPtr, si)})
+			}
+		}
+		if _, ok := seenVariant[g.DefaultVariant]; !ok {
+			issues = append(issues, Issue{File: name, Pointer: "/default_variant", Message: fmt.Sprintf("unknown variant %q", g.DefaultVariant)})
+		}
+	} else {
+		for si, sec := range g.Sections {
+			sections = append(sections, sectionAt{section: sec, pointer: fmt.Sprintf("/sections/%d", si)})
+		}
+	}
+
+	var steps []stepAt
+	reg, regErr := entities.Default()
+	if regErr != nil {
+		issues = append(issues, Issue{File: name, Message: regErr.Error()})
+	}
+	checkProvenance := func(source Provenance, ptr string, allowed map[string]bool) {
+		for i, stepID := range source.StepIDs {
+			if _, ok := g.stepsByID[stepID]; !ok {
+				issues = append(issues, Issue{File: name, Pointer: fmt.Sprintf("%s/step_ids/%d", ptr, i), Message: fmt.Sprintf("unknown provenance step %q", stepID)})
+				continue
+			}
+			if allowed != nil && !allowed[stepID] {
+				issues = append(issues, Issue{File: name, Pointer: fmt.Sprintf("%s/step_ids/%d", ptr, i), Message: fmt.Sprintf("provenance step %q is outside this segment", stepID)})
 			}
 		}
 	}
-	// References to other steps must resolve (quests/skills/items are
-	// resolved later by the graph builder against the wiki).
-	for si, sec := range g.Sections {
-		for ti, st := range sec.Steps {
-			ptr := fmt.Sprintf("/sections/%d/steps/%d", si, ti)
-			for field, refs := range map[string][]string{"requires": st.Requires, "recommended_after": st.RecommendedAfter} {
-				for ri, ref := range refs {
-					id, ok := strings.CutPrefix(ref, "step:")
-					if !ok {
-						continue
-					}
-					if _, found := g.stepsByID[id]; !found {
-						issues = append(issues, Issue{File: name, Pointer: fmt.Sprintf("%s/%s/%d", ptr, field, ri), Message: fmt.Sprintf("unknown step %q", id)})
-					}
-					if id == st.ID {
-						issues = append(issues, Issue{File: name, Pointer: fmt.Sprintf("%s/%s/%d", ptr, field, ri), Message: "step references itself"})
-					}
+	for _, entry := range sections {
+		sec, secPtr := entry.section, entry.pointer
+		if first, dup := seenSec[sec.ID]; dup {
+			issues = append(issues, Issue{File: name, Pointer: secPtr + "/id", Message: fmt.Sprintf("duplicate section id %q (first at %s)", sec.ID, first)})
+		} else {
+			seenSec[sec.ID] = secPtr
+		}
+		if first, dup := seenSlug[sec.Slug]; dup {
+			issues = append(issues, Issue{File: name, Pointer: secPtr + "/slug", Message: fmt.Sprintf("duplicate section slug %q (first at %s)", sec.Slug, first)})
+		} else {
+			seenSlug[sec.Slug] = secPtr
+		}
+		if len(sec.Segments) == 0 {
+			for ti, st := range sec.Steps {
+				steps = append(steps, stepAt{step: st, pointer: fmt.Sprintf("%s/steps/%d", secPtr, ti)})
+			}
+			continue
+		}
+		for mi, segment := range sec.Segments {
+			segmentPtr := fmt.Sprintf("%s/segments/%d", secPtr, mi)
+			segmentStepIDs := make(map[string]bool, len(segment.Steps))
+			for _, step := range segment.Steps {
+				segmentStepIDs[step.ID] = true
+			}
+			if first, dup := seenSegment[segment.ID]; dup {
+				issues = append(issues, Issue{File: name, Pointer: segmentPtr + "/id", Message: fmt.Sprintf("duplicate segment id %q (first at %s)", segment.ID, first)})
+			} else {
+				seenSegment[segment.ID] = segmentPtr
+			}
+			if segment.Kind == SegmentBankLeg && len(segment.BankActions) == 0 {
+				issues = append(issues, Issue{File: name, Pointer: segmentPtr + "/bank_actions", Message: "bank_leg requires at least one explicit bank action"})
+			}
+			if segment.Kind == SegmentSequence && len(segment.BankActions) > 0 {
+				issues = append(issues, Issue{File: name, Pointer: segmentPtr + "/bank_actions", Message: "sequence cannot claim bank actions"})
+			}
+			checkProvenance(segment.Source, segmentPtr+"/source", segmentStepIDs)
+			for ai, action := range segment.BankActions {
+				checkProvenance(action.Source, fmt.Sprintf("%s/bank_actions/%d/source", segmentPtr, ai), segmentStepIDs)
+			}
+			if segment.Loadout != nil && segment.Loadout.Source != nil {
+				checkProvenance(*segment.Loadout.Source, segmentPtr+"/loadout/source", segmentStepIDs)
+			}
+			if reg != nil {
+				issues = append(issues, checkLoadoutItemIDs(name, segmentPtr, segment.Loadout, reg)...)
+			}
+			for ti, st := range segment.Steps {
+				steps = append(steps, stepAt{step: st, pointer: fmt.Sprintf("%s/steps/%d", segmentPtr, ti)})
+			}
+		}
+	}
+
+	for _, entry := range steps {
+		st, ptr := entry.step, entry.pointer
+		if first, dup := seenStep[st.ID]; dup {
+			issues = append(issues, Issue{File: name, Pointer: ptr + "/id", Message: fmt.Sprintf("duplicate step id %q (first at %s)", st.ID, first)})
+		} else {
+			seenStep[st.ID] = ptr
+		}
+		if reg != nil {
+			issues = append(issues, g.checkStepEntities(name, ptr, st, reg)...)
+		}
+		// References to other steps must resolve (quests/skills/items are
+		// resolved later by the graph builder against the wiki).
+		for field, refs := range map[string][]string{"requires": st.Requires, "recommended_after": st.RecommendedAfter} {
+			for ri, ref := range refs {
+				id, ok := strings.CutPrefix(ref, "step:")
+				if !ok {
+					continue
+				}
+				if _, found := g.stepsByID[id]; !found {
+					issues = append(issues, Issue{File: name, Pointer: fmt.Sprintf("%s/%s/%d", ptr, field, ri), Message: fmt.Sprintf("unknown step %q", id)})
+				}
+				if id == st.ID {
+					issues = append(issues, Issue{File: name, Pointer: fmt.Sprintf("%s/%s/%d", ptr, field, ri), Message: "step references itself"})
 				}
 			}
 		}
@@ -263,10 +341,57 @@ func pointer(loc []string) string {
 	return sb.String()
 }
 
-// Step returns a step by id across all guides.
+// SelectGuide resolves an explicit guide id. An empty id selects the guide only
+// when exactly one guide is loaded. The empty-id behavior is the compatibility
+// path for callers that predate guide-scoped routing; it deliberately refuses
+// to choose between multiple guides.
+func (c *Content) SelectGuide(id string) (*Guide, bool) {
+	if id != "" {
+		return c.Guide(id)
+	}
+	if len(c.Guides) != 1 {
+		return nil, false
+	}
+	return c.Guides[0], true
+}
+
+// StepInGuide returns a step from the named guide. Step ids are unique within
+// a guide, but may be reused by other guides.
+func (c *Content) StepInGuide(guideID, stepID string) (*Step, bool) {
+	g, ok := c.Guide(guideID)
+	if !ok {
+		return nil, false
+	}
+	return g.Step(stepID)
+}
+
+// SectionInGuide returns a section by id or slug from the named guide.
+// Section ids and slugs are unique within a guide, but may be reused by other
+// guides.
+func (c *Content) SectionInGuide(guideID, idOrSlug string) (*Section, bool) {
+	g, ok := c.Guide(guideID)
+	if !ok {
+		return nil, false
+	}
+	return g.Section(idOrSlug)
+}
+
+// Step returns a step by id when that id has exactly one match across all
+// guides. It is kept for single-guide compatibility. When multiple guides use
+// the id, Step returns (nil, false); multi-guide callers must use StepInGuide.
 func (c *Content) Step(id string) (*Step, bool) {
-	s, ok := c.steps[id]
-	return s, ok
+	var found *Step
+	for _, g := range c.Guides {
+		s, ok := g.Step(id)
+		if !ok {
+			continue
+		}
+		if found != nil {
+			return nil, false
+		}
+		found = s
+	}
+	return found, found != nil
 }
 
 // Guide returns a guide by id.
@@ -279,19 +404,32 @@ func (c *Content) Guide(id string) (*Guide, bool) {
 	return nil, false
 }
 
-// Section returns the first section matching id or slug across all guides,
-// together with its guide.
+// Section returns a section matching id or slug when there is exactly one
+// match across all guides, together with its guide. It is kept for single-guide
+// compatibility. When multiple guides match, Section returns (nil, nil, false);
+// multi-guide callers must use SectionInGuide.
 func (c *Content) Section(idOrSlug string) (*Guide, *Section, bool) {
+	var foundGuide *Guide
+	var foundSection *Section
 	for _, g := range c.Guides {
 		if s, ok := g.Section(idOrSlug); ok {
-			return g, s, true
+			if foundSection != nil {
+				return nil, nil, false
+			}
+			foundGuide, foundSection = g, s
 		}
 	}
-	return nil, nil, false
+	return foundGuide, foundSection, foundSection != nil
 }
 
 // StepCount returns the total number of steps across guides.
-func (c *Content) StepCount() int { return len(c.steps) }
+func (c *Content) StepCount() int {
+	n := 0
+	for _, g := range c.Guides {
+		n += g.StepCount()
+	}
+	return n
+}
 
 // Steps returns every step across guides in guide order.
 func (c *Content) Steps() []*Step {

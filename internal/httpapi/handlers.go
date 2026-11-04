@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -69,24 +70,39 @@ func summarize(g *content.Guide, sec *content.Section) sectionSummary {
 	return sectionSummary{ID: sec.ID, Slug: sec.Slug, Title: sec.Title, Kind: kind, Track: sec.IsTrack(), Steps: len(sec.Steps), Guide: g.ID}
 }
 
-func (s *Server) handleGuide(w http.ResponseWriter, _ *http.Request) {
-	type guideOut struct {
-		ID       string           `json:"id"`
-		Slug     string           `json:"slug,omitempty"`
-		Title    string           `json:"title"`
-		Version  string           `json:"version,omitempty"`
-		Source   *content.Source  `json:"source,omitempty"`
-		Sections []sectionSummary `json:"sections"`
+type guideOut struct {
+	ID       string           `json:"id"`
+	Slug     string           `json:"slug,omitempty"`
+	Title    string           `json:"title"`
+	Version  string           `json:"version,omitempty"`
+	Source   *content.Source  `json:"source,omitempty"`
+	Steps    int              `json:"steps"`
+	Sections []sectionSummary `json:"sections"`
+}
+
+func guideOutput(g *content.Guide) guideOut {
+	item := guideOut{ID: g.ID, Slug: g.Slug, Title: g.Title, Version: g.Version, Source: g.Source, Steps: g.StepCount()}
+	for _, sec := range g.Sections {
+		item.Sections = append(item.Sections, summarize(g, sec))
 	}
+	return item
+}
+
+func (s *Server) handleGuides(w http.ResponseWriter, _ *http.Request) {
 	out := make([]guideOut, 0, len(s.opts.Content.Guides))
 	for _, g := range s.opts.Content.Guides {
-		item := guideOut{ID: g.ID, Slug: g.Slug, Title: g.Title, Version: g.Version, Source: g.Source}
-		for _, sec := range g.Sections {
-			item.Sections = append(item.Sections, summarize(g, sec))
-		}
-		out = append(out, item)
+		out = append(out, guideOutput(g))
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"guides": out})
+}
+
+func (s *Server) handleGuide(w http.ResponseWriter, r *http.Request) {
+	g, ok := s.opts.Content.Guide(r.PathValue("guide"))
+	if !ok {
+		writeError(w, http.StatusNotFound, "guide not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, guideOutput(g))
 }
 
 type sectionOut struct {
@@ -94,13 +110,35 @@ type sectionOut struct {
 	Guide string `json:"guide"`
 }
 
+// MarshalJSON keeps the section endpoint's established flattened `steps`
+// view even when the canonical content model stores steps under segments.
+// content.Section has its own marshaler, so relying on anonymous embedding
+// would otherwise also drop the outer Guide field.
+func (s sectionOut) MarshalJSON() ([]byte, error) {
+	raw, err := json.Marshal(s.Section)
+	if err != nil {
+		return nil, err
+	}
+	var out map[string]any
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return nil, err
+	}
+	out["guide"] = s.Guide
+	out["steps"] = s.Steps
+	return json.Marshal(out)
+}
+
 func (s *Server) handleSection(w http.ResponseWriter, r *http.Request) {
-	g, sec, ok := s.opts.Content.Section(r.PathValue("section"))
+	s.writeSection(w, r.PathValue("guide"), r.PathValue("section"))
+}
+
+func (s *Server) writeSection(w http.ResponseWriter, guideID, sectionID string) {
+	sec, ok := s.opts.Content.SectionInGuide(guideID, sectionID)
 	if !ok {
 		writeError(w, http.StatusNotFound, "section not found")
 		return
 	}
-	writeJSON(w, http.StatusOK, sectionOut{Section: sec, Guide: g.ID})
+	writeJSON(w, http.StatusOK, sectionOut{Section: sec, Guide: guideID})
 }
 
 // stepOut is a step plus its position for API consumers.
@@ -116,7 +154,11 @@ func outStep(st *content.Step) stepOut {
 }
 
 func (s *Server) handleStep(w http.ResponseWriter, r *http.Request) {
-	st, ok := s.opts.Content.Step(r.PathValue("id"))
+	s.writeStep(w, r.PathValue("guide"), r.PathValue("id"))
+}
+
+func (s *Server) writeStep(w http.ResponseWriter, guideID, stepID string) {
+	st, ok := s.opts.Content.StepInGuide(guideID, stepID)
 	if !ok {
 		writeError(w, http.StatusNotFound, "step not found")
 		return
@@ -125,6 +167,7 @@ func (s *Server) handleStep(w http.ResponseWriter, r *http.Request) {
 }
 
 type nowResponse struct {
+	Guide    string    `json:"guide"`
 	Current  *stepOut  `json:"current"`
 	Next     []stepOut `json:"next"`
 	Progress progress  `json:"progress"`
@@ -135,20 +178,27 @@ type progress struct {
 	Total int `json:"total"`
 }
 
-// handleNow is a stub until progress exists: the first step of the first
-// non-track section, the 5 that follow it, and the main-guide step total.
-func (s *Server) handleNow(w http.ResponseWriter, _ *http.Request) {
+// handleNow is a stub until progress exists: the first step and five following
+// steps from one explicitly selected guide. Routes are never concatenated.
+func (s *Server) handleNow(w http.ResponseWriter, r *http.Request) {
+	s.writeNow(w, r.PathValue("guide"))
+}
+
+func (s *Server) writeNow(w http.ResponseWriter, guideID string) {
 	const lookahead = 5
-	var main []*content.Step
-	for _, g := range s.opts.Content.Guides {
-		for _, sec := range g.Sections {
-			if sec.IsTrack() {
-				continue
-			}
-			main = append(main, sec.Steps...)
-		}
+	g, ok := s.opts.Content.Guide(guideID)
+	if !ok {
+		writeError(w, http.StatusNotFound, "guide not found")
+		return
 	}
-	resp := nowResponse{Next: []stepOut{}, Progress: progress{Done: 0, Total: len(main)}}
+	var main []*content.Step
+	for _, sec := range g.Sections {
+		if sec.IsTrack() {
+			continue
+		}
+		main = append(main, sec.Steps...)
+	}
+	resp := nowResponse{Guide: guideID, Next: []stepOut{}, Progress: progress{Done: 0, Total: len(main)}}
 	if len(main) > 0 {
 		cur := outStep(main[0])
 		resp.Current = &cur
@@ -157,4 +207,53 @@ func (s *Server) handleNow(w http.ResponseWriter, _ *http.Request) {
 		}
 	}
 	writeJSON(w, http.StatusOK, resp)
+}
+
+func (s *Server) defaultGuide() (string, bool) {
+	if s.opts.DefaultGuideID != "" {
+		_, ok := s.opts.Content.Guide(s.opts.DefaultGuideID)
+		return s.opts.DefaultGuideID, ok
+	}
+	if _, ok := s.opts.Content.Guide("oziris-main"); ok {
+		return "oziris-main", true
+	}
+	if len(s.opts.Content.Guides) == 1 {
+		return s.opts.Content.Guides[0].ID, true
+	}
+	return "", false
+}
+
+func (s *Server) writeNoDefaultGuide(w http.ResponseWriter) {
+	writeError(w, http.StatusNotFound, "legacy route has no default guide")
+}
+
+func (s *Server) handleLegacyGuides(w http.ResponseWriter, r *http.Request) {
+	s.handleGuides(w, r)
+}
+
+func (s *Server) handleLegacySection(w http.ResponseWriter, r *http.Request) {
+	guideID, ok := s.defaultGuide()
+	if !ok {
+		s.writeNoDefaultGuide(w)
+		return
+	}
+	s.writeSection(w, guideID, r.PathValue("section"))
+}
+
+func (s *Server) handleLegacyStep(w http.ResponseWriter, r *http.Request) {
+	guideID, ok := s.defaultGuide()
+	if !ok {
+		s.writeNoDefaultGuide(w)
+		return
+	}
+	s.writeStep(w, guideID, r.PathValue("id"))
+}
+
+func (s *Server) handleLegacyNow(w http.ResponseWriter, _ *http.Request) {
+	guideID, ok := s.defaultGuide()
+	if !ok {
+		s.writeNoDefaultGuide(w)
+		return
+	}
+	s.writeNow(w, guideID)
 }

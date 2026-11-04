@@ -1,0 +1,136 @@
+{
+  "catalog": "skills",
+  "version": "2026.11.0",
+  "source": "RuneLite net.runelite.api.Skill (data/samples/runelite/Skill.java); ids are the lower-case enum names used by guide rules.",
+  "skills": [
+    {
+      "id": "attack",
+      "name": "Attack",
+      "wiki_key": "Attack"
+    },
+    {
+      "id": "strength",
+      "name": "Strength",
+      "wiki_key": "Strength"
+    },
+    {
+      "id": "defence",
+      "name": "Defence",
+      "wiki_key": "Defence"
+    },
+    {
+      "id": "ranged",
+      "name": "Ranged",
+      "wiki_key": "Ranged",
+      "aliases": [
+        "Range"
+      ]
+    },
+    {
+      "id": "prayer",
+      "name": "Prayer",
+      "wiki_key": "Prayer"
+    },
+    {
+      "id": "magic",
+      "name": "Magic",
+      "wiki_key": "Magic"
+    },
+    {
+      "id": "runecraft",
+      "name": "Runecraft",
+      "wiki_key": "Runecraft",
+      "aliases": [
+        "Runecrafting"
+      ]
+    },
+    {
+      "id": "construction",
+      "name": "Construction",
+      "wiki_key": "Construction"
+    },
+    {
+      "id": "hitpoints",
+      "name": "Hitpoints",
+      "wiki_key": "Hitpoints",
+      "aliases": [
+        "HP"
+      ]
+    },
+    {
+      "id": "agility",
+      "name": "Agility",
+      "wiki_key": "Agility"
+    },
+    {
+      "id": "herblore",
+      "name": "Herblore",
+      "wiki_key": "Herblore"
+    },
+    {
+      "id": "thieving",
+      "name": "Thieving",
+      "wiki_key": "Thieving"
+    },
+    {
+      "id": "crafting",
+      "name": "Crafting",
+      "wiki_key": "Crafting"
+    },
+    {
+      "id": "fletching",
+      "name": "Fletching",
+      "wiki_key": "Fletching"
+    },
+    {
+      "id": "slayer",
+      "name": "Slayer",
+      "wiki_key": "Slayer"
+    },
+    {
+      "id": "hunter",
+      "name": "Hunter",
+      "wiki_key": "Hunter"
+    },
+    {
+      "id": "mining",
+      "name": "Mining",
+      "wiki_key": "Mining"
+    },
+    {
+      "id": "smithing",
+      "name": "Smithing",
+      "wiki_key": "Smithing"
+    },
+    {
+      "id": "fishing",
+      "name": "Fishing",
+      "wiki_key": "Fishing"
+    },
+    {
+      "id": "cooking",
+      "name": "Cooking",
+      "wiki_key": "Cooking"
+    },
+    {
+      "id": "firemaking",
+      "name": "Firemaking",
+      "wiki_key": "Firemaking"
+    },
+    {
+      "id": "woodcutting",
+      "name": "Woodcutting",
+      "wiki_key": "Woodcutting"
+    },
+    {
+      "id": "farming",
+      "name": "Farming",
+      "wiki_key": "Farming"
+    },
+    {
+      "id": "sailing",
+      "name": "Sailing",
+      "wiki_key": "Sailing"
+    }
+  ]
+}

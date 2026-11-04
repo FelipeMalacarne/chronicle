@@ -1,0 +1,89 @@
+-- Queries used by internal/store/ingest. All mutation queries run inside the
+-- same transaction that locks plugin_ingest_tokens.
+
+-- name: InsertSnapshotItemContainer :exec
+INSERT INTO snapshot_item_containers (
+  snapshot_id, container, state, observed_at, revision, live_epoch
+) VALUES ($1, $2, $3, $4, $5, $6);
+
+-- name: InsertSnapshotItem :exec
+INSERT INTO snapshot_items (snapshot_id, container, item_id, qty)
+VALUES ($1, $2, $3, $4);
+
+-- name: InsertSnapshotCollectionLogItem :exec
+INSERT INTO snapshot_collection_log (snapshot_id, item_id, qty)
+VALUES ($1, $2, $3);
+
+-- name: UpsertIngestContainerFreshness :one
+INSERT INTO ingest_container_freshness (
+  account_id, container, state, observed_at, revision, live_epoch, snapshot_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (account_id, container) DO UPDATE SET
+  state       = EXCLUDED.state,
+  observed_at = EXCLUDED.observed_at,
+  revision    = EXCLUDED.revision,
+  live_epoch  = EXCLUDED.live_epoch,
+  snapshot_id = EXCLUDED.snapshot_id,
+  updated_at  = now()
+WHERE
+  EXCLUDED.observed_at > ingest_container_freshness.observed_at
+  OR (
+    EXCLUDED.observed_at = ingest_container_freshness.observed_at
+    AND CASE
+      WHEN EXCLUDED.state <> ingest_container_freshness.state THEN
+        CASE EXCLUDED.state WHEN 'live' THEN 3 WHEN 'restored' THEN 2 ELSE 1 END
+          > CASE ingest_container_freshness.state WHEN 'live' THEN 3 WHEN 'restored' THEN 2 ELSE 1 END
+      WHEN EXCLUDED.state = 'unavailable' THEN true
+      WHEN EXCLUDED.state = 'restored' THEN EXCLUDED.revision > ingest_container_freshness.revision
+      WHEN EXCLUDED.live_epoch = ingest_container_freshness.live_epoch THEN
+        EXCLUDED.revision > ingest_container_freshness.revision
+      ELSE true
+    END
+  )
+RETURNING *;
+
+-- name: DeletePlayerStateItemsByContainer :exec
+DELETE FROM player_state
+WHERE account_id = sqlc.arg(account_id)
+  AND facet = 'item'
+  AND key LIKE sqlc.arg(container)::text || ':%';
+
+-- name: DeletePlayerStateFact :exec
+DELETE FROM player_state
+WHERE account_id = $1 AND facet = $2 AND key = $3;
+
+-- name: DeletePlayerStateFacet :exec
+DELETE FROM player_state
+WHERE account_id = $1 AND facet = $2;
+
+-- name: UpsertPlayerStateJSONPatch :exec
+-- Skill deltas can carry only xp or boosted; merge those fields into the
+-- existing skill object instead of erasing level.
+INSERT INTO player_state (account_id, facet, key, value, source, snapshot_id, observed_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (account_id, facet, key) DO UPDATE SET
+  value       = player_state.value || EXCLUDED.value,
+  source      = EXCLUDED.source,
+  snapshot_id = EXCLUDED.snapshot_id,
+  observed_at = EXCLUDED.observed_at
+WHERE EXCLUDED.observed_at >= player_state.observed_at;
+
+-- name: ListItemContainerFreshness :many
+-- Latest accepted observation per item container, plus whether a full push
+-- observed the container in that same state and live epoch. Without such a
+-- baseline the merged item facts only prove presence, never absence.
+SELECT f.container, f.state, f.observed_at, f.revision, f.live_epoch,
+  EXISTS (
+    SELECT 1
+    FROM snapshot_item_containers c
+    JOIN snapshots s ON s.id = c.snapshot_id
+    WHERE s.account_id = f.account_id
+      AND s.kind = 'full'
+      AND c.container = f.container
+      AND c.state = f.state
+      AND c.state <> 'unavailable'
+      AND c.live_epoch IS NOT DISTINCT FROM f.live_epoch
+  )::boolean AS has_baseline
+FROM ingest_container_freshness f
+WHERE f.account_id = $1
+ORDER BY f.container;

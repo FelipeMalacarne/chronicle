@@ -11,7 +11,7 @@ dominante (159 dos 209 steps auto-rastreáveis) e só saem do cliente. Com o Mic
 
 - Não há revisão do Plugin Hub, nem limite do que o plugin pode ler. Sideload é o fluxo normal.
 - A API do RuneLite continua disponível inteira (`Client`, `Quest.getState`, varbits, `ItemContainer`
-  do banco e inventário, `Skill` xp), então o contrato de ingestão do doc 04, seção 6.4, vale sem mudança.
+  do banco e inventário, `Skill` xp), então o cliente implementa o contrato v1 do doc 04, seção 6.4.
 - Por cima, o Microbot oferece caches consultáveis (`Microbot.getRs2XxxCache()` para NPCs, objetos,
   inventário, banco, varbits, players, widgets) e utilitários `Rs2Bank`, `Rs2Inventory`, `Rs2Player`,
   `Rs2Walker`, `Rs2Dialogue`, que já cuidam de thread do cliente e retries. Documentação em
@@ -33,28 +33,43 @@ do repositório de plugins que ele já mantém.
 | Diaries por task e por tier | varbits do manifest (o servidor manda a lista, como no WikiSync) | em `VarbitChanged` |
 | Combat achievements | varbits/cs2 do manifest | em `VarbitChanged` |
 | Collection log | `collectionLogSlots` via enums/structs do chisel, como o WikiSync faz | login e ao abrir o log |
-| Banco, inventário, equipamento | `ItemContainerChanged` ou cache `Rs2Bank`/`Rs2Inventory` | ao fechar o banco, ao logar; opt-in por toggle |
+| Banco, inventário, equipamento | `ItemContainerChanged` para `live`; cache `Rs2Bank`/`Rs2Inventory` apenas como `restored` | ao fechar o banco, ao logar; opt-in separado por container |
 | Posição, mundo, membro | `client.getLocalPlayer().getWorldLocation()`, `getWorld()` | a cada N segundos, opt-in; útil para "você está em Ardougne, próximo step aqui" |
 | Quest Helper ativo | não necessário | |
 
-Protocolo: idêntico ao doc 04, seção 6.4. `GET /api/ingest/manifest` (lista de varbits, varps,
-coleções e versão), `POST /api/ingest` com deltas, `client_seq`, `resync` quando o servidor pede
-estado completo, token `ipl_` por conta na config do plugin.
+Protocolo: idêntico ao doc 04, seção 6.4. `GET /api/ingest/manifest` devolve
+`contract_version: 1`, `manifest_version`, varbits/varps/coleções, `token_scopes`, permissões de
+itens e `resync`. `POST /api/ingest` envia `client_seq` monotônico e `kind: full|delta`; a resposta
+repete `accepted_seq`, a versão e se exige `resync`. O token `ipl_` fica por conta na config.
+
+Os toggles `sendBank`, `sendInventory` e `sendEquipment` começam `false` e só coletam se o manifest
+também anunciar o scope correspondente (`items:bank`, `items:inventory`, `items:equipment`). Um
+`full` sempre descreve os três containers: sem permissão/toggle/leitura usa `state: unavailable`,
+nunca `{}`. Um container restaurado de cache usa `state: restored`, conserva o `observed_at` da
+captura original, leva `revision` e o mapa inteiro, mas **não** leva `live_epoch`. Assim ele pode
+servir de espelho sem fingir que houve evento do banco no login atual.
+
+Somente uma leitura/evento na thread do cliente produz `state: live`. No login o plugin cria um
+`live_epoch` opaco; a `revision` começa em zero e cresce por container dentro desse epoch. Em `full`,
+`quantities` é o retrato inteiro e não aceita zero. Em `delta`, containers inalterados são omitidos e
+o mapa de um container `live` usa total novo por item (`0` remove). Os mapas no DTO Java devem ser
+`Map<String, Long>` para serializar como `{"4151": 1}`, sem adaptador de chaves do Gson.
 
 ## Esqueleto sugerido no repositório de plugins do Microbot
 
 ```
 plugins/ironmanplanner/
   IronmanPlannerPlugin.java     @PluginDescriptor(name = "Ironman Planner", tags = {"ironman","tracker"})
-  IronmanPlannerConfig.java     serverUrl, ingestToken, sendBank, sendPosition, intervalSeconds
+  IronmanPlannerConfig.java     serverUrl, ingestToken, sendBank/sendInventory/sendEquipment=false
   PlannerClient.java            OkHttp (já no RuneLite), manifest GET, submit POST com Gson
-  PlayerStateCollector.java     lê skills, quests, varbits do manifest, clog; calcula delta vs último envio
+  PlayerStateCollector.java     lê estado; rastreia observed_at/revision/live_epoch; calcula delta
   PlannerPanel.java (opcional)  painel lateral com "próximo step" vindo de GET /api/now
 ```
 
 Regras do AGENTS.md do Microbot que importam aqui: tudo que lê o `Client` roda na thread do cliente
 (`Microbot.getClientThread().runOnClientThreadOptional` ou `invokeLater`), rede nunca na thread do
-cliente, e scripts em `ScheduledExecutorService` próprio.
+cliente, e scripts em `ScheduledExecutorService` próprio. O DTO de rede copia os mapas ainda na
+thread do cliente; o envio assíncrono não segura referências mutáveis do cache.
 
 ## Bônus que só o Microbot permite
 

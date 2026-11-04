@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "id": "partial-loadout",
+  "title": "Partial loadout fixture",
+  "default_variant": "main",
+  "variants": [
+    {
+      "id": "main",
+      "title": "Main route",
+      "sections": [
+        {
+          "id": "section",
+          "slug": "section",
+          "title": "Section",
+          "segments": [
+            {
+              "id": "bank-leg",
+              "kind": "bank_leg",
+              "bank_actions": [
+                {
+                  "type": "withdraw",
+                  "position": "start",
+                  "text": "Withdraw",
+                  "source": {
+                    "method": "explicit",
+                    "confidence": "high",
+                    "step_ids": ["withdraw"]
+                  }
+                }
+              ],
+              "loadout": {
+                "status": "partial",
+                "inventory": [
+                  {
+                    "name": "Rope",
+                    "qty": 2,
+                    "source_text": "2 ropes"
+                  }
+                ],
+                "equipment": [
+                  {
+                    "name": "Leather gloves",
+                    "optional": true,
+                    "source_text": "Leather gloves (optional)"
+                  }
+                ],
+                "empty_slots": 3,
+                "source": {
+                  "method": "explicit",
+                  "confidence": "high",
+                  "step_ids": ["withdraw"]
+                }
+              },
+              "source": {
+                "method": "derived",
+                "confidence": "high",
+                "step_ids": ["withdraw"]
+              },
+              "steps": [
+                {"id": "withdraw", "text": "Withdraw 2 ropes and leave 3 empty slots."}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

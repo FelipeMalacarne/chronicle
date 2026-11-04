@@ -1,8 +1,8 @@
 -- name: InsertSnapshot :one
--- Fails with unique_violation (23505) when (account_id, source, raw_hash) already
--- exists; callers should check GetSnapshotByHash first or map the error to "unchanged".
-INSERT INTO snapshots (id, account_id, source, kind, fetched_at, raw, raw_hash, adapter_version, client_seq)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+-- Non-plugin sources retain raw-hash dedupe. Plugin snapshots are idempotent
+-- by (ingest_token_id, client_seq), so two installs can submit identical JSON.
+INSERT INTO snapshots (id, account_id, source, kind, fetched_at, raw, raw_hash, adapter_version, client_seq, ingest_token_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
 RETURNING *;
 
 -- name: GetSnapshot :one

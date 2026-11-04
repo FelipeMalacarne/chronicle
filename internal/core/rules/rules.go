@@ -5,6 +5,7 @@ package rules
 
 import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 )
 
 // Verdict is the outcome of evaluating a rule.
@@ -38,6 +39,10 @@ type PlayerState struct {
 	Diaries map[string]map[string]bool
 	// BossKC by hiscores boss name → kill count.
 	BossKC map[string]int
+	// Items by container; nil means no item container was ever observed.
+	Items ItemHoldings
+	// Catalog relates noted/unnoted item ids; nil compares ids exactly.
+	Catalog *entities.Registry
 
 	// ManualDone is per-step context supplied by the caller: whether the user
 	// ticked the step being evaluated. Manual rules are met only when true.
@@ -50,6 +55,8 @@ type Evidence struct {
 	Verdict  Verdict      `json:"verdict"`
 	Observed any          `json:"observed,omitempty"`
 	Reason   string       `json:"reason,omitempty"`
+	// Stale marks a met verdict that relies on a restored (not live) mirror.
+	Stale bool `json:"stale,omitempty"`
 }
 
 // Result is the evaluation of a rule list.
@@ -198,6 +205,8 @@ func atomic(r content.Rule, ps PlayerState) Evidence {
 		}
 		ev.Observed = map[string]int{"kc": kc}
 		ev.Verdict = boolVerdict(kc >= v.KC)
+	case content.ItemOwnedRule:
+		itemOwned(v, ps, &ev)
 	case content.ManualRule:
 		ev.Verdict = manualVerdict(ps)
 		ev.Reason = "manual rule"

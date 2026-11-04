@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "id": "known-loadout",
+  "title": "Known loadout fixture",
+  "default_variant": "main",
+  "variants": [
+    {
+      "id": "main",
+      "title": "Main route",
+      "sections": [
+        {
+          "id": "section",
+          "slug": "section",
+          "title": "Section",
+          "segments": [
+            {
+              "id": "bank-leg",
+              "kind": "bank_leg",
+              "bank_actions": [
+                {
+                  "type": "bank_setup",
+                  "position": "start",
+                  "text": "Bank",
+                  "source": {
+                    "method": "explicit",
+                    "confidence": "high",
+                    "step_ids": ["bank"]
+                  }
+                }
+              ],
+              "loadout": {
+                "status": "known",
+                "inventory": [],
+                "equipment": [],
+                "empty_slots": 28,
+                "source": {
+                  "method": "explicit",
+                  "confidence": "high",
+                  "step_ids": ["bank"],
+                  "evidence": "Explicitly carry nothing"
+                }
+              },
+              "source": {
+                "method": "derived",
+                "confidence": "high",
+                "step_ids": ["bank"]
+              },
+              "steps": [
+                {"id": "bank", "text": "Bank with an empty inventory."}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

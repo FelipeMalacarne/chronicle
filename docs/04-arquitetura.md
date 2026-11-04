@@ -190,7 +190,7 @@ Configurações por conta (tabela `settings`): layer ativa, modo, fontes habilit
 - **Login**: `POST /api/auth/login` com usuário/senha → cookie `sid` HttpOnly, SameSite=Lax, 30 dias, hash em `sessions`. `hooks.server.ts` resolve `event.locals.user`. Sem OAuth, sem e-mail. Rate limit de 5 tentativas/min por IP.
 - **Multiusuário futuro**: `users.role`, `accounts.user_id` já existem; adicionar convite por link é um endpoint.
 - **Tokens de API** (`api_tokens`): `Authorization: Bearer apk_…`, para scripts de export e CLI.
-- **Tokens do plugin** (`plugin_ingest_tokens`): `Authorization: Bearer ipl_…`, escopo = uma conta, criados em `/account/tokens`, mostrados uma vez, armazenados como sha256, revogáveis, com `scopes` (bank/inventory são opt-in explícito).
+- **Tokens do plugin** (`plugin_ingest_tokens`): `Authorization: Bearer ipl_…`, escopo = uma conta, criados em `/account/tokens`, mostrados uma vez, armazenados como sha256, revogáveis, com `scopes` (bank/inventory/equipment são opt-in explícito).
 
 Rotas principais:
 
@@ -453,10 +453,10 @@ sequenceDiagram
   participant P as Plugin (RuneLite)
   participant S as Servidor (/api/ingest)
   P->>S: GET /api/ingest/manifest  (Bearer ipl_…)
-  S-->>P: {version: 7, varbits:[…], varps:[…], collections:[…], items:{bank:false,…}, interval_seconds:10, full_resync:true}
+  S-->>P: {contract_version:1, manifest_version:7, token_scopes:["state:write"], items:{bank:false,…}, resync:true}
   Note over P: login → lê tudo que o manifest pede
-  P->>S: POST /api/ingest {kind:"full", client_seq:1, manifest_version:7, data:{…}}
-  S-->>P: {ok, accepted_seq:1, resync:false, manifest_version:7}
+  P->>S: POST /api/ingest {contract_version:1, kind:"full", client_seq:1, manifest_version:7, data:{…}}
+  S-->>P: {contract_version:1, ok:true, accepted_seq:1, resync:false, manifest_version:7}
   loop a cada 10 s, se algo mudou
     P->>S: POST /api/ingest {kind:"delta", client_seq:n, data:{varb:{…só mudados}, level:{…}}}
     S-->>P: {ok, accepted_seq:n, steps_changed:2}
@@ -469,18 +469,70 @@ sequenceDiagram
 
 Detalhes do contrato (schemas Zod em `types.ts`: `IngestManifest`, `IngestPayload`, `IngestResponse`):
 
-- **Manifest é gerado pelo servidor** a partir do conteúdo: união de todos os `varbit`/`varp` usados em `complete_when`, mais os varbits de quests/diaries do `wiki_cache` (chisel mapping) necessários para `quest_state` e `diary_task`, mais `collections` (lista de item_ids do collection log, ordem fixa = índice do bitset). `version` é hash truncado desse conjunto; muda ⇒ cliente faz `full`. Escopos do token controlam `items.bank/inventory/equipment`.
-- **Delta**: igual ao WikiSync para `varb/varp/level`; para `items`, delta é `item_id → qty` com `qty: 0` significando removido. `collectionLogSlots` continua bitset base64 (o clog só cresce; mandar o bitset inteiro é barato, ~1 KB).
+- **Versões**: `contract_version` é literalmente `1`; mudança incompatível cria outro contrato. `manifest_version` é o hash truncado do conjunto gerado pelo servidor: união dos `varbit`/`varp` usados em `complete_when`, mapeamentos de quests/diaries e `collections` (item ids em ordem fixa para o bitset). Manifest diferente exige novo `full`.
+- **Escopos**: todo token de ingestão anuncia `state:write`; dados privados usam `items:bank`, `items:inventory` e `items:equipment`. Os booleanos homônimos de `items` no manifest são a permissão efetiva e devem corresponder aos escopos. Ainda há o segundo opt-in no cliente; os três toggles locais começam desligados. `only_item_ids`, quando presente, limita as chaves aceitas.
+- **Formato Java-friendly**: mapas são objetos JSON, não listas de pares. IDs numéricos são chaves decimais canônicas (`"4151"`), portanto o cliente pode usar `Map<String, Long>` do Gson sem adaptador de chave.
+- **Full versus delta**: `full` contém os mapas `varb`, `varp`, `level`, `xp` e `boosted`, mesmo que vazios, e uma observação explícita para cada um de `bank`, `inventory` e `equipment`. Em `delta`, facetas e containers inalterados são omitidos. `collectionLogSlots` continua bitset base64 completo (o clog só cresce; ~1 KB).
 - **Ordem e idempotência**: `client_seq` monotônico por token; servidor rejeita `seq ≤ last_seq` com `ok:false, accepted_seq:last_seq` (cliente então faz `full`). Cada POST aceito vira um `snapshots(kind=delta|full, raw=payload, client_seq)` e um merge em `player_state`.
-- **Baseline**: se o servidor não tem nenhum snapshot `full` para o token (ex.: banco restaurado), responde `resync:true`. Login do personagem também dispara `full` no cliente.
+- **Resync**: `resync:true` no manifest ou na resposta manda o cliente atualizar o manifest e fazer `full` no ciclo seguinte. Isso ocorre se não existe baseline `full`, a versão mudou ou a sequência deixou de ser aproveitável. Login também dispara `full`.
 - **Cadência**: 10 s de verificação local, envio só se houver delta, backoff quadrático como no original, timeout 3 s. O plugin também envia `full` ao deslogar (último estado conhecido).
 - **Config do plugin**: URL do servidor, token, toggles por categoria (bank/inventory/equipment desligados por default), indicador de último envio.
+
+Cada container de itens é uma observação discriminada; um mapa persistido nunca pode ter o mesmo shape de um evento ao vivo:
+
+| `state` | Campos obrigatórios | Campos proibidos | Semântica |
+|---|---|---|---|
+| `unavailable` | `observed_at` | `revision`, `live_epoch`, `quantities` | o plugin confirmou naquele instante que não podia ler o container (sem escopo, toggle desligado, logout/cache ausente etc.); não equivale a vazio |
+| `restored` | `observed_at`, `revision`, `quantities` | `live_epoch` | espelho completo recuperado de persistência; só é aceito em `full` e não prova que o banco foi aberto nesta sessão |
+| `live` | `observed_at`, `revision`, `live_epoch`, `quantities` | — | leitura/evento do cliente na sessão corrente; pode aparecer em `full` ou `delta` |
+
+`observed_at` é RFC 3339 com offset, representa quando o conteúdo foi realmente observado (não quando um cache foi recarregado) e não pode ser posterior a `sent_at`. `revision` é inteiro não negativo e monotônico dentro da origem; em `live`, ele é comparado somente dentro do mesmo `live_epoch`, identificador opaco criado por login/sessão. O servidor **não** promove `restored` a `live`: a ausência deliberada de `live_epoch` preserva a proveniência do espelho.
+
+`quantities` usa `item_id → qty`. Em `full`, é a imagem inteira do container: mapa vazio significa container observado vazio e toda quantidade presente deve ser `> 0`. Em `delta`, é patch de um container `live`: quantidade positiva substitui o total daquele item e `0` é tombstone (remoção). Quantidade negativa é sempre inválida. A observação `unavailable` não leva `quantities`, para não confundir "não li" com "li e estava vazio".
+
+Exemplo abreviado de itens em um `full`:
+
+```json
+{
+  "items": {
+    "bank": {
+      "state": "restored",
+      "observed_at": "2026-11-04T11:55:00Z",
+      "revision": 41,
+      "quantities": {"4151": 1, "995": 250000}
+    },
+    "inventory": {
+      "state": "live",
+      "observed_at": "2026-11-04T12:00:00Z",
+      "revision": 3,
+      "live_epoch": "login-2026-11-04T11:59:20Z",
+      "quantities": {"995": 1200}
+    },
+    "equipment": {
+      "state": "unavailable",
+      "observed_at": "2026-11-04T12:00:00Z"
+    }
+  }
+}
+```
+
+### 6.4.1 Posse, prontidão do trecho e ações de banco
+
+Os containers ingeridos alimentam três perguntas distintas, que nunca se misturam (`internal/core/rules` e `internal/core/planning`):
+
+- **Posse** (`item_owned`, `rules.Owns`): a conta tem `qty` do item em algum dos containers pedidos. Forma noteada e não noteada contam como o mesmo item; doses/cargas não. Um banco `restored` pode sustentar `met`, mas com `stale: true`. Ausência só é provada por container `live` com baseline `full`; `restored`, `unavailable`, container nunca observado (sem escopo ou opt-in) e deltas sem baseline resultam em `unknown`.
+- **Prontidão do trecho** (`planning.EvaluateSegment`): o inventário e o equipamento **live** batem com o loadout do segmento. Ids comparados de forma exata (planks noteadas ≠ planks). Item de inventário pode estar empunhado; item de equipamento precisa estar no equipamento. Status: `ready` (loadout `known` todo verificado), `listed_ready` (loadout `partial`: só os itens listados foram verificados), `not_ready`, `unknown`, `no_loadout`. Slots livres são um intervalo `free_min..free_max`, porque a empilhabilidade de itens fora do catálogo é desconhecida.
+- **Ações de banco**: instruções do guia (`bank_actions`), devolvidas como texto com proveniência. Nunca são marcadas como concluídas nem inferidas do estado.
+
+Baseline: o servidor considera um container completo só quando existe um snapshot `full` que o observou no mesmo `state` e no mesmo `live_epoch` da observação atual (`ListItemContainerFreshness`). Fatos de item de outro estado ou epoch são descartados na leitura. O plugin já força `full` em qualquer troca de estado ou de epoch.
+
+Rotas: `GET /api/guides/{guide}/readiness?account=&step=` (segmento que contém o step e o próximo `bank_leg` da mesma variante, sem atravessar tracks) e `GET /api/guides/{guide}/segments/{segment}/readiness?account=`. Como expõem o banco por id de conta e ainda não há sessão, só são registradas com `AUTH_MODE=dev`. Tipos em `docs/arquitetura/types.ts`.
 
 ### 6.5 Privacidade
 
 - Tudo fica no servidor do dono; nenhum terceiro recebe dados do plugin.
 - O manifest limita o que o cliente lê: o plugin não varre todos os varbits, só os pedidos — e o usuário pode ver o manifest em `/account/tokens`.
-- Banco/inventário são opt-in duplo (escopo do token + toggle no plugin); regras `item_owned` aparecem como `unknown` sem isso.
+- Banco/inventário/equipamento são opt-in duplo (escopo do token + toggle no plugin); regras `item_owned` aparecem como `unknown` sem isso.
 - WikiSync como importador exige aceite explícito na UI, mostrando o texto da política da wiki, e roda no máximo 4×/dia.
 - Tokens são hash no banco; revogação é imediata; `last_ip` e `last_seen_at` ficam visíveis.
 - Exports contêm snapshots brutos (incluindo banco, se habilitado); a UI avisa ao exportar.

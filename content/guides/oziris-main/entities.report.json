@@ -1,0 +1,1860 @@
+{
+  "guide_id": "oziris-main",
+  "guide_version": "2026.11.0",
+  "catalogs": {
+    "ca": "2026.11.0",
+    "diary": "2026.11.0",
+    "item": "2026.11.0",
+    "quest": "2026.11.0",
+    "skill": "2026.11.0"
+  },
+  "counts": {
+    "resolved": 640,
+    "ambiguous": 18,
+    "unresolved": 143,
+    "by_kind": {
+      "diary": {
+        "resolved": 4,
+        "ambiguous": 0,
+        "unresolved": 0
+      },
+      "item": {
+        "resolved": 87,
+        "ambiguous": 11,
+        "unresolved": 96
+      },
+      "quest": {
+        "resolved": 455,
+        "ambiguous": 7,
+        "unresolved": 47
+      },
+      "skill": {
+        "resolved": 94,
+        "ambiguous": 0,
+        "unresolved": 0
+      }
+    },
+    "loadout_items": {
+      "resolved": 12,
+      "ambiguous": 1,
+      "unresolved": 10
+    }
+  },
+  "ambiguous": [
+    {
+      "step_id": "1.1.110",
+      "field": "/items/4",
+      "source_text": "Axe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1349",
+        "item:1351",
+        "item:1353",
+        "item:1355",
+        "item:1357",
+        "item:1359"
+      ]
+    },
+    {
+      "step_id": "1.1.114",
+      "field": "/items/0",
+      "source_text": "Pickaxe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1265",
+        "item:1267",
+        "item:1269",
+        "item:1271",
+        "item:1273",
+        "item:1275"
+      ]
+    },
+    {
+      "step_id": "1.1.135",
+      "field": "/items/1",
+      "source_text": "Pickaxe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1265",
+        "item:1267",
+        "item:1269",
+        "item:1271",
+        "item:1273",
+        "item:1275"
+      ]
+    },
+    {
+      "step_id": "1.1.158",
+      "field": "/items/3",
+      "source_text": "Axe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1349",
+        "item:1351",
+        "item:1353",
+        "item:1355",
+        "item:1357",
+        "item:1359"
+      ]
+    },
+    {
+      "step_id": "1.1.178",
+      "field": "/text",
+      "span": [
+        6,
+        9
+      ],
+      "source_text": "RFD",
+      "kind": "quest",
+      "method": "text",
+      "reason": "text_ambiguous",
+      "candidates": [
+        "quest:recipe_for_disaster",
+        "quest:recipe_for_disaster_another_cooks_quest",
+        "quest:recipe_for_disaster_defeating_the_culinaromancer",
+        "quest:recipe_for_disaster_freeing_evil_dave",
+        "quest:recipe_for_disaster_freeing_king_awowogei",
+        "quest:recipe_for_disaster_freeing_pirate_pete",
+        "quest:recipe_for_disaster_freeing_sir_amik_varze",
+        "quest:recipe_for_disaster_freeing_skrach_uglogwee",
+        "quest:recipe_for_disaster_freeing_the_goblin_generals",
+        "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
+        "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "1.1.223",
+      "field": "/items/2",
+      "source_text": "Pickaxe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1265",
+        "item:1267",
+        "item:1269",
+        "item:1271",
+        "item:1273",
+        "item:1275"
+      ]
+    },
+    {
+      "step_id": "1.1.271",
+      "field": "/items/0",
+      "source_text": "Pickaxe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1265",
+        "item:1267",
+        "item:1269",
+        "item:1271",
+        "item:1273",
+        "item:1275"
+      ]
+    },
+    {
+      "step_id": "1.2.20",
+      "field": "/items/1",
+      "source_text": "Axe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1349",
+        "item:1351",
+        "item:1353",
+        "item:1355",
+        "item:1357",
+        "item:1359"
+      ]
+    },
+    {
+      "step_id": "1.2.20",
+      "field": "/items/2",
+      "source_text": "Pickaxe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1265",
+        "item:1267",
+        "item:1269",
+        "item:1271",
+        "item:1273",
+        "item:1275"
+      ]
+    },
+    {
+      "step_id": "1.3.17",
+      "field": "/items/0",
+      "source_text": "Axe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1349",
+        "item:1351",
+        "item:1353",
+        "item:1355",
+        "item:1357",
+        "item:1359"
+      ]
+    },
+    {
+      "step_id": "1.3.36",
+      "field": "/text",
+      "span": [
+        29,
+        32
+      ],
+      "source_text": "RFD",
+      "kind": "quest",
+      "method": "text",
+      "reason": "text_ambiguous",
+      "candidates": [
+        "quest:recipe_for_disaster",
+        "quest:recipe_for_disaster_another_cooks_quest",
+        "quest:recipe_for_disaster_defeating_the_culinaromancer",
+        "quest:recipe_for_disaster_freeing_evil_dave",
+        "quest:recipe_for_disaster_freeing_king_awowogei",
+        "quest:recipe_for_disaster_freeing_pirate_pete",
+        "quest:recipe_for_disaster_freeing_sir_amik_varze",
+        "quest:recipe_for_disaster_freeing_skrach_uglogwee",
+        "quest:recipe_for_disaster_freeing_the_goblin_generals",
+        "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
+        "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "1.4.5",
+      "field": "/text",
+      "span": [
+        102,
+        105
+      ],
+      "source_text": "RFD",
+      "kind": "quest",
+      "method": "text",
+      "reason": "text_ambiguous",
+      "candidates": [
+        "quest:recipe_for_disaster",
+        "quest:recipe_for_disaster_another_cooks_quest",
+        "quest:recipe_for_disaster_defeating_the_culinaromancer",
+        "quest:recipe_for_disaster_freeing_evil_dave",
+        "quest:recipe_for_disaster_freeing_king_awowogei",
+        "quest:recipe_for_disaster_freeing_pirate_pete",
+        "quest:recipe_for_disaster_freeing_sir_amik_varze",
+        "quest:recipe_for_disaster_freeing_skrach_uglogwee",
+        "quest:recipe_for_disaster_freeing_the_goblin_generals",
+        "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
+        "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "1.4.29",
+      "field": "/text",
+      "span": [
+        238,
+        241
+      ],
+      "source_text": "RFD",
+      "kind": "quest",
+      "method": "text",
+      "reason": "text_ambiguous",
+      "candidates": [
+        "quest:recipe_for_disaster",
+        "quest:recipe_for_disaster_another_cooks_quest",
+        "quest:recipe_for_disaster_defeating_the_culinaromancer",
+        "quest:recipe_for_disaster_freeing_evil_dave",
+        "quest:recipe_for_disaster_freeing_king_awowogei",
+        "quest:recipe_for_disaster_freeing_pirate_pete",
+        "quest:recipe_for_disaster_freeing_sir_amik_varze",
+        "quest:recipe_for_disaster_freeing_skrach_uglogwee",
+        "quest:recipe_for_disaster_freeing_the_goblin_generals",
+        "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
+        "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "1.5.1",
+      "field": "/text",
+      "span": [
+        14,
+        17
+      ],
+      "source_text": "RFD",
+      "kind": "quest",
+      "method": "text",
+      "reason": "text_ambiguous",
+      "candidates": [
+        "quest:recipe_for_disaster",
+        "quest:recipe_for_disaster_another_cooks_quest",
+        "quest:recipe_for_disaster_defeating_the_culinaromancer",
+        "quest:recipe_for_disaster_freeing_evil_dave",
+        "quest:recipe_for_disaster_freeing_king_awowogei",
+        "quest:recipe_for_disaster_freeing_pirate_pete",
+        "quest:recipe_for_disaster_freeing_sir_amik_varze",
+        "quest:recipe_for_disaster_freeing_skrach_uglogwee",
+        "quest:recipe_for_disaster_freeing_the_goblin_generals",
+        "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
+        "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "1.5.17",
+      "field": "/text",
+      "span": [
+        7,
+        10
+      ],
+      "source_text": "RFD",
+      "kind": "quest",
+      "method": "text",
+      "reason": "text_ambiguous",
+      "candidates": [
+        "quest:recipe_for_disaster",
+        "quest:recipe_for_disaster_another_cooks_quest",
+        "quest:recipe_for_disaster_defeating_the_culinaromancer",
+        "quest:recipe_for_disaster_freeing_evil_dave",
+        "quest:recipe_for_disaster_freeing_king_awowogei",
+        "quest:recipe_for_disaster_freeing_pirate_pete",
+        "quest:recipe_for_disaster_freeing_sir_amik_varze",
+        "quest:recipe_for_disaster_freeing_skrach_uglogwee",
+        "quest:recipe_for_disaster_freeing_the_goblin_generals",
+        "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
+        "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "2.0.4",
+      "field": "/items/6",
+      "source_text": "6 waterskins",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:1823",
+        "item:1825",
+        "item:1827",
+        "item:1829",
+        "item:1831"
+      ]
+    },
+    {
+      "step_id": "2.0.38",
+      "field": "/text",
+      "span": [
+        3,
+        16
+      ],
+      "source_text": "Dragon slayer",
+      "kind": "quest",
+      "method": "text",
+      "reason": "sequel_suffix",
+      "candidates": [
+        "quest:dragon_slayer_i"
+      ]
+    },
+    {
+      "step_id": "S.9a",
+      "field": "/items/1",
+      "source_text": "Pickaxe",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:1265",
+        "item:1267",
+        "item:1269",
+        "item:1271",
+        "item:1273",
+        "item:1275"
+      ]
+    }
+  ],
+  "unresolved": [
+    {
+      "step_id": "1.1.15",
+      "field": "/text",
+      "span": [
+        19,
+        35
+      ],
+      "source_text": "x marks the spot",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:x_marks_the_spot"
+      ]
+    },
+    {
+      "step_id": "1.1.27",
+      "field": "/text",
+      "span": [
+        22,
+        38
+      ],
+      "source_text": "X marks the spot",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:x_marks_the_spot"
+      ]
+    },
+    {
+      "step_id": "1.1.50",
+      "field": "/text",
+      "span": [
+        21,
+        37
+      ],
+      "source_text": "X marks the spot",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:x_marks_the_spot"
+      ]
+    },
+    {
+      "step_id": "1.1.51",
+      "field": "/items/3",
+      "source_text": "Few cakes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.64",
+      "field": "/items/1",
+      "source_text": "Dwellberries",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.64",
+      "field": "/items/2",
+      "source_text": "Hangover cure",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.75",
+      "field": "/items/5",
+      "source_text": "1k arrow shafts",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.75",
+      "field": "/items/6",
+      "source_text": "1k bronze arrowheads",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.83",
+      "field": "/items/1",
+      "source_text": "Few cakes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.83",
+      "field": "/items/3",
+      "source_text": "ALL of your mind and air runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.92",
+      "field": "/text",
+      "span": [
+        33,
+        45
+      ],
+      "source_text": "Dwarf cannon",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:dwarf_cannon"
+      ]
+    },
+    {
+      "step_id": "1.1.94",
+      "field": "/items/2",
+      "source_text": "Rune mysteries package",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.110",
+      "field": "/items/3",
+      "source_text": "Seasoned sardine",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.121",
+      "field": "/items/1",
+      "source_text": "Runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.121",
+      "field": "/items/4",
+      "source_text": "Fire staff (equip)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.131",
+      "field": "/items/1",
+      "source_text": "Cheese",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.131",
+      "field": "/items/2",
+      "source_text": "Runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.131",
+      "field": "/items/3",
+      "source_text": "All 4 meat for druidic ritual",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.131",
+      "field": "/items/5",
+      "source_text": "Gloves (equip)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.135",
+      "field": "/items/2",
+      "source_text": "Burnt meat",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.135",
+      "field": "/items/3",
+      "source_text": "Eye of newt",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.135",
+      "field": "/items/6",
+      "source_text": "Pie dish",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.135",
+      "field": "/items/8",
+      "source_text": "2 House teletabs",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.135",
+      "field": "/items/9",
+      "source_text": "Fally teletab",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.141",
+      "field": "/text",
+      "span": [
+        38,
+        52
+      ],
+      "source_text": "Knight's sword",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:the_knights_sword"
+      ]
+    },
+    {
+      "step_id": "1.1.158",
+      "field": "/items/0",
+      "source_text": "Fire strike runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.158",
+      "field": "/text",
+      "span": [
+        29,
+        42
+      ],
+      "source_text": "tower of life",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:tower_of_life"
+      ]
+    },
+    {
+      "step_id": "1.1.169",
+      "field": "/items/0",
+      "source_text": "Glarial's pebble",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.169",
+      "field": "/items/1",
+      "source_text": "Notes for dwarf cannon",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.169",
+      "field": "/items/2",
+      "source_text": "Ammo mould",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.169",
+      "field": "/items/4",
+      "source_text": "6 air/water/earth runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.181",
+      "field": "/items/0",
+      "source_text": "20 Ball of wool",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.185",
+      "field": "/items/1",
+      "source_text": "3 balls of wool",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.185",
+      "field": "/items/3",
+      "source_text": "Pot of flour",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.185",
+      "field": "/text",
+      "span": [
+        44,
+        61
+      ],
+      "source_text": "Prince ali rescue",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:prince_ali_rescue"
+      ]
+    },
+    {
+      "step_id": "1.1.190",
+      "field": "/items/0",
+      "source_text": "Fire staff (equip)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.190",
+      "field": "/items/1",
+      "source_text": "Chronicle (equip)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.190",
+      "field": "/items/2",
+      "source_text": "Fire strike runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.190",
+      "field": "/items/3",
+      "source_text": "Rune mysteries notes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.190",
+      "field": "/items/4",
+      "source_text": "4 beads",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.190",
+      "field": "/items/5",
+      "source_text": "20 bones (kill goblins south of the draynor jail)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.193",
+      "field": "/text",
+      "span": [
+        42,
+        54
+      ],
+      "source_text": "demon slayer",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:demon_slayer"
+      ]
+    },
+    {
+      "step_id": "1.1.194",
+      "field": "/items/1",
+      "source_text": "Cadava berries",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.194",
+      "field": "/items/2",
+      "source_text": "Juliet's letter (Item name is just 'message')",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.203",
+      "field": "/items/2",
+      "source_text": "Bark sample",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.203",
+      "field": "/items/3",
+      "source_text": "Translation notes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.203",
+      "field": "/items/6",
+      "source_text": "Fire strike runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.223",
+      "field": "/items/1",
+      "source_text": "Scrying orb",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.223",
+      "field": "/items/3",
+      "source_text": "Fire strike runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.223",
+      "field": "/items/4",
+      "source_text": "1 wizard mind bomb",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.223",
+      "field": "/items/6",
+      "source_text": "Some food",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.235",
+      "field": "/text",
+      "span": [
+        48,
+        64
+      ],
+      "source_text": "Merlin's crystal",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:merlins_crystal"
+      ]
+    },
+    {
+      "step_id": "1.1.236",
+      "field": "/items/2",
+      "source_text": "Pot",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.236",
+      "field": "/items/5",
+      "source_text": "Fishing pass",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.239",
+      "field": "/items/0",
+      "source_text": "6 clay",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.239",
+      "field": "/items/1",
+      "source_text": "4 copper",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.239",
+      "field": "/items/2",
+      "source_text": "2 iron",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.239",
+      "field": "/items/3",
+      "source_text": "5 buckets of sand",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.239",
+      "field": "/items/4",
+      "source_text": "5 soda ash",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.239",
+      "field": "/items/6",
+      "source_text": "Fire strike runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.249",
+      "field": "/items/4",
+      "source_text": "Ghost's skull",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.249",
+      "field": "/items/5",
+      "source_text": "Runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.249",
+      "field": "/items/6",
+      "source_text": "Some food",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.249",
+      "field": "/items/7",
+      "source_text": "10 empty slots for antipoisons",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.254",
+      "field": "/items/0",
+      "source_text": "Brooch",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.254",
+      "field": "/items/1",
+      "source_text": "Scrying orb",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.259",
+      "field": "/text",
+      "span": [
+        24,
+        40
+      ],
+      "source_text": "Merlin's crystal",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:merlins_crystal"
+      ]
+    },
+    {
+      "step_id": "1.1.271",
+      "field": "/items/2",
+      "source_text": "Lit candle",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.271",
+      "field": "/items/3",
+      "source_text": "Excalibur",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.271",
+      "field": "/items/4",
+      "source_text": "Bat bones",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.271",
+      "field": "/items/5",
+      "source_text": "Black candle",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.277",
+      "field": "/items/0",
+      "source_text": "Lost tribe brooch and book",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.277",
+      "field": "/items/1",
+      "source_text": "Blue/orange dyes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.281",
+      "field": "/items/1",
+      "source_text": "5 silver ore",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.281",
+      "field": "/items/2",
+      "source_text": "Sickle mould",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.281",
+      "field": "/items/3",
+      "source_text": "Holy mould",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.1.281",
+      "field": "/items/4",
+      "source_text": "Key imprint",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.2.9",
+      "field": "/text",
+      "span": [
+        17,
+        30
+      ],
+      "source_text": "Shilo Village",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:shilo_village"
+      ]
+    },
+    {
+      "step_id": "1.2.11",
+      "field": "/text",
+      "span": [
+        22,
+        35
+      ],
+      "source_text": "shilo village",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:shilo_village"
+      ]
+    },
+    {
+      "step_id": "1.2.20",
+      "field": "/items/0",
+      "source_text": "Teleport runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.2.20",
+      "field": "/items/3",
+      "source_text": "Bird snare",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.2.20",
+      "field": "/items/4",
+      "source_text": "All the golem quest items",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.11",
+      "field": "/items/0",
+      "source_text": "Tele runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.11",
+      "field": "/items/2",
+      "source_text": "Rune scim",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.15",
+      "field": "/text",
+      "span": [
+        18,
+        34
+      ],
+      "source_text": "Rag and bone man",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:rag_and_bone_man_i"
+      ]
+    },
+    {
+      "step_id": "1.3.17",
+      "field": "/items/2",
+      "source_text": "Lit candle",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.17",
+      "field": "/items/4",
+      "source_text": "Stake (vampire slayer)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.19",
+      "field": "/text",
+      "span": [
+        31,
+        47
+      ],
+      "source_text": "rag and bone man",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:rag_and_bone_man_i"
+      ]
+    },
+    {
+      "step_id": "1.3.20",
+      "field": "/text",
+      "span": [
+        76,
+        92
+      ],
+      "source_text": "rag and bone man",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:rag_and_bone_man_i"
+      ]
+    },
+    {
+      "step_id": "1.3.25",
+      "field": "/items/0",
+      "source_text": "Fire strike runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.25",
+      "field": "/items/1",
+      "source_text": "Food",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.26",
+      "field": "/text",
+      "span": [
+        28,
+        38
+      ],
+      "source_text": "Holy grail",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:holy_grail"
+      ]
+    },
+    {
+      "step_id": "1.3.41",
+      "field": "/items/1",
+      "source_text": "Maze key",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.41",
+      "field": "/items/5",
+      "source_text": "Food",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.41",
+      "field": "/items/6",
+      "source_text": "Runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.42",
+      "field": "/text",
+      "span": [
+        55,
+        68
+      ],
+      "source_text": "Dragon Slayer",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:dragon_slayer_i"
+      ]
+    },
+    {
+      "step_id": "1.3.43",
+      "field": "/text",
+      "span": [
+        25,
+        38
+      ],
+      "source_text": "dragon slayer",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:dragon_slayer_i"
+      ]
+    },
+    {
+      "step_id": "1.3.45",
+      "field": "/items/1",
+      "source_text": "Runes",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.45",
+      "field": "/items/3",
+      "source_text": "Wizard mind bomb",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.45",
+      "field": "/items/4",
+      "source_text": "Lobster pot",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.47",
+      "field": "/text",
+      "span": [
+        26,
+        39
+      ],
+      "source_text": "dragon slayer",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:dragon_slayer_i"
+      ]
+    },
+    {
+      "step_id": "1.3.49",
+      "field": "/text",
+      "span": [
+        28,
+        41
+      ],
+      "source_text": "dragon slayer",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:dragon_slayer_i"
+      ]
+    },
+    {
+      "step_id": "1.3.64a",
+      "field": "/text",
+      "span": [
+        44,
+        63
+      ],
+      "source_text": "Children of the Sun",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:children_of_the_sun"
+      ]
+    },
+    {
+      "step_id": "1.3.79",
+      "field": "/items/0",
+      "source_text": "GP stack",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.79",
+      "field": "/items/1",
+      "source_text": "9 d bones",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.79",
+      "field": "/items/2",
+      "source_text": "9 pot",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.79",
+      "field": "/items/3",
+      "source_text": "9 slime",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.79",
+      "field": "/items/4",
+      "source_text": "General store sells pots if you don't have",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "1.3.79",
+      "field": "/text",
+      "span": [
+        23,
+        34
+      ],
+      "source_text": "ghosts ahoy",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:ghosts_ahoy"
+      ]
+    },
+    {
+      "step_id": "1.4.5",
+      "field": "/text",
+      "span": [
+        24,
+        38
+      ],
+      "source_text": "the grand tree",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:the_grand_tree"
+      ]
+    },
+    {
+      "step_id": "1.4.16",
+      "field": "/text",
+      "span": [
+        25,
+        38
+      ],
+      "source_text": "Tower of life",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:tower_of_life"
+      ]
+    },
+    {
+      "step_id": "1.4.29",
+      "field": "/text",
+      "span": [
+        66,
+        82
+      ],
+      "source_text": "Rag and bone man",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:rag_and_bone_man_i"
+      ]
+    },
+    {
+      "step_id": "1.4.29",
+      "field": "/text",
+      "span": [
+        136,
+        148
+      ],
+      "source_text": "Family crest",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:family_crest"
+      ]
+    },
+    {
+      "step_id": "1.4.29",
+      "field": "/text",
+      "span": [
+        244,
+        257
+      ],
+      "source_text": "Death plateau",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:death_plateau"
+      ]
+    },
+    {
+      "step_id": "1.4.29",
+      "field": "/text",
+      "span": [
+        259,
+        275
+      ],
+      "source_text": "Troll Stronghold",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:troll_stronghold"
+      ]
+    },
+    {
+      "step_id": "1.4.31a",
+      "field": "/text",
+      "span": [
+        9,
+        20
+      ],
+      "source_text": "Vale Totems",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:vale_totems_miniquest"
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "field": "/text",
+      "span": [
+        36,
+        49
+      ],
+      "source_text": "A soul's bane",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:a_souls_bane"
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "field": "/text",
+      "span": [
+        75,
+        100
+      ],
+      "source_text": "Icthlarin's little helper",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:icthlarins_little_helper"
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "field": "/text",
+      "span": [
+        102,
+        110
+      ],
+      "source_text": "Contact!",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:contact"
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "field": "/text",
+      "span": [
+        112,
+        136
+      ],
+      "source_text": "In search of the Myreque",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:in_search_of_the_myreque"
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "field": "/text",
+      "span": [
+        138,
+        159
+      ],
+      "source_text": "In aid of the Myreque",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:in_aid_of_the_myreque"
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "field": "/text",
+      "span": [
+        161,
+        173
+      ],
+      "source_text": "Eagles' peak",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:eagles_peak"
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "field": "/text",
+      "span": [
+        175,
+        191
+      ],
+      "source_text": "Enakhra's Lament",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:enakhras_lament"
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "field": "/text",
+      "span": [
+        237,
+        256
+      ],
+      "source_text": "Tai bwo wannai trio",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:tai_bwo_wannai_trio"
+      ]
+    },
+    {
+      "step_id": "1.5.5a",
+      "field": "/text",
+      "span": [
+        65,
+        83
+      ],
+      "source_text": "Twilight's Promise",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:twilights_promise"
+      ]
+    },
+    {
+      "step_id": "1.5.5c",
+      "field": "/text",
+      "span": [
+        66,
+        74
+      ],
+      "source_text": "Contact!",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:contact"
+      ]
+    },
+    {
+      "step_id": "1.5.5d",
+      "field": "/text",
+      "span": [
+        40,
+        52
+      ],
+      "source_text": "Eagles' Peak",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:eagles_peak"
+      ]
+    },
+    {
+      "step_id": "1.5.6",
+      "field": "/text",
+      "span": [
+        0,
+        8
+      ],
+      "source_text": "Rum deal",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:rum_deal"
+      ]
+    },
+    {
+      "step_id": "1.5.7",
+      "field": "/text",
+      "span": [
+        0,
+        11
+      ],
+      "source_text": "Cabin fever",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:cabin_fever"
+      ]
+    },
+    {
+      "step_id": "1.5.8",
+      "field": "/text",
+      "span": [
+        0,
+        16
+      ],
+      "source_text": "One small favour",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:one_small_favour"
+      ]
+    },
+    {
+      "step_id": "2.0.4",
+      "field": "/items/0",
+      "source_text": "Rune pick (equip)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "2.0.4",
+      "field": "/items/1",
+      "source_text": "Varrock armor 2 (equip)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "2.0.4",
+      "field": "/items/2",
+      "source_text": "Camulet (equip)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "2.0.4",
+      "field": "/items/3",
+      "source_text": "Graceful (except body)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "2.0.4",
+      "field": "/items/4",
+      "source_text": "1200 empty buckets",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "2.0.4",
+      "field": "/items/7",
+      "source_text": "Knife and teak log for 3-ticking (preferably)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "2.0.15a",
+      "field": "/text",
+      "span": [
+        17,
+        36
+      ],
+      "source_text": "Defender of Varrock",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:defender_of_varrock"
+      ]
+    },
+    {
+      "step_id": "2.0.45",
+      "field": "/text",
+      "span": [
+        48,
+        67
+      ],
+      "source_text": "Children of the Sun",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:children_of_the_sun"
+      ]
+    },
+    {
+      "step_id": "2.0.48",
+      "field": "/text",
+      "span": [
+        74,
+        93
+      ],
+      "source_text": "Defender of Varrock",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:defender_of_varrock"
+      ]
+    },
+    {
+      "step_id": "S.3",
+      "field": "/text",
+      "span": [
+        48,
+        66
+      ],
+      "source_text": "The Knight's Sword",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:the_knights_sword"
+      ]
+    },
+    {
+      "step_id": "S.9a",
+      "field": "/items/0",
+      "source_text": "Raft or skiff",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "S.9a",
+      "field": "/items/3",
+      "source_text": "Hammer (not Imcando)",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    },
+    {
+      "step_id": "S.9a",
+      "field": "/items/4",
+      "source_text": "Food + prayer potions",
+      "kind": "item",
+      "method": "item",
+      "reason": "not_in_catalog"
+    }
+  ]
+}

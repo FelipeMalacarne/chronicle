@@ -1,6 +1,6 @@
 # OSRS Ironman Efficiency Guide (OzirisLoL)
 
-Guide id: `oziris-main` · content version `2026.11.0` · 7 sections · 576 steps (209 with automatic rules, 367 manual).
+Guide id: `oziris-main` · content version `2026.11.0` · 1 source variant · 7 sections · 32 segments (25 explicit bank legs) · 576 steps (209 with automatic rules, 367 manual).
 
 ## Attribution
 
@@ -16,6 +16,12 @@ Guide id: `oziris-main` · content version `2026.11.0` · 7 sections · 576 step
 - Migrated to the canonical schema (`content/schema/guide.schema.json`) by
   `ironman content migrate` (package `internal/core/content/migrate`).
   Field mapping: docs/05-conteudo-e-normalizacao.md, "Mapeamento para o schema canônico (Go)".
+- Explicit bank/deposit/withdraw words deterministically start a bank-leg
+  segment. The checked-in result contains 5 partial loadouts and 27 explicitly
+  unknown loadouts; absent requirements are never represented as empty arrays.
+- Bank actions and structured loadouts retain source step ids, confidence and
+  derivation evidence. Segment ids are fingerprints of the section and first
+  stable step id, independent of array positions.
 
 ## Editing
 

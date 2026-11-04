@@ -1,5 +1,6 @@
-// Package content holds the typed content model of a guide (Guide → Section →
-// Step → Rule) and the loader that reads content/guides/*/guide.json,
+// Package content holds the typed content model of a guide (Guide → Variant →
+// Section → Segment → Step → Rule) and the loader that reads
+// content/guides/*/guide.json,
 // validates each file against the embedded JSON Schema
 // (content/schema/guide.schema.json) and builds lookup indexes.
 //

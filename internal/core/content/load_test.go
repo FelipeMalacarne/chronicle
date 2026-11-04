@@ -15,27 +15,34 @@ func TestLoadRealContent(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
-	if len(c.Guides) != 1 {
-		t.Fatalf("guides = %d, want 1", len(c.Guides))
+	if len(c.Guides) != 2 {
+		t.Fatalf("guides = %d, want 2", len(c.Guides))
 	}
-	g := c.Guides[0]
-	if g.ID != "oziris-main" {
-		t.Errorf("guide id = %q", g.ID)
+	g, ok := c.Guide("oziris-main")
+	if !ok {
+		t.Fatal("oziris-main guide not loaded")
 	}
 	if got := g.StepCount(); got != 576 {
 		t.Errorf("steps = %d, want 576", got)
 	}
-	if got := c.StepCount(); got != 576 {
-		t.Errorf("indexed steps = %d, want 576 (ids not unique?)", got)
+	bruh, ok := c.Guide("bruhsailer-main")
+	if !ok || bruh.StepCount() != 226 {
+		t.Fatalf("bruhsailer-main = %#v, %v; want 226 steps", bruh, ok)
 	}
-	seen := map[string]bool{}
-	for _, st := range g.Steps() {
-		if seen[st.ID] {
-			t.Errorf("duplicate step id %q", st.ID)
-		}
-		seen[st.ID] = true
-		if st.SectionID == "" || st.GuideID != g.ID {
-			t.Errorf("step %s: back references not set (section=%q guide=%q)", st.ID, st.SectionID, st.GuideID)
+	if got := c.StepCount(); got != 802 {
+		t.Errorf("indexed steps = %d, want 802", got)
+	}
+	for _, guide := range c.Guides {
+		seen := map[string]bool{}
+		for _, st := range guide.Steps() {
+			if seen[st.ID] {
+				t.Errorf("guide %s: duplicate step id %q", guide.ID, st.ID)
+			}
+			seen[st.ID] = true
+			if st.SectionID == "" || st.VariantID == "" || st.SegmentID == "" || st.GuideID != guide.ID {
+				t.Errorf("step %s: back references not set (variant=%q section=%q segment=%q guide=%q)",
+					st.ID, st.VariantID, st.SectionID, st.SegmentID, st.GuideID)
+			}
 		}
 	}
 	st, ok := c.Step("1.1.258a")
@@ -97,6 +104,71 @@ func TestLoadMinimalAndItems(t *testing.T) {
 	}
 	if string(out) != `["Spade",{"name":"Rope","qty":2}]` {
 		t.Errorf("items round-trip = %s", out)
+	}
+}
+
+func TestLoadMultipleGuidesWithCollidingIDs(t *testing.T) {
+	dir := t.TempDir()
+	writeGuide(t, dir, "z-alpha", `{"schema_version":1,"id":"alpha","title":"Alpha","sections":[{"id":"shared-section","slug":"shared-slug","title":"Alpha section","steps":[
+ {"id":"shared-step","text":"Alpha shared"},{"id":"alpha-only","text":"Alpha only"}
+]}]}`)
+	writeGuide(t, dir, "a-beta", `{"schema_version":1,"id":"beta","title":"Beta","sections":[{"id":"shared-section","slug":"shared-slug","title":"Beta section","steps":[
+ {"id":"shared-step","text":"Beta shared"},{"id":"beta-only","text":"Beta only"}
+]}]}`)
+
+	c, err := Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	if got := c.StepCount(); got != 4 {
+		t.Fatalf("StepCount = %d, want 4", got)
+	}
+
+	alphaStep, ok := c.StepInGuide("alpha", "shared-step")
+	if !ok || alphaStep.Text != "Alpha shared" || alphaStep.GuideID != "alpha" {
+		t.Fatalf("alpha shared step = %#v, %v", alphaStep, ok)
+	}
+	betaStep, ok := c.StepInGuide("beta", "shared-step")
+	if !ok || betaStep.Text != "Beta shared" || betaStep.GuideID != "beta" {
+		t.Fatalf("beta shared step = %#v, %v", betaStep, ok)
+	}
+	alphaSection, ok := c.SectionInGuide("alpha", "shared-section")
+	if !ok || alphaSection.Title != "Alpha section" {
+		t.Fatalf("alpha shared section = %#v, %v", alphaSection, ok)
+	}
+	betaSection, ok := c.SectionInGuide("beta", "shared-slug")
+	if !ok || betaSection.Title != "Beta section" {
+		t.Fatalf("beta shared section = %#v, %v", betaSection, ok)
+	}
+
+	if st, ok := c.Step("shared-step"); ok || st != nil {
+		t.Errorf("ambiguous legacy Step = %#v, %v; want nil, false", st, ok)
+	}
+	if g, sec, ok := c.Section("shared-section"); ok || g != nil || sec != nil {
+		t.Errorf("ambiguous legacy Section = %#v, %#v, %v; want nil, nil, false", g, sec, ok)
+	}
+	if st, ok := c.Step("alpha-only"); !ok || st.Text != "Alpha only" || st.GuideID != "alpha" {
+		t.Errorf("unambiguous legacy Step = %#v, %v", st, ok)
+	}
+
+	if g, ok := c.SelectGuide("alpha"); !ok || g.ID != "alpha" {
+		t.Errorf("SelectGuide(alpha) = %#v, %v", g, ok)
+	}
+	if g, ok := c.SelectGuide(""); ok || g != nil {
+		t.Errorf("SelectGuide(empty) with multiple guides = %#v, %v; want nil, false", g, ok)
+	}
+}
+
+func TestSelectGuideSingleGuideCompatibility(t *testing.T) {
+	dir := t.TempDir()
+	writeGuide(t, dir, "t", minimalGuide)
+	c, err := Load(dir)
+	if err != nil {
+		t.Fatalf("Load: %v", err)
+	}
+	g, ok := c.SelectGuide("")
+	if !ok || g.ID != "t" {
+		t.Fatalf("SelectGuide(empty) = %#v, %v", g, ok)
 	}
 }
 

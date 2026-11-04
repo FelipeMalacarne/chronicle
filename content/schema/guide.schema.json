@@ -2,14 +2,36 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ironman-planner.local/schemas/guide.schema.json",
   "title": "Ironman Planner Guide",
-  "description": "Um guia = lista ordenada de seções = lista ordenada de steps. Superset do shape extraído do ironman.guide. Arquivo: content/guides/<guide-id>/guide.json (ou guide.yaml + sections/*.yaml, mesclados pelo loader). Cópia canônica: content/schema/guide.schema.json (embutida no binário Go); docs/arquitetura/guide.schema.json é referência histórica.",
+  "description": "Um guia contém variantes ordenadas; cada variante contém seções, segmentos/pernas e steps. O formato legado com sections na raiz continua aceito para migração. Arquivo: content/guides/<guide-id>/guide.json. Cópia canônica: content/schema/guide.schema.json (embutida no binário Go); docs/arquitetura/guide.schema.json é referência histórica.",
   "type": "object",
   "additionalProperties": false,
   "required": [
     "schema_version",
     "id",
-    "title",
-    "sections"
+    "title"
+  ],
+  "oneOf": [
+    {
+      "required": [
+        "variants",
+        "default_variant"
+      ],
+      "not": {
+        "required": [
+          "sections"
+        ]
+      }
+    },
+    {
+      "required": [
+        "sections"
+      ],
+      "not": {
+        "required": [
+          "variants"
+        ]
+      }
+    }
   ],
   "properties": {
     "schema_version": {
@@ -43,6 +65,17 @@
     },
     "source": {
       "$ref": "#/$defs/source"
+    },
+    "default_variant": {
+      "$ref": "#/$defs/stableId",
+      "description": "ID da variante selecionada por padrão. Obrigatório nos arquivos canônicos com variants."
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/variant"
+      }
     },
     "sections": {
       "type": "array",
@@ -930,6 +963,280 @@
         },
         "source": {
           "$ref": "#/$defs/source"
+        },
+        "entities": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/entityMention"
+          },
+          "description": "Entidades resolvidas deterministicamente pelo enriquecimento (internal/core/entities/enrich). Menções ambíguas ou não resolvidas ficam fora daqui, no entities.report.json do guia."
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "confidence",
+        "step_ids"
+      ],
+      "properties": {
+        "method": {
+          "type": "string",
+          "enum": [
+            "explicit",
+            "derived"
+          ]
+        },
+        "confidence": {
+          "type": "string",
+          "enum": [
+            "high",
+            "medium",
+            "low"
+          ]
+        },
+        "step_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/$defs/stableId"
+          }
+        },
+        "evidence": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "loadoutItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "item_id": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Id OSRS/RuneLite exato do item como aparece no inventário (forma noted tem id próprio). Só é preenchido quando o nome resolve sem ambiguidade."
+        },
+        "qty": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "optional": {
+          "type": "boolean",
+          "default": false
+        },
+        "source_text": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "loadoutItemList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/loadoutItem"
+      }
+    },
+    "loadoutKnown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "inventory",
+        "equipment",
+        "source"
+      ],
+      "properties": {
+        "status": {
+          "const": "known"
+        },
+        "inventory": {
+          "$ref": "#/$defs/loadoutItemList"
+        },
+        "equipment": {
+          "$ref": "#/$defs/loadoutItemList"
+        },
+        "empty_slots": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 28
+        },
+        "source": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "loadoutPartial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "source"
+      ],
+      "anyOf": [
+        {
+          "required": [
+            "inventory"
+          ]
+        },
+        {
+          "required": [
+            "equipment"
+          ]
+        },
+        {
+          "required": [
+            "empty_slots"
+          ]
+        }
+      ],
+      "properties": {
+        "status": {
+          "const": "partial"
+        },
+        "inventory": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/loadoutItem"
+          }
+        },
+        "equipment": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/loadoutItem"
+          }
+        },
+        "empty_slots": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 28
+        },
+        "source": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "loadoutUnknown": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status"
+      ],
+      "properties": {
+        "status": {
+          "const": "unknown"
+        },
+        "source": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "loadout": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/loadoutKnown"
+        },
+        {
+          "$ref": "#/$defs/loadoutPartial"
+        },
+        {
+          "$ref": "#/$defs/loadoutUnknown"
+        }
+      ]
+    },
+    "bankAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "position",
+        "text",
+        "source"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "open_bank",
+            "deposit_all",
+            "deposit",
+            "withdraw",
+            "bank_setup",
+            "close_bank"
+          ]
+        },
+        "position": {
+          "type": "string",
+          "enum": [
+            "start",
+            "within",
+            "end"
+          ]
+        },
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source": {
+          "$ref": "#/$defs/provenance"
+        }
+      }
+    },
+    "segment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "kind",
+        "source",
+        "steps"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "kind": {
+          "type": "string",
+          "enum": [
+            "sequence",
+            "bank_leg"
+          ]
+        },
+        "bank_actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/bankAction"
+          }
+        },
+        "loadout": {
+          "$ref": "#/$defs/loadout"
+        },
+        "source": {
+          "$ref": "#/$defs/provenance"
+        },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/step"
+          }
         }
       }
     },
@@ -939,8 +1246,29 @@
       "required": [
         "id",
         "slug",
-        "title",
-        "steps"
+        "title"
+      ],
+      "oneOf": [
+        {
+          "required": [
+            "segments"
+          ],
+          "not": {
+            "required": [
+              "steps"
+            ]
+          }
+        },
+        {
+          "required": [
+            "steps"
+          ],
+          "not": {
+            "required": [
+              "segments"
+            ]
+          }
+        }
       ],
       "properties": {
         "id": {
@@ -994,6 +1322,54 @@
           "items": {
             "$ref": "#/$defs/step"
           }
+        },
+        "segments": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/segment"
+          }
+        }
+      }
+    },
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "sections"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/stableId"
+        },
+        "slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "description": {
+          "type": "string"
+        },
+        "modes": {
+          "$ref": "#/$defs/modes"
+        },
+        "layers": {
+          "$ref": "#/$defs/layers"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "sections": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/section"
+          }
         }
       }
     },
@@ -1021,6 +1397,68 @@
         "match": {
           "type": "string",
           "description": "Trecho do texto que disparou a inferência."
+        }
+      }
+    },
+    "entityRef": {
+      "type": "string",
+      "description": "Identidade canônica tipada de uma entidade (internal/core/entities.Ref): 'quest:<slug>', 'item:<id OSRS/RuneLite>' (o id noted é outro id), 'skill:<skill>', 'diary:<área>:<tier>', 'ca:<id da task>', 'boss:<slug>', 'goal:<slug>', 'step:[<guia>/]<id>'. Nunca é uma URL nem um nome de exibição; nomes e URLs da wiki derivam do catálogo em content/reference.",
+      "pattern": "^(?:(?:quest|skill|boss|goal):[a-z0-9]+(?:_[a-z0-9]+)*|item:[1-9][0-9]*|ca:(?:0|[1-9][0-9]*)|diary:[a-z0-9]+(?:_[a-z0-9]+)*:(?:easy|medium|hard|elite)|step:(?:[A-Za-z0-9][A-Za-z0-9._-]{0,63}/)?[A-Za-z0-9][A-Za-z0-9._-]{0,63})$"
+    },
+    "entityMention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "source_text",
+        "field",
+        "method",
+        "match"
+      ],
+      "description": "Uma referência resolvida com confiança exata. 'ref' é a identidade; 'source_text' e 'field' são a evidência (texto original e onde ele está no step). Nomes de exibição não são gravados aqui.",
+      "properties": {
+        "ref": {
+          "$ref": "#/$defs/entityRef"
+        },
+        "source_text": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Texto exatamente como aparece na fonte."
+        },
+        "field": {
+          "type": "string",
+          "pattern": "^(?:/(?:[^~/]|~[01])*)+$",
+          "description": "JSON pointer, relativo ao step, do valor que contém source_text."
+        },
+        "span": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[início, fim) em bytes dentro da string apontada por field (só para texto livre)."
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "rule",
+            "item",
+            "link",
+            "text"
+          ]
+        },
+        "match": {
+          "type": "string",
+          "enum": [
+            "id",
+            "name",
+            "alias",
+            "article",
+            "plural",
+            "wiki_key"
+          ]
         }
       }
     }

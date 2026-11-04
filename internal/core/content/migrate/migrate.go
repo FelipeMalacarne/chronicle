@@ -15,6 +15,9 @@ import (
 	"strings"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/content/derive"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities/enrich"
 )
 
 // Normalized is the root of the v0.1 normalizer output.
@@ -151,6 +154,13 @@ func ReadNormalized(path string) (*Normalized, error) {
 // Convert maps a normalized guide onto the canonical model. The result is
 // indexed but not yet schema-validated; use Encode + content.ValidateJSON.
 func Convert(n *Normalized, opts Options) (*content.Guide, error) {
+	g, _, err := ConvertWithReport(n, opts)
+	return g, err
+}
+
+// ConvertWithReport is Convert plus the entity enrichment report (the
+// ambiguous and unresolved references left out of the guide).
+func ConvertWithReport(n *Normalized, opts Options) (*content.Guide, *enrich.Report, error) {
 	opts.defaults()
 	imported := n.Guide.Source.ExtractedAt
 	g := &content.Guide{
@@ -188,14 +198,18 @@ func Convert(n *Normalized, opts Options) (*content.Guide, error) {
 		for _, nst := range ns.Steps {
 			st, err := convertStep(nst, imported, opts)
 			if err != nil {
-				return nil, fmt.Errorf("migrate: section %s step %s: %w", ns.ID, nst.ID, err)
+				return nil, nil, fmt.Errorf("migrate: section %s step %s: %w", ns.ID, nst.ID, err)
 			}
 			sec.Steps = append(sec.Steps, st)
 		}
 		g.Sections = append(g.Sections, sec)
 	}
-	g.Index()
-	return g, nil
+	derive.EnrichGuide(g)
+	reg, err := entities.Default()
+	if err != nil {
+		return nil, nil, err
+	}
+	return g, enrich.Guide(g, reg), nil
 }
 
 func convertStep(n NStep, imported string, opts Options) (*content.Step, error) {
@@ -357,7 +371,14 @@ func Encode(g *content.Guide) ([]byte, error) {
 type Result struct {
 	GuideFile  string
 	ReadmeFile string
+	ReportFile string
+	Entities   enrich.Tally
+	Variants   int
 	Sections   int
+	Segments   int
+	BankLegs   int
+	Partial    int
+	Unknown    int
 	Steps      int
 	WithRules  int
 	Manual     int
@@ -371,7 +392,7 @@ func Run(inPath, outDir string, opts Options) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
-	g, err := Convert(n, opts)
+	g, report, err := ConvertWithReport(n, opts)
 	if err != nil {
 		return nil, err
 	}
@@ -389,11 +410,41 @@ func Run(inPath, outDir string, opts Options) (*Result, error) {
 	if err := os.WriteFile(outFile, data, 0o644); err != nil {
 		return nil, err
 	}
+	reportData, encErr := report.Encode()
+	if encErr != nil {
+		return nil, fmt.Errorf("migrate: encode entity report: %w", encErr)
+	}
+	reportFile := filepath.Join(outDir, enrich.ReportFileName)
+	if err := os.WriteFile(reportFile, reportData, 0o644); err != nil {
+		return nil, err
+	}
 	readme := filepath.Join(outDir, "README.md")
 	if err := os.WriteFile(readme, []byte(readmeFor(n, g, inPath)), 0o644); err != nil {
 		return nil, err
 	}
-	res := &Result{GuideFile: outFile, ReadmeFile: readme, Sections: len(g.Sections), Steps: g.StepCount()}
+	res := &Result{
+		GuideFile:  outFile,
+		ReadmeFile: readme,
+		ReportFile: reportFile,
+		Entities:   report.Counts.Tally,
+		Variants:   len(g.Variants),
+		Sections:   len(g.Sections),
+		Steps:      g.StepCount(),
+	}
+	for _, segment := range g.Segments() {
+		res.Segments++
+		if segment.Kind == content.SegmentBankLeg {
+			res.BankLegs++
+		}
+		if segment.Loadout != nil {
+			switch segment.Loadout.Status {
+			case content.LoadoutPartial:
+				res.Partial++
+			case content.LoadoutUnknown:
+				res.Unknown++
+			}
+		}
+	}
 	for _, st := range g.Steps() {
 		if st.IsManual() {
 			res.Manual++
@@ -411,9 +462,24 @@ func readmeFor(n *Normalized, g *content.Guide, inPath string) string {
 			withRules++
 		}
 	}
+	segments, bankLegs, partial, unknown := 0, 0, 0, 0
+	for _, segment := range g.Segments() {
+		segments++
+		if segment.Kind == content.SegmentBankLeg {
+			bankLegs++
+		}
+		if segment.Loadout != nil {
+			switch segment.Loadout.Status {
+			case content.LoadoutPartial:
+				partial++
+			case content.LoadoutUnknown:
+				unknown++
+			}
+		}
+	}
 	return fmt.Sprintf(`# %s
 
-Guide id: `+"`%s`"+` · content version `+"`%s`"+` · %d sections · %d steps (%d with automatic rules, %d manual).
+Guide id: `+"`%s`"+` · content version `+"`%s`"+` · %d source variant · %d sections · %d segments (%d explicit bank legs) · %d steps (%d with automatic rules, %d manual).
 
 ## Attribution
 
@@ -429,6 +495,12 @@ Guide id: `+"`%s`"+` · content version `+"`%s`"+` · %d sections · %d steps (%
 - Migrated to the canonical schema (`+"`content/schema/guide.schema.json`"+`) by
   `+"`ironman content migrate`"+` (package `+"`internal/core/content/migrate`"+`).
   Field mapping: docs/05-conteudo-e-normalizacao.md, "Mapeamento para o schema canônico (Go)".
+- Explicit bank/deposit/withdraw words deterministically start a bank-leg
+  segment. The checked-in result contains %d partial loadouts and %d explicitly
+  unknown loadouts; absent requirements are never represented as empty arrays.
+- Bank actions and structured loadouts retain source step ids, confidence and
+  derivation evidence. Segment ids are fingerprints of the section and first
+  stable step id, independent of array positions.
 
 ## Editing
 
@@ -439,7 +511,7 @@ fix the extraction/normalisation and re-run:
     go run ./cmd/ironman content validate
 
 Step ids are stable and inherited from ironman.guide; never reuse one.
-`, g.Title, g.ID, g.Version, len(g.Sections), g.StepCount(), withRules, g.StepCount()-withRules,
+`, g.Title, g.ID, g.Version, len(g.Variants), len(g.Sections), segments, bankLegs, g.StepCount(), withRules, g.StepCount()-withRules,
 		n.Guide.Source.Author, n.Guide.Source.Maintainer, n.Guide.Source.URL,
-		n.Guide.Source.URL, n.Guide.Source.ExtractedAt, filepath.ToSlash(inPath), n.SchemaVersion)
+		n.Guide.Source.URL, n.Guide.Source.ExtractedAt, filepath.ToSlash(inPath), n.SchemaVersion, partial, unknown)
 }

@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
 )
 
 // DBPinger is the subset of a connection pool the API needs for health checks.
@@ -23,8 +25,24 @@ type Options struct {
 	Version string
 	// Content is the loaded guide content (required).
 	Content *content.Content
+	// DefaultGuideID is used only by legacy unscoped routes. New callers must
+	// always address a guide explicitly.
+	DefaultGuideID string
 	// DB is pinged by /api/health; nil means no database is configured.
 	DB DBPinger
+	// Ingest handles authenticated plugin manifests and pushes. nil disables
+	// the ingest routes (for example when no database is configured).
+	Ingest storeingest.Service
+	// Holdings serves the item containers behind the readiness routes. nil
+	// disables them.
+	Holdings HoldingsSource
+	// Catalog relates noted/unnoted item ids and knows stackability for the
+	// readiness evaluator; nil compares ids exactly.
+	Catalog *entities.Registry
+	// DevMode exposes the one-time ingest-token bootstrap endpoint and the
+	// account-addressed readiness routes. It must never be enabled by a
+	// production authentication mode.
+	DevMode bool
 	// Static is the SPA filesystem rooted at the site (index.html at its root).
 	// nil disables the SPA and / returns 404.
 	Static fs.FS
@@ -57,10 +75,30 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/health", s.handleHealth)
 	s.mux.HandleFunc("GET /api/version", s.handleVersion)
-	s.mux.HandleFunc("GET /api/guide", s.handleGuide)
-	s.mux.HandleFunc("GET /api/guide/{section}", s.handleSection)
-	s.mux.HandleFunc("GET /api/steps/{id}", s.handleStep)
-	s.mux.HandleFunc("GET /api/now", s.handleNow)
+	s.mux.HandleFunc("GET /api/guides", s.handleGuides)
+	s.mux.HandleFunc("GET /api/guides/{guide}", s.handleGuide)
+	s.mux.HandleFunc("GET /api/guides/{guide}/sections/{section}", s.handleSection)
+	s.mux.HandleFunc("GET /api/guides/{guide}/steps/{id}", s.handleStep)
+	s.mux.HandleFunc("GET /api/guides/{guide}/now", s.handleNow)
+	// Compatibility paths deliberately select one configured guide; they never
+	// concatenate multiple routes or resolve ambiguous ids across guides.
+	s.mux.HandleFunc("GET /api/guide", s.handleLegacyGuides)
+	s.mux.HandleFunc("GET /api/guide/{section}", s.handleLegacySection)
+	s.mux.HandleFunc("GET /api/steps/{id}", s.handleLegacyStep)
+	s.mux.HandleFunc("GET /api/now", s.handleLegacyNow)
+	if s.opts.Ingest != nil {
+		s.mux.HandleFunc("GET /api/ingest/manifest", s.handleIngestManifest)
+		s.mux.HandleFunc("POST /api/ingest", s.handleIngestPush)
+		if s.opts.DevMode {
+			s.mux.HandleFunc("POST /api/dev/ingest-token", s.handleCreateIngestToken)
+		}
+	}
+	// Readiness exposes an account's item containers by account id. Until
+	// session authentication exists it is a dev-mode-only route.
+	if s.opts.Holdings != nil && s.opts.DevMode {
+		s.mux.HandleFunc("GET /api/guides/{guide}/readiness", s.handleReadiness)
+		s.mux.HandleFunc("GET /api/guides/{guide}/segments/{segment}/readiness", s.handleSegmentReadiness)
+	}
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
 	})

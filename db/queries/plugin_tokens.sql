@@ -13,6 +13,15 @@ FROM plugin_ingest_tokens t
 JOIN accounts a ON a.id = t.account_id
 WHERE t.token_hash = $1 AND t.revoked_at IS NULL AND a.active = true;
 
+-- name: GetPluginTokenByHashForUpdate :one
+-- Serializes pushes for one token so client_seq comparison and advancement are
+-- atomic with the snapshot and merged-state writes.
+SELECT t.*, a.user_id
+FROM plugin_ingest_tokens t
+JOIN accounts a ON a.id = t.account_id
+WHERE t.token_hash = $1 AND t.revoked_at IS NULL AND a.active = true
+FOR UPDATE OF t;
+
 -- name: ListPluginTokensByAccount :many
 SELECT id, account_id, label, scopes, manifest_version, last_seq, last_seen_at, last_ip, created_at, revoked_at
 FROM plugin_ingest_tokens
@@ -24,6 +33,14 @@ ORDER BY created_at DESC;
 UPDATE plugin_ingest_tokens
 SET last_seq         = GREATEST(last_seq, $2),
     manifest_version = GREATEST(manifest_version, $3),
+    last_seen_at     = now(),
+    last_ip          = $4
+WHERE id = $1;
+
+-- name: UpdatePluginTokenAfterPush :exec
+UPDATE plugin_ingest_tokens
+SET last_seq         = $2,
+    manifest_version = $3,
     last_seen_at     = now(),
     last_ip          = $4
 WHERE id = $1;

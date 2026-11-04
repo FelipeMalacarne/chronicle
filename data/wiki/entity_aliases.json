@@ -1,0 +1,77 @@
+{
+  "version": "2026.11.0",
+  "quest_aliases": [
+    {
+      "text": "Forgettable Tale",
+      "quest": "Forgettable Tale...",
+      "note": "title without the ellipsis"
+    },
+    {
+      "text": "Forgettable Tale of a Drunken Dwarf",
+      "quest": "Forgettable Tale...",
+      "note": "full in-game title"
+    },
+    {
+      "text": "Dragon Slayer",
+      "quest": "Dragon Slayer I",
+      "note": "title before Dragon Slayer II was released; wiki redirect"
+    },
+    {
+      "text": "Monkey Madness",
+      "quest": "Monkey Madness I",
+      "note": "title before Monkey Madness II was released; wiki redirect"
+    },
+    {
+      "text": "Desert Treasure",
+      "quest": "Desert Treasure I",
+      "note": "title before Desert Treasure II was released; wiki redirect"
+    },
+    {
+      "text": "Desert Treasure II",
+      "quest": "Desert Treasure II - The Fallen Empire",
+      "note": "title without subtitle"
+    },
+    {
+      "text": "Fairytale I",
+      "quest": "Fairytale I - Growing Pains",
+      "note": "title without subtitle"
+    },
+    {
+      "text": "Fairytale II",
+      "quest": "Fairytale II - Cure a Queen",
+      "note": "title without subtitle"
+    },
+    {
+      "text": "Rag and Bone Man",
+      "quest": "Rag and Bone Man I",
+      "note": "title before Rag and Bone Man II was released; wiki redirect"
+    },
+    {
+      "text": "OSF",
+      "quest": "One Small Favour",
+      "note": "common abbreviation"
+    }
+  ],
+  "quest_text_ambiguous": [
+    {
+      "text": "Tears of Guthix",
+      "quests": [
+        "Tears of Guthix"
+      ],
+      "reason": "also the name of the Tears of Guthix minigame; free text resolves only as 'Tears of Guthix quest'"
+    },
+    {
+      "text": "RFD",
+      "quests": [
+        "Recipe for Disaster"
+      ],
+      "include_subquests_of": "Recipe for Disaster",
+      "reason": "abbreviation used for the parent quest and for its subquests"
+    }
+  ],
+  "diary_area_aliases": {
+    "Kourend": "Kourend & Kebos",
+    "Lumbridge": "Lumbridge & Draynor",
+    "Wildy": "Wilderness"
+  }
+}

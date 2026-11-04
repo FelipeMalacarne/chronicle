@@ -19,7 +19,9 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
 	"github.com/FelipeMalacarne/ironman-planner/internal/config"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 	"github.com/FelipeMalacarne/ironman-planner/internal/httpapi"
+	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
 	"github.com/FelipeMalacarne/ironman-planner/web"
 )
 
@@ -55,6 +57,8 @@ func runServe(parent context.Context) error {
 	logger.Info("content loaded", "dir", cfg.ContentDir, "guides", len(cnt.Guides), "steps", cnt.StepCount())
 
 	var db httpapi.DBPinger
+	var ingestService storeingest.Service
+	var holdings httpapi.HoldingsSource
 	if cfg.DatabaseURL != "" {
 		pool, dbErr := connectDB(ctx, cfg, logger)
 		if dbErr != nil {
@@ -63,6 +67,8 @@ func runServe(parent context.Context) error {
 		if pool != nil {
 			defer pool.Close()
 			db = pool
+			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt))
+			ingestService, holdings = repo, repo
 		}
 	} else {
 		logger.Info("no DATABASE_URL set; running without a database")
@@ -73,12 +79,22 @@ func runServe(parent context.Context) error {
 		return fmt.Errorf("embedded web/dist: %w", err)
 	}
 
+	catalog, err := entities.Default()
+	if err != nil {
+		return fmt.Errorf("entity catalog: %w", err)
+	}
+
 	api := httpapi.New(httpapi.Options{
-		Version: buildinfo.String(),
-		Content: cnt,
-		DB:      db,
-		Static:  static,
-		Logger:  logger,
+		Version:        buildinfo.String(),
+		Content:        cnt,
+		DefaultGuideID: "oziris-main",
+		DB:             db,
+		Ingest:         ingestService,
+		Holdings:       holdings,
+		Catalog:        catalog,
+		DevMode:        cfg.IsDev(),
+		Static:         static,
+		Logger:         logger,
 	})
 	srv := &http.Server{
 		Addr:              cfg.Addr,

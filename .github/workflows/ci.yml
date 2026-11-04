@@ -93,7 +93,10 @@ jobs:
           # Go cache is already handled by setup-go.
           skip-cache: false
 
-      - run: go test -race -count=1 ./...
+      - name: go test (race needs cgo)
+        run: go test -race -count=1 ./...
+        env:
+          CGO_ENABLED: "1"
 
       - name: Validate content
         run: go run ./cmd/ironman content validate
@@ -121,6 +124,7 @@ jobs:
     env:
       DATABASE_URL: postgres://ironman:ironman@localhost:5432/ironman_planner?sslmode=disable
       GOOSE_DRIVER: postgres
+      GOOSE_DBSTRING: postgres://ironman:ironman@localhost:5432/ironman_planner?sslmode=disable
       GOOSE_MIGRATION_DIR: db/migrations
     steps:
       - uses: actions/checkout@v4
@@ -134,15 +138,15 @@ jobs:
         run: go install github.com/pressly/goose/v3/cmd/goose@latest
 
       - name: goose up
-        run: goose postgres "$DATABASE_URL" up
+        run: goose up
 
       - name: goose status
-        run: goose postgres "$DATABASE_URL" status
+        run: goose status
 
       - name: goose down-to 0 and up again (Down sections must work)
         run: |
-          goose postgres "$DATABASE_URL" down-to 0
-          goose postgres "$DATABASE_URL" up
+          goose down-to 0
+          goose up
 
       - name: sqlc vet (queries parse against the schema)
         run: go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest vet

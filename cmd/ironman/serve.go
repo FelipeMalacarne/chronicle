@@ -22,6 +22,7 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 	"github.com/FelipeMalacarne/ironman-planner/internal/httpapi"
 	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 	"github.com/FelipeMalacarne/ironman-planner/web"
 )
 
@@ -59,9 +60,15 @@ func runServe(parent context.Context) error {
 		logger.Warn("annotation skipped", "issue", w.Error())
 	}
 
+	catalog, err := entities.Default()
+	if err != nil {
+		return fmt.Errorf("entity catalog: %w", err)
+	}
+
 	var db httpapi.DBPinger
 	var ingestService storeingest.Service
 	var holdings httpapi.HoldingsSource
+	var progressService httpapi.ProgressService
 	if cfg.DatabaseURL != "" {
 		pool, dbErr := connectDB(ctx, cfg, logger)
 		if dbErr != nil {
@@ -70,8 +77,15 @@ func runServe(parent context.Context) error {
 		if pool != nil {
 			defer pool.Close()
 			db = pool
-			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt))
-			ingestService, holdings = repo, repo
+			progressRepo := storeprogress.New(pool, cnt, catalog)
+			if err = bootProgress(ctx, progressRepo, logger); err != nil {
+				if !cfg.IsDev() {
+					return err
+				}
+				logger.Error("progress: boot indexing failed; continuing", "err", err)
+			}
+			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt)).WithReevaluator(progressRepo)
+			ingestService, holdings, progressService = repo, repo, progressRepo
 		}
 	} else {
 		logger.Info("no DATABASE_URL set; running without a database")
@@ -82,11 +96,6 @@ func runServe(parent context.Context) error {
 		return fmt.Errorf("embedded web/dist: %w", err)
 	}
 
-	catalog, err := entities.Default()
-	if err != nil {
-		return fmt.Errorf("entity catalog: %w", err)
-	}
-
 	api := httpapi.New(httpapi.Options{
 		Version:        buildinfo.String(),
 		Content:        cnt,
@@ -94,6 +103,7 @@ func runServe(parent context.Context) error {
 		DB:             db,
 		Ingest:         ingestService,
 		Holdings:       holdings,
+		Progress:       progressService,
 		Catalog:        catalog,
 		DevMode:        cfg.IsDev(),
 		Static:         static,
@@ -130,6 +140,27 @@ func runServe(parent context.Context) error {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		return fmt.Errorf("shutdown: %w", err)
 	}
+	return nil
+}
+
+// bootProgress indexes the loaded content (content_versions, content_steps),
+// applies pending step id aliases and reevaluates every active account, so
+// newly extracted annotations show up without any other step (docs/09
+// section 6.2).
+func bootProgress(ctx context.Context, repo *storeprogress.Repository, logger *slog.Logger) error {
+	report, err := repo.IndexContent(ctx, buildinfo.String())
+	if err != nil {
+		return fmt.Errorf("index content: %w", err)
+	}
+	for _, w := range report.Warnings {
+		logger.Warn("step id alias not applied", "issue", w)
+	}
+	accounts, err := repo.ReevaluateAll(ctx)
+	if err != nil {
+		return fmt.Errorf("reevaluate progress: %w", err)
+	}
+	logger.Info("progress: content indexed", "content_version", report.ContentVersionID,
+		"steps", report.Steps, "aliases_applied", report.AliasesApplied, "accounts_reevaluated", accounts)
 	return nil
 }
 

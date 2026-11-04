@@ -36,6 +36,9 @@ type Options struct {
 	// Holdings serves the item containers behind the readiness routes. nil
 	// disables them.
 	Holdings HoldingsSource
+	// Progress serves the board, marks, cursor and objective verdicts. nil
+	// disables those routes.
+	Progress ProgressService
 	// Catalog relates noted/unnoted item ids and knows stackability for the
 	// readiness evaluator; nil compares ids exactly.
 	Catalog *entities.Registry
@@ -98,6 +101,15 @@ func (s *Server) routes() {
 	if s.opts.Holdings != nil && s.opts.DevMode {
 		s.mux.HandleFunc("GET /api/guides/{guide}/readiness", s.handleReadiness)
 		s.mux.HandleFunc("GET /api/guides/{guide}/segments/{segment}/readiness", s.handleSegmentReadiness)
+	}
+	// Progress is addressed by account id too: dev-mode-only until sessions
+	// exist (CLAUDE.md rule 10).
+	if s.opts.Progress != nil && s.opts.DevMode {
+		s.mux.HandleFunc("GET /api/guides/{guide}/board", s.handleBoard)
+		s.mux.HandleFunc("PATCH /api/guides/{guide}/steps/{id}/mark", s.handleMark)
+		s.mux.HandleFunc("POST /api/guides/{guide}/implied/confirm", s.handleConfirmImplied)
+		s.mux.HandleFunc("PUT /api/guides/{guide}/cursor", s.handleCursor)
+		s.mux.HandleFunc("GET /api/objectives", s.handleObjectives)
 	}
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")

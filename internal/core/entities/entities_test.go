@@ -228,6 +228,11 @@ func TestResolveItems(t *testing.T) {
 		"1 normal log":         {Resolved, "item:1511", MatchAlias, "", false},
 		"law runes":            {Resolved, "item:563", MatchPlural, "", false},
 		"planks":               {Resolved, "item:960", MatchPlural, "", false},
+		"shrimp":               {Resolved, "item:315", MatchPlural, "", false},
+		"30 balls of wool":     {Resolved, "item:1759", MatchPlural, "", false},
+		"buckets of milk":      {Resolved, "item:1927", MatchPlural, "", false},
+		"eyes of newt":         {Resolved, "item:221", MatchPlural, "", false},
+		"8 woad leaves":        {Resolved, "item:1793", MatchPlural, "", false},
 		"120 noted planks":     {Resolved, "item:961", MatchPlural, "", true},
 		"Logs (noted)":         {Resolved, "item:1512", MatchName, "", true},
 		"Prayer potion(4)":     {Resolved, "item:2434", MatchName, "", false},
@@ -238,7 +243,9 @@ func TestResolveItems(t *testing.T) {
 		"noted chisel":         {Resolved, "item:1756", MatchName, "", true},
 		"noted fishing pass":   {Unresolved, "", "", ReasonNotedFormUnknown, true},
 		"Few cakes":            {Unresolved, "", "", ReasonNotInCatalog, false},
-		"1k bronze arrowheads": {Unresolved, "", "", ReasonNotInCatalog, false},
+		"1k bronze arrowheads": {Resolved, "item:39", MatchAlias, "", false},
+		"law rune":             {Resolved, "item:563", MatchName, "", false},
+		"Some food":            {Unresolved, "", "", ReasonNotInCatalog, false},
 	} {
 		res, p := r.ResolveItem(phrase)
 		if res.Status != w.status || res.Reason != w.reason || p.Noted != w.noted {

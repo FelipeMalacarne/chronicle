@@ -2832,6 +2832,7 @@
                   },
                   {
                     "name": "1k bronze arrowheads",
+                    "item_id": 39,
                     "source_text": "1k bronze arrowheads"
                   },
                   {
@@ -2930,6 +2931,13 @@
                       "field": "/items/5",
                       "method": "item",
                       "match": "plural"
+                    },
+                    {
+                      "ref": "item:39",
+                      "source_text": "1k bronze arrowheads",
+                      "field": "/items/6",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "item:8013",
@@ -3577,6 +3585,13 @@
                       "field": "/items/1",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:290",
+                      "source_text": "Rune mysteries package",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "item:995",
@@ -5240,6 +5255,20 @@
                       "field": "/items/7",
                       "method": "item",
                       "match": "plural"
+                    },
+                    {
+                      "ref": "item:8013",
+                      "source_text": "2 House teletabs",
+                      "field": "/items/8",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:8009",
+                      "source_text": "Fally teletab",
+                      "field": "/items/9",
+                      "method": "item",
+                      "match": "alias"
                     }
                   ]
                 },
@@ -6643,6 +6672,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:3",
+                      "source_text": "Notes for dwarf cannon",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
                       "ref": "item:4",
                       "source_text": "Ammo mould",
                       "field": "/items/2",
@@ -7386,6 +7422,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:1759",
+                      "source_text": "3 balls of wool",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:592",
                       "source_text": "Ashes",
                       "field": "/items/2",
@@ -7598,6 +7641,13 @@
                       "field": "/complete_when/0/quest",
                       "method": "rule",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:291",
+                      "source_text": "Rune mysteries notes",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "quest:imp_catcher",
@@ -8864,6 +8914,13 @@
                       "match": "alias"
                     },
                     {
+                      "ref": "item:1907",
+                      "source_text": "1 wizard mind bomb",
+                      "field": "/items/4",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
                       "ref": "item:563",
                       "source_text": "1 law rune",
                       "field": "/items/5",
@@ -9492,6 +9549,13 @@
                       "field": "/items/0",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1783",
+                      "source_text": "5 buckets of sand",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:1781",
@@ -11641,6 +11705,13 @@
                       "field": "/items/3",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:2423",
+                      "source_text": "Key imprint",
+                      "field": "/items/4",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "item:2349",
@@ -15061,6 +15132,13 @@
                       "field": "/items/2",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1907",
+                      "source_text": "Wizard mind bomb",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "item:301",
@@ -21639,6 +21717,13 @@
                       "field": "/complete_when/0/skill",
                       "method": "rule",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:3727",
+                      "source_text": "1200 empty buckets",
+                      "field": "/items/4",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:995",

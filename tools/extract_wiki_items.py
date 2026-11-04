@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Offline extract of the OSRS items cited by the two guides (stdlib only).
+"""Offline extract of every OSRS item page of the wiki (stdlib only).
+
+Every main-namespace page that transcludes {{Infobox Item}} is fetched and
+kept, so the catalog holds all items of the game, not only the ones the guides
+cite (docs/09 section 7). The guides' citations below only fill `cited_as` and
+`not_found` and add candidate titles (redirects, shorthand) to the fetch.
 
 Inputs (read from the repository root):
   - content/guides/*/entities.report.json: `ambiguous` and `unresolved` entries
@@ -456,6 +461,31 @@ class Wiki:
                 cur = hops[cur]
             resolve[title] = cur
 
+    def item_pages(self):
+        """Every main-namespace page that transcludes {{Infobox Item}} (cached)."""
+        # Outside self.dir: every *.json there is a cached page batch.
+        path = os.path.join(os.path.dirname(self.dir), "item-pages.json")
+        if not self.refresh and os.path.exists(path):
+            return load_json(path)
+        params = {
+            "action": "query", "list": "embeddedin", "eititle": "Template:Infobox Item",
+            "einamespace": "0", "eilimit": "500", "format": "json", "formatversion": "2",
+        }
+        titles, cont = [], {}
+        while True:
+            data = self._get({**params, **cont})
+            if "error" in data:
+                raise RuntimeError(f"wiki API error: {data['error']}")
+            titles.extend(p["title"] for p in (data.get("query") or {}).get("embeddedin") or [])
+            print(f"  wiki: {len(titles)} item pages listed", file=sys.stderr)
+            if "continue" not in data:
+                break
+            cont = data["continue"]
+        titles = sorted(set(titles))
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(titles, f)
+        return titles
+
     def fetch(self, titles):
         """Return (resolve map requested->final title, pages title->(revid, wikitext)).
 
@@ -634,7 +664,8 @@ def parse_page(text, stats):
                 stats["skipped_versions"] += 1
                 continue
             name = plain(get("name"))
-            ids = [int(x.strip()) for x in (get("id") or "").split(",") if x.strip().isdigit()]
+            # Id 0 (Dwarf remains) stays out: item refs are positive (internal/core/entities/ref.go).
+            ids = [int(x.strip()) for x in (get("id") or "").split(",") if x.strip().isdigit() and int(x.strip()) > 0]
             if not name or not ids:
                 stats["versions_without_id"] += 1
                 continue
@@ -684,14 +715,15 @@ def main():
             skipped.append(raw)
         else:
             name_candidates[raw] = cands
-    titles = set(SEED_PAGES) | set(curated_keys)
+    wiki = Wiki(args.cache_dir, args.refresh)
+    item_pages = wiki.item_pages()
+    titles = set(item_pages) | set(SEED_PAGES) | set(curated_keys)
     for groups in name_candidates.values():
         for group in groups:
             titles.update(group)
-    print(f"cited names: {len(names)} ({len(skipped)} skipped as non-items), "
-          f"titles to fetch: {len(titles)}", file=sys.stderr)
+    print(f"cited names: {len(names)} ({len(skipped)} skipped as non-items), item pages: "
+          f"{len(item_pages)}, titles to fetch: {len(titles)}", file=sys.stderr)
 
-    wiki = Wiki(args.cache_dir, args.refresh)
     resolve, pages = wiki.fetch(sorted(titles))
 
     stats = {"skipped_versions": 0, "versions_without_id": 0}
@@ -716,10 +748,9 @@ def main():
             matched += 1
         else:
             not_found.append({"text": raw, "tried": [c for group in groups for c in group]})
-    wanted = set(cited_by_page)
-    for title in list(SEED_PAGES) + curated_keys:
-        if page_of(title):
-            wanted.add(page_of(title))
+    # Every item page of the game, not only the cited ones (docs/09 section 7):
+    # the citations only fill cited_as and not_found.
+    wanted = set(parsed)
 
     sha, noted = runelite_ids(args.cache_dir, args.refresh, args.runelite_sha)
 

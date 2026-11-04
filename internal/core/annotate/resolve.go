@@ -32,10 +32,15 @@ type EntityResult struct {
 	Noted bool `json:"noted,omitempty"`
 }
 
-// EntityCandidate is one candidate of an ambiguous name.
+// EntityCandidate is one candidate of an ambiguous name. Variant and Page
+// tell same-name items apart: variants of one wiki page (potion doses,
+// "Dyed" and "Grey" wigs), or items on pages of their own ("Message (Romeo &
+// Juliet)").
 type EntityCandidate struct {
-	Ref  string `json:"ref"`
-	Name string `json:"name"`
+	Ref     string `json:"ref"`
+	Name    string `json:"name"`
+	Variant string `json:"variant,omitempty"`
+	Page    string `json:"page,omitempty"`
 }
 
 // ResolveEntity resolves a name of a kind the way submit will. tier is the
@@ -48,7 +53,8 @@ func (w *Workspace) ResolveEntity(kind, name, tier string) EntityResult {
 	}
 	for _, c := range res.Candidates {
 		disp, _ := w.reg.Display(c)
-		out.Candidates = append(out.Candidates, EntityCandidate{Ref: c.String(), Name: disp})
+		v, page := variant(w.reg, c)
+		out.Candidates = append(out.Candidates, EntityCandidate{Ref: c.String(), Name: disp, Variant: v, Page: page})
 	}
 	if kind == string(entities.KindItem) {
 		out.Family = familySlug(w.reg, entities.ParseItemPhrase(name).Name)
@@ -101,7 +107,7 @@ func resolveName(reg *entities.Registry, kind, name, tier string) (entities.Reso
 // an ambiguous name and must agree with a resolved one; an unresolved name
 // never gets an id. id is the bare id ("552") or the full ref ("item:552"),
 // the form resolve_entity and the rejection reasons print.
-func pick(res entities.Resolution, kind, name, id string) (entities.Ref, error) {
+func pick(reg *entities.Registry, res entities.Resolution, kind, name, id string) (entities.Ref, error) {
 	switch res.Status {
 	case entities.Resolved:
 		if id != "" && !sameRef(res.Ref, id) {
@@ -110,14 +116,14 @@ func pick(res entities.Resolution, kind, name, id string) (entities.Ref, error) 
 		return res.Ref, nil
 	case entities.Ambiguous:
 		if id == "" {
-			return entities.Ref{}, fmt.Errorf("%s %q is ambiguous (%s): choose an id among %s", kind, name, res.Reason, refList(res.Candidates))
+			return entities.Ref{}, fmt.Errorf("%s %q is ambiguous (%s): choose an id among %s", kind, name, res.Reason, refList(reg, res.Candidates))
 		}
 		for _, c := range res.Candidates {
 			if sameRef(c, id) {
 				return c, nil
 			}
 		}
-		return entities.Ref{}, fmt.Errorf("id %q is not a candidate of %s %q (%s)", id, kind, name, refList(res.Candidates))
+		return entities.Ref{}, fmt.Errorf("id %q is not a candidate of %s %q (%s)", id, kind, name, refList(reg, res.Candidates))
 	}
 	hint := ""
 	if kind == string(entities.KindUnlock) || kind == string(entities.KindLocation) {
@@ -131,12 +137,31 @@ func sameRef(r entities.Ref, id string) bool {
 	return id == r.ID || id == r.String()
 }
 
-func refList(refs []entities.Ref) string {
+// refList prints refs for a message, with what tells same-name items apart
+// ("item:2419 (Dyed), item:2421 (Grey)", "item:755 (Message (Romeo & Juliet))").
+func refList(reg *entities.Registry, refs []entities.Ref) string {
 	s := make([]string, len(refs))
 	for i, r := range refs {
 		s[i] = r.String()
+		if v, page := variant(reg, r); v != "" || page != "" {
+			s[i] += " (" + strings.TrimSpace(page+" "+v) + ")"
+		}
 	}
 	return strings.Join(s, ", ")
+}
+
+// variant returns the catalog variant of an item ref and its wiki page when
+// the page is not titled with the item's name; "" otherwise.
+func variant(reg *entities.Registry, r entities.Ref) (v, page string) {
+	if id, ok := r.Int(); ok && r.Kind == entities.KindItem {
+		if it, ok := reg.Item(id); ok {
+			if entities.NormalizeName(string(it.WikiKey)) != entities.NormalizeName(it.Name) {
+				page = string(it.WikiKey)
+			}
+			return it.Variant, page
+		}
+	}
+	return "", ""
 }
 
 // StepProposal is what the agent submits for one step: names, quotes and
@@ -266,7 +291,7 @@ func build(reg *entities.Registry, st *content.Step, p StepProposal, skillVersio
 		sa.BankActions = append(sa.BankActions, content.AnnotatedBankAction{Type: bp.Type, Position: bp.Position, Evidence: ev, Source: src})
 	}
 	if lp := p.Location; lp != nil {
-		ref, err := pick(reg.ResolveLocation(lp.Name), string(entities.KindLocation), lp.Name, lp.ID)
+		ref, err := pick(reg, reg.ResolveLocation(lp.Name), string(entities.KindLocation), lp.Name, lp.ID)
 		if err != nil {
 			fail("location", err)
 		} else if ev, src, err := provenance(st, lp.Evidence, lp.Source, skillVersion); err != nil {
@@ -290,7 +315,7 @@ func objectiveKey(reg *entities.Registry, op ObjectiveProposal) (entities.Object
 	if noted {
 		return entities.ObjectiveKey{}, fmt.Errorf("item objectives count the item, not its noted form: drop %q", "noted")
 	}
-	ref, err := pick(res, op.Kind, op.Name, op.ID)
+	ref, err := pick(reg, res, op.Kind, op.Name, op.ID)
 	if err != nil {
 		return entities.ObjectiveKey{}, err
 	}
@@ -356,7 +381,7 @@ func itemRequirement(reg *entities.Registry, ip ItemProposal) (content.ItemRequi
 			req.AnyOf = append(req.AnyOf, id)
 		}
 	default:
-		ref, err := pick(res, string(entities.KindItem), phrase.Name, ip.ID)
+		ref, err := pick(reg, res, string(entities.KindItem), phrase.Name, ip.ID)
 		if err != nil {
 			hint := ""
 			if res.Status == entities.Ambiguous {
@@ -398,10 +423,10 @@ func anyOfID(reg *entities.Registry, own entities.Resolution, ownName, alt strin
 				return id, nil
 			}
 		}
-		return 0, fmt.Errorf("any_of id %d is not a candidate of %q (%s); name the item instead", id, ownName, refList(cands))
+		return 0, fmt.Errorf("any_of id %d is not a candidate of %q (%s); name the item instead", id, ownName, refList(reg, cands))
 	}
 	res, _ := reg.ResolveItem(entities.ParseItemPhrase(alt).Name)
-	ref, err := pick(res, string(entities.KindItem), alt, "")
+	ref, err := pick(reg, res, string(entities.KindItem), alt, "")
 	if err != nil {
 		return 0, fmt.Errorf("any_of: %w", err)
 	}

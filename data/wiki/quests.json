@@ -6,6 +6,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 300
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "4 January 2001",
@@ -34,6 +40,7 @@
   "length": "Short",
   "quest_points": 5,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": false,
   "release_date": "4 January 2001",
@@ -62,6 +69,7 @@
   "length": "Short",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Demon Slayer, #1",
   "members": false,
   "release_date": "4 January 2001",
@@ -90,6 +98,7 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": false,
   "release_date": "4 January 2001",
@@ -118,6 +127,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 150
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "4 January 2001",
@@ -146,6 +161,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Prayer",
+    "xp": 1125
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "4 January 2001",
@@ -174,6 +195,7 @@
   "length": "Very Short",
   "quest_points": 4,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": false,
   "release_date": "21 January 2001",
@@ -202,6 +224,12 @@
   "length": "Very Short",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 4825
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "28 January 2001",
@@ -230,6 +258,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Magic",
+    "xp": 875
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "16 February 2001",
@@ -258,6 +292,16 @@
   "length": "Short",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 500
+   },
+   {
+    "skill": "Smithing",
+    "xp": 500
+   }
+  ],
   "series": "Kharidian, #1",
   "members": false,
   "release_date": "28 February 2001",
@@ -286,6 +330,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Mining",
+    "xp": 1300
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "6 April 2001",
@@ -314,6 +364,7 @@
   "length": "Very Short",
   "quest_points": 3,
   "quest_points_required": 12,
+  "xp_rewards": [],
   "series": "None",
   "members": false,
   "release_date": "6 April 2001",
@@ -342,6 +393,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Magic",
+    "xp": 325
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "6 April 2001",
@@ -370,6 +427,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Smithing",
+    "xp": 12725
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "6 April 2001",
@@ -405,6 +468,12 @@
   "length": "Very Short",
   "quest_points": 5,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 200
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "8 May 2001",
@@ -433,6 +502,12 @@
   "length": "Very Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 800
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "11 June 2001",
@@ -461,6 +536,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": 32,
+  "xp_rewards": [
+   {
+    "skill": "Defence",
+    "xp": 18650
+   },
+   {
+    "skill": "Sailing",
+    "xp": 60
+   },
+   {
+    "skill": "Strength",
+    "xp": 18650
+   }
+  ],
   "series": "Dragonkin, #1",
   "members": false,
   "release_date": "23 September 2001",
@@ -489,6 +578,12 @@
   "length": "Very Short",
   "quest_points": 4,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Herblore",
+    "xp": 250
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "27 February 2002",
@@ -517,6 +612,16 @@
   "length": "Short",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 1500
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 1500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "27 February 2002",
@@ -558,6 +663,12 @@
   "length": "Very Short",
   "quest_points": 4,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Hitpoints",
+    "xp": 6325
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "27 February 2002",
@@ -586,6 +697,12 @@
   "length": "Short",
   "quest_points": 6,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Firemaking",
+    "xp": 1000
+   }
+  ],
   "series": "Camelot, #1",
   "members": true,
   "release_date": "27 February 2002",
@@ -615,6 +732,56 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": 55,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 3075
+   },
+   {
+    "skill": "Cooking",
+    "xp": 2825
+   },
+   {
+    "skill": "Defence",
+    "xp": 3075
+   },
+   {
+    "skill": "Firemaking",
+    "xp": 1575
+   },
+   {
+    "skill": "Fishing",
+    "xp": 2725
+   },
+   {
+    "skill": "Herblore",
+    "xp": 1325
+   },
+   {
+    "skill": "Hitpoints",
+    "xp": 3075
+   },
+   {
+    "skill": "Mining",
+    "xp": 2575
+   },
+   {
+    "skill": "Ranged",
+    "xp": 2075
+   },
+   {
+    "skill": "Smithing",
+    "xp": 2275
+   },
+   {
+    "skill": "Strength",
+    "xp": 3075
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 1575
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "27 February 2002",
@@ -678,6 +845,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Strength",
+    "xp": 6625
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "25 March 2002",
@@ -717,6 +890,7 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "9 April 2002",
@@ -770,6 +944,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fishing",
+    "xp": 2437
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "28 May 2002",
@@ -803,6 +983,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 1775
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "30 April 2002",
@@ -836,6 +1022,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Woodcutting",
+    "xp": 2000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "28 May 2002",
@@ -864,6 +1056,16 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fletching",
+    "xp": 8000
+   },
+   {
+    "skill": "Ranged",
+    "xp": 10500
+   }
+  ],
   "series": "Mahjarrat, #5",
   "members": true,
   "release_date": "17 June 2002",
@@ -905,6 +1107,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Firemaking",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "17 June 2002",
@@ -933,6 +1141,16 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Defence",
+    "xp": 15300
+   },
+   {
+    "skill": "Prayer",
+    "xp": 11000
+   }
+  ],
   "series": "Camelot, #2",
   "members": true,
   "release_date": "23 July 2002",
@@ -972,6 +1190,12 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 11450
+   }
+  ],
   "series": "Gnome quest series",
   "members": true,
   "release_date": "23 July 2002",
@@ -1000,6 +1224,16 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 12175
+   },
+   {
+    "skill": "Thieving",
+    "xp": 2175
+   }
+  ],
   "series": "Mahjarrat, #3",
   "members": true,
   "release_date": "23 July 2002",
@@ -1028,6 +1262,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 1500
+   }
+  ],
   "series": "Mahjarrat, #2",
   "members": true,
   "release_date": "15 August 2002",
@@ -1056,6 +1296,12 @@
   "length": "Short",
   "quest_points": 4,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Hunter",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 August 2002",
@@ -1084,6 +1330,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Mining",
+    "xp": 2425
+   }
+  ],
   "series": "Elf, #1",
   "members": true,
   "release_date": "27 August 2002",
@@ -1112,6 +1364,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fishing",
+    "xp": 7175
+   }
+  ],
   "series": "Temple Knight, #3",
   "members": true,
   "release_date": "9 September 2002",
@@ -1145,6 +1403,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 13750
+   },
+   {
+    "skill": "Strength",
+    "xp": 13750
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "24 September 2002",
@@ -1173,6 +1441,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Herblore",
+    "xp": 775
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "23 October 2002",
@@ -1212,6 +1486,20 @@
   "length": "Medium",
   "quest_points": 5,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 7900
+   },
+   {
+    "skill": "Attack",
+    "xp": 18400
+   },
+   {
+    "skill": "Magic",
+    "xp": 2150
+   }
+  ],
   "series": "Gnome, #1",
   "members": true,
   "release_date": "12 December 2002",
@@ -1247,6 +1535,16 @@
   "length": "Long",
   "quest_points": 5,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 3000
+   },
+   {
+    "skill": "Attack",
+    "xp": 3000
+   }
+  ],
   "series": "Elf, #3",
   "members": true,
   "release_date": "3 March 2003",
@@ -1285,6 +1583,12 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 2250
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "17 March 2003",
@@ -1313,6 +1617,12 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Sailing",
+    "xp": 50
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "14 April 2003",
@@ -1354,6 +1664,12 @@
   "length": "Medium",
   "quest_points": 4,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Magic",
+    "xp": 15250
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "7 May 2003",
@@ -1413,6 +1729,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 750
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "27 May 2003",
@@ -1441,6 +1763,12 @@
   "length": "Short",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 1406
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "9 June 2003",
@@ -1469,6 +1797,16 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Herblore",
+    "xp": 2000
+   },
+   {
+    "skill": "Mining",
+    "xp": 15300
+   }
+  ],
   "series": "Mahjarrat, #1",
   "members": true,
   "release_date": "9 July 2003",
@@ -1514,6 +1852,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 1525
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "28 July 2003",
@@ -1542,6 +1886,7 @@
   "length": "Long",
   "quest_points": 4,
   "quest_points_required": 107,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "20 August 2003",
@@ -1651,6 +1996,7 @@
   "length": "Short - Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -1691,6 +2037,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Runecraft",
+    "xp": 500
+   }
+  ],
   "series": "Order of Wizards, #1",
   "members": false,
   "release_date": "29 March 2004",
@@ -1717,6 +2069,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 3000
+   }
+  ],
   "series": "Troll, #1",
   "members": true,
   "release_date": "9 August 2004",
@@ -1745,6 +2103,12 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Herblore",
+    "xp": 11000
+   }
+  ],
   "series": "Troll, #3",
   "members": true,
   "release_date": "5 October 2004",
@@ -1785,6 +2149,20 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 1470
+   },
+   {
+    "skill": "Fletching",
+    "xp": 262
+   },
+   {
+    "skill": "Ranged",
+    "xp": 735
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "18 May 2004",
@@ -1832,6 +2210,16 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 5000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 5000
+   }
+  ],
   "series": "Elemental Workshop, #1",
   "members": true,
   "release_date": "2 June 2004",
@@ -1877,6 +2265,20 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 3000
+   },
+   {
+    "skill": "Defence",
+    "xp": 2000
+   },
+   {
+    "skill": "Hitpoints",
+    "xp": 2000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "13 July 2004",
@@ -1909,6 +2311,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Prayer",
+    "xp": 1406
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "29 June 2004",
@@ -1937,6 +2345,12 @@
   "length": "Long",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 13750
+   }
+  ],
   "series": "Elf, #4",
   "members": true,
   "release_date": "20 September 2004",
@@ -1984,6 +2398,24 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 2500
+   },
+   {
+    "skill": "Cooking",
+    "xp": 5000
+   },
+   {
+    "skill": "Fishing",
+    "xp": 5000
+   },
+   {
+    "skill": "Strength",
+    "xp": 2500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "14 September 2004",
@@ -2034,6 +2466,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 2000
+   }
+  ],
   "series": "Troll, #2",
   "members": true,
   "release_date": "24 August 2004",
@@ -2073,6 +2511,16 @@
   "length": "Short",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 2000
+   },
+   {
+    "skill": "Herblore",
+    "xp": 2000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "18 October 2004",
@@ -2126,6 +2574,7 @@
   "length": "Medium",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Fremennik, #1",
   "members": true,
   "release_date": "2 November 2004",
@@ -2155,6 +2604,7 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "17 November 2004",
@@ -2192,6 +2642,24 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Farming",
+    "xp": 1000
+   },
+   {
+    "skill": "Fishing",
+    "xp": 1000
+   },
+   {
+    "skill": "Mining",
+    "xp": 1000
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 1000
+   }
+  ],
   "series": "Miscellania, #1",
   "members": true,
   "release_date": "29 November 2004",
@@ -2228,6 +2696,7 @@
   "length": "Long",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Gnome, #4",
   "members": true,
   "release_date": "6 December 2004",
@@ -2262,6 +2731,12 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Strength",
+    "xp": 22000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "21 December 2004",
@@ -2302,6 +2777,16 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 8000
+   },
+   {
+    "skill": "Strength",
+    "xp": 4000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "5 January 2005",
@@ -2342,6 +2827,28 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 600
+   },
+   {
+    "skill": "Crafting",
+    "xp": 600
+   },
+   {
+    "skill": "Defence",
+    "xp": 600
+   },
+   {
+    "skill": "Hitpoints",
+    "xp": 600
+   },
+   {
+    "skill": "Strength",
+    "xp": 600
+   }
+  ],
   "series": "Myreque, #1",
   "members": true,
   "release_date": "10 January 2005",
@@ -2383,6 +2890,12 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "31 January 2005",
@@ -2431,6 +2944,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Strength",
+    "xp": 10000
+   }
+  ],
   "series": "Elf, #5",
   "members": true,
   "release_date": "7 February 2005",
@@ -2475,6 +2994,12 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Prayer",
+    "xp": 2400
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 February 2005",
@@ -2520,6 +3045,7 @@
   "length": "Long",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "28 February 2005",
@@ -2579,6 +3105,16 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 1000
+   },
+   {
+    "skill": "Prayer",
+    "xp": 2000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "7 March 2005",
@@ -2614,6 +3150,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Defence",
+    "xp": 5000
+   },
+   {
+    "skill": "Mining",
+    "xp": 5000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 5000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "21 March 2005",
@@ -2667,6 +3217,12 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 15000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "4 April 2005",
@@ -2702,6 +3258,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 1000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "11 April 2005",
@@ -2741,6 +3307,7 @@
   "length": "Long",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Mahjarrat, #7",
   "members": true,
   "release_date": "18 April 2005",
@@ -2809,6 +3376,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 4000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 4500
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 4000
+   }
+  ],
   "series": "Kharidian, #2",
   "members": true,
   "release_date": "26 April 2005",
@@ -2841,6 +3422,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": 43,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "4 May 2005",
@@ -2886,6 +3473,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Mining",
+    "xp": 3000
+   }
+  ],
   "series": "Dorgeshuun, #1",
   "members": true,
   "release_date": "31 May 2005",
@@ -2937,6 +3530,32 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 2500
+   },
+   {
+    "skill": "Firemaking",
+    "xp": 1500
+   },
+   {
+    "skill": "Magic",
+    "xp": 1500
+   },
+   {
+    "skill": "Mining",
+    "xp": 2500
+   },
+   {
+    "skill": "Smithing",
+    "xp": 2500
+   },
+   {
+    "skill": "Thieving",
+    "xp": 1500
+   }
+  ],
   "series": "Red Axe, #1",
   "members": true,
   "release_date": "31 May 2005",
@@ -2988,6 +3607,7 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Temple Knight, #1",
   "members": true,
   "release_date": "27 June 2005",
@@ -3020,6 +3640,16 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Hitpoints",
+    "xp": 25000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 40000
+   }
+  ],
   "series": "Elf, #6",
   "members": true,
   "release_date": "19 July 2005",
@@ -3074,6 +3704,16 @@
   "length": "Long",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 5000
+   },
+   {
+    "skill": "Farming",
+    "xp": 5000
+   }
+  ],
   "series": "Red Axe, #2",
   "members": true,
   "release_date": "26 July 2005",
@@ -3119,6 +3759,12 @@
   "length": "Long",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Farming",
+    "xp": 5000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "30 August 2005",
@@ -3158,6 +3804,7 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Dragonkin, #2",
   "members": true,
   "release_date": "26 September 2005",
@@ -3189,6 +3836,12 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": 32,
+  "xp_rewards": [
+   {
+    "skill": "Slayer",
+    "xp": 5000
+   }
+  ],
   "series": "Temple Knight, #2",
   "members": true,
   "release_date": "17 October 2005",
@@ -3231,6 +3884,12 @@
   "length": "Long",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 60000
+   }
+  ],
   "series": "Elf, #7",
   "members": true,
   "release_date": "17 October 2005",
@@ -3269,6 +3928,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Farming",
+    "xp": 7000
+   },
+   {
+    "skill": "Fishing",
+    "xp": 7000
+   },
+   {
+    "skill": "Prayer",
+    "xp": 7000
+   }
+  ],
   "series": "Pirate, #1",
   "members": true,
   "release_date": "31 October 2005",
@@ -3337,6 +4010,7 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Demon Slayer, #2",
   "members": true,
   "release_date": "14 November 2005",
@@ -3378,6 +4052,16 @@
   "length": "Short",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 1000
+   },
+   {
+    "skill": "Prayer",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "22 November 2005",
@@ -3410,6 +4094,12 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 4500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "28 November 2005",
@@ -3444,6 +4134,20 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Magic",
+    "xp": 1000
+   },
+   {
+    "skill": "Prayer",
+    "xp": 8000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "5 December 2005",
@@ -3497,6 +4201,20 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fletching",
+    "xp": 5000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 5000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 6500
+   }
+  ],
   "series": "Mahjarrat, #11",
   "members": true,
   "release_date": "19 December 2005",
@@ -3559,6 +4277,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 9000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "10 January 2006",
@@ -3598,6 +4326,24 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 7000
+   },
+   {
+    "skill": "Firemaking",
+    "xp": 7000
+   },
+   {
+    "skill": "Magic",
+    "xp": 7000
+   },
+   {
+    "skill": "Mining",
+    "xp": 7000
+   }
+  ],
   "series": "Mahjarrat, #4",
   "members": true,
   "release_date": "23 January 2006",
@@ -3651,6 +4397,20 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 7000
+   },
+   {
+    "skill": "Crafting",
+    "xp": 7000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 7000
+   }
+  ],
   "series": "Pirate, #2",
   "members": true,
   "release_date": "7 February 2006",
@@ -3713,6 +4473,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 2000
+   },
+   {
+    "skill": "Farming",
+    "xp": 3500
+   },
+   {
+    "skill": "Magic",
+    "xp": 1000
+   }
+  ],
   "series": "Fairytale, #1",
   "members": true,
   "release_date": "27 February 2006",
@@ -3749,6 +4523,7 @@
   "length": "Very Long",
   "quest_points": 10,
   "quest_points_required": 175,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -3909,6 +4684,28 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Attack",
+    "xp": 2000
+   },
+   {
+    "skill": "Crafting",
+    "xp": 2000
+   },
+   {
+    "skill": "Defence",
+    "xp": 2000
+   },
+   {
+    "skill": "Sailing",
+    "xp": 65
+   },
+   {
+    "skill": "Strength",
+    "xp": 2000
+   }
+  ],
   "series": "Myreque, #2",
   "members": true,
   "release_date": "22 March 2006",
@@ -3967,6 +4764,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Defence",
+    "xp": 500
+   },
+   {
+    "skill": "Hitpoints",
+    "xp": 500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "3 April 2006",
@@ -3995,6 +4802,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 500
+   },
+   {
+    "skill": "Prayer",
+    "xp": 500
+   }
+  ],
   "series": "Rag and Bone Man, #1",
   "members": true,
   "release_date": "10 April 2006",
@@ -4023,6 +4840,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": 100,
+  "xp_rewards": [
+   {
+    "skill": "Fishing",
+    "xp": 50000
+   },
+   {
+    "skill": "Magic",
+    "xp": 15000
+   },
+   {
+    "skill": "Prayer",
+    "xp": 10000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "2 May 2006",
@@ -4101,6 +4932,24 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 5000
+   },
+   {
+    "skill": "Hitpoints",
+    "xp": 5000
+   },
+   {
+    "skill": "Sailing",
+    "xp": 80
+   },
+   {
+    "skill": "Slayer",
+    "xp": 5000
+   }
+  ],
   "series": "Miscellania, #2",
   "members": true,
   "release_date": "22 May 2006",
@@ -4150,6 +4999,16 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Ranged",
+    "xp": 2000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 2000
+   }
+  ],
   "series": "Dorgeshuun, #2",
   "members": true,
   "release_date": "21 June 2006",
@@ -4197,6 +5056,16 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Herblore",
+    "xp": 3500
+   },
+   {
+    "skill": "Thieving",
+    "xp": 2500
+   }
+  ],
   "series": "Fairytale, #2",
   "members": true,
   "release_date": "11 July 2006",
@@ -4252,6 +5121,16 @@
   "length": "Long",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Magic",
+    "xp": 5000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 5000
+   }
+  ],
   "series": "Fremennik, #3",
   "members": true,
   "release_date": "24 July 2006",
@@ -4336,6 +5215,24 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 250
+   },
+   {
+    "skill": "Magic",
+    "xp": 12000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 6000
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 2500
+   }
+  ],
   "series": "Gnome, #2",
   "members": true,
   "release_date": "15 August 2006",
@@ -4379,6 +5276,20 @@
   "length": "Long",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 7000
+   },
+   {
+    "skill": "Construction",
+    "xp": 2000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 6000
+   }
+  ],
   "series": "Myreque, #3",
   "members": true,
   "release_date": "4 September 2006",
@@ -4458,6 +5369,20 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 3500
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 3500
+   },
+   {
+    "skill": "Thieving",
+    "xp": 3500
+   }
+  ],
   "series": "Temple Knight, #4",
   "members": true,
   "release_date": "20 September 2006",
@@ -4526,6 +5451,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 7500
+   },
+   {
+    "skill": "Smithing",
+    "xp": 7500
+   }
+  ],
   "series": "Elemental Workshop, #2",
   "members": true,
   "release_date": "2 October 2006",
@@ -4569,6 +5504,16 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Farming",
+    "xp": 5000
+   },
+   {
+    "skill": "Herblore",
+    "xp": 10000
+   }
+  ],
   "series": "Troll, #4",
   "members": true,
   "release_date": "23 October 2006",
@@ -4621,6 +5566,24 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": 20,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 2000
+   },
+   {
+    "skill": "Farming",
+    "xp": 3000
+   },
+   {
+    "skill": "Firemaking",
+    "xp": 4000
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 1500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "6 November 2006",
@@ -4666,6 +5629,12 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Hunter",
+    "xp": 2500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "28 November 2006",
@@ -4699,6 +5668,24 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 1000
+   },
+   {
+    "skill": "Fletching",
+    "xp": 1000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 1000
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 2500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "12 December 2006",
@@ -4758,6 +5745,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 7000
+   }
+  ],
   "series": "Kharidian, #3",
   "members": true,
   "release_date": "10 January 2007",
@@ -4791,6 +5784,20 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 5000
+   },
+   {
+    "skill": "Construction",
+    "xp": 1500
+   },
+   {
+    "skill": "Crafting",
+    "xp": 2000
+   }
+  ],
   "series": "Penguin, #1",
   "members": true,
   "release_date": "29 January 2007",
@@ -4850,6 +5857,20 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 5000
+   },
+   {
+    "skill": "Crafting",
+    "xp": 5000
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 10000
+   }
+  ],
   "series": "Fremennik, #2",
   "members": true,
   "release_date": "6 February 2007",
@@ -4889,6 +5910,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 2000
+   },
+   {
+    "skill": "Crafting",
+    "xp": 3000
+   },
+   {
+    "skill": "Prayer",
+    "xp": 6000
+   }
+  ],
   "series": "Pirate, #3",
   "members": true,
   "release_date": "6 March 2007",
@@ -4951,6 +5986,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Defence",
+    "xp": 2000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 8000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "27 March 2007",
@@ -4988,6 +6033,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Defence",
+    "xp": 12000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "10 April 2007",
@@ -5033,6 +6084,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Mining",
+    "xp": 3000
+   },
+   {
+    "skill": "Prayer",
+    "xp": 3000
+   }
+  ],
   "series": "Dorgeshuun, #3",
   "members": true,
   "release_date": "24 April 2007",
@@ -5085,6 +6146,16 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Hitpoints",
+    "xp": 15000
+   },
+   {
+    "skill": "Magic",
+    "xp": 10000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 May 2007",
@@ -5134,6 +6205,32 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 25000
+   },
+   {
+    "skill": "Farming",
+    "xp": 10000
+   },
+   {
+    "skill": "Herblore",
+    "xp": 15000
+   },
+   {
+    "skill": "Hitpoints",
+    "xp": 5000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 25000
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 60000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "4 June 2007",
@@ -5197,6 +6294,16 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Defence",
+    "xp": 33000
+   },
+   {
+    "skill": "Magic",
+    "xp": 5000
+   }
+  ],
   "series": "Camelot, #3",
   "members": true,
   "release_date": "24 July 2007",
@@ -5251,6 +6358,12 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 3875
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "27 January 2003",
@@ -5297,6 +6410,12 @@
   "length": "Short",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 1250
+   }
+  ],
   "series": "Elf, #2",
   "members": true,
   "release_date": "23 October 2002",
@@ -5327,6 +6446,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -5355,6 +6475,7 @@
   "length": "Very Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -5385,6 +6506,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -5421,6 +6543,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -5500,6 +6623,7 @@
   "length": "Very Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -5533,6 +6657,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -5572,6 +6697,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 1000
+   },
+   {
+    "skill": "Crafting",
+    "xp": 500
+   },
+   {
+    "skill": "Thieving",
+    "xp": 500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "19 February 2007",
@@ -5605,6 +6744,12 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Prayer",
+    "xp": 5000
+   }
+  ],
   "series": "Rag and Bone Man, #2",
   "members": true,
   "release_date": "10 April 2006",
@@ -5655,6 +6800,24 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 8000
+   },
+   {
+    "skill": "Fishing",
+    "xp": 8000
+   },
+   {
+    "skill": "Herblore",
+    "xp": 8000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 8000
+   }
+  ],
   "series": "Dorgeshuun, #4",
   "members": true,
   "release_date": "9 February 2022",
@@ -5718,6 +6881,24 @@
   "length": "Very Long",
   "quest_points": 5,
   "quest_points_required": 180,
+  "xp_rewards": [
+   {
+    "skill": "Farming",
+    "xp": 75000
+   },
+   {
+    "skill": "Herblore",
+    "xp": 75000
+   },
+   {
+    "skill": "Hunter",
+    "xp": 50000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 80000
+   }
+  ],
   "series": "Mahjarrat, #15",
   "members": true,
   "release_date": "10 July 2024",
@@ -5847,6 +7028,20 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fletching",
+    "xp": 2000
+   },
+   {
+    "skill": "Herblore",
+    "xp": 2000
+   },
+   {
+    "skill": "Ranged",
+    "xp": 2000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "17 May 2005",
@@ -5901,6 +7096,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -5940,6 +7136,7 @@
   "length": "Long",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -5975,6 +7172,24 @@
   "length": "Very Long",
   "quest_points": 4,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 60000
+   },
+   {
+    "skill": "Hunter",
+    "xp": 50000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 80000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 50000
+   }
+  ],
   "series": "Gnome, #5",
   "members": true,
   "release_date": "6 May 2016",
@@ -6054,6 +7269,7 @@
   "length": "Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -6082,6 +7298,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -6114,6 +7331,7 @@
   "length": "Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -6147,6 +7365,7 @@
   "length": "Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -6177,6 +7396,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 600
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "26 January 2017",
@@ -6205,6 +7430,7 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Great Kourend, #2",
   "members": true,
   "release_date": "20 April 2017",
@@ -6235,6 +7461,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 2000
+   }
+  ],
   "series": "Great Kourend, #3A",
   "members": true,
   "release_date": "9 November 2017",
@@ -6273,6 +7505,7 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "7 September 2017",
@@ -6304,6 +7537,24 @@
   "length": "Very Long",
   "quest_points": 5,
   "quest_points_required": 200,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 50000
+   },
+   {
+    "skill": "Mining",
+    "xp": 60000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 80000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 50000
+   }
+  ],
   "series": "Dragonkin, #3",
   "members": true,
   "release_date": "4 January 2018",
@@ -6424,6 +7675,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 1500
+   }
+  ],
   "series": "Great Kourend, #3B",
   "members": true,
   "release_date": "9 November 2017",
@@ -6464,6 +7721,7 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6501,6 +7759,20 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 1000
+   },
+   {
+    "skill": "Crafting",
+    "xp": 1000
+   },
+   {
+    "skill": "Farming",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6534,6 +7806,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 1000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6569,6 +7851,12 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 7000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6606,6 +7894,24 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 1000
+   },
+   {
+    "skill": "Crafting",
+    "xp": 1000
+   },
+   {
+    "skill": "Fishing",
+    "xp": 1000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6646,6 +7952,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 2500
+   },
+   {
+    "skill": "Magic",
+    "xp": 2500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6699,6 +8015,16 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": 107,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 4000
+   },
+   {
+    "skill": "Hitpoints",
+    "xp": 4000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6752,6 +8078,16 @@
   "length": "Long",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 10000
+   },
+   {
+    "skill": "Cooking",
+    "xp": 10000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6802,6 +8138,24 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 1500
+   },
+   {
+    "skill": "Crafting",
+    "xp": 1500
+   },
+   {
+    "skill": "Ranged",
+    "xp": 1500
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 1500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -6848,6 +8202,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -6887,6 +8242,12 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Firemaking",
+    "xp": 1200
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "7 December 2017",
@@ -6913,6 +8274,7 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Myreque, #4",
   "members": true,
   "release_date": "24 May 2018",
@@ -6979,6 +8341,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Mining",
+    "xp": 1500
+   }
+  ],
   "series": "Great Kourend, #3E",
   "members": true,
   "release_date": "19 April 2018",
@@ -7023,6 +8391,24 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 50000
+   },
+   {
+    "skill": "Construction",
+    "xp": 10000
+   },
+   {
+    "skill": "Firemaking",
+    "xp": 40000
+   },
+   {
+    "skill": "Mining",
+    "xp": 50000
+   }
+  ],
   "series": "Troll, #5",
   "members": true,
   "release_date": "6 September 2018",
@@ -7099,6 +8485,7 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": 175,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "15 March 2006",
@@ -7157,6 +8544,40 @@
   "length": "Very Long",
   "quest_points": 4,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 40000
+   },
+   {
+    "skill": "Construction",
+    "xp": 40000
+   },
+   {
+    "skill": "Farming",
+    "xp": 40000
+   },
+   {
+    "skill": "Herblore",
+    "xp": 40000
+   },
+   {
+    "skill": "Hunter",
+    "xp": 40000
+   },
+   {
+    "skill": "Mining",
+    "xp": 40000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 40000
+   },
+   {
+    "skill": "Woodcutting",
+    "xp": 40000
+   }
+  ],
   "series": "Elf, #8",
   "members": true,
   "release_date": "25 July 2019",
@@ -7251,6 +8672,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Hunter",
+    "xp": 1500
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 500
+   }
+  ],
   "series": "Great Kourend, #3C",
   "members": true,
   "release_date": "10 January 2019",
@@ -7289,6 +8720,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Mining",
+    "xp": 500
+   },
+   {
+    "skill": "Smithing",
+    "xp": 500
+   }
+  ],
   "series": "Great Kourend, #3D",
   "members": true,
   "release_date": "10 January 2019",
@@ -7320,6 +8761,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 50000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 30000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 50000
+   }
+  ],
   "series": "Fremennik, #4",
   "members": true,
   "release_date": "26 September 2019",
@@ -7402,6 +8857,7 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Great Kourend, #1",
   "members": false,
   "release_date": "7 February 2019",
@@ -7430,6 +8886,7 @@
   "length": "",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Dorgeshuun, #5",
   "members": true,
   "release_date": "2027",
@@ -7487,6 +8944,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 40000
+   },
+   {
+    "skill": "Mining",
+    "xp": 40000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 40000
+   }
+  ],
   "series": "Mahjarrat, #10",
   "members": true,
   "release_date": "6 November 2024",
@@ -7570,6 +9041,16 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Hunter",
+    "xp": 15000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 15000
+   }
+  ],
   "series": "Mahjarrat, #6",
   "members": true,
   "release_date": "21 February 2024",
@@ -7631,6 +9112,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -7659,6 +9141,7 @@
   "length": "Long",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Myreque, #5",
   "members": true,
   "release_date": "4 June 2020",
@@ -7740,6 +9223,7 @@
   "length": "Long",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Great Kourend, #4",
   "members": true,
   "release_date": "16 June 2021",
@@ -7823,6 +9307,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 944
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "26 August 2020",
@@ -7851,6 +9341,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Slayer",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "10 September 2020",
@@ -7879,6 +9375,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 3200
+   },
+   {
+    "skill": "Crafting",
+    "xp": 4000
+   }
+  ],
   "series": "Twisted Tales",
   "members": true,
   "release_date": "25 November 2020",
@@ -7918,6 +9424,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": 16,
+  "xp_rewards": [
+   {
+    "skill": "Mining",
+    "xp": 1200
+   }
+  ],
   "series": "None",
   "members": false,
   "release_date": "14 April 2021",
@@ -7944,6 +9456,7 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": "3 June 2021",
@@ -7980,6 +9493,12 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 50000
+   }
+  ],
   "series": "Kharidian, #4",
   "members": true,
   "release_date": "27 April 2022",
@@ -8032,6 +9551,7 @@
   "length": "Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -8087,6 +9607,7 @@
   "length": "Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -8132,6 +9653,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Runecraft",
+    "xp": 5000
+   }
+  ],
   "series": "Order of Wizards, #3",
   "members": true,
   "release_date": "23 March 2022",
@@ -8170,6 +9697,24 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Magic",
+    "xp": 5000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 20000
+   },
+   {
+    "skill": "Strength",
+    "xp": 30000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 5000
+   }
+  ],
   "series": "Gnome, #3",
   "members": true,
   "release_date": "13 September 2023",
@@ -8236,6 +9781,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Smithing",
+    "xp": 6000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "8 June 2022",
@@ -8269,6 +9820,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -8303,6 +9855,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Farming",
+    "xp": 10000
+   }
+  ],
   "series": "Twisted Tales",
   "members": true,
   "release_date": "30 November 2022",
@@ -8336,6 +9894,7 @@
   "length": "Very Long",
   "quest_points": 5,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Mahjarrat, #14",
   "members": true,
   "release_date": "26 July 2023",
@@ -8449,6 +10008,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 60000
+   },
+   {
+    "skill": "Hunter",
+    "xp": 40000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 50000
+   }
+  ],
   "series": "Mahjarrat, #13",
   "members": true,
   "release_date": "11 January 2023",
@@ -8531,6 +10104,7 @@
   "length": "Very Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -8563,6 +10137,7 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Twilight Emissaries, #1",
   "members": true,
   "release_date": "10 January 2024",
@@ -8591,6 +10166,24 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fishing",
+    "xp": 5000
+   },
+   {
+    "skill": "Hunter",
+    "xp": 5000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 5000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 40000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "20 March 2024",
@@ -8653,6 +10246,12 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Woodcutting",
+    "xp": 2000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "20 March 2024",
@@ -8690,6 +10289,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 3000
+   }
+  ],
   "series": "Twilight Emissaries, #2",
   "members": true,
   "release_date": "20 March 2024",
@@ -8720,6 +10325,20 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 800
+   },
+   {
+    "skill": "Herblore",
+    "xp": 500
+   },
+   {
+    "skill": "Hunter",
+    "xp": 4500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "20 March 2024",
@@ -8771,6 +10390,24 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 8000
+   },
+   {
+    "skill": "Mining",
+    "xp": 8000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 8000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 8000
+   }
+  ],
   "series": "Twilight Emissaries, #3",
   "members": true,
   "release_date": "25 September 2024",
@@ -8827,6 +10464,20 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 7500
+   },
+   {
+    "skill": "Crafting",
+    "xp": 5000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 10000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "25 September 2024",
@@ -8870,6 +10521,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Cooking",
+    "xp": 8000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "25 September 2024",
@@ -8900,6 +10557,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Thieving",
+    "xp": 6000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "25 September 2024",
@@ -8939,6 +10602,7 @@
   "length": "Very Long",
   "quest_points": 4,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Myreque, #6",
   "members": true,
   "release_date": "30 June 2026",
@@ -9040,6 +10704,20 @@
   "length": "Long",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fletching",
+    "xp": 25000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 25000
+   },
+   {
+    "skill": "Thieving",
+    "xp": 55000
+   }
+  ],
   "series": "Twilight Emissaries, #4",
   "members": true,
   "release_date": "23 July 2025",
@@ -9093,6 +10771,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Sailing",
+    "xp": 400
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "19 November 2025",
@@ -9119,6 +10803,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Sailing",
+    "xp": 800
+   },
+   {
+    "skill": "Smithing",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "19 November 2025",
@@ -9166,6 +10860,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fishing",
+    "xp": 1000
+   },
+   {
+    "skill": "Sailing",
+    "xp": 1400
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "19 November 2025",
@@ -9209,6 +10913,16 @@
   "length": "Medium",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Sailing",
+    "xp": 10000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 8000
+   }
+  ],
   "series": "Tortugan, #1",
   "members": true,
   "release_date": "19 November 2025",
@@ -9276,6 +10990,16 @@
   "length": "Medium",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Sailing",
+    "xp": 15000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 5000
+   }
+  ],
   "series": "Tortugan, #2",
   "members": true,
   "release_date": "20 May 2026",
@@ -9320,6 +11044,24 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 3000
+   },
+   {
+    "skill": "Fishing",
+    "xp": 3000
+   },
+   {
+    "skill": "Hunter",
+    "xp": 4000
+   },
+   {
+    "skill": "Slayer",
+    "xp": 10000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "23 July 2025",
@@ -9375,6 +11117,20 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Construction",
+    "xp": 5000
+   },
+   {
+    "skill": "Cooking",
+    "xp": 5000
+   },
+   {
+    "skill": "Smithing",
+    "xp": 5000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "23 July 2025",
@@ -9424,6 +11180,7 @@
   "length": "Very Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -9461,6 +11218,7 @@
   "length": "Very Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -9489,6 +11247,7 @@
   "length": "Very Short",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -9517,6 +11276,7 @@
   "length": "",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": true,
   "release_date": null,
@@ -9570,6 +11330,7 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": false,
   "release_date": "22 October 2025",
@@ -9596,6 +11357,7 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": false,
   "release_date": "25 February 2026",
@@ -9624,6 +11386,24 @@
   "length": "",
   "quest_points": 3,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 35065
+   },
+   {
+    "skill": "Fletching",
+    "xp": 10000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 15000
+   },
+   {
+    "skill": "Sailing",
+    "xp": 35000
+   }
+  ],
   "series": "Fremennik, #5",
   "members": true,
   "release_date": null,
@@ -9696,6 +11476,24 @@
   "length": "Short",
   "quest_points": 2,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 10000
+   },
+   {
+    "skill": "Mining",
+    "xp": 5000
+   },
+   {
+    "skill": "Runecraft",
+    "xp": 5000
+   },
+   {
+    "skill": "Sailing",
+    "xp": 12500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "29 July 2026",
@@ -9751,6 +11549,12 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Crafting",
+    "xp": 1000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "8 September 2026",
@@ -9784,6 +11588,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Fishing",
+    "xp": 3000
+   },
+   {
+    "skill": "Sailing",
+    "xp": 10000
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "8 September 2026",
@@ -9823,6 +11637,7 @@
   "length": "",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Fairytale, #3",
   "members": true,
   "release_date": "2027",
@@ -9849,6 +11664,7 @@
   "length": "",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "Kharidian, #6",
   "members": true,
   "release_date": "2027",
@@ -9883,6 +11699,7 @@
   "length": "Medium",
   "quest_points": null,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": null,
   "members": null,
   "release_date": null,
@@ -9957,6 +11774,7 @@
   "length": "Very Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [],
   "series": "None",
   "members": false,
   "release_date": "3 November 2026",
@@ -9985,6 +11803,16 @@
   "length": "Short",
   "quest_points": 1,
   "quest_points_required": null,
+  "xp_rewards": [
+   {
+    "skill": "Agility",
+    "xp": 2500
+   },
+   {
+    "skill": "Thieving",
+    "xp": 2500
+   }
+  ],
   "series": "None",
   "members": true,
   "release_date": "3 November 2026",

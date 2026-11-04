@@ -159,6 +159,106 @@
       "text": "Rune sword",
       "item_id": 1289,
       "note": "name before the wiki renamed it to Rune shortsword"
+    },
+    {
+      "text": "wine",
+      "item_id": 1993,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "bronze arrowheads",
+      "item_id": 39,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "housetab",
+      "item_id": 8013,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "house teletab",
+      "item_id": 8013,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "fally teletab",
+      "item_id": 8009,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "falador teletab",
+      "item_id": 8009,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "flour",
+      "item_id": 1933,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "key imprint",
+      "item_id": 2423,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "skin paste",
+      "item_id": 2424,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "mind bomb",
+      "item_id": 1907,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "wizard mind bomb",
+      "item_id": 1907,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "small fish net",
+      "item_id": 303,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "black wizard hat",
+      "item_id": 1017,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "black wizards hat",
+      "item_id": 1017,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "notes for dwarf cannon",
+      "item_id": 3,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "rune mysteries package",
+      "item_id": 290,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "rune mysteries notes",
+      "item_id": 291,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "lost tribe brooch",
+      "item_id": 5008,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "bucket pack",
+      "item_id": 22660,
+      "note": "guide shorthand (extraction pilot, oziris-main 1.1)"
+    },
+    {
+      "text": "onions",
+      "item_id": 1957,
+      "note": "guide plural; the Onions page is the onion sack family"
     }
   ],
   "item_ambiguous": [

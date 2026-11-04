@@ -210,11 +210,14 @@ func ParseItemPhrase(s string) ItemPhrase {
 func (r *Registry) ResolveItem(phrase string) (Resolution, ItemPhrase) {
 	p := ParseItemPhrase(phrase)
 	res := r.resolveItemName(NormalizeName(p.Name))
-	if res.Status == Unresolved && strings.HasSuffix(NormalizeName(p.Name), "s") {
-		if alt := r.resolveItemName(strings.TrimSuffix(NormalizeName(p.Name), "s")); alt.Status != Unresolved {
-			res = alt
-			if res.Status == Resolved {
-				res.Match = MatchPlural
+	if res.Status == Unresolved {
+		for _, form := range numberForms(NormalizeName(p.Name)) {
+			if alt := r.resolveItemName(form); alt.Status != Unresolved {
+				res = alt
+				if res.Status == Resolved {
+					res.Match = MatchPlural
+				}
+				break
 			}
 		}
 	}
@@ -230,6 +233,74 @@ func (r *Registry) ResolveItem(phrase string) (Resolution, ItemPhrase) {
 	return res, p
 }
 
+// numberForms lists the other grammatical numbers of a normalized item name,
+// tried in order when the name itself does not resolve: the singular of the
+// head noun ("balls of wool" -> "ball of wool", "woad leaves" -> "woad
+// leaf"), then the plural ("shrimp" -> "shrimps", the catalog's name).
+func numberForms(name string) []string {
+	words := strings.Split(name, " ")
+	head := len(words) - 1
+	for i, w := range words {
+		if w == "of" && i > 0 {
+			head = i - 1
+			break
+		}
+	}
+	with := func(w string) string {
+		out := append([]string{}, words...)
+		out[head] = w
+		return strings.Join(out, " ")
+	}
+	var forms []string
+	for _, w := range singulars(words[head]) {
+		forms = append(forms, with(w))
+	}
+	if w := words[head]; !strings.HasSuffix(w, "s") {
+		forms = append(forms, with(w+"s"))
+	}
+	return forms
+}
+
+// singulars are the candidate singulars of an English plural word.
+func singulars(w string) []string {
+	if len(w) < 3 || !strings.HasSuffix(w, "s") || strings.HasSuffix(w, "ss") {
+		return nil
+	}
+	var out []string
+	switch {
+	case strings.HasSuffix(w, "ies"):
+		out = append(out, strings.TrimSuffix(w, "ies")+"y")
+	case strings.HasSuffix(w, "ves"):
+		out = append(out, strings.TrimSuffix(w, "ves")+"f", strings.TrimSuffix(w, "ves")+"fe")
+	case strings.HasSuffix(w, "ches"), strings.HasSuffix(w, "shes"), strings.HasSuffix(w, "xes"), strings.HasSuffix(w, "oes"):
+		out = append(out, strings.TrimSuffix(w, "es"))
+	}
+	return append(out, strings.TrimSuffix(w, "s"))
+}
+
+// ownPage drops, from several items that share a name, those described on a
+// page of another title: "Law rune (Barbarian Assault)" and "Tinderbox (Cabin
+// Fever)" are minigame and quest copies of Law rune and Tinderbox, with ids
+// of their own. They stay reachable by id; a bare name means the item of the
+// page titled with it. Variants of that one page (doses, Full and Empty)
+// remain ambiguous.
+func (r *Registry) ownPage(hits []nameHit) []nameHit {
+	if len(hits) < 2 {
+		return hits
+	}
+	var own []nameHit
+	for _, h := range hits {
+		id, _ := strconv.Atoi(h.id)
+		if it, ok := r.items[id]; ok && h.match == MatchName && NormalizeName(string(it.WikiKey)) == NormalizeName(it.Name) {
+			own = append(own, h)
+		}
+	}
+	if len(own) == 0 || len(own) == len(hits) {
+		return hits
+	}
+	return own
+}
+
 func (r *Registry) resolveItemName(k string) Resolution {
 	if k == "" {
 		return unresolved(ReasonNotInCatalog)
@@ -241,7 +312,7 @@ func (r *Registry) resolveItemName(k string) Resolution {
 		}
 		return ambiguous(ReasonAmbiguousName, refs)
 	}
-	if res, ok := fromHits(KindItem, r.itemNames[k]); ok {
+	if res, ok := fromHits(KindItem, r.ownPage(r.itemNames[k])); ok {
 		return res
 	}
 	if ids := r.itemFamily[k]; len(ids) > 0 {

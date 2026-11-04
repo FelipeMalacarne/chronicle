@@ -111,7 +111,7 @@ func (w *Workspace) ProposeEntity(p EntityProposal) (*EntityResult, error) {
 	}
 	for _, name := range append([]string{p.Name}, p.Aliases...) {
 		if res, _ := resolveName(w.reg, p.Kind, name, ""); res.Status != entities.Unresolved {
-			return nil, fmt.Errorf("%q already names %s", name, refList(append([]entities.Ref{res.Ref}, res.Candidates...)))
+			return nil, fmt.Errorf("%q already names %s", name, refList(w.reg, append([]entities.Ref{res.Ref}, res.Candidates...)))
 		}
 	}
 	var wiki entities.WikiKey

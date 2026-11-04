@@ -10,6 +10,7 @@ type ItemForm struct {
 	Name    string
 	Family  string // empty when the item has no variants
 	Variant string
+	WikiKey WikiKey
 	// Stackable is true when one inventory slot holds any quantity; noted
 	// forms are always stackable.
 	Stackable bool
@@ -18,11 +19,11 @@ type ItemForm struct {
 // Item describes an item id listed in the catalog, unnoted or noted.
 func (r *Registry) Item(id int) (ItemForm, bool) {
 	if it, ok := r.items[id]; ok {
-		return ItemForm{ID: id, BaseID: id, Name: it.Name, Family: it.Family, Variant: it.Variant, Stackable: it.Stackable}, true
+		return ItemForm{ID: id, BaseID: id, Name: it.Name, Family: it.Family, Variant: it.Variant, WikiKey: it.WikiKey, Stackable: it.Stackable}, true
 	}
 	if base, ok := r.notedBase[id]; ok {
 		it := r.items[base]
-		return ItemForm{ID: id, BaseID: base, Noted: true, Name: it.Name, Family: it.Family, Variant: it.Variant, Stackable: true}, true
+		return ItemForm{ID: id, BaseID: base, Noted: true, Name: it.Name, Family: it.Family, Variant: it.Variant, WikiKey: it.WikiKey, Stackable: true}, true
 	}
 	return ItemForm{}, false
 }

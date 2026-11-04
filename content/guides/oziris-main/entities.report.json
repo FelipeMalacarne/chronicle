@@ -11,9 +11,9 @@
     "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 672,
+    "resolved": 684,
     "ambiguous": 20,
-    "unresolved": 109,
+    "unresolved": 97,
     "by_kind": {
       "diary": {
         "resolved": 4,
@@ -21,9 +21,9 @@
         "unresolved": 0
       },
       "item": {
-        "resolved": 119,
+        "resolved": 131,
         "ambiguous": 13,
-        "unresolved": 62
+        "unresolved": 50
       },
       "quest": {
         "resolved": 455,
@@ -37,9 +37,9 @@
       }
     },
     "loadout_items": {
-      "resolved": 14,
+      "resolved": 15,
       "ambiguous": 1,
-      "unresolved": 8
+      "unresolved": 7
     }
   },
   "ambiguous": [
@@ -463,14 +463,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "1.1.75",
-      "field": "/items/6",
-      "source_text": "1k bronze arrowheads",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "1.1.83",
       "field": "/items/1",
       "source_text": "Few cakes",
@@ -500,14 +492,6 @@
       "candidates": [
         "quest:dwarf_cannon"
       ]
-    },
-    {
-      "step_id": "1.1.94",
-      "field": "/items/2",
-      "source_text": "Rune mysteries package",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "1.1.121",
@@ -545,22 +529,6 @@
       "step_id": "1.1.131",
       "field": "/items/5",
       "source_text": "Gloves (equip)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.1.135",
-      "field": "/items/8",
-      "source_text": "2 House teletabs",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.1.135",
-      "field": "/items/9",
-      "source_text": "Fally teletab",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -605,24 +573,8 @@
     },
     {
       "step_id": "1.1.169",
-      "field": "/items/1",
-      "source_text": "Notes for dwarf cannon",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.1.169",
       "field": "/items/4",
       "source_text": "6 air/water/earth runes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.1.185",
-      "field": "/items/1",
-      "source_text": "3 balls of wool",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -662,14 +614,6 @@
       "step_id": "1.1.190",
       "field": "/items/2",
       "source_text": "Fire strike runes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.1.190",
-      "field": "/items/3",
-      "source_text": "Rune mysteries notes",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -739,14 +683,6 @@
     },
     {
       "step_id": "1.1.223",
-      "field": "/items/4",
-      "source_text": "1 wizard mind bomb",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.1.223",
       "field": "/items/6",
       "source_text": "Some food",
       "kind": "item",
@@ -780,14 +716,6 @@
       "step_id": "1.1.239",
       "field": "/items/2",
       "source_text": "2 iron",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.1.239",
-      "field": "/items/3",
-      "source_text": "5 buckets of sand",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -851,14 +779,6 @@
       "step_id": "1.1.277",
       "field": "/items/1",
       "source_text": "Blue/orange dyes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.1.281",
-      "field": "/items/4",
-      "source_text": "Key imprint",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -1059,14 +979,6 @@
       "step_id": "1.3.45",
       "field": "/items/1",
       "source_text": "Runes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "1.3.45",
-      "field": "/items/3",
-      "source_text": "Wizard mind bomb",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -1506,14 +1418,6 @@
       "step_id": "2.0.4",
       "field": "/items/3",
       "source_text": "Graceful (except body)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "2.0.4",
-      "field": "/items/4",
-      "source_text": "1200 empty buckets",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"

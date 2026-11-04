@@ -11,9 +11,9 @@
     "unlock": "2026.11.0"
   },
   "counts": {
-    "resolved": 1846,
-    "ambiguous": 176,
-    "unresolved": 643,
+    "resolved": 1889,
+    "ambiguous": 184,
+    "unresolved": 592,
     "by_kind": {
       "ca": {
         "resolved": 4,
@@ -26,14 +26,14 @@
         "unresolved": 0
       },
       "item": {
-        "resolved": 1391,
-        "ambiguous": 146,
-        "unresolved": 369
+        "resolved": 1434,
+        "ambiguous": 153,
+        "unresolved": 319
       },
       "link": {
         "resolved": 0,
-        "ambiguous": 0,
-        "unresolved": 13
+        "ambiguous": 1,
+        "unresolved": 12
       },
       "quest": {
         "resolved": 391,
@@ -42,9 +42,9 @@
       }
     },
     "loadout_items": {
-      "resolved": 715,
-      "ambiguous": 64,
-      "unresolved": 168
+      "resolved": 735,
+      "ambiguous": 68,
+      "unresolved": 144
     }
   },
   "ambiguous": [
@@ -58,6 +58,35 @@
       "candidates": [
         "item:552",
         "item:4250"
+      ]
+    },
+    {
+      "step_id": "bruh-1.1-9d433fcccc12",
+      "field": "/items/1",
+      "source_text": "key",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:275",
+        "item:293",
+        "item:298",
+        "item:423",
+        "item:1543",
+        "item:1544",
+        "item:1545",
+        "item:1546",
+        "item:1547",
+        "item:1548",
+        "item:2411",
+        "item:5010",
+        "item:9722",
+        "item:11039",
+        "item:11040",
+        "item:11041",
+        "item:11042",
+        "item:11043",
+        "item:30951"
       ]
     },
     {
@@ -266,6 +295,18 @@
       ]
     },
     {
+      "step_id": "bruh-1.3-8ab026e97122",
+      "field": "/items/3",
+      "source_text": "statuette",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:4618",
+        "item:6785"
+      ]
+    },
+    {
       "step_id": "bruh-1.3-80e9203f5c43",
       "field": "/text",
       "span": [
@@ -321,6 +362,19 @@
         "item:21151",
         "item:21153",
         "item:21155"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-ffd94c28254c",
+      "field": "/items/2",
+      "source_text": "notes",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:21056",
+        "item:21057",
+        "item:21058"
       ]
     },
     {
@@ -502,6 +556,19 @@
         "quest:recipe_for_disaster_freeing_the_goblin_generals",
         "quest:recipe_for_disaster_freeing_the_lumbridge_guide",
         "quest:recipe_for_disaster_freeing_the_mountain_dwarf"
+      ]
+    },
+    {
+      "step_id": "bruh-1.3-aa4ae9967d70",
+      "field": "/items/8",
+      "source_text": "diary",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:2408",
+        "item:3395",
+        "item:3846"
       ]
     },
     {
@@ -824,6 +891,42 @@
         "item:141",
         "item:143",
         "item:2434"
+      ]
+    },
+    {
+      "step_id": "bruh-1.4-3898b8985437",
+      "field": "/items/9",
+      "source_text": "5 rings of dueling",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:2552",
+        "item:2554",
+        "item:2556",
+        "item:2558",
+        "item:2560",
+        "item:2562",
+        "item:2564",
+        "item:2566"
+      ]
+    },
+    {
+      "step_id": "bruh-2.1-998e961ab51a",
+      "field": "/items/2",
+      "source_text": "rings of dueling",
+      "kind": "item",
+      "method": "item",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:2552",
+        "item:2554",
+        "item:2556",
+        "item:2558",
+        "item:2560",
+        "item:2562",
+        "item:2564",
+        "item:2566"
       ]
     },
     {
@@ -2487,6 +2590,19 @@
     },
     {
       "step_id": "bruh-2.2-9b5e1c730252",
+      "field": "/items/6",
+      "source_text": "mission report",
+      "kind": "item",
+      "method": "item",
+      "reason": "ambiguous_name",
+      "candidates": [
+        "item:10597",
+        "item:10598",
+        "item:10599"
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9b5e1c730252",
       "field": "/items/12",
       "source_text": "prayer potions",
       "kind": "item",
@@ -2910,6 +3026,18 @@
         "item:11976",
         "item:11978"
       ]
+    },
+    {
+      "step_id": "bruh-3.1-dd6cc83d3302",
+      "field": "/links/0/url",
+      "source_text": "https://oldschool.runescape.wiki/w/Facility_bottle",
+      "kind": "link",
+      "method": "link",
+      "reason": "variant_unspecified",
+      "candidates": [
+        "item:33074",
+        "item:33077"
+      ]
     }
   ],
   "unresolved": [
@@ -3014,14 +3142,6 @@
     },
     {
       "step_id": "bruh-1.1-c5dd0c60297b",
-      "field": "/items/3",
-      "source_text": "20 balls of wool",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-c5dd0c60297b",
       "field": "/text",
       "span": [
         70,
@@ -3087,14 +3207,6 @@
       "candidates": [
         "quest:demon_slayer"
       ]
-    },
-    {
-      "step_id": "bruh-1.1-9d433fcccc12",
-      "field": "/items/1",
-      "source_text": "key",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.1-9d433fcccc12",
@@ -3169,14 +3281,6 @@
       "step_id": "bruh-1.1-5fa116cc2c88",
       "field": "/items/7",
       "source_text": "100 air/mind runes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.1-5fa116cc2c88",
-      "field": "/items/8",
-      "source_text": "5 bolts of cloth",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -3296,30 +3400,6 @@
       ]
     },
     {
-      "step_id": "bruh-1.2-61ac68a4f552",
-      "field": "/items/3",
-      "source_text": "3 pots of flour",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-61ac68a4f552",
-      "field": "/items/6",
-      "source_text": "2 woad leaves",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.2-8d771b72bcd5",
-      "field": "/items/1",
-      "source_text": "3 pots of flour",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.2-8d771b72bcd5",
       "field": "/text",
       "span": [
@@ -3333,14 +3413,6 @@
       "candidates": [
         "quest:desert_treasure_i"
       ]
-    },
-    {
-      "step_id": "bruh-1.2-3b82582ee229",
-      "field": "/items/2",
-      "source_text": "7 buckets of sand",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.2-3b82582ee229",
@@ -3985,14 +4057,6 @@
     },
     {
       "step_id": "bruh-1.3-792a43e8b277",
-      "field": "/items/12",
-      "source_text": "empty bucket",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-792a43e8b277",
       "field": "/text",
       "span": [
         639,
@@ -4046,40 +4110,8 @@
     },
     {
       "step_id": "bruh-1.3-8ab026e97122",
-      "field": "/items/3",
-      "source_text": "statuette",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-8ab026e97122",
       "field": "/items/11",
       "source_text": "vial (should get your vial back after emptying the chemical compound during Dig Site)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/4",
-      "source_text": "2 pots of flour",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/5",
-      "source_text": "2 buckets of milk",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-80e9203f5c43",
-      "field": "/items/6",
-      "source_text": "2 bowls of water",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4124,32 +4156,8 @@
     },
     {
       "step_id": "bruh-1.3-ffd94c28254c",
-      "field": "/items/2",
-      "source_text": "notes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-ffd94c28254c",
       "field": "/items/3",
       "source_text": "adamant/bronze pickaxe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-ffd94c28254c",
-      "field": "/items/6",
-      "source_text": "3 balls of wool",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-ffd94c28254c",
-      "field": "/items/13",
-      "source_text": "8 woad leaves",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4264,22 +4272,6 @@
     },
     {
       "step_id": "bruh-1.3-4c7daf877fc6",
-      "field": "/items/6",
-      "source_text": "empty vial",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-4c7daf877fc6",
-      "field": "/items/8",
-      "source_text": "black wizard hat",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-4c7daf877fc6",
       "field": "/items/9",
       "source_text": "black priest gown top/bottom",
       "kind": "item",
@@ -4342,14 +4334,6 @@
     },
     {
       "step_id": "bruh-1.3-899bab1deb77",
-      "field": "/items/1",
-      "source_text": "1600 buckets of sand",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-899bab1deb77",
       "field": "/items/3",
       "source_text": "uncut sapphires/emeralds/rubies",
       "kind": "item",
@@ -4360,14 +4344,6 @@
       "step_id": "bruh-1.3-899bab1deb77",
       "field": "/items/4",
       "source_text": "matching gold bars for the gems",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-4f2af9af2cc0",
-      "field": "/items/2",
-      "source_text": "empty bucket",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4392,14 +4368,6 @@
       "step_id": "bruh-1.3-029eac528407",
       "field": "/items/4",
       "source_text": "law runes (telegrab)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-029eac528407",
-      "field": "/items/11",
-      "source_text": "2 vials of water",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4668,24 +4636,8 @@
     },
     {
       "step_id": "bruh-1.3-aa4ae9967d70",
-      "field": "/items/8",
-      "source_text": "diary",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-aa4ae9967d70",
       "field": "/items/15",
       "source_text": "Rag and Bone Man I bones",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-aa4ae9967d70",
-      "field": "/items/16",
-      "source_text": "jugs of vinegar",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -4792,14 +4744,6 @@
       "step_id": "bruh-1.3-7d180b5735ca",
       "field": "/items/4",
       "source_text": "1 iron bar; rest after creating bank: rune pickaxe",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.3-7d180b5735ca",
-      "field": "/items/15",
-      "source_text": "empty bucket",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5265,22 +5209,6 @@
       ]
     },
     {
-      "step_id": "bruh-1.4-989566c72b27",
-      "field": "/items/2",
-      "source_text": "2 buckets of water",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-989566c72b27",
-      "field": "/items/3",
-      "source_text": "holy grail",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.4-1db0f3a29da9",
       "field": "/text",
       "span": [
@@ -5360,14 +5288,6 @@
     },
     {
       "step_id": "bruh-1.4-3cb1982b6327",
-      "field": "/items/19",
-      "source_text": "1 plant pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-3cb1982b6327",
       "field": "/text",
       "span": [
         380,
@@ -5440,14 +5360,6 @@
       "candidates": [
         "quest:dwarf_cannon"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-85c07ce8189e",
-      "field": "/items/9",
-      "source_text": "plant pot",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-85c07ce8189e",
@@ -5644,14 +5556,6 @@
     },
     {
       "step_id": "bruh-1.4-9e184c2c912d",
-      "field": "/items/1",
-      "source_text": "51 rubies",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-9e184c2c912d",
       "field": "/items/3",
       "source_text": "air/earth runes",
       "kind": "item",
@@ -5662,14 +5566,6 @@
       "step_id": "bruh-1.4-9e184c2c912d",
       "field": "/items/6",
       "source_text": "108 cosmics",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-b64460ef9890",
-      "field": "/items/7",
-      "source_text": "maple log",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -5688,14 +5584,6 @@
       "candidates": [
         "quest:icthlarins_little_helper"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-1f257947c836",
-      "field": "/items/2",
-      "source_text": "3 plant pots",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-b491172fe629",
@@ -5742,30 +5630,6 @@
       "candidates": [
         "quest:desert_treasure_i"
       ]
-    },
-    {
-      "step_id": "bruh-1.4-d946724ab321",
-      "field": "/items/0",
-      "source_text": "bronze knives",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-d946724ab321",
-      "field": "/items/1",
-      "source_text": "iron knives",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-d946724ab321",
-      "field": "/items/2",
-      "source_text": "steel knives",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
     },
     {
       "step_id": "bruh-1.4-d946724ab321",
@@ -5860,14 +5724,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-1.4-2865faf1ac70",
-      "field": "/items/9",
-      "source_text": "12 willow branches",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.4-5fcc565b7ed8",
       "field": "/items/2",
       "source_text": "GP stack",
@@ -5903,14 +5759,6 @@
       "step_id": "bruh-1.4-fdc177159a82",
       "field": "/items/21",
       "source_text": "spade + rake + seed dibbe + plant cure (buy these four in Trollheim)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-fdc177159a82",
-      "field": "/items/23",
-      "source_text": "empty bucket",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6163,22 +6011,6 @@
       "reason": "not_in_catalog"
     },
     {
-      "step_id": "bruh-1.4-3898b8985437",
-      "field": "/items/9",
-      "source_text": "5 rings of dueling",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-1.4-373214d0df64",
-      "field": "/items/1",
-      "source_text": "2 empty vials",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
       "step_id": "bruh-1.4-373214d0df64",
       "field": "/items/4",
       "source_text": "lantern lens (blow from molten glass)",
@@ -6190,14 +6022,6 @@
       "step_id": "bruh-2.1-998e961ab51a",
       "field": "/items/1",
       "source_text": "300k gp (obtained during the step)",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-998e961ab51a",
-      "field": "/items/2",
-      "source_text": "rings of dueling",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6299,14 +6123,6 @@
       "step_id": "bruh-2.1-043882e243c2",
       "field": "/items/10",
       "source_text": "wind strike/bolt runes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-abcfa0457f68",
-      "field": "/items/3",
-      "source_text": "bracelets of clay",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6507,22 +6323,6 @@
     },
     {
       "step_id": "bruh-2.1-09dde0dda0c4",
-      "field": "/items/13",
-      "source_text": "willow log",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-09dde0dda0c4",
-      "field": "/items/14",
-      "source_text": "maple log",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-09dde0dda0c4",
       "field": "/items/17",
       "source_text": "Crumble Undead runes",
       "kind": "item",
@@ -6596,14 +6396,6 @@
       "step_id": "bruh-2.1-72a11f040f2d",
       "field": "/items/2",
       "source_text": "light source",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-72a11f040f2d",
-      "field": "/items/5",
-      "source_text": "willow log",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -6794,14 +6586,6 @@
     },
     {
       "step_id": "bruh-2.1-0f6d2a3f24dc",
-      "field": "/items/5",
-      "source_text": "8 buckets of slime",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-0f6d2a3f24dc",
       "field": "/text",
       "span": [
         57,
@@ -6886,14 +6670,6 @@
     },
     {
       "step_id": "bruh-2.1-86c9ed8c8686",
-      "field": "/items/19",
-      "source_text": "4 tinderboxes",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-86c9ed8c8686",
       "field": "/items/27",
       "source_text": "red spider eggs",
       "kind": "item",
@@ -6957,14 +6733,6 @@
       "step_id": "bruh-2.1-47a8fa581b17",
       "field": "/items/7",
       "source_text": "water runes 5 iron bars",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.1-47a8fa581b17",
-      "field": "/items/9",
-      "source_text": "2 undead chickens",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -7643,22 +7411,6 @@
     },
     {
       "step_id": "bruh-2.2-e6dbda977d38",
-      "field": "/items/2",
-      "source_text": "bronze nail",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-e6dbda977d38",
-      "field": "/items/8",
-      "source_text": "bronze nail",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-e6dbda977d38",
       "field": "/items/11",
       "source_text": "melee gear",
       "kind": "item",
@@ -8124,14 +7876,6 @@
     },
     {
       "step_id": "bruh-2.2-214d11574fb1",
-      "field": "/items/5",
-      "source_text": "empty vial",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-214d11574fb1",
       "field": "/items/6",
       "source_text": "2 red spider’s eggs",
       "kind": "item",
@@ -8405,14 +8149,6 @@
       "step_id": "bruh-2.2-9b5e1c730252",
       "field": "/items/3",
       "source_text": "penguin suit",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.2-9b5e1c730252",
-      "field": "/items/6",
-      "source_text": "mission report",
       "kind": "item",
       "method": "item",
       "reason": "not_in_catalog"
@@ -9355,14 +9091,6 @@
     },
     {
       "step_id": "bruh-2.3-1d9f930a812d",
-      "field": "/items/0",
-      "source_text": "2 vials of water",
-      "kind": "item",
-      "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-2.3-1d9f930a812d",
       "field": "/items/4",
       "source_text": "cheese potatoes",
       "kind": "item",
@@ -9714,14 +9442,6 @@
       "source_text": "red dragonhide shield optional.",
       "kind": "item",
       "method": "item",
-      "reason": "not_in_catalog"
-    },
-    {
-      "step_id": "bruh-3.1-dd6cc83d3302",
-      "field": "/links/0/url",
-      "source_text": "https://oldschool.runescape.wiki/w/Facility_bottle",
-      "kind": "link",
-      "method": "link",
       "reason": "not_in_catalog"
     },
     {

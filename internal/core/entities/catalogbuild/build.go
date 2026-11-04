@@ -65,6 +65,10 @@ type rawQuest struct {
 	IsMiniquest bool              `json:"is_miniquest"`
 	Aliases     map[string]string `json:"aliases"`
 	WikiURL     string            `json:"wiki_url"`
+	XPRewards   []struct {
+		Skill string `json:"skill"`
+		XP    int    `json:"xp"`
+	} `json:"xp_rewards"`
 }
 
 type curated struct {
@@ -245,6 +249,9 @@ func buildQuests(raw []rawQuest, cur curated) (*entities.QuestCatalog, error) {
 		}
 		seen[id] = q.Name
 		e := entities.QuestEntry{ID: id, Name: q.Name, WikiKey: link.Key, Members: q.Members, Miniquest: q.IsMiniquest}
+		for _, x := range q.XPRewards {
+			e.XPRewards = append(e.XPRewards, entities.SkillXP{Skill: entities.Slug(x.Skill), XP: x.XP})
+		}
 		for _, src := range []string{"wikisync", "runelite"} {
 			if a := q.Aliases[src]; a != "" && a != q.Name && !hasAlias(e.Aliases, a) {
 				e.Aliases = append(e.Aliases, entities.Alias{Text: a, Source: src})

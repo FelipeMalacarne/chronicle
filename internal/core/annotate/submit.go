@@ -214,8 +214,14 @@ func (gs *guideState) orderIssues(reg *entities.Registry, candidates map[string]
 		} else if sa := gs.annotation(st); sa != nil && sa.TextHash == content.StepTextHash(st) {
 			objs = append(objs, sa.Objectives...)
 		}
+		// A rule objective the annotation repeats is placed once, so its
+		// conflicts are reported once.
+		seen := map[string]bool{}
 		for _, o := range objs {
-			all = append(all, placed{step: st.ID, at: gs.index[st.ID], sec: sec, obj: o})
+			if k := o.Key.String() + " " + o.Role; !seen[k] {
+				seen[k] = true
+				all = append(all, placed{step: st.ID, at: gs.index[st.ID], sec: sec, obj: o})
+			}
 		}
 	}
 	out := map[string][]string{}
@@ -228,7 +234,7 @@ func (gs *guideState) orderIssues(reg *entities.Registry, candidates map[string]
 			if q.step == p.step || !ordered(p, q) {
 				continue
 			}
-			if msg := conflict(p, q, all); msg != "" {
+			if msg := conflict(reg, p, q, all); msg != "" {
 				out[p.step] = append(out[p.step], fmt.Sprintf("order: %s %s %s", p.obj.Key, p.obj.Role, msg))
 			}
 		}
@@ -257,7 +263,7 @@ func ordered(p, q placed) bool {
 
 // conflict explains why objective p cannot stand given objective q, or
 // returns "".
-func conflict(p, q placed, all []placed) string {
+func conflict(reg *entities.Registry, p, q placed, all []placed) string {
 	pk, qk := p.obj.Key, q.obj.Key
 	if pk.Ref != qk.Ref || pk.IsQuestPoints() != qk.IsQuestPoints() {
 		return ""
@@ -276,7 +282,7 @@ func conflict(p, q placed, all []placed) string {
 			return fmt.Sprintf("is already completed by step %s (%s)", q.step, qk)
 		}
 	case content.RoleRequires:
-		if q.at > p.at && q.obj.Role == content.RoleCompletes && implies(qk, pk) && !metBefore(p, all) {
+		if q.at > p.at && q.obj.Role == content.RoleCompletes && implies(qk, pk) && !metBefore(p, all) && !questXPMeets(reg, p, all) {
 			return fmt.Sprintf("is required here but the route only completes it later, at step %s", q.step)
 		}
 	}
@@ -301,4 +307,32 @@ func metBefore(p placed, all []placed) bool {
 		}
 	}
 	return false
+}
+
+// questXPMeets reports whether a skill level p requires is reached by the
+// fixed experience of the quests the route finishes before p, on top of the
+// skill's starting experience. Training is not modeled, so this only ever
+// accepts a requirement, never rejects one.
+func questXPMeets(reg *entities.Registry, p placed, all []placed) bool {
+	pk := p.obj.Key
+	if pk.Ref.Kind != entities.KindSkill || pk.Op != entities.OpAtLeast {
+		return false
+	}
+	xp, counted := entities.StartingXP(pk.Ref.ID), map[string]bool{}
+	for _, q := range all {
+		qk := q.obj.Key
+		if q.at >= p.at || !ordered(p, q) || q.obj.Role != content.RoleCompletes ||
+			qk.Ref.Kind != entities.KindQuest || qk.State != entities.StateFinished || counted[qk.Ref.ID] {
+			continue
+		}
+		counted[qk.Ref.ID] = true
+		if quest, ok := reg.Quest(qk.Ref.ID); ok {
+			for _, r := range quest.XPRewards {
+				if r.Skill == pk.Ref.ID {
+					xp += r.XP
+				}
+			}
+		}
+	}
+	return entities.LevelForXP(xp) >= pk.N
 }

@@ -1036,6 +1036,7 @@
                   },
                   {
                     "name": "balls of wool",
+                    "item_id": 1759,
                     "qty": 20,
                     "source_text": "20 balls of wool"
                   }
@@ -1103,6 +1104,13 @@
                       "field": "/items/2",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1759",
+                      "source_text": "20 balls of wool",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "quest:tribal_totem",
@@ -2178,6 +2186,7 @@
                   },
                   {
                     "name": "bolts of cloth",
+                    "item_id": 8790,
                     "qty": 5,
                     "source_text": "5 bolts of cloth"
                   },
@@ -2297,6 +2306,13 @@
                       "field": "/items/6",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:8790",
+                      "source_text": "5 bolts of cloth",
+                      "field": "/items/8",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:961",
@@ -2689,6 +2705,13 @@
                       "match": "alias"
                     },
                     {
+                      "ref": "item:1933",
+                      "source_text": "3 pots of flour",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:1951",
                       "source_text": "3 redberries",
                       "field": "/items/4",
@@ -2699,6 +2722,13 @@
                       "ref": "item:1957",
                       "source_text": "6 onions",
                       "field": "/items/5",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
+                      "ref": "item:1793",
+                      "source_text": "2 woad leaves",
+                      "field": "/items/6",
                       "method": "item",
                       "match": "plural"
                     },
@@ -2764,6 +2794,13 @@
                       "field": "/items/0",
                       "method": "item",
                       "match": "alias"
+                    },
+                    {
+                      "ref": "item:1933",
+                      "source_text": "3 pots of flour",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:1925",
@@ -3011,6 +3048,7 @@
                   },
                   {
                     "name": "buckets of sand",
+                    "item_id": 1783,
                     "qty": 7,
                     "source_text": "7 buckets of sand"
                   },
@@ -3200,6 +3238,13 @@
                       "field": "/items/1",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1783",
+                      "source_text": "7 buckets of sand",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:952",
@@ -6775,6 +6820,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:3727",
+                      "source_text": "empty bucket",
+                      "field": "/items/12",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:1917",
                       "source_text": "beer",
                       "field": "/items/13",
@@ -7096,16 +7148,19 @@
                   },
                   {
                     "name": "pots of flour",
+                    "item_id": 1933,
                     "qty": 2,
                     "source_text": "2 pots of flour"
                   },
                   {
                     "name": "buckets of milk",
+                    "item_id": 1927,
                     "qty": 2,
                     "source_text": "2 buckets of milk"
                   },
                   {
                     "name": "bowls of water",
+                    "item_id": 1921,
                     "qty": 2,
                     "source_text": "2 bowls of water"
                   },
@@ -7281,6 +7336,27 @@
                       "match": "plural"
                     },
                     {
+                      "ref": "item:1933",
+                      "source_text": "2 pots of flour",
+                      "field": "/items/4",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:1927",
+                      "source_text": "2 buckets of milk",
+                      "field": "/items/5",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:1921",
+                      "source_text": "2 bowls of water",
+                      "field": "/items/6",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:1353",
                       "source_text": "steel axe",
                       "field": "/items/7",
@@ -7439,6 +7515,7 @@
                   },
                   {
                     "name": "balls of wool",
+                    "item_id": 1759,
                     "qty": 3,
                     "source_text": "3 balls of wool"
                   },
@@ -7480,6 +7557,7 @@
                   },
                   {
                     "name": "woad leaves",
+                    "item_id": 1793,
                     "qty": 8,
                     "source_text": "8 woad leaves"
                   },
@@ -7565,6 +7643,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:1759",
+                      "source_text": "3 balls of wool",
+                      "field": "/items/6",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:954",
                       "source_text": "1 rope",
                       "field": "/items/7",
@@ -7605,6 +7690,13 @@
                       "field": "/items/12",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1793",
+                      "source_text": "8 woad leaves",
+                      "field": "/items/13",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:1933",
@@ -7911,6 +8003,7 @@
                   },
                   {
                     "name": "empty vial",
+                    "item_id": 9085,
                     "source_text": "empty vial"
                   },
                   {
@@ -7920,6 +8013,7 @@
                   },
                   {
                     "name": "black wizard hat",
+                    "item_id": 1017,
                     "source_text": "black wizard hat"
                   },
                   {
@@ -8023,11 +8117,25 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:9085",
+                      "source_text": "empty vial",
+                      "field": "/items/6",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:233",
                       "source_text": "pestle and mortar",
                       "field": "/items/7",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1017",
+                      "source_text": "black wizard hat",
+                      "field": "/items/8",
+                      "method": "item",
+                      "match": "alias"
                     },
                     {
                       "ref": "item:2423",
@@ -8266,6 +8374,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:1783",
+                      "source_text": "1600 buckets of sand",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:1755",
                       "source_text": "chisel",
                       "field": "/items/2",
@@ -8339,6 +8454,7 @@
                   },
                   {
                     "name": "empty bucket",
+                    "item_id": 3727,
                     "source_text": "empty bucket"
                   },
                   {
@@ -8427,6 +8543,13 @@
                       "field": "/items/1",
                       "method": "item",
                       "match": "alias"
+                    },
+                    {
+                      "ref": "item:3727",
+                      "source_text": "empty bucket",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "name"
                     },
                     {
                       "ref": "item:562",
@@ -8591,6 +8714,7 @@
                   },
                   {
                     "name": "vials of water",
+                    "item_id": 227,
                     "qty": 2,
                     "source_text": "2 vials of water"
                   },
@@ -8726,6 +8850,13 @@
                       "field": "/items/9",
                       "method": "item",
                       "match": "alias"
+                    },
+                    {
+                      "ref": "item:227",
+                      "source_text": "2 vials of water",
+                      "field": "/items/11",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:1353",
@@ -10207,6 +10338,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:7810",
+                      "source_text": "jugs of vinegar",
+                      "field": "/items/16",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:2015",
                       "source_text": "2 vodkas",
                       "field": "/items/18",
@@ -10389,6 +10527,7 @@
                   },
                   {
                     "name": "empty bucket",
+                    "item_id": 3727,
                     "source_text": "empty bucket"
                   },
                   {
@@ -10583,6 +10722,13 @@
                       "ref": "item:1761",
                       "source_text": "3 soft clay",
                       "field": "/items/14",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:3727",
+                      "source_text": "empty bucket",
+                      "field": "/items/15",
                       "method": "item",
                       "match": "name"
                     },
@@ -12729,6 +12875,20 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:1929",
+                      "source_text": "2 buckets of water",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:19",
+                      "source_text": "holy grail",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:556",
                       "source_text": "air runes",
                       "field": "/items/4",
@@ -13185,6 +13345,7 @@
                   },
                   {
                     "name": "plant pot",
+                    "item_id": 5356,
                     "qty": 1,
                     "source_text": "1 plant pot"
                   },
@@ -13432,6 +13593,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:5356",
+                      "source_text": "1 plant pot",
+                      "field": "/items/19",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
                       "ref": "item:5324",
                       "source_text": "6 cabbage seeds",
                       "field": "/items/20",
@@ -13651,6 +13819,13 @@
                       "ref": "item:7409",
                       "source_text": "magic secateurs",
                       "field": "/items/8",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:5356",
+                      "source_text": "plant pot",
+                      "field": "/items/9",
                       "method": "item",
                       "match": "name"
                     },
@@ -14706,6 +14881,7 @@
                   },
                   {
                     "name": "rubies",
+                    "item_id": 1603,
                     "qty": 51,
                     "source_text": "51 rubies"
                   },
@@ -14804,6 +14980,13 @@
                       "ref": "item:1605",
                       "source_text": "41 emeralds",
                       "field": "/items/0",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:1603",
+                      "source_text": "51 rubies",
+                      "field": "/items/1",
                       "method": "item",
                       "match": "plural"
                     },
@@ -14967,6 +15150,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:1517",
+                      "source_text": "maple log",
+                      "field": "/items/7",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:1521",
                       "source_text": "oak log",
                       "field": "/items/8",
@@ -15069,6 +15259,13 @@
                       "ref": "item:5313",
                       "source_text": "3 willow seeds",
                       "field": "/items/1",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:5356",
+                      "source_text": "3 plant pots",
+                      "field": "/items/2",
                       "method": "item",
                       "match": "plural"
                     },
@@ -15369,6 +15566,27 @@
                     "original_id": "CH1.88"
                   },
                   "entities": [
+                    {
+                      "ref": "item:864",
+                      "source_text": "bronze knives",
+                      "field": "/items/0",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:863",
+                      "source_text": "iron knives",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:865",
+                      "source_text": "steel knives",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "plural"
+                    },
                     {
                       "ref": "item:25826",
                       "source_text": "lizardkickers",
@@ -15732,6 +15950,13 @@
                       "match": "name"
                     },
                     {
+                      "ref": "item:5933",
+                      "source_text": "12 willow branches",
+                      "field": "/items/9",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "quest:enlightened_journey",
                       "source_text": "Enlightened Journey",
                       "field": "/text",
@@ -16000,6 +16225,13 @@
                       "ref": "item:4601",
                       "source_text": "3 Ugthanki dung",
                       "field": "/items/22",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:3727",
+                      "source_text": "empty bucket",
+                      "field": "/items/23",
                       "method": "item",
                       "match": "name"
                     },
@@ -17297,6 +17529,13 @@
                       "match": "alias"
                     },
                     {
+                      "ref": "item:9085",
+                      "source_text": "2 empty vials",
+                      "field": "/items/1",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:1951",
                       "source_text": "redberries",
                       "field": "/items/2",
@@ -18455,6 +18694,7 @@
                   },
                   {
                     "name": "bracelets of clay",
+                    "item_id": 11074,
                     "source_text": "bracelets of clay"
                   },
                   {
@@ -18557,6 +18797,13 @@
                       "field": "/items/1",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:11074",
+                      "source_text": "bracelets of clay",
+                      "field": "/items/3",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:563",
@@ -20042,10 +20289,12 @@
                   },
                   {
                     "name": "willow log",
+                    "item_id": 1519,
                     "source_text": "willow log"
                   },
                   {
                     "name": "maple log",
+                    "item_id": 1517,
                     "source_text": "maple log"
                   },
                   {
@@ -20269,6 +20518,20 @@
                       "field": "/items/12",
                       "method": "item",
                       "match": "alias"
+                    },
+                    {
+                      "ref": "item:1519",
+                      "source_text": "willow log",
+                      "field": "/items/13",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:1517",
+                      "source_text": "maple log",
+                      "field": "/items/14",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:1761",
@@ -20764,6 +21027,13 @@
                       "field": "/items/4",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:1519",
+                      "source_text": "willow log",
+                      "field": "/items/5",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:4687",
@@ -21773,6 +22043,13 @@
                       "match": "alias"
                     },
                     {
+                      "ref": "item:4286",
+                      "source_text": "8 buckets of slime",
+                      "field": "/items/5",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:526",
                       "source_text": "8 bones",
                       "field": "/items/6",
@@ -21965,6 +22242,7 @@
                   },
                   {
                     "name": "tinderboxes",
+                    "item_id": 590,
                     "qty": 4,
                     "source_text": "4 tinderboxes"
                   },
@@ -22197,6 +22475,13 @@
                       "ref": "item:1351",
                       "source_text": "10 bronze axes",
                       "field": "/items/18",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
+                      "ref": "item:590",
+                      "source_text": "4 tinderboxes",
+                      "field": "/items/19",
                       "method": "item",
                       "match": "plural"
                     },
@@ -22706,6 +22991,13 @@
                       "field": "/items/8",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:10487",
+                      "source_text": "2 undead chickens",
+                      "field": "/items/9",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:1355",
@@ -24823,6 +25115,13 @@
                       "match": "alias"
                     },
                     {
+                      "ref": "item:4819",
+                      "source_text": "bronze nail",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "plural"
+                    },
+                    {
                       "ref": "item:447",
                       "source_text": "6 mithril ore",
                       "field": "/items/3",
@@ -24856,6 +25155,13 @@
                       "field": "/items/7",
                       "method": "item",
                       "match": "name"
+                    },
+                    {
+                      "ref": "item:4819",
+                      "source_text": "bronze nail",
+                      "field": "/items/8",
+                      "method": "item",
+                      "match": "plural"
                     },
                     {
                       "ref": "item:1733",
@@ -26786,6 +27092,13 @@
                       "ref": "item:1985",
                       "source_text": "4 cheese",
                       "field": "/items/4",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:9085",
+                      "source_text": "empty vial",
+                      "field": "/items/5",
                       "method": "item",
                       "match": "name"
                     },
@@ -31188,6 +31501,7 @@
                 "inventory": [
                   {
                     "name": "vials of water",
+                    "item_id": 227,
                     "qty": 2,
                     "source_text": "2 vials of water"
                   },
@@ -31313,6 +31627,13 @@
                     "original_id": "CH2.97"
                   },
                   "entities": [
+                    {
+                      "ref": "item:227",
+                      "source_text": "2 vials of water",
+                      "field": "/items/0",
+                      "method": "item",
+                      "match": "plural"
+                    },
                     {
                       "ref": "item:253",
                       "source_text": "2 tarromins",

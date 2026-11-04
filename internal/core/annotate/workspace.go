@@ -38,9 +38,11 @@ type Workspace struct {
 	// Today returns the date recorded on decisions (YYYY-MM-DD).
 	Today func() string
 
-	reg    *entities.Registry
-	guides map[string]*guideState
-	order  []string
+	reg *entities.Registry
+	// regStamp fingerprints the catalog files reg was built from.
+	regStamp string
+	guides   map[string]*guideState
+	order    []string
 }
 
 type guideState struct {
@@ -92,12 +94,46 @@ func Open(dir string) (*Workspace, error) {
 func (w *Workspace) Registry() *entities.Registry { return w.reg }
 
 func (w *Workspace) reloadRegistry() error {
+	stamp, err := w.referenceStamp()
+	if err != nil {
+		return err
+	}
 	reg, err := entities.Load(os.DirFS(filepath.Join(w.Dir, ReferenceSubdir)))
 	if err != nil {
 		return fmt.Errorf("annotate: %w", err)
 	}
-	w.reg = reg
+	w.reg, w.regStamp = reg, stamp
 	return nil
+}
+
+// SyncRegistry reloads the registry when a catalog file changed on disk since
+// it was built (a regenerated items.json, an edited locations.json), so a
+// running server never resolves against stale catalogs.
+func (w *Workspace) SyncRegistry() error {
+	stamp, err := w.referenceStamp()
+	if err != nil || stamp == w.regStamp {
+		return err
+	}
+	return w.reloadRegistry()
+}
+
+// referenceStamp is the name, size and modification time of every catalog
+// file under dir/reference.
+func (w *Workspace) referenceStamp() (string, error) {
+	files, err := filepath.Glob(filepath.Join(w.Dir, ReferenceSubdir, "*.json"))
+	if err != nil {
+		return "", err
+	}
+	sort.Strings(files)
+	var b bytes.Buffer
+	for _, f := range files {
+		fi, err := os.Stat(f)
+		if err != nil {
+			return "", err
+		}
+		fmt.Fprintf(&b, "%s %d %d\n", filepath.Base(f), fi.Size(), fi.ModTime().UnixNano())
+	}
+	return b.String(), nil
 }
 
 func (w *Workspace) guide(id string) (*guideState, error) {

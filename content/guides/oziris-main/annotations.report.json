@@ -9,8 +9,8 @@
     "pending": 290,
     "submitted": 286,
     "first_submit_accepted": 284,
-    "owner_confirmed": 112,
-    "decisions_applied": 100
+    "owner_confirmed": 25,
+    "decisions_applied": 107
   },
   "sections": [
     {
@@ -21,8 +21,8 @@
       "pending": 0,
       "submitted": 286,
       "first_submit_accepted": 284,
-      "owner_confirmed": 112,
-      "decisions_applied": 100
+      "owner_confirmed": 25,
+      "decisions_applied": 107
     },
     {
       "section_id": "1.2",
@@ -93,7 +93,7 @@
   ],
   "rule_agreement": {
     "rules": 95,
-    "reproduced": 87,
+    "reproduced": 88,
     "divergent": [
       {
         "step_id": "1.1.95",
@@ -106,12 +106,6 @@
         "key": "quest:gertrudes_cat@started",
         "role": "starts",
         "comment": "Diverge da regra (quest:gertrudes_cat@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.94."
-      },
-      {
-        "step_id": "1.1.145a",
-        "key": "skill:smithing>=15",
-        "role": "requires",
-        "comment": "Diverge da regra (skill:smithing>=15 requires, derived): o verificador de ordem recusa porque a rota só conclui Smithing em 1.4.38/2.0.32; o nível 15/29 vem do XP de The Knight's Sword, que não é objetivo. O dono decidiu tirar o requires."
       },
       {
         "step_id": "1.1.195",
@@ -160,9 +154,9 @@
     },
     {
       "step_id": "1.1.15",
-      "what": "item Shrimps = item:315",
-      "quote": "shrimp",
-      "decision": "singular-of-plural-catalog-name"
+      "what": "item Treasure scroll = family treasure_scroll",
+      "quote": "Clue (x marks the spot)",
+      "decision": "ambiguous-variant-by-context"
     },
     {
       "step_id": "1.1.29",
@@ -283,12 +277,6 @@
       "decision": "do-quest-means-finish"
     },
     {
-      "step_id": "1.1.100",
-      "what": "item:1387x1 completes",
-      "quote": "Buy a fire staff",
-      "decision": "item-shorthand-to-catalog-name"
-    },
-    {
       "step_id": "1.1.102",
       "what": "item:1059x1 completes",
       "quote": "Buy gloves"
@@ -354,12 +342,6 @@
       "decision": "unnumbered-acquire-is-one"
     },
     {
-      "step_id": "1.1.121",
-      "what": "item Staff of fire = item:1387",
-      "quote": "Fire staff (equip)",
-      "decision": "item-shorthand-to-catalog-name"
-    },
-    {
       "step_id": "1.1.125",
       "what": "item:2146x1 completes",
       "quote": "Pick up 1 cooked meat from the table and burn it",
@@ -381,6 +363,12 @@
       "what": "quest:druidic_ritual@finished completes",
       "quote": "Do Druidic ritual",
       "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.1.134",
+      "what": "item:12859x1 completes",
+      "quote": "Buy 1 PACK of eyes of newt",
+      "decision": "item-shorthand-to-catalog-name"
     },
     {
       "step_id": "1.1.134",
@@ -413,16 +401,16 @@
       "decision": "item-shorthand-to-catalog-name"
     },
     {
-      "step_id": "1.1.143",
-      "what": "item Falador teleport = item:8009 x1",
-      "quote": "the falador teletab",
+      "step_id": "1.1.144",
+      "what": "item:667x1 completes",
+      "quote": "for the sword",
       "decision": "item-shorthand-to-catalog-name"
     },
     {
       "step_id": "1.1.149",
-      "what": "item Small fishing net = item:303 x1",
-      "quote": "small fish net",
-      "decision": "item-shorthand-to-catalog-name"
+      "what": "item:321x1 completes",
+      "quote": "Fish anchovies",
+      "decision": "unnumbered-acquire-is-one"
     },
     {
       "step_id": "1.1.151",
@@ -441,6 +429,26 @@
       "what": "item:1933x10 completes",
       "quote": "Buy 10 flour",
       "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.158",
+      "what": "item:1470x1 completes",
+      "quote": "for all 4 beads"
+    },
+    {
+      "step_id": "1.1.158",
+      "what": "item:1472x1 completes",
+      "quote": "for all 4 beads"
+    },
+    {
+      "step_id": "1.1.158",
+      "what": "item:1474x1 completes",
+      "quote": "for all 4 beads"
+    },
+    {
+      "step_id": "1.1.158",
+      "what": "item:1476x1 completes",
+      "quote": "for all 4 beads"
     },
     {
       "step_id": "1.1.158",
@@ -476,6 +484,18 @@
       "step_id": "1.1.169",
       "what": "item Nulodion's notes = item:3",
       "quote": "Notes for dwarf cannon",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.170",
+      "what": "item:295x1 completes",
+      "quote": "get amulet and the urn",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.170",
+      "what": "item:296x1 completes",
+      "quote": "get amulet and the urn",
       "decision": "item-shorthand-to-catalog-name"
     },
     {
@@ -520,16 +540,35 @@
       "decision": "item-shorthand-to-catalog-name"
     },
     {
-      "step_id": "1.1.190",
-      "what": "item Staff of fire = item:1387",
-      "quote": "Fire staff (equip)",
+      "step_id": "1.1.189",
+      "what": "item:13658x20 completes",
+      "quote": "Buy 20 teleports for chronicle",
       "decision": "item-shorthand-to-catalog-name"
     },
     {
       "step_id": "1.1.190",
-      "what": "item Research notes = item:291",
-      "quote": "Rune mysteries notes",
-      "decision": "item-shorthand-to-catalog-name"
+      "what": "item Red bead = item:1470 x1",
+      "quote": "4 beads"
+    },
+    {
+      "step_id": "1.1.190",
+      "what": "item Yellow bead = item:1472 x1",
+      "quote": "4 beads"
+    },
+    {
+      "step_id": "1.1.190",
+      "what": "item Black bead = item:1474 x1",
+      "quote": "4 beads"
+    },
+    {
+      "step_id": "1.1.190",
+      "what": "item White bead = item:1476 x1",
+      "quote": "4 beads"
+    },
+    {
+      "step_id": "1.1.194",
+      "what": "item message = item:755",
+      "quote": "Juliet's letter (Item name is just 'message')"
     },
     {
       "step_id": "1.1.197a",
@@ -540,6 +579,24 @@
       "step_id": "1.1.202",
       "what": "item scrying orb = family scrying_orb",
       "quote": "make sure you have it with you"
+    },
+    {
+      "step_id": "1.1.203",
+      "what": "item Translation book = item:784",
+      "quote": "Translation notes",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.1.213",
+      "what": "item:317x1 completes",
+      "quote": "Fish shrimp",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.1.220",
+      "what": "item:2116x1 completes",
+      "quote": "pineapple chunks",
+      "decision": "unnumbered-acquire-is-one"
     },
     {
       "step_id": "1.1.223",
@@ -575,6 +632,12 @@
       "what": "item:301x1 completes",
       "quote": "lobster pot",
       "decision": "unnumbered-acquire-is-one"
+    },
+    {
+      "step_id": "1.1.233",
+      "what": "item:19704x1 completes",
+      "quote": "Buy 1 pack of normal compost",
+      "decision": "item-shorthand-to-catalog-name"
     },
     {
       "step_id": "1.1.235",
@@ -643,6 +706,26 @@
       "decision": "do-quest-means-finish"
     },
     {
+      "step_id": "1.1.257",
+      "what": "item:426x1 completes",
+      "quote": "Buy priest robes"
+    },
+    {
+      "step_id": "1.1.257",
+      "what": "item:428x1 completes",
+      "quote": "Buy priest robes"
+    },
+    {
+      "step_id": "1.1.257",
+      "what": "item:426x1 uses",
+      "quote": "keep these after quest"
+    },
+    {
+      "step_id": "1.1.257",
+      "what": "item:428x1 uses",
+      "quote": "keep these after quest"
+    },
+    {
       "step_id": "1.1.261",
       "what": "quest:the_dig_site@finished completes",
       "quote": "Do the Digsite quest",
@@ -685,8 +768,8 @@
     },
     {
       "step_id": "1.1.277",
-      "what": "item Brooch = item:5008",
-      "quote": "Lost tribe brooch",
+      "what": "item Goblin symbol book = item:5009",
+      "quote": "Lost tribe brooch and book",
       "decision": "item-shorthand-to-catalog-name"
     },
     {
@@ -722,15 +805,15 @@
     },
     "1.1.100": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
       "comment": "'fire staff' → Staff of fire."
     },
     "1.1.101": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'newspaper' fora do catálogo."
+      "comment": "Reanotado com o catálogo completo: Newspaper x1."
     },
     "1.1.102": {
       "section_id": "1.1",
@@ -851,15 +934,15 @@
     },
     "1.1.121": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'Runes' genérico fica fora; 'Fire staff' → Staff of fire."
+      "comment": "'Runes' genérico fica fora."
     },
     "1.1.122": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'bronze med helm' fora do catálogo."
+      "comment": "Reanotado com o catálogo completo: Bronze med helm x1."
     },
     "1.1.125": {
       "section_id": "1.1",
@@ -917,9 +1000,9 @@
     },
     "1.1.134": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'1 PACK of eyes of newt' (Eye of newt pack) fora do catálogo."
+      "comment": "'PACK of eyes of newt' → Eye of newt pack."
     },
     "1.1.135": {
       "section_id": "1.1",
@@ -934,9 +1017,9 @@
     },
     "1.1.137": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Onion não está no catálogo como objetivo do passo; dica de onde pegar."
+      "comment": "'onion is just north of the town' é dica de onde pegar o onion, não objetivo."
     },
     "1.1.138": {
       "section_id": "1.1",
@@ -956,9 +1039,9 @@
     },
     "1.1.140": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'security book' fora do catálogo; 'for a diary task' não conclui tier."
+      "comment": "'for a diary task' não conclui tier."
     },
     "1.1.141": {
       "section_id": "1.1",
@@ -968,21 +1051,21 @@
     },
     "1.1.142": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'blurite ore' fora do catálogo (o objetivo x2 fica fora)."
+      "comment": "Reanotado com o catálogo completo: Blurite ore x2 (1 é para o diary)."
     },
     "1.1.143": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'portrait' fora do catálogo; ação no meio de The Knight's Sword."
+      "comment": "Reanotado: Portrait x1; 'falador teletab' resolve por alias."
     },
     "1.1.144": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'the sword' (Blurite sword) fora do catálogo; ação no meio da quest."
+      "comment": "'the sword' de Thurgo → Blurite sword."
     },
     "1.1.145": {
       "section_id": "1.1",
@@ -991,8 +1074,8 @@
     },
     "1.1.145a": {
       "section_id": "1.1",
-      "submits": 2,
-      "comment": "Diverge da regra (skill:smithing>=15 requires, derived): o verificador de ordem recusa porque a rota só conclui Smithing em 1.4.38/2.0.32; o nível 15/29 vem do XP de The Knight's Sword, que não é objetivo. O dono decidiu tirar o requires."
+      "submits": 3,
+      "comment": "O requires passa pela checagem de ordem: o XP de The Knight's Sword (12.725) dá Smithing 29 antes deste passo."
     },
     "1.1.146": {
       "section_id": "1.1",
@@ -1013,15 +1096,15 @@
     },
     "1.1.149": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Raw anchovies fora do catálogo (só Anchovies cozido está); 'for a diary' não conclui tier. 'small fish net' → Small fishing net."
+      "comment": "Pesca para o diary: pelo menos 1 Raw anchovies."
     },
     "1.1.15": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Fora do catálogo, fora de items: 'Clue (x marks the spot)' (Treasure scroll) e 'air talisman'. Quantidades não informadas."
+      "comment": "'Clue (x marks the spot)' = Treasure scroll, qualquer etapa (family). Quantidades não informadas."
     },
     "1.1.150": {
       "section_id": "1.1",
@@ -1072,9 +1155,9 @@
     },
     "1.1.158": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "As 4 beads (red/yellow/black/white) estão fora do catálogo; 'Fire strike runes' é genérico."
+      "comment": "As 4 beads da Imp Catcher (dono). 'Fire strike runes' é genérico."
     },
     "1.1.159": {
       "section_id": "1.1",
@@ -1111,9 +1194,9 @@
     },
     "1.1.164": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'compost pack' fora do catálogo."
+      "comment": "Reanotado com o catálogo completo: Compost pack x4."
     },
     "1.1.165": {
       "section_id": "1.1",
@@ -1151,9 +1234,9 @@
     },
     "1.1.170": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Glarial's amulet e Glarial's urn fora do catálogo; ação no meio de Waterfall."
+      "comment": "'amulet'/'the urn' da tumba de Glarial → Glarial's amulet e Glarial's urn."
     },
     "1.1.171": {
       "section_id": "1.1",
@@ -1173,9 +1256,9 @@
     },
     "1.1.174": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'saltpetre' (100) fora do catálogo. Nota do favour é update informativo."
+      "comment": "Nota do favour é update informativo."
     },
     "1.1.174a": {
       "section_id": "1.1",
@@ -1228,9 +1311,9 @@
     },
     "1.1.182": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'rusty sword' fora do catálogo; a nota (robes, opal, buttons) é condicional."
+      "comment": "A nota (robes, opal, buttons) é condicional."
     },
     "1.1.183": {
       "section_id": "1.1",
@@ -1267,9 +1350,9 @@
     },
     "1.1.189": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "20 cargas de Chronicle (teleport cards) fora do catálogo."
+      "comment": "'teleports for chronicle' → Teleport card."
     },
     "1.1.19": {
       "section_id": "1.1",
@@ -1278,9 +1361,9 @@
     },
     "1.1.190": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'Fire strike runes' genérico e '4 beads' fora do catálogo."
+      "comment": "'Fire strike runes' genérico."
     },
     "1.1.191": {
       "section_id": "1.1",
@@ -1301,9 +1384,9 @@
     },
     "1.1.194": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Juliet's letter ('message') fora do catálogo."
+      "comment": "Juliet's letter = Message 755, página 'Message (Romeo & Juliet)' (dono)."
     },
     "1.1.195": {
       "section_id": "1.1",
@@ -1368,9 +1451,9 @@
     },
     "1.1.203": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'Translation notes' fora do catálogo; 'Fire strike runes' genérico."
+      "comment": "'Translation notes' → Translation book; 'Fire strike runes' genérico."
     },
     "1.1.204": {
       "section_id": "1.1",
@@ -1432,9 +1515,9 @@
     },
     "1.1.213": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Tarefa de diary; Raw shrimps fora do catálogo."
+      "comment": "Pesca para o diary: pelo menos 1 Raw shrimps."
     },
     "1.1.214": {
       "section_id": "1.1",
@@ -1455,9 +1538,9 @@
     },
     "1.1.217": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'pirate's message' fora do catálogo (e descartável depois de ler)."
+      "comment": "Pode ser dropado depois de ler; a evidência fica."
     },
     "1.1.218": {
       "section_id": "1.1",
@@ -1478,15 +1561,15 @@
     },
     "1.1.220": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'pineapple chunks' fora do catálogo."
+      "comment": "Reanotado: Pineapple chunks x1 (sem número)."
     },
     "1.1.221": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'Gas mask' fora do catálogo."
+      "comment": "Reanotado: Gas mask equipado."
     },
     "1.1.222": {
       "section_id": "1.1",
@@ -1547,21 +1630,21 @@
     },
     "1.1.231": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'pineapples' (15) fora do catálogo."
+      "comment": "Reanotado com o catálogo completo: Pineapple x15."
     },
     "1.1.232": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Pineapples fora do catálogo; compost bin sem objetivo."
+      "comment": "Compost bin: sem objetivo."
     },
     "1.1.233": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'1 pack of normal compost' (pack fora do catálogo) e 'all farming tools' (vago): fora."
+      "comment": "'pack of normal compost' → Compost pack; 'all farming tools' é vago."
     },
     "1.1.234": {
       "section_id": "1.1",
@@ -1570,9 +1653,9 @@
     },
     "1.1.235": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Ação no meio de Merlin's Crystal. A nota manda pegar 5 flax, mas Flax está fora do catálogo."
+      "comment": "Ação no meio de Merlin's Crystal; flax vem da nota (diaries)."
     },
     "1.1.236": {
       "section_id": "1.1",
@@ -1656,9 +1739,9 @@
     },
     "1.1.25": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Ação no meio de Rune Mysteries. 'air talisman' fora do catálogo."
+      "comment": "Ação no meio de Rune Mysteries."
     },
     "1.1.250": {
       "section_id": "1.1",
@@ -1702,9 +1785,9 @@
     },
     "1.1.257": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'priest robes' fora do catálogo (o 'keep these after quest' seria uses); 'boots, gloves' ambíguos e sem contexto: fora."
+      "comment": "Priest robes = Priest gown top (426) e bottom (428), guardar depois da quest (dono). 'boots, gloves' ambíguos: fora."
     },
     "1.1.258": {
       "section_id": "1.1",
@@ -1781,9 +1864,9 @@
     },
     "1.1.269": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'~100 karambwanji' da nota é vago e Raw karambwanji está fora do catálogo."
+      "comment": "'~100 karambwanji' da nota é quantidade vaga: fora."
     },
     "1.1.27": {
       "section_id": "1.1",
@@ -1830,9 +1913,9 @@
     },
     "1.1.277": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "O 'book' da Lost Tribe está fora do catálogo. 'Falador teleport' aqui é o deslocamento (tab ou spell não fixado)."
+      "comment": "'book' da Lost Tribe → Goblin symbol book."
     },
     "1.1.278": {
       "section_id": "1.1",
@@ -1894,9 +1977,9 @@
     },
     "1.1.32": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'snape grass' fora do catálogo de itens: o objetivo item (1 snape grass, completes) fica fora."
+      "comment": "Reanotado com o catálogo completo: Snape grass x1."
     },
     "1.1.33": {
       "section_id": "1.1",
@@ -2016,9 +2099,9 @@
     },
     "1.1.52": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'clue hunter gloves and boots' fora do catálogo de itens. Location 'North of Ardougne' é relativa (named-places-enter-catalog)."
+      "comment": "Location 'North of Ardougne' é relativa (named-places-enter-catalog)."
     },
     "1.1.53": {
       "section_id": "1.1",
@@ -2074,9 +2157,9 @@
     },
     "1.1.61": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "Fora do catálogo: pineapple, lemon (2), cocktail shaker, cocktail glass, chocolate dust."
+      "comment": "Reanotado com o catálogo completo: os 8 itens da lista."
     },
     "1.1.62": {
       "section_id": "1.1",
@@ -2166,15 +2249,15 @@
     },
     "1.1.76": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'teleport cards' (2) fora do catálogo."
+      "comment": "Reanotado com o catálogo completo: Teleport card x2."
     },
     "1.1.76a": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "'Rainbow scarf' fora do catálogo: o objetivo item fica fora."
+      "comment": "O Rainbow jumper da nota é opcional."
     },
     "1.1.77": {
       "section_id": "1.1",
@@ -2207,9 +2290,9 @@
     },
     "1.1.80": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "A nota manda fletch '1k bronze arrows' no caminho, mas Bronze arrow está fora do catálogo."
+      "comment": "Objetivo vindo da nota (fletch no caminho)."
     },
     "1.1.81": {
       "section_id": "1.1",
@@ -2236,9 +2319,9 @@
     },
     "1.1.85": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'bucket pack' fora do catálogo."
+      "comment": "Reanotado: 'bucket pack' = Empty bucket pack (alias)."
     },
     "1.1.86": {
       "section_id": "1.1",

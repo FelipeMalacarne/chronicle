@@ -326,7 +326,7 @@ func TestRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if r.Summary.Annotated != 3 || r.Summary.FirstSubmitAccepted != 3 || r.Summary.DecisionsApplied != 1 || r.Summary.OwnerConfirmed != 1 {
+	if r.Summary.Annotated != 3 || r.Summary.FirstSubmitAccepted != 3 || r.Summary.DecisionsApplied != 1 || r.Summary.OwnerConfirmed != 0 {
 		t.Errorf("summary = %+v", r.Summary)
 	}
 	// b's rule woodcutting>=30 was not repeated: a divergence.
@@ -387,5 +387,117 @@ func TestProposeEntity(t *testing.T) {
 	}
 	if e, ok := reg.Location("lumbridge"); !ok || e.WikiKey != "Lumbridge" {
 		t.Errorf("catalog on disk = %+v", e)
+	}
+}
+
+func TestReviseEntity(t *testing.T) {
+	w, dir := workspace(t)
+	if _, err := w.ProposeEntity(EntityProposal{Kind: "location", ID: "h_a_m_hideout", Name: "H.A.M. Hideout", ConfirmedBy: "owner"}); err != nil {
+		t.Fatal(err)
+	}
+	sub := submit(t, w, "1.1", StepProposal{StepID: "a", Location: &LocationProposal{Name: "H.A.M. Hideout", Evidence: Evidence{Field: "/location", Quote: "Lumbridge"}, Source: hi}})
+	if len(sub.Accepted) != 1 {
+		t.Fatalf("setup = %+v", sub)
+	}
+	if _, err := w.ReviseEntity(EntityRevision{Kind: "location", ID: "h_a_m_hideout", NewID: "ham_hideout"}); err == nil || !strings.Contains(err.Error(), "confirmation") {
+		t.Errorf("unconfirmed revision: %v", err)
+	}
+	if _, err := w.ReviseEntity(EntityRevision{Kind: "location", ID: "h_a_m_hideout", Remove: true, ConfirmedBy: "owner"}); err == nil || !strings.Contains(err.Error(), "t/a") {
+		t.Errorf("removing a used entry: %v", err)
+	}
+	aliases := []string{"HAM Hideout"}
+	res, err := w.ReviseEntity(EntityRevision{Kind: "location", ID: "h_a_m_hideout", NewID: "ham_hideout", Aliases: &aliases, ConfirmedBy: "owner"})
+	if err != nil || res.Ref != "location:ham_hideout" || len(res.Rewritten) != 1 {
+		t.Fatalf("rename = %+v, %v", res, err)
+	}
+	if r := w.ResolveEntity("location", "HAM Hideout", ""); r.Ref != "location:ham_hideout" {
+		t.Errorf("alias after rename = %+v", r)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, content.GuidesSubdir, "t", content.AnnotationsSubdir, "1.1.json"))
+	if err != nil || !strings.Contains(string(data), "location:ham_hideout") || strings.Contains(string(data), "h_a_m_hideout") {
+		t.Errorf("sidecar not rewritten: %v\n%s", err, data)
+	}
+	if _, err := Open(dir); err != nil {
+		t.Errorf("reopening after the rename: %v", err)
+	}
+	if _, err := w.ProposeEntity(EntityProposal{Kind: "location", Name: "Unused Place", ConfirmedBy: "owner"}); err != nil {
+		t.Fatal(err)
+	}
+	if res, err := w.ReviseEntity(EntityRevision{Kind: "location", ID: "unused_place", Remove: true, ConfirmedBy: "owner"}); err != nil || !res.Removed {
+		t.Errorf("remove = %+v, %v", res, err)
+	}
+	if r := w.ResolveEntity("location", "Unused Place", ""); r.Status != entities.Unresolved {
+		t.Errorf("removed entry still resolves: %+v", r)
+	}
+}
+
+func TestSyncRegistry(t *testing.T) {
+	w, dir := workspace(t)
+	if r := w.ResolveEntity("location", "Lumbridge", ""); r.Status != entities.Unresolved {
+		t.Fatalf("precondition: %+v", r)
+	}
+	loc := `{"catalog": "locations", "version": "test", "locations": [{"id": "lumbridge", "name": "Lumbridge"}]}`
+	if err := os.WriteFile(filepath.Join(dir, ReferenceSubdir, "locations.json"), []byte(loc), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.SyncRegistry(); err != nil {
+		t.Fatal(err)
+	}
+	if r := w.ResolveEntity("location", "Lumbridge", ""); r.Ref != "location:lumbridge" {
+		t.Errorf("catalog edited on disk not picked up: %+v", r)
+	}
+}
+
+func TestSubmitOrderQuestXP(t *testing.T) {
+	w, _ := workspace(t)
+	// Cook's Assistant rewards 300 Cooking xp: level 4 (276 xp), not 5 (388).
+	res := submit(t, w, "1.1", StepProposal{StepID: "a2", Objectives: []ObjectiveProposal{
+		objective("completes", "quest", "Cook's Assistant", "finished", 0, "Finish X marks the spot", hi)}})
+	res2 := submit(t, w, "1.2", StepProposal{StepID: "d", Objectives: []ObjectiveProposal{
+		objective("completes", "skill", "Cooking", "", 10, "Do Cook's Assistant", hi)}})
+	if len(res.Accepted) != 1 || len(res2.Accepted) != 1 {
+		t.Fatalf("setup rejected: %+v %+v", res.Rejected, res2.Rejected)
+	}
+	met := submit(t, w, "1.1", StepProposal{StepID: "c", Objectives: []ObjectiveProposal{
+		objective("requires", "skill", "Cooking", "", 4, "Do the Cook", hi)}})
+	if len(met.Accepted) != 1 {
+		t.Errorf("cooking 4 is met by the quest xp: %s", reasons(met, "c"))
+	}
+	short := submit(t, w, "1.1", StepProposal{StepID: "c", Objectives: []ObjectiveProposal{
+		objective("requires", "skill", "Cooking", "", 5, "Do the Cook", hi)}})
+	if got := reasons(short, "c"); strings.Count(got, "only completes it later") != 1 {
+		t.Errorf("cooking 5 must be rejected once, got %q", got)
+	}
+}
+
+func TestReportCountsAndVariants(t *testing.T) {
+	w, _ := workspace(t)
+	if _, err := w.RecordDecision("t", content.Decision{ID: "do-quest-means-finish", Question: "?", Answer: "!", Scope: "all"}); err != nil {
+		t.Fatal(err)
+	}
+	sub := submit(t, w, "1.1",
+		StepProposal{StepID: "c", Objectives: []ObjectiveProposal{objective("completes", "quest", "Cook's Assistant", "finished", 0, "Do the Cook",
+			Source{Confidence: content.ConfidenceMedium, Decision: "do-quest-means-finish"})}},
+		StepProposal{StepID: "a2", Objectives: []ObjectiveProposal{objective("completes", "quest", "X Marks the Spot", "finished", 0, "Finish X marks the spot",
+			Source{Confidence: content.ConfidenceMedium, ConfirmedBy: content.ConfirmedByOwner})}},
+	)
+	if len(sub.Accepted) != 2 {
+		t.Fatalf("setup rejected: %+v", sub.Rejected)
+	}
+	r, err := w.Report("t")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if r.Summary.OwnerConfirmed != 1 || r.Summary.DecisionsApplied != 1 {
+		t.Errorf("owner_confirmed %d, decisions_applied %d, want 1 and 1", r.Summary.OwnerConfirmed, r.Summary.DecisionsApplied)
+	}
+	submit(t, w, "1.1", StepProposal{StepID: "a", Comment: "old explanation"})
+	submit(t, w, "1.1", StepProposal{StepID: "a"})
+	if c := w.guides["t"].report.Steps["a"].Comment; c != "" {
+		t.Errorf("an accepted resubmit keeps the old comment %q", c)
+	}
+	wig := w.ResolveEntity("item", "wig", "")
+	if wig.Status != entities.Ambiguous || len(wig.Candidates) < 2 || wig.Candidates[0].Variant == "" {
+		t.Errorf("wig candidates carry no variant: %+v", wig)
 	}
 }

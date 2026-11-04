@@ -599,6 +599,44 @@
           }
         },
         {
+          "name": "Treasure scroll",
+          "family": "treasure_scroll",
+          "source_text": "Clue (x marks the spot)",
+          "evidence": {
+            "field": "/text",
+            "quote": "Clue (x marks the spot)",
+            "span": [
+              13,
+              36
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "ambiguous-variant-by-context"
+          }
+        },
+        {
+          "name": "air talisman",
+          "item_id": 1438,
+          "source_text": "air talisman",
+          "evidence": {
+            "field": "/text",
+            "quote": "air talisman",
+            "span": [
+              38,
+              50
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
           "name": "spade",
           "item_id": 952,
           "source_text": "spade",
@@ -671,7 +709,7 @@
           }
         },
         {
-          "name": "Shrimps",
+          "name": "shrimp",
           "item_id": 315,
           "source_text": "shrimp",
           "evidence": {
@@ -684,10 +722,8 @@
           },
           "source": {
             "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@1",
-            "confirmed_by": "owner",
-            "decision": "singular-of-plural-catalog-name"
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
           }
         }
       ],
@@ -992,6 +1028,29 @@
     {
       "step_id": "1.1.25",
       "text_hash": "sha256:b12ed9a52eacb19b31050203b62642cf7abc119719a24fe418d331e69cb5e1b4",
+      "items": [
+        {
+          "name": "air talisman",
+          "item_id": 1438,
+          "qty": 1,
+          "source_text": "the air talisman",
+          "evidence": {
+            "field": "/text",
+            "quote": "the air talisman",
+            "span": [
+              5,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "consumed-items-as-requirements"
+          }
+        }
+      ],
       "location": {
         "ref": "location:wizards_tower",
         "evidence": {
@@ -1191,6 +1250,25 @@
     {
       "step_id": "1.1.32",
       "text_hash": "sha256:ded9591cfffae3adfb513723fed034b702f3c664dd41a6e85518f94a1cf18e42",
+      "objectives": [
+        {
+          "key": "item:231x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "pick up 1 snape grass",
+            "span": [
+              20,
+              41
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:rimmington",
         "evidence": {
@@ -2196,7 +2274,43 @@
     },
     {
       "step_id": "1.1.52",
-      "text_hash": "sha256:33f3869d84121aac5c8b257119c24f367dff3b19fe7c92eb999edf4d78ad096b"
+      "text_hash": "sha256:33f3869d84121aac5c8b257119c24f367dff3b19fe7c92eb999edf4d78ad096b",
+      "objectives": [
+        {
+          "key": "item:19691x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Dig up clue hunter gloves and boots",
+            "span": [
+              0,
+              35
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "key": "item:19695x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Dig up clue hunter gloves and boots",
+            "span": [
+              0,
+              35
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ]
     },
     {
       "step_id": "1.1.53",
@@ -2430,6 +2544,23 @@
       "text_hash": "sha256:07733186a5ecac7623726855bb1367c8e15a58d96a9e9b852639fc88b7659691",
       "objectives": [
         {
+          "key": "item:2114x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 pineapple",
+            "span": [
+              55,
+              66
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
           "key": "item:2108x1",
           "role": "completes",
           "evidence": {
@@ -2438,6 +2569,57 @@
             "span": [
               68,
               76
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "key": "item:2102x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "2 lemons",
+            "span": [
+              78,
+              86
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "key": "item:2025x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 cocktail shaker",
+            "span": [
+              88,
+              105
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "key": "item:2026x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 cocktail glass",
+            "span": [
+              107,
+              123
             ]
           },
           "source": {
@@ -2472,6 +2654,23 @@
             "span": [
               141,
               157
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "key": "item:1975x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 chocolate dust",
+            "span": [
+              159,
+              175
             ]
           },
           "source": {
@@ -3191,6 +3390,23 @@
             "confidence": "high",
             "skill_version": "annotate-guide@1"
           }
+        },
+        {
+          "key": "item:13658x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "2 teleport cards",
+            "span": [
+              20,
+              36
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
         }
       ],
       "location": {
@@ -3213,6 +3429,25 @@
     {
       "step_id": "1.1.76a",
       "text_hash": "sha256:3095b1307e2b3565f98202822790d1bbc9379b798913eff88def42e3933a6e50",
+      "objectives": [
+        {
+          "key": "item:21314x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a Rainbow scarf",
+            "span": [
+              17,
+              36
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:draynor_village",
         "evidence": {
@@ -3393,6 +3628,25 @@
     {
       "step_id": "1.1.80",
       "text_hash": "sha256:1a2b8abb7360503e13f175dec097f6d3988be61ab2d903598556a4c45e5b1ae0",
+      "objectives": [
+        {
+          "key": "item:882x1000",
+          "role": "completes",
+          "evidence": {
+            "field": "/notes/0/text",
+            "quote": "Fletch all 1k bronze arrows",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:wintertodt",
         "evidence": {
@@ -3672,6 +3926,23 @@
             "span": [
               0,
               13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "key": "item:22660x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 bucket pack",
+            "span": [
+              18,
+              31
             ]
           },
           "source": {
@@ -4310,10 +4581,8 @@
           },
           "source": {
             "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@1",
-            "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
           }
         }
       ],
@@ -4337,6 +4606,25 @@
     {
       "step_id": "1.1.101",
       "text_hash": "sha256:8488561286a6c2f4c5d7e75bb4ae7e5a5fd605b29c7fc6695647426d73e8e898",
+      "objectives": [
+        {
+          "key": "item:11171x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy a newspaper",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:varrock",
         "evidence": {
@@ -5409,7 +5697,7 @@
           }
         },
         {
-          "name": "Staff of fire",
+          "name": "Fire staff",
           "item_id": 1387,
           "source_text": "Fire staff (equip)",
           "slot": "equipment",
@@ -5423,10 +5711,8 @@
           },
           "source": {
             "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@1",
-            "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
           }
         }
       ],
@@ -5469,6 +5755,25 @@
     {
       "step_id": "1.1.122",
       "text_hash": "sha256:2b3b5e15797bd6903c61521e723bcd5c2f11c0b41297d0e3b9ee907c797e82e2",
+      "objectives": [
+        {
+          "key": "item:1139x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy bronze med helm",
+            "span": [
+              41,
+              60
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:barbarian_village",
         "evidence": {
@@ -5890,6 +6195,25 @@
       "text_hash": "sha256:a131593e01471383003135d457bb446341c788cc63eb1ba8c65d90a1f00c31e7",
       "objectives": [
         {
+          "key": "item:12859x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 1 PACK of eyes of newt",
+            "span": [
+              0,
+              26
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
           "key": "item:233x1",
           "role": "completes",
           "evidence": {
@@ -6290,6 +6614,25 @@
     {
       "step_id": "1.1.140",
       "text_hash": "sha256:185555385a543889842c5c42e908f91317a31854dbdad322b63a85803f43feee",
+      "objectives": [
+        {
+          "key": "item:9003x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get a security book",
+            "span": [
+              0,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:port_sarim",
         "evidence": {
@@ -6353,6 +6696,25 @@
     {
       "step_id": "1.1.142",
       "text_hash": "sha256:b08b35d13a655a3e6291d2accf05678871b606304dbc7a9c1334df1f3eeaf923",
+      "objectives": [
+        {
+          "key": "item:668x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "mine 2 blurite ore",
+            "span": [
+              24,
+              42
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:mudskipper_point",
         "evidence": {
@@ -6373,9 +6735,28 @@
     {
       "step_id": "1.1.143",
       "text_hash": "sha256:2a4e6b00c8a5c4626858ad586637d806deae06bf5888346548500b2c08f57b16",
+      "objectives": [
+        {
+          "key": "item:666x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "get the portrait",
+            "span": [
+              48,
+              64
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "items": [
         {
-          "name": "Falador teleport",
+          "name": "falador teletab",
           "item_id": 8009,
           "qty": 1,
           "source_text": "the falador teletab",
@@ -6389,10 +6770,10 @@
           },
           "source": {
             "method": "llm",
-            "confidence": "medium",
+            "confidence": "high",
             "skill_version": "annotate-guide@1",
             "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
+            "decision": "consumed-items-as-requirements"
           }
         }
       ],
@@ -6416,6 +6797,27 @@
     {
       "step_id": "1.1.144",
       "text_hash": "sha256:64bbed293649272281c1d455e019c1902e4f7789e78ea3d454487c4decdb2cea",
+      "objectives": [
+        {
+          "key": "item:667x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for the sword",
+            "span": [
+              37,
+              50
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
       "items": [
         {
           "name": "house tab",
@@ -6508,6 +6910,23 @@
             "span": [
               0,
               30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "key": "skill:smithing>=15",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "15 Smithing required",
+            "span": [
+              32,
+              52
             ]
           },
           "source": {
@@ -6652,9 +7071,30 @@
     {
       "step_id": "1.1.149",
       "text_hash": "sha256:bfb33e9611f658aa22944db99bcda02bd3129c12f806c6b8fab66621e901abd6",
+      "objectives": [
+        {
+          "key": "item:321x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Fish anchovies",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        }
+      ],
       "items": [
         {
-          "name": "Small fishing net",
+          "name": "small fish net",
           "item_id": 303,
           "qty": 1,
           "source_text": "small fish net",
@@ -6668,10 +7108,8 @@
           },
           "source": {
             "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@1",
-            "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
           }
         }
       ],
@@ -6940,6 +7378,80 @@
     {
       "step_id": "1.1.158",
       "text_hash": "sha256:0d6438d2b5becce43dff19bdc7164d1ef896844d429b42cb5cf681ddf88285ff",
+      "objectives": [
+        {
+          "key": "item:1470x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for all 4 beads",
+            "span": [
+              43,
+              58
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:1472x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for all 4 beads",
+            "span": [
+              43,
+              58
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:1474x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for all 4 beads",
+            "span": [
+              43,
+              58
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:1476x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for all 4 beads",
+            "span": [
+              43,
+              58
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
       "items": [
         {
           "name": "Barcrawl card",
@@ -7205,6 +7717,25 @@
     {
       "step_id": "1.1.164",
       "text_hash": "sha256:8ac75aa776c55e9995b36768e36929e5f1825451380e3730705891fefb880b9e",
+      "objectives": [
+        {
+          "key": "item:19704x4",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 4 compost pack",
+            "span": [
+              0,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:ardougne",
         "evidence": {
@@ -7556,6 +8087,46 @@
     {
       "step_id": "1.1.170",
       "text_hash": "sha256:35752ec7b9bf1f5d253eb1476903d10519db680cc3dbeddc7537cab1beca7c4e",
+      "objectives": [
+        {
+          "key": "item:295x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "get amulet and the urn",
+            "span": [
+              35,
+              57
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "key": "item:296x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "get amulet and the urn",
+            "span": [
+              35,
+              57
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
       "location": {
         "ref": "location:baxtorian_falls",
         "evidence": {
@@ -7696,6 +8267,23 @@
       "objectives": [
         {
           "key": "item:6032x100",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "get 100 compost and saltpetre",
+            "span": [
+              15,
+              44
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "key": "item:13421x100",
           "role": "completes",
           "evidence": {
             "field": "/text",
@@ -8071,8 +8659,27 @@
     {
       "step_id": "1.1.182",
       "text_hash": "sha256:ce7143b3e0f9f6a50bbcedcbc8a445a1cde564556f51c08c506d577c96dfae15",
+      "objectives": [
+        {
+          "key": "item:686x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for a rusty sword",
+            "span": [
+              23,
+              40
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
-        "ref": "location:h_a_m_hideout",
+        "ref": "location:ham_hideout",
         "evidence": {
           "field": "/location",
           "quote": "HAM Hideout",
@@ -8508,6 +9115,27 @@
     {
       "step_id": "1.1.189",
       "text_hash": "sha256:0ec281933b7f74ea154b733e61167253c5a6c90801cebc075dc611924372cf72",
+      "objectives": [
+        {
+          "key": "item:13658x20",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 20 teleports for chronicle",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
       "location": {
         "ref": "location:draynor_village",
         "evidence": {
@@ -8549,7 +9177,7 @@
       ],
       "items": [
         {
-          "name": "Staff of fire",
+          "name": "Fire staff",
           "item_id": 1387,
           "source_text": "Fire staff (equip)",
           "slot": "equipment",
@@ -8563,10 +9191,8 @@
           },
           "source": {
             "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@1",
-            "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
           }
         },
         {
@@ -8589,7 +9215,7 @@
           }
         },
         {
-          "name": "Research notes",
+          "name": "Rune mysteries notes",
           "item_id": 291,
           "source_text": "Rune mysteries notes",
           "evidence": {
@@ -8602,10 +9228,88 @@
           },
           "source": {
             "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "name": "Red bead",
+          "item_id": 1470,
+          "qty": 1,
+          "source_text": "4 beads",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "4 beads",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
             "confidence": "medium",
             "skill_version": "annotate-guide@1",
-            "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "name": "Yellow bead",
+          "item_id": 1472,
+          "qty": 1,
+          "source_text": "4 beads",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "4 beads",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "name": "Black bead",
+          "item_id": 1474,
+          "qty": 1,
+          "source_text": "4 beads",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "4 beads",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "name": "White bead",
+          "item_id": 1476,
+          "qty": 1,
+          "source_text": "4 beads",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "4 beads",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
           }
         },
         {
@@ -8804,6 +9508,25 @@
             "method": "llm",
             "confidence": "high",
             "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "name": "message",
+          "item_id": 755,
+          "source_text": "Juliet's letter (Item name is just 'message')",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "Juliet's letter (Item name is just 'message')",
+            "span": [
+              0,
+              45
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
           }
         }
       ],
@@ -9254,6 +9977,26 @@
           }
         },
         {
+          "name": "Translation book",
+          "item_id": 784,
+          "source_text": "Translation notes",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "Translation notes",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
           "name": "Barcrawl card",
           "item_id": 455,
           "source_text": "Barcrawl card",
@@ -9562,6 +10305,27 @@
     {
       "step_id": "1.1.213",
       "text_hash": "sha256:9347837a0362e2924c12f400d51c354af82a47b80cea3baba6a00b54d18e4391",
+      "objectives": [
+        {
+          "key": "item:317x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Fish shrimp",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        }
+      ],
       "location": {
         "ref": "location:karamja",
         "evidence": {
@@ -9665,6 +10429,25 @@
     {
       "step_id": "1.1.217",
       "text_hash": "sha256:32e7512a208635acf2fc4e6aacb0d5ec3775da773b81a8a4a0fea6e986b8a9b2",
+      "objectives": [
+        {
+          "key": "item:433x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get pirate's message",
+            "span": [
+              0,
+              20
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:varrock",
         "evidence": {
@@ -9795,6 +10578,25 @@
             "confidence": "high",
             "skill_version": "annotate-guide@1"
           }
+        },
+        {
+          "key": "item:2116x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "pineapple chunks",
+            "span": [
+              34,
+              50
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
         }
       ],
       "location": {
@@ -9817,6 +10619,27 @@
     {
       "step_id": "1.1.221",
       "text_hash": "sha256:6fae9b95b96950e9244db40dece59e33105e87e562db9ef37cae90ae92e9c5bd",
+      "items": [
+        {
+          "name": "Gas mask",
+          "item_id": 1506,
+          "source_text": "Equip Gas mask",
+          "slot": "equipment",
+          "evidence": {
+            "field": "/text",
+            "quote": "Equip Gas mask",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:tree_gnome_stronghold",
         "evidence": {
@@ -10297,6 +11120,25 @@
     {
       "step_id": "1.1.231",
       "text_hash": "sha256:08c96ceaccb0a5d8067c903e9475561829ea24f36b5f0a895d174e971e440c71",
+      "objectives": [
+        {
+          "key": "item:2114x15",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 15 pineapples",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        }
+      ],
       "location": {
         "ref": "location:catherby",
         "evidence": {
@@ -10317,6 +11159,28 @@
     {
       "step_id": "1.1.232",
       "text_hash": "sha256:5bc5d1538a4855309593cbd4108b6f3bc9b6de93109c073c07e98bcb7f848502",
+      "items": [
+        {
+          "name": "pineapples",
+          "item_id": 2114,
+          "source_text": "pineapples",
+          "evidence": {
+            "field": "/text",
+            "quote": "pineapples",
+            "span": [
+              4,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "consumed-items-as-requirements"
+          }
+        }
+      ],
       "location": {
         "ref": "location:catherby",
         "evidence": {
@@ -10337,6 +11201,27 @@
     {
       "step_id": "1.1.233",
       "text_hash": "sha256:4903dfa2dbdee2eb6deeadfc5d719084a322ea1c74af155bef5056b5c2643212",
+      "objectives": [
+        {
+          "key": "item:19704x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 1 pack of normal compost",
+            "span": [
+              0,
+              28
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
       "location": {
         "ref": "location:catherby",
         "evidence": {
@@ -10433,6 +11318,23 @@
             "skill_version": "annotate-guide@1",
             "confirmed_by": "owner",
             "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "item:1779x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/notes/0/text",
+            "quote": "pick 5 flax",
+            "span": [
+              21,
+              32
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
           }
         }
       ],
@@ -11501,6 +12403,80 @@
     {
       "step_id": "1.1.257",
       "text_hash": "sha256:d8ed63175c4ba3e582c5dab71bf485f94c73429cc1b239303662f44cca922564",
+      "objectives": [
+        {
+          "key": "item:426x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy priest robes",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:428x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy priest robes",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:426x1",
+          "role": "uses",
+          "evidence": {
+            "field": "/text",
+            "quote": "keep these after quest",
+            "span": [
+              18,
+              40
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:428x1",
+          "role": "uses",
+          "evidence": {
+            "field": "/text",
+            "quote": "keep these after quest",
+            "span": [
+              18,
+              40
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@1",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
       "location": {
         "ref": "location:varrock",
         "evidence": {
@@ -12516,7 +13492,7 @@
       "text_hash": "sha256:eb0756397c0aea8da3bd2fde664a8e92c2f68ef71881413e354cb537e8b20862",
       "items": [
         {
-          "name": "Brooch",
+          "name": "Lost tribe brooch",
           "item_id": 5008,
           "source_text": "Lost tribe brooch",
           "evidence": {
@@ -12525,6 +13501,24 @@
             "span": [
               0,
               17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@1"
+          }
+        },
+        {
+          "name": "Goblin symbol book",
+          "item_id": 5009,
+          "source_text": "Lost tribe brooch and book",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "Lost tribe brooch and book",
+            "span": [
+              0,
+              26
             ]
           },
           "source": {

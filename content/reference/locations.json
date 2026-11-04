@@ -130,7 +130,7 @@
     {
       "id": "fight_arena",
       "name": "Fight Arena",
-      "wiki_key": "Fight Arena",
+      "wiki_key": "Fight Arena (location)",
       "note": "decision named-places-enter-catalog"
     },
     {
@@ -167,7 +167,7 @@
       "note": "decision named-places-enter-catalog"
     },
     {
-      "id": "h_a_m_hideout",
+      "id": "ham_hideout",
       "name": "H.A.M. Hideout",
       "wiki_key": "H.A.M. Hideout",
       "aliases": [
@@ -320,8 +320,7 @@
     {
       "id": "tower_of_life",
       "name": "Tower of Life",
-      "wiki_key": "Tower of Life",
-      "note": "decision named-places-enter-catalog"
+      "note": "decision named-places-enter-catalog; no wiki_key: the wiki describes the place on the Tower of Life quest page"
     },
     {
       "id": "tree_gnome_stronghold",

@@ -38,8 +38,8 @@ type SectionReport struct {
 	// those accepted on their first submit (the pilot's acceptance metric).
 	Submitted           int `json:"submitted"`
 	FirstSubmitAccepted int `json:"first_submit_accepted"`
-	// OwnerConfirmed counts annotated entries confirmed by the owner;
-	// DecisionsApplied those that apply a recorded decision.
+	// OwnerConfirmed counts annotated entries the owner confirmed directly;
+	// DecisionsApplied those that apply a recorded decision instead.
 	OwnerConfirmed   int `json:"owner_confirmed"`
 	DecisionsApplied int `json:"decisions_applied"`
 }
@@ -92,7 +92,9 @@ func (r *Report) log(stepID, sectionID string, reasons []string, comment string)
 	if len(reasons) == 0 && l.Submits == 1 {
 		l.FirstSubmitAccepted = true
 	}
-	if comment != "" {
+	// An accepted submit replaces the annotation, so its comment (even none)
+	// replaces the old one; a rejected one keeps the last explanation.
+	if len(reasons) == 0 || comment != "" {
 		l.Comment = comment
 	}
 }
@@ -167,7 +169,9 @@ func (gs *guideState) refreshReport(reg *entities.Registry) {
 // tally counts the confirmed and inferred entries of one annotation.
 func (gs *guideState) tally(s *SectionReport, st *content.Step, sa *content.StepAnnotation) {
 	count := func(what string, ev content.ObjectiveEvidence, src content.ObjectiveSource) {
-		if src.ConfirmedBy == content.ConfirmedByOwner {
+		// An applied decision implies confirmed_by owner (docs/09 section 4.1);
+		// only answers given for this entry count as owner confirmations.
+		if src.ConfirmedBy == content.ConfirmedByOwner && src.Decision == "" {
 			s.OwnerConfirmed++
 		}
 		if src.Decision != "" {

@@ -59,7 +59,7 @@ quotes. Anything inferred (confidence medium) needs the owner's answer first
 the catalogs only through propose_entity after the owner confirms.`
 
 func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
-	return &mcp.Server{
+	srv := &mcp.Server{
 		Name:         "ironman-content",
 		Version:      buildinfo.Version,
 		Instructions: contentMCPInstructions,
@@ -136,6 +136,26 @@ func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
 				},
 			},
 			{
+				Name: "revise_entity",
+				Description: "Rename, edit or remove an unlock or location entry after the owner confirmed it (ask first). new_id renames the entry and rewrites its refs in every sidecar; " +
+					"name, wiki_key, aliases and note replace the old values when given (an empty wiki_key or note clears it); remove is refused while a sidecar or rule still uses the entry.",
+				InputSchema: schema(`{"type":"object","additionalProperties":false,"required":["kind","id","confirmed_by"],"properties":{
+					"kind":{"type":"string","enum":["unlock","location"]},
+					"id":{"type":"string","description":"current id (slug)"},
+					"new_id":{"type":"string","description":"new lower-case slug"},
+					"name":{"type":"string"},"wiki_key":{"type":"string","description":"wiki page title; empty clears it"},
+					"aliases":{"type":"array","items":{"type":"string"},"description":"replaces every alias"},"note":{"type":"string"},
+					"remove":{"type":"boolean"},
+					"confirmed_by":{"const":"owner"}}}`),
+				Handler: func(_ context.Context, raw json.RawMessage) (any, error) {
+					var rv annotate.EntityRevision
+					if err := mcp.Decode(raw, &rv); err != nil {
+						return nil, err
+					}
+					return ws.ReviseEntity(rv)
+				},
+			},
+			{
 				Name: "submit",
 				Description: "Verify and store annotations for steps of one section. Each step is accepted whole or rejected with every reason " +
 					"(name does not resolve or is ambiguous, quote not in the field, inference without the owner's confirmation, wrong role, route order). " +
@@ -203,6 +223,17 @@ func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
 			},
 		},
 	}
+	// Every tool first picks up catalogs changed on disk since the last call.
+	for i, t := range srv.Tools {
+		h := t.Handler
+		srv.Tools[i].Handler = func(ctx context.Context, raw json.RawMessage) (any, error) {
+			if err := ws.SyncRegistry(); err != nil {
+				return nil, err
+			}
+			return h(ctx, raw)
+		}
+	}
+	return srv
 }
 
 func schema(s string) json.RawMessage {

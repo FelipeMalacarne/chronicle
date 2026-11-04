@@ -67,6 +67,15 @@ type QuestEntry struct {
 	Members   bool    `json:"members"`
 	Miniquest bool    `json:"miniquest,omitempty"`
 	Aliases   []Alias `json:"aliases,omitempty"`
+	// XPRewards is the fixed skill experience the quest grants on completion
+	// (choice lamps excluded), from the wiki's {{Quest rewards}}.
+	XPRewards []SkillXP `json:"xp_rewards,omitempty"`
+}
+
+// SkillXP is an amount of experience in one skill (skill id).
+type SkillXP struct {
+	Skill string `json:"skill"`
+	XP    int    `json:"xp"`
 }
 
 // ItemCatalog is content/reference/items.json.
@@ -445,6 +454,14 @@ func Load(fsys fs.FS) (*Registry, error) {
 			r.skillNames.add(a, s.ID, MatchAlias)
 		}
 		r.addWiki(s.WikiKey, ref)
+	}
+
+	for _, q := range qc.Quests {
+		for _, x := range q.XPRewards {
+			if _, ok := r.skills[x.Skill]; !ok || x.XP <= 0 {
+				fail("%s: quest %q: invalid xp reward %+v", QuestsFile, q.ID, x)
+			}
+		}
 	}
 
 	for i := range dc.Diaries {

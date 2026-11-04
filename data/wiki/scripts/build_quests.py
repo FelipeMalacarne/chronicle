@@ -41,6 +41,26 @@ def strip_wiki(s):
     s = re.sub(r"'''?", '', s)
     return s.strip()
 
+SCP_XP = re.compile(r'\{\{SCP\|([A-Za-z]+)\|([\d,]+)(?:\|[^}]*)?\}\}')
+CHOICE = re.compile(r'\b(or|choice|choose|either|lamps?)\b', re.I)
+SKILLS = {'Attack', 'Strength', 'Defence', 'Ranged', 'Prayer', 'Magic', 'Runecraft', 'Construction',
+          'Hitpoints', 'Agility', 'Herblore', 'Thieving', 'Crafting', 'Fletching', 'Slayer', 'Hunter',
+          'Mining', 'Smithing', 'Fishing', 'Cooking', 'Firemaking', 'Woodcutting', 'Farming', 'Sailing'}
+
+def xp_rewards(rewards):
+    """Fixed skill experience of {{Quest rewards|rewards=...}}: every {{SCP|Skill|N}}
+    on a line that offers no choice (lamps and "your choice of" lines are skipped,
+    their skill is the player's to pick)."""
+    out = {}
+    for line in (rewards or '').split('\n'):
+        if CHOICE.search(re.sub(r'\{\{[^}]*\}\}|\[\[[^\]]*\]\]', '', line)):
+            continue
+        for skill, xp in SCP_XP.findall(line):
+            skill = skill[:1].upper() + skill[1:].lower()
+            if skill in SKILLS:  # not "Overall" (The Great Brain Robbery)
+                out[skill] = out.get(skill, 0) + int(xp.replace(',', ''))
+    return [{'skill': s, 'xp': out[s]} for s in sorted(out)]
+
 quest_names = {r['page_name'] for r in rows}
 ALIAS = {
  "Recipe for Disaster/Another Cook's Quest": "Recipe for Disaster - Another Cook's Quest",
@@ -114,6 +134,7 @@ for r in rows:
         'length': r.get('official_length') or details.get('length'),
         'quest_points': int(qp) if qp and qp.isdigit() else (qp or None),
         'quest_points_required': qp_req,
+        'xp_rewards': xp_rewards(rewards.get('rewards')),
         'series': strip_wiki(series) if series else None,
         'members': (info.get('members') or '').lower() == 'yes' if 'members' in info else None,
         'release_date': strip_wiki(info.get('release', '')) or None,

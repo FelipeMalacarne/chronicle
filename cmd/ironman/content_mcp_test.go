@@ -124,7 +124,7 @@ func TestContentMCPExampleBatch(t *testing.T) {
 	for _, tl := range list.Tools {
 		names = append(names, tl.Name)
 	}
-	if got := strings.Join(names, ","); got != "status,next_batch,resolve_entity,propose_entity,submit,record_decision,list_decisions,report" {
+	if got := strings.Join(names, ","); got != "status,next_batch,resolve_entity,propose_entity,revise_entity,submit,record_decision,list_decisions,report" {
 		t.Errorf("tools = %s", got)
 	}
 

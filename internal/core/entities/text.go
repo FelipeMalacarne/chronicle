@@ -29,11 +29,14 @@ func Slug(name string) string {
 }
 
 // FamilySlug is the slug of an item family name. Unlike Slug it keeps "+"
-// (as "plus"), because families such as Antidote+ and Antidote++ differ only
-// there: "Antidote++" → "antidote_plus_plus".
+// (as "plus") and "(-)" (as "minus"), because families such as Antidote+ and
+// Antidote++, or Antipoison and Antipoison (-), differ only there:
+// "Antidote++" → "antidote_plus_plus", "Antipoison (-)" → "antipoison_minus".
 func FamilySlug(name string) string {
-	return Slug(strings.ReplaceAll(name, "+", " plus "))
+	return Slug(familySigns.Replace(name))
 }
+
+var familySigns = strings.NewReplacer("+", " plus ", "(-)", " minus ")
 
 // foldPunct maps typographic punctuation that guides use interchangeably
 // with ASCII onto ASCII: curly quotes/apostrophes and non-breaking spaces.

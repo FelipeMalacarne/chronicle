@@ -724,7 +724,7 @@ Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/mic
 | Catálogos gerados: todos os itens do jogo com página na wiki (14.870 ids), XP de recompensa de 167 quests, varbits de referência (48 diaries + quest points); `locations.json` (57 locais) e `unlocks.json` (Player-owned house) povoados pela extração | `tools/extract_wiki_items.py` → `data/wiki/items.json`; `data/wiki/scripts/build_quests.py` → `data/wiki/quests.json`; `internal/core/entities/catalogbuild` | `catalogbuild -update` sem rede; o catálogo contém os 856 ids do anterior com o mesmo nome; nenhum ref já resolvido nos guias mudou de id |
 | Anotações do Oziris 1.1: 286 passos com objetivos, itens, ações de banco e local verificados; 11 decisões gerais do dono | `content/guides/oziris-main/annotations/` | `content validate`; `annotations.report.json` (doc 09, seção 6.6) |
 
-Ainda não existe: anotações além do Oziris 1.1 (BRUHsailer 1.1 é o resto do item 5), progresso persistido (as queries de `step_progress` existem no sqlc, sem chamador; a
+Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, progresso persistido (as queries de `step_progress` existem no sqlc, sem chamador; a
 web mostra 0 feitos), indexação de conteúdo no boot (`content_versions`/`content_steps`) e aplicação de
 `step_id_aliases`, faceta de quest e diary no `player_state` (doc 09, seção 1), sessão/OIDC, adapter de
 hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de controle do
@@ -741,7 +741,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`, schema dos sidecars; loader converte `complete_when` e compõe anotações; readiness e posse avaliam as variantes de item | **feito** (2026-11-04; detalhes da composição no doc 09, seção 4.2) |
 | 3 | Dados e catálogos: script em `tools/` extrai da wiki os itens citados pelos guias mais famílias para `data/wiki/items.json`; `catalogbuild` gera `content/reference/items.json`; `unlocks.json`, `locations.json` e `varbits.json` iniciais | **feito** (2026-11-04). Itens do Oziris sem resolução 96 → 62 e resolvidos 87 → 119; os ambíguos subiram de 11 para 13, porque nomes antes desconhecidos agora caem em vários ids (doc 09, seção 7) |
 | 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | **feito** (2026-11-04; contrato das tools no doc 09, seção 6.8) |
-| 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6. **Oziris 1.1 feito** (2026-11-04): 99,3% aceitos no primeiro envio; 88 de 95 objetivos de regra reproduzidos (abaixo dos 95%, as 7 divergências explicadas no doc 09, seção 6.6); levou ao catálogo de itens completo, ao XP de quest na ordem e ao `revise_entity`. Falta o BRUHsailer 1.1 |
+| 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6. **Oziris 1.1 feito** (2026-11-04): 99,3% aceitos no primeiro envio; 88 de 95 objetivos de regra reproduzidos (abaixo dos 95%, as 7 divergências explicadas no doc 09, seção 6.6); levou ao catálogo de itens completo, ao XP de quest na ordem e ao `revise_entity`. **BRUHsailer 1.1 feito** (2026-11-04): 17 de 18 aceitos no primeiro envio, 13 perguntas em 3 lotes; expôs o corte da linha "Items needed:" no importador e os itens inobteníveis resolvidos por nome, ambos corrigidos |
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
 | 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado |
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado |
@@ -750,3 +750,17 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
 
 Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.
+
+Em paralelo com o item 6 (decisão 21 do doc 01, 2026-11-04): os itens 8, 9 e 10 andam numa sessão
+própria, num git worktree com branch própria, para o dono usar e testar o que já foi extraído. A
+extração não muda de ordem e continua na sessão de extração, Oziris primeiro. A divisão de arquivos
+evita conflito:
+
+- a extração mexe em `content/guides/*/annotations`, `content/reference`, `data/wiki/entity_aliases.json`
+  e no ferramental de extração (`internal/core/annotate`, `internal/core/entities`, importadores);
+- a outra sessão mexe em `web/`, `internal/httpapi`, `internal/store`, `db/migrations`,
+  `internal/core/progress` e no adapter de hiscores, e é a única que muda o schema do banco;
+- as duas editam este doc e o doc 09; quem chega depois faz rebase na `main` antes do merge. O
+  progresso lê os sidecars no boot, então cada seção extraída aparece lá sem trabalho extra.
+
+O item 7 continua depois, porque depende de rodar o plugin no jogo.

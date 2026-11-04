@@ -65,6 +65,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 18 | Catálogo de itens com o jogo inteiro (toda página de item da wiki), não só o que os guias citam; por nome vale o item da página com aquele título | resolvida (2026-11-04) | doc 09, seção 7 (substitui o escopo de D8) |
 | 19 | Checagem de ordem da extração conta o XP fixo de recompensa das quests como fonte de nível | resolvida (2026-11-04) | doc 09, seções 6.8 e 7 |
 | 20 | Entradas de `unlock`/`location` corrigidas só pela tool `revise_entity`, com confirmação do dono | resolvida (2026-11-04) | doc 09, seção 6.8 |
+| 21 | Progresso, web e hiscores (itens 8 a 10 da sequência) andam em paralelo com a extração completa (item 6), numa sessão e branch próprias, para o dono usar e testar o que já foi extraído | resolvida (2026-11-04) | doc 04, seção 9 (ajusta D7 do doc 09) |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais

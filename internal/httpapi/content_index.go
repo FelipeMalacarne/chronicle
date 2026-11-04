@@ -11,6 +11,7 @@ type occurrence struct {
 	Guide    string `json:"guide"`
 	Step     string `json:"step"`
 	Ref      string `json:"ref"`
+	Title    string `json:"title"`
 	Section  string `json:"section"`
 	Position int    `json:"position,omitempty"`
 	Total    int    `json:"total"`
@@ -66,7 +67,7 @@ func buildContentIndex(cnt *content.Content) *contentIndex {
 					idx.entities = append(idx.entities, entity)
 				}
 				idx.touched[entity] = append(idx.touched[entity], occurrence{
-					Guide: g.ID, Step: st.ID, Ref: authorRef(st), Section: st.SectionID,
+					Guide: g.ID, Step: st.ID, Ref: authorRef(st), Title: coreprogress.StepTitle(st.Text), Section: st.SectionID,
 					Position: idx.position[guideStep{g.ID, st.ID}], Total: idx.total[g.ID],
 					Key: o.Key.String(), Role: o.Role,
 				})
@@ -78,7 +79,7 @@ func buildContentIndex(cnt *content.Content) *contentIndex {
 				}
 				seen[entity] = true
 				idx.byEntity[entity] = append(idx.byEntity[entity], occurrence{
-					Guide: g.ID, Step: st.ID, Ref: authorRef(st), Section: st.SectionID,
+					Guide: g.ID, Step: st.ID, Ref: authorRef(st), Title: coreprogress.StepTitle(st.Text), Section: st.SectionID,
 					Position: idx.position[guideStep{g.ID, st.ID}], Total: idx.total[g.ID],
 					Key: o.Key.String(), Role: o.Role,
 				})

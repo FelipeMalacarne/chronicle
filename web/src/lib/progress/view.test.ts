@@ -6,7 +6,9 @@ import {
 	checkboxLine,
 	chipsOf,
 	eventLines,
+	entityVerdict,
 	freshnessLabel,
+	mainKey,
 	isParagraphStep,
 	metaOf,
 	objectiveLabel,
@@ -14,8 +16,10 @@ import {
 	parseKey,
 	plainNotes,
 	routeLabel,
+	routesLine,
 	sectionLabel,
 	segmentsOf,
+	stateLabel,
 	statusView,
 	unknownHint,
 	verdictView
@@ -347,4 +351,29 @@ test('also-in lists where each other route completes the same entity', () => {
 		}
 	]);
 	assert.equal(routeLabel('bruhsailer-main', 'x'), 'BRUHsailer');
+});
+
+test('world helpers: state labels, main key, entity verdict', () => {
+	assert.equal(stateLabel('quest:a@started'), 'iniciada');
+	assert.equal(stateLabel('quest:a@finished'), 'concluída');
+	assert.equal(stateLabel('skill:agility>=70'), '≥ 70');
+	assert.equal(stateLabel('item:314x120'), '×120');
+	assert.equal(mainKey(['quest:a@started', 'quest:a@finished']), 'quest:a@finished');
+	assert.equal(
+		mainKey(['skill:agility>=10', 'skill:agility>=70', 'skill:agility>=35']),
+		'skill:agility>=70'
+	);
+	assert.equal(entityVerdict([{ verdict: 'met' }, { verdict: 'unknown' }]), 'prog');
+	assert.equal(entityVerdict([{ verdict: 'unknown' }]), 'unknown');
+	assert.equal(entityVerdict([{ verdict: 'unmet' }, { verdict: 'unknown' }]), 'unmet');
+	assert.equal(
+		routesLine(
+			[
+				{ guide: 'oziris-main', ref: '1.5.17' },
+				{ guide: 'bruhsailer-main', ref: 'CH2.72' }
+			],
+			(g) => routeLabel(g, g)
+		),
+		'Oziris 1.5.17 · BRUHsailer CH2.72'
+	);
 });

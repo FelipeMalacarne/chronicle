@@ -9,6 +9,7 @@
 		eventLines,
 		pct,
 		routeLabel,
+		routesLine,
 		sectionLabel,
 		segmentsOf,
 		statusView
@@ -46,6 +47,10 @@
 			? progressApi.readiness(guideId, account, cursorId).catch(() => null)
 			: Promise.resolve(null)
 	);
+	const goals = createResource(() =>
+		account ? progressApi.goals(account) : Promise.resolve(null)
+	);
+	const pinned = $derived((goals.data?.goals ?? []).filter((g) => g.status === 'active'));
 	const events = createResource(() =>
 		account && guideId ? progressApi.events(guideId, account, 30) : Promise.resolve(null)
 	);
@@ -291,6 +296,26 @@
 
 			<aside class="side-c">
 				<section class="panel">
+					<div class="plaque">Metas fixadas<span class="r">{pinned.length}</span></div>
+					<div class="pad list">
+						{#each pinned as g (g.id)}
+							{@const here = g.routes.find((r) => r.guide === guideId)}
+							{@const elsewhere = g.routes.filter((r) => r.guide !== guideId)}
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da entidade -->
+							<a class="goal" href={`${resolve('/mundo')}?e=${encodeURIComponent(g.ref)}`}>
+								<span class="sr gname">{g.label}</span>
+								<span class="su small"
+									>{here ? `nesta rota: ${here.ref}` : 'não está nesta rota'}{elsewhere.length
+										? ` · ${routesLine(elsewhere, (id) => routeLabel(id, id))}`
+										: ''}</span
+								>
+							</a>
+						{:else}
+							<span class="su small">Nenhuma meta. Fixe uma entidade no Mundo.</span>
+						{/each}
+					</div>
+				</section>
+				<section class="panel">
 					<div class="plaque">Nesta sessão<span class="r">{lines.length} mudanças</span></div>
 					<div class="pad list">
 						{#each lines as l, i (i)}
@@ -422,6 +447,20 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+	}
+	.goal {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 8px 10px;
+		border-radius: 4px;
+		background: var(--elevated);
+		box-shadow: var(--bevel);
+		text-decoration: none;
+		color: var(--ink);
+	}
+	.gname {
+		font-size: 15px;
 	}
 	.dot12 {
 		width: 12px;

@@ -557,3 +557,70 @@ export function routeLabel(guide: string, title: string): string {
 	if (guide.startsWith('bruhsailer')) return 'BRUHsailer';
 	return title;
 }
+
+/* ------------------------------------------------------------------ Mundo e metas (V4Mundo) */
+
+/** Rótulo do alvo dentro da entidade: "iniciada", "concluída", "≥ 70", "×120". */
+export function stateLabel(key: string): string {
+	const k = parseKey(key);
+	if (!k) return key;
+	if (k.op === '@') {
+		return (
+			{ started: 'iniciada', finished: 'concluída', complete: 'completa', done: 'feito' }[
+				k.state ?? ''
+			] ??
+			k.state ??
+			''
+		);
+	}
+	return k.op === 'x' ? `×${k.n}` : `≥ ${k.n}`;
+}
+
+const STATE_RANK: Record<string, number> = { started: 1, finished: 2, complete: 2, done: 2 };
+
+/** O objetivo que "Virar meta" fixa: o estado final ou o alvo mais alto da entidade. */
+export function mainKey(keys: string[]): string | undefined {
+	let best: string | undefined;
+	let bestRank = -1;
+	for (const key of keys) {
+		const k = parseKey(key);
+		if (!k) continue;
+		const rank = k.op === '@' ? (STATE_RANK[k.state ?? ''] ?? 0) * 1e9 : (k.n ?? 0);
+		if (rank > bestRank) {
+			best = key;
+			bestRank = rank;
+		}
+	}
+	return best;
+}
+
+export const KIND_LABEL: Record<string, string> = {
+	quest: 'quest',
+	item: 'item',
+	skill: 'level',
+	diary: 'diary',
+	unlock: 'unlock',
+	location: 'local',
+	boss: 'boss',
+	ca: 'ca',
+	qp: 'qp'
+};
+
+/** Veredito agregado da entidade para a bolinha da lista: met se todos, progresso se algum. */
+export function entityVerdict(
+	objectives: { verdict: Verdict }[]
+): 'met' | 'prog' | 'unmet' | 'unknown' {
+	if (objectives.length === 0) return 'unknown';
+	const met = objectives.filter((o) => o.verdict === 'met').length;
+	if (met === objectives.length) return 'met';
+	if (met > 0) return 'prog';
+	return objectives.some((o) => o.verdict === 'unmet') ? 'unmet' : 'unknown';
+}
+
+/** "Oziris 1.5.17 · BRUHsailer CH2.72": onde cada rota conclui a meta. */
+export function routesLine(
+	routes: { guide: string; ref: string }[],
+	label: (guide: string) => string
+): string {
+	return routes.map((r) => `${label(r.guide)} ${r.ref}`).join(' · ');
+}

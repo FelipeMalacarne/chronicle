@@ -169,6 +169,7 @@ export interface Occurrence {
 	guide: string;
 	step: string;
 	ref: string;
+	title?: string;
 	section: string;
 	position?: number;
 	total: number;
@@ -311,4 +312,38 @@ export interface Readiness {
 	step?: string;
 	current: SegmentReadiness | null;
 	next: SegmentReadiness | null;
+}
+
+/* ------------------------------------------------------------------ metas (F9) e Mundo */
+
+export interface Goal {
+	id: string;
+	objective_key: string;
+	label: string;
+	priority: number;
+	status: 'active' | 'achieved' | 'abandoned';
+	created_at: string;
+	achieved_at?: string;
+	verdict: Verdict;
+	regressed?: boolean;
+	name: string;
+	ref: string;
+	kind: string;
+	/** Onde cada rota conclui a entidade da meta (o primeiro passo de cada uma). */
+	routes: Occurrence[];
+}
+
+export interface WorldObjective {
+	key: string;
+	verdict: Verdict;
+	regressed?: boolean;
+}
+
+export interface WorldEntity {
+	ref: string;
+	kind: string;
+	name: string;
+	wiki?: string;
+	objectives: WorldObjective[];
+	routes: Occurrence[];
 }

@@ -2,10 +2,12 @@ import type {
 	Board,
 	ContentSection,
 	EventsView,
+	Goal,
 	GuideInfo,
 	MarkAction,
 	ProgressSummary,
-	Readiness
+	Readiness,
+	WorldEntity
 } from '../progress/types';
 import { untrack } from 'svelte';
 import { sync, markOk, markFail } from './sync.svelte';
@@ -56,7 +58,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 			}
 			throw new ApiError(detail || `HTTP ${res.status}`, res.status, url);
 		}
-		const data = (await res.json()) as T;
+		const data = (res.status === 204 ? null : await res.json()) as T;
 		untrack(markOk);
 		return data;
 	} catch (e) {
@@ -102,6 +104,13 @@ export const progressApi = {
 			`/guides/${enc(guide)}/cursor?account=${enc(account)}`,
 			json('PUT', { step_id: step })
 		),
+	goals: (account: string) => request<{ goals: Goal[] }>(`/goals?account=${enc(account)}`),
+	addGoal: (account: string, key: string) =>
+		request<Goal>(`/goals?account=${enc(account)}`, json('POST', { objective_key: key })),
+	removeGoal: (account: string, id: string) =>
+		request<null>(`/goals/${enc(id)}?account=${enc(account)}`, json('DELETE')),
+	world: (account: string) =>
+		request<{ entities: WorldEntity[] }>(`/world?account=${enc(account)}`),
 	setActiveGuide: (account: string, guide: string) =>
 		request<ProgressSummary>(
 			`/account/guide?account=${enc(account)}`,

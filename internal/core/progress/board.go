@@ -92,7 +92,7 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 	objectives := map[string]bool{}
 	for _, st := range steps {
 		s := StepState{
-			ID: st.ID, Ref: AuthorRef(st), Title: title(st.Text), SectionID: st.SectionID, Status: status[st.ID],
+			ID: st.ID, Ref: AuthorRef(st), Title: StepTitle(st.Text), SectionID: st.SectionID, Status: status[st.ID],
 			Manual: IsManual(st), Main: main[st.ID], Visible: Visible(st, in.Account),
 			Objectives: make([]ObjectiveState, 0, len(st.Objectives)),
 		}
@@ -147,7 +147,8 @@ func AuthorRef(st *content.Step) string {
 
 const titleRunes = 140
 
-func title(text string) string {
+// StepTitle is the start of a step's text, enough to pick it in a list.
+func StepTitle(text string) string {
 	text = strings.Join(strings.Fields(strings.TrimLeft(strings.TrimSpace(text), "-• ")), " ")
 	if r := []rune(text); len(r) > titleRunes {
 		return strings.TrimSpace(string(r[:titleRunes])) + "…"

@@ -672,3 +672,5 @@ Sequência de MVP vigente (substitui 9.5):
 7. Wiki adapter, grafo em Go, telas Conta, Meta e Grafo.
 8. Zitadel OIDC e deploy no saradomin.
 9. WOM, export/import, notas, múltiplas contas.
+
+Controle do cliente Microbot (doc 08: agent no zaros, VNC, plugins, rotinas): suas cinco fases entram depois do marco da tarefa 5, em paralelo às tarefas 6 a 9, sem bloquear o caminho crítico do planner. O módulo nasce desligado (`MICROBOT_CONTROL=off`).

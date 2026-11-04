@@ -54,6 +54,10 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 
 Local-first: o MVP roda no `zaros` com Docker Compose (Postgres + binário) e `AUTH_MODE=dev`. O deploy no `saradomin` com Zitadel vem depois do marco "em uso", com a mesma imagem. Toolchain: Go 1.27, Node 22, pnpm, Nix flake, Docker. Ver doc 04, seção 10, e doc 07.
 
+## Controle do Microbot
+
+Além do tracking somente leitura (doc 06), o dono decidiu controlar o cliente Microbot pelo planner: headless no zaros, VNC no navegador, plugins do Hub e rotinas agendadas. Módulo separado e desligado por padrão, com risco aceito conscientemente. Ver doc 08.
+
 ## Próximo passo proposto
 
 Executar a sequência vigente do doc 04, seção 10: o harness (tarefa 1) está pronto; seguem rule engine, Postgres, hiscores e ingest, com o marco "em uso no zaros" na tarefa 5.

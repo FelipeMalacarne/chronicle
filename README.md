@@ -62,6 +62,7 @@ passo em `docs/07-ambiente-e-ferramental.md`, seção 3.3.
 | `docs/04-arquitetura.md` | Stack, componentes, schema de conteúdo, banco, grafo, plugin |
 | `docs/05-conteudo-e-normalizacao.md` | O que foi extraído do guia e como vira regras de auto-complete |
 | `docs/06-cliente-microbot.md` | Plugin de leitura no Microbot (fork do RuneLite) como fonte principal de quests e diaries |
+| `docs/08-controle-microbot.md` | Controle do cliente Microbot pelo planner: agent no zaros, VNC, plugins, rotinas |
 | `docs/07-ambiente-e-ferramental.md` | Ferramentas, modos local-first e saradomin, variáveis de ambiente, CI e troubleshooting |
 
 ## Design

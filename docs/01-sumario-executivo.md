@@ -14,6 +14,10 @@ Data: 2026-11-03. Consolida os documentos 00 a 05, produzidos em paralelo por qu
 | 492 tasks de achievement diary por área e tier | `data/wiki/diary_tasks.json` | gerado |
 | 124 respostas reais de API (hiscores, WOM, WikiSync, Bucket, chisel, TempleOSRS, RuneLite) | `data/samples/` | salvas |
 | Schema de conteúdo (JSON Schema), DDL SQLite, tipos TS/Zod | `docs/arquitetura/` | rascunho compilado e validado |
+| Guia BRUHsailer, rota independente (9 seções, 226 passos) | `content/guides/bruhsailer-main/` | importado dos DOCX pinados (2026-11-04) |
+| Segmentos de banco, loadouts e entidades canônicas dos dois guias | `content/guides/*`, `content/reference/` | gerados e validados |
+| Núcleo Go: conteúdo, regras, ingest v1, readiness; API por guia; web `/plan` e `/compare` | `internal/`, `web/` | na `main`, testado (doc 04, seção 11) |
+| Plugin Microbot Ironman Planner 1.0.0 | repositório `microbot-plugins` | testado em JUnit, ainda não rodou no jogo |
 
 ## Números que importam
 
@@ -27,6 +31,8 @@ Cobertura de auto-tracking medida sobre os 576 steps (fonte: doc 05):
 
 A regra de cascata (concluir um step posterior implica os anteriores da mesma sequência, estado `implied`) eleva a cobertura prática para perto de 90%, mas precisa ser visualmente distinta e confirmável. O doc 03 traz estimativas um pouco mais otimistas; os números medidos acima prevalecem.
 
+No BRUHsailer a cobertura automática hoje é **zero**: 226 passos longos e nenhuma regra. É isso que motiva o modelo de objetivos e a extração por agente do doc 09.
+
 Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o projeto fica refém do WikiSync, cuja API o wiki pede explicitamente para não usar em projetos de terceiros.
 
 ## Decisões já tomadas (pela equipe de design, revisáveis)
@@ -37,6 +43,12 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 - Rule engine puro com vereditos met / unmet / unknown e evidência; auto_done é pegajoso para regras monotônicas; manual nunca é sobrescrito pelo motor.
 - Skills entram no grafo como limiar de aresta, não como nó.
 - Protocolo do plugin RuneLite clona o do WikiSync: manifest servido pelo nosso servidor, deltas a cada 10 s, token por cliente.
+
+## Decisões de 2026-11-04 (dono)
+
+- BRUHsailer entra como **rota independente**, nunca como camada do Oziris; comparação em faixas paralelas ligadas só por marcos compartilhados.
+- **Progresso compartilhado entre rotas**: o objetivo (entidade canônica + estado-alvo) é a unidade rastreável; marca manual e posição ficam por guia (doc 09).
+- **Extração estruturada dos textos dos guias por agente no Claude Code**, acompanhada pelo dono, via MCP stdio local (`ironman content mcp`) e uma skill. É uma operação única: o resultado é JSON commitado e verificado por código determinístico, e a app sobe com esse conteúdo (doc 09, seção 6).
 
 ## Decisões que ficam com o dono
 
@@ -49,6 +61,8 @@ Quests são o sinal dominante e dependem do cliente. Sem plugin próprio o proje
 7. Metas pré-definidas iniciais: títulos das 7 seções, Barrows gloves, Fire cape, Quest cape, Bowfa.
 8. Repositório público ou privado. Público exige resolver a licença do texto do Oziris/ironman.guide antes.
 9. Nome da conta ironman para testar o sync real desde a primeira sessão de código.
+10. Objetivo inferido de texto com confiança média conclui o passo sozinho ou só sugere? (doc 09, 9.2)
+11. Tipos `unlock` e `location` já nesta revisão do modelo ou depois do MVP? (doc 09, 9.2)
 
 ## Modo de execução
 
@@ -60,7 +74,9 @@ Além do tracking somente leitura (doc 06), o dono decidiu controlar o cliente M
 
 ## Próximo passo proposto
 
-Executar a sequência vigente do doc 04, seção 10: o harness (tarefa 1) está pronto; seguem rule engine, Postgres, hiscores e ingest, com o marco "em uso no zaros" na tarefa 5.
+Seguir a sequência do doc 04, seção 11. Primeiro fechar as decisões 10 e 11 e o modelo de objetivos do
+doc 09. Depois vêm o schema, o catálogo de itens gerado e o piloto da extração por agente. Só então a API
+de progresso sobre objetivos e os hiscores. O marco "em uso no zaros" inclui o teste do plugin no jogo.
 
 ## Discrepâncias e ressalvas
 

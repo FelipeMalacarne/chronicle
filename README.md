@@ -1,14 +1,24 @@
 # ironman-planner
 
-Planner e tracker self-hosted para conta Ironman de OSRS, baseado no Oziris Ironman Efficiency Guide
-(texto de OzirisLoL, versão interativa mantida por ironman.guide), com tracking automático de progresso
-via hiscores, Wise Old Man, WikiSync/plugin RuneLite e dados estruturados do OSRS Wiki.
+Planner e tracker self-hosted para conta Ironman de OSRS. Segue duas rotas independentes e comparáveis:
+o Oziris Ironman Efficiency Guide (texto de OzirisLoL, versão interativa mantida por ironman.guide) e o
+BRUHsailer (So Iron BRUH e ParasailerOSRS). O progresso é rastreado automaticamente via hiscores, Wise
+Old Man, um plugin próprio no Microbot (RuneLite) e dados estruturados do OSRS Wiki.
 
 ## Estado
 
-Descoberta e design concluídos (docs 00 a 07). Implementação do MVP em andamento seguindo
-`docs/04-arquitetura.md`, seção 9.5 (núcleo em Go, SPA Svelte embutida, Postgres, Zitadel depois).
-Roda primeiro na estação do dono (local-first, `docker compose`, `AUTH_MODE=dev`); o deploy no
+- **Na `main`**:
+  - conteúdo multi-guia (802 passos), segmentos de banco e entidades canônicas;
+  - ingest v1 do plugin com frescor por container;
+  - readiness do próximo trecho;
+  - API por guia;
+  - web `/plan` e `/compare` sobre a API real.
+- **Plugin Microbot** 1.0.0 (somente leitura) no repositório `microbot-plugins`, ainda não testado no jogo.
+- **Em revisão**: o modelo de domínio passa a ter o objetivo como unidade rastreável, com progresso
+  compartilhado entre rotas (`docs/09-modelo-de-dominio.md`). A API de progresso espera essa revisão.
+- **Estado detalhado e sequência vigente**: `docs/04-arquitetura.md`, seção 11.
+
+Roda primeiro na estação do dono (local-first, `docker compose`, `AUTH_MODE=dev`). O deploy no
 `saradomin` usa a mesma imagem com outras variáveis de ambiente.
 
 ## Como rodar (local-first)
@@ -61,9 +71,10 @@ passo em `docs/07-ambiente-e-ferramental.md`, seção 3.3.
 | `docs/03-produto-e-features.md` | Jobs-to-be-done, catálogo de features, UX tela a tela |
 | `docs/04-arquitetura.md` | Stack, componentes, schema de conteúdo, banco, grafo, plugin |
 | `docs/05-conteudo-e-normalizacao.md` | O que foi extraído do guia e como vira regras de auto-complete |
-| `docs/06-cliente-microbot.md` | Plugin de leitura no Microbot (fork do RuneLite) como fonte principal de quests e diaries |
-| `docs/08-controle-microbot.md` | Controle do cliente Microbot pelo planner: agent no zaros, VNC, plugins, rotinas |
+| `docs/06-cliente-microbot.md` | Plugin de leitura no Microbot (fork do RuneLite) como fonte principal de quests, diaries e itens |
 | `docs/07-ambiente-e-ferramental.md` | Ferramentas, modos local-first e saradomin, variáveis de ambiente, CI e troubleshooting |
+| `docs/08-controle-microbot.md` | Controle do cliente Microbot pelo planner: agent no zaros, VNC, plugins, rotinas |
+| `docs/09-modelo-de-dominio.md` | Objetivos, entidades e progresso compartilhado; extração dos guias por agente |
 
 ## Design
 
@@ -71,11 +82,14 @@ Telas v0 no Claude Design (canvas privado do dono): Agora, Checklist da seção,
 
 ## Dados
 
-- `data/guide/` guia principal extraído (7 seções, 576 passos) e versão normalizada em `data/guide/normalized/`.
+- `content/guides/` conteúdo canônico: `oziris-main` (7 seções, 576 passos) e `bruhsailer-main` (9 seções, 226 passos), com README de proveniência e relatório de entidades.
+- `content/reference/` catálogos de entidades (quests, itens, skills, diaries, combat achievements).
+- `data/guide/` guia do Oziris extraído e versão normalizada em `data/guide/normalized/` (entrada do `content migrate`).
+- `data/sources/bruhsailer/` DOCX pinados do BRUHsailer com checksums (entrada do `content import-bruhsailer`).
 - `data/raw/ironman-guide/` payloads brutos e páginas companheiras em Markdown.
 - `data/wiki/` dados estruturados do OSRS Wiki (quests, requisitos, diaries).
 - `data/samples/` respostas de exemplo de cada API.
 
 ## Atribuição
 
-O conteúdo do guia pertence a OzirisLoL e ironman.guide. Uso pessoal; manter atribuição em qualquer tela que exiba os passos.
+O Oziris pertence a OzirisLoL e ironman.guide; o BRUHsailer, a So Iron BRUH e ParasailerOSRS. Nenhum dos dois declara licença: uso pessoal e self-hosted, sem redistribuição pública, mantendo a atribuição em qualquer tela que exiba os passos.

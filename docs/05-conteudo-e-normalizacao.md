@@ -300,3 +300,26 @@ Ambas aditivas e opcionais; `additionalProperties: false` continua em todos os o
 2. **`step.prerequisites`**: array de regras (mesmo `$defs/rule`), informativo: o que o texto diz que você precisa antes do passo. Não bloqueia conclusão; o grafo pode derivar arestas suaves daí. 20 passos.
 
 Resultado da migração: 7 seções, 576 passos, 209 com regra automática (170 `quest_state`, 59 `skill_level`, 5 `diary_tier`, com sobreposição por passo), 367 manuais; `ironman content validate` passa com 0 erros.
+
+## 11. Adendo de 2026-11-04: segundo guia, segmentos e entidades
+
+- **BRUHsailer** (So Iron BRUH e ParasailerOSRS) entrou como rota independente em
+  `content/guides/bruhsailer-main/`: 226 passos em 9 seções, importados dos três DOCX do mirror
+  `Osrsper/BRUHsailer` no commit `b697c0a` (checksums em `data/sources/bruhsailer/`) por
+  `ironman content import-bruhsailer`. Os passos são parágrafos longos (média de 1097 caracteres) e
+  **não têm regras `complete_when`**; os metadados da fonte (GP, tempo, itens, skills/quests) ficam como
+  notas. Proveniência e mapeamento em `content/guides/bruhsailer-main/README.md`.
+- **Segmentos**: os dois guias são divididos em `bank_leg` (começa numa ação de banco explícita) e
+  `sequence`, com `bank_actions` e `loadout` `known`/`partial`/`unknown`, sempre com proveniência.
+  Oziris: 32 segmentos (25 bank legs, 5 loadouts parciais). BRUHsailer: 102 (99 bank legs, 84 parciais).
+- **Entidades**: `internal/core/entities` resolve menções a quest, item, skill, diary e CA por match
+  exato contra os catálogos em `content/reference/` e grava `Step.entities` com citação e posição. O que
+  é ambíguo ou não resolve vai para `content/guides/<id>/entities.report.json`. No Oziris:
+  640 resolvidas, 18 ambíguas, 143 sem resolução. No BRUHsailer: 1478, 115 e 1072.
+- **Limites conhecidos**:
+  - o catálogo de itens tem cerca de 130 ids curados à mão;
+  - quantidades como "1k" não são interpretadas;
+  - requisitos genéricos ("Axe", "food") ficam ambíguos;
+  - algumas ações de banco são mal classificadas ("bank everything" vira `open_bank`).
+
+  A revisão do modelo e a extração estruturada dos textos estão no doc 09.

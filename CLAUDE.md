@@ -1,8 +1,14 @@
 # CLAUDE.md
 
-Self-hosted planner/tracker for an OSRS Ironman account, built on the Oziris Ironman Efficiency Guide
-(576 steps). One Go binary (`ironman`) serves the API + embedded Svelte SPA, and doubles as CLI and MCP
-server; progress is auto-tracked from hiscores, Wise Old Man and a read-only Microbot (RuneLite) plugin.
+Self-hosted planner/tracker for an OSRS Ironman account. It follows two independent, comparable routes:
+the Oziris Ironman Efficiency Guide (`oziris-main`, 576 steps) and BRUHsailer (`bruhsailer-main`, 226
+steps). One Go binary (`ironman`) serves the API + embedded Svelte SPA, and doubles as CLI and MCP
+server; progress is auto-tracked from hiscores, Wise Old Man and a read-only Microbot (RuneLite) plugin
+that lives in the separate `microbot-plugins` repository (`fm/ironmanplanner`).
+
+Current state and the active build sequence: `docs/04-arquitetura.md` section 11. The domain model is
+being revised around objectives (`docs/09-modelo-de-dominio.md`); read it before touching progress,
+goals, the graph or the content schema.
 
 ## Language rules
 
@@ -24,8 +30,10 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `just dev` | Postgres from `compose.dev.yaml`, then `air` (or `go run ./cmd/ironman serve`) |
 | `just web-dev` | Vite dev server with hot reload (proxied to :8080) |
 | `just build` | web build + `bin/ironman` with `-X .../internal/buildinfo.Version=$(git describe)` |
-| `just test` / `just lint` / `just fmt` | `go test ./...` + `pnpm check`; golangci-lint + gofmt + `pnpm lint` |
+| `just test` / `just lint` / `just fmt` | `go test ./...` + `pnpm check` + `pnpm test`; golangci-lint + gofmt + `pnpm lint` |
 | `just content-validate` | `ironman content validate` against `content/schema/guide.schema.json` |
+| `go run ./cmd/ironman content migrate` | regenerate `content/guides/oziris-main` from `data/guide/normalized` |
+| `go run ./cmd/ironman content import-bruhsailer` | regenerate `content/guides/bruhsailer-main` from the pinned DOCX in `data/sources/bruhsailer` |
 | `just migrate-up` / `migrate-status` / `migrate-new <name>` | goose against `DATABASE_URL` |
 | `just sqlc` | regenerate `internal/store/db` from `db/queries/*.sql` |
 | `just up` / `just down` / `just logs` | prod-like stack from `compose.yaml` (Postgres + app image) |
@@ -35,18 +43,27 @@ Run `just` alone to list everything. All tools also work without Nix (`go run pk
 ## Layout
 
 ```
-cmd/ironman/          cobra subcommands: serve, now, done, plan, sync, state, mcp, content
-internal/core/        PURE domain: content loader/schema, rules engine, graph, merged player state
-internal/sources/     hiscores, wom, wikisync, wiki, ingest (plugin manifest + delta)
-internal/store/       repositories; internal/store/db is sqlc OUTPUT (never edit by hand)
-internal/httpapi/     handlers, OIDC/dev auth, sessions, tokens, SSE
-internal/client/      Go client of the API, used by CLI and MCP
-internal/mcp/         MCP tools over internal/client
-web/                  Svelte SPA; web/embed.go embeds web/dist (`//go:embed all:dist`)
-content/              guides/<id>/*.json (source of truth), schema/guide.schema.json, reference/
+cmd/ironman/          cobra subcommands: serve, content (migrate, validate, import-bruhsailer);
+                      planned: content mcp + content annotate verify|merge (offline, content/ only,
+                      docs/09 section 6), now, done, plan, sync, state, mcp (account, over the API)
+internal/core/        PURE domain (no DB/HTTP imports):
+  content/            loader, schema validation, guide/variant/section/segment/step model
+  content/derive/     deterministic bank-leg segments, bank actions and loadouts
+  entities/           canonical entity registry (refs, catalogs, resolver, enrichment)
+  ingest/             plugin wire contract v1 (manifest, push, item freshness) + validation
+  rules/              rule engine incl. item_owned over item holdings
+  planning/           next-leg readiness (ownership vs carried loadout vs bank instructions)
+internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
+internal/store/       repositories (ingest: tokens, pushes, holdings); internal/store/db is sqlc OUTPUT
+internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, dev-only readiness and token bootstrap
+                      planned: internal/sources (hiscores, wom, wiki), internal/client, internal/mcp
+web/                  Svelte SPA; web/embed.go embeds web/dist (`//go:embed all:dist`);
+                      web/src/lib/planner: view-model, API adapter (apimap.ts is pure and node-tested)
+content/              guides/<id>/guide.json (generated; source of truth for the app) + README +
+                      entities.report.json, schema/guide.schema.json, reference/ (entity catalogs)
 db/migrations/        goose SQL (0001_init.sql ports docs/arquitetura/schema.sql to Postgres)
 db/queries/           sqlc queries; sqlc.yaml at the root
-data/                 original extraction (read-only input for `ironman content migrate`)
+data/                 original extraction: guide/ (input of `content migrate`), sources/bruhsailer (pinned DOCX)
 docs/                 numbered design docs (PT-BR); tools/ has the Python extraction scripts
 ```
 
@@ -62,7 +79,19 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
 4. `internal/core` has no DB or HTTP imports. Keep the rule engine pure and table-tested.
 5. Schema changes = new goose migration (`just migrate-new`), then `just sqlc`. Never edit an applied
    migration; never hand-edit `internal/store/db`.
-6. Keep attribution to OzirisLoL / ironman.guide on any screen that shows guide steps.
+6. Keep attribution on any screen that shows guide steps: OzirisLoL / ironman.guide for Oziris, So Iron
+   BRUH and ParasailerOSRS for BRUHsailer.
+7. **Routes are independent; ids are guide-scoped.** Local step/section/segment ids may repeat across
+   guides. Always address content by `(guide_id, id)`; never merge, layer or concatenate routes. In the
+   web, step keys are `<guide>::<id>`.
+8. **Item freshness is never upgraded.** `restored` is never treated as `live`; absence is proven only by
+   a `live` container with a `full` baseline in the same live epoch; everything else is `unknown`.
+   Bank actions are guide instructions and are never marked done (docs/04 section 6.4.1).
+9. **Generated content is not hand-edited.** Fix the importer/normalizer and regenerate. LLM/agent
+   extraction output is a proposal: it enters `content/` only after deterministic verification (exact
+   quote, resolver-assigned refs, schema), per docs/09 section 6.
+10. Account-addressed routes (`/api/guides/{guide}/readiness?account=`) are registered only in
+    `AUTH_MODE=dev` until session auth exists.
 
 ## Environment variables
 
@@ -79,13 +108,17 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 
 - `go test ./...` (unit; rule engine uses table tests with fixtures under `internal/core/.../testdata`).
 - Store tests need `DATABASE_URL` pointing at a scratch Postgres (`just db-up`); skip when unset.
-- `cd web && pnpm check && pnpm lint`; CI runs web, go, migrations (goose up/down/up on Postgres 17)
-  and a docker build on `main` (`.github/workflows/ci.yml`).
+- `cd web && pnpm check && pnpm test && pnpm lint`; CI runs web, go, migrations (goose up/down/up on
+  Postgres 17) and a docker build on `main` (`.github/workflows/ci.yml`).
+- `pnpm` may refuse to run scripts while a lockfile entry is younger than the `minimumReleaseAge` policy;
+  that is the supply-chain policy, not a broken install.
 
 ## Docs by number
 
 00 levantamento inicial · 01 sumário executivo · 02 fontes de dados (APIs reais) · 03 produto e
 features · 04 arquitetura (seções 8 e 9 são as decisões atuais: Postgres, Zitadel, Go) · 05 conteúdo
-e normalização · 06 cliente Microbot (plugin, contrato de ingest) · 07 ambiente e ferramental · 08 controle do
-Microbot pelo planner (headless, VNC, plugins, rotinas).
+e normalização (adendo multi-guia na seção 11) · 06 cliente Microbot (plugin, contrato de ingest) ·
+07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC, plugins, rotinas) ·
+09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por agente).
+`docs/04` section 11 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/` holds `schema.sql` (SQLite original), `guide.schema.json`, `types.ts`.

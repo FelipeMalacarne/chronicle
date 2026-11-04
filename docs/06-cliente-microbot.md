@@ -91,3 +91,31 @@ thread do cliente; o envio assíncrono não segura referências mutáveis do cac
 O dono decidiu controlar o Microbot pelo webapp (ver o jogo ao vivo, iniciar e parar plugins,
 rotinas). Isso vive num módulo de controle separado, desligado por padrão, descrito no doc 08. O
 plugin de tracking deste doc continua somente leitura.
+
+## Adendo de 2026-11-04: plugin implementado
+
+O plugin existe em `FelipeMalacarne/microbot-plugins` (repositório privado), pacote
+`net.runelite.client.plugins.microbot.fm.ironmanplanner`, versão 1.0.0. O esqueleto acima virou estes
+arquivos:
+
+- `IronmanPlannerPlugin` e `IronmanPlannerConfig`: URL do servidor, token e toggles de banco, inventário
+  e equipamento, desligados por padrão.
+- `StateCollector`: lê o estado na thread do cliente.
+- `ContainerTracker` e `BankFreshness`: revisão e `live_epoch` por container.
+- `PushBuilder`: monta `full` e `delta` e decide quando um `full` é obrigatório.
+- `SyncEngine`: sequência, ACK, retry e backoff.
+- `PlannerHttpClient` e `PlannerStatusOverlay`.
+
+Comportamento implementado (contrato v1, doc 04, seção 6.4):
+
+- O banco fica `restored` até um evento de container BANK nesta sessão de login aplicar um `live_epoch`.
+- Qualquer troca de estado ou de epoch força `full`.
+- Deltas só saem depois de um ACK, com o mesmo `client_seq` no retry após 3 s de timeout e backoff
+  quadrático.
+- Um 409 faz o plugin renumerar e mandar `full`.
+- O token e o username nunca aparecem em log, e o plugin não executa nenhuma ação no jogo.
+- O log de coleção (opcional no contrato) ainda não é enviado.
+
+Verificação: 36 testes JUnit (diff, baseline, frescor, ACK/retry, backoff) e o jar compilado contra o
+cliente pinado. **Ainda não rodou no jogo** (`mb-test` pendente). O painel lateral com o "próximo passo"
+não foi feito.

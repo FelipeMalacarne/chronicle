@@ -75,10 +75,11 @@ docker-build:
 
 # --- quality ---------------------------------------------------------------
 
-# go test ./... and `pnpm check` when the web project defines it
+# go test ./... plus `pnpm check` and `pnpm test` when the web project defines them
 test:
     go test ./...
     if [ -f web/package.json ] && grep -q '"check"' web/package.json; then (cd web && pnpm check); fi
+    if [ -f web/package.json ] && grep -q '"test"' web/package.json; then (cd web && pnpm test); fi
 
 # golangci-lint, gofmt check and `pnpm lint` when defined
 lint:

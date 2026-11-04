@@ -4,6 +4,12 @@ Data: 2026-11-03. Autor: design de produto. Escopo: um planner self-hosted para 
 
 > Premissas desta rodada: a comparação com o site atual usa a estrutura extraída do próprio ironman.guide (`data/guide/*.json`, 576 steps) e o levantamento em `docs/00-levantamento-inicial.md`; as páginas companheiras do site estão em `data/raw/ironman-guide/pages/`. Os números de cobertura abaixo são estimativas feitas aqui; os números medidos pelo normalizador estão em `docs/05-conteudo-e-normalizacao.md` e prevalecem.
 
+> Adendo de 2026-11-04: o produto passa a seguir duas rotas independentes (Oziris e BRUHsailer), com
+> seletor de guia em `/plan` e comparação lado a lado em `/compare`. O doc 09 revisa o modelo de
+> domínio em torno de objetivos com progresso compartilhado entre rotas. Isso muda como F1 (status
+> derivado dos objetivos), F2 (cursor por rota), F9 (meta = objetivo) e F10 (nós = objetivos) são
+> implementados, sem mudar o comportamento descrito aqui.
+
 ## 0. Fatos sobre o conteúdo que moldam o produto
 
 | Fato (dados reais) | Consequência de produto |

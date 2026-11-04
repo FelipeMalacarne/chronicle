@@ -8,7 +8,8 @@ Data: 2026-11-03. Complementa `00-levantamento-inicial.md`. Artefatos técnicos 
 |---|---|
 | Stack | **Revisado (seção 9): backend em Go** (um binário com `serve`, CLI e servidor MCP) + Postgres + frontend Svelte embutido no binário. A opção SvelteKit full-stack das seções 1 e 2 fica registrada como alternativa; o que muda está na seção 9. Deploy no `saradomin` com Postgres e Zitadel existentes. |
 | Grafo | Calculado no servidor em memória a partir de `content/` + cache do wiki; renderizado com **Cytoscape.js + ELK** (layout em camadas). |
-| Conteúdo | Arquivos JSON/YAML em `content/guides/<id>/`, validados por Zod no boot e na CI. IDs do ironman.guide preservados (`1.1.76a`). |
+| Conteúdo | Arquivos JSON em `content/guides/<id>/` (hoje `oziris-main` e `bruhsailer-main`, rotas independentes), validados contra `content/schema/guide.schema.json` pelo loader Go no boot e na CI. IDs do ironman.guide preservados (`1.1.76a`); ids sempre escopados por guia. |
+| Domínio | **Revisado (doc 09):** o objetivo (entidade canônica + estado-alvo) é a unidade rastreável e o passo é a unidade de navegação; progresso da conta compartilhado entre rotas, marca manual e posição por guia. |
 | Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o rule engine. |
 | Rule engine | Função pura `(rules, PlayerState) → {verdict, evidence}`; reavaliação completa a cada snapshot (576 steps × regras simples = milissegundos). |
 | Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas, token por cliente. |
@@ -713,7 +714,7 @@ Decisão do dono: o MVP roda na estação de trabalho (`zaros`), onde o Microbot
 - **O que fica fora do caminho crítico**: OIDC (antiga tarefa 4 da seção 9.5) e deploy (antiga tarefa 7) viram uma única tarefa "subir no saradomin" depois do marco "em uso".
 - **Toolchain**: Go 1.27 (última estável em 2026-11), Node 22, pnpm, SvelteKit com adapter-static embutido no binário, Nix flake para o ambiente de desenvolvimento, Docker para rodar e para o deploy. Detalhes em `docs/07-ambiente-e-ferramental.md`.
 
-Sequência de MVP vigente (substitui 9.5):
+Sequência de MVP de 2026-11-04 (substitui 9.5; o estado e a sequência atual estão na seção 11):
 
 1. Harness: módulo Go, `content migrate|validate`, API mínima (`/api/health`, `/api/guide`, `/api/now` sem banco), SPA embutida com as telas Agora e Checklist em modo leitura, flake, Docker, compose, justfile, CI. **Feito nesta rodada.**
 2. Rule engine completo com testes e cascata `implied`.
@@ -726,3 +727,37 @@ Sequência de MVP vigente (substitui 9.5):
 9. WOM, export/import, notas, múltiplas contas.
 
 Controle do cliente Microbot (doc 08: agent no zaros, VNC, plugins, rotinas): suas cinco fases entram depois do marco da tarefa 5, em paralelo às tarefas 6 a 9, sem bloquear o caminho crítico do planner. O módulo nasce desligado (`MICROBOT_CONTROL=off`).
+
+## 11. Estado em 2026-11-04 e sequência vigente (substitui a da seção 10)
+
+Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/microbot-plugins`, commit `68fc1c6`):
+
+| Peça | Onde | Verificação |
+|---|---|---|
+| Multi-guia: Oziris + BRUHsailer como rotas independentes, ids escopados por guia | `internal/core/content`, `internal/importer/bruhsailer`, `content/guides/*`, migration 0003 | `content validate` (802 passos), testes de importação byte a byte |
+| Segmentos `bank_leg`/`sequence`, ações de banco e loadouts com proveniência | `internal/core/content/derive` | testes de tabela |
+| Registry de entidades e menções por passo | `internal/core/entities`, `content/reference`, `entities.report.json` | testes, relatório por guia |
+| Contrato de ingest v1, tokens com escopo, `GET /api/ingest/manifest`, `POST /api/ingest`, frescor por container | `internal/core/ingest`, `internal/store/ingest`, migration 0002 | testes de integração no Postgres 17 |
+| Readiness: `item_owned`, prontidão do trecho, rotas `/readiness` (só `AUTH_MODE=dev`) | `internal/core/rules/items.go`, `internal/core/planning`, seção 6.4.1 | testes de tabela, integração e teste ponta a ponta com binário real |
+| API por guia `/api/guides/{guide}/...` | `internal/httpapi` | testes HTTP |
+| Web `/plan` e `/compare` sobre a API real, card da perna de banco | `web/src/lib/planner`, `web/src/routes/{plan,compare}` | `pnpm test`, `pnpm check`, build, renderização headless |
+| Plugin Microbot Ironman Planner 1.0.0 (somente leitura) | `microbot-plugins`: `fm/ironmanplanner` | 36 testes JUnit; **nunca rodou no jogo** |
+
+Ainda não existe: progresso persistido (`step_progress` sem API; a web mostra 0 feitos), sessão/OIDC,
+adapter de hiscores e scheduler, CLI/MCP sobre o cliente, grafo, metas, tela de conta e o módulo de
+controle do Microbot (doc 08). A web usa fixtures para grafo, metas, conta e Microbot.
+
+Sequência vigente. Os itens da seção 10 que ainda não foram feitos continuam valendo, mas a API de progresso passa a
+depender do modelo de objetivos (doc 09):
+
+1. Doc 09: fechar as decisões em aberto (9.2).
+2. Schema de objetivos e `ItemRequirement`; tipos `unlock` e `location` (doc 09, seção 10, itens 2 e 3).
+3. Catálogo de itens gerado a partir da wiki.
+4. Extração estruturada dos guias: `internal/core/annotate`, `ironman content mcp` (stdio, só `content/`) e a skill `annotate-guide`; piloto com o agente no Claude Code (Oziris 1.1, BRUHsailer 1.1), depois os dois guias inteiros (doc 09, seção 6).
+5. Progresso sobre objetivos: migration, `objective_progress`, `step_marks`, `route_cursor`, API e reavaliação por snapshot.
+6. Hiscores: adapter, snapshots, scheduler, `POST /api/sync`.
+7. Teste do plugin no jogo (`mb-test`) e uso no zaros. **Marco: em uso no zaros.**
+8. CLI `now/done/plan/state` e `ironman mcp`; depois grafo, metas e conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08).
+
+Revisão de integração entre os dois repositórios (contrato, frescor, plugin somente leitura, chaves por
+guia) fica pendente e roda antes do marco 7.

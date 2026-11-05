@@ -68,9 +68,10 @@
 		flex-direction: column;
 		gap: 20px;
 	}
-	@media (max-width: 640px) {
+	@media (max-width: 719px) {
 		main {
-			padding: 16px;
+			padding: 12px 12px 24px;
+			gap: 14px;
 		}
 	}
 	.skip {

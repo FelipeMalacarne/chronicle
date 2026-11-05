@@ -2,6 +2,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import Glyph from './Glyph.svelte';
+	import Menu from './Menu.svelte';
 	import { theme, toggleTheme } from '#lib/progress/theme.svelte';
 	import { ago } from '#lib/progress/view';
 	import type { ProgressSummary } from '#lib/progress/types';
@@ -22,6 +23,21 @@
 		wikisync: 'wikisync'
 	};
 	const sources = $derived(summary?.sources ?? []);
+	// Compact bar (below 1100 px): the sources become dots with one accessible summary.
+	const sourceLine = $derived(
+		sources.length
+			? sources
+					.map(
+						(s) =>
+							`${LABEL[s.source] ?? s.source} ${ago(Date.parse(s.last_observed_at), now)}${now - Date.parse(s.last_observed_at) > STALE_MS ? ' (velha)' : ''}`
+					)
+					.join(' · ')
+			: 'nenhuma fonte ainda'
+	);
+	const menuItems = $derived([
+		{ label: `Conta: ${account ?? 'sem conta'}`, hint: 'trocar', href: resolve('/setup') },
+		{ label: 'Tema', hint: theme.value, onselect: toggleTheme }
+	]);
 
 	const items = $derived([
 		{ href: resolve('/'), label: 'Agora', icon: 'agora' as const, on: path === '/' },
@@ -62,19 +78,33 @@
 		</a>
 	{/each}
 	<div class="grow"></div>
+	<!-- Compact bar only: sources as dots (filled = fresh, ring = stale, dotted = none). -->
+	<a
+		class="dots bar"
+		href={resolve('/conta')}
+		title={`Fontes: ${sourceLine}`}
+		aria-label={`Fontes: ${sourceLine}`}
+	>
+		{#each sources as s (s.source)}
+			<span class="dot" class:dot-w={now - Date.parse(s.last_observed_at) > STALE_MS}></span>
+		{:else}
+			<span class="dot dot-off"></span>
+		{/each}
+	</a>
+	<span class="bar"><Menu label="Conta e tema" items={menuItems} cls="sbtn more" /></span>
 	<p class="ey fontes">Fontes</p>
 	{#each sources as s (s.source)}
 		{@const at = Date.parse(s.last_observed_at)}
-		<div class="src">
+		<div class="src wide">
 			<span class="dot" class:dot-w={now - at > STALE_MS}></span>{LABEL[s.source] ?? s.source} · {ago(
 				at,
 				now
 			)}
 		</div>
 	{:else}
-		<div class="src"><span class="dot dot-off"></span>nenhuma fonte ainda</div>
+		<div class="src wide"><span class="dot dot-off"></span>nenhuma fonte ainda</div>
 	{/each}
-	<button class="sbtn tema" type="button" onclick={toggleTheme}>
+	<button class="sbtn tema wide" type="button" onclick={toggleTheme}>
 		<Glyph name="moon" size={14} />
 		<span>Tema: {theme.value}</span><span class="small">trocar</span>
 	</button>
@@ -120,6 +150,35 @@
 	.small {
 		font-size: 11px;
 	}
+	.bar {
+		display: none;
+	}
+	/* Stale is a ring, not only a color: status by shape. */
+	.dots .dot-w {
+		background: transparent;
+		border: 2px solid var(--stale);
+		box-sizing: border-box;
+	}
+	.dots {
+		align-items: center;
+		gap: 4px;
+		min-height: 36px;
+		padding: 0 8px;
+		border-radius: 4px;
+		text-decoration: none;
+	}
+	.dots:hover {
+		background: var(--frame-2);
+	}
+	.dots .dot {
+		width: 9px;
+		height: 9px;
+	}
+	:global(.sbtn.more) {
+		width: 36px;
+		justify-content: center;
+		padding: 0;
+	}
 	@media (max-width: 1100px) {
 		.side {
 			position: static;
@@ -134,12 +193,46 @@
 		.brand {
 			padding: 0 10px 0 0;
 		}
-		.grow,
+		.side {
+			flex-wrap: nowrap;
+			gap: 2px;
+			padding: 6px 12px;
+		}
+		.brand .acct,
+		.wide,
 		.fontes {
 			display: none;
 		}
-		.tema {
-			margin: 0 0 0 auto;
+		.bar {
+			display: inline-flex;
+		}
+		.brand a.sr {
+			font-size: 17px;
+			white-space: nowrap;
+		}
+	}
+	@media (max-width: 719px) {
+		.side {
+			padding: 4px 8px;
+		}
+		.side .nav {
+			height: 44px;
+			gap: 6px;
+			padding: 0 8px;
+		}
+		.side .nav :global(.n) {
+			display: none;
+		}
+		.dots,
+		:global(.sbtn.more) {
+			min-height: 44px;
+			min-width: 44px;
+			justify-content: center;
+		}
+	}
+	@media (max-width: 560px) {
+		.brand {
+			display: none;
 		}
 	}
 </style>

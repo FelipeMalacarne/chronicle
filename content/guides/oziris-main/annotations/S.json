@@ -1,0 +1,685 @@
+{
+  "schema_version": 1,
+  "kind": "section",
+  "guide_id": "oziris-main",
+  "section_id": "S",
+  "skill_version": "annotate-guide@3",
+  "steps": [
+    {
+      "step_id": "S.1",
+      "text_hash": "sha256:2522a6722ada10753b71e650601a39508d429bf8feff60a1d045936d57d81076",
+      "objectives": [
+        {
+          "key": "quest:pandemonium@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Unlock Sailing via the Pandemonium quest",
+            "span": [
+              0,
+              40
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:port_sarim",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Sarim",
+          "span": [
+            0,
+            10
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "S.2",
+      "text_hash": "sha256:dbea9478f915f5fc60a773934e9b020c66962182327090fad3bc15db8b988ba5",
+      "objectives": [
+        {
+          "key": "skill:sailing>=12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Train Sailing to 12",
+            "span": [
+              0,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:port_sarim",
+        "evidence": {
+          "field": "/location",
+          "quote": "Port Sarim",
+          "span": [
+            0,
+            10
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "S.3",
+      "text_hash": "sha256:55d7b511b38aa45f7d87bb5d90cd6b1fcedc6047b3b01031bd0ef5b261cc0d91",
+      "objectives": [
+        {
+          "key": "quest:prying_times@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Prying Times",
+            "span": [
+              0,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:sailing>=12",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "Sailing 12",
+            "span": [
+              23,
+              33
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:smithing>=30",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "Smithing 30",
+            "span": [
+              35,
+              46
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "quest:the_knights_sword@finished",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "The Knight's Sword",
+            "span": [
+              48,
+              66
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "S.4",
+      "text_hash": "sha256:f71dcb5a11c8eb4a68202e4a04c4b0b5ba63e6e6913534c01aeb85847567f44c",
+      "objectives": [
+        {
+          "key": "skill:sailing>=22",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Train Sailing to 22",
+            "span": [
+              0,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "S.5",
+      "text_hash": "sha256:d62d11b263673769664ac291b798ef33998f7331975c2ce3f4384c533655e5ef",
+      "objectives": [
+        {
+          "key": "quest:current_affairs@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Current Affairs",
+            "span": [
+              0,
+              24
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:sailing>=22",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "Sailing 22",
+            "span": [
+              26,
+              36
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:fishing>=10",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "Fishing 10",
+            "span": [
+              38,
+              48
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "S.6",
+      "text_hash": "sha256:86e5e61b88595165b4c7c9f8baa201e5a93f965c17440e2524d1c7ec41f04a2c",
+      "objectives": [
+        {
+          "key": "skill:sailing>=45",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Train Sailing to 45",
+            "span": [
+              0,
+              19
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "S.7",
+      "text_hash": "sha256:071b3a6dfcd7ca34903a5a7d9d3ede744cfda2307f6a829e6a39bdf695fe94f4",
+      "objectives": [
+        {
+          "key": "quest:troubled_tortugans@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Troubled Tortugans",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:sailing>=45",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "Sailing 45",
+            "span": [
+              29,
+              39
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:slayer>=51",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "51 Slayer",
+            "span": [
+              46,
+              55
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:construction>=48",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "48 Construction",
+            "span": [
+              58,
+              73
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:hunter>=45",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "45 Hunter",
+            "span": [
+              76,
+              85
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:woodcutting>=40",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "40 Woodcutting",
+            "span": [
+              88,
+              102
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:crafting>=34",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "34 Crafting",
+            "span": [
+              105,
+              116
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "S.8",
+      "text_hash": "sha256:56b682bff2d73710566b5ff0ce71fc224313fd7d45f43fac6ed803b47990e44b",
+      "objectives": [
+        {
+          "key": "quest:the_red_reef@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete The Red Reef",
+            "span": [
+              0,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:sailing>=52",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "Sailing 52",
+            "span": [
+              23,
+              33
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:smithing>=48",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "Smithing 48",
+            "span": [
+              35,
+              46
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "S.9",
+      "text_hash": "sha256:7fde19971fee64f60122e648613199637da312ccff2e8992e1134fb572d045cb",
+      "objectives": [
+        {
+          "key": "unlock:sailing_teleport_focus@done",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Build a teleport focus",
+            "span": [
+              0,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:sailing>=55",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "at Sailing 55",
+            "span": [
+              23,
+              36
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:construction>=49",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "needs 49 Construction",
+            "span": [
+              38,
+              59
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "S.9a",
+      "text_hash": "sha256:03c2ba7e22bfad167a9b2db08dd1d2fea80d3b95a5f8fd70a3dc448438dee715",
+      "objectives": [
+        {
+          "key": "quest:fallen_from_grace@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete Fallen From Grace",
+            "span": [
+              37,
+              63
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:sailing>=62",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "At 62 Sailing",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:crafting>=60",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "60 Crafting",
+            "span": [
+              76,
+              87
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:mining>=53",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "53 Mining",
+            "span": [
+              89,
+              98
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:runecraft>=47",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "47 Runecraft",
+            "span": [
+              100,
+              112
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Pickaxe",
+          "any_of": [
+            1275,
+            1271,
+            1273,
+            12297,
+            1269,
+            1267,
+            1265
+          ],
+          "source_text": "Pickaxe",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "Pickaxe",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "axe-means-best-axe"
+          }
+        },
+        {
+          "name": "Chisel",
+          "item_id": 1755,
+          "source_text": "Chisel",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "Chisel",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "Hammer (not Imcando)",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "Hammer (not Imcando)",
+            "span": [
+              0,
+              20
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:wyrmscraig",
+        "evidence": {
+          "field": "/location",
+          "quote": "Wyrmscraig",
+          "span": [
+            0,
+            10
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "S.10",
+      "text_hash": "sha256:6ef871b611821a0de86b7c060bbc16219f93dc4de4962483c412983a0660af0f"
+    },
+    {
+      "step_id": "S.11",
+      "text_hash": "sha256:cc153f5da308e231b0e76d0590d4cbdb6158843c99679079d969f3ef31b0689c"
+    }
+  ]
+}

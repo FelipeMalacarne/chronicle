@@ -4,13 +4,13 @@
   "guide_id": "oziris-main",
   "summary": {
     "steps": 576,
-    "annotated": 564,
+    "annotated": 576,
     "stale": 0,
-    "pending": 12,
-    "submitted": 564,
-    "first_submit_accepted": 555,
-    "owner_confirmed": 99,
-    "decisions_applied": 226
+    "pending": 0,
+    "submitted": 576,
+    "first_submit_accepted": 567,
+    "owner_confirmed": 100,
+    "decisions_applied": 227
   },
   "sections": [
     {
@@ -82,18 +82,18 @@
     {
       "section_id": "S",
       "steps": 12,
-      "annotated": 0,
+      "annotated": 12,
       "stale": 0,
-      "pending": 12,
-      "submitted": 0,
-      "first_submit_accepted": 0,
-      "owner_confirmed": 0,
-      "decisions_applied": 0
+      "pending": 0,
+      "submitted": 12,
+      "first_submit_accepted": 12,
+      "owner_confirmed": 1,
+      "decisions_applied": 1
     }
   ],
   "rule_agreement": {
-    "rules": 264,
-    "reproduced": 239,
+    "rules": 291,
+    "reproduced": 265,
     "divergent": [
       {
         "step_id": "1.1.2",
@@ -260,6 +260,12 @@
         "key": "skill:herblore>=77",
         "role": "completes",
         "comment": "Conditional ('if not already from WGS lamps'): Herblore 77 is completed at 2.0.26, so the rule (completes herblore>=77) is already met; harmless. Location 'Various'."
+      },
+      {
+        "step_id": "S.11",
+        "key": "skill:herblore>=85",
+        "role": "requires",
+        "comment": "Deep-sea trawling is an open-ended activity. The rule requires herblore>=85 is the Extended Stamina requirement and stays. Location 'Various'."
       }
     ]
   },
@@ -1997,6 +2003,17 @@
       "what": "quest:while_guthix_sleeps@finished requires",
       "quote": "requires WGS completion",
       "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "S.1",
+      "what": "quest:pandemonium@finished completes",
+      "quote": "Unlock Sailing via the Pandemonium quest"
+    },
+    {
+      "step_id": "S.9a",
+      "what": "item Pickaxe = any_of [1275 1271 1273 12297 1269 1267 1265]",
+      "quote": "Pickaxe",
+      "decision": "axe-means-best-axe"
     }
   ],
   "steps": {
@@ -5234,6 +5251,77 @@
       "submits": 1,
       "first_submit_accepted": true,
       "comment": "Tip: only 60 needed for now, sandstone grinder, waterskins (advice). Location 'Various'."
+    },
+    "S.1": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Points to main-guide 1.1.78a; completes Pandemonium so the track step closes with it (owner). Parallel track: not compared with the main route."
+    },
+    "S.10": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "List of higher milestones (72/73/93 Sailing) without a step goal. Location 'Various'."
+    },
+    "S.11": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Deep-sea trawling is an open-ended activity. The rule requires herblore>=85 is the Extended Stamina requirement and stays. Location 'Various'."
+    },
+    "S.2": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "S.3": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "S.4": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Barracuda Trials at 30 is information. Location 'Various'."
+    },
+    "S.5": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "S.6": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "S.7": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "S.8": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "S.9": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Unlock added (owner). Greater teleport focus (75/69) is a tip. Location 'Various'."
+    },
+    "S.9a": {
+      "section_id": "S",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Wyrmscraig comes with the quest (no separate unlock, owner). 'Raft or skiff' is a boat, not an item; 'Food + prayer potions' vague."
     }
   }
 }

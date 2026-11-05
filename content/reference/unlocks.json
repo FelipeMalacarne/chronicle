@@ -39,6 +39,15 @@
         "POH"
       ],
       "note": "Owner confirmed at oziris-main 1.1.49 (2026-11-04). No proof varbit recorded yet."
+    },
+    {
+      "id": "sailing_teleport_focus",
+      "name": "Sailing teleport focus",
+      "wiki_key": "Teleport focus",
+      "aliases": [
+        "teleport focus"
+      ],
+      "note": "Owner confirmed at oziris-main S.9 (2026-11-04). No proof varbit recorded yet."
     }
   ]
 }

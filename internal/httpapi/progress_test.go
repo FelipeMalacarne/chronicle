@@ -40,6 +40,13 @@ func (f *fakeProgress) Board(_ context.Context, accountID, guideID string) (stor
 	return f.board("board", accountID, guideID)
 }
 
+func (f *fakeProgress) ActiveGuide(_ context.Context, accountID string) (string, error) {
+	if accountID != "acc-1" {
+		return "", storeprogress.ErrAccountNotFound
+	}
+	return "oziris-main", nil
+}
+
 func (f *fakeProgress) Mark(_ context.Context, accountID, guideID, stepID string, action coreprogress.MarkAction, note *string) (storeprogress.BoardView, error) {
 	f.action, f.note, f.step = action, note, stepID
 	return f.board("mark", accountID, guideID)

@@ -19,6 +19,7 @@ import (
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
 	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
 	"github.com/FelipeMalacarne/ironman-planner/internal/events"
@@ -72,34 +73,42 @@ func (r *Repository) publishOwner(accountID string, stepsChanged int, guides ...
 // returns how many steps changed status because of the engine, in every
 // guide. snapshotID is the snapshot that triggered it, or empty (boot).
 func (r *Repository) Reevaluate(ctx context.Context, tx pgx.Tx, accountID, snapshotID string) (int, error) {
+	n, _, err := r.ReevaluateRoute(ctx, tx, accountID, snapshotID)
+	return n, err
+}
+
+// ReevaluateRoute is Reevaluate plus what changed in the account's active
+// route: its cursor after the reevaluation and the steps whose status
+// changed (the ingest response's route, read by the plugin panel).
+func (r *Repository) ReevaluateRoute(ctx context.Context, tx pgx.Tx, accountID, snapshotID string) (int, coreingest.RouteUpdate, error) {
 	q := r.queries.WithTx(tx)
 	acc, err := lockAccount(ctx, q, accountID)
 	if err != nil {
-		return 0, err
+		return 0, coreingest.RouteUpdate{}, err
 	}
 	ps, obs, err := state.Load(ctx, q, accountID, r.catalog)
 	if err != nil {
-		return 0, err
+		return 0, coreingest.RouteUpdate{}, err
 	}
 	in := coreprogress.Input{
 		Guides: r.content.Guides, Registry: r.catalog, State: ps, Observations: obs,
 		Account: acc, Now: r.now(),
 	}
 	if in.Objectives, err = loadObjectives(ctx, q, accountID); err != nil {
-		return 0, err
+		return 0, coreingest.RouteUpdate{}, err
 	}
 	if in.Marks, err = loadMarks(ctx, q, accountID); err != nil {
-		return 0, err
+		return 0, coreingest.RouteUpdate{}, err
 	}
 	if in.LastStatus, err = loadLastStatus(ctx, q, accountID); err != nil {
-		return 0, err
+		return 0, coreingest.RouteUpdate{}, err
 	}
 	if in.Cursors, err = loadCursors(ctx, q, accountID); err != nil {
-		return 0, err
+		return 0, coreingest.RouteUpdate{}, err
 	}
 	goals, err := q.ListGoalsByAccount(ctx, accountID)
 	if err != nil {
-		return 0, fmt.Errorf("list goals: %w", err)
+		return 0, coreingest.RouteUpdate{}, fmt.Errorf("list goals: %w", err)
 	}
 	for _, g := range goals {
 		if g.Status == "active" {
@@ -108,9 +117,14 @@ func (r *Repository) Reevaluate(ctx context.Context, tx pgx.Tx, accountID, snaps
 	}
 	plan := coreprogress.Reevaluate(in)
 	if err := writePlan(ctx, q, accountID, snapshotID, in.Now, plan); err != nil {
-		return 0, err
+		return 0, coreingest.RouteUpdate{}, err
 	}
-	return plan.StepsChanged, nil
+	var route coreingest.RouteUpdate
+	if _, ok := r.content.Guide(acc.ActiveGuideID); ok {
+		rc := plan.Route(acc.ActiveGuideID, in.Cursors[acc.ActiveGuideID])
+		route = coreingest.RouteUpdate{Guide: rc.GuideID, Cursor: rc.Cursor.StepID, CursorCause: rc.Cursor.Cause, Changed: rc.Changed}
+	}
+	return plan.StepsChanged, route, nil
 }
 
 // ReevaluateAll reevaluates every active account, each in its own

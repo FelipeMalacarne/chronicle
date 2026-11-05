@@ -112,3 +112,12 @@ func (r *Repository) SetActiveGuide(ctx context.Context, accountID, guideID stri
 	}
 	return err
 }
+
+// ActiveGuide returns the guide the account follows (accounts.guide_id).
+func (r *Repository) ActiveGuide(ctx context.Context, accountID string) (string, error) {
+	acc, err := getAccount(ctx, r.queries, accountID)
+	if err != nil {
+		return "", err
+	}
+	return acc.ActiveGuideID, nil
+}

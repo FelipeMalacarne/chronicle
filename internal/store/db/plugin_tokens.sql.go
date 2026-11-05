@@ -16,13 +16,13 @@ const createPluginToken = `-- name: CreatePluginToken :one
 
 INSERT INTO plugin_ingest_tokens (id, account_id, token_hash, label, scopes)
 VALUES ($1, $2, $3, $4, $5)
-RETURNING id, account_id, token_hash, label, scopes, manifest_version, last_seq, last_seen_at, last_ip, created_at, revoked_at
+RETURNING id, account_id, token_hash, label, scopes, manifest_version, last_seq, last_seen_at, last_ip, created_at, revoked_at, installation_id
 `
 
 type CreatePluginTokenParams struct {
 	ID        string          `json:"id"`
 	AccountID string          `json:"account_id"`
-	TokenHash string          `json:"token_hash"`
+	TokenHash pgtype.Text     `json:"token_hash"`
 	Label     pgtype.Text     `json:"label"`
 	Scopes    json.RawMessage `json:"scopes"`
 }
@@ -50,21 +50,52 @@ func (q *Queries) CreatePluginToken(ctx context.Context, arg CreatePluginTokenPa
 		&i.LastIp,
 		&i.CreatedAt,
 		&i.RevokedAt,
+		&i.InstallationID,
 	)
 	return i, err
 }
 
-const getPluginTokenByHash = `-- name: GetPluginTokenByHash :one
-SELECT t.id, t.account_id, t.token_hash, t.label, t.scopes, t.manifest_version, t.last_seq, t.last_seen_at, t.last_ip, t.created_at, t.revoked_at, a.user_id
-FROM plugin_ingest_tokens t
-JOIN accounts a ON a.id = t.account_id
-WHERE t.token_hash = $1 AND t.revoked_at IS NULL AND a.active = true
+const ensurePluginInstallation = `-- name: EnsurePluginInstallation :exec
+INSERT INTO plugin_ingest_tokens (id, account_id, installation_id, label, scopes)
+VALUES ($1, $2, $3, $4, $5)
+ON CONFLICT (account_id, installation_id) WHERE token_hash IS NULL DO NOTHING
 `
 
-type GetPluginTokenByHashRow struct {
+type EnsurePluginInstallationParams struct {
+	ID             string          `json:"id"`
+	AccountID      string          `json:"account_id"`
+	InstallationID pgtype.Text     `json:"installation_id"`
+	Label          pgtype.Text     `json:"label"`
+	Scopes         json.RawMessage `json:"scopes"`
+}
+
+// Tokenless AUTH_MODE=dev ingest: the installation's record for one account,
+// created on its first push (migration 0006).
+func (q *Queries) EnsurePluginInstallation(ctx context.Context, arg EnsurePluginInstallationParams) error {
+	_, err := q.db.Exec(ctx, ensurePluginInstallation,
+		arg.ID,
+		arg.AccountID,
+		arg.InstallationID,
+		arg.Label,
+		arg.Scopes,
+	)
+	return err
+}
+
+const getLatestPluginInstallation = `-- name: GetLatestPluginInstallation :one
+SELECT t.id, t.account_id, t.token_hash, t.label, t.scopes, t.manifest_version, t.last_seq, t.last_seen_at, t.last_ip, t.created_at, t.revoked_at, t.installation_id, a.user_id
+FROM plugin_ingest_tokens t
+JOIN accounts a ON a.id = t.account_id
+WHERE t.installation_id = $1 AND t.token_hash IS NULL
+  AND t.revoked_at IS NULL AND a.active = true
+ORDER BY t.last_seen_at DESC NULLS LAST, t.created_at DESC
+LIMIT 1
+`
+
+type GetLatestPluginInstallationRow struct {
 	ID              string             `json:"id"`
 	AccountID       string             `json:"account_id"`
-	TokenHash       string             `json:"token_hash"`
+	TokenHash       pgtype.Text        `json:"token_hash"`
 	Label           pgtype.Text        `json:"label"`
 	Scopes          json.RawMessage    `json:"scopes"`
 	ManifestVersion int32              `json:"manifest_version"`
@@ -73,11 +104,111 @@ type GetPluginTokenByHashRow struct {
 	LastIp          pgtype.Text        `json:"last_ip"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+	InstallationID  pgtype.Text        `json:"installation_id"`
+	UserID          string             `json:"user_id"`
+}
+
+// The record a dev installation pushed through most recently: the account its
+// panel shows and the manifest version it last used.
+func (q *Queries) GetLatestPluginInstallation(ctx context.Context, installationID pgtype.Text) (GetLatestPluginInstallationRow, error) {
+	row := q.db.QueryRow(ctx, getLatestPluginInstallation, installationID)
+	var i GetLatestPluginInstallationRow
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.TokenHash,
+		&i.Label,
+		&i.Scopes,
+		&i.ManifestVersion,
+		&i.LastSeq,
+		&i.LastSeenAt,
+		&i.LastIp,
+		&i.CreatedAt,
+		&i.RevokedAt,
+		&i.InstallationID,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const getPluginInstallationForUpdate = `-- name: GetPluginInstallationForUpdate :one
+SELECT t.id, t.account_id, t.token_hash, t.label, t.scopes, t.manifest_version, t.last_seq, t.last_seen_at, t.last_ip, t.created_at, t.revoked_at, t.installation_id, a.user_id
+FROM plugin_ingest_tokens t
+JOIN accounts a ON a.id = t.account_id
+WHERE t.account_id = $1 AND t.installation_id = $2 AND t.token_hash IS NULL
+  AND t.revoked_at IS NULL AND a.active = true
+FOR UPDATE OF t
+`
+
+type GetPluginInstallationForUpdateParams struct {
+	AccountID      string      `json:"account_id"`
+	InstallationID pgtype.Text `json:"installation_id"`
+}
+
+type GetPluginInstallationForUpdateRow struct {
+	ID              string             `json:"id"`
+	AccountID       string             `json:"account_id"`
+	TokenHash       pgtype.Text        `json:"token_hash"`
+	Label           pgtype.Text        `json:"label"`
+	Scopes          json.RawMessage    `json:"scopes"`
+	ManifestVersion int32              `json:"manifest_version"`
+	LastSeq         int64              `json:"last_seq"`
+	LastSeenAt      pgtype.Timestamptz `json:"last_seen_at"`
+	LastIp          pgtype.Text        `json:"last_ip"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+	InstallationID  pgtype.Text        `json:"installation_id"`
+	UserID          string             `json:"user_id"`
+}
+
+// Serializes the pushes of one dev installation for one account, like
+// GetPluginTokenByHashForUpdate does for a token.
+func (q *Queries) GetPluginInstallationForUpdate(ctx context.Context, arg GetPluginInstallationForUpdateParams) (GetPluginInstallationForUpdateRow, error) {
+	row := q.db.QueryRow(ctx, getPluginInstallationForUpdate, arg.AccountID, arg.InstallationID)
+	var i GetPluginInstallationForUpdateRow
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.TokenHash,
+		&i.Label,
+		&i.Scopes,
+		&i.ManifestVersion,
+		&i.LastSeq,
+		&i.LastSeenAt,
+		&i.LastIp,
+		&i.CreatedAt,
+		&i.RevokedAt,
+		&i.InstallationID,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const getPluginTokenByHash = `-- name: GetPluginTokenByHash :one
+SELECT t.id, t.account_id, t.token_hash, t.label, t.scopes, t.manifest_version, t.last_seq, t.last_seen_at, t.last_ip, t.created_at, t.revoked_at, t.installation_id, a.user_id
+FROM plugin_ingest_tokens t
+JOIN accounts a ON a.id = t.account_id
+WHERE t.token_hash = $1 AND t.revoked_at IS NULL AND a.active = true
+`
+
+type GetPluginTokenByHashRow struct {
+	ID              string             `json:"id"`
+	AccountID       string             `json:"account_id"`
+	TokenHash       pgtype.Text        `json:"token_hash"`
+	Label           pgtype.Text        `json:"label"`
+	Scopes          json.RawMessage    `json:"scopes"`
+	ManifestVersion int32              `json:"manifest_version"`
+	LastSeq         int64              `json:"last_seq"`
+	LastSeenAt      pgtype.Timestamptz `json:"last_seen_at"`
+	LastIp          pgtype.Text        `json:"last_ip"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+	InstallationID  pgtype.Text        `json:"installation_id"`
 	UserID          string             `json:"user_id"`
 }
 
 // Authentication path for POST /api/ingest and GET /api/ingest/manifest.
-func (q *Queries) GetPluginTokenByHash(ctx context.Context, tokenHash string) (GetPluginTokenByHashRow, error) {
+func (q *Queries) GetPluginTokenByHash(ctx context.Context, tokenHash pgtype.Text) (GetPluginTokenByHashRow, error) {
 	row := q.db.QueryRow(ctx, getPluginTokenByHash, tokenHash)
 	var i GetPluginTokenByHashRow
 	err := row.Scan(
@@ -92,13 +223,14 @@ func (q *Queries) GetPluginTokenByHash(ctx context.Context, tokenHash string) (G
 		&i.LastIp,
 		&i.CreatedAt,
 		&i.RevokedAt,
+		&i.InstallationID,
 		&i.UserID,
 	)
 	return i, err
 }
 
 const getPluginTokenByHashForUpdate = `-- name: GetPluginTokenByHashForUpdate :one
-SELECT t.id, t.account_id, t.token_hash, t.label, t.scopes, t.manifest_version, t.last_seq, t.last_seen_at, t.last_ip, t.created_at, t.revoked_at, a.user_id
+SELECT t.id, t.account_id, t.token_hash, t.label, t.scopes, t.manifest_version, t.last_seq, t.last_seen_at, t.last_ip, t.created_at, t.revoked_at, t.installation_id, a.user_id
 FROM plugin_ingest_tokens t
 JOIN accounts a ON a.id = t.account_id
 WHERE t.token_hash = $1 AND t.revoked_at IS NULL AND a.active = true
@@ -108,7 +240,7 @@ FOR UPDATE OF t
 type GetPluginTokenByHashForUpdateRow struct {
 	ID              string             `json:"id"`
 	AccountID       string             `json:"account_id"`
-	TokenHash       string             `json:"token_hash"`
+	TokenHash       pgtype.Text        `json:"token_hash"`
 	Label           pgtype.Text        `json:"label"`
 	Scopes          json.RawMessage    `json:"scopes"`
 	ManifestVersion int32              `json:"manifest_version"`
@@ -117,12 +249,13 @@ type GetPluginTokenByHashForUpdateRow struct {
 	LastIp          pgtype.Text        `json:"last_ip"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+	InstallationID  pgtype.Text        `json:"installation_id"`
 	UserID          string             `json:"user_id"`
 }
 
 // Serializes pushes for one token so client_seq comparison and advancement are
 // atomic with the snapshot and merged-state writes.
-func (q *Queries) GetPluginTokenByHashForUpdate(ctx context.Context, tokenHash string) (GetPluginTokenByHashForUpdateRow, error) {
+func (q *Queries) GetPluginTokenByHashForUpdate(ctx context.Context, tokenHash pgtype.Text) (GetPluginTokenByHashForUpdateRow, error) {
 	row := q.db.QueryRow(ctx, getPluginTokenByHashForUpdate, tokenHash)
 	var i GetPluginTokenByHashForUpdateRow
 	err := row.Scan(
@@ -137,6 +270,7 @@ func (q *Queries) GetPluginTokenByHashForUpdate(ctx context.Context, tokenHash s
 		&i.LastIp,
 		&i.CreatedAt,
 		&i.RevokedAt,
+		&i.InstallationID,
 		&i.UserID,
 	)
 	return i, err

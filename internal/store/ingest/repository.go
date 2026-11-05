@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -22,17 +21,21 @@ import (
 // adapterVersion 2: snapshot_facts, quests and diary tiers (migration 0005).
 const adapterVersion = 2
 
-// Service is the transport-facing ingest behavior.
+// Service is the transport-facing ingest behavior. Every plugin call names
+// its Credential: an ipl_ token or a tokenless dev installation.
 type Service interface {
-	Manifest(context.Context, string) (coreingest.Manifest, error)
-	Accept(context.Context, string, string, json.RawMessage, coreingest.Push) (coreingest.Response, error)
+	ManifestFor(context.Context, Credential) (coreingest.Manifest, error)
+	AcceptFor(context.Context, Credential, string, json.RawMessage, coreingest.Push) (coreingest.Response, error)
+	Principal(context.Context, Credential) (Principal, error)
 	CreateToken(context.Context, string, string, []coreingest.TokenScope) (CreatedToken, error)
 }
 
 // Reevaluator reevaluates an account's progress inside the ingest
-// transaction and returns how many steps changed status (steps_changed).
+// transaction. It returns how many steps changed status in every guide
+// (steps_changed) and what changed in the active route (the response's
+// route, read by the plugin panel).
 type Reevaluator interface {
-	Reevaluate(ctx context.Context, tx pgx.Tx, accountID, snapshotID string) (int, error)
+	ReevaluateRoute(ctx context.Context, tx pgx.Tx, accountID, snapshotID string) (int, coreingest.RouteUpdate, error)
 }
 
 // Repository implements Service with PostgreSQL transactions.
@@ -42,6 +45,8 @@ type Repository struct {
 	definition  Definition
 	reevaluator Reevaluator
 	publisher   events.Publisher
+	// devInstallations accepts tokenless credentials (AUTH_MODE=dev).
+	devInstallations bool
 }
 
 func New(pool *pgxpool.Pool, definition Definition) *Repository {
@@ -62,20 +67,14 @@ func (r *Repository) WithPublisher(p events.Publisher) *Repository {
 	return r
 }
 
+// Manifest returns the manifest of an ipl_ token.
 func (r *Repository) Manifest(ctx context.Context, plaintextToken string) (coreingest.Manifest, error) {
-	token, err := r.queries.GetPluginTokenByHash(ctx, tokenHash(plaintextToken))
-	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return coreingest.Manifest{}, ErrUnauthorized
-		}
-		return coreingest.Manifest{}, fmt.Errorf("get ingest token: %w", err)
-	}
-	scopes, err := decodeScopes(token.Scopes)
-	if err != nil {
-		return coreingest.Manifest{}, err
-	}
-	manifest := r.definition.manifest(scopes, int64(token.ManifestVersion) != r.definition.Version)
-	return manifest, manifest.Validate()
+	return r.manifestFor(ctx, Credential{Token: plaintextToken})
+}
+
+// ManifestFor returns the manifest of a token or a dev installation.
+func (r *Repository) ManifestFor(ctx context.Context, c Credential) (coreingest.Manifest, error) {
+	return r.manifestFor(ctx, c)
 }
 
 func responseFor(definition Definition, acceptedSeq int64, ok, resync bool) coreingest.Response {
@@ -88,9 +87,16 @@ func responseFor(definition Definition, acceptedSeq int64, ok, resync bool) core
 	}
 }
 
-// Accept validates and persists a push atomically. The token row lock covers
-// sequence comparison, all snapshot/state writes, and last_seq advancement.
-func (r *Repository) Accept(ctx context.Context, plaintextToken, remoteIP string, raw json.RawMessage, push coreingest.Push) (resp coreingest.Response, err error) {
+// Accept validates and persists a push of an ipl_ token.
+func (r *Repository) Accept(ctx context.Context, plaintextToken, remoteIP string, raw json.RawMessage, push coreingest.Push) (coreingest.Response, error) {
+	return r.AcceptFor(ctx, Credential{Token: plaintextToken}, remoteIP, raw, push)
+}
+
+// AcceptFor validates and persists a push atomically. The credential row
+// lock (the token's, or the dev installation's record for the push's
+// account) covers sequence comparison, all snapshot/state writes, and
+// last_seq advancement.
+func (r *Repository) AcceptFor(ctx context.Context, c Credential, remoteIP string, raw json.RawMessage, push coreingest.Push) (resp coreingest.Response, err error) {
 	if err = push.Validate(); err != nil {
 		return coreingest.Response{}, fmt.Errorf("%w: %v", ErrInvalidPayload, err)
 	}
@@ -107,12 +113,9 @@ func (r *Repository) Accept(ctx context.Context, plaintextToken, remoteIP string
 	}
 	defer func() { _ = tx.Rollback(ctx) }()
 	q := r.queries.WithTx(tx)
-	token, err := q.GetPluginTokenByHashForUpdate(ctx, tokenHash(plaintextToken))
+	token, err := r.lockCredential(ctx, q, c, push)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return coreingest.Response{}, ErrUnauthorized
-		}
-		return coreingest.Response{}, fmt.Errorf("lock ingest token: %w", err)
+		return coreingest.Response{}, err
 	}
 	resp = responseFor(r.definition, token.LastSeq, false, true)
 	if push.ClientSeq <= token.LastSeq {
@@ -121,14 +124,10 @@ func (r *Repository) Accept(ctx context.Context, plaintextToken, remoteIP string
 	if push.ManifestVersion != r.definition.Version {
 		return resp, ErrStaleManifest
 	}
-	if int64(token.ManifestVersion) != r.definition.Version && push.Kind != coreingest.PushFull {
+	if token.ManifestVersion != r.definition.Version && push.Kind != coreingest.PushFull {
 		return resp, ErrStaleManifest
 	}
-	scopes, err := decodeScopes(token.Scopes)
-	if err != nil {
-		return coreingest.Response{}, err
-	}
-	manifest := r.definition.manifest(scopes, false)
+	manifest := r.definition.manifest(token.Scopes, false)
 	if err = push.ValidateAgainst(manifest); err != nil {
 		return responseFor(r.definition, token.LastSeq, false, false), fmt.Errorf("%w: %v", ErrScopeDenied, err)
 	}
@@ -170,13 +169,16 @@ func (r *Repository) Accept(ctx context.Context, plaintextToken, remoteIP string
 	resp = responseFor(r.definition, push.ClientSeq, true, false)
 	changed := 0
 	if r.reevaluator != nil {
-		n, err := r.reevaluator.Reevaluate(ctx, tx, token.AccountID, snapshotID)
+		n, route, err := r.reevaluator.ReevaluateRoute(ctx, tx, token.AccountID, snapshotID)
 		if err != nil {
 			return coreingest.Response{}, fmt.Errorf("reevaluate progress: %w", err)
 		}
 		changed = n
 		steps := int64(n)
 		resp.StepsChanged = &steps
+		if route.Guide != "" {
+			resp.Route = &route
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return coreingest.Response{}, fmt.Errorf("commit ingest transaction: %w", err)

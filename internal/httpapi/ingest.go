@@ -17,11 +17,11 @@ import (
 const maxIngestBody = 2 << 20 // 2 MiB; manifests keep normal pushes far below this.
 
 func (s *Server) handleIngestManifest(w http.ResponseWriter, r *http.Request) {
-	token, ok := bearerToken(w, r)
+	cred, ok := s.pluginCredential(w, r)
 	if !ok {
 		return
 	}
-	manifest, err := s.opts.Ingest.Manifest(r.Context(), token)
+	manifest, err := s.opts.Ingest.ManifestFor(r.Context(), cred)
 	if err != nil {
 		s.writeIngestError(w, err)
 		return
@@ -30,7 +30,7 @@ func (s *Server) handleIngestManifest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleIngestPush(w http.ResponseWriter, r *http.Request) {
-	token, ok := bearerToken(w, r)
+	cred, ok := s.pluginCredential(w, r)
 	if !ok {
 		return
 	}
@@ -48,7 +48,7 @@ func (s *Server) handleIngestPush(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	response, err := s.opts.Ingest.Accept(r.Context(), token, remoteIP(r.RemoteAddr), raw, push)
+	response, err := s.opts.Ingest.AcceptFor(r.Context(), cred, remoteIP(r.RemoteAddr), raw, push)
 	if err != nil {
 		if errors.Is(err, storeingest.ErrStaleSequence) || errors.Is(err, storeingest.ErrStaleManifest) {
 			writeJSON(w, http.StatusConflict, response)
@@ -103,6 +103,9 @@ func (s *Server) writeIngestError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, storeingest.ErrAccountNotFound):
 		writeError(w, http.StatusNotFound, "account not found")
+	case errors.Is(err, storeingest.ErrAccountAmbiguous):
+		// 422, not 409: the plugin reads 409 as a stale sequence.
+		writeError(w, http.StatusUnprocessableEntity, "several dev accounts: set the plugin's account (Conta)")
 	default:
 		s.log.Error("ingest request failed", "err", err)
 		writeError(w, http.StatusInternalServerError, "ingest failed")

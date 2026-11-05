@@ -11,4 +11,7 @@ var (
 	ErrStaleManifest   = errors.New("client must refresh the manifest and send a full push")
 	ErrScopeDenied     = errors.New("ingest token does not allow the submitted item data")
 	ErrAccountNotFound = errors.New("ingest account does not exist or is inactive")
+	// ErrAccountAmbiguous: a tokenless dev request matches no single account
+	// (several accounts and nothing names one).
+	ErrAccountAmbiguous = errors.New("several accounts: set the plugin's account")
 )

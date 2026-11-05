@@ -46,7 +46,8 @@ func normalizeScopes(scopes []coreingest.TokenScope) ([]coreingest.TokenScope, e
 	seen := map[coreingest.TokenScope]bool{}
 	for _, scope := range scopes {
 		switch scope {
-		case coreingest.ScopeStateWrite, coreingest.ScopeItemsBank, coreingest.ScopeItemsInventory, coreingest.ScopeItemsEquipment:
+		case coreingest.ScopeStateWrite, coreingest.ScopeItemsBank, coreingest.ScopeItemsInventory, coreingest.ScopeItemsEquipment,
+			coreingest.ScopeMarksWrite:
 		default:
 			return nil, fmt.Errorf("unknown token scope %q", scope)
 		}
@@ -59,6 +60,14 @@ func normalizeScopes(scopes []coreingest.TokenScope) ([]coreingest.TokenScope, e
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i] < out[j] })
 	return out, nil
+}
+
+func encodeScopes(scopes []coreingest.TokenScope) ([]byte, error) {
+	raw, err := json.Marshal(scopes)
+	if err != nil {
+		return nil, fmt.Errorf("encode token scopes: %w", err)
+	}
+	return raw, nil
 }
 
 func randomText(prefix string, bytes int) (string, error) {
@@ -94,11 +103,14 @@ func (r *Repository) CreateToken(ctx context.Context, accountID, label string, s
 	if err != nil {
 		return CreatedToken{}, fmt.Errorf("generate token id: %w", err)
 	}
-	rawScopes, _ := json.Marshal(scopes)
+	rawScopes, err := encodeScopes(scopes)
+	if err != nil {
+		return CreatedToken{}, err
+	}
 	_, err = r.queries.CreatePluginToken(ctx, storedb.CreatePluginTokenParams{
 		ID:        id,
 		AccountID: accountID,
-		TokenHash: tokenHash(plaintext),
+		TokenHash: text(tokenHash(plaintext)),
 		Label: pgtype.Text{
 			String: strings.TrimSpace(label),
 			Valid:  strings.TrimSpace(label) != "",

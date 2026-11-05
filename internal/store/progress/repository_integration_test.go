@@ -108,6 +108,12 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 	if resp.StepsChanged == nil || *resp.StepsChanged != 3 {
 		t.Fatalf("steps_changed = %v, want 3 (a3, a5 in g1 and c2 in g2)", resp.StepsChanged)
 	}
+	// The response's route is the active guide's: its new cursor and every
+	// step whose status changed there, implied ones included, in route order.
+	if r := resp.Route; r == nil || r.Guide != "g1" || r.Cursor != "a6" || r.CursorCause != coreprogress.CursorAuto ||
+		strings.Join(r.Changed, ",") != "a1,a3,a4,a5" {
+		t.Fatalf("route = %+v, want g1 cursor a6 with a1,a3,a4,a5 changed", r)
+	}
 	firstSnapshot := latestSnapshot(ctx, t, pool)
 	var (
 		verdict, snapshot, metIn string
@@ -134,6 +140,9 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 	resp = push(ctx, t, ingest, token.Token, fullPush(2, map[string]int64{"agility": 10}, map[string]int64{"314": 120}))
 	if resp.StepsChanged == nil || *resp.StepsChanged != 0 {
 		t.Fatalf("steps_changed on an identical push = %v", resp.StepsChanged)
+	}
+	if r := resp.Route; r == nil || r.Cursor != "a6" || len(r.Changed) != 0 {
+		t.Fatalf("route on an identical push = %+v, want the same cursor and nothing changed", r)
 	}
 
 	// Spending the feathers keeps a5 done and marks the objective regressed.

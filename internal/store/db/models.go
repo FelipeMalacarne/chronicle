@@ -128,11 +128,11 @@ type PlayerState struct {
 	ObservedAt pgtype.Timestamptz `json:"observed_at"`
 }
 
-// Bearer tokens used by the Microbot plugin to push snapshots (docs/06).
+// Plugin credentials and their protocol state: ipl_ bearer tokens and tokenless dev installations (docs/04 section 2.5, docs/06).
 type PluginIngestToken struct {
 	ID              string             `json:"id"`
 	AccountID       string             `json:"account_id"`
-	TokenHash       string             `json:"token_hash"`
+	TokenHash       pgtype.Text        `json:"token_hash"`
 	Label           pgtype.Text        `json:"label"`
 	Scopes          json.RawMessage    `json:"scopes"`
 	ManifestVersion int32              `json:"manifest_version"`
@@ -141,6 +141,8 @@ type PluginIngestToken struct {
 	LastIp          pgtype.Text        `json:"last_ip"`
 	CreatedAt       pgtype.Timestamptz `json:"created_at"`
 	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+	// Plugin installation id (random UUID kept in the plugin config). Without token_hash the row is a tokenless AUTH_MODE=dev installation.
+	InstallationID pgtype.Text `json:"installation_id"`
 }
 
 // Current step per guide; switching guides keeps the place. accounts.guide_id stays the active guide.

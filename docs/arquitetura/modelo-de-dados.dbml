@@ -201,7 +201,7 @@ Table player_state {
 Table plugin_ingest_tokens {
   id text [pk]
   account_id text [not null]
-  token_hash text [not null, unique, note: 'sha256 of the \'ipl_...\' token (shown once)']
+  token_hash text [unique, note: 'sha256 of the \'ipl_...\' token (shown once)']
   label text [note: '\'desktop\', \'laptop\'']
   scopes jsonb [not null, default: `'["state:write"]'::jsonb`, note: '\'bank\',\'inventory\',\'equipment\' are opt-in']
   manifest_version integer [not null, default: `0`, note: 'last manifest version delivered to this client']
@@ -210,13 +210,16 @@ Table plugin_ingest_tokens {
   last_ip text
   created_at timestamptz [not null, default: `now()`]
   revoked_at timestamptz
+  installation_id text [note: 'Plugin installation id (random UUID kept in the plugin config). Without token_hash the row is a tokenless AUTH_MODE=dev installation.']
 
   indexes {
     (account_id) [name: 'plugin_ingest_tokens_account_idx']
+    `account_id, installation_id) WHERE (token_hash IS NULL` [name: 'plugin_ingest_tokens_installation_idx', unique]
   }
 
   Note: '''
-  Bearer tokens used by the Microbot plugin to push snapshots (docs/06).
+  Plugin credentials and their protocol state: ipl_ bearer tokens and tokenless dev installations (docs/04 section 2.5, docs/06).
+  plugin_ingest_tokens_credential: CHECK (((token_hash IS NOT NULL) OR (installation_id IS NOT NULL)))
   plugin_ingest_tokens_scopes_array: CHECK ((jsonb_typeof(scopes) = 'array'::text))
   '''
 }
@@ -516,7 +519,8 @@ TableGroup metas_e_caches {
 // ===== PLANEJADO (doc 09) =====
 // Escrito à mão: tabelas das próximas migrations. Ao implementar, a migration nova passa a gerar
 // estas tabelas na parte de cima; apague daqui o que já existir lá. O progresso sobre objetivos
-// (item 8) está acima desde a migration 0004; snapshot_facts e a faceta diary (item 7), desde a 0005.
+// (item 8) está acima desde a migration 0004; snapshot_facts e a faceta diary (item 7), desde a 0005;
+// o registro por instalação do plugin em plugin_ingest_tokens (item 14), desde a 0006.
 // Nenhuma tabela planejada no momento.
 
 Note mudancas_planejadas {

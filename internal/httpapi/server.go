@@ -56,9 +56,9 @@ type Options struct {
 	// means 25 s.
 	EventsHeartbeat time.Duration
 	// DevMode exposes the one-time ingest-token bootstrap endpoint and the
-	// account-addressed routes without a session (single local user). It must
-	// never be enabled by a production authentication mode, and it excludes
-	// OIDC.
+	// account-addressed routes without a session (single local user), and
+	// accepts tokenless plugin requests from loopback. It must never be
+	// enabled by a production authentication mode, and it excludes OIDC.
 	DevMode bool
 	// OIDC turns on AUTH_MODE=oidc: /auth/login, /auth/callback, /auth/logout
 	// and the account-addressed routes behind a session, restricted to the
@@ -120,6 +120,14 @@ func (s *Server) routes() {
 		if s.opts.DevMode {
 			s.mux.HandleFunc("POST /api/dev/ingest-token", s.handleCreateIngestToken)
 		}
+	}
+	// The plugin panel (docs/04 section 2.5) is addressed by the plugin's
+	// credential, like ingest, never by an account id: a token in every mode,
+	// tokenless only in dev mode from loopback (pluginCredential).
+	if s.opts.Ingest != nil && s.opts.Progress != nil {
+		s.mux.HandleFunc("GET /api/plugin/route", s.handlePluginRoute)
+		s.mux.HandleFunc("PATCH /api/plugin/guides/{guide}/steps/{id}/mark", s.handlePluginMark)
+		s.mux.HandleFunc("POST /api/plugin/guides/{guide}/marks", s.handlePluginRestore)
 	}
 	// Every route below addresses an account by id: in dev mode without a
 	// session, in oidc mode behind one and only for the session user's

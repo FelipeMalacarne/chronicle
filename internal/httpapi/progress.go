@@ -15,6 +15,7 @@ import (
 // ProgressService reads and writes account progress (docs/09 section 5).
 type ProgressService interface {
 	Board(ctx context.Context, accountID, guideID string) (storeprogress.BoardView, error)
+	ActiveGuide(ctx context.Context, accountID string) (string, error)
 	Mark(ctx context.Context, accountID, guideID, stepID string, action coreprogress.MarkAction, note *string) (storeprogress.BoardView, error)
 	ConfirmImplied(ctx context.Context, accountID, guideID string) (storeprogress.BoardView, error)
 	PinCursor(ctx context.Context, accountID, guideID, stepID string) (storeprogress.BoardView, error)

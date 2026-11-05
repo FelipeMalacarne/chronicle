@@ -113,7 +113,10 @@ func runServe(parent context.Context) error {
 				}
 				logger.Error("progress: boot indexing failed; continuing", "err", err)
 			}
-			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).WithReevaluator(progressRepo).WithPublisher(hub)
+			// Tokenless plugin installations only in dev mode (docs/04 section 2.5);
+			// the HTTP layer also requires a loopback peer.
+			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).
+				WithReevaluator(progressRepo).WithPublisher(hub).WithDevInstallations(cfg.IsDev())
 			ingestService, holdings, progressService = repo, repo, progressRepo
 			hiscoresClient := hiscores.New()
 			hiscoresDetector, accountService = hiscoresClient, progressRepo

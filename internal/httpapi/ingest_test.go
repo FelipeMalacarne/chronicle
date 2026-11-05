@@ -23,7 +23,12 @@ type fakeIngestService struct {
 	accepted     int
 	observations []coreingest.ItemObservation
 	created      int
+	// creds records every credential the handlers passed on.
+	creds []storeingest.Credential
 }
+
+// testInstallation is a plugin installation id (tokenless dev requests).
+const testInstallation = "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"
 
 func newFakeIngestService() *fakeIngestService {
 	return &fakeIngestService{lastSeq: map[string]int64{}}
@@ -47,8 +52,46 @@ func testManifest(bank bool) coreingest.Manifest {
 	}
 }
 
-func (f *fakeIngestService) Manifest(_ context.Context, token string) (coreingest.Manifest, error) {
-	switch token {
+func (f *fakeIngestService) record(c storeingest.Credential) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.creds = append(f.creds, c)
+}
+
+func (f *fakeIngestService) ManifestFor(_ context.Context, c storeingest.Credential) (coreingest.Manifest, error) {
+	f.record(c)
+	return f.manifest(c)
+}
+
+// Principal: a dev installation acts for c.Account or acc_dev with every
+// scope; "valid" and "nobank" read only; "marks" may write marks.
+func (f *fakeIngestService) Principal(_ context.Context, c storeingest.Credential) (storeingest.Principal, error) {
+	f.record(c)
+	if c.Tokenless() {
+		account := c.Account
+		if account == "ambiguous" {
+			return storeingest.Principal{}, storeingest.ErrAccountAmbiguous
+		}
+		if account == "" {
+			account = "acc_dev"
+		}
+		return storeingest.Principal{AccountID: account, Scopes: []coreingest.TokenScope{coreingest.ScopeStateWrite, coreingest.ScopeMarksWrite}, Tokenless: true}, nil
+	}
+	switch c.Token {
+	case "valid", "nobank":
+		return storeingest.Principal{AccountID: "account-1", Scopes: []coreingest.TokenScope{coreingest.ScopeStateWrite}}, nil
+	case "marks":
+		return storeingest.Principal{AccountID: "account-1", Scopes: []coreingest.TokenScope{coreingest.ScopeStateWrite, coreingest.ScopeMarksWrite}}, nil
+	default:
+		return storeingest.Principal{}, storeingest.ErrUnauthorized
+	}
+}
+
+func (f *fakeIngestService) manifest(c storeingest.Credential) (coreingest.Manifest, error) {
+	if c.Tokenless() {
+		return testManifest(true), nil
+	}
+	switch c.Token {
 	case "valid":
 		return testManifest(true), nil
 	case "nobank":
@@ -58,12 +101,17 @@ func (f *fakeIngestService) Manifest(_ context.Context, token string) (coreinges
 	}
 }
 
-func (f *fakeIngestService) Accept(_ context.Context, token, _ string, _ json.RawMessage, push coreingest.Push) (coreingest.Response, error) {
+func (f *fakeIngestService) AcceptFor(_ context.Context, c storeingest.Credential, _ string, _ json.RawMessage, push coreingest.Push) (coreingest.Response, error) {
+	f.record(c)
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	manifest, err := f.Manifest(context.Background(), token)
+	manifest, err := f.manifest(c)
 	if err != nil {
 		return coreingest.Response{}, err
+	}
+	token := c.Token
+	if c.Tokenless() {
+		token = "dev:" + c.Installation
 	}
 	response := coreingest.Response{
 		ContractVersion: coreingest.ContractVersion,

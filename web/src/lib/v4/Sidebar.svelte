@@ -22,7 +22,6 @@
 		wikisync: 'wikisync'
 	};
 	const sources = $derived(summary?.sources ?? []);
-	const hasQuests = false; // faceta de quest chega com o plugin 1.1 (item 7)
 
 	const items = $derived([
 		{ href: resolve('/'), label: 'Agora', icon: 'agora' as const, on: path === '/' },
@@ -75,9 +74,6 @@
 	{:else}
 		<div class="src"><span class="dot dot-off"></span>nenhuma fonte ainda</div>
 	{/each}
-	{#if !hasQuests}
-		<div class="src"><span class="dot dot-off"></span>quests · sem faceta (plugin 1.1)</div>
-	{/if}
 	<button class="sbtn tema" type="button" onclick={toggleTheme}>
 		<Glyph name="moon" size={14} />
 		<span>Tema: {theme.value}</span><span class="small">trocar</span>

@@ -206,7 +206,11 @@
 							{@const items = groupOf(g.group)}
 							{#if items.length || (g.group.includes('blocked') && missingLevels)}
 								<div class="sub">
-									{g.title}<span class="n">{items.length}{g.hint ? ` · ${g.hint}` : ''}</span>
+									{g.title}<span class="n"
+										>{items.length + (g.group.includes('blocked') && missingLevels ? 1 : 0)}{g.hint
+											? ` · ${g.hint}`
+											: ''}</span
+									>
 								</div>
 								{#if g.group.includes('done')}
 									<div class="ln ln-done">

@@ -222,12 +222,27 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
     páginas de erro do login, que são HTML mínimo fora do design system.
 - **Tokens de API** (`api_tokens`): `Authorization: Bearer apk_…`, para CLI, MCP e scripts.
 - **Tokens do plugin** (`plugin_ingest_tokens`): `Authorization: Bearer ipl_…`, escopo = uma conta,
-  mostrados uma vez, sha256 no banco, revogáveis, com `scopes` (`state:write`; `items:*` são opt-in).
-  Vale até a auth planejada do plugin (decisão 28 do doc 01, 2026-11-05):
-  - **`AUTH_MODE=dev`**: ingest, manifest e as rotas do painel do plugin aceitas sem token quando a
-    conexão vem de `127.0.0.1` (a stack só escuta no loopback); o plugin é configurado só com a URL. A
-    conta do push sai do RSN do personagem; com mais de uma conta em dev, um campo de conta na config.
-  - **`AUTH_MODE=oidc`**: Device Authorization Grant (RFC 8628) no Zitadel com uma aplicação nativa
+  mostrados uma vez, sha256 no banco, revogáveis, com `scopes` (`state:write`; `items:*` são opt-in;
+  `marks:write` deixa o painel do plugin gravar marcas). Valem em qualquer modo até o device flow
+  (item 15). Auth do plugin (decisão 28 do doc 01, 2026-11-05):
+  - **`AUTH_MODE=dev`, feito (item 14)**: ingest, manifest e as rotas do painel são aceitos sem
+    `Authorization` quando o peer TCP é loopback (`127.0.0.0/8` ou `::1`, lido de `RemoteAddr`;
+    `X-Forwarded-For` e afins nunca contam). O pedido leva `X-Ironman-Installation` (UUID minúsculo
+    que o plugin gera uma vez) e, opcional, `X-Ironman-Account` (campo "Conta" da config, id da
+    conta). Com `Authorization` presente vale só o token, também em dev (token errado é 401, nunca
+    cai no modo sem token). O estado do protocolo fica num registro por instalação na mesma
+    `plugin_ingest_tokens` (migration 0006: `installation_id`, `token_hash` nulo, um registro por
+    `(conta, instalação)`), com o mesmo lock de linha e a mesma semântica de `client_seq` e 409 do
+    token. Uma instalação de dev tem todos os escopos (o servidor é do dono e só escuta no
+    loopback); os toggles de item do plugin continuam sendo o segundo opt-in. A conta
+    (`ResolveDevAccount`, `internal/core/ingest`): a "Conta" quando preenchida (id desconhecido é
+    404, nunca trocado); senão a conta cujo RSN normalizado é o `username` do push (espaço não
+    separável do RuneLite conta como espaço); no manifest e no painel, que não têm RSN, a conta
+    para a qual a instalação enviou por último; senão a única conta ativa; com várias e nada que
+    decida, 422 pedindo a "Conta". O manifest sem token não depende da conta (é pedido antes do
+    login). Na stack do compose o app roda num container e o peer é o gateway da bridge, não o
+    loopback: lá o plugin usa o token.
+  - **`AUTH_MODE=oidc`, planejado (item 15)**: nada sem token. Device Authorization Grant (RFC 8628) no Zitadel com uma aplicação nativa
     pública, a mesma para toda instalação, sem dynamic client registration. O plugin descobre issuer e
     `client_id` em `GET /api/auth/plugin`, mostra o código, guarda o refresh token na config do RuneLite e
     renova sozinho. O access token é um JWT validado pela JWKS em cache, sem chamar o Zitadel a cada
@@ -245,7 +260,10 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/guides`, `GET /api/guides/{guide}` | feita | guias carregados e sumário de seções |
 | `GET /api/guides/{guide}/sections/{section}`, `GET /api/guides/{guide}/steps/{id}` | feita | conteúdo (steps planos e segmentos) |
 | `GET /api/guides/{guide}/now` | stub | primeiro passo e os cinco seguintes; vira o cursor da rota |
-| `GET /api/ingest/manifest`, `POST /api/ingest` | feita | plugin (seção 6.4) |
+| `GET /api/ingest/manifest`, `POST /api/ingest` | feita | plugin (seção 6.4): token `ipl_` em qualquer modo, ou sem token em dev pelo loopback (acima) |
+| `GET /api/plugin/route?limit=` | feita | painel do plugin: janela da rota ativa (passo do cursor e os `limit` seguintes, 1 a 50, padrão 15); credencial do plugin, nunca `?account=` |
+| `PATCH /api/plugin/guides/{guide}/steps/{id}/mark?limit=` | feita | Feito/Pular/Desfazer do painel: o mesmo `{kind, note}` e a mesma operação da rota da web (evento `progress`/`owner`); responde com a janela; token precisa de `marks:write` |
+| `POST /api/plugin/guides/{guide}/marks?limit=` | feita | Desfazer de uma marca `implied`: só `{restore: [...]}` (o desfazer em lote da web); responde com a janela; token precisa de `marks:write` |
 | `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` | feita (oidc) | login web pelo Zitadel (acima) |
 | `GET /api/me` | feita (dev, oidc) | usuário, roles do projeto e contas dele |
 | `POST /api/dev/ingest-token` | feita (só dev) | bootstrap de token sem UI |
@@ -269,6 +287,39 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/world?account=` | feita (dev, oidc) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
 | `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=` | planejadas | grafo e plano da meta (esperam os requisitos de quest no catálogo) |
 | `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
+
+Janela do painel (`internal/core/panel`, montagem pura; o plugin não tem catálogo, então todo
+rótulo sai daqui). Passos são os do board (`coreprogress.BuildBoard`): o do cursor com `current`
+e os visíveis da rota principal depois dele; `blocked_by` e `objectives` trazem o rótulo de exibição
+de cada chave (como `objectiveLabel` da web); `carry` é a readiness do trecho do cursor
+(`planning.EvaluateSegment`) ou, sem loadout no guia, a prévia dos próximos passos
+(`planning.LookAhead`, `derived: true`), com as ações de banco como texto; `attribution` é a linha
+de crédito do guia (regra 6). Exemplo abreviado:
+
+```json
+{
+  "guide": "oziris-main",
+  "title": "OSRS Ironman Efficiency Guide (OzirisLoL)",
+  "attribution": "Guia por OzirisLoL · ironman.guide",
+  "cursor": {"step_id": "1.1.7", "cause": "auto"},
+  "counts": {"total": 576, "done": 34, "auto_done": 30, "manual_done": 4, "implied": 0,
+             "skipped": 1, "pinned_open": 0, "remaining": 541, "blocked": 2},
+  "steps": [
+    {"id": "1.1.7", "ref": "1.1.7", "section_id": "1.1", "section_title": "Early game",
+     "title": "Talk to Bob…", "text": "Talk to Bob in Lumbridge and buy an axe.",
+     "location": "Lumbridge", "status": "pending", "current": true, "blocked_by": [],
+     "objectives": [{"key": "skill:woodcutting>=15", "role": "completes", "label": "15 Woodcutting", "verdict": "met"}]},
+    {"id": "1.1.8", "ref": "1.1.8", "section_id": "1.1", "title": "Start Dragon Slayer I",
+     "text": "…", "status": "pending", "current": false,
+     "blocked_by": [{"key": "qp>=32", "label": "32 quest points"}],
+     "objectives": [{"key": "qp>=32", "role": "requires", "label": "32 quest points", "verdict": "unmet"}]}
+  ],
+  "carry": {"segment_id": "…", "status": "not_ready", "loadout_status": "known", "derived": false,
+            "items": [{"name": "Hammer", "qty": 1, "qty_stated": true, "slot": "inventory",
+                       "verdict": "unmet", "carried": 0, "owned": "met", "held": 1}],
+            "bank_actions": ["Withdraw a hammer."]}
+}
+```
 
 ### 2.6 Backups e export
 
@@ -642,6 +693,19 @@ Detalhes do contrato (tipos Go em `internal/core/ingest/contract.go`; espelho Zo
   `ok:false, accepted_seq:last_seq, resync:true` para `seq ≤ last_seq` ou manifest antigo, e o cliente
   renumera e manda `full`. Cada POST aceito vira um `snapshots(kind, raw, client_seq)` e um merge em
   `player_state`.
+- **Resposta com a rota** (item 14): todo push aceito que reavaliou devolve, além de
+  `steps_changed`, `route: {guide, cursor, cursor_cause, changed}`: a rota ativa da conta, o cursor
+  depois do push e os passos dela que mudaram de status (do motor e da cascata), em ordem. É o que o
+  painel do plugin usa para decidir se relê a janela. Campo extra e opcional: o plugin 1.1.1 (Gson)
+  ignora campos desconhecidos.
+
+  ```json
+  {"contract_version": 1, "ok": true, "accepted_seq": 42, "resync": false, "manifest_version": 329934161,
+   "steps_changed": 1, "route": {"guide": "oziris-main", "cursor": "1.1.8", "cursor_cause": "auto", "changed": ["1.1.7"]}}
+  ```
+- **Credencial**: o `client_seq` é monotônico por credencial: por token, ou por registro de
+  instalação `(conta, instalação)` no modo sem token de dev (seção 2.5). O mesmo plugin trocando de
+  personagem tem um registro por conta.
 - **Resync**: `resync:true` no manifest ou na resposta manda o cliente atualizar o manifest e fazer `full`
   no ciclo seguinte. Login e logout também disparam `full` (o de logout leva o último estado conhecido).
 - **Cadência**: 10 s de verificação local, envio só se houver delta, backoff quadrático, timeout 3 s com
@@ -933,8 +997,21 @@ outro usuário, CSRF, sessão revogada pela política); `internal/store/identity
 Falta o deploy no saradomin (doc 07, seção 3.3), a tela de login/sair no canvas e a auth do plugin
 (item 15).
 
-Ainda não existe: anotações do BRUHsailer além do 1.1, deploy no saradomin, auth do plugin sem token,
-painel da rota no plugin, CLI/MCP sobre o cliente, grafo,
+Painel da rota no plugin e auth de dev sem token (item 14, 2026-11-05, branches
+`feat/painel-plugin` e `feat/painel-rota` do plugin): migration 0006 (registro por instalação em
+`plugin_ingest_tokens`), credencial do plugin no servidor (token `ipl_` ou, só em dev e pelo
+loopback, `X-Ironman-Installation`/`X-Ironman-Account`; `ResolveDevAccount` em
+`internal/core/ingest`), escopo `marks:write`, `route` na resposta do ingest (`Plan.Route`), a
+janela da rota em `internal/core/panel` e as rotas `/api/plugin/...` reaproveitando `Mark` e
+`RestoreMarks` (seção 2.5); plugin 1.2.0 com o painel lateral e a credencial plugável (doc 06).
+Verificação: testes de tabela (conta de dev, janela, rótulos, `Plan.Route`), testes HTTP (loopback
+aceito em dev, peer remoto recusado mesmo com `X-Forwarded-For`, nada sem token fora de dev,
+token inalterado, `marks:write`), `TestDevInstallationPostgres` e a rota da resposta em
+`TestProgressPostgresLifecycle`, goose up/down/up da 0006 com dados, `just dbml`; no plugin, 92
+testes JUnit e o jar. Falta usar no jogo.
+
+Ainda não existe: anotações do BRUHsailer além do 1.1, deploy no saradomin, device flow do plugin,
+CLI/MCP sobre o cliente, grafo,
 tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
 antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
 
@@ -956,7 +1033,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin (sessão web por PKCE e device flow do plugin, item 15); depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); falta o deploy no saradomin e a tela de login/sair |
 | 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05): falta conferir ao vivo com o plugin |
 | 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito no branch** (2026-11-05, `feat/push-por-evento`), falta instalar e conferir no jogo |
-| 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Próximo**, depois do item 12 |
+| 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito nos branches** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); falta instalar e conferir no jogo |
 | 15 | Auth do plugin em `oidc`: aplicação nativa no Zitadel, `GET /api/auth/plugin`, validação do JWT pela JWKS, roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | junto do deploy no saradomin (item 11) |
 | 16 | Plugin 1.2.x: posição e mundo (`data.position`, opt-in) com destaque na web dos passos pendentes no lugar (desenho no canvas antes), collection log e combat achievements (decisão 24 do doc 01) | por entrega |
 

@@ -1,9 +1,10 @@
 /**
- * Ironman Planner — espelho em Zod/TS de três contratos do servidor Go, só como referência para
+ * Ironman Planner — espelho em Zod/TS de quatro contratos do servidor Go, só como referência para
  * clientes TypeScript. A fonte da verdade é o código Go:
  *   - contrato de ingest v1: internal/core/ingest/contract.go e validate.go (doc 04, seção 6.4);
  *   - readiness do trecho: internal/core/planning/readiness.go (doc 04, seção 6.4.1);
- *   - eventos de tempo real (SSE): internal/events/hub.go (doc 04, seção 6.6).
+ *   - eventos de tempo real (SSE): internal/events/hub.go (doc 04, seção 6.6);
+ *   - janela da rota do painel do plugin: internal/core/panel/panel.go (doc 04, seção 2.5).
  * O schema do conteúdo é content/schema/guide.schema.json (não há mais tipos Zod para ele); o
  * modelo de progresso está no doc 09. Este arquivo não é compilado nem consumido pela web.
  */
@@ -18,7 +19,8 @@ export type Verdict = 'met' | 'unmet' | 'unknown';
 // ---------------------------------------------------------------------------
 // Contrato v1 do plugin Microbot
 // ---------------------------------------------------------------------------
-export const IngestTokenScope = z.enum(['state:write', 'items:bank', 'items:inventory', 'items:equipment']);
+// marks:write: escrita das marcas pelo painel do plugin (instalação de dev sem token tem todos).
+export const IngestTokenScope = z.enum(['state:write', 'items:bank', 'items:inventory', 'items:equipment', 'marks:write']);
 export type IngestTokenScope = z.infer<typeof IngestTokenScope>;
 
 const uniquePositiveIDs = z.array(z.number().int().positive().safe()).refine(
@@ -179,7 +181,21 @@ export const IngestResponse = z.object({
   resync: z.boolean().default(false),          // true => cliente deve mandar 'full' no próximo ciclo
   manifest_version: z.number().int().positive().safe(), // se diferente, cliente rebaixa manifest
   steps_changed: z.number().int().nonnegative().safe().optional(),
+  // Rota ativa depois da reavaliação deste push (painel do plugin 1.2.0); clientes antigos ignoram.
+  route: z.object({
+    guide: z.string(),
+    cursor: z.string().optional(),               // ausente: rota concluída
+    cursor_cause: z.enum(['auto', 'pin']).optional(),
+    changed: z.array(z.string()),                // passos da rota ativa que mudaram de status, em ordem
+  }).strict().optional(),
 }).strict();
+
+// Pedido sem token (só AUTH_MODE=dev e peer de loopback; doc 04, seção 2.5): sem Authorization,
+// com estes cabeçalhos. O token ipl_ continua valendo quando presente.
+export interface TokenlessHeaders {
+  'X-Ironman-Installation': string;  // UUID minúsculo gerado uma vez pelo plugin
+  'X-Ironman-Account'?: string;      // config "Conta": id da conta, só com várias contas
+}
 
 // ---------------------------------------------------------------------------
 // Readiness do trecho — GET /api/guides/{guide}/readiness?account=&step=
@@ -299,3 +315,55 @@ export const LiveEvent = z.object({
   at: z.string().datetime({ offset: true }),
 });
 export type LiveEvent = z.infer<typeof LiveEvent>;
+
+// ---------------------------------------------------------------------------
+// Painel do plugin: GET /api/plugin/route?limit= (passos depois do cursor, 1..50, padrão 15);
+// PATCH /api/plugin/guides/{guide}/steps/{id}/mark?limit= ({kind, note?}, como a web) e
+// POST /api/plugin/guides/{guide}/marks?limit= ({restore: MarkRestore[]}) respondem com a mesma
+// janela. Autenticação do plugin (token ou sem token em dev); escrita por token exige marks:write.
+// ---------------------------------------------------------------------------
+export type StepStatus = 'pending' | 'auto_done' | 'manual_done' | 'implied' | 'skipped' | 'pinned_open';
+
+export interface StepMark {
+  kind: 'manual_done' | 'skipped' | 'pinned_open' | 'implied';
+  implied_by_step_id?: string;
+  note?: string;
+}
+
+export interface RouteWindow {
+  guide: string;
+  title: string;
+  attribution: string;                 // regra 6 do CLAUDE.md
+  cursor: { step_id: string; cause: 'auto' | 'pin' } | null;
+  counts: { total: number; done: number; auto_done: number; manual_done: number; implied: number;
+            skipped: number; pinned_open: number; remaining: number; blocked: number };
+  steps: RouteWindowStep[];            // o passo do cursor (current) e os próximos visíveis da rota principal
+  carry: RouteCarry | null;            // trecho do cursor
+}
+
+export interface RouteWindowStep {
+  id: string;
+  ref: string;                         // referência do autor
+  section_id: string;
+  section_title?: string;
+  title: string;
+  text: string;
+  location?: string;
+  status: StepStatus;
+  mark?: StepMark;
+  current: boolean;
+  blocked_by: { key: string; label: string }[];  // "falta …"
+  objectives: { key: string; role: 'completes' | 'starts' | 'requires' | 'uses'; label: string;
+                verdict: Verdict; regressed?: boolean }[];
+}
+
+export interface RouteCarry {
+  segment_id: string;
+  title?: string;
+  status: ReadinessStatus;
+  loadout_status: 'known' | 'partial' | 'unknown';
+  derived: boolean;                    // sem setup no guia: prévia dos próximos passos, nunca loadout
+  items: { name: string; qty: number; qty_stated: boolean; slot: 'inventory' | 'equipment';
+           optional?: boolean; verdict: Verdict; carried: number; owned?: Verdict; held?: number }[];
+  bank_actions: string[];
+}

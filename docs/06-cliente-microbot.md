@@ -292,3 +292,62 @@ Authorization Grant no Zitadel (aplicação nativa pública, sem DCR): o plugin 
 `client_id` no planner, mostra o código, guarda o refresh token na config e renova sozinho; as roles do
 projeto no JWT (`ingest`, `items:*`, `marks:write`) fazem o papel dos `scopes`. A credencial é plugável no
 plugin desde o painel (nenhuma em dev, device flow em `oidc`), e o `ipl_` sai quando o device flow entrar.
+
+## Adendo de 2026-11-05: painel da rota e auth sem token implementados (item 14)
+
+Servidor no branch `feat/painel-plugin`, plugin 1.2.0 no `feat/painel-rota` do `microbot-plugins`.
+Contrato e rotas: doc 04, seções 2.5 e 6.4; espelho em `docs/arquitetura/types.ts`.
+
+**Credencial plugável no plugin.** `PlannerCredential` decide o que o pedido leva:
+
+- `NoCredential` (padrão, "None (dev, URL only)"): nada de `Authorization`; `X-Ironman-Installation`
+  com o id da instalação e, se preenchido, `X-Ironman-Account` com a "Conta". Só funciona com o
+  planner em `AUTH_MODE=dev` e o plugin chegando pelo loopback (`just dev` no zaros; na stack do
+  compose o peer é o gateway do Docker e o plugin precisa do token).
+- `TokenCredential` ("ipl_ token"): `Authorization: Bearer ipl_…`, como na 1.1.1. As marcas do painel
+  pedem o escopo `marks:write` no token.
+- Device flow de `oidc` (item 15): só o ponto de extensão documentado na interface, sem implementação.
+
+O id da instalação é um UUID aleatório gerado uma vez e guardado na config (`installationId`,
+escondida). Ele identifica a instalação, não o jogador: o servidor guarda o `client_seq` e o manifest
+por `(conta, instalação)` (migration 0006), então trocar de personagem no mesmo cliente não mistura
+sequências. Token, username e RSN continuam fora dos logs.
+
+**Qual conta.** O push já leva o nome do personagem (`username`), então o contrato não ganhou campo:
+o servidor usa a "Conta" quando preenchida, senão a conta desse RSN, senão a única conta; no manifest e
+no painel (sem RSN), a conta da última vez que a instalação enviou. Com várias contas e nenhum desses
+sinais, 422 pedindo a "Conta".
+
+**Painel** (`RoutePanel`, `RoutePanelController`, `PanelText`). Botão "Ironman Planner" na barra
+lateral; dentro, no visual do RuneLite:
+
+- cabeçalho: nome da rota, atribuição do guia (regra 6), "N de M feitos · K bloqueados" e a linha de
+  conexão ("Conectado · há 12 s"; "Desatualizado · há 3 min · servidor fora do ar"; "Sem conexão");
+- AGORA: referência e seção, texto completo, local, chips de objetivo com glifo por veredito (✓ met,
+  ✗ unmet, ? unknown com borda tracejada; "requer"/"usa" no rótulo), cadeado e "falta …" quando
+  bloqueado, botões Feito, Pular e Desfazer;
+- itens do trecho do cursor (✓ na mochila/equipado, ○ no banco, ✗ falta, ? não sabemos) e as ações de
+  banco do guia; sem setup no guia, "Itens dos próximos passos" com o aviso de prévia;
+- Próximos: os 15 passos seguintes numa lista compacta com glifo de estado, cadeado nos bloqueados;
+  clique expande texto, chips e Feito/Pular daquele passo;
+- botão Atualizar.
+
+Feito e Pular chamam `PATCH /api/plugin/guides/{guide}/steps/{id}/mark` (`manual_done`, `skipped`);
+Desfazer desfaz a última marca do painel com a marca anterior do passo (`clear` se não havia, o mesmo
+`kind` se havia `skipped`/`manual_done`/`pinned_open`, e o restore em lote quando era `implied` e a
+ação foi Feito; Pular num presumido se desfaz com `clear`, porque o restore só volta por cima de
+`manual_done`). As respostas já trazem a janela nova e o servidor publica o `progress`/`owner` do SSE,
+então a web atualiza junto.
+
+**Quando relê.** Depois de cada push confirmado cuja `route` mudou (cursor diferente do exibido, outra
+rota ativa ou `changed` não vazio; com servidor antigo, `steps_changed > 0`), depois de cada marca, no
+login, ao abrir o painel e a cada 30 s enquanto ele está visível. A última janela fica em memória e
+continua na tela, marcada "Desatualizado", quando o servidor não responde; trocar URL ou credencial
+descarta o cache e o Desfazer.
+
+**Threads.** Captura na thread do cliente, protocolo de ingest na `ironman-planner-sync`, HTTP do
+painel na `ironman-planner-panel`, Swing só no EDT. Nenhum HTTP no EDT nem na thread do cliente.
+
+Verificação: 92 testes JUnit (janela e resposta do ingest com campos novos e antigos, chamadas HTTP de
+Feito/Pular/Desfazer, gatilhos de releitura, cache offline, credenciais, id de instalação, textos) e o
+jar; render sem tela do painel conferido. Falta instalar e usar no jogo.

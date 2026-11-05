@@ -118,12 +118,30 @@ armazenam.
              | complete                      (diary)
              | done                          (unlock, ca)
  ">=" N     := skill (nível), boss (kill count), qp (quest points)
- "x" N      := item exato; N ≥ 1 sempre explícito na chave (item:952x1, nunca item:952)
+ "x" N      := item exato              item:<id>xN; N ≥ 1 sempre explícito (item:952x1, nunca item:952)
+             | família                 item:family/<slug>xN (qualquer variante da família, somadas)
+             | alternativas            item:any(<id>x<n>|<id>x<n>|...), sem xN externo
 ```
 
 Exemplos: `quest:x_marks_the_spot@finished`, `quest:rune_mysteries@started`, `skill:agility>=70`,
-`diary:ardougne:easy@complete`, `item:960x120`, `unlock:fairy_rings@done`, `boss:zulrah>=50`,
-`ca:574@done`, `qp>=107`.
+`diary:ardougne:easy@complete`, `item:960x120`, `item:family/graceful_hoodx1`,
+`item:any(1355x2|1357x1|1359x1)`, `unlock:fairy_rings@done`, `boss:zulrah>=50`, `ca:574@done`,
+`qp>=107`.
+
+As duas formas não exatas de item (D4, revisada):
+
+- **Família**: o slug é o de `entities.FamilySlug` no catálogo de itens (`Registry.Family`). Qualquer
+  variante conta e as quantidades se somam: vestido e no inventário, doses, cargas, forma noteada (a
+  mesma avaliação de `rules.OwnsFamily`, seção 3.4).
+- **Alternativas**: cada alternativa tem a sua quantidade e o objetivo está `met` quando **uma**
+  alternativa atinge a própria quantidade sozinha; as alternativas não se somam. "Um mithril axe e mais
+  outro mith axe, um addy axe ou um rune axe" (Oziris 1.3.65) são duas chaves: `item:1355x1` e
+  `item:any(1355x2|1357x1|1359x1)`.
+- **Forma canônica**: como o texto da chave é a chave primária de `objective_progress`, cada objetivo
+  tem uma única grafia. Nas alternativas: ids em ordem crescente, sem repetição, ao menos duas, toda
+  quantidade explícita e ≥ 1. `ParseObjectiveKey` rejeita qualquer outra grafia (não normaliza) e
+  `String()` devolve a mesma. O parse é sintático; `ironman content validate` e o verificador das
+  anotações conferem no catálogo que a família existe e que cada id das alternativas é um item.
 
 Cada alvo mapeia para uma regra do motor e para a faceta do `player_state` que a sustenta. A fonte de
 cada faceta é parte do modelo (princípio 6):
@@ -132,7 +150,7 @@ cada faceta é parte do modelo (princípio 6):
 |---|---|---|---|
 | `quest@started` / `quest@finished` | `quest_state` | `quest` | plugin, faceta `data.quest` do contrato v1 (item 7 da sequência); hiscores não sabe |
 | `skill>=N` | `skill_level` | `skill` | plugin (`level`) ou hiscores |
-| `item xN` | `item_owned` | `item` | plugin, containers opt-in (doc 04, seção 6.4.1) |
+| `item xN` | `item_owned` (exato), `OwnsFamily` (família), `OwnsAlternatives` (alternativas) | `item` | plugin, containers opt-in (doc 04, seção 6.4.1) |
 | `diary@complete` | `diary_tier` | `diary` | plugin, varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` listados em `content/reference/varbits.json` e pedidos no manifest |
 | `unlock@done` | `varbit`/`varp` do catálogo, senão só manual | `varbit`/`varp` | plugin, varbit do catálogo de unlocks no manifest |
 | `boss>=N` | `boss_kc` | `activity` | hiscores (plugin não vê KC) |
@@ -142,9 +160,10 @@ cada faceta é parte do modelo (princípio 6):
 O manifest do ingest passa a ser construído a partir dessas tabelas de referência (varbits de diary,
 varbits de unlock, varp 101) mais o que as regras do conteúdo pedirem, e não só das regras.
 
-O objetivo é avaliado **uma vez por conta** e não por guia. Requisitos de item não exatos (`any_of`,
-`family`, seção 3.4) **não têm chave de objetivo**: vivem só em loadouts e no papel `uses`, e são avaliados
-pela readiness e pela posse, nunca persistidos em `objective_progress`.
+O objetivo é avaliado **uma vez por conta** e não por guia. Os requisitos de item dos loadouts
+(`any_of`, `family`, seção 3.4) continuam sem chave de objetivo: são avaliados pela readiness e pela
+posse, nunca persistidos em `objective_progress`. Quando o passo tem como objetivo uma família ou
+alternativas, a anotação usa as chaves `item:family/...` e `item:any(...)` acima.
 
 ### 3.3 Papel do objetivo no passo
 
@@ -683,7 +702,7 @@ Nenhuma. O planejamento do modelo está fechado; a execução segue o doc 04, se
 | D1 | Como quest e diary chegam ao `player_state` | faceta `data.quest` no contrato v1 (aditiva) e varbits de diary de referência no manifest; não mapear varbit → quest no servidor |
 | D2 | Eventos de status de passo | para todos os guias, não só a rota ativa |
 | D3 | Onde vivem as anotações | sidecar canônico lido pelo loader; sem comando `merge` |
-| D4 | Requisitos de item não exatos | sem chave de objetivo; `category` fora desta revisão |
+| D4 | Requisitos de item não exatos | revisada pelo dono em 2026-11-04: objetivos de item ganham as chaves `item:family/<slug>xN` e `item:any(<id>x<n>\|...)` (seção 3.2); os requisitos dos loadouts seguem sem chave; `category` fora desta revisão |
 | D5 | `content_steps` | fica como índice mínimo, gravado pelo loader |
 | D6 | Ids do BRUHsailer | posicionais da numeração upstream, com fingerprint do texto |
 | D7 | Ordem da sequência | mantida: extração completa antes do progresso persistido; o contrato (D1) entra como item próprio antes do progresso |

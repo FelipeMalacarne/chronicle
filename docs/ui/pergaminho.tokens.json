@@ -1,0 +1,108 @@
+{
+  "name": "Pergaminho",
+  "version": 1,
+  "meta": {
+    "source": "hand",
+    "synced": "2026-11-04",
+    "note": "Sistema do Ironman Planner, coeso com a interface do Old School RuneScape: pergaminho do quest journal de dia (tema pergaminho), pedra e madeira da interface escura de noite (tema pedra). Nenhum asset da Jagex é copiado; só a linguagem (bevel, placas, dourado sobre madeira, verde/amarelo/vermelho de quest)."
+  },
+  "color": {
+    "themes": [
+      { "id": "pergaminho", "name": "Pergaminho (claro)" },
+      { "id": "pedra", "name": "Pedra (escuro)" }
+    ],
+    "tokens": [
+      { "name": "ground", "value": { "pergaminho": "#d9ccaa", "pedra": "#15120e" }, "usage": "Chão da página. De dia é o papel do quest journal; de noite, a pedra da interface escura." },
+      { "name": "surface", "value": { "pergaminho": "#cbbb90", "pedra": "#221d16" }, "usage": "Painéis, cards, linhas de lista. Um degrau mais escuro que o chão de dia, mais claro de noite." },
+      { "name": "elevated", "value": { "pergaminho": "#bbaa7a", "pedra": "#2e2720" }, "usage": "Linha selecionada, botão secundário, trilho de barra, slot vazio de inventário." },
+      { "name": "frame", "value": { "pergaminho": "#3b2f1e", "pedra": "#0e0c09" }, "usage": "Madeira e pedra escura: sidebar, barra do topo, placas de título, botão primário. Escuro nos dois temas; o texto sobre ele é on-frame ou gold." },
+      { "name": "frame-2", "value": { "pergaminho": "#52432b", "pedra": "#1a1611" }, "usage": "Hover e item ativo dentro do frame; trilho da barra de XP." },
+      { "name": "border", "value": { "pergaminho": "#8e7d57", "pedra": "#3e3529" }, "usage": "Contorno de painéis e slots (1px). Decorativo: nunca o único sinal de um controle." },
+      { "name": "hairline", "value": { "pergaminho": "#b6a57c", "pedra": "#2a241c" }, "usage": "Divisores entre linhas e grupos." },
+      { "name": "bevel-light", "value": { "pergaminho": "#e6dbbe", "pedra": "#3a322a" }, "usage": "Aresta superior-esquerda do bevel (inset 1px). Só via o shadow bevel." },
+      { "name": "bevel-dark", "value": { "pergaminho": "#9f8e66", "pedra": "#0b0906" }, "usage": "Aresta inferior-direita do bevel (inset -1px). Só via o shadow bevel." },
+      { "name": "ink", "value": { "pergaminho": "#2b2114", "pedra": "#e8dcc0" }, "usage": "Texto principal sobre ground, surface e elevated. ≥ 9:1 nos dois temas." },
+      { "name": "ink-muted", "value": { "pergaminho": "#4a3a22", "pedra": "#b3a58a" }, "usage": "Texto secundário: descrições, locais, notas do guia. ≥ 6:1." },
+      { "name": "ink-subtle", "value": { "pergaminho": "#5e4d30", "pedra": "#9c8f75" }, "usage": "Eyebrows, ids de passo, contadores, horários. ≥ 4,6:1 sobre elevated; não para conteúdo essencial." },
+      { "name": "on-frame", "value": { "pergaminho": "#e8dcc0", "pedra": "#e8dcc0" }, "usage": "Texto e ícones sobre frame e frame-2 (sidebar, placas, botão primário)." },
+      { "name": "on-frame-muted", "value": { "pergaminho": "#b3a58a", "pedra": "#b3a58a" }, "usage": "Texto secundário sobre frame: itens inativos da sidebar, horários das fontes." },
+      { "name": "gold", "value": { "pergaminho": "#f2c94c", "pedra": "#f2c94c" }, "usage": "O amarelo do jogo. SÓ sobre frame: título de placa, item ativo da sidebar, texto do botão primário, nível na célula de skill. Nunca sobre pergaminho (2,3:1)." },
+      { "name": "gold-ink", "value": { "pergaminho": "#6b4700", "pedra": "#f2c94c" }, "usage": "O mesmo significado do gold quando o fundo é claro: passo atual, meta fixada, quest em progresso. Sobre ground de dia 5,2:1." },
+      { "name": "gold-tint", "value": { "pergaminho": "#f2c94c38", "pedra": "#f2c94c24" }, "usage": "Realce do passo atual e da meta fixada por trás do texto. Palavras sobre tint usam ink." },
+      { "name": "done", "value": { "pergaminho": "#175a22", "pedra": "#6dbf5b" }, "usage": "Quest concluída, passo feito, requisito atendido, fonte conectada. Verde do quest journal. Sempre com glifo ✓." },
+      { "name": "done-tint", "value": { "pergaminho": "#175a2226", "pedra": "#6dbf5b26" }, "usage": "Poço do check e fundo de badge de feito." },
+      { "name": "progress", "value": { "pergaminho": "#6b4700", "pedra": "#f2c94c" }, "usage": "Quest em progresso, meta em andamento (o amarelo do quest journal). Igual a gold-ink de propósito: em progresso é a cor da decisão." },
+      { "name": "not-started", "value": { "pergaminho": "#a11d1d", "pedra": "#e86c5c" }, "usage": "Quest não iniciada e requisito bloqueado (o vermelho do quest journal). Sempre com cadeado ou palavra." },
+      { "name": "auto", "value": { "pergaminho": "#1f4e8c", "pedra": "#7fa7d8" }, "usage": "Dado que veio de uma fonte automática: badges HS, WS, RL. Azul porque não existe azul no journal: é a cor do que é 'de fora'." },
+      { "name": "auto-tint", "value": { "pergaminho": "#1f4e8c22", "pedra": "#7fa7d822" }, "usage": "Fundo dos badges de fonte automática." },
+      { "name": "stale", "value": { "pergaminho": "#8a3b00", "pedra": "#e39a4a" }, "usage": "Fonte com mais de 24 h, conflito entre o que você marcou e o que a regra diz, nota de atualização do guia." },
+      { "name": "stale-tint", "value": { "pergaminho": "#8a3b0022", "pedra": "#e39a4a22" }, "usage": "Faixa de dados desatualizados e badge de conflito." },
+      { "name": "error", "value": { "pergaminho": "#a11d1d", "pedra": "#e86c5c" }, "usage": "Só falha de fonte ou de ação. Mesmo vermelho de not-started; difere pelo ícone de alerta e pela frase." },
+      { "name": "focus", "value": { "pergaminho": "#1f4e8c", "pedra": "#f2c94c" }, "usage": "Anel de foco de 2px. Azul de dia (o ouro some no papel), ouro de noite." }
+    ]
+  },
+  "type": {
+    "fonts": [],
+    "families": {
+      "display": "Alegreya, Georgia, \"Times New Roman\", serif",
+      "sans": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+      "mono": "\"JetBrains Mono\", ui-monospace, SFMono-Regular, Menlo, monospace"
+    },
+    "groups": [
+      {
+        "name": "Voz do jogo",
+        "family": "display",
+        "styles": [
+          { "name": "display", "fontSize": "32px", "lineHeight": 1.1, "fontWeight": 700, "sample": "Use the housetab and train construction", "usage": "Texto do passo atual e título de página. Um por tela. A serifa de pena do quest journal." },
+          { "name": "heading", "fontSize": "22px", "lineHeight": 1.15, "fontWeight": 700, "sample": "Early quests, wintertodt and ardy cloak 1", "usage": "Título de seção da rota, nome da meta, nome da entidade selecionada." },
+          { "name": "plaque", "fontSize": "15px", "lineHeight": 1.2, "fontWeight": 700, "letterSpacing": "0.02em", "sample": "Passo atual", "usage": "Título de placa sobre frame, em gold. Como o título de uma aba da interface do jogo." }
+        ]
+      },
+      {
+        "name": "Interface",
+        "family": "sans",
+        "styles": [
+          { "name": "body", "fontSize": "14px", "lineHeight": 1.45, "fontWeight": 400, "sample": "Use phials to un-note planks.", "usage": "Texto de passos na lista, notas, descrições." },
+          { "name": "control", "fontSize": "13px", "lineHeight": 1.2, "fontWeight": 500, "sample": "Fixar outro passo", "usage": "Botões, chips, itens da sidebar." },
+          { "name": "label", "fontSize": "12px", "lineHeight": 1.3, "fontWeight": 400, "sample": "Rimmington · há 4 min via hiscores", "usage": "Metadados de linha, legendas de célula." },
+          { "name": "caption", "fontSize": "11px", "lineHeight": 1.3, "fontWeight": 400, "sample": "Imagens © Jagex via OSRS Wiki", "usage": "Rodapé, atribuição, dicas de teclado." },
+          { "name": "level", "fontSize": "20px", "lineHeight": 1, "fontWeight": 600, "sample": "8 → 20", "usage": "Número da célula de skill, numerais tabulares (font-variant-numeric: tabular-nums)." }
+        ]
+      },
+      {
+        "name": "Dados",
+        "family": "mono",
+        "styles": [
+          { "name": "eyebrow", "fontSize": "11px", "lineHeight": 1.3, "fontWeight": 500, "letterSpacing": "0.08em", "sample": "ROTA ATIVA · SEÇÃO 1.1", "usage": "Rótulo de seção em caixa alta, ink-subtle (ou on-frame-muted sobre frame)." },
+          { "name": "data", "fontSize": "12px", "lineHeight": 1.4, "fontWeight": 400, "sample": "1.1.77 · 74/286 · 12.4k gp", "usage": "Ids de passo, contagens, quantidades, horários, XP. Numerais tabulares." },
+          { "name": "qty", "fontSize": "11px", "lineHeight": 1, "fontWeight": 500, "sample": "120", "usage": "Quantidade no canto do slot de inventário, como no jogo." }
+        ]
+      }
+    ]
+  },
+  "spacing": {
+    "tokens": [
+      { "name": "space-1", "value": "4px", "usage": "Gap entre glifo e texto, entre badges." },
+      { "name": "space-2", "value": "8px", "usage": "Gap entre linhas de lista, entre slots de inventário, entre botões." },
+      { "name": "space-3", "value": "12px", "usage": "Padding horizontal de linha e de chip; gap entre colunas de célula." },
+      { "name": "space-4", "value": "16px", "usage": "Padding de painel compacto; gap entre cards na sidebar." },
+      { "name": "space-6", "value": "24px", "usage": "Padding do card do passo atual; gap entre colunas de conteúdo." },
+      { "name": "space-8", "value": "32px", "usage": "Padding lateral da área de conteúdo no desktop." },
+      { "name": "slot", "value": "44px", "usage": "Lado do slot de inventário e altura mínima de alvo de toque no celular." }
+    ]
+  },
+  "radius": {
+    "tokens": [
+      { "name": "radius-xs", "value": "2px", "usage": "Slots, badges, placas. A interface do jogo é quase quadrada: este é o padrão." },
+      { "name": "radius-sm", "value": "4px", "usage": "Botões, chips, linhas selecionadas." },
+      { "name": "radius-md", "value": "6px", "usage": "Cards e painéis." }
+    ]
+  },
+  "shadow": {
+    "tokens": [
+      { "name": "bevel", "value": { "pergaminho": "inset 1px 1px 0 #e6dbbe, inset -1px -1px 0 #9f8e66", "pedra": "inset 1px 1px 0 #3a322a, inset -1px -1px 0 #0b0906" }, "usage": "Aresta de painel, slot e botão secundário sobre surface/elevated: claro em cima e à esquerda, escuro embaixo e à direita, como as bordas da interface do jogo." },
+      { "name": "bevel-frame", "value": { "pergaminho": "inset 1px 1px 0 #6a5a3c, inset -1px -1px 0 #1c160d", "pedra": "inset 1px 1px 0 #2a241c, inset -1px -1px 0 #000000" }, "usage": "O mesmo bevel sobre frame: sidebar, placas, botão primário." },
+      { "name": "panel", "value": { "pergaminho": "0 8px 24px rgba(43, 33, 20, 0.25)", "pedra": "0 8px 24px rgba(0, 0, 0, 0.5)" }, "usage": "Só para o que flutua: paleta de comando, menus, toasts." }
+    ]
+  }
+}

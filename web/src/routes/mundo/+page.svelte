@@ -25,11 +25,14 @@
 	 * o grafo por foco fica para o item do grafo.
 	 */
 	const account = $derived(session.account);
-	const world = createResource(() =>
-		account ? progressApi.world(account) : Promise.resolve({ entities: [] as WorldEntity[] })
+	const world = createResource(
+		() =>
+			account ? progressApi.world(account) : Promise.resolve({ entities: [] as WorldEntity[] }),
+		{ tags: ['progress'] }
 	);
-	const goals = createResource(() =>
-		account ? progressApi.goals(account) : Promise.resolve({ goals: [] as Goal[] })
+	const goals = createResource(
+		() => (account ? progressApi.goals(account) : Promise.resolve({ goals: [] as Goal[] })),
+		{ tags: ['progress'] }
 	);
 	const routes = $derived(session.summary?.routes ?? []);
 	const active = $derived(routes.find((r) => r.active));

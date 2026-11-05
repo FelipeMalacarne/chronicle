@@ -37,6 +37,21 @@ export async function loadSummary(account: string | undefined): Promise<void> {
 	}
 }
 
+/** Releitura silenciosa (eventos do servidor): sem `loading`; uma falha mantém o resumo. */
+export async function refreshSummary(): Promise<void> {
+	const account = session.account;
+	if (!account) return;
+	const my = ++seq;
+	try {
+		const summary = await progressApi.summary(account);
+		if (my !== seq) return;
+		session.summary = summary;
+		session.error = null;
+	} catch {
+		/* o indicador global de sync já registrou a falha */
+	}
+}
+
 export function setSummary(summary: ProgressSummary) {
 	seq++;
 	session.summary = summary;

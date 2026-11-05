@@ -4,10 +4,12 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { ApiError } from '#lib/api/client';
+	import { connectLive, dismissDetection, live } from '#lib/api/events.svelte';
 	import Sidebar from '#lib/v4/Sidebar.svelte';
 	import { currentAccount } from '#lib/progress/account.svelte';
 	import { loadSummary, session } from '#lib/progress/session.svelte';
 	import { theme } from '#lib/progress/theme.svelte';
+	import Toast from '#lib/v4/Toast.svelte';
 
 	let { children } = $props();
 	const account = $derived(currentAccount());
@@ -19,6 +21,11 @@
 	$effect(() => {
 		const missing = session.error instanceof ApiError && session.error.status === 404;
 		if (!setup && (!account || missing)) void goto(resolve('/setup'), { replaceState: true });
+	});
+	// Tempo real: um stream por conta; os eventos refazem os recursos abertos (docs/04, 6.5).
+	$effect(() => {
+		if (!account || setup) return;
+		return connectLive(account);
 	});
 	// O tema também no body: o fundo fora do shell (overscroll) segue o tema.
 	$effect(() => {
@@ -36,6 +43,11 @@
 	<main id="conteudo">
 		{@render children()}
 	</main>
+	{#if live.toast}
+		{#key live.toast.id}
+			<Toast auto title={live.toast.title} text={live.toast.text} onclose={dismissDetection} />
+		{/key}
+	{/if}
 </div>
 
 <style>

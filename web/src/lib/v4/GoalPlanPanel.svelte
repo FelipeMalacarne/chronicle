@@ -28,7 +28,7 @@
 		onunpin: () => void;
 	} = $props();
 
-	const res = createResource(() => progressApi.goalPlan(account, goalId));
+	const res = createResource(() => progressApi.goalPlan(account, goalId), { tags: ['progress'] });
 	const plan = $derived(res.data?.plan);
 	const goal = $derived(res.data?.goal);
 	const byKey = $derived(new Map((plan?.nodes ?? []).map((n) => [n.key, n])));

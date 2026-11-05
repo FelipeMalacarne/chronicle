@@ -44,18 +44,21 @@
 
 	const guides = createResource(() => progressApi.guides());
 	const section = createResource(() => progressApi.section(guideId, sectionId));
-	const board = createResource(() =>
-		account ? progressApi.board(guideId, account) : Promise.resolve(null)
+	const board = createResource(
+		() => (account ? progressApi.board(guideId, account) : Promise.resolve(null)),
+		{ tags: ['progress'] }
 	);
 	const route = $derived(session.summary?.routes.find((r) => r.guide === guideId) ?? null);
 	const guide = $derived(guides.data?.guides.find((g) => g.id === guideId) ?? null);
 	const boardById = $derived(new Map((board.data?.steps ?? []).map((s) => [s.id, s])));
 	const cursorId = $derived(board.data?.cursor?.step_id);
 	const cursorHere = $derived(!!cursorId && boardById.get(cursorId)?.section_id === sectionId);
-	const readiness = createResource(() =>
-		account && cursorHere && cursorId
-			? progressApi.readiness(guideId, account, cursorId).catch(() => null)
-			: Promise.resolve(null)
+	const readiness = createResource(
+		() =>
+			account && cursorHere && cursorId
+				? progressApi.readiness(guideId, account, cursorId).catch(() => null)
+				: Promise.resolve(null),
+		{ tags: ['progress'] }
 	);
 	const counts = $derived(board.data?.sections.find((s) => s.id === sectionId)?.counts);
 	const segments = $derived(section.data ? segmentsOf(section.data) : []);

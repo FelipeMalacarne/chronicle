@@ -35,21 +35,27 @@
 		return other ? [first, other] : [first];
 	});
 
-	const boards = createResource(() => {
-		const a = account;
-		const guides = pair.map((r) => r.guide);
-		return a ? Promise.all(guides.map((g) => progressApi.board(g, a))) : Promise.resolve([]);
-	});
+	const boards = createResource(
+		() => {
+			const a = account;
+			const guides = pair.map((r) => r.guide);
+			return a ? Promise.all(guides.map((g) => progressApi.board(g, a))) : Promise.resolve([]);
+		},
+		{ tags: ['progress'] }
+	);
 	const boardOf = (guide: string): Board | undefined => boards.data?.find((b) => b.guide === guide);
 
-	const world = createResource(() =>
-		account ? progressApi.world(account) : Promise.resolve({ entities: [] as WorldEntity[] })
+	const world = createResource(
+		() =>
+			account ? progressApi.world(account) : Promise.resolve({ entities: [] as WorldEntity[] }),
+		{ tags: ['progress'] }
 	);
 	const names = $derived(
 		Object.fromEntries((world.data?.entities ?? []).map((e) => [e.ref, e.name]))
 	);
-	const goals = createResource(() =>
-		account ? progressApi.goals(account) : Promise.resolve({ goals: [] as Goal[] })
+	const goals = createResource(
+		() => (account ? progressApi.goals(account) : Promise.resolve({ goals: [] as Goal[] })),
+		{ tags: ['progress'] }
 	);
 
 	const AUTHORS: Record<string, string> = {
@@ -128,13 +134,16 @@
 	let markId = $state<string | null>(null);
 	const activeGoals = $derived((goals.data?.goals ?? []).filter((g) => g.status === 'active'));
 	const mark = $derived(activeGoals.find((g) => g.id === markId) ?? activeGoals[0] ?? null);
-	const plan = createResource(() => {
-		const a = account;
-		const m = mark;
-		return a && m
-			? progressApi.goalPlan(a, m.id).then((v) => v.plan)
-			: Promise.resolve(null as GoalPlan | null);
-	});
+	const plan = createResource(
+		() => {
+			const a = account;
+			const m = mark;
+			return a && m
+				? progressApi.goalPlan(a, m.id).then((v) => v.plan)
+				: Promise.resolve(null as GoalPlan | null);
+		},
+		{ tags: ['progress'] }
+	);
 	const gargalo = $derived(plan.data?.bottlenecks.find((b) => !b.met) ?? null);
 	function markIn(guide: string) {
 		const b = boardOf(guide);

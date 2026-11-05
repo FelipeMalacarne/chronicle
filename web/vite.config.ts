@@ -21,6 +21,9 @@ export default defineConfig({
 	server: {
 		port: 5173,
 		proxy: {
+			// Tempo real (SSE): sem timeout no proxy para o stream durar; o servidor manda
+			// X-Accel-Buffering: no e flush por evento, e o http-proxy repassa cada pedaço.
+			'/api/events': { target: API_TARGET, changeOrigin: false, timeout: 0, proxyTimeout: 0 },
 			'/api': { target: API_TARGET, changeOrigin: false }
 		}
 	}

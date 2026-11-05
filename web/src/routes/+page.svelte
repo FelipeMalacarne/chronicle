@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { progressApi } from '#lib/api/client';
+	import { quietDetection } from '#lib/api/events.svelte';
 	import { createResource } from '#lib/api/resource.svelte';
 	import { loadSummary, session } from '#lib/progress/session.svelte';
 	import { ICON_ATTRIBUTION } from '#lib/progress/icons';
@@ -34,8 +35,9 @@
 	);
 	const guideId = $derived(route?.guide);
 
-	const board = createResource(() =>
-		account && guideId ? progressApi.board(guideId, account) : Promise.resolve(null)
+	const board = createResource(
+		() => (account && guideId ? progressApi.board(guideId, account) : Promise.resolve(null)),
+		{ tags: ['progress'] }
 	);
 	const cursorId = $derived(board.data?.cursor?.step_id);
 	const boardById = $derived(new Map((board.data?.steps ?? []).map((s) => [s.id, s])));
@@ -43,16 +45,20 @@
 	const section = createResource(() =>
 		guideId && sectionId ? progressApi.section(guideId, sectionId) : Promise.resolve(null)
 	);
-	const readiness = createResource(() =>
-		account && guideId && cursorId
-			? progressApi.readiness(guideId, account, cursorId).catch(() => null)
-			: Promise.resolve(null)
+	const readiness = createResource(
+		() =>
+			account && guideId && cursorId
+				? progressApi.readiness(guideId, account, cursorId).catch(() => null)
+				: Promise.resolve(null),
+		{ tags: ['progress'] }
 	);
-	const goals = createResource(() =>
-		account ? progressApi.goals(account) : Promise.resolve(null)
+	const goals = createResource(
+		() => (account ? progressApi.goals(account) : Promise.resolve(null)),
+		{ tags: ['progress'] }
 	);
-	const runs = createResource(() =>
-		account ? progressApi.syncRuns(account, 1).catch(() => null) : Promise.resolve(null)
+	const runs = createResource(
+		() => (account ? progressApi.syncRuns(account, 1).catch(() => null) : Promise.resolve(null)),
+		{ tags: ['sync'] }
 	);
 	const hiscoresAt = $derived.by(() => {
 		const s = session.summary?.sources.find((x) => x.source === 'hiscores');
@@ -64,6 +70,8 @@
 		if (!account || syncing) return;
 		syncing = true;
 		failure = null;
+		// Este sync mostra o próprio toast; o evento dele não repete a detecção.
+		quietDetection('hiscores');
 		try {
 			const run = await progressApi.sync(account);
 			toast =
@@ -90,8 +98,9 @@
 		}
 	}
 	const pinned = $derived((goals.data?.goals ?? []).filter((g) => g.status === 'active'));
-	const events = createResource(() =>
-		account && guideId ? progressApi.events(guideId, account, 30) : Promise.resolve(null)
+	const events = createResource(
+		() => (account && guideId ? progressApi.events(guideId, account, 30) : Promise.resolve(null)),
+		{ tags: ['progress'] }
 	);
 
 	const step = $derived(section.data?.steps.find((s) => s.id === cursorId) ?? null);

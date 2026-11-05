@@ -34,8 +34,9 @@ A regra de cascata (concluir um step posterior implica os anteriores da mesma se
 eleva a cobertura prática para perto de 90%, mas precisa ser visualmente distinta e confirmável. O doc 03
 traz estimativas um pouco mais otimistas; os números medidos acima prevalecem.
 
-No BRUHsailer a cobertura automática hoje é **zero**: 226 passos longos e nenhuma regra. É isso que
-motiva o modelo de objetivos e a extração por agente do doc 09.
+No BRUHsailer a cobertura automática era **zero** (226 passos longos e nenhuma regra), o que motivou o
+modelo de objetivos e a extração por agente do doc 09. Desde 2026-11-05 os 226 passos estão anotados
+(308 objetivos de quest, 68 de skill, 31 de diary, 385 de item); 28 passos ficaram sem objetivo.
 
 Quests são o sinal dominante e dependem do cliente. Desde o plugin 1.1.0 (item 7, 2026-11-05) o plugin
 envia o estado de todas as quests, os varbits de diary e o varp 101 (quest points) na faceta `data.quest`

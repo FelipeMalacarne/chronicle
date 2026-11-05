@@ -197,3 +197,43 @@ func Normalize(s Snapshot) []Fact {
 	}
 	return out
 }
+
+// Detection is the mode found for a name in the setup (docs/02 section 1:
+// the table that answers tells the mode) and what that table says.
+type Detection struct {
+	// Mode is the accounts.mode of the most specific table that knows the
+	// name ("hcim", "uim", "ironman"), or empty when only the normal table
+	// does (a main account or a group ironman: the owner picks).
+	Mode     string
+	Found    bool
+	Snapshot Snapshot
+}
+
+// detectOrder goes from the most specific table to the normal one: an HCIM
+// or a UIM is also listed on the ironman table.
+var detectOrder = []struct{ mode, table string }{
+	{"hcim", "hiscore_oldschool_hardcore_ironman"},
+	{"uim", "hiscore_oldschool_ultimate"},
+	{"ironman", "hiscore_oldschool_ironman"},
+	{"", normal},
+}
+
+// Detect probes the tables in order (at most four calls, only in the setup)
+// and returns the first that knows the name.
+func (c *Client) Detect(ctx context.Context, rsn string) (Detection, error) {
+	for _, d := range detectOrder {
+		raw, err := c.get(ctx, d.table, rsn)
+		if errors.Is(err, ErrNotFound) {
+			continue
+		}
+		if err != nil {
+			return Detection{}, err
+		}
+		snap, err := Parse(raw)
+		if err != nil {
+			return Detection{}, err
+		}
+		return Detection{Mode: d.mode, Found: true, Snapshot: snap}, nil
+	}
+	return Detection{}, nil
+}

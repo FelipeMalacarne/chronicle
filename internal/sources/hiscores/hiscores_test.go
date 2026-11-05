@@ -125,3 +125,34 @@ func TestFetch(t *testing.T) {
 		t.Fatalf("429 = %v", err)
 	}
 }
+
+func TestDetect(t *testing.T) {
+	body := sample(t, "iron_ohzone.json")
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		player := r.URL.Query().Get("player")
+		switch {
+		case player == "Uim Guy" && strings.Contains(r.URL.Path, "ultimate"),
+			player == "Iron Guy" && r.URL.Path == "/m=hiscore_oldschool_ironman/index_lite.json",
+			player == "Main Guy" && r.URL.Path == "/m=hiscore_oldschool/index_lite.json":
+			_, _ = w.Write(body)
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	t.Cleanup(srv.Close)
+	c := &Client{BaseURL: srv.URL, HTTP: srv.Client()}
+	for rsn, want := range map[string]Detection{
+		"Uim Guy":  {Mode: "uim", Found: true},
+		"Iron Guy": {Mode: "ironman", Found: true},
+		"Main Guy": {Mode: "", Found: true},
+		"Nobody":   {Found: false},
+	} {
+		got, err := c.Detect(context.Background(), rsn)
+		if err != nil || got.Mode != want.Mode || got.Found != want.Found {
+			t.Fatalf("%s = %+v, %v", rsn, got.Mode, err)
+		}
+		if got.Found && len(got.Snapshot.Skills) == 0 {
+			t.Fatalf("%s: no skills", rsn)
+		}
+	}
+}

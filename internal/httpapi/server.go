@@ -41,6 +41,10 @@ type Options struct {
 	Progress ProgressService
 	// Sync runs the hiscores on demand and lists the runs. nil disables it.
 	Sync SyncService
+	// Accounts and Hiscores serve the setup (/setup, V4Setup). nil Accounts
+	// disables it; nil Hiscores skips the mode detection.
+	Accounts AccountService
+	Hiscores ModeDetector
 	// Catalog relates noted/unnoted item ids and knows stackability for the
 	// readiness evaluator; nil compares ids exactly.
 	Catalog *entities.Registry
@@ -120,6 +124,12 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("POST /api/goals", s.handleAddGoal)
 		s.mux.HandleFunc("DELETE /api/goals/{id}", s.handleRemoveGoal)
 		s.mux.HandleFunc("GET /api/world", s.handleWorld)
+	}
+	// The setup picks or creates the account by name: dev-mode-only, like
+	// every route that addresses an account without a session (rule 10).
+	if s.opts.Accounts != nil && s.opts.DevMode {
+		s.mux.HandleFunc("GET /api/setup/lookup", s.handleSetupLookup)
+		s.mux.HandleFunc("POST /api/accounts", s.handleCreateAccount)
 	}
 	if s.opts.Sync != nil && s.opts.DevMode {
 		s.mux.HandleFunc("POST /api/sync", s.handleSync)

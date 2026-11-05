@@ -72,6 +72,8 @@ func runServe(parent context.Context) error {
 	var holdings httpapi.HoldingsSource
 	var progressService httpapi.ProgressService
 	var syncService httpapi.SyncService
+	var accountService httpapi.AccountService
+	var hiscoresDetector httpapi.ModeDetector
 	if cfg.DatabaseURL != "" {
 		pool, dbErr := connectDB(ctx, cfg, logger)
 		if dbErr != nil {
@@ -89,7 +91,9 @@ func runServe(parent context.Context) error {
 			}
 			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt)).WithReevaluator(progressRepo)
 			ingestService, holdings, progressService = repo, repo, progressRepo
-			syncRepo := syncrun.New(pool, hiscores.New(), progressRepo)
+			hiscoresClient := hiscores.New()
+			hiscoresDetector, accountService = hiscoresClient, progressRepo
+			syncRepo := syncrun.New(pool, hiscoresClient, progressRepo)
 			syncService = syncRepo
 			if cfg.SyncHiscoresMinutes > 0 {
 				scheduler := &syncrun.Scheduler{
@@ -118,6 +122,8 @@ func runServe(parent context.Context) error {
 		Holdings:       holdings,
 		Progress:       progressService,
 		Sync:           syncService,
+		Accounts:       accountService,
+		Hiscores:       hiscoresDetector,
 		Catalog:        catalog,
 		DevMode:        cfg.IsDev(),
 		Static:         static,

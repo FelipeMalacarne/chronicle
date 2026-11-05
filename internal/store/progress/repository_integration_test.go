@@ -435,3 +435,43 @@ func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
 	}
 	return pool
 }
+
+func TestAccountsPostgres(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(pool, loadContent(t), catalog)
+	if _, ok, findErr := repo.FindAccount(ctx, "Iron Man"); findErr != nil || ok {
+		t.Fatalf("find before any user = %v, %v", ok, findErr)
+	}
+	for _, bad := range []AccountInput{
+		{RSN: "", Mode: "ironman", GuideID: "g1", Layer: "classic"},
+		{RSN: "way too long a name", Mode: "ironman", GuideID: "g1", Layer: "classic"},
+		{RSN: "Iron Man", Mode: "main", GuideID: "g1", Layer: "classic"},
+		{RSN: "Iron Man", Mode: "ironman", GuideID: "nope", Layer: "classic"},
+		{RSN: "Iron Man", Mode: "ironman", GuideID: "g1", Layer: "hcim"},
+	} {
+		if _, _, badErr := repo.CreateAccount(ctx, bad); !errors.Is(badErr, ErrInvalidAccount) {
+			t.Fatalf("%+v: %v", bad, badErr)
+		}
+	}
+	acc, created, err := repo.CreateAccount(ctx, AccountInput{RSN: " Iron Man ", Mode: "hcim", GuideID: "g1", Layer: "classic"})
+	if err != nil || !created || acc.ID != "acc_iron_man" || acc.RSN != "Iron Man" || acc.Mode != "hcim" {
+		t.Fatalf("create = %+v %v, %v", acc, created, err)
+	}
+	board, err := repo.Board(ctx, acc.ID, "g1")
+	if err != nil || board.Cursor == nil || !board.Active {
+		t.Fatalf("board after setup = %+v, %v", board.Cursor, err)
+	}
+	same, created, err := repo.CreateAccount(ctx, AccountInput{RSN: "iron man", Mode: "ironman", GuideID: "g2", Layer: "enhanced"})
+	if err != nil || created || same.ID != acc.ID || same.Mode != "hcim" {
+		t.Fatalf("second create = %+v %v, %v", same, created, err)
+	}
+	found, ok, err := repo.FindAccount(ctx, "IRON MAN")
+	if err != nil || !ok || found.ID != acc.ID {
+		t.Fatalf("find = %+v %v, %v", found, ok, err)
+	}
+}

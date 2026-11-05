@@ -26,26 +26,6 @@
       }
     },
     {
-      "step_id": "1.4.2",
-      "text_hash": "sha256:0277dc9d852a7029c99a3f2fcc59d7f1aec777f21dbf6dd2bff04cbaf9f566bc",
-      "location": {
-        "ref": "location:hosidius",
-        "evidence": {
-          "field": "/location",
-          "quote": "Hosidius",
-          "span": [
-            0,
-            8
-          ]
-        },
-        "source": {
-          "method": "llm",
-          "confidence": "high",
-          "skill_version": "annotate-guide@3"
-        }
-      }
-    },
-    {
       "step_id": "1.4.3",
       "text_hash": "sha256:2089a994d4a18d88254bf828f14f7f926dc48c2d5a502a46121a30a71b1f7f1e"
     },

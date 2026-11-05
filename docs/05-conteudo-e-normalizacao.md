@@ -325,3 +325,31 @@ Resultado da migração: 7 seções, 576 passos, 209 com regra automática (170 
   - algumas ações de banco são mal classificadas ("bank everything" vira `open_bank`).
 
   A revisão do modelo e a extração estruturada dos textos estão no doc 09.
+
+## 12. Correções de rota do dono (2026-11-05)
+
+O objetivo é uma rota boa, não uma cópia literal do Oziris. Quando uma nota de update do site diz que
+o jogo mudou e o passo ficou impossível ou fora de ordem, a correção entra no import, nunca à mão no
+`guide.json` (que continua gerado):
+
+- `data/guide/route-patches.json` lista os patches, cada um com `id`, `reason` e operações em ordem:
+  `drop` (remove o passo; recusa se outro passo o tem em `requires`), `move` (põe o passo logo depois de
+  outro, na mesma seção), `insert` (passo novo, id novo no estilo `1.1.254a`, `source.origin: own`),
+  `note` (troca a nota de update que pediu o patch por uma que diz o que foi ajustado) e `items` (troca
+  os itens do passo).
+- `ironman content migrate` aplica os patches depois de converter os passos e antes de derivar os
+  segmentos (`internal/core/content/migrate/patches.go`). Um patch que não casa mais com o guia
+  importado é erro, nunca é pulado.
+- Passos movidos mantêm o id: marcas, cursor e anotações continuam valendo, e `content_steps.position`
+  segue a nova ordem. Um passo removido leva a anotação junto: o `submit` do `content mcp` reescreve o
+  sidecar da seção sem ele (e o relatório sem o log dele). Passos com texto, nota ou itens alterados
+  ficam `stale` e são reprocessados pela skill `annotate-guide`.
+
+Patches atuais (578 passos: 576 importados, 1 removido, 3 adicionados):
+
+| Patch | O que faz |
+|---|---|
+| `lost-tribe-after-goblin-diplomacy` | Goblin Diplomacy virou requisito da The Lost Tribe (nota de 1.1.254). A quest inteira vai para depois de 1.1.278: 280 (home tele), 254, 254a (tele Varrock), 256, 256a (Falador tele até a Goblin Village, com o brooch e o livro), 279, 279a (tele Lumbridge), 281. 1.1.277 leva só as dyes. Substitui a decisão `update-note-overrides-text` nesse trecho |
+| `no-hosidius-favour` | Remove 1.4.2 (100% de favour em Hosidius): o sistema de favour de Kourend saiu em janeiro de 2024. Com ele sai o bank leg que o passo abria (31 segmentos, 24 bank legs) |
+
+As outras 12 notas de update só sugerem alternativas e continuam como notas.

@@ -116,6 +116,11 @@ type Options struct {
 	ContentVersion string
 	// BaseURL resolves relative links (e.g. "/articles/x"). Default "https://ironman.guide".
 	BaseURL string
+	// PatchesPath is the route patch file Run reads (see RoutePatches); empty
+	// means none.
+	PatchesPath string
+	// Patches are applied by Convert after the steps are converted.
+	Patches *RoutePatches
 }
 
 func (o *Options) defaults() {
@@ -203,6 +208,9 @@ func ConvertWithReport(n *Normalized, opts Options) (*content.Guide, *enrich.Rep
 			sec.Steps = append(sec.Steps, st)
 		}
 		g.Sections = append(g.Sections, sec)
+	}
+	if err := applyPatches(g.Sections, opts.Patches, opts.GuideID, imported); err != nil {
+		return nil, nil, fmt.Errorf("migrate: %w", err)
 	}
 	derive.EnrichGuide(g)
 	reg, err := entities.Default()
@@ -392,6 +400,11 @@ func Run(inPath, outDir string, opts Options) (*Result, error) {
 	if err != nil {
 		return nil, err
 	}
+	if opts.PatchesPath != "" && opts.Patches == nil {
+		if opts.Patches, err = ReadRoutePatches(opts.PatchesPath); err != nil {
+			return nil, err
+		}
+	}
 	g, report, err := ConvertWithReport(n, opts)
 	if err != nil {
 		return nil, err
@@ -419,7 +432,7 @@ func Run(inPath, outDir string, opts Options) (*Result, error) {
 		return nil, err
 	}
 	readme := filepath.Join(outDir, "README.md")
-	if err := os.WriteFile(readme, []byte(readmeFor(n, g, inPath)), 0o644); err != nil {
+	if err := os.WriteFile(readme, []byte(readmeFor(n, g, inPath, opts.PatchesPath, opts.Patches)), 0o644); err != nil {
 		return nil, err
 	}
 	res := &Result{
@@ -455,7 +468,7 @@ func Run(inPath, outDir string, opts Options) (*Result, error) {
 	return res, nil
 }
 
-func readmeFor(n *Normalized, g *content.Guide, inPath string) string {
+func readmeFor(n *Normalized, g *content.Guide, inPath, patchesPath string, patches *RoutePatches) string {
 	withRules := 0
 	for _, st := range g.Steps() {
 		if !st.IsManual() {
@@ -477,6 +490,11 @@ func readmeFor(n *Normalized, g *content.Guide, inPath string) string {
 			}
 		}
 	}
+	patched := ""
+	if patches != nil {
+		patched = fmt.Sprintf("\n- Route corrected by %d owner patches from %#q (dropped, moved and added steps;\n  added steps have source origin `own`). See docs/05-conteudo-e-normalizacao.md, section 12.",
+			len(patches.Patches), filepath.ToSlash(patchesPath))
+	}
 	return fmt.Sprintf(`# %s
 
 Guide id: `+"`%s`"+` · content version `+"`%s`"+` · %d source variant · %d sections · %d segments (%d explicit bank legs) · %d steps (%d with automatic rules, %d manual).
@@ -494,7 +512,7 @@ Guide id: `+"`%s`"+` · content version `+"`%s`"+` · %d source variant · %d se
 - Normalised by `+"`tools/normalize_guide.py`"+` into `+"`%s`"+` (schema v%s).
 - Migrated to the canonical schema (`+"`content/schema/guide.schema.json`"+`) by
   `+"`ironman content migrate`"+` (package `+"`internal/core/content/migrate`"+`).
-  Field mapping: docs/05-conteudo-e-normalizacao.md, "Mapeamento para o schema canônico (Go)".
+  Field mapping: docs/05-conteudo-e-normalizacao.md, "Mapeamento para o schema canônico (Go)".%s
 - Explicit bank/deposit/withdraw words deterministically start a bank-leg
   segment. The checked-in result contains %d partial loadouts and %d explicitly
   unknown loadouts; absent requirements are never represented as empty arrays.
@@ -505,7 +523,7 @@ Guide id: `+"`%s`"+` · content version `+"`%s`"+` · %d source variant · %d se
 ## Editing
 
 `+"`guide.json`"+` is generated. Do not hand-edit it while the normalizer is still the source of truth;
-fix the extraction/normalisation and re-run:
+fix the extraction/normalisation (or the route patches) and re-run:
 
     go run ./cmd/ironman content migrate
     go run ./cmd/ironman content validate
@@ -513,5 +531,5 @@ fix the extraction/normalisation and re-run:
 Step ids are stable and inherited from ironman.guide; never reuse one.
 `, g.Title, g.ID, g.Version, len(g.Variants), len(g.Sections), segments, bankLegs, g.StepCount(), withRules, g.StepCount()-withRules,
 		n.Guide.Source.Author, n.Guide.Source.Maintainer, n.Guide.Source.URL,
-		n.Guide.Source.URL, n.Guide.Source.ExtractedAt, filepath.ToSlash(inPath), n.SchemaVersion, partial, unknown)
+		n.Guide.Source.URL, n.Guide.Source.ExtractedAt, filepath.ToSlash(inPath), n.SchemaVersion, patched, partial, unknown)
 }

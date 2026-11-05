@@ -328,7 +328,11 @@ func TestImportersRegenerateCommittedContent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	g, rep, err := migrate.ConvertWithReport(n, migrate.Options{})
+	patches, err := migrate.ReadRoutePatches(filepath.Join(root, "data", "guide", "route-patches.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, rep, err := migrate.ConvertWithReport(n, migrate.Options{Patches: patches})
 	if err != nil {
 		t.Fatal(err)
 	}

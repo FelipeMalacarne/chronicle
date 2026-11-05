@@ -1,6 +1,6 @@
 # OSRS Ironman Efficiency Guide (OzirisLoL)
 
-Guide id: `oziris-main` · content version `2026.11.0` · 1 source variant · 7 sections · 32 segments (25 explicit bank legs) · 576 steps (209 with automatic rules, 367 manual).
+Guide id: `oziris-main` · content version `2026.11.0` · 1 source variant · 7 sections · 31 segments (24 explicit bank legs) · 578 steps (209 with automatic rules, 369 manual).
 
 ## Attribution
 
@@ -16,8 +16,10 @@ Guide id: `oziris-main` · content version `2026.11.0` · 1 source variant · 7 
 - Migrated to the canonical schema (`content/schema/guide.schema.json`) by
   `ironman content migrate` (package `internal/core/content/migrate`).
   Field mapping: docs/05-conteudo-e-normalizacao.md, "Mapeamento para o schema canônico (Go)".
+- Route corrected by 2 owner patches from `data/guide/route-patches.json` (dropped, moved and added steps;
+  added steps have source origin `own`). See docs/05-conteudo-e-normalizacao.md, section 12.
 - Explicit bank/deposit/withdraw words deterministically start a bank-leg
-  segment. The checked-in result contains 5 partial loadouts and 27 explicitly
+  segment. The checked-in result contains 5 partial loadouts and 26 explicitly
   unknown loadouts; absent requirements are never represented as empty arrays.
 - Bank actions and structured loadouts retain source step ids, confidence and
   derivation evidence. Segment ids are fingerprints of the section and first
@@ -26,7 +28,7 @@ Guide id: `oziris-main` · content version `2026.11.0` · 1 source variant · 7 
 ## Editing
 
 `guide.json` is generated. Do not hand-edit it while the normalizer is still the source of truth;
-fix the extraction/normalisation and re-run:
+fix the extraction/normalisation (or the route patches) and re-run:
 
     go run ./cmd/ironman content migrate
     go run ./cmd/ironman content validate

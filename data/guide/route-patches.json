@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "guide_id": "oziris-main",
+  "patches": [
+    {
+      "id": "lost-tribe-after-goblin-diplomacy",
+      "reason": "Goblin Diplomacy is now required before starting The Lost Tribe (update note of 1.1.254). The whole quest moves to right after 1.1.278, in the order the note gives: Lumbridge, Varrock, Goblin Village, Lumbridge.",
+      "ops": [
+        { "op": "move", "step": "1.1.280", "after": "1.1.278" },
+        { "op": "move", "step": "1.1.254", "after": "1.1.280" },
+        { "op": "insert", "after": "1.1.254", "new": { "id": "1.1.254a", "text": "Teleport to Varrock", "location": "Varrock" } },
+        { "op": "move", "step": "1.1.256", "after": "1.1.254a" },
+        { "op": "insert", "after": "1.1.256", "new": { "id": "1.1.256a", "text": "Falador teleport and run north to the Goblin Village", "location": "Goblin Village", "items": ["Lost tribe brooch and book"] } },
+        { "op": "move", "step": "1.1.279", "after": "1.1.256a" },
+        { "op": "insert", "after": "1.1.279", "new": { "id": "1.1.279a", "text": "Teleport to Lumbridge", "location": "Lumbridge" } },
+        { "op": "items", "step": "1.1.277", "items": ["Blue/orange dyes"] },
+        { "op": "note", "step": "1.1.254", "note": "Route adjusted by the planner: Goblin Diplomacy is now required before The Lost Tribe, so the whole quest now runs right after Goblin Diplomacy (1.1.278): Lumbridge, Varrock, Goblin Village, Lumbridge." }
+      ]
+    },
+    {
+      "id": "no-hosidius-favour",
+      "reason": "The Kourend favour system was removed in January 2024, so getting 100% Hosidius favour is no longer possible (update note of 1.4.2).",
+      "ops": [
+        { "op": "drop", "step": "1.4.2" }
+      ]
+    }
+  ]
+}

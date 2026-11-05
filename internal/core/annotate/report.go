@@ -130,6 +130,12 @@ func (gs *guideState) writeReport(reg *entities.Registry) error {
 func (gs *guideState) refreshReport(reg *entities.Registry) {
 	r := gs.report
 	r.SchemaVersion, r.Kind, r.GuideID = 1, ReportKind, gs.guide.ID
+	for id := range r.Steps {
+		// The log of a step the route patches dropped goes with it.
+		if _, exists := gs.index[id]; !exists {
+			delete(r.Steps, id)
+		}
+	}
 	r.Summary = SectionReport{}
 	r.Sections = nil
 	r.RuleAgreement = RuleAgreement{Divergent: []Divergence{}}

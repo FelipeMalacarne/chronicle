@@ -3,7 +3,7 @@
   "kind": "section",
   "guide_id": "oziris-main",
   "section_id": "1.1",
-  "skill_version": "annotate-guide@3",
+  "skill_version": "annotate-guide@5",
   "steps": [
     {
       "step_id": "1.1.1",
@@ -12334,40 +12334,6 @@
       }
     },
     {
-      "step_id": "1.1.254",
-      "text_hash": "sha256:9c382773935e3f5e958f5ac5f66435a514c6f61715aaf65c8d111b57ed652af9",
-      "suppressed": [
-        {
-          "key": "quest:the_lost_tribe@started",
-          "role": "starts",
-          "reason": "The update note says to skip this step: Goblin Diplomacy is now required, and The Lost Tribe starts at 1.1.279.",
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@3",
-            "confirmed_by": "owner",
-            "decision": "update-note-overrides-text"
-          }
-        }
-      ],
-      "location": {
-        "ref": "location:lumbridge",
-        "evidence": {
-          "field": "/location",
-          "quote": "Lumbridge",
-          "span": [
-            0,
-            9
-          ]
-        },
-        "source": {
-          "method": "llm",
-          "confidence": "high",
-          "skill_version": "annotate-guide@3"
-        }
-      }
-    },
-    {
       "step_id": "1.1.255",
       "text_hash": "sha256:66b3fe6041d22cd0f67e2f585a093c1f92a7c5c1101ce143e20617a55ebe68bf",
       "location": {
@@ -12384,40 +12350,6 @@
           "method": "llm",
           "confidence": "high",
           "skill_version": "annotate-guide@1"
-        }
-      }
-    },
-    {
-      "step_id": "1.1.256",
-      "text_hash": "sha256:77e1fb22547118edd603feb7fa584d7de9bd411a0304eed001fefb1f2e7d5470",
-      "suppressed": [
-        {
-          "key": "quest:the_lost_tribe@started",
-          "role": "starts",
-          "reason": "The 1.1.254 update note says to skip this step; The Lost Tribe starts at 1.1.279.",
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@3",
-            "confirmed_by": "owner",
-            "decision": "update-note-overrides-text"
-          }
-        }
-      ],
-      "location": {
-        "ref": "location:varrock",
-        "evidence": {
-          "field": "/location",
-          "quote": "Varrock",
-          "span": [
-            0,
-            7
-          ]
-        },
-        "source": {
-          "method": "llm",
-          "confidence": "high",
-          "skill_version": "annotate-guide@3"
         }
       }
     },
@@ -13510,52 +13442,14 @@
     },
     {
       "step_id": "1.1.277",
-      "text_hash": "sha256:eb0756397c0aea8da3bd2fde664a8e92c2f68ef71881413e354cb537e8b20862",
+      "text_hash": "sha256:269b67faccf242ca37e8fbdd1e670faee73b472c9057b5326125558b4bdab4fb",
       "items": [
-        {
-          "name": "Lost tribe brooch",
-          "item_id": 5008,
-          "source_text": "Lost tribe brooch",
-          "evidence": {
-            "field": "/items/0",
-            "quote": "Lost tribe brooch",
-            "span": [
-              0,
-              17
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@1"
-          }
-        },
-        {
-          "name": "Goblin symbol book",
-          "item_id": 5009,
-          "source_text": "Lost tribe brooch and book",
-          "evidence": {
-            "field": "/items/0",
-            "quote": "Lost tribe brooch and book",
-            "span": [
-              0,
-              26
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@1",
-            "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
-          }
-        },
         {
           "name": "Blue dye",
           "item_id": 1767,
           "source_text": "Blue/orange dyes",
           "evidence": {
-            "field": "/items/1",
+            "field": "/items/0",
             "quote": "Blue/orange dyes",
             "span": [
               0,
@@ -13565,7 +13459,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@1"
+            "skill_version": "annotate-guide@5"
           }
         },
         {
@@ -13573,7 +13467,7 @@
           "item_id": 1769,
           "source_text": "Blue/orange dyes",
           "evidence": {
-            "field": "/items/1",
+            "field": "/items/0",
             "quote": "Blue/orange dyes",
             "span": [
               0,
@@ -13583,7 +13477,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@1"
+            "skill_version": "annotate-guide@5"
           }
         }
       ],
@@ -13600,7 +13494,7 @@
         "source": {
           "method": "llm",
           "confidence": "high",
-          "skill_version": "annotate-guide@1"
+          "skill_version": "annotate-guide@5"
         }
       }
     },
@@ -13646,47 +13540,6 @@
       }
     },
     {
-      "step_id": "1.1.279",
-      "text_hash": "sha256:3706fff1ae3135f1d1db904d377d5b486ffcd2046e30414318aca18479007d49",
-      "objectives": [
-        {
-          "key": "quest:the_lost_tribe@started",
-          "role": "starts",
-          "evidence": {
-            "field": "/text",
-            "quote": "Continue Lost tribe",
-            "span": [
-              0,
-              19
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@1",
-            "confirmed_by": "owner",
-            "decision": "update-note-overrides-text"
-          }
-        }
-      ],
-      "location": {
-        "ref": "location:goblin_village",
-        "evidence": {
-          "field": "/location",
-          "quote": "Goblin Village",
-          "span": [
-            0,
-            14
-          ]
-        },
-        "source": {
-          "method": "llm",
-          "confidence": "high",
-          "skill_version": "annotate-guide@1"
-        }
-      }
-    },
-    {
       "step_id": "1.1.280",
       "text_hash": "sha256:fc389cbd30d7a47cdfa0284da7581f418b8a8711b2b961604403c457ad9436e5",
       "location": {
@@ -13703,6 +13556,185 @@
           "method": "llm",
           "confidence": "high",
           "skill_version": "annotate-guide@1"
+        }
+      }
+    },
+    {
+      "step_id": "1.1.254",
+      "text_hash": "sha256:af586983c005eefae3a929056111c7422d42cd3ee689c5d819ae3347a172413a",
+      "objectives": [
+        {
+          "key": "quest:the_lost_tribe@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start the Lost tribe",
+            "span": [
+              0,
+              20
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@5"
+        }
+      }
+    },
+    {
+      "step_id": "1.1.254a",
+      "text_hash": "sha256:66b3fe6041d22cd0f67e2f585a093c1f92a7c5c1101ce143e20617a55ebe68bf",
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@5"
+        }
+      }
+    },
+    {
+      "step_id": "1.1.256",
+      "text_hash": "sha256:77e1fb22547118edd603feb7fa584d7de9bd411a0304eed001fefb1f2e7d5470",
+      "location": {
+        "ref": "location:varrock",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varrock",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@5"
+        }
+      }
+    },
+    {
+      "step_id": "1.1.256a",
+      "text_hash": "sha256:9e92c98dad29eebbef9ca77ac37a0d209c634ea45920b7e3b32f7082947d8b30",
+      "items": [
+        {
+          "name": "Lost tribe brooch",
+          "item_id": 5008,
+          "source_text": "Lost tribe brooch",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "Lost tribe brooch",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Goblin symbol book",
+          "item_id": 5009,
+          "source_text": "Lost tribe brooch and book",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "Lost tribe brooch and book",
+            "span": [
+              0,
+              26
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:goblin_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Goblin Village",
+          "span": [
+            0,
+            14
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@5"
+        }
+      }
+    },
+    {
+      "step_id": "1.1.279",
+      "text_hash": "sha256:3706fff1ae3135f1d1db904d377d5b486ffcd2046e30414318aca18479007d49",
+      "location": {
+        "ref": "location:goblin_village",
+        "evidence": {
+          "field": "/location",
+          "quote": "Goblin Village",
+          "span": [
+            0,
+            14
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@5"
+        }
+      }
+    },
+    {
+      "step_id": "1.1.279a",
+      "text_hash": "sha256:1098984e862ae809ce9b81ff7f4fb71773e4718a2a0394e2dad5001f921aeaf8",
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@5"
         }
       }
     },

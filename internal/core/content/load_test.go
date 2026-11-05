@@ -22,15 +22,15 @@ func TestLoadRealContent(t *testing.T) {
 	if !ok {
 		t.Fatal("oziris-main guide not loaded")
 	}
-	if got := g.StepCount(); got != 576 {
-		t.Errorf("steps = %d, want 576", got)
+	if got := g.StepCount(); got != 578 {
+		t.Errorf("steps = %d, want 578 (576 imported plus route patches)", got)
 	}
 	bruh, ok := c.Guide("bruhsailer-main")
 	if !ok || bruh.StepCount() != 226 {
 		t.Fatalf("bruhsailer-main = %#v, %v; want 226 steps", bruh, ok)
 	}
-	if got := c.StepCount(); got != 802 {
-		t.Errorf("indexed steps = %d, want 802", got)
+	if got := c.StepCount(); got != 804 {
+		t.Errorf("indexed steps = %d, want 804", got)
 	}
 	for _, guide := range c.Guides {
 		seen := map[string]bool{}

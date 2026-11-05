@@ -92,19 +92,20 @@ func reportIssues(cmd *cobra.Command, err error) error {
 }
 
 func newContentMigrateCmd() *cobra.Command {
-	var in, out, guideID, version string
+	var in, out, guideID, version, patches string
 	cmd := &cobra.Command{
 		Use:   "migrate",
 		Short: "Convert the normalized ironman.guide JSON into canonical content",
 		Long: `Read data/guide/normalized/guide.json (schema v0.1 from tools/normalize_guide.py),
-convert it to the canonical schema, validate the result and write
+convert it to the canonical schema, apply the owner's route patches
+(data/guide/route-patches.json), validate the result and write
 content/guides/<id>/guide.json plus README.md (attribution and provenance).`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if out == "" {
 				out = "content/guides/" + guideID
 			}
-			res, err := migrate.Run(in, out, migrate.Options{GuideID: guideID, ContentVersion: version})
+			res, err := migrate.Run(in, out, migrate.Options{GuideID: guideID, ContentVersion: version, PatchesPath: patches})
 			if err != nil {
 				return reportIssues(cmd, err)
 			}
@@ -117,6 +118,7 @@ content/guides/<id>/guide.json plus README.md (attribution and provenance).`,
 	}
 	cmd.Flags().StringVar(&in, "in", "data/guide/normalized/guide.json", "normalized guide (schema v0.1)")
 	cmd.Flags().StringVar(&out, "out", "", "output directory (default content/guides/<guide-id>)")
+	cmd.Flags().StringVar(&patches, "patches", "data/guide/route-patches.json", "owner route patches (empty for none)")
 	cmd.Flags().StringVar(&guideID, "guide-id", "oziris-main", "canonical guide id")
 	cmd.Flags().StringVar(&version, "content-version", "2026.11.0", "value for guide.version")
 	return cmd

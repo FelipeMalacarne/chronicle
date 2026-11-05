@@ -172,6 +172,10 @@ func (gs *guideState) write(sec *content.Section, skillVersion string, accepted 
 	next := &content.AnnotationFile{SchemaVersion: 1, Kind: content.AnnotationKindSection, GuideID: gs.guide.ID, SectionID: sec.ID, SkillVersion: skillVersion}
 	if a != nil {
 		for _, sa := range a.Steps {
+			// A step the route patches dropped takes its annotation with it.
+			if _, exists := gs.index[sa.StepID]; !exists {
+				continue
+			}
 			if _, replaced := accepted[sa.StepID]; !replaced {
 				next.Steps = append(next.Steps, sa)
 			}

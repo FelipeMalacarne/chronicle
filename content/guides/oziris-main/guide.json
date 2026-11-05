@@ -10229,100 +10229,6 @@
                   ]
                 },
                 {
-                  "id": "1.1.254",
-                  "text": "Start the Lost tribe, do until you need to go to Varrock",
-                  "location": "Lumbridge",
-                  "notes": [
-                    {
-                      "kind": "update",
-                      "text": "Goblin Diplomacy is now required before starting The Lost Tribe. Skip this step and steps 256/279 — instead, complete Goblin Diplomacy at step 278 first, then do The Lost Tribe entirely afterward (Lumbridge → Varrock → Goblin Village → Lumbridge). The extra travel is unavoidable but the guide is otherwise unaffected."
-                    }
-                  ],
-                  "items": [
-                    "Brooch",
-                    "Scrying orb",
-                    "GP"
-                  ],
-                  "links": [
-                    {
-                      "type": "wiki",
-                      "url": "https://oldschool.runescape.wiki/w/The_Lost_Tribe",
-                      "text": "The Lost Tribe"
-                    }
-                  ],
-                  "complete_when": [
-                    {
-                      "type": "quest_state",
-                      "meta": {
-                        "origin": "questStatus",
-                        "confidence": "high"
-                      },
-                      "quest": "The Lost Tribe",
-                      "state": "IN_PROGRESS",
-                      "op": "gte"
-                    }
-                  ],
-                  "tags": [
-                    "quest"
-                  ],
-                  "modes": [
-                    "ironman",
-                    "hcim",
-                    "uim",
-                    "gim"
-                  ],
-                  "layers": [
-                    "classic",
-                    "enhanced"
-                  ],
-                  "source": {
-                    "origin": "ironman.guide",
-                    "original_id": "1.1.254",
-                    "imported_at": "2026-11-03"
-                  },
-                  "entities": [
-                    {
-                      "ref": "quest:the_lost_tribe",
-                      "source_text": "The Lost Tribe",
-                      "field": "/complete_when/0/quest",
-                      "method": "rule",
-                      "match": "name"
-                    },
-                    {
-                      "ref": "item:5008",
-                      "source_text": "Brooch",
-                      "field": "/items/0",
-                      "method": "item",
-                      "match": "name"
-                    },
-                    {
-                      "ref": "item:995",
-                      "source_text": "GP",
-                      "field": "/items/2",
-                      "method": "item",
-                      "match": "alias"
-                    },
-                    {
-                      "ref": "quest:the_lost_tribe",
-                      "source_text": "https://oldschool.runescape.wiki/w/The_Lost_Tribe",
-                      "field": "/links/0/url",
-                      "method": "link",
-                      "match": "wiki_key"
-                    },
-                    {
-                      "ref": "quest:the_lost_tribe",
-                      "source_text": "the Lost tribe",
-                      "field": "/text",
-                      "span": [
-                        6,
-                        20
-                      ],
-                      "method": "text",
-                      "match": "name"
-                    }
-                  ]
-                },
-                {
                   "id": "1.1.255",
                   "text": "Teleport to Varrock",
                   "location": "Varrock",
@@ -10341,63 +10247,6 @@
                     "original_id": "1.1.255",
                     "imported_at": "2026-11-03"
                   }
-                },
-                {
-                  "id": "1.1.256",
-                  "text": "Continue Lost tribe until you need to go to the goblin village",
-                  "location": "Varrock",
-                  "complete_when": [
-                    {
-                      "type": "quest_state",
-                      "meta": {
-                        "origin": "text",
-                        "inferred": true,
-                        "confidence": "medium",
-                        "match": "continue lost tribe"
-                      },
-                      "quest": "The Lost Tribe",
-                      "state": "IN_PROGRESS",
-                      "op": "gte"
-                    }
-                  ],
-                  "tags": [
-                    "quest"
-                  ],
-                  "modes": [
-                    "ironman",
-                    "hcim",
-                    "uim",
-                    "gim"
-                  ],
-                  "layers": [
-                    "classic",
-                    "enhanced"
-                  ],
-                  "source": {
-                    "origin": "ironman.guide",
-                    "original_id": "1.1.256",
-                    "imported_at": "2026-11-03"
-                  },
-                  "entities": [
-                    {
-                      "ref": "quest:the_lost_tribe",
-                      "source_text": "The Lost Tribe",
-                      "field": "/complete_when/0/quest",
-                      "method": "rule",
-                      "match": "name"
-                    },
-                    {
-                      "ref": "quest:the_lost_tribe",
-                      "source_text": "Lost tribe",
-                      "field": "/text",
-                      "span": [
-                        9,
-                        19
-                      ],
-                      "method": "text",
-                      "match": "article"
-                    }
-                  ]
                 },
                 {
                   "id": "1.1.257",
@@ -11477,7 +11326,6 @@
                   "text": "Falador teleport",
                   "location": "Falador",
                   "items": [
-                    "Lost tribe brooch and book",
                     "Blue/orange dyes"
                   ],
                   "modes": [
@@ -11565,6 +11413,218 @@
                   ]
                 },
                 {
+                  "id": "1.1.280",
+                  "text": "Home tele, Lumby",
+                  "location": "Lumbridge",
+                  "modes": [
+                    "ironman",
+                    "hcim",
+                    "uim",
+                    "gim"
+                  ],
+                  "layers": [
+                    "classic",
+                    "enhanced"
+                  ],
+                  "source": {
+                    "origin": "ironman.guide",
+                    "original_id": "1.1.280",
+                    "imported_at": "2026-11-03"
+                  }
+                },
+                {
+                  "id": "1.1.254",
+                  "text": "Start the Lost tribe, do until you need to go to Varrock",
+                  "location": "Lumbridge",
+                  "notes": [
+                    {
+                      "kind": "update",
+                      "text": "Route adjusted by the planner: Goblin Diplomacy is now required before The Lost Tribe, so the whole quest now runs right after Goblin Diplomacy (1.1.278): Lumbridge, Varrock, Goblin Village, Lumbridge."
+                    }
+                  ],
+                  "items": [
+                    "Brooch",
+                    "Scrying orb",
+                    "GP"
+                  ],
+                  "links": [
+                    {
+                      "type": "wiki",
+                      "url": "https://oldschool.runescape.wiki/w/The_Lost_Tribe",
+                      "text": "The Lost Tribe"
+                    }
+                  ],
+                  "complete_when": [
+                    {
+                      "type": "quest_state",
+                      "meta": {
+                        "origin": "questStatus",
+                        "confidence": "high"
+                      },
+                      "quest": "The Lost Tribe",
+                      "state": "IN_PROGRESS",
+                      "op": "gte"
+                    }
+                  ],
+                  "tags": [
+                    "quest"
+                  ],
+                  "modes": [
+                    "ironman",
+                    "hcim",
+                    "uim",
+                    "gim"
+                  ],
+                  "layers": [
+                    "classic",
+                    "enhanced"
+                  ],
+                  "source": {
+                    "origin": "ironman.guide",
+                    "original_id": "1.1.254",
+                    "imported_at": "2026-11-03"
+                  },
+                  "entities": [
+                    {
+                      "ref": "quest:the_lost_tribe",
+                      "source_text": "The Lost Tribe",
+                      "field": "/complete_when/0/quest",
+                      "method": "rule",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:5008",
+                      "source_text": "Brooch",
+                      "field": "/items/0",
+                      "method": "item",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "item:995",
+                      "source_text": "GP",
+                      "field": "/items/2",
+                      "method": "item",
+                      "match": "alias"
+                    },
+                    {
+                      "ref": "quest:the_lost_tribe",
+                      "source_text": "https://oldschool.runescape.wiki/w/The_Lost_Tribe",
+                      "field": "/links/0/url",
+                      "method": "link",
+                      "match": "wiki_key"
+                    },
+                    {
+                      "ref": "quest:the_lost_tribe",
+                      "source_text": "the Lost tribe",
+                      "field": "/text",
+                      "span": [
+                        6,
+                        20
+                      ],
+                      "method": "text",
+                      "match": "name"
+                    }
+                  ]
+                },
+                {
+                  "id": "1.1.254a",
+                  "text": "Teleport to Varrock",
+                  "location": "Varrock",
+                  "modes": [
+                    "ironman",
+                    "hcim",
+                    "uim",
+                    "gim"
+                  ],
+                  "layers": [
+                    "classic",
+                    "enhanced"
+                  ],
+                  "source": {
+                    "origin": "own",
+                    "imported_at": "2026-11-03"
+                  }
+                },
+                {
+                  "id": "1.1.256",
+                  "text": "Continue Lost tribe until you need to go to the goblin village",
+                  "location": "Varrock",
+                  "complete_when": [
+                    {
+                      "type": "quest_state",
+                      "meta": {
+                        "origin": "text",
+                        "inferred": true,
+                        "confidence": "medium",
+                        "match": "continue lost tribe"
+                      },
+                      "quest": "The Lost Tribe",
+                      "state": "IN_PROGRESS",
+                      "op": "gte"
+                    }
+                  ],
+                  "tags": [
+                    "quest"
+                  ],
+                  "modes": [
+                    "ironman",
+                    "hcim",
+                    "uim",
+                    "gim"
+                  ],
+                  "layers": [
+                    "classic",
+                    "enhanced"
+                  ],
+                  "source": {
+                    "origin": "ironman.guide",
+                    "original_id": "1.1.256",
+                    "imported_at": "2026-11-03"
+                  },
+                  "entities": [
+                    {
+                      "ref": "quest:the_lost_tribe",
+                      "source_text": "The Lost Tribe",
+                      "field": "/complete_when/0/quest",
+                      "method": "rule",
+                      "match": "name"
+                    },
+                    {
+                      "ref": "quest:the_lost_tribe",
+                      "source_text": "Lost tribe",
+                      "field": "/text",
+                      "span": [
+                        9,
+                        19
+                      ],
+                      "method": "text",
+                      "match": "article"
+                    }
+                  ]
+                },
+                {
+                  "id": "1.1.256a",
+                  "text": "Falador teleport and run north to the Goblin Village",
+                  "location": "Goblin Village",
+                  "items": [
+                    "Lost tribe brooch and book"
+                  ],
+                  "modes": [
+                    "ironman",
+                    "hcim",
+                    "uim",
+                    "gim"
+                  ],
+                  "layers": [
+                    "classic",
+                    "enhanced"
+                  ],
+                  "source": {
+                    "origin": "own",
+                    "imported_at": "2026-11-03"
+                  }
+                },
+                {
                   "id": "1.1.279",
                   "text": "Continue Lost tribe",
                   "location": "Goblin Village",
@@ -11622,8 +11682,8 @@
                   ]
                 },
                 {
-                  "id": "1.1.280",
-                  "text": "Home tele, Lumby",
+                  "id": "1.1.279a",
+                  "text": "Teleport to Lumbridge",
                   "location": "Lumbridge",
                   "modes": [
                     "ironman",
@@ -11636,8 +11696,7 @@
                     "enhanced"
                   ],
                   "source": {
-                    "origin": "ironman.guide",
-                    "original_id": "1.1.280",
+                    "origin": "own",
                     "imported_at": "2026-11-03"
                   }
                 },
@@ -18002,69 +18061,6 @@
                   "source": {
                     "origin": "ironman.guide",
                     "original_id": "1.4.1",
-                    "imported_at": "2026-11-03"
-                  }
-                }
-              ]
-            },
-            {
-              "id": "seg-c5cdeeb446bd",
-              "title": "Bank leg from 1.4.2",
-              "kind": "bank_leg",
-              "bank_actions": [
-                {
-                  "type": "open_bank",
-                  "position": "end",
-                  "text": "bank",
-                  "source": {
-                    "method": "explicit",
-                    "confidence": "high",
-                    "step_ids": [
-                      "1.4.2"
-                    ],
-                    "evidence": "bank"
-                  }
-                }
-              ],
-              "loadout": {
-                "status": "unknown"
-              },
-              "source": {
-                "method": "derived",
-                "confidence": "high",
-                "step_ids": [
-                  "1.4.2"
-                ],
-                "evidence": "segment begins at an explicit bank action"
-              },
-              "steps": [
-                {
-                  "id": "1.4.2",
-                  "text": "Get 100% hosidius favour, should have 300 compost in bank",
-                  "location": "Hosidius",
-                  "notes": [
-                    {
-                      "kind": "tip",
-                      "text": "At 45% do mess hall until 100%"
-                    },
-                    {
-                      "kind": "update",
-                      "text": "The Kourend favour system was removed in January 2024, so this step is no longer possible — skip it entirely. All Hosidius content (fruit stalls, farming patches, Tithe Farm, the Mess) is freely accessible now. The Mess still exists as optional Cooking training if you want it."
-                    }
-                  ],
-                  "modes": [
-                    "ironman",
-                    "hcim",
-                    "uim",
-                    "gim"
-                  ],
-                  "layers": [
-                    "classic",
-                    "enhanced"
-                  ],
-                  "source": {
-                    "origin": "ironman.guide",
-                    "original_id": "1.4.2",
                     "imported_at": "2026-11-03"
                   }
                 },

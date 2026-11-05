@@ -72,7 +72,7 @@ func TestHealth(t *testing.T) {
 	if resp.StatusCode != 200 || h.Status != "ok" || h.Version != "test" {
 		t.Errorf("health = %d %+v", resp.StatusCode, h)
 	}
-	if h.Content.Guides != 2 || h.Content.Steps != 802 {
+	if h.Content.Guides != 2 || h.Content.Steps != 804 {
 		t.Errorf("content counts = %+v", h.Content)
 	}
 	if h.DB != DBNotConfigured {
@@ -124,7 +124,7 @@ func TestNow(t *testing.T) {
 		t.Errorf("next = %d steps, want 5", len(now.Next))
 	}
 	// Total excludes the Sailing track (12 steps).
-	if now.Progress.Done != 0 || now.Progress.Total != 576-12 {
+	if now.Progress.Done != 0 || now.Progress.Total != 578-12 {
 		t.Errorf("progress = %+v", now.Progress)
 	}
 }
@@ -176,7 +176,7 @@ func TestGuideSectionStep(t *testing.T) {
 		Steps []map[string]any `json:"steps"`
 	}
 	getJSON(t, srv.URL+"/api/guides/oziris-main/sections/1.1", &sec)
-	if sec.ID != "1.1" || sec.Guide != "oziris-main" || len(sec.Steps) != 286 {
+	if sec.ID != "1.1" || sec.Guide != "oziris-main" || len(sec.Steps) != 289 {
 		t.Errorf("section 1.1 = %s %s %d steps", sec.ID, sec.Guide, len(sec.Steps))
 	}
 	getJSON(t, srv.URL+"/api/guides/oziris-main/sections/sailing", &sec)
@@ -291,7 +291,7 @@ func TestGuideScopedNowDoesNotConcatenateRoutes(t *testing.T) {
 		guide string
 		total int
 	}{
-		{guide: "oziris-main", total: 564},
+		{guide: "oziris-main", total: 566},
 		{guide: "bruhsailer-main", total: 226},
 	} {
 		var now nowResponse

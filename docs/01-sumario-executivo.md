@@ -78,6 +78,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 29 | Comparar rotas é uma aba de Rotas (Oziris · BRUHsailer · Comparar), não a tela principal; a lista de rotas deixa de existir | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
 | 30 | O produto se chama **Chronicle** (wordmark Alegreya 700 com o livro e a runa); "Ironman Planner" vira descrição | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
 | 31 | Recorrentes (birdhouses, herb run, kingdom) como entidades com `ready_at` no doc 09 | **aberta** (proposta no canvas v6) | docs/ui/decisoes-canvas.md, seção 5 |
+| 32 | A rota do Oziris pode ser corrigida pelo dono: notas de update que tornam um passo impossível ou fora de ordem viram patches de import (`data/guide/route-patches.json`: remover, mover, inserir), não só anotações; primeiros: Lost Tribe depois do Goblin Diplomacy e 1.4.2 (favour) removido | resolvida (2026-11-05) | docs/05, seção 12 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais

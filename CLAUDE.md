@@ -33,7 +33,7 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `just build` | web build + `bin/ironman` with `-X .../internal/buildinfo.Version=$(git describe)` |
 | `just test` / `just lint` / `just fmt` | `go test ./...` + `pnpm check` + `pnpm test`; golangci-lint + gofmt + `pnpm lint` |
 | `just content-validate` | `ironman content validate` against `content/schema/guide.schema.json` |
-| `go run ./cmd/ironman content migrate` | regenerate `content/guides/oziris-main` from `data/guide/normalized` |
+| `go run ./cmd/ironman content migrate` | regenerate `content/guides/oziris-main` from `data/guide/normalized` plus the owner's route fixes in `data/guide/route-patches.json` (docs/05 section 12) |
 | `go run ./cmd/ironman content import-bruhsailer` | regenerate `content/guides/bruhsailer-main` from the pinned DOCX in `data/sources/bruhsailer` |
 | `just migrate-up` / `migrate-status` / `migrate-new <name>` | goose against `DATABASE_URL` |
 | `just account-create <rsn>` / `account-guide <id> <guide>` / `accounts` | dev accounts (id `acc_<rsn>`) and the active route, until the account screen exists |
@@ -116,7 +116,9 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
 8. **Item freshness is never upgraded.** `restored` is never treated as `live`; absence is proven only by
    a `live` container with a `full` baseline in the same live epoch; everything else is `unknown`.
    Bank actions are guide instructions and are never marked done (docs/04 section 6.4.1).
-9. **Generated content is not hand-edited.** Fix the importer/normalizer and regenerate. LLM/agent
+9. **Generated content is not hand-edited.** Fix the importer/normalizer and regenerate. The route is
+   meant to be good, not a literal copy: owner route fixes (drop, move, insert steps) go in
+   `data/guide/route-patches.json`. LLM/agent
    extraction output is a proposal: it enters `content/` only after deterministic verification (exact
    quote, resolver-assigned refs, schema), per docs/09 section 6. During extraction the owner watches
    live: ask them (AskUserQuestion) whenever an objective is inferred, a name is ambiguous, the taxonomy

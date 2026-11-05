@@ -496,6 +496,24 @@ func TestRoundTrip(t *testing.T) {
 	if r, _ := w2.Report("t"); r.Summary.Submitted != 3 {
 		t.Errorf("report log did not survive reopening: %+v", r.Summary)
 	}
+
+	// Drop step a2 upstream: the loader rejects its annotation until the next
+	// submit of the section rewrites the sidecar without it.
+	if err = os.WriteFile(gp, []byte(strings.Replace(testGuide, `,
+   {"id":"a2","text":"Finish X marks the spot and talk to Veos"}`, "", 1)), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = content.Load(dir); err == nil {
+		t.Fatal("annotation of a dropped step should not load")
+	}
+	w3, err := Open(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	submit(t, w3, "1.1", StepProposal{StepID: "c", Comment: "the quest is in section 1.2's objectives"})
+	if _, err = content.Load(dir); err != nil {
+		t.Errorf("after resubmitting, load = %v", err)
+	}
 }
 
 func TestProposeEntity(t *testing.T) {

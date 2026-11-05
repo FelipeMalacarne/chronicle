@@ -3,26 +3,26 @@
   "kind": "report",
   "guide_id": "oziris-main",
   "summary": {
-    "steps": 576,
-    "annotated": 576,
+    "steps": 578,
+    "annotated": 578,
     "stale": 0,
     "pending": 0,
-    "submitted": 576,
-    "first_submit_accepted": 567,
+    "submitted": 578,
+    "first_submit_accepted": 569,
     "owner_confirmed": 101,
-    "decisions_applied": 227
+    "decisions_applied": 224
   },
   "sections": [
     {
       "section_id": "1.1",
-      "steps": 286,
-      "annotated": 286,
+      "steps": 289,
+      "annotated": 289,
       "stale": 0,
       "pending": 0,
-      "submitted": 286,
-      "first_submit_accepted": 284,
+      "submitted": 289,
+      "first_submit_accepted": 287,
       "owner_confirmed": 25,
-      "decisions_applied": 109
+      "decisions_applied": 106
     },
     {
       "section_id": "1.2",
@@ -48,12 +48,12 @@
     },
     {
       "section_id": "1.4",
-      "steps": 50,
-      "annotated": 50,
+      "steps": 49,
+      "annotated": 49,
       "stale": 0,
       "pending": 0,
-      "submitted": 50,
-      "first_submit_accepted": 49,
+      "submitted": 49,
+      "first_submit_accepted": 48,
       "owner_confirmed": 9,
       "decisions_applied": 23
     },
@@ -128,26 +128,22 @@
         "comment": "Diverge da regra (quest:the_grand_tree@started, derived): 'continue the grand tree' é o meio da quest, iniciada em 1.1.203."
       },
       {
-        "step_id": "1.1.254",
-        "key": "quest:the_lost_tribe@started",
+        "step_id": "1.1.260",
+        "key": "quest:biohazard@started",
         "role": "starts",
-        "suppressed": true,
-        "reason": "The update note says to skip this step: Goblin Diplomacy is now required, and The Lost Tribe starts at 1.1.279.",
-        "comment": "Suppresses the rule (starts the_lost_tribe, explicit): the update note says to skip this step; The Lost Tribe starts at 1.1.279 (update-note-overrides-text). Items (Brooch, Scrying orb, GP) also left out."
+        "comment": "Diverge da regra (quest:biohazard@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.223."
       },
       {
         "step_id": "1.1.256",
         "key": "quest:the_lost_tribe@started",
         "role": "starts",
-        "suppressed": true,
-        "reason": "The 1.1.254 update note says to skip this step; The Lost Tribe starts at 1.1.279.",
-        "comment": "Suppresses the rule (starts the_lost_tribe, derived): the 1.1.254 update note says to skip this step (update-note-overrides-text)."
+        "comment": "Continue <quest>: the rule's started is already met at 1.1.254 (harmless divergence, no suppression)."
       },
       {
-        "step_id": "1.1.260",
-        "key": "quest:biohazard@started",
+        "step_id": "1.1.279",
+        "key": "quest:the_lost_tribe@started",
         "role": "starts",
-        "comment": "Diverge da regra (quest:biohazard@started, derived): 'Continue' é o meio da quest, iniciada em 1.1.223."
+        "comment": "Continue <quest>: the rule's started is already met at 1.1.254 (harmless divergence, no suppression)."
       },
       {
         "step_id": "1.2.16",
@@ -845,18 +841,6 @@
       "decision": "do-quest-means-finish"
     },
     {
-      "step_id": "1.1.254",
-      "what": "suppresses quest:the_lost_tribe@started starts",
-      "quote": "The update note says to skip this step: Goblin Diplomacy is now required, and The Lost Tribe starts at 1.1.279.",
-      "decision": "update-note-overrides-text"
-    },
-    {
-      "step_id": "1.1.256",
-      "what": "suppresses quest:the_lost_tribe@started starts",
-      "quote": "The 1.1.254 update note says to skip this step; The Lost Tribe starts at 1.1.279.",
-      "decision": "update-note-overrides-text"
-    },
-    {
       "step_id": "1.1.257",
       "what": "item:426x1 completes",
       "quote": "Buy priest robes"
@@ -918,22 +902,16 @@
       "decision": "do-quest-means-finish"
     },
     {
-      "step_id": "1.1.277",
-      "what": "item Goblin symbol book = item:5009",
-      "quote": "Lost tribe brooch and book",
-      "decision": "item-shorthand-to-catalog-name"
-    },
-    {
       "step_id": "1.1.278",
       "what": "quest:goblin_diplomacy@finished completes",
       "quote": "Do Goblin diplomacy",
       "decision": "do-quest-means-finish"
     },
     {
-      "step_id": "1.1.279",
-      "what": "quest:the_lost_tribe@started starts",
-      "quote": "Continue Lost tribe",
-      "decision": "update-note-overrides-text"
+      "step_id": "1.1.256a",
+      "what": "item Goblin symbol book = item:5009",
+      "quote": "Lost tribe brooch and book",
+      "decision": "item-shorthand-to-catalog-name"
     },
     {
       "step_id": "1.1.281",
@@ -3006,9 +2984,15 @@
     },
     "1.1.254": {
       "section_id": "1.1",
-      "submits": 2,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "Suppresses the rule (starts the_lost_tribe, explicit): the update note says to skip this step; The Lost Tribe starts at 1.1.279 (update-note-overrides-text). Items (Brooch, Scrying orb, GP) also left out."
+      "comment": "Route patch moved this step after Goblin Diplomacy (1.1.278), so the quest starts here again; the old suppression is gone."
+    },
+    "1.1.254a": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Planner step (route patch): travel only."
     },
     "1.1.255": {
       "section_id": "1.1",
@@ -3018,9 +3002,15 @@
     },
     "1.1.256": {
       "section_id": "1.1",
-      "submits": 2,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "Suppresses the rule (starts the_lost_tribe, derived): the 1.1.254 update note says to skip this step (update-note-overrides-text)."
+      "comment": "Continue <quest>: the rule's started is already met at 1.1.254 (harmless divergence, no suppression)."
+    },
+    "1.1.256a": {
+      "section_id": "1.1",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Planner step (route patch): travel to Goblin Village with the brooch and book, as 1.1.277 carried them before the patch."
     },
     "1.1.257": {
       "section_id": "1.1",
@@ -3152,9 +3142,9 @@
     },
     "1.1.277": {
       "section_id": "1.1",
-      "submits": 2,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "'book' da Lost Tribe → Goblin symbol book."
+      "comment": "Route patch lost-tribe-after-goblin-diplomacy: the Lost Tribe brooch and book now come after Goblin Diplomacy (1.1.256a carries them); only the dyes for Goblin Diplomacy remain."
     },
     "1.1.278": {
       "section_id": "1.1",
@@ -3163,9 +3153,15 @@
     },
     "1.1.279": {
       "section_id": "1.1",
+      "submits": 2,
+      "first_submit_accepted": true,
+      "comment": "Continue <quest>: the rule's started is already met at 1.1.254 (harmless divergence, no suppression)."
+    },
+    "1.1.279a": {
+      "section_id": "1.1",
       "submits": 1,
       "first_submit_accepted": true,
-      "comment": "Pela nota de update de 1.1.254, a Lost Tribe começa aqui, depois de Goblin Diplomacy (dono)."
+      "comment": "Planner step (route patch): travel only."
     },
     "1.1.28": {
       "section_id": "1.1",
@@ -4542,12 +4538,6 @@
       "first_submit_accepted": true,
       "comment": "Farm run; patch state not catalogued. Tip: store 15 supercompost in the leprechaun for a quest. Location 'Various'."
     },
-    "1.4.2": {
-      "section_id": "1.4",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Update note: Kourend favour was removed, skip this step (update-note-overrides-text). No rule objectives. '300 compost in bank' is a reference amount."
-    },
     "1.4.20": {
       "section_id": "1.4",
       "submits": 1,
@@ -4610,8 +4600,8 @@
     },
     "1.4.3": {
       "section_id": "1.4",
-      "submits": 2,
-      "comment": "'Buy pineapples' has no number; x1 would repeat 1.1.61 (Pineapple x1), so no objective. 1.4.4 needs 15 per bin. Location 'Various'."
+      "submits": 4,
+      "comment": "'Buy pineapples' has no number; x1 would repeat 1.1.61 (Pineapple x1), so no objective. 1.4.4 needs 15 per bin. Location 'Various'. Resubmitted unchanged to drop the annotation of 1.4.2 (removed by route patch no-hosidius-favour)."
     },
     "1.4.30": {
       "section_id": "1.4",

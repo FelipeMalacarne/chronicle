@@ -3,19 +3,27 @@ package migrate
 import (
 	"bytes"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 )
 
-const normalizedPath = "../../../../data/guide/normalized/guide.json"
+const (
+	normalizedPath = "../../../../data/guide/normalized/guide.json"
+	patchesPath    = "../../../../data/guide/route-patches.json"
+)
 
 func TestConvertRealNormalizedGuide(t *testing.T) {
 	n, err := ReadNormalized(normalizedPath)
 	if err != nil {
 		t.Skipf("normalized guide not available: %v", err)
 	}
-	g, err := Convert(n, Options{})
+	patches, err := ReadRoutePatches(patchesPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, err := Convert(n, Options{Patches: patches})
 	if err != nil {
 		t.Fatalf("Convert: %v", err)
 	}
@@ -34,15 +42,15 @@ func TestConvertRealNormalizedGuide(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := readmeFor(n, g, "data/guide/normalized/guide.json"); string(checkedReadme) != want {
+	if want := readmeFor(n, g, "data/guide/normalized/guide.json", "data/guide/route-patches.json", patches); string(checkedReadme) != want {
 		t.Fatal("checked-in Oziris README differs from deterministic migration")
 	}
 	parsed, err := content.ParseGuide("guide.json", data)
 	if err != nil {
 		t.Fatalf("output invalid against canonical schema: %v", err)
 	}
-	if parsed.StepCount() != 576 {
-		t.Errorf("steps = %d, want 576", parsed.StepCount())
+	if parsed.StepCount() != 578 {
+		t.Errorf("steps = %d, want 578 (576 imported, 1 dropped and 3 added by route patches)", parsed.StepCount())
 	}
 	if parsed.ID != "oziris-main" || parsed.SchemaVersion != 1 {
 		t.Errorf("header = %q v%d", parsed.ID, parsed.SchemaVersion)
@@ -56,8 +64,8 @@ func TestConvertRealNormalizedGuide(t *testing.T) {
 			bankLegs++
 		}
 	}
-	if len(parsed.Segments()) != 32 || bankLegs != 25 {
-		t.Fatalf("segments = %d, bank legs = %d; want 32, 25", len(parsed.Segments()), bankLegs)
+	if len(parsed.Segments()) != 31 || bankLegs != 24 {
+		t.Fatalf("segments = %d, bank legs = %d; want 31, 24", len(parsed.Segments()), bankLegs)
 	}
 	withRules := 0
 	for _, st := range parsed.Steps() {
@@ -134,5 +142,61 @@ func TestConvertRuleQuestOp(t *testing.T) {
 	}
 	if _, err := convertRule(NRule{Type: "combat_achievement"}); err == nil {
 		t.Error("unsupported type should error")
+	}
+}
+
+func TestApplyPatches(t *testing.T) {
+	section := func() []*content.Section {
+		return []*content.Section{{ID: "1", Steps: []*content.Step{
+			{ID: "a", Text: "A", Notes: []content.Note{{Kind: content.NoteUpdate, Text: "old"}}},
+			{ID: "b", Text: "B"},
+			{ID: "c", Text: "C", Requires: []string{"step:a"}},
+		}}}
+	}
+	ids := func(secs []*content.Section) string {
+		var out []string
+		for _, st := range secs[0].Steps {
+			out = append(out, st.ID)
+		}
+		return strings.Join(out, ",")
+	}
+	patch := func(ops ...PatchOp) *RoutePatches {
+		return &RoutePatches{SchemaVersion: 1, GuideID: "g", Patches: []RoutePatch{{ID: "p", Reason: "r", Ops: ops}}}
+	}
+
+	secs := section()
+	err := applyPatches(secs, patch(
+		PatchOp{Op: OpMove, Step: "a", After: "b"},
+		PatchOp{Op: OpInsert, After: "a", New: &NewStep{ID: "a1", Text: "New", Items: []string{"Rope"}}},
+		PatchOp{Op: OpDrop, Step: "b"},
+		PatchOp{Op: OpNote, Step: "a", Note: "new"},
+		PatchOp{Op: OpItems, Step: "c", Items: &[]string{"Bucket"}},
+	), "g", "2026-11-05")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ids(secs); got != "a,a1,c" {
+		t.Errorf("order = %s, want a,a1,c", got)
+	}
+	added := secs[0].Steps[1]
+	if added.Source == nil || added.Source.Origin != "own" || len(added.Items) != 1 || len(added.Modes) == 0 {
+		t.Errorf("added step = %+v", added)
+	}
+	if secs[0].Steps[0].Notes[0].Text != "new" || secs[0].Steps[2].Items[0].Name != "Bucket" {
+		t.Errorf("note/items not replaced: %+v %+v", secs[0].Steps[0], secs[0].Steps[2])
+	}
+
+	for name, p := range map[string]*RoutePatches{
+		"stale step":       patch(PatchOp{Op: OpMove, Step: "zz", After: "a"}),
+		"required step":    patch(PatchOp{Op: OpDrop, Step: "a"}),
+		"duplicate id":     patch(PatchOp{Op: OpInsert, After: "a", New: &NewStep{ID: "b", Text: "x"}}),
+		"no update note":   patch(PatchOp{Op: OpNote, Step: "b", Note: "x"}),
+		"unknown op":       patch(PatchOp{Op: "rename", Step: "a"}),
+		"other guide":      {SchemaVersion: 1, GuideID: "h"},
+		"missing a reason": {SchemaVersion: 1, GuideID: "g", Patches: []RoutePatch{{ID: "p"}}},
+	} {
+		if err := applyPatches(section(), p, "g", ""); err == nil {
+			t.Errorf("%s: want an error", name)
+		}
 	}
 }

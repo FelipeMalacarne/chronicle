@@ -1,5 +1,6 @@
 import { invalidate } from './resource.svelte';
-import { refreshSummary } from '../progress/session.svelte';
+import { refreshSummary, session } from '../progress/session.svelte';
+import { loadMe } from '../progress/me.svelte';
 import {
 	detectionToast,
 	parseLiveEvent,
@@ -42,6 +43,7 @@ function schedule(tags: LiveTag[]) {
 		for (const t of due) pending[t] = false;
 		invalidate(...due);
 		void refreshSummary();
+		void loadMe(session.account);
 	}, COALESCE_MS);
 }
 

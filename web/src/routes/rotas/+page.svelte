@@ -5,7 +5,7 @@
 	import { session, setSummary } from '#lib/progress/session.svelte';
 	import { checkboxLine, coverageLine, pct, sectionLabel } from '#lib/progress/view';
 	import type { RouteSummary } from '#lib/progress/types';
-	import Glyph from '#lib/v4/Glyph.svelte';
+	import Glyph from '#lib/v6/Glyph.svelte';
 
 	/*
 	 * Rotas (V4Rotas): cada rota é uma ordem e o progresso é um só; a cobertura diz quanto de
@@ -50,7 +50,7 @@
 </script>
 
 <svelte:head>
-	<title>Rotas · Ironman Planner</title>
+	<title>Rotas · Chronicle</title>
 </svelte:head>
 
 <header class="head">

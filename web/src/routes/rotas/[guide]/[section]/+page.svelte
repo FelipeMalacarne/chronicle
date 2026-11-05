@@ -30,9 +30,9 @@
 		MarkAction,
 		MarkRestore
 	} from '#lib/progress/types';
-	import Glyph from '#lib/v4/Glyph.svelte';
-	import ObjectiveChip from '#lib/v4/ObjectiveChip.svelte';
-	import Toast from '#lib/v4/Toast.svelte';
+	import Glyph from '#lib/v6/Glyph.svelte';
+	import ObjectiveChip from '#lib/v6/ObjectiveChip.svelte';
+	import Toast from '#lib/v6/Toast.svelte';
 
 	/*
 	 * Rota (V4RotaOziris / V4RotaBruh): uma seção agrupada por trecho de banco. O Oziris mostra
@@ -213,7 +213,7 @@
 </script>
 
 <svelte:head>
-	<title>{section.data?.title ?? 'Rota'} · {label} · Ironman Planner</title>
+	<title>{section.data?.title ?? 'Rota'} · {label} · Chronicle</title>
 </svelte:head>
 
 <div class="wrap rota">
@@ -582,12 +582,7 @@
 		{#if stepNotes(s).some((n) => n.kind === 'update')}<span class="badge badge-up"
 				>atualização</span
 			>{:else if plainNotes(s).length}<span class="badge">nota</span>{/if}
-		{#each rowChips.slice(0, 3) as c (c.role + c.key)}<ObjectiveChip
-				chip={c}
-				small
-				hint={false}
-				link={false}
-			/>{/each}
+		{#each rowChips.slice(0, 3) as c (c.role + c.key)}<ObjectiveChip chip={c} small />{/each}
 		{#if rowChips.length > 3}<span class="badge">+{rowChips.length - 3}</span>{/if}
 		{#if nItems}<span class="badge">{nItems} {nItems === 1 ? 'item' : 'itens'}</span>{/if}
 	</button>

@@ -3,37 +3,50 @@
 	import { progressApi } from '#lib/api/client';
 	import { quietDetection } from '#lib/api/events.svelte';
 	import { createResource } from '#lib/api/resource.svelte';
+	import { rowChip, sessionLine, whoDid } from '#lib/progress/agora';
+	import { openEntity } from '#lib/progress/entity.svelte';
+	import { iconFor, ICON_ATTRIBUTION } from '#lib/progress/icons';
+	import { narrow } from '#lib/progress/narrow.svelte';
 	import { loadSummary, session } from '#lib/progress/session.svelte';
-	import { ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import {
 		chipsOf,
-		eventLines,
+		metaOf,
 		pct,
 		routeLabel,
-		routesLine,
+		routeTitle,
 		sectionLabel,
-		sourceBand,
 		segmentsOf,
+		sourceBand,
 		statusView
 	} from '#lib/progress/view';
-	import type { Board, BoardStep, Mark, MarkAction, MarkRestore } from '#lib/progress/types';
-	import BankPanel from '#lib/v4/BankPanel.svelte';
-	import CurrentStep from '#lib/v4/CurrentStep.svelte';
-	import Glyph from '#lib/v4/Glyph.svelte';
-	import ObjectiveChip from '#lib/v4/ObjectiveChip.svelte';
-	import PinDialog from '#lib/v4/PinDialog.svelte';
-	import Toast from '#lib/v4/Toast.svelte';
+	import type {
+		Board,
+		BoardStep,
+		Goal,
+		GoalPlan,
+		Mark,
+		MarkAction,
+		MarkRestore
+	} from '#lib/progress/types';
+	import BankPanel from '#lib/v6/BankPanel.svelte';
+	import CurrentStep from '#lib/v6/CurrentStep.svelte';
+	import Glyph from '#lib/v6/Glyph.svelte';
+	import ObjectiveChip from '#lib/v6/ObjectiveChip.svelte';
+	import PinDialog from '#lib/v6/PinDialog.svelte';
+	import Toast from '#lib/v6/Toast.svelte';
 
 	/*
-	 * Agora (V4AgoraOziris / V4AgoraBruh): o cursor da rota ativa como card, o banco do trecho
-	 * em três colunas, os próximos passos do trecho e o que mudou na sessão. Painéis sem fonte
-	 * de dados (metas fixadas, fora da rota ativa, recorrentes, ⌘K) entram nos itens seguintes.
+	 * Agora (V6Agora1440 e V6Agora640; BRUHsailer em V6AgoraBruh1440/640; fonte falhou e Fixar
+	 * outro em V6AgoraEstados1440): o passo atual, "Levar do banco" e "Em seguida". A 1440 o banco
+	 * e as metas ficam na coluna da direita; a 640 o banco vem logo depois do passo e o que não tem
+	 * conteúdo vira uma linha no rodapé (V6Fundamentos, átomo 3).
 	 */
 	const account = $derived(session.account);
 	const route = $derived(
 		session.summary?.routes.find((r) => r.active) ?? session.summary?.routes[0] ?? null
 	);
 	const guideId = $derived(route?.guide);
+	const label = $derived(route ? routeLabel(route.guide, route.title) : '');
 
 	const board = createResource(
 		() => (account && guideId ? progressApi.board(guideId, account) : Promise.resolve(null)),
@@ -41,6 +54,7 @@
 	);
 	const cursorId = $derived(board.data?.cursor?.step_id);
 	const boardById = $derived(new Map((board.data?.steps ?? []).map((s) => [s.id, s])));
+	const refOf = (id: string) => boardById.get(id)?.ref ?? id;
 	const sectionId = $derived(cursorId ? boardById.get(cursorId)?.section_id : undefined);
 	const section = createResource(() =>
 		guideId && sectionId ? progressApi.section(guideId, sectionId) : Promise.resolve(null)
@@ -60,13 +74,110 @@
 		() => (account ? progressApi.syncRuns(account, 1).catch(() => null) : Promise.resolve(null)),
 		{ tags: ['sync'] }
 	);
+	const events = createResource(
+		() => (account && guideId ? progressApi.events(guideId, account, 60) : Promise.resolve(null)),
+		{ tags: ['progress'] }
+	);
+
+	let now = $state(Date.now());
+	$effect(() => {
+		const t = setInterval(() => (now = Date.now()), 30_000);
+		return () => clearInterval(t);
+	});
 	const hiscoresAt = $derived.by(() => {
 		const s = session.summary?.sources.find((x) => x.source === 'hiscores');
 		return s ? Date.parse(s.last_observed_at) : undefined;
 	});
-	const band = $derived(sourceBand(runs.data?.runs[0], hiscoresAt, Date.now()));
+	const band = $derived(sourceBand(runs.data?.runs[0], hiscoresAt, now));
+
+	/* Metas fixadas com o plano: "14 de 31", o gargalo e onde esta rota chega. */
+	const pinned = $derived((goals.data?.goals ?? []).filter((g) => g.status === 'active'));
+	let plans = $state<Record<string, GoalPlan>>({});
+	$effect(() => {
+		const acc = account;
+		if (!acc) return;
+		for (const g of pinned.slice(0, 3)) {
+			progressApi
+				.goalPlan(acc, g.id)
+				.then((r) => (plans = { ...plans, [g.id]: r.plan }))
+				.catch(() => {});
+		}
+	});
+	function goalLine(g: Goal): string {
+		const plan = plans[g.id];
+		const parts: string[] = [];
+		const b = plan?.bottlenecks.find((x) => !x.met);
+		if (b)
+			parts.push(
+				`Gargalo: ${b.target} ${b.skill}${b.level !== null ? ` (está em ${b.level})` : ''}.`
+			);
+		const here =
+			plan?.routes.find((r) => r.guide_id === guideId && r.goal) ??
+			g.routes.find((r) => r.guide === guideId);
+		parts.push(here ? `Esta rota chega lá em ${here.ref}.` : 'Esta rota não conclui.');
+		return parts.join(' ');
+	}
+
+	const step = $derived(section.data?.steps.find((s) => s.id === cursorId) ?? null);
+	const segments = $derived(section.data ? segmentsOf(section.data) : []);
+	const segOf = $derived(new Map(segments.flatMap((g) => g.steps.map((s) => [s.id, g] as const))));
+	const segment = $derived(cursorId ? (segOf.get(cursorId) ?? null) : null);
+	const mainSteps = $derived((board.data?.steps ?? []).filter((s) => s.main && s.visible));
+	const cursorIndex = $derived(mainSteps.findIndex((s) => s.id === cursorId));
+	const prev = $derived(
+		cursorIndex > 0
+			? mainSteps
+					.slice(Math.max(0, cursorIndex - 2), cursorIndex)
+					.filter((s) => s.status !== 'pending')
+			: []
+	);
+	const paragraphRoute = $derived(guideId?.startsWith('bruhsailer') ?? false);
+	const next = $derived.by(() => {
+		if (!section.data || !step) return [];
+		const steps = section.data.steps;
+		const i = steps.findIndex((s) => s.id === step.id);
+		return steps.slice(i + 1, i + (paragraphRoute ? 4 : 6));
+	});
+	/** Linha "banco · entre A e B" quando o próximo passo abre outro trecho de banco. */
+	function bankBefore(i: number): string {
+		const cur = i === 0 ? step : next[i - 1];
+		const s = next[i];
+		if (!cur || !s) return '';
+		const a = segOf.get(cur.id);
+		const b = segOf.get(s.id);
+		if (!a || !b || a.id === b.id || b.kind !== 'bank_leg') return '';
+		return `banco · entre ${cur.ref} e ${s.ref}`;
+	}
+	const sectionCounts = $derived(board.data?.sections.find((s) => s.id === sectionId)?.counts);
+	const others = $derived(
+		(session.summary?.routes ?? [])
+			.filter((r) => r.guide !== guideId)
+			.map((r) => ({ guide: r.guide, label: routeLabel(r.guide, r.title), route: r }))
+	);
+	const where = $derived.by(() => {
+		if (!step) return '';
+		const steps = section.data?.steps ?? [];
+		const parts = [`${steps.findIndex((s) => s.id === step.id) + 1} de ${steps.length}`];
+		if (step.location) parts.push(step.location);
+		return parts.join(' · ');
+	});
+	const rotaBase = $derived(
+		guideId && sectionId
+			? resolve('/rotas/[guide]/[section]', { guide: guideId, section: sectionId })
+			: resolve('/rotas')
+	);
+	const rotaHref = $derived(cursorId ? `${rotaBase}#passo-${cursorId}` : rotaBase);
+	const recent = $derived(sessionLine(events.data, now));
+	const bankActions = $derived(
+		readiness.data?.current?.bank_actions?.length
+			? readiness.data.current.bank_actions
+			: (segment?.bankActions ?? [])
+	);
+	const bankFirst = $derived(segment?.steps[0]?.ref ?? '');
+	const shortTitle = $derived(route ? routeTitle(route.guide, route.title) : '');
+
+	/* Sincronizar */
 	let syncing = $state(false);
-	let descOpen = $state(false);
 	async function syncNow() {
 		if (!account || syncing) return;
 		syncing = true;
@@ -98,55 +209,6 @@
 			runs.reload();
 		}
 	}
-	const pinned = $derived((goals.data?.goals ?? []).filter((g) => g.status === 'active'));
-	const events = createResource(
-		() => (account && guideId ? progressApi.events(guideId, account, 30) : Promise.resolve(null)),
-		{ tags: ['progress'] }
-	);
-
-	const step = $derived(section.data?.steps.find((s) => s.id === cursorId) ?? null);
-	const segments = $derived(section.data ? segmentsOf(section.data) : []);
-	const segment = $derived(segments.find((g) => g.steps.some((s) => s.id === cursorId)) ?? null);
-	const mainSteps = $derived((board.data?.steps ?? []).filter((s) => s.main && s.visible));
-	const cursorIndex = $derived(mainSteps.findIndex((s) => s.id === cursorId));
-	const prev = $derived(
-		cursorIndex > 0
-			? mainSteps
-					.slice(Math.max(0, cursorIndex - 2), cursorIndex)
-					.filter((s) => s.status !== 'pending')
-			: []
-	);
-	const next = $derived.by(() => {
-		if (!section.data || !step) return [];
-		const pool = segment && segment.steps.length > 1 ? segment.steps : section.data.steps;
-		const i = pool.findIndex((s) => s.id === step.id);
-		return pool.slice(i + 1, i + 7);
-	});
-	const sectionCounts = $derived(board.data?.sections.find((s) => s.id === sectionId)?.counts);
-	const others = $derived(
-		(session.summary?.routes ?? [])
-			.filter((r) => r.guide !== guideId)
-			.map((r) => ({ guide: r.guide, label: routeLabel(r.guide, r.title) }))
-	);
-	const where = $derived.by(() => {
-		if (!step) return '';
-		const steps = section.data?.steps ?? [];
-		const parts = [`${steps.findIndex((s) => s.id === step.id) + 1} de ${steps.length}`];
-		if (step.location) parts.push(step.location);
-		if (segment?.kind === 'bank_leg') parts.push(`trecho de banco ${segment.range}`);
-		return parts.join(' · ');
-	});
-	const lines = $derived(
-		events.data
-			? eventLines(events.data, (id) => boardById.get(id)?.ref ?? id, section.data?.names ?? {})
-			: []
-	);
-	const rotaBase = $derived(
-		guideId && sectionId
-			? resolve('/rotas/[guide]/[section]', { guide: guideId, section: sectionId })
-			: resolve('/rotas')
-	);
-	const rotaHref = $derived(cursorId ? `${rotaBase}#passo-${cursorId}` : rotaBase);
 
 	/* Feito / Pular / Desfazer: marcas do dono pela API; o motor nunca as sobrescreve. */
 	let busy = $state(false);
@@ -206,7 +268,7 @@
 	function pin(stepId: string, before: boolean) {
 		if (!account || !guideId) return;
 		pinning = false;
-		const ref = boardById.get(stepId)?.ref ?? stepId;
+		const ref = refOf(stepId);
 		if (!before) {
 			toast = { title: 'Fixado', text: `${ref} é o passo atual`, undo: false };
 			void write(() => progressApi.pin(guideId, account, stepId));
@@ -224,10 +286,21 @@
 		});
 	}
 
+	async function activate(guide: string) {
+		if (!account) return;
+		try {
+			await progressApi.setActiveGuide(account, guide);
+			void loadSummary(account);
+		} catch (e) {
+			failure = e instanceof Error ? e.message : String(e);
+		}
+	}
+
 	function keys(e: KeyboardEvent) {
 		if (pinning || e.metaKey || e.ctrlKey || e.altKey) return;
 		const t = e.target as HTMLElement | null;
 		if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+		if (t?.closest('[role="dialog"]') || document.querySelector('[role="dialog"]')) return;
 		if (e.key === 'j' || e.key === 'J') mark('manual_done');
 		else if (e.key === 'k' || e.key === 'K') mark('skipped');
 		else if (e.key === 'u' || e.key === 'U') undoLast();
@@ -236,22 +309,75 @@
 
 <svelte:window onkeydown={keys} />
 <svelte:head>
-	<title>Agora{route ? ` · ${routeLabel(route.guide, route.title)}` : ''} · Ironman Planner</title>
+	<title>Agora{label ? ` · ${label}` : ''} · Chronicle</title>
 </svelte:head>
+
+{#snippet bank()}
+	{#if segment}
+		<BankPanel
+			readiness={readiness.data?.current ?? null}
+			ahead={readiness.data?.ahead ?? null}
+			{bankActions}
+			firstRef={bankFirst}
+			{refOf}
+		/>
+	{/if}
+{/snippet}
+
+{#snippet nextList()}
+	{#if next.length}
+		<section class="next">
+			<div class="nh">
+				<h2 class="lbl">Em seguida</h2>
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaHref = resolve() + âncora -->
+				<a href={rotaHref} class="push small"
+					>{paragraphRoute ? 'abrir o capítulo' : 'abrir a seção'}</a
+				>
+			</div>
+			{#each next as s, i (s.id)}
+				{@const b = boardById.get(s.id)}
+				{@const v = statusView(b?.status)}
+				{@const rc = rowChip(chipsOf(s, b))}
+				{@const line = bankBefore(i)}
+				{@const items = metaOf(s).find((m) => m.label === 'itens')}
+				{#if line}<div class="bankline">{line}</div>{/if}
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaBase vem de resolve() -->
+				<a class="row" href={`${rotaBase}#passo-${s.id}`}>
+					<span class="st {v.st}"
+						>{#if v.done}<Glyph name="check" size={10} />{/if}</span
+					><span class="id" class:wid={paragraphRoute}>{s.ref}</span>
+					<span class="tx">{b?.title ?? s.text}</span>
+					{#if rc.chip}
+						<ObjectiveChip chip={rc.chip} small />
+						{#if rc.more}<span class="more">+{rc.more}</span>{/if}
+					{:else if s.location}<span class="loc">{s.location}</span>{/if}
+					{#if items}<span class="more" title={items.value}
+							>{items.value.split(',').length} itens</span
+						>{/if}
+				</a>
+			{/each}
+		</section>
+	{/if}
+{/snippet}
+
+{#snippet footLine()}
+	<div class="foot" class:col={!narrow.value}>
+		{#if pinned.length === 0}
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + aba Metas -->
+			<a href={`${resolve('/mundo')}?tab=metas`}>Nenhuma meta fixada</a>
+		{/if}
+		<span>Nesta sessão: {recent || 'nada mudou'}</span>
+		<span>Microbot desligado</span>
+	</div>
+{/snippet}
 
 {#if !account}
 	<div class="band">
-		<Glyph name="alert" />
-		<span>
-			Sem conta, nada é verificado nem gravado. Crie uma com <code
-				>just account-create &lt;rsn&gt;</code
-			>
-			e abra com <code>?account=acc_&lt;rsn&gt;</code> (modo dev).
-		</span>
-		<a class="btn btn-s push" href={resolve('/rotas')}>Ver as rotas</a>
+		<Glyph name="alert" /><span>Sem conta, nada é verificado nem gravado.</span>
+		<a class="btn btn-s push" href={resolve('/setup')}>Primeiro acesso</a>
 	</div>
 {:else if session.error || board.error}
-	<div class="band">
+	<div class="band" role="alert">
 		<Glyph name="alert" />
 		<span>Não deu para carregar o progresso: {(session.error ?? board.error)?.message}</span>
 		<button
@@ -263,64 +389,59 @@
 {:else if !route || !board.data}
 	<p class="su" aria-busy="true">Carregando a rota ativa…</p>
 {:else}
+	{#if band}
+		<div class="band" role="alert">
+			<Glyph name={band.kind === 'failed' ? 'alert' : 'clock'} />
+			<span>{band.text}</span>
+			<button class="btn btn-s push" type="button" disabled={syncing} onclick={syncNow}
+				>{band.kind === 'failed' ? 'Tentar agora' : 'Sincronizar agora'}</button
+			>
+			<a class="btn btn-g btn-s" href={resolve('/conta')}>Fontes</a>
+		</div>
+	{/if}
+
 	<header class="top">
-		<a class="sel" href={resolve('/rotas')}
-			>{route.title} <small>▾ {route.active ? 'rota ativa' : 'rota'}</small></a
+		<a class="sel" href={resolve('/rotas')} title={`${route.title} · trocar rota`}
+			>{narrow.value ? label : shortTitle} <small>▾{narrow.value ? '' : ' rota ativa'}</small></a
 		>
 		<div class="sec">
 			{#if section.data}
-				<span class="small"
-					><span class="mono su tiny">{sectionLabel(section.data.id)}</span> &nbsp;{section.data
-						.title}</span
+				<span class="stitle" class:clip={narrow.value}
+					><span class="mono su tiny">{sectionLabel(section.data.id)}</span>&nbsp; {section.data
+						.title}{#if section.data.description && !narrow.value}
+						<span class="su"> · {section.data.description}</span>{/if}</span
 				>
-				{#if section.data.description}
-					<button
-						class="desc mu"
-						class:open={descOpen}
-						type="button"
-						aria-expanded={descOpen}
-						title={descOpen ? 'Recolher' : 'Ler a descrição da seção'}
-						onclick={() => (descOpen = !descOpen)}>{section.data.description}</button
-					>
-				{/if}
 			{/if}
 			{#if sectionCounts}
 				<div class="prog">
 					<div class="xp">
 						<span style="width: {pct(sectionCounts.done, sectionCounts.total)}%"></span>
 					</div>
-					<span class="mono su tiny">{sectionCounts.done} / {sectionCounts.total} feitos</span>
+					<span class="mono su tiny"
+						>{sectionCounts.done} / {sectionCounts.total}{narrow.value ? '' : ' feitos'}</span
+					>
 				</div>
 			{/if}
 		</div>
-		<div class="acts">
-			<button class="btn btn-s" type="button" disabled={syncing} onclick={syncNow}
-				>{syncing ? 'Sincronizando…' : 'Sincronizar'}</button
-			>
-			<a class="btn btn-g btn-s" href={resolve('/rotas')}>Trocar rota</a>
-		</div>
+		<button class="btn btn-s" type="button" disabled={syncing} onclick={syncNow}
+			><Glyph name="sync" size={14} />{syncing ? 'Sincronizando…' : 'Sincronizar'}</button
+		>
 	</header>
 
-	{#if band}
-		<div class="band" class:failed={band.kind === 'failed'}>
-			<Glyph name={band.kind === 'failed' ? 'alert' : 'clock'} />
-			<span>{band.text}</span>
-			<button class="btn btn-s push" type="button" disabled={syncing} onclick={syncNow}
-				>{band.kind === 'failed' ? 'Tentar agora' : 'Sincronizar agora'}</button
-			>
-		</div>
-	{/if}
-
 	{#if failure}
-		<div class="band"><Glyph name="alert" /><span>A marca não foi gravada: {failure}</span></div>
+		<div class="band" role="alert">
+			<Glyph name="alert" /><span>Não foi gravado: {failure}</span>
+		</div>
 	{/if}
 
 	{#if !cursorId}
-		<section class="panel done">
+		<section class="panel">
 			<div class="plaque">Rota concluída</div>
 			<p class="mu pad">
-				Todos os passos da rota principal estão feitos, presumidos ou pulados. Fixe um passo na rota
-				para voltar a ele.
+				Todos os passos da rota principal estão feitos, presumidos ou pulados.
+				<button class="btn btn-s" type="button" onclick={() => (pinning = true)}
+					>Fixar um passo</button
+				>
 			</p>
 		</section>
 	{:else}
@@ -331,10 +452,12 @@
 						{step}
 						board={boardById.get(step.id)}
 						{prev}
+						prevWho={(id) => whoDid(events.data, id, now)}
 						{where}
 						{others}
 						{rotaHref}
 						{busy}
+						narrow={narrow.value}
 						canUndo={undo.length > 0 || !!batch?.length}
 						ondone={() => mark('manual_done')}
 						onskip={() => mark('skipped')}
@@ -344,108 +467,65 @@
 				{:else}
 					<p class="su" aria-busy="true">Carregando o passo atual…</p>
 				{/if}
-
-				{#if segment && (segment.bankActions.length || segment.loadout?.inventory?.length || segment.loadout?.equipment?.length || readiness.data?.ahead)}
-					<BankPanel
-						readiness={readiness.data?.current ?? null}
-						ahead={readiness.data?.ahead ?? null}
-						range={segment.range}
-						loadout={segment.loadout}
-						bankActions={segment.bankActions}
-						firstRef={segment.steps[0]?.ref ?? ''}
-					/>
-				{/if}
-
-				{#if next.length}
-					<section class="next">
-						<div class="nh">
-							<h2 class="ey">
-								Em seguida{segment && segment.steps.length > 1 ? ' · mesmo trecho' : ''}
-							</h2>
-							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaHref = resolve() + âncora -->
-							<a href={rotaHref} class="push small">abrir a seção</a>
-						</div>
-						<div class="rows">
-							{#each next as s (s.id)}
-								{@const b = boardById.get(s.id)}
-								{@const v = statusView(b?.status)}
-								{@const rowChips = chipsOf(s, b).filter((c) => c.role !== 'uses')}
-								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaBase vem de resolve() -->
-								<a class="row" href={`${rotaBase}#passo-${s.id}`}>
-									<span class="st {v.st}"></span><span class="id">{s.ref}</span>
-									<span class="tx">{b?.title ?? s.text}</span>
-									{#if s.layers?.length === 1 && s.layers[0] === 'enhanced'}<span class="badge"
-											>enhanced</span
-										>{/if}
-									{#each rowChips.slice(0, 2) as c (c.role + c.key)}
-										<ObjectiveChip chip={c} small hint={false} link={false} />
-									{/each}
-									{#if rowChips.length > 2}<span class="badge">+{rowChips.length - 2}</span>{/if}
-									{#if s.location}<span class="loc">{s.location}</span>{/if}
-								</a>
-							{/each}
-						</div>
-					</section>
-				{/if}
+				{#if narrow.value}{@render bank()}{/if}
+				{@render nextList()}
+				{#if narrow.value}{@render footLine()}{/if}
 			</div>
 
-			<aside class="side-c">
-				<section class="panel">
-					<div class="plaque">Metas fixadas<span class="r">{pinned.length}</span></div>
-					<div class="pad list">
-						{#each pinned as g (g.id)}
-							{@const here = g.routes.find((r) => r.guide === guideId)}
-							{@const elsewhere = g.routes.filter((r) => r.guide !== guideId)}
-							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da entidade -->
-							<a class="goal" href={`${resolve('/mundo')}?e=${encodeURIComponent(g.ref)}`}>
-								<span class="sr gname">{g.label}</span>
-								<span class="su small"
-									>{here ? `nesta rota: ${here.ref}` : 'não está nesta rota'}{elsewhere.length
-										? ` · ${routesLine(elsewhere, (id) => routeLabel(id, id))}`
-										: ''}</span
-								>
-							</a>
-						{:else}
-							<span class="su small">Nenhuma meta. Fixe uma entidade no Mundo.</span>
-						{/each}
-					</div>
-				</section>
-				<section class="panel">
-					<div class="plaque">Nesta sessão<span class="r">{lines.length} mudanças</span></div>
-					<div class="pad list">
-						{#each lines as l, i (i)}
-							<div class="rec">
-								{#if l.st === 'badge'}
-									<span class="badge badge-auto">{l.right.split(' · ')[0] || 'fonte'}</span>
-								{:else}
-									<span class="st {l.st} dot12"></span>
-								{/if}
-								{l.text}<span class="w"
-									>{l.st === 'badge' ? l.right.split(' · ').slice(1).join(' · ') : l.right}</span
-								>
+			{#if !narrow.value}
+				<aside class="side-c">
+					{@render bank()}
+					{#if pinned.length}
+						<section class="panel">
+							<div class="plaque">Metas fixadas<span class="r">{pinned.length}</span></div>
+							<div class="goals">
+								{#each pinned as g (g.id)}
+									{@const plan = plans[g.id]}
+									{@const icon = iconFor(g.ref)}
+									<button class="goal" type="button" onclick={() => openEntity(g.ref)}>
+										<span class="gt"
+											>{#if icon}<img class="ski" src={icon} alt="" />{/if}<span class="gn"
+												>{g.label}</span
+											>{#if plan?.requirements}<span class="mono su tiny push"
+													>{plan.met} de {plan.total}</span
+												>{/if}</span
+										>
+										{#if plan?.requirements}<span class="xp"
+												><span style="width: {pct(plan.met, plan.total)}%"></span></span
+											>{/if}
+										<span class="su small">{goalLine(g)}</span>
+									</button>
+								{/each}
 							</div>
-						{:else}
-							<span class="su small"
-								>Nada mudou ainda nesta rota. Marque um passo ou sincronize uma fonte.</span
-							>
-						{/each}
-					</div>
-				</section>
-				<section class="panel">
-					<div class="plaque off">Microbot<span class="r">desligado</span></div>
-					<div class="pad">
-						<span class="su small"
-							>Controle do cliente desligado (MICROBOT_CONTROL=off). O plugin de leitura continua
-							enviando dados.</span
-						>
-					</div>
-				</section>
-			</aside>
+						</section>
+					{/if}
+					{#if others.length}
+						<section class="panel">
+							<div class="plaque">Outras rotas<span class="r">cursor guardado</span></div>
+							<div class="recs">
+								{#each others as o (o.guide)}
+									<button
+										class="rec"
+										type="button"
+										title="Tornar {o.label} a rota ativa"
+										onclick={() => activate(o.guide)}
+										><span class="st st-cur dotc"></span>{o.label} · {o.route.cursor_ref ??
+											'fim'}<span class="w"
+											>{o.route.counts.done} / {o.route.counts.total} · tornar ativa</span
+										></button
+									>
+								{/each}
+							</div>
+						</section>
+					{/if}
+					{@render footLine()}
+				</aside>
+			{/if}
 		</div>
 	{/if}
 
 	<footer class="su tiny">
-		{#if route.guide.startsWith('oziris')}Guia por OzirisLoL, versão interativa de ironman.guide.{:else}Guia
+		{#if route.guide.startsWith('oziris')}Guia por OzirisLoL, versão interativa de ironman.guide.{:else}BRUHsailer
 			por So Iron BRUH e ParasailerOSRS.{/if}
 		Uso pessoal; atribuição mantida. {ICON_ATTRIBUTION}.
 	</footer>
@@ -453,7 +533,7 @@
 
 {#if pinning && board.data}
 	<PinDialog
-		guideLabel={route ? routeLabel(route.guide, route.title) : ''}
+		guideLabel={label}
 		steps={mainSteps}
 		{cursorId}
 		onpin={pin}
@@ -484,25 +564,13 @@
 		flex: 1 1 320px;
 		min-width: 0;
 	}
-	.desc {
-		all: unset;
-		cursor: pointer;
+	.stitle {
 		font-size: 13px;
-		line-height: 1.4;
-		max-width: 72ch;
+	}
+	.stitle.clip {
+		white-space: nowrap;
 		overflow: hidden;
-		display: -webkit-box;
-		-webkit-line-clamp: 1;
-		line-clamp: 1;
-		-webkit-box-orient: vertical;
-	}
-	.desc.open {
-		-webkit-line-clamp: unset;
-		line-clamp: unset;
-	}
-	.desc:focus-visible {
-		outline: 2px solid var(--gold-ink);
-		outline-offset: 2px;
+		text-overflow: ellipsis;
 	}
 	.prog {
 		display: flex;
@@ -512,11 +580,6 @@
 	.prog .xp {
 		flex: 1;
 		max-width: 360px;
-	}
-	.acts {
-		display: flex;
-		gap: 8px;
-		align-items: center;
 	}
 	.grid {
 		display: flex;
@@ -532,63 +595,79 @@
 		gap: 20px;
 	}
 	.side-c {
-		flex: 1 1 300px;
-		max-width: 340px;
+		flex: 1 1 360px;
+		max-width: 440px;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
+		gap: 20px;
 	}
 	.next {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
+		gap: 2px;
 	}
 	.nh {
 		display: flex;
 		align-items: baseline;
 		gap: 12px;
-		padding: 0 12px;
+		padding: 0 12px 4px;
 	}
-	.rows {
+	.id.wid {
+		width: 56px;
+	}
+	.goals {
+		padding: 12px 14px;
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
+		gap: 10px;
 	}
-	.pad {
-		padding: 10px 12px;
+	button.goal {
+		border: 0;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
 	}
-	.list {
+	.gt {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+	.gn {
+		font-weight: 600;
+	}
+	.recs {
+		padding: 6px 14px 8px;
 		display: flex;
 		flex-direction: column;
-		gap: 2px;
 	}
-	.band.failed {
-		border-color: var(--not-started);
-	}
-	.band.failed :global(svg) {
-		color: var(--not-started);
-	}
-	.goal {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		padding: 8px 10px;
-		border-radius: 4px;
-		background: var(--elevated);
-		box-shadow: var(--bevel);
-		text-decoration: none;
+	button.rec {
+		border: 0;
+		border-bottom: 1px solid var(--hairline);
+		background: transparent;
+		font: inherit;
+		font-size: 13px;
 		color: var(--ink);
+		cursor: pointer;
+		text-align: left;
+		width: 100%;
 	}
-	.gname {
-		font-size: 15px;
-	}
-	.dot12 {
+	.dotc {
 		width: 12px;
 		height: 12px;
+		box-shadow: inset 0 0 0 2px var(--surface);
 	}
-	.off {
-		color: var(--on-frame-muted);
+	.foot.col {
+		flex-direction: column;
+		gap: 6px;
+	}
+	.foot:not(.col) {
+		padding-top: 6px;
+		border-top: 1px solid var(--hairline);
+	}
+	.pad {
+		padding: 12px 16px;
+		margin: 0;
 	}
 	.push {
 		margin-left: auto;
@@ -599,15 +678,9 @@
 	.tiny {
 		font-size: 11px;
 	}
-	.done {
-		display: flex;
-		flex-direction: column;
-	}
-	.done p {
-		margin: 0;
-	}
-	code {
-		font-family: 'JetBrains Mono', monospace;
-		font-size: 12px;
+	@media (max-width: 900px) {
+		.mainc {
+			gap: 14px;
+		}
 	}
 </style>

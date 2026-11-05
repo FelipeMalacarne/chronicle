@@ -16,7 +16,7 @@
 		type CrossCell
 	} from '#lib/progress/view';
 	import type { Board, Goal, GoalPlan, RouteSummary, WorldEntity } from '#lib/progress/types';
-	import Glyph from '#lib/v4/Glyph.svelte';
+	import Glyph from '#lib/v6/Glyph.svelte';
 
 	/*
 	 * Comparar rotas (V5Comparar, página v5 do canvas): duas rotas lado a lado sobre o mesmo
@@ -157,7 +157,7 @@
 </script>
 
 <svelte:head>
-	<title>Comparar rotas · Ironman Planner</title>
+	<title>Comparar rotas · Chronicle</title>
 </svelte:head>
 
 <div class="page">

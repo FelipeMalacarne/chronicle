@@ -1,5 +1,5 @@
 <svelte:head>
-	<title>Conta · Ironman Planner</title>
+	<title>Conta · Chronicle</title>
 </svelte:head>
 
 <header class="head">

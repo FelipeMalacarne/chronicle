@@ -394,6 +394,23 @@ export interface WorldEntity {
 	routes: Occurrence[];
 }
 
+/** Requisito de uma entidade, ou entidade que ela destrava, com o veredito da conta. */
+export interface WorldLink {
+	key: string;
+	ref?: string;
+	label: string;
+	verdict: Verdict;
+	boostable?: boolean;
+	during_quest?: boolean;
+}
+
+/** Uma entidade para o painel (GET /api/world/entity): requer → destrava. */
+export interface WorldEntityDetail extends WorldEntity {
+	requires: WorldLink[];
+	combat_level?: number;
+	unlocks: WorldLink[];
+}
+
 /* ------------------------------------------------------------------ sync (hiscores) */
 
 export interface SyncRun {
@@ -409,6 +426,50 @@ export interface SyncRun {
 	steps_changed: number;
 	next_allowed_at?: string;
 	created_at: string;
+}
+
+/* ------------------------------------------------------------------ estado da conta (V6Conta) */
+
+export interface FactSource {
+	source: string;
+	observed_at: string;
+}
+
+export interface SkillView extends FactSource {
+	skill: string;
+	level: number;
+	xp: number;
+}
+
+export interface QuestView extends FactSource {
+	id?: string;
+	name: string;
+	state: 'NOT_STARTED' | 'IN_PROGRESS' | 'FINISHED';
+}
+
+export interface DiaryView extends FactSource {
+	area: string;
+	tier: 'easy' | 'medium' | 'hard' | 'elite';
+	complete: boolean;
+}
+
+export interface ContainerView {
+	container: 'inventory' | 'equipment' | 'bank' | string;
+	state: ContainerState;
+	observed_at: string;
+	complete: boolean;
+	items: { id: number; name: string; qty: number }[];
+}
+
+/** GET /api/account/state: o que a Conta mostra, cada fato com fonte e idade. */
+export interface AccountState {
+	account: AccountView;
+	total_level?: number;
+	quest_points?: number;
+	skills: SkillView[];
+	quests: QuestView[];
+	diaries: DiaryView[];
+	containers: ContainerView[];
 }
 
 /* ------------------------------------------------------------------ setup (V4Setup) */

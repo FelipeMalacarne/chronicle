@@ -16,7 +16,7 @@
 		stateLabel
 	} from '#lib/progress/view';
 	import type { Goal, WorldEntity } from '#lib/progress/types';
-	import Glyph from '#lib/v4/Glyph.svelte';
+	import Glyph from '#lib/v6/Glyph.svelte';
 	import GoalPlanPanel from '#lib/v4/GoalPlanPanel.svelte';
 
 	/*
@@ -131,7 +131,7 @@
 </script>
 
 <svelte:head>
-	<title>Mundo · Ironman Planner</title>
+	<title>Mundo · Chronicle</title>
 </svelte:head>
 
 <header class="top">

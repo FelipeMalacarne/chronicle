@@ -66,3 +66,49 @@ func TestGoalsAndWorld(t *testing.T) {
 		t.Fatalf("monk's friend = %v", monk)
 	}
 }
+
+func TestWorldEntity(t *testing.T) {
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	cnt := &content.Content{Guides: []*content.Guide{crossGuide("oziris-main", "1.1.40", "", 3)}}
+	server := httptest.NewServer(New(Options{Version: "test", Content: cnt, Catalog: catalog, Progress: &fakeProgress{}, DevMode: true, Logger: slog.New(slog.NewTextHandler(io.Discard, nil))}))
+	t.Cleanup(server.Close)
+	base := server.URL + "/api/world/entity?account=acc-1"
+
+	status, body := do(t, "GET", base+"&ref=quest:the_grand_tree", "")
+	if status != http.StatusOK || body["name"] != "The Grand Tree" || body["kind"] != "quest" {
+		t.Fatalf("entity = %d %v", status, body)
+	}
+	reqs := body["requires"].([]any)
+	if len(reqs) != 1 {
+		t.Fatalf("requires = %v", reqs)
+	}
+	if r := reqs[0].(map[string]any); r["key"] != "skill:agility>=25" || r["label"] != "Agility" || r["verdict"] != "unknown" || r["boostable"] != true {
+		t.Fatalf("requirement = %v", r)
+	}
+	unlocks := body["unlocks"].([]any)
+	var names []string
+	for _, u := range unlocks {
+		names = append(names, u.(map[string]any)["key"].(string))
+	}
+	if len(names) != 2 || names[0] != "quest:monkey_madness_i@finished" || names[1] != "quest:the_eyes_of_glouphrie@finished" {
+		t.Fatalf("unlocks = %v", names)
+	}
+
+	// Verdicts come from the account's objectives; a skill has no requirements of its own.
+	status, body = do(t, "GET", base+"&ref=skill:agility", "")
+	if status != http.StatusOK || len(body["requires"].([]any)) != 0 || len(body["unlocks"].([]any)) == 0 {
+		t.Fatalf("agility = %d %v", status, body)
+	}
+	if status, _ = do(t, "GET", base+"&ref=", ""); status != http.StatusBadRequest {
+		t.Fatalf("missing ref = %d", status)
+	}
+	if status, _ = do(t, "GET", base+"&ref=nope", ""); status != http.StatusBadRequest {
+		t.Fatalf("invalid ref = %d", status)
+	}
+	if status, _ = do(t, "GET", server.URL+"/api/world/entity?account=acc-9&ref=quest:the_grand_tree", ""); status != http.StatusNotFound {
+		t.Fatalf("other account = %d", status)
+	}
+}

@@ -3,6 +3,7 @@ package progress
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"slices"
 	"strings"
 	"testing"
@@ -111,6 +112,26 @@ func TestQuestAndDiaryFactsPostgres(t *testing.T) {
 	}
 	if n := count(ctx, t, pool, `SELECT count(*) FROM snapshot_facts WHERE snapshot_id = '`+snapshot+`' AND facet IN ('quest', 'diary', 'varbit', 'varp')`); n != 3+2+2+1 {
 		t.Fatalf("snapshot facts = %d, want 8", n)
+	}
+
+	// The account screen reads the same facts, with the catalog id of each quest.
+	st, err := repo.AccountState(ctx, "account-1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if st.Account.RSN != "Example" || len(st.Quests) != 3 || st.QuestPoints == nil || *st.QuestPoints != 3 || len(st.Diaries) != 2 {
+		t.Fatalf("account state = %+v", st)
+	}
+	for _, q := range st.Quests {
+		if q.ID == "" || q.Source != "plugin" || q.ObservedAt.IsZero() {
+			t.Fatalf("quest view = %+v", q)
+		}
+	}
+	if d := st.Diaries[0]; d.Area != "ardougne" || d.Tier != "easy" || !d.Complete {
+		t.Fatalf("diaries = %+v", st.Diaries)
+	}
+	if _, err = repo.AccountState(ctx, "nobody"); !errors.Is(err, ErrAccountNotFound) {
+		t.Fatalf("unknown account = %v", err)
 	}
 
 	// A delta with one changed quest.

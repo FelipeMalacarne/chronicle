@@ -2,8 +2,7 @@
 #
 #   cp .env.example .env              # set POSTGRES_PASSWORD
 #   just up                           # build from HEAD, migrate, start
-#   just stack-account-create "<RSN>" # once: the account (id acc_<rsn>)
-#   open http://localhost:8080/?account=acc_<rsn>
+#   open http://localhost:8080        # first access at /setup: name, detected mode, route
 #
 # - `migrate` applies db/migrations with goose and exits; `app` starts only after it succeeded
 #   (the server never migrates: only `ironman serve` opens the database, CLAUDE.md rule 1).

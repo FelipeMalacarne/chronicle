@@ -88,7 +88,8 @@ flowchart LR
 
 Responsabilidades:
 
-- **SPA**: telas da página v4 do canvas, tema Pergaminho: `/` (Agora, o cursor da rota ativa),
+- **SPA**: telas da página v4 do canvas, tema Pergaminho: `/setup` (primeiro acesso: RSN, modo,
+  camadas, rota, primeiro sync; um RSN já cadastrado entra direto), `/` (Agora, o cursor da rota ativa),
   `/rotas` (lista com cobertura), `/rotas/[guia]/[seção]` (a seção por trecho de banco), `/mundo` e
   `/conta` (ainda "em breve"). Sem tela de comparação (decisão 1 do v4): o cruzamento entre rotas é o
   "também na rota X" do passo e a cobertura da lista. Os caminhos antigos redirecionam.
@@ -192,6 +193,7 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/progress?account=` | feita (dev) | resumo das rotas: rota ativa, cursor (com a referência do autor), contagens por seção, cobertura, fontes |
 | `GET /api/guides/{guide}/events?account=&limit=` | feita (dev) | o que mudou: eventos de passo do guia e de objetivo da conta, com a fonte do snapshot |
 | `PUT /api/account/guide?account=` | feita (dev) | troca a rota ativa e reavalia na mesma transação |
+| `GET /api/setup/lookup?rsn=`, `POST /api/accounts` | feita (dev) | primeiro acesso (`/setup`, V4Setup): conta existente pelo RSN, ou modo detectado e níveis do hiscores; cria a conta e reavalia |
 | `POST /api/sync?account=` | feita (dev) | sync do hiscores agora; 429 com `retry_at` no debounce de 60 s ou no recuo |
 | `GET /api/sync/runs?account=&limit=` | feita (dev) | tentativas de sync (status, HTTP, erro, `steps_changed`, `next_allowed_at`) |
 | `GET /api/state?account=` | planejada | estado da conta |

@@ -60,8 +60,8 @@ o goose e sai, e o app (imagem distroless), que só sobe depois da migração.
 ```
 cp .env.example .env                 # POSTGRES_PASSWORD
 just up                              # imagens do HEAD commitado, migrate, start
-just stack-account-create "<RSN>"    # uma vez: conta acc_<rsn> (modo ironman, rota Oziris)
-open http://localhost:8080/?account=acc_<rsn>
+open http://localhost:8080              # primeiro acesso em /setup: RSN, modo detectado, rota
+just stack-account-create "<RSN>"    # alternativa sem a tela (modo ironman, rota Oziris)
 just restart                         # reinicia o app (mesma imagem)
 just logs                            # logs do app; `just logs migrate` mostra a migração
 just db-backup                       # pg_dump em backups/ (fora do git)

@@ -468,6 +468,31 @@ func TestReevaluateSharedProgressCascadeAndCursor(t *testing.T) {
 	}
 }
 
+func TestReevaluateCascadeStopsAtAPendingObjectiveStep(t *testing.T) {
+	g1, g2 := loadGuides(t)
+	// The feathers (a5) go from unmet to met while Agility 10 (a3) is still
+	// unmet: a3 is evidence the account is not past it, so only a4 (the
+	// checkbox right before a5) is presumed; a1 and a2 stay pending.
+	facts := append([]Fact{{"skill", "agility"}}, containerFacts...)
+	in := Input{
+		Guides:   []*content.Guide{g1, g2},
+		Registry: registry(t),
+		State:    rules.PlayerState{Skills: skills(map[string]int{"agility": 5}), Items: liveBank(map[int]int64{314: 120})},
+		Objectives: map[string]ObjectiveRecord{
+			agility10: {Exists: true, Verdict: rules.Unmet},
+			feathers:  {Exists: true, Verdict: rules.Unmet},
+		},
+		Observations: obs(t0, "snap-1", facts...),
+		Account:      Account{ActiveGuideID: "g1", Layer: "classic", Mode: "ironman"},
+		Now:          t1,
+	}
+	plan := Reevaluate(in)
+	marks := marksAfter(nil, plan)
+	if len(marks) != 1 || marks[ref("g1", "a4")].ImpliedBy != "a5" {
+		t.Fatalf("marks = %+v, want only a4 implied by a5", marks)
+	}
+}
+
 func TestReevaluateFirstObservationDoesNotCascade(t *testing.T) {
 	g1, g2 := loadGuides(t)
 	// A new source reports Agility 10 at its first observation (no stored

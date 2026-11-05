@@ -693,6 +693,11 @@ Claude Code, fora do MCP; o relatório conta só as respostas registradas.
     `met` na primeira observação (uma fonte ou faceta nova trazendo o que foi feito antes, fora da ordem
     da rota) é histórico e não dispara cascata. Motivo: a primeira sincronização do plugin 1.1.0 trouxe
     "Continue Biohazard" (1.1.260) já começado e presumiu 42 passos à frente de onde o dono estava;
+  - só os checkboxes **contíguos** antes do passo que disparou (2026-11-05): andando para trás a partir
+    dele, a presunção para no primeiro passo visível pendente, sem marca, que tem objetivo que o
+    conclui, porque a evidência diz que o dono não passou por ele. Motivo: o Excalibur obtido fora da
+    ordem concluiu o 1.1.248 e presumiu o 1.1.245 e o 1.1.246 por cima do 1.1.243 e do 1.1.247, que
+    continuavam pendentes;
   - a marca `implied` aponta para o passo que disparou (`implied_by_step_id`), tem visual próprio e só
     vira feito com a confirmação do dono ("confirmar tudo"). Nunca é `auto_done`.
 

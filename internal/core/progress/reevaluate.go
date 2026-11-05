@@ -145,7 +145,10 @@ func Reevaluate(in Input) Plan {
 // 9.1). A trigger is a step that became AutoDone in this reevaluation, outside
 // tracks, whose most recently met completing objective was met while this
 // guide was the active one, and one of whose completing objectives went from
-// a stored non-met verdict to met in this reevaluation (metAfterObservedUnmet). Every earlier visible checkbox step of the same
+// a stored non-met verdict to met in this reevaluation (metAfterObservedUnmet).
+// Walking back from the trigger, the presumption stops at the first visible
+// pending step with completing objectives that the owner did not mark: the
+// evidence says the account is not past it (owner decision of 2026-11-05). Every earlier visible checkbox step of the same
 // section that is still Pending and unmarked becomes implied by the nearest
 // later trigger. Because only transitions trigger, an implied mark the owner
 // cleared does not come back.
@@ -164,9 +167,19 @@ func cascade(g *content.Guide, status map[string]Status, in Input, met map[strin
 			if latestMetGuide(st, met) != in.Account.ActiveGuideID || !metAfterObservedUnmet(st, in.Objectives, met) {
 				continue
 			}
-			for _, prev := range sec.Steps[:i] {
+			// Walk back from the trigger; a pending step with completing
+			// objectives is evidence the account is not past it, so the
+			// presumption stops there.
+			for j := i - 1; j >= 0; j-- {
+				prev := sec.Steps[j]
 				pref := StepRef{GuideID: g.ID, StepID: prev.ID}
-				if marked[prev.ID] || hasMark(in.Marks, pref) || status[prev.ID] != Pending || !IsManual(prev) || !Visible(prev, in.Account) {
+				if !Visible(prev, in.Account) {
+					continue
+				}
+				if status[prev.ID] == Pending && !IsManual(prev) && !hasMark(in.Marks, pref) {
+					break
+				}
+				if marked[prev.ID] || hasMark(in.Marks, pref) || status[prev.ID] != Pending || !IsManual(prev) {
 					continue
 				}
 				marked[prev.ID] = true

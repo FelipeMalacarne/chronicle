@@ -37,8 +37,9 @@ traz estimativas um pouco mais otimistas; os números medidos acima prevalecem.
 No BRUHsailer a cobertura automática hoje é **zero**: 226 passos longos e nenhuma regra. É isso que
 motiva o modelo de objetivos e a extração por agente do doc 09.
 
-Quests são o sinal dominante e dependem do cliente. Hoje nem o plugin as envia: a faceta `quest` do
-contrato é o item 7 da sequência do doc 09. Sem plugin próprio o projeto ficaria refém do WikiSync, cuja
+Quests são o sinal dominante e dependem do cliente. Desde o plugin 1.1.0 (item 7, 2026-11-05) o plugin
+envia o estado de todas as quests, os varbits de diary e o varp 101 (quest points) na faceta `data.quest`
+e nos vars genéricos do contrato v1. Sem plugin próprio o projeto ficaria refém do WikiSync, cuja
 API o wiki pede explicitamente para não usar em projetos de terceiros.
 
 ## Registro de decisões
@@ -66,6 +67,13 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 19 | Checagem de ordem da extração conta o XP fixo de recompensa das quests como fonte de nível | resolvida (2026-11-04) | doc 09, seções 6.8 e 7 |
 | 20 | Entradas de `unlock`/`location` corrigidas só pela tool `revise_entity`, com confirmação do dono | resolvida (2026-11-04) | doc 09, seção 6.8 |
 | 21 | Progresso, web e hiscores (itens 8 a 10 da sequência) andam em paralelo com a extração completa (item 6), numa sessão e branch próprias, para o dono usar e testar o que já foi extraído | resolvida (2026-11-04) | doc 04, seção 9 (ajusta D7 do doc 09) |
+| 22 | Passo bloqueado não segura o cursor: `requires` em `unmet` do passo ou requisito de catálogo da quest que ele conclui (fora `during_quest`, `boostable` e o que o passo conclui); `unknown` não bloqueia; `pinned_open` e pin seguram; passos flutuantes sem marcador no conteúdo | resolvida (2026-11-04) | doc 09, seção 3.5; doc 03 |
+| 23 | Chaves de item não exatas: `item:family/<slug>xN` e `item:any(<id>x<n>\|…)` com quantidade por alternativa e forma canônica; graceful pela família padrão (recolor não conta) | resolvida (2026-11-04) | doc 09, seção 3.2 (revê D4) |
+| 24 | Plugin lê qualquer varbit/varp que o manifest pedir (unlocks, CA e afins viram trabalho só de servidor e catálogo); 1.1.0 com quests, diaries e qp; 1.2.0 com painel da rota, posição/mundo (opt-in), collection log e CA | resolvida (2026-11-04) | doc 06; doc 04, seção 9 |
+| 25 | Tempo real na web por SSE (`GET /api/events`) com refetch: o evento só avisa que algo mudou, sem segunda fonte da verdade; hub em memória (um processo), sem WebSocket nem dependência nova | resolvida (2026-11-05) | doc 04, seções 2.5 e 9 |
+| 26 | Plugin captura e envia por evento (`ItemContainerChanged`, `VarbitChanged`, `StatChanged`) com debounce de ~1 s; a leitura periódica fica como rede de segurança | resolvida (2026-11-05) | doc 06 |
+| 27 | Painel da rota dentro do plugin (lista a partir do cursor, bloqueados, objetivos, itens do trecho, Feito/Pular/Desfazer), implementado direto no visual do RuneLite, sem passar pelo canvas; o servidor continua a fonte da verdade e o plugin só guarda o último estado para exibir | resolvida (2026-11-05) | doc 06; doc 04, seção 9 |
+| 28 | Auth do plugin: em `AUTH_MODE=dev` sem token (ingest e painel aceitos de `127.0.0.1`, plugin configurado só com a URL); em `oidc`, Device Authorization Grant no Zitadel com uma aplicação nativa pública (sem DCR) e roles do projeto no JWT (`ingest`, `items:*`, `marks:write`), aposentando o token `ipl_`; o registro por instalação fica com o estado do protocolo | resolvida (2026-11-05) | doc 04, seções 2.5 e 8; doc 06; doc 07 (revê "o plugin continua com token `ipl_`") |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais

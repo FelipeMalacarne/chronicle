@@ -19,9 +19,9 @@ documento onde houver conflito.
 | Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o motor. |
 | Motor | Função pura `(regras, PlayerState) → {veredito, evidência}` em `internal/core/rules`; status do passo derivado dos objetivos em `internal/core/progress`; reavaliação completa a cada snapshot. |
 | Grafo | Calculado no servidor em memória a partir de `content/` + catálogos + cache do wiki; renderizado com **Cytoscape.js + ELK**. Nós são chaves de objetivo. |
-| Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas, token `ipl_` por cliente; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06). |
+| Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06), com painel da rota e marcas a partir da 1.2.0. Hoje autentica com token `ipl_` por cliente; planejado (decisão 28 do doc 01): sem token em `AUTH_MODE=dev` (só de `127.0.0.1`) e device flow do Zitadel em `oidc`. |
 | Execução | Local-first na estação `zaros` com `AUTH_MODE=dev`; depois a mesma imagem no `saradomin` com Postgres e Zitadel existentes (seção 8). |
-| Auth | `AUTH_MODE=dev` (usuário fixo) hoje; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs`) na tarefa de deploy. Tokens `ipl_` por conta para o plugin; tokens de API para CLI e MCP. |
+| Auth | `AUTH_MODE=dev` (usuário fixo) hoje; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs`) na tarefa de deploy. Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). Tokens de API para CLI e MCP. |
 
 ## 1. Stack
 
@@ -175,6 +175,19 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 - **Tokens de API** (`api_tokens`): `Authorization: Bearer apk_…`, para CLI, MCP e scripts.
 - **Tokens do plugin** (`plugin_ingest_tokens`): `Authorization: Bearer ipl_…`, escopo = uma conta,
   mostrados uma vez, sha256 no banco, revogáveis, com `scopes` (`state:write`; `items:*` são opt-in).
+  Vale até a auth planejada do plugin (decisão 28 do doc 01, 2026-11-05):
+  - **`AUTH_MODE=dev`**: ingest, manifest e as rotas do painel do plugin aceitas sem token quando a
+    conexão vem de `127.0.0.1` (a stack só escuta no loopback); o plugin é configurado só com a URL. A
+    conta do push sai do RSN do personagem; com mais de uma conta em dev, um campo de conta na config.
+  - **`AUTH_MODE=oidc`**: Device Authorization Grant (RFC 8628) no Zitadel com uma aplicação nativa
+    pública, a mesma para toda instalação, sem dynamic client registration. O plugin descobre issuer e
+    `client_id` em `GET /api/auth/plugin`, mostra o código, guarda o refresh token na config do RuneLite e
+    renova sozinho. O access token é um JWT validado pela JWKS em cache, sem chamar o Zitadel a cada
+    push. As roles do projeto (`ingest`, `items:bank`, `items:inventory`, `items:equipment`,
+    `marks:write`) substituem os `scopes`.
+  - O `ipl_` é aposentado; `plugin_ingest_tokens` vira o registro de instalações (usuário do Zitadel ou
+    conta de dev, mais um id de instalação), porque guarda estado do protocolo (`last_seq`,
+    `manifest_version`, conta).
 
 | Rota | Estado | Função |
 |---|---|---|
@@ -730,13 +743,15 @@ o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis
 
 - **Local-first**: `docker compose` com Postgres e o binário (`compose.yaml`), ou o mesmo Postgres com
   `air` e `pnpm dev` no host (`just dev`). Acesso em `localhost:8080` (dev: `localhost:5173`);
-  celular pela rede local ou Tailscale. `AUTH_MODE=dev`. Plugin com `serverUrl=http://localhost:8080` e
-  token `ipl_` gerado localmente. `pg_dump` manual ou via `just`.
+  celular pela rede local ou Tailscale. `AUTH_MODE=dev`. Plugin com `serverUrl=http://localhost:8080` e,
+  até a auth planejada do plugin (seção 2.5), token `ipl_` gerado localmente; depois, só a URL. `pg_dump` manual ou via `just`.
 - **saradomin** (decisão de 2026-11-03): Postgres existente (database `ironman_planner`), Zitadel via
   OIDC com uma aplicação Web (PKCE, sem client secret) e redirect `https://planner.<domínio>/auth/callback`;
   `/auth/login` inicia o fluxo, `/auth/callback` troca o código, cria ou atualiza `users` pelo `sub` e
   grava a sessão em cookie `HttpOnly`. Autorização: lista de `sub` permitidos no `.env`, depois role no
-  projeto do Zitadel. O plugin continua com token `ipl_`. Imagem publicada no registry que o servidor já
+  projeto do Zitadel. O plugin autentica pelo device flow do Zitadel, numa aplicação nativa pública,
+  com as roles do projeto no JWT (seção 2.5; decisão 28 do doc 01, que revê o "plugin continua com token
+  `ipl_`" de 2026-11-03). Imagem publicada no registry que o servidor já
   usa, serviço no compose existente, atrás do reverse proxy; health em `/api/health`; `pg_dump` na rotina
   do servidor.
 - Nada no código distingue os dois ambientes além da configuração (doc 07).
@@ -796,8 +811,15 @@ diary, varbit/varp, objetivos) e `TestQuestAndDiaryFactsPostgres` com o conteúd
 goose up/down/up com dados. Falta: plugin 1.1.0 lendo `Quest.getState`, `mb-test` no jogo e a
 revisão de integração entre os repositórios.
 
-Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, sessão/OIDC, CLI/MCP sobre
-o cliente, grafo, tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
+Cursor e chaves de item (2026-11-04, na `main`): o cursor passa dos passos bloqueados (`requires` em
+`unmet` ou requisito de catálogo da quest que o passo conclui; board com `blocked_by` e `counts.blocked`;
+cadeado na Rota) e as chaves `item:family/<slug>xN` e `item:any(<id>x<n>|…)` são avaliadas; o Oziris
+1.3.65 (segundo axe) e 1.4.43 (graceful pela família) foram reanotados com elas (decisões 22 e 23 do
+doc 01).
+
+Ainda não existe: anotações do BRUHsailer além do 1.1, sessão/OIDC, auth do plugin sem token,
+tempo real na web (item 12, em andamento), painel da rota no plugin, CLI/MCP sobre o cliente, grafo,
+tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
 antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
 
 Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam para cá. A ordem dos itens
@@ -811,11 +833,16 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | **feito** (2026-11-04; contrato das tools no doc 09, seção 6.8) |
 | 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6. **Oziris 1.1 feito** (2026-11-04): 99,3% aceitos no primeiro envio; 88 de 95 objetivos de regra reproduzidos (abaixo dos 95%, as 7 divergências explicadas no doc 09, seção 6.6); levou ao catálogo de itens completo, ao XP de quest na ordem e ao `revise_entity`. **BRUHsailer 1.1 feito** (2026-11-04): 17 de 18 aceitos no primeiro envio, 13 perguntas em 3 lotes; expôs o corte da linha "Items needed:" no importador e os itens inobteníveis resolvidos por nome, ambos corrigidos |
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
-| 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado. **Servidor feito** (2026-11-04, `feat/item7-contrato`): contrato, manifest, migration 0005, normalizador, avaliação de quest/diary/`qp`, teste no Postgres com o Oziris real, `just dbml`. Pendente: plugin 1.1.0, `mb-test` e a revisão entre os repositórios |
+| 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado. **Servidor feito** (2026-11-04, `feat/item7-contrato`): contrato, manifest, migration 0005, normalizador, avaliação de quest/diary/`qp`, teste no Postgres com o Oziris real, `just dbml`. Plugin 1.1.0 **feito** (2026-11-05, `microbot-plugins`): lê `Quest.getState` e os vars do manifest. **Em uso no zaros** (2026-11-05): o primeiro `full` trouxe as 217 quests (todas resolvidas no catálogo), os 48 varbits de diary e o varp 101; 54 objetivos de quest e 2 de diary saíram de `unknown` como `met` com evidência, e os objetivos de item saíram de `unknown` depois de abrir o banco. **Feito** |
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
-| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
+| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin (sessão web por PKCE e device flow do plugin, item 15); depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
+| 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Em andamento** (2026-11-05, `feat/tempo-real`) |
+| 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito no branch** (2026-11-05, `feat/push-por-evento`), falta instalar e conferir no jogo |
+| 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Próximo**, depois do item 12 |
+| 15 | Auth do plugin em `oidc`: aplicação nativa no Zitadel, `GET /api/auth/plugin`, validação do JWT pela JWKS, roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | junto do deploy no saradomin (item 11) |
+| 16 | Plugin 1.2.x: posição e mundo (`data.position`, opt-in) com destaque na web dos passos pendentes no lugar (desenho no canvas antes), collection log e combat achievements (decisão 24 do doc 01) | por entrega |
 
 Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.
 

@@ -85,6 +85,10 @@ just stack-accounts / stack-account-guide <id> <guia> / stack-psql
 1. Criar database e usuário no Postgres existente; `DATABASE_URL` com `sslmode=require` se aplicável.
 2. No Zitadel, criar aplicação Web (PKCE, sem secret) com redirect
    `https://planner.<domínio>/auth/callback`; copiar issuer e client id para `OIDC_*`.
+   Para o plugin (decisão 28 do doc 01, item 15 do doc 04): criar também uma aplicação **nativa**
+   pública com o grant Device Code, e as roles do projeto `ingest`, `items:bank`, `items:inventory`,
+   `items:equipment` e `marks:write`, atribuídas ao usuário do dono; o access token deve ser JWT com as
+   roles no token. O planner informa o `client_id` dela ao plugin, que só precisa da URL.
 3. `.env` com `AUTH_MODE=oidc`, `SESSION_SECRET` novo (`openssl rand -hex 32`), `PUBLIC_BASE_URL`.
 4. Usar só o serviço `app` do `compose.yaml` (remover `postgres` e o `depends_on`) ou declarar o
    serviço no compose do servidor com a mesma imagem. Health em `GET /api/health`.

@@ -28,9 +28,9 @@ do repositório de plugins que ele já mantém.
 
 | Dado | Como ler no cliente | Quando enviar |
 |---|---|---|
-| Skills (level real, xp, boosted) | `client.getRealSkillLevel`, `getSkillExperience`, evento `StatChanged` | no evento, com debounce de alguns segundos |
-| Quests (NOT_STARTED, IN_PROGRESS, FINISHED) | `Quest.values()` + `quest.getState(client)` na thread do cliente, enviados na faceta `data.quest` do contrato v1 (doc 04, seção 6.4) com a chave `quest.getName()`. Servidor pronto; **plugin ainda não**: entra na versão 1.1.0 (adendo "contrato do item 7" abaixo) | todos no `full`; em `delta` só os que mudaram |
-| Diaries por tier, quest points, unlocks | genérico: todo varbit/varp que o manifest listar, em `data.varb`/`data.varp`. Hoje o manifest pede os 48 varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` e o varp 101 (`QUEST_POINTS`) de `content/reference/varbits.json`, mais os `proof` de `unlocks.json` quando existirem; o servidor deriva diary, `qp` e unlock. O plugin 1.0.0 já lê o que o manifest pede | em `VarbitChanged`/`VarClientIntChanged` ou na verificação de 10 s |
+| Skills (level real, xp, boosted) | `client.getRealSkillLevel`, `getSkillExperience`, evento `StatChanged` | no evento (1.1.1: debounce de 1 s; XP e boost sem teto, level-up com teto de 3 s) |
+| Quests (NOT_STARTED, IN_PROGRESS, FINISHED) | `Quest.values()` + `quest.getState(client)` na thread do cliente, enviados na faceta `data.quest` do contrato v1 (doc 04, seção 6.4) com a chave `quest.getName()`. Feito no plugin 1.1.0 (adendo "contrato do item 7" abaixo) | todos no `full`; em `delta` só os que mudaram |
+| Diaries por tier, quest points, unlocks | genérico: todo varbit/varp que o manifest listar, em `data.varb`/`data.varp`. Hoje o manifest pede os 48 varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` e o varp 101 (`QUEST_POINTS`) de `content/reference/varbits.json`, mais os `proof` de `unlocks.json` quando existirem; o servidor deriva diary, `qp` e unlock. O plugin 1.0.0 já lê o que o manifest pede | em `VarbitChanged` (1.1.1: debounce de 1 s, teto de 3 s para os vars do manifest) ou na verificação de 10 s |
 | Combat achievements | varbits/cs2 do manifest | em `VarbitChanged` |
 | Collection log | `collectionLogSlots` via enums/structs do chisel, como o WikiSync faz | login e ao abrir o log |
 | Banco, inventário, equipamento | `ItemContainerChanged` para `live`; cache `Rs2Bank`/`Rs2Inventory` apenas como `restored` | ao fechar o banco, ao logar; opt-in separado por container |
@@ -40,7 +40,8 @@ do repositório de plugins que ele já mantém.
 Protocolo: idêntico ao doc 04, seção 6.4. `GET /api/ingest/manifest` devolve
 `contract_version: 1`, `manifest_version`, varbits/varps/coleções, `token_scopes`, permissões de
 itens e `resync`. `POST /api/ingest` envia `client_seq` monotônico e `kind: full|delta`; a resposta
-repete `accepted_seq`, a versão e se exige `resync`. O token `ipl_` fica por conta na config.
+repete `accepted_seq`, a versão e se exige `resync`. Hoje o token `ipl_` fica por conta na config; a auth
+planejada (adendo de 2026-11-05 abaixo) dispensa o token em dev e usa o device flow do Zitadel em `oidc`.
 
 Os toggles `sendBank`, `sendInventory` e `sendEquipment` começam `false` e só coletam se o manifest
 também anunciar o scope correspondente (`items:bank`, `items:inventory`, `items:equipment`). Um
@@ -253,3 +254,41 @@ ela vier `true`:
 Combat achievements e unlocks, quando o catálogo tiver os vars, chegam pelos `varbits`/`varps` do
 manifest, sem mudar o plugin.
 
+## Adendo de 2026-11-05: em uso, push por evento, painel da rota e auth
+
+**Em uso no zaros.** O plugin 1.1.0 rodou no cliente de dev com a conta do dono: o primeiro `full` levou as
+217 quests do cliente 2.6.52 (todas resolvidas no catálogo, Architectural Alliance inclusive), os 48
+varbits de diary e o varp 101. No planner, 54 objetivos de quest e 2 de diary viraram `met` com evidência
+e os objetivos de item saíram de `unknown` depois de abrir o banco na sessão.
+
+**1.1.1: captura por evento** (decisão 26 do doc 01; branch `feat/push-por-evento`). Eventos marcam uma
+captura com debounce de 1 s depois do último evento e, nos eventos "duros", teto de 3 s depois do
+primeiro:
+
+| Evento | Classe |
+|---|---|
+| `ItemContainerChanged` de banco, inventário e equipamento, só com flag do manifest, scope e toggle | duro |
+| `VarbitChanged` de um var do manifest, ou do varp 101 com `quests` ligado | duro |
+| `VarbitChanged` de outro var, com `quests` ligado (marca as quests para reler) | suave |
+| `StatChanged` com level real novo | duro |
+| `StatChanged` só de XP ou boost | suave |
+| fim da espera de 3 ticks depois do login ou da troca de mundo | duro |
+
+O protocolo não muda: um push por vez, ACK antes do próximo delta, mesmo `client_seq` no retry, backoff,
+409 com renumeração e `full`. Pedidos durante um push em voo ou um backoff viram uma só captura depois
+dele; a leitura periódica (`interval_seconds`) é pulada quando uma captura por evento acabou de rodar.
+Captura continua na thread do cliente; o gatilho só registra horários.
+
+**1.2.0: painel da rota** (decisão 27 do doc 01; item 14 do doc 04, seção 9). Painel lateral do RuneLite,
+no visual dele (sem canvas): a rota ativa a partir do cursor, o passo atual destacado, os próximos, os
+bloqueados com cadeado e o "falta …", os chips de objetivo com veredito, os itens do trecho e os botões
+Feito, Pular e Desfazer (as mesmas marcas da web). Atualiza depois de cada push confirmado (a resposta do
+ingest passa a trazer o cursor e os passos que mudaram) e depois de cada marca. O servidor continua a
+fonte da verdade; o plugin guarda o último estado só para exibir quando o servidor estiver fora.
+
+**Auth do plugin** (decisão 28 do doc 01; doc 04, seção 2.5). Em `AUTH_MODE=dev` o plugin precisa só da
+URL: ingest, manifest e as rotas do painel são aceitos sem token vindos de `127.0.0.1`. Em `oidc`, Device
+Authorization Grant no Zitadel (aplicação nativa pública, sem DCR): o plugin descobre issuer e
+`client_id` no planner, mostra o código, guarda o refresh token na config e renova sozinho; as roles do
+projeto no JWT (`ingest`, `items:*`, `marks:write`) fazem o papel dos `scopes`. A credencial é plugável no
+plugin desde o painel (nenhuma em dev, device flow em `oidc`), e o `ipl_` sai quando o device flow entrar.

@@ -305,10 +305,12 @@ Marcas (`step_marks`), eventos de passo e cursor são chaveados por `(account_id
 ## 4. Banco de dados e avaliação
 
 DDL em `db/migrations/` (goose, Postgres); `0001_init.sql` é o schema base, `0002` o frescor do ingest,
-`0003` a identidade por guia. O modelo em DBML, com a parte atual gerada e a planejada à mão, está em
+`0003` a identidade por guia, `0004` o progresso sobre objetivos e `0005` o `snapshot_facts` com a
+faceta `diary`. O modelo em DBML, com a parte atual gerada e a planejada à mão, está em
 `docs/arquitetura/modelo-de-dados.dbml`, e é lá que as mudanças de schema de cada item ficam listadas. Em
-resumo: a migration do item 7 colapsa as nove tabelas `snapshot_*` tipadas numa `snapshot_facts` com o
-shape de `player_state` (decisão do dono, 2026-11-04); a do item 8 cria as tabelas de objetivos (doc 09,
+resumo: a migration do item 7 (`0005`) colapsou as oito tabelas `snapshot_*` tipadas numa
+`snapshot_facts` com o shape de `player_state` (decisão do dono, 2026-11-04), copiando as linhas; a do
+item 8 cria as tabelas de objetivos (doc 09,
 seção 5), derruba `step_progress`, `step_progress_events` e `v_step_board` depois de copiar as marcas, e
 reduz `content_steps` ao índice mínimo. `wiki_cache` e `graph_cache` ficam, vazias, até terem uso.
 
@@ -338,12 +340,13 @@ erDiagram
 - **`snapshots`** é append-only com `raw` bruto; dedupe por `raw_hash` para fontes de polling e por
   `(ingest_token_id, client_seq)` para o plugin. **`snapshot_facts`** `(snapshot_id, facet, key, value)`
   é a normalização por snapshot, com o mesmo shape de `player_state`: histórico para gráficos e diffs
-  sem uma tabela por faceta (hoje ainda são as nove `snapshot_*` da migration 0001, quatro delas sem
-  escritor; o colapso é o item 7). Um `adapter_version` por snapshot permite re-normalizar o passado.
+  sem uma tabela por faceta (migration 0005). Um tombstone de item em `delta` fica como `{"qty":0}`.
+  Um `adapter_version` por snapshot permite re-normalizar o passado (plugin: `2` desde a 0005, com
+  quests e diaries).
 - **`player_state`**: uma linha por fato `(facet, key)` com `value` JSON, fonte e `observed_at`. Facetas:
   `skill`, `activity`, `quest`, `diary_task`, `combat_achievement`, `collection_log`, `varbit`, `varp`,
-  `item`; a faceta `diary` (tier completa, a partir dos varbits de referência) entra com o item 7 da
-  sequência. O merge é "observação mais nova vence dentro da faceta", com prioridade
+  `item` e `diary` (tier completa, chave `area:tier`, valor `{"complete":bool}`, derivada dos varbits
+  de referência; migration 0005). A chave de `quest` é o nome canônico da wiki do catálogo. O merge é "observação mais nova vence dentro da faceta", com prioridade
   `plugin > wikisync > hiscores > wom` em empate. O motor só lê essa tabela, carregada em memória como
   `rules.PlayerState`.
 - **`ingest_container_freshness`** e **`snapshot_item_containers`**: estado (`unavailable`/`restored`/
@@ -518,7 +521,7 @@ sequenceDiagram
   participant P as Plugin (Microbot)
   participant S as Servidor (/api/ingest)
   P->>S: GET /api/ingest/manifest  (Bearer ipl_…)
-  S-->>P: {contract_version:1, manifest_version:7, token_scopes:["state:write"], varbits:[…], items:{bank:false,…}, resync:true}
+  S-->>P: {contract_version:1, manifest_version:7, token_scopes:["state:write"], varbits:[…], varps:[101], quests:true, items:{bank:false,…}, resync:true}
   Note over P: login → lê tudo que o manifest pede
   P->>S: POST /api/ingest {contract_version:1, kind:"full", client_seq:1, manifest_version:7, data:{…}}
   S-->>P: {contract_version:1, ok:true, accepted_seq:1, resync:false, manifest_version:7}
@@ -537,19 +540,33 @@ Detalhes do contrato (tipos Go em `internal/core/ingest/contract.go`; espelho Zo
 
 - **Versões**: `contract_version` é literalmente `1`; campos novos opcionais não mudam a versão, mudança
   incompatível cria outro contrato. `manifest_version` é um hash truncado do conjunto gerado pelo servidor:
-  varbits/varps de referência (`content/reference/varbits.json`: diaries, unlocks, varp 101) mais os
-  usados em regras do conteúdo, `collections` (item ids em ordem fixa para o bitset) e `only_item_ids`.
-  Manifest diferente exige novo `full`.
+  varbits/varps de referência (`content/reference/varbits.json`: 48 tiers de diary e o varp 101; os
+  `proof` de `unlocks.json`, hoje nenhum) mais os usados em regras do conteúdo, `collections` (item ids
+  em ordem fixa para o bitset), `only_item_ids` e `quests`. Manifest diferente exige novo `full`.
 - **Facetas** de `data`: `varb`, `varp`, `level`, `xp`, `boosted` (mapas id → valor), `collectionLogSlots`
-  (bitset base64) e `items`. **Nova (item 7 da sequência do doc 09)**: `quest`, mapa nome RuneLite →
-  `NOT_STARTED | IN_PROGRESS | FINISHED`, lido com `Quest.getState` na thread do cliente (doc 02, seção 6);
-  obrigatório em `full`, só os que mudaram em `delta`. O servidor resolve o nome pelo registry (aliases
-  do WikiSync cobrem os nomes divergentes) e grava a faceta `quest`. O servidor rejeita campos
-  desconhecidos (`DisallowUnknownFields`), então ele sobe antes do plugin.
+  (bitset base64), `items` e, desde o item 7, `quest`: mapa nome RuneLite (`Quest.getName()`) →
+  `NOT_STARTED | IN_PROGRESS | FINISHED`, lido com `Quest.getState` na thread do cliente (doc 02, seção 6).
+  `quest` é opcional em qualquer push, para o plugin 1.0.0 continuar aceito; num `full` presente é a
+  lista completa e substitui as quests guardadas (ausente: as guardadas ficam), num `delta` leva só as
+  que mudaram. O cliente só envia `quest` quando o manifest anuncia `quests: true`. O servidor resolve o
+  nome pelo registry (nome canônico, aliases do WikiSync/RuneLite e curados) e grava a faceta `quest`
+  com o nome canônico da wiki; nome que não resolve para exatamente uma quest do catálogo é descartado,
+  nunca adivinhado (fica no `raw`). Os 216 nomes do `Quest.java` pinado resolvem (teste
+  `TestRuneLiteQuestNamesResolve`). O servidor rejeita campos desconhecidos (`DisallowUnknownFields`),
+  então ele sobe antes do plugin.
+- **Vars genéricos**: o plugin lê **todo** varbit/varp que o manifest listar (`client.getVarbitValue`,
+  `client.getVarpValue`) e manda em `varb`/`varp`, sem saber o que significam. O servidor deriva os fatos:
+  a faceta `diary` dos varbits `DIARY_<ÁREA>_<TIER>_COMPLETED`, `qp>=N` do varp 101 (`QUEST_POINTS`) e,
+  quando `unlocks.json` tiver `proof`, os unlocks. Um fato novo que vive num var pede só catálogo e
+  servidor, nunca uma versão do plugin (decisão do dono, 2026-11-04). Os nomes reservados para a 1.2.0
+  estão no doc 06.
 - **Escopos**: todo token anuncia `state:write`; dados privados usam `items:bank`, `items:inventory` e
   `items:equipment`. Os booleanos de `items` no manifest são a permissão efetiva e devem corresponder aos
   escopos. Ainda há o segundo opt-in no cliente; os três toggles locais começam desligados.
-  `only_item_ids`, quando presente, limita as chaves aceitas.
+  `only_item_ids`, quando presente, limita as chaves aceitas e o plugin filtra por ele; o manifest gerado
+  **não** o preenche (o plugin manda o container inteiro), porque uma lista tirada só das regras deixaria
+  de fora os itens dos objetivos dos sidecars, dos loadouts, das formas noteadas, de `any_of` e das
+  famílias, que a posse e a readiness precisam.
 - **Formato Java-friendly**: mapas são objetos JSON com chaves decimais canônicas (`"4151"`), portanto
   o cliente usa `Map<String, Long>` do Gson sem adaptador.
 - **Full versus delta**: `full` contém todos os mapas, mesmo vazios, e uma observação explícita para cada
@@ -587,6 +604,8 @@ Exemplo abreviado de um `full`:
 
 ```json
 {
+  "varb": {"4458": 1, "4459": 0},
+  "varp": {"101": 33},
   "quest": {"Cook's Assistant": "FINISHED", "X Marks the Spot": "IN_PROGRESS"},
   "items": {
     "bank": {
@@ -749,8 +768,8 @@ de status, cursor; derruba `step_progress`, `step_progress_events` e `v_step_boa
 tabela), `internal/store/progress` (reavaliação na transação do ingest com `steps_changed`, marcas,
 cursor, board, indexação de `content_versions`/`content_steps` e dos aliases de `step.replaces` no
 boot; teste de integração no Postgres 17) e as rotas dev do board, das marcas e do cursor. Contas de
-teste: `just account-create`/`account-guide`. Hoje só skill e item saem de `unknown`: quest, diary,
-unlock, CA e `qp` esperam o item 7.
+teste: `just account-create`/`account-guide`. Com o servidor do item 7, quest, diary e `qp` também saem de
+`unknown` quando o plugin manda os fatos; unlock (sem `proof` no catálogo) e CA continuam `unknown`.
 
 Web v4 (item 9, branch `feat/progresso`): Agora, Rotas e Rota no tema Pergaminho, sobre o progresso
 real; a API devolve por passo a referência do autor, a posição, os nomes dos refs e o "também em"; os
@@ -766,8 +785,18 @@ a trazer: `requires` (chaves de objetivo das quests diretas `@finished`, dos ní
 `quest_reqs`, `skill_reqs` e `quest_points_required` de `data/wiki/quests.json`; acesso por
 `entities.Registry.Quest(id).Requires`.
 
-Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, plano da meta, faceta de quest e
-diary no `player_state` (doc 09, seção 1), sessão/OIDC, CLI/MCP sobre
+Contrato com quests (item 7, parte do servidor, branch `feat/item7-contrato`): `data.quest` e
+`manifest.quests` no contrato v1 (opcionais, plugin 1.0.0 continua aceito); manifest com os 48 varbits de
+diary, o varp 101 e os `proof` de unlocks; migration 0005 (`snapshot_facts`, faceta `diary`, dados
+copiados, Down que restaura as tabelas tipadas); normalizador gravando `quest` (nome canônico pelo
+registry), `diary` e o histórico em `snapshot_facts`; motor avaliando `varbit`/`varp`, `qp>=N` pelo varp
+101 e unlock com `proof`. Verificação: testes de tabela (contrato, resolução dos 216 nomes do RuneLite,
+diary, varbit/varp, objetivos) e `TestQuestAndDiaryFactsPostgres` com o conteúdo real do Oziris
+(`quest:x_marks_the_spot@finished` e `diary:ardougne:easy@complete` saem de `unknown` com evidência);
+goose up/down/up com dados. Falta: plugin 1.1.0 lendo `Quest.getState`, `mb-test` no jogo e a
+revisão de integração entre os repositórios.
+
+Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, sessão/OIDC, CLI/MCP sobre
 o cliente, grafo, tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
 antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
 
@@ -782,7 +811,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | **feito** (2026-11-04; contrato das tools no doc 09, seção 6.8) |
 | 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6. **Oziris 1.1 feito** (2026-11-04): 99,3% aceitos no primeiro envio; 88 de 95 objetivos de regra reproduzidos (abaixo dos 95%, as 7 divergências explicadas no doc 09, seção 6.6); levou ao catálogo de itens completo, ao XP de quest na ordem e ao `revise_entity`. **BRUHsailer 1.1 feito** (2026-11-04): 17 de 18 aceitos no primeiro envio, 13 perguntas em 3 lotes; expôs o corte da linha "Items needed:" no importador e os itens inobteníveis resolvidos por nome, ambos corrigidos |
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde |
-| 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado |
+| 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado. **Servidor feito** (2026-11-04, `feat/item7-contrato`): contrato, manifest, migration 0005, normalizador, avaliação de quest/diary/`qp`, teste no Postgres com o Oziris real, `just dbml`. Pendente: plugin 1.1.0, `mb-test` e a revisão entre os repositórios |
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |

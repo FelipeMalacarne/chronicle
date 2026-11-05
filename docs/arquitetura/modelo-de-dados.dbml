@@ -194,7 +194,7 @@ Table player_state {
 
   Note: '''
   Current merged fact per (account, facet, key). Rewritten after every snapshot.
-  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
+  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
   '''
 }
 
@@ -267,50 +267,19 @@ Table settings {
   '''
 }
 
-Table snapshot_activities {
+Table snapshot_facts {
   snapshot_id text [not null]
-  activity text [not null, note: 'canonical hiscores name']
-  score bigint [not null, note: '-1 = unranked']
-  rank bigint
+  facet text [not null]
+  key text [not null, note: 'same keys as player_state: \'agility\' | \'X Marks the Spot\' | \'ardougne:easy\' | \'4458\' | \'bank:4151\'']
+  value jsonb [not null, note: 'same values as player_state; an item delta tombstone is {"qty":0}']
 
   indexes {
-    (snapshot_id, activity) [pk]
-  }
-}
-
-Table snapshot_collection_log {
-  snapshot_id text [not null]
-  item_id integer [not null]
-  qty integer [not null, default: `1`]
-
-  indexes {
-    (snapshot_id, item_id) [pk]
-  }
-}
-
-Table snapshot_combat_achievements {
-  snapshot_id text [not null]
-  ca_id integer [not null]
-  done boolean [not null]
-
-  indexes {
-    (snapshot_id, ca_id) [pk]
-  }
-}
-
-Table snapshot_diary_tasks {
-  snapshot_id text [not null]
-  area text [not null]
-  tier text [not null]
-  task_index integer [not null]
-  done boolean [not null]
-
-  indexes {
-    (snapshot_id, area, tier, task_index) [pk]
+    (snapshot_id, facet, key) [pk]
   }
 
   Note: '''
-  snapshot_diary_tasks_tier_check: CHECK ((tier = ANY (ARRAY['easy'::text, 'medium'::text, 'hard'::text, 'elite'::text])))
+  Normalized facts of one snapshot, with the shape of player_state (history for charts and diffs).
+  snapshot_facts_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
   '''
 }
 
@@ -331,64 +300,6 @@ Table snapshot_item_containers {
   snapshot_item_containers_container_check: CHECK ((container = ANY (ARRAY['bank'::text, 'inventory'::text, 'equipment'::text])))
   snapshot_item_containers_freshness: CHECK ((((state = 'unavailable'::text) AND (revision IS NULL) AND (live_epoch IS NULL)) OR ((state = 'restored'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (live_epoch IS NULL)) OR ((state = 'live'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (length(live_epoch) > 0))))
   snapshot_item_containers_state_check: CHECK ((state = ANY (ARRAY['unavailable'::text, 'restored'::text, 'live'::text])))
-  '''
-}
-
-Table snapshot_items {
-  snapshot_id text [not null]
-  container text [not null]
-  item_id integer [not null]
-  qty integer [not null]
-
-  indexes {
-    (snapshot_id, container, item_id) [pk]
-  }
-
-  Note: '''
-  snapshot_items_container_check: CHECK ((container = ANY (ARRAY['bank'::text, 'inventory'::text, 'equipment'::text, 'poh'::text])))
-  snapshot_items_qty_nonnegative: CHECK ((qty >= 0))
-  '''
-}
-
-Table snapshot_quests {
-  snapshot_id text [not null]
-  quest text [not null, note: 'canonical wiki name']
-  state text [not null]
-
-  indexes {
-    (snapshot_id, quest) [pk]
-  }
-
-  Note: '''
-  snapshot_quests_state_check: CHECK ((state = ANY (ARRAY['NOT_STARTED'::text, 'IN_PROGRESS'::text, 'FINISHED'::text])))
-  '''
-}
-
-Table snapshot_skills {
-  snapshot_id text [not null]
-  skill text [not null]
-  level integer [not null]
-  xp bigint
-  rank bigint
-  boosted integer [note: 'plugin only (boosted level)']
-
-  indexes {
-    (snapshot_id, skill) [pk]
-  }
-}
-
-Table snapshot_vars {
-  snapshot_id text [not null]
-  kind text [not null]
-  var_id integer [not null]
-  value integer [not null]
-
-  indexes {
-    (snapshot_id, kind, var_id) [pk]
-  }
-
-  Note: '''
-  snapshot_vars_kind_check: CHECK ((kind = ANY (ARRAY['varbit'::text, 'varp'::text])))
   '''
 }
 
@@ -413,7 +324,7 @@ Table snapshots {
   }
 
   Note: '''
-  Immutable raw snapshots per source. Normalized rows live in snapshot_* tables.
+  Immutable raw snapshots per source. Normalized facts live in snapshot_facts.
   snapshots_kind_check: CHECK ((kind = ANY (ARRAY['full'::text, 'delta'::text])))
   snapshots_source_check: CHECK ((source = ANY (ARRAY['hiscores'::text, 'wom'::text, 'wikisync'::text, 'plugin'::text, 'import'::text])))
   '''
@@ -551,15 +462,8 @@ Ref player_state_snapshot_id_fkey: player_state.snapshot_id > snapshots.id
 Ref plugin_ingest_tokens_account_id_fkey: plugin_ingest_tokens.account_id > accounts.id [delete: cascade]
 Ref route_cursor_account_id_fkey: route_cursor.account_id > accounts.id [delete: cascade]
 Ref settings_account_id_fkey: settings.account_id > accounts.id [delete: cascade]
-Ref snapshot_activities_snapshot_id_fkey: snapshot_activities.snapshot_id > snapshots.id [delete: cascade]
-Ref snapshot_collection_log_snapshot_id_fkey: snapshot_collection_log.snapshot_id > snapshots.id [delete: cascade]
-Ref snapshot_combat_achievements_snapshot_id_fkey: snapshot_combat_achievements.snapshot_id > snapshots.id [delete: cascade]
-Ref snapshot_diary_tasks_snapshot_id_fkey: snapshot_diary_tasks.snapshot_id > snapshots.id [delete: cascade]
+Ref snapshot_facts_snapshot_id_fkey: snapshot_facts.snapshot_id > snapshots.id [delete: cascade]
 Ref snapshot_item_containers_snapshot_id_fkey: snapshot_item_containers.snapshot_id > snapshots.id [delete: cascade]
-Ref snapshot_items_snapshot_id_fkey: snapshot_items.snapshot_id > snapshots.id [delete: cascade]
-Ref snapshot_quests_snapshot_id_fkey: snapshot_quests.snapshot_id > snapshots.id [delete: cascade]
-Ref snapshot_skills_snapshot_id_fkey: snapshot_skills.snapshot_id > snapshots.id [delete: cascade]
-Ref snapshot_vars_snapshot_id_fkey: snapshot_vars.snapshot_id > snapshots.id [delete: cascade]
 Ref snapshots_account_id_fkey: snapshots.account_id > accounts.id [delete: cascade]
 Ref snapshots_ingest_token_id_fkey: snapshots.ingest_token_id > plugin_ingest_tokens.id [delete: set null]
 Ref step_marks_account_id_fkey: step_marks.account_id > accounts.id [delete: cascade]
@@ -578,14 +482,7 @@ TableGroup ingest_e_snapshots {
   plugin_ingest_tokens
   sync_runs
   snapshots
-  snapshot_skills
-  snapshot_activities
-  snapshot_quests
-  snapshot_diary_tasks
-  snapshot_combat_achievements
-  snapshot_collection_log
-  snapshot_vars
-  snapshot_items
+  snapshot_facts
   snapshot_item_containers
 }
 
@@ -619,41 +516,11 @@ TableGroup metas_e_caches {
 // ===== PLANEJADO (doc 09) =====
 // Escrito à mão: tabelas das próximas migrations. Ao implementar, a migration nova passa a gerar
 // estas tabelas na parte de cima; apague daqui o que já existir lá. O progresso sobre objetivos
-// (item 8 da sequência) já está acima, na migration 0004.
-
-Table snapshot_facts {
-  snapshot_id text [not null]
-  facet text [not null, note: 'mesmo domínio de player_state.facet: skill | activity | quest | diary | diary_task | combat_achievement | collection_log | varbit | varp | item']
-  key text [not null]
-  value jsonb [not null]
-
-  indexes {
-    (snapshot_id, facet, key) [pk]
-  }
-
-  Note: '''
-  Histórico normalizado por snapshot, com o mesmo shape de player_state (decisão do dono, 2026-11-04).
-  Substitui snapshot_skills, snapshot_activities, snapshot_quests, snapshot_diary_tasks,
-  snapshot_combat_achievements, snapshot_collection_log, snapshot_vars e snapshot_items.
-  snapshot_item_containers fica: é proveniência do container, não um fato. Entra no item 7 da
-  sequência (doc 04, seção 9), junto com a faceta quest.
-  '''
-}
-
-Ref snapshot_facts_snapshot_fk: snapshot_facts.snapshot_id > snapshots.id [delete: cascade]
-
-TableGroup snapshots_planejado {
-  snapshot_facts
-}
+// (item 8) está acima desde a migration 0004; snapshot_facts e a faceta diary (item 7), desde a 0005.
+// Nenhuma tabela planejada no momento.
 
 Note mudancas_planejadas {
 '''
-Migration do item 7 (contrato com quests):
-- as nove snapshot_* tipadas viram snapshot_facts (acima); snapshot_item_containers fica.
-- player_state.facet ganha 'diary' (tier completa, derivada dos varbits de referência).
-- snapshot_items aceitava 'poh' e as tabelas de container não: o domínio de container passa a ser
-  um só (bank | inventory | equipment).
-
 Ficam como estão, por decisão do dono (2026-11-04): wiki_cache e graph_cache, vazias até o adapter
 do wiki e o grafo existirem.
 '''

@@ -34,8 +34,15 @@ const ItemQuantityMap = z.record(
   z.number().int().nonnegative().safe(),
 ); // objeto JSON item_id decimal -> qty; Gson: Map<String, Long>
 
-/** Faceta de quests (doc 09, item 7): nome RuneLite da quest -> estado. */
-const QuestStateMap = z.record(z.string().min(1), QuestState);
+/**
+ * Faceta de quests (doc 09, item 7): nome RuneLite da quest (Quest.getName()) -> estado. Opcional
+ * em todo push; em full, presente = lista completa que substitui as quests guardadas; em delta,
+ * só as que mudaram. O cliente só envia se manifest.quests for true.
+ */
+const QuestStateMap = z.record(
+  z.string().max(120).refine(name => name.trim() === name && name.length > 0, 'nome não vazio e sem espaços nas pontas'),
+  QuestState,
+);
 
 const IngestItemSelection = z.object({
   bank: z.boolean().default(false),
@@ -48,10 +55,11 @@ export const IngestManifest = z.object({
   contract_version: z.literal(1),
   manifest_version: z.number().int().positive().safe(),
   token_scopes: z.array(IngestTokenScope).refine(scopes => new Set(scopes).size === scopes.length, 'scopes devem ser únicos'),
-  varbits: uniqueNonnegativeIDs,                        // regras do conteúdo + content/reference/varbits.json
-  varps: uniqueNonnegativeIDs,
+  varbits: uniqueNonnegativeIDs,                        // varbits.json + proofs de unlocks.json + regras do conteúdo
+  varps: uniqueNonnegativeIDs,                          // idem (varp 101 = quest points)
   collections: uniquePositiveIDs,                       // ordem dos bits do collectionLogSlots
   skills: z.boolean().default(true),
+  quests: z.boolean().default(false),                   // o servidor aceita data.quest (servidor anterior: ausente)
   items: IngestItemSelection,
   interval_seconds: z.number().int().min(5).default(10),
   resync: z.boolean().default(false),                    // próximo push deve ser full
@@ -124,7 +132,8 @@ const IngestPayloadBase = z.object({
 export const IngestPayload = IngestPayloadBase.superRefine((payload, ctx) => {
   const containers = ['bank', 'inventory', 'equipment'] as const;
   if (payload.kind === 'full') {
-    for (const field of ['varb', 'varp', 'level', 'xp', 'boosted', 'quest'] as const) {
+    // data.quest fica fora: é opcional mesmo em full (plugin 1.0.0 não envia).
+    for (const field of ['varb', 'varp', 'level', 'xp', 'boosted'] as const) {
       if (payload.data[field] === undefined) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['data', field], message: 'obrigatório em full' });
       }

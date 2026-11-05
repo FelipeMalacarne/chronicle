@@ -24,9 +24,7 @@ PLANNED_MARKER = "// ===== PLANEJADO (doc 09) ====="
 GROUPS = {
     "identidade": ["users", "sessions", "api_tokens", "accounts", "settings"],
     "ingest_e_snapshots": [
-        "plugin_ingest_tokens", "sync_runs", "snapshots", "snapshot_skills", "snapshot_activities",
-        "snapshot_quests", "snapshot_diary_tasks", "snapshot_combat_achievements",
-        "snapshot_collection_log", "snapshot_vars", "snapshot_items", "snapshot_item_containers",
+        "plugin_ingest_tokens", "sync_runs", "snapshots", "snapshot_facts", "snapshot_item_containers",
     ],
     "estado_da_conta": ["player_state", "ingest_container_freshness"],
     "conteudo_indexado": ["content_versions", "content_steps", "step_id_aliases"],

@@ -29,8 +29,8 @@ do repositório de plugins que ele já mantém.
 | Dado | Como ler no cliente | Quando enviar |
 |---|---|---|
 | Skills (level real, xp, boosted) | `client.getRealSkillLevel`, `getSkillExperience`, evento `StatChanged` | no evento, com debounce de alguns segundos |
-| Quests (NOT_STARTED, IN_PROGRESS, FINISHED) | `Quest.values()` + `quest.getState(client)` na thread do cliente, enviados na faceta `data.quest` do contrato v1 (doc 04, seção 6.4). **Ainda não implementado**: entra na versão 1.1.0 (doc 09, item 7) | todos no `full`; em `delta` só os que mudaram |
-| Diaries por tier | varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` de `content/reference/varbits.json`, pedidos pelo manifest (hoje o manifest sai vazio porque o conteúdo não tem regras `varbit`) | em `VarbitChanged` |
+| Quests (NOT_STARTED, IN_PROGRESS, FINISHED) | `Quest.values()` + `quest.getState(client)` na thread do cliente, enviados na faceta `data.quest` do contrato v1 (doc 04, seção 6.4) com a chave `quest.getName()`. Servidor pronto; **plugin ainda não**: entra na versão 1.1.0 (adendo "contrato do item 7" abaixo) | todos no `full`; em `delta` só os que mudaram |
+| Diaries por tier, quest points, unlocks | genérico: todo varbit/varp que o manifest listar, em `data.varb`/`data.varp`. Hoje o manifest pede os 48 varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` e o varp 101 (`QUEST_POINTS`) de `content/reference/varbits.json`, mais os `proof` de `unlocks.json` quando existirem; o servidor deriva diary, `qp` e unlock. O plugin 1.0.0 já lê o que o manifest pede | em `VarbitChanged`/`VarClientIntChanged` ou na verificação de 10 s |
 | Combat achievements | varbits/cs2 do manifest | em `VarbitChanged` |
 | Collection log | `collectionLogSlots` via enums/structs do chisel, como o WikiSync faz | login e ao abrir o log |
 | Banco, inventário, equipamento | `ItemContainerChanged` para `live`; cache `Rs2Bank`/`Rs2Inventory` apenas como `restored` | ao fechar o banco, ao logar; opt-in separado por container |
@@ -122,3 +122,134 @@ Comportamento implementado (contrato v1, doc 04, seção 6.4):
 Verificação: 36 testes JUnit (diff, baseline, frescor, ACK/retry, backoff) e o jar compilado contra o
 cliente pinado. **Ainda não rodou no jogo** (`mb-test` pendente). O painel lateral com o "próximo passo"
 não foi feito.
+
+## Adendo de 2026-11-04: contrato do item 7 (quests e vars de referência)
+
+O servidor do item 7 está pronto (doc 04, seções 6.4 e 9); este adendo é tudo que o plugin 1.1.0
+precisa. O contrato continua `contract_version: 1`: os campos novos são opcionais e o servidor aceita o
+plugin 1.0.0 como está.
+
+**Decisão do dono (2026-11-04):** o plugin lê **genericamente** todo varbit e varp que o manifest
+listar e manda os valores; ele não sabe o que é diary, quest point ou unlock. Fatos novos que vivem em
+vars (unlocks com `proof` em `content/reference/unlocks.json`, combat achievements) pedem só catálogo e
+servidor, nunca uma versão nova do plugin.
+
+### O que muda no manifest
+
+`GET /api/ingest/manifest` passa a devolver:
+
+- `varbits`: os varbits de `content/reference/varbits.json` (os 48 tiers de diary), os `proof` do tipo
+  `varbit` de `unlocks.json` (hoje nenhum) e os de regras `varbit` do conteúdo, sem repetição e
+  ordenados;
+- `varps`: idem para varps; hoje `[101]` (`QUEST_POINTS`);
+- `quests: true`: o servidor aceita `data.quest`. **Só envie `data.quest` quando `quests` for `true`**;
+  um servidor anterior não manda o campo (Gson: `null`/`false`) e rejeitaria `data.quest` como campo
+  desconhecido;
+- `items.only_item_ids` não vem mais preenchido: mande o container inteiro (o filtro do
+  `ItemQuantities` continua valendo se um dia vier).
+
+O `manifest_version` muda com isso, então o primeiro push de cada token após o deploy recebe `409` com
+`resync:true` e o plugin manda `full`, como já faz.
+
+```json
+{
+  "contract_version": 1,
+  "manifest_version": 329934161,
+  "token_scopes": ["state:write", "items:bank"],
+  "varbits": [3578, 3599, 3611, 4458, 4459, 4460, 4461, 4462, 4463, 4464, 4465, 4466, 4467, 4468,
+              4469, 4471, 4472, 4473, 4474, 4475, 4476, 4477, 4478, 4479, 4480, 4481, 4482, 4483,
+              4484, 4485, 4486, 4487, 4488, 4489, 4490, 4491, 4492, 4493, 4494, 4495, 4496, 4497,
+              4498, 4566, 7925, 7926, 7927, 7928],
+  "varps": [101],
+  "collections": [],
+  "skills": true,
+  "quests": true,
+  "items": {"bank": true, "inventory": false, "equipment": false},
+  "interval_seconds": 10,
+  "resync": true
+}
+```
+
+Este é o manifest real do conteúdo atual (`BuildDefinition` com o catálogo de 2026-11-04); a versão
+muda quando o catálogo ou as regras mudarem, e o plugin nunca a interpreta, só a repete no push.
+
+### O que muda no push
+
+- `data.varb` e `data.varp` continuam como estão (`Map<String, Long>`, chave decimal): para cada id de
+  `manifest.varbits`, `client.getVarbitValue(id)`; para cada id de `manifest.varps`,
+  `client.getVarpValue(id)`. Em `full`, todos os ids do manifest; em `delta`, só os que mudaram.
+- Novo `data.quest` (`Map<String, String>`): para cada `Quest q : Quest.values()`, chave `q.getName()`
+  (o nome exato que o RuneLite expõe, por exemplo `"Recipe for Disaster - Mountain Dwarf"`), valor
+  `q.getState(client).name()` (`NOT_STARTED`, `IN_PROGRESS` ou `FINISHED`). Lido na thread do cliente
+  (`Quest.getState` roda script do cliente). Em `full`, todas as quests; em `delta`, só as que mudaram de
+  estado desde o último ACK. Mapa vazio é `{}`, nunca `null`; nome sem espaços nas pontas e com até 120
+  bytes.
+
+```json
+{
+  "contract_version": 1,
+  "username": "Example Iron",
+  "profile": "STANDARD",
+  "account_type": "IRONMAN",
+  "manifest_version": 329934161,
+  "client_seq": 1,
+  "kind": "full",
+  "sent_at": "2026-11-04T12:00:00Z",
+  "data": {
+    "varb": {"3578": 0, "3599": 0, "4458": 1, "4459": 0},
+    "varp": {"101": 33},
+    "level": {"attack": 40, "agility": 30},
+    "xp": {"attack": 37224, "agility": 13363},
+    "boosted": {"attack": 40, "agility": 30},
+    "quest": {
+      "Cook's Assistant": "FINISHED",
+      "X Marks the Spot": "FINISHED",
+      "Rune Mysteries": "IN_PROGRESS",
+      "Recipe for Disaster - Mountain Dwarf": "NOT_STARTED"
+    },
+    "items": {
+      "bank": {"state": "restored", "observed_at": "2026-11-04T11:55:00Z", "revision": 41, "quantities": {"995": 250000}},
+      "inventory": {"state": "unavailable", "observed_at": "2026-11-04T12:00:00Z"},
+      "equipment": {"state": "unavailable", "observed_at": "2026-11-04T12:00:00Z"}
+    }
+  }
+}
+```
+
+Um `delta` depois de terminar Rune Mysteries:
+
+```json
+{
+  "contract_version": 1, "username": "Example Iron", "profile": "STANDARD",
+  "manifest_version": 329934161, "client_seq": 2, "kind": "delta", "sent_at": "2026-11-04T12:10:00Z",
+  "data": {"varp": {"101": 34}, "quest": {"Rune Mysteries": "FINISHED"}}
+}
+```
+
+O que o servidor faz com isso: resolve cada nome pelo registry (nome canônico, aliases do RuneLite e do
+WikiSync) e grava `quest` com o nome da wiki; nome desconhecido é descartado, não rejeita o push (fica
+no `raw` do snapshot para reprocessar). Deriva `diary` de cada varbit de diary presente (`1` = tier
+completa) e avalia `qp>=N` pelo varp 101. Um `full` sem `data.quest` (plugin 1.0.0) não apaga as quests
+já guardadas; um `full` com `data.quest` substitui todas.
+
+Para o plugin: `IngestContract.Manifest` ganha `Boolean quests`; `IngestContract.PushData` ganha
+`Map<String, String> quest`; o `StateCollector` lê as quests; o `PushBuilder` calcula o delta de
+quests como faz com os varbits. Os 216 nomes do `Quest.java` pinado em `data/samples/runelite`
+resolvem no catálogo (teste `TestRuneLiteQuestNamesResolve`); se o cliente ganhar quests novas antes do
+catálogo, elas ficam `unknown` até o `catalogbuild` alcançar.
+
+### Nomes reservados para a 1.2.0 (não implementar agora)
+
+O servidor ainda rejeita estes campos (`DisallowUnknownFields`); eles ficam reservados para o contrato
+continuar v1 sem colisão. Cada um terá uma flag no manifest, como `quests`, e o plugin só manda quando
+ela vier `true`:
+
+| Campo do push | Flag do manifest | Conteúdo previsto |
+|---|---|---|
+| `data.position` | `position` | posição e mundo, opt-in no cliente: `{"world": 330, "region_id": 10547, "x": 2662, "y": 3305, "plane": 0}` |
+| `data.collectionLogSlots`, `data.collectionLogItemCount` | `collections` (já existe, lista não vazia) | já no contrato v1; o plugin passa a enviar |
+| `data.ca` | `combat_achievements` | só se os varps genéricos não bastarem; a preferência é ler CA pelos varps que o manifest listar, sem campo novo |
+
+Combat achievements e unlocks, quando o catálogo tiver os vars, chegam pelos `varbits`/`varps` do
+manifest, sem mudar o plugin.
+

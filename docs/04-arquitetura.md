@@ -188,6 +188,7 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/guides/{guide}/board?account=` | feita (dev) | status derivado e veredito por objetivo de cada passo, marcas, cursor, contagens, órfãos; frescor fica para o item 9 |
 | `PATCH /api/guides/{guide}/steps/{id}/mark?account=` | feita (dev) | `{kind: manual_done\|skipped\|pinned_open\|confirm_implied\|clear, note}`; `note` ausente mantém, `""` limpa |
 | `POST /api/guides/{guide}/implied/confirm?account=` | feita (dev) | "confirmar tudo": toda marca `implied` do guia vira `manual_done` |
+| `POST /api/guides/{guide}/marks?account=` | feita (dev) | "marcar tudo antes deste": `before_step_id` marca `manual_done` todo passo da rota principal antes dele, visível e pendente sem marca; `clear` desfaz o lote (só remove `manual_done`) |
 | `PUT /api/guides/{guide}/cursor?account=` | feita (dev) | `{step_id}` fixa o passo atual (passo feito é recusado); `{step_id: null}` volta ao automático |
 | `GET /api/objectives?account=` | feita (dev) | vereditos compartilhados com evidência |
 | `GET /api/progress?account=` | feita (dev) | resumo das rotas: rota ativa, cursor (com a referência do autor), contagens por seção, cobertura, fontes |

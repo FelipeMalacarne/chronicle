@@ -103,6 +103,18 @@
 		return true;
 	}
 
+	/*
+	 * Com busca ou filtro, a lista se estreita: trechos sem resultado somem, os com resultado abrem
+	 * sozinhos (o dono ainda pode recolher) e mostram todos os resultados. Mudar a busca reabre tudo.
+	 */
+	const narrowed = $derived(query.trim() !== '' || filter !== 'all');
+	let searchOpen = $state<Record<string, boolean>>({});
+	$effect(() => {
+		void query;
+		void filter;
+		searchOpen = {};
+	});
+
 	/* Trechos abertos e o passo expandido: o do cursor por padrão, ou o da âncora #passo-<id>. */
 	let open = $state<Record<string, boolean>>({});
 	let expanded = $state<string | null>(null);
@@ -110,6 +122,7 @@
 	const doneIn = (seg: SegmentView) =>
 		seg.steps.filter((s) => statusView(boardById.get(s.id)?.status).done).length;
 	function isOpen(seg: SegmentView): boolean {
+		if (narrowed) return searchOpen[seg.id] ?? true;
 		if (seg.id in open) return open[seg.id];
 		if (cursorHere) return seg.steps.some((s) => s.id === cursorId);
 		const first = segments.find((g) => doneIn(g) < g.steps.length);
@@ -171,8 +184,9 @@
 		if (b && account) await write(() => progressApi.clearMarks(guideId, account, b.ids));
 	}
 
-	function legCount(seg: SegmentView): string {
-		const parts = [`${seg.steps.length} ${seg.steps.length === 1 ? 'passo' : 'passos'}`];
+	function legCount(seg: SegmentView, shownCount: number): string {
+		const total = `${seg.steps.length} ${seg.steps.length === 1 ? 'passo' : 'passos'}`;
+		const parts = [narrowed ? `${shownCount} de ${total}` : total];
 		const lo = loadoutLabel(seg.loadout);
 		if (lo) parts.push(lo);
 		const start = seg.bankActions.find((a) => a.position === 'start') ?? seg.bankActions[0];
@@ -184,6 +198,7 @@
 		return seg.steps[0]?.id === s.id ? [...loadoutItems(seg.loadout), ...own] : own;
 	}
 	const LIMIT = 30;
+	const matches = $derived(segments.reduce((n, g) => n + g.steps.filter(shown).length, 0));
 </script>
 
 <svelte:head>
@@ -330,12 +345,19 @@
 			</div>
 
 			<div class="legs">
+				{#if narrowed && !matches}
+					<p class="su empty">
+						Nenhum passo {query.trim() ? `com “${query.trim()}”` : 'com este filtro'} nesta seção.
+					</p>
+				{/if}
 				{#each segments as seg, si (seg.id)}
 					{@const done = doneIn(seg)}
 					{@const isCur = cursorHere && seg.steps.some((s) => s.id === cursorId)}
 					{@const visible = seg.steps.filter(shown)}
-					{#if paragraph}
-						{#if seg.bankActions.length && si > 0}
+					{#if narrowed && !visible.length}
+						<!-- trecho sem resultado: some enquanto a busca ou o filtro estiver ativo -->
+					{:else if paragraph}
+						{#if seg.bankActions.length && si > 0 && !narrowed}
 							<div class="bankline">
 								banco · {seg.bankActions[0].type} · entre {segments[si - 1].steps.at(-1)?.ref} e {seg
 									.steps[0]?.ref}
@@ -349,10 +371,11 @@
 							class="leg"
 							type="button"
 							aria-expanded={isOpen(seg)}
-							onclick={() => (open[seg.id] = !isOpen(seg))}
+							onclick={() =>
+								narrowed ? (searchOpen[seg.id] = !isOpen(seg)) : (open[seg.id] = !isOpen(seg))}
 						>
 							<Glyph name="chevron" size={12} />Trecho · {seg.range}
-							<span class="ct">{legCount(seg)}</span>
+							<span class="ct">{legCount(seg, visible.length)}</span>
 							<span class="r">
 								{#if isCur}<span class="badge badge-gold">cursor</span>{/if}
 								{#if isCur && readiness.data?.current}<span
@@ -368,7 +391,7 @@
 							</span>
 						</button>
 						{#if isOpen(seg)}
-							{@const rows = showAll[seg.id] ? visible : visible.slice(0, LIMIT)}
+							{@const rows = showAll[seg.id] || narrowed ? visible : visible.slice(0, LIMIT)}
 							{#each rows as s, i (s.id)}
 								{#if s.location && s.location !== rows[i - 1]?.location}<div class="locl">
 										{s.location}
@@ -664,6 +687,9 @@
 	}
 	.legs > :global(.leg:first-child) {
 		margin-top: 0;
+	}
+	.empty {
+		padding: 16px 4px;
 	}
 	.card {
 		width: 100%;

@@ -411,11 +411,15 @@ test('also-in lists where each other route completes the same entity', () => {
 			guide: 'oziris-main',
 			label: 'Oziris',
 			entries: [
-				{ label: "Monk's Friend", where: '1.1.40 (pos. 40 de 286)' },
-				{ label: 'Clock Tower', where: 'não está na rota' }
+				{ label: "Monk's Friend", where: '1.1.40 (pos. 40 de 286)' }
 			]
 		}
 	]);
+	// A route that has none of the step's entities is left out, never "não está na rota".
+	assert.deepEqual(
+		alsoIn(st, chipsOf(st, undefined), [{ guide: 'bruhsailer-main', label: 'BRUHsailer' }]),
+		[]
+	);
 	assert.equal(routeLabel('bruhsailer-main', 'x'), 'BRUHsailer');
 });
 

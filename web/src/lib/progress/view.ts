@@ -732,7 +732,8 @@ export interface AlsoIn {
 
 /**
  * A referência cruzada discreta do passo (decisão 1 do v4): para cada outra rota, onde ela
- * conclui as mesmas entidades, ou "não está na rota".
+ * conclui as mesmas entidades. Entidades que a outra rota não tem ficam de fora, e uma rota
+ * sem nenhuma some: "também na rota X … não está na rota" se contradizia.
  */
 export function alsoIn(
 	step: Pick<ContentStep, 'also'>,
@@ -741,18 +742,22 @@ export function alsoIn(
 ): AlsoIn[] {
 	const completing = chips.filter((c) => c.role === 'completes' || c.role === 'starts');
 	if (completing.length === 0) return [];
-	return others.map((g) => ({
-		guide: g.guide,
-		label: g.label,
-		entries: completing.map((c) => {
-			const occ = step.also?.[c.key]?.find((o) => o.guide === g.guide);
-			if (!occ) return { label: c.label, where: 'não está na rota' };
-			return {
-				label: c.label,
-				where: occ.position ? `${occ.ref} (pos. ${occ.position} de ${occ.total})` : occ.ref
-			};
-		})
-	}));
+	return others
+		.map((g) => ({
+			guide: g.guide,
+			label: g.label,
+			entries: completing.flatMap((c) => {
+				const occ = step.also?.[c.key]?.find((o) => o.guide === g.guide);
+				if (!occ) return [];
+				return [
+					{
+						label: c.label,
+						where: occ.position ? `${occ.ref} (pos. ${occ.position} de ${occ.total})` : occ.ref
+					}
+				];
+			})
+		}))
+		.filter((r) => r.entries.length > 0);
 }
 
 /** Nome curto da rota para as linhas cruzadas: "Oziris", "BRUHsailer". */

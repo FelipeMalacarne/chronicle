@@ -126,8 +126,10 @@ def absorb_infobox(text, out):
             ids[version] = [int(x) for x in re.findall(r"\d+", value)]
         else:
             m = FILE.search(value)
-            if m:
-                images[version] = m.group(1).strip()
+            # {{Infobox Item}} comes first; the {{Infobox Bonuses}} below it has
+            # the "equipped" character images under the same field names.
+            if m and " equipped" not in m.group(1):
+                images.setdefault(version, m.group(1).strip())
     for version, values in ids.items():
         image = images.get(version) or images.get("")
         if image:

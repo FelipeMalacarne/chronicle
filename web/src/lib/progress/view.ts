@@ -147,10 +147,10 @@ export interface VerdictView {
 }
 
 const UNKNOWN_HINT: Record<string, string> = {
-	quest: 'sem faceta de quest',
+	quest: 'sem leitura do plugin',
 	item: 'sem container',
 	skill: 'sem leitura',
-	diary: 'sem faceta de diary',
+	diary: 'sem leitura do plugin',
 	boss: 'sem hiscores',
 	unlock: 'sem fonte',
 	ca: 'sem fonte',
@@ -208,10 +208,11 @@ export function unknownHint(chips: Chip[]): string {
 	const kinds = new Set(chips.filter((c) => c.verdict === 'unknown').map((c) => c.kind));
 	const parts: string[] = [];
 	if (kinds.has('quest'))
-		parts.push('quests ficam "não sabemos" até o plugin 1.1 enviar a faceta de quest');
+		parts.push('quests ficam "não sabemos" até o plugin enviar uma leitura delas');
 	if (kinds.has('item')) parts.push('itens dependem dos containers do plugin');
 	if (kinds.has('skill')) parts.push('levels vêm do hiscores ou do plugin');
-	if (kinds.has('diary')) parts.push('diaries esperam a faceta do plugin 1.1');
+	if (kinds.has('diary'))
+		parts.push('diaries ficam "não sabemos" até o plugin enviar uma leitura delas');
 	if (parts.length === 0) return '';
 	const text = parts.join('; ');
 	return text.charAt(0).toUpperCase() + text.slice(1) + '.';

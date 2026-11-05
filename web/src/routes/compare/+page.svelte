@@ -269,7 +269,7 @@
 						</div>
 						<span class="su tiny"
 							>{r.active
-								? 'Listrado = presumido pela cascata. Quests contam "não sabemos" até o plugin 1.1, nunca como falta.'
+								? 'Listrado = presumido pela cascata. Quests sem leitura do plugin contam "não sabemos", nunca como falta.'
 								: 'O progresso é um só: objetivos feitos seguindo a outra rota valem aqui. Marcas à mão e cursor são desta rota.'}</span
 						>
 					</div>

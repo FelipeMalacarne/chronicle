@@ -11,8 +11,8 @@
 	/*
 	 * Plano da meta (V4Meta, coluna central): "N de M", gargalos de nível, ordem sugerida em
 	 * colunas e onde cada rota chega. Fora desta entrega (decisão do dono, 2026-11-04): o grafo
-	 * por foco, os presets do guia e a estimativa de tempo. Quests ficam "não sabemos" até o
-	 * plugin 1.1; uma quest cujo passo você marcou feito aparece como presumida, fora do N de M.
+	 * por foco, os presets do guia e a estimativa de tempo. Quests ficam "não sabemos" sem
+	 * leitura do plugin; uma quest cujo passo você marcou feito aparece como presumida, fora do N de M.
 	 */
 	let {
 		account,
@@ -38,7 +38,7 @@
 		{ group: ['done', 'presumed'], title: 'Já feito', hint: 'evidência, ou presumido pela marca' },
 		{ group: ['available'], title: 'Disponível agora', hint: 'requisitos cumpridos' },
 		{ group: ['blocked'], title: 'Bloqueado por requisito', hint: 'falta algo antes' },
-		{ group: ['unknown'], title: 'Não sabemos', hint: 'quests até o plugin 1.1' }
+		{ group: ['unknown'], title: 'Não sabemos', hint: 'sem leitura do plugin' }
 	];
 	const reqs = $derived((plan?.nodes ?? []).filter((n) => n.depth > 0));
 	const isLevel = (n: GoalNode) => n.key.startsWith('skill:') || n.key.startsWith('qp');

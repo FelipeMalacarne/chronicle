@@ -344,7 +344,7 @@
 					{:else if step === 5 && busy}
 						<span class="su small">Sincronizando com o hiscores…</span>
 					{/if}
-					<span class="badge badge-unk">quests · não sabemos até o plugin 1.1</span>
+					<span class="badge badge-unk">quests · não sabemos sem leitura do plugin</span>
 					<span class="badge badge-unk">banco · sem plugin</span>
 					<span class="su small"
 						>Depois disso o Agora abre no cursor da rota: o primeiro passo não feito nem pulado.</span

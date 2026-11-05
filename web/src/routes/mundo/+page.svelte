@@ -302,7 +302,7 @@
 						</div>
 						<span class="su tiny"
 							>Veredito com evidência quando a fonte existe; quests e diaries ficam "não sabemos"
-							até o plugin 1.1.</span
+							sem leitura do plugin.</span
 						>
 					</div>
 					<div class="acts">

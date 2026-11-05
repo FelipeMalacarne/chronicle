@@ -141,7 +141,7 @@ test('unknown is never unmet', () => {
 		cls: 'v-unk',
 		glyph: '?',
 		unknown: true,
-		hint: 'sem faceta de quest'
+		hint: 'sem leitura do plugin'
 	});
 	assert.equal(verdictView({ key: 'skill:a>=1', verdict: 'unmet' }).cls, 'v-unmet');
 	assert.equal(
@@ -168,7 +168,15 @@ test('chips take the verdict of the board and default to unknown', () => {
 			['inicia', 'Cooks Assistant', 'unknown']
 		]
 	);
-	assert.match(unknownHint(chips), /plugin 1\.1/);
+	assert.equal(
+		unknownHint(chips),
+		'Quests ficam "não sabemos" até o plugin enviar uma leitura delas.'
+	);
+	assert.doesNotMatch(unknownHint(chips), /faceta|1\.1/);
+	assert.equal(
+		verdictView({ key: 'diary:ardougne@easy', verdict: 'unknown' }).hint,
+		'sem leitura do plugin'
+	);
 	assert.equal(unknownHint(chips.slice(0, 1)), '');
 });
 
@@ -410,9 +418,7 @@ test('also-in lists where each other route completes the same entity', () => {
 		{
 			guide: 'oziris-main',
 			label: 'Oziris',
-			entries: [
-				{ label: "Monk's Friend", where: '1.1.40 (pos. 40 de 286)' }
-			]
+			entries: [{ label: "Monk's Friend", where: '1.1.40 (pos. 40 de 286)' }]
 		}
 	]);
 	// A route that has none of the step's entities is left out, never "não está na rota".

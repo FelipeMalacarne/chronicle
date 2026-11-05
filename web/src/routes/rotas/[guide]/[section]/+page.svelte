@@ -429,7 +429,7 @@
 			</div>
 			<p class="su tiny">
 				Guia por {AUTHORS[guideId] ?? label}; uso pessoal, atribuição mantida. Objetivos de quest
-				ficam "não sabemos" até o plugin 1.1; levels vêm do hiscores ou do plugin. Passos sem
+				ficam "não sabemos" sem leitura do plugin; levels vêm do hiscores ou do plugin. Passos sem
 				objetivo detectável são checkbox. {ICON_ATTRIBUTION}.
 			</p>
 		{/if}

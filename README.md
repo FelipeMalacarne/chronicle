@@ -25,7 +25,7 @@ before each launch.
 
 Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
 
-## Ironman Planner (`fm/ironmanplanner`, 1.2.0)
+## Ironman Planner (`fm/ironmanplanner`, 1.2.1)
 
 Read-only tracker for the self-hosted Ironman Planner: it pushes skills, quest states, the
 manifest's varbits/varps and, when switched on, bank/inventory/equipment (ingest contract v1,
@@ -34,15 +34,21 @@ manifest's varbits/varps and, when switched on, bank/inventory/equipment (ingest
 **Route panel.** A side panel (toolbar icon "Ironman Planner") shows the planner's active
 route from the cursor on, in RuneLite's look:
 
-- header: route name, the guide's attribution (OzirisLoL / ironman.guide, or So Iron BRUH and
-  ParasailerOSRS), done/total, and the connection line ("Conectado · há 12 s", or
-  "Desatualizado" with the cause when the planner cannot be reached);
-- the current step (AGORA) with its full text, location, objective chips (✓ met, ✗ unmet,
-  ? unknown, dashed when unknown; requirements say "requer"), a padlock and "falta …" when
-  blocked, and the buttons **Feito**, **Pular** and **Desfazer** (undoes the last mark);
-- the items to carry for the cursor's leg (carried, in the bank, missing, unknown) and the
-  guide's bank actions; when the guide lists no setup, a preview from the next steps;
-- the next 15 steps as a compact list: click one to see its text, chips and Feito/Pular.
+- header: the route's short name (Oziris, BRUHsailer; full title in the tooltip), a thin
+  progress bar with done/total and blocked, a status dot with "há 12 s" (or "desatualizado";
+  the full line in the tooltip), the cursor's section with its description (first line, the
+  rest on click) and the guide's attribution (OzirisLoL / ironman.guide, or So Iron BRUH and
+  ParasailerOSRS);
+- the current step (AGORA): its full text, location, the guide's notes ("Atualização:" in
+  orange, "Dica:"; hcim notes are hidden, the window does not say the account's mode),
+  objectives as rows (icon, label, "feito" / "falta" / "sem dado"), a padlock row "Falta: …"
+  when blocked, and the buttons **Feito**, **Pular** and, after a mark, **Desfazer**;
+- the items to carry, collapsed into one summary ("5 faltam · 2 com você · 19 no banco") that
+  still lists the missing ones; open it for all (a derived preview shows six more and "+N");
+  the choice is remembered (hidden config `itemsExpanded`);
+- the next 8 steps, one line each with a drawn icon (pending, done, presumed, skipped,
+  blocked) and a marker when the step has a note (orange for an update): click one for its
+  text, notes, objectives and Feito/Pular.
 
 The planner is the source of truth: verdicts, statuses and labels come from it, and the marks
 are the web's marks (they show up in the web at once). The panel refetches after each

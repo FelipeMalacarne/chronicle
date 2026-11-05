@@ -8,6 +8,7 @@ import net.runelite.client.config.ConfigItem;
 public interface IronmanPlannerConfig extends Config
 {
 	String GROUP = "fm-ironmanplanner";
+	String ITEMS_EXPANDED = "itemsExpanded";
 
 	/** How requests authenticate (ironman-planner docs/04-arquitetura.md 2.5). */
 	enum CredentialMode
@@ -85,6 +86,17 @@ public interface IronmanPlannerConfig extends Config
 	default String installationId()
 	{
 		return "";
+	}
+
+	@ConfigItem(
+		keyName = IronmanPlannerConfig.ITEMS_EXPANDED,
+		name = "Items expanded",
+		description = "Whether the route panel shows every item to carry; set from the panel",
+		hidden = true
+	)
+	default boolean itemsExpanded()
+	{
+		return false;
 	}
 
 	@ConfigItem(

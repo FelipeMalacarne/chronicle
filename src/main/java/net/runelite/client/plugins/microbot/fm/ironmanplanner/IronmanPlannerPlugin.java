@@ -45,7 +45,7 @@ import okhttp3.OkHttpClient;
  * manifest's {@code interval_seconds} capture stays as a safety net and is pushed back by every
  * capture.
  *
- * <p>Route panel (1.2.0): a side panel shows the planner's window of the active route and
+ * <p>Route panel (1.2.0, readable layout 1.2.1): a side panel shows the planner's window of the active route and
  * writes the owner's marks (Feito, Pular, Desfazer) through the planner's mark API. It refetches
  * after an acknowledged push that changed the route, after each mark, on login and every 30 s
  * while visible; the last window stays on screen, marked outdated, while the planner is down.
@@ -64,7 +64,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class IronmanPlannerPlugin extends Plugin
 {
-	static final String VERSION = "1.2.0";
+	static final String VERSION = "1.2.1";
 	private static final long CAPTURE_TIMEOUT_MS = 2_000;
 	/** How often the sync thread looks at the engine: well under {@link CaptureTrigger#DEBOUNCE}. */
 	private static final long TICK_PERIOD_MS = 250;
@@ -203,6 +203,12 @@ public class IronmanPlannerPlugin extends Plugin
 			}
 
 			@Override
+			public void itemsExpanded(boolean expanded)
+			{
+				configManager.setConfiguration(IronmanPlannerConfig.GROUP, IronmanPlannerConfig.ITEMS_EXPANDED, expanded);
+			}
+
+			@Override
 			public void visible(boolean visible)
 			{
 				panelVisible = visible;
@@ -220,7 +226,7 @@ public class IronmanPlannerPlugin extends Plugin
 		};
 		RoutePanel.onSwing(() ->
 		{
-			routePanel = new RoutePanel(actions);
+			routePanel = new RoutePanel(actions, config.itemsExpanded());
 			navigationButton = NavigationButton.builder()
 				.tooltip("Ironman Planner")
 				.icon(RoutePanel.navigationIcon())

@@ -55,6 +55,11 @@
       "text": "Romeo and Juliet",
       "quest": "Romeo & Juliet",
       "note": "spelled out in BRUHsailer"
+    },
+    {
+      "text": "WGS",
+      "quest": "While Guthix Sleeps",
+      "note": "common abbreviation (extraction, oziris-main 2.0)"
     }
   ],
   "quest_text_ambiguous": [
@@ -379,6 +384,21 @@
       "text": "bone cbow",
       "item_id": 8880,
       "note": "guide shorthand (extraction, oziris-main 1.5)"
+    },
+    {
+      "text": "Varrock armor 2",
+      "item_id": 13105,
+      "note": "guide shorthand (extraction, oziris-main 2.0)"
+    },
+    {
+      "text": "red chins",
+      "item_id": 10034,
+      "note": "guide shorthand (extraction, oziris-main 2.0)"
+    },
+    {
+      "text": "bone crossbow",
+      "item_id": 8880,
+      "note": "guide shorthand (extraction, oziris-main 2.0)"
     }
   ],
   "item_ambiguous": [

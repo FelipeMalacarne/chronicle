@@ -13,7 +13,7 @@
   "counts": {
     "resolved": 689,
     "ambiguous": 20,
-    "unresolved": 94,
+    "unresolved": 96,
     "by_kind": {
       "diary": {
         "resolved": 4,
@@ -28,7 +28,7 @@
       "quest": {
         "resolved": 457,
         "ambiguous": 7,
-        "unresolved": 47
+        "unresolved": 49
       },
       "skill": {
         "resolved": 94,
@@ -1449,6 +1449,36 @@
       "reason": "no_quest_context",
       "candidates": [
         "quest:defender_of_varrock"
+      ]
+    },
+    {
+      "step_id": "2.0.51",
+      "field": "/text",
+      "span": [
+        57,
+        60
+      ],
+      "source_text": "WGS",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:while_guthix_sleeps"
+      ]
+    },
+    {
+      "step_id": "2.0.56",
+      "field": "/text",
+      "span": [
+        56,
+        59
+      ],
+      "source_text": "WGS",
+      "kind": "quest",
+      "method": "text",
+      "reason": "no_quest_context",
+      "candidates": [
+        "quest:while_guthix_sleeps"
       ]
     },
     {

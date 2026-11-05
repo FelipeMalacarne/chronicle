@@ -116,9 +116,9 @@ func TestCounts(t *testing.T) {
 		quest, item     enrich.Tally
 	}{
 		"oziris-main": {
-			total:    enrich.Tally{Resolved: 689, Ambiguous: 20, Unresolved: 94},
+			total:    enrich.Tally{Resolved: 689, Ambiguous: 20, Unresolved: 96},
 			loadouts: enrich.Tally{Resolved: 15, Ambiguous: 1, Unresolved: 7},
-			quest:    enrich.Tally{Resolved: 457, Ambiguous: 7, Unresolved: 47},
+			quest:    enrich.Tally{Resolved: 457, Ambiguous: 7, Unresolved: 49},
 			item:     enrich.Tally{Resolved: 134, Ambiguous: 13, Unresolved: 47},
 		},
 		"bruhsailer-main": {

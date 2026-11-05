@@ -16,12 +16,16 @@ type ItemForm struct {
 	Stackable bool
 	// Unobtainable is true for ids no player can hold (catalog field).
 	Unobtainable bool
+	// EquipmentSlot is the one equipment slot the item goes to ("head",
+	// "weapon", "2h", ...); empty for items that are not equipable. Noted
+	// forms are never equipped.
+	EquipmentSlot string
 }
 
 // Item describes an item id listed in the catalog, unnoted or noted.
 func (r *Registry) Item(id int) (ItemForm, bool) {
 	if it, ok := r.items[id]; ok {
-		return ItemForm{ID: id, BaseID: id, Name: it.Name, Family: it.Family, Variant: it.Variant, WikiKey: it.WikiKey, Stackable: it.Stackable, Unobtainable: it.Unobtainable}, true
+		return ItemForm{ID: id, BaseID: id, Name: it.Name, Family: it.Family, Variant: it.Variant, WikiKey: it.WikiKey, Stackable: it.Stackable, Unobtainable: it.Unobtainable, EquipmentSlot: it.EquipmentSlot}, true
 	}
 	if base, ok := r.notedBase[id]; ok {
 		it := r.items[base]

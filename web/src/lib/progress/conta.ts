@@ -76,3 +76,58 @@ export function shortQty(n: number): string {
 	if (n >= 10_000) return `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k`;
 	return String(n);
 }
+
+export interface EquipCell {
+	slot: string;
+	/** Nome do slot no título da célula vazia ("Capa: vazio"). */
+	label: string;
+	row: number;
+	col: number;
+	item?: { id: number; name: string; qty: number };
+	/** O escudo fica vazio porque a arma é de duas mãos. */
+	blockedBy2h?: boolean;
+}
+
+/**
+ * Os onze slots do boneco do jogo (V6Conta1440): cabeça no topo; capa, amuleto e munição; arma,
+ * corpo e escudo; pernas; mãos, pés e anel. Arma de duas mãos ("2h") ocupa o slot da arma.
+ */
+const SLOTS: [string, string, number, number][] = [
+	['head', 'Cabeça', 1, 2],
+	['cape', 'Capa', 2, 1],
+	['neck', 'Amuleto', 2, 2],
+	['ammo', 'Munição', 2, 3],
+	['weapon', 'Arma', 3, 1],
+	['body', 'Corpo', 3, 2],
+	['shield', 'Escudo', 3, 3],
+	['legs', 'Pernas', 4, 2],
+	['hands', 'Mãos', 5, 1],
+	['feet', 'Pés', 5, 2],
+	['ring', 'Anel', 5, 3]
+];
+
+/**
+ * Põe cada item do equipamento no único slot que ele ocupa (slot do catálogo da wiki). O que
+ * não tem slot conhecido, ou disputa um slot já ocupado, volta em `rest` para não sumir.
+ */
+export function equipmentLayout(
+	items: { id: number; name: string; qty: number; slot?: string }[]
+): { cells: EquipCell[]; rest: { id: number; name: string; qty: number }[] } {
+	const cells: EquipCell[] = SLOTS.map(([slot, label, row, col]) => ({ slot, label, row, col }));
+	const rest: { id: number; name: string; qty: number }[] = [];
+	for (const it of items) {
+		const slot = it.slot === '2h' ? 'weapon' : it.slot;
+		const cell = cells.find((c) => c.slot === slot);
+		const { id, name, qty } = it;
+		if (!cell || cell.item) {
+			rest.push({ id, name, qty });
+			continue;
+		}
+		cell.item = { id, name, qty };
+		if (it.slot === '2h') {
+			const shield = cells.find((c) => c.slot === 'shield');
+			if (shield) shield.blockedBy2h = true;
+		}
+	}
+	return { cells, rest };
+}

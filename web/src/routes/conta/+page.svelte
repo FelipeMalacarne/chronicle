@@ -2,7 +2,7 @@
 	import { progressApi } from '#lib/api/client';
 	import { quietDetection } from '#lib/api/events.svelte';
 	import { createResource } from '#lib/api/resource.svelte';
-	import { combatLevel, shortQty, SKILL_ORDER, toNext } from '#lib/progress/conta';
+	import { combatLevel, equipmentLayout, shortQty, SKILL_ORDER, toNext } from '#lib/progress/conta';
 	import { openEntity } from '#lib/progress/entity.svelte';
 	import { iconFor, itemIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { loadMe, me } from '#lib/progress/me.svelte';
@@ -15,8 +15,8 @@
 	/*
 	 * Conta (V6Conta1440 e V6Conta640): skills, quests e diaries com fonte e idade primeiro, depois
 	 * os containers com frescor, o banco e as fontes no fim. Facetas que o plugin nunca mandou ficam
-	 * "sem leitura": nunca viram ausência (regra 8). Sem posição de slot no contrato, o equipamento
-	 * vem em grade como o inventário.
+	 * "sem leitura": nunca viram ausência (regra 8). O equipamento vai no boneco do jogo: cada item
+	 * ocupa um slot só, o do catálogo da wiki.
 	 */
 	const account = $derived(session.account);
 	const st = $derived(me.state);
@@ -171,7 +171,7 @@
 	>
 {/snippet}
 
-{#snippet container(title: string, c: ContainerView | undefined, slots: number)}
+{#snippet container(title: string, c: ContainerView | undefined, slots: number, equip = false)}
 	{@const f = fresh(c)}
 	<section class="panel pb">
 		<div class="plaque">
@@ -182,13 +182,34 @@
 		</div>
 		{#if c && c.state !== 'unavailable'}
 			<div class="cbody ctr">
-				<div class="g4">
-					{#each c.items as i (i.id)}{@render item(i)}{/each}
-					{#each Array.from({ length: Math.max(0, slots - c.items.length) }, (_v, n) => n) as n (n)}<span
-							class="it e"
-							aria-hidden="true"
-						></span>{/each}
-				</div>
+				{#if equip}
+					{@const lay = equipmentLayout(c.items)}
+					<div class="eq">
+						{#each lay.cells as cell (cell.slot)}
+							<div class="slotcell" style="grid-row: {cell.row}; grid-column: {cell.col};">
+								{#if cell.item}{@render item(cell.item)}{:else}<span
+										class="it e"
+										title={cell.blockedBy2h
+											? `${cell.label}: vazio (arma de duas mãos)`
+											: `${cell.label}: vazio`}
+									></span>{/if}
+							</div>
+						{/each}
+					</div>
+					{#if lay.rest.length}
+						<div class="g4">
+							{#each lay.rest as i (i.id)}{@render item(i)}{/each}
+						</div>
+					{/if}
+				{:else}
+					<div class="g4">
+						{#each c.items as i (i.id)}{@render item(i)}{/each}
+						{#each Array.from({ length: Math.max(0, slots - c.items.length) }, (_v, n) => n) as n (n)}<span
+								class="it e"
+								aria-hidden="true"
+							></span>{/each}
+					</div>
+				{/if}
 			</div>
 		{:else}
 			<div
@@ -376,7 +397,7 @@
 	</div>
 
 	<div class="cgrid" id="itens">
-		{@render container('Equipamento', eq, 0)}
+		{@render container('Equipamento', eq, 0, true)}
 		{@render container('Inventário', inv, 28)}
 	</div>
 
@@ -544,6 +565,13 @@
 		align-items: center;
 		justify-content: center;
 		text-transform: uppercase;
+	}
+	.slotcell {
+		width: 40px;
+		height: 40px;
+	}
+	.cbody {
+		gap: 10px;
 	}
 	.dotin {
 		display: inline-block;

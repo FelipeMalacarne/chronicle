@@ -278,6 +278,25 @@ func TestUnobtainableItemsResolveByID(t *testing.T) {
 	}
 }
 
+func TestItemEquipmentSlot(t *testing.T) {
+	r := registry(t)
+	for _, c := range []struct {
+		id   int
+		slot string
+	}{
+		{1153, "head"}, // Iron full helm
+		{1704, "neck"}, // Amulet of glory
+		{1067, "legs"}, // Iron platelegs
+		{1068, ""},     // noted Iron platelegs: never equipped
+		{995, ""},      // Coins
+	} {
+		it, ok := r.Item(c.id)
+		if !ok || it.EquipmentSlot != c.slot {
+			t.Errorf("Item(%d) slot = %q (%v), want %q", c.id, it.EquipmentSlot, ok, c.slot)
+		}
+	}
+}
+
 func TestSameItem(t *testing.T) {
 	r := registry(t)
 	cases := []struct {

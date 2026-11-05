@@ -13,6 +13,9 @@ const (
 	ScopeItemsBank      TokenScope = "items:bank"
 	ScopeItemsInventory TokenScope = "items:inventory"
 	ScopeItemsEquipment TokenScope = "items:equipment"
+	// ScopeMarksWrite lets the plugin panel write the owner's marks (Feito,
+	// Pular, Desfazer). Reading the panel needs any valid credential.
+	ScopeMarksWrite TokenScope = "marks:write"
 )
 
 // Manifest tells a client which state it may read and submit. Item collection
@@ -145,4 +148,21 @@ type Response struct {
 	Resync          bool   `json:"resync"`
 	ManifestVersion int64  `json:"manifest_version"`
 	StepsChanged    *int64 `json:"steps_changed,omitempty"`
+	// Route is the account's active route after the reevaluation of this
+	// push: its cursor and the steps whose status changed. It lets the plugin
+	// panel decide whether to refetch. Absent when no reevaluation ran; old
+	// clients ignore it.
+	Route *RouteUpdate `json:"route,omitempty"`
+}
+
+// RouteUpdate is what one accepted push changed in the active route.
+type RouteUpdate struct {
+	Guide string `json:"guide"`
+	// Cursor is the cursor step id after the push; empty when the route is
+	// finished.
+	Cursor      string `json:"cursor,omitempty"`
+	CursorCause string `json:"cursor_cause,omitempty"`
+	// Changed lists the steps of the active route whose status changed
+	// (engine status changes and implied marks), in route order.
+	Changed []string `json:"changed"`
 }

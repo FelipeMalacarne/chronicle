@@ -249,3 +249,28 @@ func objectiveKeys(guides []*content.Guide, reg *entities.Registry, extra []stri
 	sort.Strings(out)
 	return out
 }
+
+// RouteChange is what a plan changed in one guide: the cursor after the plan
+// and the steps whose status changed, in route order.
+type RouteChange struct {
+	GuideID string
+	Cursor  CursorRecord
+	Changed []string
+}
+
+// Route returns what the plan changed in guideID; before is the guide's
+// cursor the reevaluation read.
+func (p Plan) Route(guideID string, before CursorRecord) RouteChange {
+	out := RouteChange{GuideID: guideID, Cursor: before, Changed: []string{}}
+	for _, e := range p.StepEvents {
+		if e.Ref.GuideID == guideID {
+			out.Changed = append(out.Changed, e.Ref.StepID)
+		}
+	}
+	for _, c := range p.Cursors {
+		if c.GuideID == guideID {
+			out.Cursor = c.Cursor
+		}
+	}
+	return out
+}

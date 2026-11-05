@@ -40,7 +40,7 @@ func (m Manifest) Validate() error {
 	scopes := make(map[TokenScope]bool, len(m.TokenScopes))
 	for i, scope := range m.TokenScopes {
 		switch scope {
-		case ScopeStateWrite, ScopeItemsBank, ScopeItemsInventory, ScopeItemsEquipment:
+		case ScopeStateWrite, ScopeItemsBank, ScopeItemsInventory, ScopeItemsEquipment, ScopeMarksWrite:
 		default:
 			errs = append(errs, fmt.Sprintf("token_scopes[%d] is unknown", i))
 		}

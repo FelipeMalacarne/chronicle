@@ -37,6 +37,30 @@ export class ApiError extends Error {
 
 const BASE = '/api';
 
+/**
+ * Cabeçalho anti-CSRF (docs/04, seção 2.5): em AUTH_MODE=oidc toda escrita autenticada pelo
+ * cookie de sessão precisa dele; outro site não consegue mandá-lo sem preflight de CORS.
+ */
+const CSRF_HEADER = 'X-Ironman-CSRF';
+
+const LOGIN_AT = 'ironman.login-redirect-at';
+/** Um 401 logo depois de voltar do login é cookie recusado (ex.: Secure em http): não repete. */
+const LOGIN_LOOP_MS = 15_000;
+
+/** Sessão ausente ou vencida (só em AUTH_MODE=oidc): vai para o login e volta para esta tela. */
+function redirectToLogin() {
+	if (typeof window === 'undefined') return;
+	try {
+		const last = Number(sessionStorage.getItem(LOGIN_AT) ?? 0);
+		if (Date.now() - last < LOGIN_LOOP_MS) return;
+		sessionStorage.setItem(LOGIN_AT, String(Date.now()));
+	} catch {
+		/* sem storage: segue para o login */
+	}
+	const here = window.location.pathname + window.location.search + window.location.hash;
+	window.location.assign(`/auth/login?return=${encodeURIComponent(here)}`);
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	const url = `${BASE}${path}`;
 	// untrack: quem chama pode estar dentro de um $effect; ler sync aqui criaria dependência e loop.
@@ -47,13 +71,19 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
 	try {
 		let res: Response;
 		try {
+			const method = (init?.method ?? 'GET').toUpperCase();
 			res = await fetch(url, {
 				...init,
-				headers: { accept: 'application/json', ...(init?.headers as Record<string, string>) }
+				headers: {
+					accept: 'application/json',
+					...(method === 'GET' || method === 'HEAD' ? {} : { [CSRF_HEADER]: '1' }),
+					...(init?.headers as Record<string, string>)
+				}
 			});
 		} catch (e) {
 			throw new ApiError(e instanceof Error ? e.message : 'falha de rede', 0, url);
 		}
+		if (res.status === 401) redirectToLogin();
 		if (!res.ok) {
 			let detail = res.statusText;
 			try {
@@ -84,7 +114,10 @@ const json = (method: string, body?: unknown): RequestInit => ({
 	body: body === undefined ? undefined : JSON.stringify(body)
 });
 
-/** Progresso sobre objetivos (docs/04, seção 2.5). Rotas por conta: só em AUTH_MODE=dev até existir sessão. */
+/**
+ * Progresso sobre objetivos (docs/04, seção 2.5). Rotas por conta: em AUTH_MODE=dev sem login; em
+ * oidc com a sessão, só para as contas do usuário (401 leva ao login).
+ */
 export const progressApi = {
 	guides: () => request<{ guides: GuideInfo[] }>('/guides'),
 	section: (guide: string, section: string) =>

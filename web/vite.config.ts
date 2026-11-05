@@ -24,7 +24,9 @@ export default defineConfig({
 			// Tempo real (SSE): sem timeout no proxy para o stream durar; o servidor manda
 			// X-Accel-Buffering: no e flush por evento, e o http-proxy repassa cada pedaço.
 			'/api/events': { target: API_TARGET, changeOrigin: false, timeout: 0, proxyTimeout: 0 },
-			'/api': { target: API_TARGET, changeOrigin: false }
+			'/api': { target: API_TARGET, changeOrigin: false },
+			// Login OIDC (AUTH_MODE=oidc): /auth/login, /auth/callback e /auth/logout são do Go.
+			'^/auth/': { target: API_TARGET, changeOrigin: false }
 		}
 	}
 });

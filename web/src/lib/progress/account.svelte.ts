@@ -4,7 +4,7 @@ const KEY = 'ironman.account';
 
 /**
  * Conta das rotas de progresso: `?account=` (lembrada neste navegador) ou a última usada.
- * Conveniência local até existir sessão; o servidor só aceita isso em AUTH_MODE=dev
+ * Em AUTH_MODE=dev o servidor aceita qualquer conta; em oidc, só as do usuário da sessão
  * (CLAUDE.md, regra 10). Contas de teste: `just account-create <rsn>`.
  */
 export function currentAccount(): string | undefined {

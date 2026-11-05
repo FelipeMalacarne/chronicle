@@ -645,7 +645,7 @@ test('preview of the next steps when the guide lists no setup', () => {
 		[
 			['GP', 'slot-you', 'com você', ''],
 			['Clay', '', 'no banco', '6'],
-			['Iron ore', 'slot-miss', 'tem 1 de 2', '2'],
+			['Iron ore', 'slot-miss', 'tem 1 de 2', '1/2'],
 			['Ghost skull', 'slot-miss', 'falta', ''],
 			['Planks', 'slot-stale', 'tinha', ''],
 			['cat', 'slot-unk', 'sem id', '']

@@ -1,5 +1,6 @@
 import type {
 	AccountMode,
+	AccountState,
 	AccountView,
 	Board,
 	ContentSection,
@@ -13,7 +14,8 @@ import type {
 	Readiness,
 	SetupLookup,
 	SyncRun,
-	WorldEntity
+	WorldEntity,
+	WorldEntityDetail
 } from '../progress/types';
 import { untrack } from 'svelte';
 import { sync, markOk, markFail } from './sync.svelte';
@@ -162,6 +164,10 @@ export const progressApi = {
 		request<null>(`/goals/${enc(id)}?account=${enc(account)}`, json('DELETE')),
 	world: (account: string) =>
 		request<{ entities: WorldEntity[] }>(`/world?account=${enc(account)}`),
+	accountState: (account: string) =>
+		request<AccountState>(`/account/state?account=${enc(account)}`),
+	entity: (account: string, ref: string) =>
+		request<WorldEntityDetail>(`/world/entity?account=${enc(account)}&ref=${enc(ref)}`),
 	sync: (account: string) => request<SyncRun>(`/sync?account=${enc(account)}`, json('POST')),
 	syncRuns: (account: string, limit = 5) =>
 		request<{ runs: SyncRun[] }>(`/sync/runs?account=${enc(account)}&limit=${limit}`),

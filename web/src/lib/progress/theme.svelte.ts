@@ -17,10 +17,10 @@ function initial(): Theme {
 /** Tema Pergaminho (dia) ou Pedra (noite); lembrado neste navegador. */
 export const theme = $state<{ value: Theme }>({ value: initial() });
 
-export function toggleTheme() {
-	theme.value = theme.value === 'pergaminho' ? 'pedra' : 'pergaminho';
+export function setTheme(value: Theme) {
+	theme.value = value;
 	try {
-		localStorage.setItem(KEY, theme.value);
+		localStorage.setItem(KEY, value);
 	} catch {
 		/* conveniência local apenas */
 	}

@@ -7,7 +7,7 @@
 	import { rememberAccount } from '#lib/progress/account.svelte';
 	import { routeLabel } from '#lib/progress/view';
 	import type { AccountMode, AccountView, SetupLookup, SyncRun } from '#lib/progress/types';
-	import Glyph from '#lib/v4/Glyph.svelte';
+	import Glyph from '#lib/v6/Glyph.svelte';
 
 	/*
 	 * Primeiro acesso (V4Setup): RSN e modo, camadas do guia, rota inicial e primeiro sync. Um RSN
@@ -131,7 +131,7 @@
 </script>
 
 <svelte:head>
-	<title>Primeiro acesso · Ironman Planner</title>
+	<title>Primeiro acesso · Chronicle</title>
 </svelte:head>
 
 <div class="page">

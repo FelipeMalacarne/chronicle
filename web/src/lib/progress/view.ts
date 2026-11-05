@@ -523,7 +523,11 @@ export const AHEAD_DEFAULT = 30;
 export interface AheadSlot {
 	name: string;
 	itemId?: number;
+	/** Ref da entidade do item (abre o painel); vazio quando o catálogo não resolveu. */
+	ref: string;
 	qty: string;
+	required: number;
+	held?: number;
 	cls: '' | 'slot-you' | 'slot-miss' | 'slot-unk' | 'slot-stale';
 	state: string;
 	ok: boolean;
@@ -578,10 +582,13 @@ export function aheadView(a: Ahead, horizon: number): AheadView {
 /** Com você (carregado ao vivo), você tem (banco ou outro container), falta ou não sabemos. */
 function aheadSlot(it: AheadItem): AheadSlot {
 	const also = it.also_at?.length ? `também em ${it.also_at.join(', ')}` : '';
+	const itemId = it.matched_id ?? it.item_id ?? it.any_of?.[0];
 	const base = {
 		name: it.name,
-		itemId: it.matched_id ?? it.item_id ?? it.any_of?.[0],
+		itemId,
+		ref: it.family ? `item:family/${it.family}` : itemId !== undefined ? `item:${itemId}` : '',
 		qty: it.qty_stated || it.required > 1 ? qtyLabel(it.required) : '',
+		required: it.required,
 		tip: also
 	};
 	if (it.variant === 'unresolved')
@@ -614,6 +621,8 @@ function aheadSlot(it: AheadItem): AheadSlot {
 		const held = owned.held ?? 0;
 		return {
 			...base,
+			held,
+			qty: held > 0 ? `${held}/${it.required}` : base.qty,
 			cls: 'slot-miss',
 			state: held > 0 ? `tem ${held} de ${it.required}` : 'falta',
 			ok: false
@@ -764,6 +773,13 @@ export function alsoIn(
 /** Nome curto da rota para as linhas cruzadas: "Oziris", "BRUHsailer". */
 export function routeLabel(guide: string, title: string): string {
 	if (guide.startsWith('oziris')) return 'Oziris';
+	if (guide.startsWith('bruhsailer')) return 'BRUHsailer';
+	return title;
+}
+
+/** Nome da rota no seletor do topo (V6Agora1440): "Oziris Efficiency", "BRUHsailer". */
+export function routeTitle(guide: string, title: string): string {
+	if (guide.startsWith('oziris')) return 'Oziris Efficiency';
 	if (guide.startsWith('bruhsailer')) return 'BRUHsailer';
 	return title;
 }

@@ -25,3 +25,12 @@ export function rememberAccount(id: string) {
 		/* sem storage: a conta segue pela URL */
 	}
 }
+
+/** Esquece a conta deste navegador (sair em AUTH_MODE=dev). */
+export function forgetAccount() {
+	try {
+		localStorage.removeItem(KEY);
+	} catch {
+		/* sem storage: nada a esquecer */
+	}
+}

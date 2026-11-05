@@ -5,16 +5,19 @@
 	import { resolve } from '$app/paths';
 	import { ApiError } from '#lib/api/client';
 	import { connectLive, dismissDetection, live } from '#lib/api/events.svelte';
-	import Sidebar from '#lib/v4/Sidebar.svelte';
+	import Sidebar from '#lib/v6/Sidebar.svelte';
 	import { currentAccount } from '#lib/progress/account.svelte';
 	import { loadSummary, session } from '#lib/progress/session.svelte';
+	import { accountSub, loadMe, me } from '#lib/progress/me.svelte';
 	import { theme } from '#lib/progress/theme.svelte';
-	import Toast from '#lib/v4/Toast.svelte';
+	import Toast from '#lib/v6/Toast.svelte';
+	import EntityPanel from '#lib/v6/EntityPanel.svelte';
 
 	let { children } = $props();
 	const account = $derived(currentAccount());
 	$effect(() => {
 		void loadSummary(account);
+		void loadMe(account);
 	});
 	// Sem conta, ou com uma conta que não existe mais, o primeiro acesso (V4Setup) escolhe ou cria.
 	const setup = $derived(page.url.pathname === '/setup');
@@ -34,15 +37,21 @@
 </script>
 
 <svelte:head>
-	<title>Ironman Planner</title>
+	<title>Chronicle</title>
 </svelte:head>
 
 <div class="pg shell" data-theme={theme.value}>
 	<a class="skip" href="#conteudo">Pular para o conteúdo</a>
-	{#if !setup}<Sidebar summary={session.summary} account={session.account} />{/if}
+	{#if !setup}<Sidebar
+			summary={session.summary}
+			account={session.account}
+			name={me.state?.account.rsn}
+			sub={accountSub(me.state)}
+		/>{/if}
 	<main id="conteudo">
 		{@render children()}
 	</main>
+	{#if !setup}<EntityPanel />{/if}
 	{#if live.toast}
 		{#key live.toast.id}
 			<Toast auto title={live.toast.title} text={live.toast.text} onclose={dismissDetection} />
@@ -58,9 +67,17 @@
 		display: flex;
 		flex-wrap: wrap;
 		min-height: 100vh;
+		/* A madeira da sidebar desce a página inteira; a sidebar em si fica presa no topo. */
+		background: linear-gradient(to right, var(--frame) 240px, var(--ground) 240px);
+	}
+	@media (max-width: 900px) {
+		.shell {
+			background: var(--ground);
+		}
 	}
 	main {
 		flex: 999 1 560px;
+		max-width: 1440px;
 		min-width: 0;
 		padding: 24px 32px 36px;
 		box-sizing: border-box;
@@ -68,9 +85,10 @@
 		flex-direction: column;
 		gap: 20px;
 	}
-	@media (max-width: 640px) {
+	@media (max-width: 900px) {
 		main {
-			padding: 16px;
+			padding: 14px 14px 24px;
+			gap: 14px;
 		}
 	}
 	.skip {

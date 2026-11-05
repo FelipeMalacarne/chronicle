@@ -325,9 +325,10 @@
 					<p class="su" aria-busy="true">Carregando o passo atual…</p>
 				{/if}
 
-				{#if segment && (segment.bankActions.length || segment.loadout?.inventory?.length || segment.loadout?.equipment?.length)}
+				{#if segment && (segment.bankActions.length || segment.loadout?.inventory?.length || segment.loadout?.equipment?.length || readiness.data?.ahead)}
 					<BankPanel
 						readiness={readiness.data?.current ?? null}
+						ahead={readiness.data?.ahead ?? null}
 						range={segment.range}
 						loadout={segment.loadout}
 						bankActions={segment.bankActions}

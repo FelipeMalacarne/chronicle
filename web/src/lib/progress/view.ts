@@ -4,6 +4,8 @@
  * V4RotaOziris, V4RotaBruh e V4Vazios do canvas.
  */
 import type {
+	Ahead,
+	AheadItem,
 	BoardObjective,
 	BoardStep,
 	ContentSection,
@@ -426,6 +428,124 @@ function slotOf(it: ReadinessItem): BankSlot {
 		default:
 			return { ...base, cls: 'slot-unk', suffix: 'não sabemos', ok: false };
 	}
+}
+
+/* ------------------------------------------------------------------ prévia pelos próximos passos */
+
+/** Janelas do painel de banco sem setup do guia; 0 é "até o fim do trecho". */
+export const AHEAD_HORIZONS = [15, 30, 0] as const;
+export const AHEAD_DEFAULT = 30;
+
+export interface AheadSlot {
+	name: string;
+	itemId?: number;
+	qty: string;
+	cls: '' | 'slot-you' | 'slot-miss' | 'slot-unk' | 'slot-stale';
+	state: string;
+	ok: boolean;
+	tip: string;
+}
+
+export interface AheadView {
+	until: string;
+	groups: { stepId: string; text: string; when: string; slots: AheadSlot[] }[];
+	obtained: { name: string; itemId: number; from: string; use: string }[];
+	counts: { total: number; you: number; have: number; miss: number; unk: number };
+}
+
+/** Os passos da prévia até horizon passos depois do cursor (0: o trecho inteiro). */
+export function aheadView(a: Ahead, horizon: number): AheadView {
+	const limit = horizon > 0 && horizon < a.steps ? horizon : a.steps;
+	const counts = { total: 0, you: 0, have: 0, miss: 0, unk: 0 };
+	const groups = a.groups
+		.filter((g) => g.offset <= limit)
+		.map((g) => ({
+			stepId: g.step_id,
+			text: g.text,
+			when:
+				g.offset === 0
+					? 'neste passo'
+					: g.offset === 1
+						? 'no próximo passo'
+						: `em ${g.offset} passos`,
+			slots: g.items.map((it) => {
+				const s = aheadSlot(it);
+				counts.total++;
+				if (s.cls === 'slot-you') counts.you++;
+				else if (s.cls === 'slot-miss') counts.miss++;
+				else if (s.cls === 'slot-unk') counts.unk++;
+				else counts.have++;
+				return s;
+			})
+		}));
+	const obtained = a.obtained
+		.filter((o) => o.use_offset <= limit)
+		.map((o) => ({
+			name: o.qty > 1 ? `${o.name} ×${o.qty}` : o.name,
+			itemId: o.item_id,
+			from: o.step_id,
+			use: o.use_step_id
+		}));
+	const until =
+		limit === a.steps ? `${a.until_step_id}, fim do trecho` : `${limit} passos à frente`;
+	return { until, groups, obtained, counts };
+}
+
+/** Com você (carregado ao vivo), você tem (banco ou outro container), falta ou não sabemos. */
+function aheadSlot(it: AheadItem): AheadSlot {
+	const also = it.also_at?.length ? `também em ${it.also_at.join(', ')}` : '';
+	const base = {
+		name: it.name,
+		itemId: it.matched_id ?? it.item_id ?? it.any_of?.[0],
+		qty: it.qty_stated || it.required > 1 ? qtyLabel(it.required) : '',
+		tip: also
+	};
+	if (it.variant === 'unresolved')
+		return {
+			...base,
+			cls: 'slot-unk',
+			state: 'sem id',
+			ok: false,
+			tip: joinTip('o catálogo não resolveu o nome', also)
+		};
+	if (it.verdict === 'met') return { ...base, cls: 'slot-you', state: 'com você', ok: true };
+	const owned = it.owned;
+	if (owned?.verdict === 'met') {
+		if (owned.stale)
+			return {
+				...base,
+				cls: 'slot-stale',
+				state: 'tinha',
+				ok: false,
+				tip: joinTip('só num espelho restaurado', also)
+			};
+		return {
+			...base,
+			cls: '',
+			state: owned.containers?.bank?.qty ? 'no banco' : 'você tem',
+			ok: false
+		};
+	}
+	if (owned?.verdict === 'unmet') {
+		const held = owned.held ?? 0;
+		return {
+			...base,
+			cls: 'slot-miss',
+			state: held > 0 ? `tem ${held} de ${it.required}` : 'falta',
+			ok: false
+		};
+	}
+	return {
+		...base,
+		cls: 'slot-unk',
+		state: 'não sabemos',
+		ok: false,
+		tip: joinTip(it.reason ?? owned?.reason ?? '', also)
+	};
+}
+
+function joinTip(a: string, b: string): string {
+	return [a, b].filter(Boolean).join(' · ');
 }
 
 /* ------------------------------------------------------------------ cobertura e seções (Rotas) */

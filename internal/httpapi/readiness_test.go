@@ -28,11 +28,13 @@ func (f fakeHoldings) ItemHoldings(_ context.Context, accountID string) (rules.I
 }
 
 // readinessGuide builds a route whose local ids ("1", "2", "leg-1", "leg-2")
-// are shared by both test guides; only the loadout item differs.
+// are shared by both test guides; only the loadout item differs. Leg 1 lists
+// no setup, so its step's item is previewed.
 func readinessGuide(id string, itemID int) *content.Guide {
 	lo := &content.Loadout{Status: content.LoadoutPartial, Inventory: []content.ItemRequirement{{Name: "tool", ItemID: &itemID}}}
 	g := &content.Guide{ID: id, Title: id, Sections: []*content.Section{{ID: "s", Slug: "s", Segments: []*content.Segment{
-		{ID: "leg-1", Kind: content.SegmentBankLeg, Steps: []*content.Step{{ID: "1", Text: "bank"}}},
+		{ID: "leg-1", Kind: content.SegmentBankLeg, Steps: []*content.Step{{ID: "1", Text: "bank",
+			Requirements: []content.ItemRequirement{{Name: "tool", ItemID: &itemID}}}}},
 		{ID: "leg-2", Kind: content.SegmentBankLeg, Loadout: lo,
 			BankActions: []content.BankAction{{Type: content.BankWithdraw, Position: content.PositionStart, Text: "withdraw the tool"}},
 			Steps:       []*content.Step{{ID: "2", Text: "use the tool"}}},
@@ -107,6 +109,20 @@ func TestReadinessGuideScoped(t *testing.T) {
 	}
 	if bruh.Next.Freshness[rules.ContainerBank].Live {
 		t.Fatal("restored bank reported live")
+	}
+	// Only the leg without a listed setup is previewed, from the requested step.
+	if oz.Ahead == nil || oz.Ahead.FromStepID != "1" || len(oz.Ahead.Groups) != 1 || oz.Ahead.Groups[0].Items[0].Verdict != rules.Met {
+		t.Fatalf("oziris ahead = %+v", oz.Ahead)
+	}
+	if bruh.Ahead == nil {
+		t.Fatal("bruhsailer ahead = nil")
+	}
+	if it := bruh.Ahead.Groups[0].Items[0]; it.Verdict != rules.Unmet || it.Owned == nil || !it.Owned.Stale {
+		t.Fatalf("bruhsailer ahead = %+v", bruh.Ahead)
+	}
+	var listed readinessResponse
+	if got := getStatus(t, server.URL+"/api/guides/oziris-main/readiness?account=acc-1&step=2", &listed); got != http.StatusOK || listed.Ahead != nil {
+		t.Fatalf("leg with a listed setup: status %d, ahead %+v", got, listed.Ahead)
 	}
 	if len(bruh.Next.BankActions) != 1 {
 		t.Fatalf("bank actions = %+v", bruh.Next.BankActions)

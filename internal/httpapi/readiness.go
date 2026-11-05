@@ -24,6 +24,9 @@ type readinessResponse struct {
 	Step    string            `json:"step,omitempty"`
 	Current *planning.Segment `json:"current"`
 	Next    *planning.Segment `json:"next"`
+	// Ahead previews what the rest of the current leg asks for, from step on,
+	// only when the guide does not list that leg's setup.
+	Ahead *planning.Ahead `json:"ahead,omitempty"`
 }
 
 func (s *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
@@ -45,6 +48,9 @@ func (s *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
 	}
 	current, next := planning.Legs(g, stepID)
 	resp := readinessResponse{Guide: g.ID, Step: stepID, Current: s.evaluate(g, current, h), Next: s.evaluate(g, next, h)}
+	if resp.Current != nil && resp.Current.LoadoutStatus == content.LoadoutUnknown {
+		resp.Ahead = planning.LookAhead(current, stepID, h, s.opts.Catalog)
+	}
 	writeJSON(w, http.StatusOK, resp)
 }
 

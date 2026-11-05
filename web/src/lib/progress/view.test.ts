@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+	aheadView,
 	alsoIn,
 	crossCell,
 	crossObjectives,
@@ -30,7 +31,7 @@ import {
 	unknownHint,
 	verdictView
 } from './view.ts';
-import type { ContentSection, ContentStep, SegmentReadiness } from './types.ts';
+import type { Ahead, AheadItem, ContentSection, ContentStep, SegmentReadiness } from './types.ts';
 
 const step = (id: string, extra: Partial<ContentStep> = {}): ContentStep => ({
 	id,
@@ -497,4 +498,101 @@ test('compare: cross objectives, cells, distance and reaching', () => {
 	assert.equal(firstReaching(oz.steps, 'skill:cooking>=50')?.id, 'c1');
 	assert.equal(firstReaching(oz.steps, 'skill:cooking>=30')?.id, 'b1');
 	assert.equal(firstReaching(br.steps, 'skill:cooking>=50'), null);
+});
+
+test('preview of the next steps when the guide lists no setup', () => {
+	const it = (name: string, extra: Partial<AheadItem>): AheadItem => ({
+		name,
+		variant: 'exact',
+		item_id: 1,
+		slot: 'inventory',
+		required: 1,
+		qty_stated: false,
+		verdict: 'unmet',
+		carried: 0,
+		...extra
+	});
+	const bank = { bank: { state: 'live' as const, observed: true, qty: 6 } };
+	const a: Ahead = {
+		from_step_id: '1.1.219',
+		until_step_id: '1.1.282',
+		steps: 63,
+		groups: [
+			{
+				step_id: '1.1.223',
+				text: 'Start biohazard',
+				offset: 4,
+				items: [
+					it('GP', { verdict: 'met', carried: 8200, also_at: ['1.1.236'] }),
+					it('Clay', {
+						required: 6,
+						qty_stated: true,
+						owned: { verdict: 'met', held: 6, containers: bank }
+					}),
+					it('Iron ore', {
+						required: 2,
+						qty_stated: true,
+						owned: { verdict: 'unmet', held: 1, containers: bank }
+					}),
+					it('Ghost skull', { owned: { verdict: 'unmet', held: 0, containers: {} } }),
+					it('Planks', { owned: { verdict: 'met', stale: true, held: 3, containers: bank } }),
+					it('cat', { variant: 'unresolved', item_id: undefined, verdict: 'unknown' })
+				]
+			},
+			{
+				step_id: '1.1.271',
+				text: 'Teleport to Camelot',
+				offset: 52,
+				items: [it('Hammer', { verdict: 'unknown' })]
+			}
+		],
+		obtained: [
+			{
+				name: 'Fishing rod',
+				item_id: 307,
+				qty: 2,
+				step_id: '1.1.230',
+				use_step_id: '1.1.236',
+				use_offset: 17
+			},
+			{
+				name: 'Excalibur',
+				item_id: 35,
+				qty: 1,
+				step_id: '1.1.248',
+				use_step_id: '1.1.271',
+				use_offset: 52
+			}
+		]
+	};
+	const v = aheadView(a, 30);
+	assert.equal(v.until, '30 passos à frente');
+	assert.deepEqual(
+		v.groups.map((g) => [g.stepId, g.when]),
+		[['1.1.223', 'em 4 passos']]
+	);
+	assert.deepEqual(
+		v.groups[0].slots.map((s) => [s.name, s.cls, s.state, s.qty]),
+		[
+			['GP', 'slot-you', 'com você', ''],
+			['Clay', '', 'no banco', '6'],
+			['Iron ore', 'slot-miss', 'tem 1 de 2', '2'],
+			['Ghost skull', 'slot-miss', 'falta', ''],
+			['Planks', 'slot-stale', 'tinha', ''],
+			['cat', 'slot-unk', 'sem id', '']
+		]
+	);
+	assert.equal(v.groups[0].slots[0].tip, 'também em 1.1.236');
+	assert.deepEqual(v.counts, { total: 6, you: 1, have: 2, miss: 2, unk: 1 });
+	assert.deepEqual(
+		v.obtained.map((o) => o.name),
+		['Fishing rod ×2']
+	);
+	const all = aheadView(a, 0);
+	assert.equal(all.until, '1.1.282, fim do trecho');
+	assert.equal(all.groups.length, 2);
+	assert.equal(all.groups[1].slots[0].state, 'não sabemos');
+	assert.equal(all.obtained.length, 2);
+	// A horizon past the end of the leg is the whole leg.
+	assert.equal(aheadView(a, 100).until, '1.1.282, fim do trecho');
 });

@@ -627,6 +627,13 @@ e `internal/core/planning`):
   são um intervalo `free_min..free_max`, porque a empilhabilidade de itens fora do catálogo é desconhecida.
 - **Ações de banco**: instruções do guia (`bank_actions`), devolvidas como texto com proveniência. Nunca
   são marcadas como concluídas nem inferidas do estado.
+- **Prévia pelos próximos passos** (`planning.LookAhead`): quando o loadout do trecho atual é `unknown`, a
+  rota `/readiness` devolve também `ahead`, os requisitos de item dos passos do trecho a partir do passo
+  pedido. Cada item aparece uma vez, no passo do primeiro uso (`offset` conta os passos à frente,
+  `also_at` lista os outros usos), avaliado como item de loadout (carregado e posse). Item que um passo
+  anterior da janela obtém (objetivo `item:<id>x<n>` com papel `completes`) vai para `obtained`. É
+  derivado, não instrução do guia: não tem status e nunca deixa um trecho `ready`. A janela exibida (15,
+  30 ou o trecho inteiro) é filtrada no cliente.
 
 Baseline: o servidor considera um container completo só quando existe um snapshot `full` que o observou
 no mesmo `state` e no mesmo `live_epoch` da observação atual (`ListItemContainerFreshness`). Fatos de

@@ -271,6 +271,7 @@ export type ContainerState = 'unavailable' | 'restored' | 'live';
 export interface Ownership {
 	verdict: Verdict;
 	stale?: boolean;
+	held?: number;
 	containers: Partial<Record<string, { state?: ContainerState; observed: boolean; qty: number }>>;
 	reason?: string;
 }
@@ -316,11 +317,43 @@ export interface SegmentReadiness {
 	reason?: string;
 }
 
+export interface AheadItem extends ReadinessItem {
+	also_at?: string[];
+}
+
+/** Passo do primeiro uso; offset conta os passos depois de from_step_id. */
+export interface AheadGroup {
+	step_id: string;
+	text: string;
+	offset: number;
+	items: AheadItem[];
+}
+
+/** Item que um passo anterior da janela obtém (objetivo de item). */
+export interface AheadObtained {
+	name: string;
+	item_id: number;
+	qty: number;
+	step_id: string;
+	use_step_id: string;
+	use_offset: number;
+}
+
+/** Prévia derivada dos passos quando o guia não lista o setup do trecho; nunca é readiness. */
+export interface Ahead {
+	from_step_id: string;
+	until_step_id: string;
+	steps: number;
+	groups: AheadGroup[];
+	obtained: AheadObtained[];
+}
+
 export interface Readiness {
 	guide: string;
 	step?: string;
 	current: SegmentReadiness | null;
 	next: SegmentReadiness | null;
+	ahead?: Ahead;
 }
 
 /* ------------------------------------------------------------------ metas (F9) e Mundo */

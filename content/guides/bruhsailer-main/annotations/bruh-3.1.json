@@ -1,0 +1,1079 @@
+{
+  "schema_version": 1,
+  "kind": "section",
+  "guide_id": "bruhsailer-main",
+  "section_id": "bruh-3.1",
+  "skill_version": "annotate-guide@5",
+  "steps": [
+    {
+      "step_id": "bruh-3.1-a0193944b404",
+      "text_hash": "sha256:b2f009b63d0f1b163176483230da1bc06cc3ea7bd71e4941ca937c90ca690a55"
+    },
+    {
+      "step_id": "bruh-3.1-a575a58fb537",
+      "text_hash": "sha256:fc0730b6f5d939b39b9989cb501403209845a7c44ae30d32297d9eb1a79b152f"
+    },
+    {
+      "step_id": "bruh-3.1-f9adca2c86c3",
+      "text_hash": "sha256:d737e601ca3a27ee088de0bf95946dcf4058f114a477534fe6f0e57aac6e0653",
+      "objectives": [
+        {
+          "key": "skill:construction>=75",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "train construction to level 75",
+            "span": [
+              45,
+              75
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:8782x20",
+          "role": "uses",
+          "evidence": {
+            "field": "/text",
+            "quote": "keep 20 mahogany planks for sailing",
+            "span": [
+              106,
+              141
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "no_bank_actions": {
+        "reason": "The only 'bank' is 'the bank chest on Sunbleak Island', a conditional POH/building mention, not a banking action of the step.",
+        "source": {
+          "method": "llm",
+          "confidence": "medium",
+          "skill_version": "annotate-guide@5",
+          "confirmed_by": "owner",
+          "decision": "agent-judgment-delegated"
+        }
+      }
+    },
+    {
+      "step_id": "bruh-3.1-741b6d084f3b",
+      "text_hash": "sha256:bab2f292f71c68dfbbe8c02e194d94e74c707451a4825ae142039766ad8d5528",
+      "objectives": [
+        {
+          "key": "item:24704x28000",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "mine 28k daeyalt essence",
+            "span": [
+              75,
+              99
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:5521x275",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make 275 binding necklaces",
+            "span": [
+              135,
+              161
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:family/ring_of_duelingx175",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "175 rings of dueling",
+            "span": [
+              163,
+              183
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:5537x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a fire tiara",
+            "span": [
+              185,
+              197
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "skill:runecraft>=64",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "lava runecraft to 425,000 xp (level 64",
+            "span": [
+              356,
+              394
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:the_final_dawn@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "start and complete The Final Dawn",
+            "span": [
+              429,
+              462
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:lumbridge_and_draynor:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete the Lumbridge Hard diary",
+            "span": [
+              732,
+              765
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:ardougne:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete the Ardougne Hard diary",
+            "span": [
+              801,
+              833
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-4b88568cc648",
+      "text_hash": "sha256:8b086283de22fd796000112efb679972a98da37b927360a0ea1503e4d785c05d",
+      "objectives": [
+        {
+          "key": "diary:morytania:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete the Morytania Hard diary",
+            "span": [
+              210,
+              253
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:1434x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy a dragon mace",
+            "span": [
+              815,
+              832
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:fallen_from_grace@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete Fallen From Grace",
+            "span": [
+              854,
+              890
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-d54a651e72e9",
+      "text_hash": "sha256:9c910a2b66e384271a7428a225d64ea06b9796f3699e1dad167b9997b18fc888",
+      "objectives": [
+        {
+          "key": "skill:crafting>=70",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to get to level 70 crafting",
+            "span": [
+              29,
+              56
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:family/pharaohs_sceptrex1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Pyramid Plunder for one",
+            "span": [
+              350,
+              376
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Superantipoison potions",
+          "family": "superantipoison",
+          "source_text": "Superantipoison potions",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "Superantipoison potions",
+            "span": [
+              0,
+              23
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-9f47e4966d68",
+      "text_hash": "sha256:7e677b121ea2e40790d6f454debeab07489f690f64bad62875cc2fe4e606e7b5",
+      "objectives": [
+        {
+          "key": "skill:crafting>=75",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "train your crafting level to 80 (or 75, boosting after)",
+            "span": [
+              47,
+              102
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:family/amulet_of_gloryx1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make an amulet of glory",
+            "span": [
+              128,
+              151
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "skill:attack>=78",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Your target stats are 78 Attack",
+            "span": [
+              183,
+              214
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:strength>=85",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "85 Strength",
+            "span": [
+              216,
+              227
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:defence>=75",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "75(+) Defence",
+            "span": [
+              229,
+              242
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:prayer>=72",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "72(+) prayer",
+            "span": [
+              247,
+              259
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:34027x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to get Hallowfell",
+            "span": [
+              500,
+              517
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:family/arclightx1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "At level 75 Attack make Arclight",
+            "span": [
+              644,
+              676
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "diary:kourend_and_kebos:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do the Kourend & Kebos Hard diary",
+            "span": [
+              3770,
+              3803
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:wilderness:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "68 slayer - Wilderness Hard diary",
+            "span": [
+              2617,
+              2650
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "diary:falador:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "72 slayer - Falador Hard diary",
+            "span": [
+              2657,
+              2687
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "diary:desert:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Slayer Helmet - Desert Hard diary",
+            "span": [
+              2694,
+              2727
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "diary:karamja:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "After completing the Karamja Hard diary",
+            "span": [
+              3188,
+              3227
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:6306x100000",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to get 100k trading sticks",
+            "span": [
+              3396,
+              3422
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-d9882d6568dc",
+      "text_hash": "sha256:79b7846c2c68e248bfb1a7eec319b5593c8ba381258639270ddc02ebbb6e19b2",
+      "objectives": [
+        {
+          "key": "item:13072x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "full elite void range",
+            "span": [
+              306,
+              327
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:13073x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "full elite void range",
+            "span": [
+              306,
+              327
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:8842x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "full elite void range",
+            "span": [
+              306,
+              327
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:11664x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "full elite void range",
+            "span": [
+              306,
+              327
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-ce8a3d375f1f",
+      "text_hash": "sha256:7be0f1ebeee3154fde62681a9420bf63834ef07781eaf651846890f5f2106095",
+      "objectives": [
+        {
+          "key": "quest:the_fremennik_exiles@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do the Fremennik Exiles",
+            "span": [
+              2,
+              25
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:a_night_at_the_theatre@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "A Night at the Theatre",
+            "span": [
+              27,
+              49
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:hopespears_will@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Hopespear’s Will",
+            "span": [
+              70,
+              88
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:monkey_madness_ii@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Monkey Madness II",
+            "span": [
+              90,
+              113
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-51716d9d3889",
+      "text_hash": "sha256:66ff9d709451cc634f6f77baaa3da8d8508d96d349b76c65d74e783cdad2a887",
+      "objectives": [
+        {
+          "key": "diary:western_provinces:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete the Western Provinces Hard Diary",
+            "span": [
+              774,
+              815
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "boss:zulrah>=1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "getting one Zulrah kill",
+            "span": [
+              831,
+              854
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:any(23987x1|24125x1)",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a crystal halberd",
+            "span": [
+              954,
+              975
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:ranged>=92",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "throw the chins to get to level 92 ranging",
+            "span": [
+              988,
+              1030
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-826a261fead9",
+      "text_hash": "sha256:39668c5a9fcbb70f393b67b26f23cfcd167488452b11e16e2c20c6076a5f4bfe"
+    },
+    {
+      "step_id": "bruh-3.1-dd6cc83d3302",
+      "text_hash": "sha256:f4185a0bbde43168d1de5456994df054001763df29d8e7f7506cfba240c2f1ec",
+      "objectives": [
+        {
+          "key": "skill:mining>=75",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make sure you have at least 75 mining",
+            "span": [
+              2,
+              39
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "should-now-have-is-checkpoint"
+          }
+        },
+        {
+          "key": "quest:the_red_reef@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "start The Red Reef",
+            "span": [
+              130,
+              148
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:31719x24",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "mine 24 nickel ore",
+            "span": [
+              234,
+              252
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:449x551",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "obtain 551 addy ore",
+            "span": [
+              285,
+              304
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:451x15",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "at least 15 runite ore",
+            "span": [
+              478,
+              500
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:4823x1065",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1065 addy nails",
+            "span": [
+              615,
+              630
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:31432x64",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make 64 camphor planks",
+            "span": [
+              997,
+              1019
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-f77df6611096",
+      "text_hash": "sha256:28d210d14fdbf7cc39f86b9136c3abf1f544fdb9e7e6197cd0d58b8ba5ebc3d0",
+      "objectives": [
+        {
+          "key": "item:31910x5000",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 5k mithril cannonballs",
+            "span": [
+              296,
+              322
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:the_red_reef@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete the Red Reef quest",
+            "span": [
+              3163,
+              3190
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-eb405ff8c177",
+      "text_hash": "sha256:d1b18c9004098685a092adc8e84fcd5c649598a15fb6db17fcdb7b42af0e7313",
+      "objectives": [
+        {
+          "key": "item:31432x408",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make 408 camphor planks",
+            "span": [
+              115,
+              138
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.1-66432b00a2de",
+      "text_hash": "sha256:67541a5e53ba1727cac824c0eb14a9bc28b7d51b20e3e45f9e17a06d5059adaa"
+    },
+    {
+      "step_id": "bruh-3.1-2c5967dfc186",
+      "text_hash": "sha256:836f22293f6f57c802211a1cfa0438b8db93aa7124219f544983b4e01ba44828",
+      "objectives": [
+        {
+          "key": "item:23956x6",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "6 armour seeds",
+            "span": [
+              28,
+              42
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:25859x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "one enhanced weapon seed",
+            "span": [
+              47,
+              71
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:ranged>=93",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "You should be level 93 ranging after this step",
+            "span": [
+              266,
+              312
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "should-now-have-is-checkpoint"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,549 @@
+{
+  "schema_version": 1,
+  "kind": "section",
+  "guide_id": "bruhsailer-main",
+  "section_id": "bruh-3.2",
+  "skill_version": "annotate-guide@5",
+  "steps": [
+    {
+      "step_id": "bruh-3.2-fb4df86421f2",
+      "text_hash": "sha256:43f55ae904e79d954561bfd18b179d8d92f4db66c63693b59e3c14a3f825abc6",
+      "objectives": [
+        {
+          "key": "item:26850x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the full Raiments of the Eye",
+            "span": [
+              74,
+              102
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:26852x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the full Raiments of the Eye",
+            "span": [
+              74,
+              102
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:26854x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the full Raiments of the Eye",
+            "span": [
+              74,
+              102
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:26856x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the full Raiments of the Eye",
+            "span": [
+              74,
+              102
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:any(26784x1|26786x1)",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the colossal pouch",
+            "span": [
+              107,
+              125
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.2-088b648d6eee",
+      "text_hash": "sha256:5d4e0030f217fb81b8e2bcb56906b133799dfed73ec5fdb5cfb07129001b97a5",
+      "objectives": [
+        {
+          "key": "quest:while_guthix_sleeps@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do While Guthix Sleeps if you haven’t already",
+            "span": [
+              2,
+              49
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "quest:dragon_slayer_ii@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete Dragon Slayer II",
+            "span": [
+              51,
+              86
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:22109x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to get an Ava’s Assembler",
+            "span": [
+              412,
+              439
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:monkey_madness_ii@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Monkey Madness II",
+            "span": [
+              441,
+              467
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.2-b8b380586eac",
+      "text_hash": "sha256:c4d9d22f88afc5488f10703437f10d1bcc71d5178423f6eaffec74d61c98f4f4",
+      "objectives": [
+        {
+          "key": "quest:devious_minds@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Devious Minds",
+            "span": [
+              2,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:secrets_of_the_north@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "then Secrets of the North",
+            "span": [
+              20,
+              45
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:beneath_cursed_sands@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Beneath Cursed Sands",
+            "span": [
+              100,
+              123
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:into_the_tombs@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Into the Tombs",
+            "span": [
+              191,
+              205
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:desert_treasure_ii_the_fallen_empire@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete Desert Treasure II",
+            "span": [
+              465,
+              502
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.2-c736cc9cb869",
+      "text_hash": "sha256:0dad0be30e6ca28608327c92b924a3f03dce2063d7fbe8db277812804a57932a",
+      "objectives": [
+        {
+          "key": "quest:the_blood_moon_rises@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete The Blood Moon Rises",
+            "span": [
+              2,
+              41
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:9813x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Collect a quest cape",
+            "span": [
+              171,
+              191
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:smithing>=86",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "train smithing to level 86",
+            "span": [
+              218,
+              244
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:2363x15",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Smelt at least 15 runite bars",
+            "span": [
+              340,
+              369
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:lumbridge_and_draynor:elite@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete the Lumbridge Elite diary",
+            "span": [
+              371,
+              405
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.2-470660b81402",
+      "text_hash": "sha256:0dbde2447df87d5b58eee7bf5cb51ae5ad10f86bc77a5ba546764b8969d56a58",
+      "objectives": [
+        {
+          "key": "skill:sailing>=75",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to 1,225,000 xp (level 75)",
+            "span": [
+              741,
+              767
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:4824x45",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "smith 3 runite bars into 45 rune nails",
+            "span": [
+              949,
+              987
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:8788x4",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 4 magic stones",
+            "span": [
+              1058,
+              1076
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:woodcutting>=80",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Train your woodcutting to level 80",
+            "span": [
+              5490,
+              5524
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "no_bank_actions": {
+        "reason": "The only 'bank' is 'build the bank chest there if you want to' on Sunbleak Island, an optional construction, not a banking action.",
+        "source": {
+          "method": "llm",
+          "confidence": "medium",
+          "skill_version": "annotate-guide@5",
+          "confirmed_by": "owner",
+          "decision": "agent-judgment-delegated"
+        }
+      }
+    },
+    {
+      "step_id": "bruh-3.2-5af9f14b4c7f",
+      "text_hash": "sha256:d9e12a6d2d0f45be240383e6703f31f456538df1dc74daf3098705a9b27642ce",
+      "objectives": [
+        {
+          "key": "item:6570x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get a fire cape",
+            "span": [
+              2,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.2-3358d877240e",
+      "text_hash": "sha256:b5e38c03560b62aff21423270e104e03f51fbbd11cf06308e032325d1231c841"
+    },
+    {
+      "step_id": "bruh-3.2-95ee132cd3e3",
+      "text_hash": "sha256:f07dc00f06cf79ddce0922dff4e397e6943aec9888baa804d1bfdffef54fb0f7"
+    },
+    {
+      "step_id": "bruh-3.2-d7707077e8fe",
+      "text_hash": "sha256:289d3df185c8862f2e750c3f152c22e90c541e4b7c10c95b39da831ba77154af"
+    },
+    {
+      "step_id": "bruh-3.2-3eced1efbd16",
+      "text_hash": "sha256:a116208a941c86d38d52627390d7e02037df6ed80047c1437ff772ef020a7935",
+      "objectives": [
+        {
+          "key": "skill:thieving>=91",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "If you aren’t 91 thieving yet, arteglass the molten glass until you are",
+            "span": [
+              276,
+              349
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-3.2-fde1d3314bd8",
+      "text_hash": "sha256:09a9abc0dad75689583260e16e5d4c8c3a4487dee6ed95b715440133592eb146"
+    },
+    {
+      "step_id": "bruh-3.2-b616aaa52167",
+      "text_hash": "sha256:81c6d6d0d626a819aaaca4e6219195c690d31401b4522c994306396f315a6011"
+    },
+    {
+      "step_id": "bruh-3.2-15c96591367f",
+      "text_hash": "sha256:67a73b981273277bafc0de9f5923c729a6fcdcfb3a46d490a4d4dd2d0abbced9",
+      "objectives": [
+        {
+          "key": "skill:construction>=83",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "train construction to level 83",
+            "span": [
+              90,
+              120
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    }
+  ]
+}

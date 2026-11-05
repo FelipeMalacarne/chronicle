@@ -107,6 +107,62 @@
       "step_ids": [
         "bruh-1.1-8b1563b2fd77"
       ]
+    },
+    {
+      "id": "agent-judgment-delegated",
+      "question": "Extração do BRUHsailer 1.2 a 3.2: quem decide as inferências pontuais (objetivo implícito, papel incerto, nome ambíguo, supressão de regra) que nenhuma outra decisão cobre?",
+      "answer": "O dono delegou ao agente (2026-11-05: \"faz tudo de uma vez tomando as decisões que você julgar melhor\"). O agente decide pelo critério conservador (na dúvida, fica de fora e vai no comment), cita esta decisão em cada entrada medium que ela cobre, e o relatório final lista todas para revisão do dono. Não substitui confirmed_by owner: toda entrada com esta decisão é revisável.",
+      "scope": "bruhsailer-main, seções 1.2 a 3.2: inferências sem decisão geral",
+      "decided_at": "2026-11-05"
+    },
+    {
+      "id": "conditional-step-no-objectives",
+      "question": "Passo ou trecho condicional (\"if you want...\", \"optional\", \"if you're planning...\"): o que ele obtém vira objetivo?",
+      "answer": "Não: o trecho que só vale sob uma condição opcional do jogador fica sem objetivos, com a condição no comment. (Adotada do oziris-main.)",
+      "scope": "bruhsailer-main, todas as seções: passos e trechos condicionais/opcionais",
+      "decided_at": "2026-11-05"
+    },
+    {
+      "id": "final-quest-action-completes",
+      "question": "O passo descreve a ação final de uma quest sem dizer finish, e a regra diz completes @finished. Marco como concluída?",
+      "answer": "Sim: completes @finished (medium, com esta decisão), quando a ação é a última da quest ou o passo seguinte já pressupõe a quest concluída. (Adotada do oziris-main.)",
+      "scope": "bruhsailer-main, todas as seções: quests cuja ação final aparece sem o verbo finish",
+      "decided_at": "2026-11-05"
+    },
+    {
+      "id": "gather-for-level-completes-where-trained",
+      "question": "Um passo junta recursos \"for N <skill>\" e um passo posterior é onde o nível sobe. Onde fica o completes?",
+      "answer": "Só no passo onde o nível sobe; o passo que só junta os recursos fica sem esse completes. (Adotada do oziris-main.)",
+      "scope": "bruhsailer-main, todas as seções: níveis citados num passo de coleta e atingidos depois",
+      "decided_at": "2026-11-05"
+    },
+    {
+      "id": "approximate-quantity-is-target",
+      "question": "Quantidade aproximada (\"~200\", \"around N\", \"about N\"): vira objetivo com o número?",
+      "answer": "Sim: completes com N (medium, com esta decisão). Quantidades sem número (\"plenty\", \"a few\") continuam fora. (Adotada do oziris-main.)",
+      "scope": "bruhsailer-main, todas as seções: quantidades aproximadas com número",
+      "decided_at": "2026-11-05"
+    },
+    {
+      "id": "bare-quest-name-means-finish",
+      "question": "Trecho que é só o nome da quest, sem verbo (linha \"Waterfall quest\" numa lista): conta como concluir?",
+      "answer": "Sim: completes @finished, igual a do-quest-means-finish, com as mesmas exceções (\"up to\", \"until\", \"start\"). (Adotada do oziris-main.)",
+      "scope": "bruhsailer-main, todas as seções: quests citadas só pelo nome numa lista de tarefas",
+      "decided_at": "2026-11-05"
+    },
+    {
+      "id": "floating-step-quest-only",
+      "question": "Requisito de nível que o verificador rejeita por ordem (a rota só atinge o nível depois): como fica?",
+      "answer": "Só a quest (completes) e os requisitos que a rota já cumpre; o nível fora de ordem fica de fora (ou é suprimido, se vier de regra) com esta decisão. (Adotada do oziris-main.)",
+      "scope": "bruhsailer-main, todas as seções: requisitos de nível fora da ordem da rota",
+      "decided_at": "2026-11-05"
+    },
+    {
+      "id": "farm-for-drops-no-objectives",
+      "question": "Trechos \"farm/kill <boss/monstro> for <drops>\" sem número de drops: os drops viram objetivo?",
+      "answer": "Não: metas abertas (goals, F9). Só entram com um número explícito de drops ou de kill count como alvo. (Adotada do oziris-main.)",
+      "scope": "bruhsailer-main, todas as seções: farm por drops",
+      "decided_at": "2026-11-05"
     }
   ]
 }

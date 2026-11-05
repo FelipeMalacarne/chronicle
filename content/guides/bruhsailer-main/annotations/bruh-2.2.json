@@ -1,0 +1,7185 @@
+{
+  "schema_version": 1,
+  "kind": "section",
+  "guide_id": "bruhsailer-main",
+  "section_id": "bruh-2.2",
+  "skill_version": "annotate-guide@5",
+  "steps": [
+    {
+      "step_id": "bruh-2.2-da08d05c2a29",
+      "text_hash": "sha256:8ac8c9ee6e4063f9a11d4f124cb87e55a4e28ff2401c48cf436765746e20f6cf",
+      "objectives": [
+        {
+          "key": "skill:agility>=65",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do barbarian fishing to 65 agility",
+            "span": [
+              2,
+              36
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:11334x1700",
+          "role": "uses",
+          "evidence": {
+            "field": "/text",
+            "quote": "Save and bank at least 1700 fish offcuts for crab trapping later",
+            "span": [
+              668,
+              732
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "bank_actions": [
+        {
+          "type": "deposit",
+          "position": "within",
+          "evidence": {
+            "field": "/text",
+            "quote": "Save and bank at least 1700 fish offcuts",
+            "span": [
+              668,
+              708
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-e6dbda977d38",
+      "text_hash": "sha256:89f4741592a157c96cb0053ad9e22492dbb2a2ee664cbbeb55ce860e9f830543",
+      "objectives": [
+        {
+          "key": "quest:the_fremennik_isles@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do The Fremennik Isles",
+            "span": [
+              47,
+              69
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "item:10826x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make a ‘Neitiznot shield’",
+            "span": [
+              71,
+              100
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "item:10828x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "obtained the Helm of Neitiznot",
+            "span": [
+              334,
+              364
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Fremennik sea boots 1",
+          "item_id": 13129,
+          "source_text": "Fremennik boots 1",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "Fremennik boots 1",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "Bronze nail",
+          "item_id": 4819,
+          "qty": 2,
+          "source_text": "bronze nail",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "bronze nail",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Mithril ore",
+          "item_id": 447,
+          "qty": 6,
+          "source_text": "6 mithril ore",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "6 mithril ore",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rope",
+          "item_id": 954,
+          "qty": 9,
+          "source_text": "9 ropes",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "9 ropes",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rune axe",
+          "item_id": 1359,
+          "source_text": "rune axe",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "rune axe",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Needle",
+          "item_id": 1733,
+          "source_text": "needle",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "needle",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Thread",
+          "item_id": 1734,
+          "qty": 2,
+          "source_text": "2 thread",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "2 thread",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Sapphire",
+          "item_id": 1607,
+          "source_text": "cut sapphire",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "cut sapphire",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "Mithril bar",
+          "item_id": 2359,
+          "source_text": "mithril bar",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "mithril bar",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Silver bar",
+          "item_id": 2355,
+          "source_text": "silver bar",
+          "evidence": {
+            "field": "/items/16",
+            "quote": "silver bar",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rod mould",
+          "item_id": 7649,
+          "source_text": "rod mould",
+          "evidence": {
+            "field": "/items/17",
+            "quote": "rod mould",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Cosmic rune",
+          "item_id": 564,
+          "source_text": "cosmic rune",
+          "evidence": {
+            "field": "/items/18",
+            "quote": "cosmic rune",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Water rune",
+          "item_id": 555,
+          "source_text": "water runes",
+          "evidence": {
+            "field": "/items/19",
+            "quote": "water runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-63c1597a7863",
+      "text_hash": "sha256:e2757169a02f493ccbd31289fc0f4280afcd3d8c276aa0b31ea6a6ef7a7fa0cf",
+      "objectives": [
+        {
+          "key": "quest:lunar_diplomacy@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Lunar Diplomacy",
+            "span": [
+              2,
+              23
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:1939x45",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect at least 45 swamp tar",
+            "span": [
+              222,
+              251
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Tinderbox",
+          "item_id": 590,
+          "source_text": "tinderbox",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "tinderbox",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "bullseye lantern",
+          "family": "bullseye_lantern",
+          "source_text": "bullseye lantern",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "bullseye lantern",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swordfish",
+          "item_id": 373,
+          "source_text": "swordfish",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "swordfish",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "energy potions",
+          "family": "energy_potion",
+          "source_text": "energy potions",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "energy potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Guam leaf",
+          "item_id": 249,
+          "source_text": "clean guam",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "clean guam",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "Marrentill",
+          "item_id": 251,
+          "source_text": "clean marrentill",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "clean marrentill",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "Pestle and mortar",
+          "item_id": 233,
+          "source_text": "pestle and mortar",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "pestle and mortar",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-00b571d0ee0f",
+      "text_hash": "sha256:b2221518db89b936b1ea76031fdd2096525ab328f6882a9471ea939d503cc176",
+      "objectives": [
+        {
+          "key": "item:5529x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a mind tiara for the diary",
+            "span": [
+              83,
+              109
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Stew",
+          "item_id": 2003,
+          "qty": 9,
+          "source_text": "9 stews",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "9 stews",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Tiara",
+          "item_id": 5525,
+          "source_text": "tiara",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "tiara",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Mind talisman",
+          "item_id": 1448,
+          "source_text": "mind talisman",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "mind talisman",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Pure essence",
+          "item_id": 7936,
+          "qty": 10,
+          "source_text": "10 pure essence",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "10 pure essence",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Binding necklace",
+          "item_id": 5521,
+          "source_text": "binding necklace",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "binding necklace",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Earth talisman",
+          "item_id": 1440,
+          "source_text": "earth talisman",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "earth talisman",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Earth rune",
+          "item_id": 557,
+          "source_text": "earth runes",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "earth runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-ad3e9b4a072f",
+      "text_hash": "sha256:7e682a2fa33c9354f491fcb0dc6437e169f0e5adea89cfff546ef3678fddad81",
+      "objectives": [
+        {
+          "key": "quest:the_slug_menace@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete The Slug Menace",
+            "span": [
+              208,
+              232
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:1111x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy an adamant chainbody",
+            "span": [
+              317,
+              341
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:lunar_diplomacy@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete all of Lunar Diplomacy",
+            "span": [
+              486,
+              517
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Air rune",
+          "item_id": 556,
+          "source_text": "air runes",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "air runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Earth rune",
+          "item_id": 557,
+          "source_text": "earth runes",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "earth runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Water rune",
+          "item_id": 555,
+          "source_text": "water runes",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "water runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Teasing stick",
+          "item_id": 10029,
+          "source_text": "teasing stick",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "teasing stick",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Seal of passage",
+          "item_id": 9083,
+          "source_text": "seal of passage",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "seal of passage",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Bowl of water",
+          "item_id": 1921,
+          "source_text": "bowl of water",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "bowl of water",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rune pickaxe",
+          "item_id": 1275,
+          "source_text": "rune pickaxe",
+          "evidence": {
+            "field": "/items/11",
+            "quote": "rune pickaxe",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Needle",
+          "item_id": 1733,
+          "source_text": "needle",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "needle",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Thread",
+          "item_id": 1734,
+          "qty": 2,
+          "source_text": "2 thread",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "2 thread",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Suqah hide",
+          "item_id": 9080,
+          "qty": 4,
+          "source_text": "4 suqah hide",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "4 suqah hide",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Tinderbox",
+          "item_id": 590,
+          "source_text": "tinderbox",
+          "evidence": {
+            "field": "/items/16",
+            "quote": "tinderbox",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Spade",
+          "item_id": 952,
+          "source_text": "spade",
+          "evidence": {
+            "field": "/items/17",
+            "quote": "spade",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "energy potions",
+          "family": "energy_potion",
+          "source_text": "energy potions",
+          "evidence": {
+            "field": "/items/18",
+            "quote": "energy potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/19",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swordfish",
+          "item_id": 373,
+          "source_text": "swordfish",
+          "evidence": {
+            "field": "/items/20",
+            "quote": "swordfish",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Small pouch",
+          "item_id": 5509,
+          "source_text": "small pouch",
+          "evidence": {
+            "field": "/items/21",
+            "quote": "small pouch",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Medium pouch",
+          "any_of": [
+            5510,
+            5511
+          ],
+          "source_text": "medium pouch",
+          "evidence": {
+            "field": "/items/22",
+            "quote": "medium pouch",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Large pouch",
+          "any_of": [
+            5512,
+            5513
+          ],
+          "source_text": "large pouch",
+          "evidence": {
+            "field": "/items/23",
+            "quote": "large pouch",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Cosmic rune",
+          "item_id": 564,
+          "source_text": "cosmic runes",
+          "evidence": {
+            "field": "/items/24",
+            "quote": "cosmic runes",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Astral rune",
+          "item_id": 9075,
+          "source_text": "astral runes",
+          "evidence": {
+            "field": "/items/25",
+            "quote": "astral runes",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of air",
+          "item_id": 1381,
+          "source_text": "staff of air",
+          "evidence": {
+            "field": "/items/26",
+            "quote": "staff of air",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Chisel",
+          "item_id": 1755,
+          "source_text": "chisel",
+          "evidence": {
+            "field": "/items/27",
+            "quote": "chisel",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-912a85abde7b",
+      "text_hash": "sha256:7a40ff66b5d2709de3171f6554031668c02e15f8b445f7d59eed27d38ef115f8",
+      "objectives": [
+        {
+          "key": "quest:what_lies_below@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "start What Lies Below",
+            "span": [
+              35,
+              56
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:scorpion_catcher@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Visit Thormac to complete Scorpion Catcher",
+            "span": [
+              457,
+              499
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:family/pigeon_cagex5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get 5 pigeon cages",
+            "span": [
+              559,
+              577
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Bowl of hot water",
+          "item_id": 4456,
+          "source_text": "bowl of hot water",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "bowl of hot water",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Harralander",
+          "item_id": 255,
+          "qty": 1,
+          "source_text": "1 harralander",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "1 harralander",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Guam leaf",
+          "item_id": 249,
+          "qty": 2,
+          "source_text": "2 guam",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "2 guam",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "Marrentill",
+          "item_id": 251,
+          "qty": 2,
+          "source_text": "2 marrentill",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "2 marrentill",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "energy potions",
+          "family": "energy_potion",
+          "source_text": "energy potions",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "energy potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of air",
+          "item_id": 1381,
+          "source_text": "air staff",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "air staff",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Water rune",
+          "item_id": 555,
+          "source_text": "water runes",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "water runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "scorpion cage",
+          "family": "scorpion_cage",
+          "source_text": "scorpion cage",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "scorpion cage",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-f55110ed5551",
+      "text_hash": "sha256:a28897e1c9d8e4b7aff5fd83090f81cbaf95dabd3e055a936fb9f173dfa4aaa2",
+      "objectives": [
+        {
+          "key": "quest:cold_war@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Cold War in the zoo",
+            "span": [
+              237,
+              262
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "emerald lantern",
+          "family": "emerald_lantern",
+          "source_text": "emerald lantern",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "emerald lantern",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Lantern lens",
+          "item_id": 4542,
+          "source_text": "lantern lens",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "lantern lens",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Tinderbox",
+          "item_id": 590,
+          "source_text": "tinderbox",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "tinderbox",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Oak plank",
+          "item_id": 8778,
+          "qty": 10,
+          "source_text": "10 oak planks",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "10 oak planks",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Steel nails",
+          "item_id": 1539,
+          "qty": 10,
+          "source_text": "10 steel nails",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "10 steel nails",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Spade",
+          "item_id": 952,
+          "source_text": "spade",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "spade",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Butterfly net",
+          "item_id": 10010,
+          "source_text": "butterfly net",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "butterfly net",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Butterfly jar",
+          "item_id": 10012,
+          "source_text": "butterfly jar",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "butterfly jar",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Teasing stick",
+          "item_id": 10029,
+          "source_text": "teasing stick",
+          "evidence": {
+            "field": "/items/11",
+            "quote": "teasing stick",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of water",
+          "item_id": 1383,
+          "source_text": "water staff",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "water staff",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Ardougne cloak 1",
+          "item_id": 13121,
+          "source_text": "ardougne cloak 1",
+          "evidence": {
+            "field": "/items/17",
+            "quote": "ardougne cloak 1",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-53e9444e522d",
+      "text_hash": "sha256:4b53cca9242bdeeeaf6ef81a3c10f0ed50e440d181570bf8d269ae7098cd58c1",
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rune axe",
+          "item_id": 1359,
+          "source_text": "rune axe",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "rune axe",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Death rune",
+          "item_id": 560,
+          "source_text": "death runes",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "death runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Raw karambwanji",
+          "item_id": 3150,
+          "qty": 23,
+          "source_text": "23 raw karambwanji",
+          "evidence": {
+            "field": "/text",
+            "quote": "23 raw karambwanji",
+            "span": [
+              220,
+              238
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Anti-dragon shield",
+          "item_id": 1540,
+          "source_text": "anti-dragon shield",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "anti-dragon shield",
+            "span": [
+              0,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swordfish",
+          "item_id": 373,
+          "source_text": "swordfish",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "swordfish",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "energy potions",
+          "family": "energy_potion",
+          "source_text": "energy potions",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "energy potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Steel spear",
+          "item_id": 1241,
+          "source_text": "steel spear",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "steel spear",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Small fishing net",
+          "item_id": 303,
+          "source_text": "small fishing net",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "small fishing net",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Agility potion(4)",
+          "item_id": 3032,
+          "source_text": "4-dose agility potion",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "4-dose agility potion",
+            "span": [
+              0,
+              21
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Tinderbox",
+          "item_id": 590,
+          "source_text": "tinderbox",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "tinderbox",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-be2ac6d66b8a",
+      "text_hash": "sha256:10c4a18a6bd63d4c57a23d36beebaea396c0543c29974284ffae6517c40d6d0b",
+      "objectives": [
+        {
+          "key": "quest:tai_bwo_wannai_trio@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "proceed to complete Tai Bwo Wannai Trio",
+            "span": [
+              7,
+              46
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:1237x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a bronze spear",
+            "span": [
+              352,
+              370
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Death rune",
+          "item_id": 560,
+          "source_text": "death runes",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "death runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Fire rune",
+          "item_id": 554,
+          "source_text": "fire runes",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "fire runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Tinderbox",
+          "item_id": 590,
+          "source_text": "tinderbox",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "tinderbox",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Seaweed",
+          "item_id": 401,
+          "source_text": "seaweed",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "seaweed",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Monkey skin",
+          "item_id": 3167,
+          "source_text": "monkey skin",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "monkey skin",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Jogre bones",
+          "item_id": 3125,
+          "source_text": "jogre bones",
+          "evidence": {
+            "field": "/items/11",
+            "quote": "jogre bones",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Raw karambwanji",
+          "item_id": 3150,
+          "source_text": "raw karambwanji",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "raw karambwanji",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Pestle and mortar",
+          "item_id": 233,
+          "source_text": "pestle and mortar",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "pestle and mortar",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Teasing stick",
+          "item_id": 10029,
+          "source_text": "teasing stick",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "teasing stick",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-1515ef531d2b",
+      "text_hash": "sha256:533ae6965237acc63ad19dd6c4497492798ecb4899b3c91719d55c83e3f8d9d0"
+    },
+    {
+      "step_id": "bruh-2.2-39f76eab7532",
+      "text_hash": "sha256:ece6b893b5ef1bc6085d7640760c73103d3e866c21c99470db5a3a3b9a833566",
+      "objectives": [
+        {
+          "key": "quest:contact@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "finish Contact!",
+            "span": [
+              405,
+              420
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Camulet",
+          "item_id": 6707,
+          "source_text": "Camulet",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "Camulet",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Stone scarab",
+          "item_id": 9030,
+          "source_text": "stone scarab",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "stone scarab",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Death rune",
+          "item_id": 560,
+          "source_text": "death runes",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "death runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swordfish",
+          "item_id": 373,
+          "source_text": "swordfish",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "swordfish",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Catspeak amulet",
+          "item_id": 4677,
+          "source_text": "catspeak amulet",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "catspeak amulet",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Logs",
+          "item_id": 1511,
+          "source_text": "logs",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "logs",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Tinderbox",
+          "item_id": 590,
+          "source_text": "tinderbox",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "tinderbox",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Bucket of milk",
+          "item_id": 1927,
+          "source_text": "bucket of milk",
+          "evidence": {
+            "field": "/items/16",
+            "quote": "bucket of milk",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Chocolate cake",
+          "item_id": 1897,
+          "source_text": "chocolate cake",
+          "evidence": {
+            "field": "/items/17",
+            "quote": "chocolate cake",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Shears",
+          "item_id": 1735,
+          "source_text": "shears",
+          "evidence": {
+            "field": "/items/18",
+            "quote": "shears",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rake",
+          "item_id": 5341,
+          "source_text": "rake",
+          "evidence": {
+            "field": "/items/19",
+            "quote": "rake",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Seed dibber",
+          "item_id": 5343,
+          "source_text": "seed dibber",
+          "evidence": {
+            "field": "/items/20",
+            "quote": "seed dibber",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Potato seed",
+          "item_id": 5318,
+          "qty": 4,
+          "source_text": "4 potato seeds",
+          "evidence": {
+            "field": "/items/21",
+            "quote": "4 potato seeds",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-6f26d7191bf5",
+      "text_hash": "sha256:b6c9193e241f7b4ff4c61d796dea4d704720677ff7b2bb60fc28a83fd19baba8",
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Stodgy mattress",
+          "item_id": 4425,
+          "source_text": "stodgy mattress",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "stodgy mattress",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Sapphire",
+          "item_id": 1607,
+          "source_text": "sapphires",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "sapphires",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Teasing stick",
+          "item_id": 10029,
+          "source_text": "teasing stick",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "teasing stick",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Chisel",
+          "item_id": 1755,
+          "source_text": "chisel",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "chisel",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-214d11574fb1",
+      "text_hash": "sha256:ca8c8d3f8d0d97b097da20e9103196ec2d1e8c0d36f2b6cd7a2181f0837fe2e8",
+      "items": [
+        {
+          "name": "Stodgy mattress",
+          "item_id": 4425,
+          "source_text": "stodgy mattress",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "stodgy mattress",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Catspeak amulet",
+          "item_id": 4677,
+          "source_text": "catspeak amulet",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "catspeak amulet",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Cheese",
+          "item_id": 1985,
+          "qty": 4,
+          "source_text": "4 cheese",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "4 cheese",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Empty vial",
+          "item_id": 9085,
+          "source_text": "empty vial",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "empty vial",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Kwuarm",
+          "item_id": 263,
+          "source_text": "kwuarm",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "kwuarm",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Marrentill",
+          "item_id": 251,
+          "source_text": "marrentill",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "marrentill",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Unicorn horn dust",
+          "item_id": 235,
+          "source_text": "unicorn horn dust",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "unicorn horn dust",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Bucket of milk",
+          "item_id": 1927,
+          "source_text": "bucket of milk",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "bucket of milk",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Limpwurt root",
+          "item_id": 225,
+          "source_text": "limpwurt root",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "limpwurt root",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Air rune",
+          "item_id": 556,
+          "source_text": "air runes",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "air runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Fire rune",
+          "item_id": 554,
+          "source_text": "fire runes",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "fire runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9ff8a6700210",
+      "text_hash": "sha256:c57fcd57cb0bce7ffc149ee8da325fae5fa07c839ee2f39965f68b9994569f7c",
+      "items": [
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Earth rune",
+          "item_id": 557,
+          "source_text": "earth runes",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "earth runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Air rune",
+          "item_id": 556,
+          "source_text": "air runes",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "air runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Plank",
+          "item_id": 960,
+          "source_text": "plank",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "plank",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Silk",
+          "item_id": 950,
+          "source_text": "silk",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "silk",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Steel bar",
+          "item_id": 2353,
+          "source_text": "steel bar",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "steel bar",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Catspeak amulet",
+          "item_id": 4677,
+          "source_text": "catspeak amulet",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "catspeak amulet",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Pot",
+          "item_id": 1931,
+          "source_text": "pot",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "pot",
+            "span": [
+              0,
+              3
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Weeds",
+          "item_id": 6055,
+          "source_text": "weeds",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "weeds",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Tinderbox",
+          "item_id": 590,
+          "source_text": "tinderbox",
+          "evidence": {
+            "field": "/items/11",
+            "quote": "tinderbox",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-d19339e3dfb2",
+      "text_hash": "sha256:3c634b44f0b79eaec1e98281caf53c762fd5ef98c4254355d86f17f5b4449e6e",
+      "objectives": [
+        {
+          "key": "quest:legends_quest@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "start Legends’ Quest",
+            "span": [
+              138,
+              160
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:970x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "pick up 5 papyrus",
+            "span": [
+              425,
+              442
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Doctor's hat",
+          "item_id": 6547,
+          "source_text": "doctor’s hat",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "doctor’s hat",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Vial of water",
+          "item_id": 227,
+          "source_text": "vial of water",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "vial of water",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of water",
+          "item_id": 1383,
+          "source_text": "water staff",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "water staff",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Ring of charos(a)",
+          "item_id": 6465,
+          "source_text": "ring of charos(a)",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "ring of charos(a)",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-7ddf391d4fd0",
+      "text_hash": "sha256:61971527770df9b601fcfac359bd31921d45f26c8b434d2b15471219182229ac",
+      "objectives": [
+        {
+          "key": "quest:what_lies_below@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "continue and complete What Lies Below",
+            "span": [
+              500,
+              537
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of air",
+          "item_id": 1381,
+          "source_text": "air staff",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "air staff",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swordfish",
+          "item_id": 373,
+          "source_text": "swordfish",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "swordfish",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "energy potions",
+          "family": "energy_potion",
+          "source_text": "energy potions",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "energy potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Soft clay",
+          "item_id": 1761,
+          "qty": 2,
+          "source_text": "2 soft clay",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "2 soft clay",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Fire rune",
+          "item_id": 554,
+          "source_text": "fire runes",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "fire runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "pigeon cages",
+          "family": "pigeon_cage",
+          "qty": 5,
+          "source_text": "5 pigeon cages",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "5 pigeon cages",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-64fa57c14ed0",
+      "text_hash": "sha256:0f302fa5255343e9fa1a0f144e681aa44a84d32ac0c2907633ff897b8a9b4635",
+      "objectives": [
+        {
+          "key": "quest:a_tail_of_two_cats@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete A Tail of Two Cats",
+            "span": [
+              239,
+              266
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "no_bank_actions": {
+        "reason": "The only 'bank' in the text is the place name 'west bank anvils' (world hop spot); no bank is opened. Items needed are 'all for next section'.",
+        "source": {
+          "method": "llm",
+          "confidence": "medium",
+          "skill_version": "annotate-guide@5",
+          "confirmed_by": "owner",
+          "decision": "agent-judgment-delegated"
+        }
+      }
+    },
+    {
+      "step_id": "bruh-2.2-b93eedcdc5c1",
+      "text_hash": "sha256:090f7002255edc4a91ca9ea32510bd1aef545cce9cb7830e35600522ce2473ce",
+      "objectives": [
+        {
+          "key": "item:7457x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy black gloves",
+            "span": [
+              181,
+              197
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Air rune",
+          "item_id": 556,
+          "source_text": "air runes",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "air runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Water rune",
+          "item_id": 555,
+          "source_text": "water rune",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "water rune",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law rune",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "law rune",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-03b67e72a240",
+      "text_hash": "sha256:8b1aa36cba70001368e4fc3d28c0dec8c0e203b7ac3ee7d2a059c3e53b9ff142",
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Catspeak amulet",
+          "item_id": 4677,
+          "source_text": "catspeak amulet",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "catspeak amulet",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Snake charm",
+          "item_id": 4605,
+          "source_text": "snake charm",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "snake charm",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Bucket of milk",
+          "item_id": 1927,
+          "source_text": "bucket of milk",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "bucket of milk",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Egg",
+          "item_id": 1944,
+          "source_text": "egg",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "egg",
+            "span": [
+              0,
+              3
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Pot of flour",
+          "item_id": 1933,
+          "source_text": "pot of flour",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "pot of flour",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Cake tin",
+          "item_id": 1887,
+          "source_text": "cake tin",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "cake tin",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9b5e1c730252",
+      "text_hash": "sha256:f84b59b337a5fbc51695f89905f159f70a3b319f08614d9e5167a0396aa40aa6",
+      "objectives": [
+        {
+          "key": "quest:one_small_favour@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete One Small Favour",
+            "span": [
+              2,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:cold_war@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Cold War",
+            "span": [
+              121,
+              138
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:making_history@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Making History",
+            "span": [
+              140,
+              163
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Ring of charos(a)",
+          "item_id": 6465,
+          "source_text": "ring of charos(a)",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "ring of charos(a)",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Sharpened axe",
+          "item_id": 4444,
+          "source_text": "sharpened axe",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "sharpened axe",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swamp tar",
+          "item_id": 1939,
+          "source_text": "swamp tar",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "swamp tar",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Feather",
+          "item_id": 314,
+          "qty": 5,
+          "source_text": "5 feathers",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "5 feathers",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Mahogany plank",
+          "item_id": 8782,
+          "source_text": "mahogany plank",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "mahogany plank",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Soft leather",
+          "item_id": 1741,
+          "source_text": "soft leather",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "soft leather",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swordfish",
+          "item_id": 373,
+          "source_text": "swordfish",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "swordfish",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Spade",
+          "item_id": 952,
+          "source_text": "spade",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "spade",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Sapphire amulet",
+          "item_id": 1694,
+          "source_text": "sapphire amulet",
+          "evidence": {
+            "field": "/items/16",
+            "quote": "sapphire amulet",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/19",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of water",
+          "item_id": 1383,
+          "source_text": "water staff",
+          "evidence": {
+            "field": "/items/20",
+            "quote": "water staff",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Enchanted key",
+          "item_id": 6754,
+          "source_text": "enchanted key",
+          "evidence": {
+            "field": "/items/21",
+            "quote": "enchanted key",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Air rune",
+          "item_id": 556,
+          "source_text": "air runes",
+          "evidence": {
+            "field": "/items/23",
+            "quote": "air runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Earth rune",
+          "item_id": 557,
+          "source_text": "earth rune",
+          "evidence": {
+            "field": "/items/24",
+            "quote": "earth rune",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9849f0d8fc91",
+      "text_hash": "sha256:bafff1246bbd1ed4cde65c5abd8d48b9d16a5d7b4d63acc378b0e9071148b166",
+      "objectives": [
+        {
+          "key": "item:3138x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect 5 potato cacti",
+            "span": [
+              52,
+              74
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:desert:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect the easy Desert diary",
+            "span": [
+              126,
+              155
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:ratcatchers@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete Ratcatchers",
+            "span": [
+              280,
+              300
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rope",
+          "item_id": 954,
+          "source_text": "rope",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "rope",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Camulet",
+          "item_id": 6707,
+          "source_text": "Camulet",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "Camulet",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Catspeak amulet",
+          "item_id": 4677,
+          "source_text": "catspeak amulet",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "catspeak amulet",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-be44b6bcb4ba",
+      "text_hash": "sha256:b1656fe55ec849472e5e8fd6ef62cd4042c5cbf6c4a25aabc992b694a6091922",
+      "objectives": [
+        {
+          "key": "quest:between_a_rock@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "continue and complete Between a Rock…",
+            "span": [
+              19,
+              58
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Gold bar",
+          "item_id": 2357,
+          "qty": 3,
+          "source_text": "3 gold bars",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "3 gold bars",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swordfish",
+          "item_id": 373,
+          "source_text": "swordfish",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "swordfish",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-77a91e47362f",
+      "text_hash": "sha256:575369d7a4652da97ac8189114537fd012b0835b6e8a08f4fb40697dec46b76e",
+      "objectives": [
+        {
+          "key": "item:12019x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "MLM for coal and gem bag",
+            "span": [
+              2,
+              26
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "item:12020x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "MLM for coal and gem bag",
+            "span": [
+              2,
+              26
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "diary:falador:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete the Falador easy diary",
+            "span": [
+              409,
+              440
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "no_bank_actions": {
+        "reason": "The derived 'deposit' comes from the Motherlode Mine 'deposit chute' in the tick-manipulation notes, not a bank.",
+        "source": {
+          "method": "llm",
+          "confidence": "medium",
+          "skill_version": "annotate-guide@5",
+          "confirmed_by": "owner",
+          "decision": "agent-judgment-delegated"
+        }
+      }
+    },
+    {
+      "step_id": "bruh-2.2-31164de7dfc7",
+      "text_hash": "sha256:469e4be85d955f46eedcc351ce4fcfd7d3e05cedba30441e39dca9b29facd18b",
+      "objectives": [
+        {
+          "key": "quest:swan_song@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start Swan Song",
+            "span": [
+              2,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:eagles_peak@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Visit Charlie to complete Eagles’ Peak",
+            "span": [
+              140,
+              180
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:desert:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect the Desert medium diary reward",
+            "span": [
+              367,
+              405
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:swan_song@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Swan Song",
+            "span": [
+              714,
+              732
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:making_friends_with_my_arm@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete Making Friends with My Arm",
+            "span": [
+              734,
+              779
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:22601x100",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "100 each of Stony and Icy basalt",
+            "span": [
+              1057,
+              1089
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:22599x100",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "100 each of Stony and Icy basalt",
+            "span": [
+              1057,
+              1089
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Eagle cape",
+          "item_id": 10171,
+          "source_text": "eagle cape",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "eagle cape",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Fake beak",
+          "item_id": 10172,
+          "source_text": "fake beak",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "fake beak",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Mist rune",
+          "item_id": 4695,
+          "qty": 10,
+          "source_text": "10 mist runes",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "10 mist runes",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Lava rune",
+          "item_id": 4699,
+          "qty": 10,
+          "source_text": "10 lava runes",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "10 lava runes",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Blood rune",
+          "item_id": 565,
+          "qty": 5,
+          "source_text": "5 blood runes",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "5 blood runes",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Airtight pot",
+          "item_id": 4436,
+          "source_text": "airtight pot",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "airtight pot",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rune pickaxe",
+          "item_id": 1275,
+          "source_text": "rune pickaxe",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "rune pickaxe",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rune axe",
+          "item_id": 1359,
+          "source_text": "rune axe",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "rune axe",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Tinderbox",
+          "item_id": 590,
+          "source_text": "tinderbox",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "tinderbox",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Ring of charos(a)",
+          "item_id": 6465,
+          "source_text": "ring of charos(a)",
+          "evidence": {
+            "field": "/items/11",
+            "quote": "ring of charos(a)",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swordfish",
+          "item_id": 373,
+          "source_text": "swordfish",
+          "evidence": {
+            "field": "/items/17",
+            "quote": "swordfish",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Yellow dye",
+          "item_id": 1765,
+          "source_text": "yellow dye",
+          "evidence": {
+            "field": "/items/18",
+            "quote": "yellow dye",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Swamp tar",
+          "item_id": 1939,
+          "source_text": "swamp tar",
+          "evidence": {
+            "field": "/items/19",
+            "quote": "swamp tar",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rope",
+          "item_id": 954,
+          "source_text": "rope",
+          "evidence": {
+            "field": "/items/21",
+            "quote": "rope",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Teasing stick",
+          "item_id": 10029,
+          "source_text": "teasing stick",
+          "evidence": {
+            "field": "/items/23",
+            "quote": "teasing stick",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Box trap",
+          "item_id": 10008,
+          "source_text": "box trap",
+          "evidence": {
+            "field": "/items/24",
+            "quote": "box trap",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rabbit snare",
+          "item_id": 10031,
+          "source_text": "rabbit snare",
+          "evidence": {
+            "field": "/items/25",
+            "quote": "rabbit snare",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/26",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Soul rune",
+          "item_id": 566,
+          "source_text": "soul runes",
+          "evidence": {
+            "field": "/items/27",
+            "quote": "soul runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-06f9f2ccf951",
+      "text_hash": "sha256:852b64d4d76cc12e7ad898a4c17e3caf84616fc70a37007788bfc520a54c8fd5",
+      "objectives": [
+        {
+          "key": "skill:fishing>=99",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do barbarian fishing to 99 fishing",
+            "span": [
+              2,
+              36
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Barbarian rod",
+          "item_id": 11323,
+          "source_text": "barbarian rod",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "barbarian rod",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Feather",
+          "item_id": 314,
+          "source_text": "feathers",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "feathers",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "bank_actions": [
+        {
+          "type": "deposit",
+          "position": "within",
+          "evidence": {
+            "field": "/text",
+            "quote": "just bank the sturgeons",
+            "span": [
+              866,
+              889
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-ce48f774436a",
+      "text_hash": "sha256:436dcd4b507b69ce40bd230cbfb64c1614fe24a563436f89836ce4dc0906218a",
+      "objectives": [
+        {
+          "key": "quest:legends_quest@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "go inside and complete the quest",
+            "span": [
+              959,
+              991
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:recipe_for_disaster@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete RFD (including the Culinaromancer fight)",
+            "span": [
+              1373,
+              1422
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:7462x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy barrows gloves",
+            "span": [
+              1442,
+              1460
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:karamja:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "claim the easy and medium Karamja diaries",
+            "span": [
+              1545,
+              1586
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:karamja:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "claim the easy and medium Karamja diaries",
+            "span": [
+              1545,
+              1586
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-85e0148637e3",
+      "text_hash": "sha256:0a5fb26dc0f45be5cc24de038b23103d63eef27b3f998295a6712c388f4a688a",
+      "objectives": [
+        {
+          "key": "item:12954x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "kill cyclopes to get a dragon defender",
+            "span": [
+              202,
+              240
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:defence>=60",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "train your defence to 60",
+            "span": [
+              549,
+              573
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:family/defence_potionx1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy a defence potion",
+            "span": [
+              782,
+              802
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "cash stack",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "cash stack",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Diamond",
+          "item_id": 1601,
+          "source_text": "cut diamond",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "cut diamond",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-4b907585b095",
+      "text_hash": "sha256:f828042aa510ddbe69311c0b4d6901d6fe117bb5c2b1a95cf2b3789e6db147c9",
+      "objectives": [
+        {
+          "key": "diary:kourend_and_kebos:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Collect the medium Kourend & Kebos diary",
+            "span": [
+              196,
+              236
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:a_kingdom_divided@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do A Kingdom Divided",
+            "span": [
+              266,
+              286
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:his_faithful_servants@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "start and complete His Faithful Servants miniquest",
+            "span": [
+              532,
+              582
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Volcanic sulphur",
+          "item_id": 13571,
+          "source_text": "volcanic sulphur",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "volcanic sulphur",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Molten glass",
+          "item_id": 1775,
+          "source_text": "molten glass",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "molten glass",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Dark essence block",
+          "item_id": 13446,
+          "source_text": "dark essence block",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "dark essence block",
+            "span": [
+              0,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "an axe",
+          "any_of": [
+            1359,
+            1357,
+            1355,
+            1361,
+            1353,
+            1349,
+            1351
+          ],
+          "source_text": "an axe",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "an axe",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "axe-means-best-axe"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-9c59a66bedd7",
+      "text_hash": "sha256:eee69fd1c2088b814a2b73ee3ae40677f8abe65dd83c3fb77f04f8ccda4e53e0",
+      "objectives": [
+        {
+          "key": "quest:kings_ransom@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do King’s Ransom",
+            "span": [
+              88,
+              106
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "skill:prayer>=60",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Use the bones at the Chaos Altar to get to 60+ prayer",
+            "span": [
+              198,
+              251
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:defence>=70",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to 70 defence",
+            "span": [
+              324,
+              337
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "looting bag",
+          "family": "looting_bag",
+          "source_text": "looting bag",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "looting bag",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-113470bd76c7",
+      "text_hash": "sha256:0729eb6a75fd551d51557d44776c6c50c9fc08f5282d81388519cb2f0ccbfddd",
+      "objectives": [
+        {
+          "key": "skill:prayer>=70",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Cash in the prayer xp at the Chaos Altar",
+            "span": [
+              2,
+              42
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Bones",
+          "item_id": 526,
+          "qty": 1400,
+          "source_text": "1.4k bones",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "1.4k bones",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-f67c5d8b717f",
+      "text_hash": "sha256:4c5ff5c331ef97b7a4ea97ad9eb9d76aecb011844b9ae392693e664b5685f309",
+      "objectives": [
+        {
+          "key": "item:22275x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make a green d’hide shield",
+            "span": [
+              67,
+              95
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "item:29303x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Upgrade your medium fur pouch to a large fur pouch",
+            "span": [
+              245,
+              295
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "skill:fletching>=60",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to get to level 60 and make all into headless arrows",
+            "span": [
+              545,
+              597
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Green dragonhide",
+          "item_id": 1753,
+          "source_text": "green dragonhides",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "green dragonhides",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Coins",
+          "item_id": 995,
+          "source_text": "coins",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "coins",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Nature rune",
+          "item_id": 561,
+          "source_text": "nature runes",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "nature runes",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of fire",
+          "item_id": 1387,
+          "source_text": "staff of fire",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "staff of fire",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Maple logs",
+          "item_id": 1517,
+          "source_text": "maple logs",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "maple logs",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Feather",
+          "item_id": 314,
+          "source_text": "feathers",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "feathers",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Log basket",
+          "item_id": 28140,
+          "source_text": "log basket",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "log basket",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-c3ccb2b3f486",
+      "text_hash": "sha256:394accb611281518eb5e0a4e9d0606b7eaa9d2a7e891ebdaf8a7c2b4d7484ddb",
+      "objectives": [
+        {
+          "key": "skill:slayer>=51",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "You should be level 51 (or higher) slayer",
+            "span": [
+              2,
+              43
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "should-now-have-is-checkpoint"
+          }
+        },
+        {
+          "key": "item:556x20000",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 20,000 air runes",
+            "span": [
+              354,
+              374
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:at_first_light@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "do At First Light",
+            "span": [
+              493,
+              510
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "item:29277x27",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "27 Trapper’s tipple",
+            "span": [
+              791,
+              812
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:29286x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "mixed hide boots",
+            "span": [
+              903,
+              919
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "item:29289x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a mixed hide cape",
+            "span": [
+              957,
+              974
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "quest:perilous_moons@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "start and complete Perilous Moons",
+            "span": [
+              1098,
+              1131
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:the_heart_of_darkness@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "and The Heart of Darkness",
+            "span": [
+              1249,
+              1274
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:847x4",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy four willow longbows",
+            "span": [
+              1353,
+              1377
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:vale_totems_miniquest@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do the Vale Totems miniquest",
+            "span": [
+              1511,
+              1539
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:shadows_of_custodia@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete Shadows of Custodia",
+            "span": [
+              1541,
+              1579
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:family/rod_of_ivandisx1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make the Rod of Ivandis",
+            "span": [
+              1733,
+              1756
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "quest:in_aid_of_the_myreque@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete In Aid of the Myreque",
+            "span": [
+              1758,
+              1788
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:darkness_of_hallowvale@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Darkness of Hallowvale",
+            "span": [
+              1795,
+              1817
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:a_taste_of_hope@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "A Taste of Hope",
+            "span": [
+              1819,
+              1834
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:sins_of_the_father@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Sins of the Father",
+            "span": [
+              1839,
+              1857
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:varrock:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "You can now complete the Varrock hard diary",
+            "span": [
+              2472,
+              2515
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:fremennik:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "slay a Brine rat to complete the Fremennik medium diary",
+            "span": [
+              2783,
+              2838
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Law rune",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Soul rune",
+          "item_id": 566,
+          "source_text": "soul runes",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "soul runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Rope",
+          "item_id": 954,
+          "source_text": "rope",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "rope",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Plank",
+          "item_id": 960,
+          "qty": 2,
+          "source_text": "2 plank",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "2 plank",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Emerald",
+          "item_id": 1605,
+          "source_text": "emerald",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "emerald",
+            "span": [
+              0,
+              7
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Chisel",
+          "item_id": 1755,
+          "source_text": "chisel",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "chisel",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Air rune",
+          "item_id": 556,
+          "source_text": "air runes",
+          "evidence": {
+            "field": "/items/11",
+            "quote": "air runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Cosmic rune",
+          "item_id": 564,
+          "source_text": "cosmic runes",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "cosmic runes",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Pestle and mortar",
+          "item_id": 233,
+          "source_text": "pestle and mortar",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "pestle and mortar",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Vial of water",
+          "item_id": 227,
+          "source_text": "vial of water",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "vial of water",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Ruby",
+          "item_id": 1603,
+          "source_text": "ruby",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "ruby",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Fire rune",
+          "item_id": 554,
+          "source_text": "fire runes",
+          "evidence": {
+            "field": "/items/16",
+            "quote": "fire runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-68fb6e6f6386",
+      "text_hash": "sha256:290c795cd4db0a72ea3a5be660384b40212354fa537af72e4f4f5ad99e88858e",
+      "objectives": [
+        {
+          "key": "quest:troubled_tortugans@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Troubled Tortugans and start and complete the quest in full",
+            "span": [
+              280,
+              339
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:sailing>=50",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "port courier tasks to Summer Shore until level 50 sailing",
+            "span": [
+              439,
+              496
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:31716x80",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 80 lead ore",
+            "span": [
+              1297,
+              1312
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "skill:hunter>=60",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "catch blue crabs until 61 hunter (300k xp, level 60, is actually fine)",
+            "span": [
+              1587,
+              1657
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Bucket",
+          "item_id": 1925,
+          "qty": 4,
+          "source_text": "4 buckets",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "4 buckets",
+            "span": [
+              6,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Plank",
+          "item_id": 960,
+          "qty": 4,
+          "source_text": "4 planks",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "4 planks",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Saw",
+          "item_id": 8794,
+          "source_text": "saw",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "saw",
+            "span": [
+              0,
+              3
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "no_bank_actions": {
+        "reason": "Both derived bank actions come from the conditional sardine note ('If you did not have enough banked fish offcuts ... banking by speaking with Peer the Seer ... at the bank boat'), not from the step's main instructions.",
+        "source": {
+          "method": "llm",
+          "confidence": "medium",
+          "skill_version": "annotate-guide@5",
+          "confirmed_by": "owner",
+          "decision": "agent-judgment-delegated"
+        }
+      }
+    },
+    {
+      "step_id": "bruh-2.2-eebcc93d77e7",
+      "text_hash": "sha256:5351521bbde219733dd834a8315c0fa8afc6a0dfe473a985e4527e7d6c89d36c",
+      "objectives": [
+        {
+          "key": "skill:ranged>=62",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Train your ranging in the MM1 tunnels (short fuse) to level 62",
+            "span": [
+              416,
+              478
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:10499x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy an upgraded device from Ava at level 50",
+            "span": [
+              1207,
+              1250
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Box trap",
+          "item_id": 10008,
+          "source_text": "box traps",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "box traps",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Knife",
+          "item_id": 946,
+          "source_text": "knife",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "knife",
+            "span": [
+              0,
+              5
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of fire",
+          "item_id": 1387,
+          "source_text": "fire staff",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "fire staff",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Nature rune",
+          "item_id": 561,
+          "source_text": "nature runes",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "nature runes",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-d9052689a032",
+      "text_hash": "sha256:c90c8418cdfa6ab285406692ec692238d05b9d369af4963452b5d8710fd750c1",
+      "objectives": [
+        {
+          "key": "item:4822x975",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make 65 mithril bars into 975 nails",
+            "span": [
+              160,
+              195
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:8778x300",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Collect 300 oak planks",
+            "span": [
+              329,
+              351
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:3032x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "decant them into 12 (4)-dose potions",
+            "span": [
+              557,
+              593
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-0929f544c2c3",
+      "text_hash": "sha256:e5e224ca9784016f9c263ec4d74603df99eaf1cd8c2ca369ec641d43d828afd9",
+      "objectives": [
+        {
+          "key": "skill:sailing>=55",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Salvage until level 55 sailing",
+            "span": [
+              537,
+              567
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-da5e9c05eae9",
+      "text_hash": "sha256:a940061123cc2e84619047d660e30c2f675a18b66eed7f48a5978e1213341c8d",
+      "objectives": [
+        {
+          "key": "skill:agility>=84",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Hallowed Sepulchre grind to level 84 agility",
+            "span": [
+              67,
+              111
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Crossbow",
+          "item_id": 837,
+          "source_text": "crossbow",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "crossbow",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "agility potions",
+          "family": "agility_potion",
+          "source_text": "agility potions",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "agility potions",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Oak plank",
+          "item_id": 8778,
+          "source_text": "oak planks",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "oak planks",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Mithril nails",
+          "item_id": 4822,
+          "source_text": "mithril nails",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "mithril nails",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of fire",
+          "item_id": 1387,
+          "source_text": "fire staff",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "fire staff",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Nature rune",
+          "item_id": 561,
+          "source_text": "nature runes",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "nature runes",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-be73f7328c3b",
+      "text_hash": "sha256:63d233bd45e03d07ae92c72c723e542f1cd9d49aef3ac1a6c58c2eae584727d1",
+      "objectives": [
+        {
+          "key": "skill:smithing>=70",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "train your smithing to level 70",
+            "span": [
+              767,
+              798
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:1315x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make a mithril 2h sword for Devious Minds",
+            "span": [
+              883,
+              924
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "quest:defender_of_varrock@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete Defender of Varrock",
+            "span": [
+              1280,
+              1318
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "item:9419x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "create 5 mithril grapples",
+            "span": [
+              1799,
+              1824
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:ardougne:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete and collect the rewards for the Ardougne medium diary",
+            "span": [
+              1829,
+              1891
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:kandarin:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the Kandarin medium diary",
+            "span": [
+              1893,
+              1918
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:lumbridge_and_draynor:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the Lumbridge & Draynor medium diary",
+            "span": [
+              1920,
+              1956
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.2-c9ca0e75b4b5",
+      "text_hash": "sha256:85b612e722777cb4112c140fd034cafef731a0df5fb5476d1223592f2df55bc7",
+      "items": [
+        {
+          "name": "Crossbow",
+          "item_id": 837,
+          "source_text": "crossbow",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "crossbow",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "agility potions",
+          "family": "agility_potion",
+          "source_text": "agility potions",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "agility potions",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Teak plank",
+          "item_id": 8780,
+          "source_text": "teak planks",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "teak planks",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Staff of fire",
+          "item_id": 1387,
+          "source_text": "fire staff",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "fire staff",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Nature rune",
+          "item_id": 561,
+          "source_text": "nature runes",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "nature runes",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    }
+  ]
+}

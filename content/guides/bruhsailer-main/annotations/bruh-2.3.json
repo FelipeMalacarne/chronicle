@@ -1,0 +1,1369 @@
+{
+  "schema_version": 1,
+  "kind": "section",
+  "guide_id": "bruhsailer-main",
+  "section_id": "bruh-2.3",
+  "skill_version": "annotate-guide@5",
+  "steps": [
+    {
+      "step_id": "bruh-2.3-bb8092b5f6ef",
+      "text_hash": "sha256:a8eb15610a18bd73621eb1d91d1d2b0945a10d28254d2678aea274ec286ca76b",
+      "items": [
+        {
+          "name": "crystal saw",
+          "item_id": 9625,
+          "source_text": "crystal saw",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "crystal saw",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-4920bdb2b1b3",
+      "text_hash": "sha256:2d37682daa0c36cce2a7b706d44c8b1edead41cad283c33d77a2648bacdf4619",
+      "objectives": [
+        {
+          "key": "quest:mage_arena_i@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do the Mage Arena I miniquest",
+            "span": [
+              2,
+              31
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:mage_arena_ii@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "followed by the Mage Arena II miniquest",
+            "span": [
+              33,
+              72
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-4f3fbf457c63",
+      "text_hash": "sha256:01e292a4b3065f621210e614bd2f52bb72ad40769a2de72c4172f7bf113f0c1a",
+      "objectives": [
+        {
+          "key": "quest:the_generals_shadow@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "start The General’s Shadow miniquest",
+            "span": [
+              30,
+              68
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:dream_mentor@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete Dream Mentor",
+            "span": [
+              202,
+              233
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:dream_mentor@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Start and complete Dream Mentor",
+            "span": [
+              202,
+              233
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:fremennik:hard@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect the Fremennik hard diary",
+            "span": [
+              441,
+              473
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-0924d45a29ca",
+      "text_hash": "sha256:efbbb17cbd2ef3c81e877b9f34e7f7e063f7f53a96e361d7517073310319ac0e",
+      "objectives": [
+        {
+          "key": "item:4827x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make a composite ogre bow (comp ogre bow)",
+            "span": [
+              2,
+              43
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "unnumbered-acquire-is-one"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-fad3873a0be4",
+      "text_hash": "sha256:ab542879c5b30c50ef5c585739610a5c711701a361624e7f5517f263abe69b7f",
+      "objectives": [
+        {
+          "key": "skill:sailing>=67",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "keep training sailing to level 67 sailing",
+            "span": [
+              362,
+              403
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-ba0b6b802c14",
+      "text_hash": "sha256:cb0ec023b971a735d124a3e34f088c3c7336d81df79abe3677bb133f3e2a2ca5"
+    },
+    {
+      "step_id": "bruh-2.3-50f19ae8329f",
+      "text_hash": "sha256:d7a606c85157b891a7c550d9c1473d65c60893e19f72198b765ac965a2214b0f",
+      "objectives": [
+        {
+          "key": "quest:fairytale_ii_cure_a_queen@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "resume and complete Fairytale II - Cure a Queen",
+            "span": [
+              25,
+              72
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-bfb1056b880c",
+      "text_hash": "sha256:18e6cfe6cd60b5a8f244c11b8ce04df460bcc425c079b63871dfaeb0e148e1c5"
+    },
+    {
+      "step_id": "bruh-2.3-6f6ce4547072",
+      "text_hash": "sha256:2c88c333a9f748057bae27a18b23895f1eb38c2981723f545e8e8495d459a41d",
+      "objectives": [
+        {
+          "key": "quest:land_of_the_goblins@started",
+          "role": "starts",
+          "evidence": {
+            "field": "/text",
+            "quote": "start Land of the Goblins",
+            "span": [
+              58,
+              83
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:the_generals_shadow@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "finish The General's Shadow",
+            "span": [
+              129,
+              156
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:land_of_the_goblins@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "continue Land of the Goblins and complete it in full",
+            "span": [
+              163,
+              215
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-86638eb5666c",
+      "text_hash": "sha256:ddc0f95a9c52f042c6a17675cd076a079082a1c685526044102b4336f703489f",
+      "objectives": [
+        {
+          "key": "quest:skippy_and_the_mogres@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete ‘Skippy and the Mogres’ in full",
+            "span": [
+              142,
+              186
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "quest:rag_and_bone_man_ii@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Kill the following for Rag and Bone Man II, then complete the quest",
+            "span": [
+              2,
+              69
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "prayer potions",
+          "family": "prayer_potion",
+          "source_text": "prayer potions",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "prayer potions",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "mirror shield",
+          "item_id": 4156,
+          "source_text": "mirror shield",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "mirror shield",
+            "span": [
+              0,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "law runes",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "soul runes",
+          "item_id": 566,
+          "source_text": "soul runes",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "soul runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "dramen staff",
+          "item_id": 772,
+          "source_text": "dramen staff",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "dramen staff",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "fishing explosives",
+          "item_id": 6664,
+          "source_text": "fishing explosives",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "fishing explosives",
+            "span": [
+              0,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-6536287c1be9",
+      "text_hash": "sha256:520e8dd1af3b6c66ba8eb8153545cb35face061154ea844f5feded2bbe54edca",
+      "objectives": [
+        {
+          "key": "diary:wilderness:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Collect the easy and medium wilderness diary rewards",
+            "span": [
+              235,
+              287
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "key": "diary:wilderness:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Collect the easy and medium wilderness diary rewards",
+            "span": [
+              235,
+              287
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-1d9f930a812d",
+      "text_hash": "sha256:b4e6743a863f89bfac3e0dc8612366fe9d66167b3500fc8e24b789ad74362677",
+      "objectives": [
+        {
+          "key": "quest:grim_tales@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Grim Tales",
+            "span": [
+              2,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "diary:falador:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect the Falador medium diary rewards",
+            "span": [
+              211,
+              251
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "vials of water",
+          "item_id": 227,
+          "qty": 2,
+          "source_text": "2 vials of water",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "2 vials of water",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "tarromins",
+          "item_id": 253,
+          "qty": 2,
+          "source_text": "2 tarromins",
+          "evidence": {
+            "field": "/items/1",
+            "quote": "2 tarromins",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "leather gloves",
+          "item_id": 1059,
+          "source_text": "leather gloves",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "leather gloves",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "rune axe",
+          "item_id": 1359,
+          "source_text": "rune axe",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "rune axe",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Potato with cheese",
+          "item_id": 6705,
+          "source_text": "cheese potatoes",
+          "evidence": {
+            "field": "/items/4",
+            "quote": "cheese potatoes",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "death runes",
+          "item_id": 560,
+          "source_text": "death runes",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "death runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "fire runes",
+          "item_id": 554,
+          "source_text": "fire runes",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "fire runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "water runes",
+          "item_id": 555,
+          "source_text": "water runes",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "water runes",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "air staff",
+          "item_id": 1381,
+          "source_text": "air staff",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "air staff",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "law runes",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "dueling ring",
+          "family": "ring_of_dueling",
+          "source_text": "dueling ring",
+          "evidence": {
+            "field": "/items/11",
+            "quote": "dueling ring",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "prayer pots",
+          "family": "prayer_potion",
+          "source_text": "prayer pots",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "prayer pots",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "energy pots",
+          "family": "energy_potion",
+          "source_text": "energy pots",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "energy pots",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-bccf72bc6e8a",
+      "text_hash": "sha256:66c5bcb0b4f3ce733d7148db382395cb3770b7bc7c9714628ea385cc617b1600",
+      "objectives": [
+        {
+          "key": "quest:rum_deal@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Rum Deal",
+            "span": [
+              2,
+              13
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:cabin_fever@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Cabin Fever",
+            "span": [
+              91,
+              105
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:the_great_brain_robbery@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do The Great Brain Robbery",
+            "span": [
+              310,
+              336
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "diary:morytania:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete the Morytania medium diary",
+            "span": [
+              438,
+              473
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Ectophial",
+          "family": "ectophial",
+          "source_text": "Ectophial",
+          "evidence": {
+            "field": "/items/0",
+            "quote": "Ectophial",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "Potato with cheese",
+          "item_id": 6705,
+          "source_text": "cheese potatoes",
+          "evidence": {
+            "field": "/items/2",
+            "quote": "cheese potatoes",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "prayer pots",
+          "family": "prayer_potion",
+          "source_text": "prayer pots",
+          "evidence": {
+            "field": "/items/3",
+            "quote": "prayer pots",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "energy pots",
+          "family": "energy_potion",
+          "source_text": "energy pots",
+          "evidence": {
+            "field": "/items/5",
+            "quote": "energy pots",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        },
+        {
+          "name": "fishbowl helmet",
+          "item_id": 7534,
+          "source_text": "fishbowl helmet",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "fishbowl helmet",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "diving apparatus",
+          "item_id": 7535,
+          "source_text": "diving apparatus",
+          "evidence": {
+            "field": "/items/6",
+            "quote": "diving apparatus",
+            "span": [
+              18,
+              34
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "planks",
+          "item_id": 960,
+          "qty": 18,
+          "source_text": "18 planks",
+          "evidence": {
+            "field": "/items/7",
+            "quote": "18 planks",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "bear fur",
+          "item_id": 948,
+          "qty": 10,
+          "source_text": "10 bear fur",
+          "evidence": {
+            "field": "/items/8",
+            "quote": "10 bear fur",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "hammer",
+          "item_id": 2347,
+          "source_text": "hammer",
+          "evidence": {
+            "field": "/items/9",
+            "quote": "hammer",
+            "span": [
+              0,
+              6
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "holy symbol",
+          "item_id": 1718,
+          "source_text": "holy symbol",
+          "evidence": {
+            "field": "/items/10",
+            "quote": "holy symbol",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "ring of charos(a)",
+          "item_id": 6465,
+          "source_text": "ring of charos(a)",
+          "evidence": {
+            "field": "/items/11",
+            "quote": "ring of charos(a)",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "bowl",
+          "item_id": 1923,
+          "source_text": "bowl",
+          "evidence": {
+            "field": "/items/12",
+            "quote": "bowl",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "chaos runes",
+          "item_id": 562,
+          "qty": 15,
+          "source_text": "15 chaos runes",
+          "evidence": {
+            "field": "/items/13",
+            "quote": "15 chaos runes",
+            "span": [
+              0,
+              14
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "law runes",
+          "item_id": 563,
+          "source_text": "law runes",
+          "evidence": {
+            "field": "/items/14",
+            "quote": "law runes",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "fire runes",
+          "item_id": 554,
+          "source_text": "fire runes",
+          "evidence": {
+            "field": "/items/15",
+            "quote": "fire runes",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "air staff",
+          "item_id": 1381,
+          "source_text": "air staff",
+          "evidence": {
+            "field": "/items/16",
+            "quote": "air staff",
+            "span": [
+              0,
+              9
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "rune axe",
+          "item_id": 1359,
+          "source_text": "rune axe",
+          "evidence": {
+            "field": "/items/17",
+            "quote": "rune axe",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "fremennik boots",
+          "item_id": 3791,
+          "source_text": "fremennik boots",
+          "evidence": {
+            "field": "/items/18",
+            "quote": "fremennik boots",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "watermelon seeds",
+          "item_id": 5321,
+          "source_text": "watermelon seeds",
+          "evidence": {
+            "field": "/items/19",
+            "quote": "watermelon seeds",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "ultracompost",
+          "item_id": 21483,
+          "source_text": "ultracompost",
+          "evidence": {
+            "field": "/items/20",
+            "quote": "ultracompost",
+            "span": [
+              0,
+              12
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "rake",
+          "item_id": 5341,
+          "source_text": "rake",
+          "evidence": {
+            "field": "/items/21",
+            "quote": "rake",
+            "span": [
+              0,
+              4
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        },
+        {
+          "name": "seed dibber",
+          "item_id": 5343,
+          "source_text": "seed dibber",
+          "evidence": {
+            "field": "/items/22",
+            "quote": "seed dibber",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@5"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "bruh-2.3-867ab9cc404b",
+      "text_hash": "sha256:665b03cf1849876d98fff46a46867c410d7625830f182e681bc77bbbe66879b7",
+      "objectives": [
+        {
+          "key": "quest:regicide@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do the entire elf quest line: Regicide",
+            "span": [
+              246,
+              284
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:roving_elves@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Roving Elves, Mourning’s End Part I",
+            "span": [
+              286,
+              323
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:mournings_end_part_i@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Mourning’s End Part I, Mourning’s End Part II",
+            "span": [
+              300,
+              349
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:mournings_end_part_ii@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Mourning’s End Part II, Song of the Elves",
+            "span": [
+              325,
+              368
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:song_of_the_elves@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Mourning’s End Part II, Song of the Elves",
+            "span": [
+              325,
+              368
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@5",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ]
+    }
+  ]
+}

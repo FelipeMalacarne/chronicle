@@ -114,3 +114,44 @@ acesso e Automação (Microbot: cockpit, rotinas, plugins, 640). Os artboards po
 v6 e, desde 2026-11-05, também o registro da v6 (sem texto de sistema, explicações no `title`, um bisel
 só). A página v6 é a referência para a implementação, tela por tela, começando pelo Agora. Em aberto:
 recorrentes com `ready_at` como entidade (decisão 31 do doc 01).
+
+## 6. Implementação da v6 (2026-11-05)
+
+As telas da página v6 foram implementadas em `web/` (componentes em `web/src/lib/v6`, folha em
+`web/src/lib/styles/pergaminho.css` gerada a partir das regras dos artboards V6, com os mesmos nomes de
+classe). Artboards seguidos:
+
+| Tela | Artboards | Rota |
+|---|---|---|
+| Casca (Chronicle, sidebar A, barra estreita) | V6Agora1440, V6Agora640, V6Sidebars (opção A) | todas |
+| Agora | V6Agora1440, V6Agora640, V6AgoraBruh1440, V6AgoraBruh640, V6AgoraEstados1440 (fonte falhou, Fixar outro) | `/` |
+| Painel de entidade | V6Entidade, comportamento em V6Agora1440/640 e V6Mundo1440 | sobre qualquer tela |
+| Rota | V6Rota1440, V6Rota640, V6RotaBruh1440 | `/rotas/<guia>/<seção>` |
+| Comparar | V6Comparar1440 | `/compare` |
+| Mundo › Entidades | V6Mundo1440, V6Mundo640 | `/mundo` |
+| Mundo › Metas | V6Metas1440, V6Metas640 | `/mundo/metas` |
+| Conta | V6Conta1440, V6Conta640 | `/conta` |
+| Primeiro acesso | V6Setup1440 | `/setup` |
+
+Onde o código diverge do canvas, por falta de dado ou de API (para o dono decidir se o canvas muda ou
+se a API vem depois):
+
+1. **Grafo, Sessão, Automação e recorrentes** não foram implementados: não há API de grafo, de sessão
+   (diff entre snapshots) nem o módulo do Microbot (doc 08); recorrentes com prazo seguem como proposta
+   (decisão 31 do doc 01). A aba Grafo do Mundo fica desabilitada; "Nesta sessão" no rodapé do Agora
+   conta as últimas 6 h de eventos, sem o link "ver".
+2. **Equipamento em grade**: o contrato do plugin não traz a posição de cada slot, então o equipamento
+   aparece em grade como o inventário, não no boneco de V6Conta1440. Rune pouch e seed vault não são
+   lidos pelo plugin e não aparecem.
+3. **Banco sem abas e sem "só o que a rota pede"**: o contrato não traz as abas do banco.
+4. **Diaries sem lista de tarefas**: o catálogo tem só os tiers; a área aberta mostra os quatro tiers.
+5. **Presets do guia** (Metas) não existem no conteúdo; a lista termina em "+ fixar qualquer entidade".
+6. **Chip de skill sem o nível atual** ("43 Magic · 41"): o board não devolve o fato observado junto do
+   veredito; o painel de entidade mostra o estado.
+7. **"Nota pessoal"** na linha aberta da Rota não existe: nota só existe junto de uma marca.
+8. **"Marcar os anteriores como feitos"** (lote com desfazer) continua como ação secundária do painel
+   "Fixar outro", embora o artboard não a mostre, para não perder a função.
+9. O badge `AUTH_MODE=dev` de V6Setup1440 não entrou: V6Fundamentos proíbe nome de variável de ambiente
+   na UI.
+10. A Rota abre o trecho do cursor numa janela (3 passos antes, 10 depois) com "mostrar tudo", como em
+    V6Rota1440; trechos sem título no conteúdo recebem o nome dos locais e das quests concluídas.

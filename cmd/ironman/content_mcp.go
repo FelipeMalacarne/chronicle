@@ -266,7 +266,10 @@ const submitSchema = `{"type":"object","additionalProperties":false,"required":[
    "id":{"type":"string","description":"chosen candidate id when the name is ambiguous"},
    "tier":{"type":"string","enum":["easy","medium","hard","elite"]},
    "state":{"type":"string","enum":["started","finished"],"description":"quest only"},
-   "n":{"type":"integer","minimum":1,"description":"skill level, boss kill count, item quantity, quest points"},
+   "n":{"type":"integer","minimum":1,"description":"skill level, boss kill count, item quantity (summed over the family with family), quest points; omit with any_of"},
+   "family":{"type":"string","description":"item only, instead of name: family name or slug, any variant counts (item:family/<slug>xN)"},
+   "any_of":{"type":"array","minItems":2,"description":"item only, instead of name and n: alternatives, one must reach its own n alone (item:any(<id>x<n>|...))","items":{"type":"object","additionalProperties":false,"required":["name","n"],"properties":{
+    "name":{"type":"string"},"id":{"type":"string","description":"chosen candidate id when the name is ambiguous"},"n":{"type":"integer","minimum":1}}}},
    "field":{"$ref":"#/$defs/field"},"quote":{"$ref":"#/$defs/quote"},
    "confidence":{"$ref":"#/$defs/confidence"},"confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}}},
   "items":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["name","quote","confidence"],"properties":{

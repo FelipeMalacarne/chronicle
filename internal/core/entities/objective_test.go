@@ -3,6 +3,7 @@ package entities
 import (
 	"encoding/json"
 	"io/fs"
+	"slices"
 	"strings"
 	"testing"
 	"testing/fstest"
@@ -15,6 +16,8 @@ func TestParseObjectiveKey(t *testing.T) {
 		"quest:x_marks_the_spot@finished", "quest:rune_mysteries@started", "skill:agility>=70",
 		"skill:attack>=1", "skill:herblore>=99", "diary:ardougne:easy@complete", "item:960x120", "item:952x1",
 		"unlock:fairy_rings@done", "boss:zulrah>=50", "ca:574@done", "ca:0@done", "qp>=107", "qp>=1",
+		"item:family/graceful_hoodx1", "item:family/prayer_potionx4", "item:family/antidote_plus_plusx2",
+		"item:any(1355x2|1357x1|1359x1)", "item:any(1x1|2x1)",
 	}
 	for _, s := range valid {
 		k, err := ParseObjectiveKey(s)
@@ -32,11 +35,78 @@ func TestParseObjectiveKey(t *testing.T) {
 		"diary:ardougne:easy@finished", "item:952", "item:952x0", "item:952>=1", "item:0x1",
 		"unlock:fairy_rings@complete", "boss:zulrah>=0", "ca:574@finished", "qp>=0", "qp@done", "qp",
 		"location:draynor_village@done", "goal:fire_cape@done", "step:1.1.5@done", "quest:Cook's Assistant@finished",
+		// item families
+		"item:family/graceful_hood", "item:family/graceful_hoodx0", "item:family/x1", "item:family/Graceful_hoodx1",
+		"item:family/graceful hoodx1", "item:family/graceful_hood>=1", "item:family/graceful_hood@done", "item:family/graceful_hoodx01",
+		// item alternatives: canonical form only
+		"item:any(1355x2|1357x1|1359x1)x1", "item:any(1357x1|1355x2)", "item:any(1355x2|1355x1)", "item:any(1355x2)",
+		"item:any()", "item:any(1355|1357x1)", "item:any(1355x0|1357x1)", "item:any(1355x02|1357x1)", "item:any(01355x2|1357x1)",
+		"item:any(1355x2|1357x1", "item:any(1355x2,1357x1)", "item:any(1355x2||1357x1)", "item:any(0x1|1357x1)", "item:any(1355x2|1357x1|)",
+		"item:any(1355x2|1357x1)@done", "item:any(1355x2|1357x1)>=1",
 	}
 	for _, s := range invalid {
 		if _, err := ParseObjectiveKey(s); err == nil {
 			t.Errorf("ParseObjectiveKey(%q) accepted an invalid key", s)
 		}
+	}
+}
+
+func TestItemKeyAccessors(t *testing.T) {
+	fam := MustParseObjectiveKey("item:family/graceful_hoodx1")
+	if slug, n, ok := fam.ItemFamily(); !ok || slug != "graceful_hood" || n != 1 {
+		t.Errorf("ItemFamily = %q %d %v", slug, n, ok)
+	}
+	if _, ok := fam.ItemAlternatives(); ok {
+		t.Error("a family key has alternatives")
+	}
+	if _, ok := fam.Ref.Int(); ok {
+		t.Error("a family ref is an item id")
+	}
+	anyKey := MustParseObjectiveKey("item:any(1355x2|1357x1|1359x1)")
+	alts, ok := anyKey.ItemAlternatives()
+	if want := []ItemQty{{1355, 2}, {1357, 1}, {1359, 1}}; !ok || !slices.Equal(alts, want) {
+		t.Errorf("ItemAlternatives = %v %v", alts, ok)
+	}
+	if _, _, ok := anyKey.ItemFamily(); ok {
+		t.Error("an alternatives key is a family")
+	}
+	if _, ok := anyKey.Ref.Int(); ok {
+		t.Error("an alternatives ref is an item id")
+	}
+	exact := MustParseObjectiveKey("item:1355x1")
+	if _, _, ok := exact.ItemFamily(); ok {
+		t.Error("an exact key is a family")
+	}
+	if _, ok := exact.ItemAlternatives(); ok {
+		t.Error("an exact key has alternatives")
+	}
+
+	built, err := ItemAlternativesKey([]ItemQty{{1359, 1}, {1355, 2}, {1357, 1}})
+	if err != nil || built != anyKey {
+		t.Errorf("ItemAlternativesKey = %v %v, want %v", built, err, anyKey)
+	}
+	for _, bad := range [][]ItemQty{{{1355, 1}}, {{1355, 1}, {1355, 2}}, {{1355, 0}, {1357, 1}}, {{0, 1}, {1357, 1}}} {
+		if k, err := ItemAlternativesKey(bad); err == nil {
+			t.Errorf("ItemAlternativesKey(%v) = %v", bad, k)
+		}
+	}
+	if k, err := ItemFamilyKey("graceful_hood", 1); err != nil || k != fam {
+		t.Errorf("ItemFamilyKey = %v %v", k, err)
+	}
+	for _, bad := range []ObjectiveKey{
+		{Ref: Ref{Kind: KindItem, ID: "family/graceful_hood"}, Op: OpQuantity},
+		{Ref: Ref{Kind: KindItem, ID: "any(1355x2|1357x1)"}, Op: OpQuantity, N: 1},
+		{Ref: Ref{Kind: KindItem, ID: "any(1355x2|1357x1)"}, Op: OpState, State: StateDone},
+	} {
+		if err := bad.Validate(); err == nil {
+			t.Errorf("Validate(%+v) accepted", bad)
+		}
+	}
+	if _, err := ParseRef("item:family/graceful_hood"); err == nil {
+		t.Error("ParseRef accepted a family subject")
+	}
+	if ref, err := ParseObjectiveRef("item:family/graceful_hood"); err != nil || ref != fam.Ref {
+		t.Errorf("ParseObjectiveRef = %v %v", ref, err)
 	}
 }
 
@@ -76,11 +146,23 @@ func TestKnownObjective(t *testing.T) {
 		"boss:zulrah>=50":                 true, // no boss catalog: syntax only
 		"unlock:not_an_unlock@done":       false,
 		"qp>=107":                         true,
+		"item:family/graceful_hoodx1":     true,
+		"item:family/not_a_familyx1":      false,
+		"item:any(1355x2|1357x1|1359x1)":  true,
+		"item:any(1355x2|999999x1)":       false,
 	}
 	for s, want := range cases {
 		msg := r.KnownObjective(MustParseObjectiveKey(s))
 		if (msg == "") != want {
 			t.Errorf("KnownObjective(%s) = %q, want known=%v", s, msg, want)
+		}
+	}
+	for s, want := range map[string]string{
+		"item:family/graceful_hoodx1":    "Graceful hood",
+		"item:any(1355x2|1357x1|1359x1)": "Mithril axe / Adamant axe / Rune axe",
+	} {
+		if name, ok := r.Display(MustParseObjectiveKey(s).Ref); !ok || name != want {
+			t.Errorf("Display(%s) = %q %v, want %q", s, name, ok, want)
 		}
 	}
 }

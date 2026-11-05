@@ -58,7 +58,7 @@ func (s *Server) handleWorld(w http.ResponseWriter, r *http.Request) {
 func (s *Server) worldEntity(entity string, verdicts map[string]storeprogress.ObjectiveView) worldEntity {
 	e := worldEntity{Ref: entity, Kind: entities.QuestPoints, Name: "quest points", Objectives: []worldObjective{}, Routes: []occurrence{}}
 	if entity != entities.QuestPoints {
-		if ref, err := entities.ParseRef(entity); err == nil {
+		if ref, err := entities.ParseObjectiveRef(entity); err == nil {
 			e.Kind, e.Name = string(ref.Kind), ref.ID
 			if s.opts.Catalog != nil {
 				if name, ok := s.opts.Catalog.Display(ref); ok {

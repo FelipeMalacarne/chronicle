@@ -139,6 +139,10 @@ func stepNames(st *content.Step, catalog *entities.Registry, into map[string]str
 	}
 	for _, o := range st.Objectives {
 		add(o.Key.Ref)
+		alts, _ := o.Key.ItemAlternatives()
+		for _, a := range alts {
+			add(entities.ItemRef(a.ID))
+		}
 	}
 	if st.LocationRef != nil {
 		add(*st.LocationRef)

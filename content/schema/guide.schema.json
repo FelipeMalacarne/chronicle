@@ -1441,8 +1441,8 @@
     },
     "objectiveKey": {
       "type": "string",
-      "description": "Chave canônica de objetivo (internal/core/entities.ObjectiveKey, doc 09 seção 3.2): ref + alvo. '@started'/'@finished' (quest), '@complete' (diary), '@done' (unlock, ca), '>=N' (skill 1..99, boss, qp), 'xN' (item exato, N sempre explícito). Ex.: 'quest:x_marks_the_spot@finished', 'skill:agility>=70', 'item:960x120', 'qp>=107'.",
-      "pattern": "^(?:qp>=[1-9][0-9]*|quest:[a-z0-9]+(?:_[a-z0-9]+)*@(?:started|finished)|diary:[a-z0-9]+(?:_[a-z0-9]+)*:(?:easy|medium|hard|elite)@complete|unlock:[a-z0-9]+(?:_[a-z0-9]+)*@done|ca:(?:0|[1-9][0-9]*)@done|skill:[a-z0-9]+(?:_[a-z0-9]+)*>=(?:[1-9]|[1-9][0-9])|boss:[a-z0-9]+(?:_[a-z0-9]+)*>=[1-9][0-9]*|item:[1-9][0-9]*x[1-9][0-9]*)$"
+      "description": "Chave canônica de objetivo (internal/core/entities.ObjectiveKey, doc 09 seção 3.2): ref + alvo. '@started'/'@finished' (quest), '@complete' (diary), '@done' (unlock, ca), '>=N' (skill 1..99, boss, qp), 'xN' (item exato, N sempre explícito), 'item:family/<slug>xN' (qualquer variante da família do catálogo, somadas) e 'item:any(<id>x<n>|...)' (alternativas, sem xN externo: basta uma atingir a própria quantidade; forma canônica com ids crescentes sem repetição, ao menos duas, quantidades explícitas >= 1, verificada pelo validador). Ex.: 'quest:x_marks_the_spot@finished', 'skill:agility>=70', 'item:960x120', 'item:family/graceful_hoodx1', 'item:any(1355x2|1357x1|1359x1)', 'qp>=107'.",
+      "pattern": "^(?:qp>=[1-9][0-9]*|quest:[a-z0-9]+(?:_[a-z0-9]+)*@(?:started|finished)|diary:[a-z0-9]+(?:_[a-z0-9]+)*:(?:easy|medium|hard|elite)@complete|unlock:[a-z0-9]+(?:_[a-z0-9]+)*@done|ca:(?:0|[1-9][0-9]*)@done|skill:[a-z0-9]+(?:_[a-z0-9]+)*>=(?:[1-9]|[1-9][0-9])|boss:[a-z0-9]+(?:_[a-z0-9]+)*>=[1-9][0-9]*|item:[1-9][0-9]*x[1-9][0-9]*|item:family/[a-z0-9]+(?:_[a-z0-9]+)*x[1-9][0-9]*|item:any\\([1-9][0-9]*x[1-9][0-9]*(?:\\|[1-9][0-9]*x[1-9][0-9]*)+\\))$"
     },
     "graphRef": {
       "description": "Referência de aresta do grafo: uma entidade (entityRef, inclusive 'step:<id>') ou um objetivo (objectiveKey).",

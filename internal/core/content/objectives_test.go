@@ -134,6 +134,8 @@ func TestAnnotationsCompose(t *testing.T) {
   "objectives":[{"key":"item:952x1","role":"uses","evidence":{"field":"/text","quote":"buy a spade","span":[0,11]},"source":`+llm+`},
                 {"key":"quest:x_marks_the_spot@started","role":"starts","evidence":{"field":"/text","quote":"start X marks the spot quest","span":[13,41]},"source":`+llm+`}]},
  {"step_id":"b","text_hash":"`+h["b"]+`",
+  "objectives":[{"key":"item:any(1349x1|1351x1)","role":"uses","evidence":{"field":"/text","quote":"an axe","span":[15,21]},"source":`+llm+`},
+                {"key":"item:family/prayer_potionx2","role":"uses","evidence":{"field":"/text","quote":"2 prayer potions","span":[26,42]},"source":`+llm+`}],
   "items":[{"name":"Axe","any_of":[1351,1349],"evidence":{"field":"/text","quote":"an axe","span":[15,21]},"source":`+llm+`},
            {"name":"Prayer potion","family":"prayer_potion","qty":2,"evidence":{"field":"/text","quote":"2 prayer potions","span":[26,42]},"source":`+llm+`}],
   "bank_actions":[{"type":"withdraw","position":"start","evidence":{"field":"/text","quote":"withdraw an axe","span":[6,21]},"source":`+llm+`}]},
@@ -158,6 +160,14 @@ func TestAnnotationsCompose(t *testing.T) {
 	}
 	if a.Objectives[1].Source.SkillVersion != "annotate-guide@1" {
 		t.Errorf("skill version not stamped: %+v", a.Objectives[1].Source)
+	}
+	b, _ := c.StepInGuide("t", "b")
+	keys = keys[:0]
+	for _, o := range b.Objectives {
+		keys = append(keys, o.Key.String())
+	}
+	if got := strings.Join(keys, "|"); !strings.HasSuffix(got, "|item:any(1349x1|1351x1)|item:family/prayer_potionx2") {
+		t.Errorf("b objectives = %s", got)
 	}
 	g, _ := c.Guide("t")
 	seg, _ := g.Segment("seg-b")
@@ -208,6 +218,9 @@ func TestAnnotationsRejected(t *testing.T) {
 		{"role mismatch", "1.1.json", "a", `"objectives":[{"key":"quest:x_marks_the_spot@finished","role":"uses","evidence":{"field":"/text","quote":"start X marks","span":[13,26]},"source":` + llm + `}]`, "role uses needs an item key"},
 		{"unknown location", "1.1.json", "a", `"location":{"ref":"location:not_a_place","evidence":{"field":"/location","quote":"Lumbridge","span":[0,9]},"source":` + llm + `}`, "unknown entity location:not_a_place"},
 		{"unknown family", "1.1.json", "b", `"items":[{"name":"x","family":"not_a_family","evidence":{"field":"/text","quote":"an axe","span":[15,21]},"source":` + llm + `}]`, "unknown item family"},
+		{"unknown family key", "1.1.json", "b", `"objectives":[{"key":"item:family/not_a_familyx2","role":"uses","evidence":{"field":"/text","quote":"2 prayer potions","span":[26,42]},"source":` + llm + `}]`, "unknown item family not_a_family"},
+		{"unknown alternative", "1.1.json", "b", `"objectives":[{"key":"item:any(1351x1|999999x1)","role":"uses","evidence":{"field":"/text","quote":"an axe","span":[15,21]},"source":` + llm + `}]`, "unknown entity item:999999"},
+		{"alternatives out of order", "1.1.json", "b", `"objectives":[{"key":"item:any(1351x1|1349x1)","role":"uses","evidence":{"field":"/text","quote":"an axe","span":[15,21]},"source":` + llm + `}]`, "ascending"},
 		{"step of another section", "1.2.json", "a", `"objectives":[]`, "belongs to section"},
 		{"unconfirmed inference", "1.1.json", "a", `"objectives":[{"key":"item:952x1","role":"uses","evidence":{"field":"/text","quote":"buy a spade","span":[0,11]},"source":{"method":"llm","confidence":"medium"}}]`, "needs confirmed_by owner"},
 		{"unknown decision", "1.1.json", "a", `"objectives":[{"key":"item:952x1","role":"uses","evidence":{"field":"/text","quote":"buy a spade","span":[0,11]},"source":{"method":"llm","confidence":"medium","confirmed_by":"owner","decision":"spade-rule"}}]`, "unknown decision \"spade-rule\""},

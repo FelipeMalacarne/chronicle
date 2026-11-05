@@ -222,16 +222,31 @@ type Source struct {
 // diary); ID chooses among the candidates of an ambiguous name. State is
 // "started" or "finished" for a quest; N is the level of a skill, the kill
 // count of a boss, the quantity of an item and the quest points of qp.
+//
+// An item objective names one item (Name), or instead a family (Family, a
+// family name or slug: every variant counts, with N the summed quantity), or
+// alternatives (AnyOf, each with its own quantity, no N: one must reach its
+// quantity alone).
 type ObjectiveProposal struct {
-	Role  string `json:"role"`
-	Kind  string `json:"kind"`
-	Name  string `json:"name,omitempty"`
-	ID    string `json:"id,omitempty"`
-	Tier  string `json:"tier,omitempty"`
-	State string `json:"state,omitempty"`
-	N     int    `json:"n,omitempty"`
+	Role   string                `json:"role"`
+	Kind   string                `json:"kind"`
+	Name   string                `json:"name,omitempty"`
+	ID     string                `json:"id,omitempty"`
+	Tier   string                `json:"tier,omitempty"`
+	State  string                `json:"state,omitempty"`
+	N      int                   `json:"n,omitempty"`
+	Family string                `json:"family,omitempty"`
+	AnyOf  []AlternativeProposal `json:"any_of,omitempty"`
 	Evidence
 	Source
+}
+
+// AlternativeProposal is one alternative of an item objective: N of the item
+// Name (ID chooses among the candidates of an ambiguous name).
+type AlternativeProposal struct {
+	Name string `json:"name"`
+	ID   string `json:"id,omitempty"`
+	N    int    `json:"n"`
 }
 
 // ItemProposal is an item requirement. Name is the item as the step says it
@@ -352,6 +367,9 @@ func objectiveKey(reg *entities.Registry, op ObjectiveProposal) (entities.Object
 	if op.Kind == KindQuestPoints {
 		return entities.ParseObjectiveKey(fmt.Sprintf("%s>=%d", entities.QuestPoints, op.N))
 	}
+	if op.Family != "" || len(op.AnyOf) > 0 {
+		return itemSetKey(reg, op)
+	}
 	if op.Name == "" {
 		return entities.ObjectiveKey{}, fmt.Errorf("%s objectives need a name", op.Kind)
 	}
@@ -384,6 +402,43 @@ func objectiveKey(reg *entities.Registry, op ObjectiveProposal) (entities.Object
 		s = ref.String() + "@" + entities.StateDone
 	}
 	return entities.ParseObjectiveKey(s)
+}
+
+// itemSetKey resolves an item family or alternatives objective.
+func itemSetKey(reg *entities.Registry, op ObjectiveProposal) (entities.ObjectiveKey, error) {
+	switch {
+	case op.Kind != string(entities.KindItem):
+		return entities.ObjectiveKey{}, fmt.Errorf("family and any_of are for item objectives, not %s", op.Kind)
+	case op.Family != "" && len(op.AnyOf) > 0:
+		return entities.ObjectiveKey{}, fmt.Errorf("set only one of family and any_of")
+	case op.Name != "" || op.ID != "":
+		return entities.ObjectiveKey{}, fmt.Errorf("an item objective with family or any_of takes no name or id")
+	}
+	if op.Family != "" {
+		slug := familySlug(reg, op.Family)
+		if slug == "" {
+			return entities.ObjectiveKey{}, fmt.Errorf("unknown item family %q", op.Family)
+		}
+		return entities.ItemFamilyKey(slug, op.N)
+	}
+	if op.N != 0 {
+		return entities.ObjectiveKey{}, fmt.Errorf("any_of alternatives carry their own n; drop the objective's n")
+	}
+	alts := make([]entities.ItemQty, 0, len(op.AnyOf))
+	for i, a := range op.AnyOf {
+		p := entities.ParseItemPhrase(a.Name)
+		if p.Noted {
+			return entities.ObjectiveKey{}, fmt.Errorf("any_of[%d]: item objectives count the item, not its noted form: drop %q", i, "noted")
+		}
+		res, _ := reg.ResolveItem(p.Name)
+		ref, err := pick(reg, res, string(entities.KindItem), p.Name, a.ID)
+		if err != nil {
+			return entities.ObjectiveKey{}, fmt.Errorf("any_of[%d]: %w", i, err)
+		}
+		id, _ := ref.Int()
+		alts = append(alts, entities.ItemQty{ID: id, N: a.N})
+	}
+	return entities.ItemAlternativesKey(alts)
 }
 
 // itemRequirement resolves an item proposal into a requirement.

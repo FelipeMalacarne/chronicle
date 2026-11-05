@@ -5,7 +5,7 @@ description: Extract objectives, item requirements, bank actions and locations f
 
 # annotate-guide
 
-Skill version: **`annotate-guide@4`**. Pass it as `skill_version` on every `submit`. Bump the number
+Skill version: **`annotate-guide@5`**. Pass it as `skill_version` on every `submit`. Bump the number
 here whenever the taxonomy or procedure below changes.
 
 You turn guide text into structured annotations (docs/09 section 6). The output is committed in
@@ -70,10 +70,22 @@ beforehand (`requires`) or consumes on the way (`uses`).
 | `skill` | skill name | `n`: level 1–99 | `completes`, `requires` |
 | `diary` | area, plus `tier` | complete | `completes`, `requires` |
 | `boss` | boss name | `n`: kill count | `completes`, `requires` |
-| `item` | item name | `n`: quantity | `uses`, rarely `completes` (the step's goal is to obtain it) or `requires` |
+| `item` | item name, or `family`, or `any_of` (below) | `n`: quantity | `uses`, rarely `completes` (the step's goal is to obtain it) or `requires` |
 | `unlock` | unlock name | done | `completes`, `requires` |
 | `ca` | combat achievement task | done | `completes`, `requires` |
 | `qp` | none | `n`: quest points | `requires` |
+
+An `item` objective names one exact item (`name`, `id` for an ambiguous name), or instead of `name`:
+
+- `family` (family name or slug, as `resolve_entity` reports it) with `n`: any variant counts,
+  summed (worn and inventory, doses, charges, noted). "Get a graceful hood" when any hood serves →
+  `{"kind":"item","family":"graceful hood","n":1}`, key `item:family/graceful_hoodx1`.
+- `any_of`: alternatives, each `{name, id?, n}` with its own quantity, and no `n` on the objective; it
+  is met when one alternative reaches its own quantity alone. "A mithril axe and either another mith
+  axe, addy axe or a rune axe" → `item` Mithril axe `n: 1` plus
+  `{"kind":"item","any_of":[{"name":"Mithril axe","n":2},{"name":"Adamant axe","n":1},{"name":"Rune axe","n":1}]}`,
+  key `item:any(1355x2|1357x1|1359x1)`. Order does not matter (submit sorts by id); list each item
+  once, at least two.
 
 Each objective has a `quote`: the exact words that support it, from `field` (default `/text`). Case,
 spacing and curly quotes may differ; the words may not.

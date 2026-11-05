@@ -795,6 +795,9 @@ func (r *Registry) Display(ref Ref) (string, bool) {
 			return d.Area + " " + titleTier(d.Tier) + " Diary", true
 		}
 	case KindItem:
+		if name, ok := r.displayItemSet(ref.ID); ok {
+			return name, true
+		}
 		if n, ok := ref.Int(); ok {
 			if f, ok := r.Item(n); ok {
 				if f.Noted {
@@ -819,6 +822,33 @@ func (r *Registry) Display(ref Ref) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// displayItemSet names the subject of an item family key (the family name,
+// "Graceful hood") or of an alternatives key (the item names joined with
+// " / ").
+func (r *Registry) displayItemSet(id string) (string, bool) {
+	if slug, ok := strings.CutPrefix(id, itemFamilyPrefix); ok {
+		ids, known := r.Family(slug)
+		if !known || len(ids) == 0 {
+			return "", false
+		}
+		f, _ := r.Item(ids[0])
+		return f.Family, f.Family != ""
+	}
+	alts, err := parseAlternatives(id)
+	if err != nil {
+		return "", false
+	}
+	names := make([]string, len(alts))
+	for i, a := range alts {
+		f, ok := r.Item(a.ID)
+		if !ok {
+			return "", false
+		}
+		names[i] = f.Name
+	}
+	return strings.Join(names, " / "), true
 }
 
 // WikiKeyOf returns the wiki page key of a known ref.

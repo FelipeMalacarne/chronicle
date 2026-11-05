@@ -87,3 +87,27 @@ func TestStepCrossReferences(t *testing.T) {
 		t.Fatalf("section = %+v", sec)
 	}
 }
+
+func TestStepNamesOfItemSetKeys(t *testing.T) {
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	st := &content.Step{Objectives: []content.Objective{
+		{Key: entities.MustParseObjectiveKey("item:family/graceful_hoodx1"), Role: content.RoleUses},
+		{Key: entities.MustParseObjectiveKey("item:any(1355x2|1357x1)"), Role: content.RoleUses},
+	}}
+	names := map[string]string{}
+	stepNames(st, catalog, names)
+	want := map[string]string{
+		"item:family/graceful_hood": "Graceful hood",
+		"item:any(1355x2|1357x1)":   "Mithril axe / Adamant axe",
+		"item:1355":                 "Mithril axe",
+		"item:1357":                 "Adamant axe",
+	}
+	for k, v := range want {
+		if names[k] != v {
+			t.Errorf("names[%s] = %q, want %q", k, names[k], v)
+		}
+	}
+}

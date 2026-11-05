@@ -285,6 +285,8 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET/POST /api/goals?account=`, `DELETE /api/goals/{id}?account=` | feita (dev, oidc) | metas: objetivo fixado (chave canônica validada no registry); alcançada quando o objetivo vira met |
 | `GET /api/goals/{id}/plan?account=` | feita (dev, oidc) | plano da meta: fechamento de `QuestEntry.Requires` contra fatos e vereditos; unknown nunca conta como feito, presumido pela marca fica fora do "N de M" |
 | `GET /api/world?account=` | feita (dev, oidc) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
+| `GET /api/world/entity?account=&ref=` | feita (dev, oidc) | uma entidade para o painel de entidade da v6: a mesma visão do `/api/world`, os requisitos diretos do catálogo (com o veredito da conta) e as quests que ela destrava |
+| `GET /api/account/state?account=` | feita (dev, oidc) | a Conta (V6Conta1440): conta, total e quest points, skills, quests e diaries com fonte e idade de cada fato, containers com frescor e itens; faceta nunca lida fica vazia |
 | `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=` | planejadas | grafo e plano da meta (esperam os requisitos de quest no catálogo) |
 | `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
 
@@ -1010,10 +1012,19 @@ token inalterado, `marks:write`), `TestDevInstallationPostgres` e a rota da resp
 `TestProgressPostgresLifecycle`, goose up/down/up da 0006 com dados, `just dbml`; no plugin, 92
 testes JUnit e o jar. Falta usar no jogo.
 
+Web v6 (2026-11-05, branch `claude/epic-hypatia-xujppt`): as telas seguem a página v6 do canvas
+"Chronicle — Telas" (docs/ui/decisoes-canvas.md, seção 6). Casca Chronicle com a sidebar A e a barra
+de topo no estreito; Agora (Oziris e BRUHsailer, 1440 e 640, fonte falhou, Fixar outro); Rotas com as
+abas Oziris · BRUHsailer · Comparar (a lista de Rotas saiu); Mundo › Entidades e Mundo › Metas; Conta
+sobre `GET /api/account/state`; primeiro acesso; painel de entidade sobre `GET /api/world/entity`.
+Componentes em `web/src/lib/v6`. Verificação: testes HTTP das duas rotas novas,
+`TestQuestAndDiaryFactsPostgres` com o estado da conta, `node --test` dos módulos puros (Agora, Rota,
+Conta) e capturas em 1440 e 640 contra o servidor real com um Postgres local.
+
 Ainda não existe: deploy no saradomin, device flow do plugin,
-CLI/MCP sobre o cliente, grafo,
-tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
-antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
+CLI/MCP sobre o cliente, grafo (a aba Grafo do Mundo fica desabilitada),
+sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e o módulo de controle
+do Microbot (doc 08; Automação no canvas).
 
 Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam para cá. A ordem dos itens
 2 a 9 foi decidida pelo dono (doc 09, decisão D7): extração completa antes do progresso persistido.

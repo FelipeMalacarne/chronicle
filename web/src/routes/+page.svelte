@@ -109,7 +109,7 @@
 		const b = plan?.bottlenecks.find((x) => !x.met);
 		if (b)
 			parts.push(
-				`Gargalo: ${b.target} ${b.skill}${b.level !== null ? ` (está em ${b.level})` : ''}.`
+				`Gargalo: ${b.target} ${b.skill.charAt(0).toUpperCase() + b.skill.slice(1)}${b.level !== null ? ` (está em ${b.level})` : ''}.`
 			);
 		const here =
 			plan?.routes.find((r) => r.guide_id === guideId && r.goal) ??

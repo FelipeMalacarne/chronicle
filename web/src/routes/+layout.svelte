@@ -30,11 +30,22 @@
 		if (!account || setup) return;
 		return connectLive(account);
 	});
+	// ⌘K / Ctrl+K: a busca da sidebar abre o Mundo com o campo de busca em foco.
+	function searchKey(e: KeyboardEvent) {
+		if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k' && !setup) {
+			e.preventDefault();
+			void goto(resolve('/mundo')).then(() =>
+				document.querySelector<HTMLInputElement>('input[aria-label="Buscar entidade"]')?.focus()
+			);
+		}
+	}
 	// O tema também no body: o fundo fora do shell (overscroll) segue o tema.
 	$effect(() => {
 		document.body.dataset.theme = theme.value;
 	});
 </script>
+
+<svelte:window onkeydown={searchKey} />
 
 <svelte:head>
 	<title>Chronicle</title>

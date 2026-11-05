@@ -289,7 +289,7 @@ func TestPlaceCursor(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			if got := PlaceCursor(g1, tc.status, tc.acc, tc.cur); got != tc.want {
+			if got := PlaceCursor(g1, tc.status, Verdicts{}, nil, tc.acc, tc.cur); got != tc.want {
 				t.Fatalf("cursor = %+v, want %+v", got, tc.want)
 			}
 		})

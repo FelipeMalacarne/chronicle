@@ -31,7 +31,10 @@ type StepState struct {
 	// Main: the step is on the main route (default variant, not a track).
 	Main bool `json:"main"`
 	// Visible: the step belongs to the account's layer and mode.
-	Visible    bool             `json:"visible"`
+	Visible bool `json:"visible"`
+	// BlockedBy are the unmet requirements of a pending step (Blocked): the
+	// cursor passes it until they are met.
+	BlockedBy  []string         `json:"blocked_by,omitempty"`
 	Objectives []ObjectiveState `json:"objectives"`
 }
 
@@ -45,6 +48,8 @@ type Counts struct {
 	Skipped   int `json:"skipped"`
 	Pinned    int `json:"pinned_open"`
 	Remaining int `json:"remaining"`
+	// Blocked counts the remaining steps with an unmet requirement.
+	Blocked int `json:"blocked"`
 }
 
 // SectionCounts summarizes the visible steps of one section (tracks
@@ -99,6 +104,9 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 		if m, ok := in.Marks[st.ID]; ok {
 			s.Mark = &m
 		}
+		if s.Status == Pending {
+			s.BlockedBy = Blocked(st, in.Verdicts, in.Registry)
+		}
 		for _, o := range st.Objectives {
 			key := o.Key.String()
 			s.Objectives = append(s.Objectives, ObjectiveState{Key: key, Role: o.Role, Verdict: in.Verdicts.Of(key), Regressed: regressed[key]})
@@ -108,12 +116,12 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 			continue
 		}
 		if sc, ok := sections[st.SectionID]; ok {
-			sc.Counts.add(s.Status)
+			sc.Counts.add(s)
 		}
 		if !s.Main {
 			continue
 		}
-		out.Counts.add(s.Status)
+		out.Counts.add(s)
 		if s.Manual {
 			out.Coverage.Checkbox++
 			switch {
@@ -156,8 +164,12 @@ func StepTitle(text string) string {
 	return text
 }
 
-func (c *Counts) add(s Status) {
+func (c *Counts) add(st StepState) {
+	s := st.Status
 	c.Total++
+	if len(st.BlockedBy) > 0 {
+		c.Blocked++
+	}
 	switch s {
 	case AutoDone:
 		c.AutoDone++

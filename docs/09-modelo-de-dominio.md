@@ -197,6 +197,17 @@ nem `skipped`, recalculado a cada reavaliação e a cada marca (`cause = auto`).
 conta como feito mesmo antes da confirmação, para a cascata não puxá-lo de volta (decisão do dono,
 2026-11-04). Um pin é descartado quando o passo fixado é concluído.
 
+O cursor também não para num passo bloqueado (decisão do dono, 2026-11-04): um passo `pending` com um
+objetivo `requires` em `unmet`, ou que conclui uma quest (`completes` de `@finished`) com um requisito de
+catálogo (`Registry.Quest(id).Requires`) em `unmet`. Do catálogo ficam de fora os requisitos
+`during_quest`, os `boostable` (os guias contam com boost) e os que o próprio passo conclui. Só `unmet`
+bloqueia: `unknown` não, e um `met` travado continua valendo mesmo regredido. O passo aparece como
+bloqueado (`blocked_by` no board) e volta a valer quando o requisito vira `met`, puxando o cursor de volta.
+Uma marca `pinned_open` e um pin seguram o cursor mesmo num passo bloqueado. Por isso os passos
+flutuantes ("Complete Perilous Moons when you reach 48 Slayer", Oziris 1.5.5a) não precisam de marcador
+no conteúdo: o requisito vem do catálogo da quest. A reavaliação avalia também esses requisitos de
+catálogo, mesmo que nenhum passo os cite.
+
 ## 4. Formato no conteúdo
 
 ### 4.1 O passo em memória e na API

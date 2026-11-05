@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 )
 
 // MarkAction is what the owner asks for in PATCH .../steps/{id}/mark.
@@ -36,6 +37,8 @@ type GuideInput struct {
 	LastStatus map[string]Status
 	Cursor     CursorRecord
 	Account    Account
+	// Registry is the catalog with the quest requirements that block steps.
+	Registry *entities.Registry
 }
 
 // MarkChange is a mark to write; a nil Mark deletes it.
@@ -117,7 +120,7 @@ func PlanPin(in GuideInput, stepID string) (OwnerPlan, error) {
 	if cur.StepID != "" && status[cur.StepID].Done() {
 		return OwnerPlan{}, ErrStepDone
 	}
-	placed := PlaceCursor(in.Guide, status, in.Account, cur)
+	placed := PlaceCursor(in.Guide, status, in.Verdicts, in.Registry, in.Account, cur)
 	return OwnerPlan{Cursor: &placed}, nil
 }
 
@@ -139,7 +142,7 @@ func (in GuideInput) plan(changes []MarkChange) OwnerPlan {
 			out.Events = append(out.Events, StepEvent{Ref: StepRef{GuideID: in.Guide.ID, StepID: c.StepID}, From: from, To: to, Cause: CauseUser})
 		}
 	}
-	placed := PlaceCursor(in.Guide, status, in.Account, in.Cursor)
+	placed := PlaceCursor(in.Guide, status, in.Verdicts, in.Registry, in.Account, in.Cursor)
 	if placed != in.Cursor {
 		out.Cursor = &placed
 	}

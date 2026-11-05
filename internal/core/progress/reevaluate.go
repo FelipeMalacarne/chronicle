@@ -62,7 +62,8 @@ type Plan struct {
 }
 
 // Reevaluate runs the reevaluation of docs/09 section 5, in order: evaluate
-// every objective referenced by any guide (any role), advance the stored
+// every objective referenced by any guide (any role, plus the catalog
+// requirements of the quests the steps complete), advance the stored
 // verdicts, derive the status of every step of every guide and record what
 // changed, apply the implied cascade on the active guide only, and place the
 // cursors.
@@ -76,7 +77,7 @@ func Reevaluate(in Input) Plan {
 			met[key] = rec
 		}
 	}
-	for _, key := range objectiveKeys(in.Guides, in.Goals) {
+	for _, key := range objectiveKeys(in.Guides, in.Registry, in.Goals) {
 		k, err := entities.ParseObjectiveKey(key)
 		if err != nil {
 			continue
@@ -132,7 +133,7 @@ func Reevaluate(in Input) Plan {
 			}
 			plan.StepEvents = append(plan.StepEvents, StepEvent{Ref: ref, From: from, To: to, Cause: cause})
 		}
-		cur := PlaceCursor(g, status, in.Account, in.Cursors[g.ID])
+		cur := PlaceCursor(g, status, verdicts, in.Registry, in.Account, in.Cursors[g.ID])
 		if cur != in.Cursors[g.ID] {
 			plan.Cursors = append(plan.Cursors, CursorUpdate{GuideID: g.ID, Cursor: cur})
 		}
@@ -207,8 +208,9 @@ func hasMark(marks map[StepRef]Mark, ref StepRef) bool {
 }
 
 // objectiveKeys returns the sorted keys of every objective of every guide,
-// plus the extra ones (goals).
-func objectiveKeys(guides []*content.Guide, extra []string) []string {
+// the catalog requirements that can block their steps, and the extra ones
+// (goals).
+func objectiveKeys(guides []*content.Guide, reg *entities.Registry, extra []string) []string {
 	seen := map[string]bool{}
 	for _, k := range extra {
 		seen[k] = true
@@ -217,6 +219,9 @@ func objectiveKeys(guides []*content.Guide, extra []string) []string {
 		for _, st := range g.Steps() {
 			for _, o := range st.Objectives {
 				seen[o.Key.String()] = true
+			}
+			for _, k := range CatalogRequires(st, reg) {
+				seen[k] = true
 			}
 		}
 	}

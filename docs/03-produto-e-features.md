@@ -184,7 +184,7 @@ Navegação principal (desktop): barra lateral fixa com 7 itens + status do sync
 │  ▸ mostrar mais 5                                           │ B-gloves 48% ▮▮▮ │
 └─────────────────────────────────────────────────────────────┴──────────────────┘
 ```
-- **Estados:** *vazio* (sem RSN: card "configure sua conta" + checklist 100% manual funciona mesmo assim); *carregando* (skeleton do card); *sincronizado* (ponto verde, "há 4 min"); *desatualizado* (>24 h ou fonte falhou: faixa amarela "dados de 3 dias; requisitos podem estar errados", botão sincronizar); *bloqueado* (passo atual tem requisito não atendido: card mostra o gargalo e sugere "próximo passo disponível": 1.3.63).
+- **Estados:** *vazio* (sem RSN: card "configure sua conta" + checklist 100% manual funciona mesmo assim); *carregando* (skeleton do card); *sincronizado* (ponto verde, "há 4 min"); *desatualizado* (>24 h ou fonte falhou: faixa amarela "dados de 3 dias; requisitos podem estar errados", botão sincronizar); *bloqueado* (o cursor não para num passo com requisito em `unmet`: ele segue para o próximo disponível, e o passo pulado aparece na Rota com 🔒 e o gargalo; quando o requisito vira `met`, o cursor volta para ele; docs/09 seção 3.5).
 - **Mobile:** só a coluna esquerda; "Levar" vira acordeão abaixo do card; botões Feito/Pular com 48 px; passo atual fixado no topo ao rolar.
 
 ### Tela 2 — Checklist da seção (`/guide/:section`)
@@ -252,7 +252,7 @@ Conta (RSN, modo iron/HCIM/UIM/GIM, endpoint detectado), Fontes (hiscores on/off
 1. **Primeiro acesso:** login → `/setup` (RSN → detectar modo pelo hiscores → camadas → "tem progresso no ironman.guide? cole o JSON" → 1º sync com progresso visível) → `/now`.
 2. **Sessão de jogo:** `/now` → (joga) → toast "detectado" → card avança sozinho → fim: `/log` destacado com badge "nova sessão".
 3. **Meta:** `/dashboard` → "+ meta" → busca → `/goals/:id` → "Ver no grafo" (foco já aplicado) → nó → "fixar step em Agora".
-4. **Bloqueio:** `/now` mostra 🔒 → "ver o que falta" abre o mini-plano do requisito (mesmo componente de meta) → "próximo disponível" pula para o step viável.
+4. **Bloqueio:** o cursor já passa dos passos bloqueados; na Rota, o 🔒 de um passo pulado → "ver o que falta" abre o mini-plano do requisito (mesmo componente de meta).
 
 ## 4. Princípios de design e direção visual
 

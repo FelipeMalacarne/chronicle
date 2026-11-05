@@ -191,7 +191,7 @@ func (r *Repository) guideInput(ctx context.Context, q *storedb.Queries, account
 		return coreprogress.GuideInput{}, nil, err
 	}
 	in := coreprogress.GuideInput{
-		Guide: g, Account: acc, Verdicts: coreprogress.Verdicts{},
+		Guide: g, Account: acc, Verdicts: coreprogress.Verdicts{}, Registry: r.catalog,
 		Marks: map[string]coreprogress.Mark{}, LastStatus: map[string]coreprogress.Status{},
 	}
 	objectives, err := q.ListObjectiveProgress(ctx, accountID)
@@ -249,7 +249,7 @@ func (r *Repository) boardView(ctx context.Context, q *storedb.Queries, accountI
 	// shows where its route starts.
 	cur := in.Cursor
 	if cur.StepID == "" {
-		cur = coreprogress.PlaceCursor(in.Guide, boardStatus(out.Board), in.Account, cur)
+		cur = coreprogress.PlaceCursor(in.Guide, boardStatus(out.Board), in.Verdicts, in.Registry, in.Account, cur)
 	}
 	if cur.StepID != "" {
 		out.Cursor = &Cursor{StepID: cur.StepID, Cause: cur.Cause}

@@ -7,6 +7,7 @@
 	import { itemIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { loadSummary, session } from '#lib/progress/session.svelte';
 	import {
+		blockedBadge,
 		chipsOf,
 		isParagraphStep,
 		loadoutItems,
@@ -530,7 +531,7 @@
 {#snippet stepRow(s: ContentStep, seg: SegmentView)}
 	{@const b = boardById.get(s.id)}
 	{@const cur = s.id === cursorId}
-	{@const v = statusView(b?.status, cur)}
+	{@const v = statusView(b?.status, cur, !!b?.blocked_by?.length)}
 	{@const nItems =
 		(s.items?.length ?? 0) +
 		(s.requirements?.length ?? 0) +
@@ -546,10 +547,26 @@
 		aria-expanded={expanded === s.id}
 		onclick={() => (expanded = expanded === s.id ? null : s.id)}
 	>
-		<span class="st {v.st}"></span><span class="id" class:gold={cur}>{s.ref}</span>
+		<span class="st {v.st}"
+			>{#if v.st === 'st-lock'}<svg
+					viewBox="0 0 16 16"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="1.8"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					aria-hidden="true"
+					><rect x="3.5" y="7" width="9" height="6.5" rx="1.2" /><path
+						d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
+					/></svg
+				>{/if}</span
+		><span class="id" class:gold={cur}>{s.ref}</span>
 		<span class="tx" class:strong={cur}>{s.text}</span>
 		{#if cur}<span class="badge badge-gold">agora</span>{/if}
 		{#if b?.status === 'implied'}<span class="badge">presumido</span>{/if}
+		{#if v.st === 'st-lock'}<span class="badge badge-red"
+				>{blockedBadge(b?.blocked_by, s.names)}</span
+			>{/if}
 		{#if s.layers?.length === 1 && s.layers[0] === 'enhanced'}<span class="badge">enhanced</span
 			>{/if}
 		{#if plainNotes(s).length}<span class="badge">nota</span>{/if}
@@ -568,7 +585,7 @@
 {#snippet stepCard(s: ContentStep, seg: SegmentView)}
 	{@const b = boardById.get(s.id)}
 	{@const cur = s.id === cursorId}
-	{@const v = statusView(b?.status, cur)}
+	{@const v = statusView(b?.status, cur, !!b?.blocked_by?.length)}
 	{@const meta = metaOf(s)}
 	<button
 		id={`passo-${s.id}`}
@@ -580,10 +597,26 @@
 		onclick={() => (expanded = expanded === s.id ? null : s.id)}
 	>
 		<span class="tl">
-			<span class="st {v.st}"></span><span class="ref">{s.ref}</span>
+			<span class="st {v.st}"
+				>{#if v.st === 'st-lock'}<svg
+						viewBox="0 0 16 16"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="1.8"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						aria-hidden="true"
+						><rect x="3.5" y="7" width="9" height="6.5" rx="1.2" /><path
+							d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
+						/></svg
+					>{/if}</span
+			><span class="ref">{s.ref}</span>
 			<span class="tx">{b?.title ?? s.text}</span>
 			{#if cur}<span class="badge badge-gold">agora</span>{/if}
 			{#if b?.status === 'implied'}<span class="badge">presumido</span>{/if}
+			{#if v.st === 'st-lock'}<span class="badge badge-red"
+					>{blockedBadge(b?.blocked_by, s.names)}</span
+				>{/if}
 		</span>
 		{#if meta.length}
 			<span class="m"

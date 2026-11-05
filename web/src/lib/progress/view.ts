@@ -169,14 +169,20 @@ export function unknownHint(chips: Chip[]): string {
 /* ------------------------------------------------------------------ estado do passo */
 
 export interface StatusView {
-	/** Classe do círculo: st-auto, st-man, st-imp, st-skip, st-cur, ''. */
+	/** Classe do círculo: st-auto, st-man, st-imp, st-skip, st-cur, st-lock, ''. */
 	st: string;
 	label: string;
 	done: boolean;
 }
 
-export function statusView(status: StepStatus | undefined, current = false): StatusView {
+export function statusView(
+	status: StepStatus | undefined,
+	current = false,
+	blocked = false
+): StatusView {
 	if (current) return { st: 'st-cur', label: 'agora', done: false };
+	if (blocked && (status === undefined || status === 'pending'))
+		return { st: 'st-lock', label: 'bloqueado', done: false };
 	switch (status) {
 		case 'auto_done':
 			return { st: 'st-auto', label: 'detectado', done: true };
@@ -191,6 +197,13 @@ export function statusView(status: StepStatus | undefined, current = false): Sta
 		default:
 			return { st: '', label: '', done: false };
 	}
+}
+
+/** Selo do passo bloqueado: "falta 48 Slayer", "falta Twilight's Promise +1". */
+export function blockedBadge(keys: string[] | undefined, names: Record<string, string>): string {
+	if (!keys?.length) return '';
+	const first = `falta ${objectiveLabel(keys[0], names)}`;
+	return keys.length > 1 ? `${first} +${keys.length - 1}` : first;
 }
 
 /* ------------------------------------------------------------------ passo-parágrafo (BRUHsailer) */

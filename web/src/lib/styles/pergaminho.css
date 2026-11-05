@@ -312,6 +312,10 @@ body {
 	color: var(--ink-subtle);
 	background: var(--elevated);
 }
+.st-lock {
+	border-color: var(--not-started);
+	color: var(--not-started);
+}
 .st-cur {
 	border-color: var(--gold-ink);
 	background: var(--gold-ink);

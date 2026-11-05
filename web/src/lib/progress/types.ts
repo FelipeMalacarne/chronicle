@@ -34,6 +34,8 @@ export interface BoardStep {
 	manual: boolean;
 	main: boolean;
 	visible: boolean;
+	/** Requisitos em unmet de um passo pendente: o cursor passa dele (docs/09 seção 3.5). */
+	blocked_by?: string[];
 	objectives: BoardObjective[];
 }
 
@@ -46,6 +48,8 @@ export interface Counts {
 	skipped: number;
 	pinned_open: number;
 	remaining: number;
+	/** Passos restantes com requisito em unmet. */
+	blocked: number;
 }
 
 export interface SectionCounts {

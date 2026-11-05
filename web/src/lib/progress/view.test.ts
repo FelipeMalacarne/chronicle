@@ -7,6 +7,7 @@ import {
 	crossObjectives,
 	distanceTo,
 	firstReaching,
+	blockedBadge,
 	bankColumns,
 	checkboxLine,
 	chipsOf,
@@ -122,6 +123,9 @@ test('status view maps marks and evidence to the step circle', () => {
 	assert.equal(statusView('implied').done, true);
 	assert.equal(statusView('skipped').done, false);
 	assert.equal(statusView('pending', true).st, 'st-cur');
+	assert.equal(statusView('pending', false, true).st, 'st-lock');
+	assert.equal(statusView('pending', true, true).st, 'st-cur');
+	assert.equal(statusView('pinned_open', false, true).st, '');
 });
 
 test('paragraph keeps the TL;DR open, else the first bullet', () => {
@@ -595,4 +599,14 @@ test('preview of the next steps when the guide lists no setup', () => {
 	assert.equal(all.obtained.length, 2);
 	// A horizon past the end of the leg is the whole leg.
 	assert.equal(aheadView(a, 100).until, '1.1.282, fim do trecho');
+});
+
+test('blocked badge names the first missing requirement', () => {
+	const names = { 'quest:twilights_promise': "Twilight's Promise" };
+	assert.equal(blockedBadge(undefined, names), '');
+	assert.equal(blockedBadge(['skill:slayer>=48'], names), 'falta 48 Slayer');
+	assert.equal(
+		blockedBadge(['quest:twilights_promise@finished', 'skill:slayer>=48'], names),
+		"falta Twilight's Promise +1"
+	);
 });

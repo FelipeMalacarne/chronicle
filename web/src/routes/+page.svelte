@@ -335,7 +335,7 @@
 											>enhanced</span
 										>{/if}
 									{#each rowChips.slice(0, 2) as c (c.role + c.key)}
-										<ObjectiveChip chip={c} small hint={false} />
+										<ObjectiveChip chip={c} small hint={false} link={false} />
 									{/each}
 									{#if rowChips.length > 2}<span class="badge">+{rowChips.length - 2}</span>{/if}
 									{#if s.location}<span class="loc">{s.location}</span>{/if}

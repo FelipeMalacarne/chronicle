@@ -479,6 +479,7 @@
 				chip={c}
 				small
 				hint={false}
+				link={false}
 			/>{/each}
 		{#if rowChips.length > 3}<span class="badge">+{rowChips.length - 3}</span>{/if}
 		{#if nItems}<span class="badge">{nItems} {nItems === 1 ? 'item' : 'itens'}</span>{/if}

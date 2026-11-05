@@ -3,6 +3,8 @@ package net.runelite.client.plugins.microbot.fm.ironmanplanner;
 import com.google.gson.Gson;
 import com.google.gson.JsonParseException;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import okhttp3.HttpUrl;
 import okhttp3.MediaType;
@@ -13,14 +15,17 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * Blocking HTTP calls to the planner, run only on the plugin's own executor. The token goes in
- * the Authorization header and is never logged or put in a URL.
+ * Blocking HTTP calls to the planner, run only on the plugin's own executors (never the client
+ * thread or the Swing thread). The credential decides the headers; a token goes in the
+ * Authorization header and is never logged or put in a URL.
  */
-final class PlannerHttpClient
+final class PlannerHttpClient implements PanelApi
 {
 	static final long TIMEOUT_SECONDS = 3;
 	private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 	private static final long MAX_BODY_BYTES = 64 * 1024;
+	/** A route window carries full step texts (BRUHsailer steps are long paragraphs). */
+	private static final long MAX_WINDOW_BYTES = 1024 * 1024;
 
 	/** Outcome of one call: {@code status == 0} means timeout or I/O error. */
 	static final class Result<T>
@@ -82,29 +87,102 @@ final class PlannerHttpClient
 		return b.build();
 	}
 
-	Result<IngestContract.Manifest> fetchManifest(HttpUrl base, String token)
+	Result<IngestContract.Manifest> fetchManifest(HttpUrl base, PlannerCredential credential)
 	{
-		Request request = new Request.Builder()
+		Request.Builder request = new Request.Builder()
 			.url(endpoint(base, "api", "ingest", "manifest"))
-			.header("Authorization", "Bearer " + token)
 			.header("Accept", "application/json")
-			.get()
-			.build();
-		return execute(request, IngestContract.Manifest.class);
+			.get();
+		credential.apply(request);
+		return execute(request.build(), IngestContract.Manifest.class, MAX_BODY_BYTES);
 	}
 
-	Result<IngestContract.Response> push(HttpUrl base, String token, IngestContract.Push push)
+	Result<IngestContract.Response> push(HttpUrl base, PlannerCredential credential, IngestContract.Push push)
 	{
-		Request request = new Request.Builder()
+		Request.Builder request = new Request.Builder()
 			.url(endpoint(base, "api", "ingest"))
-			.header("Authorization", "Bearer " + token)
 			.header("Accept", "application/json")
-			.post(RequestBody.create(JSON, gson.toJson(push)))
-			.build();
-		return execute(request, IngestContract.Response.class);
+			.post(RequestBody.create(JSON, gson.toJson(push)));
+		credential.apply(request);
+		return execute(request.build(), IngestContract.Response.class, MAX_BODY_BYTES);
 	}
 
-	private <T> Result<T> execute(Request request, Class<T> type)
+	@Override
+	public Result<RouteWindow> fetchRoute(HttpUrl base, PlannerCredential credential, int limit)
+	{
+		HttpUrl url = endpoint(base, "api", "plugin", "route").newBuilder()
+			.addQueryParameter("limit", Integer.toString(limit))
+			.build();
+		Request.Builder request = new Request.Builder().url(url).header("Accept", "application/json").get();
+		credential.apply(request);
+		return execute(request.build(), RouteWindow.class, MAX_WINDOW_BYTES);
+	}
+
+	/** Body of PATCH .../mark: the web's mark action. */
+	static final class MarkRequest
+	{
+		final String kind;
+
+		MarkRequest(String kind)
+		{
+			this.kind = kind;
+		}
+	}
+
+	/** Body of POST .../marks: the web's batch undo, one step. */
+	static final class RestoreRequest
+	{
+		static final class Entry
+		{
+			@com.google.gson.annotations.SerializedName("step_id")
+			final String stepId;
+			// serialized as null when the step had no mark
+			final RouteWindow.Mark mark;
+
+			Entry(String stepId, RouteWindow.Mark mark)
+			{
+				this.stepId = stepId;
+				this.mark = mark;
+			}
+		}
+
+		final List<Entry> restore;
+
+		RestoreRequest(String stepId, RouteWindow.Mark mark)
+		{
+			this.restore = Collections.singletonList(new Entry(stepId, mark));
+		}
+	}
+
+	@Override
+	public Result<RouteWindow> mark(HttpUrl base, PlannerCredential credential, String guide, String stepId, String kind, int limit)
+	{
+		HttpUrl url = endpoint(base, "api", "plugin", "guides", guide, "steps", stepId, "mark").newBuilder()
+			.addQueryParameter("limit", Integer.toString(limit))
+			.build();
+		Request.Builder request = new Request.Builder()
+			.url(url)
+			.header("Accept", "application/json")
+			.patch(RequestBody.create(JSON, gson.toJson(new MarkRequest(kind))));
+		credential.apply(request);
+		return execute(request.build(), RouteWindow.class, MAX_WINDOW_BYTES);
+	}
+
+	@Override
+	public Result<RouteWindow> restore(HttpUrl base, PlannerCredential credential, String guide, String stepId, RouteWindow.Mark mark, int limit)
+	{
+		HttpUrl url = endpoint(base, "api", "plugin", "guides", guide, "marks").newBuilder()
+			.addQueryParameter("limit", Integer.toString(limit))
+			.build();
+		Request.Builder request = new Request.Builder()
+			.url(url)
+			.header("Accept", "application/json")
+			.post(RequestBody.create(JSON, gson.toJson(new RestoreRequest(stepId, mark))));
+		credential.apply(request);
+		return execute(request.build(), RouteWindow.class, MAX_WINDOW_BYTES);
+	}
+
+	private <T> Result<T> execute(Request request, Class<T> type, long maxBytes)
 	{
 		try (Response response = http.newCall(request).execute())
 		{
@@ -114,7 +192,7 @@ final class PlannerHttpClient
 			{
 				try
 				{
-					parsed = gson.fromJson(response.peekBody(MAX_BODY_BYTES).string(), type);
+					parsed = gson.fromJson(response.peekBody(maxBytes).string(), type);
 				}
 				catch (JsonParseException ex)
 				{

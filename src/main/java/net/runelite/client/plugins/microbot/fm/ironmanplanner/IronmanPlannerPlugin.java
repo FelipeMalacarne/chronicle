@@ -3,6 +3,7 @@ package net.runelite.client.plugins.microbot.fm.ironmanplanner;
 import com.google.gson.Gson;
 import com.google.inject.Provides;
 import java.time.Instant;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
@@ -25,6 +26,8 @@ import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.ClientToolbar;
+import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
@@ -41,11 +44,17 @@ import okhttp3.OkHttpClient;
  * quest vars, stats) ask {@link CaptureTrigger} for a capture about a second later; the
  * manifest's {@code interval_seconds} capture stays as a safety net and is pushed back by every
  * capture.
+ *
+ * <p>Route panel (1.2.0): a side panel shows the planner's window of the active route and
+ * writes the owner's marks (Feito, Pular, Desfazer) through the planner's mark API. It refetches
+ * after an acknowledged push that changed the route, after each mark, on login and every 30 s
+ * while visible; the last window stays on screen, marked outdated, while the planner is down.
+ * Its HTTP runs on a third thread ({@code ironman-planner-panel}), its Swing work on the EDT.
  */
 @PluginDescriptor(
 	name = PluginDescriptor.Mocrosoft + "Ironman Planner",
-	description = "Read-only: syncs skills, quests, diary varbits and opted-in items to your Ironman Planner server",
-	tags = {"ironman", "tracker", "planner"},
+	description = "Syncs skills, quests, diary varbits and opted-in items to your Ironman Planner server and shows its route in a side panel",
+	tags = {"ironman", "tracker", "planner", "guide", "panel"},
 	authors = {"FelipeMalacarne"},
 	version = IronmanPlannerPlugin.VERSION,
 	minClientVersion = "2.6.52",
@@ -55,7 +64,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class IronmanPlannerPlugin extends Plugin
 {
-	static final String VERSION = "1.1.1";
+	static final String VERSION = "1.2.0";
 	private static final long CAPTURE_TIMEOUT_MS = 2_000;
 	/** How often the sync thread looks at the engine: well under {@link CaptureTrigger#DEBOUNCE}. */
 	private static final long TICK_PERIOD_MS = 250;
@@ -81,6 +90,12 @@ public class IronmanPlannerPlugin extends Plugin
 	@Inject
 	private Gson gson;
 
+	@Inject
+	private ClientToolbar clientToolbar;
+
+	@Inject
+	private ConfigManager configManager;
+
 	/** Client thread only. */
 	private StateCollector collector;
 
@@ -104,6 +119,16 @@ public class IronmanPlannerPlugin extends Plugin
 	/** What the current manifest makes worth a capture; null ignores every event. */
 	private volatile EventFilter eventFilter;
 
+	/** This installation's id, generated once into the config. */
+	private volatile String installationId;
+
+	// route panel: controller only on panelExecutor, panel only on the EDT
+	private ScheduledExecutorService panelExecutor;
+	private RoutePanelController panelController;
+	private RoutePanel routePanel;
+	private NavigationButton navigationButton;
+	private volatile boolean panelVisible;
+
 	@Provides
 	IronmanPlannerConfig provideConfig(ConfigManager configManager)
 	{
@@ -114,6 +139,9 @@ public class IronmanPlannerPlugin extends Plugin
 	protected void startUp()
 	{
 		log.info("Ironman Planner {} starting", VERSION);
+		installationId = InstallationId.ensure(config.installationId(),
+			id -> configManager.setConfiguration(IronmanPlannerConfig.GROUP, InstallationId.CONFIG_KEY, id),
+			UUID::randomUUID);
 		collector = new StateCollector(client);
 		status = notConfigured();
 		trigger.clear();
@@ -134,6 +162,136 @@ public class IronmanPlannerPlugin extends Plugin
 			return t;
 		});
 		executor.scheduleWithFixedDelay(this::tick, TICK_PERIOD_MS, TICK_PERIOD_MS, TimeUnit.MILLISECONDS);
+		startPanel();
+	}
+
+	private void startPanel()
+	{
+		panelExecutor = Executors.newSingleThreadScheduledExecutor(r ->
+		{
+			Thread t = new Thread(r, "ironman-planner-panel");
+			t.setDaemon(true);
+			return t;
+		});
+		PlannerHttpClient panelHttp = new PlannerHttpClient(okHttpClient, gson);
+		panelController = new RoutePanelController(panelHttp, this::panelEndpoint,
+			state -> RoutePanel.onSwing(() ->
+			{
+				if (routePanel != null)
+				{
+					routePanel.update(state);
+				}
+			}));
+		RoutePanel.Actions actions = new RoutePanel.Actions()
+		{
+			@Override
+			public void mark(String stepId, String kind)
+			{
+				onPanel(() -> panelController.mark(stepId, kind, Instant.now()));
+			}
+
+			@Override
+			public void undo()
+			{
+				onPanel(() -> panelController.undo(Instant.now()));
+			}
+
+			@Override
+			public void refresh()
+			{
+				onPanel(() -> panelController.refresh(Instant.now()));
+			}
+
+			@Override
+			public void visible(boolean visible)
+			{
+				panelVisible = visible;
+				if (visible)
+				{
+					onPanel(() ->
+					{
+						if (panelController.pollDue(Instant.now(), true))
+						{
+							panelController.refresh(Instant.now());
+						}
+					});
+				}
+			}
+		};
+		RoutePanel.onSwing(() ->
+		{
+			routePanel = new RoutePanel(actions);
+			navigationButton = NavigationButton.builder()
+				.tooltip("Ironman Planner")
+				.icon(RoutePanel.navigationIcon())
+				.priority(8)
+				.panel(routePanel)
+				.build();
+			clientToolbar.addNavigation(navigationButton);
+		});
+		panelExecutor.scheduleWithFixedDelay(() ->
+		{
+			Instant now = Instant.now();
+			if (panelController.pollDue(now, panelVisible))
+			{
+				panelController.refresh(now);
+			}
+			else if (panelVisible)
+			{
+				// keeps the "h\u00e1 N s" line current
+				RoutePanel.onSwing(() ->
+				{
+					if (routePanel != null)
+					{
+						routePanel.tickClock();
+					}
+				});
+			}
+		}, 5, 5, TimeUnit.SECONDS);
+		// a first window for the panel, even before login
+		onPanel(() -> panelController.refresh(Instant.now()));
+	}
+
+	/** Runs on the panel's own thread; never on the client or Swing thread. */
+	private void onPanel(Runnable r)
+	{
+		ScheduledExecutorService ex = panelExecutor;
+		if (ex == null)
+		{
+			return;
+		}
+		try
+		{
+			ex.execute(() ->
+			{
+				try
+				{
+					r.run();
+				}
+				catch (RuntimeException e)
+				{
+					// the class name only: messages can carry request details
+					log.debug("Ironman Planner panel task failed: {}", e.getClass().getSimpleName());
+				}
+			});
+		}
+		catch (java.util.concurrent.RejectedExecutionException ignored)
+		{
+			// shutting down
+		}
+	}
+
+	/** The panel's planner endpoint, or null while not configured. */
+	private RoutePanelController.Endpoint panelEndpoint()
+	{
+		HttpUrl base = PlannerHttpClient.parseServer(config.serverUrl());
+		PlannerCredential credential = credential();
+		return base == null || !credential.ready() ? null : new RoutePanelController.Endpoint(base, credential);
+	}
+
+	private PlannerCredential credential()
+	{
+		return PlannerCredential.of(config.credentialMode(), config.ingestToken(), installationId, config.account());
 	}
 
 	@Override
@@ -144,6 +302,23 @@ public class IronmanPlannerPlugin extends Plugin
 			executor.shutdownNow();
 			executor = null;
 		}
+		if (panelExecutor != null)
+		{
+			panelExecutor.shutdownNow();
+			panelExecutor = null;
+		}
+		NavigationButton button = navigationButton;
+		RoutePanel.onSwing(() ->
+		{
+			if (button != null)
+			{
+				clientToolbar.removeNavigation(button);
+			}
+			routePanel = null;
+		});
+		navigationButton = null;
+		panelController = null;
+		panelVisible = false;
 		overlayManager.remove(overlay);
 		engine = null;
 		engineKey = null;
@@ -172,6 +347,7 @@ public class IronmanPlannerPlugin extends Plugin
 			collector.startEpoch();
 			trigger.clear();
 			fullRequested = true;
+			onPanel(() -> panelController.refresh(Instant.now()));
 		}
 		else if (event.getGameState() == GameState.LOGIN_SCREEN && collector.inEpoch())
 		{
@@ -259,8 +435,8 @@ public class IronmanPlannerPlugin extends Plugin
 		try
 		{
 			HttpUrl base = PlannerHttpClient.parseServer(config.serverUrl());
-			String token = config.ingestToken() == null ? "" : config.ingestToken().trim();
-			if (base == null || token.isEmpty())
+			PlannerCredential token = credential();
+			if (base == null || !token.ready())
 			{
 				engine = null;
 				engineKey = null;
@@ -268,7 +444,7 @@ public class IronmanPlannerPlugin extends Plugin
 				status = notConfigured();
 				return;
 			}
-			String key = base + "\n" + token;
+			String key = base + "\n" + token.fingerprint();
 			if (!key.equals(engineKey))
 			{
 				engine = new SyncEngine();
@@ -319,7 +495,7 @@ public class IronmanPlannerPlugin extends Plugin
 		}
 	}
 
-	private void fetchManifest(HttpUrl base, String token)
+	private void fetchManifest(HttpUrl base, PlannerCredential token)
 	{
 		PlannerHttpClient.Result<IngestContract.Manifest> result = http.fetchManifest(base, token);
 		if (result.status == 200 && result.body != null)
@@ -334,7 +510,7 @@ public class IronmanPlannerPlugin extends Plugin
 		}
 	}
 
-	private void captureAndPush(HttpUrl base, String token) throws InterruptedException
+	private void captureAndPush(HttpUrl base, PlannerCredential token) throws InterruptedException
 	{
 		IngestContract.Manifest manifest = engine.manifest();
 		PlayerSnapshot snapshot = capture(manifest);
@@ -366,6 +542,12 @@ public class IronmanPlannerPlugin extends Plugin
 				log.debug("Ironman Planner push #{} answered HTTP {}", push.clientSeq, result.status);
 			}
 			engine.onPushResult(result.status, result.body, Instant.now());
+			IngestContract.Response body = result.body;
+			if (result.status == 200 && body != null && body.ok && body.acceptedSeq == push.clientSeq)
+			{
+				// the panel decides from the response's route whether to refetch
+				onPanel(() -> panelController.onPushAck(body, Instant.now()));
+			}
 		}
 		if (engine.isAcknowledged(logoutSnapshot))
 		{

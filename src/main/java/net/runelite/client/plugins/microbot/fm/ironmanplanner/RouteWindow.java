@@ -1,0 +1,183 @@
+package net.runelite.client.plugins.microbot.fm.ironmanplanner;
+
+import com.google.gson.annotations.SerializedName;
+import java.util.Collections;
+import java.util.List;
+
+/**
+ * Wire DTOs of {@code GET /api/plugin/route} (ironman-planner docs/04-arquitetura.md 2.5): the
+ * active route from the cursor on, as the planner computes it. Every verdict, status and label
+ * comes from the server; the plugin only displays them. Unknown fields are ignored (Gson).
+ */
+final class RouteWindow
+{
+	String guide;
+	String title;
+	/** Credit line of the guide's authors; every view of the steps shows it. */
+	String attribution;
+	Cursor cursor;
+	Counts counts;
+	List<Step> steps;
+	Carry carry;
+
+	List<Step> stepsOrEmpty()
+	{
+		return steps == null ? Collections.emptyList() : steps;
+	}
+
+	/** The cursor step, or null when the route is finished. */
+	Step current()
+	{
+		for (Step s : stepsOrEmpty())
+		{
+			if (s.current)
+			{
+				return s;
+			}
+		}
+		return null;
+	}
+
+	Step step(String id)
+	{
+		for (Step s : stepsOrEmpty())
+		{
+			if (s.id != null && s.id.equals(id))
+			{
+				return s;
+			}
+		}
+		return null;
+	}
+
+	String cursorStepId()
+	{
+		return cursor == null ? null : cursor.stepId;
+	}
+
+	static final class Cursor
+	{
+		@SerializedName("step_id")
+		String stepId;
+		String cause;
+	}
+
+	static final class Counts
+	{
+		int total;
+		int done;
+		int remaining;
+		int blocked;
+	}
+
+	static final class Step
+	{
+		String id;
+		String ref;
+		@SerializedName("section_id")
+		String sectionId;
+		@SerializedName("section_title")
+		String sectionTitle;
+		String title;
+		String text;
+		String location;
+		/** pending, auto_done, manual_done, implied, skipped, pinned_open. */
+		String status;
+		Mark mark;
+		boolean current;
+		@SerializedName("blocked_by")
+		List<Requirement> blockedBy;
+		List<Objective> objectives;
+
+		List<Requirement> blockedOrEmpty()
+		{
+			return blockedBy == null ? Collections.emptyList() : blockedBy;
+		}
+
+		List<Objective> objectivesOrEmpty()
+		{
+			return objectives == null ? Collections.emptyList() : objectives;
+		}
+
+		boolean blocked()
+		{
+			return !blockedOrEmpty().isEmpty();
+		}
+	}
+
+	/** A step mark, also the body of a restore. */
+	static final class Mark
+	{
+		String kind;
+		@SerializedName("implied_by_step_id")
+		String impliedBy;
+		String note;
+
+		Mark()
+		{
+		}
+
+		Mark(String kind, String impliedBy)
+		{
+			this.kind = kind;
+			this.impliedBy = impliedBy;
+		}
+	}
+
+	static final class Requirement
+	{
+		String key;
+		String label;
+	}
+
+	static final class Objective
+	{
+		String key;
+		String role;
+		String label;
+		/** met, unmet or unknown. */
+		String verdict;
+		boolean regressed;
+	}
+
+	static final class Carry
+	{
+		@SerializedName("segment_id")
+		String segmentId;
+		String title;
+		String status;
+		@SerializedName("loadout_status")
+		String loadoutStatus;
+		/** The guide lists no setup: the items preview what the next steps use. */
+		boolean derived;
+		List<CarryItem> items;
+		@SerializedName("bank_actions")
+		List<String> bankActions;
+
+		List<CarryItem> itemsOrEmpty()
+		{
+			return items == null ? Collections.emptyList() : items;
+		}
+
+		List<String> bankActionsOrEmpty()
+		{
+			return bankActions == null ? Collections.emptyList() : bankActions;
+		}
+	}
+
+	static final class CarryItem
+	{
+		String name;
+		long qty;
+		@SerializedName("qty_stated")
+		boolean qtyStated;
+		String slot;
+		boolean optional;
+		/** About the live inventory/equipment. */
+		String verdict;
+		long carried;
+		/** Ownership anywhere (bank included), or null. */
+		String owned;
+		long held;
+	}
+}

@@ -152,5 +152,18 @@ final class IngestContract
 		long manifestVersion;
 		@SerializedName("steps_changed")
 		Long stepsChanged;
+		/** The active route after the push (planner with the plugin panel); null from older servers. */
+		RouteUpdate route;
+	}
+
+	/** What an accepted push changed in the active route: its cursor and the changed steps. */
+	static final class RouteUpdate
+	{
+		String guide;
+		/** Cursor step id after the push; null when the route is finished. */
+		String cursor;
+		@SerializedName("cursor_cause")
+		String cursorCause;
+		List<String> changed;
 	}
 }

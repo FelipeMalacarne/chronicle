@@ -396,3 +396,62 @@ export interface SetupLookup {
 	skills: { skill: string; level: number }[];
 	hiscores_error?: string;
 }
+
+/* ------------------------------------------------------------------ plano da meta (F9 parte B) */
+
+export type GoalGroup = 'done' | 'presumed' | 'available' | 'blocked' | 'unknown';
+
+/** Onde uma rota faz algo: o passo e a posição na seção. */
+export interface StepPlace {
+	guide_id: string;
+	step_id: string;
+	ref: string;
+	title: string;
+	section_id: string;
+	section_pos: number;
+	role?: string;
+	/** O passo conclui a própria meta. */
+	goal?: boolean;
+	done?: boolean;
+}
+
+export interface GoalNode {
+	key: string;
+	ref?: string;
+	label: string;
+	depth: number;
+	verdict: Verdict;
+	presumed?: boolean;
+	group: GoalGroup;
+	boostable?: boolean;
+	during_quest?: boolean;
+	requires?: string[];
+	missing?: string[];
+	for?: string[];
+	step?: StepPlace;
+}
+
+export interface Bottleneck {
+	key: string;
+	skill: string;
+	level: number | null;
+	target: number;
+	met: boolean;
+	boostable?: boolean;
+	during_quest?: boolean;
+	for?: string[];
+	step?: StepPlace;
+	reach?: number;
+	reach_step?: StepPlace;
+}
+
+export interface GoalPlan {
+	goal: string;
+	requirements: boolean;
+	met: number;
+	total: number;
+	presumed: number;
+	nodes: GoalNode[];
+	bottlenecks: Bottleneck[];
+	routes: StepPlace[];
+}

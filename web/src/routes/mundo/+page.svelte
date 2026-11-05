@@ -17,11 +17,12 @@
 	} from '#lib/progress/view';
 	import type { Goal, WorldEntity } from '#lib/progress/types';
 	import Glyph from '#lib/v4/Glyph.svelte';
+	import GoalPlanPanel from '#lib/v4/GoalPlanPanel.svelte';
 
 	/*
 	 * Mundo (V4Mundo): entidades e objetivos compartilhados entre as rotas, as metas fixadas e,
-	 * por entidade, onde cada rota a faz. O plano da meta (gargalos, requisitos, ordem) e o grafo
-	 * por foco esperam os requisitos de quest no catálogo.
+	 * por entidade, onde cada rota a faz. "Ver plano" abre o plano da meta (V4Meta) em ?meta=;
+	 * o grafo por foco fica para o item do grafo.
 	 */
 	const account = $derived(session.account);
 	const world = createResource(() =>
@@ -68,6 +69,15 @@
 	const pick = (ref: string) => {
 		const url = new URL(page.url.href);
 		url.searchParams.set('e', ref);
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- mesma página, só a query muda
+		void goto(url, { replaceState: true });
+	};
+
+	const planId = $derived(page.url.searchParams.get('meta'));
+	const showPlan = (id: string | null) => {
+		const url = new URL(page.url.href);
+		if (id) url.searchParams.set('meta', id);
+		else url.searchParams.delete('meta');
 		// eslint-disable-next-line svelte/no-navigation-without-resolve -- mesma página, só a query muda
 		void goto(url, { replaceState: true });
 	};
@@ -186,15 +196,19 @@
 						? ` · ${routesLine(g.routes, label)}`
 						: ' · nenhuma rota conclui'}</span
 				>
-				<span class="su tiny"
-					>gargalos e requisitos chegam com os requisitos de quest no catálogo</span
-				>
-				<button
-					class="btn btn-g btn-s unpin"
-					type="button"
-					disabled={busy}
-					onclick={() => unpin(g.id)}>Desafixar</button
-				>
+				<div class="gacts">
+					<button
+						class="btn btn-s"
+						class:btn-p={planId !== g.id}
+						type="button"
+						aria-pressed={planId === g.id}
+						onclick={() => showPlan(planId === g.id ? null : g.id)}
+						>{planId === g.id ? 'Fechar plano' : 'Ver plano'}</button
+					>
+					<button class="btn btn-g btn-s" type="button" disabled={busy} onclick={() => unpin(g.id)}
+						>Desafixar</button
+					>
+				</div>
 			</div>
 		{:else}
 			<span class="su small"
@@ -202,6 +216,21 @@
 			>
 		{/each}
 	</div>
+	{#if account && planId && goals.data?.goals.some((g) => g.id === planId)}
+		{#key planId}
+			<GoalPlanPanel
+				{account}
+				goalId={planId}
+				activeGuide={active?.guide}
+				routeName={label}
+				onunpin={() => {
+					const id = planId;
+					showPlan(null);
+					void unpin(id);
+				}}
+			/>
+		{/key}
+	{/if}
 </section>
 
 <div class="split">
@@ -451,8 +480,10 @@
 		flex: 1;
 		min-width: 0;
 	}
-	.unpin {
-		align-self: flex-start;
+	.gacts {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
 	}
 	.split {
 		display: flex;

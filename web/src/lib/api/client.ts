@@ -5,6 +5,7 @@ import type {
 	ContentSection,
 	EventsView,
 	Goal,
+	GoalPlan,
 	GuideInfo,
 	MarkAction,
 	MarkRestore,
@@ -122,6 +123,8 @@ export const progressApi = {
 	goals: (account: string) => request<{ goals: Goal[] }>(`/goals?account=${enc(account)}`),
 	addGoal: (account: string, key: string) =>
 		request<Goal>(`/goals?account=${enc(account)}`, json('POST', { objective_key: key })),
+	goalPlan: (account: string, id: string) =>
+		request<{ goal: Goal; plan: GoalPlan }>(`/goals/${enc(id)}/plan?account=${enc(account)}`),
 	removeGoal: (account: string, id: string) =>
 		request<null>(`/goals/${enc(id)}?account=${enc(account)}`, json('DELETE')),
 	world: (account: string) =>

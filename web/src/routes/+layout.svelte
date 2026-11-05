@@ -40,7 +40,7 @@
 	<title>Chronicle</title>
 </svelte:head>
 
-<div class="pg shell" data-theme={theme.value}>
+<div class="pg shell" class:bare={setup} data-theme={theme.value}>
 	<a class="skip" href="#conteudo">Pular para o conteúdo</a>
 	{#if !setup}<Sidebar
 			summary={session.summary}
@@ -75,6 +75,9 @@
 		.shell {
 			background: var(--ground);
 		}
+	}
+	.shell.bare {
+		background: var(--ground);
 	}
 	main {
 		flex: 999 1 560px;

@@ -109,8 +109,8 @@ func (q *Queries) GetUserBySubject(ctx context.Context, subject string) (User, e
 
 const upsertOIDCUser = `-- name: UpsertOIDCUser :one
 
-INSERT INTO users (id, subject, issuer, username, email, display_name, last_login_at)
-VALUES ($1, $2, $3::text, $4, $5, $6, now())
+INSERT INTO users (id, subject, issuer, username, email, display_name, role, last_login_at)
+VALUES ($1, $2, $3::text, $4, $5, $6, $7, now())
 ON CONFLICT (subject) DO UPDATE SET
   email         = EXCLUDED.email,
   display_name  = EXCLUDED.display_name,
@@ -126,6 +126,7 @@ type UpsertOIDCUserParams struct {
 	Username    string      `json:"username"`
 	Email       pgtype.Text `json:"email"`
 	DisplayName pgtype.Text `json:"display_name"`
+	Role        string      `json:"role"`
 }
 
 // AUTH_MODE=oidc (docs/04 section 8). A user is (issuer, subject): the
@@ -133,6 +134,7 @@ type UpsertOIDCUserParams struct {
 // to the dev user or to another issuer returns no row and the login fails.
 // username is kept from the first login (it is UNIQUE; preferred_username may
 // change at the issuer).
+// role is used only on insert: the first OIDC user is owner, later ones member.
 func (q *Queries) UpsertOIDCUser(ctx context.Context, arg UpsertOIDCUserParams) (User, error) {
 	row := q.db.QueryRow(ctx, upsertOIDCUser,
 		arg.ID,
@@ -141,6 +143,7 @@ func (q *Queries) UpsertOIDCUser(ctx context.Context, arg UpsertOIDCUserParams) 
 		arg.Username,
 		arg.Email,
 		arg.DisplayName,
+		arg.Role,
 	)
 	var i User
 	err := row.Scan(

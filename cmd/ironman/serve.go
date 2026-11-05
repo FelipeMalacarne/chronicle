@@ -196,7 +196,7 @@ func newOIDC(ctx context.Context, cfg config.Config, pool *pgxpool.Pool) (*httpa
 	discoverCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	provider, err := auth.NewProvider(discoverCtx, auth.Config{
-		Issuer: cfg.OIDCIssuer, ClientID: cfg.OIDCClientID, RedirectURL: cfg.OIDCRedirectURL,
+		Issuer: cfg.OIDCIssuer, ClientID: cfg.OIDCClientID, RedirectURL: cfg.OIDCRedirectURL, ProjectID: cfg.OIDCProjectID,
 		HTTPClient: &http.Client{Timeout: 15 * time.Second},
 	})
 	if err != nil {

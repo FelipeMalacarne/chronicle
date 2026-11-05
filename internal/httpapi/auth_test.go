@@ -431,15 +431,24 @@ func TestOIDCLoginDenials(t *testing.T) {
 		}
 		expectNoSession("denied", c)
 	})
+	// The policy lists subjects and requires a role: a login needs both.
 	t.Run("listed subject without the role", func(t *testing.T) {
 		c := e.client()
-		if resp := e.login(c, "/", authtest.User{Subject: "300"}); resp.StatusCode != http.StatusSeeOther {
+		if resp := e.login(c, "/", authtest.User{Subject: "300"}); resp.StatusCode != http.StatusForbidden {
 			t.Errorf("status = %d", resp.StatusCode)
 		}
+		expectNoSession("listed without role", c)
+	})
+	t.Run("role without a listed subject", func(t *testing.T) {
+		c := e.client()
+		if resp := e.login(c, "/", authtest.User{Subject: "400", Roles: []string{"owner"}}); resp.StatusCode != http.StatusForbidden {
+			t.Errorf("status = %d", resp.StatusCode)
+		}
+		expectNoSession("role without subject", c)
 	})
 	t.Run("role in the project-scoped claim", func(t *testing.T) {
 		c := e.client()
-		if resp := e.login(c, "/", authtest.User{Subject: "400", Roles: []string{"owner"}, ProjectID: "123456"}); resp.StatusCode != http.StatusSeeOther {
+		if resp := e.login(c, "/", authtest.User{Subject: "300", Roles: []string{"owner"}, ProjectID: "123456"}); resp.StatusCode != http.StatusSeeOther {
 			t.Errorf("status = %d", resp.StatusCode)
 		}
 		// Allowed in, but still not the owner of another user's account.

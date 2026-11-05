@@ -138,7 +138,7 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
 
 Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
 (`dev` | `oidc`, default `dev`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL` (`PUBLIC_BASE_URL/auth/callback`), `OIDC_ALLOWED_SUBJECTS`,
-`OIDC_REQUIRED_ROLE` (oidc needs one of the two), `SESSION_SECRET` (32+ chars in oidc),
+`OIDC_REQUIRED_ROLE` (oidc needs one of the two; both set = both required), `OIDC_PROJECT_ID`, `SESSION_SECRET` (32+ chars in oidc),
 `CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler). `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 

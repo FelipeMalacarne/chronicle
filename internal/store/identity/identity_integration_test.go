@@ -67,7 +67,7 @@ func TestLoginOIDCClaimsDevAccountsOnce(t *testing.T) {
 		t.Fatal(err)
 	}
 	other, err := repo.LoginOIDC(ctx, Login{Issuer: issuer, Subject: "200", Username: "friend"})
-	if err != nil || !other.Created || other.ClaimedAccounts != 0 {
+	if err != nil || !other.Created || other.ClaimedAccounts != 0 || other.User.Role != "member" {
 		t.Fatalf("second user = %+v, %v", other, err)
 	}
 	if ok, _ := repo.OwnsAccount(ctx, other.User.ID, "acc_a"); ok {

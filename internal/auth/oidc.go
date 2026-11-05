@@ -25,6 +25,9 @@ type Config struct {
 	Issuer      string
 	ClientID    string
 	RedirectURL string
+	// ProjectID pins the project-scoped role claim to one Zitadel project;
+	// empty accepts any project id.
+	ProjectID string
 	// HTTPClient talks to the issuer (discovery, JWKS, token, userinfo); nil
 	// uses http.DefaultClient.
 	HTTPClient *http.Client
@@ -50,6 +53,7 @@ type Provider struct {
 	client     *http.Client
 	issuer     string
 	endSession string
+	projectID  string
 }
 
 // NewProvider discovers the issuer (/.well-known/openid-configuration). The
@@ -83,6 +87,7 @@ func NewProvider(ctx context.Context, cfg Config) (*Provider, error) {
 		client:     client,
 		issuer:     cfg.Issuer,
 		endSession: extra.EndSession,
+		projectID:  cfg.ProjectID,
 	}, nil
 }
 
@@ -129,7 +134,7 @@ func (p *Provider) Exchange(ctx context.Context, code, verifier, nonce string) (
 	}
 	id := Identity{
 		Issuer: idt.Issuer, Subject: idt.Subject, Username: std.PreferredUsername,
-		Email: std.Email, DisplayName: std.Name, Roles: RolesFromClaims(all),
+		Email: std.Email, DisplayName: std.Name, Roles: RolesFromClaims(all, p.projectID),
 	}
 	if len(id.Roles) == 0 || id.Username == "" {
 		p.fillFromUserinfo(ctx, tok, &id)
@@ -164,7 +169,7 @@ func (p *Provider) fillFromUserinfo(ctx context.Context, tok *oauth2.Token, id *
 		id.DisplayName = std.Name
 	}
 	if len(id.Roles) == 0 {
-		id.Roles = RolesFromClaims(claims)
+		id.Roles = RolesFromClaims(claims, p.projectID)
 	}
 }
 

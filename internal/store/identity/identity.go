@@ -119,12 +119,19 @@ func (r *Repository) LoginOIDC(ctx context.Context, in Login) (LoginResult, erro
 		}
 	}
 	id := existing.ID
+	// The first OIDC user owns the planner; later ones are members (owner
+	// decision of 2026-11-05). An existing user keeps its role.
+	role := existing.Role
 	if out.Created {
 		id = newID()
+		role = "member"
+		if others == 0 {
+			role = "owner"
+		}
 	}
 	row, err := q.UpsertOIDCUser(ctx, storedb.UpsertOIDCUserParams{
 		ID: id, Subject: in.Subject, Issuer: in.Issuer, Username: username,
-		Email: text(in.Email), DisplayName: text(in.DisplayName),
+		Email: text(in.Email), DisplayName: text(in.DisplayName), Role: role,
 	})
 	if errors.Is(err, pgx.ErrNoRows) {
 		return out, ErrSubjectConflict

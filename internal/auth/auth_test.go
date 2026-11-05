@@ -26,7 +26,9 @@ func TestPolicyAllows(t *testing.T) {
 		{"unlisted subject", auth.Policy{AllowedSubjects: []string{"1"}}, "3", []string{"owner"}, false},
 		{"required role", auth.Policy{RequiredRole: "owner"}, "3", []string{"member", "owner"}, true},
 		{"missing role", auth.Policy{RequiredRole: "owner"}, "3", []string{"member"}, false},
-		{"either passes", auth.Policy{AllowedSubjects: []string{"1"}, RequiredRole: "owner"}, "3", []string{"owner"}, true},
+		{"both set: role without a listed subject", auth.Policy{AllowedSubjects: []string{"1"}, RequiredRole: "owner"}, "3", []string{"owner"}, false},
+		{"both set: listed subject without the role", auth.Policy{AllowedSubjects: []string{"1"}, RequiredRole: "owner"}, "1", []string{"member"}, false},
+		{"both set: listed subject with the role", auth.Policy{AllowedSubjects: []string{"1"}, RequiredRole: "owner"}, "1", []string{"owner"}, true},
 		{"empty policy", auth.Policy{}, "1", []string{"owner"}, false},
 		{"empty subject", auth.Policy{AllowedSubjects: []string{""}}, "", nil, false},
 	} {
@@ -49,8 +51,14 @@ func TestRolesFromClaims(t *testing.T) {
 	if err := json.Unmarshal([]byte(raw), &claims); err != nil {
 		t.Fatal(err)
 	}
-	if got := strings.Join(auth.RolesFromClaims(claims), ","); got != "member,owner" {
+	if got := strings.Join(auth.RolesFromClaims(claims, ""), ","); got != "member,owner" {
 		t.Errorf("roles = %q", got)
+	}
+	// Pinned to project 777: the scoped claim of 999 no longer counts, the
+	// requesting project's claim still does.
+	claims["urn:zitadel:iam:org:project:777:roles"] = json.RawMessage(`{"viewer": {"o1": "d"}}`)
+	if got := strings.Join(auth.RolesFromClaims(claims, "777"), ","); got != "owner,viewer" {
+		t.Errorf("pinned roles = %q", got)
 	}
 }
 

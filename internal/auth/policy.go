@@ -7,6 +7,7 @@ package auth
 
 import (
 	"encoding/json"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -19,8 +20,10 @@ const (
 	zitadelRolesSuffix  = ":roles"
 )
 
-// Policy decides who may log in: a listed subject OR a holder of the
-// required project role. An empty policy allows nobody (config refuses it).
+// Policy decides who may log in. With only a subject list, a listed subject
+// passes; with only a required role, a holder of that project role passes;
+// with both, a login needs both (owner decision of 2026-11-05). An empty
+// policy allows nobody (config refuses it).
 type Policy struct {
 	AllowedSubjects []string
 	RequiredRole    string
@@ -29,32 +32,24 @@ type Policy struct {
 // Allows reports whether a user with this subject and these project roles is
 // authorized.
 func (p Policy) Allows(subject string, roles []string) bool {
-	if subject == "" {
+	if subject == "" || (len(p.AllowedSubjects) == 0 && p.RequiredRole == "") {
 		return false
 	}
-	for _, s := range p.AllowedSubjects {
-		if s == subject {
-			return true
-		}
-	}
-	if p.RequiredRole == "" {
+	if len(p.AllowedSubjects) > 0 && !slices.Contains(p.AllowedSubjects, subject) {
 		return false
 	}
-	for _, r := range roles {
-		if r == p.RequiredRole {
-			return true
-		}
-	}
-	return false
+	return p.RequiredRole == "" || slices.Contains(roles, p.RequiredRole)
 }
 
-// RolesFromClaims collects the role keys of every Zitadel project role claim
-// (urn:zitadel:iam:org:project:roles and urn:zitadel:iam:org:project:<id>:roles),
-// sorted and without duplicates. Claims of any other shape are ignored.
-func RolesFromClaims(claims map[string]json.RawMessage) []string {
+// RolesFromClaims collects the role keys of the Zitadel project role claims,
+// sorted and without duplicates: urn:zitadel:iam:org:project:roles (the
+// project of the requesting client) and urn:zitadel:iam:org:project:<id>:roles.
+// With projectID set, only that project's scoped claim counts; empty accepts
+// any project id. Claims of any other shape are ignored.
+func RolesFromClaims(claims map[string]json.RawMessage, projectID string) []string {
 	seen := map[string]bool{}
 	for name, raw := range claims {
-		if name != zitadelRolesClaim && (!strings.HasPrefix(name, zitadelProjectClaim) || !strings.HasSuffix(name, zitadelRolesSuffix)) {
+		if name != zitadelRolesClaim && !projectClaim(name, projectID) {
 			continue
 		}
 		var roles map[string]json.RawMessage
@@ -73,4 +68,18 @@ func RolesFromClaims(claims map[string]json.RawMessage) []string {
 	}
 	sort.Strings(out)
 	return out
+}
+
+// projectClaim reports whether name is a project-scoped role claim, of
+// projectID when it is set.
+func projectClaim(name, projectID string) bool {
+	id, ok := strings.CutPrefix(name, zitadelProjectClaim)
+	if !ok {
+		return false
+	}
+	id, ok = strings.CutSuffix(id, zitadelRolesSuffix)
+	if !ok || id == "" {
+		return false
+	}
+	return projectID == "" || id == projectID
 }

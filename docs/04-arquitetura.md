@@ -163,7 +163,7 @@ sequenceDiagram
 
 Variáveis lidas por `internal/config`: `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
 (`dev` | `oidc`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL`, `OIDC_ALLOWED_SUBJECTS`,
-`OIDC_REQUIRED_ROLE`, `SESSION_SECRET`, `CONTENT_DIR` (`content`), `LOG_LEVEL`, `PUBLIC_BASE_URL`,
+`OIDC_REQUIRED_ROLE`, `OIDC_PROJECT_ID`, `SESSION_SECRET`, `CONTENT_DIR` (`content`), `LOG_LEVEL`, `PUBLIC_BASE_URL`,
 `SYNC_HISCORES_MINUTES`. `.env.example` documenta cada uma; detalhes, modos e
 troubleshooting no doc 07. Configurações por conta (tabela `settings`): layer ativa, modo, fontes
 habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
@@ -191,9 +191,11 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
     `PUBLIC_BASE_URL` é https, persistente. Vale 7 dias sem uso e no máximo 30 dias depois do login;
     vencida, a próxima chamada responde 401 e a web vai para o login. Guarda id do usuário, `sub`,
     roles e o ID token (só para o logout).
-  - **Autorização**: passa quem tem o `sub` em `OIDC_ALLOWED_SUBJECTS` **ou** a role
-    `OIDC_REQUIRED_ROLE` nas claims `urn:zitadel:iam:org:project:roles` ou
-    `urn:zitadel:iam:org:project:<id>:roles` do ID token (sem roles no ID token, as do userinfo). O
+  - **Autorização** (decisão do dono, 2026-11-05): com só `OIDC_ALLOWED_SUBJECTS`, passa um `sub`
+    da lista; com só `OIDC_REQUIRED_ROLE`, quem tem a role; com os dois, precisa dos dois. As roles vêm
+    das claims `urn:zitadel:iam:org:project:roles` e `urn:zitadel:iam:org:project:<id>:roles` do ID
+    token (sem roles no ID token, as do userinfo); com `OIDC_PROJECT_ID`, só a claim desse projeto
+    conta. O primeiro usuário OIDC é `owner`; os seguintes entram como `member`. O
     `serve` não sobe em oidc sem nenhuma das duas. A política é conferida de novo a cada requisição
     com o `sub` e as roles da sessão: tirar um `sub` da lista e reiniciar derruba as sessões dele; uma
     role tirada no Zitadel só vale no próximo login. Recusa: página PT-BR "Acesso negado" (403) no

@@ -48,8 +48,8 @@ type Config struct {
 	OIDCRedirectURL string
 
 	// OIDCAllowedSubjects lists the OIDC `sub` values allowed to log in
-	// (comma separated). A login passes when its subject is listed OR it has
-	// OIDCRequiredRole; AUTH_MODE=oidc needs at least one of the two.
+	// (comma separated). With OIDCRequiredRole also set, a login needs both a
+	// listed subject and the role; AUTH_MODE=oidc needs at least one of the two.
 	// Env: OIDC_ALLOWED_SUBJECTS.
 	OIDCAllowedSubjects []string
 
@@ -57,6 +57,11 @@ type Config struct {
 	// from the urn:zitadel:iam:org:project[:<id>]:roles claims of the ID token).
 	// Env: OIDC_REQUIRED_ROLE.
 	OIDCRequiredRole string
+
+	// OIDCProjectID pins the project-scoped role claim
+	// (urn:zitadel:iam:org:project:<id>:roles) to the planner's Zitadel
+	// project; empty accepts any project id. Env: OIDC_PROJECT_ID.
+	OIDCProjectID string
 
 	// SessionSecret keys the encrypted cookie that carries the login state
 	// (state, nonce, PKCE verifier) between /auth/login and /auth/callback; the
@@ -125,6 +130,7 @@ func FromLookup(lookup func(string) (string, bool)) (Config, error) {
 		OIDCClientID:     get("OIDC_CLIENT_ID", ""),
 		OIDCRedirectURL:  get("OIDC_REDIRECT_URL", ""),
 		OIDCRequiredRole: get("OIDC_REQUIRED_ROLE", ""),
+		OIDCProjectID:    get("OIDC_PROJECT_ID", ""),
 		SessionSecret:    get("SESSION_SECRET", ""),
 		ContentDir:       get("CONTENT_DIR", DefaultContentDir),
 		LogLevel:         strings.ToLower(get("LOG_LEVEL", DefaultLogLevel)),

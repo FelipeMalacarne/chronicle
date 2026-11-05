@@ -28,8 +28,9 @@ SELECT count(*) FROM users;
 -- change at the issuer).
 
 -- name: UpsertOIDCUser :one
-INSERT INTO users (id, subject, issuer, username, email, display_name, last_login_at)
-VALUES (@id, @subject, @issuer::text, @username, @email, @display_name, now())
+-- role is used only on insert: the first OIDC user is owner, later ones member.
+INSERT INTO users (id, subject, issuer, username, email, display_name, role, last_login_at)
+VALUES (@id, @subject, @issuer::text, @username, @email, @display_name, @role, now())
 ON CONFLICT (subject) DO UPDATE SET
   email         = EXCLUDED.email,
   display_name  = EXCLUDED.display_name,

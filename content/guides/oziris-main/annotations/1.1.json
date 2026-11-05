@@ -12,22 +12,15 @@
     {
       "step_id": "1.1.2",
       "text_hash": "sha256:05a9889c0d79a74866461985e4cb6d5c80f20518197ad27c94f0d8c2705207d8",
-      "objectives": [
+      "suppressed": [
         {
           "key": "skill:herblore>=77",
           "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "Use every book and lamp on Herblore UNTIL 77 herb",
-            "span": [
-              0,
-              49
-            ]
-          },
+          "reason": "Standing instruction for the whole route (use books and lamps on Herblore until 77); the level is reached at 2.0.26.",
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@1",
+            "skill_version": "annotate-guide@3",
             "confirmed_by": "owner"
           }
         }

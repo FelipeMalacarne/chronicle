@@ -208,6 +208,27 @@
         "1.5.5a",
         "1.5.5c"
       ]
+    },
+    {
+      "id": "farm-for-drops-no-objectives",
+      "question": "Passos \"Farm/Camp <boss ou raid> for <drops>\" (endgame): os drops viram objetivo?",
+      "answer": "Não: são metas abertas, melhor tratadas como goals (F9). Ficam sem completes, só com os requisitos que o texto cita (quests). Exceção: quando o texto dá um número de drops como alvo do passo (\"until 2 enhanced weapon seeds\", 2.0.41), entra com o número.",
+      "scope": "oziris-main, todas as seções: passos de farm de boss/raid por drops",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "2.0.40b",
+        "2.0.41",
+        "2.0.47",
+        "2.0.53",
+        "2.0.54",
+        "2.0.57",
+        "2.0.58",
+        "2.0.59",
+        "2.0.60",
+        "2.0.61",
+        "2.0.61a",
+        "2.0.63"
+      ]
     }
   ]
 }

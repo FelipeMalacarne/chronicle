@@ -4,13 +4,13 @@
   "guide_id": "oziris-main",
   "summary": {
     "steps": 576,
-    "annotated": 501,
+    "annotated": 564,
     "stale": 0,
-    "pending": 75,
-    "submitted": 501,
-    "first_submit_accepted": 492,
-    "owner_confirmed": 86,
-    "decisions_applied": 211
+    "pending": 12,
+    "submitted": 564,
+    "first_submit_accepted": 555,
+    "owner_confirmed": 99,
+    "decisions_applied": 226
   },
   "sections": [
     {
@@ -71,13 +71,13 @@
     {
       "section_id": "2.0",
       "steps": 63,
-      "annotated": 0,
+      "annotated": 63,
       "stale": 0,
-      "pending": 63,
-      "submitted": 0,
-      "first_submit_accepted": 0,
-      "owner_confirmed": 0,
-      "decisions_applied": 0
+      "pending": 0,
+      "submitted": 63,
+      "first_submit_accepted": 63,
+      "owner_confirmed": 13,
+      "decisions_applied": 15
     },
     {
       "section_id": "S",
@@ -92,9 +92,17 @@
     }
   ],
   "rule_agreement": {
-    "rules": 236,
-    "reproduced": 216,
+    "rules": 264,
+    "reproduced": 239,
     "divergent": [
+      {
+        "step_id": "1.1.2",
+        "key": "skill:herblore>=77",
+        "role": "completes",
+        "suppressed": true,
+        "reason": "Standing instruction for the whole route (use books and lamps on Herblore until 77); the level is reached at 2.0.26.",
+        "comment": "Moved Herblore 77 to 2.0.26 (owner, 2026-11-04): this is an ongoing instruction, and completing it here kept the step pending until 2.0. Rule suppressed."
+      },
       {
         "step_id": "1.1.95",
         "key": "quest:gertrudes_cat@started",
@@ -228,6 +236,30 @@
         "key": "diary:varrock:easy@complete",
         "role": "completes",
         "comment": "All easy and medium tiers (owner) except Ardougne easy (1.1.265) and Varrock easy (1.2.30), already completed; their rules here are already met (harmless divergence). The tip postpones Kourend, Wilderness/Fremennik/Falador medium, kept per owner. Location 'Various'."
+      },
+      {
+        "step_id": "2.0.1",
+        "key": "skill:farming>=54",
+        "role": "requires",
+        "comment": "Conditional ('if 54 farming'; conditional-step-no-objectives): autoweed perk not catalogued. The rule requires farming>=54 matches the condition and stays."
+      },
+      {
+        "step_id": "2.0.15a",
+        "key": "skill:attack>=65",
+        "role": "requires",
+        "comment": "Conditional ('If you completed Defender of Varrock ... and have 65 Attack'): Zombie Axe not added. The rule requires attack>=65 matches the condition and stays. Location 'Various'."
+      },
+      {
+        "step_id": "2.0.27",
+        "key": "skill:agility>=70",
+        "role": "completes",
+        "comment": "Conditional ('if you didn't get it ... earlier'): Agility 70 is already completed at 2.0.21, so the rule (completes agility>=70) is already met; harmless. Location 'Various'."
+      },
+      {
+        "step_id": "2.0.51",
+        "key": "skill:herblore>=77",
+        "role": "completes",
+        "comment": "Conditional ('if not already from WGS lamps'): Herblore 77 is completed at 2.0.26, so the rule (completes herblore>=77) is already met; harmless. Location 'Various'."
       }
     ]
   },
@@ -235,8 +267,8 @@
   "inferred": [
     {
       "step_id": "1.1.2",
-      "what": "skill:herblore>=77 completes",
-      "quote": "Use every book and lamp on Herblore UNTIL 77 herb"
+      "what": "suppresses skill:herblore>=77 completes",
+      "quote": "Standing instruction for the whole route (use books and lamps on Herblore until 77); the level is reached at 2.0.26."
     },
     {
       "step_id": "1.1.14",
@@ -1810,6 +1842,161 @@
       "step_id": "1.5.17",
       "what": "item:7462x1 completes",
       "quote": "buy B gloves"
+    },
+    {
+      "step_id": "2.0.4",
+      "what": "item Varrock armour 2 = item:13105",
+      "quote": "Varrock armor 2 (equip)",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "2.0.4",
+      "what": "item Graceful hood = family graceful_hood",
+      "quote": "Graceful (except body)",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "2.0.4",
+      "what": "item Graceful legs = family graceful_legs",
+      "quote": "Graceful (except body)",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "2.0.4",
+      "what": "item Graceful gloves = family graceful_gloves",
+      "quote": "Graceful (except body)",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "2.0.4",
+      "what": "item Graceful boots = family graceful_boots",
+      "quote": "Graceful (except body)",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "2.0.4",
+      "what": "item Graceful cape = family graceful_cape",
+      "quote": "Graceful (except body)",
+      "decision": "ambiguous-variant-by-context"
+    },
+    {
+      "step_id": "2.0.4",
+      "what": "item Bucket = item:1925 x1200",
+      "quote": "1200 empty buckets"
+    },
+    {
+      "step_id": "2.0.6",
+      "what": "item Giant seaweed = item:21504 x4",
+      "quote": "4 seaweed",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "2.0.9",
+      "what": "quest:lunar_diplomacy@finished completes",
+      "quote": "do Lunar's diplomacy",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "2.0.10",
+      "what": "item:10828x1 completes",
+      "quote": "Get a helm of neitiznot"
+    },
+    {
+      "step_id": "2.0.11",
+      "what": "item:10551x1 completes",
+      "quote": "Get a fighter torso"
+    },
+    {
+      "step_id": "2.0.14",
+      "what": "item:12954x1 completes",
+      "quote": "Get a dragon defender"
+    },
+    {
+      "step_id": "2.0.19",
+      "what": "item:8901x1 completes",
+      "quote": "Camp Cave horrors for mask"
+    },
+    {
+      "step_id": "2.0.20",
+      "what": "quest:making_friends_with_my_arm@finished completes",
+      "quote": "do Making friends with my arm quest"
+    },
+    {
+      "step_id": "2.0.22",
+      "what": "quest:dream_mentor@finished completes",
+      "quote": "Do dream mentor",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "2.0.25",
+      "what": "quest:mage_arena_ii@finished completes",
+      "quote": "Do Mage arena 2",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "2.0.31",
+      "what": "item Dorgeshuun crossbow = item:8880",
+      "quote": "bone crossbow",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "2.0.34",
+      "what": "quest:song_of_the_elves@finished completes",
+      "quote": "Do Song of the elves",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "2.0.35",
+      "what": "item:10034x15000 completes",
+      "quote": "Hunt 15k red chins",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "2.0.36",
+      "what": "item:8839x1 completes",
+      "quote": "Get range void"
+    },
+    {
+      "step_id": "2.0.36",
+      "what": "item:8840x1 completes",
+      "quote": "Get range void"
+    },
+    {
+      "step_id": "2.0.36",
+      "what": "item:8842x1 completes",
+      "quote": "Get range void"
+    },
+    {
+      "step_id": "2.0.36",
+      "what": "item:11664x1 completes",
+      "quote": "Get range void"
+    },
+    {
+      "step_id": "2.0.37",
+      "what": "quest:monkey_madness_ii@finished completes",
+      "quote": "Unlock MM2 chinning area"
+    },
+    {
+      "step_id": "2.0.38",
+      "what": "quest:dragon_slayer_ii@finished completes",
+      "quote": "Do Dragon slayer 2",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "2.0.41",
+      "what": "item:25859x2 completes",
+      "quote": "until 2 enhanced weapon seeds"
+    },
+    {
+      "step_id": "2.0.41",
+      "what": "item:23956x6 completes",
+      "quote": "6 armor seeds"
+    },
+    {
+      "step_id": "2.0.56",
+      "what": "quest:while_guthix_sleeps@finished requires",
+      "quote": "requires WGS completion",
+      "decision": "item-shorthand-to-catalog-name"
     }
   ],
   "steps": {
@@ -2443,9 +2630,9 @@
     },
     "1.1.2": {
       "section_id": "1.1",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Instrução contínua; o dono confirmou que o passo conclui com Herblore 77 (repete a regra derivada)."
+      "comment": "Moved Herblore 77 to 2.0.26 (owner, 2026-11-04): this is an ongoing instruction, and completing it here kept the step pending until 2.0. Rule suppressed."
     },
     "1.1.20": {
       "section_id": "1.1",
@@ -4672,6 +4859,381 @@
       "section_id": "1.5",
       "submits": 1,
       "first_submit_accepted": true
+    },
+    "2.0.1": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('if 54 farming'; conditional-step-no-objectives): autoweed perk not catalogued. The rule requires farming>=54 matches the condition and stays."
+    },
+    "2.0.10": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "10828, not the LMS 23591 (owner)."
+    },
+    "2.0.11": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "10551, not the Pete Kayer's Challenges 34613 (owner)."
+    },
+    "2.0.12": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Advice (strength amulet for melee slayer). Location 'Various'."
+    },
+    "2.0.13": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'if you don't have them already' only acknowledges they may be met. Location 'Various'."
+    },
+    "2.0.14": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "12954, not the LMS 23597 (owner). Tip: defence 60 while getting defenders."
+    },
+    "2.0.15": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Advice (training order 65/80/65). Location 'Various'."
+    },
+    "2.0.15a": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('If you completed Defender of Varrock ... and have 65 Attack'): Zombie Axe not added. The rule requires attack>=65 matches the condition and stays. Location 'Various'."
+    },
+    "2.0.16": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: Turael point boosting (advice). Location 'Various'."
+    },
+    "2.0.17": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Recommendation (hard clues, superglass make). Location 'Various'."
+    },
+    "2.0.18": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Slayer point priorities (advice); update note changes the order. Not catalogued unlocks. Location 'Various'."
+    },
+    "2.0.19": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Black mask (10) 8901, as it drops (owner)."
+    },
+    "2.0.2": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ongoing routine (farming contracts 'as soon as you can'); no objective."
+    },
+    "2.0.20": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'If you have around 65/80/65' is about timing, not optional (owner). Basalt POH portals not catalogued."
+    },
+    "2.0.21": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'few agility pots' vague."
+    },
+    "2.0.22": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'imbue your mask': Black mask (i) has 3 ids by imbue source (11784, 25276, 26781); no item objective (owner)."
+    },
+    "2.0.23": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'at some point' and no level stated; no objective. Location 'Various'."
+    },
+    "2.0.24": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: optional stop at 70 for ToB brews (conditional). Location 'Various'."
+    },
+    "2.0.25": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "2.0.26": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Herblore 77 is reached here; moved from 1.1.2 (owner). Location 'Various'."
+    },
+    "2.0.27": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('if you didn't get it ... earlier'): Agility 70 is already completed at 2.0.21, so the rule (completes agility>=70) is already met; harmless. Location 'Various'."
+    },
+    "2.0.28": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "2.0.29": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mahogany Homes is an activity, not a location. Location 'Various'."
+    },
+    "2.0.3": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('If you ever need something AFK'). Update note on Scurrius is advice. Location 'Various'."
+    },
+    "2.0.30": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "2.0.31": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'if you haven't already got 60' only acknowledges it may be met. 'bone crossbow' alias candidate."
+    },
+    "2.0.32": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip (steel platebodies) and update note (Giants' Foundry) are method advice."
+    },
+    "2.0.33": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Botanical pies and the +4 boost have no number. Location 'Various'."
+    },
+    "2.0.34": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: MTA, blood blitz vs Seren (advice)."
+    },
+    "2.0.35": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'red chins' -> Red chinchompa (10034); alias candidate."
+    },
+    "2.0.36": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ranged void = top, robe, gloves, ranger helm (owner)."
+    },
+    "2.0.37": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "The MM2 chinning area opens after Monkey Madness II (owner). Tip: elite void at 70 range (conditional)."
+    },
+    "2.0.38": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "2.0.39": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Kingdom setup is not a catalogued state."
+    },
+    "2.0.4": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'empty buckets' -> Bucket 1925, not 'Empty bucket' 3727 (owner); alias to add. 'Varrock armor 2' -> Varrock armour 2 (13105); alias candidate. Graceful (except body) as the 5 families. Knife and teak log optional ('preferably'). Location 'Various'."
+    },
+    "2.0.40": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "End of the main guide. Location 'Various'."
+    },
+    "2.0.40a": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Farm' Blue Moon / Blood Moon has no kill count or set target; armour pieces not itemized."
+    },
+    "2.0.40b": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'Farm Royal Titans for' drops (Twinflame staff parts, scrolls) has no target; Royal Titans is a boss, not a location."
+    },
+    "2.0.41": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Seed counts from the text (owner; exception in farm-for-drops-no-objectives). The weapons and crystal armour made from them are not itemized."
+    },
+    "2.0.42": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Section header. Location 'Various'."
+    },
+    "2.0.44": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Abyssal whip camping is a tip. Location 'Various'."
+    },
+    "2.0.45": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mastering Mixology is an open-ended minigame; only the stated requirements."
+    },
+    "2.0.46": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Invocation level is not a catalogued state (farm-for-drops-no-objectives)."
+    },
+    "2.0.47": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Osmumten's fang, Lightbearer."
+    },
+    "2.0.48": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'many prerequisites including Defender of Varrock' (DoV at 1.5.5b, not repeated). Location 'Various'."
+    },
+    "2.0.49": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Farming Phantom Muspah: farm-for-drops-no-objectives. Location 'Various'."
+    },
+    "2.0.5": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip on run energy is advice."
+    },
+    "2.0.51": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Conditional ('if not already from WGS lamps'): Herblore 77 is completed at 2.0.26, so the rule (completes herblore>=77) is already met; harmless. Location 'Various'."
+    },
+    "2.0.52": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "2.0.53": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Ultor vestige, Executioner's axe head (DT2 bosses). Location 'Various'."
+    },
+    "2.0.54": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Bandos and Armadyl armour."
+    },
+    "2.0.56": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Purging staff comes from farming Tormented Demons (farm-for-drops-no-objectives); only the requirement. 'WGS' -> While Guthix Sleeps. 'Tormented Demons' is a monster, not a location."
+    },
+    "2.0.57": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Dizana's quiver."
+    },
+    "2.0.58": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Torva armour. 'Nex' is a boss, not a location."
+    },
+    "2.0.59": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Twisted bow, Dragon hunter crossbow."
+    },
+    "2.0.6": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Soda ash product has no number."
+    },
+    "2.0.60": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Scythe of vitur, Ghrazi rapier, Sanguinesti staff."
+    },
+    "2.0.61": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Oathplate armour. 'Yama' is a boss, not a location."
+    },
+    "2.0.61a": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Eye of Ayak, Avernic treads. 'Doom of Mokhaiotl' is a boss, not a location."
+    },
+    "2.0.63": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "farm-for-drops-no-objectives: Masori armour, Tumeken's shadow."
+    },
+    "2.0.7": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Molten glass has no number (consumed in 2.0.8)."
+    },
+    "2.0.8": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Glass lenses have no number; training toward 61 Crafting (2.0.4)."
+    },
+    "2.0.9": {
+      "section_id": "2.0",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tip: only 60 needed for now, sandstone grinder, waterskins (advice). Location 'Various'."
     }
   }
 }

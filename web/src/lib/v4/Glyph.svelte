@@ -10,8 +10,7 @@
 		| 'check'
 		| 'chevron'
 		| 'alert'
-		| 'clock'
-		| 'more';
+		| 'clock';
 	let { name, size = 16 }: { name: Name; size?: number } = $props();
 </script>
 
@@ -48,12 +47,5 @@
 		<path d="M12 3l10 18H2L12 3z M12 10v5 M12 18h.01" />
 	{:else if name === 'clock'}
 		<circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" />
-	{:else if name === 'more'}
-		<circle cx="5" cy="12" r="1.2" fill="currentColor" /><circle
-			cx="12"
-			cy="12"
-			r="1.2"
-			fill="currentColor"
-		/><circle cx="19" cy="12" r="1.2" fill="currentColor" />
 	{/if}
 </svg>

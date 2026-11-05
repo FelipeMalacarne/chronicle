@@ -2,11 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
 	aheadView,
-	aheadMissing,
-	bankSummary,
-	chipRole,
-	prevSummary,
-	verdictWords,
 	stepNotes,
 	alsoIn,
 	crossCell,
@@ -697,76 +692,4 @@ test('step notes keep every author note, updates first, without metadata', () =>
 		{ kind: 'hcim', label: 'HCIM', text: 'Bring food.' }
 	]);
 	assert.deepEqual(stepNotes({}), []);
-});
-
-test('chips show the role only when it is not "conclui", and the verdict in words for a11y', () => {
-	const st = step('a', {
-		objectives: [
-			{ key: 'quest:a@finished', role: 'completes' },
-			{ key: 'quest:b@started', role: 'starts' },
-			{ key: 'skill:agility>=10', role: 'requires' }
-		]
-	});
-	assert.deepEqual(chipsOf(st, undefined).map(chipRole), ['', 'inicia', 'requer']);
-	assert.equal(verdictWords('met'), 'feito');
-	assert.equal(verdictWords('unmet'), 'não atende');
-	assert.equal(verdictWords('unknown'), 'não sabemos');
-});
-
-test('previous steps collapse into one line', () => {
-	assert.equal(prevSummary([]), null);
-	assert.deepEqual(prevSummary([{ ref: '1.1.243', status: 'auto_done' }]), {
-		text: '1 anterior ✓',
-		detail: '1.1.243 detectado'
-	});
-	assert.deepEqual(
-		prevSummary([
-			{ ref: '1.1.242', status: 'auto_done' },
-			{ ref: '1.1.243', status: 'implied' }
-		]),
-		{ text: '2 anteriores ✓', detail: '1.1.242 detectado · 1.1.243 presumido' }
-	);
-});
-
-test('the collapsed bank panel says what to take and what is missing', () => {
-	assert.deepEqual(bankSummary({ total: 13, miss: 1, unk: 0 }), {
-		text: '13 para levar · 1 falta',
-		missing: 1
-	});
-	assert.equal(
-		bankSummary({ total: 18, miss: 2, unk: 3 }).text,
-		'18 para levar · 2 faltam · 3 não verificáveis'
-	);
-	assert.equal(bankSummary({ total: 4, miss: 0, unk: 1 }).text, '4 para levar · 1 não verificável');
-	assert.equal(bankSummary({ total: 3, miss: 0, unk: 0 }).text, '3 para levar · nada falta');
-	assert.equal(bankSummary({ total: 0, miss: 0, unk: 0 }).text, 'nada para levar');
-	const missing = aheadMissing({
-		groups: [
-			{
-				stepId: '1.1.266',
-				text: 'Trade cat',
-				when: 'em 23 passos',
-				slots: [
-					{ name: 'cat', qty: '1', cls: 'slot-miss', state: 'falta', ok: false, tip: '' },
-					{ name: 'GP', qty: '', cls: 'slot-you', state: 'com você', ok: true, tip: '' }
-				]
-			},
-			{
-				stepId: '1.1.271',
-				text: 'Teleport',
-				when: 'em 28 passos',
-				slots: [
-					{ name: 'cat', qty: '1', cls: 'slot-miss', state: 'falta', ok: false, tip: '' },
-					{ name: 'Lit candle', qty: '', cls: 'slot-miss', state: 'falta', ok: false, tip: '' }
-				]
-			}
-		]
-	});
-	assert.deepEqual(
-		missing.map((m) => [m.name, m.stepId]),
-		[
-			['cat', '1.1.266'],
-			['Lit candle', '1.1.271']
-		]
-	);
 });

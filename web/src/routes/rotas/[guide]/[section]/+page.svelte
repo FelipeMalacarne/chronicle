@@ -582,10 +582,13 @@
 		{#if stepNotes(s).some((n) => n.kind === 'update')}<span class="badge badge-up"
 				>atualização</span
 			>{:else if plainNotes(s).length}<span class="badge">nota</span>{/if}
-		{#each rowChips.slice(0, 3) as c, i (c.role + c.key)}<span class="rc" class:extra={i > 0}
-				><ObjectiveChip chip={c} small hint={false} link={false} /></span
-			>{/each}
-		{#if rowChips.length > 3}<span class="badge extra">+{rowChips.length - 3}</span>{/if}
+		{#each rowChips.slice(0, 3) as c (c.role + c.key)}<ObjectiveChip
+				chip={c}
+				small
+				hint={false}
+				link={false}
+			/>{/each}
+		{#if rowChips.length > 3}<span class="badge">+{rowChips.length - 3}</span>{/if}
 		{#if nItems}<span class="badge">{nItems} {nItems === 1 ? 'item' : 'itens'}</span>{/if}
 	</button>
 	{#if expanded === s.id}{@render expansion(s, seg)}{/if}
@@ -812,15 +815,5 @@
 	.badge-up {
 		color: var(--stale);
 		background: var(--stale-tint);
-	}
-	.rc {
-		display: inline-flex;
-		flex: 0 0 auto;
-	}
-	/* v5 limpeza: on narrow widths a row keeps one chip; the expansion shows them all. */
-	@media (max-width: 719px) {
-		.extra {
-			display: none;
-		}
 	}
 </style>

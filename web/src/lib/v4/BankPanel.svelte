@@ -2,13 +2,7 @@
 	import BankAhead from './BankAhead.svelte';
 	import Glyph from './Glyph.svelte';
 	import { itemIcon } from '#lib/progress/icons';
-	import {
-		bankColumns,
-		bankSummary,
-		freshnessLabel,
-		loadoutItems,
-		qtyLabel
-	} from '#lib/progress/view';
+	import { bankColumns, freshnessLabel, loadoutItems, qtyLabel } from '#lib/progress/view';
 	import type { Ahead, BankAction, Loadout, SegmentReadiness } from '#lib/progress/types';
 
 	/**
@@ -16,8 +10,6 @@
 	 * decisão 7 do v4). Ações de banco são instrução e nunca viram passo feito; ausência só é
 	 * afirmada com container live e baseline full (regra 8). Sem setup do guia, mostra a prévia
 	 * pelos próximos passos (BankAhead).
-	 * v5 limpeza: collapsed by default to one line plus the missing items; the choice is
-	 * remembered in this browser only.
 	 */
 	let {
 		readiness,
@@ -54,83 +46,21 @@
 		no_loadout: ''
 	};
 	const partial = $derived((readiness?.loadout_status ?? loadout?.status) === 'partial');
-
-	const KEY = 'ironman.bank.open';
-	let open = $state(readOpen());
-	function readOpen(): boolean {
-		try {
-			return localStorage.getItem(KEY) === '1';
-		} catch {
-			return false;
-		}
-	}
-	function toggle() {
-		open = !open;
-		try {
-			localStorage.setItem(KEY, open ? '1' : '0');
-		} catch {
-			/* local convenience only */
-		}
-	}
-	const summary = $derived(
-		cols
-			? bankSummary({ total: cols.total, miss: cols.missing, unk: cols.unverifiable })
-			: bankSummary({ total: fallback.length, miss: 0, unk: fallback.length })
-	);
-	const missingSlots = $derived(cols ? cols.slots.filter((s) => s.cls === 'slot-miss') : []);
 </script>
 
 <section class="panel">
 	<div class="plaque">
 		Banco · trecho {range}
-		{#if open && !ahead}
-			<span class="r">
-				{#if readiness}readiness: {readiness.status}{:else}sem leitura do plugin{/if}{partial
-					? ' · o guia lista o setup só em parte'
-					: ''}
-			</span>
-		{/if}
+		<span class="r">
+			{#if ahead}o guia não lista o setup · prévia pelos próximos passos{:else if readiness}readiness:
+				{readiness.status}{:else}sem leitura do plugin{/if}{partial
+				? ' · o guia lista o setup só em parte'
+				: ''}
+		</span>
 	</div>
 	{#if ahead}
-		<BankAhead
-			{ahead}
-			bankActions={actions}
-			{firstRef}
-			bankLabel={bank.label}
-			bankCls={bank.cls}
-			{open}
-			ontoggle={toggle}
-		/>
-	{:else if !open}
-		<div class="top">
-			<button class="disc sum-btn" type="button" aria-expanded={open} onclick={toggle}
-				><Glyph name="chevron" size={12} /><span class:has-miss={summary.missing > 0}
-					>{summary.text}</span
-				></button
-			>
-		</div>
-		{#if missingSlots.length}
-			<div class="miss" aria-label="Faltam">
-				{#each missingSlots as s, i (i)}
-					{@const icon = itemIcon(s.itemId)}
-					<span class="slot {s.cls}">
-						<span class="bx">
-							{#if icon}<img class="sp" src={icon} alt="" />{/if}
-							<span class="q">{s.qty}</span>
-						</span>
-						<span class="nm">{s.name} · falta</span>
-					</span>
-				{/each}
-			</div>
-		{/if}
+		<BankAhead {ahead} bankActions={actions} {firstRef} bankLabel={bank.label} bankCls={bank.cls} />
 	{:else}
-		<div class="top">
-			<button class="disc sum-btn" type="button" aria-expanded={open} onclick={toggle}
-				><Glyph name="chevron" size={12} /><span class:has-miss={summary.missing > 0}
-					>{summary.text}</span
-				></button
-			>
-		</div>
 		<div class="cols">
 			<div class="col">
 				<div class="h"><p class="ey">Com você</p></div>
@@ -207,27 +137,8 @@
 		display: flex;
 		flex-direction: column;
 	}
-	.top {
-		padding: 8px 12px 4px;
-		display: flex;
-	}
-	.sum-btn {
-		flex: 1 1 auto;
-		justify-content: flex-start;
-		font-size: 13px;
-		color: var(--ink);
-	}
-	.has-miss {
-		font-weight: 600;
-	}
-	.miss {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px 6px;
-		padding: 4px 18px 12px;
-	}
 	.cols {
-		padding: 6px 18px 12px;
+		padding: 14px 18px 12px;
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
 		gap: 16px;

@@ -268,33 +268,3 @@ O que falta desenhar:
    resultados de passos de todas as seções e das duas rotas, entidades do Mundo e metas, com destino
    claro de cada tipo. A busca da Rota vale só para a seção aberta, e é preciso saber a seção para
    achar o passo.
-
-## 12. Limpeza da UI (2026-11-05): referência vigente
-
-Decisão do dono (2026-11-05): "implemente direto e mantenha o canvas atualizado; aprovo tudo". O código
-foi limpo em `feat/ui-limpeza` e o canvas ganhou a página **`v5-limpeza`** ("v5 · limpeza
-(2026-11-05)"), que passa a ser a referência do Agora, da barra do topo e das linhas da Rota; as
-páginas v0–v5 continuam como histórico. O contexto é o dono jogando com o navegador numa janela de
-~600–700 px ao lado do jogo, com o Agora se atualizando sozinho e o painel do Microbot também
-mostrando a rota.
-
-Princípios:
-
-1. **Em ~650 px, de relance:** o passo atual, as notas dele, o que pede e o que falta, e Feito/Pular.
-   O resto existe, mas um clique adiante.
-2. **Uma linha antes de um painel.** Passos anteriores viram "2 anteriores ✓"; o banco vira
-   "18 para levar · 2 faltam"; wiki e "também na rota" ficam em "detalhes". Ao expandir, nada se perde
-   (abas 15/30/até o banco e o selo "prévia · nunca 'pronto'" moram no banco expandido).
-3. **O que falta nunca se esconde.** Os itens em falta aparecem mesmo com o banco recolhido.
-4. **Ações secundárias em menus "⋯"** com `aria-haspopup`, Esc e setas: Sincronizar, Trocar rota e
-   Abrir a seção na faixa da seção; Fixar outro e Abrir na rota no passo; conta e tema na barra.
-   Desfazer só aparece quando há o que desfazer; a legenda J/K/U some no estreito.
-5. **Menos palavras nos chips.** O papel só aparece quando não é "conclui"; o veredito é glifo
-   (✓ feito, ✕ não atende, ? não sabemos, este pontilhado e nunca vermelho), com as palavras para
-   leitor de tela. Dicas só dizem o que é verdade ("sem leitura do plugin").
-6. **Estado pela forma, não só pela cor;** foco visível também na moldura escura; alvos de 44 px abaixo
-   de 720 px.
-7. **Barra compacta abaixo de 1100 px:** título, navegação, fontes como pontos (cheio = recente,
-   anel = velha, pontilhado = nenhuma) com o resumo no rótulo, e o menu de conta e tema.
-
-Fora desta rodada: Mundo e Conta (sem redesenho), a busca ⌘K e a seção 11.

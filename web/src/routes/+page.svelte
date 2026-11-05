@@ -20,7 +20,6 @@
 	import BankPanel from '#lib/v4/BankPanel.svelte';
 	import CurrentStep from '#lib/v4/CurrentStep.svelte';
 	import Glyph from '#lib/v4/Glyph.svelte';
-	import Menu from '#lib/v4/Menu.svelte';
 	import ObjectiveChip from '#lib/v4/ObjectiveChip.svelte';
 	import PinDialog from '#lib/v4/PinDialog.svelte';
 	import Toast from '#lib/v4/Toast.svelte';
@@ -129,9 +128,14 @@
 			.filter((r) => r.guide !== guideId)
 			.map((r) => ({ guide: r.guide, label: routeLabel(r.guide, r.title) }))
 	);
-	// The plaque keeps only the place: the position is in the section strip, the bank leg in
-	// the bank panel (v5 limpeza).
-	const where = $derived(step?.location ?? '');
+	const where = $derived.by(() => {
+		if (!step) return '';
+		const steps = section.data?.steps ?? [];
+		const parts = [`${steps.findIndex((s) => s.id === step.id) + 1} de ${steps.length}`];
+		if (step.location) parts.push(step.location);
+		if (segment?.kind === 'bank_leg') parts.push(`trecho de banco ${segment.range}`);
+		return parts.join(' · ');
+	});
 	const lines = $derived(
 		events.data
 			? eventLines(events.data, (id) => boardById.get(id)?.ref ?? id, section.data?.names ?? {})
@@ -260,54 +264,41 @@
 	<p class="su" aria-busy="true">Carregando a rota ativa…</p>
 {:else}
 	<header class="top">
-		<a class="sel" href={resolve('/rotas')} title={`${route.title} · trocar rota`}
-			>{routeLabel(route.guide, route.title)} <small>▾</small></a
+		<a class="sel" href={resolve('/rotas')}
+			>{route.title} <small>▾ {route.active ? 'rota ativa' : 'rota'}</small></a
 		>
 		<div class="sec">
 			{#if section.data}
-				<span class="stitle" title={section.data.title}
-					><span class="mono su tiny">{sectionLabel(section.data.id)}</span>
-					{section.data.title}</span
+				<span class="small"
+					><span class="mono su tiny">{sectionLabel(section.data.id)}</span> &nbsp;{section.data
+						.title}</span
 				>
+				{#if section.data.description}
+					<button
+						class="desc mu"
+						class:open={descOpen}
+						type="button"
+						aria-expanded={descOpen}
+						title={descOpen ? 'Recolher' : 'Ler a descrição da seção'}
+						onclick={() => (descOpen = !descOpen)}>{section.data.description}</button
+					>
+				{/if}
 			{/if}
 			{#if sectionCounts}
 				<div class="prog">
-					<div
-						class="xp"
-						role="progressbar"
-						aria-label="Passos feitos na seção"
-						aria-valuemin={0}
-						aria-valuemax={sectionCounts.total}
-						aria-valuenow={sectionCounts.done}
-					>
+					<div class="xp">
 						<span style="width: {pct(sectionCounts.done, sectionCounts.total)}%"></span>
 					</div>
-					<span class="mono su tiny">{sectionCounts.done}/{sectionCounts.total}</span>
+					<span class="mono su tiny">{sectionCounts.done} / {sectionCounts.total} feitos</span>
 				</div>
 			{/if}
 		</div>
-		<Menu
-			label="Ações da rota"
-			items={[
-				{
-					label: syncing ? 'Sincronizando…' : 'Sincronizar hiscores',
-					disabled: syncing,
-					onselect: syncNow
-				},
-				{ label: 'Trocar rota', href: resolve('/rotas') },
-				{ label: 'Abrir a seção', href: rotaBase }
-			]}
-		/>
-		{#if section.data?.description}
-			<button
-				class="desc mu"
-				class:open={descOpen}
-				type="button"
-				aria-expanded={descOpen}
-				title={descOpen ? 'Recolher' : 'Ler a descrição da seção'}
-				onclick={() => (descOpen = !descOpen)}>{section.data.description}</button
+		<div class="acts">
+			<button class="btn btn-s" type="button" disabled={syncing} onclick={syncNow}
+				>{syncing ? 'Sincronizando…' : 'Sincronizar'}</button
 			>
-		{/if}
+			<a class="btn btn-g btn-s" href={resolve('/rotas')}>Trocar rota</a>
+		</div>
 	</header>
 
 	{#if band}
@@ -386,10 +377,8 @@
 									{#if s.layers?.length === 1 && s.layers[0] === 'enhanced'}<span class="badge"
 											>enhanced</span
 										>{/if}
-									{#each rowChips.slice(0, 2) as c, i (c.role + c.key)}
-										<span class="rc" class:extra={i > 0}
-											><ObjectiveChip chip={c} small hint={false} link={false} /></span
-										>
+									{#each rowChips.slice(0, 2) as c (c.role + c.key)}
+										<ObjectiveChip chip={c} small hint={false} link={false} />
 									{/each}
 									{#if rowChips.length > 2}<span class="badge">+{rowChips.length - 2}</span>{/if}
 									{#if s.location}<span class="loc">{s.location}</span>{/if}
@@ -486,31 +475,21 @@
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 6px 14px;
+		gap: 12px 20px;
 	}
 	.sec {
 		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 4px 14px;
-		flex: 1 1 200px;
+		flex-direction: column;
+		gap: 4px;
+		flex: 1 1 320px;
 		min-width: 0;
-	}
-	.stitle {
-		flex: 1 1 180px;
-		min-width: 0;
-		font-size: 13px;
-		white-space: nowrap;
-		overflow: hidden;
-		text-overflow: ellipsis;
 	}
 	.desc {
 		all: unset;
-		flex: 1 1 100%;
 		cursor: pointer;
 		font-size: 13px;
 		line-height: 1.4;
-		max-width: none;
+		max-width: 72ch;
 		overflow: hidden;
 		display: -webkit-box;
 		-webkit-line-clamp: 1;
@@ -530,12 +509,14 @@
 		align-items: center;
 		gap: 10px;
 	}
-	.prog {
-		flex: 0 1 240px;
-	}
 	.prog .xp {
 		flex: 1;
-		min-width: 60px;
+		max-width: 360px;
+	}
+	.acts {
+		display: flex;
+		gap: 8px;
+		align-items: center;
 	}
 	.grid {
 		display: flex;
@@ -628,25 +609,5 @@
 	code {
 		font-family: 'JetBrains Mono', monospace;
 		font-size: 12px;
-	}
-	.rc {
-		display: inline-flex;
-		flex: 0 0 auto;
-	}
-	@media (max-width: 719px) {
-		.top {
-			gap: 6px 10px;
-		}
-		.grid,
-		.mainc {
-			gap: 14px;
-		}
-		.row .loc,
-		.rc.extra {
-			display: none;
-		}
-		.row {
-			min-height: 44px;
-		}
 	}
 </style>

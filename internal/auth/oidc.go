@@ -131,17 +131,41 @@ func (p *Provider) Exchange(ctx context.Context, code, verifier, nonce string) (
 		Issuer: idt.Issuer, Subject: idt.Subject, Username: std.PreferredUsername,
 		Email: std.Email, DisplayName: std.Name, Roles: RolesFromClaims(all),
 	}
-	if len(id.Roles) == 0 {
-		// Zitadel puts the roles in the ID token only with "User roles inside
-		// ID token"; with "Assert roles on authentication" userinfo has them.
-		if info, err := p.provider.UserInfo(ctx, oauth2.StaticTokenSource(tok)); err == nil && info.Subject == id.Subject {
-			var claims map[string]json.RawMessage
-			if info.Claims(&claims) == nil {
-				id.Roles = RolesFromClaims(claims)
-			}
-		}
+	if len(id.Roles) == 0 || id.Username == "" {
+		p.fillFromUserinfo(ctx, tok, &id)
 	}
 	return id, raw, nil
+}
+
+// fillFromUserinfo completes the identity from the userinfo endpoint. Zitadel
+// puts profile claims in the ID token only with "User Info inside ID Token"
+// and roles only with "User roles inside ID Token"; with "Assert roles on
+// authentication" userinfo has both. Failures leave the identity as is.
+func (p *Provider) fillFromUserinfo(ctx context.Context, tok *oauth2.Token, id *Identity) {
+	info, err := p.provider.UserInfo(ctx, oauth2.StaticTokenSource(tok))
+	if err != nil || info.Subject != id.Subject {
+		return
+	}
+	var std struct {
+		PreferredUsername string `json:"preferred_username"`
+		Name              string `json:"name"`
+	}
+	var claims map[string]json.RawMessage
+	if info.Claims(&std) != nil || info.Claims(&claims) != nil {
+		return
+	}
+	if id.Username == "" {
+		id.Username = std.PreferredUsername
+	}
+	if id.Email == "" {
+		id.Email = info.Email
+	}
+	if id.DisplayName == "" {
+		id.DisplayName = std.Name
+	}
+	if len(id.Roles) == 0 {
+		id.Roles = RolesFromClaims(claims)
+	}
 }
 
 // EndSessionURL is the RP-initiated logout URL at the issuer, or "" when the

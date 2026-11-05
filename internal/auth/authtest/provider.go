@@ -36,6 +36,9 @@ type User struct {
 	ProjectID string
 	// RolesInUserinfo moves the roles from the ID token to userinfo.
 	RolesInUserinfo bool
+	// ProfileInUserinfo moves preferred_username, email and name from the ID
+	// token to userinfo (Zitadel without "User Info inside ID Token").
+	ProfileInUserinfo bool
 }
 
 type grant struct {
@@ -174,7 +177,9 @@ func (p *Provider) token(w http.ResponseWriter, r *http.Request) {
 	claims := map[string]any{
 		"iss": p.Issuer(), "sub": g.user.Subject, "aud": []string{g.clientID}, "azp": g.clientID,
 		"iat": now.Unix(), "exp": now.Add(time.Hour).Unix(), "nonce": nonce,
-		"preferred_username": g.user.Username, "email": g.user.Email, "name": g.user.Name,
+	}
+	if !g.user.ProfileInUserinfo {
+		claims["preferred_username"], claims["email"], claims["name"] = g.user.Username, g.user.Email, g.user.Name
 	}
 	if !g.user.RolesInUserinfo {
 		addRoles(claims, g.user)
@@ -201,7 +206,7 @@ func (p *Provider) userinfo(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_token"})
 		return
 	}
-	claims := map[string]any{"sub": u.Subject, "preferred_username": u.Username}
+	claims := map[string]any{"sub": u.Subject, "preferred_username": u.Username, "email": u.Email, "name": u.Name}
 	addRoles(claims, u)
 	writeJSON(w, http.StatusOK, claims)
 }

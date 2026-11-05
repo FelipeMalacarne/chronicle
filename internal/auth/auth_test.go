@@ -135,6 +135,10 @@ func TestProviderExchange(t *testing.T) {
 	if err != nil || strings.Join(id.Roles, ",") != "owner" {
 		t.Errorf("userinfo roles = %+v, %v", id, err)
 	}
+	id, _, err = login(authtest.User{Subject: "44", Username: "u44", Email: "u@example.org", Name: "U", Roles: []string{"owner"}, ProfileInUserinfo: true})
+	if err != nil || id.Username != "u44" || id.Email != "u@example.org" || id.DisplayName != "U" || strings.Join(id.Roles, ",") != "owner" {
+		t.Errorf("userinfo profile = %+v, %v", id, err)
+	}
 
 	fake.WrongNonce = true
 	if _, _, err := login(authtest.User{Subject: "42"}); !errors.Is(err, auth.ErrNonce) {

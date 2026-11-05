@@ -160,7 +160,7 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
   book in `docs/ui/pergaminho.md`; the artifact also has React previews of the atoms (`Plaque`,
   `SkillCell`, `InventorySlot`, `StepRow`, `ObjectiveChip`, `BankCard`). In `web/` use the tokens as CSS
   variables and the same class names (`pg-*`), no React.
-- **Decisions**: `docs/ui/decisoes-canvas.md` (section 5 is current) and doc 01 decisions 18 to 20. The
+- **Decisions**: `docs/ui/decisoes-canvas.md` (section 5 is current) and doc 01 decisions 29 to 31. The
   product is called **Chronicle** ("Ironman Planner" is the description); Comparar is a tab of Rotas;
   sidebar option A on 1440; one bevel only (panel, plaque, controls), everything inside panels flat;
   no system text in paragraphs (explanations go to `title`); real OSRS Wiki sprites for skills and items

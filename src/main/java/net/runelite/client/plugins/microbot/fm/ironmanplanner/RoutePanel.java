@@ -7,33 +7,50 @@ import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
+import java.awt.FontMetrics;
+import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.GridLayout;
+import java.awt.Insets;
 import java.awt.RenderingHints;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.image.BufferedImage;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.BoxLayout;
-import javax.swing.ImageIcon;
+import javax.swing.Icon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.EmptyBorder;
+import javax.swing.plaf.basic.BasicGraphicsUtils;
 import net.runelite.client.ui.ColorScheme;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.PluginPanel;
+import net.runelite.client.ui.components.ThinProgressBar;
 
 /**
- * The route panel in RuneLite's own look: the active route from the cursor, the current step
- * with its objectives and Feito/Pular/Desfazer, the next steps (click to expand), and the items
- * to carry for the leg. Swing only: every method runs on the Swing thread, and actions go to
+ * The route panel in RuneLite's own look: a header with the route, its progress and the
+ * cursor's section; the current step (AGORA) with its notes, objectives and Feito/Pular/
+ * Desfazer; the items to carry, collapsed into one summary; and the next steps, one line each
+ * (click to expand). Swing only: every method runs on the Swing thread, and actions go to
  * {@link Actions}, which hands them to the panel executor.
+ *
+ * <p>Type: bold RuneScape for titles, regular for body text, small only for metadata.
+ * Colours: {@link ColorScheme} (dark grey cards, brand orange accents, the progress colours for
+ * verdicts), and every verdict also has its own drawn icon ({@link PanelIcons}).
  */
 final class RoutePanel extends PluginPanel
 {
@@ -48,41 +65,80 @@ final class RoutePanel extends PluginPanel
 
 		/** The panel became visible (true) or hidden (false). */
 		void visible(boolean visible);
+
+		/** The owner opened or closed the item list (remembered in the config). */
+		default void itemsExpanded(boolean expanded)
+		{
+		}
 	}
 
-	private static final Color MET = new Color(0x4caf50);
-	private static final Color UNMET = new Color(0xe57373);
-	private static final Color UNKNOWN = ColorScheme.LIGHT_GRAY_COLOR;
-	private static final Color MUTED = new Color(0x9e9e9e);
-	/** Text width inside the panel (borders, card edge and scrollbar off), for the HTML wrapping. */
-	private static final int TEXT_WIDTH = PANEL_WIDTH - 52;
+	/** Rows of the "Próximos" list. */
+	static final int NEXT_ROWS = 8;
+	/** Items of a derived preview shown when expanded, besides the missing ones. */
+	static final int PREVIEW_ITEMS = 6;
 
-	private static final ImageIcon LOCK = new ImageIcon(lockImage());
+	private static final Font BOLD = FontManager.getRunescapeBoldFont();
+	private static final Font BODY = FontManager.getRunescapeFont();
+	private static final Font SMALL = FontManager.getRunescapeSmallFont();
+
+	private static final Color TITLE = Color.WHITE;
+	private static final Color TEXT = ColorScheme.TEXT_COLOR;
+	private static final Color MUTED = ColorScheme.LIGHT_GRAY_COLOR;
+	private static final Color CARD = ColorScheme.DARKER_GRAY_COLOR;
+	private static final Color CARD_HOVER = ColorScheme.DARKER_GRAY_HOVER_COLOR;
+	private static final Color BG = ColorScheme.DARK_GRAY_COLOR;
+
+	/** Padding inside a card. */
+	private static final int PAD = 8;
+	/** Width of the AGORA card's orange edge. */
+	private static final int EDGE = 3;
+	/** Icon column of rows. */
+	private static final int ICON_COL = PanelIcons.SIZE + 6;
+	private static final int BUTTON_HEIGHT = 28;
 
 	private final Actions actions;
 	private final JPanel content = new JPanel();
 	/** Steps of the list the owner expanded. */
 	private final Set<String> expanded = new HashSet<>();
+	private boolean itemsOpen;
+	private boolean sectionOpen;
 	private PanelState state = new PanelState(PanelState.Connection.NOT_CONFIGURED, null, null, null, null);
 	private boolean busy;
+	private int renderedWidth;
 
 	RoutePanel(Actions actions)
 	{
+		this(actions, false);
+	}
+
+	RoutePanel(Actions actions, boolean itemsExpanded)
+	{
 		super(false);
 		this.actions = actions;
+		this.itemsOpen = itemsExpanded;
 		setLayout(new BorderLayout());
-		setBackground(ColorScheme.DARK_GRAY_COLOR);
-		setBorder(new EmptyBorder(8, 8, 8, 8));
+		setBackground(BG);
+		setBorder(new EmptyBorder(BORDER_OFFSET, BORDER_OFFSET, BORDER_OFFSET, BORDER_OFFSET));
 		content.setLayout(new BoxLayout(content, BoxLayout.Y_AXIS));
-		content.setBackground(ColorScheme.DARK_GRAY_COLOR);
+		content.setBackground(BG);
+		content.addComponentListener(new ComponentAdapter()
+		{
+			@Override
+			public void componentResized(ComponentEvent e)
+			{
+				if (content.getWidth() != renderedWidth)
+				{
+					render();
+				}
+			}
+		});
 		JPanel north = new WidthTrackingPanel();
-		north.setBackground(ColorScheme.DARK_GRAY_COLOR);
 		north.add(content, BorderLayout.NORTH);
-		javax.swing.JScrollPane scroll = new javax.swing.JScrollPane(north);
+		JScrollPane scroll = new JScrollPane(north);
 		scroll.setBorder(null);
-		scroll.getViewport().setBackground(ColorScheme.DARK_GRAY_COLOR);
+		scroll.getViewport().setBackground(BG);
 		scroll.getVerticalScrollBar().setUnitIncrement(16);
-		scroll.setHorizontalScrollBarPolicy(javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		add(scroll, BorderLayout.CENTER);
 		render();
 	}
@@ -107,7 +163,7 @@ final class RoutePanel extends PluginPanel
 		render();
 	}
 
-	/** Refreshes the "h\u00e1 N s" texts (Swing thread). */
+	/** Refreshes the "há N s" texts (Swing thread). */
 	void tickClock()
 	{
 		render();
@@ -115,158 +171,293 @@ final class RoutePanel extends PluginPanel
 
 	private void render()
 	{
+		renderedWidth = content.getWidth();
 		content.removeAll();
+		int width = contentWidth();
 		RouteWindow w = state.window;
-		content.add(header(w));
-		if (w != null)
+		content.add(header(w, width));
+		if (w == null)
+		{
+			content.add(gap(8));
+			content.add(noteCard(emptyText(), width));
+		}
+		else
 		{
 			RouteWindow.Step current = w.current();
+			content.add(gap(8));
 			if (current == null)
 			{
-				content.add(note("Rota conclu\u00edda: nenhum passo pendente."));
+				content.add(noteCard("Rota concluída: nenhum passo pendente.", width));
 			}
 			else
 			{
-				content.add(currentCard(current));
+				content.add(currentCard(w, current, width));
 			}
-			JComponent carry = carry(w.carry);
+			JComponent carry = carry(w.carry, width);
 			if (carry != null)
 			{
+				content.add(gap(8));
 				content.add(carry);
 			}
-			JComponent next = nextSteps(w);
+			JComponent next = nextSteps(w, width);
 			if (next != null)
 			{
+				content.add(gap(12));
 				content.add(next);
 			}
 		}
-		content.add(footer());
+		content.add(gap(10));
+		content.add(footer(width));
 		content.revalidate();
 		content.repaint();
 	}
 
-	private JComponent header(RouteWindow w)
+	/** The width the content gets: the laid-out one, or the side panel's before the first layout. */
+	private int contentWidth()
 	{
-		JPanel p = section();
-		if (w != null)
+		int w = content.getWidth();
+		return w > 0 ? w : PANEL_WIDTH - 2 * BORDER_OFFSET - 7;
+	}
+
+	private String emptyText()
+	{
+		switch (state.connection)
 		{
-			JLabel title = wrappedLabel(w.title, Color.WHITE);
-			title.setFont(FontManager.getRunescapeBoldFont());
-			p.add(title);
-			p.add(wrapped(w.attribution, MUTED));
-			String counts = PanelText.counts(w.counts);
-			if (!counts.isEmpty())
-			{
-				p.add(label(counts, FontManager.getRunescapeSmallFont(), ColorScheme.LIGHT_GRAY_COLOR));
-			}
+			case NOT_CONFIGURED:
+				return "Configure a URL do planner nas opções do plugin.";
+			case CONNECTING:
+				return "Buscando a rota no planner…";
+			default:
+				return "Sem conexão com o planner" + (state.message == null ? "." : ": " + state.message + ".");
 		}
-		else
+	}
+
+	// ---- header ------------------------------------------------------------------------------
+
+	private JComponent header(RouteWindow w, int width)
+	{
+		JPanel p = column(BG);
+		String name = w == null ? "Ironman Planner" : PanelText.routeName(w.guide, w.title);
+		JLabel status = label(PanelText.connectionShort(state, Instant.now()), SMALL, MUTED);
+		status.setIcon(PanelIcons.dot(connectionColor()));
+		status.setIconTextGap(4);
+		status.setToolTipText(PanelText.connection(state, Instant.now()));
+		JLabel title = label(PanelText.ellipsize(name, width - status.getPreferredSize().width - 8, measure(BOLD)), BOLD, TITLE);
+		if (w != null && w.title != null)
 		{
-			p.add(label("Ironman Planner", FontManager.getRunescapeBoldFont(), Color.WHITE));
+			title.setToolTipText(w.title);
 		}
-		Color color;
+		p.add(spread(title, status));
+		if (w == null)
+		{
+			return p;
+		}
+		RouteWindow.Counts c = w.counts;
+		if (c != null && c.total > 0)
+		{
+			p.add(gap(4));
+			ThinProgressBar bar = new ThinProgressBar();
+			bar.setMaximumValue(c.total);
+			bar.setValue(c.done);
+			bar.setForeground(ColorScheme.PROGRESS_COMPLETE_COLOR);
+			bar.setBackground(ColorScheme.MEDIUM_GRAY_COLOR);
+			fix(bar, width, 4);
+			p.add(bar);
+			p.add(gap(3));
+			JLabel done = label(PanelText.progress(c) + " feitos", SMALL, MUTED);
+			JLabel blocked = label(PanelText.blockedCount(c), SMALL, MUTED);
+			blocked.setToolTipText("Passos com requisito faltando: o cursor passa por eles");
+			p.add(spread(done, blocked));
+		}
+		JComponent section = section(w, width);
+		if (section != null)
+		{
+			p.add(gap(6));
+			p.add(section);
+		}
+		if (w.attribution != null && !w.attribution.isEmpty())
+		{
+			p.add(gap(4));
+			p.add(text(w.attribution, SMALL, MUTED, width));
+		}
+		return p;
+	}
+
+	private Color connectionColor()
+	{
 		switch (state.connection)
 		{
 			case ONLINE:
-				color = MET;
-				break;
+				return ColorScheme.PROGRESS_COMPLETE_COLOR;
 			case STALE:
+				return ColorScheme.PROGRESS_INPROGRESS_COLOR;
 			case OFFLINE:
-				color = UNMET;
-				break;
+				return ColorScheme.PROGRESS_ERROR_COLOR;
 			default:
-				color = MUTED;
+				return ColorScheme.MEDIUM_GRAY_COLOR;
 		}
-		p.add(wrapped(PanelText.connection(state, Instant.now()), color));
-		return p;
 	}
 
-	private JComponent currentCard(RouteWindow.Step s)
+	/** The cursor's section: its title, and the description's first line (all of it on click). */
+	private JComponent section(RouteWindow w, int width)
 	{
-		JPanel p = section();
-		p.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		p.setBorder(BorderFactory.createCompoundBorder(
-			BorderFactory.createMatteBorder(0, 3, 0, 0, ColorScheme.BRAND_ORANGE),
-			new EmptyBorder(6, 6, 6, 6)));
-		String where = s.sectionTitle == null || s.sectionTitle.isEmpty() ? "" : " \u00b7 " + s.sectionTitle;
-		p.add(label("AGORA \u00b7 " + s.ref + where, FontManager.getRunescapeSmallFont(), ColorScheme.BRAND_ORANGE));
-		addStepBody(p, s, true);
-		p.add(buttons(s, true));
-		return p;
-	}
-
-	/** Text, location, blocked line and objective chips of a step. */
-	private void addStepBody(JPanel p, RouteWindow.Step s, boolean full)
-	{
-		String status = PanelText.status(s.status);
-		if (!status.isEmpty())
+		String id;
+		String title;
+		String description;
+		if (w.section != null)
 		{
-			p.add(label(status, FontManager.getRunescapeSmallFont(), MUTED));
+			id = w.section.id;
+			title = w.section.title;
+			description = w.section.description;
 		}
-		p.add(wrapped(full ? s.text : s.title, Color.WHITE));
+		else
+		{
+			RouteWindow.Step cur = w.current();
+			if (cur == null)
+			{
+				return null;
+			}
+			id = cur.sectionId;
+			title = cur.sectionTitle;
+			description = null;
+		}
+		if ((title == null || title.isEmpty()) && (id == null || id.isEmpty()))
+		{
+			return null;
+		}
+		String head = (id == null || id.isEmpty() ? "" : id + "  ") + (title == null ? "" : title);
+		boolean hasDescription = description != null && !description.trim().isEmpty();
+		JPanel p = column(BG);
+		int textWidth = hasDescription ? width - ICON_COL : width;
+		JComponent headText = text(head, BODY, TEXT, textWidth);
+		if (!hasDescription)
+		{
+			p.add(headText);
+			return p;
+		}
+		JLabel chevron = new JLabel(PanelIcons.of(sectionOpen ? PanelIcons.Shape.CHEVRON_DOWN : PanelIcons.Shape.CHEVRON_RIGHT));
+		chevron.setVerticalAlignment(JLabel.TOP);
+		chevron.setBorder(new EmptyBorder(2, 0, 0, 6));
+		JPanel top = new JPanel(new BorderLayout());
+		top.setOpaque(false);
+		top.setAlignmentX(LEFT_ALIGNMENT);
+		top.add(chevron, BorderLayout.WEST);
+		top.add(headText, BorderLayout.CENTER);
+		p.add(top);
+		List<String> lines = PanelText.wrap(description.trim(), textWidth, measure(SMALL));
+		List<String> shown = sectionOpen || lines.size() <= 1 ? lines : List.of(
+			lines.size() > 1 ? PanelText.ellipsize(lines.get(0) + " " + lines.get(1), textWidth, measure(SMALL)) : lines.get(0));
+		JComponent desc = new TextBlock(shown, SMALL, MUTED, null, null);
+		desc.setBorder(new EmptyBorder(2, ICON_COL, 0, 0));
+		p.add(desc);
+		p.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		p.setToolTipText(sectionOpen ? "Clique para recolher a descrição" : "Clique para ler a descrição da seção");
+		p.addMouseListener(click(() ->
+		{
+			sectionOpen = !sectionOpen;
+			render();
+		}));
+		return p;
+	}
+
+	// ---- AGORA -------------------------------------------------------------------------------
+
+	private JComponent currentCard(RouteWindow w, RouteWindow.Step s, int width)
+	{
+		JPanel p = column(CARD);
+		p.setBorder(BorderFactory.createCompoundBorder(
+			BorderFactory.createMatteBorder(0, EDGE, 0, 0, ColorScheme.BRAND_ORANGE),
+			new EmptyBorder(PAD, PAD, PAD, PAD)));
+		int inner = width - EDGE - 2 * PAD;
+		JLabel now = label("AGORA", SMALL, ColorScheme.BRAND_ORANGE);
+		JLabel ref = label("  " + (s.ref == null ? "" : s.ref), SMALL, MUTED);
+		JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		left.setOpaque(false);
+		left.add(now);
+		left.add(ref);
+		JLabel status = label(PanelText.status(s.status), SMALL, MUTED);
+		JPanel top = spread(left, status);
+		if (s.sectionTitle != null)
+		{
+			top.setToolTipText((s.sectionId == null ? "" : s.sectionId + " ") + s.sectionTitle);
+		}
+		p.add(top);
+		p.add(gap(4));
+		addStepBody(p, w, s, inner, true);
+		p.add(gap(8));
+		p.add(buttons(s, true, inner));
+		return p;
+	}
+
+	/** Text, location, notes, objectives and the blocked line of a step. */
+	private void addStepBody(JPanel p, RouteWindow w, RouteWindow.Step s, int width, boolean current)
+	{
+		String body = s.text == null || s.text.isEmpty() ? s.title : s.text;
+		p.add(text(body, BODY, current ? TITLE : TEXT, width));
 		if (s.location != null && !s.location.isEmpty())
 		{
-			p.add(label("Local: " + s.location, FontManager.getRunescapeSmallFont(), ColorScheme.LIGHT_GRAY_COLOR));
+			p.add(gap(2));
+			p.add(text("Local: " + s.location, SMALL, MUTED, width));
 		}
-		if (s.blocked())
+		for (RouteWindow.Note n : s.visibleNotes())
 		{
-			JLabel lock = label(PanelText.blocked(s.blockedOrEmpty()), FontManager.getRunescapeSmallFont(), UNMET);
-			lock.setIcon(LOCK);
-			lock.setToolTipText("Bloqueado: o cursor passa por este passo at\u00e9 o requisito ser cumprido");
-			p.add(lock);
+			p.add(gap(5));
+			boolean update = RouteWindow.Note.UPDATE.equals(n.kind);
+			p.add(new TextBlock(PanelText.wrap(PanelText.noteLabel(n) + " " + n.text, width, measure(BODY)), BODY,
+				update ? TEXT : MUTED, PanelText.noteLabel(n), update ? ColorScheme.BRAND_ORANGE : TEXT));
 		}
 		if (!s.objectivesOrEmpty().isEmpty())
 		{
-			JPanel chips = new JPanel(new WrapLayout());
-			chips.setOpaque(false);
-			chips.setAlignmentX(LEFT_ALIGNMENT);
+			p.add(gap(6));
 			for (RouteWindow.Objective o : s.objectivesOrEmpty())
 			{
-				chips.add(chip(o));
+				p.add(objectiveRow(o, width));
 			}
-			p.add(chips);
 		}
-	}
-
-	private JComponent chip(RouteWindow.Objective o)
-	{
-		JLabel chip = new JLabel(PanelText.chip(o));
-		chip.setFont(new Font(Font.DIALOG, Font.PLAIN, 11));
-		Color c = "met".equals(o.verdict) ? MET : "unmet".equals(o.verdict) ? UNMET : UNKNOWN;
-		chip.setForeground(c);
-		chip.setBorder(BorderFactory.createCompoundBorder(
-			"unknown".equals(o.verdict) || o.verdict == null
-				? BorderFactory.createDashedBorder(c, 1, 3, 2, true)
-				: BorderFactory.createLineBorder(c),
-			new EmptyBorder(1, 4, 1, 4)));
-		chip.setToolTipText(PanelText.role(o.role) + " \u00b7 " + PanelText.verdictWord(o.verdict));
-		return chip;
-	}
-
-	private JComponent buttons(RouteWindow.Step s, boolean withUndo)
-	{
-		JPanel row = new JPanel(new GridLayout(1, withUndo ? 3 : 2, 4, 0));
-		row.setOpaque(false);
-		row.setAlignmentX(LEFT_ALIGNMENT);
-		row.setBorder(new EmptyBorder(6, 0, 0, 0));
-		row.add(button("Feito", "Marca o passo como feito (manual_done)", () -> actions.mark(s.id, RoutePanelController.MANUAL_DONE)));
-		row.add(button("Pular", "Pula o passo (skipped)", () -> actions.mark(s.id, RoutePanelController.SKIPPED)));
-		if (withUndo)
+		if (s.blocked())
 		{
-			JButton undo = button("Desfazer", state.undoRef == null ? "Nada para desfazer" : "Desfaz a \u00faltima marca (" + state.undoRef + ")", actions::undo);
-			undo.setEnabled(!busy && state.undoRef != null);
-			row.add(undo);
+			p.add(gap(4));
+			JComponent row = iconRow(PanelIcons.of(PanelIcons.Shape.LOCK),
+				text(PanelText.blocked(s.blockedOrEmpty()), BODY, TEXT, width - ICON_COL), null);
+			if (current)
+			{
+				row.setToolTipText(PanelText.blockedAll(s.blockedOrEmpty()) + " · o cursor passa por este passo");
+			}
+			p.add(row);
 		}
+	}
+
+	private JComponent objectiveRow(RouteWindow.Objective o, int width)
+	{
+		JLabel verdict = label(PanelText.verdictShort(o), SMALL, PanelIcons.verdictColor(o.verdict));
+		verdict.setVerticalAlignment(JLabel.TOP);
+		verdict.setBorder(new EmptyBorder(2, 6, 0, 0));
+		int labelWidth = width - ICON_COL - verdict.getPreferredSize().width;
+		JComponent row = iconRow(PanelIcons.verdict(o.verdict), text(PanelText.objectiveLabel(o), BODY, TEXT, labelWidth), verdict);
+		row.setBorder(new EmptyBorder(1, 0, 1, 0));
 		return row;
 	}
 
-	private JButton button(String text, String tooltip, Runnable run)
+	private JComponent buttons(RouteWindow.Step s, boolean withUndo, int width)
 	{
-		JButton b = new JButton(text);
+		boolean undo = withUndo && state.undoRef != null;
+		JPanel row = new JPanel(new GridLayout(1, undo ? 3 : 2, 4, 0));
+		row.setOpaque(false);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		row.add(button("Feito", true, "Marca o passo como feito", () -> actions.mark(s.id, RoutePanelController.MANUAL_DONE)));
+		row.add(button("Pular", false, "Pula o passo", () -> actions.mark(s.id, RoutePanelController.SKIPPED)));
+		if (undo)
+		{
+			row.add(button("Desfazer", false, "Desfaz a última marca (" + state.undoRef + ")", actions::undo));
+		}
+		fix(row, width, BUTTON_HEIGHT);
+		return row;
+	}
+
+	private JButton button(String text, boolean primary, String tooltip, Runnable run)
+	{
+		FlatButton b = new FlatButton(text, primary, BUTTON_HEIGHT);
 		b.setToolTipText(tooltip);
-		b.setFocusable(false);
-		b.setFont(FontManager.getRunescapeSmallFont());
-		b.setMargin(new java.awt.Insets(2, 1, 2, 1));
 		b.setEnabled(!busy && state.window != null);
 		b.addActionListener(e ->
 		{
@@ -277,81 +468,199 @@ final class RoutePanel extends PluginPanel
 		return b;
 	}
 
-	private JComponent carry(RouteWindow.Carry c)
+	// ---- items -------------------------------------------------------------------------------
+
+	private JComponent carry(RouteWindow.Carry c, int width)
 	{
 		if (c == null || (c.itemsOrEmpty().isEmpty() && c.bankActionsOrEmpty().isEmpty()))
 		{
 			return null;
 		}
-		JPanel p = section();
-		String title = c.derived ? "Itens dos pr\u00f3ximos passos" : "Itens do trecho";
-		p.add(label(title, FontManager.getRunescapeBoldFont(), Color.WHITE));
-		if (c.derived)
+		JPanel p = column(CARD);
+		p.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
+		int inner = width - 2 * PAD;
+		List<RouteWindow.CarryItem> ordered = PanelText.carryOrdered(c.itemsOrEmpty());
+
+		JLabel title = label("Itens", BOLD, TITLE);
+		title.setIcon(PanelIcons.of(itemsOpen ? PanelIcons.Shape.CHEVRON_DOWN : PanelIcons.Shape.CHEVRON_RIGHT));
+		title.setIconTextGap(6);
+		JLabel kind = label(c.derived ? "prévia" : "do trecho", SMALL, MUTED);
+		JPanel head = column(CARD);
+		head.add(spread(title, kind));
+		head.add(gap(2));
+		head.add(text(PanelText.carrySummary(c.itemsOrEmpty()), SMALL, MUTED, inner));
+		head.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		head.setToolTipText((c.derived
+			? "O guia não lista o setup deste trecho: prévia do que os próximos passos usam. "
+			: (c.title == null ? "" : c.title + ". "))
+			+ (itemsOpen ? "Clique para recolher" : "Clique para ver todos"));
+		head.addMouseListener(click(() ->
 		{
-			p.add(label("pr\u00e9via: o guia n\u00e3o lista o setup do trecho", FontManager.getRunescapeSmallFont(), MUTED));
+			itemsOpen = !itemsOpen;
+			actions.itemsExpanded(itemsOpen);
+			render();
+		}));
+		p.add(head);
+
+		List<RouteWindow.CarryItem> shown = new ArrayList<>();
+		List<RouteWindow.CarryItem> hidden = new ArrayList<>();
+		int missing = 0;
+		for (RouteWindow.CarryItem it : ordered)
+		{
+			if (PanelText.itemKind(it) == PanelText.ItemKind.MISSING)
+			{
+				missing++;
+			}
 		}
-		for (RouteWindow.CarryItem it : c.itemsOrEmpty())
+		int limit = !itemsOpen ? missing : c.derived ? missing + PREVIEW_ITEMS : ordered.size();
+		for (RouteWindow.CarryItem it : ordered)
 		{
-			String text = PanelText.carryGlyph(it) + " " + PanelText.carryName(it) + " \u00b7 " + PanelText.carryWhere(it)
-				+ (it.optional ? " (opcional)" : "");
-			JLabel l = label(text, new Font(Font.DIALOG, Font.PLAIN, 11),
-				"met".equals(it.verdict) ? MET : PanelText.GLYPH_UNMET.equals(PanelText.carryGlyph(it)) ? UNMET : ColorScheme.LIGHT_GRAY_COLOR);
-			p.add(l);
+			(shown.size() < limit ? shown : hidden).add(it);
 		}
-		for (String action : c.bankActionsOrEmpty())
+		if (!shown.isEmpty())
 		{
-			p.add(wrapped("Banco: " + action, ColorScheme.LIGHT_GRAY_COLOR));
+			p.add(gap(4));
+		}
+		for (RouteWindow.CarryItem it : shown)
+		{
+			p.add(itemRow(it, inner));
+		}
+		if (itemsOpen && !hidden.isEmpty())
+		{
+			JLabel more = label("+" + hidden.size() + (hidden.size() == 1 ? " item" : " itens"), SMALL, MUTED);
+			more.setBorder(new EmptyBorder(2, ICON_COL, 0, 0));
+			StringBuilder tip = new StringBuilder("<html>");
+			for (int i = 0; i < hidden.size(); i++)
+			{
+				RouteWindow.CarryItem it = hidden.get(i);
+				tip.append(i == 0 ? "" : "<br>").append(escape(PanelText.carryName(it))).append(" · ").append(PanelText.carryWhere(it));
+			}
+			more.setToolTipText(tip.append("</html>").toString());
+			p.add(more);
+		}
+		if (itemsOpen)
+		{
+			for (String action : c.bankActionsOrEmpty())
+			{
+				p.add(gap(4));
+				p.add(text("Banco: " + action, SMALL, MUTED, inner));
+			}
 		}
 		return p;
 	}
 
-	private JComponent nextSteps(RouteWindow w)
+	private JComponent itemRow(RouteWindow.CarryItem it, int width)
 	{
-		JPanel p = section();
-		int n = 0;
-		for (RouteWindow.Step s : w.stepsOrEmpty())
-		{
-			if (s.current)
-			{
-				continue;
-			}
-			if (n == 0)
-			{
-				p.add(label("Pr\u00f3ximos", FontManager.getRunescapeBoldFont(), Color.WHITE));
-			}
-			n++;
-			p.add(row(s));
-		}
-		return n == 0 ? null : p;
+		PanelText.ItemKind kind = PanelText.itemKind(it);
+		JLabel where = label(PanelText.carryWhere(it) + (it.optional ? " (opcional)" : ""), SMALL, PanelIcons.itemColor(kind));
+		int nameWidth = width - ICON_COL - where.getPreferredSize().width - 6;
+		JLabel name = label(PanelText.ellipsize(PanelText.carryName(it), nameWidth, measure(BODY)), BODY,
+			kind == PanelText.ItemKind.BANK ? MUTED : TEXT);
+		JLabel icon = new JLabel(PanelIcons.item(kind));
+		icon.setBorder(new EmptyBorder(0, 0, 0, ICON_COL - PanelIcons.SIZE));
+		JPanel row = new JPanel(new BorderLayout());
+		row.setOpaque(false);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		row.add(icon, BorderLayout.WEST);
+		row.add(name, BorderLayout.CENTER);
+		row.add(where, BorderLayout.EAST);
+		row.setBorder(new EmptyBorder(1, 0, 1, 0));
+		return row;
 	}
 
-	private JComponent row(RouteWindow.Step s)
+	// ---- next steps --------------------------------------------------------------------------
+
+	private JComponent nextSteps(RouteWindow w, int width)
 	{
-		JPanel r = new JPanel();
-		r.setLayout(new BoxLayout(r, BoxLayout.Y_AXIS));
-		r.setBackground(ColorScheme.DARKER_GRAY_COLOR);
-		r.setBorder(new EmptyBorder(3, 4, 3, 4));
-		r.setAlignmentX(LEFT_ALIGNMENT);
+		List<RouteWindow.Step> next = new ArrayList<>();
+		for (RouteWindow.Step s : w.stepsOrEmpty())
+		{
+			if (!s.current && next.size() < NEXT_ROWS)
+			{
+				next.add(s);
+			}
+		}
+		if (next.isEmpty())
+		{
+			return null;
+		}
+		JPanel p = column(BG);
+		p.add(label("Próximos", BOLD, TITLE));
+		p.add(gap(4));
+		JPanel list = column(CARD);
+		for (int i = 0; i < next.size(); i++)
+		{
+			JComponent row = stepRow(w, next.get(i), width);
+			if (i > 0)
+			{
+				row.setBorder(BorderFactory.createCompoundBorder(
+					BorderFactory.createMatteBorder(1, 0, 0, 0, BG), row.getBorder()));
+			}
+			list.add(row);
+		}
+		p.add(list);
+		return p;
+	}
+
+	private JComponent stepRow(RouteWindow w, RouteWindow.Step s, int width)
+	{
+		PanelText.StepKind kind = PanelText.stepKind(s);
 		boolean open = expanded.contains(s.id);
-		String head = PanelText.statusGlyph(s) + " " + s.ref + "  " + (s.title == null ? "" : s.title);
-		JLabel title = wrappedLabel(head, s.blocked() ? MUTED : Color.WHITE);
-		title.setFont(new Font(Font.DIALOG, Font.PLAIN, 11));
+		int inner = width - 2 * 6;
+		JPanel r = column(CARD);
+		r.setBorder(new EmptyBorder(5, 6, 5, 6));
+
+		List<RouteWindow.Note> notes = s.visibleNotes();
+		String marker = PanelText.noteMarker(notes);
+		String ref = s.ref == null ? "" : s.ref;
+		int refWidth = measure(SMALL).applyAsInt(ref) + 6;
+		int markerWidth = marker == null ? 0 : PanelIcons.SIZE + 4;
+		String title = s.title == null ? "" : s.title;
+		boolean dim = kind != PanelText.StepKind.PENDING;
+
+		JPanel head = new JPanel();
+		head.setLayout(new BoxLayout(head, BoxLayout.X_AXIS));
+		head.setOpaque(false);
+		head.setAlignmentX(LEFT_ALIGNMENT);
+		JLabel icon = new JLabel(PanelIcons.step(kind));
+		icon.setBorder(new EmptyBorder(0, 0, 0, ICON_COL - PanelIcons.SIZE));
+		head.add(icon);
+		JLabel refLabel = label(ref, SMALL, MUTED);
+		refLabel.setBorder(new EmptyBorder(1, 0, 0, 6));
+		head.add(refLabel);
+		JLabel titleLabel = label(open ? "" : PanelText.ellipsize(title, inner - ICON_COL - refWidth - markerWidth, measure(BODY)),
+			BODY, dim ? MUTED : TEXT);
+		head.add(titleLabel);
+		head.add(Box.createHorizontalGlue());
+		if (marker != null)
+		{
+			JLabel m = new JLabel(PanelIcons.of(RouteWindow.Note.UPDATE.equals(marker) ? PanelIcons.Shape.UPDATE : PanelIcons.Shape.NOTE));
+			m.setBorder(new EmptyBorder(0, 4, 0, 0));
+			head.add(m);
+		}
+		r.add(head);
+
+		StringBuilder tip = new StringBuilder("<html>").append(escape(ref)).append(" · ").append(escape(title))
+			.append("<br>").append(PanelText.stepKindWord(kind));
 		if (s.blocked())
 		{
-			title.setIcon(LOCK);
+			tip.append("<br>").append(escape(PanelText.blockedAll(s.blockedOrEmpty())));
 		}
-		r.add(title);
-		if (s.blocked() && !open)
+		if (marker != null)
 		{
-			r.add(label(PanelText.blocked(s.blockedOrEmpty()), FontManager.getRunescapeSmallFont(), UNMET));
+			tip.append("<br>").append(RouteWindow.Note.UPDATE.equals(marker) ? "tem atualização do guia" : "tem dica");
 		}
+		tip.append("<br>").append(open ? "Clique para recolher" : "Clique para ver o texto e as ações").append("</html>");
+		r.setToolTipText(tip.toString());
+
 		if (open)
 		{
-			addStepBody(r, s, true);
-			r.add(buttons(s, false));
+			r.add(gap(4));
+			addStepBody(r, w, s, inner, false);
+			r.add(gap(6));
+			r.add(buttons(s, false, inner));
 		}
 		r.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-		r.setToolTipText(open ? "Clique para recolher" : "Clique para ver o texto e as a\u00e7\u00f5es");
 		r.addMouseListener(new MouseAdapter()
 		{
 			@Override
@@ -363,22 +672,30 @@ final class RoutePanel extends PluginPanel
 				}
 				render();
 			}
+
+			@Override
+			public void mouseEntered(MouseEvent e)
+			{
+				r.setBackground(CARD_HOVER);
+			}
+
+			@Override
+			public void mouseExited(MouseEvent e)
+			{
+				r.setBackground(CARD);
+			}
 		});
-		JPanel wrap = new JPanel(new BorderLayout());
-		wrap.setOpaque(false);
-		wrap.setBorder(new EmptyBorder(2, 0, 2, 0));
-		wrap.setAlignmentX(LEFT_ALIGNMENT);
-		wrap.add(r, BorderLayout.CENTER);
-		return wrap;
+		return r;
 	}
 
-	private JComponent footer()
+	// ---- footer ------------------------------------------------------------------------------
+
+	private JComponent footer(int width)
 	{
-		JPanel p = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		p.setOpaque(false);
-		p.setAlignmentX(LEFT_ALIGNMENT);
-		JButton refresh = new JButton("Atualizar");
-		refresh.setFocusable(false);
+		JPanel p = column(BG);
+		FlatButton refresh = new FlatButton("Atualizar", false, 24);
+		refresh.setFont(SMALL);
+		refresh.setToolTipText("Busca a rota no planner agora");
 		refresh.setEnabled(!busy && state.connection != PanelState.Connection.NOT_CONFIGURED);
 		refresh.addActionListener(e ->
 		{
@@ -386,24 +703,75 @@ final class RoutePanel extends PluginPanel
 			render();
 			actions.refresh();
 		});
-		p.add(refresh);
+		JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		row.setOpaque(false);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		row.add(refresh);
+		p.add(row);
+		if (state.message != null && state.window != null)
+		{
+			p.add(gap(4));
+			p.add(text(PanelText.connection(state, Instant.now()), SMALL, ColorScheme.PROGRESS_ERROR_COLOR, width));
+		}
 		return p;
 	}
 
-	private JComponent note(String text)
+	private JComponent noteCard(String text, int width)
 	{
-		JPanel p = section();
-		p.add(wrapped(text, ColorScheme.LIGHT_GRAY_COLOR));
+		JPanel p = column(CARD);
+		p.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
+		p.add(text(text, BODY, TEXT, width - 2 * PAD));
 		return p;
 	}
 
-	private static JPanel section()
+	// ---- building blocks ---------------------------------------------------------------------
+
+	private java.util.function.ToIntFunction<String> measure(Font font)
+	{
+		FontMetrics fm = content.getFontMetrics(font);
+		return fm::stringWidth;
+	}
+
+	private JComponent text(String text, Font font, Color color, int width)
+	{
+		return new TextBlock(PanelText.wrap(text, width, measure(font)), font, color, null, null);
+	}
+
+	private static JPanel column(Color background)
 	{
 		JPanel p = new JPanel();
 		p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
-		p.setBackground(ColorScheme.DARK_GRAY_COLOR);
-		p.setBorder(new EmptyBorder(0, 0, 8, 0));
+		p.setBackground(background);
 		p.setAlignmentX(LEFT_ALIGNMENT);
+		return p;
+	}
+
+	/** Left and right components on one line. */
+	private static JPanel spread(JComponent left, JComponent right)
+	{
+		JPanel p = new JPanel(new BorderLayout(6, 0));
+		p.setOpaque(false);
+		p.setAlignmentX(LEFT_ALIGNMENT);
+		p.add(left, BorderLayout.WEST);
+		p.add(right, BorderLayout.EAST);
+		return p;
+	}
+
+	/** An icon in the left column, then a component, then an optional one on the right. */
+	private static JPanel iconRow(Icon icon, JComponent center, JComponent east)
+	{
+		JLabel i = new JLabel(icon);
+		i.setVerticalAlignment(JLabel.TOP);
+		i.setBorder(new EmptyBorder(2, 0, 0, ICON_COL - PanelIcons.SIZE));
+		JPanel p = new JPanel(new BorderLayout());
+		p.setOpaque(false);
+		p.setAlignmentX(LEFT_ALIGNMENT);
+		p.add(i, BorderLayout.WEST);
+		p.add(center, BorderLayout.CENTER);
+		if (east != null)
+		{
+			p.add(east, BorderLayout.EAST);
+		}
 		return p;
 	}
 
@@ -416,44 +784,162 @@ final class RoutePanel extends PluginPanel
 		return l;
 	}
 
-	/** A label whose text wraps at the panel width. */
-	private static JLabel wrapped(String text, Color color)
+	private static Box.Filler gap(int height)
 	{
-		JLabel l = wrappedLabel(text, color);
-		l.setFont(FontManager.getRunescapeSmallFont());
-		return l;
+		Box.Filler f = (Box.Filler) Box.createRigidArea(new Dimension(0, height));
+		f.setAlignmentX(LEFT_ALIGNMENT);
+		return f;
 	}
 
-	private static JLabel wrappedLabel(String text, Color color)
+	private static void fix(JComponent c, int width, int height)
 	{
-		String body = escape(text == null ? "" : text).replace("\n", "<br>");
-		// Swing's HTML scales CSS px by 4/3 (96 dpi over 72), so the CSS width is 3/4 of the pixels
-		JLabel l = new JLabel("<html><div style='width:" + (TEXT_WIDTH * 3 / 4) + "px'>" + body + "</div></html>");
-		l.setForeground(color);
-		l.setAlignmentX(LEFT_ALIGNMENT);
-		l.setBorder(new EmptyBorder(2, 0, 2, 0));
-		return l;
+		c.setPreferredSize(new Dimension(width, height));
+		c.setMaximumSize(new Dimension(Integer.MAX_VALUE, height));
+		c.setAlignmentX(LEFT_ALIGNMENT);
+	}
+
+	private static MouseAdapter click(Runnable run)
+	{
+		return new MouseAdapter()
+		{
+			@Override
+			public void mouseClicked(MouseEvent e)
+			{
+				run.run();
+			}
+		};
 	}
 
 	private static String escape(String s)
 	{
-		return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+		return s == null ? "" : s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
 	}
 
-	/** A small padlock, drawn so the panel needs no resource files. */
-	private static BufferedImage lockImage()
+	/**
+	 * Pre-wrapped lines of text in one font; the first line may start with a prefix in its own
+	 * colour (the "Atualização:" of a note).
+	 */
+	private static final class TextBlock extends JComponent
 	{
-		BufferedImage img = new BufferedImage(10, 12, BufferedImage.TYPE_INT_ARGB);
-		Graphics2D g = img.createGraphics();
-		g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-		g.setColor(UNMET);
-		g.setStroke(new BasicStroke(1.6f));
-		g.drawArc(2, 0, 6, 8, 0, 180);
-		g.drawLine(2, 4, 2, 6);
-		g.drawLine(8, 4, 8, 6);
-		g.fillRoundRect(0, 5, 10, 7, 2, 2);
-		g.dispose();
-		return img;
+		private final List<String> lines;
+		private final Color color;
+		private final String prefix;
+		private final Color prefixColor;
+
+		TextBlock(List<String> lines, Font font, Color color, String prefix, Color prefixColor)
+		{
+			this.lines = lines;
+			this.color = color;
+			this.prefix = prefix;
+			this.prefixColor = prefixColor;
+			setFont(font);
+			setForeground(color);
+			setAlignmentX(LEFT_ALIGNMENT);
+		}
+
+		@Override
+		public Dimension getPreferredSize()
+		{
+			FontMetrics fm = getFontMetrics(getFont());
+			int w = 0;
+			for (String l : lines)
+			{
+				w = Math.max(w, fm.stringWidth(l));
+			}
+			Insets in = getInsets();
+			return new Dimension(w + in.left + in.right, lines.size() * fm.getHeight() + in.top + in.bottom);
+		}
+
+		@Override
+		public Dimension getMaximumSize()
+		{
+			return new Dimension(Integer.MAX_VALUE, getPreferredSize().height);
+		}
+
+		@Override
+		protected void paintComponent(Graphics g)
+		{
+			FontMetrics fm = getFontMetrics(getFont());
+			Insets in = getInsets();
+			g.setFont(getFont());
+			int y = in.top + fm.getAscent();
+			for (int i = 0; i < lines.size(); i++)
+			{
+				String line = lines.get(i);
+				int x = in.left;
+				if (i == 0 && prefix != null && line.startsWith(prefix))
+				{
+					g.setColor(prefixColor);
+					BasicGraphicsUtils.drawString(this, (Graphics2D) g, prefix, x, y);
+					x += fm.stringWidth(prefix);
+					line = line.substring(prefix.length());
+				}
+				g.setColor(color);
+				BasicGraphicsUtils.drawString(this, (Graphics2D) g, line, x, y);
+				y += fm.getHeight();
+			}
+		}
+	}
+
+	/** A flat, slightly rounded button: brand orange when primary, medium grey otherwise. */
+	private static final class FlatButton extends JButton
+	{
+		private final boolean primary;
+		private final int minHeight;
+
+		FlatButton(String text, boolean primary, int minHeight)
+		{
+			super(text);
+			this.primary = primary;
+			this.minHeight = minHeight;
+			setFont(primary ? BOLD : BODY);
+			setForeground(primary ? ColorScheme.DARKER_GRAY_COLOR : Color.WHITE);
+			setContentAreaFilled(false);
+			setBorderPainted(false);
+			setFocusPainted(false);
+			setFocusable(false);
+			setOpaque(false);
+			setRolloverEnabled(true);
+			setBorder(new EmptyBorder(2, 4, 2, 4));
+			setMargin(new Insets(2, 4, 2, 4));
+			setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+		}
+
+		@Override
+		public Dimension getPreferredSize()
+		{
+			Dimension d = super.getPreferredSize();
+			return new Dimension(d.width, Math.max(d.height, minHeight));
+		}
+
+		@Override
+		protected void paintComponent(Graphics g)
+		{
+			Graphics2D g2 = (Graphics2D) g.create();
+			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			Color base = primary ? ColorScheme.BRAND_ORANGE : ColorScheme.MEDIUM_GRAY_COLOR;
+			Color bg;
+			if (!isEnabled())
+			{
+				bg = primary ? new Color(0x6e4a10) : new Color(0x3a3a3a);
+			}
+			else if (getModel().isPressed())
+			{
+				bg = base.darker();
+			}
+			else if (getModel().isRollover())
+			{
+				bg = primary ? new Color(0xf09a10) : new Color(0x5c5c5c);
+			}
+			else
+			{
+				bg = base;
+			}
+			g2.setColor(bg);
+			g2.fillRoundRect(0, 0, getWidth(), getHeight(), 5, 5);
+			g2.dispose();
+			super.paintComponent(g);
+		}
 	}
 
 	/** The toolbar icon: a scroll with a route line, drawn in code. */
@@ -481,7 +967,7 @@ final class RoutePanel extends PluginPanel
 		WidthTrackingPanel()
 		{
 			super(new BorderLayout());
-			setBackground(ColorScheme.DARK_GRAY_COLOR);
+			setBackground(BG);
 		}
 
 		@Override
@@ -512,55 +998,6 @@ final class RoutePanel extends PluginPanel
 		public boolean getScrollableTracksViewportHeight()
 		{
 			return false;
-		}
-	}
-
-	/** FlowLayout that wraps its rows inside a vertical box (the objective chips). */
-	private static final class WrapLayout extends FlowLayout
-	{
-		WrapLayout()
-		{
-			super(FlowLayout.LEFT, 3, 3);
-		}
-
-		@Override
-		public Dimension preferredLayoutSize(java.awt.Container target)
-		{
-			return layoutSize(target);
-		}
-
-		@Override
-		public Dimension minimumLayoutSize(java.awt.Container target)
-		{
-			return layoutSize(target);
-		}
-
-		private Dimension layoutSize(java.awt.Container target)
-		{
-			synchronized (target.getTreeLock())
-			{
-				int maxWidth = TEXT_WIDTH;
-				int x = 0;
-				int y = 0;
-				int rowHeight = 0;
-				for (java.awt.Component c : target.getComponents())
-				{
-					if (!c.isVisible())
-					{
-						continue;
-					}
-					Dimension d = c.getPreferredSize();
-					if (x > 0 && x + d.width > maxWidth)
-					{
-						y += rowHeight + getVgap();
-						x = 0;
-						rowHeight = 0;
-					}
-					x += d.width + getHgap();
-					rowHeight = Math.max(rowHeight, d.height);
-				}
-				return new Dimension(maxWidth, y + rowHeight + getVgap() * 2);
-			}
 		}
 	}
 

@@ -8,8 +8,8 @@
 	import Glyph from '#lib/v4/Glyph.svelte';
 
 	/*
-	 * Rotas (V4Rotas): cada rota é uma ordem e o progresso é um só. Sem tela de comparação
-	 * (decisão 1 do v4): a cobertura diz quanto de cada rota os fatos da conta já respondem.
+	 * Rotas (V4Rotas): cada rota é uma ordem e o progresso é um só; a cobertura diz quanto de
+	 * cada rota os fatos da conta já respondem. A aba Comparar (V5Comparar) põe duas lado a lado.
 	 */
 	const guides = createResource(() => progressApi.guides());
 	const routes = $derived(
@@ -61,6 +61,12 @@
 			O que você já fez na conta vale em todas. Cada rota guarda o próprio cursor e as próprias
 			marcas manuais. A cobertura diz quanto de cada rota o seu progresso já responde.
 		</p>
+	</div>
+	<div class="seg" role="tablist">
+		<a class="on" href={resolve('/rotas')} role="tab" aria-selected="true" aria-current="page"
+			>Lista</a
+		>
+		<a href={resolve('/compare')} role="tab" aria-selected="false">Comparar</a>
 	</div>
 </header>
 
@@ -171,6 +177,33 @@
 		flex-wrap: wrap;
 		align-items: flex-end;
 		gap: 12px 24px;
+	}
+	.seg {
+		display: inline-flex;
+		gap: 2px;
+		padding: 2px;
+		border-radius: 4px;
+		background: var(--ground);
+		border: 1px solid var(--border);
+		box-shadow: var(--bevel);
+	}
+	.seg > * {
+		display: inline-flex;
+		align-items: center;
+		height: 26px;
+		padding: 0 12px;
+		border-radius: 3px;
+		color: var(--ink-muted);
+		font:
+			500 12px Inter,
+			system-ui,
+			sans-serif;
+		text-decoration: none;
+	}
+	.seg .on {
+		background: var(--frame);
+		color: var(--gold);
+		box-shadow: var(--bevel-frame);
 	}
 	.txt {
 		display: flex;

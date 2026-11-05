@@ -690,3 +690,105 @@ export function pendingBefore(
 	}
 	return [];
 }
+
+/* ------------------------------------------------------------------ comparar rotas (V5Comparar) */
+
+type CompareStep = Pick<
+	BoardStep,
+	'id' | 'ref' | 'title' | 'section_id' | 'status' | 'main' | 'visible' | 'objectives'
+>;
+interface CompareBoard {
+	guide: string;
+	steps: CompareStep[];
+}
+
+/** Como um objetivo aparece numa rota: o primeiro passo que o conclui ou inicia. */
+export interface CrossPlace {
+	ref: string;
+	status: StepStatus;
+	role: Role;
+}
+
+/** Um objetivo que mais de uma rota conclui, com o veredito da conta (um só). */
+export interface CrossRow {
+	key: string;
+	verdict: Verdict;
+	places: Record<string, CrossPlace>;
+}
+
+/** Rótulo da célula de uma rota: evidência cruza; marca à mão fica na rota dela. */
+export type CrossCell = 'feito' | 'adianta' | 'feito à mão' | 'não sabemos' | 'pendente' | 'pulado';
+
+const isDone = (s: StepStatus) => s === 'auto_done' || s === 'manual_done' || s === 'implied';
+
+export function crossCell(row: CrossRow, guide: string): CrossCell | null {
+	const p = row.places[guide];
+	if (!p) return null;
+	if (row.verdict === 'met') return isDone(p.status) ? 'feito' : 'adianta';
+	if (p.status === 'skipped') return 'pulado';
+	if (isDone(p.status)) return 'feito à mão';
+	return row.verdict === 'unknown' ? 'não sabemos' : 'pendente';
+}
+
+/**
+ * Os objetivos que duas ou mais rotas concluem, com o lugar de cada uma (passos da rota
+ * principal, visíveis). Primeiro os que já valem (met), depois os feitos à mão em alguma
+ * rota, depois na ordem da primeira rota.
+ */
+export function crossObjectives(boards: CompareBoard[]): CrossRow[] {
+	const rows = new Map<string, CrossRow & { order: number }>();
+	let order = 0;
+	for (const b of boards) {
+		for (const s of b.steps) {
+			if (!s.main || !s.visible) continue;
+			for (const o of s.objectives) {
+				if (o.role !== 'completes' && o.role !== 'starts') continue;
+				let row = rows.get(o.key);
+				if (!row) {
+					row = { key: o.key, verdict: o.verdict, places: {}, order: order++ };
+					rows.set(o.key, row);
+				}
+				row.places[b.guide] ??= { ref: s.ref, status: s.status, role: o.role };
+			}
+		}
+	}
+	const rank = (r: CrossRow) =>
+		r.verdict === 'met' ? 0 : Object.values(r.places).some((p) => isDone(p.status)) ? 1 : 2;
+	return [...rows.values()]
+		.filter((r) => Object.keys(r.places).length > 1)
+		.sort((a, b) => rank(a) - rank(b) || a.order - b.order)
+		.map(({ key, verdict, places }) => ({ key, verdict, places }));
+}
+
+/** Quanto falta numa rota até um passo: passos abertos (nem feitos nem pulados) e seções. */
+export interface Distance {
+	steps: number;
+	sections: string[];
+}
+
+export function distanceTo(steps: CompareStep[], stepId: string): Distance | null {
+	const out: Distance = { steps: 0, sections: [] };
+	for (const s of steps) {
+		if (s.main && s.visible && !isDone(s.status) && s.status !== 'skipped') {
+			out.steps++;
+			if (!out.sections.includes(s.section_id)) out.sections.push(s.section_id);
+		}
+		if (s.id === stepId) return out;
+	}
+	return null;
+}
+
+/** O primeiro passo da rota que conclui a chave (um nível maior também serve). */
+export function firstReaching(steps: CompareStep[], key: string): CompareStep | null {
+	const want = /^(skill:[a-z_]+|qp)>=(\d+)$/.exec(key);
+	for (const s of steps) {
+		if (!s.main || !s.visible) continue;
+		for (const o of s.objectives) {
+			if (o.role !== 'completes' && o.role !== 'starts') continue;
+			if (o.key === key) return s;
+			const have = want && /^(skill:[a-z_]+|qp)>=(\d+)$/.exec(o.key);
+			if (want && have && have[1] === want[1] && Number(have[2]) >= Number(want[2])) return s;
+		}
+	}
+	return null;
+}

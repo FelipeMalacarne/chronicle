@@ -2,6 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
 	alsoIn,
+	crossCell,
+	crossObjectives,
+	distanceTo,
+	firstReaching,
 	bankColumns,
 	checkboxLine,
 	chipsOf,
@@ -436,4 +440,61 @@ test('pending-before counts what the batch would mark', () => {
 	assert.deepEqual(pendingBefore(steps, 'x'), ['a', 'e', 'i']);
 	assert.deepEqual(pendingBefore(steps, 'a'), []);
 	assert.deepEqual(pendingBefore(steps, 'missing'), []);
+});
+
+test('compare: cross objectives, cells, distance and reaching', () => {
+	const st = (
+		id: string,
+		status: 'pending' | 'auto_done' | 'manual_done' | 'skipped',
+		objectives: { key: string; verdict: 'met' | 'unmet' | 'unknown' }[],
+		extra = {}
+	) => ({
+		id,
+		ref: id.toUpperCase(),
+		title: id,
+		section_id: id.slice(0, 1),
+		status,
+		main: true,
+		visible: true,
+		objectives: objectives.map((o) => ({ ...o, role: 'completes' as const })),
+		...extra
+	});
+	const oz = {
+		guide: 'oz',
+		steps: [
+			st('a1', 'auto_done', [{ key: 'skill:woodcutting>=35', verdict: 'met' }]),
+			st('a2', 'manual_done', [{ key: 'quest:monks_friend@finished', verdict: 'unknown' }]),
+			st('a3', 'skipped', []),
+			st('b1', 'pending', [{ key: 'skill:cooking>=40', verdict: 'unmet' }]),
+			st('b2', 'pending', [{ key: 'quest:only_here@finished', verdict: 'unknown' }]),
+			st('b3', 'pending', [{ key: 'skill:cooking>=70', verdict: 'unmet' }], { visible: false }),
+			st('c1', 'pending', [{ key: 'skill:cooking>=70', verdict: 'unmet' }])
+		]
+	};
+	const br = {
+		guide: 'br',
+		steps: [
+			st('x1', 'pending', [
+				{ key: 'quest:monks_friend@finished', verdict: 'unknown' },
+				{ key: 'skill:woodcutting>=35', verdict: 'met' }
+			]),
+			st('x2', 'pending', [{ key: 'skill:cooking>=40', verdict: 'unmet' }])
+		]
+	};
+	const rows = crossObjectives([oz, br]);
+	assert.deepEqual(
+		rows.map((r) => r.key),
+		['skill:woodcutting>=35', 'quest:monks_friend@finished', 'skill:cooking>=40']
+	);
+	assert.equal(crossCell(rows[0], 'oz'), 'feito');
+	assert.equal(crossCell(rows[0], 'br'), 'adianta');
+	assert.equal(crossCell(rows[1], 'oz'), 'feito à mão');
+	assert.equal(crossCell(rows[1], 'br'), 'não sabemos');
+	assert.equal(crossCell(rows[2], 'br'), 'pendente');
+	assert.equal(crossCell(rows[2], 'zz'), null);
+	assert.deepEqual(distanceTo(oz.steps, 'c1'), { steps: 3, sections: ['b', 'c'] });
+	assert.equal(distanceTo(oz.steps, 'nope'), null);
+	assert.equal(firstReaching(oz.steps, 'skill:cooking>=50')?.id, 'c1');
+	assert.equal(firstReaching(oz.steps, 'skill:cooking>=30')?.id, 'b1');
+	assert.equal(firstReaching(br.steps, 'skill:cooking>=50'), null);
 });

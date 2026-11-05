@@ -359,6 +359,26 @@
       "text": "chocolate",
       "item_id": 1973,
       "note": "guide shorthand (extraction, oziris-main 1.4)"
+    },
+    {
+      "text": "mithril grapple",
+      "item_id": 9419,
+      "note": "guide shorthand (extraction, oziris-main 1.5)"
+    },
+    {
+      "text": "dragon scim",
+      "item_id": 4587,
+      "note": "guide shorthand (extraction, oziris-main 1.5)"
+    },
+    {
+      "text": "B gloves",
+      "item_id": 7462,
+      "note": "guide shorthand (extraction, oziris-main 1.5)"
+    },
+    {
+      "text": "bone cbow",
+      "item_id": 8880,
+      "note": "guide shorthand (extraction, oziris-main 1.5)"
     }
   ],
   "item_ambiguous": [

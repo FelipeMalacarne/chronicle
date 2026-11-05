@@ -21,7 +21,7 @@ documento onde houver conflito.
 | Grafo | Calculado no servidor em memória a partir de `content/` + catálogos + cache do wiki; renderizado com **Cytoscape.js + ELK**. Nós são chaves de objetivo. |
 | Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06), com painel da rota e marcas a partir da 1.2.0. Hoje autentica com token `ipl_` por cliente; planejado (decisão 28 do doc 01): sem token em `AUTH_MODE=dev` (só de `127.0.0.1`) e device flow do Zitadel em `oidc`. |
 | Execução | Local-first na estação `zaros` com `AUTH_MODE=dev`; depois a mesma imagem no `saradomin` com Postgres e Zitadel existentes (seção 8). |
-| Auth | `AUTH_MODE=dev` (usuário fixo) hoje; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs`) na tarefa de deploy. Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). Tokens de API para CLI e MCP. |
+| Auth | `AUTH_MODE=dev` (usuário fixo) no zaros; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs` no Postgres) feito para a web, falta o deploy no saradomin (seção 8). Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). Tokens de API para CLI e MCP. |
 
 ## 1. Stack
 
@@ -162,16 +162,62 @@ sequenceDiagram
 ### 2.4 Configuração
 
 Variáveis lidas por `internal/config`: `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
-(`dev` | `oidc`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL`, `SESSION_SECRET`, `CONTENT_DIR`
-(`content`), `LOG_LEVEL`, `PUBLIC_BASE_URL`. `.env.example` documenta cada uma; detalhes, modos e
+(`dev` | `oidc`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL`, `OIDC_ALLOWED_SUBJECTS`,
+`OIDC_REQUIRED_ROLE`, `SESSION_SECRET`, `CONTENT_DIR` (`content`), `LOG_LEVEL`, `PUBLIC_BASE_URL`,
+`SYNC_HISCORES_MINUTES`. `.env.example` documenta cada uma; detalhes, modos e
 troubleshooting no doc 07. Configurações por conta (tabela `settings`): layer ativa, modo, fontes
 habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 
 ### 2.5 Auth e API
 
-- **Hoje**: `AUTH_MODE=dev` loga um usuário fixo sem OIDC; é o modo dos testes e da CI. Rotas que
-  expõem dados por id de conta (`?account=`) só existem nesse modo.
-- **Depois**: OIDC Zitadel (seção 8); `users.role`, `accounts.user_id` já existem para multiusuário.
+- **`AUTH_MODE=dev`**: um usuário fixo (`subject = 'dev'`) sem login; é o modo do zaros, dos testes e
+  da CI. Rotas por id de conta (`?account=`) aceitam qualquer conta, sem sessão e sem cabeçalho CSRF.
+- **`AUTH_MODE=oidc`** (feito para a web em 2026-11-05; `internal/auth`, `internal/store/identity`,
+  `internal/httpapi/auth.go`): login no Zitadel pelo authorization code flow com PKCE, sem client
+  secret (seção 8).
+  - `GET /auth/login?return=<caminho>`: gera `state`, `nonce` e o verificador PKCE (desafio S256),
+    guarda os três e o destino num cookie `ironman_oidc` cifrado (AES-GCM, chave derivada do
+    `SESSION_SECRET`; `HttpOnly`, `SameSite=Lax`, `Path=/auth/callback`, 10 min) e redireciona ao
+    issuer. Só caminhos locais valem como destino (nada de `//host`, URL absoluta ou `/auth/*`).
+  - `GET /auth/callback`: confere o `state` com o cookie, troca o código com o verificador, verifica o
+    ID token com o go-oidc (assinatura pela JWKS, `iss`, `aud`, `exp`) e o `nonce`, aplica a política,
+    grava o usuário por `(issuer, sub)` e abre a sessão com token novo (sem fixação). Um `sub` que já
+    é do usuário dev ou de outro issuer é recusado, nunca fundido.
+  - `POST /auth/logout` (com o cabeçalho CSRF): destrói a sessão no banco e responde
+    `{"redirect": …}`, o `end_session_endpoint` do discovery com `id_token_hint`, `client_id` e
+    `post_logout_redirect_uri = PUBLIC_BASE_URL + "/"` (ou `/` se o issuer não anunciar o endpoint).
+  - **Sessão**: `alexedwards/scs` com `pgxstore` na tabela `sessions` (migration 0001; limpeza dos
+    vencidos a cada 5 min). Cookie `ironman_session` `HttpOnly`, `SameSite=Lax`, `Secure` quando
+    `PUBLIC_BASE_URL` é https, persistente. Vale 7 dias sem uso e no máximo 30 dias depois do login;
+    vencida, a próxima chamada responde 401 e a web vai para o login. Guarda id do usuário, `sub`,
+    roles e o ID token (só para o logout).
+  - **Autorização**: passa quem tem o `sub` em `OIDC_ALLOWED_SUBJECTS` **ou** a role
+    `OIDC_REQUIRED_ROLE` nas claims `urn:zitadel:iam:org:project:roles` ou
+    `urn:zitadel:iam:org:project:<id>:roles` do ID token (sem roles no ID token, as do userinfo). O
+    `serve` não sobe em oidc sem nenhuma das duas. A política é conferida de novo a cada requisição
+    com o `sub` e as roles da sessão: tirar um `sub` da lista e reiniciar derruba as sessões dele; uma
+    role tirada no Zitadel só vale no próximo login. Recusa: página PT-BR "Acesso negado" (403) no
+    callback, com link para sair do Zitadel e entrar com outro usuário; JSON 403 na API.
+  - **CSRF**: `SameSite=Lax` mais o cabeçalho `X-Ironman-CSRF: 1` exigido em todo método que não é
+    GET/HEAD/OPTIONS nas rotas com sessão (e no logout). Escolhido no lugar da checagem de `Origin`
+    porque não depende de o proxy reverso preservar `Host`/`Origin` nem de `PUBLIC_BASE_URL` bater
+    byte a byte; outro site não manda cabeçalho próprio sem preflight de CORS, e o servidor não
+    responde CORS. A web manda o cabeçalho em toda escrita (também em dev, onde é ignorado).
+  - **Rotas por conta**: as mesmas do modo dev, atrás da sessão (401 sem ela, com
+    `{"login":"/auth/login"}`), e só para contas com `accounts.user_id` do usuário; conta de outro
+    usuário ou inexistente é o mesmo 404. O setup procura e cria contas do usuário da sessão; o id
+    continua `acc_<rsn>`, então um RSN que já é conta de outro usuário dá 409. A web, num 401,
+    vai para `/auth/login?return=<tela atual>`.
+  - **Vínculo das contas de dev** (regra determinística): na primeira entrada de um `sub` novo, se
+    ainda não existe nenhum outro usuário OIDC no banco, todas as contas do usuário dev (`subject =
+    'dev'`, sem issuer) passam para ele, na mesma transação do login (log
+    `first OIDC login claimed the dev accounts`). É o caso do banco do zaros levado ao saradomin por
+    `pg_dump`. Qualquer usuário OIDC seguinte começa sem contas; contas de dev criadas depois disso
+    ficam com o dev.
+  - `GET /api/me` (dev e oidc): `{auth_mode, user: {id, username, email, display_name, role}, roles,
+    accounts}`.
+  - Falta: tela de login/logout no canvas (hoje não há botão "Sair"; o logout existe só na API) e as
+    páginas de erro do login, que são HTML mínimo fora do design system.
 - **Tokens de API** (`api_tokens`): `Authorization: Bearer apk_…`, para CLI, MCP e scripts.
 - **Tokens do plugin** (`plugin_ingest_tokens`): `Authorization: Bearer ipl_…`, escopo = uma conta,
   mostrados uma vez, sha256 no banco, revogáveis, com `scopes` (`state:write`; `items:*` são opt-in).
@@ -189,6 +235,8 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
     conta de dev, mais um id de instalação), porque guarda estado do protocolo (`last_seq`,
     `manifest_version`, conta).
 
+"feita (dev, oidc)": em dev sem sessão; em oidc atrás da sessão e só para as contas do usuário.
+
 | Rota | Estado | Função |
 |---|---|---|
 | `GET /api/health`, `GET /api/version` | feita | liveness, versão, contagem de conteúdo, estado do banco |
@@ -196,25 +244,27 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/guides/{guide}/sections/{section}`, `GET /api/guides/{guide}/steps/{id}` | feita | conteúdo (steps planos e segmentos) |
 | `GET /api/guides/{guide}/now` | stub | primeiro passo e os cinco seguintes; vira o cursor da rota |
 | `GET /api/ingest/manifest`, `POST /api/ingest` | feita | plugin (seção 6.4) |
-| `POST /api/dev/ingest-token` | feita (dev) | bootstrap de token sem UI |
-| `GET /api/guides/{guide}/readiness?account=&step=`, `GET /api/guides/{guide}/segments/{segment}/readiness?account=` | feita (dev) | readiness do trecho (seção 6.4.1) |
-| `GET /api/guides/{guide}/board?account=` | feita (dev) | status derivado e veredito por objetivo de cada passo, marcas, cursor, contagens, órfãos; frescor fica para o item 9 |
-| `PATCH /api/guides/{guide}/steps/{id}/mark?account=` | feita (dev) | `{kind: manual_done\|skipped\|pinned_open\|confirm_implied\|clear, note}`; `note` ausente mantém, `""` limpa |
-| `POST /api/guides/{guide}/implied/confirm?account=` | feita (dev) | "confirmar tudo": toda marca `implied` do guia vira `manual_done` |
-| `POST /api/guides/{guide}/marks?account=` | feita (dev) | "marcar tudo antes deste": `before_step_id` marca `manual_done` todo passo da rota principal antes dele, visível e pendente sem marca ou presumido (`implied`); pulados ficam; `restore` (a lista `undo` da resposta) devolve a cada passo a marca anterior |
-| `PUT /api/guides/{guide}/cursor?account=` | feita (dev) | `{step_id}` fixa o passo atual (passo feito é recusado); `{step_id: null}` volta ao automático |
-| `GET /api/objectives?account=` | feita (dev) | vereditos compartilhados com evidência |
-| `GET /api/progress?account=` | feita (dev) | resumo das rotas: rota ativa, cursor (com a referência do autor), contagens por seção, cobertura, fontes |
-| `GET /api/guides/{guide}/events?account=&limit=` | feita (dev) | o que mudou: eventos de passo do guia e de objetivo da conta, com a fonte do snapshot |
-| `PUT /api/account/guide?account=` | feita (dev) | troca a rota ativa e reavalia na mesma transação |
-| `GET /api/setup/lookup?rsn=`, `POST /api/accounts` | feita (dev) | primeiro acesso (`/setup`, V4Setup): conta existente pelo RSN, ou modo detectado e níveis do hiscores; cria a conta e reavalia |
-| `POST /api/sync?account=` | feita (dev) | sync do hiscores agora; 429 com `retry_at` no debounce de 60 s ou no recuo |
-| `GET /api/sync/runs?account=&limit=` | feita (dev) | tentativas de sync (status, HTTP, erro, `steps_changed`, `next_allowed_at`) |
-| `GET /api/events?account=` | feita (dev) | tempo real (SSE): sinais de invalidação da conta depois de cada commit de progresso (seção 6.6) |
+| `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` | feita (oidc) | login web pelo Zitadel (acima) |
+| `GET /api/me` | feita (dev, oidc) | usuário, roles do projeto e contas dele |
+| `POST /api/dev/ingest-token` | feita (só dev) | bootstrap de token sem UI |
+| `GET /api/guides/{guide}/readiness?account=&step=`, `GET /api/guides/{guide}/segments/{segment}/readiness?account=` | feita (dev, oidc) | readiness do trecho (seção 6.4.1) |
+| `GET /api/guides/{guide}/board?account=` | feita (dev, oidc) | status derivado e veredito por objetivo de cada passo, marcas, cursor, contagens, órfãos; frescor fica para o item 9 |
+| `PATCH /api/guides/{guide}/steps/{id}/mark?account=` | feita (dev, oidc) | `{kind: manual_done\|skipped\|pinned_open\|confirm_implied\|clear, note}`; `note` ausente mantém, `""` limpa |
+| `POST /api/guides/{guide}/implied/confirm?account=` | feita (dev, oidc) | "confirmar tudo": toda marca `implied` do guia vira `manual_done` |
+| `POST /api/guides/{guide}/marks?account=` | feita (dev, oidc) | "marcar tudo antes deste": `before_step_id` marca `manual_done` todo passo da rota principal antes dele, visível e pendente sem marca ou presumido (`implied`); pulados ficam; `restore` (a lista `undo` da resposta) devolve a cada passo a marca anterior |
+| `PUT /api/guides/{guide}/cursor?account=` | feita (dev, oidc) | `{step_id}` fixa o passo atual (passo feito é recusado); `{step_id: null}` volta ao automático |
+| `GET /api/objectives?account=` | feita (dev, oidc) | vereditos compartilhados com evidência |
+| `GET /api/progress?account=` | feita (dev, oidc) | resumo das rotas: rota ativa, cursor (com a referência do autor), contagens por seção, cobertura, fontes |
+| `GET /api/guides/{guide}/events?account=&limit=` | feita (dev, oidc) | o que mudou: eventos de passo do guia e de objetivo da conta, com a fonte do snapshot |
+| `PUT /api/account/guide?account=` | feita (dev, oidc) | troca a rota ativa e reavalia na mesma transação |
+| `GET /api/setup/lookup?rsn=`, `POST /api/accounts` | feita (dev, oidc) | primeiro acesso (`/setup`, V4Setup): conta existente pelo RSN, ou modo detectado e níveis do hiscores; cria a conta e reavalia |
+| `POST /api/sync?account=` | feita (dev, oidc) | sync do hiscores agora; 429 com `retry_at` no debounce de 60 s ou no recuo |
+| `GET /api/sync/runs?account=&limit=` | feita (dev, oidc) | tentativas de sync (status, HTTP, erro, `steps_changed`, `next_allowed_at`) |
+| `GET /api/events?account=` | feita (dev, oidc) | tempo real (SSE): sinais de invalidação da conta depois de cada commit de progresso (seção 6.6) |
 | `GET /api/state?account=` | planejada | estado da conta |
-| `GET/POST /api/goals?account=`, `DELETE /api/goals/{id}?account=` | feita (dev) | metas: objetivo fixado (chave canônica validada no registry); alcançada quando o objetivo vira met |
-| `GET /api/goals/{id}/plan?account=` | feita (dev) | plano da meta: fechamento de `QuestEntry.Requires` contra fatos e vereditos; unknown nunca conta como feito, presumido pela marca fica fora do "N de M" |
-| `GET /api/world?account=` | feita (dev) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
+| `GET/POST /api/goals?account=`, `DELETE /api/goals/{id}?account=` | feita (dev, oidc) | metas: objetivo fixado (chave canônica validada no registry); alcançada quando o objetivo vira met |
+| `GET /api/goals/{id}/plan?account=` | feita (dev, oidc) | plano da meta: fechamento de `QuestEntry.Requires` contra fatos e vereditos; unknown nunca conta como feito, presumido pela marca fica fora do "N de M" |
+| `GET /api/world?account=` | feita (dev, oidc) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
 | `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=` | planejadas | grafo e plano da meta (esperam os requisitos de quest no catálogo) |
 | `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
 
@@ -694,8 +744,9 @@ Decisão do dono (2026-11-05): SSE e releitura, sem WebSocket, sem dependência 
 (Redis, LISTEN/NOTIFY). Um evento é só um sinal de invalidação: o cliente relê pela API de sempre e
 não existe uma segunda fonte de verdade.
 
-- **Rota**: `GET /api/events?account=<id>`, `text/event-stream`. Como toda rota por id de conta, só
-  existe com `AUTH_MODE=dev` (regra 10 do CLAUDE.md); fora dele responde 404.
+- **Rota**: `GET /api/events?account=<id>`, `text/event-stream`. Como toda rota por id de conta,
+  existe em `AUTH_MODE=dev` e, em `oidc`, atrás da sessão e só para contas do usuário (regra 10 do
+  CLAUDE.md); o `EventSource` manda o cookie de sessão por ser da mesma origem.
 - **Stream**: `retry: 3000`, depois `event: hello` (`{"type":"hello","account","at"}`), um evento por
   publicação com flush e o comentário `: ping` a cada 25 s. Termina quando o cliente sai, quando o
   servidor desliga (o contexto base) ou quando o hub descarta o assinante lento. O `serve` não tem
@@ -793,9 +844,10 @@ o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis
   até a auth planejada do plugin (seção 2.5), token `ipl_` gerado localmente; depois, só a URL. `pg_dump` manual ou via `just`.
 - **saradomin** (decisão de 2026-11-03): Postgres existente (database `ironman_planner`), Zitadel via
   OIDC com uma aplicação Web (PKCE, sem client secret) e redirect `https://planner.<domínio>/auth/callback`;
-  `/auth/login` inicia o fluxo, `/auth/callback` troca o código, cria ou atualiza `users` pelo `sub` e
-  grava a sessão em cookie `HttpOnly`. Autorização: lista de `sub` permitidos no `.env`, depois role no
-  projeto do Zitadel. O plugin autentica pelo device flow do Zitadel, numa aplicação nativa pública,
+  `/auth/login` inicia o fluxo, `/auth/callback` troca o código, cria ou atualiza `users` por
+  `(issuer, sub)` e grava a sessão em cookie `HttpOnly` (feito; seção 2.5). Autorização:
+  `OIDC_ALLOWED_SUBJECTS` no `.env` e/ou `OIDC_REQUIRED_ROLE` (role do projeto no Zitadel). Passos do
+  console e do `.env` no doc 07, seção 3.3. O plugin autentica pelo device flow do Zitadel, numa aplicação nativa pública,
   com as roles do projeto no JWT (seção 2.5; decisão 28 do doc 01, que revê o "plugin continua com token
   `ipl_`" de 2026-11-03). Imagem publicada no registry que o servidor já
   usa, serviço no compose existente, atrás do reverse proxy; health em `/api/health`; `pg_dump` na rotina
@@ -869,7 +921,17 @@ detecção (seção 6.6). Verificação: testes do hub com `-race`, teste HTTP d
 de integração de ingest, sync e progresso, `node --test` do view-model e o stream passando pelo proxy
 do Vite. Falta ver ao vivo com o plugin no zaros.
 
-Ainda não existe: anotações do BRUHsailer além do 1.1, sessão/OIDC, auth do plugin sem token,
+Sessão web por OIDC (parte web do item 11, 2026-11-05, branch `feat/oidc-web`): `/auth/login`,
+`/auth/callback`, `/auth/logout`, `GET /api/me`, sessão scs no `pgxstore`, política por `sub` ou role
+do projeto, CSRF por cabeçalho, rotas por conta liberadas em `oidc` só para as contas do usuário e o
+vínculo das contas de dev no primeiro login (seção 2.5). Verificação: provedor OIDC falso em processo
+(`internal/auth/authtest`) no fluxo completo login → callback → sessão → `/api/me` → rota da conta →
+SSE → logout, em memória e no Postgres; recusas (state, nonce, cookie ausente, sub e role, conta de
+outro usuário, CSRF, sessão revogada pela política); `internal/store/identity` em schema descartável.
+Falta o deploy no saradomin (doc 07, seção 3.3), a tela de login/sair no canvas e a auth do plugin
+(item 15).
+
+Ainda não existe: anotações do BRUHsailer além do 1.1, deploy no saradomin, auth do plugin sem token,
 painel da rota no plugin, CLI/MCP sobre o cliente, grafo,
 tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
 antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
@@ -889,7 +951,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
-| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin (sessão web por PKCE e device flow do plugin, item 15); depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
+| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin (sessão web por PKCE e device flow do plugin, item 15); depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); falta o deploy no saradomin e a tela de login/sair |
 | 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05): falta conferir ao vivo com o plugin |
 | 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito no branch** (2026-11-05, `feat/push-por-evento`), falta instalar e conferir no jogo |
 | 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Próximo**, depois do item 12 |

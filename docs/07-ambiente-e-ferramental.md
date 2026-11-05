@@ -82,17 +82,48 @@ just stack-accounts / stack-account-guide <id> <guia> / stack-psql
 
 ### 3.3 saradomin
 
+A sessão web por OIDC está pronta (doc 04, seção 2.5); falta só o deploy.
+
 1. Criar database e usuário no Postgres existente; `DATABASE_URL` com `sslmode=require` se aplicável.
-2. No Zitadel, criar aplicação Web (PKCE, sem secret) com redirect
-   `https://planner.<domínio>/auth/callback`; copiar issuer e client id para `OIDC_*`.
+   Para levar o progresso do zaros: `just db-backup` lá e `pg_restore`/`psql` aqui, antes do primeiro
+   login (ver o passo 7).
+2. No console do Zitadel, **projeto** "Ironman Planner" (Projects → New):
+   - em General, ligar **Assert Roles on Authentication** (as roles do projeto vão para o userinfo);
+     opcional: **Check authorization on Authentication** (o próprio Zitadel barra quem não tem role
+     no projeto);
+   - em Roles, criar a role `owner` (é o `OIDC_REQUIRED_ROLE`; outro nome serve, desde que bata);
+   - em Authorizations, dar `owner` ao usuário do dono.
+3. No mesmo projeto, **aplicação** Web (Applications → New → Web), método de autenticação **PKCE**
+   (sem client secret):
+   - Redirect URIs: `https://planner.<domínio>/auth/callback`;
+   - Post Logout URIs: `https://planner.<domínio>/`;
+   - Development Mode desligado (ligar só para testar com `http://localhost:8080/auth/callback`);
+   - em Token Settings, ligar **User roles inside ID Token** e **User Info inside ID Token** (sem eles
+     o planner busca roles e perfil no userinfo, uma chamada a mais no login);
+   - copiar o **Client ID** para `OIDC_CLIENT_ID`. O issuer é o domínio da instância
+     (`https://auth.<domínio>`; conferir em `/.well-known/openid-configuration`).
+   - O `sub` do dono é o **ID** do usuário em Users (número de 18 dígitos), para
+     `OIDC_ALLOWED_SUBJECTS`.
    Para o plugin (decisão 28 do doc 01, item 15 do doc 04): criar também uma aplicação **nativa**
    pública com o grant Device Code, e as roles do projeto `ingest`, `items:bank`, `items:inventory`,
    `items:equipment` e `marks:write`, atribuídas ao usuário do dono; o access token deve ser JWT com as
    roles no token. O planner informa o `client_id` dela ao plugin, que só precisa da URL.
-3. `.env` com `AUTH_MODE=oidc`, `SESSION_SECRET` novo (`openssl rand -hex 32`), `PUBLIC_BASE_URL`.
-4. Usar só o serviço `app` do `compose.yaml` (remover `postgres` e o `depends_on`) ou declarar o
-   serviço no compose do servidor com a mesma imagem. Health em `GET /api/health`.
-5. `goose up` com o `DATABASE_URL` do servidor antes de subir a nova versão.
+4. `.env` com `AUTH_MODE=oidc`, `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `PUBLIC_BASE_URL=https://planner.<domínio>`
+   (https liga o `Secure` do cookie; `OIDC_REDIRECT_URL` pode ficar vazio e vira
+   `PUBLIC_BASE_URL/auth/callback`), `SESSION_SECRET` novo (`openssl rand -hex 32`; o valor do
+   `.env.example` é recusado) e pelo menos um de `OIDC_ALLOWED_SUBJECTS` e `OIDC_REQUIRED_ROLE` (basta
+   passar em um). Sem nenhum dos dois, ou sem `DATABASE_URL`, o `serve` não sobe.
+5. Usar só o serviço `app` do `compose.yaml` (remover `postgres` e o `depends_on`) ou declarar o
+   serviço no compose do servidor com a mesma imagem. Health em `GET /api/health`. O proxy reverso
+   termina o TLS e repassa cookies; para o SSE (`/api/events`), sem buffer e sem timeout curto de
+   leitura (o servidor já manda `X-Accel-Buffering: no`).
+6. `goose up` com o `DATABASE_URL` do servidor antes de subir a nova versão (a tabela `sessions` já
+   vem da migration 0001).
+7. Primeiro login: o primeiro usuário OIDC do banco recebe todas as contas do usuário dev (regra no
+   doc 04, seção 2.5; o log diz `first OIDC login claimed the dev accounts`). Por isso o dono entra
+   antes de qualquer outro usuário. Os tokens `ipl_` do plugin continuam valendo até o item 15.
+8. Conferir: `/` sem sessão leva ao Zitadel e volta à mesma tela; `GET /api/me` mostra as contas;
+   um usuário sem a role vê "Acesso negado".
 
 ## 4. Variáveis de ambiente
 
@@ -104,12 +135,14 @@ Lidas pelo binário (`ironman serve` é o único comando que abre o banco):
 | `DATABASE_URL` | — | `postgres://user:senha@host:5432/db?sslmode=...` |
 | `AUTH_MODE` | `dev` | `dev` (usuário local fixo, sem login) ou `oidc` |
 | `OIDC_ISSUER` | — | URL do Zitadel (obrigatório em `oidc`) |
-| `OIDC_CLIENT_ID` | — | client id da aplicação Web |
-| `OIDC_REDIRECT_URL` | — | deve bater com o registrado no Zitadel |
-| `SESSION_SECRET` | — | 32+ bytes aleatórios; assina o cookie de sessão |
+| `OIDC_CLIENT_ID` | — | client id da aplicação Web (PKCE, sem secret) |
+| `OIDC_REDIRECT_URL` | `PUBLIC_BASE_URL` + `/auth/callback` em `oidc` | deve bater com o registrado no Zitadel |
+| `OIDC_ALLOWED_SUBJECTS` | — | `sub` do Zitadel aceitos, separados por vírgula; em `oidc`, este ou `OIDC_REQUIRED_ROLE` (basta passar em um) |
+| `OIDC_REQUIRED_ROLE` | — | role do projeto no Zitadel que dá acesso (claims `urn:zitadel:iam:org:project[:<id>]:roles`) |
+| `SESSION_SECRET` | — | 32+ caracteres aleatórios (obrigatório em `oidc`); cifra o cookie do estado do login (state, nonce, PKCE); a sessão é um token aleatório na tabela `sessions` |
 | `CONTENT_DIR` | `content` | diretório dos guias; `/app/content` na imagem |
 | `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
-| `PUBLIC_BASE_URL` | — | usada em links e no manifest do plugin Microbot |
+| `PUBLIC_BASE_URL` | — | usada em links e no manifest do plugin Microbot; em `oidc` é obrigatória, dá o redirect padrão e a volta do logout, e com https o cookie de sessão ganha `Secure` |
 | `SYNC_HISCORES_MINUTES` | `30` | cadência do sync do hiscores por conta (jitter de ±5 min); `0` desliga o scheduler, o botão Sincronizar continua |
 
 Só para o compose: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`,

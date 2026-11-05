@@ -67,10 +67,12 @@ internal/core/        PURE domain (no DB/HTTP imports):
   annotate/           guide extraction: batches, name resolution, verification, sidecar/report writer
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
-internal/store/       repositories (ingest: tokens, pushes, holdings; progress: reevaluation, marks,
+internal/store/       repositories (identity: OIDC users, dev-account claim, ownership; ingest: tokens, pushes, holdings; progress: reevaluation, marks,
                       cursor, board, goals, content index and step id aliases at boot; state:
                       PlayerState from player_state; syncrun: hiscores runs, backoff, scheduler); internal/store/db is sqlc OUTPUT
-internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, dev-only readiness and token bootstrap
+internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy); authtest: fake issuer for tests
+internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* and /api/me, account routes
+                      (dev without session, oidc behind it), dev-only token bootstrap
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
                       planned: internal/client
 web/                  Svelte SPA; web/embed.go embeds web/dist (`//go:embed all:dist`);
@@ -118,8 +120,11 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
    live: ask them (AskUserQuestion) whenever an objective is inferred, a name is ambiguous, the taxonomy
    does not fit or the verifier rejects something non-obvious; record answers as `confirmed_by: owner`
    and general rules in `annotations/decisions.json`. Never commit an unconfirmed inference.
-10. Account-addressed routes (`/api/guides/{guide}/readiness?account=`) are registered only in
-    `AUTH_MODE=dev` until session auth exists.
+10. Account-addressed routes (`?account=`: board, marks, readiness, goals, sync, `/api/events`, ...)
+    exist without a session only in `AUTH_MODE=dev`. In `oidc` they are wrapped by the session
+    middleware (`Server.authed`: 401 without a session, `X-Ironman-CSRF` on writes) and
+    `Server.accountParam` restricts them to accounts owned by the session user (404 otherwise). Never
+    register one outside that pair (docs/04 section 2.5).
 11. **The Claude Design canvas is the reference for every screen.** Before implementing or changing
     any screen or component in `web/`, read the canvas "Ironman Planner — Telas"
     (https://claude.ai/artifact/NqmKesmqCJH1gnSowjJFbQ) with the Artifact tool: `project/canvas.json`
@@ -132,7 +137,8 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
 ## Environment variables
 
 Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
-(`dev` | `oidc`, default `dev`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL`, `SESSION_SECRET`,
+(`dev` | `oidc`, default `dev`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL` (`PUBLIC_BASE_URL/auth/callback`), `OIDC_ALLOWED_SUBJECTS`,
+`OIDC_REQUIRED_ROLE` (oidc needs one of the two), `SESSION_SECRET` (32+ chars in oidc),
 `CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler). `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 

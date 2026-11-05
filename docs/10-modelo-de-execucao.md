@@ -268,6 +268,14 @@ Go manda e o tipo não declara; o teste Go recusa a mudança de forma de uma res
 `internal/httpapi`, o struct embutido pede `tstype:",extends"`, cada tipo de outro pacote pede um
 mapeamento manual e os nomes do TS e do Go divergem; as fixtures já cobrem a detecção de divergência.
 
+**Adiado pelo dono (2026-11-05), com OpenAPI como candidato no lugar do tygo.** Motivo: o tygo só
+gera tipos para a web, e o contrato de ingest e as rotas `/api/plugin` têm um segundo consumidor, o
+plugin em Java, que hoje só tem o espelho de `docs/arquitetura/types.ts`. Caminho proposto ao retomar:
+(1) `openapi.yaml` escrito primeiro para `/api/ingest`, `/api/ingest/manifest` e `/api/plugin/*`, com
+o cliente Java gerado dele; (2) depois as rotas da web, com tipos de `openapi-typescript`; (3) as
+fixtures viram teste de conformidade, com cada resposta real validada contra o spec no Go
+(`kin-openapi`).
+
 ## 13. Fases
 
 | Fase | Entrega | Pronto quando |

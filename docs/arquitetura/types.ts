@@ -339,6 +339,7 @@ export interface RouteWindow {
             skipped: number; pinned_open: number; remaining: number; blocked: number };
   steps: RouteWindowStep[];            // o passo do cursor (current) e os próximos visíveis da rota principal
   carry: RouteCarry | null;            // trecho do cursor
+  section?: { id: string; title: string; description?: string };  // seção do cursor
 }
 
 export interface RouteWindowStep {
@@ -355,6 +356,7 @@ export interface RouteWindowStep {
   blocked_by: { key: string; label: string }[];  // "falta …"
   objectives: { key: string; role: 'completes' | 'starts' | 'requires' | 'uses'; label: string;
                 verdict: Verdict; regressed?: boolean }[];
+  notes?: { kind: 'tip' | 'update' | 'hcim'; text: string }[];  // notas do autor, sem metadados
 }
 
 export interface RouteCarry {

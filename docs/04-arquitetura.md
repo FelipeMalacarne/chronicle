@@ -261,7 +261,7 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/guides/{guide}/sections/{section}`, `GET /api/guides/{guide}/steps/{id}` | feita | conteúdo (steps planos e segmentos) |
 | `GET /api/guides/{guide}/now` | stub | primeiro passo e os cinco seguintes; vira o cursor da rota |
 | `GET /api/ingest/manifest`, `POST /api/ingest` | feita | plugin (seção 6.4): token `ipl_` em qualquer modo, ou sem token em dev pelo loopback (acima) |
-| `GET /api/plugin/route?limit=` | feita | painel do plugin: janela da rota ativa (passo do cursor e os `limit` seguintes, 1 a 50, padrão 15); credencial do plugin, nunca `?account=` |
+| `GET /api/plugin/route?limit=` | feita | painel do plugin: janela da rota ativa (passo do cursor e os `limit` seguintes, 1 a 50, padrão 15), com as notas do autor de cada passo (`notes`: `tip`, `update`, `hcim`; sem as linhas de metadado do BRUHsailer) e a seção do cursor com a descrição (`section`); credencial do plugin, nunca `?account=` |
 | `PATCH /api/plugin/guides/{guide}/steps/{id}/mark?limit=` | feita | Feito/Pular/Desfazer do painel: o mesmo `{kind, note}` e a mesma operação da rota da web (evento `progress`/`owner`); responde com a janela; token precisa de `marks:write` |
 | `POST /api/plugin/guides/{guide}/marks?limit=` | feita | Desfazer de uma marca `implied`: só `{restore: [...]}` (o desfazer em lote da web); responde com a janela; token precisa de `marks:write` |
 | `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` | feita (oidc) | login web pelo Zitadel (acima) |

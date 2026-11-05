@@ -40,6 +40,22 @@ type Window struct {
 	// Carry is the cursor's leg: what to bring and the bank actions. Null
 	// without a cursor.
 	Carry *Carry `json:"carry"`
+	// Section is the cursor's section with the author's description. Null
+	// without a cursor.
+	Section *Section `json:"section,omitempty"`
+}
+
+// Section is the cursor's section.
+type Section struct {
+	ID          string `json:"id"`
+	Title       string `json:"title"`
+	Description string `json:"description,omitempty"`
+}
+
+// Note is one of the author's notes on a step (tip, update, hcim).
+type Note struct {
+	Kind string `json:"kind"`
+	Text string `json:"text"`
 }
 
 // Cursor is the route's current step.
@@ -64,6 +80,10 @@ type Step struct {
 	// pending step ("falta …").
 	BlockedBy  []Requirement `json:"blocked_by"`
 	Objectives []Objective   `json:"objectives"`
+	// Notes are the author's notes, without the BRUHsailer metadata lines
+	// (GP after step, total time, items needed, skills/quests). An update
+	// note can tell the player to skip the step.
+	Notes []Note `json:"notes,omitempty"`
 }
 
 // Requirement is an objective key with its display label.
@@ -164,6 +184,11 @@ func Build(in Input) Window {
 		}
 		out.Steps = append(out.Steps, step(st, s, titles[st.SectionID], current, in.Registry))
 	}
+	if cur, ok := g.Step(in.Cursor.StepID); ok {
+		if sec, ok := g.Section(cur.SectionID); ok {
+			out.Section = &Section{ID: sec.ID, Title: sec.Title, Description: strings.TrimSpace(sec.Description)}
+		}
+	}
 	if current, _ := planning.Legs(g, in.Cursor.StepID); current != nil {
 		out.Carry = carry(g, current, in.Cursor.StepID, in.Holdings, in.Registry)
 	}
@@ -182,7 +207,26 @@ func step(st *content.Step, s progress.StepState, sectionTitle string, current b
 	for _, o := range s.Objectives {
 		out.Objectives = append(out.Objectives, Objective{Key: o.Key, Role: o.Role, Label: Label(o.Key, reg), Verdict: o.Verdict, Regressed: o.Regressed})
 	}
+	for _, n := range st.Notes {
+		if text := strings.TrimSpace(n.Text); text != "" && !metaNote(text) {
+			out.Notes = append(out.Notes, Note{Kind: n.Kind, Text: text})
+		}
+	}
 	return out
+}
+
+// metaPrefixes are the BRUHsailer metadata lines the importer keeps as notes;
+// the web shows them as chips (web/src/lib/progress/view.ts META), not as notes.
+var metaPrefixes = []string{"gp after step:", "total time:", "items needed:", "skills / quests:"}
+
+func metaNote(text string) bool {
+	lower := strings.ToLower(text)
+	for _, p := range metaPrefixes {
+		if strings.HasPrefix(lower, p) {
+			return true
+		}
+	}
+	return false
 }
 
 func location(st *content.Step, reg *entities.Registry) string {

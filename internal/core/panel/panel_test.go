@@ -42,7 +42,7 @@ func testGuide() *content.Guide {
 		ID: "g", Title: "Test guide", DefaultVariant: "main",
 		Source: &content.Source{Author: "Alice and Bob", Origin: "example.guide"},
 		Variants: []*content.Variant{{ID: "main", Sections: []*content.Section{
-			{ID: "s1", Title: "Early game", Segments: []*content.Segment{
+			{ID: "s1", Title: "Early game", Description: " Starting out. ", Segments: []*content.Segment{
 				{
 					ID: "leg1", Kind: content.SegmentBankLeg, Title: "Bank in Lumbridge",
 					BankActions: []content.BankAction{{Type: content.BankWithdraw, Text: "Withdraw a hammer."}},
@@ -51,7 +51,12 @@ func testGuide() *content.Guide {
 					}},
 					Steps: []*content.Step{
 						{ID: "1", Text: "Train agility.", Objectives: []content.Objective{objective(agility10, content.RoleCompletes)}},
-						{ID: "2", Text: "  Talk to Bob.  ", Location: "Lumbridge"},
+						{ID: "2", Text: "  Talk to Bob.  ", Location: "Lumbridge", Notes: []content.Note{
+							{Kind: content.NoteTip, Text: " Bob sells axes. "},
+							{Kind: "update", Text: "Skip this step after the rework."},
+							{Kind: content.NoteTip, Text: "GP after step: 10k"},
+							{Kind: content.NoteTip, Text: "  "},
+						}},
 						{ID: "3", Text: "Start Dragon Slayer I.", Objectives: []content.Objective{objective(qp32, content.RoleRequires)}},
 						{ID: "uim", Text: "UIM only.", Modes: []string{"uim"}},
 					},
@@ -227,5 +232,29 @@ func TestAttributionOfTheShippedGuides(t *testing.T) {
 		if got := Attribution(&content.Guide{Title: "x", Source: &src}); got != tc.want {
 			t.Errorf("Attribution(%+v) = %q, want %q", tc.src, got, tc.want)
 		}
+	}
+}
+
+func TestWindowNotesAndSection(t *testing.T) {
+	g, reg := testGuide(), registry(t)
+	w := Build(Input{Guide: g, Board: board(g, reg, progress.Verdicts{}, nil), Cursor: progress.CursorRecord{StepID: "1", Cause: progress.CursorAuto}, Registry: reg})
+	if w.Section == nil || w.Section.ID != "s1" || w.Section.Title != "Early game" || w.Section.Description != "Starting out." {
+		t.Fatalf("section = %+v", w.Section)
+	}
+	var notes []Note
+	for _, s := range w.Steps {
+		if s.ID == "2" {
+			notes = s.Notes
+		}
+		if s.ID == "1" && s.Notes != nil {
+			t.Errorf("step without notes = %+v", s.Notes)
+		}
+	}
+	want := []Note{{Kind: content.NoteTip, Text: "Bob sells axes."}, {Kind: "update", Text: "Skip this step after the rework."}}
+	if !slices.Equal(notes, want) {
+		t.Fatalf("notes = %+v, want %+v (metadata and blank lines dropped)", notes, want)
+	}
+	if empty := Build(Input{Guide: g, Board: board(g, reg, progress.Verdicts{}, nil), Registry: reg}); empty.Section != nil {
+		t.Errorf("no cursor, section = %+v", empty.Section)
 	}
 }

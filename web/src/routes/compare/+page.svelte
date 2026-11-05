@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { progressApi } from '#lib/api/client';
 	import { createResource } from '#lib/api/resource.svelte';
-	import { iconFor } from '#lib/progress/icons';
+	import { iconFor, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { session, setSummary } from '#lib/progress/session.svelte';
 	import {
 		crossCell,
@@ -17,9 +17,10 @@
 	} from '#lib/progress/view';
 	import type { Board, Goal, GoalPlan, RouteSummary, WorldEntity } from '#lib/progress/types';
 	import Glyph from '#lib/v6/Glyph.svelte';
+	import RouteTabs from '#lib/v6/RouteTabs.svelte';
 
 	/*
-	 * Comparar rotas (V5Comparar, página v5 do canvas): duas rotas lado a lado sobre o mesmo
+	 * Comparar rotas (V6Comparar1440, aba de Rotas): duas rotas lado a lado sobre o mesmo
 	 * progresso. Cada coluna é uma rota inteira com cursor e marcas próprios (regra 7); só a
 	 * evidência cruza de rota, a marca à mão não. Revê a decisão 3 da v4 (dono, 2026-11-04).
 	 */
@@ -161,16 +162,11 @@
 </svelte:head>
 
 <div class="page">
+	<RouteTabs current="compare" />
 	<header class="top">
 		<div class="ttl">
-			<p class="ey">Rotas · lado a lado · o progresso é da conta</p>
+			<p class="su small">Rotas · lado a lado · o progresso é da conta</p>
 			<h1 class="sr">Comparar rotas</h1>
-		</div>
-		<div class="seg" role="tablist">
-			<a href={resolve('/rotas')} role="tab" aria-selected="false">Lista</a>
-			<a class="on" href={resolve('/compare')} role="tab" aria-selected="true" aria-current="page"
-				>Comparar</a
-			>
 		</div>
 		{#if routes.length > 2}
 			<div class="kinds">
@@ -184,9 +180,6 @@
 				{/each}
 			</div>
 		{/if}
-		<span class="su small aside"
-			>Duas rotas de {routes.length} · cada uma com cursor e marcas próprios; objetivos valem nas duas</span
-		>
 	</header>
 
 	{#if !account}
@@ -257,7 +250,13 @@
 							></span>
 						</div>
 						<div class="bl">
-							<span class="su small">objetivos com evidência</span><span class="mono tiny"
+							<span
+								class="su small"
+								title={r.active
+									? 'Listrado = presumido pela cascata. Quests sem leitura do plugin contam "não sabemos", nunca como falta.'
+									: 'O progresso é um só: objetivos feitos seguindo a outra rota valem aqui. Marcas à mão e cursor são desta rota.'}
+								>objetivos com evidência</span
+							><span class="mono tiny"
 								>{r.coverage.met} / {r.coverage.objectives} · {pct(
 									r.coverage.met,
 									r.coverage.objectives
@@ -267,11 +266,6 @@
 						<div class="xp xp-gold">
 							<span style:width={`${pct(r.coverage.met, r.coverage.objectives)}%`}></span>
 						</div>
-						<span class="su tiny"
-							>{r.active
-								? 'Listrado = presumido pela cascata. Quests sem leitura do plugin contam "não sabemos", nunca como falta.'
-								: 'O progresso é um só: objetivos feitos seguindo a outra rota valem aqui. Marcas à mão e cursor são desta rota.'}</span
-						>
 					</div>
 					<div class="acts">
 						{#if r.active}
@@ -354,7 +348,13 @@
 		</section>
 
 		<section class="panel">
-			<div class="plaque">Até o mesmo marco<span class="r">escolha uma meta</span></div>
+			<div class="plaque">
+				Até o mesmo marco<span
+					class="r"
+					title="Contagem de passos, não de tempo. Passos têm tamanhos diferentes entre as rotas (linha curta no Oziris, parágrafo no BRUHsailer): o número compara posição, não esforço."
+					>escolha uma meta</span
+				>
+			</div>
 			<div class="pad xs">
 				{#if activeGoals.length}
 					<div class="kinds">
@@ -422,18 +422,12 @@
 						falta em cada rota.</span
 					>
 				{/if}
-				<span class="su tiny"
-					>Contagem de passos, não de tempo: a estimativa de tempo é v2. Passos têm tamanhos
-					diferentes entre as rotas (linha curta no Oziris, parágrafo no BRUHsailer), então o número
-					compara posição, não esforço.</span
-				>
 			</div>
 		</section>
 	{/if}
 
 	<p class="su tiny foot">
-		As rotas nunca se misturam: cada coluna é uma rota inteira com seus ids. Guias por OzirisLoL /
-		ironman.guide e por So Iron BRUH e ParasailerOSRS. Ícones: OSRS Wiki.
+		Guias por OzirisLoL / ironman.guide e por So Iron BRUH e ParasailerOSRS. {ICON_ATTRIBUTION}.
 	</p>
 </div>
 
@@ -442,9 +436,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 18px;
-		padding: 24px 32px 36px;
-		max-width: 1440px;
-		box-sizing: border-box;
 	}
 	.top {
 		display: flex;
@@ -463,33 +454,6 @@
 	}
 	.aside {
 		margin-left: auto;
-	}
-	.seg {
-		display: inline-flex;
-		gap: 2px;
-		padding: 2px;
-		border-radius: 4px;
-		background: var(--ground);
-		border: 1px solid var(--border);
-		box-shadow: var(--bevel);
-	}
-	.seg > * {
-		display: inline-flex;
-		align-items: center;
-		height: 26px;
-		padding: 0 12px;
-		border-radius: 3px;
-		color: var(--ink-muted);
-		font:
-			500 12px Inter,
-			system-ui,
-			sans-serif;
-		text-decoration: none;
-	}
-	.seg .on {
-		background: var(--frame);
-		color: var(--gold);
-		box-shadow: var(--bevel-frame);
 	}
 	.kinds {
 		display: flex;

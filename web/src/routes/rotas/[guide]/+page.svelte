@@ -5,7 +5,7 @@
 	import { progressApi } from '#lib/api/client';
 	import { session } from '#lib/progress/session.svelte';
 
-	/* /rotas/<guia> abre a seção do cursor (ou a primeira, sem conta). */
+	/* /rotas/<guia> abre a seção do cursor (ou a primeira, sem conta), sem pular para o passo. */
 	const guideId = $derived(page.params.guide ?? '');
 	$effect(() => {
 		const id = guideId;
@@ -16,9 +16,8 @@
 			if (!section)
 				section = (await progressApi.guides()).guides.find((g) => g.id === id)?.sections[0]?.id;
 			if (!section) return goto(resolve('/rotas'), { replaceState: true });
-			const base = resolve('/rotas/[guide]/[section]', { guide: id, section });
-			// eslint-disable-next-line svelte/no-navigation-without-resolve -- âncora sobre resolve()
-			return goto(route?.cursor ? `${base}#passo-${route.cursor.step_id}` : base, {
+			// O trecho do cursor abre sozinho e a faixa "Você está em" leva até ele.
+			return goto(resolve('/rotas/[guide]/[section]', { guide: id, section }), {
 				replaceState: true
 			});
 		})();

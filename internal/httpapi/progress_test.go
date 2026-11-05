@@ -54,6 +54,18 @@ func (f *fakeProgress) PinCursor(_ context.Context, accountID, guideID, stepID s
 	return f.board("pin", accountID, guideID)
 }
 
+func (f *fakeProgress) MarkBefore(_ context.Context, accountID, guideID, stepID string) (storeprogress.BoardView, error) {
+	f.step = stepID
+	b, err := f.board("before", accountID, guideID)
+	b.Marked = []string{"0", "1"}
+	return b, err
+}
+
+func (f *fakeProgress) ClearMarks(_ context.Context, accountID, guideID string, ids []string) (storeprogress.BoardView, error) {
+	f.step = strings.Join(ids, ",")
+	return f.board("clear", accountID, guideID)
+}
+
 func (f *fakeProgress) Objectives(_ context.Context, accountID string) ([]storeprogress.ObjectiveView, error) {
 	f.call = "objectives"
 	if accountID != "acc-1" {
@@ -202,6 +214,15 @@ func TestProgressRoutes(t *testing.T) {
 		t.Fatalf("objectives = %d %v", status, body)
 	}
 
+	if status, body := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"before_step_id":"1"}`); status != http.StatusOK || fake.call != "before" || len(body["marked"].([]any)) != 2 {
+		t.Fatalf("mark before = %d %v", status, body)
+	}
+	if status, _ := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"clear":["0","1"]}`); status != http.StatusOK || fake.call != "clear" || fake.step != "0,1" {
+		t.Fatalf("clear = %d %s", status, fake.step)
+	}
+	if status, _ := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"before_step_id":"1","clear":["0"]}`); status != http.StatusBadRequest {
+		t.Fatalf("both = %d", status)
+	}
 	if status, body := do(t, "GET", base+"/progress?account=acc-1", ""); status != http.StatusOK || len(body["routes"].([]any)) != 1 {
 		t.Fatalf("progress = %d %v", status, body)
 	}

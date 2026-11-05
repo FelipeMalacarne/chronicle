@@ -33,6 +33,8 @@ type BoardView struct {
 	Active  bool     `json:"active"`
 	Cursor  *Cursor  `json:"cursor"`
 	Orphans []Orphan `json:"orphans"`
+	// Marked lists the steps a batch marked (MarkBefore), for its undo.
+	Marked []string `json:"marked,omitempty"`
 	coreprogress.Board
 }
 
@@ -73,6 +75,26 @@ func (r *Repository) Mark(ctx context.Context, accountID, guideID, stepID string
 func (r *Repository) ConfirmImplied(ctx context.Context, accountID, guideID string) (BoardView, error) {
 	return r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
 		return coreprogress.PlanConfirmImplied(in), nil
+	})
+}
+
+// MarkBefore marks every pending step before stepID as manual_done and
+// returns the board with the ids it marked.
+func (r *Repository) MarkBefore(ctx context.Context, accountID, guideID, stepID string) (BoardView, error) {
+	var marked []string
+	out, err := r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
+		p, ids, err := coreprogress.PlanMarkBefore(in, stepID)
+		marked = ids
+		return p, err
+	})
+	out.Marked = marked
+	return out, err
+}
+
+// ClearMarks undoes a batch: it removes the manual_done marks of stepIDs.
+func (r *Repository) ClearMarks(ctx context.Context, accountID, guideID string, stepIDs []string) (BoardView, error) {
+	return r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
+		return coreprogress.PlanClearManual(in, stepIDs), nil
 	})
 }
 

@@ -162,3 +162,50 @@ func (in GuideInput) statuses(override map[string]*Mark) map[string]Status {
 	}
 	return out
 }
+
+// PlanMarkBefore marks as manual_done every step of the main route that comes
+// before stepID, is visible for the account and is still pending without a
+// mark (the owner catching up with where they are). Done, skipped and marked
+// steps, tracks and the step itself are left as they are. It returns the plan
+// and the ids it marks, so the owner can undo the batch.
+func PlanMarkBefore(in GuideInput, stepID string) (OwnerPlan, []string, error) {
+	if _, ok := in.Guide.Step(stepID); !ok {
+		return OwnerPlan{}, nil, ErrStepNotFound
+	}
+	status := in.statuses(nil)
+	steps, main := guideSteps(in.Guide)
+	var changes []MarkChange
+	var ids []string
+	for _, st := range steps {
+		if st.ID == stepID {
+			break
+		}
+		if !main[st.ID] || !Visible(st, in.Account) || status[st.ID] != Pending {
+			continue
+		}
+		if _, marked := in.Marks[st.ID]; marked {
+			continue
+		}
+		changes = append(changes, MarkChange{StepID: st.ID, Mark: &Mark{Kind: MarkManualDone}})
+		ids = append(ids, st.ID)
+	}
+	if len(changes) == 0 {
+		return OwnerPlan{}, nil, nil
+	}
+	return in.plan(changes), ids, nil
+}
+
+// PlanClearManual removes the manual_done marks of the given steps (undoing a
+// batch); other marks and unknown ids are left alone.
+func PlanClearManual(in GuideInput, stepIDs []string) OwnerPlan {
+	var changes []MarkChange
+	for _, id := range stepIDs {
+		if m, ok := in.Marks[id]; ok && m.Kind == MarkManualDone {
+			changes = append(changes, MarkChange{StepID: id})
+		}
+	}
+	if len(changes) == 0 {
+		return OwnerPlan{}
+	}
+	return in.plan(changes)
+}

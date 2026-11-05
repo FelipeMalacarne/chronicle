@@ -3,6 +3,7 @@ package progress
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -698,5 +699,46 @@ func TestReevaluateEvaluatesGoalsOutsideTheContent(t *testing.T) {
 	}
 	if plan.StepsChanged != 0 {
 		t.Fatalf("a goal changed steps: %d", plan.StepsChanged)
+	}
+}
+
+func TestPlanMarkBefore(t *testing.T) {
+	g1, _ := loadGuides(t)
+	in := guideInput(g1)
+	in.Verdicts = Verdicts{agility10: rules.Met}
+	in.Marks = map[string]Mark{"a2": {Kind: MarkSkipped}}
+	in.LastStatus = map[string]Status{"a2": Skipped, "a3": AutoDone}
+	// Before b1: a1 (pending), a2 (skipped: kept), a3 (auto_done: kept), a4, a5,
+	// a6 (pending: marked), b0 (enhanced-only: hidden for a classic account).
+	p, ids, err := PlanMarkBefore(in, "b1")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if fmt.Sprint(ids) != "[a1 a4 a5 a6]" {
+		t.Fatalf("ids = %v", ids)
+	}
+	for _, e := range p.Events {
+		if e.To != ManualDone || e.Cause != CauseUser {
+			t.Fatalf("event = %+v", e)
+		}
+	}
+	if p.Cursor == nil || *p.Cursor != (CursorRecord{"b1", CursorAuto}) {
+		t.Fatalf("cursor = %+v", p.Cursor)
+	}
+	if _, _, err = PlanMarkBefore(in, "zz"); !errors.Is(err, ErrStepNotFound) {
+		t.Fatalf("missing step: %v", err)
+	}
+	if p, ids, err = PlanMarkBefore(in, "a1"); err != nil || len(ids) != 0 || len(p.Marks) != 0 {
+		t.Fatalf("nothing before a1 = %+v %v %v", p, ids, err)
+	}
+
+	// Undo clears only the manual_done marks of the batch.
+	for _, id := range []string{"a1", "a4"} {
+		in.Marks[id] = Mark{Kind: MarkManualDone}
+		in.LastStatus[id] = ManualDone
+	}
+	undo := PlanClearManual(in, []string{"a1", "a2", "a4", "zz"})
+	if len(undo.Marks) != 2 || undo.Marks[0].Mark != nil || len(undo.Events) != 2 || undo.Events[0].To != Pending {
+		t.Fatalf("undo = %+v", undo)
 	}
 }

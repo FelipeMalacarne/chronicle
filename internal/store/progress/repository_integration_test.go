@@ -475,3 +475,33 @@ func TestAccountsPostgres(t *testing.T) {
 		t.Fatalf("find = %+v %v, %v", found, ok, err)
 	}
 }
+
+func TestMarkBeforePostgres(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO users (id, subject, username) VALUES ('user-1', 'dev-batch-test', 'dev-batch-test');
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
+		VALUES ('account-1', 'user-1', 'Example', 'example', 'ironman', 'g1', 'classic');
+		INSERT INTO step_marks (account_id, guide_id, step_id, kind) VALUES ('account-1', 'g1', 'a2', 'skipped');
+	`); err != nil {
+		t.Fatal(err)
+	}
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(pool, loadContent(t), catalog)
+	board, err := repo.MarkBefore(ctx, "account-1", "g1", "a5")
+	if err != nil || fmt.Sprint(board.Marked) != "[a1 a3 a4]" || board.Cursor == nil || board.Cursor.StepID != "a5" {
+		t.Fatalf("mark before = %v cursor %+v, %v", board.Marked, board.Cursor, err)
+	}
+	if n := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE cause = 'user' AND to_status = 'manual_done'`); n != 3 {
+		t.Fatalf("user events = %d", n)
+	}
+	board, err = repo.ClearMarks(ctx, "account-1", "g1", board.Marked)
+	if err != nil || board.Cursor == nil || board.Cursor.StepID != "a1" {
+		t.Fatalf("undo cursor = %+v, %v", board.Cursor, err)
+	}
+	assertMarks(ctx, t, pool, "g1", map[string]string{"a2": "skipped"})
+}

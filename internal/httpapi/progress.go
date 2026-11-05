@@ -18,6 +18,8 @@ type ProgressService interface {
 	Mark(ctx context.Context, accountID, guideID, stepID string, action coreprogress.MarkAction, note *string) (storeprogress.BoardView, error)
 	ConfirmImplied(ctx context.Context, accountID, guideID string) (storeprogress.BoardView, error)
 	PinCursor(ctx context.Context, accountID, guideID, stepID string) (storeprogress.BoardView, error)
+	MarkBefore(ctx context.Context, accountID, guideID, stepID string) (storeprogress.BoardView, error)
+	ClearMarks(ctx context.Context, accountID, guideID string, stepIDs []string) (storeprogress.BoardView, error)
 	Objectives(ctx context.Context, accountID string) ([]storeprogress.ObjectiveView, error)
 	Events(ctx context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error)
 	SetActiveGuide(ctx context.Context, accountID, guideID string) error
@@ -64,6 +66,13 @@ type markRequest struct {
 	Note *string `json:"note,omitempty"`
 }
 
+// batchMarkRequest is either a batch (every pending step before
+// before_step_id becomes manual_done) or its undo (clear those ids).
+type batchMarkRequest struct {
+	BeforeStepID string   `json:"before_step_id,omitempty"`
+	Clear        []string `json:"clear,omitempty"`
+}
+
 type cursorRequest struct {
 	// StepID: a step pins the cursor there; null unpins it.
 	StepID *string `json:"step_id"`
@@ -94,6 +103,27 @@ func (s *Server) handleMark(w http.ResponseWriter, r *http.Request) {
 	}
 	board, err := s.opts.Progress.Mark(r.Context(), account, r.PathValue("guide"), r.PathValue("id"), req.Kind, req.Note)
 	s.writeProgress(w, board, err)
+}
+
+func (s *Server) handleBatchMarks(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	var req batchMarkRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	switch {
+	case req.BeforeStepID != "" && len(req.Clear) == 0:
+		board, err := s.opts.Progress.MarkBefore(r.Context(), account, r.PathValue("guide"), req.BeforeStepID)
+		s.writeProgress(w, board, err)
+	case req.BeforeStepID == "" && len(req.Clear) > 0 && len(req.Clear) <= 2000:
+		board, err := s.opts.Progress.ClearMarks(r.Context(), account, r.PathValue("guide"), req.Clear)
+		s.writeProgress(w, board, err)
+	default:
+		writeError(w, http.StatusBadRequest, "send either before_step_id or clear (1 to 2000 step ids)")
+	}
 }
 
 func (s *Server) handleConfirmImplied(w http.ResponseWriter, r *http.Request) {

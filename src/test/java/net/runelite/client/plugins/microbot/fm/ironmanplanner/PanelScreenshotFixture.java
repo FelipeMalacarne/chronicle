@@ -29,6 +29,11 @@ final class PanelScreenshotFixture
 		w.counts.remaining = 315;
 		w.counts.blocked = 62;
 		w.steps = new ArrayList<>();
+		w.section = new RouteWindow.Section();
+		w.section.id = "1.1";
+		w.section.title = "Early quests, wintertodt and ardy cloak 1";
+		w.section.description = "Starting your ironman journey. Complete early quests, get 50+ firemaking at Wintertodt, "
+			+ "and unlock the Ardougne cloak 1 for its teleport.";
 
 		RouteWindow.Step cur = step("1.1.243", "Do Black knight's fortress", "pending");
 		cur.current = true;
@@ -37,6 +42,10 @@ final class PanelScreenshotFixture
 			objective("quest:black_knights_fortress", "completes", "Black Knights' Fortress", "unmet"),
 			objective("qp>=12", "requires", "12 quest points", "met"),
 			objective("item:iron_chainbody", "uses", "Iron chainbody", "unknown"));
+		cur.notes = List.of(
+			note("update", "The quest now needs 12 quest points to start; do it after the Port Sarim run if you are short."),
+			note("tip", "Bring the Iron chainbody and the cabbage from the Draynor manor garden."),
+			note("hcim", "Hardcores: the Black Knights hit hard, bring food."));
 		w.steps.add(cur);
 
 		RouteWindow.Step s244 = step("1.1.244", "Do Recruitment drive", "pending");
@@ -49,8 +58,12 @@ final class PanelScreenshotFixture
 		RouteWindow.Step s248 = step("1.1.248", "Port Sarim jewellery store, give the bread to the beggar to get the excalibur", "implied");
 		s248.mark = new RouteWindow.Mark("implied", "1.1.252");
 		w.steps.add(s248);
-		w.steps.add(step("1.1.249", "Minigame tele to clan wars, recharge energy and go to castle wars", "pending"));
-		w.steps.add(step("1.1.250", "Hop worlds for super antipoison(1), decant them until you have like 6 full pots", "pending"));
+		RouteWindow.Step s249 = step("1.1.249", "Minigame tele to clan wars, recharge energy and go to castle wars", "pending");
+		s249.notes = List.of(note("tip", "Castle wars has a free bank chest next to the energy pool."));
+		w.steps.add(s249);
+		RouteWindow.Step s250 = step("1.1.250", "Hop worlds for super antipoison(1), decant them until you have like 6 full pots", "pending");
+		s250.notes = List.of(note("update", "Skip this step: super antipoison is no longer sold in that shop."));
+		w.steps.add(s250);
 		RouteWindow.Step s251 = step("1.1.251", "Do the Observatory quest", "skipped");
 		s251.mark = new RouteWindow.Mark("skipped", null);
 		w.steps.add(s251);
@@ -102,6 +115,28 @@ final class PanelScreenshotFixture
 		s.text = title;
 		s.status = status;
 		return s;
+	}
+
+	private static RouteWindow.Note note(String kind, String text)
+	{
+		RouteWindow.Note n = new RouteWindow.Note();
+		n.kind = kind;
+		n.text = text;
+		return n;
+	}
+
+	/** The planner's real answer at cursor 1.1.244 (2026-11-05, read-only GET), with notes and the section. */
+	static RouteWindow real()
+	{
+		try (java.io.InputStream in = PanelScreenshotFixture.class.getResourceAsStream("route-oziris-1.1.244.json"))
+		{
+			return new com.google.gson.Gson().fromJson(
+				new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8), RouteWindow.class);
+		}
+		catch (java.io.IOException e)
+		{
+			throw new java.io.UncheckedIOException(e);
+		}
 	}
 
 	private static RouteWindow.Objective objective(String key, String role, String label, String verdict)

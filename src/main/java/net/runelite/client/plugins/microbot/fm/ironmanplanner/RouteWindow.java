@@ -19,6 +19,8 @@ final class RouteWindow
 	Counts counts;
 	List<Step> steps;
 	Carry carry;
+	/** The cursor's section with its description; null from an older planner. */
+	Section section;
 
 	List<Step> stepsOrEmpty()
 	{
@@ -88,6 +90,30 @@ final class RouteWindow
 		@SerializedName("blocked_by")
 		List<Requirement> blockedBy;
 		List<Objective> objectives;
+		/** The guide's notes of the step; absent when none (and from an older planner). */
+		List<Note> notes;
+
+		List<Note> notesOrEmpty()
+		{
+			return notes == null ? Collections.emptyList() : notes;
+		}
+
+		/**
+		 * The notes the panel shows. hcim notes are left out: the window does not say the
+		 * account's mode, and a hardcore-only warning would mislead a plain ironman.
+		 */
+		List<Note> visibleNotes()
+		{
+			List<Note> out = new java.util.ArrayList<>();
+			for (Note n : notesOrEmpty())
+			{
+				if (n != null && n.text != null && !n.text.isEmpty() && !Note.HCIM.equals(n.kind))
+				{
+					out.add(n);
+				}
+			}
+			return out;
+		}
 
 		List<Requirement> blockedOrEmpty()
 		{
@@ -122,6 +148,26 @@ final class RouteWindow
 			this.kind = kind;
 			this.impliedBy = impliedBy;
 		}
+	}
+
+	/** A note of the guide on a step. */
+	static final class Note
+	{
+		static final String TIP = "tip";
+		static final String UPDATE = "update";
+		static final String HCIM = "hcim";
+
+		/** tip, update or hcim. */
+		String kind;
+		String text;
+	}
+
+	/** The cursor's section. */
+	static final class Section
+	{
+		String id;
+		String title;
+		String description;
 	}
 
 	static final class Requirement

@@ -1,0 +1,599 @@
+{
+    "guide": "oziris-main",
+    "title": "OSRS Ironman Efficiency Guide (OzirisLoL)",
+    "attribution": "Guia por OzirisLoL \u00b7 ironman.guide",
+    "cursor": {
+        "step_id": "1.1.244",
+        "cause": "auto"
+    },
+    "counts": {
+        "total": 564,
+        "done": 250,
+        "auto_done": 23,
+        "manual_done": 161,
+        "implied": 66,
+        "skipped": 0,
+        "pinned_open": 0,
+        "remaining": 314,
+        "blocked": 61
+    },
+    "steps": [
+        {
+            "id": "1.1.244",
+            "ref": "1.1.244",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Do Recruitment drive",
+            "text": "Do Recruitment drive",
+            "location": "Falador",
+            "status": "pending",
+            "current": true,
+            "blocked_by": [],
+            "objectives": [
+                {
+                    "key": "quest:recruitment_drive@finished",
+                    "role": "completes",
+                    "label": "Recruitment Drive",
+                    "verdict": "unmet"
+                }
+            ]
+        },
+        {
+            "id": "1.1.245",
+            "ref": "1.1.245",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Run south to Port sarim",
+            "text": "Run south to Port sarim",
+            "location": "Port Sarim",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": []
+        },
+        {
+            "id": "1.1.246",
+            "ref": "1.1.246",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Trade Sarah's farming shop for a falador diary task",
+            "text": "Trade Sarah's farming shop for a falador diary task",
+            "location": "Port Sarim",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": []
+        },
+        {
+            "id": "1.1.247",
+            "ref": "1.1.247",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Buy a black wizards hat from Betty at port sarim magic store",
+            "text": "Buy a black wizards hat from Betty at port sarim magic store",
+            "location": "Port Sarim",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": [
+                {
+                    "key": "item:1017x1",
+                    "role": "completes",
+                    "label": "Wizard hat",
+                    "verdict": "unmet"
+                }
+            ]
+        },
+        {
+            "id": "1.1.248",
+            "ref": "1.1.248",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Port Sarim jewellery store, give the bread to the beggar to get the excalibur",
+            "text": "Port Sarim jewellery store, give the bread to the beggar to get the excalibur",
+            "location": "Port Sarim",
+            "status": "auto_done",
+            "current": false,
+            "blocked_by": [],
+            "objectives": [
+                {
+                    "key": "item:35x1",
+                    "role": "completes",
+                    "label": "Excalibur",
+                    "verdict": "met"
+                }
+            ]
+        },
+        {
+            "id": "1.1.249",
+            "ref": "1.1.249",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Minigame tele to clan wars, recharge energy and go to castle wars",
+            "text": "Minigame tele to clan wars, recharge energy and go to castle wars",
+            "location": "Castle Wars",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": []
+        },
+        {
+            "id": "1.1.250",
+            "ref": "1.1.250",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Hop worlds for super antipoison(1), decant them until you have like 6 full pots",
+            "text": "Hop worlds for super antipoison(1), decant them until you have like 6 full pots",
+            "location": "Castle Wars",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": []
+        },
+        {
+            "id": "1.1.251",
+            "ref": "1.1.251",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Do the Observatory quest",
+            "text": "Do the Observatory quest",
+            "location": "Observatory",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": [
+                {
+                    "key": "quest:observatory_quest@finished",
+                    "role": "completes",
+                    "label": "Observatory Quest",
+                    "verdict": "unmet"
+                }
+            ]
+        },
+        {
+            "id": "1.1.252",
+            "ref": "1.1.252",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "HOME TELE, Lumby",
+            "text": "HOME TELE, Lumby",
+            "location": "Lumbridge",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": []
+        },
+        {
+            "id": "1.1.253",
+            "ref": "1.1.253",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Finish The Restless ghost",
+            "text": "Finish The Restless ghost",
+            "location": "Lumbridge",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": [
+                {
+                    "key": "quest:the_restless_ghost@finished",
+                    "role": "completes",
+                    "label": "The Restless Ghost",
+                    "verdict": "unmet"
+                }
+            ]
+        },
+        {
+            "id": "1.1.254",
+            "ref": "1.1.254",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Start the Lost tribe, do until you need to go to Varrock",
+            "text": "Start the Lost tribe, do until you need to go to Varrock",
+            "location": "Lumbridge",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": [],
+            "notes": [
+                {
+                    "kind": "update",
+                    "text": "Goblin Diplomacy is now required before starting The Lost Tribe. Skip this step and steps 256/279 \u2014 instead, complete Goblin Diplomacy at step 278 first, then do The Lost Tribe entirely afterward (Lumbridge \u2192 Varrock \u2192 Goblin Village \u2192 Lumbridge). The extra travel is unavoidable but the guide is otherwise unaffected."
+                }
+            ]
+        },
+        {
+            "id": "1.1.255",
+            "ref": "1.1.255",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Teleport to Varrock",
+            "text": "Teleport to Varrock",
+            "location": "Varrock",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": []
+        },
+        {
+            "id": "1.1.256",
+            "ref": "1.1.256",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Continue Lost tribe until you need to go to the goblin village",
+            "text": "Continue Lost tribe until you need to go to the goblin village",
+            "location": "Varrock",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": []
+        },
+        {
+            "id": "1.1.257",
+            "ref": "1.1.257",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Buy priest robes (keep these after quest), boots, gloves",
+            "text": "Buy priest robes (keep these after quest), boots, gloves",
+            "location": "Varrock",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": [
+                {
+                    "key": "item:426x1",
+                    "role": "completes",
+                    "label": "Priest gown",
+                    "verdict": "unmet"
+                },
+                {
+                    "key": "item:428x1",
+                    "role": "completes",
+                    "label": "Priest gown",
+                    "verdict": "unmet"
+                },
+                {
+                    "key": "item:426x1",
+                    "role": "uses",
+                    "label": "Priest gown",
+                    "verdict": "unmet"
+                },
+                {
+                    "key": "item:428x1",
+                    "role": "uses",
+                    "label": "Priest gown",
+                    "verdict": "unmet"
+                }
+            ]
+        },
+        {
+            "id": "1.1.258",
+            "ref": "1.1.258",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Finish abyss miniquest",
+            "text": "Finish abyss miniquest",
+            "location": "Varrock",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [],
+            "objectives": [
+                {
+                    "key": "quest:enter_the_abyss@finished",
+                    "role": "completes",
+                    "label": "Enter the Abyss",
+                    "verdict": "unmet"
+                }
+            ]
+        },
+        {
+            "id": "1.1.258a",
+            "ref": "1.1.258a",
+            "section_id": "1.1",
+            "section_title": "Early quests, wintertodt and ardy cloak 1",
+            "title": "Train Runecraft to 10, then complete Temple of the Eye quest to unlock Guardians of the Rift",
+            "text": "Train Runecraft to 10, then complete Temple of the Eye quest to unlock Guardians of the Rift",
+            "location": "Wizards' Tower",
+            "status": "pending",
+            "current": false,
+            "blocked_by": [
+                {
+                    "key": "quest:enter_the_abyss@finished",
+                    "label": "Enter the Abyss"
+                }
+            ],
+            "objectives": [
+                {
+                    "key": "quest:temple_of_the_eye@finished",
+                    "role": "completes",
+                    "label": "Temple of the Eye",
+                    "verdict": "unmet"
+                },
+                {
+                    "key": "skill:runecraft>=10",
+                    "role": "completes",
+                    "label": "10 Runecraft",
+                    "verdict": "unmet"
+                }
+            ],
+            "notes": [
+                {
+                    "kind": "tip",
+                    "text": "GOTR is a massive improvement for RC training on ironmen. The quest gives ~5k Runecraft XP on completion (~9k including in-quest XP). GOTR provides runes, talismans, and the Raiments of the Eye set for bonus runes. This makes RC no longer need to be your lowest skill for Tears of Guthix."
+                }
+            ]
+        }
+    ],
+    "carry": {
+        "segment_id": "seg-89241ed23c8e",
+        "title": "Bank leg from 1.1.178",
+        "status": "no_loadout",
+        "loadout_status": "unknown",
+        "derived": true,
+        "items": [
+            {
+                "name": "GP",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "met",
+                "carried": 866888,
+                "owned": "met",
+                "held": 866888
+            },
+            {
+                "name": "Bread",
+                "qty": 1,
+                "qty_stated": true,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 19
+            },
+            {
+                "name": "planks",
+                "qty": 3,
+                "qty_stated": true,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 12
+            },
+            {
+                "name": "Bronze bar",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 32
+            },
+            {
+                "name": "Molten glass",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 5
+            },
+            {
+                "name": "Ghost's skull",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 1
+            },
+            {
+                "name": "Chronicle",
+                "qty": 1,
+                "qty_stated": true,
+                "slot": "inventory",
+                "verdict": "met",
+                "carried": 1,
+                "owned": "met",
+                "held": 1
+            },
+            {
+                "name": "cat",
+                "qty": 1,
+                "qty_stated": true,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "unmet"
+            },
+            {
+                "name": "Pickaxe",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 1
+            },
+            {
+                "name": "Hammer",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 2
+            },
+            {
+                "name": "Lit candle",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "unmet"
+            },
+            {
+                "name": "Bat bones",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 1
+            },
+            {
+                "name": "Black candle",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 1
+            },
+            {
+                "name": "Tinderbox",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 1
+            },
+            {
+                "name": "Knife",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 2
+            },
+            {
+                "name": "Needle",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 3
+            },
+            {
+                "name": "Thread",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 50
+            },
+            {
+                "name": "Coal",
+                "qty": 4,
+                "qty_stated": true,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 205
+            },
+            {
+                "name": "Lost tribe brooch",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "unmet"
+            },
+            {
+                "name": "Goblin symbol book",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "unmet"
+            },
+            {
+                "name": "Blue dye",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 4
+            },
+            {
+                "name": "Orange dye",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "unmet"
+            },
+            {
+                "name": "Silver ore",
+                "qty": 5,
+                "qty_stated": true,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 528
+            },
+            {
+                "name": "Sickle mould",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 1
+            },
+            {
+                "name": "Holy mould",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 1
+            },
+            {
+                "name": "Key print",
+                "qty": 1,
+                "qty_stated": false,
+                "slot": "inventory",
+                "verdict": "unmet",
+                "carried": 0,
+                "owned": "met",
+                "held": 1
+            }
+        ],
+        "bank_actions": [
+            "bank"
+        ]
+    },
+    "section": {
+        "id": "1.1",
+        "title": "Early quests, wintertodt and ardy cloak 1",
+        "description": "Starting your ironman journey. Complete early quests, get 50+ firemaking at Wintertodt, and unlock the Ardougne cloak 1 for its teleport."
+    }
+}

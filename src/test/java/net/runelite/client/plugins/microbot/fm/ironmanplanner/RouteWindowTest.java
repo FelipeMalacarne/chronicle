@@ -64,4 +64,29 @@ class RouteWindowTest
 			IngestContract.Response.class);
 		assertNull(old.route);
 	}
+
+	@Test
+	void parsesNotesAndTheSectionAndOlderWindowsStillParse()
+	{
+		RouteWindow real = PanelScreenshotFixture.real();
+		assertEquals("1.1", real.section.id);
+		assertEquals("Early quests, wintertodt and ardy cloak 1", real.section.title);
+		assertTrue(real.section.description.startsWith("Starting your ironman journey."));
+		RouteWindow.Step lostTribe = real.step("1.1.254");
+		assertEquals(1, lostTribe.visibleNotes().size());
+		assertEquals(RouteWindow.Note.UPDATE, lostTribe.visibleNotes().get(0).kind);
+		assertEquals(RouteWindow.Note.TIP, real.step("1.1.258a").notesOrEmpty().get(0).kind);
+		assertTrue(real.current().notesOrEmpty().isEmpty(), "notes are omitted when a step has none");
+
+		RouteWindow older = RouteWindowFixtures.window();
+		assertNull(older.section, "an older planner sends no section");
+		assertTrue(older.current().visibleNotes().isEmpty());
+
+		RouteWindow hcim = new Gson().fromJson("{\"guide\":\"g\",\"steps\":[{\"id\":\"a\",\"current\":true,\"notes\":["
+			+ "{\"kind\":\"hcim\",\"text\":\"Careful\"},{\"kind\":\"tip\",\"text\":\"\"},{\"kind\":\"tip\",\"text\":\"Bring food\"}]}]}",
+			RouteWindow.class);
+		assertEquals(3, hcim.current().notesOrEmpty().size());
+		assertEquals(1, hcim.current().visibleNotes().size(), "hcim and empty notes are hidden");
+		assertEquals("Bring food", hcim.current().visibleNotes().get(0).text);
+	}
 }

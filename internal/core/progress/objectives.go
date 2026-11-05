@@ -1,6 +1,7 @@
 package progress
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
@@ -28,11 +29,11 @@ type Evaluation struct {
 }
 
 // EvaluateObjective maps an objective key to the rule that proves it (docs/09
-// section 3.2) and evaluates it. Targets without a fact source yet (unlock
-// proofs, combat achievements, quest points) are unknown, never guessed.
+// section 3.2) and evaluates it. Targets without a fact source (unlocks
+// without a proof var, combat achievements) are unknown, never guessed.
 func EvaluateObjective(k entities.ObjectiveKey, ps rules.PlayerState, reg *entities.Registry) Evaluation {
 	if k.IsQuestPoints() {
-		return unknown("quest points need varp 101 in the player state")
+		return questPoints(k.N, ps, reg)
 	}
 	switch k.Ref.Kind {
 	case entities.KindQuest:
@@ -69,7 +70,16 @@ func EvaluateObjective(k entities.ObjectiveKey, ps rules.PlayerState, reg *entit
 		r := content.BossKCRule{RuleHeader: header(content.TypeBossKC), Boss: name, KC: k.N}
 		return evaluate(r, ps, Fact{Facet: "activity", Key: name})
 	case entities.KindUnlock:
-		return unknown("unlock proofs need varbits in the player state")
+		var proof *entities.VarTest
+		if reg != nil {
+			if u, ok := reg.Unlock(k.Ref.ID); ok {
+				proof = u.Proof
+			}
+		}
+		if proof == nil {
+			return unknown("unlock has no proof var in the catalog; only the owner can mark it")
+		}
+		return evaluateVar(*proof, proof.Eq, proof.Min, ps)
 	case entities.KindCombatAchievement:
 		return unknown("combat achievements are not observed yet")
 	}
@@ -136,6 +146,29 @@ func owned(r content.ItemOwnedRule, ps rules.PlayerState, facts []Fact, own func
 		out.Facts = facts
 	}
 	return out
+}
+
+// questPoints evaluates qp>=n against the quest points count var of the
+// catalog (varp 101, QUEST_POINTS, in content/reference/varbits.json).
+func questPoints(n int, ps rules.PlayerState, reg *entities.Registry) Evaluation {
+	if reg != nil {
+		for _, v := range reg.VarsFor(entities.QuestPoints) {
+			if v.Semantics == entities.VarCount {
+				return evaluateVar(entities.VarTest{Var: v.Var, ID: v.ID}, nil, &n, ps)
+			}
+		}
+	}
+	return unknown("no quest points var in the catalog")
+}
+
+// evaluateVar evaluates a varbit/varp test as the matching engine rule; the
+// fact is the var row of player_state.
+func evaluateVar(t entities.VarTest, eq, atLeast *int, ps rules.PlayerState) Evaluation {
+	fact := Fact{Facet: string(t.Var), Key: strconv.Itoa(t.ID)}
+	if t.Var == entities.Varp {
+		return evaluate(content.VarpRule{RuleHeader: header(content.TypeVarp), ID: t.ID, Eq: eq, Min: atLeast}, ps, fact)
+	}
+	return evaluate(content.VarbitRule{RuleHeader: header(content.TypeVarbit), ID: t.ID, Eq: eq, Min: atLeast}, ps, fact)
 }
 
 func lookupQuest(reg *entities.Registry, id string) (string, bool) {

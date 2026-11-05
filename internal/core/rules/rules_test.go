@@ -24,6 +24,14 @@ func TestEvaluate(t *testing.T) {
 		Quests:  map[string]string{"Sea Slug": "IN_PROGRESS", "Cook's Assistant": "FINISHED", "Dragon Slayer I": "NOT_STARTED"},
 		Diaries: map[string]map[string]bool{"ardougne": {"easy": true, "medium": false}, "varrock": {"easy": true}},
 		BossKC:  map[string]int{"Wintertodt": 120},
+		Varbits: map[int]int64{4458: 1, 4459: 0, 10: 0b101},
+		Varps:   map[int]int64{101: 33},
+	}
+	varbit := func(id int, eq, atLeast, bit *int) content.Rule {
+		return content.VarbitRule{RuleHeader: hdr(content.TypeVarbit), ID: id, Eq: eq, Min: atLeast, Bit: bit}
+	}
+	varp := func(id int, eq, atLeast *int) content.Rule {
+		return content.VarpRule{RuleHeader: hdr(content.TypeVarp), ID: id, Eq: eq, Min: atLeast}
 	}
 	allEasy := map[string]map[string]bool{}
 	for _, a := range DiaryAreas {
@@ -81,8 +89,17 @@ func TestEvaluate(t *testing.T) {
 		{"not unknown stays unknown", []content.Rule{content.NotRule{Not: skill("slayer", 10)}}, full, Unknown, false},
 		{"unsupported type -> unknown", []content.Rule{content.CombatAchievementRule{RuleHeader: hdr(content.TypeCombatAchievement), Name: "x"}}, full, Unknown, true},
 		{"item_owned unknown and non monotonic", []content.Rule{content.ItemOwnedRule{RuleHeader: hdr(content.TypeItemOwned), ItemName: "Spade"}}, full, Unknown, false},
-		{"varbit with min is monotonic", []content.Rule{content.VarbitRule{RuleHeader: hdr(content.TypeVarbit), ID: 1, Min: intp(1)}}, full, Unknown, true},
-		{"varbit with eq is not monotonic", []content.Rule{content.VarbitRule{RuleHeader: hdr(content.TypeVarbit), ID: 1, Eq: intp(1)}}, full, Unknown, false},
+		{"varbit with min is monotonic", []content.Rule{varbit(1, nil, intp(1), nil)}, full, Unknown, true},
+		{"varbit with eq is not monotonic", []content.Rule{varbit(1, intp(1), nil, nil)}, full, Unknown, false},
+		{"varbit eq met", []content.Rule{varbit(4458, intp(1), nil, nil)}, full, Met, false},
+		{"varbit eq unmet", []content.Rule{varbit(4459, intp(1), nil, nil)}, full, Unmet, false},
+		{"varbit bit set", []content.Rule{varbit(10, nil, nil, intp(2))}, full, Met, false},
+		{"varbit bit clear", []content.Rule{varbit(10, nil, nil, intp(1))}, full, Unmet, false},
+		{"varbit facet absent -> unknown", []content.Rule{varbit(4458, intp(1), nil, nil)}, PlayerState{}, Unknown, false},
+		{"varp min met (quest points)", []content.Rule{varp(101, nil, intp(32))}, full, Met, true},
+		{"varp min boundary", []content.Rule{varp(101, nil, intp(33))}, full, Met, true},
+		{"varp min unmet", []content.Rule{varp(101, nil, intp(34))}, full, Unmet, true},
+		{"varp key missing -> unknown", []content.Rule{varp(102, nil, intp(1))}, full, Unknown, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

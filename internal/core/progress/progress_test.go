@@ -127,10 +127,16 @@ func TestEvaluateObjective(t *testing.T) {
 		}}, rules.Unknown, nil},
 		{"diary without facet", "diary:ardougne:easy@complete", rules.PlayerState{}, rules.Unknown, nil},
 		{"diary complete", "diary:ardougne:easy@complete", rules.PlayerState{Diaries: map[string]map[string]bool{"ardougne": {"easy": true}}}, rules.Met, []Fact{{"diary", "ardougne:easy"}}},
+		{"diary incomplete", "diary:ardougne:easy@complete", rules.PlayerState{Diaries: map[string]map[string]bool{"ardougne": {"easy": false}}}, rules.Unmet, []Fact{{"diary", "ardougne:easy"}}},
+		{"diary other tier only", "diary:ardougne:medium@complete", rules.PlayerState{Diaries: map[string]map[string]bool{"ardougne": {"easy": true}}}, rules.Unknown, nil},
 		{"boss by hiscores name", "boss:zulrah>=50", rules.PlayerState{BossKC: map[string]int{"Zulrah": 51}}, rules.Met, []Fact{{"activity", "Zulrah"}}},
-		{"unlock has no source yet", "unlock:fairy_rings@done", rules.PlayerState{}, rules.Unknown, nil},
+		{"unlock without a proof var", "unlock:fairy_rings@done", rules.PlayerState{Varbits: map[int]int64{1: 1}}, rules.Unknown, nil},
 		{"combat achievement has no source yet", "ca:574@done", rules.PlayerState{}, rules.Unknown, nil},
-		{"quest points have no source yet", "qp>=107", rules.PlayerState{}, rules.Unknown, nil},
+		{"quest points without varps", "qp>=107", rules.PlayerState{}, rules.Unknown, nil},
+		{"quest points varp 101 missing", "qp>=107", rules.PlayerState{Varps: map[int]int64{1: 200}}, rules.Unknown, nil},
+		{"quest points met", "qp>=32", rules.PlayerState{Varps: map[int]int64{101: 33}}, rules.Met, []Fact{{"varp", "101"}}},
+		{"quest points boundary", "qp>=33", rules.PlayerState{Varps: map[int]int64{101: 33}}, rules.Met, []Fact{{"varp", "101"}}},
+		{"quest points unmet", "qp>=107", rules.PlayerState{Varps: map[int]int64{101: 33}}, rules.Unmet, []Fact{{"varp", "101"}}},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {

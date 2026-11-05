@@ -39,6 +39,10 @@ type PlayerState struct {
 	Diaries map[string]map[string]bool
 	// BossKC by hiscores boss name → kill count.
 	BossKC map[string]int
+	// Varbits and Varps by id → value, as the plugin read them (the ids the
+	// ingest manifest asks for).
+	Varbits map[int]int64
+	Varps   map[int]int64
 	// Items by container; nil means no item container was ever observed.
 	Items ItemHoldings
 	// Catalog relates noted/unnoted item ids; nil compares ids exactly.
@@ -205,6 +209,10 @@ func atomic(r content.Rule, ps PlayerState) Evidence {
 		}
 		ev.Observed = map[string]int{"kc": kc}
 		ev.Verdict = boolVerdict(kc >= v.KC)
+	case content.VarbitRule:
+		varCheck(ps.Varbits, v.ID, v.Eq, v.Min, v.Bit, "varbit", &ev)
+	case content.VarpRule:
+		varCheck(ps.Varps, v.ID, v.Eq, v.Min, v.Bit, "varp", &ev)
 	case content.ItemOwnedRule:
 		itemOwned(v, ps, &ev)
 	case content.ManualRule:
@@ -214,6 +222,28 @@ func atomic(r content.Rule, ps PlayerState) Evidence {
 		ev.Reason = "rule type " + r.RuleType() + " not evaluable yet"
 	}
 	return ev
+}
+
+// varCheck decides a varbit/varp rule: the value equals eq, is at least atLeast,
+// or has bit set (exactly one is given by the schema).
+func varCheck(values map[int]int64, id int, eq, atLeast, bit *int, kind string, ev *Evidence) {
+	value, ok := values[id]
+	if !ok {
+		ev.Reason = kind + " not observed"
+		return
+	}
+	ev.Observed = map[string]int64{"value": value}
+	switch {
+	case eq != nil:
+		ev.Verdict = boolVerdict(value == int64(*eq))
+	case atLeast != nil:
+		ev.Verdict = boolVerdict(value >= int64(*atLeast))
+	case bit != nil && *bit >= 0 && *bit < 63:
+		ev.Verdict = boolVerdict(value&(int64(1)<<uint(*bit)) != 0)
+	default:
+		ev.Observed = nil
+		ev.Reason = kind + " rule has no test"
+	}
 }
 
 func diaryTier(ps PlayerState, area, tier string) (bool, bool) {

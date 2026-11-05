@@ -69,7 +69,18 @@ type rawQuest struct {
 		Skill string `json:"skill"`
 		XP    int    `json:"xp"`
 	} `json:"xp_rewards"`
+	QuestReqs []string `json:"quest_reqs"`
+	SkillReqs []struct {
+		Skill           string `json:"skill"`
+		Level           int    `json:"level"`
+		Boostable       bool   `json:"boostable"`
+		RequiredToStart bool   `json:"required_to_start"`
+	} `json:"skill_reqs"`
+	QuestPointsRequired *int `json:"quest_points_required"`
 }
+
+// combatLevelReq is the skill_reqs name of a combat level requirement.
+const combatLevelReq = "Combat level"
 
 type curated struct {
 	Version      string `json:"version"`
@@ -234,6 +245,46 @@ func Build(root string) (map[string][]byte, error) {
 	return out, nil
 }
 
+// questRequirements converts the wiki requirements of q into objective keys:
+// each direct quest requirement finished, each skill level and the quest
+// points. A combat level requirement has no key and is returned apart.
+func questRequirements(q rawQuest, questID func(name string) (string, bool)) ([]entities.QuestRequirement, int, error) {
+	var out []entities.QuestRequirement
+	add := func(key string, boostable, during bool) error {
+		k, err := entities.ParseObjectiveKey(key)
+		if err != nil {
+			return fmt.Errorf("catalogbuild: quest %q: requirement %s: %w", q.Name, key, err)
+		}
+		out = append(out, entities.QuestRequirement{Key: k, Boostable: boostable, DuringQuest: during})
+		return nil
+	}
+	for _, name := range q.QuestReqs {
+		id, ok := questID(name)
+		if !ok {
+			return nil, 0, fmt.Errorf("catalogbuild: quest %q requires unknown quest %q", q.Name, name)
+		}
+		if err := add(fmt.Sprintf("quest:%s@%s", id, entities.StateFinished), false, false); err != nil {
+			return nil, 0, err
+		}
+	}
+	combat := 0
+	for _, s := range q.SkillReqs {
+		if s.Skill == combatLevelReq {
+			combat = s.Level
+			continue
+		}
+		if err := add(fmt.Sprintf("skill:%s>=%d", entities.Slug(s.Skill), s.Level), s.Boostable, !s.RequiredToStart); err != nil {
+			return nil, 0, err
+		}
+	}
+	if qp := q.QuestPointsRequired; qp != nil && *qp > 0 {
+		if err := add(fmt.Sprintf("%s>=%d", entities.QuestPoints, *qp), false, false); err != nil {
+			return nil, 0, err
+		}
+	}
+	return out, combat, nil
+}
+
 func buildQuests(raw []rawQuest, cur curated) (*entities.QuestCatalog, error) {
 	qc := &entities.QuestCatalog{}
 	byName := map[string]int{}
@@ -259,6 +310,22 @@ func buildQuests(raw []rawQuest, cur curated) (*entities.QuestCatalog, error) {
 		}
 		byName[q.Name] = len(qc.Quests)
 		qc.Quests = append(qc.Quests, e)
+	}
+	// Requirements name other quests, so they are added once every quest
+	// has its id.
+	for _, q := range raw {
+		e := &qc.Quests[byName[q.Name]]
+		reqs, combat, err := questRequirements(q, func(name string) (string, bool) {
+			i, ok := byName[name]
+			if !ok {
+				return "", false
+			}
+			return qc.Quests[i].ID, true
+		})
+		if err != nil {
+			return nil, err
+		}
+		e.Requires, e.CombatLevel = reqs, combat
 	}
 	for _, a := range cur.QuestAliases {
 		i, ok := byName[a.Quest]

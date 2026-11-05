@@ -751,8 +751,11 @@ Hiscores (item 10, branch `feat/progresso`): adapter puro testado com as amostra
 com `sync_runs`, snapshot, fatos e reavaliação numa transação, recuo exponencial e scheduler no `serve`.
 
 Metas (F9, parte A): fixar um objetivo do Mundo, veredito, onde cada rota o conclui e o painel no
-Agora. A parte B (plano da meta) precisa de `requires`, `skill_reqs` e `quest_points_required` em
-`content/reference/quests.json`, pedido à sessão de extração.
+Agora. A parte B (plano da meta) usa os requisitos de quest que `content/reference/quests.json` passou
+a trazer: `requires` (chaves de objetivo das quests diretas `@finished`, dos níveis de skill com
+`boostable` e `during_quest`, e de `qp`) e `combat_level`, gerados por `catalogbuild` a partir de
+`quest_reqs`, `skill_reqs` e `quest_points_required` de `data/wiki/quests.json`; acesso por
+`entities.Registry.Quest(id).Requires`.
 
 Ainda não existe: anotações além do Oziris 1.1 e do BRUHsailer 1.1, plano da meta, faceta de quest e
 diary no `player_state` (doc 09, seção 1), sessão/OIDC, CLI/MCP sobre

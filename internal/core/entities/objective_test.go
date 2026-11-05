@@ -3,6 +3,7 @@ package entities
 import (
 	"encoding/json"
 	"io/fs"
+	"strings"
 	"testing"
 	"testing/fstest"
 
@@ -173,3 +174,38 @@ func catalogFS(t *testing.T) fstest.MapFS {
 }
 
 func readEmbedded(name string) ([]byte, error) { return fs.ReadFile(reference.FS, name) }
+
+func TestQuestRequirements(t *testing.T) {
+	r := registry(t)
+	q, ok := r.Quest("perilous_moons")
+	if !ok {
+		t.Fatal("perilous_moons not in the catalog")
+	}
+	want := []string{"quest:twilights_promise@finished", "skill:slayer>=48", "skill:hunter>=20", "skill:fishing>=20", "skill:runecraft>=20", "skill:construction>=10"}
+	if len(q.Requires) != len(want) {
+		t.Fatalf("requires = %+v", q.Requires)
+	}
+	for i, w := range want {
+		if q.Requires[i].Key.String() != w {
+			t.Errorf("requires[%d] = %s, want %s", i, q.Requires[i].Key, w)
+		}
+	}
+	legends, _ := r.Quest("legends_quest")
+	var qp, boostable bool
+	for _, req := range legends.Requires {
+		qp = qp || req.Key.String() == "qp>=107"
+		boostable = boostable || (req.Key.String() == "skill:agility>=50" && req.Boostable)
+	}
+	if !qp || !boostable {
+		t.Errorf("legends_quest requires = %+v", legends.Requires)
+	}
+
+	fsys := catalogFS(t)
+	fsys[QuestsFile] = &fstest.MapFile{Data: []byte(`{"catalog":"quests","version":"t","source":"t","quests":[
+		{"id":"a","name":"A","wiki_key":"A","members":false,"requires":[{"key":"quest:not_a_quest@finished"}]},
+		{"id":"b","name":"B","wiki_key":"B","members":false,"requires":[{"key":"quest:b@finished"}]}]}`)}
+	_, err := Load(fsys)
+	if err == nil || !strings.Contains(err.Error(), "a requires quest:not_a_quest@finished") || !strings.Contains(err.Error(), "b requires itself") {
+		t.Errorf("Load = %v", err)
+	}
+}

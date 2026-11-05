@@ -70,6 +70,22 @@ type QuestEntry struct {
 	// XPRewards is the fixed skill experience the quest grants on completion
 	// (choice lamps excluded), from the wiki's {{Quest rewards}}.
 	XPRewards []SkillXP `json:"xp_rewards,omitempty"`
+	// Requires are the quest's own requirements from the wiki's quest
+	// details: the direct quest requirements (finished), skill levels and
+	// quest points, as objective keys. They hold whatever guide routes the
+	// quest (docs/09 section 3, "Requires").
+	Requires []QuestRequirement `json:"requires,omitempty"`
+	// CombatLevel is a combat level requirement; it has no objective key.
+	CombatLevel int `json:"combat_level,omitempty"`
+}
+
+// QuestRequirement is one requirement of a quest. Boostable says a skill
+// level may be met with a temporary boost; DuringQuest says it is needed
+// only for part of the quest, not to start it.
+type QuestRequirement struct {
+	Key         ObjectiveKey `json:"key"`
+	Boostable   bool         `json:"boostable,omitempty"`
+	DuringQuest bool         `json:"during_quest,omitempty"`
 }
 
 // SkillXP is an amount of experience in one skill (skill id).
@@ -583,6 +599,16 @@ func Load(fsys fs.FS) (*Registry, error) {
 	for _, v := range r.vars {
 		if ref, err := ParseRef(v.Subject); err == nil && ref.Kind == KindUnlock && !r.Known(ref) {
 			fail("%s: %s/%d: unknown subject %s", VarbitsFile, v.Var, v.ID, ref)
+		}
+	}
+	for _, q := range qc.Quests {
+		for _, req := range q.Requires {
+			if msg := r.KnownObjective(req.Key); msg != "" {
+				fail("%s: %s requires %s: %s", QuestsFile, q.ID, req.Key, msg)
+			}
+			if req.Key.Ref == (Ref{Kind: KindQuest, ID: q.ID}) {
+				fail("%s: %s requires itself", QuestsFile, q.ID)
+			}
 		}
 	}
 

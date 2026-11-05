@@ -8,13 +8,56 @@
       "id": "a_kingdom_divided",
       "name": "A Kingdom Divided",
       "wiki_key": "A Kingdom Divided",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:the_depths_of_despair@finished"
+        },
+        {
+          "key": "quest:the_queen_of_thieves@finished"
+        },
+        {
+          "key": "quest:the_ascent_of_arceuus@finished"
+        },
+        {
+          "key": "quest:the_forsaken_tower@finished"
+        },
+        {
+          "key": "quest:tale_of_the_righteous@finished"
+        },
+        {
+          "key": "skill:agility>=54"
+        },
+        {
+          "key": "skill:thieving>=52"
+        },
+        {
+          "key": "skill:woodcutting>=52"
+        },
+        {
+          "key": "skill:herblore>=50"
+        },
+        {
+          "key": "skill:mining>=42"
+        },
+        {
+          "key": "skill:crafting>=38"
+        },
+        {
+          "key": "skill:magic>=35"
+        }
+      ]
     },
     {
       "id": "a_night_at_the_theatre",
       "name": "A Night at the Theatre",
       "wiki_key": "A Night at the Theatre",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:a_taste_of_hope@finished"
+        }
+      ]
     },
     {
       "id": "a_porcine_of_interest",
@@ -38,6 +81,12 @@
           "skill": "crafting",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:crafting>=15",
+          "during_quest": true
+        }
       ]
     },
     {
@@ -60,13 +109,43 @@
       "id": "a_tail_of_two_cats",
       "name": "A Tail of Two Cats",
       "wiki_key": "A Tail of Two Cats",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:icthlarins_little_helper@finished"
+        }
+      ]
     },
     {
       "id": "a_taste_of_hope",
       "name": "A Taste of Hope",
       "wiki_key": "A Taste of Hope",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:darkness_of_hallowvale@finished"
+        },
+        {
+          "key": "skill:crafting>=48",
+          "during_quest": true
+        },
+        {
+          "key": "skill:agility>=45",
+          "during_quest": true
+        },
+        {
+          "key": "skill:attack>=40",
+          "during_quest": true
+        },
+        {
+          "key": "skill:herblore>=40",
+          "during_quest": true
+        },
+        {
+          "key": "skill:slayer>=38",
+          "during_quest": true
+        }
+      ]
     },
     {
       "id": "alfred_grimhands_barcrawl",
@@ -97,6 +176,29 @@
           "skill": "woodcutting",
           "xp": 2500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_restless_ghost@finished"
+        },
+        {
+          "key": "quest:ernest_the_chicken@finished"
+        },
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "skill:slayer>=18"
+        },
+        {
+          "key": "skill:crafting>=19"
+        },
+        {
+          "key": "skill:ranged>=30"
+        },
+        {
+          "key": "skill:woodcutting>=35"
+        }
       ]
     },
     {
@@ -113,6 +215,25 @@
           "skill": "prayer",
           "xp": 3000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:death_to_the_dorgeshuun@finished"
+        },
+        {
+          "key": "quest:the_giant_dwarf@finished"
+        },
+        {
+          "key": "quest:the_dig_site@finished"
+        },
+        {
+          "key": "skill:attack>=15",
+          "during_quest": true
+        },
+        {
+          "key": "skill:prayer>=25",
+          "during_quest": true
+        }
       ]
     },
     {
@@ -120,7 +241,13 @@
       "name": "Architectural Alliance",
       "wiki_key": "Architectural Alliance",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "skill:mining>=42",
+          "during_quest": true
+        }
+      ]
     },
     {
       "id": "at_first_light",
@@ -140,6 +267,23 @@
           "skill": "hunter",
           "xp": 4500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:children_of_the_sun@finished"
+        },
+        {
+          "key": "quest:eagles_peak@finished"
+        },
+        {
+          "key": "skill:hunter>=46"
+        },
+        {
+          "key": "skill:herblore>=30"
+        },
+        {
+          "key": "skill:construction>=27"
+        }
       ]
     },
     {
@@ -147,7 +291,37 @@
       "name": "Barbarian Training",
       "wiki_key": "Barbarian Training",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:tai_bwo_wannai_trio@finished"
+        },
+        {
+          "key": "skill:fishing>=55",
+          "boostable": true
+        },
+        {
+          "key": "skill:firemaking>=35"
+        },
+        {
+          "key": "skill:strength>=35"
+        },
+        {
+          "key": "skill:agility>=15"
+        },
+        {
+          "key": "skill:farming>=15"
+        },
+        {
+          "key": "skill:crafting>=11"
+        },
+        {
+          "key": "skill:smithing>=5"
+        },
+        {
+          "key": "skill:herblore>=4"
+        }
+      ]
     },
     {
       "id": "bear_your_soul",
@@ -166,6 +340,11 @@
           "skill": "mining",
           "xp": 1200
         }
+      ],
+      "requires": [
+        {
+          "key": "qp>=16"
+        }
       ]
     },
     {
@@ -177,6 +356,20 @@
         {
           "skill": "agility",
           "xp": 50000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:contact@finished"
+        },
+        {
+          "key": "skill:agility>=62"
+        },
+        {
+          "key": "skill:crafting>=55"
+        },
+        {
+          "key": "skill:firemaking>=55"
         }
       ]
     },
@@ -198,6 +391,26 @@
           "skill": "smithing",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:dwarf_cannon@finished"
+        },
+        {
+          "key": "quest:fishing_contest@finished"
+        },
+        {
+          "key": "skill:defence>=30",
+          "boostable": true
+        },
+        {
+          "key": "skill:mining>=40",
+          "boostable": true
+        },
+        {
+          "key": "skill:smithing>=50",
+          "boostable": true
+        }
       ]
     },
     {
@@ -218,6 +431,19 @@
           "skill": "ranged",
           "xp": 735
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:fletching>=5",
+          "boostable": true
+        },
+        {
+          "key": "skill:cooking>=30",
+          "boostable": true
+        },
+        {
+          "key": "skill:ranged>=30"
+        }
       ]
     },
     {
@@ -230,13 +456,23 @@
           "skill": "thieving",
           "xp": 1250
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:plague_city@finished"
+        }
       ]
     },
     {
       "id": "black_knights_fortress",
       "name": "Black Knights' Fortress",
       "wiki_key": "Black Knights' Fortress",
-      "members": false
+      "members": false,
+      "requires": [
+        {
+          "key": "qp>=12"
+        }
+      ]
     },
     {
       "id": "bone_voyage",
@@ -248,7 +484,27 @@
       "id": "burial_at_sea",
       "name": "Burial at Sea",
       "wiki_key": "Burial at Sea",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:pandemonium@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_pirate_pete@finished"
+        },
+        {
+          "key": "skill:sailing>=42",
+          "during_quest": true
+        },
+        {
+          "key": "skill:smithing>=38",
+          "during_quest": true
+        },
+        {
+          "key": "skill:construction>=32",
+          "during_quest": true
+        }
+      ]
     },
     {
       "id": "cabin_fever",
@@ -267,6 +523,28 @@
         {
           "skill": "smithing",
           "xp": 7000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:pirates_treasure@finished"
+        },
+        {
+          "key": "quest:rum_deal@finished"
+        },
+        {
+          "key": "skill:agility>=42",
+          "during_quest": true
+        },
+        {
+          "key": "skill:crafting>=45",
+          "during_quest": true
+        },
+        {
+          "key": "skill:smithing>=50"
+        },
+        {
+          "key": "skill:ranged>=40"
         }
       ]
     },
@@ -312,6 +590,23 @@
           "skill": "crafting",
           "xp": 2000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:hunter>=10"
+        },
+        {
+          "key": "skill:agility>=30"
+        },
+        {
+          "key": "skill:crafting>=30"
+        },
+        {
+          "key": "skill:construction>=34"
+        },
+        {
+          "key": "skill:thieving>=15"
+        }
       ]
     },
     {
@@ -323,6 +618,14 @@
         {
           "skill": "thieving",
           "xp": 7000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:prince_ali_rescue@finished"
+        },
+        {
+          "key": "quest:icthlarins_little_helper@finished"
         }
       ]
     },
@@ -352,6 +655,16 @@
           "skill": "sailing",
           "xp": 10000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:sailing>=40",
+          "during_quest": true
+        },
+        {
+          "key": "skill:fishing>=30",
+          "during_quest": true
+        }
       ]
     },
     {
@@ -363,6 +676,19 @@
         {
           "skill": "thieving",
           "xp": 1000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "skill:crafting>=20",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=25",
+          "boostable": true
         }
       ]
     },
@@ -380,6 +706,18 @@
           "skill": "sailing",
           "xp": 1400
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:pandemonium@finished"
+        },
+        {
+          "key": "skill:sailing>=22"
+        },
+        {
+          "key": "skill:fishing>=10",
+          "boostable": true
+        }
       ]
     },
     {
@@ -387,7 +725,12 @@
       "name": "Curse of the Empty Lord",
       "wiki_key": "Curse of the Empty Lord",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "skill:prayer>=31"
+        }
+      ]
     },
     {
       "id": "daddys_home",
@@ -419,6 +762,35 @@
           "skill": "thieving",
           "xp": 6000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:in_aid_of_the_myreque@finished"
+        },
+        {
+          "key": "skill:construction>=5",
+          "boostable": true
+        },
+        {
+          "key": "skill:mining>=20"
+        },
+        {
+          "key": "skill:thieving>=22"
+        },
+        {
+          "key": "skill:agility>=26",
+          "boostable": true
+        },
+        {
+          "key": "skill:crafting>=32"
+        },
+        {
+          "key": "skill:magic>=33",
+          "boostable": true
+        },
+        {
+          "key": "skill:strength>=40"
+        }
       ]
     },
     {
@@ -438,6 +810,17 @@
         {
           "skill": "thieving",
           "xp": 10000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:children_of_the_sun@finished"
+        },
+        {
+          "key": "skill:thieving>=34"
+        },
+        {
+          "key": "skill:agility>=32"
         }
       ]
     },
@@ -467,6 +850,19 @@
           "skill": "thieving",
           "xp": 2000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_lost_tribe@finished"
+        },
+        {
+          "key": "skill:agility>=23",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=23",
+          "boostable": true
+        }
       ]
     },
     {
@@ -482,6 +878,38 @@
         {
           "skill": "smithing",
           "xp": 15000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:shield_of_arrav@finished"
+        },
+        {
+          "key": "quest:temple_of_ikov@finished"
+        },
+        {
+          "key": "quest:below_ice_mountain@finished"
+        },
+        {
+          "key": "quest:family_crest@finished"
+        },
+        {
+          "key": "quest:garden_of_tranquillity@finished"
+        },
+        {
+          "key": "quest:what_lies_below@finished"
+        },
+        {
+          "key": "quest:romeo_and_juliet@finished"
+        },
+        {
+          "key": "quest:demon_slayer@finished"
+        },
+        {
+          "key": "skill:smithing>=55"
+        },
+        {
+          "key": "skill:hunter>=52"
         }
       ]
     },
@@ -502,6 +930,40 @@
           "source": "curated",
           "note": "title before Desert Treasure II was released; wiki redirect"
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_dig_site@finished"
+        },
+        {
+          "key": "quest:temple_of_ikov@finished"
+        },
+        {
+          "key": "quest:the_tourist_trap@finished"
+        },
+        {
+          "key": "quest:troll_stronghold@finished"
+        },
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "quest:waterfall_quest@finished"
+        },
+        {
+          "key": "skill:thieving>=53"
+        },
+        {
+          "key": "skill:magic>=50",
+          "during_quest": true
+        },
+        {
+          "key": "skill:firemaking>=50",
+          "boostable": true
+        },
+        {
+          "key": "skill:slayer>=10"
+        }
       ]
     },
     {
@@ -514,6 +976,47 @@
           "text": "Desert Treasure II",
           "source": "curated",
           "note": "title without subtitle"
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:desert_treasure_i@finished"
+        },
+        {
+          "key": "quest:secrets_of_the_north@finished"
+        },
+        {
+          "key": "quest:enakhras_lament@finished"
+        },
+        {
+          "key": "quest:temple_of_the_eye@finished"
+        },
+        {
+          "key": "quest:the_garden_of_death@finished"
+        },
+        {
+          "key": "quest:below_ice_mountain@finished"
+        },
+        {
+          "key": "quest:his_faithful_servants@finished"
+        },
+        {
+          "key": "skill:firemaking>=75"
+        },
+        {
+          "key": "skill:magic>=75"
+        },
+        {
+          "key": "skill:thieving>=70"
+        },
+        {
+          "key": "skill:herblore>=62"
+        },
+        {
+          "key": "skill:runecraft>=60"
+        },
+        {
+          "key": "skill:construction>=60"
         }
       ]
     },
@@ -534,6 +1037,30 @@
         {
           "skill": "smithing",
           "xp": 6500
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:wanted@finished"
+        },
+        {
+          "key": "quest:troll_stronghold@finished"
+        },
+        {
+          "key": "quest:dorics_quest@finished"
+        },
+        {
+          "key": "skill:smithing>=65",
+          "boostable": true
+        },
+        {
+          "key": "skill:runecraft>=50",
+          "during_quest": true
+        },
+        {
+          "key": "skill:fletching>=50",
+          "boostable": true,
+          "during_quest": true
         }
       ]
     },
@@ -574,6 +1101,11 @@
           "skill": "strength",
           "xp": 18650
         }
+      ],
+      "requires": [
+        {
+          "key": "qp>=32"
+        }
       ]
     },
     {
@@ -598,6 +1130,56 @@
           "skill": "thieving",
           "xp": 50000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:legends_quest@finished"
+        },
+        {
+          "key": "quest:dream_mentor@finished"
+        },
+        {
+          "key": "quest:a_tail_of_two_cats@finished"
+        },
+        {
+          "key": "quest:animal_magnetism@finished"
+        },
+        {
+          "key": "quest:ghosts_ahoy@finished"
+        },
+        {
+          "key": "quest:bone_voyage@finished"
+        },
+        {
+          "key": "quest:client_of_kourend@finished"
+        },
+        {
+          "key": "skill:magic>=75"
+        },
+        {
+          "key": "skill:smithing>=70"
+        },
+        {
+          "key": "skill:mining>=68"
+        },
+        {
+          "key": "skill:crafting>=62"
+        },
+        {
+          "key": "skill:agility>=60"
+        },
+        {
+          "key": "skill:thieving>=60"
+        },
+        {
+          "key": "skill:construction>=50"
+        },
+        {
+          "key": "skill:hitpoints>=50"
+        },
+        {
+          "key": "qp>=200"
+        }
       ]
     },
     {
@@ -614,7 +1196,16 @@
           "skill": "magic",
           "xp": 10000
         }
-      ]
+      ],
+      "requires": [
+        {
+          "key": "quest:lunar_diplomacy@finished"
+        },
+        {
+          "key": "quest:eadgars_ruse@finished"
+        }
+      ],
+      "combat_level": 85
     },
     {
       "id": "druidic_ritual",
@@ -650,6 +1241,18 @@
           "skill": "herblore",
           "xp": 11000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:druidic_ritual@finished"
+        },
+        {
+          "key": "quest:troll_stronghold@finished"
+        },
+        {
+          "key": "skill:herblore>=31",
+          "boostable": true
+        }
       ]
     },
     {
@@ -661,6 +1264,12 @@
         {
           "skill": "hunter",
           "xp": 2500
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:hunter>=27",
+          "boostable": true
         }
       ]
     },
@@ -678,6 +1287,20 @@
           "skill": "smithing",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:mining>=20",
+          "boostable": true
+        },
+        {
+          "key": "skill:smithing>=20",
+          "boostable": true
+        },
+        {
+          "key": "skill:crafting>=20",
+          "boostable": true
+        }
       ]
     },
     {
@@ -693,6 +1316,21 @@
         {
           "skill": "smithing",
           "xp": 7500
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:elemental_workshop_i@finished"
+        },
+        {
+          "key": "skill:magic>=20",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:smithing>=30",
+          "boostable": true,
+          "during_quest": true
         }
       ]
     },
@@ -718,6 +1356,22 @@
           "skill": "mining",
           "xp": 7000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:crafting>=50"
+        },
+        {
+          "key": "skill:firemaking>=45",
+          "boostable": true
+        },
+        {
+          "key": "skill:prayer>=43"
+        },
+        {
+          "key": "skill:magic>=39",
+          "boostable": true
+        }
       ]
     },
     {
@@ -742,6 +1396,23 @@
           "skill": "woodcutting",
           "xp": 1500
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:firemaking>=20",
+          "boostable": true
+        },
+        {
+          "key": "skill:farming>=30",
+          "boostable": true
+        },
+        {
+          "key": "skill:crafting>=36",
+          "boostable": true
+        },
+        {
+          "key": "qp>=20"
+        }
       ]
     },
     {
@@ -749,7 +1420,12 @@
       "name": "Enter the Abyss",
       "wiki_key": "Enter the Abyss",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:rune_mysteries@finished"
+        }
+      ]
     },
     {
       "id": "ernest_the_chicken",
@@ -766,6 +1442,17 @@
         {
           "skill": "thieving",
           "xp": 6000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:children_of_the_sun@finished"
+        },
+        {
+          "key": "quest:shield_of_arrav@finished"
+        },
+        {
+          "key": "skill:thieving>=25"
         }
       ]
     },
@@ -794,6 +1481,14 @@
           "skill": "magic",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:lost_city@finished"
+        },
+        {
+          "key": "quest:nature_spirit@finished"
+        }
       ]
     },
     {
@@ -816,6 +1511,22 @@
         {
           "skill": "thieving",
           "xp": 2500
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:fairytale_i_growing_pains@finished"
+        },
+        {
+          "key": "skill:thieving>=40"
+        },
+        {
+          "key": "skill:farming>=49",
+          "boostable": true
+        },
+        {
+          "key": "skill:herblore>=57",
+          "boostable": true
         }
       ]
     },
@@ -847,20 +1558,64 @@
           "skill": "sailing",
           "xp": 12500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:pandemonium@finished"
+        },
+        {
+          "key": "skill:sailing>=62",
+          "during_quest": true
+        },
+        {
+          "key": "skill:crafting>=60",
+          "during_quest": true
+        },
+        {
+          "key": "skill:runecraft>=47",
+          "during_quest": true
+        },
+        {
+          "key": "skill:mining>=53",
+          "during_quest": true
+        }
       ]
     },
     {
       "id": "family_crest",
       "name": "Family Crest",
       "wiki_key": "Family Crest",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "skill:mining>=40",
+          "boostable": true
+        },
+        {
+          "key": "skill:smithing>=40",
+          "boostable": true
+        },
+        {
+          "key": "skill:magic>=59",
+          "boostable": true
+        },
+        {
+          "key": "skill:crafting>=40",
+          "boostable": true
+        }
+      ]
     },
     {
       "id": "family_pest",
       "name": "Family Pest",
       "wiki_key": "Family Pest",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:family_crest@finished"
+        }
+      ]
     },
     {
       "id": "fight_arena",
@@ -888,13 +1643,23 @@
           "skill": "fishing",
           "xp": 2437
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:fishing>=10"
+        }
       ]
     },
     {
       "id": "fools_gold",
       "name": "Fool's Gold",
       "wiki_key": "Fool's Gold",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:beneath_cursed_sands@finished"
+        }
+      ]
     },
     {
       "id": "forgettable_tale",
@@ -922,6 +1687,22 @@
           "skill": "farming",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_giant_dwarf@finished"
+        },
+        {
+          "key": "quest:fishing_contest@finished"
+        },
+        {
+          "key": "skill:cooking>=22",
+          "boostable": true
+        },
+        {
+          "key": "skill:farming>=17",
+          "boostable": true
+        }
       ]
     },
     {
@@ -933,6 +1714,14 @@
         {
           "skill": "farming",
           "xp": 5000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:creature_of_fenkenstrain@finished"
+        },
+        {
+          "key": "skill:farming>=25"
         }
       ]
     },
@@ -962,6 +1751,14 @@
           "skill": "crafting",
           "xp": 4000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:crafting>=30"
+        },
+        {
+          "key": "skill:construction>=26"
+        }
       ]
     },
     {
@@ -973,6 +1770,22 @@
         {
           "skill": "prayer",
           "xp": 2400
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "quest:the_restless_ghost@finished"
+        },
+        {
+          "key": "skill:agility>=25",
+          "boostable": true
+        },
+        {
+          "key": "skill:cooking>=20",
+          "boostable": true
         }
       ]
     },
@@ -1018,6 +1831,31 @@
           "skill": "woodcutting",
           "xp": 60000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:witchs_house@finished"
+        },
+        {
+          "key": "skill:farming>=45",
+          "boostable": true
+        },
+        {
+          "key": "skill:herblore>=52",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=58",
+          "boostable": true
+        },
+        {
+          "key": "skill:agility>=59",
+          "boostable": true
+        },
+        {
+          "key": "skill:woodcutting>=71",
+          "boostable": true
+        }
       ]
     },
     {
@@ -1029,6 +1867,15 @@
         {
           "skill": "strength",
           "xp": 22000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "skill:crafting>=35",
+          "boostable": true
         }
       ]
     },
@@ -1098,6 +1945,39 @@
           "skill": "woodcutting",
           "xp": 1575
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:shield_of_arrav@finished"
+        },
+        {
+          "key": "quest:lost_city@finished"
+        },
+        {
+          "key": "quest:merlins_crystal@finished"
+        },
+        {
+          "key": "quest:dragon_slayer_i@finished"
+        },
+        {
+          "key": "skill:cooking>=53",
+          "boostable": true
+        },
+        {
+          "key": "skill:fishing>=53",
+          "boostable": true
+        },
+        {
+          "key": "skill:herblore>=25",
+          "boostable": true
+        },
+        {
+          "key": "skill:mining>=50",
+          "boostable": true
+        },
+        {
+          "key": "qp>=55"
+        }
       ]
     },
     {
@@ -1105,7 +1985,12 @@
       "name": "His Faithful Servants",
       "wiki_key": "His Faithful Servants",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:priest_in_peril@finished"
+        }
+      ]
     },
     {
       "id": "holy_grail",
@@ -1121,6 +2006,14 @@
           "skill": "prayer",
           "xp": 11000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:merlins_crystal@finished"
+        },
+        {
+          "key": "skill:attack>=20"
+        }
       ]
     },
     {
@@ -1128,13 +2021,37 @@
       "name": "Hopespear's Will",
       "wiki_key": "Hopespear's Will",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:desert_treasure_i@finished"
+        },
+        {
+          "key": "quest:fairytale_ii_cure_a_queen@finished"
+        },
+        {
+          "key": "quest:land_of_the_goblins@finished"
+        },
+        {
+          "key": "skill:prayer>=50",
+          "during_quest": true
+        }
+      ]
     },
     {
       "id": "horror_from_the_deep",
       "name": "Horror from the Deep",
       "wiki_key": "Horror from the Deep",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:alfred_grimhands_barcrawl@finished"
+        },
+        {
+          "key": "skill:agility>=35",
+          "boostable": true
+        }
+      ]
     },
     {
       "id": "icthlarins_little_helper",
@@ -1153,6 +2070,11 @@
         {
           "skill": "woodcutting",
           "xp": 4000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:gertrudes_cat@finished"
         }
       ]
     },
@@ -1194,6 +2116,29 @@
           "skill": "strength",
           "xp": 2000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:in_search_of_the_myreque@finished"
+        },
+        {
+          "key": "skill:agility>=25",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:crafting>=25",
+          "during_quest": true
+        },
+        {
+          "key": "skill:mining>=15",
+          "during_quest": true
+        },
+        {
+          "key": "skill:magic>=7",
+          "boostable": true,
+          "during_quest": true
+        }
       ]
     },
     {
@@ -1229,6 +2174,16 @@
           "skill": "strength",
           "xp": 600
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:nature_spirit@finished"
+        },
+        {
+          "key": "skill:agility>=25",
+          "boostable": true,
+          "during_quest": true
+        }
       ]
     },
     {
@@ -1236,7 +2191,12 @@
       "name": "Into the Tombs",
       "wiki_key": "Into the Tombs",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:beneath_cursed_sands@finished"
+        }
+      ]
     },
     {
       "id": "jungle_potion",
@@ -1247,6 +2207,15 @@
         {
           "skill": "herblore",
           "xp": 775
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:druidic_ritual@finished"
+        },
+        {
+          "key": "skill:herblore>=3",
+          "boostable": true
         }
       ]
     },
@@ -1264,6 +2233,27 @@
           "skill": "magic",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:black_knights_fortress@finished"
+        },
+        {
+          "key": "quest:holy_grail@finished"
+        },
+        {
+          "key": "quest:murder_mystery@finished"
+        },
+        {
+          "key": "quest:one_small_favour@finished"
+        },
+        {
+          "key": "skill:magic>=45",
+          "during_quest": true
+        },
+        {
+          "key": "skill:defence>=65"
+        }
       ]
     },
     {
@@ -1271,7 +2261,16 @@
       "name": "Lair of Tarn Razorlor",
       "wiki_key": "Lair of Tarn Razorlor",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:haunted_mine@finished"
+        },
+        {
+          "key": "skill:slayer>=40",
+          "during_quest": true
+        }
+      ]
     },
     {
       "id": "land_of_the_goblins",
@@ -1295,6 +2294,26 @@
           "skill": "thieving",
           "xp": 8000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:another_slice_of_h_a_m@finished"
+        },
+        {
+          "key": "quest:fishing_contest@finished"
+        },
+        {
+          "key": "skill:agility>=38"
+        },
+        {
+          "key": "skill:fishing>=40"
+        },
+        {
+          "key": "skill:thieving>=45"
+        },
+        {
+          "key": "skill:herblore>=48"
+        }
       ]
     },
     {
@@ -1307,7 +2326,67 @@
       "id": "legends_quest",
       "name": "Legends' Quest",
       "wiki_key": "Legends' Quest",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:family_crest@finished"
+        },
+        {
+          "key": "quest:heroes_quest@finished"
+        },
+        {
+          "key": "quest:shilo_village@finished"
+        },
+        {
+          "key": "quest:underground_pass@finished"
+        },
+        {
+          "key": "quest:waterfall_quest@finished"
+        },
+        {
+          "key": "skill:agility>=50",
+          "boostable": true
+        },
+        {
+          "key": "skill:crafting>=50",
+          "boostable": true
+        },
+        {
+          "key": "skill:herblore>=45",
+          "boostable": true
+        },
+        {
+          "key": "skill:magic>=56",
+          "boostable": true
+        },
+        {
+          "key": "skill:mining>=52",
+          "boostable": true
+        },
+        {
+          "key": "skill:prayer>=42",
+          "boostable": true
+        },
+        {
+          "key": "skill:smithing>=50",
+          "boostable": true
+        },
+        {
+          "key": "skill:strength>=50",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=50",
+          "boostable": true
+        },
+        {
+          "key": "skill:woodcutting>=50",
+          "boostable": true
+        },
+        {
+          "key": "qp>=107"
+        }
+      ]
     },
     {
       "id": "lost_city",
@@ -1322,6 +2401,16 @@
         {
           "skill": "woodcutting",
           "xp": 1500
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:crafting>=31",
+          "boostable": true
+        },
+        {
+          "key": "skill:woodcutting>=36",
+          "boostable": true
         }
       ]
     },
@@ -1345,6 +2434,41 @@
           "skill": "runecraft",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_fremennik_trials@finished"
+        },
+        {
+          "key": "quest:lost_city@finished"
+        },
+        {
+          "key": "quest:rune_mysteries@finished"
+        },
+        {
+          "key": "quest:shilo_village@finished"
+        },
+        {
+          "key": "skill:herblore>=5"
+        },
+        {
+          "key": "skill:crafting>=61"
+        },
+        {
+          "key": "skill:defence>=40"
+        },
+        {
+          "key": "skill:firemaking>=49"
+        },
+        {
+          "key": "skill:magic>=65"
+        },
+        {
+          "key": "skill:mining>=60"
+        },
+        {
+          "key": "skill:woodcutting>=55"
+        }
       ]
     },
     {
@@ -1352,14 +2476,27 @@
       "name": "Mage Arena I",
       "wiki_key": "Mage Arena I",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "skill:magic>=60"
+        }
+      ]
     },
     {
       "id": "mage_arena_ii",
       "name": "Mage Arena II",
       "wiki_key": "Mage Arena II",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:mage_arena_i@finished"
+        },
+        {
+          "key": "skill:magic>=75"
+        }
+      ]
     },
     {
       "id": "making_friends_with_my_arm",
@@ -1383,6 +2520,36 @@
           "skill": "mining",
           "xp": 50000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:my_arms_big_adventure@finished"
+        },
+        {
+          "key": "quest:swan_song@finished"
+        },
+        {
+          "key": "quest:cold_war@finished"
+        },
+        {
+          "key": "quest:romeo_and_juliet@finished"
+        },
+        {
+          "key": "skill:firemaking>=66"
+        },
+        {
+          "key": "skill:mining>=72",
+          "boostable": true
+        },
+        {
+          "key": "skill:construction>=35",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:agility>=68",
+          "boostable": true
+        }
       ]
     },
     {
@@ -1399,6 +2566,14 @@
           "skill": "prayer",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "quest:the_restless_ghost@finished"
+        }
       ]
     },
     {
@@ -1410,6 +2585,11 @@
         {
           "skill": "cooking",
           "xp": 8000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:children_of_the_sun@finished"
         }
       ]
     },
@@ -1448,6 +2628,14 @@
           "source": "curated",
           "note": "title before Monkey Madness II was released; wiki redirect"
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_grand_tree@finished"
+        },
+        {
+          "key": "quest:tree_gnome_village@finished"
+        }
       ]
     },
     {
@@ -1471,6 +2659,38 @@
         {
           "skill": "thieving",
           "xp": 50000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:enlightened_journey@finished"
+        },
+        {
+          "key": "quest:the_eyes_of_glouphrie@finished"
+        },
+        {
+          "key": "quest:troll_stronghold@finished"
+        },
+        {
+          "key": "quest:watchtower@finished"
+        },
+        {
+          "key": "skill:slayer>=69"
+        },
+        {
+          "key": "skill:crafting>=70"
+        },
+        {
+          "key": "skill:hunter>=60"
+        },
+        {
+          "key": "skill:agility>=55"
+        },
+        {
+          "key": "skill:thieving>=55"
+        },
+        {
+          "key": "skill:firemaking>=60"
         }
       ]
     },
@@ -1500,6 +2720,12 @@
           "skill": "prayer",
           "xp": 2000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:agility>=20",
+          "boostable": true
+        }
       ]
     },
     {
@@ -1516,6 +2742,23 @@
           "skill": "thieving",
           "xp": 40000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:roving_elves@finished"
+        },
+        {
+          "key": "quest:big_chompy_bird_hunting@finished"
+        },
+        {
+          "key": "quest:sheep_herder@finished"
+        },
+        {
+          "key": "skill:ranged>=60"
+        },
+        {
+          "key": "skill:thieving>=50"
+        }
       ]
     },
     {
@@ -1527,6 +2770,11 @@
         {
           "skill": "agility",
           "xp": 60000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:mournings_end_part_i@finished"
         }
       ]
     },
@@ -1562,6 +2810,26 @@
           "skill": "herblore",
           "xp": 10000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:eadgars_ruse@finished"
+        },
+        {
+          "key": "quest:the_feud@finished"
+        },
+        {
+          "key": "quest:jungle_potion@finished"
+        },
+        {
+          "key": "skill:farming>=29",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:woodcutting>=10",
+          "during_quest": true
+        }
       ]
     },
     {
@@ -1581,6 +2849,14 @@
         {
           "skill": "hitpoints",
           "xp": 2000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "quest:the_restless_ghost@finished"
         }
       ]
     },
@@ -1606,6 +2882,19 @@
           "skill": "defence",
           "xp": 12000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_fremennik_trials@finished"
+        },
+        {
+          "key": "skill:firemaking>=40",
+          "boostable": true
+        },
+        {
+          "key": "skill:woodcutting>=50",
+          "boostable": true
+        }
       ]
     },
     {
@@ -1618,6 +2907,34 @@
           "text": "OSF",
           "source": "curated",
           "note": "common abbreviation"
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:rune_mysteries@finished"
+        },
+        {
+          "key": "quest:shilo_village@finished"
+        },
+        {
+          "key": "skill:agility>=36",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:crafting>=25",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:herblore>=18",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:smithing>=30",
+          "boostable": true,
+          "during_quest": true
         }
       ]
     },
@@ -1654,6 +2971,26 @@
         {
           "skill": "slayer",
           "xp": 40000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:twilights_promise@finished"
+        },
+        {
+          "key": "skill:slayer>=48"
+        },
+        {
+          "key": "skill:hunter>=20"
+        },
+        {
+          "key": "skill:fishing>=20"
+        },
+        {
+          "key": "skill:runecraft>=20"
+        },
+        {
+          "key": "skill:construction>=10"
         }
       ]
     },
@@ -1723,6 +3060,20 @@
           "skill": "smithing",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:pandemonium@finished"
+        },
+        {
+          "key": "quest:the_knights_sword@finished"
+        },
+        {
+          "key": "skill:smithing>=30"
+        },
+        {
+          "key": "skill:sailing>=12"
+        }
       ]
     },
     {
@@ -1758,6 +3109,21 @@
           "skill": "prayer",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:rag_and_bone_man_i@finished"
+        },
+        {
+          "key": "quest:skippy_and_the_mogres@finished"
+        },
+        {
+          "key": "skill:slayer>=40",
+          "boostable": true
+        },
+        {
+          "key": "skill:defence>=20"
+        }
       ]
     },
     {
@@ -1770,13 +3136,96 @@
           "skill": "thieving",
           "xp": 4500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:icthlarins_little_helper@finished"
+        }
       ]
     },
     {
       "id": "recipe_for_disaster",
       "name": "Recipe for Disaster",
       "wiki_key": "Recipe for Disaster",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "quest:cooks_assistant@finished"
+        },
+        {
+          "key": "skill:cooking>=10",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:cooking>=70",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:agility>=48",
+          "during_quest": true
+        },
+        {
+          "key": "skill:mining>=50",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:fishing>=53",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:thieving>=53",
+          "during_quest": true
+        },
+        {
+          "key": "skill:herblore>=25",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:magic>=59",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:smithing>=40",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:firemaking>=50",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:ranged>=40",
+          "during_quest": true
+        },
+        {
+          "key": "skill:crafting>=40",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:fletching>=10",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:woodcutting>=36",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "qp>=175"
+        }
+      ]
     },
     {
       "id": "recipe_for_disaster_another_cooks_quest",
@@ -1787,6 +3236,15 @@
         {
           "text": "Recipe for Disaster - Another Cook's Quest",
           "source": "wikisync"
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:cooks_assistant@finished"
+        },
+        {
+          "key": "skill:cooking>=10",
+          "during_quest": true
         }
       ]
     },
@@ -1799,6 +3257,41 @@
         {
           "text": "Recipe for Disaster - Culinaromancer",
           "source": "wikisync"
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:desert_treasure_i@finished"
+        },
+        {
+          "key": "quest:horror_from_the_deep@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_evil_dave@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_the_goblin_generals@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_the_lumbridge_guide@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_the_mountain_dwarf@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_pirate_pete@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_sir_amik_varze@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_skrach_uglogwee@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_king_awowogei@finished"
+        },
+        {
+          "key": "qp>=175"
         }
       ]
     },
@@ -1817,6 +3310,17 @@
         {
           "skill": "cooking",
           "xp": 7000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:gertrudes_cat@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "quest:shadow_of_the_storm@finished"
         }
       ]
     },
@@ -1839,6 +3343,21 @@
         {
           "skill": "cooking",
           "xp": 10000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:monkey_madness_i@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "skill:cooking>=70",
+          "boostable": true
+        },
+        {
+          "key": "skill:agility>=48"
         }
       ]
     },
@@ -1870,6 +3389,16 @@
           "skill": "smithing",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "skill:cooking>=31",
+          "boostable": true,
+          "during_quest": true
+        }
       ]
     },
     {
@@ -1891,6 +3420,29 @@
         {
           "skill": "hitpoints",
           "xp": 4000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:family_crest@finished"
+        },
+        {
+          "key": "quest:heroes_quest@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "quest:shilo_village@finished"
+        },
+        {
+          "key": "quest:underground_pass@finished"
+        },
+        {
+          "key": "quest:waterfall_quest@finished"
+        },
+        {
+          "key": "qp>=107"
         }
       ]
     },
@@ -1922,6 +3474,22 @@
           "skill": "woodcutting",
           "xp": 1500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:big_chompy_bird_hunting@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "skill:cooking>=41",
+          "boostable": true
+        },
+        {
+          "key": "skill:firemaking>=20",
+          "boostable": true
+        }
       ]
     },
     {
@@ -1948,6 +3516,14 @@
           "skill": "farming",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "quest:goblin_diplomacy@finished"
+        }
       ]
     },
     {
@@ -1969,6 +3545,33 @@
         {
           "skill": "magic",
           "xp": 2500
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:big_chompy_bird_hunting@finished"
+        },
+        {
+          "key": "quest:biohazard@finished"
+        },
+        {
+          "key": "quest:demon_slayer@finished"
+        },
+        {
+          "key": "quest:murder_mystery@finished"
+        },
+        {
+          "key": "quest:nature_spirit@finished"
+        },
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "quest:witchs_house@finished"
+        },
+        {
+          "key": "skill:cooking>=40",
+          "boostable": true
         }
       ]
     },
@@ -1992,13 +3595,29 @@
           "skill": "slayer",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:recipe_for_disaster_another_cooks_quest@finished"
+        },
+        {
+          "key": "quest:fishing_contest@finished"
+        }
       ]
     },
     {
       "id": "recruitment_drive",
       "name": "Recruitment Drive",
       "wiki_key": "Recruitment Drive",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:black_knights_fortress@finished"
+        },
+        {
+          "key": "quest:druidic_ritual@finished"
+        }
+      ]
     },
     {
       "id": "regicide",
@@ -2010,13 +3629,37 @@
           "skill": "agility",
           "xp": 13750
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:underground_pass@finished"
+        },
+        {
+          "key": "skill:crafting>=10",
+          "during_quest": true
+        },
+        {
+          "key": "skill:agility>=56",
+          "boostable": true
+        }
       ]
     },
     {
       "id": "rogue_trader",
       "name": "Rogue Trader",
       "wiki_key": "Rogue Trader",
-      "members": false
+      "members": false,
+      "requires": [
+        {
+          "key": "quest:the_feud@finished"
+        },
+        {
+          "key": "quest:rune_mysteries@finished"
+        },
+        {
+          "key": "quest:icthlarins_little_helper@finished"
+        }
+      ]
     },
     {
       "id": "romeo_and_juliet",
@@ -2040,6 +3683,18 @@
         {
           "skill": "strength",
           "xp": 10000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:regicide@finished"
+        },
+        {
+          "key": "quest:waterfall_quest@finished"
+        },
+        {
+          "key": "skill:agility>=56",
+          "boostable": true
         }
       ]
     },
@@ -2065,6 +3720,19 @@
           "skill": "slayer",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:throne_of_miscellania@finished"
+        },
+        {
+          "key": "skill:agility>=40",
+          "boostable": true
+        },
+        {
+          "key": "skill:slayer>=40",
+          "boostable": true
+        }
       ]
     },
     {
@@ -2084,6 +3752,33 @@
         {
           "skill": "prayer",
           "xp": 7000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:zogre_flesh_eaters@finished"
+        },
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "skill:crafting>=42",
+          "boostable": true
+        },
+        {
+          "key": "skill:farming>=40",
+          "boostable": true
+        },
+        {
+          "key": "skill:prayer>=47",
+          "boostable": true
+        },
+        {
+          "key": "skill:slayer>=42"
+        },
+        {
+          "key": "skill:fishing>=50",
+          "boostable": true
         }
       ]
     },
@@ -2109,6 +3804,14 @@
           "skill": "strength",
           "xp": 6625
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:alfred_grimhands_barcrawl@finished"
+        },
+        {
+          "key": "skill:prayer>=31"
+        }
       ]
     },
     {
@@ -2129,6 +3832,20 @@
           "skill": "smithing",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:children_of_the_sun@finished"
+        },
+        {
+          "key": "skill:construction>=38"
+        },
+        {
+          "key": "skill:cooking>=36"
+        },
+        {
+          "key": "skill:smithing>=35"
+        }
       ]
     },
     {
@@ -2140,6 +3857,12 @@
         {
           "skill": "fishing",
           "xp": 7175
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:firemaking>=30",
+          "boostable": true
         }
       ]
     },
@@ -2161,6 +3884,29 @@
           "skill": "thieving",
           "xp": 50000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:making_friends_with_my_arm@finished"
+        },
+        {
+          "key": "quest:the_generals_shadow@finished"
+        },
+        {
+          "key": "quest:devious_minds@finished"
+        },
+        {
+          "key": "quest:hazeel_cult@finished"
+        },
+        {
+          "key": "skill:agility>=69"
+        },
+        {
+          "key": "skill:thieving>=64"
+        },
+        {
+          "key": "skill:hunter>=56"
+        }
       ]
     },
     {
@@ -2177,13 +3923,42 @@
           "skill": "herblore",
           "xp": 2000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "skill:crafting>=20",
+          "boostable": true
+        },
+        {
+          "key": "skill:herblore>=15",
+          "boostable": true
+        },
+        {
+          "key": "skill:firemaking>=5",
+          "boostable": true
+        }
       ]
     },
     {
       "id": "shadow_of_the_storm",
       "name": "Shadow of the Storm",
       "wiki_key": "Shadow of the Storm",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:the_golem@finished"
+        },
+        {
+          "key": "quest:demon_slayer@finished"
+        },
+        {
+          "key": "skill:crafting>=30",
+          "boostable": true
+        }
+      ]
     },
     {
       "id": "shadows_of_custodia",
@@ -2206,6 +3981,23 @@
         {
           "skill": "slayer",
           "xp": 10000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:children_of_the_sun@finished"
+        },
+        {
+          "key": "skill:slayer>=54"
+        },
+        {
+          "key": "skill:fishing>=45"
+        },
+        {
+          "key": "skill:construction>=41"
+        },
+        {
+          "key": "skill:hunter>=36"
         }
       ]
     },
@@ -2249,20 +4041,71 @@
           "skill": "crafting",
           "xp": 3875
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:jungle_potion@finished"
+        },
+        {
+          "key": "skill:crafting>=20",
+          "boostable": true
+        },
+        {
+          "key": "skill:agility>=32",
+          "boostable": true
+        }
       ]
     },
     {
       "id": "sins_of_the_father",
       "name": "Sins of the Father",
       "wiki_key": "Sins of the Father",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:vampyre_slayer@finished"
+        },
+        {
+          "key": "quest:a_taste_of_hope@finished"
+        },
+        {
+          "key": "skill:woodcutting>=62"
+        },
+        {
+          "key": "skill:fletching>=60"
+        },
+        {
+          "key": "skill:crafting>=56"
+        },
+        {
+          "key": "skill:agility>=52"
+        },
+        {
+          "key": "skill:attack>=50",
+          "during_quest": true
+        },
+        {
+          "key": "skill:slayer>=50",
+          "during_quest": true
+        },
+        {
+          "key": "skill:magic>=49",
+          "during_quest": true
+        }
+      ]
     },
     {
       "id": "skippy_and_the_mogres",
       "name": "Skippy and the Mogres",
       "wiki_key": "Skippy and the Mogres",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "skill:cooking>=20",
+          "boostable": true
+        }
+      ]
     },
     {
       "id": "sleeping_giants",
@@ -2273,6 +4116,11 @@
         {
           "skill": "smithing",
           "xp": 6000
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:smithing>=15"
         }
       ]
     },
@@ -2314,6 +4162,41 @@
           "skill": "woodcutting",
           "xp": 40000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:mournings_end_part_ii@finished"
+        },
+        {
+          "key": "quest:making_history@finished"
+        },
+        {
+          "key": "quest:druidic_ritual@finished"
+        },
+        {
+          "key": "skill:agility>=70"
+        },
+        {
+          "key": "skill:construction>=70"
+        },
+        {
+          "key": "skill:farming>=70"
+        },
+        {
+          "key": "skill:herblore>=70"
+        },
+        {
+          "key": "skill:hunter>=70"
+        },
+        {
+          "key": "skill:mining>=70"
+        },
+        {
+          "key": "skill:smithing>=70"
+        },
+        {
+          "key": "skill:woodcutting>=70"
+        }
       ]
     },
     {
@@ -2340,6 +4223,24 @@
           "skill": "thieving",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:magic>=33",
+          "boostable": true
+        },
+        {
+          "key": "skill:ranged>=37",
+          "boostable": true
+        },
+        {
+          "key": "skill:mining>=37",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=37",
+          "boostable": true
+        }
       ]
     },
     {
@@ -2359,6 +4260,41 @@
         {
           "skill": "prayer",
           "xp": 10000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:one_small_favour@finished"
+        },
+        {
+          "key": "quest:garden_of_tranquillity@finished"
+        },
+        {
+          "key": "skill:magic>=66",
+          "boostable": true
+        },
+        {
+          "key": "skill:cooking>=62",
+          "boostable": true
+        },
+        {
+          "key": "skill:fishing>=62",
+          "boostable": true
+        },
+        {
+          "key": "skill:smithing>=45",
+          "boostable": true
+        },
+        {
+          "key": "skill:firemaking>=42",
+          "boostable": true
+        },
+        {
+          "key": "skill:crafting>=40",
+          "boostable": true
+        },
+        {
+          "key": "qp>=100"
         }
       ]
     },
@@ -2384,6 +4320,22 @@
           "skill": "strength",
           "xp": 2500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:jungle_potion@finished"
+        },
+        {
+          "key": "skill:agility>=15",
+          "boostable": true
+        },
+        {
+          "key": "skill:cooking>=30"
+        },
+        {
+          "key": "skill:fishing>=5",
+          "boostable": true
+        }
       ]
     },
     {
@@ -2396,6 +4348,17 @@
           "skill": "mining",
           "xp": 1500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:client_of_kourend@finished"
+        },
+        {
+          "key": "skill:strength>=16"
+        },
+        {
+          "key": "skill:mining>=10"
+        }
       ]
     },
     {
@@ -2407,6 +4370,23 @@
         {
           "skill": "crafting",
           "xp": 1000
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:firemaking>=49",
+          "boostable": true
+        },
+        {
+          "key": "skill:crafting>=20",
+          "boostable": true
+        },
+        {
+          "key": "skill:mining>=20",
+          "boostable": true
+        },
+        {
+          "key": "qp>=43"
         }
       ]
     },
@@ -2424,6 +4404,15 @@
           "skill": "ranged",
           "xp": 10500
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:thieving>=42",
+          "boostable": true
+        },
+        {
+          "key": "skill:ranged>=40"
+        }
       ]
     },
     {
@@ -2435,6 +4424,14 @@
         {
           "skill": "runecraft",
           "xp": 5000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:enter_the_abyss@finished"
+        },
+        {
+          "key": "skill:runecraft>=10"
         }
       ]
     },
@@ -2452,19 +4449,82 @@
           "skill": "runecraft",
           "xp": 500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:client_of_kourend@finished"
+        },
+        {
+          "key": "skill:hunter>=12"
+        }
       ]
     },
     {
       "id": "the_blood_moon_rises",
       "name": "The Blood Moon Rises",
       "wiki_key": "The Blood Moon Rises",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:a_night_at_the_theatre@finished"
+        },
+        {
+          "key": "quest:sins_of_the_father@finished"
+        },
+        {
+          "key": "skill:slayer>=74"
+        },
+        {
+          "key": "skill:woodcutting>=74"
+        },
+        {
+          "key": "skill:smithing>=72"
+        },
+        {
+          "key": "skill:cooking>=72"
+        },
+        {
+          "key": "skill:fletching>=70"
+        },
+        {
+          "key": "skill:mining>=66"
+        },
+        {
+          "key": "skill:hunter>=65"
+        },
+        {
+          "key": "skill:crafting>=64"
+        },
+        {
+          "key": "skill:herblore>=64"
+        },
+        {
+          "key": "skill:magic>=57"
+        }
+      ]
     },
     {
       "id": "the_chosen_commander",
       "name": "The Chosen Commander",
       "wiki_key": "The Chosen Commander",
-      "members": true
+      "members": true,
+      "requires": [
+        {
+          "key": "quest:land_of_the_goblins@finished"
+        },
+        {
+          "key": "skill:agility>=58",
+          "during_quest": true
+        },
+        {
+          "key": "skill:thieving>=54",
+          "during_quest": true
+        },
+        {
+          "key": "skill:strength>=46",
+          "during_quest": true
+        }
+      ]
     },
     {
       "id": "the_corsair_curse",
@@ -2496,6 +4556,39 @@
           "skill": "thieving",
           "xp": 40000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:defender_of_varrock@finished"
+        },
+        {
+          "key": "quest:troll_romance@finished"
+        },
+        {
+          "key": "skill:mining>=64",
+          "during_quest": true
+        },
+        {
+          "key": "skill:ranged>=62",
+          "during_quest": true
+        },
+        {
+          "key": "skill:thieving>=62",
+          "during_quest": true
+        },
+        {
+          "key": "skill:agility>=61",
+          "during_quest": true
+        },
+        {
+          "key": "skill:strength>=58",
+          "during_quest": true
+        },
+        {
+          "key": "skill:slayer>=37",
+          "boostable": true,
+          "during_quest": true
+        }
       ]
     },
     {
@@ -2507,6 +4600,14 @@
         {
           "skill": "agility",
           "xp": 1500
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:client_of_kourend@finished"
+        },
+        {
+          "key": "skill:agility>=18"
         }
       ]
     },
@@ -2524,6 +4625,20 @@
           "skill": "mining",
           "xp": 15300
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:agility>=10",
+          "boostable": true
+        },
+        {
+          "key": "skill:herblore>=10",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=25",
+          "boostable": true
+        }
       ]
     },
     {
@@ -2531,7 +4646,12 @@
       "name": "The Enchanted Key",
       "wiki_key": "The Enchanted Key",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:making_history@finished"
+        }
+      ]
     },
     {
       "id": "the_eyes_of_glouphrie",
@@ -2555,6 +4675,18 @@
           "skill": "woodcutting",
           "xp": 2500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_grand_tree@finished"
+        },
+        {
+          "key": "skill:construction>=5",
+          "during_quest": true
+        },
+        {
+          "key": "skill:magic>=46"
+        }
       ]
     },
     {
@@ -2566,6 +4698,11 @@
         {
           "skill": "thieving",
           "xp": 15000
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:thieving>=30"
         }
       ]
     },
@@ -2587,6 +4724,23 @@
           "skill": "thieving",
           "xp": 55000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_heart_of_darkness@finished"
+        },
+        {
+          "key": "quest:perilous_moons@finished"
+        },
+        {
+          "key": "skill:thieving>=66"
+        },
+        {
+          "key": "skill:runecraft>=52"
+        },
+        {
+          "key": "skill:fletching>=52"
+        }
       ]
     },
     {
@@ -2603,6 +4757,11 @@
           "skill": "smithing",
           "xp": 500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:client_of_kourend@finished"
+        }
       ]
     },
     {
@@ -2615,6 +4774,11 @@
         {
           "text": "The Fractured Archive",
           "source": "wikisync"
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:while_guthix_sleeps@finished"
         }
       ]
     },
@@ -2636,6 +4800,39 @@
           "skill": "slayer",
           "xp": 50000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_fremennik_isles@finished"
+        },
+        {
+          "key": "quest:lunar_diplomacy@finished"
+        },
+        {
+          "key": "quest:mountain_daughter@finished"
+        },
+        {
+          "key": "quest:heroes_quest@finished"
+        },
+        {
+          "key": "skill:crafting>=65"
+        },
+        {
+          "key": "skill:slayer>=60"
+        },
+        {
+          "key": "skill:smithing>=60"
+        },
+        {
+          "key": "skill:fishing>=60"
+        },
+        {
+          "key": "skill:runecraft>=55"
+        },
+        {
+          "key": "skill:mining>=60",
+          "boostable": true
+        }
       ]
     },
     {
@@ -2656,6 +4853,15 @@
           "skill": "woodcutting",
           "xp": 10000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_fremennik_trials@finished"
+        },
+        {
+          "key": "skill:construction>=20",
+          "boostable": true
+        }
       ]
     },
     {
@@ -2669,7 +4875,25 @@
       "name": "The Frozen Door",
       "wiki_key": "The Frozen Door",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:desert_treasure_i@finished"
+        },
+        {
+          "key": "skill:agility>=70"
+        },
+        {
+          "key": "skill:hitpoints>=70",
+          "boostable": true
+        },
+        {
+          "key": "skill:ranged>=70"
+        },
+        {
+          "key": "skill:strength>=70"
+        }
+      ]
     },
     {
       "id": "the_garden_of_death",
@@ -2681,6 +4905,11 @@
           "skill": "farming",
           "xp": 10000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:farming>=20"
+        }
       ]
     },
     {
@@ -2688,7 +4917,15 @@
       "name": "The General's Shadow",
       "wiki_key": "The General's Shadow",
       "members": false,
-      "miniquest": true
+      "miniquest": true,
+      "requires": [
+        {
+          "key": "quest:curse_of_the_empty_lord@finished"
+        },
+        {
+          "key": "quest:fight_arena@finished"
+        }
+      ]
     },
     {
       "id": "the_giant_dwarf",
@@ -2720,6 +4957,24 @@
           "skill": "thieving",
           "xp": 1500
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:crafting>=12",
+          "boostable": true
+        },
+        {
+          "key": "skill:firemaking>=16",
+          "boostable": true
+        },
+        {
+          "key": "skill:magic>=33",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=14",
+          "boostable": true
+        }
       ]
     },
     {
@@ -2735,6 +4990,16 @@
         {
           "skill": "thieving",
           "xp": 1000
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:crafting>=20",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=25",
+          "boostable": true
         }
       ]
     },
@@ -2755,6 +5020,12 @@
         {
           "skill": "magic",
           "xp": 2150
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:agility>=25",
+          "boostable": true
         }
       ]
     },
@@ -2780,6 +5051,33 @@
           "skill": "sailing",
           "xp": 35000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_fremennik_exiles@finished"
+        },
+        {
+          "key": "quest:olafs_quest@finished"
+        },
+        {
+          "key": "quest:pandemonium@finished"
+        },
+        {
+          "key": "skill:sailing>=65",
+          "during_quest": true
+        },
+        {
+          "key": "skill:agility>=65",
+          "during_quest": true
+        },
+        {
+          "key": "skill:woodcutting>=56",
+          "during_quest": true
+        },
+        {
+          "key": "skill:fletching>=54",
+          "during_quest": true
+        }
       ]
     },
     {
@@ -2800,6 +5098,20 @@
           "skill": "prayer",
           "xp": 6000
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:crafting>=16",
+          "during_quest": true
+        },
+        {
+          "key": "skill:construction>=30",
+          "during_quest": true
+        },
+        {
+          "key": "skill:prayer>=50",
+          "during_quest": true
+        }
       ]
     },
     {
@@ -2815,6 +5127,14 @@
         {
           "skill": "thieving",
           "xp": 1000
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:thieving>=17"
+        },
+        {
+          "key": "skill:crafting>=49"
         }
       ]
     },
@@ -2840,6 +5160,23 @@
           "skill": "thieving",
           "xp": 8000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:twilights_promise@finished"
+        },
+        {
+          "key": "skill:mining>=55"
+        },
+        {
+          "key": "skill:thieving>=48"
+        },
+        {
+          "key": "skill:slayer>=48"
+        },
+        {
+          "key": "skill:agility>=46"
+        }
       ]
     },
     {
@@ -2858,6 +5195,12 @@
           "skill": "smithing",
           "xp": 12725
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:mining>=10",
+          "boostable": true
+        }
       ]
     },
     {
@@ -2869,6 +5212,29 @@
         {
           "skill": "mining",
           "xp": 3000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:goblin_diplomacy@finished"
+        },
+        {
+          "key": "quest:rune_mysteries@finished"
+        },
+        {
+          "key": "skill:agility>=13",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:thieving>=13",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:mining>=17",
+          "boostable": true,
+          "during_quest": true
         }
       ]
     },
@@ -2894,6 +5260,32 @@
           "skill": "thieving",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:the_eyes_of_glouphrie@finished"
+        },
+        {
+          "key": "quest:waterfall_quest@finished"
+        },
+        {
+          "key": "quest:tree_gnome_village@finished"
+        },
+        {
+          "key": "skill:strength>=60"
+        },
+        {
+          "key": "skill:slayer>=56"
+        },
+        {
+          "key": "skill:thieving>=56"
+        },
+        {
+          "key": "skill:ranged>=47"
+        },
+        {
+          "key": "skill:agility>=45"
+        }
       ]
     },
     {
@@ -2905,6 +5297,14 @@
         {
           "skill": "thieving",
           "xp": 2000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:client_of_kourend@finished"
+        },
+        {
+          "key": "skill:thieving>=20"
         }
       ]
     },
@@ -2921,6 +5321,19 @@
         {
           "skill": "smithing",
           "xp": 5000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:troubled_tortugans@finished"
+        },
+        {
+          "key": "skill:sailing>=52",
+          "during_quest": true
+        },
+        {
+          "key": "skill:smithing>=48",
+          "during_quest": true
         }
       ]
     },
@@ -2946,6 +5359,14 @@
           "skill": "woodcutting",
           "xp": 2000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:children_of_the_sun@finished"
+        },
+        {
+          "key": "skill:woodcutting>=15"
+        }
       ]
     },
     {
@@ -2966,6 +5387,28 @@
           "skill": "thieving",
           "xp": 3500
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:wanted@finished"
+        },
+        {
+          "key": "quest:sea_slug@finished"
+        },
+        {
+          "key": "skill:crafting>=30",
+          "during_quest": true
+        },
+        {
+          "key": "skill:runecraft>=30"
+        },
+        {
+          "key": "skill:slayer>=30"
+        },
+        {
+          "key": "skill:thieving>=30",
+          "during_quest": true
+        }
       ]
     },
     {
@@ -2977,6 +5420,16 @@
         {
           "skill": "sailing",
           "xp": 50
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:fletching>=10",
+          "boostable": true
+        },
+        {
+          "key": "skill:smithing>=20",
+          "boostable": true
         }
       ]
     },
@@ -2993,6 +5446,16 @@
         {
           "skill": "thieving",
           "xp": 2500
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:agility>=22",
+          "during_quest": true
+        },
+        {
+          "key": "skill:thieving>=20",
+          "during_quest": true
         }
       ]
     },
@@ -3018,6 +5481,14 @@
           "skill": "woodcutting",
           "xp": 1000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:heroes_quest@finished"
+        },
+        {
+          "key": "quest:the_fremennik_trials@finished"
+        }
       ]
     },
     {
@@ -3037,6 +5508,11 @@
         {
           "skill": "thieving",
           "xp": 500
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:construction>=10"
         }
       ]
     },
@@ -3062,6 +5538,12 @@
           "skill": "thieving",
           "xp": 1775
         }
+      ],
+      "requires": [
+        {
+          "key": "skill:thieving>=21",
+          "boostable": true
+        }
       ]
     },
     {
@@ -3078,6 +5560,16 @@
           "skill": "strength",
           "xp": 4000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:troll_stronghold@finished"
+        },
+        {
+          "key": "skill:agility>=28",
+          "boostable": true,
+          "during_quest": true
+        }
       ]
     },
     {
@@ -3089,6 +5581,15 @@
         {
           "skill": "agility",
           "xp": 2000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:death_plateau@finished"
+        },
+        {
+          "key": "skill:agility>=15",
+          "boostable": true
         }
       ]
     },
@@ -3106,6 +5607,29 @@
           "skill": "slayer",
           "xp": 8000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:pandemonium@finished"
+        },
+        {
+          "key": "skill:slayer>=51"
+        },
+        {
+          "key": "skill:construction>=48"
+        },
+        {
+          "key": "skill:sailing>=45"
+        },
+        {
+          "key": "skill:hunter>=45"
+        },
+        {
+          "key": "skill:woodcutting>=40"
+        },
+        {
+          "key": "skill:crafting>=34"
+        }
       ]
     },
     {
@@ -3117,6 +5641,11 @@
         {
           "skill": "thieving",
           "xp": 3000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:children_of_the_sun@finished"
         }
       ]
     },
@@ -3134,6 +5663,16 @@
           "skill": "attack",
           "xp": 3000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:biohazard@finished"
+        },
+        {
+          "key": "skill:ranged>=25",
+          "boostable": true,
+          "during_quest": true
+        }
       ]
     },
     {
@@ -3146,6 +5685,12 @@
         {
           "text": "Vale Totems",
           "source": "wikisync"
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:fletching>=20",
+          "during_quest": true
         }
       ]
     },
@@ -3171,6 +5716,23 @@
           "skill": "slayer",
           "xp": 5000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:recruitment_drive@finished"
+        },
+        {
+          "key": "quest:the_lost_tribe@finished"
+        },
+        {
+          "key": "quest:priest_in_peril@finished"
+        },
+        {
+          "key": "quest:enter_the_abyss@finished"
+        },
+        {
+          "key": "qp>=32"
+        }
       ]
     },
     {
@@ -3182,6 +5744,28 @@
         {
           "skill": "magic",
           "xp": 15250
+        }
+      ],
+      "requires": [
+        {
+          "key": "skill:magic>=14",
+          "boostable": true
+        },
+        {
+          "key": "skill:thieving>=15",
+          "boostable": true
+        },
+        {
+          "key": "skill:agility>=25",
+          "boostable": true
+        },
+        {
+          "key": "skill:herblore>=14",
+          "boostable": true
+        },
+        {
+          "key": "skill:mining>=40",
+          "boostable": true
         }
       ]
     },
@@ -3215,6 +5799,14 @@
           "skill": "runecraft",
           "xp": 8000
         }
+      ],
+      "requires": [
+        {
+          "key": "quest:rune_mysteries@finished"
+        },
+        {
+          "key": "skill:runecraft>=35"
+        }
       ]
     },
     {
@@ -3245,6 +5837,67 @@
         {
           "skill": "thieving",
           "xp": 80000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:defender_of_varrock@finished"
+        },
+        {
+          "key": "quest:the_path_of_glouphrie@finished"
+        },
+        {
+          "key": "quest:fight_arena@finished"
+        },
+        {
+          "key": "quest:dream_mentor@finished"
+        },
+        {
+          "key": "quest:the_hand_in_the_sand@finished"
+        },
+        {
+          "key": "quest:wanted@finished"
+        },
+        {
+          "key": "quest:temple_of_the_eye@finished"
+        },
+        {
+          "key": "quest:tears_of_guthix@finished"
+        },
+        {
+          "key": "quest:nature_spirit@finished"
+        },
+        {
+          "key": "quest:a_tail_of_two_cats@finished"
+        },
+        {
+          "key": "skill:thieving>=72"
+        },
+        {
+          "key": "skill:magic>=67"
+        },
+        {
+          "key": "skill:agility>=66"
+        },
+        {
+          "key": "skill:farming>=65"
+        },
+        {
+          "key": "skill:herblore>=65"
+        },
+        {
+          "key": "skill:hunter>=62"
+        },
+        {
+          "key": "skill:firemaking>=49",
+          "during_quest": true
+        },
+        {
+          "key": "skill:attack>=99",
+          "during_quest": true
+        },
+        {
+          "key": "qp>=180"
         }
       ]
     },
@@ -3295,6 +5948,28 @@
         {
           "skill": "ranged",
           "xp": 2000
+        }
+      ],
+      "requires": [
+        {
+          "key": "quest:big_chompy_bird_hunting@finished"
+        },
+        {
+          "key": "quest:jungle_potion@finished"
+        },
+        {
+          "key": "skill:smithing>=4",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:herblore>=8",
+          "boostable": true,
+          "during_quest": true
+        },
+        {
+          "key": "skill:ranged>=30",
+          "during_quest": true
         }
       ]
     }

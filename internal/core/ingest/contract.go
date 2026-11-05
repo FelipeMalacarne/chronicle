@@ -18,13 +18,17 @@ const (
 // Manifest tells a client which state it may read and submit. Item collection
 // is disabled by the zero value of ItemSelection and therefore remains opt-in.
 type Manifest struct {
-	ContractVersion int           `json:"contract_version"`
-	ManifestVersion int64         `json:"manifest_version"`
-	TokenScopes     []TokenScope  `json:"token_scopes"`
-	Varbits         []int64       `json:"varbits"`
-	Varps           []int64       `json:"varps"`
-	Collections     []int64       `json:"collections"`
-	Skills          bool          `json:"skills"`
+	ContractVersion int          `json:"contract_version"`
+	ManifestVersion int64        `json:"manifest_version"`
+	TokenScopes     []TokenScope `json:"token_scopes"`
+	Varbits         []int64      `json:"varbits"`
+	Varps           []int64      `json:"varps"`
+	Collections     []int64      `json:"collections"`
+	Skills          bool         `json:"skills"`
+	// Quests tells the client the server accepts data.quest. A client must
+	// not send data.quest unless it is true (an older server rejects the
+	// unknown field).
+	Quests          bool          `json:"quests"`
 	Items           ItemSelection `json:"items"`
 	IntervalSeconds int           `json:"interval_seconds"`
 	Resync          bool          `json:"resync"`
@@ -76,7 +80,26 @@ type PushData struct {
 	CollectionLogSlots     *string         `json:"collectionLogSlots,omitempty"`
 	CollectionLogItemCount *int64          `json:"collectionLogItemCount,omitempty"`
 	Items                  *ItemContainers `json:"items,omitempty"`
+	// Quests maps the RuneLite quest name (Quest.getName()) to its
+	// QuestState. Optional in every push for backward compatibility; when
+	// present in a full push it is the complete quest list and replaces the
+	// stored quests, in a delta it carries only the quests that changed.
+	Quests *QuestMap `json:"quest,omitempty"`
 }
+
+// QuestMap is a JSON object RuneLite quest name -> NOT_STARTED |
+// IN_PROGRESS | FINISHED, which maps to Map<String, String> in Java.
+type QuestMap map[string]string
+
+// Quest states, as RuneLite's QuestState enum names them.
+const (
+	QuestNotStarted = "NOT_STARTED"
+	QuestInProgress = "IN_PROGRESS"
+	QuestFinished   = "FINISHED"
+)
+
+// MaxQuestNameLength bounds a data.quest key.
+const MaxQuestNameLength = 120
 
 // ItemContainers holds independent observations. Full pushes include all
 // three pointers; delta pushes include only containers whose state or contents

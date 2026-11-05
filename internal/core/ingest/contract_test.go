@@ -411,3 +411,146 @@ func TestJSONRoundTrips(t *testing.T) {
 		})
 	}
 }
+
+func TestQuestFacetValidation(t *testing.T) {
+	quests := func(m QuestMap) *QuestMap { return &m }
+	tests := []struct {
+		name    string
+		push    func() Push
+		wantErr string
+	}{
+		{
+			name: "full without quests stays valid (plugin 1.0.0)",
+			push: fullPush,
+		},
+		{
+			name: "full with quests",
+			push: func() Push {
+				p := fullPush()
+				p.Data.Quests = quests(QuestMap{"Cook's Assistant": QuestFinished, "X Marks the Spot": QuestInProgress, "Dragon Slayer I": QuestNotStarted})
+				return p
+			},
+		},
+		{
+			name: "full with an empty quest list",
+			push: func() Push {
+				p := fullPush()
+				p.Data.Quests = quests(QuestMap{})
+				return p
+			},
+		},
+		{
+			name: "delta with one changed quest",
+			push: func() Push {
+				p := deltaPush(liveObservation(QuantityMap{"4151": 1}))
+				p.Data.Quests = quests(QuestMap{"Rune Mysteries": QuestFinished})
+				return p
+			},
+		},
+		{
+			name: "null quest map is not an empty object",
+			push: func() Push {
+				p := fullPush()
+				p.Data.Quests = quests(nil)
+				return p
+			},
+			wantErr: "data.quest must be a JSON object",
+		},
+		{
+			name: "unknown state",
+			push: func() Push {
+				p := fullPush()
+				p.Data.Quests = quests(QuestMap{"Cook's Assistant": "COMPLETED"})
+				return p
+			},
+			wantErr: `data.quest["Cook's Assistant"] must be NOT_STARTED, IN_PROGRESS or FINISHED`,
+		},
+		{
+			name: "lower-case state",
+			push: func() Push {
+				p := fullPush()
+				p.Data.Quests = quests(QuestMap{"Cook's Assistant": "finished"})
+				return p
+			},
+			wantErr: "must be NOT_STARTED, IN_PROGRESS or FINISHED",
+		},
+		{
+			name: "blank name",
+			push: func() Push {
+				p := fullPush()
+				p.Data.Quests = quests(QuestMap{" ": QuestFinished})
+				return p
+			},
+			wantErr: "must be a non-empty trimmed quest name",
+		},
+		{
+			name: "untrimmed name",
+			push: func() Push {
+				p := fullPush()
+				p.Data.Quests = quests(QuestMap{"Cook's Assistant ": QuestFinished})
+				return p
+			},
+			wantErr: "must be a non-empty trimmed quest name",
+		},
+		{
+			name: "overlong name",
+			push: func() Push {
+				p := fullPush()
+				p.Data.Quests = quests(QuestMap{strings.Repeat("a", MaxQuestNameLength+1): QuestFinished})
+				return p
+			},
+			wantErr: "is longer than",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.push().Validate()
+			if tt.wantErr == "" && err != nil {
+				t.Fatalf("Validate() = %v", err)
+			}
+			if tt.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tt.wantErr)) {
+				t.Fatalf("Validate() = %v, want error containing %q", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestQuestFacetNeedsManifest(t *testing.T) {
+	manifest := Manifest{
+		ContractVersion: ContractVersion, ManifestVersion: 7, TokenScopes: []TokenScope{ScopeStateWrite},
+		Varbits: []int64{}, Varps: []int64{}, Collections: []int64{}, IntervalSeconds: 10,
+	}
+	push := fullPush()
+	push.Data.Quests = &QuestMap{"Cook's Assistant": QuestFinished}
+	if err := push.ValidateAgainst(manifest); err == nil || !strings.Contains(err.Error(), "data.quest is not enabled") {
+		t.Fatalf("ValidateAgainst() = %v, want quest gate", err)
+	}
+	manifest.Quests = true
+	if err := push.ValidateAgainst(manifest); err != nil {
+		t.Fatalf("ValidateAgainst() with quests = %v", err)
+	}
+	push.Data.Quests = nil
+	if err := push.ValidateAgainst(manifest); err != nil {
+		t.Fatalf("ValidateAgainst() without quests = %v", err)
+	}
+}
+
+func TestQuestFacetWireShape(t *testing.T) {
+	push := fullPush()
+	push.Data.Quests = &QuestMap{"Cook's Assistant": QuestFinished}
+	encoded, err := json.Marshal(push)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(encoded), `"quest":{"Cook's Assistant":"FINISHED"}`) {
+		t.Fatalf("data.quest must encode as a JSON object of names: %s", encoded)
+	}
+	var decoded Push
+	if err := json.Unmarshal(encoded, &decoded); err != nil || !reflect.DeepEqual(decoded.Data.Quests, push.Data.Quests) {
+		t.Fatalf("round trip = %v, %v", decoded.Data.Quests, err)
+	}
+	manifest, _ := json.Marshal(Manifest{Quests: true})
+	if !strings.Contains(string(manifest), `"quests":true`) {
+		t.Fatalf("manifest must announce quests: %s", manifest)
+	}
+}

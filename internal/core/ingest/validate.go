@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -112,6 +113,10 @@ func (p Push) Validate() error {
 		if field.values != nil && *field.values == nil {
 			errs = append(errs, field.path+" must be a JSON object (use {} when empty)")
 		}
+	}
+
+	if p.Data.Quests != nil {
+		validateQuests(&errs, *p.Data.Quests)
 	}
 
 	switch p.Kind {
@@ -232,6 +237,9 @@ func (p Push) ValidateAgainst(m Manifest) error {
 	if p.ManifestVersion != m.ManifestVersion {
 		errs = append(errs, "push and manifest manifest_version differ")
 	}
+	if p.Data.Quests != nil && !m.Quests {
+		errs = append(errs, "data.quest is not enabled by the manifest")
+	}
 	if p.Data.Items == nil {
 		return errs.err()
 	}
@@ -273,6 +281,30 @@ func (r Response) Validate() error {
 		errs = append(errs, "steps_changed must not be negative")
 	}
 	return errs.err()
+}
+
+func validateQuests(errs *validationErrors, quests QuestMap) {
+	if quests == nil {
+		*errs = append(*errs, "data.quest must be a JSON object (use {} when empty)")
+		return
+	}
+	names := make([]string, 0, len(quests))
+	for name := range quests {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		if strings.TrimSpace(name) == "" || strings.TrimSpace(name) != name {
+			*errs = append(*errs, fmt.Sprintf("data.quest key %q must be a non-empty trimmed quest name", name))
+		} else if len(name) > MaxQuestNameLength {
+			*errs = append(*errs, fmt.Sprintf("data.quest key %q is longer than %d bytes", name, MaxQuestNameLength))
+		}
+		switch quests[name] {
+		case QuestNotStarted, QuestInProgress, QuestFinished:
+		default:
+			*errs = append(*errs, fmt.Sprintf("data.quest[%q] must be NOT_STARTED, IN_PROGRESS or FINISHED", name))
+		}
+	}
 }
 
 func validatePositiveUniqueIDs(errs *validationErrors, path string, ids []int64) {

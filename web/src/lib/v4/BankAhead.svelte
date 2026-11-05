@@ -1,26 +1,38 @@
 <script lang="ts">
 	import Glyph from './Glyph.svelte';
 	import { itemIcon } from '#lib/progress/icons';
-	import { AHEAD_DEFAULT, AHEAD_HORIZONS, aheadView } from '#lib/progress/view';
+	import {
+		AHEAD_DEFAULT,
+		AHEAD_HORIZONS,
+		aheadMissing,
+		aheadView,
+		bankSummary
+	} from '#lib/progress/view';
 	import type { Ahead, BankAction } from '#lib/progress/types';
 
 	/**
 	 * Prévia pelos próximos passos quando o guia não lista o setup do trecho (artboard
 	 * V4AgoraOzirisBanco). É derivada, nunca readiness: não diz "pronto" e as ações de banco
 	 * continuam instrução (regra 8).
+	 * v5 limpeza: collapsed, it is one line ("18 para levar · 2 faltam") plus the missing items;
+	 * the horizon tabs, the "prévia" badge and the full columns live in the expanded view.
 	 */
 	let {
 		ahead,
 		bankActions,
 		firstRef,
 		bankLabel,
-		bankCls
+		bankCls,
+		open,
+		ontoggle
 	}: {
 		ahead: Ahead;
 		bankActions: BankAction[];
 		firstRef: string;
 		bankLabel: string;
 		bankCls: string;
+		open: boolean;
+		ontoggle: () => void;
 	} = $props();
 
 	let horizon = $state<number>(AHEAD_DEFAULT);
@@ -32,21 +44,22 @@
 		}))
 	);
 	const active = $derived(horizon > 0 && horizon < ahead.steps ? horizon : 0);
+	const summary = $derived(bankSummary(v.counts));
+	const missing = $derived(aheadMissing(v));
 </script>
 
 <div class="top">
-	<div class="sum">
-		<span class="small">O que os passos pedem a partir de {ahead.from_step_id}, até {v.until}.</span
-		>
-		<div class="cnt">
-			<span><b>{v.counts.total}</b> para levar</span>
-			<span><b>{v.counts.you}</b> com você</span>
-			<span><b>{v.counts.have}</b> no banco</span>
-			<span class="miss"><b>{v.counts.miss}</b> faltam</span>
-			<span><b>{v.counts.unk}</b> não verificáveis</span>
-		</div>
-	</div>
-	{#if options.length > 1}
+	<button
+		class="disc sum-btn"
+		class:wide={open}
+		type="button"
+		aria-expanded={open}
+		onclick={ontoggle}
+		><Glyph name="chevron" size={12} /><span class:has-miss={summary.missing > 0}
+			>{summary.text}</span
+		>{#if !open}<span class="su until">até {v.until}</span>{/if}</button
+	>
+	{#if open && options.length > 1}
 		<div class="seg" role="group" aria-label="Quantos passos olhar">
 			{#each options as o (o.n)}
 				<button
@@ -58,93 +71,150 @@
 			{/each}
 		</div>
 	{/if}
-	<span class="badge badge-unk">prévia · nunca “pronto”</span>
+	{#if open}<span class="badge badge-unk">prévia · nunca “pronto”</span>{/if}
 </div>
-<div class="cols">
-	<div class="col">
-		<div class="h">
-			<p class="ey">Levar do banco</p>
-			<span class="fr {bankCls} push"><span class="d"></span>{bankLabel}</span>
-		</div>
-		{#each v.groups as g (g.stepId)}
-			<div class="grp">
-				<div class="gh">
-					<span class="id">{g.stepId}</span><span class="tx">{g.text}</span><span class="w"
-						>{g.when}</span
-					>
-				</div>
-				<div class="slots">
-					{#each g.slots as s, i (i)}
-						{@const icon = itemIcon(s.itemId)}
-						<span class="slot {s.cls}" title={s.tip || undefined}>
-							<span class="bx">
-								{#if icon}<img class="sp" src={icon} alt="" />{/if}
-								<span class="q">{s.qty}</span>
-								{#if s.ok}<span class="ok"><Glyph name="check" size={10} /></span>{/if}
-								{#if s.cls === 'slot-unk'}<span class="qm">?</span>{/if}
-							</span>
-							<span class="nm">{s.name}</span>
-							<span class="stt">{s.state}</span>
-						</span>
-					{/each}
-				</div>
-			</div>
-		{:else}
-			<span class="su small">Nenhum passo desta janela lista itens.</span>
+{#if !open && missing.length}
+	<div class="miss" aria-label="Faltam">
+		{#each missing as s, i (i)}
+			{@const icon = itemIcon(s.itemId)}
+			<span class="slot slot-miss" title={s.tip || `usado no ${s.stepId}`}>
+				<span class="bx">
+					{#if icon}<img class="sp" src={icon} alt="" />{/if}
+					<span class="q">{s.qty}</span>
+				</span>
+				<span class="nm">{s.name}</span>
+				<span class="stt">{s.state} · {s.stepId}</span>
+			</span>
 		{/each}
 	</div>
-	<div class="col side">
+{/if}
+{#if open}
+	<p class="small mu lead">
+		O que os passos pedem a partir de {ahead.from_step_id}, até {v.until}. O guia não lista o setup
+		deste trecho.
+	</p>
+	<div class="cnt">
+		<span><b>{v.counts.total}</b> para levar</span>
+		<span><b>{v.counts.you}</b> com você</span>
+		<span><b>{v.counts.have}</b> no banco</span>
+		<span class="miss-c"><b>{v.counts.miss}</b> faltam</span>
+		<span><b>{v.counts.unk}</b> não verificáveis</span>
+	</div>
+	<div class="cols">
 		<div class="col">
-			<div class="h"><p class="ey">Consegue no caminho</p></div>
-			{#each v.obtained as o, i (i)}
-				{@const icon = itemIcon(o.itemId)}
-				<div class="way">
-					{#if icon}<img src={icon} alt="" />{/if}{o.name}<span class="w"
-						>{o.from} obtém<br />usa no {o.use}</span
-					>
+			<div class="h">
+				<p class="ey">Levar do banco</p>
+				<span class="fr {bankCls} push"><span class="d"></span>{bankLabel}</span>
+			</div>
+			{#each v.groups as g (g.stepId)}
+				<div class="grp">
+					<div class="gh">
+						<span class="id">{g.stepId}</span><span class="tx">{g.text}</span><span class="w"
+							>{g.when}</span
+						>
+					</div>
+					<div class="slots">
+						{#each g.slots as s, i (i)}
+							{@const icon = itemIcon(s.itemId)}
+							<span class="slot {s.cls}" title={s.tip || undefined}>
+								<span class="bx">
+									{#if icon}<img class="sp" src={icon} alt="" />{/if}
+									<span class="q">{s.qty}</span>
+									{#if s.ok}<span class="ok"><Glyph name="check" size={10} /></span>{/if}
+									{#if s.cls === 'slot-unk'}<span class="qm">?</span>{/if}
+								</span>
+								<span class="nm">{s.name}</span>
+								<span class="stt">{s.state}</span>
+							</span>
+						{/each}
+					</div>
 				</div>
 			{:else}
-				<span class="su small">Nada nesta janela.</span>
+				<span class="su small">Nenhum passo desta janela lista itens.</span>
 			{/each}
-			<span class="su tiny"
-				>Um passo anterior da janela obtém o item. Não precisa sair do banco com ele.</span
-			>
 		</div>
-		<div class="col">
-			<div class="h"><p class="ey">O guia manda</p></div>
-			{#each bankActions as a, i (i)}
-				<span class="quote">“{a.text}”</span>
-			{:else}
-				<span class="su small">Nenhuma ação de banco neste trecho.</span>
-			{/each}
-			{#if bankActions.length}
-				<span class="su tiny">instrução do passo {firstRef} · nunca é marcada como feita</span>
-			{/if}
+		<div class="col side">
+			<div class="col">
+				<div class="h"><p class="ey">Consegue no caminho</p></div>
+				{#each v.obtained as o, i (i)}
+					{@const icon = itemIcon(o.itemId)}
+					<div class="way">
+						{#if icon}<img src={icon} alt="" />{/if}{o.name}<span class="w"
+							>{o.from} obtém<br />usa no {o.use}</span
+						>
+					</div>
+				{:else}
+					<span class="su small">Nada nesta janela.</span>
+				{/each}
+				<span class="su tiny"
+					>Um passo anterior da janela obtém o item. Não precisa sair do banco com ele.</span
+				>
+			</div>
+			<div class="col">
+				<div class="h"><p class="ey">O guia manda</p></div>
+				{#each bankActions as a, i (i)}
+					<span class="quote">“{a.text}”</span>
+				{:else}
+					<span class="su small">Nenhuma ação de banco neste trecho.</span>
+				{/each}
+				{#if bankActions.length}
+					<span class="su tiny">instrução do passo {firstRef} · nunca é marcada como feita</span>
+				{/if}
+			</div>
 		</div>
 	</div>
-</div>
-<p class="su tiny foot">
-	Prévia derivada, não instrução do guia: soma dos itens listados nos passos da janela, sem os que
-	um passo anterior dela obtém. Quantidade sem número conta 1. Itens de quest que o guia não anota
-	como obtidos aparecem como falta até você pegá-los.
-</p>
+	<p class="su tiny foot">
+		Prévia derivada, não instrução do guia: soma dos itens listados nos passos da janela, sem os que
+		um passo anterior dela obtém. Quantidade sem número conta 1. Itens de quest que o guia não anota
+		como obtidos aparecem como falta até você pegá-los.
+	</p>
+{/if}
 
 <style>
 	.top {
-		padding: 14px 18px 4px;
+		padding: 8px 12px 4px;
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 10px 16px;
 	}
-	.sum {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		flex: 1 1 360px;
+	.sum-btn {
+		flex: 1 1 260px;
 		min-width: 0;
+		justify-content: flex-start;
+		font-size: 13px;
+		color: var(--ink);
+	}
+	.sum-btn .until {
+		font:
+			400 11px 'JetBrains Mono',
+			monospace;
+		margin-left: 6px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.sum-btn.wide {
+		flex-basis: 100%;
+	}
+	.has-miss {
+		font-weight: 600;
+	}
+	.miss {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px 6px;
+		padding: 4px 18px 12px;
+	}
+	.miss .stt {
+		color: var(--not-started);
+	}
+	.lead {
+		margin: 0;
+		padding: 0 18px;
 	}
 	.cnt {
+		padding: 4px 18px 0;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 6px 14px;
@@ -158,8 +228,8 @@
 		font-weight: 600;
 		color: var(--ink);
 	}
-	.cnt .miss,
-	.cnt .miss b {
+	.cnt .miss-c,
+	.cnt .miss-c b {
 		color: var(--not-started);
 	}
 	.seg {

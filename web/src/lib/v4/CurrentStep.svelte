@@ -1,5 +1,6 @@
 <script lang="ts">
 	import Glyph from './Glyph.svelte';
+	import Menu from './Menu.svelte';
 	import ObjectiveChip from './ObjectiveChip.svelte';
 	import {
 		alsoIn,
@@ -7,6 +8,7 @@
 		isParagraphStep,
 		metaOf,
 		paragraphOf,
+		prevSummary,
 		statusView,
 		stepNotes,
 		unknownHint
@@ -55,29 +57,19 @@
 	const notes = $derived(stepNotes(step));
 	const wiki = $derived((step.links ?? []).filter((l) => l.type === 'wiki'));
 	const cross = $derived(alsoIn(step, chips, others));
+	const before = $derived(prevSummary(prev));
 	let open = $state(false);
+	let prevOpen = $state(false);
+	let detailsOpen = $state(false);
+	const hasDetails = $derived(wiki.length > 0 || cross.length > 0);
 </script>
 
 <article class="panel">
 	<div class="plaque">
-		<span class="st st-cur cur"></span>Passo atual · {step.ref}
-		<span class="r">{where}</span>
+		<span class="st st-cur cur" aria-hidden="true"></span>Passo atual · {step.ref}
+		{#if where}<span class="r">{where}</span>{/if}
 	</div>
 	<div class="body">
-		{#if prev.length}
-			<div class="prev">
-				{#each prev as s (s.id)}
-					{@const v = statusView(s.status)}
-					<div class="row row-done mini">
-						<span class="st {v.st} tiny"></span><span class="id">{s.ref}</span><span class="tx"
-							>{s.title}</span
-						>
-						{#if v.label}<span class="badge">{v.label}</span>{/if}
-					</div>
-				{/each}
-			</div>
-		{/if}
-
 		{#if paragraph}
 			{#if meta.length}
 				<div class="metas">
@@ -133,38 +125,85 @@
 			</div>
 		{/if}
 
-		{#if wiki.length}
-			<p class="su line">
-				<span class="ey mini-ey">wiki</span>
-				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- link externo da wiki -->
-				{#each wiki as l (l.url)}<a href={l.url} target="_blank" rel="noreferrer"
-						>{l.text ?? l.url}</a
-					>{/each}
-			</p>
-		{/if}
-		{#each cross as c (c.guide)}
-			<p class="su line">
-				<span class="ey mini-ey">também na rota {c.label}</span>
-				{#each c.entries as e, i (i)}<span>{e.label} · {e.where}</span>{/each}
-			</p>
-		{/each}
-
 		<div class="actions">
-			<button class="btn btn-p" type="button" disabled={busy} onclick={ondone}
+			<button class="btn btn-p act" type="button" disabled={busy} onclick={ondone}
 				><Glyph name="check" size={14} />Feito</button
 			>
-			<button class="btn" type="button" disabled={busy} onclick={onskip}>Pular</button>
-			<button class="btn btn-g" type="button" disabled={busy || !canUndo} onclick={onundo}
-				>Desfazer</button
-			>
-			<button class="btn btn-g" type="button" disabled={busy} onclick={onpin}>Fixar outro</button>
-			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href montado com resolve() pela página -->
-			<a class="btn btn-g" href={rotaHref}>Abrir na rota</a>
-			<span class="su keys"
+			<button class="btn act" type="button" disabled={busy} onclick={onskip}>Pular</button>
+			{#if canUndo}
+				<button class="btn btn-g act" type="button" disabled={busy} onclick={onundo}
+					>Desfazer</button
+				>
+			{/if}
+			<Menu
+				label="Mais ações do passo"
+				cls="btn btn-g act more"
+				items={[
+					{ label: 'Fixar outro passo', disabled: busy, onselect: onpin },
+					{ label: 'Abrir na rota', href: rotaHref }
+				]}
+			/>
+			<span class="su keys" aria-hidden="true"
 				><span class="kbd">J</span>feito <span class="kbd">K</span>pular
-				<span class="kbd">U</span>desfazer</span
+				{#if canUndo}<span class="kbd">U</span>desfazer{/if}</span
 			>
 		</div>
+
+		{#if before || hasDetails}
+			<div class="foot">
+				{#if before}
+					<button
+						class="disc"
+						type="button"
+						aria-expanded={prevOpen}
+						title={before.detail}
+						onclick={() => (prevOpen = !prevOpen)}
+						><Glyph name="chevron" size={12} />{before.text}</button
+					>
+				{/if}
+				{#if hasDetails}
+					<button
+						class="disc"
+						type="button"
+						aria-expanded={detailsOpen}
+						onclick={() => (detailsOpen = !detailsOpen)}
+						><Glyph name="chevron" size={12} />detalhes</button
+					>
+				{/if}
+			</div>
+			{#if before && prevOpen}
+				<div class="prev">
+					{#each prev as s (s.id)}
+						{@const v = statusView(s.status)}
+						<div class="row row-done mini">
+							<span class="st {v.st} tiny"></span><span class="id">{s.ref}</span><span class="tx"
+								>{s.title}</span
+							>
+							{#if v.label}<span class="badge">{v.label}</span>{/if}
+						</div>
+					{/each}
+				</div>
+			{/if}
+			{#if hasDetails && detailsOpen}
+				<div class="details">
+					{#if wiki.length}
+						<p class="su line">
+							<span class="ey mini-ey">wiki</span>
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- link externo da wiki -->
+							{#each wiki as l (l.url)}<a href={l.url} target="_blank" rel="noreferrer"
+									>{l.text ?? l.url}</a
+								>{/each}
+						</p>
+					{/if}
+					{#each cross as c (c.guide)}
+						<p class="su line">
+							<span class="ey mini-ey">também na rota {c.label}</span>
+							{#each c.entries as e, i (i)}<span>{e.label} · {e.where}</span>{/each}
+						</p>
+					{/each}
+				</div>
+			{/if}
+		{/if}
 	</div>
 </article>
 
@@ -297,5 +336,45 @@
 		gap: 6px;
 		align-items: center;
 		font-size: 11px;
+	}
+	:global(.btn.more) {
+		width: 36px;
+		padding: 0;
+	}
+	.foot {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 12px;
+		margin: -4px 0 -6px -6px;
+	}
+	.details {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+	}
+	@media (max-width: 719px) {
+		.body {
+			gap: 12px;
+			padding: 12px 14px 12px;
+		}
+		.short {
+			font-size: 25px;
+		}
+		.para {
+			font-size: 21px;
+		}
+		.actions {
+			display: grid;
+			grid-template-columns: 1fr 1fr auto auto;
+		}
+		.act {
+			height: 44px;
+		}
+		:global(.btn.more) {
+			width: 44px;
+		}
+		.keys {
+			display: none;
+		}
 	}
 </style>

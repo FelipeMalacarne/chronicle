@@ -203,6 +203,19 @@ export function chipsOf(
 	});
 }
 
+/**
+ * The role label a chip shows: none for "conclui" (the common case, implied by the chip
+ * itself); "inicia", "requer" and "usa" stay because they change what the chip means.
+ */
+export function chipRole(chip: Pick<Chip, 'role' | 'roleLabel'>): string {
+	return chip.role === 'completes' ? '' : chip.roleLabel;
+}
+
+/** Verdict as words for the chip's tooltip and screen readers (the glyph carries it on screen). */
+export function verdictWords(v: Verdict): string {
+	return v === 'met' ? 'feito' : v === 'unmet' ? 'não atende' : 'não sabemos';
+}
+
 /** Frase de apoio quando algum chip é "não sabemos": de onde virá a fonte. */
 export function unknownHint(chips: Chip[]): string {
 	const kinds = new Set(chips.filter((c) => c.verdict === 'unknown').map((c) => c.kind));
@@ -256,6 +269,21 @@ export function blockedBadge(keys: string[] | undefined, names: Record<string, s
 	if (!keys?.length) return '';
 	const first = `falta ${objectiveLabel(keys[0], names)}`;
 	return keys.length > 1 ? `${first} +${keys.length - 1}` : first;
+}
+
+/**
+ * One line for the steps just before the cursor that are already done: "2 anteriores ✓"
+ * with what each one is in the tooltip ("1.1.242 detectado · 1.1.243 presumido").
+ */
+export function prevSummary(
+	prev: Pick<BoardStep, 'ref' | 'status'>[]
+): { text: string; detail: string } | null {
+	if (prev.length === 0) return null;
+	const text = prev.length === 1 ? '1 anterior ✓' : `${prev.length} anteriores ✓`;
+	const detail = prev
+		.map((s) => [s.ref, statusView(s.status).label].filter(Boolean).join(' '))
+		.join(' · ');
+	return { text, detail };
 }
 
 /* ------------------------------------------------------------------ passo-parágrafo (BRUHsailer) */
@@ -630,6 +658,38 @@ function aheadSlot(it: AheadItem): AheadSlot {
 
 function joinTip(a: string, b: string): string {
 	return [a, b].filter(Boolean).join(' · ');
+}
+
+/* ------------------------------------------------------------------ resumo do banco (recolhido) */
+
+export interface BankSummary {
+	/** "13 para levar · 1 falta" (or "· nada falta" when all verified), plus the unverifiable count. */
+	text: string;
+	missing: number;
+}
+
+/** The collapsed bank panel's one line, from the preview counts or the readiness columns. */
+export function bankSummary(c: { total: number; miss: number; unk: number }): BankSummary {
+	if (c.total === 0) return { text: 'nada para levar', missing: 0 };
+	const parts = [`${c.total} para levar`];
+	// "nada falta" only when every item was verified; otherwise the unverifiable count says it.
+	if (c.miss > 0) parts.push(c.miss === 1 ? '1 falta' : `${c.miss} faltam`);
+	else if (c.unk === 0) parts.push('nada falta');
+	if (c.unk > 0) parts.push(`${c.unk} não ${c.unk === 1 ? 'verificável' : 'verificáveis'}`);
+	return { text: parts.join(' · '), missing: c.miss };
+}
+
+/** The missing slots of a preview window, deduplicated by name, for the collapsed panel. */
+export function aheadMissing(v: Pick<AheadView, 'groups'>): (AheadSlot & { stepId: string })[] {
+	const seen = new Set<string>();
+	const out: (AheadSlot & { stepId: string })[] = [];
+	for (const g of v.groups)
+		for (const s of g.slots)
+			if (s.cls === 'slot-miss' && !seen.has(s.name)) {
+				seen.add(s.name);
+				out.push({ ...s, stepId: g.stepId });
+			}
+	return out;
 }
 
 /* ------------------------------------------------------------------ cobertura e seções (Rotas) */

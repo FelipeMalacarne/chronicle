@@ -9,7 +9,7 @@
     "pending": 0,
     "submitted": 576,
     "first_submit_accepted": 567,
-    "owner_confirmed": 100,
+    "owner_confirmed": 101,
     "decisions_applied": 227
   },
   "sections": [
@@ -54,7 +54,7 @@
       "pending": 0,
       "submitted": 50,
       "first_submit_accepted": 49,
-      "owner_confirmed": 8,
+      "owner_confirmed": 9,
       "decisions_applied": 23
     },
     {
@@ -270,6 +270,15 @@
     ]
   },
   "rejected": [],
+  "order_issues": [
+    {
+      "step_id": "1.5.5d",
+      "reasons": [
+        "order: skill:herblore>=30 requires is required here but the route only completes it later, at step 2.0.26",
+        "order: skill:herblore>=30 requires is required here but the route only completes it later, at step 2.0.51"
+      ]
+    }
+  ],
   "inferred": [
     {
       "step_id": "1.1.2",
@@ -1439,6 +1448,11 @@
       "what": "item Axe = any_of [1359 1357 1355 1361 1353 1349 1351]",
       "quote": "equip whichever axe you got from tree spirits earlier",
       "decision": "axe-means-best-axe"
+    },
+    {
+      "step_id": "1.4.23",
+      "what": "no bank actions",
+      "quote": "'deposit them to the log storage' is the balloon log storage, not a bank."
     },
     {
       "step_id": "1.4.25",
@@ -4554,9 +4568,9 @@
     },
     "1.4.23": {
       "section_id": "1.4",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "65 willow logs go into the balloon log storage (not catalogued state). The derived 'deposit' bank action comes from 'deposit them to the log storage', which is not a bank: derive false positive, cannot be removed by an annotation."
+      "comment": "65 willow logs go into the balloon log storage (not catalogued state). The derived 'deposit' bank action is dropped (no_bank_actions, owner)."
     },
     "1.4.24": {
       "section_id": "1.4",

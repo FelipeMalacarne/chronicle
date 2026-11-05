@@ -3,7 +3,7 @@
   "kind": "section",
   "guide_id": "oziris-main",
   "section_id": "1.4",
-  "skill_version": "annotate-guide@3",
+  "skill_version": "annotate-guide@4",
   "steps": [
     {
       "step_id": "1.4.1",
@@ -728,6 +728,15 @@
     {
       "step_id": "1.4.23",
       "text_hash": "sha256:2509b951356d88426f86490876abaed6c3c72e6b2a3df1ff448fcc7577029110",
+      "no_bank_actions": {
+        "reason": "'deposit them to the log storage' is the balloon log storage, not a bank.",
+        "source": {
+          "method": "llm",
+          "confidence": "medium",
+          "skill_version": "annotate-guide@4",
+          "confirmed_by": "owner"
+        }
+      },
       "location": {
         "ref": "location:castle_wars",
         "evidence": {
@@ -741,7 +750,7 @@
         "source": {
           "method": "llm",
           "confidence": "high",
-          "skill_version": "annotate-guide@3"
+          "skill_version": "annotate-guide@4"
         }
       }
     },

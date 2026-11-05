@@ -7,8 +7,8 @@
 		isParagraphStep,
 		metaOf,
 		paragraphOf,
-		plainNotes,
 		statusView,
+		stepNotes,
 		unknownHint
 	} from '#lib/progress/view';
 	import type { BoardStep, ContentStep } from '#lib/progress/types';
@@ -52,7 +52,7 @@
 	const paragraph = $derived(isParagraphStep(step));
 	const para = $derived(paragraphOf(step.text));
 	const meta = $derived(metaOf(step));
-	const notes = $derived(plainNotes(step));
+	const notes = $derived(stepNotes(step));
 	const wiki = $derived((step.links ?? []).filter((l) => l.type === 'wiki'));
 	const cross = $derived(alsoIn(step, chips, others));
 	let open = $state(false);
@@ -90,7 +90,11 @@
 		{:else}
 			<h1 class="sr short">{step.text}</h1>
 		{/if}
-		{#if notes.length}<p class="mu note">{notes[0]}</p>{/if}
+		{#each notes as n, i (i)}
+			<p class="note" class:note-up={n.kind === 'update'} class:mu={n.kind !== 'update'}>
+				{#if n.label}<span class="nl">{n.label}</span>{/if}{n.text}
+			</p>
+		{/each}
 
 		<div class="objs">
 			{#if paragraph && chips.length}
@@ -221,6 +225,21 @@
 	.note {
 		margin: 0;
 		max-width: 64ch;
+	}
+	.note-up {
+		padding: 6px 10px;
+		border-left: 3px solid var(--stale);
+		background: var(--stale-tint);
+		color: var(--ink);
+	}
+	.nl {
+		margin-right: 8px;
+		font:
+			600 11px 'JetBrains Mono',
+			monospace;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--stale);
 	}
 	.metas,
 	.chips {

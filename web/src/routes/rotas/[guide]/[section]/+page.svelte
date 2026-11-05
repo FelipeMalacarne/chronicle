@@ -16,6 +16,7 @@
 		pct,
 		pendingBefore,
 		plainNotes,
+		stepNotes,
 		routeLabel,
 		sectionLabel,
 		segmentsOf,
@@ -439,7 +440,7 @@
 	{@const b = boardById.get(s.id)}
 	{@const chips = chipsOf(s, b)}
 	{@const items = itemsOf(s, seg)}
-	{@const notes = plainNotes(s)}
+	{@const notes = stepNotes(s).filter((n) => n.kind !== 'hcim')}
 	<div class="exp">
 		{#if items.length}
 			<div class="line">
@@ -462,7 +463,13 @@
 					><span class="v v-unk">?</span>nenhum detectável · só você conclui</span
 				>{/each}
 		</div>
-		{#if notes.length}<p class="mu note">{notes.join(' · ')}</p>{/if}
+		{#each notes as n, i (i)}<p
+				class="note"
+				class:note-up={n.kind === 'update'}
+				class:mu={n.kind !== 'update'}
+			>
+				{#if n.label}<span class="nl">{n.label}</span>{/if}{n.text}
+			</p>{/each}
 		{#if hcim}{#each (s.notes ?? []).filter((n) => n.kind === 'hcim') as n, i (i)}<p
 					class="mu note"
 				>
@@ -572,7 +579,9 @@
 			>{/if}
 		{#if s.layers?.length === 1 && s.layers[0] === 'enhanced'}<span class="badge">enhanced</span
 			>{/if}
-		{#if plainNotes(s).length}<span class="badge">nota</span>{/if}
+		{#if stepNotes(s).some((n) => n.kind === 'update')}<span class="badge badge-up"
+				>atualização</span
+			>{:else if plainNotes(s).length}<span class="badge">nota</span>{/if}
 		{#each rowChips.slice(0, 3) as c (c.role + c.key)}<ObjectiveChip
 				chip={c}
 				small
@@ -787,5 +796,24 @@
 	code {
 		font-family: 'JetBrains Mono', monospace;
 		font-size: 12px;
+	}
+	.note-up {
+		padding: 6px 10px;
+		border-left: 3px solid var(--stale);
+		background: var(--stale-tint);
+		color: var(--ink);
+	}
+	.nl {
+		margin-right: 8px;
+		font:
+			600 11px 'JetBrains Mono',
+			monospace;
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		color: var(--stale);
+	}
+	.badge-up {
+		color: var(--stale);
+		background: var(--stale-tint);
 	}
 </style>

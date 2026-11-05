@@ -2,6 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
 	aheadView,
+	stepNotes,
 	alsoIn,
 	crossCell,
 	crossObjectives,
@@ -663,4 +664,22 @@ test('blocked badge names the first missing requirement', () => {
 		blockedBadge(['quest:twilights_promise@finished', 'skill:slayer>=48'], names),
 		"falta Twilight's Promise +1"
 	);
+});
+
+test('step notes keep every author note, updates first, without metadata', () => {
+	const notes = stepNotes({
+		notes: [
+			{ kind: 'tip', text: ' Alch your bows. ' },
+			{ kind: 'tip', text: 'GP after step: 10k' },
+			{ kind: 'update', text: 'Skip this step.' },
+			{ kind: 'hcim', text: 'Bring food.' },
+			{ kind: 'tip', text: '   ' }
+		]
+	});
+	assert.deepEqual(notes, [
+		{ kind: 'update', label: 'Atualização', text: 'Skip this step.' },
+		{ kind: 'tip', label: '', text: 'Alch your bows.' },
+		{ kind: 'hcim', label: 'HCIM', text: 'Bring food.' }
+	]);
+	assert.deepEqual(stepNotes({}), []);
 });

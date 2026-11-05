@@ -310,6 +310,25 @@ export function metaOf(step: Pick<ContentStep, 'notes'>): { label: string; value
 	return out;
 }
 
+export interface StepNote {
+	kind: string;
+	/** Rótulo antes do texto: "Atualização" (pode mandar pular o passo), "HCIM", ou vazio na dica. */
+	label: string;
+	text: string;
+}
+
+const NOTE_LABEL: Record<string, string> = { update: 'Atualização', hcim: 'HCIM' };
+
+/** Todas as notas do autor que não são metadados, com o tipo; atualizações primeiro. */
+export function stepNotes(step: Pick<ContentStep, 'notes'>): StepNote[] {
+	return (step.notes ?? [])
+		.map((n) => ({ kind: n.kind, label: NOTE_LABEL[n.kind] ?? '', text: n.text.trim() }))
+		.filter(
+			(n) => n.text && !META.some(([re]) => re.test(n.text)) && !/^Skills \/ quests:/i.test(n.text)
+		)
+		.sort((a, b) => Number(b.kind === 'update') - Number(a.kind === 'update'));
+}
+
 /** Notas que não são metadados (dicas do Oziris). */
 export function plainNotes(step: Pick<ContentStep, 'notes'>): string[] {
 	return (step.notes ?? [])

@@ -66,6 +66,7 @@
 	});
 	const band = $derived(sourceBand(runs.data?.runs[0], hiscoresAt, Date.now()));
 	let syncing = $state(false);
+	let descOpen = $state(false);
 	async function syncNow() {
 		if (!account || syncing) return;
 		syncing = true;
@@ -272,6 +273,16 @@
 					><span class="mono su tiny">{sectionLabel(section.data.id)}</span> &nbsp;{section.data
 						.title}</span
 				>
+				{#if section.data.description}
+					<button
+						class="desc mu"
+						class:open={descOpen}
+						type="button"
+						aria-expanded={descOpen}
+						title={descOpen ? 'Recolher' : 'Ler a descrição da seção'}
+						onclick={() => (descOpen = !descOpen)}>{section.data.description}</button
+					>
+				{/if}
 			{/if}
 			{#if sectionCounts}
 				<div class="prog">
@@ -472,6 +483,26 @@
 		gap: 4px;
 		flex: 1 1 320px;
 		min-width: 0;
+	}
+	.desc {
+		all: unset;
+		cursor: pointer;
+		font-size: 13px;
+		line-height: 1.4;
+		max-width: 72ch;
+		overflow: hidden;
+		display: -webkit-box;
+		-webkit-line-clamp: 1;
+		line-clamp: 1;
+		-webkit-box-orient: vertical;
+	}
+	.desc.open {
+		-webkit-line-clamp: unset;
+		line-clamp: unset;
+	}
+	.desc:focus-visible {
+		outline: 2px solid var(--gold-ink);
+		outline-offset: 2px;
 	}
 	.prog {
 		display: flex;

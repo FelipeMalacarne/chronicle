@@ -364,7 +364,7 @@
 	<div class="foot" class:col={!narrow.value}>
 		{#if pinned.length === 0}
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + aba Metas -->
-			<a href={`${resolve('/mundo')}?tab=metas`}>Nenhuma meta fixada</a>
+			<a href={resolve('/mundo/metas')}>Nenhuma meta fixada</a>
 		{/if}
 		<span>Nesta sessão: {recent || 'nada mudou'}</span>
 		<span>Microbot desligado</span>

@@ -75,6 +75,9 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 26 | Plugin captura e envia por evento (`ItemContainerChanged`, `VarbitChanged`, `StatChanged`) com debounce de ~1 s; a leitura periódica fica como rede de segurança | resolvida (2026-11-05) | doc 06 |
 | 27 | Painel da rota dentro do plugin (lista a partir do cursor, bloqueados, objetivos, itens do trecho, Feito/Pular/Desfazer), implementado direto no visual do RuneLite, sem passar pelo canvas; o servidor continua a fonte da verdade e o plugin só guarda o último estado para exibir | resolvida (2026-11-05) | doc 06; doc 04, seção 9 |
 | 28 | Auth do plugin: em `AUTH_MODE=dev` sem token (ingest e painel aceitos de `127.0.0.1`, plugin configurado só com a URL); em `oidc`, Device Authorization Grant no Zitadel com uma aplicação nativa pública (sem DCR) e roles do projeto no JWT (`ingest`, `items:*`, `marks:write`), aposentando o token `ipl_`; o registro por instalação fica com o estado do protocolo | resolvida (2026-11-05) | doc 04, seções 2.5 e 8; doc 06; doc 07 (revê "o plugin continua com token `ipl_`") |
+| 29 | Comparar rotas é uma aba de Rotas (Oziris · BRUHsailer · Comparar), não a tela principal; a lista de rotas deixa de existir | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
+| 30 | O produto se chama **Chronicle** (wordmark Alegreya 700 com o livro e a runa); "Ironman Planner" vira descrição | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
+| 31 | Recorrentes (birdhouses, herb run, kingdom) como entidades com `ready_at` no doc 09 | **aberta** (proposta no canvas v6) | docs/ui/decisoes-canvas.md, seção 5 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais

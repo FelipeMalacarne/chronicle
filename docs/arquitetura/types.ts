@@ -1,8 +1,9 @@
 /**
- * Ironman Planner — espelho em Zod/TS de dois contratos do servidor Go, só como referência para
+ * Ironman Planner — espelho em Zod/TS de três contratos do servidor Go, só como referência para
  * clientes TypeScript. A fonte da verdade é o código Go:
  *   - contrato de ingest v1: internal/core/ingest/contract.go e validate.go (doc 04, seção 6.4);
- *   - readiness do trecho: internal/core/planning/readiness.go (doc 04, seção 6.4.1).
+ *   - readiness do trecho: internal/core/planning/readiness.go (doc 04, seção 6.4.1);
+ *   - eventos de tempo real (SSE): internal/events/hub.go (doc 04, seção 6.6).
  * O schema do conteúdo é content/schema/guide.schema.json (não há mais tipos Zod para ele); o
  * modelo de progresso está no doc 09. Este arquivo não é compilado nem consumido pela web.
  */
@@ -277,3 +278,24 @@ export interface ReadinessResponse {
   current: SegmentReadiness | null;   // segmento que contém o step (rota principal)
   next: SegmentReadiness | null;      // próximo bank_leg da mesma variante
 }
+
+// ---------------------------------------------------------------------------
+// Tempo real: GET /api/events?account= (text/event-stream, só AUTH_MODE=dev).
+// `event:` é o `type`; `data:` é o JSON abaixo. Sinal de invalidação: o cliente relê pela API.
+
+export const LiveHello = z.object({
+  type: z.literal('hello'),
+  account: z.string(),
+  at: z.string().datetime({ offset: true }),
+});
+
+export const LiveEvent = z.object({
+  type: z.enum(['progress', 'sync']),
+  account: z.string(),
+  source: z.enum(['plugin', 'hiscores', 'owner']),
+  guides: z.array(z.string()).optional(),       // progress: o guia da marca, ou todos
+  steps_changed: z.number().int().nonnegative(), // só mudanças causadas pelo motor
+  status: z.enum(['ok', 'unchanged', 'error', 'rate_limited']).optional(), // sync
+  at: z.string().datetime({ offset: true }),
+});
+export type LiveEvent = z.infer<typeof LiveEvent>;

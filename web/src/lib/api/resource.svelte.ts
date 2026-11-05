@@ -9,7 +9,7 @@ const registry: Record<LiveTag, (() => void)[]> = { progress: [], sync: [] };
 
 /**
  * Refaz em silêncio todo recurso aberto com alguma das etiquetas (eventos do servidor, docs/04
- * seção 6.5). Sem `loading`, sem trocar o dado por null: a tela mantém linhas abertas, rolagem
+ * seção 6.6). Sem `loading`, sem trocar o dado por null: a tela mantém linhas abertas, rolagem
  * e diálogos; só o dado muda quando a resposta chega.
  */
 export function invalidate(...tags: LiveTag[]) {

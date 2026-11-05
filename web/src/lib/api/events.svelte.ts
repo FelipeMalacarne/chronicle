@@ -10,7 +10,7 @@ import {
 } from '../progress/live';
 
 /**
- * Tempo real (docs/04, seção 6.5): um EventSource em /api/events por conta. Cada evento é só
+ * Tempo real (docs/04, seção 6.6): um EventSource em /api/events por conta. Cada evento é só
  * um sinal; os recursos com a etiqueta certa se refazem pela API de sempre (invalidate) e o
  * resumo da sessão também. Só existe em AUTH_MODE=dev, como as outras rotas por conta: fora
  * dele o servidor responde 404 e o EventSource desiste sozinho.

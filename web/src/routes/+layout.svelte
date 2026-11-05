@@ -22,7 +22,7 @@
 		const missing = session.error instanceof ApiError && session.error.status === 404;
 		if (!setup && (!account || missing)) void goto(resolve('/setup'), { replaceState: true });
 	});
-	// Tempo real: um stream por conta; os eventos refazem os recursos abertos (docs/04, 6.5).
+	// Tempo real: um stream por conta; os eventos refazem os recursos abertos (docs/04, 6.6).
 	$effect(() => {
 		if (!account || setup) return;
 		return connectLive(account);

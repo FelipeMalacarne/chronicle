@@ -2,7 +2,7 @@
 // transaction that changed an account's progress commits, the store publishes a
 // lightweight invalidation signal and every open stream of that account gets
 // it. Clients refetch over the regular API; an event is never a second source
-// of truth (docs/04 section 6.5).
+// of truth (docs/04 section 6.6).
 //
 // The hub lives outside internal/core because it is runtime plumbing
 // (goroutines, channels, a mutex) shared by internal/store and

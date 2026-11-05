@@ -210,6 +210,7 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/setup/lookup?rsn=`, `POST /api/accounts` | feita (dev) | primeiro acesso (`/setup`, V4Setup): conta existente pelo RSN, ou modo detectado e níveis do hiscores; cria a conta e reavalia |
 | `POST /api/sync?account=` | feita (dev) | sync do hiscores agora; 429 com `retry_at` no debounce de 60 s ou no recuo |
 | `GET /api/sync/runs?account=&limit=` | feita (dev) | tentativas de sync (status, HTTP, erro, `steps_changed`, `next_allowed_at`) |
+| `GET /api/events?account=` | feita (dev) | tempo real (SSE): sinais de invalidação da conta depois de cada commit de progresso (seção 6.6) |
 | `GET /api/state?account=` | planejada | estado da conta |
 | `GET/POST /api/goals?account=`, `DELETE /api/goals/{id}?account=` | feita (dev) | metas: objetivo fixado (chave canônica validada no registry); alcançada quando o objetivo vira met |
 | `GET /api/goals/{id}/plan?account=` | feita (dev) | plano da meta: fechamento de `QuestEntry.Requires` contra fatos e vereditos; unknown nunca conta como feito, presumido pela marca fica fora do "N de M" |
@@ -687,6 +688,51 @@ ainda não há sessão, só são registradas com `AUTH_MODE=dev`.
 - Tokens são hash no banco; revogação é imediata; `last_ip` e `last_seen_at` ficam visíveis.
 - Exports contêm snapshots brutos (incluindo banco, se habilitado); a UI avisa ao exportar.
 
+### 6.6 Tempo real (SSE)
+
+Decisão do dono (2026-11-05): SSE e releitura, sem WebSocket, sem dependência nova e sem broker
+(Redis, LISTEN/NOTIFY). Um evento é só um sinal de invalidação: o cliente relê pela API de sempre e
+não existe uma segunda fonte de verdade.
+
+- **Rota**: `GET /api/events?account=<id>`, `text/event-stream`. Como toda rota por id de conta, só
+  existe com `AUTH_MODE=dev` (regra 10 do CLAUDE.md); fora dele responde 404.
+- **Stream**: `retry: 3000`, depois `event: hello` (`{"type":"hello","account","at"}`), um evento por
+  publicação com flush e o comentário `: ping` a cada 25 s. Termina quando o cliente sai, quando o
+  servidor desliga (o contexto base) ou quando o hub descarta o assinante lento. O `serve` não tem
+  `WriteTimeout`; o handler zera o prazo de escrita por requisição (`http.ResponseController`) para
+  continuar assim se um dia tiver.
+- **Contrato** (`event:` = `type`, `data:` em JSON):
+
+  ```json
+  {"type":"progress","account":"acc_x","source":"plugin|hiscores|owner",
+   "guides":["oziris-main","bruhsailer-main"],"steps_changed":2,"at":"2026-11-05T20:14:00Z"}
+  {"type":"sync","account":"acc_x","source":"hiscores","status":"ok|unchanged|error|rate_limited",
+   "steps_changed":0,"at":"…"}
+  ```
+
+  `steps_changed` conta só mudanças de status causadas pelo motor; ações do dono mandam 0 (a troca de
+  rota manda o que a reavaliação mudou). `guides` é o guia da marca ou, numa reavaliação, todos.
+- **Quando dispara**, sempre depois do commit da transação:
+  - push do plugin aceito (`internal/store/ingest`, `Accept`): `progress`/`plugin`;
+  - sync do hiscores, agendado ou manual (`internal/store/syncrun`, `Run`): `sync` com o status de toda
+    tentativa que terminou, e também `progress`/`hiscores` quando gravou um snapshot novo (`ok`);
+    debounce e recuo (429) não publicam;
+  - escritas do dono (`internal/store/progress`): marca, confirmar presumidos, marcar antes, desfazer o
+    lote, cursor, troca de rota ativa, metas: `progress`/`owner`.
+  A reavaliação do boot não publica (ninguém está ouvindo).
+- **Hub** (`internal/events`): em memória, um processo só (só o `serve` abre o banco), assinantes por
+  conta com fila de 16. `Publish` nunca bloqueia: assinante com a fila cheia é descartado (o canal
+  fecha, o stream termina) e o navegador reconecta e relê tudo. Fica fora de `internal/core` por ser
+  encanamento de runtime (goroutines, mutex), não domínio; não importa banco nem HTTP.
+- **Web**: `web/src/lib/api/events.svelte.ts` abre um `EventSource` por conta no layout. Os recursos
+  declaram etiquetas (`createResource(fetcher, { tags: ['progress'] })`); um evento `progress` chama
+  `invalidate('progress')` e um `sync`, `invalidate('sync')`, juntos em 250 ms, mais o resumo da
+  sessão. A releitura é silenciosa (sem `loading`, o dado antigo fica até chegar o novo), então linhas
+  abertas, rolagem e diálogos ficam. Toda reconexão relê tudo (o que mudou no intervalo não chegou);
+  aba escondida por mais de 60 s fecha o stream e reabre ao voltar. Plugin ou hiscores com
+  `steps_changed > 0` mostram o toast de detecção de V4AgoraOziris ("N passos detectados · via plugin ·
+  20:14"); o sync manual do Agora silencia esse toast, porque já mostra o próprio resultado.
+
 ## 7. Repositório, workflow e testes
 
 ### 7.1 Layout
@@ -808,8 +854,7 @@ registry), `diary` e o histórico em `snapshot_facts`; motor avaliando `varbit`/
 101 e unlock com `proof`. Verificação: testes de tabela (contrato, resolução dos 216 nomes do RuneLite,
 diary, varbit/varp, objetivos) e `TestQuestAndDiaryFactsPostgres` com o conteúdo real do Oziris
 (`quest:x_marks_the_spot@finished` e `diary:ardougne:easy@complete` saem de `unknown` com evidência);
-goose up/down/up com dados. Falta: plugin 1.1.0 lendo `Quest.getState`, `mb-test` no jogo e a
-revisão de integração entre os repositórios.
+goose up/down/up com dados. Plugin 1.1.0 feito e em uso no zaros (2026-11-05; item 7 abaixo).
 
 Cursor e chaves de item (2026-11-04, na `main`): o cursor passa dos passos bloqueados (`requires` em
 `unmet` ou requisito de catálogo da quest que o passo conclui; board com `blocked_by` e `counts.blocked`;
@@ -817,8 +862,15 @@ cadeado na Rota) e as chaves `item:family/<slug>xN` e `item:any(<id>x<n>|…)` s
 1.3.65 (segundo axe) e 1.4.43 (graceful pela família) foram reanotados com elas (decisões 22 e 23 do
 doc 01).
 
+Tempo real (item 12, 2026-11-05): `GET /api/events` (SSE, só `AUTH_MODE=dev`), hub
+em memória por conta em `internal/events`, publicação depois do commit no ingest, no sync do hiscores
+e nas escritas do dono; na web, releitura silenciosa por etiqueta dos recursos abertos e o toast de
+detecção (seção 6.6). Verificação: testes do hub com `-race`, teste HTTP do stream, eventos nos testes
+de integração de ingest, sync e progresso, `node --test` do view-model e o stream passando pelo proxy
+do Vite. Falta ver ao vivo com o plugin no zaros.
+
 Ainda não existe: anotações do BRUHsailer além do 1.1, sessão/OIDC, auth do plugin sem token,
-tempo real na web (item 12, em andamento), painel da rota no plugin, CLI/MCP sobre o cliente, grafo,
+painel da rota no plugin, CLI/MCP sobre o cliente, grafo,
 tela de conta e o módulo de controle do Microbot (doc 08). As fixtures das telas
 antigas saíram com a web v4; Mundo e Conta mostram "em breve" até seus itens.
 
@@ -838,7 +890,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
 | 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin (sessão web por PKCE e device flow do plugin, item 15); depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega |
-| 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Em andamento** (2026-11-05, `feat/tempo-real`) |
+| 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05): falta conferir ao vivo com o plugin |
 | 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito no branch** (2026-11-05, `feat/push-por-evento`), falta instalar e conferir no jogo |
 | 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Próximo**, depois do item 12 |
 | 15 | Auth do plugin em `oidc`: aplicação nativa no Zitadel, `GET /api/auth/plugin`, validação do JWT pela JWKS, roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | junto do deploy no saradomin (item 11) |

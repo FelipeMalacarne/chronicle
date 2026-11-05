@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// Live stream defaults (docs/04 section 6.5).
+// Live stream defaults (docs/04 section 6.6).
 const (
 	defaultHeartbeat = 25 * time.Second
 	// retryMillis is the reconnect delay hinted to EventSource.

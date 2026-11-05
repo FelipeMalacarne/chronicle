@@ -1,5 +1,5 @@
 /**
- * Tempo real (docs/04, seção 6.5): o servidor manda sinais leves por SSE e a tela refaz as
+ * Tempo real (docs/04, seção 6.6): o servidor manda sinais leves por SSE e a tela refaz as
  * leituras pela API de sempre. Aqui fica a parte pura: validar a mensagem, decidir o que
  * invalidar e o texto do toast de detecção (V4AgoraOziris: "1.1.72 detectado · 50 Firemaking
  * via hiscores · 20:14").

@@ -85,7 +85,7 @@ type objectivesResponse struct {
 }
 
 func (s *Server) handleBoard(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -94,7 +94,7 @@ func (s *Server) handleBoard(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMark(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -107,7 +107,7 @@ func (s *Server) handleMark(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleBatchMarks(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -128,7 +128,7 @@ func (s *Server) handleBatchMarks(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleConfirmImplied(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -137,7 +137,7 @@ func (s *Server) handleConfirmImplied(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCursor(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -158,7 +158,7 @@ func (s *Server) handleCursor(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleObjectives(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -171,7 +171,7 @@ func (s *Server) handleObjectives(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -209,7 +209,7 @@ func (s *Server) writeProgressSummary(w http.ResponseWriter, r *http.Request, ac
 }
 
 func (s *Server) handleActiveGuide(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -225,7 +225,7 @@ func (s *Server) handleActiveGuide(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -244,15 +244,6 @@ func (s *Server) handleEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, events)
-}
-
-func accountParam(w http.ResponseWriter, r *http.Request) (string, bool) {
-	account := strings.TrimSpace(r.URL.Query().Get("account"))
-	if account == "" {
-		writeError(w, http.StatusBadRequest, "account query parameter is required")
-		return "", false
-	}
-	return account, true
 }
 
 func decodeBody(w http.ResponseWriter, r *http.Request, into any) bool {

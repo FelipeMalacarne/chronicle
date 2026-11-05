@@ -49,16 +49,24 @@ type Options struct {
 	// Catalog relates noted/unnoted item ids and knows stackability for the
 	// readiness evaluator; nil compares ids exactly.
 	Catalog *entities.Registry
-	// Events streams each account's invalidation signals (GET /api/events,
-	// dev-mode-only like every account-addressed route). nil disables it.
+	// Events streams each account's invalidation signals (GET /api/events, an
+	// account-addressed route like the others). nil disables it.
 	Events *events.Hub
 	// EventsHeartbeat is the period of the stream's keep-alive comment; zero
 	// means 25 s.
 	EventsHeartbeat time.Duration
 	// DevMode exposes the one-time ingest-token bootstrap endpoint and the
-	// account-addressed readiness routes. It must never be enabled by a
-	// production authentication mode.
+	// account-addressed routes without a session (single local user). It must
+	// never be enabled by a production authentication mode, and it excludes
+	// OIDC.
 	DevMode bool
+	// OIDC turns on AUTH_MODE=oidc: /auth/login, /auth/callback, /auth/logout
+	// and the account-addressed routes behind a session, restricted to the
+	// accounts of the session user. Requires Identity.
+	OIDC *OIDCOptions
+	// Identity serves GET /api/me and the account ownership checks of oidc
+	// mode. nil disables /api/me.
+	Identity Identity
 	// Static is the SPA filesystem rooted at the site (index.html at its root).
 	// nil disables the SPA and / returns 404.
 	Static fs.FS
@@ -78,6 +86,9 @@ type Server struct {
 func New(opts Options) *Server {
 	if opts.Logger == nil {
 		opts.Logger = slog.Default()
+	}
+	if opts.OIDC != nil && (opts.DevMode || opts.Identity == nil) {
+		panic("httpapi: OIDC needs Identity and excludes DevMode")
 	}
 	s := &Server{opts: opts, log: opts.Logger, mux: http.NewServeMux(), index: buildContentIndex(opts.Content)}
 	s.routes()
@@ -110,43 +121,53 @@ func (s *Server) routes() {
 			s.mux.HandleFunc("POST /api/dev/ingest-token", s.handleCreateIngestToken)
 		}
 	}
-	// Readiness exposes an account's item containers by account id. Until
-	// session authentication exists it is a dev-mode-only route.
-	if s.opts.Holdings != nil && s.opts.DevMode {
-		s.mux.HandleFunc("GET /api/guides/{guide}/readiness", s.handleReadiness)
-		s.mux.HandleFunc("GET /api/guides/{guide}/segments/{segment}/readiness", s.handleSegmentReadiness)
+	// Every route below addresses an account by id: in dev mode without a
+	// session, in oidc mode behind one and only for the session user's
+	// accounts (CLAUDE.md rule 10). Without either, they do not exist.
+	if s.opts.OIDC != nil {
+		sessions := s.opts.OIDC.Sessions
+		s.mux.HandleFunc("GET /auth/login", s.handleLogin)
+		s.mux.Handle("GET /auth/callback", sessions.LoadAndSave(http.HandlerFunc(s.handleCallback)))
+		s.mux.Handle("POST /auth/logout", sessions.LoadAndSave(http.HandlerFunc(s.handleLogout)))
 	}
-	// Progress is addressed by account id too: dev-mode-only until sessions
-	// exist (CLAUDE.md rule 10).
-	if s.opts.Progress != nil && s.opts.DevMode {
-		s.mux.HandleFunc("GET /api/guides/{guide}/board", s.handleBoard)
-		s.mux.HandleFunc("PATCH /api/guides/{guide}/steps/{id}/mark", s.handleMark)
-		s.mux.HandleFunc("POST /api/guides/{guide}/implied/confirm", s.handleConfirmImplied)
-		s.mux.HandleFunc("POST /api/guides/{guide}/marks", s.handleBatchMarks)
-		s.mux.HandleFunc("PUT /api/guides/{guide}/cursor", s.handleCursor)
-		s.mux.HandleFunc("GET /api/objectives", s.handleObjectives)
-		s.mux.HandleFunc("GET /api/guides/{guide}/events", s.handleEvents)
-		s.mux.HandleFunc("GET /api/progress", s.handleProgress)
-		s.mux.HandleFunc("PUT /api/account/guide", s.handleActiveGuide)
-		s.mux.HandleFunc("GET /api/goals", s.handleGoals)
-		s.mux.HandleFunc("POST /api/goals", s.handleAddGoal)
-		s.mux.HandleFunc("DELETE /api/goals/{id}", s.handleRemoveGoal)
-		s.mux.HandleFunc("GET /api/goals/{id}/plan", s.handleGoalPlan)
-		s.mux.HandleFunc("GET /api/world", s.handleWorld)
+	if s.opts.Identity != nil && s.accountRoutes() {
+		s.mux.Handle("GET /api/me", s.authed(s.handleMe))
 	}
-	// The setup picks or creates the account by name: dev-mode-only, like
-	// every route that addresses an account without a session (rule 10).
-	if s.opts.Accounts != nil && s.opts.DevMode {
-		s.mux.HandleFunc("GET /api/setup/lookup", s.handleSetupLookup)
-		s.mux.HandleFunc("POST /api/accounts", s.handleCreateAccount)
+	account := func(pattern string, h http.HandlerFunc) { s.mux.Handle(pattern, s.authed(h)) }
+	if s.opts.Holdings != nil && s.accountRoutes() {
+		account("GET /api/guides/{guide}/readiness", s.handleReadiness)
+		account("GET /api/guides/{guide}/segments/{segment}/readiness", s.handleSegmentReadiness)
 	}
-	// The live stream is addressed by account id: dev-mode-only (rule 10).
-	if s.opts.Events != nil && s.opts.DevMode {
-		s.mux.HandleFunc("GET /api/events", s.handleLiveEvents)
+	if s.opts.Progress != nil && s.accountRoutes() {
+		account("GET /api/guides/{guide}/board", s.handleBoard)
+		account("PATCH /api/guides/{guide}/steps/{id}/mark", s.handleMark)
+		account("POST /api/guides/{guide}/implied/confirm", s.handleConfirmImplied)
+		account("POST /api/guides/{guide}/marks", s.handleBatchMarks)
+		account("PUT /api/guides/{guide}/cursor", s.handleCursor)
+		account("GET /api/objectives", s.handleObjectives)
+		account("GET /api/guides/{guide}/events", s.handleEvents)
+		account("GET /api/progress", s.handleProgress)
+		account("PUT /api/account/guide", s.handleActiveGuide)
+		account("GET /api/goals", s.handleGoals)
+		account("POST /api/goals", s.handleAddGoal)
+		account("DELETE /api/goals/{id}", s.handleRemoveGoal)
+		account("GET /api/goals/{id}/plan", s.handleGoalPlan)
+		account("GET /api/world", s.handleWorld)
 	}
-	if s.opts.Sync != nil && s.opts.DevMode {
-		s.mux.HandleFunc("POST /api/sync", s.handleSync)
-		s.mux.HandleFunc("GET /api/sync/runs", s.handleSyncRuns)
+	// The setup picks or creates an account by name, of the dev user or of
+	// the session user.
+	if s.opts.Accounts != nil && s.accountRoutes() {
+		account("GET /api/setup/lookup", s.handleSetupLookup)
+		account("POST /api/accounts", s.handleCreateAccount)
+	}
+	// The live stream is addressed by account id; EventSource sends the
+	// session cookie (same origin).
+	if s.opts.Events != nil && s.accountRoutes() {
+		account("GET /api/events", s.handleLiveEvents)
+	}
+	if s.opts.Sync != nil && s.accountRoutes() {
+		account("POST /api/sync", s.handleSync)
+		account("GET /api/sync/runs", s.handleSyncRuns)
 	}
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")

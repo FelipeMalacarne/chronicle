@@ -31,7 +31,7 @@ type tooSoonResponse struct {
 // handleSync runs the hiscores sync now (POST /api/sync): debounced and never
 // during a backoff, which answer 429 with retry_at.
 func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -44,7 +44,7 @@ func (s *Server) handleSync(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleSyncRuns(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}

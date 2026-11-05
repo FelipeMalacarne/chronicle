@@ -16,14 +16,14 @@ import (
 
 type fakeAccounts struct{}
 
-func (fakeAccounts) FindAccount(_ context.Context, rsn string) (storeprogress.AccountView, bool, error) {
+func (fakeAccounts) FindAccount(_ context.Context, _, rsn string) (storeprogress.AccountView, bool, error) {
 	if storeprogress.NormalizeRSN(rsn) == "iron_man" {
 		return storeprogress.AccountView{ID: "acc_iron_man", RSN: "Iron Man", Mode: "ironman"}, true, nil
 	}
 	return storeprogress.AccountView{}, false, nil
 }
 
-func (fakeAccounts) CreateAccount(_ context.Context, in storeprogress.AccountInput) (storeprogress.AccountView, bool, error) {
+func (fakeAccounts) CreateAccount(_ context.Context, _ string, in storeprogress.AccountInput) (storeprogress.AccountView, bool, error) {
 	if in.Mode == "main" {
 		return storeprogress.AccountView{}, false, storeprogress.ErrInvalidAccount
 	}

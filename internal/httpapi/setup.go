@@ -12,8 +12,9 @@ import (
 
 // AccountService finds and creates the accounts of the setup (V4Setup).
 type AccountService interface {
-	FindAccount(ctx context.Context, rsn string) (storeprogress.AccountView, bool, error)
-	CreateAccount(ctx context.Context, in storeprogress.AccountInput) (storeprogress.AccountView, bool, error)
+	// An empty userID is the AUTH_MODE=dev user.
+	FindAccount(ctx context.Context, userID, rsn string) (storeprogress.AccountView, bool, error)
+	CreateAccount(ctx context.Context, userID string, in storeprogress.AccountInput) (storeprogress.AccountView, bool, error)
 }
 
 // ModeDetector probes the hiscores tables for a name.
@@ -49,7 +50,7 @@ func (s *Server) handleSetupLookup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	out := lookupResponse{RSN: rsn, Skills: []lookupSkill{}}
-	acc, ok, err := s.opts.Accounts.FindAccount(r.Context(), rsn)
+	acc, ok, err := s.opts.Accounts.FindAccount(r.Context(), sessionUser(r), rsn)
 	if err != nil {
 		s.log.Error("setup: find account", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not look up the account")
@@ -89,10 +90,12 @@ func (s *Server) handleCreateAccount(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &in) {
 		return
 	}
-	acc, created, err := s.opts.Accounts.CreateAccount(r.Context(), in)
+	acc, created, err := s.opts.Accounts.CreateAccount(r.Context(), sessionUser(r), in)
 	switch {
 	case errors.Is(err, storeprogress.ErrInvalidAccount):
 		writeError(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, storeprogress.ErrAccountTaken):
+		writeError(w, http.StatusConflict, err.Error())
 	case err != nil:
 		s.log.Error("setup: create account", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not create the account")

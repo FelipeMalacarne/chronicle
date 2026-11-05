@@ -81,9 +81,8 @@ func (s *Server) evaluate(g *content.Guide, seg *content.Segment, h rules.ItemHo
 }
 
 func (s *Server) holdings(w http.ResponseWriter, r *http.Request) (rules.ItemHoldings, bool) {
-	accountID := strings.TrimSpace(r.URL.Query().Get("account"))
-	if accountID == "" {
-		writeError(w, http.StatusBadRequest, "account query parameter is required")
+	accountID, ok := s.accountParam(w, r)
+	if !ok {
 		return nil, false
 	}
 	h, err := s.opts.Holdings.ItemHoldings(r.Context(), accountID)

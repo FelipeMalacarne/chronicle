@@ -13,9 +13,11 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/alexedwards/scs/pgxstore"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 
+	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
 	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
 	"github.com/FelipeMalacarne/ironman-planner/internal/config"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
@@ -23,6 +25,7 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	"github.com/FelipeMalacarne/ironman-planner/internal/httpapi"
 	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
+	"github.com/FelipeMalacarne/ironman-planner/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 	"github.com/FelipeMalacarne/ironman-planner/internal/store/syncrun"
@@ -83,6 +86,11 @@ func runServe(parent context.Context) error {
 	var syncService httpapi.SyncService
 	var accountService httpapi.AccountService
 	var hiscoresDetector httpapi.ModeDetector
+	var identityRepo httpapi.Identity
+	var oidcOpts *httpapi.OIDCOptions
+	if !cfg.IsDev() && cfg.DatabaseURL == "" {
+		return fmt.Errorf("AUTH_MODE=oidc requires DATABASE_URL (users and sessions live in Postgres)")
+	}
 	if cfg.DatabaseURL != "" {
 		pool, dbErr := connectDB(ctx, cfg, logger)
 		if dbErr != nil {
@@ -91,6 +99,13 @@ func runServe(parent context.Context) error {
 		if pool != nil {
 			defer pool.Close()
 			db = pool
+			identityRepo = identity.New(pool)
+			if !cfg.IsDev() {
+				if oidcOpts, err = newOIDC(ctx, cfg, pool); err != nil {
+					return err
+				}
+				logger.Info("auth: oidc", "issuer", cfg.OIDCIssuer, "allowed_subjects", len(cfg.OIDCAllowedSubjects), "required_role", cfg.OIDCRequiredRole)
+			}
 			progressRepo := storeprogress.New(pool, cnt, catalog).WithPublisher(hub)
 			if err = bootProgress(ctx, progressRepo, logger); err != nil {
 				if !cfg.IsDev() {
@@ -136,6 +151,8 @@ func runServe(parent context.Context) error {
 		Catalog:        catalog,
 		Events:         hub,
 		DevMode:        cfg.IsDev(),
+		OIDC:           oidcOpts,
+		Identity:       identityRepo,
 		Static:         static,
 		Logger:         logger,
 	})
@@ -171,6 +188,30 @@ func runServe(parent context.Context) error {
 		return fmt.Errorf("shutdown: %w", err)
 	}
 	return nil
+}
+
+// newOIDC discovers the issuer and builds the session manager over the
+// sessions table (pgxstore, expired rows swept every 5 minutes).
+func newOIDC(ctx context.Context, cfg config.Config, pool *pgxpool.Pool) (*httpapi.OIDCOptions, error) {
+	discoverCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	provider, err := auth.NewProvider(discoverCtx, auth.Config{
+		Issuer: cfg.OIDCIssuer, ClientID: cfg.OIDCClientID, RedirectURL: cfg.OIDCRedirectURL,
+		HTTPClient: &http.Client{Timeout: 15 * time.Second},
+	})
+	if err != nil {
+		return nil, err
+	}
+	sealer, err := auth.NewSealer(cfg.SessionSecret)
+	if err != nil {
+		return nil, err
+	}
+	return &httpapi.OIDCOptions{
+		Provider: provider,
+		Policy:   auth.Policy{AllowedSubjects: cfg.OIDCAllowedSubjects, RequiredRole: cfg.OIDCRequiredRole},
+		Sessions: httpapi.NewSessionManager(pgxstore.New(pool), cfg.SecureCookies()),
+		Flow:     sealer, PublicBaseURL: cfg.PublicBaseURL, SecureCookies: cfg.SecureCookies(),
+	}, nil
 }
 
 // bootProgress indexes the loaded content (content_versions, content_steps),

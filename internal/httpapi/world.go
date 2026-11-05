@@ -39,7 +39,7 @@ type worldResponse struct {
 const maxRouteOccurrences = 6
 
 func (s *Server) handleWorld(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -143,7 +143,7 @@ func (s *Server) goalOut(g storeprogress.GoalView) goalOut {
 }
 
 func (s *Server) handleGoals(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -160,7 +160,7 @@ func (s *Server) handleGoals(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleAddGoal(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -177,7 +177,7 @@ func (s *Server) handleAddGoal(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleRemoveGoal(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}
@@ -196,7 +196,7 @@ type goalPlanResponse struct {
 }
 
 func (s *Server) handleGoalPlan(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}

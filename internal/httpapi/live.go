@@ -20,7 +20,7 @@ const (
 // heartbeat. It ends when the client leaves, the server shuts down (the base
 // context) or the hub drops this subscriber for being slow.
 func (s *Server) handleLiveEvents(w http.ResponseWriter, r *http.Request) {
-	account, ok := accountParam(w, r)
+	account, ok := s.accountParam(w, r)
 	if !ok {
 		return
 	}

@@ -470,7 +470,7 @@ func TestAccountsPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	repo := New(pool, loadContent(t), catalog)
-	if _, ok, findErr := repo.FindAccount(ctx, "Iron Man"); findErr != nil || ok {
+	if _, ok, findErr := repo.FindAccount(ctx, "", "Iron Man"); findErr != nil || ok {
 		t.Fatalf("find before any user = %v, %v", ok, findErr)
 	}
 	for _, bad := range []AccountInput{
@@ -480,11 +480,11 @@ func TestAccountsPostgres(t *testing.T) {
 		{RSN: "Iron Man", Mode: "ironman", GuideID: "nope", Layer: "classic"},
 		{RSN: "Iron Man", Mode: "ironman", GuideID: "g1", Layer: "hcim"},
 	} {
-		if _, _, badErr := repo.CreateAccount(ctx, bad); !errors.Is(badErr, ErrInvalidAccount) {
+		if _, _, badErr := repo.CreateAccount(ctx, "", bad); !errors.Is(badErr, ErrInvalidAccount) {
 			t.Fatalf("%+v: %v", bad, badErr)
 		}
 	}
-	acc, created, err := repo.CreateAccount(ctx, AccountInput{RSN: " Iron Man ", Mode: "hcim", GuideID: "g1", Layer: "classic"})
+	acc, created, err := repo.CreateAccount(ctx, "", AccountInput{RSN: " Iron Man ", Mode: "hcim", GuideID: "g1", Layer: "classic"})
 	if err != nil || !created || acc.ID != "acc_iron_man" || acc.RSN != "Iron Man" || acc.Mode != "hcim" {
 		t.Fatalf("create = %+v %v, %v", acc, created, err)
 	}
@@ -492,13 +492,35 @@ func TestAccountsPostgres(t *testing.T) {
 	if err != nil || board.Cursor == nil || !board.Active {
 		t.Fatalf("board after setup = %+v, %v", board.Cursor, err)
 	}
-	same, created, err := repo.CreateAccount(ctx, AccountInput{RSN: "iron man", Mode: "ironman", GuideID: "g2", Layer: "enhanced"})
+	same, created, err := repo.CreateAccount(ctx, "", AccountInput{RSN: "iron man", Mode: "ironman", GuideID: "g2", Layer: "enhanced"})
 	if err != nil || created || same.ID != acc.ID || same.Mode != "hcim" {
 		t.Fatalf("second create = %+v %v, %v", same, created, err)
 	}
-	found, ok, err := repo.FindAccount(ctx, "IRON MAN")
+	found, ok, err := repo.FindAccount(ctx, "", "IRON MAN")
 	if err != nil || !ok || found.ID != acc.ID {
 		t.Fatalf("find = %+v %v, %v", found, ok, err)
+	}
+
+	// An OIDC user sees and creates only its own accounts; acc_<rsn> of
+	// another user is taken.
+	if _, err = pool.Exec(ctx, `INSERT INTO users (id, subject, issuer, username) VALUES ('usr_x', 'sub-x', 'https://issuer', 'x')`); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok, err = repo.FindAccount(ctx, "usr_x", "Iron Man"); err != nil || ok {
+		t.Fatalf("other user's find = %v, %v", ok, err)
+	}
+	if _, _, err = repo.CreateAccount(ctx, "usr_x", AccountInput{RSN: "Iron Man", Mode: "ironman", GuideID: "g1", Layer: "classic"}); !errors.Is(err, ErrAccountTaken) {
+		t.Fatalf("taken id = %v", err)
+	}
+	mine, created, err := repo.CreateAccount(ctx, "usr_x", AccountInput{RSN: "Other", Mode: "ironman", GuideID: "g1", Layer: "classic"})
+	if err != nil || !created || mine.ID != "acc_other" {
+		t.Fatalf("oidc create = %+v %v, %v", mine, created, err)
+	}
+	if got := count(ctx, t, pool, `SELECT count(*) FROM accounts WHERE id = 'acc_other' AND user_id = 'usr_x'`); got != 1 {
+		t.Fatalf("owner of the new account: %d", got)
+	}
+	if _, ok, err = repo.FindAccount(ctx, "", "Other"); err != nil || ok {
+		t.Fatalf("dev sees the oidc account = %v, %v", ok, err)
 	}
 }
 

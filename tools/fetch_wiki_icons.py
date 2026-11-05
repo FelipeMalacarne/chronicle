@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
 """Fetch the game icons the web shows (decision 8 of docs/ui v4).
 
-Copies into web/static/icons the inventory icon of every item the guides cite
-(guide.json and annotation sidecars), the 24 skill icons and the quest point
-icon, all from the Old School RuneScape Wiki, and writes the manifest the SPA
-imports (web/src/lib/icons/manifest.json). The images are © Jagex, served by
-the OSRS Wiki under CC BY-NC-SA 3.0; the manifest carries that attribution and
-the web shows it on every screen with icons.
+Copies into web/static/icons the inventory icon of every obtainable item of
+the catalog (content/reference/items.json: equipment, bank and inventory can
+hold any item, not only the ones the guides cite), the 24 skill icons and the
+quest point icon, all from the Old School RuneScape Wiki. It writes the small
+manifest the SPA imports (web/src/lib/icons/manifest.json: attribution, skill
+and misc files, and the item ids with an icon as compact ranges) and the full
+id -> wiki file map with the missing ones in data/wiki/icons.json, which stays
+out of the bundle. The images are © Jagex, served by the OSRS Wiki under
+CC BY-NC-SA 3.0; the manifest carries that attribution and the web shows it on
+every screen with icons.
 
 Item icon file names come from the `image`/`imageN` fields of {{Infobox Item}}
 in the wikitext cached by tools/extract_wiki_items.py (read only; run that
@@ -22,6 +26,7 @@ Usage:
 """
 
 import argparse
+import concurrent.futures
 import hashlib
 import json
 import os
@@ -45,6 +50,19 @@ ATTRIBUTION = "Imagens do jogo © Jagex via Old School RuneScape Wiki, CC BY-NC-
 def load_json(path):
     with open(path, encoding="utf-8") as f:
         return json.load(f)
+
+
+def id_ranges(ids):
+    """Sorted ints as "1-3,7,9-12": the compact form the SPA bundle carries."""
+    out, ids = [], sorted(ids)
+    i = 0
+    while i < len(ids):
+        j = i
+        while j + 1 < len(ids) and ids[j + 1] == ids[j] + 1:
+            j += 1
+        out.append(str(ids[i]) if i == j else f"{ids[i]}-{ids[j]}")
+        i = j + 1
+    return ",".join(out)
 
 
 def cited_items():
@@ -186,6 +204,8 @@ def main():
     ap.add_argument("--wiki-cache", default=os.path.expanduser("~/.cache/ironman-planner/wiki-items/wiki"))
     ap.add_argument("--out", default=os.path.join(ROOT, "web", "static", "icons"))
     ap.add_argument("--manifest", default=os.path.join(ROOT, "web", "src", "lib", "icons", "manifest.json"))
+    ap.add_argument("--sources", default=os.path.join(ROOT, "data", "wiki", "icons.json"))
+    ap.add_argument("--workers", type=int, default=4, help="parallel downloads (be gentle with the wiki)")
     args = ap.parse_args()
     os.makedirs(args.cache_dir, exist_ok=True)
 
@@ -196,10 +216,10 @@ def main():
         print(f"warning: no cached infobox wikitext under {args.wiki_cache}; using <name>.png", file=sys.stderr)
 
     wanted = {}  # (kind, id) -> candidate wiki file titles, best first
-    for item_id in sorted(cited_items()):
-        entry = catalog.get(item_id)
-        if entry is None:
-            continue
+    # Every obtainable catalog item, plus any cited id the catalog lists as unobtainable.
+    item_ids = {i for i, e in catalog.items() if not e.get("unobtainable")} | (cited_items() & set(catalog))
+    for item_id in sorted(item_ids):
+        entry = catalog[item_id]
         candidates = [images[item_id]] if item_id in images else []
         candidates.append(entry["name"] + ".png")
         wanted[("item", str(item_id))] = list(dict.fromkeys(candidates))
@@ -208,31 +228,51 @@ def main():
     wanted[("misc", "quest_point")] = ["Quest point icon.png"]
 
     urls = resolve_urls({t for ts in wanted.values() for t in ts}, args.cache_dir, args.refresh)
-    staging = args.out + ".tmp"
-    shutil.rmtree(staging, ignore_errors=True)
-    manifest = {"attribution": ATTRIBUTION, "source": "https://oldschool.runescape.wiki", "item": {}, "skill": {}, "misc": {}, "missing": []}
-    for (kind, ident), titles in sorted(wanted.items()):
-        title, data = titles[0], None
+
+    def first(titles):
         for candidate in titles:
             data = fetch(candidate, urls.get(candidate), args.cache_dir, args.refresh)
             if data is not None:
-                title = candidate
-                break
+                return candidate, data
+        return None, None
+
+    keys = sorted(wanted)
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, args.workers)) as pool:
+        results = dict(zip(keys, pool.map(lambda k: first(wanted[k]), keys)))
+
+    staging = args.out + ".tmp"
+    shutil.rmtree(staging, ignore_errors=True)
+    files = {"item": {}, "skill": {}, "misc": {}}
+    missing = []
+    for (kind, ident) in keys:
+        title, data = results[(kind, ident)]
         if data is None:
-            manifest["missing"].append(f"{kind}:{ident} ({' | '.join(titles)})")
+            missing.append(f"{kind}:{ident} ({' | '.join(wanted[(kind, ident)])})")
             continue
         os.makedirs(os.path.join(staging, kind), exist_ok=True)
         with open(os.path.join(staging, kind, ident + ".png"), "wb") as f:
             f.write(data)
-        manifest[kind][ident] = title
+        files[kind][ident] = title
     shutil.rmtree(args.out, ignore_errors=True)
     os.replace(staging, args.out)
+
+    manifest = {
+        "attribution": ATTRIBUTION,
+        "source": "https://oldschool.runescape.wiki",
+        "item_ids": id_ranges(int(i) for i in files["item"]),
+        "skill": files["skill"],
+        "misc": files["misc"],
+    }
     os.makedirs(os.path.dirname(args.manifest), exist_ok=True)
     with open(args.manifest, "w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent="\t", sort_keys=True)
         f.write("\n")
-    total = sum(len(manifest[k]) for k in ("item", "skill", "misc"))
-    print(f"wrote {total} icons to {args.out} ({len(manifest['missing'])} missing); manifest {args.manifest}")
+    sources = {"attribution": ATTRIBUTION, "source": manifest["source"], "files": files, "missing": missing}
+    with open(args.sources, "w", encoding="utf-8") as f:
+        json.dump(sources, f, ensure_ascii=False, indent="\t", sort_keys=True)
+        f.write("\n")
+    total = sum(len(v) for v in files.values())
+    print(f"wrote {total} icons to {args.out} ({len(missing)} missing); manifest {args.manifest}; sources {args.sources}")
 
 
 if __name__ == "__main__":

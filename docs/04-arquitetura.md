@@ -954,7 +954,9 @@ teste: `just account-create`/`account-guide`. Com o servidor do item 7, quest, d
 
 Web v4 (item 9, branch `feat/progresso`): Agora, Rotas e Rota no tema Pergaminho, sobre o progresso
 real; a API devolve por passo a referência do autor, a posição, os nomes dos refs e o "também em"; os
-ícones do jogo vêm de `tools/fetch_wiki_icons.py` para `web/static/icons`.
+ícones do jogo vêm de `tools/fetch_wiki_icons.py` para `web/static/icons` (desde a v6, todo item
+obtível do catálogo; o bundle da SPA leva só as faixas de id e o mapa completo fica em
+`data/wiki/icons.json`).
 
 Hiscores (item 10, branch `feat/progresso`): adapter puro testado com as amostras do doc 02, sync
 com `sync_runs`, snapshot, fatos e reavaliação numa transação, recuo exponencial e scheduler no `serve`.

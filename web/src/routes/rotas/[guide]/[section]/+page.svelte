@@ -1,10 +1,14 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { tick } from 'svelte';
 	import { progressApi } from '#lib/api/client';
 	import { createResource } from '#lib/api/resource.svelte';
-	import { itemIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
+	import { rowChip, whoDid } from '#lib/progress/agora';
+	import { ICON_ATTRIBUTION } from '#lib/progress/icons';
+	import { narrow } from '#lib/progress/narrow.svelte';
+	import { highlight, legSummary } from '#lib/progress/rota';
 	import { loadSummary, session } from '#lib/progress/session.svelte';
 	import {
 		blockedBadge,
@@ -13,31 +17,27 @@
 		loadoutItems,
 		loadoutLabel,
 		metaOf,
+		paragraphOf,
 		pct,
-		pendingBefore,
-		plainNotes,
-		stepNotes,
 		routeLabel,
+		routeTitle,
 		sectionLabel,
 		segmentsOf,
 		statusView,
+		stepNotes,
 		type SegmentView
 	} from '#lib/progress/view';
-	import type {
-		Board,
-		ContentStep,
-		ItemRequirement,
-		MarkAction,
-		MarkRestore
-	} from '#lib/progress/types';
+	import type { Board, ContentStep, ItemRequirement, MarkAction } from '#lib/progress/types';
+	import ChipGroups from '#lib/v6/ChipGroups.svelte';
 	import Glyph from '#lib/v6/Glyph.svelte';
 	import ObjectiveChip from '#lib/v6/ObjectiveChip.svelte';
-	import Toast from '#lib/v6/Toast.svelte';
+	import RouteTabs from '#lib/v6/RouteTabs.svelte';
 
 	/*
-	 * Rota (V4RotaOziris / V4RotaBruh): uma seção agrupada por trecho de banco. O Oziris mostra
-	 * passos curtos com o local como sub-rótulo; o BRUHsailer, passos-parágrafo com o banco como
-	 * linha fina entre eles. Concluídos ficam recolhidos; o trecho do cursor abre sozinho.
+	 * Rota (V6Rota1440 e V6Rota640; BRUHsailer em V6RotaBruh1440): abas de rota no topo, seções à
+	 * esquerda (no estreito, um seletor), uma barra de filtros, a faixa "Você está em" enquanto o
+	 * cursor não está na tela e a seção agrupada por trecho com nome. O BRUHsailer não tem trecho:
+	 * os passos-parágrafo vêm em linhas com o banco como linha fina entre elas.
 	 */
 	const guideId = $derived(page.params.guide ?? '');
 	const sectionId = $derived(page.params.section ?? '');
@@ -49,18 +49,18 @@
 		() => (account ? progressApi.board(guideId, account) : Promise.resolve(null)),
 		{ tags: ['progress'] }
 	);
+	const events = createResource(
+		() =>
+			account ? progressApi.events(guideId, account, 60).catch(() => null) : Promise.resolve(null),
+		{ tags: ['progress'] }
+	);
 	const route = $derived(session.summary?.routes.find((r) => r.guide === guideId) ?? null);
+	const activeRoute = $derived(session.summary?.routes.find((r) => r.active) ?? null);
 	const guide = $derived(guides.data?.guides.find((g) => g.id === guideId) ?? null);
 	const boardById = $derived(new Map((board.data?.steps ?? []).map((s) => [s.id, s])));
 	const cursorId = $derived(board.data?.cursor?.step_id);
-	const cursorHere = $derived(!!cursorId && boardById.get(cursorId)?.section_id === sectionId);
-	const readiness = createResource(
-		() =>
-			account && cursorHere && cursorId
-				? progressApi.readiness(guideId, account, cursorId).catch(() => null)
-				: Promise.resolve(null),
-		{ tags: ['progress'] }
-	);
+	const cursorStep = $derived(cursorId ? boardById.get(cursorId) : undefined);
+	const cursorHere = $derived(!!cursorStep && cursorStep.section_id === sectionId);
 	const counts = $derived(board.data?.sections.find((s) => s.id === sectionId)?.counts);
 	const segments = $derived(section.data ? segmentsOf(section.data) : []);
 	const paragraph = $derived(
@@ -75,6 +75,7 @@
 				? routeLabel(guide.id, guide.title)
 				: guideId
 	);
+	const title = $derived(routeTitle(guideId, guide?.title ?? label));
 	const AUTHORS: Record<string, string> = {
 		'oziris-main': 'OzirisLoL / ironman.guide',
 		'bruhsailer-main': 'So Iron BRUH e ParasailerOSRS'
@@ -89,8 +90,10 @@
 			guide?.sections.map((s) => ({ id: s.id, title: s.title, done: 0, total: s.steps })) ??
 			[]
 	);
+	const secHref = (id: string) =>
+		resolve('/rotas/[guide]/[section]', { guide: guideId, section: id });
 
-	/* Filtros (V4RotaOziris): pendentes / todos / com objetivo, enhanced, HCIM e busca. */
+	/* Filtros: Pendentes / Todos / Com objetivo num controle, Enhanced e HCIM como caixas, busca. */
 	let filter = $state<'pending' | 'all' | 'objectives'>('all');
 	let enhanced = $state(true);
 	let hcim = $state(false);
@@ -113,18 +116,9 @@
 		}
 		return true;
 	}
-
-	/*
-	 * Com busca ou filtro, a lista se estreita: trechos sem resultado somem, os com resultado abrem
-	 * sozinhos (o dono ainda pode recolher) e mostram todos os resultados. Mudar a busca reabre tudo.
-	 */
 	const narrowed = $derived(query.trim() !== '' || filter !== 'all');
-	let searchOpen = $state<Record<string, boolean>>({});
-	$effect(() => {
-		void query;
-		void filter;
-		searchOpen = {};
-	});
+	const total = $derived(section.data?.steps.length ?? 0);
+	const matches = $derived(segments.reduce((n, g) => n + g.steps.filter(shown).length, 0));
 
 	/* Trechos abertos e o passo expandido: o do cursor por padrão, ou o da âncora #passo-<id>. */
 	let open = $state<Record<string, boolean>>({});
@@ -133,7 +127,7 @@
 	const doneIn = (seg: SegmentView) =>
 		seg.steps.filter((s) => statusView(boardById.get(s.id)?.status).done).length;
 	function isOpen(seg: SegmentView): boolean {
-		if (narrowed) return searchOpen[seg.id] ?? true;
+		if (narrowed) return true;
 		if (seg.id in open) return open[seg.id];
 		if (cursorHere) return seg.steps.some((s) => s.id === cursorId);
 		const first = segments.find((g) => doneIn(g) < g.steps.length);
@@ -148,12 +142,49 @@
 		const seg = segments.find((g) => g.steps.some((s) => s.id === target));
 		if (!seg) return;
 		open[seg.id] = true;
+		showAll[seg.id] = showAll[seg.id] || (!!anchor && anchor !== cursorId);
 		expanded = target;
-		if (anchor)
-			void tick().then(() =>
-				document.getElementById(`passo-${target}`)?.scrollIntoView({ block: 'center' })
-			);
+		if (anchor) void tick().then(() => scrollTo(target));
 	});
+	function scrollTo(id: string) {
+		document.getElementById(`passo-${id}`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+	}
+
+	/* A faixa "Você está em" aparece enquanto a linha do cursor não está na tela. */
+	let cursorVisible = $state(false);
+	$effect(() => {
+		const id = cursorId;
+		void expanded;
+		void open;
+		if (!id || !cursorHere) {
+			cursorVisible = false;
+			return;
+		}
+		let obs: IntersectionObserver | undefined;
+		void tick().then(() => {
+			const el = document.getElementById(`passo-${id}`);
+			if (!el) {
+				cursorVisible = false;
+				return;
+			}
+			obs = new IntersectionObserver(([e]) => (cursorVisible = e.isIntersecting));
+			obs.observe(el);
+		});
+		return () => obs?.disconnect();
+	});
+	async function goCursor() {
+		if (!cursorId || !cursorStep) return;
+		if (!cursorHere) {
+			// eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + âncora do passo
+			await goto(`${secHref(cursorStep.section_id)}#passo-${cursorId}`);
+			return;
+		}
+		const seg = segments.find((g) => g.steps.some((s) => s.id === cursorId));
+		if (seg) open[seg.id] = true;
+		expanded = cursorId;
+		await tick();
+		scrollTo(cursorId);
+	}
 
 	/* Marcas. */
 	let busy = $state(false);
@@ -163,6 +194,7 @@
 		failure = null;
 		try {
 			board.set(await run());
+			events.reload();
 			void loadSummary(account);
 		} catch (e) {
 			failure = e instanceof Error ? e.message : String(e);
@@ -173,367 +205,165 @@
 	const mark = (id: string, kind: MarkAction) =>
 		account && write(() => progressApi.mark(guideId, id, account, kind));
 	const confirmAll = () => account && write(() => progressApi.confirmImplied(guideId, account));
-
-	/* Marcar tudo antes deste: confirmação inline com a contagem, toast com desfazer. */
-	let confirmBefore = $state<string | null>(null);
-	let batch = $state<{ undo: MarkRestore[]; ref: string } | null>(null);
-	const beforeCount = (id: string) => pendingBefore(board.data?.steps ?? [], id).length;
-	async function markBefore(id: string, ref: string) {
+	async function activate() {
 		if (!account) return;
-		confirmBefore = null;
-		let undo: MarkRestore[] = [];
-		await write(async () => {
-			const b = await progressApi.markBefore(guideId, account, id);
-			undo = b.undo ?? [];
-			return b;
-		});
-		if (undo.length) batch = { undo, ref };
-	}
-	async function undoBatch() {
-		const b = batch;
-		batch = null;
-		if (b && account) await write(() => progressApi.restoreMarks(guideId, account, b.undo));
+		try {
+			await progressApi.setActiveGuide(account, guideId);
+			await loadSummary(account);
+		} catch (e) {
+			failure = e instanceof Error ? e.message : String(e);
+		}
 	}
 
-	function legCount(seg: SegmentView, shownCount: number): string {
-		const total = `${seg.steps.length} ${seg.steps.length === 1 ? 'passo' : 'passos'}`;
-		const parts = [narrowed ? `${shownCount} de ${total}` : total];
-		const lo = loadoutLabel(seg.loadout);
-		if (lo) parts.push(lo);
-		const start = seg.bankActions.find((a) => a.position === 'start') ?? seg.bankActions[0];
-		if (start) parts.push(`banco: "${start.text}"`);
-		return parts.join(' · ');
+	const clip = (s: string, n = 28) => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+
+	/* Trecho do cursor: a janela em volta dele, com "mostrar tudo". */
+	const BEFORE = 3;
+	const AFTER = 10;
+	const LIMIT = 30;
+	function windowOf(seg: SegmentView, visible: ContentStep[]) {
+		if (showAll[seg.id] || narrowed) return { rows: visible, before: 0, after: 0 };
+		const ci = visible.findIndex((s) => s.id === cursorId);
+		if (ci < 0) {
+			const rows = visible.slice(0, LIMIT);
+			return { rows, before: 0, after: visible.length - rows.length };
+		}
+		const from = Math.max(0, ci - BEFORE);
+		const to = Math.min(visible.length, ci + AFTER + 1);
+		return { rows: visible.slice(from, to), before: from, after: visible.length - to };
 	}
 	function itemsOf(s: ContentStep, seg: SegmentView): ItemRequirement[] {
 		const own = s.requirements ?? [];
-		return seg.steps[0]?.id === s.id ? [...loadoutItems(seg.loadout), ...own] : own;
+		const all = seg.steps[0]?.id === s.id ? [...loadoutItems(seg.loadout), ...own] : own;
+		// O loadout do trecho e os requisitos do passo repetem itens: um por nome e quantidade.
+		return all.filter(
+			(it, i) => all.findIndex((x) => x.name === it.name && x.qty === it.qty) === i
+		);
 	}
-	const LIMIT = 30;
-	const matches = $derived(segments.reduce((n, g) => n + g.steps.filter(shown).length, 0));
+	const itemLabel = (it: ItemRequirement) =>
+		it.qty && it.qty > 1 ? `${it.name} ×${it.qty}` : it.name;
+	function bankLine(prev: SegmentView, seg: SegmentView): string {
+		const parts = [`banco · entre ${prev.steps.at(-1)?.ref} e ${seg.steps[0]?.ref}`];
+		const lo = loadoutItems(seg.loadout);
+		if (seg.loadout?.status === 'partial') parts.push(`loadout parcial (${lo.length} itens)`);
+		else if (lo.length) parts.push(`${lo.length} itens`);
+		return parts.join(' · ');
+	}
+	/** "GP 1.719 · 4 h 30" do BRUHsailer; no Oziris, "+2 · 3 itens". */
+	function moreOf(
+		s: ContentStep,
+		seg: SegmentView,
+		extraChips: number,
+		cur: boolean
+	): { text: string; tip: string } {
+		const meta = metaOf(s);
+		const items = itemsOf(s, seg);
+		const list = items.map(itemLabel).join(', ');
+		const count = items.length ? `${items.length} ${items.length === 1 ? 'item' : 'itens'}` : '';
+		if (paragraph && !cur) {
+			const gp = meta.find((m) => m.label === 'GP após');
+			const time = meta.find((m) => m.label === 'tempo acumulado');
+			return {
+				text: [gp ? `GP ${clip(gp.value.replace(/\s*\(.*$/, ''), 16)}` : '', time?.value ?? '']
+					.filter(Boolean)
+					.join(' · '),
+				tip: [meta.map((m) => `${m.label} ${m.value}`).join(' · '), list]
+					.filter(Boolean)
+					.join(' · ')
+			};
+		}
+		return {
+			text: [extraChips ? `+${extraChips}` : '', count].filter(Boolean).join(' · '),
+			tip: list ? `usa ${list}` : ''
+		};
+	}
+	const now = Date.now();
+
+	/* Seletores do estreito (V6Rota640). */
+	let menu = $state<'route' | 'section' | null>(null);
+	const curSection = $derived(sectionsNav.find((s) => s.id === sectionId));
 </script>
 
 <svelte:head>
 	<title>{section.data?.title ?? 'Rota'} · {label} · Chronicle</title>
 </svelte:head>
 
-<div class="wrap rota">
-	<aside class="nav-s">
-		<a href={resolve('/rotas')} class="su back">← Rotas</a>
-		<p class="ey">{label} · seções</p>
-		{#each sectionsNav as s (s.id)}
-			<a
-				class="secn"
-				class:secn-on={s.id === sectionId}
-				href={resolve('/rotas/[guide]/[section]', { guide: guideId, section: s.id })}
-				><span class="i">{sectionLabel(s.id).replace('cap. ', '')}</span>{s.title}<span class="p"
-					>{s.done}/{s.total}</span
-				></a
-			>
-		{/each}
-		{#if segments.length}
-			<p class="ey trechos">Trechos de {sectionLabel(sectionId)}</p>
-			<span class="su small pad8"
-				>{segments.length} trechos · {segments.filter((g) => g.kind === 'bank_leg').length} com banco.
-				Concluídos ficam recolhidos; o do cursor abre sozinho.</span
-			>
-		{/if}
-	</aside>
+<svelte:window
+	onclick={(e) => menu && !(e.target as HTMLElement).closest('.pop') && (menu = null)}
+/>
 
-	<section class="content">
-		{#if section.error}
-			<div class="band">
-				<Glyph name="alert" /><span>Seção não encontrada: {section.error.message}</span>
-			</div>
-		{:else if !section.data}
-			<p class="su" aria-busy="true">Carregando a seção…</p>
-		{:else}
-			<header class="head">
-				<div class="txt">
-					<p class="ey">
-						{guide?.title ?? label} · seção {sectionLabel(section.data.id)} · {AUTHORS[guideId] ??
-							''}
-					</p>
-					<h1 class="sr">{section.data.title}</h1>
-					{#if section.data.description}<p class="mu desc">{section.data.description}</p>{/if}
-				</div>
-				{#if counts}
-					<div class="sum">
-						<div class="sumh">
-							<span class="su small"
-								>{counts.done} feitos · {counts.implied} presumido{counts.implied === 1 ? '' : 's'} ·
-								{counts.skipped}
-								pulado{counts.skipped === 1 ? '' : 's'}</span
-							><span class="mono small">{pct(counts.done, counts.total)}%</span>
-						</div>
-						<div class="xp"><span style="width: {pct(counts.done, counts.total)}%"></span></div>
-						<div class="btns">
-							{#if cursorId && route?.cursor_ref}
-								{#if route.active}
-									<a class="btn btn-p btn-s" href={resolve('/')}
-										>Ir ao cursor · {route.cursor_ref}</a
-									>
-								{:else if route.cursor_section}
-									<!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() + âncora do passo -->
-									<a
-										class="btn btn-p btn-s"
-										href={`${resolve('/rotas/[guide]/[section]', { guide: guideId, section: route.cursor_section })}#passo-${cursorId}`}
-										>Ir ao cursor · {route.cursor_ref}</a
-									>
-									<!-- eslint-enable svelte/no-navigation-without-resolve -->
-								{/if}
-							{/if}
-							{#if (board.data?.counts.implied ?? 0) > 0}
-								<button class="btn btn-g btn-s" type="button" disabled={busy} onclick={confirmAll}
-									>Confirmar {board.data?.counts.implied} presumido{board.data?.counts.implied === 1
-										? ''
-										: 's'}</button
-								>
-							{/if}
-						</div>
-					</div>
-				{/if}
-			</header>
+<!-- eslint-disable svelte/no-navigation-without-resolve -- hrefs internos vêm de resolve() (secHref, resolve + âncora) -->
 
-			{#if !account}
-				<div class="band">
-					<Glyph name="alert" /><span
-						>Sem conta: os passos aparecem, mas nada é marcado. Abra com <code
-							>?account=acc_&lt;rsn&gt;</code
-						>.</span
-					>
-				</div>
-			{/if}
-			{#if failure}
-				<div class="band">
-					<Glyph name="alert" /><span>A marca não foi gravada: {failure}</span>
-				</div>
-			{/if}
-
-			<div class="panel filters">
-				<button
-					class="chip"
-					class:chip-on={filter === 'pending'}
-					type="button"
-					onclick={() => (filter = 'pending')}>Pendentes</button
-				>
-				<button
-					class="chip"
-					class:chip-on={filter === 'all'}
-					type="button"
-					onclick={() => (filter = 'all')}>Todos</button
-				>
-				<button
-					class="chip"
-					class:chip-on={filter === 'objectives'}
-					type="button"
-					onclick={() => (filter = 'objectives')}>Com objetivo</button
-				>
-				{#if hasLayers}
-					<span class="sep"></span>
-					<button
-						class="chip"
-						class:chip-on={enhanced}
-						type="button"
-						aria-pressed={enhanced}
-						onclick={() => (enhanced = !enhanced)}>Enhanced{enhanced ? ' ✓' : ''}</button
-					>
-					<button
-						class="chip"
-						class:chip-on={hcim}
-						type="button"
-						aria-pressed={hcim}
-						onclick={() => (hcim = !hcim)}>HCIM{hcim ? ' ✓' : ''}</button
-					>
-				{/if}
-				<label class="inp"
-					><Glyph name="search" size={14} /><input
-						type="search"
-						bind:value={query}
-						placeholder="buscar texto, item, local, quest…"
-						aria-label="Buscar passos"
-					/></label
-				>
-			</div>
-
-			<div class="legs">
-				{#if narrowed && !matches}
-					<p class="su empty">
-						Nenhum passo {query.trim() ? `com “${query.trim()}”` : 'com este filtro'} nesta seção.
-					</p>
-				{/if}
-				{#each segments as seg, si (seg.id)}
-					{@const done = doneIn(seg)}
-					{@const isCur = cursorHere && seg.steps.some((s) => s.id === cursorId)}
-					{@const visible = seg.steps.filter(shown)}
-					{#if narrowed && !visible.length}
-						<!-- trecho sem resultado: some enquanto a busca ou o filtro estiver ativo -->
-					{:else if paragraph}
-						{#if seg.bankActions.length && si > 0 && !narrowed}
-							<div class="bankline">
-								banco · {seg.bankActions[0].type} · entre {segments[si - 1].steps.at(-1)?.ref} e {seg
-									.steps[0]?.ref}
-							</div>
-						{/if}
-						{#each visible as s (s.id)}
-							{@render stepCard(s, seg)}
-						{/each}
-					{:else}
-						<button
-							class="leg"
-							type="button"
-							aria-expanded={isOpen(seg)}
-							onclick={() =>
-								narrowed ? (searchOpen[seg.id] = !isOpen(seg)) : (open[seg.id] = !isOpen(seg))}
-						>
-							<Glyph name="chevron" size={12} />Trecho · {seg.range}
-							<span class="ct">{legCount(seg, visible.length)}</span>
-							<span class="r">
-								{#if isCur}<span class="badge badge-gold">cursor</span>{/if}
-								{#if isCur && readiness.data?.current}<span
-										class="badge {readiness.data.current.status === 'not_ready'
-											? 'badge-red'
-											: readiness.data.current.status.includes('ready')
-												? 'badge-done'
-												: 'badge-unk'}">{readiness.data.current.status}</span
-									>{/if}
-								{#if done === seg.steps.length}<span class="badge badge-done"
-										>{done} / {seg.steps.length}{isOpen(seg) ? '' : ' · recolhido'}</span
-									>{:else}<span class="ct">{done} / {seg.steps.length}</span>{/if}
-							</span>
-						</button>
-						{#if isOpen(seg)}
-							{@const rows = showAll[seg.id] || narrowed ? visible : visible.slice(0, LIMIT)}
-							{#each rows as s, i (s.id)}
-								{#if s.location && s.location !== rows[i - 1]?.location}<div class="locl">
-										{s.location}
-									</div>{/if}
-								{@render stepRow(s, seg)}
-							{/each}
-							{#if visible.length > rows.length}
-								<div class="row more">
-									<span class="st"></span><span class="id">…</span>
-									<span class="tx su"
-										>mais {visible.length - rows.length} passos deste trecho até {visible.at(-1)
-											?.ref}</span
-									>
-									<button
-										class="btn btn-g btn-s mini"
-										type="button"
-										onclick={() => (showAll[seg.id] = true)}>mostrar</button
-									>
-								</div>
-							{/if}
-						{/if}
-					{/if}
-				{/each}
-			</div>
-			<p class="su tiny">
-				Guia por {AUTHORS[guideId] ?? label}; uso pessoal, atribuição mantida. Objetivos de quest
-				ficam "não sabemos" sem leitura do plugin; levels vêm do hiscores ou do plugin. Passos sem
-				objetivo detectável são checkbox. {ICON_ATTRIBUTION}.
-			</p>
-		{/if}
-	</section>
-</div>
+{#snippet parts(text: string)}{#each highlight(text, query) as p, i (i)}{#if p.m}<mark>{p.t}</mark
+			>{:else}{p.t}{/if}{/each}{/snippet}
 
 {#snippet expansion(s: ContentStep, seg: SegmentView)}
 	{@const b = boardById.get(s.id)}
 	{@const chips = chipsOf(s, b)}
-	{@const items = itemsOf(s, seg)}
+	{@const items = itemsOf(s, seg).filter((it) => !chips.some((c) => c.label === it.name))}
 	{@const notes = stepNotes(s).filter((n) => n.kind !== 'hcim')}
+	{@const meta = metaOf(s).filter((m) => m.label !== 'itens')}
+	{@const para = paragraph ? paragraphOf(s.text) : null}
 	<div class="exp">
-		{#if items.length}
-			<div class="line">
-				<span class="ey lbl">{seg.steps[0]?.id === s.id ? 'Levar · trecho inteiro' : 'Itens'}</span>
-				{#each items as it, i (i)}
-					{@const icon = itemIcon(it.item_id ?? it.any_of?.[0])}
-					{@const unresolved = it.item_id === undefined && !it.any_of?.length && !it.family}
-					<span class="tag" class:tag-unk={unresolved}
-						>{#if icon}<img class="ski" src={icon} alt="" />{/if}{it.qty && it.qty > 1
-							? `${it.qty} `
-							: ''}{it.name}{unresolved ? ' · sem id' : ''}</span
-					>
-				{/each}
+		{#if meta.length || (paragraph && s.bank_actions?.length)}
+			<div class="metas">
+				{#each meta as m (m.label)}<span class="meta">{m.label} <b>{m.value}</b></span>{/each}
+				{#if s.bank_actions?.length}<span class="meta">banco <b>dentro do passo</b></span>{/if}
 			</div>
 		{/if}
-		<div class="line">
-			<span class="ey lbl">Objetivos</span>
-			{#each chips as c (c.role + c.key)}<ObjectiveChip chip={c} small />{:else}<span
-					class="obj obj-unk obj-s"
-					><span class="v v-unk">?</span>nenhum detectável · só você conclui</span
-				>{/each}
-		</div>
-		{#each notes as n, i (i)}<p
-				class="note"
-				class:note-up={n.kind === 'update'}
-				class:mu={n.kind !== 'update'}
-			>
-				{#if n.label}<span class="nl">{n.label}</span>{/if}{n.text}
-			</p>{/each}
+		{#each notes as n, i (i)}
+			<p class="mu note" class:note-up={n.kind === 'update'}>
+				<span class="lbl nl">{n.label || 'Nota do autor'}</span>{n.text}
+			</p>
+		{/each}
 		{#if hcim}{#each (s.notes ?? []).filter((n) => n.kind === 'hcim') as n, i (i)}<p
 					class="mu note"
 				>
-					HCIM: {n.text}
+					<span class="lbl nl">HCIM</span>{n.text}
 				</p>{/each}{/if}
+		{#if chips.length}<ChipGroups {chips} />{/if}
+		{#if items.length}
+			<p class="su small its">
+				<span class="lbl">Itens</span>
+				{items.map(itemLabel).join(', ')}
+			</p>
+		{/if}
+		{#if para}
+			<div class="prose box">
+				{#each para.tldr ? para.rest : [para.head, ...para.rest] as p, i (i)}<p>
+						{#each highlight(p, (s.bank_actions ?? [])[0]?.text ?? '') as x, j (j)}{#if x.m}<mark
+									>{x.t}</mark
+								>{:else}{x.t}{/if}{/each}
+					</p>{/each}
+			</div>
+		{/if}
 		{#if account}
-			<div class="line">
+			<div class="acts">
 				{#if b?.mark}
-					<button
-						class="btn btn-s"
-						type="button"
-						disabled={busy}
-						onclick={() => mark(s.id, 'clear')}>Desfazer marca</button
+					<button class="btn" type="button" disabled={busy} onclick={() => mark(s.id, 'clear')}
+						>Desfazer marca</button
 					>
 					{#if b.mark.kind === 'implied'}<button
-							class="btn btn-p btn-s"
+							class="btn btn-p"
 							type="button"
 							disabled={busy}
 							onclick={() => mark(s.id, 'confirm_implied')}>Confirmar</button
 						>{/if}
 				{:else}
 					<button
-						class="btn btn-p btn-s"
+						class="btn btn-p"
 						type="button"
 						disabled={busy}
-						onclick={() => mark(s.id, 'manual_done')}>Feito</button
+						onclick={() => mark(s.id, 'manual_done')}><Glyph name="check" size={14} />Feito</button
 					>
-					<button
-						class="btn btn-s"
-						type="button"
-						disabled={busy}
-						onclick={() => mark(s.id, 'skipped')}>Pular</button
+					<button class="btn" type="button" disabled={busy} onclick={() => mark(s.id, 'skipped')}
+						>Pular</button
 					>
 				{/if}
-				{#if route?.active && s.id === cursorId}<a class="btn btn-g btn-s" href={resolve('/')}
-						>Ver no Agora</a
+				<span class="grow"></span>
+				{#if route?.active && s.id === cursorId}<a class="lnk" href={resolve('/')}>Ver no Agora</a
 					>{/if}
-				{#if beforeCount(s.id) > 0 && confirmBefore !== s.id}
-					<button
-						class="btn btn-g btn-s"
-						type="button"
-						disabled={busy}
-						onclick={() => (confirmBefore = s.id)}>Marcar tudo antes deste</button
-					>
-				{/if}
 			</div>
-			{#if confirmBefore === s.id}
-				<div class="line confirm">
-					<span class="small"
-						>Marcar {beforeCount(s.id)}
-						{beforeCount(s.id) === 1 ? 'passo anterior' : 'passos anteriores'} como feitos? Presumidos
-						viram feitos; pulados ficam como estão.</span
-					>
-					<button
-						class="btn btn-p btn-s"
-						type="button"
-						disabled={busy}
-						onclick={() => markBefore(s.id, s.ref)}>Marcar</button
-					>
-					<button class="btn btn-g btn-s" type="button" onclick={() => (confirmBefore = null)}
-						>Cancelar</button
-					>
-				</div>
-			{/if}
 		{/if}
 	</div>
 {/snippet}
@@ -542,70 +372,25 @@
 	{@const b = boardById.get(s.id)}
 	{@const cur = s.id === cursorId}
 	{@const v = statusView(b?.status, cur, !!b?.blocked_by?.length)}
-	{@const nItems =
-		(s.items?.length ?? 0) +
-		(s.requirements?.length ?? 0) +
-		(seg.steps[0]?.id === s.id ? loadoutItems(seg.loadout).length : 0)}
-	{@const rowChips = chipsOf(s, b).filter((c) => c.role !== 'uses')}
-	<button
+	{@const rc = rowChip(chipsOf(s, b))}
+	{@const more = moreOf(s, seg, rc.more, cur)}
+	{@const showChip = !paragraph || cur}
+	<div
 		id={`passo-${s.id}`}
 		class="row"
 		class:row-cur={cur}
 		class:row-done={v.done}
 		class:row-skip={b?.status === 'skipped'}
-		type="button"
-		aria-expanded={expanded === s.id}
-		onclick={() => (expanded = expanded === s.id ? null : s.id)}
 	>
-		<span class="st {v.st}"
-			>{#if v.st === 'st-lock'}<svg
-					viewBox="0 0 16 16"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.8"
-					stroke-linecap="round"
-					stroke-linejoin="round"
-					aria-hidden="true"
-					><rect x="3.5" y="7" width="9" height="6.5" rx="1.2" /><path
-						d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
-					/></svg
-				>{/if}</span
-		><span class="id" class:gold={cur}>{s.ref}</span>
-		<span class="tx" class:strong={cur}>{s.text}</span>
-		{#if cur}<span class="badge badge-gold">agora</span>{/if}
-		{#if b?.status === 'implied'}<span class="badge">presumido</span>{/if}
-		{#if v.st === 'st-lock'}<span class="badge badge-red"
-				>{blockedBadge(b?.blocked_by, s.names)}</span
-			>{/if}
-		{#if s.layers?.length === 1 && s.layers[0] === 'enhanced'}<span class="badge">enhanced</span
-			>{/if}
-		{#if stepNotes(s).some((n) => n.kind === 'update')}<span class="badge badge-up"
-				>atualização</span
-			>{:else if plainNotes(s).length}<span class="badge">nota</span>{/if}
-		{#each rowChips.slice(0, 3) as c (c.role + c.key)}<ObjectiveChip chip={c} small />{/each}
-		{#if rowChips.length > 3}<span class="badge">+{rowChips.length - 3}</span>{/if}
-		{#if nItems}<span class="badge">{nItems} {nItems === 1 ? 'item' : 'itens'}</span>{/if}
-	</button>
-	{#if expanded === s.id}{@render expansion(s, seg)}{/if}
-{/snippet}
-
-{#snippet stepCard(s: ContentStep, seg: SegmentView)}
-	{@const b = boardById.get(s.id)}
-	{@const cur = s.id === cursorId}
-	{@const v = statusView(b?.status, cur, !!b?.blocked_by?.length)}
-	{@const meta = metaOf(s)}
-	<button
-		id={`passo-${s.id}`}
-		class="card"
-		class:card-cur={cur}
-		class:card-done={v.done}
-		type="button"
-		aria-expanded={expanded === s.id}
-		onclick={() => (expanded = expanded === s.id ? null : s.id)}
-	>
-		<span class="tl">
+		<button
+			class="hit"
+			type="button"
+			aria-expanded={expanded === s.id}
+			title={v.st === 'st-lock' ? blockedBadge(b?.blocked_by, s.names) : undefined}
+			onclick={() => (expanded = expanded === s.id ? null : s.id)}
+		>
 			<span class="st {v.st}"
-				>{#if v.st === 'st-lock'}<svg
+				>{#if v.done}<Glyph name="check" size={10} />{:else if v.st === 'st-lock'}<svg
 						viewBox="0 0 16 16"
 						fill="none"
 						stroke="currentColor"
@@ -617,32 +402,290 @@
 							d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"
 						/></svg
 					>{/if}</span
-			><span class="ref">{s.ref}</span>
-			<span class="tx">{b?.title ?? s.text}</span>
-			{#if cur}<span class="badge badge-gold">agora</span>{/if}
-			{#if b?.status === 'implied'}<span class="badge">presumido</span>{/if}
-			{#if v.st === 'st-lock'}<span class="badge badge-red"
-					>{blockedBadge(b?.blocked_by, s.names)}</span
-				>{/if}
-		</span>
-		{#if meta.length}
-			<span class="m"
-				>{#each meta as m (m.label)}<span>{m.label} {m.value}</span>{/each}</span
+			><span class="id" class:gold={cur} class:wid={paragraph}>{s.ref}</span>
+			<span class="tx" class:strong={cur}
+				>{@render parts(paragraph ? (b?.title ?? s.text) : s.text)}</span
 			>
+		</button>
+		{#if showChip && rc.chip}<ObjectiveChip chip={rc.chip} small />{/if}
+		{#if paragraph && v.done && !cur}
+			<span class="fr">{whoDid(events.data, s.id, now)}</span>
+		{:else if more.text}
+			<span class="more" title={more.tip || undefined}>{more.text}</span>
 		{/if}
-	</button>
+	</div>
 	{#if expanded === s.id}{@render expansion(s, seg)}{/if}
 {/snippet}
 
-{#if batch}
-	<Toast
-		title="Marcados"
-		text={`${batch.undo.length} passos antes de ${batch.ref}`}
-		action="desfazer"
-		onaction={undoBatch}
-		onclose={() => (batch = null)}
-	/>
-{/if}
+<div class="wrap">
+	{#if !narrow.value}
+		<div class="full"><RouteTabs current={guideId} /></div>
+		<aside class="nav-s">
+			<p class="lbl pad">{paragraph ? 'Capítulos' : 'Seções'}</p>
+			{#each sectionsNav as s (s.id)}
+				<a class="secn" class:secn-on={s.id === sectionId} href={secHref(s.id)}
+					><span class="i">{sectionLabel(s.id)}</span>{s.title}<span class="p"
+						>{s.done}/{s.total}</span
+					></a
+				>
+			{/each}
+		</aside>
+	{/if}
+
+	<section class="content">
+		{#if section.error}
+			<div class="band" role="alert">
+				<Glyph name="alert" /><span>Seção não encontrada: {section.error.message}</span>
+			</div>
+		{:else if !section.data}
+			<p class="su" aria-busy="true">Carregando a seção…</p>
+		{:else}
+			{#if narrow.value}
+				<header class="nhead">
+					<div class="pop">
+						<button
+							class="sel"
+							type="button"
+							aria-haspopup="menu"
+							aria-expanded={menu === 'route'}
+							onclick={() => (menu = menu === 'route' ? null : 'route')}
+							>{label} <small>▾{route?.active ? ' ativa' : ''}</small></button
+						>
+						{#if menu === 'route'}
+							<div class="menu panel" role="menu">
+								{#each session.summary?.routes ?? [] as r (r.guide)}
+									<a
+										role="menuitem"
+										href={resolve('/rotas/[guide]', { guide: r.guide })}
+										onclick={() => (menu = null)}
+										>{routeLabel(r.guide, r.title)}<span class="su mono"
+											>{r.counts.done} / {r.counts.total}{r.active
+												? ' · ativa'
+												: r.cursor_ref
+													? ` · em ${r.cursor_ref}`
+													: ''}</span
+										></a
+									>
+								{/each}
+								<a role="menuitem" href={resolve('/compare')} onclick={() => (menu = null)}
+									>Comparar</a
+								>
+							</div>
+						{/if}
+					</div>
+					<div class="pop grow1">
+						<button
+							class="sel sel-s"
+							type="button"
+							aria-haspopup="listbox"
+							aria-expanded={menu === 'section'}
+							onclick={() => (menu = menu === 'section' ? null : 'section')}
+							><span class="mono su tiny">{sectionLabel(sectionId)}</span><span class="stt"
+								>{curSection?.title ?? section.data.title}</span
+							><small>▾</small></button
+						>
+						{#if menu === 'section'}
+							<div class="menu panel" role="listbox" aria-label="Seção">
+								{#each sectionsNav as s (s.id)}
+									<a
+										role="option"
+										aria-selected={s.id === sectionId}
+										class:on={s.id === sectionId}
+										href={secHref(s.id)}
+										onclick={() => (menu = null)}
+										><span class="mono su tiny">{sectionLabel(s.id)}</span>{s.title}<span
+											class="su mono">{s.done}/{s.total}</span
+										></a
+									>
+								{/each}
+							</div>
+						{/if}
+					</div>
+					{#if counts}
+						<div class="nprog">
+							<div class="xp"><span style="width: {pct(counts.done, counts.total)}%"></span></div>
+							<span class="mono su tiny">{counts.done} / {counts.total}</span>
+						</div>
+					{/if}
+				</header>
+			{:else}
+				<header class="head">
+					<div class="txt">
+						<p class="su small">
+							{title} · {paragraph ? 'capítulo' : 'seção'}
+							{sectionLabel(section.data.id).replace('cap. ', '')} · {AUTHORS[guideId] ?? ''}
+						</p>
+						<h1 class="sr">{section.data.title}</h1>
+						{#if section.data.description}<p class="mu desc">{section.data.description}</p>{/if}
+					</div>
+					{#if counts}
+						<div class="sum">
+							<div class="sumh">
+								<span class="su"
+									>{counts.done} de {counts.total}{#if counts.implied}
+										· {counts.implied} presumido{counts.implied === 1 ? '' : 's'}{/if}</span
+								><span class="mono">{pct(counts.done, counts.total)}%</span>
+							</div>
+							<div class="xp"><span style="width: {pct(counts.done, counts.total)}%"></span></div>
+							{#if (board.data?.counts.implied ?? 0) > 0}
+								<button
+									class="lnk sm"
+									type="button"
+									disabled={busy}
+									title="Presumidos são passos que um passo posterior implica; confirmar vira feito à mão."
+									onclick={confirmAll}>confirmar {board.data?.counts.implied} presumidos</button
+								>
+							{/if}
+						</div>
+					{/if}
+				</header>
+			{/if}
+
+			{#if failure}
+				<div class="band" role="alert">
+					<Glyph name="alert" /><span>A marca não foi gravada: {failure}</span>
+				</div>
+			{/if}
+
+			<div class="bar-f">
+				<label class="inp" class:fullw={narrow.value}
+					><Glyph name="search" size={14} /><input
+						type="search"
+						bind:value={query}
+						placeholder={`buscar ${narrow.value ? '' : paragraph ? 'neste capítulo: ' : 'nesta seção: '}texto, item, local, quest`}
+						aria-label="Buscar passos"
+					/>{#if query.trim()}<span class="cnt">{matches} de {total}</span>{/if}</label
+				>
+				<div class="seg" role="group" aria-label="Quais passos">
+					{#each [['pending', 'Pendentes'], ['all', 'Todos'], ['objectives', 'Com objetivo']] as [k, l] (k)}
+						<button
+							type="button"
+							class:on={filter === k}
+							aria-pressed={filter === k}
+							onclick={() => (filter = k as typeof filter)}>{l}</button
+						>
+					{/each}
+				</div>
+				{#if hasLayers}
+					<label class="chk"><input type="checkbox" bind:checked={enhanced} />Enhanced</label>
+					<label class="chk"><input type="checkbox" bind:checked={hcim} />HCIM</label>
+				{:else if !query.trim()}
+					<span class="cnt">{matches} / {total}</span>
+				{/if}
+			</div>
+
+			{#if cursorStep && route && !route.active}
+				<div class="strip">
+					<span class="st st-cur sd" aria-hidden="true"></span><span class="nw"
+						>Você estaria em</span
+					>
+					<b>{cursorStep.ref}</b>
+					· <span class="stx">{cursorStep.title}</span>
+					<span class="push">
+						{#if activeRoute}<span class="om"
+								>o cursor da {routeLabel(activeRoute.guide, activeRoute.title)} fica guardado</span
+							>{/if}
+						<button class="btn btn-s btn-p" type="button" onclick={activate}>Tornar ativa</button>
+					</span>
+				</div>
+			{:else if cursorStep && !cursorVisible}
+				<button class="strip" type="button" aria-label="Ir ao passo atual" onclick={goCursor}>
+					<span class="st st-cur sd" aria-hidden="true"></span><span class="nw">Você está em</span>
+					<b>{cursorStep.ref}</b>
+					· <span class="stx">{cursorStep.title}</span>
+					<span class="push gold">ir ao passo ↓</span>
+				</button>
+			{/if}
+
+			<div class="legs ruled">
+				{#if narrowed && !matches}
+					<p class="su empty">
+						Nenhum passo {query.trim() ? `com “${query.trim()}”` : 'com este filtro'} nesta seção.
+					</p>
+				{/if}
+				{#each segments as seg, si (seg.id)}
+					{@const visible = seg.steps.filter(shown)}
+					{#if narrowed && !visible.length}
+						<!-- trecho sem resultado: some enquanto a busca ou o filtro estiver ativo -->
+					{:else if paragraph}
+						{#if si > 0 && seg.kind === 'bank_leg' && !narrowed}
+							<div class="bankline">{bankLine(segments[si - 1], seg)}</div>
+						{/if}
+						{#each visible as s (s.id)}{@render stepRow(s, seg)}{/each}
+					{:else}
+						{@const done = doneIn(seg)}
+						{@const sum = legSummary(seg.steps, seg.range)}
+						{@const o = isOpen(seg)}
+						{@const start =
+							seg.bankActions.find((a) => a.position === 'start') ?? seg.bankActions[0]}
+						<button
+							class="leg"
+							class:leg-done={done === seg.steps.length}
+							type="button"
+							aria-expanded={o}
+							onclick={() => (open[seg.id] = !o)}
+						>
+							<Glyph name="chevron" size={12} />{sum.title}
+							<span class="ct" title={sum.full}
+								><span class="rng"
+									>{seg.range} · {seg.steps.length}
+									{seg.steps.length === 1 ? 'passo' : 'passos'}</span
+								>{#if sum.quests}<span class="sep">·</span
+									>{sum.quests}{/if}{#if sum.places && !narrow.value}<span class="sep">·</span
+									>{sum.places}{/if}</span
+							>
+							<span class="r"
+								>{#if done < seg.steps.length && done > 0}<span class="pr"
+										><span style="width: {pct(done, seg.steps.length)}%"></span></span
+									>{/if}{narrowed
+									? `${visible.length} de ${seg.steps.length}${query.trim() ? ` com “${query.trim()}”` : ''}`
+									: `${done} / ${seg.steps.length}${done === seg.steps.length ? ' · feito' : ''}`}{#if start && !narrowed && !narrow.value}
+									· banco no início: “{clip(
+										start.text
+									)}”{/if}{#if loadoutLabel(seg.loadout) && !narrow.value && !narrowed}
+									· {loadoutLabel(seg.loadout)}{/if}</span
+							>
+						</button>
+						{#if o}
+							{@const w = windowOf(seg, visible)}
+							{#each w.rows as s, i (s.id)}
+								{#if s.location && (i === 0 || s.location !== w.rows[i - 1]?.location)}<div
+										class="locl"
+									>
+										{s.location}
+									</div>{/if}
+								{@render stepRow(s, seg)}
+							{/each}
+							{#if w.before || w.after}
+								<div class="row last">
+									<span class="st hid"></span><span class="id">…</span>
+									<span class="tx su"
+										>{[
+											w.before ? `${w.before} antes de ${w.rows[0]?.ref}` : '',
+											w.after ? `mais ${w.after} passos até ${visible.at(-1)?.ref}` : ''
+										]
+											.filter(Boolean)
+											.join(' e ')}{visible.at(-1)?.location
+											? ` · ${visible.at(-1)?.location}`
+											: ''}</span
+									>
+									<button class="lnk more" type="button" onclick={() => (showAll[seg.id] = true)}
+										>mostrar tudo</button
+									>
+								</div>
+							{/if}
+						{/if}
+					{/if}
+				{/each}
+			</div>
+			<p class="su tiny">
+				{#if guideId.startsWith('bruhsailer')}BRUHsailer por So Iron BRUH e ParasailerOSRS.{:else}Guia
+					por OzirisLoL, versão interativa de ironman.guide.{/if} Uso pessoal; atribuição mantida.
+				{ICON_ATTRIBUTION}.
+			</p>
+		{/if}
+	</section>
+</div>
 
 <style>
 	.wrap {
@@ -651,133 +694,229 @@
 		gap: 20px;
 		align-items: flex-start;
 	}
+	.full {
+		flex: 1 1 100%;
+	}
 	.nav-s {
 		flex: 1 1 200px;
 		max-width: 230px;
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
+		position: sticky;
+		top: 16px;
 	}
-	.back {
-		font-size: 12px;
-		padding: 0 8px 6px;
-	}
-	.nav-s .ey {
+	.pad {
 		padding: 6px 8px;
-	}
-	.nav-s .trechos {
-		padding-top: 16px;
-	}
-	.pad8 {
-		padding: 0 8px;
 	}
 	.content {
 		flex: 999 1 560px;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
-		gap: 16px;
+		gap: 14px;
 	}
 	.head {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: flex-end;
-		gap: 12px 24px;
+		gap: 10px 24px;
 	}
 	.txt {
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
+		gap: 4px;
 		flex: 1 1 380px;
 		min-width: 0;
+	}
+	.txt p,
+	.desc {
+		margin: 0;
 	}
 	.txt h1 {
 		font-size: 28px;
 	}
 	.desc {
-		margin: 0;
 		max-width: 70ch;
 	}
 	.sum {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		flex: 0 1 280px;
+		gap: 6px;
+		flex: 0 1 260px;
 		min-width: 220px;
 	}
 	.sumh {
 		display: flex;
 		justify-content: space-between;
+		font-size: 12px;
 	}
-	.btns {
-		display: flex;
-		gap: 8px;
-		flex-wrap: wrap;
+	.lnk.sm {
+		min-height: 0;
+		padding: 0;
+		font-size: 12px;
+		border: 0;
+		background: none;
+		cursor: pointer;
+		align-self: flex-start;
 	}
-	.filters {
+	.bar-f {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 8px;
-		padding: 10px 12px;
+		gap: 8px 12px;
 	}
-	.sep {
-		width: 1px;
-		height: 20px;
-		background: var(--border);
-		margin: 0 4px;
+	.bar-f .inp {
+		flex: 1 1 280px;
+	}
+	.fullw {
+		flex: 1 1 100%;
+	}
+	button.strip {
+		width: 100%;
+		border: 0;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+	.sd {
+		width: 12px;
+		height: 12px;
+		box-shadow: inset 0 0 0 2px var(--frame);
+	}
+	.nw {
+		white-space: nowrap;
+	}
+	.stx {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.push {
+		margin-left: auto;
+		display: inline-flex;
+		gap: 14px;
+		align-items: center;
+		flex: 0 0 auto;
+	}
+	.gold {
+		color: var(--gold);
+	}
+	.om {
+		color: var(--on-frame-muted);
+		font-size: 12px;
 	}
 	.legs {
 		display: flex;
 		flex-direction: column;
 	}
-	.legs > :global(.leg:first-child) {
-		margin-top: 0;
-	}
-	.empty {
-		padding: 16px 4px;
-	}
-	.card {
+	button.leg {
 		width: 100%;
+		border: 0;
 		text-align: left;
-		background: transparent;
-		border-left: 0;
-		border-right: 0;
-		border-top: 0;
 		cursor: pointer;
-		font: inherit;
 	}
-	.line {
+	.leg :global(svg) {
+		transition: transform 0.15s;
+	}
+	.leg[aria-expanded='true'] :global(svg) {
+		transform: rotate(90deg);
+	}
+	.rng {
+		color: var(--on-frame-muted);
+	}
+	.ruled .row {
+		border-bottom: 1px solid var(--hairline);
+		border-radius: 0;
+		gap: 10px;
+	}
+	.ruled .row .tx {
+		white-space: normal;
+		line-height: 1.35;
+		padding: 6px 0;
+	}
+	.hit {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex: 1 1 auto;
+		min-width: 0;
+		min-height: 44px;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: inherit;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+	.id.gold {
+		color: var(--gold-ink);
+	}
+	.id.wid {
+		width: 56px;
+	}
+	.tx.strong {
+		font-weight: 500;
+	}
+	.row-skip .tx {
+		color: var(--ink-subtle);
+	}
+	.hid {
+		visibility: hidden;
+	}
+	.lnk.more {
+		border: 0;
+		background: none;
+		cursor: pointer;
+		min-height: 0;
+		font:
+			500 11px 'JetBrains Mono',
+			monospace;
+	}
+	.last {
+		border-bottom: 0 !important;
+	}
+	.metas {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px 8px;
-		align-items: center;
-	}
-	.lbl {
-		margin-right: 4px;
+		gap: 6px;
 	}
 	.note {
 		margin: 0;
-		font-size: 13px;
 	}
-	.confirm {
-		padding: 8px 10px;
+	.nl {
+		margin-right: 6px;
+	}
+	.note-up .nl {
+		color: var(--stale);
+	}
+	.its {
+		margin: 0;
+	}
+	.its .lbl {
+		margin-right: 6px;
+	}
+	.box {
+		padding: 10px 14px;
 		border-radius: 4px;
-		background: var(--gold-tint);
+		border: 1px solid var(--hairline);
 	}
-	.gold {
-		color: var(--gold-ink);
+	.acts {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 6px 4px;
 	}
-	.strong {
-		font-weight: 500;
+	.acts .btn {
+		height: 40px;
 	}
-	.more {
-		border-bottom: 0;
+	.grow {
+		flex: 1;
 	}
-	.mini {
-		height: 24px;
-		padding: 0 8px;
-		font-size: 11px;
+	.empty {
+		margin: 12px;
 	}
 	.small {
 		font-size: 12px;
@@ -785,30 +924,84 @@
 	.tiny {
 		font-size: 11px;
 	}
-	p.tiny {
-		margin: 0;
+	/* Estreito (V6Rota640): rota e seção como seletores no topo. */
+	.nhead {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px 12px;
 	}
-	code {
-		font-family: 'JetBrains Mono', monospace;
-		font-size: 12px;
+	.pop {
+		position: relative;
 	}
-	.note-up {
-		padding: 6px 10px;
-		border-left: 3px solid var(--stale);
-		background: var(--stale-tint);
+	.grow1 {
+		flex: 1 1 200px;
+		min-width: 0;
+	}
+	.sel-s {
+		width: 100%;
+		background: var(--surface);
 		color: var(--ink);
+		box-shadow: var(--bevel);
+		border: 1px solid var(--border);
+		justify-content: flex-start;
 	}
-	.nl {
-		margin-right: 8px;
+	.sel-s small {
+		color: var(--ink-subtle);
+		margin-left: auto;
+	}
+	.stt {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
 		font:
-			600 11px 'JetBrains Mono',
-			monospace;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--stale);
+			500 13px Inter,
+			system-ui,
+			sans-serif;
 	}
-	.badge-up {
-		color: var(--stale);
-		background: var(--stale-tint);
+	.menu {
+		position: absolute;
+		z-index: 8;
+		top: calc(100% + 4px);
+		left: 0;
+		min-width: 260px;
+		max-width: calc(100vw - 28px);
+		max-height: 60vh;
+		overflow: auto;
+		display: flex;
+		flex-direction: column;
+		padding: 4px;
+		box-shadow:
+			var(--bevel),
+			0 8px 24px rgba(0, 0, 0, 0.25);
+	}
+	.menu a {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 40px;
+		padding: 0 10px;
+		color: var(--ink);
+		text-decoration: none;
+		font-size: 13px;
+		border-bottom: 1px solid var(--hairline);
+	}
+	.menu a .su {
+		margin-left: auto;
+		font-size: 11px;
+	}
+	.menu a.on {
+		background: var(--gold-tint);
+		box-shadow: inset 3px 0 0 var(--gold-ink);
+	}
+	.nprog {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		flex: 1 1 100%;
+	}
+	.nprog .xp {
+		flex: 1;
 	}
 </style>

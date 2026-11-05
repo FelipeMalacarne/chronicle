@@ -66,6 +66,7 @@
 	.shell {
 		display: flex;
 		flex-wrap: wrap;
+		align-content: flex-start;
 		min-height: 100vh;
 		/* A madeira da sidebar desce a página inteira; a sidebar em si fica presa no topo. */
 		background: linear-gradient(to right, var(--frame) 240px, var(--ground) 240px);

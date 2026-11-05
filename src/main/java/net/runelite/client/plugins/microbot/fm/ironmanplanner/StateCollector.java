@@ -8,10 +8,12 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.function.IntUnaryOperator;
 import java.util.stream.Stream;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.Player;
+import net.runelite.api.Quest;
 import net.runelite.api.Skill;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.RuneScapeProfileType;
@@ -28,7 +30,15 @@ import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
  */
 final class StateCollector
 {
+	/**
+	 * Game ticks to wait after reaching LOGGED_IN before reading anything: the server sends
+	 * varps, stats and containers over the first ticks, and a full read before that would
+	 * report quests as not started and diaries as incomplete.
+	 */
+	static final int SETTLE_TICKS = 3;
+
 	private final Client client;
+	private final QuestTracker quests;
 	private final ContainerTracker bank = new ContainerTracker();
 	private final ContainerTracker inventory = new ContainerTracker();
 	private final ContainerTracker equipment = new ContainerTracker();
@@ -37,16 +47,21 @@ final class StateCollector
 	private String liveEpoch;
 	/** Last BANK container event within {@link #liveEpoch}, or null. */
 	private Instant bankEventAt;
+	/** Game ticks since login, a hop or a reconnect, capped at {@link #SETTLE_TICKS}. */
+	private int ticksLoggedIn;
 
 	StateCollector(Client client)
 	{
 		this.client = client;
+		this.quests = new QuestTracker(Quest.values(), quest -> quest.getState(client));
 	}
 
 	void startEpoch()
 	{
 		liveEpoch = "session-" + UUID.randomUUID();
 		bankEventAt = null;
+		ticksLoggedIn = 0;
+		quests.reset();
 		bank.reset();
 		inventory.reset();
 		equipment.reset();
@@ -63,6 +78,32 @@ final class StateCollector
 		return liveEpoch != null;
 	}
 
+	void onGameTick()
+	{
+		if (ticksLoggedIn < SETTLE_TICKS)
+		{
+			ticksLoggedIn++;
+		}
+	}
+
+	/**
+	 * A hop, reconnect or logout makes the server send the vars again, so wait for them anew. A
+	 * region LOADING keeps them and does not restart the wait.
+	 */
+	void onGameStateChanged(GameState state)
+	{
+		if (state != GameState.LOGGED_IN && state != GameState.LOADING)
+		{
+			ticksLoggedIn = 0;
+		}
+	}
+
+	/** A varp or varbit changed, so quest states may have too. */
+	void onVarsChanged()
+	{
+		quests.invalidate();
+	}
+
 	void onBankContainerChanged(Instant at)
 	{
 		if (liveEpoch != null)
@@ -74,7 +115,7 @@ final class StateCollector
 	/** The current state, or null when no character is readable. */
 	PlayerSnapshot capture(IngestContract.Manifest manifest, IronmanPlannerConfig config, Instant now)
 	{
-		if (liveEpoch == null || client.getGameState() != GameState.LOGGED_IN)
+		if (liveEpoch == null || client.getGameState() != GameState.LOGGED_IN || ticksLoggedIn < SETTLE_TICKS)
 		{
 			return null;
 		}
@@ -85,16 +126,9 @@ final class StateCollector
 			return null;
 		}
 
-		Map<String, Long> varb = new TreeMap<>();
-		for (Integer id : nullSafe(manifest.varbits))
-		{
-			varb.put(Integer.toString(id), (long) client.getVarbitValue(id));
-		}
-		Map<String, Long> varp = new TreeMap<>();
-		for (Integer id : nullSafe(manifest.varps))
-		{
-			varp.put(Integer.toString(id), (long) client.getVarpValue(id));
-		}
+		Map<String, Long> varb = readVars(manifest.varbits, client::getVarbitValue);
+		Map<String, Long> varp = readVars(manifest.varps, client::getVarpValue);
+		Map<String, String> quest = readQuests(manifest, quests);
 
 		Map<String, Long> level = new TreeMap<>();
 		Map<String, Long> xp = new TreeMap<>();
@@ -127,7 +161,7 @@ final class StateCollector
 
 		return new PlayerSnapshot(username, profile(RuneScapeProfileType.getCurrent(client)),
 			accountType(client.getVarbitValue(VarbitID.IRONMAN)), manifest.manifestVersion,
-			varb, varp, level, xp, boosted, containers);
+			varb, varp, level, xp, boosted, quest, containers);
 	}
 
 	private ContainerSnapshot captureBank(boolean allowed, List<Integer> only, Instant now)
@@ -156,9 +190,30 @@ final class StateCollector
 		return out;
 	}
 
-	private static List<Integer> nullSafe(List<Integer> ids)
+	/**
+	 * The quest facet, or {@code null} (not sent) unless the manifest says the server accepts
+	 * it: an older server rejects {@code data.quest} as an unknown field.
+	 */
+	static Map<String, String> readQuests(IngestContract.Manifest manifest, QuestTracker tracker)
 	{
-		return ids == null ? Collections.emptyList() : ids;
+		return manifest.questsEnabled() ? tracker.read() : null;
+	}
+
+	/**
+	 * Every id the manifest lists, read without knowing what it means (diary tiers, quest
+	 * points, unlock proofs): {@code "id" -> value}.
+	 */
+	static Map<String, Long> readVars(List<Integer> ids, IntUnaryOperator read)
+	{
+		Map<String, Long> out = new TreeMap<>();
+		for (Integer id : ids == null ? Collections.<Integer>emptyList() : ids)
+		{
+			if (id != null)
+			{
+				out.put(Integer.toString(id), (long) read.applyAsInt(id));
+			}
+		}
+		return out;
 	}
 
 	static String profile(RuneScapeProfileType type)

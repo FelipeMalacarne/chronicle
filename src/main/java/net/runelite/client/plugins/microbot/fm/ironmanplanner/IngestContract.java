@@ -35,6 +35,8 @@ final class IngestContract
 		List<Integer> varps;
 		List<Integer> collections;
 		Boolean skills;
+		/** The server accepts {@code data.quest}; absent (older server) means it would reject it. */
+		Boolean quests;
 		ItemSelection items;
 		@SerializedName("interval_seconds")
 		Integer intervalSeconds;
@@ -43,6 +45,11 @@ final class IngestContract
 		boolean skillsEnabled()
 		{
 			return skills == null || skills;
+		}
+
+		boolean questsEnabled()
+		{
+			return quests != null && quests;
 		}
 
 		int intervalSecondsOrDefault()
@@ -105,6 +112,8 @@ final class IngestContract
 		Map<String, Long> level;
 		Map<String, Long> xp;
 		Map<String, Long> boosted;
+		/** RuneLite {@code Quest.getName()} -> {@code QuestState} name; only when the manifest allows it. */
+		Map<String, String> quest;
 		ItemContainers items;
 	}
 

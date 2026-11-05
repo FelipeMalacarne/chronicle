@@ -49,8 +49,29 @@ final class Fixtures
 	static PlayerSnapshot snapshot(long manifestVersion, Map<String, Long> varb, Map<String, Long> level,
 		Map<ContainerKind, ContainerSnapshot> containers)
 	{
+		return withQuests(manifestVersion, varb, Collections.emptyMap(), level, null, containers);
+	}
+
+	static PlayerSnapshot withQuests(long manifestVersion, Map<String, Long> varb, Map<String, Long> varp,
+		Map<String, Long> level, Map<String, String> quest, Map<ContainerKind, ContainerSnapshot> containers)
+	{
 		return new PlayerSnapshot("Iron Test", "STANDARD", "IRONMAN", manifestVersion,
-			varb, Collections.emptyMap(), level, level, level, containers);
+			varb, varp, level, level, level, quest, containers);
+	}
+
+	static PlayerSnapshot quests(long manifestVersion, Map<String, String> quest)
+	{
+		return withQuests(manifestVersion, vars("4458", 0), vars("101", 33), vars("attack", 40), quest, allUnavailable(T0));
+	}
+
+	static Map<String, String> states(String... kv)
+	{
+		Map<String, String> out = new HashMap<>();
+		for (int i = 0; i < kv.length; i += 2)
+		{
+			out.put(kv[i], kv[i + 1]);
+		}
+		return out;
 	}
 
 	static PlayerSnapshot simple(long manifestVersion, long attackLevel)

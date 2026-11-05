@@ -21,12 +21,14 @@ final class PlayerSnapshot
 	final Map<String, Long> level;
 	final Map<String, Long> xp;
 	final Map<String, Long> boosted;
+	/** Quest name -> state, or {@code null} when quests are not collected (manifest or read failure). */
+	final Map<String, String> quest;
 	final Map<ContainerKind, ContainerSnapshot> containers;
 
 	PlayerSnapshot(String username, String profile, String accountType, long manifestVersion,
 		Map<String, Long> varb, Map<String, Long> varp,
 		Map<String, Long> level, Map<String, Long> xp, Map<String, Long> boosted,
-		Map<ContainerKind, ContainerSnapshot> containers)
+		Map<String, String> quest, Map<ContainerKind, ContainerSnapshot> containers)
 	{
 		this.username = Objects.requireNonNull(username);
 		this.profile = Objects.requireNonNull(profile);
@@ -37,6 +39,7 @@ final class PlayerSnapshot
 		this.level = frozen(level);
 		this.xp = frozen(xp);
 		this.boosted = frozen(boosted);
+		this.quest = quest == null ? null : Collections.unmodifiableMap(new TreeMap<>(quest));
 		EnumMap<ContainerKind, ContainerSnapshot> c = new EnumMap<>(ContainerKind.class);
 		for (ContainerKind kind : ContainerKind.values())
 		{

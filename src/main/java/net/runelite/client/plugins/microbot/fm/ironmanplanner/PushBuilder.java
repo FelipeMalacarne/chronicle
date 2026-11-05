@@ -27,7 +27,8 @@ final class PushBuilder
 			|| !acked.username.equals(current.username)
 			|| acked.manifestVersion != current.manifestVersion
 			|| !acked.varb.keySet().equals(current.varb.keySet())
-			|| !acked.varp.keySet().equals(current.varp.keySet()))
+			|| !acked.varp.keySet().equals(current.varp.keySet())
+			|| !sameKeys(acked.quest, current.quest))
 		{
 			return true;
 		}
@@ -50,6 +51,8 @@ final class PushBuilder
 		data.level = new TreeMap<>(current.level);
 		data.xp = new TreeMap<>(current.xp);
 		data.boosted = new TreeMap<>(current.boosted);
+		// every quest, {} when there are none; absent only when quests are not collected
+		data.quest = current.quest == null ? null : new TreeMap<>(current.quest);
 		data.items = new IngestContract.ItemContainers();
 		data.items.bank = observation(current.container(ContainerKind.BANK), null, sentAt);
 		data.items.inventory = observation(current.container(ContainerKind.INVENTORY), null, sentAt);
@@ -67,6 +70,8 @@ final class PushBuilder
 		data.level = changed(acked.level, current.level);
 		data.xp = changed(acked.xp, current.xp);
 		data.boosted = changed(acked.boosted, current.boosted);
+		data.quest = current.quest == null ? null
+			: acked.quest == null ? new TreeMap<>(current.quest) : changed(acked.quest, current.quest);
 
 		IngestContract.ItemContainers items = new IngestContract.ItemContainers();
 		items.bank = changedObservation(acked, current, ContainerKind.BANK, sentAt);
@@ -77,7 +82,7 @@ final class PushBuilder
 		boolean headerChanged = !acked.profile.equals(current.profile)
 			|| !Objects.equals(acked.accountType, current.accountType);
 		if (data.varb == null && data.varp == null && data.level == null && data.xp == null
-			&& data.boosted == null && data.items == null && !headerChanged)
+			&& data.boosted == null && data.quest == null && data.items == null && !headerChanged)
 		{
 			return null;
 		}
@@ -134,10 +139,20 @@ final class PushBuilder
 		return obs;
 	}
 
-	private static Map<String, Long> changed(Map<String, Long> before, Map<String, Long> after)
+	/** Both absent, or both present with the same keys: a delta can describe the change. */
+	private static boolean sameKeys(Map<String, ?> before, Map<String, ?> after)
 	{
-		TreeMap<String, Long> out = new TreeMap<>();
-		for (Map.Entry<String, Long> e : after.entrySet())
+		if (before == null || after == null)
+		{
+			return before == after;
+		}
+		return before.keySet().equals(after.keySet());
+	}
+
+	private static <V> Map<String, V> changed(Map<String, V> before, Map<String, V> after)
+	{
+		TreeMap<String, V> out = new TreeMap<>();
+		for (Map.Entry<String, V> e : after.entrySet())
 		{
 			if (!e.getValue().equals(before.get(e.getKey())))
 			{

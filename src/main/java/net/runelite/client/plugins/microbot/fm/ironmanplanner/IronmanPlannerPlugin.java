@@ -14,7 +14,9 @@ import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
+import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -28,14 +30,15 @@ import okhttp3.OkHttpClient;
 
 /**
  * Read-only tracker for the Ironman Planner (ingest contract v1). It reads skills, the
- * manifest's varbits/varps and, when opted in twice (toggle + token scope), the bank mirror,
- * inventory and equipment from Microbot's caches, then sends a full baseline followed by
+ * manifest's varbits/varps, quest states (when the manifest offers {@code quests}) and, when
+ * opted in twice (toggle + token scope), the bank mirror, inventory and equipment from
+ * Microbot's caches, then sends a full baseline followed by
  * acknowledged deltas. It never performs a game action. Reads happen on the client thread;
  * HTTP and the protocol state machine run on the plugin's own single thread.
  */
 @PluginDescriptor(
 	name = PluginDescriptor.Mocrosoft + "Ironman Planner",
-	description = "Read-only: syncs skills, quest/diary varbits and opted-in items to your Ironman Planner server",
+	description = "Read-only: syncs skills, quests, diary varbits and opted-in items to your Ironman Planner server",
 	tags = {"ironman", "tracker", "planner"},
 	authors = {"FelipeMalacarne"},
 	version = IronmanPlannerPlugin.VERSION,
@@ -145,6 +148,7 @@ public class IronmanPlannerPlugin extends Plugin
 		{
 			return;
 		}
+		collector.onGameStateChanged(event.getGameState());
 		// world hops pass through HOPPING/LOADING, not LOGIN_SCREEN, and keep the live epoch
 		if (event.getGameState() == GameState.LOGGED_IN && !collector.inEpoch())
 		{
@@ -155,6 +159,28 @@ public class IronmanPlannerPlugin extends Plugin
 		{
 			collector.endEpoch();
 			logoutRequested = true;
+		}
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		if (collector != null)
+		{
+			collector.onGameTick();
+		}
+	}
+
+	/**
+	 * Quest states derive from vars; this only marks the cached quests dirty. They are re-read
+	 * at the next capture, so at most once per interval however many vars change.
+	 */
+	@Subscribe
+	public void onVarbitChanged(VarbitChanged event)
+	{
+		if (collector != null)
+		{
+			collector.onVarsChanged();
 		}
 	}
 

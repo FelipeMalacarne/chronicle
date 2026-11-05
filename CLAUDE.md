@@ -186,7 +186,8 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 (mapeamento do importador na seção 10, adendo multi-guia na seção 11) · 06 cliente Microbot (plugin,
 contrato de ingest) · 07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC,
 plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por
-agente; decisões em 9.1 e 9.3) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas, v6 vigente) ·
+agente; decisões em 9.1 e 9.3) · 10 modelo de execução (proposta: fatos por fonte, log de eventos,
+tarefas, receitas, planos; decisões E1 a E10 abertas) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas, v6 vigente) ·
 `docs/ui/pergaminho.md` + `pergaminho.tokens.json` (design system).
 `docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.

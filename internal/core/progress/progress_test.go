@@ -706,16 +706,25 @@ func TestPlanMarkBefore(t *testing.T) {
 	g1, _ := loadGuides(t)
 	in := guideInput(g1)
 	in.Verdicts = Verdicts{agility10: rules.Met}
-	in.Marks = map[string]Mark{"a2": {Kind: MarkSkipped}}
-	in.LastStatus = map[string]Status{"a2": Skipped, "a3": AutoDone}
-	// Before b1: a1 (pending), a2 (skipped: kept), a3 (auto_done: kept), a4, a5,
-	// a6 (pending: marked), b0 (enhanced-only: hidden for a classic account).
-	p, ids, err := PlanMarkBefore(in, "b1")
+	in.Marks = map[string]Mark{"a2": {Kind: MarkSkipped}, "a4": {Kind: MarkImplied, ImpliedBy: "a6"}}
+	in.LastStatus = map[string]Status{"a2": Skipped, "a3": AutoDone, "a4": Implied}
+	// Before b1: a1 (pending), a2 (skipped: kept), a3 (auto_done: kept), a4
+	// (implied: confirmed), a5, a6 (pending: marked), b0 (enhanced-only:
+	// hidden for a classic account).
+	p, undo, err := PlanMarkBefore(in, "b1")
 	if err != nil {
 		t.Fatal(err)
 	}
-	if fmt.Sprint(ids) != "[a1 a4 a5 a6]" {
-		t.Fatalf("ids = %v", ids)
+	var got []string
+	for _, u := range undo {
+		prev := "-"
+		if u.Mark != nil {
+			prev = string(u.Mark.Kind) + "<" + u.Mark.ImpliedBy
+		}
+		got = append(got, u.StepID+":"+prev)
+	}
+	if fmt.Sprint(got) != "[a1:- a4:implied<a6 a5:- a6:-]" {
+		t.Fatalf("undo = %v", got)
 	}
 	for _, e := range p.Events {
 		if e.To != ManualDone || e.Cause != CauseUser {
@@ -728,17 +737,24 @@ func TestPlanMarkBefore(t *testing.T) {
 	if _, _, err = PlanMarkBefore(in, "zz"); !errors.Is(err, ErrStepNotFound) {
 		t.Fatalf("missing step: %v", err)
 	}
-	if p, ids, err = PlanMarkBefore(in, "a1"); err != nil || len(ids) != 0 || len(p.Marks) != 0 {
-		t.Fatalf("nothing before a1 = %+v %v %v", p, ids, err)
+	if p, undo, err = PlanMarkBefore(in, "a1"); err != nil || len(undo) != 0 || len(p.Marks) != 0 {
+		t.Fatalf("nothing before a1 = %+v %v %v", p, undo, err)
 	}
 
-	// Undo clears only the manual_done marks of the batch.
+	// The undo restores the previous marks of steps still manual_done: a1
+	// back to pending, a4 back to implied; a2 (skipped since) is left alone.
 	for _, id := range []string{"a1", "a4"} {
 		in.Marks[id] = Mark{Kind: MarkManualDone}
 		in.LastStatus[id] = ManualDone
 	}
-	undo := PlanClearManual(in, []string{"a1", "a2", "a4", "zz"})
-	if len(undo.Marks) != 2 || undo.Marks[0].Mark != nil || len(undo.Events) != 2 || undo.Events[0].To != Pending {
-		t.Fatalf("undo = %+v", undo)
+	back := PlanRestore(in, []MarkChange{
+		{StepID: "a1"}, {StepID: "a2"}, {StepID: "a4", Mark: &Mark{Kind: MarkImplied, ImpliedBy: "a6"}},
+		{StepID: "a1", Mark: &Mark{Kind: MarkSkipped}}, {StepID: "zz"},
+	})
+	if len(back.Marks) != 2 || back.Marks[0].Mark != nil || back.Marks[1].Mark.Kind != MarkImplied {
+		t.Fatalf("restore marks = %+v", back.Marks)
+	}
+	if len(back.Events) != 2 || back.Events[0].To != Pending || back.Events[1].To != Implied {
+		t.Fatalf("restore events = %+v", back.Events)
 	}
 }

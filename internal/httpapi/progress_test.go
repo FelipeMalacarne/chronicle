@@ -61,9 +61,17 @@ func (f *fakeProgress) MarkBefore(_ context.Context, accountID, guideID, stepID 
 	return b, err
 }
 
-func (f *fakeProgress) ClearMarks(_ context.Context, accountID, guideID string, ids []string) (storeprogress.BoardView, error) {
+func (f *fakeProgress) RestoreMarks(_ context.Context, accountID, guideID string, rs []storeprogress.MarkRestore) (storeprogress.BoardView, error) {
+	var ids []string
+	for _, r := range rs {
+		id := r.StepID
+		if r.Mark != nil {
+			id += "<" + string(r.Mark.Kind)
+		}
+		ids = append(ids, id)
+	}
 	f.step = strings.Join(ids, ",")
-	return f.board("clear", accountID, guideID)
+	return f.board("restore", accountID, guideID)
 }
 
 func (f *fakeProgress) Objectives(_ context.Context, accountID string) ([]storeprogress.ObjectiveView, error) {
@@ -217,10 +225,10 @@ func TestProgressRoutes(t *testing.T) {
 	if status, body := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"before_step_id":"1"}`); status != http.StatusOK || fake.call != "before" || len(body["marked"].([]any)) != 2 {
 		t.Fatalf("mark before = %d %v", status, body)
 	}
-	if status, _ := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"clear":["0","1"]}`); status != http.StatusOK || fake.call != "clear" || fake.step != "0,1" {
-		t.Fatalf("clear = %d %s", status, fake.step)
+	if status, _ := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"restore":[{"step_id":"0","mark":null},{"step_id":"1","mark":{"kind":"implied","implied_by_step_id":"2"}}]}`); status != http.StatusOK || fake.call != "restore" || fake.step != "0,1<implied" {
+		t.Fatalf("restore = %d %s", status, fake.step)
 	}
-	if status, _ := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"before_step_id":"1","clear":["0"]}`); status != http.StatusBadRequest {
+	if status, _ := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"before_step_id":"1","restore":[{"step_id":"0"}]}`); status != http.StatusBadRequest {
 		t.Fatalf("both = %d", status)
 	}
 	if status, body := do(t, "GET", base+"/progress?account=acc-1", ""); status != http.StatusOK || len(body["routes"].([]any)) != 1 {

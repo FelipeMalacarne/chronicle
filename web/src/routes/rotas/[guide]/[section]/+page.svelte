@@ -21,7 +21,13 @@
 		statusView,
 		type SegmentView
 	} from '#lib/progress/view';
-	import type { Board, ContentStep, ItemRequirement, MarkAction } from '#lib/progress/types';
+	import type {
+		Board,
+		ContentStep,
+		ItemRequirement,
+		MarkAction,
+		MarkRestore
+	} from '#lib/progress/types';
 	import Glyph from '#lib/v4/Glyph.svelte';
 	import ObjectiveChip from '#lib/v4/ObjectiveChip.svelte';
 	import Toast from '#lib/v4/Toast.svelte';
@@ -165,23 +171,23 @@
 
 	/* Marcar tudo antes deste: confirmação inline com a contagem, toast com desfazer. */
 	let confirmBefore = $state<string | null>(null);
-	let batch = $state<{ ids: string[]; ref: string } | null>(null);
+	let batch = $state<{ undo: MarkRestore[]; ref: string } | null>(null);
 	const beforeCount = (id: string) => pendingBefore(board.data?.steps ?? [], id).length;
 	async function markBefore(id: string, ref: string) {
 		if (!account) return;
 		confirmBefore = null;
-		let marked: string[] = [];
+		let undo: MarkRestore[] = [];
 		await write(async () => {
 			const b = await progressApi.markBefore(guideId, account, id);
-			marked = b.marked ?? [];
+			undo = b.undo ?? [];
 			return b;
 		});
-		if (marked.length) batch = { ids: marked, ref };
+		if (undo.length) batch = { undo, ref };
 	}
 	async function undoBatch() {
 		const b = batch;
 		batch = null;
-		if (b && account) await write(() => progressApi.clearMarks(guideId, account, b.ids));
+		if (b && account) await write(() => progressApi.restoreMarks(guideId, account, b.undo));
 	}
 
 	function legCount(seg: SegmentView, shownCount: number): string {
@@ -503,8 +509,8 @@
 				<div class="line confirm">
 					<span class="small"
 						>Marcar {beforeCount(s.id)}
-						{beforeCount(s.id) === 1 ? 'passo anterior' : 'passos anteriores'} como feitos? Feitos, pulados
-						e já marcados ficam como estão.</span
+						{beforeCount(s.id) === 1 ? 'passo anterior' : 'passos anteriores'} como feitos? Presumidos
+						viram feitos; pulados ficam como estão.</span
 					>
 					<button
 						class="btn btn-p btn-s"
@@ -591,7 +597,7 @@
 {#if batch}
 	<Toast
 		title="Marcados"
-		text={`${batch.ids.length} passos antes de ${batch.ref}`}
+		text={`${batch.undo.length} passos antes de ${batch.ref}`}
 		action="desfazer"
 		onaction={undoBatch}
 		onclose={() => (batch = null)}

@@ -164,45 +164,57 @@ func (in GuideInput) statuses(override map[string]*Mark) map[string]Status {
 }
 
 // PlanMarkBefore marks as manual_done every step of the main route that comes
-// before stepID, is visible for the account and is still pending without a
-// mark (the owner catching up with where they are). Done, skipped and marked
-// steps, tracks and the step itself are left as they are. It returns the plan
-// and the ids it marks, so the owner can undo the batch.
-func PlanMarkBefore(in GuideInput, stepID string) (OwnerPlan, []string, error) {
+// before stepID and is visible for the account: the pending ones without a
+// mark and the implied ones (the owner catching up with where they are, and
+// confirming what the cascade presumed). Done and skipped steps, other marks,
+// tracks and the step itself are left as they are. It returns the plan and,
+// per step it marks, the mark it had (nil for none), so the batch can be undone.
+func PlanMarkBefore(in GuideInput, stepID string) (OwnerPlan, []MarkChange, error) {
 	if _, ok := in.Guide.Step(stepID); !ok {
 		return OwnerPlan{}, nil, ErrStepNotFound
 	}
 	status := in.statuses(nil)
 	steps, main := guideSteps(in.Guide)
-	var changes []MarkChange
-	var ids []string
+	var changes, undo []MarkChange
 	for _, st := range steps {
 		if st.ID == stepID {
 			break
 		}
-		if !main[st.ID] || !Visible(st, in.Account) || status[st.ID] != Pending {
+		if !main[st.ID] || !Visible(st, in.Account) {
 			continue
 		}
-		if _, marked := in.Marks[st.ID]; marked {
+		var prev *Mark
+		if m, marked := in.Marks[st.ID]; marked {
+			if m.Kind != MarkImplied {
+				continue
+			}
+			prev = &m
+		} else if status[st.ID] != Pending {
 			continue
 		}
 		changes = append(changes, MarkChange{StepID: st.ID, Mark: &Mark{Kind: MarkManualDone}})
-		ids = append(ids, st.ID)
+		undo = append(undo, MarkChange{StepID: st.ID, Mark: prev})
 	}
 	if len(changes) == 0 {
 		return OwnerPlan{}, nil, nil
 	}
-	return in.plan(changes), ids, nil
+	return in.plan(changes), undo, nil
 }
 
-// PlanClearManual removes the manual_done marks of the given steps (undoing a
-// batch); other marks and unknown ids are left alone.
-func PlanClearManual(in GuideInput, stepIDs []string) OwnerPlan {
+// PlanRestore undoes a batch: each step still marked manual_done gets back
+// the mark it had (nil removes the mark; only implied marks are restored).
+// Steps the owner changed since, and unknown ids, are left alone.
+func PlanRestore(in GuideInput, restores []MarkChange) OwnerPlan {
 	var changes []MarkChange
-	for _, id := range stepIDs {
-		if m, ok := in.Marks[id]; ok && m.Kind == MarkManualDone {
-			changes = append(changes, MarkChange{StepID: id})
+	for _, r := range restores {
+		m, ok := in.Marks[r.StepID]
+		if !ok || m.Kind != MarkManualDone {
+			continue
 		}
+		if r.Mark != nil && (r.Mark.Kind != MarkImplied || r.Mark.ImpliedBy == "") {
+			continue
+		}
+		changes = append(changes, MarkChange{StepID: r.StepID, Mark: r.Mark})
 	}
 	if len(changes) == 0 {
 		return OwnerPlan{}

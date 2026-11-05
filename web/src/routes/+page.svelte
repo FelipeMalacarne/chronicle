@@ -15,7 +15,7 @@
 		segmentsOf,
 		statusView
 	} from '#lib/progress/view';
-	import type { Board, BoardStep, Mark, MarkAction } from '#lib/progress/types';
+	import type { Board, BoardStep, Mark, MarkAction, MarkRestore } from '#lib/progress/types';
 	import BankPanel from '#lib/v4/BankPanel.svelte';
 	import CurrentStep from '#lib/v4/CurrentStep.svelte';
 	import Glyph from '#lib/v4/Glyph.svelte';
@@ -176,10 +176,10 @@
 
 	function undoLast() {
 		if (batch && batch.length && account && guideId) {
-			const ids = batch;
+			const restore = batch;
 			batch = null;
-			toast = { title: 'Desfeito', text: `${ids.length} passos voltaram`, undo: false };
-			void write(() => progressApi.clearMarks(guideId, account, ids));
+			toast = { title: 'Desfeito', text: `${restore.length} passos voltaram`, undo: false };
+			void write(() => progressApi.restoreMarks(guideId, account, restore));
 			return;
 		}
 		const last = undo[undo.length - 1];
@@ -192,7 +192,7 @@
 		void write(() => progressApi.mark(guideId, last.step, account, kind, last.prev?.note));
 	}
 
-	let batch = $state<string[] | null>(null);
+	let batch = $state<MarkRestore[] | null>(null);
 	function pin(stepId: string, before: boolean) {
 		if (!account || !guideId) return;
 		pinning = false;
@@ -204,7 +204,7 @@
 		}
 		void write(async () => {
 			const b = await progressApi.markBefore(guideId, account, stepId);
-			batch = b.marked ?? [];
+			batch = b.undo ?? [];
 			toast = {
 				title: 'Marcados',
 				text: `${batch.length} passos antes de ${ref}`,

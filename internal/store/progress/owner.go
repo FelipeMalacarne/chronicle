@@ -33,8 +33,10 @@ type BoardView struct {
 	Active  bool     `json:"active"`
 	Cursor  *Cursor  `json:"cursor"`
 	Orphans []Orphan `json:"orphans"`
-	// Marked lists the steps a batch marked (MarkBefore), for its undo.
-	Marked []string `json:"marked,omitempty"`
+	// Marked lists the steps a batch marked (MarkBefore); Undo is what
+	// RestoreMarks needs to put each one back.
+	Marked []string      `json:"marked,omitempty"`
+	Undo   []MarkRestore `json:"undo,omitempty"`
 	coreprogress.Board
 }
 
@@ -81,20 +83,34 @@ func (r *Repository) ConfirmImplied(ctx context.Context, accountID, guideID stri
 // MarkBefore marks every pending step before stepID as manual_done and
 // returns the board with the ids it marked.
 func (r *Repository) MarkBefore(ctx context.Context, accountID, guideID, stepID string) (BoardView, error) {
-	var marked []string
+	var undo []coreprogress.MarkChange
 	out, err := r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
-		p, ids, err := coreprogress.PlanMarkBefore(in, stepID)
-		marked = ids
+		p, u, err := coreprogress.PlanMarkBefore(in, stepID)
+		undo = u
 		return p, err
 	})
-	out.Marked = marked
+	for _, u := range undo {
+		out.Marked = append(out.Marked, u.StepID)
+		out.Undo = append(out.Undo, MarkRestore{StepID: u.StepID, Mark: u.Mark})
+	}
 	return out, err
 }
 
-// ClearMarks undoes a batch: it removes the manual_done marks of stepIDs.
-func (r *Repository) ClearMarks(ctx context.Context, accountID, guideID string, stepIDs []string) (BoardView, error) {
+// MarkRestore is one step of a batch undo: the mark it gets back (nil for
+// none; only implied marks are restored).
+type MarkRestore struct {
+	StepID string             `json:"step_id"`
+	Mark   *coreprogress.Mark `json:"mark"`
+}
+
+// RestoreMarks undoes a batch: steps still manual_done get their mark back.
+func (r *Repository) RestoreMarks(ctx context.Context, accountID, guideID string, restores []MarkRestore) (BoardView, error) {
+	changes := make([]coreprogress.MarkChange, 0, len(restores))
+	for _, m := range restores {
+		changes = append(changes, coreprogress.MarkChange{StepID: m.StepID, Mark: m.Mark})
+	}
 	return r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
-		return coreprogress.PlanClearManual(in, stepIDs), nil
+		return coreprogress.PlanRestore(in, changes), nil
 	})
 }
 

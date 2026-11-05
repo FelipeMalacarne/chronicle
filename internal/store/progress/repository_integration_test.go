@@ -484,6 +484,7 @@ func TestMarkBeforePostgres(t *testing.T) {
 		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
 		VALUES ('account-1', 'user-1', 'Example', 'example', 'ironman', 'g1', 'classic');
 		INSERT INTO step_marks (account_id, guide_id, step_id, kind) VALUES ('account-1', 'g1', 'a2', 'skipped');
+		INSERT INTO step_marks (account_id, guide_id, step_id, kind, implied_by_step_id, implied_at) VALUES ('account-1', 'g1', 'a3', 'implied', 'a4', now());
 	`); err != nil {
 		t.Fatal(err)
 	}
@@ -499,9 +500,9 @@ func TestMarkBeforePostgres(t *testing.T) {
 	if n := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE cause = 'user' AND to_status = 'manual_done'`); n != 3 {
 		t.Fatalf("user events = %d", n)
 	}
-	board, err = repo.ClearMarks(ctx, "account-1", "g1", board.Marked)
+	board, err = repo.RestoreMarks(ctx, "account-1", "g1", board.Undo)
 	if err != nil || board.Cursor == nil || board.Cursor.StepID != "a1" {
 		t.Fatalf("undo cursor = %+v, %v", board.Cursor, err)
 	}
-	assertMarks(ctx, t, pool, "g1", map[string]string{"a2": "skipped"})
+	assertMarks(ctx, t, pool, "g1", map[string]string{"a2": "skipped", "a3": "implied:a4"})
 }

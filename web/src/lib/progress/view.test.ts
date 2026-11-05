@@ -416,7 +416,7 @@ test('source band: failed beats stale, rename alert passes through', () => {
 });
 
 test('pending-before counts what the batch would mark', () => {
-	const s = (id: string, status: 'pending' | 'auto_done' | 'skipped', extra = {}) => ({
+	const s = (id: string, status: 'pending' | 'auto_done' | 'skipped' | 'implied', extra = {}) => ({
 		id,
 		status,
 		main: true,
@@ -430,9 +430,10 @@ test('pending-before counts what the batch would mark', () => {
 		s('d', 'pending', { visible: false }),
 		s('t', 'pending', { main: false }),
 		s('e', 'pending'),
+		s('i', 'implied', { mark: { kind: 'implied' as const, implied_by_step_id: 'x' } }),
 		s('x', 'pending')
 	];
-	assert.deepEqual(pendingBefore(steps, 'x'), ['a', 'e']);
+	assert.deepEqual(pendingBefore(steps, 'x'), ['a', 'e', 'i']);
 	assert.deepEqual(pendingBefore(steps, 'a'), []);
 	assert.deepEqual(pendingBefore(steps, 'missing'), []);
 });

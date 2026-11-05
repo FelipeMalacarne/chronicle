@@ -19,7 +19,7 @@ type ProgressService interface {
 	ConfirmImplied(ctx context.Context, accountID, guideID string) (storeprogress.BoardView, error)
 	PinCursor(ctx context.Context, accountID, guideID, stepID string) (storeprogress.BoardView, error)
 	MarkBefore(ctx context.Context, accountID, guideID, stepID string) (storeprogress.BoardView, error)
-	ClearMarks(ctx context.Context, accountID, guideID string, stepIDs []string) (storeprogress.BoardView, error)
+	RestoreMarks(ctx context.Context, accountID, guideID string, restores []storeprogress.MarkRestore) (storeprogress.BoardView, error)
 	Objectives(ctx context.Context, accountID string) ([]storeprogress.ObjectiveView, error)
 	Events(ctx context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error)
 	SetActiveGuide(ctx context.Context, accountID, guideID string) error
@@ -66,11 +66,11 @@ type markRequest struct {
 	Note *string `json:"note,omitempty"`
 }
 
-// batchMarkRequest is either a batch (every pending step before
-// before_step_id becomes manual_done) or its undo (clear those ids).
+// batchMarkRequest is either a batch (every pending or implied step before
+// before_step_id becomes manual_done) or its undo (the board's undo list).
 type batchMarkRequest struct {
-	BeforeStepID string   `json:"before_step_id,omitempty"`
-	Clear        []string `json:"clear,omitempty"`
+	BeforeStepID string                      `json:"before_step_id,omitempty"`
+	Restore      []storeprogress.MarkRestore `json:"restore,omitempty"`
 }
 
 type cursorRequest struct {
@@ -115,14 +115,14 @@ func (s *Server) handleBatchMarks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch {
-	case req.BeforeStepID != "" && len(req.Clear) == 0:
+	case req.BeforeStepID != "" && len(req.Restore) == 0:
 		board, err := s.opts.Progress.MarkBefore(r.Context(), account, r.PathValue("guide"), req.BeforeStepID)
 		s.writeProgress(w, board, err)
-	case req.BeforeStepID == "" && len(req.Clear) > 0 && len(req.Clear) <= 2000:
-		board, err := s.opts.Progress.ClearMarks(r.Context(), account, r.PathValue("guide"), req.Clear)
+	case req.BeforeStepID == "" && len(req.Restore) > 0 && len(req.Restore) <= 2000:
+		board, err := s.opts.Progress.RestoreMarks(r.Context(), account, r.PathValue("guide"), req.Restore)
 		s.writeProgress(w, board, err)
 	default:
-		writeError(w, http.StatusBadRequest, "send either before_step_id or clear (1 to 2000 step ids)")
+		writeError(w, http.StatusBadRequest, "send either before_step_id or restore (1 to 2000 steps)")
 	}
 }
 

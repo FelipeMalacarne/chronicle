@@ -7,6 +7,7 @@ import type {
 	Goal,
 	GuideInfo,
 	MarkAction,
+	MarkRestore,
 	ProgressSummary,
 	Readiness,
 	SetupLookup,
@@ -106,10 +107,10 @@ export const progressApi = {
 			`/guides/${enc(guide)}/marks?account=${enc(account)}`,
 			json('POST', { before_step_id: step })
 		),
-	clearMarks: (guide: string, account: string, steps: string[]) =>
+	restoreMarks: (guide: string, account: string, restore: MarkRestore[]) =>
 		request<Board>(
 			`/guides/${enc(guide)}/marks?account=${enc(account)}`,
-			json('POST', { clear: steps })
+			json('POST', { restore })
 		),
 	confirmImplied: (guide: string, account: string) =>
 		request<Board>(`/guides/${enc(guide)}/implied/confirm?account=${enc(account)}`, json('POST')),

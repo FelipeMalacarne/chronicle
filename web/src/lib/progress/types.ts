@@ -78,8 +78,15 @@ export interface Board {
 	counts: Counts;
 	sections: SectionCounts[];
 	coverage: Coverage;
-	/** Passos marcados por um lote (marcar tudo antes), para o desfazer. */
+	/** Passos marcados por um lote (marcar tudo antes) e como desfazê-lo. */
 	marked?: string[];
+	undo?: MarkRestore[];
+}
+
+/** Um passo do desfazer de um lote: a marca que ele tinha (null: nenhuma). */
+export interface MarkRestore {
+	step_id: string;
+	mark: Mark | null;
 }
 
 export interface GuideSource {

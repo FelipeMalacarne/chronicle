@@ -22,6 +22,15 @@
 		wikisync: 'wikisync'
 	};
 	const sources = $derived(summary?.sources ?? []);
+	/* Na barra estreita só a fonte mais recente; as outras no title e na Conta (v6). */
+	const latest = $derived(
+		[...sources].sort((a, b) => Date.parse(b.last_observed_at) - Date.parse(a.last_observed_at))[0]
+	);
+	const allSources = $derived(
+		sources
+			.map((s) => `${LABEL[s.source] ?? s.source} há ${ago(Date.parse(s.last_observed_at), now)}`)
+			.join(' · ')
+	);
 
 	const items = $derived([
 		{ href: resolve('/'), label: 'Agora', icon: 'agora' as const, on: path === '/' },
@@ -62,6 +71,14 @@
 		</a>
 	{/each}
 	<div class="grow"></div>
+	{#if latest}
+		{@const at = Date.parse(latest.last_observed_at)}
+		<a class="nav one-src" href={resolve('/conta')} title={allSources}
+			><span class="dot" class:dot-w={now - at > STALE_MS}></span>{LABEL[latest.source] ??
+				latest.source}
+			{ago(at, now)}</a
+		>
+	{/if}
 	<p class="ey fontes">Fontes</p>
 	{#each sources as s (s.source)}
 		{@const at = Date.parse(s.last_observed_at)}
@@ -120,7 +137,18 @@
 	.small {
 		font-size: 11px;
 	}
+	.one-src {
+		display: none;
+		gap: 6px;
+		font:
+			400 11px 'JetBrains Mono',
+			monospace;
+	}
 	@media (max-width: 1100px) {
+		.one-src {
+			display: flex;
+			margin-left: auto;
+		}
 		.side {
 			position: static;
 			height: auto;
@@ -139,7 +167,7 @@
 			display: none;
 		}
 		.tema {
-			margin: 0 0 0 auto;
+			margin: 0;
 		}
 	}
 </style>

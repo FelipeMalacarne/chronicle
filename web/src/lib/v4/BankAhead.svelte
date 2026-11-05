@@ -3,11 +3,13 @@
 	import { itemIcon } from '#lib/progress/icons';
 	import { AHEAD_DEFAULT, AHEAD_HORIZONS, aheadView } from '#lib/progress/view';
 	import type { Ahead, BankAction } from '#lib/progress/types';
+	import type { AheadSlot } from '#lib/progress/view';
 
 	/**
-	 * Prévia pelos próximos passos quando o guia não lista o setup do trecho (artboard
-	 * V4AgoraOzirisBanco). É derivada, nunca readiness: não diz "pronto" e as ações de banco
-	 * continuam instrução (regra 8).
+	 * Prévia pelos próximos passos quando o guia não lista o setup do trecho, num registro só
+	 * (v6, V6Agora640): uma frase de resumo, o horizonte, os que faltam primeiro, os grupos por
+	 * passo com o estado na borda do slot, e uma linha de rodapé só quando há algo a dizer. É
+	 * derivada, nunca readiness: não diz "pronto" e as ações de banco continuam instrução (regra 8).
 	 */
 	let {
 		ahead,
@@ -32,20 +34,44 @@
 		}))
 	);
 	const active = $derived(horizon > 0 && horizon < ahead.steps ? horizon : 0);
+	const HOW =
+		'Prévia derivada, não instrução do guia: soma dos itens que os passos da janela pedem, sem os que um passo anterior dela obtém. Quantidade sem número conta 1. Itens de quest que o guia não anota como obtidos aparecem como falta até você pegá-los. Nunca diz "pronto".';
+	const foot = $derived.by(() => {
+		const parts: string[] = [];
+		if (v.obtained.length)
+			parts.push(
+				`No caminho, sem passar no banco: ${v.obtained.map((o) => `${o.name} (${o.from})`).join(', ')}.`
+			);
+		if (bankActions.length)
+			parts.push(
+				`O guia manda: ${bankActions.map((a) => `“${a.text}”`).join(' · ')} no ${firstRef}.`
+			);
+		return parts.join(' ');
+	});
 </script>
 
-<div class="top">
-	<div class="sum">
-		<span class="small">O que os passos pedem a partir de {ahead.from_step_id}, até {v.until}.</span
-		>
-		<div class="cnt">
-			<span><b>{v.counts.total}</b> para levar</span>
-			<span><b>{v.counts.you}</b> com você</span>
-			<span><b>{v.counts.have}</b> no banco</span>
-			<span class="miss"><b>{v.counts.miss}</b> faltam</span>
-			<span><b>{v.counts.unk}</b> não verificáveis</span>
-		</div>
-	</div>
+{#snippet slot(s: AheadSlot)}
+	{@const icon = itemIcon(s.itemId)}
+	<span class="slot {s.cls}" title={[s.name, s.state, s.tip].filter(Boolean).join(' · ')}>
+		<span class="bx">
+			{#if icon}<img class="sp" src={icon} alt="" />{/if}
+			<span class="q">{s.qty}</span>
+			{#if s.ok}<span class="ok"><Glyph name="check" size={11} /></span>{/if}
+		</span>
+		<span class="nm">{s.name}</span>
+	</span>
+{/snippet}
+
+<div class="sum">
+	<span class="small"
+		><b>{v.summary.items}</b>
+		{v.summary.window}{#if v.summary.miss}
+			· <b class="red">{v.summary.miss}</b>{/if}{#if v.summary.unk}
+			· {v.summary.unk}{/if}</span
+	>
+	<span class="fr {bankCls} push"><span class="d"></span>{bankLabel}</span>
+</div>
+<div class="ctl">
 	{#if options.length > 1}
 		<div class="seg" role="group" aria-label="Quantos passos olhar">
 			{#each options as o (o.n)}
@@ -58,109 +84,66 @@
 			{/each}
 		</div>
 	{/if}
-	<span class="badge badge-unk">prévia · nunca “pronto”</span>
+	<button class="how push small" type="button" title={HOW} aria-label="Como a prévia é calculada"
+		>prévia do guia, não setup · como é calculada</button
+	>
 </div>
-<div class="cols">
-	<div class="col">
-		<div class="h">
-			<p class="ey">Levar do banco</p>
-			<span class="fr {bankCls} push"><span class="d"></span>{bankLabel}</span>
-		</div>
-		{#each v.groups as g (g.stepId)}
-			<div class="grp">
-				<div class="gh">
-					<span class="id">{g.stepId}</span><span class="tx">{g.text}</span><span class="w"
-						>{g.when}</span
-					>
-				</div>
-				<div class="slots">
-					{#each g.slots as s, i (i)}
-						{@const icon = itemIcon(s.itemId)}
-						<span class="slot {s.cls}" title={s.tip || undefined}>
-							<span class="bx">
-								{#if icon}<img class="sp" src={icon} alt="" />{/if}
-								<span class="q">{s.qty}</span>
-								{#if s.ok}<span class="ok"><Glyph name="check" size={10} /></span>{/if}
-								{#if s.cls === 'slot-unk'}<span class="qm">?</span>{/if}
-							</span>
-							<span class="nm">{s.name}</span>
-							<span class="stt">{s.state}</span>
-						</span>
-					{/each}
-				</div>
+<div class="groups">
+	{#if v.missing.length}
+		<div class="grp first">
+			<div class="gh">
+				<span class="lbl red">Faltam</span><span class="w">pegue antes de sair do banco</span>
 			</div>
-		{:else}
-			<span class="su small">Nenhum passo desta janela lista itens.</span>
-		{/each}
-	</div>
-	<div class="col side">
-		<div class="col">
-			<div class="h"><p class="ey">Consegue no caminho</p></div>
-			{#each v.obtained as o, i (i)}
-				{@const icon = itemIcon(o.itemId)}
-				<div class="way">
-					{#if icon}<img src={icon} alt="" />{/if}{o.name}<span class="w"
-						>{o.from} obtém<br />usa no {o.use}</span
-					>
-				</div>
-			{:else}
-				<span class="su small">Nada nesta janela.</span>
-			{/each}
-			<span class="su tiny"
-				>Um passo anterior da janela obtém o item. Não precisa sair do banco com ele.</span
-			>
+			<div class="slots">
+				{#each v.missing as s, i (i)}{@render slot(s)}{/each}
+			</div>
 		</div>
-		<div class="col">
-			<div class="h"><p class="ey">O guia manda</p></div>
-			{#each bankActions as a, i (i)}
-				<span class="quote">“{a.text}”</span>
-			{:else}
-				<span class="su small">Nenhuma ação de banco neste trecho.</span>
-			{/each}
-			{#if bankActions.length}
-				<span class="su tiny">instrução do passo {firstRef} · nunca é marcada como feita</span>
-			{/if}
+	{/if}
+	{#each v.groups as g, gi (g.stepId)}
+		<div class="grp" class:first={gi === 0 && !v.missing.length}>
+			<div class="gh">
+				<span class="id">{g.stepId}</span><span class="tx">{g.text}</span><span class="w"
+					>{g.when}</span
+				>
+			</div>
+			<div class="slots">
+				{#each g.slots as s, i (i)}{@render slot(s)}{/each}
+			</div>
 		</div>
-	</div>
+	{:else}
+		<span class="su small">Nenhum passo desta janela lista itens.</span>
+	{/each}
+	{#if foot}<p class="su small foot">{foot}</p>{/if}
 </div>
-<p class="su tiny foot">
-	Prévia derivada, não instrução do guia: soma dos itens listados nos passos da janela, sem os que
-	um passo anterior dela obtém. Quantidade sem número conta 1. Itens de quest que o guia não anota
-	como obtidos aparecem como falta até você pegá-los.
-</p>
 
 <style>
-	.top {
-		padding: 14px 18px 4px;
+	.sum {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 10px 16px;
+		gap: 8px 14px;
+		padding: 12px 16px 6px;
 	}
-	.sum {
-		display: flex;
-		flex-direction: column;
-		gap: 4px;
-		flex: 1 1 360px;
-		min-width: 0;
+	.sum b {
+		font-weight: 600;
 	}
-	.cnt {
+	.ctl {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px 14px;
-		font:
-			400 11px 'JetBrains Mono',
-			ui-monospace,
-			monospace;
-		color: var(--ink-subtle);
+		align-items: center;
+		gap: 8px;
+		padding: 0 16px 10px;
 	}
-	.cnt b {
-		font-weight: 600;
-		color: var(--ink);
+	.how {
+		all: unset;
+		font-size: 13px;
+		color: var(--gold-ink);
+		text-decoration: underline dotted;
+		text-underline-offset: 3px;
+		cursor: help;
 	}
-	.cnt .miss,
-	.cnt .miss b {
-		color: var(--not-started);
+	.push {
+		margin-left: auto;
 	}
 	.seg {
 		display: inline-flex;
@@ -170,8 +153,8 @@
 		box-shadow: var(--bevel);
 	}
 	.seg button {
-		height: 30px;
-		padding: 0 12px;
+		height: 32px;
+		padding: 0 10px;
 		border: 0;
 		background: var(--elevated);
 		color: var(--ink-muted);
@@ -186,54 +169,28 @@
 	.seg .on {
 		background: var(--frame);
 		color: var(--gold);
+		box-shadow: var(--bevel-frame);
 	}
-	.badge {
-		border: 1px dotted var(--ink-subtle);
-	}
-	.cols {
-		padding: 10px 18px 12px;
-		display: grid;
-		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
-		gap: 20px;
-	}
-	@media (max-width: 760px) {
-		.cols {
-			grid-template-columns: minmax(0, 1fr);
-		}
-	}
-	.col {
+	.groups {
+		padding: 0 16px 12px;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		min-width: 0;
-	}
-	.side {
-		gap: 14px;
-	}
-	.h {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		flex-wrap: wrap;
-	}
-	.push {
-		margin-left: auto;
 	}
 	.grp {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		padding: 10px 0;
+		gap: 6px;
+		padding: 8px 0;
 		border-top: 1px solid var(--hairline);
 	}
-	.grp:first-of-type {
+	.grp.first {
 		border-top: 0;
 		padding-top: 0;
 	}
 	.gh {
 		display: flex;
 		align-items: baseline;
-		gap: 10px;
+		gap: 8px;
 		min-width: 0;
 	}
 	.gh .id,
@@ -259,59 +216,15 @@
 	.slots {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 8px 6px;
-	}
-	.stt {
-		font:
-			500 10px 'JetBrains Mono',
-			ui-monospace,
-			monospace;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--ink-subtle);
-		text-align: center;
-	}
-	.slot-you .stt {
-		color: var(--done);
-	}
-	.slot-miss .stt {
-		color: var(--not-started);
-	}
-	.way {
-		display: flex;
-		align-items: center;
-		gap: 10px;
-		min-height: 32px;
-		font-size: 13px;
-	}
-	.way img {
-		width: 22px;
-		height: 22px;
-		object-fit: contain;
-		image-rendering: pixelated;
-		flex: 0 0 auto;
-	}
-	.way .w {
-		margin-left: auto;
-		font:
-			400 11px 'JetBrains Mono',
-			ui-monospace,
-			monospace;
-		color: var(--ink-subtle);
-		text-align: right;
+		gap: 8px 4px;
 	}
 	.small {
-		font-size: 12px;
-	}
-	.tiny {
-		font-size: 11px;
-	}
-	.quote {
 		font-size: 13px;
 	}
 	.foot {
-		margin: 0;
-		padding: 0 18px 14px;
-		max-width: 110ch;
+		margin: 8px 0 0;
+		font-size: 12px;
+		border-top: 1px solid var(--hairline);
+		padding-top: 8px;
 	}
 </style>

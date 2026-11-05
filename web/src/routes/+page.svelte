@@ -8,6 +8,7 @@
 	import {
 		chipsOf,
 		eventLines,
+		primaryChip,
 		pct,
 		routeLabel,
 		routesLine,
@@ -25,9 +26,9 @@
 	import Toast from '#lib/v4/Toast.svelte';
 
 	/*
-	 * Agora (V4AgoraOziris / V4AgoraBruh): o cursor da rota ativa como card, o banco do trecho
-	 * em três colunas, os próximos passos do trecho e o que mudou na sessão. Painéis sem fonte
-	 * de dados (metas fixadas, fora da rota ativa, recorrentes, ⌘K) entram nos itens seguintes.
+	 * Agora (V6Agora640 / V6Agora1440): o cursor da rota ativa como card, o que levar do banco,
+	 * os próximos passos do trecho e, só quando têm conteúdo, as metas fixadas e o que mudou na
+	 * sessão; vazios viram uma linha no rodapé. Recorrentes e ⌘K entram nos itens seguintes.
 	 */
 	const account = $derived(session.account);
 	const route = $derived(
@@ -325,7 +326,7 @@
 		</section>
 	{:else}
 		<div class="grid">
-			<div class="mainc">
+			<div class="a-step">
 				{#if step}
 					<CurrentStep
 						{step}
@@ -344,8 +345,10 @@
 				{:else}
 					<p class="su" aria-busy="true">Carregando o passo atual…</p>
 				{/if}
+			</div>
 
-				{#if segment && (segment.bankActions.length || segment.loadout?.inventory?.length || segment.loadout?.equipment?.length || readiness.data?.ahead)}
+			{#if segment && (segment.bankActions.length || segment.loadout?.inventory?.length || segment.loadout?.equipment?.length || readiness.data?.ahead)}
+				<div class="a-bank">
 					<BankPanel
 						readiness={readiness.data?.current ?? null}
 						ahead={readiness.data?.ahead ?? null}
@@ -354,92 +357,84 @@
 						bankActions={segment.bankActions}
 						firstRef={segment.steps[0]?.ref ?? ''}
 					/>
-				{/if}
+				</div>
+			{/if}
 
-				{#if next.length}
-					<section class="next">
-						<div class="nh">
-							<h2 class="ey">
-								Em seguida{segment && segment.steps.length > 1 ? ' · mesmo trecho' : ''}
-							</h2>
-							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaHref = resolve() + âncora -->
-							<a href={rotaHref} class="push small">abrir a seção</a>
-						</div>
-						<div class="rows">
-							{#each next as s (s.id)}
-								{@const b = boardById.get(s.id)}
-								{@const v = statusView(b?.status)}
-								{@const rowChips = chipsOf(s, b).filter((c) => c.role !== 'uses')}
-								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaBase vem de resolve() -->
-								<a class="row" href={`${rotaBase}#passo-${s.id}`}>
-									<span class="st {v.st}"></span><span class="id">{s.ref}</span>
-									<span class="tx">{b?.title ?? s.text}</span>
-									{#if s.layers?.length === 1 && s.layers[0] === 'enhanced'}<span class="badge"
-											>enhanced</span
-										>{/if}
-									{#each rowChips.slice(0, 2) as c (c.role + c.key)}
-										<ObjectiveChip chip={c} small hint={false} link={false} />
-									{/each}
-									{#if rowChips.length > 2}<span class="badge">+{rowChips.length - 2}</span>{/if}
-									{#if s.location}<span class="loc">{s.location}</span>{/if}
+			{#if next.length}
+				<section class="next a-next">
+					<div class="nh">
+						<h2 class="lbl">
+							Em seguida{segment && segment.steps.length > 1 ? ' · mesmo trecho' : ''}
+						</h2>
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaHref = resolve() + âncora -->
+						<a href={rotaHref} class="push small">abrir a seção</a>
+					</div>
+					<div class="rows">
+						{#each next as s (s.id)}
+							{@const b = boardById.get(s.id)}
+							{@const v = statusView(b?.status)}
+							{@const one = primaryChip(chipsOf(s, b))}
+							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- rotaBase vem de resolve() -->
+							<a class="row" href={`${rotaBase}#passo-${s.id}`}>
+								<span class="st {v.st}"></span><span class="id">{s.ref}</span>
+								<span class="tx">{b?.title ?? s.text}</span>
+								{#if s.layers?.length === 1 && s.layers[0] === 'enhanced'}<span class="badge"
+										>enhanced</span
+									>{/if}
+								{#if one.chip}<ObjectiveChip chip={one.chip} small link={false} />{/if}
+								{#if one.more}<span class="badge">+{one.more}</span>{/if}
+								{#if s.location}<span class="loc">{s.location}</span>{/if}
+							</a>
+						{/each}
+					</div>
+				</section>
+			{/if}
+
+			<aside class="a-side">
+				{#if pinned.length}
+					<section class="panel">
+						<div class="plaque">Metas fixadas<span class="r">{pinned.length}</span></div>
+						<div class="pad list">
+							{#each pinned as g (g.id)}
+								{@const here = g.routes.find((r) => r.guide === guideId)}
+								{@const elsewhere = g.routes.filter((r) => r.guide !== guideId)}
+								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da entidade -->
+								<a class="goal" href={`${resolve('/mundo')}?e=${encodeURIComponent(g.ref)}`}>
+									<span class="sr gname">{g.label}</span>
+									<span class="su small"
+										>{here ? `nesta rota: ${here.ref}` : 'não está nesta rota'}{elsewhere.length
+											? ` · ${routesLine(elsewhere, (id) => routeLabel(id, id))}`
+											: ''}</span
+									>
 								</a>
 							{/each}
 						</div>
 					</section>
 				{/if}
-			</div>
-
-			<aside class="side-c">
-				<section class="panel">
-					<div class="plaque">Metas fixadas<span class="r">{pinned.length}</span></div>
-					<div class="pad list">
-						{#each pinned as g (g.id)}
-							{@const here = g.routes.find((r) => r.guide === guideId)}
-							{@const elsewhere = g.routes.filter((r) => r.guide !== guideId)}
-							<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da entidade -->
-							<a class="goal" href={`${resolve('/mundo')}?e=${encodeURIComponent(g.ref)}`}>
-								<span class="sr gname">{g.label}</span>
-								<span class="su small"
-									>{here ? `nesta rota: ${here.ref}` : 'não está nesta rota'}{elsewhere.length
-										? ` · ${routesLine(elsewhere, (id) => routeLabel(id, id))}`
-										: ''}</span
-								>
-							</a>
-						{:else}
-							<span class="su small">Nenhuma meta. Fixe uma entidade no Mundo.</span>
-						{/each}
-					</div>
-				</section>
-				<section class="panel">
-					<div class="plaque">Nesta sessão<span class="r">{lines.length} mudanças</span></div>
-					<div class="pad list">
-						{#each lines as l, i (i)}
-							<div class="rec">
-								{#if l.st === 'badge'}
-									<span class="badge badge-auto">{l.right.split(' · ')[0] || 'fonte'}</span>
-								{:else}
-									<span class="st {l.st} dot12"></span>
-								{/if}
-								{l.text}<span class="w"
-									>{l.st === 'badge' ? l.right.split(' · ').slice(1).join(' · ') : l.right}</span
-								>
-							</div>
-						{:else}
-							<span class="su small"
-								>Nada mudou ainda nesta rota. Marque um passo ou sincronize uma fonte.</span
-							>
-						{/each}
-					</div>
-				</section>
-				<section class="panel">
-					<div class="plaque off">Microbot<span class="r">desligado</span></div>
-					<div class="pad">
-						<span class="su small"
-							>Controle do cliente desligado (MICROBOT_CONTROL=off). O plugin de leitura continua
-							enviando dados.</span
-						>
-					</div>
-				</section>
+				{#if lines.length}
+					<section class="panel">
+						<div class="plaque">Nesta sessão<span class="r">{lines.length} mudanças</span></div>
+						<div class="pad list">
+							{#each lines as l, i (i)}
+								<div class="rec">
+									{#if l.st === 'badge'}
+										<span class="badge badge-auto">{l.right.split(' · ')[0] || 'fonte'}</span>
+									{:else}
+										<span class="st {l.st} dot12"></span>
+									{/if}
+									{l.text}<span class="w"
+										>{l.st === 'badge' ? l.right.split(' · ').slice(1).join(' · ') : l.right}</span
+									>
+								</div>
+							{/each}
+						</div>
+					</section>
+				{/if}
+				<div class="foot-line">
+					{#if !pinned.length}<a href={resolve('/mundo')}>Nenhuma meta fixada</a>{/if}
+					{#if !lines.length}<span>Nesta sessão: nada mudou</span>{/if}
+					<span>Microbot desligado</span>
+				</div>
 			</aside>
 		</div>
 	{/if}
@@ -518,26 +513,47 @@
 		gap: 8px;
 		align-items: center;
 	}
+	/* Estreito: passo, banco, em seguida, rodapé, nesta ordem. Largo (V6Agora1440): passo e
+	   "em seguida" na coluna principal; banco, metas e rodapé na da direita. */
 	.grid {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 20px;
-		align-items: flex-start;
-	}
-	.mainc {
-		flex: 999 1 460px;
-		min-width: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
 	}
-	.side-c {
-		flex: 1 1 300px;
-		max-width: 340px;
+	@media (min-width: 1180px) {
+		.grid {
+			display: grid;
+			grid-template-columns: minmax(0, 1fr) minmax(340px, 440px);
+			grid-template-areas: 'step bank' 'next bank' 'next side';
+			align-items: start;
+		}
+		.a-step {
+			grid-area: step;
+		}
+		.a-bank {
+			grid-area: bank;
+		}
+		.a-next {
+			grid-area: next;
+		}
+		.a-side {
+			grid-area: side;
+		}
+	}
+	.a-side {
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
+	}
+	.foot-line {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 16px;
+		font-size: 12px;
+		color: var(--ink-subtle);
+		padding: 8px 4px 0;
+		border-top: 1px solid var(--hairline);
 	}
 	.next {
 		display: flex;
@@ -586,9 +602,6 @@
 	.dot12 {
 		width: 12px;
 		height: 12px;
-	}
-	.off {
-		color: var(--on-frame-muted);
 	}
 	.push {
 		margin-left: auto;

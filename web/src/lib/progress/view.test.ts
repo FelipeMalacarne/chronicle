@@ -11,6 +11,8 @@ import {
 	blockedBadge,
 	bankColumns,
 	checkboxLine,
+	chipGroups,
+	chipTitle,
 	chipsOf,
 	eventLines,
 	entityVerdict,
@@ -24,6 +26,7 @@ import {
 	pendingBefore,
 	parseKey,
 	plainNotes,
+	primaryChip,
 	routeLabel,
 	routesLine,
 	sectionLabel,
@@ -654,6 +657,19 @@ test('preview of the next steps when the guide lists no setup', () => {
 	assert.equal(v.groups[0].slots[0].tip, 'também em 1.1.236');
 	assert.deepEqual(v.counts, { total: 6, you: 1, have: 2, miss: 2, unk: 1 });
 	assert.deepEqual(
+		v.missing.map((m) => [m.name, m.stepId, m.tip]),
+		[
+			['Iron ore', '1.1.223', '1.1.223 · tem 1 de 2'],
+			['Ghost skull', '1.1.223', '1.1.223 · falta']
+		]
+	);
+	assert.deepEqual(v.summary, {
+		items: '6 itens',
+		window: 'nos próximos 30 passos',
+		miss: '2 faltam',
+		unk: '1 sem id'
+	});
+	assert.deepEqual(
 		v.obtained.map((o) => o.name),
 		['Fishing rod ×2']
 	);
@@ -662,6 +678,7 @@ test('preview of the next steps when the guide lists no setup', () => {
 	assert.equal(all.groups.length, 2);
 	assert.equal(all.groups[1].slots[0].state, 'não sabemos');
 	assert.equal(all.obtained.length, 2);
+	assert.equal(all.summary.window, 'até 1.1.282');
 	// A horizon past the end of the leg is the whole leg.
 	assert.equal(aheadView(a, 100).until, '1.1.282, fim do trecho');
 });
@@ -692,4 +709,29 @@ test('step notes keep every author note, updates first, without metadata', () =>
 		{ kind: 'hcim', label: 'HCIM', text: 'Bring food.' }
 	]);
 	assert.deepEqual(stepNotes({}), []);
+});
+
+test('v6: chips group by role and a row keeps the most relevant one', () => {
+	const st = step('a', {
+		objectives: [
+			{ key: 'item:1x1', role: 'uses' },
+			{ key: 'quest:b@started', role: 'starts' },
+			{ key: 'skill:agility>=10', role: 'completes' }
+		],
+		names: { 'skill:agility': 'Agility', 'quest:b': 'B', 'item:1': 'Knife' }
+	});
+	const chips = chipsOf(st, undefined);
+	assert.deepEqual(
+		chipGroups(chips).map((g) => [g.label, g.chips.map((c) => c.label)]),
+		[
+			['Conclui', ['10 Agility']],
+			['Inicia', ['B']],
+			['Usa', ['Knife']]
+		]
+	);
+	const one = primaryChip(chips);
+	assert.equal(one.chip?.label, '10 Agility');
+	assert.equal(one.more, 2);
+	assert.equal(primaryChip([]).chip, null);
+	assert.equal(chipTitle(chips[0]), 'usa Knife · não sabemos: sem container · item:1x1');
 });

@@ -203,6 +203,42 @@ export function chipsOf(
 	});
 }
 
+/** Título (hover) do chip: papel, nome, veredito e a chave técnica, fora da tela (v6). */
+export function chipTitle(chip: Chip): string {
+	const verdict =
+		chip.verdict === 'met'
+			? chip.view.hint
+				? `feito, ${chip.view.hint}`
+				: 'feito'
+			: chip.verdict === 'unmet'
+				? 'não atende'
+				: `não sabemos: ${chip.view.hint}`;
+	return `${chip.roleLabel} ${chip.label} · ${verdict} · ${chip.key}`;
+}
+
+const ROLE_ORDER: Role[] = ['completes', 'starts', 'requires', 'uses'];
+const GROUP_LABEL: Record<Role, string> = {
+	completes: 'Conclui',
+	starts: 'Inicia',
+	requires: 'Requer',
+	uses: 'Usa'
+};
+
+/** Chips agrupados por papel, na ordem conclui > inicia > requer > usa; o rótulo vale uma vez por grupo (v6). */
+export function chipGroups(chips: Chip[]): { role: Role; label: string; chips: Chip[] }[] {
+	return ROLE_ORDER.map((role) => ({
+		role,
+		label: GROUP_LABEL[role],
+		chips: chips.filter((c) => c.role === role)
+	})).filter((g) => g.chips.length > 0);
+}
+
+/** Numa linha de passo cabe um chip: o mais relevante (conclui > inicia > requer > usa) e quantos sobram (v6). */
+export function primaryChip(chips: Chip[]): { chip: Chip | null; more: number } {
+	const sorted = [...chips].sort((a, b) => ROLE_ORDER.indexOf(a.role) - ROLE_ORDER.indexOf(b.role));
+	return { chip: sorted[0] ?? null, more: Math.max(0, sorted.length - 1) };
+}
+
 /** Frase de apoio quando algum chip é "não sabemos": de onde virá a fonte. */
 export function unknownHint(chips: Chip[]): string {
 	const kinds = new Set(chips.filter((c) => c.verdict === 'unknown').map((c) => c.kind));
@@ -412,7 +448,7 @@ export function freshnessLabel(
 	const name =
 		container === 'bank' ? 'banco' : container === 'inventory' ? 'inventário' : 'equipamento';
 	if (!f || !f.observed || f.state === 'unavailable')
-		return { label: `${name} · não verificável`, cls: 'fr-un', live: false };
+		return { label: `${name} · sem leitura do plugin`, cls: 'fr-un', live: false };
 	const at = f.observed_at ? Date.parse(f.observed_at) : NaN;
 	if (f.state === 'restored') {
 		return {
@@ -535,6 +571,10 @@ export interface AheadView {
 	groups: { stepId: string; text: string; when: string; slots: AheadSlot[] }[];
 	obtained: { name: string; itemId: number; from: string; use: string }[];
 	counts: { total: number; you: number; have: number; miss: number; unk: number };
+	/** Os que faltam, de todos os passos da janela, para o grupo "Faltam" vir primeiro (v6). */
+	missing: (AheadSlot & { stepId: string })[];
+	/** "18 itens nos próximos 30 passos · 2 faltam · 1 sem id" (v6). */
+	summary: { items: string; window: string; miss: string; unk: string };
 }
 
 /** Os passos da prévia até horizon passos depois do cursor (0: o trecho inteiro). */
@@ -572,7 +612,22 @@ export function aheadView(a: Ahead, horizon: number): AheadView {
 		}));
 	const until =
 		limit === a.steps ? `${a.until_step_id}, fim do trecho` : `${limit} passos à frente`;
-	return { until, groups, obtained, counts };
+	const missing = groups.flatMap((g) =>
+		g.slots
+			.filter((s) => s.cls === 'slot-miss')
+			.map((s) => ({ ...s, stepId: g.stepId, tip: joinTip(`${g.stepId} · ${s.state}`, s.tip) }))
+	);
+	const unresolved = groups.reduce(
+		(n, g) => n + g.slots.filter((s) => s.state === 'sem id').length,
+		0
+	);
+	const summary = {
+		items: counts.total === 1 ? '1 item' : `${counts.total} itens`,
+		window: limit === a.steps ? `até ${a.until_step_id}` : `nos próximos ${limit} passos`,
+		miss: counts.miss === 0 ? '' : counts.miss === 1 ? '1 falta' : `${counts.miss} faltam`,
+		unk: unresolved === 0 ? '' : `${unresolved} sem id`
+	};
+	return { until, groups, obtained, counts, missing, summary };
 }
 
 /** Com você (carregado ao vivo), você tem (banco ou outro container), falta ou não sabemos. */

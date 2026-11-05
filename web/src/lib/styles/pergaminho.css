@@ -104,6 +104,17 @@ body {
 	font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
 	font-variant-numeric: tabular-nums;
 }
+/* Rótulo de grupo (Conclui, Em seguida, Faltam): Inter 12 semibold, caixa normal (v6). */
+.lbl {
+	font-size: 12px;
+	font-weight: 600;
+	color: var(--ink-subtle);
+	margin: 0;
+}
+.lbl.red,
+.red {
+	color: var(--not-started);
+}
 .ey {
 	font-family: 'JetBrains Mono', ui-monospace, monospace;
 	font-size: 11px;
@@ -569,6 +580,9 @@ body {
 	color: var(--ink-muted);
 	text-align: center;
 	line-height: 1.2;
+}
+.slot-you .bx {
+	border-color: var(--done);
 }
 .slot-miss .bx {
 	border-color: var(--not-started);

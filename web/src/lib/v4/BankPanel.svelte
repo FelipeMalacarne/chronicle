@@ -6,10 +6,11 @@
 	import type { Ahead, BankAction, Loadout, SegmentReadiness } from '#lib/progress/types';
 
 	/**
-	 * Banco do trecho em três colunas: com você / no banco / o guia manda (V4AgoraOziris,
-	 * decisão 7 do v4). Ações de banco são instrução e nunca viram passo feito; ausência só é
-	 * afirmada com container live e baseline full (regra 8). Sem setup do guia, mostra a prévia
-	 * pelos próximos passos (BankAhead).
+	 * Setup do trecho em três colunas: com você / no banco / o guia manda (V4AgoraOziris,
+	 * decisão 7 do v4); o estado de readiness vira frase, nunca badge (v6). Ações de banco são
+	 * instrução e nunca viram passo feito; ausência só é afirmada com container live e baseline
+	 * full (regra 8). Sem setup do guia, mostra "Levar do banco", a prévia pelos próximos passos
+	 * (BankAhead).
 	 */
 	let {
 		readiness,
@@ -38,25 +39,13 @@
 	const bank = $derived(freshnessLabel(readiness, 'bank', now));
 	const actions = $derived(readiness?.bank_actions?.length ? readiness.bank_actions : bankActions);
 	const fallback = $derived(loadoutItems(loadout));
-	const STATUS_CLS: Record<string, string> = {
-		ready: 'badge-done',
-		listed_ready: 'badge-done',
-		not_ready: 'badge-red',
-		unknown: 'badge-unk',
-		no_loadout: ''
-	};
 	const partial = $derived((readiness?.loadout_status ?? loadout?.status) === 'partial');
 </script>
 
 <section class="panel">
 	<div class="plaque">
-		Banco · trecho {range}
-		<span class="r">
-			{#if ahead}o guia não lista o setup · prévia pelos próximos passos{:else if readiness}readiness:
-				{readiness.status}{:else}sem leitura do plugin{/if}{partial
-				? ' · o guia lista o setup só em parte'
-				: ''}
-		</span>
+		{#if ahead}Levar do banco<span class="r">até {ahead.until_step_id} · fim do trecho</span
+			>{:else}Setup do trecho<span class="r">{range}</span>{/if}
 	</div>
 	{#if ahead}
 		<BankAhead {ahead} bankActions={actions} {firstRef} bankLabel={bank.label} bankCls={bank.cls} />
@@ -68,8 +57,11 @@
 				{#if cols && cols.total === 0}
 					<span class="mu small">O guia não lista itens para este trecho.</span>
 				{:else if cols}
-					<span class="mu small">{cols.carried} de {cols.total} itens do setup carregados.</span>
-					<span class="badge {STATUS_CLS[readiness?.status ?? ''] ?? ''}">{readiness?.status}</span>
+					<span class="mu small"
+						>{cols.carried} de {cols.total} itens do setup com você{partial
+							? ', e o guia lista o setup só em parte'
+							: ''}.</span
+					>
 				{:else}
 					<span class="mu small"
 						>Sem plugin, o que você carrega não é verificável. Confira à mão.</span
@@ -85,25 +77,25 @@
 					{#if cols}
 						{#each cols.slots as s, i (i)}
 							{@const icon = itemIcon(s.itemId)}
-							<span class="slot {s.cls}">
+							<span class="slot {s.cls}" title={s.suffix ? `${s.name} · ${s.suffix}` : s.name}>
 								<span class="bx">
 									{#if icon}<img class="sp" src={icon} alt="" />{/if}
 									<span class="q">{s.qty}</span>
 									{#if s.ok}<span class="ok"><Glyph name="check" size={10} /></span>{/if}
 									{#if s.cls === 'slot-unk'}<span class="qm">?</span>{/if}
 								</span>
-								<span class="nm">{s.name}{s.suffix ? ` · ${s.suffix}` : ''}</span>
+								<span class="nm">{s.name}</span>
 							</span>
 						{/each}
 					{:else}
 						{#each fallback as it, i (i)}
 							{@const icon = itemIcon(it.item_id ?? it.any_of?.[0])}
-							<span class="slot slot-unk">
+							<span class="slot slot-unk" title="{it.name} · não sabemos: sem leitura do plugin">
 								<span class="bx">
 									{#if icon}<img class="sp" src={icon} alt="" />{/if}
 									<span class="q">{qtyLabel(it.qty)}</span><span class="qm">?</span>
 								</span>
-								<span class="nm">{it.name} · não sabemos</span>
+								<span class="nm">{it.name}</span>
 							</span>
 						{:else}
 							<span class="su small">O guia não lista itens para este trecho.</span>
@@ -112,8 +104,8 @@
 				</div>
 				{#if cols && cols.total > 0}
 					<span class="su tiny">
-						{cols.inBank} no banco · {cols.missing} falta · {cols.unverifiable} não verificáveis{#if cols.unresolved.length}
-							(o catálogo não resolveu {cols.unresolved.map((u) => `"${u}"`).join(' e ')}){/if}.
+						{cols.inBank} no banco · {cols.missing} falta{#if cols.unresolved.length}
+							· sem id: {cols.unresolved.map((u) => `"${u}"`).join(', ')}{/if}.
 					</span>
 				{/if}
 			</div>

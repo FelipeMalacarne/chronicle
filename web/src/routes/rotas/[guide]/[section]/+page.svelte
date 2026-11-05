@@ -9,6 +9,7 @@
 	import {
 		blockedBadge,
 		chipsOf,
+		primaryChip,
 		isParagraphStep,
 		loadoutItems,
 		loadoutLabel,
@@ -546,7 +547,7 @@
 		(s.items?.length ?? 0) +
 		(s.requirements?.length ?? 0) +
 		(seg.steps[0]?.id === s.id ? loadoutItems(seg.loadout).length : 0)}
-	{@const rowChips = chipsOf(s, b).filter((c) => c.role !== 'uses')}
+	{@const one = primaryChip(chipsOf(s, b))}
 	<button
 		id={`passo-${s.id}`}
 		class="row"
@@ -582,13 +583,8 @@
 		{#if stepNotes(s).some((n) => n.kind === 'update')}<span class="badge badge-up"
 				>atualização</span
 			>{:else if plainNotes(s).length}<span class="badge">nota</span>{/if}
-		{#each rowChips.slice(0, 3) as c (c.role + c.key)}<ObjectiveChip
-				chip={c}
-				small
-				hint={false}
-				link={false}
-			/>{/each}
-		{#if rowChips.length > 3}<span class="badge">+{rowChips.length - 3}</span>{/if}
+		{#if one.chip}<ObjectiveChip chip={one.chip} small link={false} />{/if}
+		{#if one.more}<span class="badge">+{one.more}</span>{/if}
 		{#if nItems}<span class="badge">{nItems} {nItems === 1 ? 'item' : 'itens'}</span>{/if}
 	</button>
 	{#if expanded === s.id}{@render expansion(s, seg)}{/if}

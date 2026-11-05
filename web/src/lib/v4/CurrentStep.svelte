@@ -3,13 +3,13 @@
 	import ObjectiveChip from './ObjectiveChip.svelte';
 	import {
 		alsoIn,
+		chipGroups,
 		chipsOf,
 		isParagraphStep,
 		metaOf,
 		paragraphOf,
 		statusView,
-		stepNotes,
-		unknownHint
+		stepNotes
 	} from '#lib/progress/view';
 	import type { BoardStep, ContentStep } from '#lib/progress/types';
 
@@ -48,7 +48,7 @@
 	const chips = $derived(chipsOf(step, board));
 	const completing = $derived(chips.filter((c) => c.role === 'completes' || c.role === 'starts'));
 	const metCount = $derived(completing.filter((c) => c.verdict === 'met').length);
-	const hint = $derived(unknownHint(chips));
+	const groups = $derived(chipGroups(chips));
 	const paragraph = $derived(isParagraphStep(step));
 	const para = $derived(paragraphOf(step.text));
 	const meta = $derived(metaOf(step));
@@ -106,17 +106,23 @@
 					</div>
 				</div>
 			{/if}
-			<div class="chips">
-				{#if completing.length === 0}
-					<span class="obj obj-unk"
-						><span class="v v-unk">?</span>sem objetivo detectável<span class="k"
+			{#if completing.length === 0}
+				<div class="chips">
+					<span
+						class="obj obj-unk"
+						title="Nenhum objetivo detectável neste passo: só a sua marca o conclui"
+						><span class="v v-unk" aria-hidden="true">?</span>sem objetivo detectável<span class="k"
 							>só você conclui</span
 						></span
 					>
-				{/if}
-				{#each chips as c (c.role + c.key)}<ObjectiveChip chip={c} />{/each}
-			</div>
-			{#if hint}<span class="su tiny">{hint}</span>{/if}
+				</div>
+			{/if}
+			{#each groups as g (g.role)}
+				<div class="chips">
+					<span class="lbl">{g.label}</span>
+					{#each g.chips as c (c.key)}<ObjectiveChip chip={c} />{/each}
+				</div>
+			{/each}
 		</div>
 
 		{#if paragraph && para.rest.length}

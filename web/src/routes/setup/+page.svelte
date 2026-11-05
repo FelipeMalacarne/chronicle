@@ -10,7 +10,7 @@
 	import Glyph from '#lib/v6/Glyph.svelte';
 
 	/*
-	 * Primeiro acesso (V4Setup): RSN e modo, camadas do guia, rota inicial e primeiro sync. Um RSN
+	 * Primeiro acesso (V6Setup1440): RSN e modo, camadas do guia, rota inicial e primeiro sync. Um RSN
 	 * que já tem conta entra direto no Agora (decisão do dono, 2026-11-04). Os passos 4 (progresso
 	 * anterior do ironman.guide) e 5 (token do plugin) ficam para uma entrega seguinte. Escolher a
 	 * conta pelo nome não é login: em AUTH_MODE=dev o app só escuta em loopback.
@@ -137,14 +137,14 @@
 <div class="page">
 	<header class="head">
 		<div class="ttl">
-			<p class="ey">Ironman Planner · primeiro acesso · /setup</p>
+			<span
+				class="sr wordmark"
+				title="Uns dois minutos. Tudo que puder ser detectado será; o resto você marca à mão. Já tem conta? Digite o RSN e entre direto."
+				><span class="logo"><Glyph name="book" size={26} /></span>Chronicle
+				<span class="su desc">Ironman Planner · primeiro acesso</span></span
+			>
 			<h1 class="sr">Vamos ligar a conta</h1>
-			<p class="mu">
-				Uns dois minutos. Tudo que puder ser detectado será; o resto você marca à mão. Já tem conta?
-				Digite o RSN e entre direto.
-			</p>
 		</div>
-		<span class="badge badge-auto">AUTH_MODE=dev · só loopback</span>
 	</header>
 
 	{#if failure}
@@ -258,10 +258,8 @@
 						type="button"
 						disabled={step !== 1}
 						aria-pressed={enhanced}
+						title="Enhanced são os passos que o ironman.guide acrescentou ao guia original do Oziris"
 						onclick={() => (enhanced = !enhanced)}>enhanced {enhanced ? '✓' : '· desligado'}</button
-					>
-					<span class="su small"
-						>Enhanced são os passos que o ironman.guide acrescentou ao guia original do Oziris.</span
 					>
 				</div>
 				{#if step === 1}
@@ -274,10 +272,14 @@
 
 			<div class="panel box" class:dim={step !== 2} class:on={step === 2}>
 				<div class="plaque">
-					3 · Rota inicial<span class="r">uma entre N · troca depois sem perder o lugar</span>
+					3 · Rota inicial<span
+						class="r"
+						title="O progresso é da conta, não da rota: o que você fizer seguindo uma vale na outra. Só o cursor e as marcas manuais são por rota."
+						>uma entre N · troca depois sem perder o lugar</span
+					>
 				</div>
 				<div class="pad grid">
-					{#each guides.data?.guides ?? [] as g (g.id)}
+					{#each [...(guides.data?.guides ?? [])].sort( (a, b) => (a.id.startsWith('oziris') ? -1 : b.id.startsWith('oziris') ? 1 : 0) ) as g (g.id)}
 						<label class="opt" class:opt-on={guide === g.id}>
 							<input
 								type="radio"
@@ -295,10 +297,6 @@
 							</span>
 						</label>
 					{/each}
-					<span class="su tiny full"
-						>O progresso é da conta, não da rota: o que você fizer seguindo uma vale na outra. Só o
-						cursor e as marcas manuais são por rota.</span
-					>
 				</div>
 				{#if step === 2}
 					<div class="pad act">
@@ -311,21 +309,21 @@
 			</div>
 
 			<div class="panel box dim">
-				<div class="plaque">4 · Progresso anterior<span class="r">em breve · pulado</span></div>
-				<div class="pad">
-					<span class="su small"
-						>Importar o JSON do ironman.guide (marcas manual_done, causa import) chega numa próxima
-						entrega. Até lá, marque na Rota.</span
+				<div class="plaque">
+					4 · Progresso anterior<span
+						class="r"
+						title="Importar o JSON do ironman.guide chega numa próxima entrega. Até lá, marque na Rota."
+						>import do ironman.guide · em breve</span
 					>
 				</div>
 			</div>
 
 			<div class="panel box dim">
-				<div class="plaque">5 · Plugin do Microbot<span class="r">opcional · pulado</span></div>
-				<div class="pad">
-					<span class="su small"
-						>O token do plugin ainda sai pelo bootstrap de dev. Sem plugin, quests, banco e itens
-						ficam "não sabemos".</span
+				<div class="plaque">
+					5 · Plugin do Microbot<span
+						class="r"
+						title="Em dev o plugin se identifica sem token pelo loopback. Sem plugin, quests, banco e itens ficam “não sabemos”."
+						>opcional · somente leitura</span
 					>
 				</div>
 			</div>
@@ -346,9 +344,6 @@
 					{/if}
 					<span class="badge badge-unk">quests · não sabemos sem leitura do plugin</span>
 					<span class="badge badge-unk">banco · sem plugin</span>
-					<span class="su small"
-						>Depois disso o Agora abre no cursor da rota: o primeiro passo não feito nem pulado.</span
-					>
 				</div>
 				{#if account}
 					<div class="pad act">
@@ -362,8 +357,7 @@
 	</div>
 
 	<p class="su tiny">
-		Fluxo 1 do doc 03: setup → Agora. Guia por OzirisLoL / ironman.guide · So Iron BRUH e
-		ParasailerOSRS. {ICON_ATTRIBUTION}.
+		Guia por OzirisLoL / ironman.guide · So Iron BRUH e ParasailerOSRS. {ICON_ATTRIBUTION}.
 	</p>
 </div>
 
@@ -374,6 +368,7 @@
 		gap: 24px;
 		padding: 16px 16px 24px;
 		max-width: 1440px;
+		box-sizing: border-box;
 	}
 	.head {
 		display: flex;
@@ -390,9 +385,22 @@
 	.ttl h1 {
 		font-size: 32px;
 	}
-	.ttl p.mu {
-		margin: 0;
-		max-width: 70ch;
+	.wordmark {
+		display: inline-flex;
+		align-items: center;
+		gap: 10px;
+		font-size: 22px;
+		color: var(--gold-ink);
+	}
+	.logo {
+		display: inline-flex;
+	}
+	.desc {
+		font:
+			400 12px Inter,
+			system-ui,
+			sans-serif;
+		margin-left: 4px;
 	}
 	.cols {
 		display: flex;

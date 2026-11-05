@@ -144,7 +144,8 @@ func Reevaluate(in Input) Plan {
 // cascade returns the implied marks of the active guide (docs/09 decision
 // 9.1). A trigger is a step that became AutoDone in this reevaluation, outside
 // tracks, whose most recently met completing objective was met while this
-// guide was the active one. Every earlier visible checkbox step of the same
+// guide was the active one, and one of whose completing objectives went from
+// a stored non-met verdict to met in this reevaluation (metAfterObservedUnmet). Every earlier visible checkbox step of the same
 // section that is still Pending and unmarked becomes implied by the nearest
 // later trigger. Because only transitions trigger, an implied mark the owner
 // cleared does not come back.
@@ -160,7 +161,7 @@ func cascade(g *content.Guide, status map[string]Status, in Input, met map[strin
 			if status[st.ID] != AutoDone || lastStatus(in.LastStatus, ref) == AutoDone {
 				continue
 			}
-			if latestMetGuide(st, met) != in.Account.ActiveGuideID {
+			if latestMetGuide(st, met) != in.Account.ActiveGuideID || !metAfterObservedUnmet(st, in.Objectives, met) {
 				continue
 			}
 			for _, prev := range sec.Steps[:i] {
@@ -174,6 +175,22 @@ func cascade(g *content.Guide, status map[string]Status, in Input, met map[strin
 		}
 	}
 	return out
+}
+
+// metAfterObservedUnmet reports whether a completing objective of the step
+// became met in this reevaluation after a stored verdict that was not met:
+// progress the account just made. An objective met at its first observation
+// (a new source or facet reporting what was done long ago, out of the
+// route's order) is history, not progress, and triggers no cascade.
+func metAfterObservedUnmet(st *content.Step, prev, met map[string]ObjectiveRecord) bool {
+	for _, o := range Completing(st) {
+		key := o.Key.String()
+		before := prev[key]
+		if before.Exists && before.Verdict != rules.Met && met[key].Verdict == rules.Met {
+			return true
+		}
+	}
+	return false
 }
 
 // latestMetGuide returns the active guide at the time the most recently met

@@ -406,8 +406,10 @@ func TestReevaluateSharedProgressCascadeAndCursor(t *testing.T) {
 		Registry:     registry(t),
 		State:        rules.PlayerState{Skills: skills(map[string]int{"agility": 10, "fishing": 5})},
 		Observations: obs(t0, "snap-1", Fact{"skill", "agility"}, Fact{"skill", "fishing"}),
-		Account:      Account{ActiveGuideID: "g1", Layer: "classic", Mode: "ironman"},
-		Now:          t1,
+		// Agility 10 was observed unmet before: reaching it now is progress.
+		Objectives: map[string]ObjectiveRecord{agility10: {Exists: true, Verdict: rules.Unmet}},
+		Account:    Account{ActiveGuideID: "g1", Layer: "classic", Mode: "ironman"},
+		Now:        t1,
 	}
 	plan := Reevaluate(in)
 
@@ -466,6 +468,31 @@ func TestReevaluateSharedProgressCascadeAndCursor(t *testing.T) {
 	}
 }
 
+func TestReevaluateFirstObservationDoesNotCascade(t *testing.T) {
+	g1, g2 := loadGuides(t)
+	// A new source reports Agility 10 at its first observation (no stored
+	// verdict): history arriving out of the route's order, not progress.
+	in := Input{
+		Guides:       []*content.Guide{g1, g2},
+		Registry:     registry(t),
+		State:        rules.PlayerState{Skills: skills(map[string]int{"agility": 10})},
+		Observations: obs(t0, "snap-1", Fact{"skill", "agility"}),
+		Account:      Account{ActiveGuideID: "g1", Layer: "classic", Mode: "ironman"},
+		Now:          t1,
+	}
+	plan := Reevaluate(in)
+	if len(plan.Marks) != 0 {
+		t.Fatalf("first observation implied %+v", plan.Marks)
+	}
+	if got := events(plan)[ref("g1", "a3")]; got.To != AutoDone {
+		t.Fatalf("a3 = %+v, want auto_done", got)
+	}
+	// The cursor stays on the first pending step instead of jumping past a3.
+	if cur := cursorsAfter(nil, plan)["g1"]; cur != (CursorRecord{"a1", CursorAuto}) {
+		t.Fatalf("cursor = %+v", cur)
+	}
+}
+
 func TestReevaluateCascadeOnlyForTheRouteThatMetIt(t *testing.T) {
 	g1, g2 := loadGuides(t)
 	metAt := t0
@@ -494,8 +521,10 @@ func TestReevaluateTrackNeverCascades(t *testing.T) {
 		Guides:       []*content.Guide{g1},
 		State:        rules.PlayerState{Skills: skills(map[string]int{"fishing": 20})},
 		Observations: obs(t0, "snap-1", Fact{"skill", "fishing"}),
-		Account:      Account{ActiveGuideID: "g1"},
-		Now:          t1,
+		// Observed unmet before, so only the track rule can stop the cascade.
+		Objectives: map[string]ObjectiveRecord{fishing20: {Exists: true, Verdict: rules.Unmet}},
+		Account:    Account{ActiveGuideID: "g1"},
+		Now:        t1,
 	})
 	if e := events(plan)[ref("g1", "t2")]; e.To != AutoDone {
 		t.Fatalf("t2 event = %+v", e)

@@ -688,6 +688,11 @@ Claude Code, fora do MCP; o relatório conta só as respostas registradas.
     (`met_in_guide_id` do objetivo = rota ativa). Um objetivo cumprido seguindo o Oziris não dispara
     cascata no BRUHsailer;
   - nunca em **tracks** paralelas;
+  - só com **progresso observado** (2026-11-05): algum objetivo que conclui o passo precisa ter um
+    veredito guardado diferente de `met` e virar `met` nesta reavaliação. Um objetivo que já chega
+    `met` na primeira observação (uma fonte ou faceta nova trazendo o que foi feito antes, fora da ordem
+    da rota) é histórico e não dispara cascata. Motivo: a primeira sincronização do plugin 1.1.0 trouxe
+    "Continue Biohazard" (1.1.260) já começado e presumiu 42 passos à frente de onde o dono estava;
   - a marca `implied` aponta para o passo que disparou (`implied_by_step_id`), tem visual próprio e só
     vira feito com a confirmação do dono ("confirmar tudo"). Nunca é `auto_done`.
 

@@ -94,6 +94,16 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 	if _, err = ingest.Manifest(ctx, token.Token); err != nil {
 		t.Fatal(err)
 	}
+	// Agility and the feathers were observed unmet before (an earlier source):
+	// reaching them now is progress, so the cascade runs. A first observation
+	// would be history and cascade nothing (core test
+	// TestReevaluateFirstObservationDoesNotCascade).
+	if _, err = pool.Exec(ctx, `
+		INSERT INTO objective_progress (account_id, objective_key, verdict, evidence)
+		VALUES ('account-1', 'skill:agility>=10', 'unmet', '[]'), ('account-1', 'item:314x120', 'unmet', '[]')
+	`); err != nil {
+		t.Fatal(err)
+	}
 	resp := push(ctx, t, ingest, token.Token, fullPush(1, map[string]int64{"agility": 10}, map[string]int64{"314": 120}))
 	if resp.StepsChanged == nil || *resp.StepsChanged != 3 {
 		t.Fatalf("steps_changed = %v, want 3 (a3, a5 in g1 and c2 in g2)", resp.StepsChanged)

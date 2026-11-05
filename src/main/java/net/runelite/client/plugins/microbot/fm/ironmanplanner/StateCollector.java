@@ -49,6 +49,8 @@ final class StateCollector
 	private Instant bankEventAt;
 	/** Game ticks since login, a hop or a reconnect, capped at {@link #SETTLE_TICKS}. */
 	private int ticksLoggedIn;
+	/** Last real level seen per skill in this epoch, 0 while unknown. */
+	private final Map<Skill, Integer> realLevels = new EnumMap<>(Skill.class);
 
 	StateCollector(Client client)
 	{
@@ -61,6 +63,7 @@ final class StateCollector
 		liveEpoch = "session-" + UUID.randomUUID();
 		bankEventAt = null;
 		ticksLoggedIn = 0;
+		realLevels.clear();
 		quests.reset();
 		bank.reset();
 		inventory.reset();
@@ -78,12 +81,32 @@ final class StateCollector
 		return liveEpoch != null;
 	}
 
-	void onGameTick()
+	/** True on the tick that ends the post-login wait: the state just became readable. */
+	boolean onGameTick()
 	{
 		if (ticksLoggedIn < SETTLE_TICKS)
 		{
 			ticksLoggedIn++;
+			return ticksLoggedIn == SETTLE_TICKS && liveEpoch != null;
 		}
+		return false;
+	}
+
+	/**
+	 * Whether a game event should ask for a capture: only once the post-login wait is over. The
+	 * events of the first ticks are the server sending the state, which the login's full reads
+	 * anyway once {@link #capture} accepts to run.
+	 */
+	boolean readyForEvents()
+	{
+		return liveEpoch != null && ticksLoggedIn >= SETTLE_TICKS && client.getGameState() == GameState.LOGGED_IN;
+	}
+
+	/** Remembers the skill's real level; true when it changed from a level already known. */
+	boolean onStatChanged(Skill skill, int realLevel)
+	{
+		Integer before = realLevels.put(skill, realLevel);
+		return before != null && before != 0 && before != realLevel;
 	}
 
 	/**

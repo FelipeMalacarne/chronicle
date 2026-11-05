@@ -208,6 +208,20 @@ final class SyncEngine
 		nextCheckAt = now;
 	}
 
+	/**
+	 * A game event asks for a capture now instead of at the next periodic check. It only moves
+	 * that check forward: a push in flight, a backoff or a halt still hold it back, and the
+	 * capture is a delta unless a full was already due. Whatever the capture finds, the next
+	 * periodic check is again one interval later, so the safety net skips what events covered.
+	 */
+	void requestCapture(Instant now)
+	{
+		if (now.isBefore(nextCheckAt))
+		{
+			nextCheckAt = now;
+		}
+	}
+
 	IngestContract.Manifest manifest()
 	{
 		return manifest;

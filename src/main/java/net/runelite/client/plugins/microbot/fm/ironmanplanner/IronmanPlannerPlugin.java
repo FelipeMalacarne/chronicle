@@ -16,6 +16,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.callback.ClientThread;
@@ -35,6 +36,11 @@ import okhttp3.OkHttpClient;
  * Microbot's caches, then sends a full baseline followed by
  * acknowledged deltas. It never performs a game action. Reads happen on the client thread;
  * HTTP and the protocol state machine run on the plugin's own single thread.
+ *
+ * <p>Cadence: game events that can change what is sent (a collected container, a listed var,
+ * quest vars, stats) ask {@link CaptureTrigger} for a capture about a second later; the
+ * manifest's {@code interval_seconds} capture stays as a safety net and is pushed back by every
+ * capture.
  */
 @PluginDescriptor(
 	name = PluginDescriptor.Mocrosoft + "Ironman Planner",
@@ -51,6 +57,8 @@ public class IronmanPlannerPlugin extends Plugin
 {
 	static final String VERSION = "1.1.0";
 	private static final long CAPTURE_TIMEOUT_MS = 2_000;
+	/** How often the sync thread looks at the engine: well under {@link CaptureTrigger#DEBOUNCE}. */
+	private static final long TICK_PERIOD_MS = 250;
 
 	@Inject
 	private Client client;
@@ -91,6 +99,11 @@ public class IronmanPlannerPlugin extends Plugin
 
 	private volatile SyncStatus status = notConfigured();
 
+	/** Events from the client thread, drained by the sync thread. */
+	private final CaptureTrigger trigger = new CaptureTrigger();
+	/** What the current manifest makes worth a capture; null ignores every event. */
+	private volatile EventFilter eventFilter;
+
 	@Provides
 	IronmanPlannerConfig provideConfig(ConfigManager configManager)
 	{
@@ -103,6 +116,8 @@ public class IronmanPlannerPlugin extends Plugin
 		log.info("Ironman Planner {} starting", VERSION);
 		collector = new StateCollector(client);
 		status = notConfigured();
+		trigger.clear();
+		eventFilter = null;
 		overlayManager.add(overlay);
 		clientThread.invoke(() ->
 		{
@@ -118,7 +133,7 @@ public class IronmanPlannerPlugin extends Plugin
 			t.setDaemon(true);
 			return t;
 		});
-		executor.scheduleWithFixedDelay(this::tick, 1, 1, TimeUnit.SECONDS);
+		executor.scheduleWithFixedDelay(this::tick, TICK_PERIOD_MS, TICK_PERIOD_MS, TimeUnit.MILLISECONDS);
 	}
 
 	@Override
@@ -134,6 +149,8 @@ public class IronmanPlannerPlugin extends Plugin
 		engineKey = null;
 		lastSnapshot = null;
 		logoutSnapshot = null;
+		eventFilter = null;
+		trigger.clear();
 	}
 
 	SyncStatus getStatus()
@@ -153,11 +170,13 @@ public class IronmanPlannerPlugin extends Plugin
 		if (event.getGameState() == GameState.LOGGED_IN && !collector.inEpoch())
 		{
 			collector.startEpoch();
+			trigger.clear();
 			fullRequested = true;
 		}
 		else if (event.getGameState() == GameState.LOGIN_SCREEN && collector.inEpoch())
 		{
 			collector.endEpoch();
+			trigger.clear();
 			logoutRequested = true;
 		}
 	}
@@ -165,31 +184,64 @@ public class IronmanPlannerPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
-		if (collector != null)
+		if (collector != null && collector.onGameTick())
 		{
-			collector.onGameTick();
+			// the post-login wait just ended: the login's full can be read now, not at the retry
+			trigger.onEvent(CaptureTrigger.Strength.HARD, Instant.now());
 		}
 	}
 
 	/**
-	 * Quest states derive from vars; this only marks the cached quests dirty. They are re-read
-	 * at the next capture, so at most once per interval however many vars change.
+	 * Quest states derive from vars, so any change marks the cached quests dirty; they are
+	 * re-read at the next capture. Whether the change also asks for one is {@link EventFilter#var}.
 	 */
 	@Subscribe
 	public void onVarbitChanged(VarbitChanged event)
 	{
-		if (collector != null)
+		if (collector == null)
 		{
-			collector.onVarsChanged();
+			return;
+		}
+		collector.onVarsChanged();
+		EventFilter filter = eventFilter;
+		if (filter != null && collector.readyForEvents())
+		{
+			trigger.onEvent(filter.var(event.getVarpId(), event.getVarbitId()), Instant.now());
+		}
+	}
+
+	@Subscribe
+	public void onStatChanged(StatChanged event)
+	{
+		if (collector == null)
+		{
+			return;
+		}
+		// tracked from the first ticks on, so the first level-up after login is recognised
+		boolean levelUp = collector.onStatChanged(event.getSkill(), event.getLevel());
+		EventFilter filter = eventFilter;
+		if (filter != null && collector.readyForEvents())
+		{
+			trigger.onEvent(filter.stat(levelUp), Instant.now());
 		}
 	}
 
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged event)
 	{
-		if (collector != null && event.getContainerId() == InventoryID.BANK)
+		if (collector == null)
 		{
-			collector.onBankContainerChanged(Instant.now());
+			return;
+		}
+		Instant now = Instant.now();
+		if (event.getContainerId() == InventoryID.BANK)
+		{
+			collector.onBankContainerChanged(now);
+		}
+		EventFilter filter = eventFilter;
+		if (filter != null && collector.readyForEvents())
+		{
+			trigger.onEvent(filter.container(event.getContainerId(), config), now);
 		}
 	}
 
@@ -212,6 +264,7 @@ public class IronmanPlannerPlugin extends Plugin
 			{
 				engine = null;
 				engineKey = null;
+				eventFilter = null;
 				status = notConfigured();
 				return;
 			}
@@ -223,6 +276,7 @@ public class IronmanPlannerPlugin extends Plugin
 				engineKey = key;
 				lastSnapshot = null;
 				logoutSnapshot = null;
+				eventFilter = null;
 			}
 
 			Instant now = Instant.now();
@@ -240,7 +294,7 @@ public class IronmanPlannerPlugin extends Plugin
 				engine.requestFull(now);
 			}
 
-			switch (engine.next(now))
+			switch (trigger.next(engine, now))
 			{
 				case FETCH_MANIFEST:
 					fetchManifest(base, token);
@@ -271,6 +325,7 @@ public class IronmanPlannerPlugin extends Plugin
 		if (result.status == 200 && result.body != null)
 		{
 			engine.onManifest(result.body, Instant.now());
+			eventFilter = EventFilter.of(engine.manifest());
 		}
 		else
 		{

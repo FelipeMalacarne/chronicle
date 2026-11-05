@@ -9,7 +9,9 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
 )
 
 // Goal errors.
@@ -126,4 +128,52 @@ func (r *Repository) RemoveGoal(ctx context.Context, accountID, goalID string) e
 		return ErrGoalNotFound
 	}
 	return nil
+}
+
+// GoalPlanView is a goal and its plan (F9 part B).
+type GoalPlanView struct {
+	Goal GoalView              `json:"goal"`
+	Plan coreprogress.GoalPlan `json:"plan"`
+}
+
+// GoalPlan computes the plan of one of the account's goals: the closure of
+// its requirements in the catalog against the account's facts, verdicts and
+// marks of every guide (docs/09 section 3).
+func (r *Repository) GoalPlan(ctx context.Context, accountID, goalID string) (GoalPlanView, error) {
+	goals, err := r.Goals(ctx, accountID)
+	if err != nil {
+		return GoalPlanView{}, err
+	}
+	var out GoalPlanView
+	for _, g := range goals {
+		if g.ID == goalID {
+			out.Goal = g
+		}
+	}
+	if out.Goal.ID == "" {
+		return GoalPlanView{}, ErrGoalNotFound
+	}
+	key, err := entities.ParseObjectiveKey(out.Goal.Key)
+	if err != nil {
+		return GoalPlanView{}, fmt.Errorf("%w: %v", ErrInvalidGoal, err)
+	}
+	err = r.inTx(ctx, func(tx pgx.Tx) error {
+		q := r.queries.WithTx(tx)
+		ps, _, loadErr := state.Load(ctx, q, accountID, r.catalog)
+		if loadErr != nil {
+			return loadErr
+		}
+		in := coreprogress.GoalPlanInput{Goal: key, Registry: r.catalog, State: ps}
+		for _, g := range r.content.Guides {
+			gi, _, inErr := r.guideInput(ctx, q, accountID, g.ID, false)
+			if inErr != nil {
+				return inErr
+			}
+			in.Verdicts = gi.Verdicts
+			in.Guides = append(in.Guides, gi)
+		}
+		out.Plan = coreprogress.BuildGoalPlan(in)
+		return nil
+	})
+	return out, err
 }

@@ -506,3 +506,31 @@ func TestMarkBeforePostgres(t *testing.T) {
 	}
 	assertMarks(ctx, t, pool, "g1", map[string]string{"a2": "skipped", "a3": "implied:a4"})
 }
+
+func TestGoalPlanPostgres(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO users (id, subject, username) VALUES ('user-1', 'dev-goal-test', 'dev-goal-test');
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
+		VALUES ('account-1', 'user-1', 'Example', 'example', 'ironman', 'g1', 'classic');
+	`); err != nil {
+		t.Fatal(err)
+	}
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(pool, loadContent(t), catalog)
+	goal, err := repo.AddGoal(ctx, "account-1", "quest:shilo_village@finished", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	v, err := repo.GoalPlan(ctx, "account-1", goal.ID)
+	if err != nil || !v.Plan.Requirements || v.Plan.Total != 5 || v.Plan.Met != 0 || len(v.Plan.Nodes) != 6 {
+		t.Fatalf("plan = %+v, %v", v.Plan, err)
+	}
+	if _, err = repo.GoalPlan(ctx, "account-1", "goal_missing"); !errors.Is(err, ErrGoalNotFound) {
+		t.Fatalf("missing goal: %v", err)
+	}
+}

@@ -27,6 +27,7 @@ type ProgressService interface {
 	Goals(ctx context.Context, accountID string) ([]storeprogress.GoalView, error)
 	AddGoal(ctx context.Context, accountID, key, label string) (storeprogress.GoalView, error)
 	RemoveGoal(ctx context.Context, accountID, goalID string) error
+	GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error)
 }
 
 // routeSummary is one route of the Rotas list: its cursor, counts per section

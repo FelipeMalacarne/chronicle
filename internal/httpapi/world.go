@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 )
 
@@ -185,6 +186,26 @@ func (s *Server) handleRemoveGoal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// goalPlanResponse is a goal (with its names and routes) and its plan.
+type goalPlanResponse struct {
+	Account string                `json:"account"`
+	Goal    goalOut               `json:"goal"`
+	Plan    coreprogress.GoalPlan `json:"plan"`
+}
+
+func (s *Server) handleGoalPlan(w http.ResponseWriter, r *http.Request) {
+	account, ok := accountParam(w, r)
+	if !ok {
+		return
+	}
+	v, err := s.opts.Progress.GoalPlan(r.Context(), account, r.PathValue("id"))
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, goalPlanResponse{Account: account, Goal: s.goalOut(v.Goal), Plan: v.Plan})
 }
 
 func isGoalError(err error) (int, bool) {

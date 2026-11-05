@@ -37,6 +37,12 @@ func TestGoalsAndWorld(t *testing.T) {
 	if status, _ = do(t, "POST", base+"/goals?account=acc-1", `{"objective_key":"skill:agility:70"}`); status != http.StatusBadRequest {
 		t.Fatalf("invalid goal = %d", status)
 	}
+	if code, plan := do(t, "GET", base+"/goals/goal_1/plan?account=acc-1", ""); code != http.StatusOK || plan["plan"].(map[string]any)["total"] != float64(1) || plan["goal"].(map[string]any)["objective_key"] != "quest:monks_friend@finished" {
+		t.Fatalf("plan = %d %v", code, plan)
+	}
+	if status, _ = do(t, "GET", base+"/goals/goal_9/plan?account=acc-1", ""); status != http.StatusNotFound {
+		t.Fatalf("missing plan = %d", status)
+	}
 	if status, _ = do(t, "DELETE", base+"/goals/goal_1?account=acc-1", ""); status != http.StatusNoContent {
 		t.Fatalf("remove goal = %d", status)
 	}

@@ -124,6 +124,7 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("GET /api/goals", s.handleGoals)
 		s.mux.HandleFunc("POST /api/goals", s.handleAddGoal)
 		s.mux.HandleFunc("DELETE /api/goals/{id}", s.handleRemoveGoal)
+		s.mux.HandleFunc("GET /api/goals/{id}/plan", s.handleGoalPlan)
 		s.mux.HandleFunc("GET /api/world", s.handleWorld)
 	}
 	// The setup picks or creates the account by name: dev-mode-only, like

@@ -120,6 +120,17 @@ func (f *fakeProgress) AddGoal(_ context.Context, _, key, label string) (storepr
 	return storeprogress.GoalView{ID: "goal_2", Key: key, Label: label, Status: "active", Verdict: "unknown"}, nil
 }
 
+func (f *fakeProgress) GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error) {
+	goals, err := f.Goals(ctx, accountID)
+	if err != nil {
+		return storeprogress.GoalPlanView{}, err
+	}
+	if goalID != "goal_1" {
+		return storeprogress.GoalPlanView{}, storeprogress.ErrGoalNotFound
+	}
+	return storeprogress.GoalPlanView{Goal: goals[0], Plan: coreprogress.GoalPlan{Goal: goals[0].Key, Requirements: true, Total: 1}}, nil
+}
+
 func (f *fakeProgress) RemoveGoal(_ context.Context, _, goalID string) error {
 	f.call, f.step = "removeGoal", goalID
 	if goalID != "goal_1" {

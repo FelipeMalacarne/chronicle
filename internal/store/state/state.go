@@ -61,6 +61,37 @@ func Load(ctx context.Context, q *storedb.Queries, accountID string, catalog *en
 				ps.BossKC = map[string]int{}
 			}
 			ps.BossKC[f.Key] = v.Score
+		case "diary":
+			area, tier, ok := strings.Cut(f.Key, ":")
+			var v struct {
+				Complete *bool `json:"complete"`
+			}
+			if !ok || json.Unmarshal(f.Value, &v) != nil || v.Complete == nil {
+				continue
+			}
+			if ps.Diaries == nil {
+				ps.Diaries = map[string]map[string]bool{}
+			}
+			if ps.Diaries[area] == nil {
+				ps.Diaries[area] = map[string]bool{}
+			}
+			ps.Diaries[area][tier] = *v.Complete
+		case "varbit", "varp":
+			id, convErr := strconv.Atoi(f.Key)
+			var v struct {
+				Value *int64 `json:"value"`
+			}
+			if convErr != nil || json.Unmarshal(f.Value, &v) != nil || v.Value == nil {
+				continue
+			}
+			target := &ps.Varbits
+			if f.Facet == "varp" {
+				target = &ps.Varps
+			}
+			if *target == nil {
+				*target = map[int]int64{}
+			}
+			(*target)[id] = *v.Value
 		case "item":
 			items = append(items, f)
 			continue

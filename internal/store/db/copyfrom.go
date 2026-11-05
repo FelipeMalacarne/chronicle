@@ -46,13 +46,13 @@ func (q *Queries) InsertContentSteps(ctx context.Context, arg []InsertContentSte
 	return q.db.CopyFrom(ctx, []string{"content_steps"}, []string{"guide_id", "step_id", "section_id", "position", "text_hash", "content_version_id"}, &iteratorForInsertContentSteps{rows: arg})
 }
 
-// iteratorForInsertSnapshotActivities implements pgx.CopyFromSource.
-type iteratorForInsertSnapshotActivities struct {
-	rows                 []InsertSnapshotActivitiesParams
+// iteratorForInsertSnapshotFacts implements pgx.CopyFromSource.
+type iteratorForInsertSnapshotFacts struct {
+	rows                 []InsertSnapshotFactsParams
 	skippedFirstNextCall bool
 }
 
-func (r *iteratorForInsertSnapshotActivities) Next() bool {
+func (r *iteratorForInsertSnapshotFacts) Next() bool {
 	if len(r.rows) == 0 {
 		return false
 	}
@@ -64,162 +64,21 @@ func (r *iteratorForInsertSnapshotActivities) Next() bool {
 	return len(r.rows) > 0
 }
 
-func (r iteratorForInsertSnapshotActivities) Values() ([]interface{}, error) {
+func (r iteratorForInsertSnapshotFacts) Values() ([]interface{}, error) {
 	return []interface{}{
 		r.rows[0].SnapshotID,
-		r.rows[0].Activity,
-		r.rows[0].Score,
-		r.rows[0].Rank,
-	}, nil
-}
-
-func (r iteratorForInsertSnapshotActivities) Err() error {
-	return nil
-}
-
-func (q *Queries) InsertSnapshotActivities(ctx context.Context, arg []InsertSnapshotActivitiesParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"snapshot_activities"}, []string{"snapshot_id", "activity", "score", "rank"}, &iteratorForInsertSnapshotActivities{rows: arg})
-}
-
-// iteratorForInsertSnapshotDiaryTasks implements pgx.CopyFromSource.
-type iteratorForInsertSnapshotDiaryTasks struct {
-	rows                 []InsertSnapshotDiaryTasksParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForInsertSnapshotDiaryTasks) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForInsertSnapshotDiaryTasks) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].SnapshotID,
-		r.rows[0].Area,
-		r.rows[0].Tier,
-		r.rows[0].TaskIndex,
-		r.rows[0].Done,
-	}, nil
-}
-
-func (r iteratorForInsertSnapshotDiaryTasks) Err() error {
-	return nil
-}
-
-func (q *Queries) InsertSnapshotDiaryTasks(ctx context.Context, arg []InsertSnapshotDiaryTasksParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"snapshot_diary_tasks"}, []string{"snapshot_id", "area", "tier", "task_index", "done"}, &iteratorForInsertSnapshotDiaryTasks{rows: arg})
-}
-
-// iteratorForInsertSnapshotQuests implements pgx.CopyFromSource.
-type iteratorForInsertSnapshotQuests struct {
-	rows                 []InsertSnapshotQuestsParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForInsertSnapshotQuests) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForInsertSnapshotQuests) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].SnapshotID,
-		r.rows[0].Quest,
-		r.rows[0].State,
-	}, nil
-}
-
-func (r iteratorForInsertSnapshotQuests) Err() error {
-	return nil
-}
-
-func (q *Queries) InsertSnapshotQuests(ctx context.Context, arg []InsertSnapshotQuestsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"snapshot_quests"}, []string{"snapshot_id", "quest", "state"}, &iteratorForInsertSnapshotQuests{rows: arg})
-}
-
-// iteratorForInsertSnapshotSkills implements pgx.CopyFromSource.
-type iteratorForInsertSnapshotSkills struct {
-	rows                 []InsertSnapshotSkillsParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForInsertSnapshotSkills) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForInsertSnapshotSkills) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].SnapshotID,
-		r.rows[0].Skill,
-		r.rows[0].Level,
-		r.rows[0].Xp,
-		r.rows[0].Rank,
-		r.rows[0].Boosted,
-	}, nil
-}
-
-func (r iteratorForInsertSnapshotSkills) Err() error {
-	return nil
-}
-
-// Normalized rows. Bulk inserts use pgx CopyFrom (sqlc :copyfrom).
-func (q *Queries) InsertSnapshotSkills(ctx context.Context, arg []InsertSnapshotSkillsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"snapshot_skills"}, []string{"snapshot_id", "skill", "level", "xp", "rank", "boosted"}, &iteratorForInsertSnapshotSkills{rows: arg})
-}
-
-// iteratorForInsertSnapshotVars implements pgx.CopyFromSource.
-type iteratorForInsertSnapshotVars struct {
-	rows                 []InsertSnapshotVarsParams
-	skippedFirstNextCall bool
-}
-
-func (r *iteratorForInsertSnapshotVars) Next() bool {
-	if len(r.rows) == 0 {
-		return false
-	}
-	if !r.skippedFirstNextCall {
-		r.skippedFirstNextCall = true
-		return true
-	}
-	r.rows = r.rows[1:]
-	return len(r.rows) > 0
-}
-
-func (r iteratorForInsertSnapshotVars) Values() ([]interface{}, error) {
-	return []interface{}{
-		r.rows[0].SnapshotID,
-		r.rows[0].Kind,
-		r.rows[0].VarID,
+		r.rows[0].Facet,
+		r.rows[0].Key,
 		r.rows[0].Value,
 	}, nil
 }
 
-func (r iteratorForInsertSnapshotVars) Err() error {
+func (r iteratorForInsertSnapshotFacts) Err() error {
 	return nil
 }
 
-func (q *Queries) InsertSnapshotVars(ctx context.Context, arg []InsertSnapshotVarsParams) (int64, error) {
-	return q.db.CopyFrom(ctx, []string{"snapshot_vars"}, []string{"snapshot_id", "kind", "var_id", "value"}, &iteratorForInsertSnapshotVars{rows: arg})
+// Normalized facts (snapshot_facts has the shape of player_state). Bulk
+// inserts use pgx CopyFrom (sqlc :copyfrom).
+func (q *Queries) InsertSnapshotFacts(ctx context.Context, arg []InsertSnapshotFactsParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"snapshot_facts"}, []string{"snapshot_id", "facet", "key", "value"}, &iteratorForInsertSnapshotFacts{rows: arg})
 }

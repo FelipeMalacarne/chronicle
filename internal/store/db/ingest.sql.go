@@ -60,44 +60,6 @@ func (q *Queries) DeletePlayerStateItemsByContainer(ctx context.Context, arg Del
 	return err
 }
 
-const insertSnapshotCollectionLogItem = `-- name: InsertSnapshotCollectionLogItem :exec
-INSERT INTO snapshot_collection_log (snapshot_id, item_id, qty)
-VALUES ($1, $2, $3)
-`
-
-type InsertSnapshotCollectionLogItemParams struct {
-	SnapshotID string `json:"snapshot_id"`
-	ItemID     int32  `json:"item_id"`
-	Qty        int32  `json:"qty"`
-}
-
-func (q *Queries) InsertSnapshotCollectionLogItem(ctx context.Context, arg InsertSnapshotCollectionLogItemParams) error {
-	_, err := q.db.Exec(ctx, insertSnapshotCollectionLogItem, arg.SnapshotID, arg.ItemID, arg.Qty)
-	return err
-}
-
-const insertSnapshotItem = `-- name: InsertSnapshotItem :exec
-INSERT INTO snapshot_items (snapshot_id, container, item_id, qty)
-VALUES ($1, $2, $3, $4)
-`
-
-type InsertSnapshotItemParams struct {
-	SnapshotID string `json:"snapshot_id"`
-	Container  string `json:"container"`
-	ItemID     int32  `json:"item_id"`
-	Qty        int32  `json:"qty"`
-}
-
-func (q *Queries) InsertSnapshotItem(ctx context.Context, arg InsertSnapshotItemParams) error {
-	_, err := q.db.Exec(ctx, insertSnapshotItem,
-		arg.SnapshotID,
-		arg.Container,
-		arg.ItemID,
-		arg.Qty,
-	)
-	return err
-}
-
 const insertSnapshotItemContainer = `-- name: InsertSnapshotItemContainer :exec
 
 INSERT INTO snapshot_item_containers (

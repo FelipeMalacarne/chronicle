@@ -153,7 +153,7 @@ func TestRepositoryPostgresIngestLifecycle(t *testing.T) {
 	if err = pool.QueryRow(ctx, `SELECT count(*) FROM player_state WHERE account_id = 'account-1' AND facet = 'item' AND key = 'bank:4151'`).Scan(&oldFactCount); err != nil {
 		t.Fatal(err)
 	}
-	if err = pool.QueryRow(ctx, `SELECT count(*) FROM snapshot_items WHERE container = 'bank' AND item_id = 4151 AND qty = 0`).Scan(&tombstoneCount); err != nil {
+	if err = pool.QueryRow(ctx, `SELECT count(*) FROM snapshot_facts WHERE facet = 'item' AND key = 'bank:4151' AND value = '{"qty": 0}'`).Scan(&tombstoneCount); err != nil {
 		t.Fatal(err)
 	}
 	if oldFactCount != 0 || tombstoneCount != 1 {

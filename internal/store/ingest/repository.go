@@ -18,7 +18,8 @@ import (
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
 )
 
-const adapterVersion = 1
+// adapterVersion 2: snapshot_facts, quests and diary tiers (migration 0005).
+const adapterVersion = 2
 
 // Service is the transport-facing ingest behavior.
 type Service interface {

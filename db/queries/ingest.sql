@@ -6,14 +6,6 @@ INSERT INTO snapshot_item_containers (
   snapshot_id, container, state, observed_at, revision, live_epoch
 ) VALUES ($1, $2, $3, $4, $5, $6);
 
--- name: InsertSnapshotItem :exec
-INSERT INTO snapshot_items (snapshot_id, container, item_id, qty)
-VALUES ($1, $2, $3, $4);
-
--- name: InsertSnapshotCollectionLogItem :exec
-INSERT INTO snapshot_collection_log (snapshot_id, item_id, qty)
-VALUES ($1, $2, $3);
-
 -- name: UpsertIngestContainerFreshness :one
 INSERT INTO ingest_container_freshness (
   account_id, container, state, observed_at, revision, live_epoch, snapshot_id

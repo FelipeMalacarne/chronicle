@@ -171,41 +171,11 @@ func (q *Queries) InsertSnapshot(ctx context.Context, arg InsertSnapshotParams) 
 	return i, err
 }
 
-type InsertSnapshotActivitiesParams struct {
-	SnapshotID string      `json:"snapshot_id"`
-	Activity   string      `json:"activity"`
-	Score      int64       `json:"score"`
-	Rank       pgtype.Int8 `json:"rank"`
-}
-
-type InsertSnapshotDiaryTasksParams struct {
-	SnapshotID string `json:"snapshot_id"`
-	Area       string `json:"area"`
-	Tier       string `json:"tier"`
-	TaskIndex  int32  `json:"task_index"`
-	Done       bool   `json:"done"`
-}
-
-type InsertSnapshotQuestsParams struct {
-	SnapshotID string `json:"snapshot_id"`
-	Quest      string `json:"quest"`
-	State      string `json:"state"`
-}
-
-type InsertSnapshotSkillsParams struct {
-	SnapshotID string      `json:"snapshot_id"`
-	Skill      string      `json:"skill"`
-	Level      int32       `json:"level"`
-	Xp         pgtype.Int8 `json:"xp"`
-	Rank       pgtype.Int8 `json:"rank"`
-	Boosted    pgtype.Int4 `json:"boosted"`
-}
-
-type InsertSnapshotVarsParams struct {
-	SnapshotID string `json:"snapshot_id"`
-	Kind       string `json:"kind"`
-	VarID      int32  `json:"var_id"`
-	Value      int32  `json:"value"`
+type InsertSnapshotFactsParams struct {
+	SnapshotID string          `json:"snapshot_id"`
+	Facet      string          `json:"facet"`
+	Key        string          `json:"key"`
+	Value      json.RawMessage `json:"value"`
 }
 
 const listLatestSnapshotPerSource = `-- name: ListLatestSnapshotPerSource :many
@@ -248,50 +218,24 @@ func (q *Queries) ListLatestSnapshotPerSource(ctx context.Context, accountID str
 	return items, nil
 }
 
-const listSnapshotQuests = `-- name: ListSnapshotQuests :many
-SELECT snapshot_id, quest, state FROM snapshot_quests WHERE snapshot_id = $1 ORDER BY quest
+const listSnapshotFacts = `-- name: ListSnapshotFacts :many
+SELECT snapshot_id, facet, key, value FROM snapshot_facts WHERE snapshot_id = $1 ORDER BY facet, key
 `
 
-func (q *Queries) ListSnapshotQuests(ctx context.Context, snapshotID string) ([]SnapshotQuest, error) {
-	rows, err := q.db.Query(ctx, listSnapshotQuests, snapshotID)
+func (q *Queries) ListSnapshotFacts(ctx context.Context, snapshotID string) ([]SnapshotFact, error) {
+	rows, err := q.db.Query(ctx, listSnapshotFacts, snapshotID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []SnapshotQuest{}
+	items := []SnapshotFact{}
 	for rows.Next() {
-		var i SnapshotQuest
-		if err := rows.Scan(&i.SnapshotID, &i.Quest, &i.State); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
-const listSnapshotSkills = `-- name: ListSnapshotSkills :many
-SELECT snapshot_id, skill, level, xp, rank, boosted FROM snapshot_skills WHERE snapshot_id = $1 ORDER BY skill
-`
-
-func (q *Queries) ListSnapshotSkills(ctx context.Context, snapshotID string) ([]SnapshotSkill, error) {
-	rows, err := q.db.Query(ctx, listSnapshotSkills, snapshotID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []SnapshotSkill{}
-	for rows.Next() {
-		var i SnapshotSkill
+		var i SnapshotFact
 		if err := rows.Scan(
 			&i.SnapshotID,
-			&i.Skill,
-			&i.Level,
-			&i.Xp,
-			&i.Rank,
-			&i.Boosted,
+			&i.Facet,
+			&i.Key,
+			&i.Value,
 		); err != nil {
 			return nil, err
 		}

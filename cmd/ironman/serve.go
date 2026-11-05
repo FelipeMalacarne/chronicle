@@ -89,7 +89,7 @@ func runServe(parent context.Context) error {
 				}
 				logger.Error("progress: boot indexing failed; continuing", "err", err)
 			}
-			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt)).WithReevaluator(progressRepo)
+			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).WithReevaluator(progressRepo)
 			ingestService, holdings, progressService = repo, repo, progressRepo
 			hiscoresClient := hiscores.New()
 			hiscoresDetector, accountService = hiscoresClient, progressRepo

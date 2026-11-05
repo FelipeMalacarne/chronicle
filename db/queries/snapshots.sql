@@ -42,30 +42,12 @@ WHERE s.account_id = $1
   AND NOT EXISTS (SELECT 1 FROM objective_progress op WHERE op.evidence_snapshot_id = s.id)
   AND NOT EXISTS (SELECT 1 FROM ingest_container_freshness f WHERE f.snapshot_id = s.id);
 
--- Normalized rows. Bulk inserts use pgx CopyFrom (sqlc :copyfrom).
+-- Normalized facts (snapshot_facts has the shape of player_state). Bulk
+-- inserts use pgx CopyFrom (sqlc :copyfrom).
 
--- name: InsertSnapshotSkills :copyfrom
-INSERT INTO snapshot_skills (snapshot_id, skill, level, xp, rank, boosted)
-VALUES ($1, $2, $3, $4, $5, $6);
-
--- name: InsertSnapshotActivities :copyfrom
-INSERT INTO snapshot_activities (snapshot_id, activity, score, rank)
+-- name: InsertSnapshotFacts :copyfrom
+INSERT INTO snapshot_facts (snapshot_id, facet, key, value)
 VALUES ($1, $2, $3, $4);
 
--- name: InsertSnapshotQuests :copyfrom
-INSERT INTO snapshot_quests (snapshot_id, quest, state)
-VALUES ($1, $2, $3);
-
--- name: InsertSnapshotDiaryTasks :copyfrom
-INSERT INTO snapshot_diary_tasks (snapshot_id, area, tier, task_index, done)
-VALUES ($1, $2, $3, $4, $5);
-
--- name: InsertSnapshotVars :copyfrom
-INSERT INTO snapshot_vars (snapshot_id, kind, var_id, value)
-VALUES ($1, $2, $3, $4);
-
--- name: ListSnapshotSkills :many
-SELECT * FROM snapshot_skills WHERE snapshot_id = $1 ORDER BY skill;
-
--- name: ListSnapshotQuests :many
-SELECT * FROM snapshot_quests WHERE snapshot_id = $1 ORDER BY quest;
+-- name: ListSnapshotFacts :many
+SELECT * FROM snapshot_facts WHERE snapshot_id = $1 ORDER BY facet, key;

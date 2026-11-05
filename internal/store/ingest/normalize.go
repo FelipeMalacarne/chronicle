@@ -17,53 +17,95 @@ import (
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
 )
 
+// facts accumulates the snapshot_facts rows of one push; they are copied in
+// one batch after the player_state merge.
+type facts []storedb.InsertSnapshotFactsParams
+
+func (f *facts) add(snapshotID, facet, key string, value json.RawMessage) {
+	*f = append(*f, storedb.InsertSnapshotFactsParams{SnapshotID: snapshotID, Facet: facet, Key: key, Value: value})
+}
+
 func (r *Repository) persistNormalized(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, push coreingest.Push) error {
 	if push.Kind == coreingest.PushFull {
-		for _, facet := range []string{"varbit", "varp", "skill"} {
+		// A full push carries complete var and level maps, so every fact
+		// derived from them is replaced. Quests are replaced only when the
+		// push has data.quest: a plugin before 1.1.0 does not send it.
+		replaced := []string{"varbit", "varp", "skill", coreingest.FacetDiary}
+		if push.Data.Quests != nil {
+			replaced = append(replaced, coreingest.FacetQuest)
+		}
+		for _, facet := range replaced {
 			if err := q.DeletePlayerStateFacet(ctx, storedb.DeletePlayerStateFacetParams{AccountID: accountID, Facet: facet}); err != nil {
 				return fmt.Errorf("replace %s state: %w", facet, err)
 			}
 		}
 	}
-	if err := persistVars(ctx, q, accountID, snapshotID, "varbit", push.Data.Varbits, push.SentAt); err != nil {
+	var rows facts
+	if err := persistVars(ctx, q, &rows, accountID, snapshotID, "varbit", push.Data.Varbits, push.SentAt); err != nil {
 		return err
 	}
-	if err := persistVars(ctx, q, accountID, snapshotID, "varp", push.Data.Varps, push.SentAt); err != nil {
+	if err := persistVars(ctx, q, &rows, accountID, snapshotID, "varp", push.Data.Varps, push.SentAt); err != nil {
 		return err
 	}
-	if err := persistSkills(ctx, q, accountID, snapshotID, push); err != nil {
+	if err := persistDerived(ctx, q, &rows, accountID, snapshotID, coreingest.DiaryFacts(r.definition.Catalog, push.Data.Varbits, push.Data.Varps), push.SentAt); err != nil {
 		return err
 	}
-	if err := r.persistCollectionLog(ctx, q, accountID, snapshotID, push); err != nil {
-		return err
-	}
-	return persistItems(ctx, q, accountID, snapshotID, push)
-}
-
-func persistVars(ctx context.Context, q *storedb.Queries, accountID, snapshotID, kind string, values *coreingest.IntMap, observedAt time.Time) error {
-	if values == nil {
-		return nil
-	}
-	rows := make([]storedb.InsertSnapshotVarsParams, 0, len(*values))
-	for rawID, value := range *values {
-		id, err := parseInt32(rawID)
-		if err != nil || value < math.MinInt32 || value > math.MaxInt32 {
-			return fmt.Errorf("%w: data.%s[%q] is outside PostgreSQL integer range", ErrInvalidPayload, kind, rawID)
-		}
-		rows = append(rows, storedb.InsertSnapshotVarsParams{SnapshotID: snapshotID, Kind: kind, VarID: id, Value: int32(value)})
-		if err := upsertFact(ctx, q, accountID, snapshotID, kind, rawID, map[string]int64{"value": value}, observedAt); err != nil {
+	if push.Data.Quests != nil {
+		// Names outside the catalog are dropped (never guessed); the raw
+		// snapshot keeps them for a later re-normalization.
+		quests, _ := coreingest.QuestFacts(r.definition.Catalog, *push.Data.Quests)
+		if err := persistDerived(ctx, q, &rows, accountID, snapshotID, quests, push.SentAt); err != nil {
 			return err
 		}
 	}
+	if err := persistSkills(ctx, q, &rows, accountID, snapshotID, push); err != nil {
+		return err
+	}
+	if err := r.persistCollectionLog(ctx, q, &rows, accountID, snapshotID, push); err != nil {
+		return err
+	}
+	if err := persistItems(ctx, q, &rows, accountID, snapshotID, push); err != nil {
+		return err
+	}
 	if len(rows) > 0 {
-		if _, err := q.InsertSnapshotVars(ctx, rows); err != nil {
-			return fmt.Errorf("insert normalized %s rows: %w", kind, err)
+		if _, err := q.InsertSnapshotFacts(ctx, rows); err != nil {
+			return fmt.Errorf("insert snapshot facts: %w", err)
 		}
 	}
 	return nil
 }
 
-func persistSkills(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, push coreingest.Push) error {
+func persistVars(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID, kind string, values *coreingest.IntMap, observedAt time.Time) error {
+	if values == nil {
+		return nil
+	}
+	for rawID, value := range *values {
+		if _, err := parseInt32(rawID); err != nil || value < math.MinInt32 || value > math.MaxInt32 {
+			return fmt.Errorf("%w: data.%s[%q] is outside PostgreSQL integer range", ErrInvalidPayload, kind, rawID)
+		}
+		raw, err := upsertFact(ctx, q, accountID, snapshotID, kind, rawID, map[string]int64{"value": value}, observedAt)
+		if err != nil {
+			return err
+		}
+		rows.add(snapshotID, kind, rawID, raw)
+	}
+	return nil
+}
+
+// persistDerived merges facts the core derived from the push (quests resolved
+// to catalog names, diary tiers from the reference varbits).
+func persistDerived(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID string, derived []coreingest.Fact, observedAt time.Time) error {
+	for _, f := range derived {
+		raw, err := upsertFact(ctx, q, accountID, snapshotID, f.Facet, f.Key, f.Value, observedAt)
+		if err != nil {
+			return err
+		}
+		rows.add(snapshotID, f.Facet, f.Key, raw)
+	}
+	return nil
+}
+
+func persistSkills(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID string, push coreingest.Push) error {
 	keys := map[string]struct{}{}
 	for _, values := range []*coreingest.IntMap{push.Data.Levels, push.Data.XP, push.Data.Boosted} {
 		if values != nil {
@@ -72,35 +114,22 @@ func persistSkills(ctx context.Context, q *storedb.Queries, accountID, snapshotI
 			}
 		}
 	}
-	rows := make([]storedb.InsertSnapshotSkillsParams, 0, len(keys))
 	for skill := range keys {
 		value := map[string]int64{}
-		level, hasLevel := mapValue(push.Data.Levels, skill)
-		xp, hasXP := mapValue(push.Data.XP, skill)
-		boosted, hasBoosted := mapValue(push.Data.Boosted, skill)
-		if hasLevel {
+		if level, ok := mapValue(push.Data.Levels, skill); ok {
 			if level < math.MinInt32 || level > math.MaxInt32 {
 				return fmt.Errorf("%w: level[%q] is outside PostgreSQL integer range", ErrInvalidPayload, skill)
 			}
 			value["level"] = level
 		}
-		if hasXP {
+		if xp, ok := mapValue(push.Data.XP, skill); ok {
 			value["xp"] = xp
 		}
-		if hasBoosted {
+		if boosted, ok := mapValue(push.Data.Boosted, skill); ok {
 			if boosted < math.MinInt32 || boosted > math.MaxInt32 {
 				return fmt.Errorf("%w: boosted[%q] is outside PostgreSQL integer range", ErrInvalidPayload, skill)
 			}
 			value["boosted"] = boosted
-		}
-		if hasLevel {
-			rows = append(rows, storedb.InsertSnapshotSkillsParams{
-				SnapshotID: snapshotID,
-				Skill:      skill,
-				Level:      int32(level),
-				Xp:         pgtype.Int8{Int64: xp, Valid: hasXP},
-				Boosted:    pgtype.Int4{Int32: int32(boosted), Valid: hasBoosted},
-			})
 		}
 		rawValue, _ := json.Marshal(value)
 		if err := q.UpsertPlayerStateJSONPatch(ctx, storedb.UpsertPlayerStateJSONPatchParams{
@@ -109,16 +138,12 @@ func persistSkills(ctx context.Context, q *storedb.Queries, accountID, snapshotI
 		}); err != nil {
 			return fmt.Errorf("merge skill %q: %w", skill, err)
 		}
-	}
-	if len(rows) > 0 {
-		if _, err := q.InsertSnapshotSkills(ctx, rows); err != nil {
-			return fmt.Errorf("insert normalized skills: %w", err)
-		}
+		rows.add(snapshotID, "skill", skill, rawValue)
 	}
 	return nil
 }
 
-func (r *Repository) persistCollectionLog(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, push coreingest.Push) error {
+func (r *Repository) persistCollectionLog(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID string, push coreingest.Push) error {
 	if push.Data.CollectionLogSlots == nil {
 		return nil
 	}
@@ -140,19 +165,17 @@ func (r *Repository) persistCollectionLog(ctx context.Context, q *storedb.Querie
 		if itemID < 1 || itemID > math.MaxInt32 {
 			return fmt.Errorf("%w: collection item id %d is outside PostgreSQL integer range", ErrInvalidPayload, itemID)
 		}
-		if err := q.InsertSnapshotCollectionLogItem(ctx, storedb.InsertSnapshotCollectionLogItemParams{
-			SnapshotID: snapshotID, ItemID: int32(itemID), Qty: 1,
-		}); err != nil {
-			return fmt.Errorf("insert collection log item %d: %w", itemID, err)
-		}
-		if err := upsertFact(ctx, q, accountID, snapshotID, "collection_log", strconv.FormatInt(itemID, 10), map[string]int{"qty": 1}, push.SentAt); err != nil {
+		key := strconv.FormatInt(itemID, 10)
+		raw, err := upsertFact(ctx, q, accountID, snapshotID, "collection_log", key, map[string]int{"qty": 1}, push.SentAt)
+		if err != nil {
 			return err
 		}
+		rows.add(snapshotID, "collection_log", key, raw)
 	}
 	return nil
 }
 
-func persistItems(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, push coreingest.Push) error {
+func persistItems(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID string, push coreingest.Push) error {
 	if push.Data.Items == nil {
 		return nil
 	}
@@ -168,14 +191,14 @@ func persistItems(ctx context.Context, q *storedb.Queries, accountID, snapshotID
 		if container.obs == nil {
 			continue
 		}
-		if err := persistItemObservation(ctx, q, accountID, snapshotID, container.name, container.obs, push.Kind); err != nil {
+		if err := persistItemObservation(ctx, q, rows, accountID, snapshotID, container.name, container.obs, push.Kind); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func persistItemObservation(ctx context.Context, q *storedb.Queries, accountID, snapshotID, container string, obs *coreingest.ItemObservation, kind coreingest.PushKind) error {
+func persistItemObservation(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID, container string, obs *coreingest.ItemObservation, kind coreingest.PushKind) error {
 	revision := pgtype.Int8{}
 	if obs.Revision != nil {
 		revision = pgtype.Int8{Int64: *obs.Revision, Valid: true}
@@ -189,15 +212,13 @@ func persistItemObservation(ctx context.Context, q *storedb.Queries, accountID, 
 	}
 	if obs.Quantities != nil {
 		for rawID, qty := range *obs.Quantities {
-			itemID, err := parseInt32(rawID)
-			if err != nil || qty < 0 || qty > math.MaxInt32 {
+			if _, err := parseInt32(rawID); err != nil || qty < 0 || qty > math.MaxInt32 {
 				return fmt.Errorf("%w: %s item %q is outside PostgreSQL integer range", ErrInvalidPayload, container, rawID)
 			}
-			if err := q.InsertSnapshotItem(ctx, storedb.InsertSnapshotItemParams{
-				SnapshotID: snapshotID, Container: container, ItemID: itemID, Qty: int32(qty),
-			}); err != nil {
-				return fmt.Errorf("insert normalized %s item %s: %w", container, rawID, err)
-			}
+			// The snapshot keeps the observation as sent, tombstones (0)
+			// included; the container provenance is snapshot_item_containers.
+			raw, _ := json.Marshal(map[string]int64{"qty": qty})
+			rows.add(snapshotID, "item", container+":"+rawID, raw)
 		}
 	}
 
@@ -236,25 +257,27 @@ func persistItemObservation(ctx context.Context, q *storedb.Queries, accountID, 
 		if obs.State == coreingest.ItemLive {
 			value["live_epoch"] = obs.LiveEpoch
 		}
-		if err := upsertFact(ctx, q, accountID, snapshotID, "item", key, value, obs.ObservedAt); err != nil {
+		if _, err := upsertFact(ctx, q, accountID, snapshotID, "item", key, value, obs.ObservedAt); err != nil {
 			return err
 		}
 	}
 	return nil
 }
 
-func upsertFact(ctx context.Context, q *storedb.Queries, accountID, snapshotID, facet, key string, value any, observedAt time.Time) error {
+// upsertFact merges one plugin fact into player_state and returns its JSON
+// value for the snapshot_facts row.
+func upsertFact(ctx context.Context, q *storedb.Queries, accountID, snapshotID, facet, key string, value any, observedAt time.Time) (json.RawMessage, error) {
 	raw, err := json.Marshal(value)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err := q.UpsertPlayerStateFact(ctx, storedb.UpsertPlayerStateFactParams{
 		AccountID: accountID, Facet: facet, Key: key, Value: raw,
 		Source: "plugin", SnapshotID: snapshotID, ObservedAt: timestamptz(observedAt),
 	}); err != nil {
-		return fmt.Errorf("merge %s %q: %w", facet, key, err)
+		return nil, fmt.Errorf("merge %s %q: %w", facet, key, err)
 	}
-	return nil
+	return raw, nil
 }
 
 func mapValue(values *coreingest.IntMap, key string) (int64, bool) {

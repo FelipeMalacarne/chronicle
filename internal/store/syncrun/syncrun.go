@@ -221,8 +221,7 @@ func (r *Repository) store(ctx context.Context, tx pgx.Tx, accountID, runID stri
 
 func writeFacts(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, facts []hiscores.Fact, now time.Time) error {
 	at := pgtype.Timestamptz{Time: now, Valid: true}
-	var skills []storedb.InsertSnapshotSkillsParams
-	var activities []storedb.InsertSnapshotActivitiesParams
+	rows := make([]storedb.InsertSnapshotFactsParams, 0, len(facts))
 	for _, f := range facts {
 		value, err := json.Marshal(f.Value)
 		if err != nil {
@@ -234,29 +233,19 @@ func writeFacts(ctx context.Context, q *storedb.Queries, accountID, snapshotID s
 			err = q.UpsertPlayerStateJSONPatch(ctx, storedb.UpsertPlayerStateJSONPatchParams{
 				AccountID: accountID, Facet: f.Facet, Key: f.Key, Value: value, Source: Source, SnapshotID: snapshotID, ObservedAt: at,
 			})
-			skills = append(skills, storedb.InsertSnapshotSkillsParams{
-				SnapshotID: snapshotID, Skill: f.Key, Level: int32(f.Value["level"]), Xp: pgtype.Int8{Int64: f.Value["xp"], Valid: true},
-			})
 		default:
 			err = q.UpsertPlayerStateFact(ctx, storedb.UpsertPlayerStateFactParams{
 				AccountID: accountID, Facet: f.Facet, Key: f.Key, Value: value, Source: Source, SnapshotID: snapshotID, ObservedAt: at,
-			})
-			activities = append(activities, storedb.InsertSnapshotActivitiesParams{
-				SnapshotID: snapshotID, Activity: f.Key, Score: f.Value["score"], Rank: pgtype.Int8{Int64: f.Value["rank"], Valid: true},
 			})
 		}
 		if err != nil {
 			return fmt.Errorf("merge %s %s: %w", f.Facet, f.Key, err)
 		}
+		rows = append(rows, storedb.InsertSnapshotFactsParams{SnapshotID: snapshotID, Facet: f.Facet, Key: f.Key, Value: value})
 	}
-	if len(skills) > 0 {
-		if _, err := q.InsertSnapshotSkills(ctx, skills); err != nil {
-			return fmt.Errorf("insert snapshot skills: %w", err)
-		}
-	}
-	if len(activities) > 0 {
-		if _, err := q.InsertSnapshotActivities(ctx, activities); err != nil {
-			return fmt.Errorf("insert snapshot activities: %w", err)
+	if len(rows) > 0 {
+		if _, err := q.InsertSnapshotFacts(ctx, rows); err != nil {
+			return fmt.Errorf("insert snapshot facts: %w", err)
 		}
 	}
 	return nil

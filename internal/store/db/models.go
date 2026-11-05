@@ -167,7 +167,7 @@ type Setting struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
-// Immutable raw snapshots per source. Normalized rows live in snapshot_* tables.
+// Immutable raw snapshots per source. Normalized facts live in snapshot_facts.
 type Snapshot struct {
 	ID             string             `json:"id"`
 	AccountID      string             `json:"account_id"`
@@ -182,38 +182,12 @@ type Snapshot struct {
 	IngestTokenID  pgtype.Text        `json:"ingest_token_id"`
 }
 
-type SnapshotActivity struct {
-	SnapshotID string      `json:"snapshot_id"`
-	Activity   string      `json:"activity"`
-	Score      int64       `json:"score"`
-	Rank       pgtype.Int8 `json:"rank"`
-}
-
-type SnapshotCollectionLog struct {
-	SnapshotID string `json:"snapshot_id"`
-	ItemID     int32  `json:"item_id"`
-	Qty        int32  `json:"qty"`
-}
-
-type SnapshotCombatAchievement struct {
-	SnapshotID string `json:"snapshot_id"`
-	CaID       int32  `json:"ca_id"`
-	Done       bool   `json:"done"`
-}
-
-type SnapshotDiaryTask struct {
-	SnapshotID string `json:"snapshot_id"`
-	Area       string `json:"area"`
-	Tier       string `json:"tier"`
-	TaskIndex  int32  `json:"task_index"`
-	Done       bool   `json:"done"`
-}
-
-type SnapshotItem struct {
-	SnapshotID string `json:"snapshot_id"`
-	Container  string `json:"container"`
-	ItemID     int32  `json:"item_id"`
-	Qty        int32  `json:"qty"`
+// Normalized facts of one snapshot, with the shape of player_state (history for charts and diffs).
+type SnapshotFact struct {
+	SnapshotID string          `json:"snapshot_id"`
+	Facet      string          `json:"facet"`
+	Key        string          `json:"key"`
+	Value      json.RawMessage `json:"value"`
 }
 
 // Immutable per-snapshot availability and provenance for item containers.
@@ -224,28 +198,6 @@ type SnapshotItemContainer struct {
 	ObservedAt pgtype.Timestamptz `json:"observed_at"`
 	Revision   pgtype.Int8        `json:"revision"`
 	LiveEpoch  pgtype.Text        `json:"live_epoch"`
-}
-
-type SnapshotQuest struct {
-	SnapshotID string `json:"snapshot_id"`
-	Quest      string `json:"quest"`
-	State      string `json:"state"`
-}
-
-type SnapshotSkill struct {
-	SnapshotID string      `json:"snapshot_id"`
-	Skill      string      `json:"skill"`
-	Level      int32       `json:"level"`
-	Xp         pgtype.Int8 `json:"xp"`
-	Rank       pgtype.Int8 `json:"rank"`
-	Boosted    pgtype.Int4 `json:"boosted"`
-}
-
-type SnapshotVar struct {
-	SnapshotID string `json:"snapshot_id"`
-	Kind       string `json:"kind"`
-	VarID      int32  `json:"var_id"`
-	Value      int32  `json:"value"`
 }
 
 type StepIDAlias struct {

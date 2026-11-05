@@ -704,6 +704,23 @@ func (r *Registry) Unlock(id string) (*UnlockEntry, bool) {
 	return u, ok
 }
 
+// ProofVars returns the var tests of every unlock that has a proof, sorted by
+// unlock id. With Vars they are the reference vars the ingest manifest asks for.
+func (r *Registry) ProofVars() []VarTest {
+	ids := make([]string, 0, len(r.unlocks))
+	for id, u := range r.unlocks {
+		if u.Proof != nil {
+			ids = append(ids, id)
+		}
+	}
+	sort.Strings(ids)
+	out := make([]VarTest, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, *r.unlocks[id].Proof)
+	}
+	return out
+}
+
 // Location returns a location entry by id.
 func (r *Registry) Location(id string) (*LocationEntry, bool) {
 	l, ok := r.locations[id]

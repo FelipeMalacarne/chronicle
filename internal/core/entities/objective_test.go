@@ -204,6 +204,9 @@ func TestUnlockLocationAndVarCatalogs(t *testing.T) {
 			t.Errorf("ResolveLocation(%q) = %+v", name, res)
 		}
 	}
+	if pv := reg.ProofVars(); len(pv) != 1 || pv[0].Var != Varbit || pv[0].ID != 1 || pv[0].Min == nil {
+		t.Errorf("proof vars = %+v", pv)
+	}
 	if res := reg.ResolveUnlock("fairy rings"); res.Status != Resolved || res.Ref.String() != "unlock:fairy_rings" {
 		t.Errorf("ResolveUnlock = %+v", res)
 	}

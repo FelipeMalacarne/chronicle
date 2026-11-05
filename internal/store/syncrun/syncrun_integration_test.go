@@ -72,8 +72,8 @@ func TestSyncPostgresLifecycle(t *testing.T) {
 	if n := count(ctx, t, pool, `SELECT count(*) FROM player_state WHERE facet = 'skill' AND key = 'fletching'`); n != 0 {
 		t.Fatal("an unranked skill was written as level 1")
 	}
-	if n := count(ctx, t, pool, `SELECT count(*) FROM snapshot_skills`); n == 0 {
-		t.Fatal("no snapshot_skills rows")
+	if n := count(ctx, t, pool, `SELECT count(*) FROM snapshot_facts WHERE facet = 'skill'`); n == 0 {
+		t.Fatal("no skill snapshot_facts rows")
 	}
 	board, err := progress.Board(ctx, "account-1", "g1")
 	if err != nil {

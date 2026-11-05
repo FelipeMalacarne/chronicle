@@ -6,7 +6,8 @@ import type {
 	ContentSection,
 	EventsView,
 	Goal,
-	GoalPlan,
+	GoalPlanResponse,
+	GoalsResponse,
 	GuideInfo,
 	MarkAction,
 	MarkRestore,
@@ -14,8 +15,9 @@ import type {
 	Readiness,
 	SetupLookup,
 	SyncRun,
-	WorldEntity,
-	WorldEntityDetail
+	SyncRunsResponse,
+	WorldEntityDetail,
+	WorldResponse
 } from '../progress/types';
 import { untrack } from 'svelte';
 import { sync, markOk, markFail } from './sync.svelte';
@@ -167,22 +169,21 @@ export const progressApi = {
 			`/guides/${enc(guide)}/cursor?account=${enc(account)}`,
 			json('PUT', { step_id: step })
 		),
-	goals: (account: string) => request<{ goals: Goal[] }>(`/goals?account=${enc(account)}`),
+	goals: (account: string) => request<GoalsResponse>(`/goals?account=${enc(account)}`),
 	addGoal: (account: string, key: string) =>
 		request<Goal>(`/goals?account=${enc(account)}`, json('POST', { objective_key: key })),
 	goalPlan: (account: string, id: string) =>
-		request<{ goal: Goal; plan: GoalPlan }>(`/goals/${enc(id)}/plan?account=${enc(account)}`),
+		request<GoalPlanResponse>(`/goals/${enc(id)}/plan?account=${enc(account)}`),
 	removeGoal: (account: string, id: string) =>
 		request<null>(`/goals/${enc(id)}?account=${enc(account)}`, json('DELETE')),
-	world: (account: string) =>
-		request<{ entities: WorldEntity[] }>(`/world?account=${enc(account)}`),
+	world: (account: string) => request<WorldResponse>(`/world?account=${enc(account)}`),
 	accountState: (account: string) =>
 		request<AccountState>(`/account/state?account=${enc(account)}`),
 	entity: (account: string, ref: string) =>
 		request<WorldEntityDetail>(`/world/entity?account=${enc(account)}&ref=${enc(ref)}`),
 	sync: (account: string) => request<SyncRun>(`/sync?account=${enc(account)}`, json('POST')),
 	syncRuns: (account: string, limit = 5) =>
-		request<{ runs: SyncRun[] }>(`/sync/runs?account=${enc(account)}&limit=${limit}`),
+		request<SyncRunsResponse>(`/sync/runs?account=${enc(account)}&limit=${limit}`),
 	setupLookup: (rsn: string) => request<SetupLookup>(`/setup/lookup?rsn=${enc(rsn)}`),
 	createAccount: (input: { rsn: string; mode: AccountMode; guide_id: string; layer: string }) =>
 		request<AccountView>('/accounts', json('POST', input)),

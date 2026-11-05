@@ -46,6 +46,7 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `just up` / `just down` / `just logs` / `just restart` | the stack used on zaros (`compose.yaml`): images built from the committed HEAD (`git archive`), Postgres + one-shot `migrate` (goose) + app on 127.0.0.1 |
 | `just stack-account-create <rsn>` / `stack-account-guide` / `stack-accounts` / `stack-psql` / `db-backup` | accounts, psql and `pg_dump` (to `backups/`) inside the stack's Postgres, which has no host port |
 | `ironman health` | GET `/api/health` of a running server (container healthcheck; never opens the database) |
+| `DATABASE_URL=... go test ./internal/httpapi -run TestContract -update` | rewrite `web/src/lib/api/contract/`: one real API answer per route the web reads, as `export const fixture = {…} satisfies <web type>`; then `pnpm check`. Without `-update` the test fails when an answer changes shape |
 | `ironman progress check --account <id>` | GET `/api/progress/check` of a running server (`IRONMAN_URL`): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
@@ -182,6 +183,8 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 - `go test ./...` (unit; rule engine uses table tests with fixtures under `internal/core/.../testdata`).
 - Store tests need `DATABASE_URL` (`just db-up`); each test runs in its own throwaway schema; skip when unset.
   CI's `go` job has a Postgres 17 service, so they run there; the progress ones end with `Repository.Check`.
+- Contract: `web/src/lib/progress/types.ts` is still hand-written, but `svelte-check` verifies it against the
+  generated fixtures in `web/src/lib/api/contract/` (never edit those; regenerate with `-update`).
 - `cd web && pnpm check && pnpm test && pnpm lint`; CI runs web, go, migrations (goose up/down/up on
   Postgres 17) and a docker build on `main` (`.github/workflows/ci.yml`).
 - `pnpm` may refuse to run scripts while a lockfile entry is younger than the `minimumReleaseAge` policy;

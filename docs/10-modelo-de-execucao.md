@@ -257,6 +257,17 @@ gerado pelo tygo em `web/src/lib/api/gen/`, `just gen-types` e `git diff --exit-
 por endpoint validadas com Zod. A web deixa de reimplementar regras do servidor: a API manda `done` e
 `before_count` prontos.
 
+Como implementado até agora (fatia f, 2026-11-05): as **fixtures** existem, sem Zod.
+`TestContractPostgres` (`internal/httpapi`) sobe a API real com Postgres e o conteúdo real, faz um push,
+marcas, uma meta e um sync, e grava em `web/src/lib/api/contract/` uma resposta real por rota que a web
+lê, como `export const fixture = {…} satisfies <tipo>`. O `satisfies` faz o `svelte-check` (já no CI)
+recusar campo obrigatório faltando, `null` onde o tipo não aceita, valor fora de uma união e campo que o
+Go manda e o tipo não declara; o teste Go recusa a mudança de forma de uma resposta até alguém rodar
+`-update` e o `pnpm check`. A primeira rodada achou 16 divergências no `types.ts`, todas corrigidas. A
+**geração com tygo** ficou para decisão do dono: os tipos de resposta da API são não exportados no
+`internal/httpapi`, o struct embutido pede `tstype:",extends"`, cada tipo de outro pacote pede um
+mapeamento manual e os nomes do TS e do Go divergem; as fixtures já cobrem a detecção de divergência.
+
 ## 13. Fases
 
 | Fase | Entrega | Pronto quando |

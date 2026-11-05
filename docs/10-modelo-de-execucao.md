@@ -1,7 +1,7 @@
 # 10 — Modelo de execução: fatos, eventos, tarefas, receitas e planos
 
-**Estado: proposta (2026-11-05), aguardando as decisões do dono na seção 14.** Nada deste doc está
-implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
+**Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 (seção 14); a fase 0 está na
+sequência do doc 04, seção 9 (item 17). E5 a E10 continuam abertas.** Nada deste doc está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
 (<https://claude.ai/artifact/EZaKJZKjVAeotQG41rehEU>), seções 5 a 8.
 
@@ -262,10 +262,10 @@ sequência do doc 04, seção 9, quando o dono fechar a seção 14.
 
 | # | Pergunta | Recomendação |
 |---|---|---|
-| E1 | Fatos por fonte com junção pelo maior valor para os monotônicos | sim |
-| E2 | `owner_commands` como log e `step_marks` como projeção | sim |
-| E3 | `progress rebuild --check` no CI, no boot ou só sob demanda | CI e comando; no boot só aviso |
-| E4 | Contrato gerado com tygo + fixtures Zod | sim |
+| E1 | Fatos por fonte com junção pelo maior valor para os monotônicos | **decidida (2026-11-05): sim** |
+| E2 | `owner_commands` como log e `step_marks` como projeção | **decidida (2026-11-05): sim** |
+| E3 | `progress rebuild --check` no CI, no boot ou só sob demanda | **decidida (2026-11-05): CI e comando; no boot só aviso, sem bloquear** |
+| E4 | Contrato gerado com tygo + fixtures Zod | **decidida (2026-11-05): sim** |
 | E5 | Lista inicial de primitivas (`travel`, `bank`, `buy`, `talk`, `interact`, `train`, `manual`) | sim; `quest` depois |
 | E6 | Receitas em `content/recipes/` (git) | sim |
 | E7 | Planos customizados no banco, exportáveis para `content/routes/` | sim |

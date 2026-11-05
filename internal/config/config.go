@@ -8,6 +8,7 @@ package config
 import (
 	"fmt"
 	"log/slog"
+	"net/url"
 	"os"
 	"strconv"
 	"strings"
@@ -41,13 +42,26 @@ type Config struct {
 	// Env: OIDC_CLIENT_ID.
 	OIDCClientID string
 
-	// OIDCRedirectURL is the callback URL registered at the issuer, normally
-	// PUBLIC_BASE_URL + "/auth/callback". Required when AUTH_MODE=oidc.
+	// OIDCRedirectURL is the callback URL registered at the issuer. Defaults to
+	// PUBLIC_BASE_URL + "/auth/callback" when AUTH_MODE=oidc.
 	// Env: OIDC_REDIRECT_URL.
 	OIDCRedirectURL string
 
-	// SessionSecret is the key used to sign/encrypt session cookies. Any long
-	// random string (32+ bytes). Required when AUTH_MODE=oidc.
+	// OIDCAllowedSubjects lists the OIDC `sub` values allowed to log in
+	// (comma separated). A login passes when its subject is listed OR it has
+	// OIDCRequiredRole; AUTH_MODE=oidc needs at least one of the two.
+	// Env: OIDC_ALLOWED_SUBJECTS.
+	OIDCAllowedSubjects []string
+
+	// OIDCRequiredRole is the Zitadel project role that allows a login (read
+	// from the urn:zitadel:iam:org:project[:<id>]:roles claims of the ID token).
+	// Env: OIDC_REQUIRED_ROLE.
+	OIDCRequiredRole string
+
+	// SessionSecret keys the encrypted cookie that carries the login state
+	// (state, nonce, PKCE verifier) between /auth/login and /auth/callback; the
+	// session itself is a random token over the sessions table. 32+ characters
+	// of random data. Required when AUTH_MODE=oidc.
 	// Env: SESSION_SECRET.
 	SessionSecret string
 
@@ -61,8 +75,9 @@ type Config struct {
 	LogLevel string
 
 	// PublicBaseURL is the URL users reach the server at (scheme + host, no
-	// trailing slash), used to build absolute links and the default OIDC
-	// redirect. Optional; defaults to http://localhost<Addr> semantics in the UI.
+	// trailing slash), used to build absolute links, the default OIDC redirect
+	// and the post-logout redirect; an https URL makes the session cookie
+	// Secure. Required when AUTH_MODE=oidc.
 	// Env: PUBLIC_BASE_URL.
 	PublicBaseURL string
 
@@ -103,22 +118,31 @@ func FromLookup(lookup func(string) (string, bool)) (Config, error) {
 		return def
 	}
 	c := Config{
-		Addr:            get("IRONMAN_ADDR", DefaultAddr),
-		DatabaseURL:     get("DATABASE_URL", ""),
-		AuthMode:        strings.ToLower(get("AUTH_MODE", DefaultAuthMode)),
-		OIDCIssuer:      get("OIDC_ISSUER", ""),
-		OIDCClientID:    get("OIDC_CLIENT_ID", ""),
-		OIDCRedirectURL: get("OIDC_REDIRECT_URL", ""),
-		SessionSecret:   get("SESSION_SECRET", ""),
-		ContentDir:      get("CONTENT_DIR", DefaultContentDir),
-		LogLevel:        strings.ToLower(get("LOG_LEVEL", DefaultLogLevel)),
-		PublicBaseURL:   strings.TrimRight(get("PUBLIC_BASE_URL", ""), "/"),
+		Addr:             get("IRONMAN_ADDR", DefaultAddr),
+		DatabaseURL:      get("DATABASE_URL", ""),
+		AuthMode:         strings.ToLower(get("AUTH_MODE", DefaultAuthMode)),
+		OIDCIssuer:       get("OIDC_ISSUER", ""),
+		OIDCClientID:     get("OIDC_CLIENT_ID", ""),
+		OIDCRedirectURL:  get("OIDC_REDIRECT_URL", ""),
+		OIDCRequiredRole: get("OIDC_REQUIRED_ROLE", ""),
+		SessionSecret:    get("SESSION_SECRET", ""),
+		ContentDir:       get("CONTENT_DIR", DefaultContentDir),
+		LogLevel:         strings.ToLower(get("LOG_LEVEL", DefaultLogLevel)),
+		PublicBaseURL:    strings.TrimRight(get("PUBLIC_BASE_URL", ""), "/"),
 	}
 	minutes, err := strconv.Atoi(get("SYNC_HISCORES_MINUTES", strconv.Itoa(DefaultSyncHiscoresMinutes)))
 	if err != nil || minutes < 0 {
 		return c, fmt.Errorf("config: SYNC_HISCORES_MINUTES must be a whole number of minutes, 0 or more")
 	}
 	c.SyncHiscoresMinutes = minutes
+	for _, sub := range strings.Split(get("OIDC_ALLOWED_SUBJECTS", ""), ",") {
+		if sub = strings.TrimSpace(sub); sub != "" {
+			c.OIDCAllowedSubjects = append(c.OIDCAllowedSubjects, sub)
+		}
+	}
+	if c.AuthMode == AuthModeOIDC && c.OIDCRedirectURL == "" && c.PublicBaseURL != "" {
+		c.OIDCRedirectURL = c.PublicBaseURL + "/auth/callback"
+	}
 	if err := c.Validate(); err != nil {
 		return c, err
 	}
@@ -134,7 +158,7 @@ func (c Config) Validate() error {
 		for _, kv := range []struct{ k, v string }{
 			{"OIDC_ISSUER", c.OIDCIssuer},
 			{"OIDC_CLIENT_ID", c.OIDCClientID},
-			{"OIDC_REDIRECT_URL", c.OIDCRedirectURL},
+			{"PUBLIC_BASE_URL", c.PublicBaseURL},
 			{"SESSION_SECRET", c.SessionSecret},
 		} {
 			if kv.v == "" {
@@ -144,6 +168,9 @@ func (c Config) Validate() error {
 		if len(missing) > 0 {
 			return fmt.Errorf("config: AUTH_MODE=oidc requires %s", strings.Join(missing, ", "))
 		}
+		if err := c.validateOIDC(); err != nil {
+			return err
+		}
 	default:
 		return fmt.Errorf("config: AUTH_MODE must be %q or %q, got %q", AuthModeDev, AuthModeOIDC, c.AuthMode)
 	}
@@ -152,6 +179,36 @@ func (c Config) Validate() error {
 	}
 	return nil
 }
+
+// MinSessionSecret is the shortest SESSION_SECRET accepted in AUTH_MODE=oidc.
+const MinSessionSecret = 32
+
+// placeholderSecret is the value .env.example ships with.
+const placeholderSecret = "troque-por-32-bytes-aleatorios-em-hex"
+
+func (c Config) validateOIDC() error {
+	for _, kv := range []struct{ k, v string }{
+		{"OIDC_ISSUER", c.OIDCIssuer},
+		{"PUBLIC_BASE_URL", c.PublicBaseURL},
+		{"OIDC_REDIRECT_URL", c.OIDCRedirectURL},
+	} {
+		u, err := url.Parse(kv.v)
+		if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" {
+			return fmt.Errorf("config: %s must be an absolute http(s) URL, got %q", kv.k, kv.v)
+		}
+	}
+	if len(c.SessionSecret) < MinSessionSecret || c.SessionSecret == placeholderSecret {
+		return fmt.Errorf("config: SESSION_SECRET must be %d+ random characters (openssl rand -hex 32)", MinSessionSecret)
+	}
+	if len(c.OIDCAllowedSubjects) == 0 && c.OIDCRequiredRole == "" {
+		return fmt.Errorf("config: AUTH_MODE=oidc requires OIDC_ALLOWED_SUBJECTS or OIDC_REQUIRED_ROLE (nobody could log in)")
+	}
+	return nil
+}
+
+// SecureCookies reports whether cookies must carry the Secure attribute: the
+// public URL is https.
+func (c Config) SecureCookies() bool { return strings.HasPrefix(c.PublicBaseURL, "https://") }
 
 // SlogLevel parses LogLevel into a slog.Level.
 func (c Config) SlogLevel() (slog.Level, error) {

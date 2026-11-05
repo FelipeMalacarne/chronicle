@@ -13,7 +13,7 @@ final class SyncStatus
 		WAITING_LOGIN("Waiting for login"),
 		SYNCED("Synced"),
 		RETRYING("Offline, retrying"),
-		UNAUTHORIZED("Token rejected"),
+		UNAUTHORIZED("Credential rejected"),
 		REJECTED("Push rejected"),
 		INCOMPATIBLE("Server contract unsupported");
 

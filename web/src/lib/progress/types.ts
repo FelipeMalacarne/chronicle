@@ -78,6 +78,8 @@ export interface Board {
 	counts: Counts;
 	sections: SectionCounts[];
 	coverage: Coverage;
+	/** Passos marcados por um lote (marcar tudo antes), para o desfazer. */
+	marked?: string[];
 }
 
 export interface GuideSource {

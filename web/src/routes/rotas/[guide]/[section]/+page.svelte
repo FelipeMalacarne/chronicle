@@ -13,6 +13,7 @@
 		loadoutLabel,
 		metaOf,
 		pct,
+		pendingBefore,
 		plainNotes,
 		routeLabel,
 		sectionLabel,
@@ -23,6 +24,7 @@
 	import type { Board, ContentStep, ItemRequirement, MarkAction } from '#lib/progress/types';
 	import Glyph from '#lib/v4/Glyph.svelte';
 	import ObjectiveChip from '#lib/v4/ObjectiveChip.svelte';
+	import Toast from '#lib/v4/Toast.svelte';
 
 	/*
 	 * Rota (V4RotaOziris / V4RotaBruh): uma seção agrupada por trecho de banco. O Oziris mostra
@@ -147,6 +149,27 @@
 	const mark = (id: string, kind: MarkAction) =>
 		account && write(() => progressApi.mark(guideId, id, account, kind));
 	const confirmAll = () => account && write(() => progressApi.confirmImplied(guideId, account));
+
+	/* Marcar tudo antes deste: confirmação inline com a contagem, toast com desfazer. */
+	let confirmBefore = $state<string | null>(null);
+	let batch = $state<{ ids: string[]; ref: string } | null>(null);
+	const beforeCount = (id: string) => pendingBefore(board.data?.steps ?? [], id).length;
+	async function markBefore(id: string, ref: string) {
+		if (!account) return;
+		confirmBefore = null;
+		let marked: string[] = [];
+		await write(async () => {
+			const b = await progressApi.markBefore(guideId, account, id);
+			marked = b.marked ?? [];
+			return b;
+		});
+		if (marked.length) batch = { ids: marked, ref };
+	}
+	async function undoBatch() {
+		const b = batch;
+		batch = null;
+		if (b && account) await write(() => progressApi.clearMarks(guideId, account, b.ids));
+	}
 
 	function legCount(seg: SegmentView): string {
 		const parts = [`${seg.steps.length} ${seg.steps.length === 1 ? 'passo' : 'passos'}`];
@@ -444,7 +467,33 @@
 				{#if route?.active && s.id === cursorId}<a class="btn btn-g btn-s" href={resolve('/')}
 						>Ver no Agora</a
 					>{/if}
+				{#if beforeCount(s.id) > 0 && confirmBefore !== s.id}
+					<button
+						class="btn btn-g btn-s"
+						type="button"
+						disabled={busy}
+						onclick={() => (confirmBefore = s.id)}>Marcar tudo antes deste</button
+					>
+				{/if}
 			</div>
+			{#if confirmBefore === s.id}
+				<div class="line confirm">
+					<span class="small"
+						>Marcar {beforeCount(s.id)}
+						{beforeCount(s.id) === 1 ? 'passo anterior' : 'passos anteriores'} como feitos? Feitos, pulados
+						e já marcados ficam como estão.</span
+					>
+					<button
+						class="btn btn-p btn-s"
+						type="button"
+						disabled={busy}
+						onclick={() => markBefore(s.id, s.ref)}>Marcar</button
+					>
+					<button class="btn btn-g btn-s" type="button" onclick={() => (confirmBefore = null)}
+						>Cancelar</button
+					>
+				</div>
+			{/if}
 		{/if}
 	</div>
 {/snippet}
@@ -515,6 +564,16 @@
 	</button>
 	{#if expanded === s.id}{@render expansion(s, seg)}{/if}
 {/snippet}
+
+{#if batch}
+	<Toast
+		title="Marcados"
+		text={`${batch.ids.length} passos antes de ${batch.ref}`}
+		action="desfazer"
+		onaction={undoBatch}
+		onclose={() => (batch = null)}
+	/>
+{/if}
 
 <style>
 	.wrap {
@@ -628,6 +687,11 @@
 	.note {
 		margin: 0;
 		font-size: 13px;
+	}
+	.confirm {
+		padding: 8px 10px;
+		border-radius: 4px;
+		background: var(--gold-tint);
 	}
 	.gold {
 		color: var(--gold-ink);

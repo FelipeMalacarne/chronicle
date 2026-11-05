@@ -671,3 +671,21 @@ export function sourceBand(
 	}
 	return null;
 }
+
+/* ------------------------------------------------------------------ marcar tudo antes */
+
+/**
+ * Os passos que "marcar tudo antes deste" marcaria: da rota principal, visíveis, antes do
+ * passo, pendentes e sem marca (o mesmo critério de progress.PlanMarkBefore no servidor).
+ */
+export function pendingBefore(
+	steps: Pick<BoardStep, 'id' | 'status' | 'mark' | 'main' | 'visible'>[],
+	stepId: string
+): string[] {
+	const out: string[] = [];
+	for (const s of steps) {
+		if (s.id === stepId) return out;
+		if (s.main && s.visible && s.status === 'pending' && !s.mark) out.push(s.id);
+	}
+	return [];
+}

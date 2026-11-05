@@ -13,6 +13,7 @@ import {
 	metaOf,
 	objectiveLabel,
 	paragraphOf,
+	pendingBefore,
 	parseKey,
 	plainNotes,
 	routeLabel,
@@ -412,4 +413,26 @@ test('source band: failed beats stale, rename alert passes through', () => {
 	);
 	assert.match(renamed?.text ?? '', /renomeou/);
 	assert.equal(sourceBand(undefined, now - 3 * 86400_000, now)?.kind, 'stale');
+});
+
+test('pending-before counts what the batch would mark', () => {
+	const s = (id: string, status: 'pending' | 'auto_done' | 'skipped', extra = {}) => ({
+		id,
+		status,
+		main: true,
+		visible: true,
+		...extra
+	});
+	const steps = [
+		s('a', 'pending'),
+		s('b', 'skipped', { mark: { kind: 'skipped' as const } }),
+		s('c', 'auto_done'),
+		s('d', 'pending', { visible: false }),
+		s('t', 'pending', { main: false }),
+		s('e', 'pending'),
+		s('x', 'pending')
+	];
+	assert.deepEqual(pendingBefore(steps, 'x'), ['a', 'e']);
+	assert.deepEqual(pendingBefore(steps, 'a'), []);
+	assert.deepEqual(pendingBefore(steps, 'missing'), []);
 });

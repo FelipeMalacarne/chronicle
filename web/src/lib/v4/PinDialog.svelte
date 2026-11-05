@@ -1,6 +1,6 @@
 <script lang="ts">
 	import Glyph from './Glyph.svelte';
-	import { statusView } from '#lib/progress/view';
+	import { pendingBefore, statusView } from '#lib/progress/view';
 	import type { BoardStep } from '#lib/progress/types';
 
 	/**
@@ -17,11 +17,13 @@
 		guideLabel: string;
 		steps: BoardStep[];
 		cursorId: string | undefined;
-		onpin: (stepId: string) => void;
+		/** before: marcar como feitos os pendentes anteriores em vez de fixar. */
+		onpin: (stepId: string, before: boolean) => void;
 		onclose: () => void;
 	} = $props();
 
 	let query = $state('');
+	let before = $state(false);
 	let selected = $state(0);
 	let input: HTMLInputElement | undefined = $state();
 
@@ -52,7 +54,7 @@
 		} else if (e.key === 'ArrowUp') {
 			selected = Math.max(0, selected - 1);
 			e.preventDefault();
-		} else if (e.key === 'Enter' && results[selected]) onpin(results[selected].s.id);
+		} else if (e.key === 'Enter' && results[selected]) onpin(results[selected].s.id, before);
 	}
 	const where = (i: number) =>
 		cursorIndex < 0 ? '' : i < cursorIndex ? ' · atrás do cursor' : ' · à frente';
@@ -83,7 +85,7 @@
 					class="it"
 					class:it-on={n === selected}
 					type="button"
-					onclick={() => onpin(r.s.id)}
+					onclick={() => onpin(r.s.id, before)}
 					onmouseenter={() => (selected = n)}
 				>
 					<span class="k">{r.s.ref}</span><span class="tx">{r.s.title}</span>
@@ -96,11 +98,16 @@
 			{/each}
 		</div>
 		<div class="ft">
-			<span
-				>O pin vale só nesta rota (route_cursor · cause = pin) e cai sozinho quando o passo
-				concluir.</span
+			<label class="chk"
+				><input type="checkbox" bind:checked={before} />marcar os anteriores como feitos{#if results[selected]}
+					({pendingBefore(steps, results[selected].s.id).length}){/if}</label
 			>
-			<span class="push"><span class="kbd">↵</span> fixar</span>
+			<span
+				>{before
+					? 'O cursor vai para o passo escolhido; o lote pode ser desfeito.'
+					: 'O pin vale só nesta rota e cai sozinho quando o passo concluir.'}</span
+			>
+			<span class="push"><span class="kbd">↵</span> {before ? 'marcar' : 'fixar'}</span>
 		</div>
 	</div>
 </div>
@@ -117,6 +124,16 @@
 	.empty {
 		margin: 8px;
 		font-size: 13px;
+	}
+	.chk {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		color: var(--ink);
+		white-space: nowrap;
+	}
+	.chk input {
+		accent-color: var(--gold-ink);
 	}
 	.push {
 		margin-left: auto;

@@ -161,6 +161,7 @@
 
 	function mark(kind: MarkAction) {
 		if (!account || !guideId || !step || busy) return;
+		batch = null;
 		const current: BoardStep | undefined = boardById.get(step.id);
 		const id = step.id;
 		const ref = step.ref;
@@ -174,6 +175,13 @@
 	}
 
 	function undoLast() {
+		if (batch && batch.length && account && guideId) {
+			const ids = batch;
+			batch = null;
+			toast = { title: 'Desfeito', text: `${ids.length} passos voltaram`, undo: false };
+			void write(() => progressApi.clearMarks(guideId, account, ids));
+			return;
+		}
 		const last = undo[undo.length - 1];
 		if (!last || !account || !guideId || busy) return;
 		undo = undo.slice(0, -1);
@@ -184,12 +192,26 @@
 		void write(() => progressApi.mark(guideId, last.step, account, kind, last.prev?.note));
 	}
 
-	function pin(stepId: string) {
+	let batch = $state<string[] | null>(null);
+	function pin(stepId: string, before: boolean) {
 		if (!account || !guideId) return;
 		pinning = false;
 		const ref = boardById.get(stepId)?.ref ?? stepId;
-		toast = { title: 'Fixado', text: `${ref} é o passo atual`, undo: false };
-		void write(() => progressApi.pin(guideId, account, stepId));
+		if (!before) {
+			toast = { title: 'Fixado', text: `${ref} é o passo atual`, undo: false };
+			void write(() => progressApi.pin(guideId, account, stepId));
+			return;
+		}
+		void write(async () => {
+			const b = await progressApi.markBefore(guideId, account, stepId);
+			batch = b.marked ?? [];
+			toast = {
+				title: 'Marcados',
+				text: `${batch.length} passos antes de ${ref}`,
+				undo: batch.length > 0
+			};
+			return b;
+		});
 	}
 
 	function keys(e: KeyboardEvent) {
@@ -293,7 +315,7 @@
 						{others}
 						{rotaHref}
 						{busy}
-						canUndo={undo.length > 0}
+						canUndo={undo.length > 0 || !!batch?.length}
 						ondone={() => mark('manual_done')}
 						onskip={() => mark('skipped')}
 						onundo={undoLast}

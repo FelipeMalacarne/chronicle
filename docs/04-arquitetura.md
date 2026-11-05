@@ -987,6 +987,10 @@ detecção (seção 6.6). Verificação: testes do hub com `-race`, teste HTTP d
 de integração de ingest, sync e progresso, `node --test` do view-model e o stream passando pelo proxy
 do Vite. Falta ver ao vivo com o plugin no zaros.
 
+Limpeza da UI (2026-11-05, branch `feat/ui-limpeza`): Agora enxuto para a janela estreita ao lado do
+jogo (barra compacta, menus "⋯", banco recolhido com o que falta à vista) e as dicas de "não sabemos"
+corrigidas; referência no canvas: página `v5-limpeza` (`docs/ui/brief-ui-ux.md`, seção 12).
+
 Sessão web por OIDC (parte web do item 11, 2026-11-05, branch `feat/oidc-web`): `/auth/login`,
 `/auth/callback`, `/auth/logout`, `GET /api/me`, sessão scs no `pgxstore`, política por `sub` ou role
 do projeto, CSRF por cabeçalho, rotas por conta liberadas em `oidc` só para as contas do usuário e o

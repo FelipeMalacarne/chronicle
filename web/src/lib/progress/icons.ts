@@ -1,14 +1,29 @@
 import manifest from '#lib/icons/manifest.json';
+import { parseRanges } from './iconset.ts';
 import { iconRef } from './view.ts';
 
-type Kind = 'item' | 'skill' | 'misc';
-const files = manifest as unknown as Record<Kind, Record<string, string>> & { attribution: string };
+/**
+ * Ícones do jogo baixados da OSRS Wiki por tools/fetch_wiki_icons.py: todo item obtível do
+ * catálogo (os itens vêm como faixas de id), os skills e o quest point.
+ */
+const files = manifest as unknown as {
+	attribution: string;
+	item_ids?: string;
+	/** Formato anterior do manifesto: id -> arquivo da wiki. */
+	item?: Record<string, string>;
+	skill: Record<string, string>;
+	misc: Record<string, string>;
+};
+const items = files.item_ids
+	? parseRanges(files.item_ids)
+	: new Set(Object.keys(files.item ?? {}).map(Number));
 
 /** Atribuição dos ícones (decisão 8 do v4); toda tela com ícone mostra no rodapé. */
 export const ICON_ATTRIBUTION = files.attribution;
 
-function url(kind: Kind, id: string): string | undefined {
-	return files[kind]?.[id] ? `/icons/${kind}/${id}.png` : undefined;
+function url(kind: 'item' | 'skill' | 'misc', id: string): string | undefined {
+	const has = kind === 'item' ? items.has(Number(id)) : !!files[kind]?.[id];
+	return has ? `/icons/${kind}/${id}.png` : undefined;
 }
 
 /**

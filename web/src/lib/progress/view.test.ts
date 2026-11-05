@@ -14,6 +14,7 @@ import {
 	eventLines,
 	entityVerdict,
 	freshnessLabel,
+	iconRef,
 	mainKey,
 	isParagraphStep,
 	metaOf,
@@ -65,6 +66,59 @@ test('parseKey reads every target of the canonical grammar', () => {
 	});
 	assert.equal(parseKey('qp>=107')?.kind, 'qp');
 	assert.equal(parseKey('nonsense'), null);
+});
+
+test('parseKey reads item families and alternatives', () => {
+	assert.deepEqual(parseKey('item:family/graceful_hoodx1'), {
+		ref: 'item:family/graceful_hood',
+		kind: 'item',
+		id: 'family/graceful_hood',
+		op: 'x',
+		n: 1,
+		family: 'graceful_hood'
+	});
+	assert.deepEqual(parseKey('item:any(1355x2|1357x1|1359x1)'), {
+		ref: 'item:any(1355x2|1357x1|1359x1)',
+		kind: 'item',
+		id: 'any(1355x2|1357x1|1359x1)',
+		op: 'x',
+		alternatives: [
+			{ id: 1355, n: 2 },
+			{ id: 1357, n: 1 },
+			{ id: 1359, n: 1 }
+		]
+	});
+	assert.equal(parseKey('item:any(1355x2)'), null);
+	assert.equal(parseKey('item:any(1355x2|1357)'), null);
+	assert.equal(parseKey('item:any(1355x2|1357x1'), null);
+});
+
+test('item families and alternatives have their own labels and icons', () => {
+	const names = {
+		'item:family/graceful_hood': 'Graceful hood',
+		'item:1355': 'Mithril axe',
+		'item:1357': 'Adamant axe',
+		'item:1359': 'Rune axe'
+	};
+	assert.equal(
+		objectiveLabel('item:family/graceful_hoodx1', names),
+		'Graceful hood (qualquer variante)'
+	);
+	assert.equal(
+		objectiveLabel('item:family/prayer_potionx4', {}),
+		'4 Prayer potion (qualquer variante)'
+	);
+	assert.equal(
+		objectiveLabel('item:any(1355x2|1357x1|1359x1)', names),
+		'2 Mithril axe ou Adamant axe ou Rune axe'
+	);
+	assert.equal(objectiveLabel('item:any(1355x1|9999x3)', names), 'Mithril axe ou 3 item 9999');
+	assert.equal(stateLabel('item:family/graceful_hoodx1'), '×1');
+	assert.equal(stateLabel('item:any(1355x2|1357x1)'), '×2 ou ×1');
+	assert.equal(iconRef('item:any(1355x2|1357x1)'), 'item:1355');
+	assert.equal(iconRef('item:family/graceful_hood'), undefined);
+	assert.equal(iconRef('item:314'), 'item:314');
+	assert.equal(iconRef('skill:agility'), 'skill:agility');
 });
 
 test('objective labels follow the chips of the canvas', () => {

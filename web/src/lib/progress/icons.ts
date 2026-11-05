@@ -1,4 +1,5 @@
 import manifest from '#lib/icons/manifest.json';
+import { iconRef } from './view.ts';
 
 type Kind = 'item' | 'skill' | 'misc';
 const files = manifest as unknown as Record<Kind, Record<string, string>> & { attribution: string };
@@ -10,8 +11,13 @@ function url(kind: Kind, id: string): string | undefined {
 	return files[kind]?.[id] ? `/icons/${kind}/${id}.png` : undefined;
 }
 
-/** Ícone do jogo para um ref ("item:314", "skill:agility", "quest:…" usa o quest point). */
-export function iconFor(ref: string): string | undefined {
+/**
+ * Ícone do jogo para um ref ("item:314", "skill:agility", "quest:…" usa o quest point); alternativas
+ * (`item:any(...)`) usam a primeira, família fica sem ícone.
+ */
+export function iconFor(subject: string): string | undefined {
+	const ref = iconRef(subject);
+	if (!ref) return undefined;
 	const colon = ref.indexOf(':');
 	if (colon < 0) return undefined;
 	const kind = ref.slice(0, colon);

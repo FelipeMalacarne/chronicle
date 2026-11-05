@@ -31,14 +31,36 @@ export interface ParsedKey {
 	id: string;
 	op: '@' | '>=' | 'x';
 	state?: string;
+	/** Ausente nas alternativas (`item:any(...)`): cada uma tem a sua quantidade. */
 	n?: number;
+	/** Slug da família de `item:family/<slug>xN` (qualquer variante conta). */
+	family?: string;
+	/** Alternativas de `item:any(<id>x<n>|...)`: basta uma atingir a própria quantidade. */
+	alternatives?: { id: number; n: number }[];
 }
 
-/** Lê a chave canônica do doc 09, seção 3.2 (`quest:x@finished`, `skill:agility>=70`, `item:314x120`, `qp>=107`). */
+/**
+ * Lê a chave canônica do doc 09, seção 3.2 (`quest:x@finished`, `skill:agility>=70`, `item:314x120`,
+ * `item:family/graceful_hoodx1`, `item:any(1355x2|1357x1)`, `qp>=107`).
+ */
 export function parseKey(key: string): ParsedKey | null {
 	if (key.startsWith('qp>=')) {
 		const n = Number(key.slice(4));
 		return Number.isInteger(n) ? { ref: '', kind: 'qp', id: '', op: '>=', n } : null;
+	}
+	if (key.startsWith('item:any(')) {
+		if (!key.endsWith(')')) return null;
+		const alternatives = key
+			.slice('item:any('.length, -1)
+			.split('|')
+			.map((p) => p.split('x').map(Number));
+		if (
+			alternatives.length < 2 ||
+			alternatives.some((a) => a.length !== 2 || !a.every(Number.isInteger))
+		)
+			return null;
+		const alts = alternatives.map(([id, n]) => ({ id, n }));
+		return { ref: key, kind: 'item', id: key.slice('item:'.length), op: 'x', alternatives: alts };
 	}
 	const at = key.indexOf('@');
 	if (at > 0) return withRef(key.slice(0, at), { op: '@', state: key.slice(at + 1) });
@@ -46,9 +68,19 @@ export function parseKey(key: string): ParsedKey | null {
 	if (ge > 0) return withRef(key.slice(0, ge), { op: '>=', n: Number(key.slice(ge + 2)) });
 	if (key.startsWith('item:')) {
 		const x = key.lastIndexOf('x');
-		if (x > 5) return withRef(key.slice(0, x), { op: 'x', n: Number(key.slice(x + 1)) });
+		if (x <= 5) return null;
+		const k = withRef(key.slice(0, x), { op: 'x', n: Number(key.slice(x + 1)) });
+		if (k?.id.startsWith('family/')) k.family = k.id.slice('family/'.length);
+		return k;
 	}
 	return null;
+}
+
+/** O ref cujo ícone representa a chave: o próprio, a primeira alternativa; família não tem. */
+export function iconRef(ref: string): string | undefined {
+	if (ref.startsWith('item:family/')) return undefined;
+	const any = /^item:any\((\d+)x/.exec(ref);
+	return any ? `item:${any[1]}` : ref;
 }
 
 function withRef(ref: string, rest: Pick<ParsedKey, 'op' | 'state' | 'n'>): ParsedKey | null {
@@ -68,11 +100,30 @@ function titleCase(id: string): string {
 	return id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-/** Nome de exibição do alvo: "35 Woodcutting", "Monk's Friend", "120 Feather", "107 quest points". */
+/** "graceful_hood" → "Graceful hood", como o catálogo escreve os itens. */
+function sentenceCase(slug: string): string {
+	const s = slug.replace(/_/g, ' ');
+	return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function counted(n: number | undefined, name: string): string {
+	return (n ?? 1) > 1 ? `${n} ${name}` : name;
+}
+
+/**
+ * Nome de exibição do alvo: "35 Woodcutting", "Monk's Friend", "120 Feather", "107 quest points",
+ * "Graceful hood (qualquer variante)", "2 Mithril axe ou Adamant axe ou Rune axe".
+ */
 export function objectiveLabel(key: string, names: Record<string, string>): string {
 	const k = parseKey(key);
 	if (!k) return key;
 	if (k.kind === 'qp') return `${k.n} quest points`;
+	if (k.family !== undefined)
+		return `${counted(k.n, names[k.ref] ?? sentenceCase(k.family))} (qualquer variante)`;
+	if (k.alternatives)
+		return k.alternatives
+			.map((a) => counted(a.n, names[`item:${a.id}`] ?? `item ${a.id}`))
+			.join(' ou ');
 	const name = names[k.ref] ?? titleCase(k.id);
 	switch (k.kind) {
 		case 'skill':
@@ -707,6 +758,7 @@ export function stateLabel(key: string): string {
 			''
 		);
 	}
+	if (k.alternatives) return k.alternatives.map((a) => `×${a.n}`).join(' ou ');
 	return k.op === 'x' ? `×${k.n}` : `≥ ${k.n}`;
 }
 

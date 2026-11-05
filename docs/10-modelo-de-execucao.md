@@ -224,7 +224,7 @@ migration de cada fase.
 
 | Tabela | Estado | Chave e campos principais |
 |---|---|---|
-| `guides` | nova | `id`, título, atribuição; preenchida no boot; FK de `accounts`, `step_marks`, `route_cursor`, eventos |
+| `guides` | nova (fatia d da fase 0) | `id`, título, atribuição; preenchida no boot; FK de `accounts`, `step_marks`, `route_cursor`, eventos |
 | `observations` | nova | `(account_id, facet, key, source)`, `value`, `observed_at` limitado, `snapshot_id` |
 | `player_state` | muda: projeção | `(account_id, facet, key)`, `value` da junção |
 | `owner_commands` | nova, só adição | `id`, `account_id`, `guide_id`, `kind`, `step_id`, `payload`, `revokes_id`, `actor`, `at` |

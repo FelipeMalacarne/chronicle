@@ -100,6 +100,9 @@ func (r *Repository) AcceptFor(ctx context.Context, c Credential, remoteIP strin
 	if err = push.Validate(); err != nil {
 		return coreingest.Response{}, fmt.Errorf("%w: %v", ErrInvalidPayload, err)
 	}
+	// The server clock bounds the plugin's (docs/10 section 5). raw keeps
+	// what the client sent.
+	push = push.ClampTimes(time.Now())
 	if len(raw) == 0 {
 		raw, err = json.Marshal(push)
 		if err != nil {
@@ -116,6 +119,12 @@ func (r *Repository) AcceptFor(ctx context.Context, c Credential, remoteIP strin
 	token, err := r.lockCredential(ctx, q, c, push)
 	if err != nil {
 		return coreingest.Response{}, err
+	}
+	// Lock order of every progress write: credential, then account, then
+	// facts (docs/10 section 6). The hiscores sync takes the account first
+	// too, so a push and a sync of the same account never deadlock.
+	if _, err := q.LockAccountProgress(ctx, token.AccountID); err != nil {
+		return coreingest.Response{}, fmt.Errorf("lock account: %w", err)
 	}
 	resp = responseFor(r.definition, token.LastSeq, false, true)
 	if push.ClientSeq <= token.LastSeq {

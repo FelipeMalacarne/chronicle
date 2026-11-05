@@ -209,6 +209,13 @@ func (r *Repository) publish(accountID string, run RunView) {
 // reevaluates and closes the run, all in tx.
 func (r *Repository) store(ctx context.Context, tx pgx.Tx, accountID, runID string, raw []byte, facts []hiscores.Fact, now time.Time) (RunView, error) {
 	q := r.queries.WithTx(tx)
+	// The account first, as every progress write does (docs/10 section 6):
+	// it serializes with pushes and owner writes, and a concurrent run of
+	// the same account waits here, then finds the snapshot the first one
+	// committed and closes as unchanged instead of failing on the hash index.
+	if _, err := q.LockAccountProgress(ctx, accountID); err != nil {
+		return RunView{}, fmt.Errorf("lock account: %w", err)
+	}
 	hash := factsHash(facts)
 	_, findErr := q.GetSnapshotByHash(ctx, storedb.GetSnapshotByHashParams{AccountID: accountID, Source: Source, RawHash: hash})
 	switch {

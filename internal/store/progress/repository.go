@@ -276,7 +276,7 @@ func writePlan(ctx context.Context, q *storedb.Queries, accountID, snapshotID st
 		}
 	}
 	for _, w := range plan.Marks {
-		if err := upsertMark(ctx, q, accountID, w.Ref.GuideID, w.Ref.StepID, w.Mark, now); err != nil {
+		if err := insertImpliedMark(ctx, q, accountID, w, now); err != nil {
 			return err
 		}
 	}
@@ -301,6 +301,21 @@ func upsertMark(ctx context.Context, q *storedb.Queries, accountID, guideID, ste
 	}
 	if err := q.UpsertStepMark(ctx, params); err != nil {
 		return fmt.Errorf("upsert mark %s/%s: %w", guideID, stepID, err)
+	}
+	return nil
+}
+
+// insertImpliedMark writes one mark of the implied cascade. The engine writes
+// nothing else to step_marks, and the query never replaces an existing mark.
+func insertImpliedMark(ctx context.Context, q *storedb.Queries, accountID string, w coreprogress.MarkWrite, now time.Time) error {
+	if w.Mark.Kind != coreprogress.MarkImplied || w.Mark.ImpliedBy == "" {
+		return fmt.Errorf("engine mark %s/%s is %q: the engine writes only implied marks", w.Ref.GuideID, w.Ref.StepID, w.Mark.Kind)
+	}
+	if _, err := q.InsertImpliedMark(ctx, storedb.InsertImpliedMarkParams{
+		AccountID: accountID, GuideID: w.Ref.GuideID, StepID: w.Ref.StepID,
+		ImpliedByStepID: text(w.Mark.ImpliedBy), ImpliedAt: timestamptz(&now),
+	}); err != nil {
+		return fmt.Errorf("insert implied mark %s/%s: %w", w.Ref.GuideID, w.Ref.StepID, err)
 	}
 	return nil
 }

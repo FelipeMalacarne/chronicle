@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -31,12 +32,15 @@ func (r *recorder) Publish(e events.Event) {
 
 // fakeFetcher answers with a sample file or an error, and records the calls.
 type fakeFetcher struct {
+	mu    sync.Mutex
 	file  string
 	err   error
 	calls []string
 }
 
 func (f *fakeFetcher) Fetch(_ context.Context, rsn, mode string) (hiscores.Result, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.calls = append(f.calls, rsn+"/"+mode)
 	if f.err != nil {
 		return hiscores.Result{}, f.err
@@ -241,4 +245,51 @@ func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
 		}
 	}
 	return pool
+}
+
+// TestSyncConcurrentRunsPostgres runs two syncs of the same account at once
+// (the scheduler and the button): both fetch the same facts, and the second
+// must close as unchanged instead of failing on the snapshot hash index and
+// backing off (docs/10 section 4, R6).
+func TestSyncConcurrentRunsPostgres(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO users (id, subject, username) VALUES ('user-1', 'dev-sync-race', 'dev-sync-race');
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
+		VALUES ('account-1', 'user-1', 'ironman260', 'ironman260', 'ironman', 'g1', 'classic');
+	`); err != nil {
+		t.Fatal(err)
+	}
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(pool, &fakeFetcher{file: "ironman260.json"}, storeprogress.New(pool, loadContent(t), catalog))
+	for round := 0; round < 5; round++ {
+		if _, err := pool.Exec(ctx, `DELETE FROM sync_runs; DELETE FROM objective_progress_events; DELETE FROM objective_progress;
+			DELETE FROM step_status_events; DELETE FROM route_cursor; DELETE FROM player_state; DELETE FROM snapshots`); err != nil {
+			t.Fatal(err)
+		}
+		var wg sync.WaitGroup
+		statuses := make([]string, 2)
+		errs := make([]error, 2)
+		for i := range 2 {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				run, err := repo.Run(ctx, "account-1", TriggerScheduled)
+				statuses[i], errs[i] = run.Status, err
+			}()
+		}
+		wg.Wait()
+		if errs[0] != nil || errs[1] != nil {
+			t.Fatalf("round %d: errors %v", round, errs)
+		}
+		got := map[string]int{statuses[0]: 1}
+		got[statuses[1]]++
+		if got["ok"] != 1 || got["unchanged"] != 1 {
+			t.Fatalf("round %d: statuses %v, want one ok and one unchanged", round, statuses)
+		}
+	}
 }

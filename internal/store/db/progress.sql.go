@@ -77,6 +77,37 @@ func (q *Queries) GetRouteCursor(ctx context.Context, arg GetRouteCursorParams) 
 	return i, err
 }
 
+const insertImpliedMark = `-- name: InsertImpliedMark :execrows
+INSERT INTO step_marks (account_id, guide_id, step_id, kind, implied_by_step_id, implied_at, marked_at)
+VALUES ($1, $2, $3, 'implied', $4, $5, now())
+ON CONFLICT (account_id, guide_id, step_id) DO NOTHING
+`
+
+type InsertImpliedMarkParams struct {
+	AccountID       string             `json:"account_id"`
+	GuideID         string             `json:"guide_id"`
+	StepID          string             `json:"step_id"`
+	ImpliedByStepID pgtype.Text        `json:"implied_by_step_id"`
+	ImpliedAt       pgtype.Timestamptz `json:"implied_at"`
+}
+
+// The implied cascade's only write (docs/09 section 9.1). It never replaces a
+// mark: the owner's mark always wins, so a conflict leaves the row as it is
+// (CLAUDE.md rule 2). Owner writes use UpsertStepMark.
+func (q *Queries) InsertImpliedMark(ctx context.Context, arg InsertImpliedMarkParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertImpliedMark,
+		arg.AccountID,
+		arg.GuideID,
+		arg.StepID,
+		arg.ImpliedByStepID,
+		arg.ImpliedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const insertObjectiveProgressEvent = `-- name: InsertObjectiveProgressEvent :exec
 INSERT INTO objective_progress_events (id, account_id, objective_key, from_verdict, to_verdict, snapshot_id, at)
 VALUES ($1, $2, $3, $4, $5, $6, clock_timestamp())
@@ -737,6 +768,7 @@ type UpsertStepMarkParams struct {
 	Note            pgtype.Text        `json:"note"`
 }
 
+// Owner writes only (marks, confirming implied); the engine uses InsertImpliedMark.
 func (q *Queries) UpsertStepMark(ctx context.Context, arg UpsertStepMarkParams) error {
 	_, err := q.db.Exec(ctx, upsertStepMark,
 		arg.AccountID,

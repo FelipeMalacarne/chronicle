@@ -36,6 +36,7 @@ SELECT * FROM step_marks WHERE account_id = $1 ORDER BY guide_id, step_id;
 SELECT * FROM step_marks WHERE account_id = $1 AND guide_id = $2 ORDER BY step_id;
 
 -- name: UpsertStepMark :exec
+-- Owner writes only (marks, confirming implied); the engine uses InsertImpliedMark.
 INSERT INTO step_marks (account_id, guide_id, step_id, kind, implied_by_step_id, implied_at, note, marked_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, now())
 ON CONFLICT (account_id, guide_id, step_id) DO UPDATE SET
@@ -44,6 +45,14 @@ ON CONFLICT (account_id, guide_id, step_id) DO UPDATE SET
   implied_at         = EXCLUDED.implied_at,
   note               = EXCLUDED.note,
   marked_at          = now();
+
+-- name: InsertImpliedMark :execrows
+-- The implied cascade's only write (docs/09 section 9.1). It never replaces a
+-- mark: the owner's mark always wins, so a conflict leaves the row as it is
+-- (CLAUDE.md rule 2). Owner writes use UpsertStepMark.
+INSERT INTO step_marks (account_id, guide_id, step_id, kind, implied_by_step_id, implied_at, marked_at)
+VALUES (@account_id, @guide_id, @step_id, 'implied', @implied_by_step_id, @implied_at, now())
+ON CONFLICT (account_id, guide_id, step_id) DO NOTHING;
 
 -- name: DeleteStepMark :exec
 DELETE FROM step_marks WHERE account_id = $1 AND guide_id = $2 AND step_id = $3;

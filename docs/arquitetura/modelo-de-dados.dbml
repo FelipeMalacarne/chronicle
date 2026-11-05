@@ -101,6 +101,7 @@ Table goals {
   }
 
   Note: '''
+  goals_key_shape: CHECK ((objective_key ~ '^(qp>=[0-9]+|[a-z_]+:.+)$'::text))
   goals_status_check: CHECK ((status = ANY (ARRAY['active'::text, 'achieved'::text, 'abandoned'::text])))
   '''
 }
@@ -153,6 +154,12 @@ Table objective_progress {
 
   Note: '''
   Verdict per account and objective, shared by every guide. A met verdict is latched with the evidence of the snapshot that proved it.
+  objective_progress_key_shape: CHECK ((objective_key ~ '^(qp>=[0-9]+|[a-z_]+:.+)$'::text))
+  objective_progress_met_evidence_not_empty: CHECK (
+CASE
+    WHEN (verdict = 'met'::text) THEN ((jsonb_typeof(evidence) = 'array'::text) AND (jsonb_array_length(evidence) > 0))
+    ELSE true
+END)
   objective_progress_met_has_evidence: CHECK (((verdict <> 'met'::text) OR ((evidence_snapshot_id IS NOT NULL) AND (evidence IS NOT NULL) AND (jsonb_typeof(evidence) = 'array'::text) AND (first_met_at IS NOT NULL))))
   objective_progress_verdict_check: CHECK ((verdict = ANY (ARRAY['met'::text, 'unmet'::text, 'unknown'::text])))
   '''
@@ -174,6 +181,7 @@ Table objective_progress_events {
   Note: '''
   Verdict transitions per objective (F6 for objectives).
   objective_progress_events_from_verdict_check: CHECK ((from_verdict = ANY (ARRAY['met'::text, 'unmet'::text, 'unknown'::text])))
+  objective_progress_events_key_shape: CHECK ((objective_key ~ '^(qp>=[0-9]+|[a-z_]+:.+)$'::text))
   objective_progress_events_to_verdict_check: CHECK ((to_verdict = ANY (ARRAY['met'::text, 'unmet'::text, 'unknown'::text])))
   '''
 }
@@ -320,6 +328,7 @@ Table snapshots {
   ingest_token_id text [note: 'Plugin idempotency is sequence-based. The old account/source/raw_hash']
 
   indexes {
+    (id, account_id) [unique]
     (account_id, source, fetched_at) [name: 'snapshots_account_source_time_idx']
     (account_id, fetched_at) [name: 'snapshots_account_time_idx']
     `account_id, source, raw_hash) WHERE (source <> 'plugin'::text` [name: 'snapshots_nonplugin_raw_hash_idx', unique]
@@ -457,11 +466,14 @@ Ref goals_account_id_fkey: goals.account_id > accounts.id [delete: cascade]
 Ref graph_cache_content_version_id_fkey: graph_cache.content_version_id > content_versions.id
 Ref ingest_container_freshness_account_id_fkey: ingest_container_freshness.account_id > accounts.id [delete: cascade]
 Ref ingest_container_freshness_snapshot_id_fkey: ingest_container_freshness.snapshot_id > snapshots.id
+Ref ingest_container_freshness_snapshot_same_account: ingest_container_freshness.(snapshot_id, account_id) > snapshots.(id, account_id)
 Ref objective_progress_account_id_fkey: objective_progress.account_id > accounts.id [delete: cascade]
+Ref objective_progress_evidence_same_account: objective_progress.(evidence_snapshot_id, account_id) > snapshots.(id, account_id)
 Ref objective_progress_evidence_snapshot_id_fkey: objective_progress.evidence_snapshot_id > snapshots.id
 Ref objective_progress_events_account_id_fkey: objective_progress_events.account_id > accounts.id [delete: cascade]
 Ref player_state_account_id_fkey: player_state.account_id > accounts.id [delete: cascade]
 Ref player_state_snapshot_id_fkey: player_state.snapshot_id > snapshots.id
+Ref player_state_snapshot_same_account: player_state.(snapshot_id, account_id) > snapshots.(id, account_id)
 Ref plugin_ingest_tokens_account_id_fkey: plugin_ingest_tokens.account_id > accounts.id [delete: cascade]
 Ref route_cursor_account_id_fkey: route_cursor.account_id > accounts.id [delete: cascade]
 Ref settings_account_id_fkey: settings.account_id > accounts.id [delete: cascade]

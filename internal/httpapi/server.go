@@ -161,6 +161,8 @@ func (s *Server) routes() {
 		account("DELETE /api/goals/{id}", s.handleRemoveGoal)
 		account("GET /api/goals/{id}/plan", s.handleGoalPlan)
 		account("GET /api/world", s.handleWorld)
+		account("GET /api/world/entity", s.handleWorldEntity)
+		account("GET /api/account/state", s.handleAccountState)
 	}
 	// The setup picks or creates an account by name, of the dev user or of
 	// the session user.

@@ -930,3 +930,13 @@ func titleTier(t string) string {
 	}
 	return string(t[0]-'a'+'A') + t[1:]
 }
+
+// QuestIDs returns every quest id of the catalog, sorted.
+func (r *Registry) QuestIDs() []string {
+	out := make([]string, 0, len(r.quests))
+	for id := range r.quests {
+		out = append(out, id)
+	}
+	sort.Strings(out)
+	return out
+}

@@ -29,6 +29,22 @@ type ProgressService interface {
 	AddGoal(ctx context.Context, accountID, key, label string) (storeprogress.GoalView, error)
 	RemoveGoal(ctx context.Context, accountID, goalID string) error
 	GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error)
+	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
+}
+
+// handleAccountState is the account screen (V6Conta1440): skills, quests and
+// diaries with source and age, the containers with their freshness.
+func (s *Server) handleAccountState(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	st, err := s.opts.Progress.AccountState(r.Context(), account)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, st)
 }
 
 // routeSummary is one route of the Rotas list: its cursor, counts per section

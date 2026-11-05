@@ -104,6 +104,21 @@ func (f *fakeProgress) Sources(_ context.Context, accountID string) ([]storeprog
 	return []storeprogress.SourceView{{Source: "plugin", Facts: 3}}, nil
 }
 
+func (f *fakeProgress) AccountState(_ context.Context, accountID string) (storeprogress.AccountState, error) {
+	f.call = "state"
+	if accountID != "acc-1" {
+		return storeprogress.AccountState{}, storeprogress.ErrAccountNotFound
+	}
+	return storeprogress.AccountState{
+		Account:    storeprogress.AccountView{ID: "acc-1", RSN: "Iron One", Mode: "ironman", GuideID: "oziris-main", Layer: "enhanced"},
+		TotalLevel: 701,
+		Skills:     []storeprogress.SkillView{{Skill: "magic", Level: 41, XP: 41000, FactSource: storeprogress.FactSource{Source: "hiscores"}}},
+		Quests:     []storeprogress.QuestView{},
+		Diaries:    []storeprogress.DiaryView{},
+		Containers: []storeprogress.ContainerView{},
+	}, nil
+}
+
 func (f *fakeProgress) SetActiveGuide(_ context.Context, accountID, guideID string) error {
 	f.call, f.step = "active", guideID
 	if guideID != "oziris-main" {
@@ -189,6 +204,8 @@ func TestProgressRoutesAreDevOnly(t *testing.T) {
 		{"GET", "/api/guides/oziris-main/events?account=acc-1", ""},
 		{"GET", "/api/progress?account=acc-1", ""},
 		{"PUT", "/api/account/guide?account=acc-1", `{"guide_id":"oziris-main"}`},
+		{"GET", "/api/account/state?account=acc-1", ""},
+		{"GET", "/api/world/entity?account=acc-1&ref=quest:the_grand_tree", ""},
 	} {
 		if status, _ := do(t, r.method, server.URL+r.path, r.body); status != http.StatusNotFound && status != http.StatusMethodNotAllowed {
 			t.Fatalf("%s %s outside dev mode = %d", r.method, r.path, status)
@@ -209,6 +226,12 @@ func TestProgressRoutes(t *testing.T) {
 	}
 	if status, _ := do(t, "GET", base+"/guides/oziris-main/board?account=nobody", ""); status != http.StatusNotFound {
 		t.Fatalf("board of an unknown account = %d", status)
+	}
+	if status, body := do(t, "GET", base+"/account/state?account=acc-1", ""); status != http.StatusOK || fake.call != "state" || body["total_level"] != float64(701) || body["account"].(map[string]any)["rsn"] != "Iron One" {
+		t.Fatalf("account state = %d %v", status, body)
+	}
+	if status, _ := do(t, "GET", base+"/account/state?account=nobody", ""); status != http.StatusNotFound {
+		t.Fatalf("account state of an unknown account = %d", status)
 	}
 
 	if status, _ := do(t, "PATCH", base+"/guides/oziris-main/steps/1/mark?account=acc-1", `{"kind":"skipped","note":"later"}`); status != http.StatusOK || fake.action != coreprogress.ActionSkipped || fake.note == nil || *fake.note != "later" || fake.step != "1" {

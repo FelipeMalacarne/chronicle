@@ -23,6 +23,7 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
 )
 
 // Source is the only polling source so far.
@@ -257,22 +258,18 @@ func (r *Repository) store(ctx context.Context, tx pgx.Tx, accountID, runID stri
 func writeFacts(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, facts []hiscores.Fact, now time.Time) error {
 	at := pgtype.Timestamptz{Time: now, Valid: true}
 	rows := make([]storedb.InsertSnapshotFactsParams, 0, len(facts))
+	touched := map[string]bool{}
 	for _, f := range facts {
 		value, err := json.Marshal(f.Value)
 		if err != nil {
 			return fmt.Errorf("encode %s %s: %w", f.Facet, f.Key, err)
 		}
-		switch f.Facet {
-		case "skill":
-			// Merge: a plugin's "boosted" survives a hiscores level/xp update.
-			err = q.UpsertPlayerStateJSONPatch(ctx, storedb.UpsertPlayerStateJSONPatchParams{
-				AccountID: accountID, Facet: f.Facet, Key: f.Key, Value: value, Source: Source, SnapshotID: snapshotID, ObservedAt: at,
-			})
-		default:
-			err = q.UpsertPlayerStateFact(ctx, storedb.UpsertPlayerStateFactParams{
-				AccountID: accountID, Facet: f.Facet, Key: f.Key, Value: value, Source: Source, SnapshotID: snapshotID, ObservedAt: at,
-			})
-		}
+		// The hiscores' own observation; the merge with the plugin's (the
+		// greatest XP, the plugin's boosted) is the projection's job.
+		err = q.UpsertObservation(ctx, storedb.UpsertObservationParams{
+			AccountID: accountID, Facet: f.Facet, Key: f.Key, Value: value, Source: Source, SnapshotID: snapshotID, ObservedAt: at,
+		})
+		touched[f.Facet] = true
 		if err != nil {
 			return fmt.Errorf("merge %s %s: %w", f.Facet, f.Key, err)
 		}
@@ -283,7 +280,11 @@ func writeFacts(ctx context.Context, q *storedb.Queries, accountID, snapshotID s
 			return fmt.Errorf("insert snapshot facts: %w", err)
 		}
 	}
-	return nil
+	facets := make([]string, 0, len(touched))
+	for f := range touched {
+		facets = append(facets, f)
+	}
+	return state.Project(ctx, q, accountID, facets...)
 }
 
 // fail closes the run as error or rate_limited with the backoff of the

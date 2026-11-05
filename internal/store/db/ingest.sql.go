@@ -7,58 +7,9 @@ package db
 
 import (
 	"context"
-	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
-
-const deletePlayerStateFacet = `-- name: DeletePlayerStateFacet :exec
-DELETE FROM player_state
-WHERE account_id = $1 AND facet = $2
-`
-
-type DeletePlayerStateFacetParams struct {
-	AccountID string `json:"account_id"`
-	Facet     string `json:"facet"`
-}
-
-func (q *Queries) DeletePlayerStateFacet(ctx context.Context, arg DeletePlayerStateFacetParams) error {
-	_, err := q.db.Exec(ctx, deletePlayerStateFacet, arg.AccountID, arg.Facet)
-	return err
-}
-
-const deletePlayerStateFact = `-- name: DeletePlayerStateFact :exec
-DELETE FROM player_state
-WHERE account_id = $1 AND facet = $2 AND key = $3
-`
-
-type DeletePlayerStateFactParams struct {
-	AccountID string `json:"account_id"`
-	Facet     string `json:"facet"`
-	Key       string `json:"key"`
-}
-
-func (q *Queries) DeletePlayerStateFact(ctx context.Context, arg DeletePlayerStateFactParams) error {
-	_, err := q.db.Exec(ctx, deletePlayerStateFact, arg.AccountID, arg.Facet, arg.Key)
-	return err
-}
-
-const deletePlayerStateItemsByContainer = `-- name: DeletePlayerStateItemsByContainer :exec
-DELETE FROM player_state
-WHERE account_id = $1
-  AND facet = 'item'
-  AND key LIKE $2::text || ':%'
-`
-
-type DeletePlayerStateItemsByContainerParams struct {
-	AccountID string `json:"account_id"`
-	Container string `json:"container"`
-}
-
-func (q *Queries) DeletePlayerStateItemsByContainer(ctx context.Context, arg DeletePlayerStateItemsByContainerParams) error {
-	_, err := q.db.Exec(ctx, deletePlayerStateItemsByContainer, arg.AccountID, arg.Container)
-	return err
-}
 
 const insertSnapshotItemContainer = `-- name: InsertSnapshotItemContainer :exec
 
@@ -210,40 +161,4 @@ func (q *Queries) UpsertIngestContainerFreshness(ctx context.Context, arg Upsert
 		&i.UpdatedAt,
 	)
 	return i, err
-}
-
-const upsertPlayerStateJSONPatch = `-- name: UpsertPlayerStateJSONPatch :exec
-INSERT INTO player_state (account_id, facet, key, value, source, snapshot_id, observed_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (account_id, facet, key) DO UPDATE SET
-  value       = player_state.value || EXCLUDED.value,
-  source      = EXCLUDED.source,
-  snapshot_id = EXCLUDED.snapshot_id,
-  observed_at = EXCLUDED.observed_at
-WHERE EXCLUDED.observed_at >= player_state.observed_at
-`
-
-type UpsertPlayerStateJSONPatchParams struct {
-	AccountID  string             `json:"account_id"`
-	Facet      string             `json:"facet"`
-	Key        string             `json:"key"`
-	Value      json.RawMessage    `json:"value"`
-	Source     string             `json:"source"`
-	SnapshotID string             `json:"snapshot_id"`
-	ObservedAt pgtype.Timestamptz `json:"observed_at"`
-}
-
-// Skill deltas can carry only xp or boosted; merge those fields into the
-// existing skill object instead of erasing level.
-func (q *Queries) UpsertPlayerStateJSONPatch(ctx context.Context, arg UpsertPlayerStateJSONPatchParams) error {
-	_, err := q.db.Exec(ctx, upsertPlayerStateJSONPatch,
-		arg.AccountID,
-		arg.Facet,
-		arg.Key,
-		arg.Value,
-		arg.Source,
-		arg.SnapshotID,
-		arg.ObservedAt,
-	)
-	return err
 }

@@ -186,6 +186,27 @@ Table objective_progress_events {
   '''
 }
 
+Table observations {
+  account_id text [not null]
+  facet text [not null]
+  key text [not null]
+  source text [not null]
+  value jsonb [not null]
+  snapshot_id text [not null]
+  observed_at timestamptz [not null, note: 'bounded by the server clock (docs/10 section 5)']
+
+  indexes {
+    (account_id, facet, key, source) [pk]
+    (account_id, source, observed_at) [name: 'observations_source_time_idx']
+  }
+
+  Note: '''
+  Last observation of each source per fact; player_state is its merge (internal/core/facts).
+  observations_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
+  observations_source_check: CHECK ((source = ANY (ARRAY['hiscores'::text, 'wom'::text, 'wikisync'::text, 'plugin'::text, 'import'::text])))
+  '''
+}
+
 Table player_state {
   account_id text [not null]
   facet text [not null]
@@ -201,7 +222,7 @@ Table player_state {
   }
 
   Note: '''
-  Current merged fact per (account, facet, key). Rewritten after every snapshot.
+  Projection: the merge of observations per fact (internal/core/facts.Merge). Written only by the projection.
   player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
   '''
 }
@@ -471,6 +492,8 @@ Ref objective_progress_account_id_fkey: objective_progress.account_id > accounts
 Ref objective_progress_evidence_same_account: objective_progress.(evidence_snapshot_id, account_id) > snapshots.(id, account_id)
 Ref objective_progress_evidence_snapshot_id_fkey: objective_progress.evidence_snapshot_id > snapshots.id
 Ref objective_progress_events_account_id_fkey: objective_progress_events.account_id > accounts.id [delete: cascade]
+Ref observations_account_id_fkey: observations.account_id > accounts.id [delete: cascade]
+Ref observations_snapshot_same_account: observations.(snapshot_id, account_id) > snapshots.(id, account_id)
 Ref player_state_account_id_fkey: player_state.account_id > accounts.id [delete: cascade]
 Ref player_state_snapshot_id_fkey: player_state.snapshot_id > snapshots.id
 Ref player_state_snapshot_same_account: player_state.(snapshot_id, account_id) > snapshots.(id, account_id)
@@ -502,6 +525,7 @@ TableGroup ingest_e_snapshots {
 }
 
 TableGroup estado_da_conta {
+  observations
   player_state
   ingest_container_freshness
 }

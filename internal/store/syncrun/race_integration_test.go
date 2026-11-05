@@ -115,3 +115,78 @@ func levelsPush(seq int64, levels map[string]int64) coreingest.Push {
 		},
 	}
 }
+
+// TestFactsMergePostgres: player_state is the merge of each source's last
+// observation (docs/10 section 5, E1). A plugin push with less XP than the
+// hiscores, sent after them, must not take the skill back, and the plugin's
+// boosted level survives a hiscores update.
+func TestFactsMergePostgres(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO users (id, subject, username) VALUES ('user-1', 'dev-merge', 'dev-merge');
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
+		VALUES ('account-1', 'user-1', 'ironman260', 'ironman260', 'ironman', 'g1', 'classic');
+	`); err != nil {
+		t.Fatal(err)
+	}
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	progress := storeprogress.New(pool, loadContent(t), catalog)
+	syncs := New(pool, &fakeFetcher{file: "ironman260.json"}, progress)
+	ingest := storeingest.New(pool, storeingest.Definition{
+		Version: 7, Varbits: []int64{}, Varps: []int64{}, Collections: []int64{}, IntervalSeconds: 10,
+	}).WithReevaluator(progress)
+	token, err := ingest.CreateToken(ctx, "account-1", "desktop", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = ingest.Manifest(ctx, token.Token); err != nil {
+		t.Fatal(err)
+	}
+	attack := func() (xp, boosted int64, source string) {
+		t.Helper()
+		var v struct{ XP, Boosted int64 }
+		var raw []byte
+		if err := pool.QueryRow(ctx, `SELECT value, source FROM player_state WHERE account_id = 'account-1' AND facet = 'skill' AND key = 'attack'`).Scan(&raw, &source); err != nil {
+			t.Fatal(err)
+		}
+		if err := json.Unmarshal(raw, &v); err != nil {
+			t.Fatal(err)
+		}
+		return v.XP, v.Boosted, source
+	}
+	pluginPush := func(seq int64) {
+		t.Helper()
+		p := levelsPush(seq, map[string]int64{"attack": 99})
+		xp, boosted := coreingest.IntMap{"attack": 13_000_000}, coreingest.IntMap{"attack": 105}
+		p.Data.XP, p.Data.Boosted = &xp, &boosted
+		body, _ := json.Marshal(p)
+		if resp, err := ingest.Accept(ctx, token.Token, "127.0.0.1", body, p); err != nil || !resp.OK {
+			t.Fatalf("push %d: %+v, %v", seq, resp, err)
+		}
+	}
+
+	pluginPush(1)
+	if xp, boosted, source := attack(); xp != 13_000_000 || boosted != 105 || source != "plugin" {
+		t.Fatalf("after the plugin: xp %d boosted %d from %s", xp, boosted, source)
+	}
+	if run, err := syncs.Run(ctx, "account-1", TriggerScheduled); err != nil || run.Status != "ok" {
+		t.Fatalf("sync: %+v, %v", run, err)
+	}
+	if xp, boosted, source := attack(); xp != 13_082_918 || boosted != 105 || source != "hiscores" {
+		t.Fatalf("after the hiscores: xp %d boosted %d from %s (boosted must survive)", xp, boosted, source)
+	}
+	// A later full push with less XP replaces the plugin's own observation,
+	// never the hiscores one: the merged skill keeps the greatest XP.
+	pluginPush(2)
+	if xp, boosted, source := attack(); xp != 13_082_918 || boosted != 105 || source != "hiscores" {
+		t.Fatalf("after a stale plugin push: xp %d boosted %d from %s", xp, boosted, source)
+	}
+	var n int
+	if err := pool.QueryRow(ctx, `SELECT count(*) FROM observations WHERE facet = 'skill' AND key = 'attack'`).Scan(&n); err != nil || n != 2 {
+		t.Fatalf("attack observations = %d, %v (one per source)", n, err)
+	}
+}

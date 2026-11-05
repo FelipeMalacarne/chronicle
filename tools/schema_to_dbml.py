@@ -26,7 +26,7 @@ GROUPS = {
     "ingest_e_snapshots": [
         "plugin_ingest_tokens", "sync_runs", "snapshots", "snapshot_facts", "snapshot_item_containers",
     ],
-    "estado_da_conta": ["player_state", "ingest_container_freshness"],
+    "estado_da_conta": ["observations", "player_state", "ingest_container_freshness"],
     "conteudo_indexado": ["content_versions", "content_steps", "step_id_aliases"],
     "progresso": [
         "objective_progress", "objective_progress_events", "step_marks", "step_status_events",

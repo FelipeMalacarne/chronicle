@@ -117,7 +117,18 @@ type ObjectiveProgressEvent struct {
 	At           pgtype.Timestamptz `json:"at"`
 }
 
-// Current merged fact per (account, facet, key). Rewritten after every snapshot.
+// Last observation of each source per fact; player_state is its merge (internal/core/facts).
+type Observation struct {
+	AccountID  string             `json:"account_id"`
+	Facet      string             `json:"facet"`
+	Key        string             `json:"key"`
+	Source     string             `json:"source"`
+	Value      json.RawMessage    `json:"value"`
+	SnapshotID string             `json:"snapshot_id"`
+	ObservedAt pgtype.Timestamptz `json:"observed_at"`
+}
+
+// Projection: the merge of observations per fact (internal/core/facts.Merge). Written only by the projection.
 type PlayerState struct {
 	AccountID  string             `json:"account_id"`
 	Facet      string             `json:"facet"`

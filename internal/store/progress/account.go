@@ -50,9 +50,9 @@ func (r *Repository) Sources(ctx context.Context, accountID string) ([]SourceVie
 	if _, err := getAccount(ctx, r.queries, accountID); err != nil {
 		return nil, err
 	}
-	rows, err := r.queries.GetPlayerStateFreshness(ctx, accountID)
+	rows, err := r.queries.ObservationFreshness(ctx, accountID)
 	if err != nil {
-		return nil, fmt.Errorf("player state freshness: %w", err)
+		return nil, fmt.Errorf("observation freshness: %w", err)
 	}
 	out := make([]SourceView, 0, len(rows))
 	for _, row := range rows {

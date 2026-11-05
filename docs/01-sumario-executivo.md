@@ -82,7 +82,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais
-`player_state` mesclado com prioridade plugin > wikisync > hiscores > wom; motor puro com vereditos
+`player_state` como projeção da junção por fonte (doc 10, E1; até 2026-11-05 era "última escrita vence" com prioridade plugin > wikisync > hiscores > wom); motor puro com vereditos
 met / unmet / unknown e evidência; skills no grafo como limiar de aresta; protocolo do plugin clone do
 WikiSync.
 

@@ -268,7 +268,7 @@ func TestSyncConcurrentRunsPostgres(t *testing.T) {
 	repo := New(pool, &fakeFetcher{file: "ironman260.json"}, storeprogress.New(pool, loadContent(t), catalog))
 	for round := 0; round < 5; round++ {
 		if _, err := pool.Exec(ctx, `DELETE FROM sync_runs; DELETE FROM objective_progress_events; DELETE FROM objective_progress;
-			DELETE FROM step_status_events; DELETE FROM route_cursor; DELETE FROM player_state; DELETE FROM snapshots`); err != nil {
+			DELETE FROM step_status_events; DELETE FROM route_cursor; DELETE FROM player_state; DELETE FROM observations; DELETE FROM snapshots`); err != nil {
 			t.Fatal(err)
 		}
 		var wg sync.WaitGroup

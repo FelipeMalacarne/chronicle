@@ -127,8 +127,9 @@ func (r *Repository) ReevaluateRoute(ctx context.Context, tx pgx.Tx, accountID, 
 	return plan.StepsChanged, route, nil
 }
 
-// ReevaluateAll reevaluates every active account, each in its own
-// transaction (boot and content reload).
+// ReevaluateAll re-projects the facts and reevaluates every active account,
+// each in its own transaction (boot and content reload). The projection runs
+// here too, so a change of facts.Merge reaches player_state at the next boot.
 func (r *Repository) ReevaluateAll(ctx context.Context) (int, error) {
 	accounts, err := r.queries.ListActiveAccounts(ctx)
 	if err != nil {
@@ -136,6 +137,13 @@ func (r *Repository) ReevaluateAll(ctx context.Context) (int, error) {
 	}
 	for _, acc := range accounts {
 		if err := r.inTx(ctx, func(tx pgx.Tx) error {
+			q := r.queries.WithTx(tx)
+			if _, err := lockAccount(ctx, q, acc.ID); err != nil {
+				return err
+			}
+			if err := state.ProjectAll(ctx, q, acc.ID); err != nil {
+				return err
+			}
 			_, err := r.Reevaluate(ctx, tx, acc.ID, "")
 			return err
 		}); err != nil {

@@ -30,12 +30,12 @@ pnpm 10 e `just` instalados.
 nix develop              # ou: direnv allow (usa .envrc); ou instale as ferramentas acima
 cp .env.example .env     # defaults já funcionam para dev local
 just setup               # pnpm install, go mod download, primeiro build do web
-just dev                 # sobe Postgres (compose.dev.yaml) e roda a API com live reload
-# abra http://localhost:8080
+just dev                 # Postgres da stack, migrations, API (air) e Vite juntos, com hot reload
+# abra http://localhost:5173
 ```
 
-Opcional: `just web-dev` em outro terminal (Vite com hot reload em :5173), `just migrate-up` para
-aplicar migrations à mão, `just up` para a stack completa prod-like (Postgres + imagem distroless).
+Opcional: `just migrate-up` para aplicar migrations à mão, `just up` para a stack completa prod-like
+(Postgres + imagem distroless), que usa o mesmo banco do `just dev`.
 `just` sem argumentos lista todos os alvos.
 
 ## Ferramental
@@ -46,7 +46,7 @@ aplicar migrations à mão, `just up` para a stack completa prod-like (Postgres 
 | sqlc + goose + pgx | queries tipadas e migrations no Postgres 17 | `db/`, `sqlc.yaml` |
 | Node 22 + pnpm 10 + Svelte/Vite | SPA estática embutida no binário | `web/` |
 | just | task runner (`just` lista) | `justfile` |
-| docker compose | Postgres local e stack prod-like | `compose.yaml`, `compose.dev.yaml` |
+| docker compose | Postgres local e stack prod-like | `compose.yaml` |
 | Dockerfile multi-stage | imagem distroless não-root | `Dockerfile`, `.dockerignore` |
 | Nix flake + direnv | dev shell reproduzível, `nix build` do binário | `flake.nix`, `.envrc` |
 | GitHub Actions | web, go, migrations, docker build | `.github/workflows/ci.yml` |

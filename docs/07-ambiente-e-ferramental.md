@@ -12,7 +12,7 @@ e só variáveis de ambiente diferentes. Nada no código distingue os dois ambie
 
 | | local-first (`zaros`) | `saradomin` |
 |---|---|---|
-| Banco | `postgres:17-alpine` do `compose.yaml` (ou `compose.dev.yaml` para dev no host) | Postgres existente; database `ironman_planner` |
+| Banco | `postgres:17-alpine` do `compose.yaml` (o mesmo banco para a stack e para o dev no host) | Postgres existente; database `ironman_planner` |
 | Auth | `AUTH_MODE=dev` (um usuário local fixo) | `AUTH_MODE=oidc` + `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL` (Zitadel, PKCE) |
 | Rede | `localhost:8080` | atrás do reverse proxy existente, `PUBLIC_BASE_URL=https://planner.<domínio>` |
 | Imagem | `just up` builda local | mesma imagem publicada no registry do servidor |
@@ -32,7 +32,7 @@ e só variáveis de ambiente diferentes. Nada no código distingue os dois ambie
 | **Node 22 + pnpm 10** | SPA Svelte em `web/`, build para `web/dist` (embutido no binário) | `just setup`, `just web-dev`, `just web-build` |
 | **PostgreSQL 17** | banco; no dev shell só o cliente (`psql`, `pg_dump`) | `just db-shell` |
 | **just** | task runner; `just` lista tudo | `justfile` na raiz |
-| **docker compose** | `compose.yaml` (Postgres + app) e `compose.dev.yaml` (só Postgres) | `just up/down/logs`, `just db-up/db-down` |
+| **docker compose** | `compose.yaml` (Postgres + app; o `just dev` usa só o Postgres) | `just up/down/logs`, `just db-up/db-down` |
 | **Nix flake** | dev shell reproduzível (`nix develop` / direnv) e `packages.default` do binário | `flake.nix`, `.envrc` |
 
 Tudo que o `justfile` chama via `go run pkg@latest` (goose, sqlc) funciona sem Nix; o flake só evita
@@ -45,12 +45,14 @@ instalar cada ferramenta à mão.
 ```
 cp .env.example .env     # DATABASE_URL já aponta para localhost:5432
 just setup               # pnpm install, go mod download, primeiro pnpm build
-just dev                 # sobe Postgres (compose.dev.yaml) e roda air / go run ./cmd/ironman serve
-just web-dev             # em outro terminal: Vite em :5173 com proxy para :8080
-just migrate-up          # aplica db/migrations (se o serve não aplicar sozinho no boot)
+just dev                 # Postgres da stack, migrate-up, air (:8080) e Vite (:5173) juntos; Ctrl-C para os dois
 ```
 
-Sem `just web-dev`, o servidor entrega a última build embutida de `web/dist`.
+Abrir `http://localhost:5173` (hot reload do Svelte; o air recompila Go e JSON de conteúdo). O `:8080`
+entrega a build embutida de `web/dist`, que o `just dev` gera se faltar. O banco é o mesmo da stack
+(decisão do dono, 2026-11-04): o `just dev` para o container `app` para liberar a porta 8080 e o
+`just up` o traz de volta. As migrations do diretório de trabalho entram nesse banco; uma migration
+ainda não commitada fica aplicada nele.
 
 ### 3.2 Stack no zaros (Docker)
 
@@ -70,8 +72,8 @@ just stack-accounts / stack-account-guide <id> <guia> / stack-psql
 
 - O app escuta só em `127.0.0.1`: em `AUTH_MODE=dev` não há login. `IRONMAN_BIND=0.0.0.0` no `.env`
   abre para a rede (celular, Tailscale), de propósito.
-- O Postgres da stack não tem porta no host, então não conflita com o `compose.dev.yaml`; as receitas
-  `stack-*` e o `db-backup` entram pelo `docker compose exec`.
+- O Postgres da stack publica só em `127.0.0.1:${POSTGRES_PORT}`, para o `just dev` usar o mesmo banco;
+  as receitas `stack-*` e o `db-backup` entram pelo `docker compose exec`.
 - Healthcheck: `/ironman health`, que só faz GET em `/api/health` e falha se o banco não responde.
 - As imagens saem do HEAD commitado (`git archive`), nunca do diretório de trabalho: os catálogos de
   entidades vão embutidos no binário e precisam bater com guias e anotações, e a extração deixa lotes
@@ -153,5 +155,5 @@ como o CI.
 **`goose` lento na primeira vez**: `go run ...@latest` compila o CLI com todos os drivers. É só na
 primeira execução; o cache de build do Go reaproveita depois.
 
-**Porta 5432 ocupada**: mudar `POSTGRES_PORT` no `.env`; o `compose.dev.yaml` e o `DATABASE_URL`
-leem da mesma variável (ajustar a URL).
+**Porta 5432 ocupada**: mudar `POSTGRES_PORT` no `.env`; o `compose.yaml` lê essa variável e o
+`DATABASE_URL` precisa da mesma porta (ajustar a URL).

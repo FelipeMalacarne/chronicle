@@ -673,7 +673,7 @@ Regra de dependência: `internal/core` não importa banco nem HTTP; CLI e MCP n�
 
 ### 7.2 Workflow
 
-- `just` lista os alvos: `setup`, `dev` (Postgres do `compose.dev.yaml` + `air`), `web-dev`, `build`,
+- `just` lista os alvos: `setup`, `dev` (Postgres do `compose.yaml` + `air` + Vite), `web-dev`, `build`,
   `test`, `lint`, `content-validate`, `migrate-*`, `sqlc`, `up`/`down`/`logs`.
 - **CI (GitHub Actions)** em todo PR: web (`pnpm check`, `pnpm test`, build), Go (build, vet,
   golangci-lint, `go test -race`, `ironman content validate`), migrations (goose up/down/up no Postgres
@@ -700,8 +700,8 @@ Regra de dependência: `internal/core` não importa banco nem HTTP; CLI e MCP n�
 Decisão do dono (2026-11-04): o MVP roda na estação de trabalho (`zaros`), onde o Microbot também roda;
 o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis de ambiente.
 
-- **Local-first**: `docker compose` com Postgres e o binário (`compose.yaml`), ou só o Postgres
-  (`compose.dev.yaml`) com `go run ./cmd/ironman serve` e `pnpm dev` no host. Acesso em `localhost:8080`;
+- **Local-first**: `docker compose` com Postgres e o binário (`compose.yaml`), ou o mesmo Postgres com
+  `air` e `pnpm dev` no host (`just dev`). Acesso em `localhost:8080` (dev: `localhost:5173`);
   celular pela rede local ou Tailscale. `AUTH_MODE=dev`. Plugin com `serverUrl=http://localhost:8080` e
   token `ipl_` gerado localmente. `pg_dump` manual ou via `just`.
 - **saradomin** (decisão de 2026-11-03): Postgres existente (database `ironman_planner`), Zitadel via

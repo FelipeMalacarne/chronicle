@@ -28,8 +28,8 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | Command | What it does |
 |---|---|
 | `just setup` | `pnpm install` in web/, `go mod download`, first `pnpm build` (go:embed needs `web/dist`) |
-| `just dev` | Postgres from `compose.dev.yaml`, then `air` (or `go run ./cmd/ironman serve`) |
-| `just web-dev` | Vite dev server with hot reload (proxied to :8080) |
+| `just dev` | the stack's Postgres (`compose.yaml`, stops its `app`), `migrate-up`, then `air` (or `go run ./cmd/ironman serve`) on :8080 and Vite with hot reload on :5173 together |
+| `just web-dev` | Vite alone (proxied to :8080) |
 | `just build` | web build + `bin/ironman` with `-X .../internal/buildinfo.Version=$(git describe)` |
 | `just test` / `just lint` / `just fmt` | `go test ./...` + `pnpm check` + `pnpm test`; golangci-lint + gofmt + `pnpm lint` |
 | `just content-validate` | `ironman content validate` against `content/schema/guide.schema.json` |
@@ -136,14 +136,14 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 `CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler). `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 
-- **local-first (workstation "zaros")**: `compose.yaml`/`compose.dev.yaml` Postgres, `AUTH_MODE=dev`.
+- **local-first (workstation "zaros")**: `compose.yaml` Postgres (shared by the stack and `just dev`), `AUTH_MODE=dev`.
 - **saradomin**: same image, existing Postgres + Zitadel, `AUTH_MODE=oidc` + `OIDC_*`, behind the
   existing reverse proxy (docs/04 sections 8 and 9, docs/07).
 
 ## Tests
 
 - `go test ./...` (unit; rule engine uses table tests with fixtures under `internal/core/.../testdata`).
-- Store tests need `DATABASE_URL` pointing at a scratch Postgres (`just db-up`); skip when unset.
+- Store tests need `DATABASE_URL` (`just db-up`); each test runs in its own throwaway schema; skip when unset.
 - `cd web && pnpm check && pnpm test && pnpm lint`; CI runs web, go, migrations (goose up/down/up on
   Postgres 17) and a docker build on `main` (`.github/workflows/ci.yml`).
 - `pnpm` may refuse to run scripts while a lockfile entry is younger than the `minimumReleaseAge` policy;

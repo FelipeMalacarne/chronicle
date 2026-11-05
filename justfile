@@ -14,7 +14,7 @@ compose := if `docker compose version >/dev/null 2>&1 && echo yes || echo no` ==
 goose := "go run github.com/pressly/goose/v3/cmd/goose@latest"
 sqlc := "go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest"
 
-# Falls back to the compose.dev.yaml defaults when .env is absent.
+# Falls back to the compose defaults when .env is absent (host dev against the stack's Postgres).
 database_url := env("DATABASE_URL", "postgres://ironman:ironman@localhost:5432/ironman_planner?sslmode=disable")
 
 # Version symbol is internal/buildinfo.Version (falls back to the VCS revision when unset).
@@ -35,24 +35,33 @@ setup:
 
 # --- dev -------------------------------------------------------------------
 
-# Start Postgres (compose.dev.yaml) and run the API with live reload (air) or `go run`
+# Hot reload on the stack's database: Postgres from compose.yaml, migrations from the working tree,
+# then the API under air (or `go run`) on :8080 and Vite on :5173 together; Ctrl-C stops both.
+# Stops the stack's `app` container (same port); `just up` brings it back.
 dev: db-up
-    @echo "DATABASE_URL={{database_url}}"
-    @echo "SPA with hot reload: run 'just web-dev' in another terminal (Vite on :5173, proxied to :8080)."
-    @echo "Without it the server serves the last 'pnpm build' embedded from web/dist."
+    #!/usr/bin/env bash
+    set -euo pipefail
+    {{compose}} stop app >/dev/null 2>&1 || true
+    just migrate-up
+    # go:embed needs a build in web/dist even though the SPA is served by Vite here.
+    test -f web/dist/index.html || (cd web && pnpm build)
+    echo "DATABASE_URL={{database_url}}"
+    echo "Open http://localhost:5173 (Vite, hot reload); :8080 serves the embedded web/dist build."
+    trap 'kill 0' EXIT
+    (cd web && pnpm dev) &
     if command -v air >/dev/null 2>&1; then air; else go run ./cmd/ironman serve; fi
 
-# Vite dev server for the SPA
+# Vite dev server for the SPA alone (the API must already run on :8080)
 web-dev:
     cd web && pnpm dev
 
-# Only Postgres from compose.dev.yaml, detached
+# Only the stack's Postgres (compose.yaml), detached, on 127.0.0.1:${POSTGRES_PORT}
 db-up:
-    {{compose}} -f compose.dev.yaml up -d --wait
+    {{compose}} up -d --wait postgres
 
-# Stop the dev Postgres (data kept in the volume)
+# Stop the stack's Postgres (data kept in the volume)
 db-down:
-    {{compose}} -f compose.dev.yaml down
+    {{compose}} stop postgres
 
 # psql against DATABASE_URL
 db-shell:
@@ -198,7 +207,6 @@ db-backup:
     {{compose}} exec -T postgres sh -c 'pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$out"
     echo "wrote $out ($(du -h "$out" | cut -f1))"
 
-# Remove containers AND volumes of both stacks (destroys local data)
+# Remove the stack's containers AND volumes (destroys local data)
 nuke:
     {{compose}} down -v
-    {{compose}} -f compose.dev.yaml down -v

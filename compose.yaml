@@ -12,12 +12,14 @@
 #   working tree: the entity catalogs are embedded in the binary and must match the guides and
 #   annotations, and the extraction keeps unfinished batches in the working tree. A newly
 #   extracted section shows up after it is committed and `just up` runs again.
-# - Postgres has no host port (it would clash with compose.dev.yaml); use `just stack-psql`,
-#   `just db-backup` and the stack-account recipes, which go through `docker compose exec`.
+# - Postgres is published on 127.0.0.1:${POSTGRES_PORT} only, so `just dev` (air + Vite on the host)
+#   uses this same database; `just dev` stops the `app` container to free port 8080 and `just up`
+#   brings it back. `just stack-psql`, `just db-backup` and the stack-account recipes still go
+#   through `docker compose exec`.
 #
 # Variables come from .env (compose reads it for interpolation, the app gets it through
 # env_file). DATABASE_URL is composed here with host `postgres`, so the same .env keeps
-# working for host dev against compose.dev.yaml (localhost).
+# working for host dev (`just dev`, localhost).
 #
 # On saradomin (existing Postgres + Zitadel) only the `app` service would be used, with
 # AUTH_MODE=oidc; that needs session auth first (docs/04 section 9, item 11).
@@ -34,6 +36,8 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-ironman}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
       POSTGRES_DB: ${POSTGRES_DB:-ironman_planner}
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:

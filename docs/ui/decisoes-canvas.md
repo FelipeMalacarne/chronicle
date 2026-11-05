@@ -1,12 +1,14 @@
-# Decisões de UI da página v4 (Claude Design)
+# Decisões de UI do canvas (Claude Design)
 
-Registro das decisões tomadas na reestruturação das telas do Ironman Planner na página **v4** do canvas
-do Claude Design (<https://claude.ai/artifact/NqmKesmqCJH1gnSowjJFbQ>), com o design system
-**Pergaminho** (<https://claude.ai/artifact/WrVkgXPtCrRJPeUSgpHWVC>). Complementa `brief-ui-ux.md`
-(brief) e segue o modelo de domínio de `../09-modelo-de-dominio.md`. As páginas v0 a v3 foram mantidas
-como histórico; nada aqui altera código em `web/` nem os docs numerados.
+Registro das decisões tomadas na reestruturação das telas do planner no canvas do Claude Design
+(<https://claude.ai/artifact/NqmKesmqCJH1gnSowjJFbQ>), com o design system **Pergaminho**
+(<https://claude.ai/artifact/WrVkgXPtCrRJPeUSgpHWVC>). Complementa `brief-ui-ux.md` (brief) e segue o
+modelo de domínio de `../09-modelo-de-dominio.md`. Nada aqui altera código em `web/` nem os docs
+numerados.
 
-Data: 2026-11-04. Confirmado pelo dono em conversa (respostas registradas ao longo do processo).
+Histórico: as seções 1 a 3 foram escritas para a página v4 (2026-11-04). Em 2026-11-05 o canvas foi
+consolidado numa única página, **v6**, e as páginas v0 a v5 foram removidas (seção 5). Onde a v6
+revisou uma decisão da v4, a seção 5 prevalece.
 
 ## 1. Decisões
 
@@ -52,7 +54,7 @@ Data: 2026-11-04. Confirmado pelo dono em conversa (respostas registradas ao lon
     sync) e tela de sessão com diff "o que mudou / o que isso causou", derivado dos eventos de
     `objective_progress` e `step_status` entre snapshots.
 
-## 2. Artboards da página v4
+## 2. Artboards da página v4 (histórico; hoje em v6, seção 5)
 
 | Artboard | Conteúdo |
 |---|---|
@@ -83,3 +85,29 @@ Tokens em dois temas, brand book e, desde esta revisão, componentes React reais
 `bundle.js`, `index.d.ts`, README e preview por componente. No SPA Svelte os mesmos nomes de classe
 (`pg-*`) e os tokens valem sem React; a implementação em `web/` fica para a sequência do doc 04,
 seção 9.
+
+## 5. Consolidação na v6 (2026-11-05)
+
+Decisões da v6, tomadas com o dono numa sessão paralela e registradas nas notas do canvas:
+
+1. **Nome Chronicle.** Wordmark Alegreya 700 com o símbolo do livro e a runa, em ouro sobre madeira;
+   "Ironman Planner" vira descrição.
+2. **Limpeza sem esconder.** A v5-limpeza falhou por esconder demais (menus, banco recolhido). Na v6
+   nada some: cada fato continua na tela, com menos camadas. Explicação nunca em parágrafo: vai para
+   o `title` ou some.
+3. **Um bisel só, o do painel.** Dentro dos painéis tudo é plano (células, chips, slots e linhas
+   separados por fio); seleção é faixa dourada com barra à esquerda. Sidebar opção A (madeira
+   inteira, refinada) em todas as telas de 1440 px.
+4. **Dois alvos: 640 px** (janela ao lado do jogo) **e 1440 px** (olhar analítico), mesmos componentes.
+5. **A lista de Rotas sai.** "Rotas" abre a rota ativa na seção do cursor, com abas Oziris ·
+   BRUHsailer · Comparar. A aba da rota inativa mostra onde você estaria e "Tornar ativa".
+6. **Comparar volta como aba**, revisando a decisão 1 da v4 a pedido do dono, mas fica em aberto se a
+   comparação deve ser a tela principal.
+7. **Mundo**: lista "no seu caminho agora" e "feitas há pouco"; o painel de entidade é o mesmo em todas
+   as telas e abre por cima, sem sair da página.
+8. **Conta**: skills e quests com fonte e idade primeiro, depois containers com frescor, fontes no fim.
+
+Portado das páginas antigas para a v6 na consolidação: Agora e Rota com a BRUHsailer (1440 e 640),
+Comparar, Agora com fonte falhou / Fixar outro / recorrentes, estados sem dados, sessão, primeiro
+acesso e Automação (Microbot: cockpit, rotinas, plugins, 640). Os artboards portados usam a casca da
+v6; passar neles o registro da v6 (menos texto de sistema) fica para a próxima iteração.

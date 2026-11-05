@@ -113,6 +113,28 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 - **saradomin**: same image, existing Postgres + Zitadel, `AUTH_MODE=oidc` + `OIDC_*`, behind the
   existing reverse proxy (docs/04 sections 8 and 9, docs/07).
 
+## UI design reference (read before touching `web/`)
+
+- **Screens**: the Claude Design canvas <https://claude.ai/artifact/NqmKesmqCJH1gnSowjJFbQ>, page set
+  "v6" only (one canvas page per product screen: 0 Marca e fundamentos, 1 Agora, 2 Rotas, 3 Mundo,
+  4 Conta, 5 Automação). Artboards are `project/V6<Screen><Width>.dc.html` (`1440` desktop with the
+  sidebar, `640` the window beside the game); read one with the Artifact tool (`action: read`, `path`).
+  Older pages v0 to v5 were deleted on 2026-11-05; never recreate them. Implementation goes screen by
+  screen after the owner approves the screen in the canvas, starting with Agora.
+- **Design system**: Pergaminho <https://claude.ai/artifact/WrVkgXPtCrRJPeUSgpHWVC>. Tokens are mirrored
+  in `docs/ui/pergaminho.tokens.json` (two themes, `pergaminho` light and `pedra` dark) and the brand
+  book in `docs/ui/pergaminho.md`; the artifact also has React previews of the atoms (`Plaque`,
+  `SkillCell`, `InventorySlot`, `StepRow`, `ObjectiveChip`, `BankCard`). In `web/` use the tokens as CSS
+  variables and the same class names (`pg-*`), no React.
+- **Decisions**: `docs/ui/decisoes-canvas.md` (section 5 is current) and doc 01 decisions 18 to 20. The
+  product is called **Chronicle** ("Ironman Planner" is the description); Comparar is a tab of Rotas;
+  sidebar option A on 1440; one bevel only (panel, plaque, controls), everything inside panels flat;
+  no system text in paragraphs (explanations go to `title`); real OSRS Wiki sprites for skills and items
+  with the Jagex / OSRS Wiki CC BY-NC-SA 3.0 credit; `unknown` is never shown as `unmet`.
+- The sticky notes on the canvas ("Decisões com o dono", "Rota · decisões", "Consolidação") are the
+  owner's record; keep them when republishing `project/canvas.json`, and re-read the live index right
+  before every publish because other sessions edit the same artifact.
+
 ## Tests
 
 - `go test ./...` (unit; rule engine uses table tests with fixtures under `internal/core/.../testdata`).
@@ -129,6 +151,7 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 (mapeamento do importador na seção 10, adendo multi-guia na seção 11) · 06 cliente Microbot (plugin,
 contrato de ingest) · 07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC,
 plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por
-agente; decisões em 9.1 e 9.3) · `docs/ui/brief-ui-ux.md` (brief de UI/UX).
+agente; decisões em 9.1 e 9.3) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas, v6 vigente) ·
+`docs/ui/pergaminho.md` + `pergaminho.tokens.json` (design system).
 `docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.

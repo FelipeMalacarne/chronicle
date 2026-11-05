@@ -175,9 +175,19 @@ type StepProposal struct {
 	Location    *LocationProposal    `json:"location,omitempty"`
 	// Suppress drops rule objectives the step does not have.
 	Suppress []SuppressProposal `json:"suppress,omitempty"`
+	// NoBankActions drops the bank actions derived from the step's text.
+	NoBankActions *NoBankActionsProposal `json:"no_bank_actions,omitempty"`
 	// Comment goes to the report only: why the step has no objectives, why it
 	// diverges from a rule, what was asked.
 	Comment string `json:"comment,omitempty"`
+}
+
+// NoBankActionsProposal says the step has no bank action although derive
+// read one from its text; it always needs the owner.
+type NoBankActionsProposal struct {
+	Reason      string `json:"reason"`
+	ConfirmedBy string `json:"confirmed_by,omitempty"`
+	Decision    string `json:"decision,omitempty"`
 }
 
 // SuppressProposal names a rule objective of the step (Key and Role as
@@ -286,16 +296,19 @@ func build(reg *entities.Registry, st *content.Step, p StepProposal, skillVersio
 			fail(where, fmt.Errorf("key must be a rule objective key from next_batch: %w", err))
 			continue
 		}
-		if sp.ConfirmedBy != "" && sp.ConfirmedBy != content.ConfirmedByOwner {
-			fail(where, fmt.Errorf("confirmed_by can only be %q", content.ConfirmedByOwner))
+		src, err := ownerSource(sp.ConfirmedBy, sp.Decision, skillVersion)
+		if err != nil {
+			fail(where, err)
 			continue
 		}
-		src := content.ObjectiveSource{Method: content.ProvenanceLLM, Confidence: content.ConfidenceMedium, SkillVersion: skillVersion,
-			ConfirmedBy: sp.ConfirmedBy, Decision: sp.Decision}
-		if sp.Decision != "" {
-			src.ConfirmedBy = content.ConfirmedByOwner
-		}
 		sa.Suppressed = append(sa.Suppressed, content.SuppressedObjective{Key: key, Role: sp.Role, Reason: strings.TrimSpace(sp.Reason), Source: src})
+	}
+	if nb := p.NoBankActions; nb != nil {
+		if src, err := ownerSource(nb.ConfirmedBy, nb.Decision, skillVersion); err != nil {
+			fail("no_bank_actions", err)
+		} else {
+			sa.NoBankActions = &content.NoBankActions{Reason: strings.TrimSpace(nb.Reason), Source: src}
+		}
 	}
 	for i, ip := range p.Items {
 		where := fmt.Sprintf("items[%d]", i)
@@ -463,6 +476,21 @@ func anyOfID(reg *entities.Registry, own entities.Resolution, ownName, alt strin
 	}
 	id, _ := ref.Int()
 	return id, nil
+}
+
+// ownerSource is the source of an entry that only the owner can decide
+// (a suppressed rule objective, dropped bank actions): always medium, with
+// confirmed_by owner implied by a decision.
+func ownerSource(confirmedBy, decision, skillVersion string) (content.ObjectiveSource, error) {
+	if confirmedBy != "" && confirmedBy != content.ConfirmedByOwner {
+		return content.ObjectiveSource{}, fmt.Errorf("confirmed_by can only be %q", content.ConfirmedByOwner)
+	}
+	src := content.ObjectiveSource{Method: content.ProvenanceLLM, Confidence: content.ConfidenceMedium, SkillVersion: skillVersion,
+		ConfirmedBy: confirmedBy, Decision: decision}
+	if decision != "" {
+		src.ConfirmedBy = content.ConfirmedByOwner
+	}
+	return src, nil
 }
 
 // provenance locates a quote and fills the source of an llm proposal.

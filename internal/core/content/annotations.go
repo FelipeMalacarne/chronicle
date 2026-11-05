@@ -53,7 +53,17 @@ type StepAnnotation struct {
 	Suppressed  []SuppressedObjective `json:"suppressed,omitempty"`
 	Items       []AnnotatedItem       `json:"items,omitempty"`
 	BankActions []AnnotatedBankAction `json:"bank_actions,omitempty"`
-	Location    *AnnotatedLocation    `json:"location,omitempty"`
+	// NoBankActions drops the bank actions derive read from this step's
+	// text (a "deposit" that is not a bank). Exclusive with BankActions.
+	NoBankActions *NoBankActions     `json:"no_bank_actions,omitempty"`
+	Location      *AnnotatedLocation `json:"location,omitempty"`
+}
+
+// NoBankActions says the step has no bank action, against what derive read
+// from its text. Like a suppressed objective it always needs the owner.
+type NoBankActions struct {
+	Reason string          `json:"reason"`
+	Source ObjectiveSource `json:"source"`
 }
 
 // SuppressedObjective is an objective converted from the step's rules that
@@ -346,6 +356,18 @@ func (g *Guide) CheckStepAnnotation(sa *StepAnnotation, decisions *DecisionsFile
 		}
 		checkSource(bPtr+"/source", ba.Source)
 	}
+	if nb := sa.NoBankActions; nb != nil {
+		if len(sa.BankActions) > 0 {
+			add("/no_bank_actions", "no_bank_actions excludes bank_actions")
+		}
+		if strings.TrimSpace(nb.Reason) == "" {
+			add("/no_bank_actions/reason", "no_bank_actions needs a reason")
+		}
+		if nb.Source.ConfirmedBy != ConfirmedByOwner {
+			add("/no_bank_actions/source", "dropping derived bank actions needs confirmed_by owner or a decision")
+		}
+		checkSource("/no_bank_actions/source", nb.Source)
+	}
 	if sa.Location != nil {
 		if sa.Location.Ref.Kind != entities.KindLocation {
 			add("/location/ref", "location must be a location ref, got %s", sa.Location.Ref)
@@ -401,6 +423,15 @@ func (g *Guide) composeStep(sa *StepAnnotation, skillVersion string) {
 	}
 	seg := g.segmentsByID[st.SegmentID]
 	starts := seg != nil && len(seg.Steps) > 0 && seg.Steps[0] == st
+	if sa.NoBankActions != nil {
+		if sa.NoBankActions.Source.SkillVersion == "" && sa.NoBankActions.Source.Method == ProvenanceLLM {
+			sa.NoBankActions.Source.SkillVersion = skillVersion
+		}
+		if seg != nil {
+			seg.BankActions = slices.DeleteFunc(seg.BankActions, func(a BankAction) bool { return slices.Contains(a.Source.StepIDs, st.ID) })
+		}
+		st.BankActions = nil
+	}
 	if len(sa.Items) > 0 {
 		inv, equip := splitItems(sa.Items)
 		if starts {

@@ -3,6 +3,7 @@ package annotate
 import (
 	"fmt"
 	"path/filepath"
+	"sort"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
@@ -24,6 +25,10 @@ type Report struct {
 	RuleAgreement RuleAgreement   `json:"rule_agreement"`
 	// Rejected lists the steps whose last submit was rejected.
 	Rejected []RejectedStep `json:"rejected"`
+	// OrderIssues re-runs the submit's route-order check over every current
+	// annotation: a conflict an annotation accepted earlier can gain when a
+	// later one moves or suppresses an objective.
+	OrderIssues []RejectedStep `json:"order_issues"`
 	// Inferred lists what entered the sidecars with medium confidence, i.e.
 	// by the owner's confirmation or decision.
 	Inferred []InferredEntry     `json:"inferred"`
@@ -173,6 +178,29 @@ func (gs *guideState) refreshReport(reg *entities.Registry) {
 		r.Summary.DecisionsApplied += s.DecisionsApplied
 		r.Sections = append(r.Sections, s)
 	}
+	r.OrderIssues = gs.allOrderIssues(reg)
+}
+
+// allOrderIssues runs the route-order check with every current annotation
+// as a candidate, in guide order.
+func (gs *guideState) allOrderIssues(reg *entities.Registry) []RejectedStep {
+	current := map[string]content.StepAnnotation{}
+	for _, st := range gs.guide.Steps() {
+		if sa := gs.annotation(st); sa != nil && sa.TextHash == content.StepTextHash(st) {
+			current[st.ID] = *sa
+		}
+	}
+	issues := gs.orderIssues(reg, current)
+	ids := make([]string, 0, len(issues))
+	for id := range issues {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool { return gs.index[ids[i]] < gs.index[ids[j]] })
+	out := []RejectedStep{}
+	for _, id := range ids {
+		out = append(out, RejectedStep{StepID: id, Reasons: issues[id]})
+	}
+	return out
 }
 
 // tally counts the confirmed and inferred entries of one annotation.
@@ -201,6 +229,9 @@ func (gs *guideState) tally(s *SectionReport, st *content.Step, sa *content.Step
 	}
 	for _, ba := range sa.BankActions {
 		count("bank "+ba.Type+"@"+ba.Position, ba.Evidence, ba.Source)
+	}
+	if nb := sa.NoBankActions; nb != nil {
+		count("no bank actions", content.ObjectiveEvidence{Quote: nb.Reason}, nb.Source)
 	}
 	if l := sa.Location; l != nil {
 		count("location "+l.Ref.String(), l.Evidence, l.Source)

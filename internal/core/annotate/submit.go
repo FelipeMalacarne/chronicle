@@ -137,6 +137,9 @@ func accepted(sa content.StepAnnotation) AcceptedStep {
 	for _, ba := range sa.BankActions {
 		a.BankActions = append(a.BankActions, ba.Type+"@"+ba.Position)
 	}
+	if sa.NoBankActions != nil {
+		a.BankActions = []string{"none"}
+	}
 	if sa.Location != nil {
 		a.Location = sa.Location.Ref.String()
 	}

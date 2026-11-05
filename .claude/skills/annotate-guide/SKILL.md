@@ -5,7 +5,7 @@ description: Extract objectives, item requirements, bank actions and locations f
 
 # annotate-guide
 
-Skill version: **`annotate-guide@3`**. Pass it as `skill_version` on every `submit`. Bump the number
+Skill version: **`annotate-guide@4`**. Pass it as `skill_version` on every `submit`. Bump the number
 here whenever the taxonomy or procedure below changes.
 
 You turn guide text into structured annotations (docs/09 section 6). The output is committed in
@@ -50,7 +50,9 @@ Hard rules:
 5. Fix every rejected step and resubmit only those. A reason you cannot fix without guessing is a
    question for the owner. Do not drop it silently.
 6. Repeat until `next_batch` returns no steps. Then call `report`, show the owner the summary
-   (first-submit acceptance, rule agreement and its divergences, inferred entries, open rejections) and
+   (first-submit acceptance, rule agreement and its divergences, inferred entries, open rejections, and
+   `order_issues`: route-order conflicts an earlier annotation gained after a later one moved or suppressed
+   an objective) and
    run `go run ./cmd/ironman content validate`.
 
 Keep the owner informed with one line per batch: steps done, questions asked, rejections.
@@ -158,6 +160,11 @@ Only what the text says, typed precisely, with `position` (`start`, `within`, `e
 - "Bank 7 logs for later", "Bank at least 4 ashes" → `deposit`
 - "Take out ... from the bank" → `withdraw`
 - a full inventory setup → `bank_setup`
+
+When `next_batch` shows a derived bank action the text does not mean (a "deposit" into something that is
+not a bank, such as the balloon log storage), ask the owner, then send `no_bank_actions` with a `reason`
+and `confirmed_by: "owner"` or a `decision`. The loader drops the bank actions derived from that step. It
+excludes `bank_actions` on the same step.
 
 ### Location (`location`)
 

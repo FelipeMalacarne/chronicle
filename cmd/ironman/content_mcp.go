@@ -288,6 +288,9 @@ const submitSchema = `{"type":"object","additionalProperties":false,"required":[
    "name":{"type":"string"},"id":{"type":"string"},
    "field":{"$ref":"#/$defs/field"},"quote":{"$ref":"#/$defs/quote"},
    "confidence":{"$ref":"#/$defs/confidence"},"confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}},
+  "no_bank_actions":{"type":"object","additionalProperties":false,"required":["reason"],"description":"the step has no bank action although derive read one from its text (a 'deposit' that is not a bank); excludes bank_actions; always needs the owner","properties":{
+   "reason":{"type":"string","minLength":1},
+   "confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}},
   "suppress":{"type":"array","description":"rule objectives the step does not have (the loader drops them); always needs the owner","items":{"type":"object","additionalProperties":false,"required":["key","role","reason"],"properties":{
    "key":{"type":"string","description":"key of one of the step's rule_objectives, as next_batch lists it"},
    "role":{"type":"string","enum":["completes","starts","requires","uses"]},

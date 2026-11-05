@@ -354,6 +354,52 @@ func TestSuppress(t *testing.T) {
 	if r.Summary.DecisionsApplied != 1 {
 		t.Errorf("summary = %+v", r.Summary)
 	}
+	if len(r.OrderIssues) != 0 {
+		t.Errorf("order issues = %+v", r.OrderIssues)
+	}
+
+	// Dropping the suppression is accepted for b (its rule is not annotated),
+	// but c's woodcutting>=20 now conflicts: the report shows it.
+	if res := submit(t, w, "1.1", StepProposal{StepID: "b"}); len(res.Accepted) != 1 {
+		t.Fatalf("resubmit b = %+v", res)
+	}
+	r, _ = w.Report("t")
+	if len(r.OrderIssues) != 1 || r.OrderIssues[0].StepID != "c" || !strings.Contains(r.OrderIssues[0].Reasons[0], "already completed by step b") {
+		t.Errorf("order issues = %+v", r.OrderIssues)
+	}
+}
+
+// TestNoBankActions: a step can drop the bank actions derive read from its
+// text, only with the owner and never together with its own bank actions.
+func TestNoBankActions(t *testing.T) {
+	w, dir := workspace(t)
+	cases := []struct {
+		name string
+		step StepProposal
+		want string
+	}{
+		{"without the owner", StepProposal{StepID: "b", NoBankActions: &NoBankActionsProposal{Reason: "not a bank"}}, "needs confirmed_by owner"},
+		{"without a reason", StepProposal{StepID: "b", NoBankActions: &NoBankActionsProposal{ConfirmedBy: content.ConfirmedByOwner}}, "needs a reason"},
+		{"with bank actions", StepProposal{StepID: "b", NoBankActions: &NoBankActionsProposal{Reason: "x", ConfirmedBy: content.ConfirmedByOwner},
+			BankActions: []BankActionProposal{{Type: "deposit_all", Position: "start", Evidence: Evidence{Quote: "Bank everything"}, Source: hi}}}, "excludes bank_actions"},
+	}
+	for _, c := range cases {
+		if got := reasons(submit(t, w, "1.1", c.step), "b"); !strings.Contains(got, c.want) {
+			t.Errorf("%s: reasons %q, want %q", c.name, got, c.want)
+		}
+	}
+	res := submit(t, w, "1.1", StepProposal{StepID: "b", NoBankActions: &NoBankActionsProposal{Reason: "not a bank", ConfirmedBy: content.ConfirmedByOwner}})
+	if len(res.Accepted) != 1 || len(res.Accepted[0].BankActions) != 1 || res.Accepted[0].BankActions[0] != "none" {
+		t.Fatalf("submit = %+v", res)
+	}
+	c, err := content.Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	g, _ := c.Guide("t")
+	if seg, _ := g.Segment("seg-b"); len(seg.BankActions) != 0 {
+		t.Errorf("seg-b bank actions = %+v", seg.BankActions)
+	}
 }
 
 // TestRoundTrip: what submit writes is what the loader composes, a stale

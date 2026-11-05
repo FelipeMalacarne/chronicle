@@ -90,6 +90,41 @@
             "$ref": "#/$defs/annotatedBankAction"
           }
         },
+        "no_bank_actions": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "reason",
+            "source"
+          ],
+          "description": "O passo não tem ação de banco, contra o que o derive leu do texto (um \"deposit\" que não é banco); o loader remove as ações derivadas do passo. Exclui bank_actions e exige o dono.",
+          "properties": {
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "source": {
+              "allOf": [
+                {
+                  "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource"
+                },
+                {
+                  "required": [
+                    "confirmed_by"
+                  ],
+                  "properties": {
+                    "method": {
+                      "enum": [
+                        "llm",
+                        "manual"
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
         "location": {
           "$ref": "#/$defs/annotatedLocation"
         }

@@ -270,7 +270,9 @@ Detalhes da composição, como implementados (item 2 da sequência):
   segmento, ficam no próprio passo (`requirements`, `bank_actions`). O ferramental de extração (item 4)
   não recorta segmentos: `next_batch` diz ao agente se o passo abre o segmento (`starts_here`) e mostra o
   loadout e as ações derivadas, para ele saber o que vai substituir. Se o piloto mostrar que falta um
-  corte, isso volta como correção do `derive`, não da anotação.
+  corte, isso volta como correção do `derive`, não da anotação. Quando o `derive` lê uma ação de banco que
+  o texto não quer dizer (um "deposit" que não é banco), a anotação traz `no_bank_actions` (motivo e
+  `confirmed_by: owner` ou `decision`) e o loader remove as ações derivadas daquele passo.
 - `content.LoadGuideFile`/`ParseGuide` validam tudo isso, mas não alteram o guia (ele recodifica para o
   mesmo `guide.json`); só `content.Load` compõe.
 

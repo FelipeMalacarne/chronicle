@@ -21,6 +21,7 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
+	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
 	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
 )
@@ -37,12 +38,34 @@ type Repository struct {
 	queries *storedb.Queries
 	content *content.Content
 	catalog *entities.Registry
-	now     func() time.Time
+	// publisher receives an event after each committed owner write; nil
+	// disables it. Reevaluate does not publish: it runs inside its caller's
+	// transaction, and the caller publishes after committing.
+	publisher events.Publisher
+	now       func() time.Time
 }
 
 // New returns a repository over the loaded content.
 func New(pool *pgxpool.Pool, cnt *content.Content, catalog *entities.Registry) *Repository {
 	return &Repository{pool: pool, queries: storedb.New(pool), content: cnt, catalog: catalog, now: time.Now}
+}
+
+// WithPublisher makes every committed owner write (marks, cursor, active
+// guide, goals) publish a progress event (GET /api/events). nil disables it.
+func (r *Repository) WithPublisher(p events.Publisher) *Repository {
+	r.publisher = p
+	return r
+}
+
+// publishOwner signals an owner write after its commit; no guides means every
+// guide (the hub fills them).
+func (r *Repository) publishOwner(accountID string, stepsChanged int, guides ...string) {
+	if r.publisher == nil {
+		return
+	}
+	r.publisher.Publish(events.Event{
+		Type: events.TypeProgress, Account: accountID, Source: events.SourceOwner, Guides: guides, StepsChanged: stepsChanged,
+	})
 }
 
 // Reevaluate reevaluates one account inside tx (docs/09 section 5) and

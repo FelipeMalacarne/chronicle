@@ -69,6 +69,7 @@ func (r *Repository) AddGoal(ctx context.Context, accountID, key, label string) 
 	if pinErr := r.inTx(ctx, func(tx pgx.Tx) error { return r.pinGoal(ctx, r.queries.WithTx(tx), accountID, key, label) }); pinErr != nil {
 		return GoalView{}, pinErr
 	}
+	r.publishOwner(accountID, 0)
 	goals, err := r.Goals(ctx, accountID)
 	if err != nil {
 		return GoalView{}, err
@@ -127,6 +128,7 @@ func (r *Repository) RemoveGoal(ctx context.Context, accountID, goalID string) e
 	if n == 0 {
 		return ErrGoalNotFound
 	}
+	r.publishOwner(accountID, 0)
 	return nil
 }
 

@@ -20,6 +20,7 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
+	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
 )
@@ -93,12 +94,21 @@ type Repository struct {
 	queries     *storedb.Queries
 	fetcher     Fetcher
 	reevaluator Reevaluator
+	publisher   events.Publisher
 	now         func() time.Time
 }
 
 // New returns a repository; reevaluator may be nil (no progress).
 func New(pool *pgxpool.Pool, fetcher Fetcher, reevaluator Reevaluator) *Repository {
 	return &Repository{pool: pool, queries: storedb.New(pool), fetcher: fetcher, reevaluator: reevaluator, now: time.Now}
+}
+
+// WithPublisher makes every finished run publish a sync event, and a run that
+// stored a new snapshot also a progress event (GET /api/events). nil disables
+// it.
+func (r *Repository) WithPublisher(p events.Publisher) *Repository {
+	r.publisher = p
+	return r
 }
 
 // Runs returns the newest runs of the account.
@@ -159,11 +169,11 @@ func (r *Repository) Run(ctx context.Context, accountID, trigger string) (RunVie
 	}
 	res, err := r.fetcher.Fetch(ctx, acc.Rsn, acc.Mode)
 	if err != nil {
-		return r.fail(ctx, run.ID, recent, err, now)
+		return r.fail(ctx, accountID, run.ID, recent, err, now)
 	}
 	snap, err := hiscores.Parse(res.Raw)
 	if err != nil {
-		return r.fail(ctx, run.ID, recent, err, now)
+		return r.fail(ctx, accountID, run.ID, recent, err, now)
 	}
 	var out RunView
 	err = pgx.BeginTxFunc(ctx, r.pool, pgx.TxOptions{}, func(tx pgx.Tx) error {
@@ -172,9 +182,27 @@ func (r *Repository) Run(ctx context.Context, accountID, trigger string) (RunVie
 		return txErr
 	})
 	if err != nil {
-		return r.fail(ctx, run.ID, recent, err, now)
+		return r.fail(ctx, accountID, run.ID, recent, err, now)
 	}
+	r.publish(accountID, out)
 	return out, nil
+}
+
+// publish signals a finished run, after its transaction committed: a progress
+// event when it stored a new snapshot (facts and maybe steps changed), and
+// always the sync event with its status.
+func (r *Repository) publish(accountID string, run RunView) {
+	if r.publisher == nil {
+		return
+	}
+	if run.Status == "ok" {
+		r.publisher.Publish(events.Event{
+			Type: events.TypeProgress, Account: accountID, Source: events.SourceHiscores, StepsChanged: run.StepsChanged,
+		})
+	}
+	r.publisher.Publish(events.Event{
+		Type: events.TypeSync, Account: accountID, Source: events.SourceHiscores, Status: run.Status, StepsChanged: run.StepsChanged,
+	})
 }
 
 // store writes the snapshot and its facts unless the facts did not change,
@@ -253,7 +281,7 @@ func writeFacts(ctx context.Context, q *storedb.Queries, accountID, snapshotID s
 
 // fail closes the run as error or rate_limited with the backoff of the
 // consecutive failures (including this one).
-func (r *Repository) fail(ctx context.Context, runID string, recent []storedb.SyncRun, cause error, now time.Time) (RunView, error) {
+func (r *Repository) fail(ctx context.Context, accountID, runID string, recent []storedb.SyncRun, cause error, now time.Time) (RunView, error) {
 	failures, notFound := 1, 0
 	if errors.Is(cause, hiscores.ErrNotFound) {
 		notFound = 1
@@ -287,7 +315,9 @@ func (r *Repository) fail(ctx context.Context, runID string, recent []storedb.Sy
 	if err != nil {
 		return RunView{}, fmt.Errorf("finish failed sync run: %w", err)
 	}
-	return view(row), nil
+	out := view(row)
+	r.publish(accountID, out)
+	return out, nil
 }
 
 // Backoff is the wait after n consecutive failures.

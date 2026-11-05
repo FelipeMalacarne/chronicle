@@ -17,9 +17,17 @@ import (
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 )
+
+// recorder keeps the published events as "type:source:status".
+type recorder struct{ got []string }
+
+func (r *recorder) Publish(e events.Event) {
+	r.got = append(r.got, e.Type+":"+e.Source+":"+e.Status)
+}
 
 // fakeFetcher answers with a sample file or an error, and records the calls.
 type fakeFetcher struct {
@@ -53,7 +61,8 @@ func TestSyncPostgresLifecycle(t *testing.T) {
 	}
 	progress := storeprogress.New(pool, loadContent(t), catalog)
 	fetch := &fakeFetcher{file: "ironman260.json"}
-	repo := New(pool, fetch, progress)
+	rec := &recorder{}
+	repo := New(pool, fetch, progress).WithPublisher(rec)
 	clock := time.Now()
 	repo.now = func() time.Time { return clock }
 
@@ -134,6 +143,16 @@ func TestSyncPostgresLifecycle(t *testing.T) {
 
 	if _, err = repo.Run(ctx, "nobody", TriggerManual); !errors.Is(err, ErrAccountNotFound) {
 		t.Fatalf("unknown account: %v", err)
+	}
+
+	// Events: progress only for the run that stored a snapshot, a sync event
+	// per finished run, nothing for refused runs.
+	want := []string{
+		"progress:hiscores:", "sync:hiscores:ok", "sync:hiscores:unchanged",
+		"sync:hiscores:error", "sync:hiscores:error", "sync:hiscores:error", "sync:hiscores:rate_limited",
+	}
+	if strings.Join(rec.got, ",") != strings.Join(want, ",") {
+		t.Fatalf("events = %v, want %v", rec.got, want)
 	}
 }
 

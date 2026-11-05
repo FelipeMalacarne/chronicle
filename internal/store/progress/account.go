@@ -94,7 +94,8 @@ func (r *Repository) SetActiveGuide(ctx context.Context, accountID, guideID stri
 	if _, ok := r.content.Guide(guideID); !ok {
 		return ErrGuideNotFound
 	}
-	return r.inTx(ctx, func(tx pgx.Tx) error {
+	changed := 0
+	err := r.inTx(ctx, func(tx pgx.Tx) error {
 		q := r.queries.WithTx(tx)
 		if _, err := lockAccount(ctx, q, accountID); err != nil {
 			return err
@@ -102,7 +103,12 @@ func (r *Repository) SetActiveGuide(ctx context.Context, accountID, guideID stri
 		if err := q.SetAccountGuide(ctx, storedb.SetAccountGuideParams{ID: accountID, GuideID: guideID}); err != nil {
 			return fmt.Errorf("set active guide: %w", err)
 		}
-		_, err := r.Reevaluate(ctx, tx, accountID, "")
+		var err error
+		changed, err = r.Reevaluate(ctx, tx, accountID, "")
 		return err
 	})
+	if err == nil {
+		r.publishOwner(accountID, changed)
+	}
+	return err
 }

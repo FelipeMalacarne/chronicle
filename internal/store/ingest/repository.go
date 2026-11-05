@@ -15,6 +15,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
+	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
 )
 
@@ -40,6 +41,7 @@ type Repository struct {
 	queries     *storedb.Queries
 	definition  Definition
 	reevaluator Reevaluator
+	publisher   events.Publisher
 }
 
 func New(pool *pgxpool.Pool, definition Definition) *Repository {
@@ -50,6 +52,13 @@ func New(pool *pgxpool.Pool, definition Definition) *Repository {
 // in the same transaction, so a push and its step changes commit together.
 func (r *Repository) WithReevaluator(re Reevaluator) *Repository {
 	r.reevaluator = re
+	return r
+}
+
+// WithPublisher makes every committed push publish a progress event for the
+// account (GET /api/events). nil disables it.
+func (r *Repository) WithPublisher(p events.Publisher) *Repository {
+	r.publisher = p
 	return r
 }
 
@@ -159,16 +168,25 @@ func (r *Repository) Accept(ctx context.Context, plaintextToken, remoteIP string
 		return coreingest.Response{}, fmt.Errorf("advance ingest token: %w", err)
 	}
 	resp = responseFor(r.definition, push.ClientSeq, true, false)
+	changed := 0
 	if r.reevaluator != nil {
-		changed, err := r.reevaluator.Reevaluate(ctx, tx, token.AccountID, snapshotID)
+		n, err := r.reevaluator.Reevaluate(ctx, tx, token.AccountID, snapshotID)
 		if err != nil {
 			return coreingest.Response{}, fmt.Errorf("reevaluate progress: %w", err)
 		}
-		n := int64(changed)
-		resp.StepsChanged = &n
+		changed = n
+		steps := int64(n)
+		resp.StepsChanged = &steps
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return coreingest.Response{}, fmt.Errorf("commit ingest transaction: %w", err)
+	}
+	// Only after the commit: the push changed facts (and maybe steps) of the
+	// account, so open screens refetch.
+	if r.publisher != nil {
+		r.publisher.Publish(events.Event{
+			Type: events.TypeProgress, Account: token.AccountID, Source: events.SourcePlugin, StepsChanged: changed,
+		})
 	}
 	return resp, nil
 }

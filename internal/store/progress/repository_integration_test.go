@@ -19,8 +19,14 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
 	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
+	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
 )
+
+// recorder keeps the published events.
+type recorder struct{ got []events.Event }
+
+func (r *recorder) Publish(e events.Event) { r.got = append(r.got, e) }
 
 func TestProgressPostgresLifecycle(t *testing.T) {
 	ctx := context.Background()
@@ -136,17 +142,27 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 		t.Fatalf("feathers = %s %s %v", verdict, snapshot, regressed)
 	}
 
-	// Owner marks.
+	// Owner marks; each committed one publishes an owner event for its guide.
+	rec := &recorder{}
+	repo.WithPublisher(rec)
 	board, err := repo.Mark(ctx, "account-1", "g1", "a6", coreprogress.ActionManualDone, nil)
 	if err != nil || board.Cursor != nil || board.Counts.Done != 6 {
 		t.Fatalf("mark a6 = cursor %+v counts %+v, %v", board.Cursor, board.Counts, err)
+	}
+	if len(rec.got) != 1 || rec.got[0].Source != events.SourceOwner || rec.got[0].Account != "account-1" ||
+		len(rec.got[0].Guides) != 1 || rec.got[0].Guides[0] != "g1" {
+		t.Fatalf("events after a mark = %+v", rec.got)
 	}
 	board, err = repo.Mark(ctx, "account-1", "g1", "a6", coreprogress.ActionClear, nil)
 	if err != nil || board.Cursor == nil || board.Cursor.StepID != "a6" {
 		t.Fatalf("clear a6 = %+v, %v", board.Cursor, err)
 	}
+	published := len(rec.got)
 	if _, err = repo.Mark(ctx, "account-1", "g1", "a6", coreprogress.ActionConfirmImplied, nil); !errors.Is(err, coreprogress.ErrNotImplied) {
 		t.Fatalf("confirm on a checkbox: %v", err)
+	}
+	if len(rec.got) != published {
+		t.Fatalf("a refused mark published %+v", rec.got[published:])
 	}
 	board, err = repo.ConfirmImplied(ctx, "account-1", "g1")
 	if err != nil || board.Counts.Implied != 0 || board.Counts.Manual != 3 {

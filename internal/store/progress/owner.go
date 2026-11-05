@@ -139,6 +139,9 @@ func (r *Repository) ownerWrite(ctx context.Context, accountID, guideID string, 
 		out, err = r.boardView(ctx, q, accountID, in, regressed)
 		return err
 	})
+	if err == nil {
+		r.publishOwner(accountID, 0, guideID)
+	}
 	return out, err
 }
 

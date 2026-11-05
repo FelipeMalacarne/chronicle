@@ -16,7 +16,13 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
+	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 )
+
+// recorder keeps the published events.
+type recorder struct{ got []events.Event }
+
+func (r *recorder) Publish(e events.Event) { r.got = append(r.got, e) }
 
 func TestRepositoryPostgresIngestLifecycle(t *testing.T) {
 	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
@@ -70,10 +76,11 @@ func TestRepositoryPostgresIngestLifecycle(t *testing.T) {
 		t.Fatalf("insert account fixture: %v", err)
 	}
 
+	rec := &recorder{}
 	repository := New(pool, Definition{
 		Version: 7, Varbits: []int64{}, Varps: []int64{}, Collections: []int64{},
 		IntervalSeconds: 10,
-	})
+	}).WithPublisher(rec)
 	created, err := repository.CreateToken(ctx, "account-1", "desktop", []coreingest.TokenScope{coreingest.ScopeItemsBank})
 	if err != nil {
 		t.Fatalf("create ingest token: %v", err)
@@ -91,6 +98,9 @@ func TestRepositoryPostgresIngestLifecycle(t *testing.T) {
 	response, err := repository.Accept(ctx, created.Token, "127.0.0.1", rawFull, full)
 	if err != nil || !response.OK || response.AcceptedSeq != 1 || response.Resync {
 		t.Fatalf("accept restored full = %+v, %v", response, err)
+	}
+	if len(rec.got) != 1 || rec.got[0].Type != events.TypeProgress || rec.got[0].Account != "account-1" || rec.got[0].Source != events.SourcePlugin {
+		t.Fatalf("events after a committed push = %+v", rec.got)
 	}
 	manifest, err = repository.Manifest(ctx, created.Token)
 	if err != nil || manifest.Resync {
@@ -219,8 +229,12 @@ func TestRepositoryPostgresIngestLifecycle(t *testing.T) {
 	if privateManifest.Items.Bank || privateManifest.Items.Inventory || privateManifest.Items.Equipment {
 		t.Fatalf("default token exposed item containers: %+v", privateManifest.Items)
 	}
+	published := len(rec.got)
 	if _, err = repository.Accept(ctx, noBank.Token, "", rawFull, full); !errors.Is(err, ErrScopeDenied) {
 		t.Fatalf("disabled bank error = %v", err)
+	}
+	if len(rec.got) != published {
+		t.Fatalf("a refused push published %+v", rec.got[published:])
 	}
 	assertSnapshotCount(ctx, t, pool, 4)
 

@@ -20,6 +20,7 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/config"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	"github.com/FelipeMalacarne/ironman-planner/internal/httpapi"
 	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
 	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
@@ -67,6 +68,14 @@ func runServe(parent context.Context) error {
 		return fmt.Errorf("entity catalog: %w", err)
 	}
 
+	// One hub per process: the store publishes after each commit, GET
+	// /api/events streams to the browser (docs/04 section 6.5).
+	guideIDs := make([]string, 0, len(cnt.Guides))
+	for _, g := range cnt.Guides {
+		guideIDs = append(guideIDs, g.ID)
+	}
+	hub := events.NewHub(guideIDs)
+
 	var db httpapi.DBPinger
 	var ingestService storeingest.Service
 	var holdings httpapi.HoldingsSource
@@ -82,18 +91,18 @@ func runServe(parent context.Context) error {
 		if pool != nil {
 			defer pool.Close()
 			db = pool
-			progressRepo := storeprogress.New(pool, cnt, catalog)
+			progressRepo := storeprogress.New(pool, cnt, catalog).WithPublisher(hub)
 			if err = bootProgress(ctx, progressRepo, logger); err != nil {
 				if !cfg.IsDev() {
 					return err
 				}
 				logger.Error("progress: boot indexing failed; continuing", "err", err)
 			}
-			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).WithReevaluator(progressRepo)
+			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).WithReevaluator(progressRepo).WithPublisher(hub)
 			ingestService, holdings, progressService = repo, repo, progressRepo
 			hiscoresClient := hiscores.New()
 			hiscoresDetector, accountService = hiscoresClient, progressRepo
-			syncRepo := syncrun.New(pool, hiscoresClient, progressRepo)
+			syncRepo := syncrun.New(pool, hiscoresClient, progressRepo).WithPublisher(hub)
 			syncService = syncRepo
 			if cfg.SyncHiscoresMinutes > 0 {
 				scheduler := &syncrun.Scheduler{
@@ -125,6 +134,7 @@ func runServe(parent context.Context) error {
 		Accounts:       accountService,
 		Hiscores:       hiscoresDetector,
 		Catalog:        catalog,
+		Events:         hub,
 		DevMode:        cfg.IsDev(),
 		Static:         static,
 		Logger:         logger,

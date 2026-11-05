@@ -1,4 +1,6 @@
 import type {
+	AccountMode,
+	AccountView,
 	Board,
 	ContentSection,
 	EventsView,
@@ -7,6 +9,7 @@ import type {
 	MarkAction,
 	ProgressSummary,
 	Readiness,
+	SetupLookup,
 	SyncRun,
 	WorldEntity
 } from '../progress/types';
@@ -115,6 +118,9 @@ export const progressApi = {
 	sync: (account: string) => request<SyncRun>(`/sync?account=${enc(account)}`, json('POST')),
 	syncRuns: (account: string, limit = 5) =>
 		request<{ runs: SyncRun[] }>(`/sync/runs?account=${enc(account)}&limit=${limit}`),
+	setupLookup: (rsn: string) => request<SetupLookup>(`/setup/lookup?rsn=${enc(rsn)}`),
+	createAccount: (input: { rsn: string; mode: AccountMode; guide_id: string; layer: string }) =>
+		request<AccountView>('/accounts', json('POST', input)),
 	setActiveGuide: (account: string, guide: string) =>
 		request<ProgressSummary>(
 			`/account/guide?account=${enc(account)}`,

@@ -51,7 +51,9 @@
 <nav class="side" aria-label="Principal">
 	<div class="brand">
 		<a href={resolve('/')} class="sr">Ironman Planner</a>
-		<span class="mono">{account ?? 'sem conta'}</span>
+		<a class="mono acct" href={resolve('/setup')} title="Trocar ou criar conta"
+			>{account ?? 'sem conta'} · trocar</a
+		>
 	</div>
 	{#each items as it (it.label)}
 		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- hrefs dos itens vêm de resolve() -->
@@ -99,9 +101,13 @@
 		color: var(--gold);
 		text-decoration: none;
 	}
-	.brand span {
+	.brand .acct {
 		font-size: 11px;
 		color: var(--on-frame-muted);
+		text-decoration: none;
+	}
+	.brand .acct:hover {
+		color: var(--on-frame);
 	}
 	.grow {
 		flex: 1;

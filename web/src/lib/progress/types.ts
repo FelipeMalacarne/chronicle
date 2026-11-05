@@ -364,3 +364,26 @@ export interface SyncRun {
 	next_allowed_at?: string;
 	created_at: string;
 }
+
+/* ------------------------------------------------------------------ setup (V4Setup) */
+
+export type AccountMode = 'ironman' | 'hcim' | 'uim' | 'gim';
+
+export interface AccountView {
+	id: string;
+	rsn: string;
+	mode: AccountMode;
+	guide_id: string;
+	layer: 'classic' | 'enhanced';
+}
+
+export interface SetupLookup {
+	rsn: string;
+	account: AccountView | null;
+	found: boolean;
+	/** Modo da tabela mais específica que conhece o nome; vazio quando só a normal conhece. */
+	mode: '' | 'ironman' | 'hcim' | 'uim';
+	total_level?: number;
+	skills: { skill: string; level: number }[];
+	hiscores_error?: string;
+}

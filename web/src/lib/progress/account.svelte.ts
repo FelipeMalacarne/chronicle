@@ -16,3 +16,12 @@ export function currentAccount(): string | undefined {
 		return raw || undefined;
 	}
 }
+
+/** Lembra a conta escolhida no setup neste navegador. */
+export function rememberAccount(id: string) {
+	try {
+		localStorage.setItem(KEY, id);
+	} catch {
+		/* sem storage: a conta segue pela URL */
+	}
+}

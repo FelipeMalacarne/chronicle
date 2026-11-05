@@ -49,7 +49,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class IronmanPlannerPlugin extends Plugin
 {
-	static final String VERSION = "1.0.0";
+	static final String VERSION = "1.1.0";
 	private static final long CAPTURE_TIMEOUT_MS = 2_000;
 
 	@Inject

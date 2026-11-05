@@ -96,6 +96,9 @@ func TestPushAndSyncConcurrentPostgres(t *testing.T) {
 	for err := range errs {
 		t.Error(err)
 	}
+	if rep, err := progress.Check(ctx, "account-1"); err != nil || !rep.OK {
+		t.Fatalf("progress check after interleaved writes: %v, %v", rep.Differences, err)
+	}
 }
 
 func levelsPush(seq int64, levels map[string]int64) coreingest.Push {
@@ -188,5 +191,15 @@ func TestFactsMergePostgres(t *testing.T) {
 	var n int
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM observations WHERE facet = 'skill' AND key = 'attack'`).Scan(&n); err != nil || n != 2 {
 		t.Fatalf("attack observations = %d, %v (one per source)", n, err)
+	}
+	if rep, err := progress.Check(ctx, "account-1"); err != nil || !rep.OK {
+		t.Fatalf("progress check: %v, %v", rep.Differences, err)
+	}
+	// A fact written around the projection is reported.
+	if _, err := pool.Exec(ctx, `UPDATE player_state SET value = '{"level":1,"xp":0}' WHERE facet = 'skill' AND key = 'attack'`); err != nil {
+		t.Fatal(err)
+	}
+	if rep, err := progress.Check(ctx, "account-1"); err != nil || rep.OK || !strings.Contains(strings.Join(rep.Differences, "\n"), "facts: skill attack") {
+		t.Fatalf("check must report the stale fact: %+v, %v", rep, err)
 	}
 }

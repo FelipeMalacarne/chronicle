@@ -86,34 +86,9 @@ func (r *Repository) ReevaluateRoute(ctx context.Context, tx pgx.Tx, accountID, 
 	if err != nil {
 		return 0, coreingest.RouteUpdate{}, err
 	}
-	ps, obs, err := state.Load(ctx, q, accountID, r.catalog)
+	in, err := r.engineInput(ctx, q, accountID, acc)
 	if err != nil {
 		return 0, coreingest.RouteUpdate{}, err
-	}
-	in := coreprogress.Input{
-		Guides: r.content.Guides, Registry: r.catalog, State: ps, Observations: obs,
-		Account: acc, Now: r.now(),
-	}
-	if in.Objectives, err = loadObjectives(ctx, q, accountID); err != nil {
-		return 0, coreingest.RouteUpdate{}, err
-	}
-	if in.Marks, err = loadMarks(ctx, q, accountID); err != nil {
-		return 0, coreingest.RouteUpdate{}, err
-	}
-	if in.LastStatus, err = loadLastStatus(ctx, q, accountID); err != nil {
-		return 0, coreingest.RouteUpdate{}, err
-	}
-	if in.Cursors, err = loadCursors(ctx, q, accountID); err != nil {
-		return 0, coreingest.RouteUpdate{}, err
-	}
-	goals, err := q.ListGoalsByAccount(ctx, accountID)
-	if err != nil {
-		return 0, coreingest.RouteUpdate{}, fmt.Errorf("list goals: %w", err)
-	}
-	for _, g := range goals {
-		if g.Status == "active" {
-			in.Goals = append(in.Goals, g.ObjectiveKey)
-		}
 	}
 	plan := coreprogress.Reevaluate(in)
 	if err := writePlan(ctx, q, accountID, snapshotID, in.Now, plan); err != nil {
@@ -125,6 +100,40 @@ func (r *Repository) ReevaluateRoute(ctx context.Context, tx pgx.Tx, accountID, 
 		route = coreingest.RouteUpdate{Guide: rc.GuideID, Cursor: rc.Cursor.StepID, CursorCause: rc.Cursor.Cause, Changed: rc.Changed}
 	}
 	return plan.StepsChanged, route, nil
+}
+
+// engineInput loads everything the engine reads for one account.
+func (r *Repository) engineInput(ctx context.Context, q *storedb.Queries, accountID string, acc coreprogress.Account) (coreprogress.Input, error) {
+	ps, obs, err := state.Load(ctx, q, accountID, r.catalog)
+	if err != nil {
+		return coreprogress.Input{}, err
+	}
+	in := coreprogress.Input{
+		Guides: r.content.Guides, Registry: r.catalog, State: ps, Observations: obs,
+		Account: acc, Now: r.now(),
+	}
+	if in.Objectives, err = loadObjectives(ctx, q, accountID); err != nil {
+		return in, err
+	}
+	if in.Marks, err = loadMarks(ctx, q, accountID); err != nil {
+		return in, err
+	}
+	if in.LastStatus, err = loadLastStatus(ctx, q, accountID); err != nil {
+		return in, err
+	}
+	if in.Cursors, err = loadCursors(ctx, q, accountID); err != nil {
+		return in, err
+	}
+	goals, err := q.ListGoalsByAccount(ctx, accountID)
+	if err != nil {
+		return in, fmt.Errorf("list goals: %w", err)
+	}
+	for _, g := range goals {
+		if g.Status == "active" {
+			in.Goals = append(in.Goals, g.ObjectiveKey)
+		}
+	}
+	return in, nil
 }
 
 // ReevaluateAll re-projects the facts and reevaluates every active account,

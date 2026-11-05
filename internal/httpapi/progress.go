@@ -30,6 +30,7 @@ type ProgressService interface {
 	RemoveGoal(ctx context.Context, accountID, goalID string) error
 	GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error)
 	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
+	Check(ctx context.Context, accountID string) (storeprogress.CheckReport, error)
 }
 
 // handleAccountState is the account screen (V6Conta1440): skills, quests and
@@ -199,6 +200,22 @@ func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.writeProgressSummary(w, r, account)
+}
+
+// handleProgressCheck is GET /api/progress/check: every projection of the
+// account recomputed from its sources, read only (`ironman progress check`,
+// docs/10 section 6).
+func (s *Server) handleProgressCheck(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	rep, err := s.opts.Progress.Check(r.Context(), account)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, rep)
 }
 
 func (s *Server) writeProgressSummary(w http.ResponseWriter, r *http.Request, account string) {

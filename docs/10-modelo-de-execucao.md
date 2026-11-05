@@ -103,6 +103,16 @@ as marcas têm `actor` e `via` em `mark_commands`, e os eventos de status aponta
 diferença para o banco. Roda no CI contra fixtures e pode rodar no boot. A trava do `met` de item usa
 `observed_at` limitado, nunca a ordem de inserção.
 
+Como implementado (fatia e, 2026-11-05), o comando é `ironman progress check --account <id>`: fala
+com `GET /api/progress/check` de um servidor no ar (CLAUDE.md regra 1) e sai com 1 se houver
+diferença. Numa transação só de leitura, o servidor confere três coisas: `step_marks` contra a
+repetição de `mark_commands`; `player_state` contra a junção das `observations`; e vereditos, marcas
+`implied`, últimos status e cursores contra uma reavaliação dos fatos atuais, que não pode ter nada a
+gravar. Não repete o histórico de snapshots desde o início: a cascata `implied` depende da ordem em
+que os vereditos mudaram, e esse histórico já está nos logs de eventos. No boot, a checagem roda antes
+da reavaliação e só avisa no log; no CI, os testes de integração do store terminam com ela, num
+Postgres 17 do job `go`.
+
 **Distribuição.** Um `outbox` gravado na transação alimenta o hub. Com um processo, o hub em memória
 de hoje basta (decisão 25 do doc 01). Com o `serve` e o agent em processos separados, o hub lê o
 outbox por `LISTEN/NOTIFY`. Sem broker.

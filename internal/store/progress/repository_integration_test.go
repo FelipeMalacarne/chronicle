@@ -303,6 +303,17 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 	if n := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE cause IN ('user', 'implied', 'migration') AND command_id IS NULL AND id <> 'sse-legacy'`); n != 0 {
 		t.Fatalf("%d owner, implied or migration events without their command", n)
 	}
+	assertConsistent(ctx, t, repo, "account-1")
+}
+
+// assertConsistent runs `ironman progress check` on one account: every
+// projection must match its sources (docs/10 section 6, decision E3).
+func assertConsistent(ctx context.Context, t *testing.T, repo *Repository, accountID string) {
+	t.Helper()
+	rep, err := repo.Check(ctx, accountID)
+	if err != nil || !rep.OK {
+		t.Fatalf("progress check of %s: %v, %v", accountID, rep.Differences, err)
+	}
 }
 
 func errOf(_ BoardView, err error) error { return err }
@@ -574,6 +585,10 @@ func TestMarkBeforePostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	repo := New(pool, loadContent(t), catalog)
+	// Boot: the fixture's marks get their statuses and cursors, as serve does.
+	if _, err := repo.ReevaluateAll(ctx); err != nil {
+		t.Fatal(err)
+	}
 	board, err := repo.MarkBefore(ctx, "account-1", "g1", "a5")
 	if err != nil || fmt.Sprint(board.Marked) != "[a1 a3 a4]" || board.Cursor == nil || board.Cursor.StepID != "a5" {
 		t.Fatalf("mark before = %v cursor %+v, %v", board.Marked, board.Cursor, err)
@@ -598,9 +613,7 @@ func TestMarkBeforePostgres(t *testing.T) {
 	if n := count(ctx, t, pool, `SELECT count(*) FROM mark_commands WHERE kind = 'restore' AND via = 'plugin_panel' AND revokes_id = '`+batch+`'`); n != 1 {
 		t.Fatalf("restore command = %d", n)
 	}
-	if diffs, err := repo.VerifyMarks(ctx, "account-1"); err != nil || len(diffs) != 0 {
-		t.Fatalf("mark log replay: %v, %v", diffs, err)
-	}
+	assertConsistent(ctx, t, repo, "account-1")
 	// The log is append-only, and a write that bypasses it shows in the replay.
 	if _, err := pool.Exec(ctx, `UPDATE mark_commands SET kind = 'mark' WHERE id = '`+batch+`'`); err == nil {
 		t.Fatal("a mark command was updated")
@@ -610,6 +623,9 @@ func TestMarkBeforePostgres(t *testing.T) {
 	}
 	if diffs, err := repo.VerifyMarks(ctx, "account-1"); err != nil || len(diffs) != 1 {
 		t.Fatalf("bypassing write: %v, %v", diffs, err)
+	}
+	if rep, err := repo.Check(ctx, "account-1"); err != nil || rep.OK {
+		t.Fatalf("check must report the bypassing write: %+v, %v", rep, err)
 	}
 }
 

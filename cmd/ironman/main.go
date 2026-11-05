@@ -32,6 +32,7 @@ func newRoot() *cobra.Command {
 		newContentCmd(),
 		newVersionCmd(),
 		newHealthCmd(),
+		newProgressCmd(),
 	)
 	root.AddCommand(stubCommands()...)
 	return root

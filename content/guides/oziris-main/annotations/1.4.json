@@ -3,7 +3,7 @@
   "kind": "section",
   "guide_id": "oziris-main",
   "section_id": "1.4",
-  "skill_version": "annotate-guide@4",
+  "skill_version": "annotate-guide@5",
   "steps": [
     {
       "step_id": "1.4.1",
@@ -1427,11 +1427,11 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@3"
+            "skill_version": "annotate-guide@5"
           }
         },
         {
-          "key": "item:11850x1",
+          "key": "item:family/graceful_hoodx1",
           "role": "completes",
           "evidence": {
             "field": "/text",
@@ -1444,12 +1444,12 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@3",
+            "skill_version": "annotate-guide@5",
             "confirmed_by": "owner"
           }
         },
         {
-          "key": "item:11852x1",
+          "key": "item:family/graceful_capex1",
           "role": "completes",
           "evidence": {
             "field": "/text",
@@ -1462,12 +1462,12 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@3",
+            "skill_version": "annotate-guide@5",
             "confirmed_by": "owner"
           }
         },
         {
-          "key": "item:11854x1",
+          "key": "item:family/graceful_topx1",
           "role": "completes",
           "evidence": {
             "field": "/text",
@@ -1480,12 +1480,12 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@3",
+            "skill_version": "annotate-guide@5",
             "confirmed_by": "owner"
           }
         },
         {
-          "key": "item:11856x1",
+          "key": "item:family/graceful_legsx1",
           "role": "completes",
           "evidence": {
             "field": "/text",
@@ -1498,12 +1498,12 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@3",
+            "skill_version": "annotate-guide@5",
             "confirmed_by": "owner"
           }
         },
         {
-          "key": "item:11858x1",
+          "key": "item:family/graceful_glovesx1",
           "role": "completes",
           "evidence": {
             "field": "/text",
@@ -1516,12 +1516,12 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@3",
+            "skill_version": "annotate-guide@5",
             "confirmed_by": "owner"
           }
         },
         {
-          "key": "item:11860x1",
+          "key": "item:family/graceful_bootsx1",
           "role": "completes",
           "evidence": {
             "field": "/text",
@@ -1534,7 +1534,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@3",
+            "skill_version": "annotate-guide@5",
             "confirmed_by": "owner"
           }
         }

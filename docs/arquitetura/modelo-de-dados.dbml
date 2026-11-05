@@ -115,6 +115,17 @@ Table graph_cache {
   edges_json jsonb [not null]
 }
 
+Table guides {
+  id text [pk]
+  title text [not null, default: `''::text`]
+  first_seen_at timestamptz [not null, default: `now()`]
+  last_loaded_at timestamptz
+
+  Note: '''
+  Every guide the server loaded (upserted at boot); progress rows reference it.
+  '''
+}
+
 Table ingest_container_freshness {
   account_id text [not null]
   container text [not null]
@@ -134,6 +145,33 @@ Table ingest_container_freshness {
   ingest_container_freshness_container_check: CHECK ((container = ANY (ARRAY['bank'::text, 'inventory'::text, 'equipment'::text])))
   ingest_container_freshness_shape: CHECK ((((state = 'unavailable'::text) AND (revision IS NULL) AND (live_epoch IS NULL)) OR ((state = 'restored'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (live_epoch IS NULL)) OR ((state = 'live'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (length(live_epoch) > 0))))
   ingest_container_freshness_state_check: CHECK ((state = ANY (ARRAY['unavailable'::text, 'restored'::text, 'live'::text])))
+  '''
+}
+
+Table mark_commands {
+  seq bigint [pk, default: `nextval('mark_commands_seq_seq'::regclass)`, note: 'replay order']
+  id text [not null, unique]
+  account_id text [not null]
+  guide_id text [not null]
+  kind text [not null]
+  actor text [not null]
+  via text [note: 'where an owner command came from']
+  step_id text [note: 'the step the command was about, when one']
+  revokes_id text [note: 'the command an undo takes back']
+  effects jsonb [not null, note: '[{step_id, from: mark|null, to: mark|null}]']
+  at timestamptz [not null, default: `clock_timestamp()`]
+
+  indexes {
+    (account_id, guide_id, seq) [name: 'mark_commands_replay_idx']
+  }
+
+  Note: '''
+  Append-only log of every step_marks change (owner, engine implied, alias moves) with its effects; step_marks is its projection.
+  mark_commands_actor_check: CHECK ((actor = ANY (ARRAY['owner'::text, 'engine'::text, 'system'::text])))
+  mark_commands_effects_check: CHECK ((jsonb_typeof(effects) = 'array'::text))
+  mark_commands_kind_check: CHECK ((kind = ANY (ARRAY['mark'::text, 'confirm_implied'::text, 'mark_before'::text, 'restore'::text, 'pin'::text, 'implied'::text, 'alias'::text, 'migration'::text])))
+  mark_commands_owner_has_via: CHECK (((actor = 'owner'::text) = (via IS NOT NULL)))
+  mark_commands_via_check: CHECK ((via = ANY (ARRAY['web'::text, 'plugin_panel'::text])))
   '''
 }
 
@@ -406,6 +444,7 @@ Table step_status_events {
   cause text [not null]
   snapshot_id text
   at timestamptz [not null, default: `now()`]
+  command_id text [note: 'the mark command behind a user, implied or migration change']
 
   indexes {
     (account_id, at) [name: 'step_status_events_account_time_idx']
@@ -480,14 +519,19 @@ Table wiki_cache {
   '''
 }
 
+Ref accounts_guide_fkey: accounts.guide_id > guides.id
 Ref accounts_user_id_fkey: accounts.user_id > users.id [delete: cascade]
 Ref api_tokens_user_id_fkey: api_tokens.user_id > users.id [delete: cascade]
 Ref content_steps_content_version_id_fkey: content_steps.content_version_id > content_versions.id
+Ref content_steps_guide_fkey: content_steps.guide_id > guides.id
 Ref goals_account_id_fkey: goals.account_id > accounts.id [delete: cascade]
 Ref graph_cache_content_version_id_fkey: graph_cache.content_version_id > content_versions.id
 Ref ingest_container_freshness_account_id_fkey: ingest_container_freshness.account_id > accounts.id [delete: cascade]
 Ref ingest_container_freshness_snapshot_id_fkey: ingest_container_freshness.snapshot_id > snapshots.id
 Ref ingest_container_freshness_snapshot_same_account: ingest_container_freshness.(snapshot_id, account_id) > snapshots.(id, account_id)
+Ref mark_commands_account_id_fkey: mark_commands.account_id > accounts.id [delete: cascade]
+Ref mark_commands_guide_id_fkey: mark_commands.guide_id > guides.id
+Ref mark_commands_revokes_id_fkey: mark_commands.revokes_id > mark_commands.id
 Ref objective_progress_account_id_fkey: objective_progress.account_id > accounts.id [delete: cascade]
 Ref objective_progress_evidence_same_account: objective_progress.(evidence_snapshot_id, account_id) > snapshots.(id, account_id)
 Ref objective_progress_evidence_snapshot_id_fkey: objective_progress.evidence_snapshot_id > snapshots.id
@@ -499,13 +543,18 @@ Ref player_state_snapshot_id_fkey: player_state.snapshot_id > snapshots.id
 Ref player_state_snapshot_same_account: player_state.(snapshot_id, account_id) > snapshots.(id, account_id)
 Ref plugin_ingest_tokens_account_id_fkey: plugin_ingest_tokens.account_id > accounts.id [delete: cascade]
 Ref route_cursor_account_id_fkey: route_cursor.account_id > accounts.id [delete: cascade]
+Ref route_cursor_guide_fkey: route_cursor.guide_id > guides.id
 Ref settings_account_id_fkey: settings.account_id > accounts.id [delete: cascade]
 Ref snapshot_facts_snapshot_id_fkey: snapshot_facts.snapshot_id > snapshots.id [delete: cascade]
 Ref snapshot_item_containers_snapshot_id_fkey: snapshot_item_containers.snapshot_id > snapshots.id [delete: cascade]
 Ref snapshots_account_id_fkey: snapshots.account_id > accounts.id [delete: cascade]
 Ref snapshots_ingest_token_id_fkey: snapshots.ingest_token_id > plugin_ingest_tokens.id [delete: set null]
+Ref step_id_aliases_guide_fkey: step_id_aliases.guide_id > guides.id
 Ref step_marks_account_id_fkey: step_marks.account_id > accounts.id [delete: cascade]
+Ref step_marks_guide_fkey: step_marks.guide_id > guides.id
 Ref step_status_events_account_id_fkey: step_status_events.account_id > accounts.id [delete: cascade]
+Ref step_status_events_command_id_fkey: step_status_events.command_id > mark_commands.id
+Ref step_status_events_guide_fkey: step_status_events.guide_id > guides.id
 Ref sync_runs_account_id_fkey: sync_runs.account_id > accounts.id [delete: cascade]
 
 TableGroup identidade {
@@ -531,6 +580,7 @@ TableGroup estado_da_conta {
 }
 
 TableGroup conteudo_indexado {
+  guides
   content_versions
   content_steps
   step_id_aliases
@@ -539,6 +589,7 @@ TableGroup conteudo_indexado {
 TableGroup progresso {
   objective_progress
   objective_progress_events
+  mark_commands
   step_marks
   step_status_events
   route_cursor

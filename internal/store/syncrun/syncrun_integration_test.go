@@ -244,6 +244,11 @@ func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
 			t.Fatalf("apply %s: %v", f, execErr)
 		}
 	}
+	// The guides of the test content (testdata) exist as the boot's index
+	// would leave them: progress rows reference guides (migration 0009).
+	if _, err := pool.Exec(ctx, `INSERT INTO guides (id) VALUES ('g1'), ('g2'), ('guide-1') ON CONFLICT DO NOTHING`); err != nil {
+		t.Fatalf("insert test guides: %v", err)
+	}
 	return pool
 }
 

@@ -46,3 +46,8 @@ ORDER BY old_step_id;
 -- name: MarkStepIDAliasApplied :exec
 UPDATE step_id_aliases SET applied_at = now()
 WHERE guide_id = $1 AND old_step_id = $2;
+
+-- name: UpsertGuide :exec
+-- Every guide the server loads; progress rows reference it.
+INSERT INTO guides (id, title, last_loaded_at) VALUES ($1, $2, now())
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, last_loaded_at = now();

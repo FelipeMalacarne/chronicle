@@ -85,7 +85,7 @@ Hoje `player_state` tem chave `(account_id, facet, key)` e guarda o último valo
 | Log | Conteúdo | Escritor |
 |---|---|---|
 | `snapshots` + `snapshot_facts` | observações brutas e normalizadas | ingest, sync (já existe) |
-| `owner_commands` | marcar, pular, fixar, desfazer, confirmar `implied`, trocar rota; `revokes_id` aponta para o comando desfeito; guia e conta sempre no comando | API do dono, painel do plugin |
+| `mark_commands` (como implementado; o rascunho chamava `owner_commands`) | toda mudança de `step_marks`, com os efeitos (marca antes e depois de cada passo): comandos do dono (marcar, pular, fixar, marcar antes, desfazer em lote, confirmar `implied`; `via` web ou painel do plugin; `revokes_id` aponta para o comando desfeito), as marcas `implied` do motor (autor `engine`) e as mudanças de id por alias (autor `system`); só adição, garantido por gatilho | API do dono, painel do plugin, motor, boot |
 | `run_events` | tarefa iniciada, concluída, entregue ao dono, falhou; com screenshot e estado | executor (seção 10) |
 
 **Projeções**, na mesma transação, por função de `(logs, conteúdo atual)`: `player_state`,
@@ -93,8 +93,11 @@ Hoje `player_state` tem chave `(account_id, facet, key)` e guarda o último valo
 a ser um comando novo que revoga o anterior pelo id, e não uma regravação de estado (resolve R9 por
 construção).
 
-**Autor.** Toda evidência e todo evento gravam o autor: `owner`, `plugin`, `hiscores`, `automation`
-(com `run_id`).
+**Autor.** Toda evidência e todo evento identificam o autor. Como implementado (fatia d, 2026-11-05):
+as marcas têm `actor` e `via` em `mark_commands`, e os eventos de status apontam para o comando
+(`step_status_events.command_id`); o autor de um veredito é a fonte do snapshot da evidência
+(`snapshots.source`, amarrado à conta pela FK composta da 0007), sem coluna repetida. `automation` e
+`run_id` entram com o executor (fases 3 e 4).
 
 **Reconstrução.** `ironman progress rebuild --check` recalcula as projeções do zero e mostra a
 diferença para o banco. Roda no CI contra fixtures e pode rodar no boot. A trava do `met` de item usa
@@ -224,10 +227,10 @@ migration de cada fase.
 
 | Tabela | Estado | Chave e campos principais |
 |---|---|---|
-| `guides` | nova (fatia d da fase 0) | `id`, título, atribuição; preenchida no boot; FK de `accounts`, `step_marks`, `route_cursor`, eventos |
+| `guides` | nova (migration 0009) | `id`, título, atribuição; preenchida no boot; FK de `accounts`, `step_marks`, `route_cursor`, eventos |
 | `observations` | nova | `(account_id, facet, key, source)`, `value`, `observed_at` limitado, `snapshot_id` |
 | `player_state` | muda: projeção | `(account_id, facet, key)`, `value` da junção |
-| `owner_commands` | nova, só adição | `id`, `account_id`, `guide_id`, `kind`, `step_id`, `payload`, `revokes_id`, `actor`, `at` |
+| `mark_commands` | nova, só adição (migration 0009) | `seq`, `id`, `account_id`, `guide_id`, `kind`, `actor`, `via`, `step_id`, `revokes_id`, `effects`, `at` |
 | `step_marks` | muda: projeção | ganha `command_id` |
 | `objective_progress` | mantém, com mais restrições | ganha `actor`, `run_id`; CHECK de evidência não vazia; trava no banco |
 | `clients` | nova | `id`, máquina, perfil do Microbot |

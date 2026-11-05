@@ -37,6 +37,9 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 		VALUES ('account-1', 'user-1', 'Example', 'example', 'ironman', 'g1', 'classic');
 		-- Progress recorded under an id the guide now declares as replaced.
 		INSERT INTO step_marks (account_id, guide_id, step_id, kind, note) VALUES ('account-1', 'g1', 'a2-old', 'manual_done', 'by hand');
+		-- As migration 0009 seeds it: the existing mark is the start of the log.
+		INSERT INTO mark_commands (id, account_id, guide_id, kind, actor, effects) VALUES ('mc-seed', 'account-1', 'g1', 'migration', 'system',
+		  '[{"step_id":"a2-old","from":null,"to":{"kind":"manual_done","note":"by hand"}}]');
 		INSERT INTO step_status_events (id, account_id, guide_id, step_id, from_status, to_status, cause)
 		VALUES ('sse-legacy', 'account-1', 'g1', 'a2-old', 'pending', 'manual_done', 'user');
 		INSERT INTO route_cursor (account_id, guide_id, step_id, cause) VALUES ('account-1', 'g1', 'a2-old', 'pin');
@@ -286,6 +289,20 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 			t.Fatalf("%s: %v", name, err)
 		}
 	}
+
+	// After aliases, owner marks, the implied cascade and its confirmation,
+	// step_marks is exactly the replay of the mark log (docs/10 section 6).
+	if diffs, err := repo.VerifyMarks(ctx, "account-1"); err != nil || len(diffs) != 0 {
+		t.Fatalf("mark log replay: %v, %v", diffs, err)
+	}
+	for actor, min := range map[string]int{"owner": 1, "engine": 1, "system": 2} {
+		if n := count(ctx, t, pool, `SELECT count(*) FROM mark_commands WHERE actor = '`+actor+`'`); n < min {
+			t.Fatalf("%s commands = %d, want at least %d", actor, n, min)
+		}
+	}
+	if n := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE cause IN ('user', 'implied', 'migration') AND command_id IS NULL AND id <> 'sse-legacy'`); n != 0 {
+		t.Fatalf("%d owner, implied or migration events without their command", n)
+	}
 }
 
 func errOf(_ BoardView, err error) error { return err }
@@ -468,6 +485,11 @@ func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
 			t.Fatalf("apply %s: %v", f, err)
 		}
 	}
+	// The guides of the test content (testdata) exist as the boot's index
+	// would leave them: progress rows reference guides (migration 0009).
+	if _, err := pool.Exec(ctx, `INSERT INTO guides (id) VALUES ('g1'), ('g2'), ('guide-1') ON CONFLICT DO NOTHING`); err != nil {
+		t.Fatalf("insert test guides: %v", err)
+	}
 	return pool
 }
 
@@ -542,6 +564,8 @@ func TestMarkBeforePostgres(t *testing.T) {
 		VALUES ('account-1', 'user-1', 'Example', 'example', 'ironman', 'g1', 'classic');
 		INSERT INTO step_marks (account_id, guide_id, step_id, kind) VALUES ('account-1', 'g1', 'a2', 'skipped');
 		INSERT INTO step_marks (account_id, guide_id, step_id, kind, implied_by_step_id, implied_at) VALUES ('account-1', 'g1', 'a3', 'implied', 'a4', now());
+		INSERT INTO mark_commands (id, account_id, guide_id, kind, actor, effects) VALUES ('mc-seed', 'account-1', 'g1', 'migration', 'system',
+		  '[{"step_id":"a2","from":null,"to":{"kind":"skipped"}},{"step_id":"a3","from":null,"to":{"kind":"implied","implied_by_step_id":"a4"}}]');
 	`); err != nil {
 		t.Fatal(err)
 	}
@@ -557,11 +581,36 @@ func TestMarkBeforePostgres(t *testing.T) {
 	if n := count(ctx, t, pool, `SELECT count(*) FROM step_status_events WHERE cause = 'user' AND to_status = 'manual_done'`); n != 3 {
 		t.Fatalf("user events = %d", n)
 	}
-	board, err = repo.RestoreMarks(ctx, "account-1", "g1", board.Undo)
+	batch := board.CommandID
+	if batch == "" {
+		t.Fatal("mark before logged no command")
+	}
+	// An undo names the command it takes back; a command of another guide or
+	// account is refused.
+	if _, err = repo.RestoreMarks(WithCommand(ctx, CommandMeta{Via: ViaWeb, Revokes: "mc-nope"}), "account-1", "g1", board.Undo); !errors.Is(err, ErrInvalidRevokes) {
+		t.Fatalf("unknown revokes: %v", err)
+	}
+	board, err = repo.RestoreMarks(WithCommand(ctx, CommandMeta{Via: ViaPluginPanel, Revokes: batch}), "account-1", "g1", board.Undo)
 	if err != nil || board.Cursor == nil || board.Cursor.StepID != "a1" {
 		t.Fatalf("undo cursor = %+v, %v", board.Cursor, err)
 	}
 	assertMarks(ctx, t, pool, "g1", map[string]string{"a2": "skipped", "a3": "implied:a4"})
+	if n := count(ctx, t, pool, `SELECT count(*) FROM mark_commands WHERE kind = 'restore' AND via = 'plugin_panel' AND revokes_id = '`+batch+`'`); n != 1 {
+		t.Fatalf("restore command = %d", n)
+	}
+	if diffs, err := repo.VerifyMarks(ctx, "account-1"); err != nil || len(diffs) != 0 {
+		t.Fatalf("mark log replay: %v, %v", diffs, err)
+	}
+	// The log is append-only, and a write that bypasses it shows in the replay.
+	if _, err := pool.Exec(ctx, `UPDATE mark_commands SET kind = 'mark' WHERE id = '`+batch+`'`); err == nil {
+		t.Fatal("a mark command was updated")
+	}
+	if _, err := pool.Exec(ctx, `UPDATE step_marks SET kind = 'manual_done' WHERE step_id = 'a2'`); err != nil {
+		t.Fatal(err)
+	}
+	if diffs, err := repo.VerifyMarks(ctx, "account-1"); err != nil || len(diffs) != 1 {
+		t.Fatalf("bypassing write: %v, %v", diffs, err)
+	}
 }
 
 func TestGoalPlanPostgres(t *testing.T) {

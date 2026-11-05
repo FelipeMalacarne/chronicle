@@ -11,8 +11,8 @@ export interface Scope {
 
 /** Uma entrada do desfazer: uma marca (com a que o passo tinha antes) ou um lote "marcar antes". */
 export type UndoEntry =
-	| { kind: 'mark'; scope: Scope; step: string; ref: string; prev?: Mark }
-	| { kind: 'batch'; scope: Scope; restore: MarkRestore[] };
+	| { kind: 'mark'; scope: Scope; step: string; ref: string; prev?: Mark; command?: string }
+	| { kind: 'batch'; scope: Scope; restore: MarkRestore[]; command?: string };
 
 export function sameScope(a: Scope | null | undefined, b: Scope | null | undefined): boolean {
 	return !!a && !!b && a.account === b.account && a.guide === b.guide;

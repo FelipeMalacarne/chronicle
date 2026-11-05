@@ -133,20 +133,32 @@ export const progressApi = {
 		request<Readiness>(
 			`/guides/${enc(guide)}/readiness?account=${enc(account)}${step ? `&step=${enc(step)}` : ''}`
 		),
-	mark: (guide: string, step: string, account: string, kind: MarkAction, note?: string) =>
+	/** `revokes`: num desfazer, o `command_id` da escrita que ele desfaz (doc 10, seção 6). */
+	mark: (
+		guide: string,
+		step: string,
+		account: string,
+		kind: MarkAction,
+		note?: string,
+		revokes?: string
+	) =>
 		request<Board>(
 			`/guides/${enc(guide)}/steps/${enc(step)}/mark?account=${enc(account)}`,
-			json('PATCH', note === undefined ? { kind } : { kind, note })
+			json('PATCH', {
+				kind,
+				...(note === undefined ? {} : { note }),
+				...(revokes ? { revokes } : {})
+			})
 		),
 	markBefore: (guide: string, account: string, step: string) =>
 		request<Board>(
 			`/guides/${enc(guide)}/marks?account=${enc(account)}`,
 			json('POST', { before_step_id: step })
 		),
-	restoreMarks: (guide: string, account: string, restore: MarkRestore[]) =>
+	restoreMarks: (guide: string, account: string, restore: MarkRestore[], revokes?: string) =>
 		request<Board>(
 			`/guides/${enc(guide)}/marks?account=${enc(account)}`,
-			json('POST', { restore })
+			json('POST', { restore, ...(revokes ? { revokes } : {}) })
 		),
 	confirmImplied: (guide: string, account: string) =>
 		request<Board>(`/guides/${enc(guide)}/implied/confirm?account=${enc(account)}`, json('POST')),

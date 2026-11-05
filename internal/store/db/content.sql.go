@@ -173,6 +173,22 @@ func (q *Queries) UpsertContentVersion(ctx context.Context, arg UpsertContentVer
 	return i, err
 }
 
+const upsertGuide = `-- name: UpsertGuide :exec
+INSERT INTO guides (id, title, last_loaded_at) VALUES ($1, $2, now())
+ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, last_loaded_at = now()
+`
+
+type UpsertGuideParams struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+}
+
+// Every guide the server loads; progress rows reference it.
+func (q *Queries) UpsertGuide(ctx context.Context, arg UpsertGuideParams) error {
+	_, err := q.db.Exec(ctx, upsertGuide, arg.ID, arg.Title)
+	return err
+}
+
 const upsertStepIDAlias = `-- name: UpsertStepIDAlias :one
 INSERT INTO step_id_aliases (guide_id, old_step_id, new_step_id)
 VALUES ($1, $2, $3)

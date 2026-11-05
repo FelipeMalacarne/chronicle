@@ -85,6 +85,8 @@ export interface Board {
 	/** Passos marcados por um lote (marcar tudo antes) e como desfazê-lo. */
 	marked?: string[];
 	undo?: MarkRestore[];
+	/** O comando que esta escrita registrou; um desfazer o cita em `revokes`. */
+	command_id?: string;
 }
 
 /** Um passo do desfazer de um lote: a marca que ele tinha (null: nenhuma). */

@@ -58,6 +58,11 @@ func (r *Repository) IndexContent(ctx context.Context, gitSHA string) (IndexRepo
 
 func (r *Repository) indexGuides(ctx context.Context, q *storedb.Queries, versionID string, rep *IndexReport) error {
 	for _, g := range r.content.Guides {
+		if err := q.UpsertGuide(ctx, storedb.UpsertGuideParams{ID: g.ID, Title: g.Title}); err != nil {
+			return fmt.Errorf("upsert guide %s: %w", g.ID, err)
+		}
+	}
+	for _, g := range r.content.Guides {
 		n, err := indexGuide(ctx, q, g, versionID)
 		if err != nil {
 			return err
@@ -194,12 +199,23 @@ func applyAlias(ctx context.Context, q *storedb.Queries, a storedb.StepIDAlias) 
 	}
 	ref := coreprogress.StepRef{GuideID: a.GuideID, StepID: a.NewStepID}
 	for _, m := range moved {
+		// The move enters the mark log (docs/10 section 6): the old id loses
+		// its mark, and the new id gets it unless it already had its own.
+		mark := coreprogress.Mark{Kind: coreprogress.MarkKind(m.Kind), ImpliedBy: m.ImpliedByStepID.String, Note: m.Note.String}
+		effects := []coreprogress.MarkEffect{{StepID: a.OldStepID, From: &mark}}
+		if !kept[m.AccountID] {
+			effects = append(effects, coreprogress.MarkEffect{StepID: a.NewStepID, To: &mark})
+		}
+		commandID, err := logCommand(ctx, q, m.AccountID, a.GuideID, kindAlias, actorSystem, a.NewStepID, CommandMeta{}, effects)
+		if err != nil {
+			return err
+		}
 		if kept[m.AccountID] {
 			continue
 		}
 		if err := insertEvents(ctx, q, m.AccountID, "", []coreprogress.StepEvent{{
 			Ref: ref, To: coreprogress.Status(m.Kind), Cause: coreprogress.CauseMigration,
-		}}); err != nil {
+		}}, func(coreprogress.StepEvent) string { return commandID }); err != nil {
 			return err
 		}
 	}

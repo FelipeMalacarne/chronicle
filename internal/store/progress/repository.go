@@ -283,12 +283,31 @@ func writePlan(ctx context.Context, q *storedb.Queries, accountID, snapshotID st
 			return fmt.Errorf("achieve goals: %w", err)
 		}
 	}
+	implied := map[string][]coreprogress.MarkEffect{}
 	for _, w := range plan.Marks {
-		if err := insertImpliedMark(ctx, q, accountID, w, now); err != nil {
+		inserted, err := insertImpliedMark(ctx, q, accountID, w, now)
+		if err != nil {
 			return err
 		}
+		if inserted {
+			m := w.Mark
+			implied[w.Ref.GuideID] = append(implied[w.Ref.GuideID], coreprogress.MarkEffect{StepID: w.Ref.StepID, To: &m})
+		}
 	}
-	if err := insertEvents(ctx, q, accountID, snapshotID, plan.StepEvents); err != nil {
+	impliedCommand := map[string]string{}
+	for guideID, effects := range implied {
+		id, err := logCommand(ctx, q, accountID, guideID, kindImplied, actorEngine, "", CommandMeta{}, effects)
+		if err != nil {
+			return err
+		}
+		impliedCommand[guideID] = id
+	}
+	if err := insertEvents(ctx, q, accountID, snapshotID, plan.StepEvents, func(e coreprogress.StepEvent) string {
+		if e.Cause == coreprogress.CauseImplied {
+			return impliedCommand[e.Ref.GuideID]
+		}
+		return ""
+	}); err != nil {
 		return err
 	}
 	for _, c := range plan.Cursors {
@@ -315,24 +334,28 @@ func upsertMark(ctx context.Context, q *storedb.Queries, accountID, guideID, ste
 
 // insertImpliedMark writes one mark of the implied cascade. The engine writes
 // nothing else to step_marks, and the query never replaces an existing mark.
-func insertImpliedMark(ctx context.Context, q *storedb.Queries, accountID string, w coreprogress.MarkWrite, now time.Time) error {
+func insertImpliedMark(ctx context.Context, q *storedb.Queries, accountID string, w coreprogress.MarkWrite, now time.Time) (bool, error) {
 	if w.Mark.Kind != coreprogress.MarkImplied || w.Mark.ImpliedBy == "" {
-		return fmt.Errorf("engine mark %s/%s is %q: the engine writes only implied marks", w.Ref.GuideID, w.Ref.StepID, w.Mark.Kind)
+		return false, fmt.Errorf("engine mark %s/%s is %q: the engine writes only implied marks", w.Ref.GuideID, w.Ref.StepID, w.Mark.Kind)
 	}
-	if _, err := q.InsertImpliedMark(ctx, storedb.InsertImpliedMarkParams{
+	n, err := q.InsertImpliedMark(ctx, storedb.InsertImpliedMarkParams{
 		AccountID: accountID, GuideID: w.Ref.GuideID, StepID: w.Ref.StepID,
 		ImpliedByStepID: text(w.Mark.ImpliedBy), ImpliedAt: timestamptz(&now),
-	}); err != nil {
-		return fmt.Errorf("insert implied mark %s/%s: %w", w.Ref.GuideID, w.Ref.StepID, err)
+	})
+	if err != nil {
+		return false, fmt.Errorf("insert implied mark %s/%s: %w", w.Ref.GuideID, w.Ref.StepID, err)
 	}
-	return nil
+	return n == 1, nil
 }
 
-func insertEvents(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, events []coreprogress.StepEvent) error {
+// insertEvents writes step status events; commandOf names the mark command
+// behind each one ("" for none).
+func insertEvents(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, events []coreprogress.StepEvent, commandOf func(coreprogress.StepEvent) string) error {
 	for _, e := range events {
 		if err := q.InsertStepStatusEvent(ctx, storedb.InsertStepStatusEventParams{
 			ID: newID("sse_"), AccountID: accountID, GuideID: e.Ref.GuideID, StepID: e.Ref.StepID,
 			FromStatus: text(string(e.From)), ToStatus: string(e.To), Cause: string(e.Cause), SnapshotID: text(snapshotID),
+			CommandID: text(commandOf(e)),
 		}); err != nil {
 			return fmt.Errorf("insert step event %s/%s: %w", e.Ref.GuideID, e.Ref.StepID, err)
 		}

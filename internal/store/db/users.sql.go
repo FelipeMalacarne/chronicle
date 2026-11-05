@@ -11,6 +11,49 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const accountOwnedBy = `-- name: AccountOwnedBy :one
+SELECT EXISTS (SELECT 1 FROM accounts WHERE id = $1 AND user_id = $2)
+`
+
+type AccountOwnedByParams struct {
+	AccountID string `json:"account_id"`
+	UserID    string `json:"user_id"`
+}
+
+func (q *Queries) AccountOwnedBy(ctx context.Context, arg AccountOwnedByParams) (bool, error) {
+	row := q.db.QueryRow(ctx, accountOwnedBy, arg.AccountID, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const claimDevAccounts = `-- name: ClaimDevAccounts :execrows
+UPDATE accounts
+SET user_id = $1, updated_at = now()
+WHERE user_id IN (SELECT id FROM users WHERE subject = 'dev' AND issuer IS NULL)
+`
+
+// First OIDC login: the dev user's accounts move to the new user.
+func (q *Queries) ClaimDevAccounts(ctx context.Context, userID string) (int64, error) {
+	result, err := q.db.Exec(ctx, claimDevAccounts, userID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const countOIDCUsersExcept = `-- name: CountOIDCUsersExcept :one
+SELECT count(*) FROM users WHERE issuer IS NOT NULL AND subject <> $1
+`
+
+// OIDC users other than this subject (the first-login account claim).
+func (q *Queries) CountOIDCUsersExcept(ctx context.Context, subject string) (int64, error) {
+	row := q.db.QueryRow(ctx, countOIDCUsersExcept, subject)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const countUsers = `-- name: CountUsers :one
 SELECT count(*) FROM users
 `
@@ -49,6 +92,56 @@ SELECT id, subject, issuer, username, email, display_name, role, created_at, las
 
 func (q *Queries) GetUserBySubject(ctx context.Context, subject string) (User, error) {
 	row := q.db.QueryRow(ctx, getUserBySubject, subject)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Subject,
+		&i.Issuer,
+		&i.Username,
+		&i.Email,
+		&i.DisplayName,
+		&i.Role,
+		&i.CreatedAt,
+		&i.LastLoginAt,
+	)
+	return i, err
+}
+
+const upsertOIDCUser = `-- name: UpsertOIDCUser :one
+
+INSERT INTO users (id, subject, issuer, username, email, display_name, last_login_at)
+VALUES ($1, $2, $3::text, $4, $5, $6, now())
+ON CONFLICT (subject) DO UPDATE SET
+  email         = EXCLUDED.email,
+  display_name  = EXCLUDED.display_name,
+  last_login_at = now()
+WHERE users.issuer = EXCLUDED.issuer
+RETURNING id, subject, issuer, username, email, display_name, role, created_at, last_login_at
+`
+
+type UpsertOIDCUserParams struct {
+	ID          string      `json:"id"`
+	Subject     string      `json:"subject"`
+	Issuer      string      `json:"issuer"`
+	Username    string      `json:"username"`
+	Email       pgtype.Text `json:"email"`
+	DisplayName pgtype.Text `json:"display_name"`
+}
+
+// AUTH_MODE=oidc (docs/04 section 8). A user is (issuer, subject): the
+// update only happens for the same issuer, so a subject that already belongs
+// to the dev user or to another issuer returns no row and the login fails.
+// username is kept from the first login (it is UNIQUE; preferred_username may
+// change at the issuer).
+func (q *Queries) UpsertOIDCUser(ctx context.Context, arg UpsertOIDCUserParams) (User, error) {
+	row := q.db.QueryRow(ctx, upsertOIDCUser,
+		arg.ID,
+		arg.Subject,
+		arg.Issuer,
+		arg.Username,
+		arg.Email,
+		arg.DisplayName,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -110,4 +203,15 @@ func (q *Queries) UpsertUserBySubject(ctx context.Context, arg UpsertUserBySubje
 		&i.LastLoginAt,
 	)
 	return i, err
+}
+
+const usernameTaken = `-- name: UsernameTaken :one
+SELECT EXISTS (SELECT 1 FROM users WHERE username = $1)
+`
+
+func (q *Queries) UsernameTaken(ctx context.Context, username string) (bool, error) {
+	row := q.db.QueryRow(ctx, usernameTaken, username)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }

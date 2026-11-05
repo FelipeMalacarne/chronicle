@@ -28,7 +28,13 @@ const (
 	feathers  = "item:314x120"
 	tinderbox = "item:590x1"
 	cooks     = "quest:cooks_assistant@started"
+	// Graceful hood 11850 (inventory) and 11851 (worn); Mithril, Adamant and
+	// Rune axe 1355, 1357, 1359.
+	hoodFamily = "item:family/graceful_hoodx1"
+	axes       = "item:any(1355x2|1357x1|1359x1)"
 )
+
+var containerFacts = []Fact{{FactItemContainer, "bank"}, {FactItemContainer, "equipment"}, {FactItemContainer, "inventory"}}
 
 func loadGuides(t *testing.T) (g1, g2 *content.Guide) {
 	t.Helper()
@@ -104,6 +110,21 @@ func TestEvaluateObjective(t *testing.T) {
 		{"restored bank never proves absence", feathers, rules.PlayerState{Items: rules.ItemHoldings{
 			rules.ContainerBank: {State: ingest.ItemRestored, ObservedAt: t0, Quantities: map[int]int64{}},
 		}}, rules.Unknown, nil},
+		{"family: any variant counts", hoodFamily, rules.PlayerState{Items: liveBank(map[int]int64{11851: 1})}, rules.Met, containerFacts},
+		{"family: variants are summed", "item:family/prayer_potionx2", rules.PlayerState{Items: liveBank(map[int]int64{2434: 1, 139: 1})}, rules.Met, containerFacts},
+		{"family absent with full live baseline", hoodFamily, rules.PlayerState{Items: liveBank(map[int]int64{1355: 1})}, rules.Unmet, containerFacts},
+		{"family never observed", hoodFamily, rules.PlayerState{}, rules.Unknown, nil},
+		{"family in a restored bank never proves absence", hoodFamily, rules.PlayerState{Items: rules.ItemHoldings{
+			rules.ContainerBank: {State: ingest.ItemRestored, ObservedAt: t0, Complete: true, Quantities: map[int]int64{}},
+		}}, rules.Unknown, nil},
+		{"unknown family is never met", "item:family/not_a_familyx1", rules.PlayerState{Items: liveBank(map[int]int64{11850: 1})}, rules.Unknown, nil},
+		{"alternative reaches its own quantity", axes, rules.PlayerState{Items: liveBank(map[int]int64{1355: 1, 1359: 1})}, rules.Met, containerFacts},
+		{"first alternative needs two", axes, rules.PlayerState{Items: liveBank(map[int]int64{1355: 2})}, rules.Met, containerFacts},
+		{"alternatives are not summed", axes, rules.PlayerState{Items: liveBank(map[int]int64{1355: 1})}, rules.Unmet, containerFacts},
+		{"alternatives never observed", axes, rules.PlayerState{}, rules.Unknown, nil},
+		{"alternatives in a restored bank never prove absence", axes, rules.PlayerState{Items: rules.ItemHoldings{
+			rules.ContainerBank: {State: ingest.ItemRestored, ObservedAt: t0, Complete: true, Quantities: map[int]int64{1355: 1}},
+		}}, rules.Unknown, nil},
 		{"diary without facet", "diary:ardougne:easy@complete", rules.PlayerState{}, rules.Unknown, nil},
 		{"diary complete", "diary:ardougne:easy@complete", rules.PlayerState{Diaries: map[string]map[string]bool{"ardougne": {"easy": true}}}, rules.Met, []Fact{{"diary", "ardougne:easy"}}},
 		{"boss by hiscores name", "boss:zulrah>=50", rules.PlayerState{BossKC: map[string]int{"Zulrah": 51}}, rules.Met, []Fact{{"activity", "Zulrah"}}},
@@ -126,6 +147,27 @@ func TestEvaluateObjective(t *testing.T) {
 				t.Fatal("every verdict carries evidence")
 			}
 		})
+	}
+}
+
+func TestEvaluateItemSetEvidence(t *testing.T) {
+	reg := registry(t)
+	restored := rules.ItemHoldings{rules.ContainerBank: {State: ingest.ItemRestored, ObservedAt: t0, Complete: true, Quantities: map[int]int64{1359: 1}}}
+	got := EvaluateObjective(entities.MustParseObjectiveKey(axes), rules.PlayerState{Items: restored}, reg)
+	if got.Verdict != rules.Met || len(got.Evidence) != 1 {
+		t.Fatalf("got %+v", got)
+	}
+	ev := got.Evidence[0]
+	r, ok := ev.Rule.(content.ItemOwnedRule)
+	if !ev.Stale || ev.Reason == "" || !ok || r.ItemID == nil || *r.ItemID != 1359 || r.Qty != 1 {
+		t.Errorf("a met verdict through a restored mirror is stale and names the deciding alternative: %+v", ev)
+	}
+	if o, ok := ev.Observed.(rules.Ownership); !ok || o.Held != 1 || o.Containers[rules.ContainerBank].Qty != 1 {
+		t.Errorf("observed = %+v", ev.Observed)
+	}
+	fam := EvaluateObjective(entities.MustParseObjectiveKey(hoodFamily), rules.PlayerState{Items: liveBank(map[int]int64{11850: 1})}, reg)
+	if r, ok := fam.Evidence[0].Rule.(content.ItemOwnedRule); !ok || r.ItemName != "graceful_hood" || r.Qty != 1 || fam.Evidence[0].Stale {
+		t.Errorf("family evidence = %+v", fam.Evidence[0])
 	}
 }
 

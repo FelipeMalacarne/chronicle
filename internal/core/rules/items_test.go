@@ -160,3 +160,42 @@ func TestOwnsFamilyAndAnyOf(t *testing.T) {
 		t.Errorf("any_of through a restored mirror = %+v %d", o, id)
 	}
 }
+
+func TestOwnsAlternatives(t *testing.T) {
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	full := func(q map[int]int64) ItemHoldings {
+		return ItemHoldings{ContainerBank: live(true, q), ContainerInventory: live(true, nil), ContainerEquipment: live(true, nil)}
+	}
+	alts := []entities.ItemQty{{ID: plank, N: 2}, {ID: prayerPot4, N: 1}}
+	cases := []struct {
+		name   string
+		h      ItemHoldings
+		want   Verdict
+		stale  bool
+		wantID int
+	}{
+		{"second alternative reaches its own quantity", full(map[int]int64{plank: 1, prayerPot4: 1}), Met, false, prayerPot4},
+		{"first alternative reaches its own quantity", full(map[int]int64{plank: 2}), Met, false, plank},
+		{"noted forms count for their alternative", full(map[int]int64{notedPlank: 2}), Met, false, plank},
+		{"alternatives are never summed", full(map[int]int64{plank: 1}), Unmet, false, plank},
+		{"other variants do not count", full(map[int]int64{prayerPot3: 5, plank: 1}), Unmet, false, plank},
+		{"live beats a restored mirror", ItemHoldings{
+			ContainerBank:      restored(map[int]int64{plank: 2}),
+			ContainerInventory: live(true, map[int]int64{prayerPot4: 1}),
+		}, Met, false, prayerPot4},
+		{"met only through a restored mirror stays stale", ItemHoldings{ContainerBank: restored(map[int]int64{prayerPot4: 1})}, Met, true, prayerPot4},
+		{"restored absence is unknown, never unmet", ItemHoldings{ContainerBank: restored(nil)}, Unknown, false, plank},
+		{"nothing observed", ItemHoldings{}, Unknown, false, plank},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			o, id := OwnsAlternatives(tc.h, catalog, alts, nil)
+			if o.Verdict != tc.want || o.Stale != tc.stale || id != tc.wantID {
+				t.Errorf("got %s stale=%v id=%d (%+v), want %s stale=%v id=%d", o.Verdict, o.Stale, id, o, tc.want, tc.stale, tc.wantID)
+			}
+		})
+	}
+}

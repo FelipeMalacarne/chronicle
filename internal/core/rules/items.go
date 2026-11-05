@@ -122,6 +122,18 @@ func OwnsFamily(h ItemHoldings, catalog *entities.Registry, family string, qty i
 // through a restored container, then unknown, then unmet) and the id that
 // produced it, preferring earlier ids on ties.
 func OwnsAnyOf(h ItemHoldings, catalog *entities.Registry, ids []int, qty int64, containers []string) (Ownership, int) {
+	alts := make([]entities.ItemQty, len(ids))
+	for i, id := range ids {
+		alts[i] = entities.ItemQty{ID: id, N: int(qty)}
+	}
+	return OwnsAlternatives(h, catalog, alts, containers)
+}
+
+// OwnsAlternatives is OwnsAnyOf with a quantity per alternative (an
+// item:any objective): one alternative must reach its own quantity alone.
+// It returns the best outcome, ranked as OwnsAnyOf does, and the id that
+// produced it; earlier alternatives win ties.
+func OwnsAlternatives(h ItemHoldings, catalog *entities.Registry, alts []entities.ItemQty, containers []string) (Ownership, int) {
 	rank := func(o Ownership) int {
 		switch {
 		case o.Verdict == Met && !o.Stale:
@@ -137,10 +149,10 @@ func OwnsAnyOf(h ItemHoldings, catalog *entities.Registry, ids []int, qty int64,
 		best   Ownership
 		bestID int
 	)
-	for i, id := range ids {
-		o := Owns(h, catalog, id, qty, containers)
+	for i, a := range alts {
+		o := Owns(h, catalog, a.ID, int64(a.N), containers)
 		if i == 0 || rank(o) > rank(best) {
-			best, bestID = o, id
+			best, bestID = o, a.ID
 		}
 	}
 	return best, bestID

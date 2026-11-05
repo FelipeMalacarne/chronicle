@@ -50,18 +50,7 @@ func EvaluateObjective(k entities.ObjectiveKey, ps rules.PlayerState, reg *entit
 		r := content.SkillLevelRule{RuleHeader: header(content.TypeSkillLevel), Skill: k.Ref.ID, Level: k.N}
 		return evaluate(r, ps, Fact{Facet: "skill", Key: k.Ref.ID})
 	case entities.KindItem:
-		id, ok := k.Ref.Int()
-		if !ok {
-			return unknown("invalid item ref")
-		}
-		r := content.ItemOwnedRule{RuleHeader: header(content.TypeItemOwned), ItemID: &id, Qty: k.N}
-		var facts []Fact
-		for _, c := range rules.DefaultItemContainers {
-			if _, ok := ps.Items[c]; ok {
-				facts = append(facts, Fact{Facet: FactItemContainer, Key: c})
-			}
-		}
-		return evaluate(r, ps, facts...)
+		return evaluateItem(k, ps, reg)
 	case entities.KindDiary:
 		area, tier, ok := strings.Cut(k.Ref.ID, ":")
 		if !ok {
@@ -85,6 +74,68 @@ func EvaluateObjective(k entities.ObjectiveKey, ps rules.PlayerState, reg *entit
 		return unknown("combat achievements are not observed yet")
 	}
 	return unknown("objective kind " + string(k.Ref.Kind) + " has no fact source")
+}
+
+// evaluateItem evaluates an item key: an exact id through the item_owned
+// rule, a family through rules.OwnsFamily and alternatives through
+// rules.OwnsAlternatives, all over the default containers with the same
+// freshness rules (restored never proves absence, a met verdict through it
+// is stale).
+func evaluateItem(k entities.ObjectiveKey, ps rules.PlayerState, reg *entities.Registry) Evaluation {
+	var facts []Fact
+	for _, c := range rules.DefaultItemContainers {
+		if _, ok := ps.Items[c]; ok {
+			facts = append(facts, Fact{Facet: FactItemContainer, Key: c})
+		}
+	}
+	catalog := ps.Catalog
+	if catalog == nil {
+		catalog = reg
+	}
+	if slug, n, ok := k.ItemFamily(); ok {
+		r := content.ItemOwnedRule{RuleHeader: header(content.TypeItemOwned), ItemName: slug, Qty: n}
+		return owned(r, ps, facts, func(*content.ItemOwnedRule) rules.Ownership {
+			return rules.OwnsFamily(ps.Items, catalog, slug, int64(n), nil)
+		})
+	}
+	if alts, ok := k.ItemAlternatives(); ok {
+		r := content.ItemOwnedRule{RuleHeader: header(content.TypeItemOwned)}
+		return owned(r, ps, facts, func(r *content.ItemOwnedRule) rules.Ownership {
+			o, id := rules.OwnsAlternatives(ps.Items, catalog, alts, nil)
+			// The evidence names the alternative that decided the verdict.
+			for _, a := range alts {
+				if a.ID == id {
+					r.ItemID, r.Qty = &id, a.N
+				}
+			}
+			return o
+		})
+	}
+	id, ok := k.Ref.Int()
+	if !ok {
+		return unknown("invalid item ref")
+	}
+	r := content.ItemOwnedRule{RuleHeader: header(content.TypeItemOwned), ItemID: &id, Qty: k.N}
+	return evaluate(r, ps, facts...)
+}
+
+// owned builds the evidence of a non-exact item key the way the item_owned
+// rule does (verdict, stale, observed ownership, reason). own may refine r,
+// the rule the evidence reports.
+func owned(r content.ItemOwnedRule, ps rules.PlayerState, facts []Fact, own func(*content.ItemOwnedRule) rules.Ownership) Evaluation {
+	ev := rules.Evidence{Verdict: rules.Unknown}
+	if ps.Items == nil {
+		ev.Reason = "items not observed"
+	} else {
+		o := own(&r)
+		ev.Verdict, ev.Stale, ev.Observed, ev.Reason = o.Verdict, o.Stale, o, o.Reason
+	}
+	ev.Rule = r
+	out := Evaluation{Verdict: ev.Verdict, Evidence: []rules.Evidence{ev}}
+	if ev.Verdict != rules.Unknown {
+		out.Facts = facts
+	}
+	return out
 }
 
 func lookupQuest(reg *entities.Registry, id string) (string, bool) {

@@ -63,6 +63,9 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 15 | Estimativas de tempo na v1 como "could" com tabela de rates à mão, ou depois do tracking confiável | **aberta** | doc 03, F14 |
 | 16 | Repositório público ou privado; público exige resolver a licença dos textos dos guias antes | **aberta** | doc 05, seção 8 |
 | 17 | Nome da conta ironman para testar o sync real desde a primeira sessão | **aberta** | doc 04, seção 6.1 |
+| 18 | Comparar rotas é uma aba de Rotas (Oziris · BRUHsailer · Comparar), não a tela principal; a lista de rotas deixa de existir | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
+| 19 | O produto se chama **Chronicle** (wordmark Alegreya 700 com o livro e a runa); "Ironman Planner" vira descrição | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
+| 20 | Recorrentes (birdhouses, herb run, kingdom) como entidades com `ready_at` no doc 09 | **aberta** (proposta no canvas v6) | docs/ui/decisoes-canvas.md, seção 5 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais

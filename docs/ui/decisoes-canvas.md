@@ -90,8 +90,9 @@ seção 9.
 
 Decisões da v6, tomadas com o dono numa sessão paralela e registradas nas notas do canvas:
 
-1. **Nome Chronicle.** Wordmark Alegreya 700 com o símbolo do livro e a runa, em ouro sobre madeira;
-   "Ironman Planner" vira descrição.
+1. **Nome Chronicle, no produto** (decidido em 2026-11-05, decisão 19 do doc 01). Wordmark Alegreya
+   700 com o símbolo do livro e a runa, em ouro sobre madeira; "Ironman Planner" vira descrição. Entra
+   no título da SPA, na sidebar, no primeiro acesso e no README na implementação.
 2. **Limpeza sem esconder.** A v5-limpeza falhou por esconder demais (menus, banco recolhido). Na v6
    nada some: cada fato continua na tela, com menos camadas. Explicação nunca em parágrafo: vai para
    o `title` ou some.
@@ -101,8 +102,8 @@ Decisões da v6, tomadas com o dono numa sessão paralela e registradas nas nota
 4. **Dois alvos: 640 px** (janela ao lado do jogo) **e 1440 px** (olhar analítico), mesmos componentes.
 5. **A lista de Rotas sai.** "Rotas" abre a rota ativa na seção do cursor, com abas Oziris ·
    BRUHsailer · Comparar. A aba da rota inativa mostra onde você estaria e "Tornar ativa".
-6. **Comparar volta como aba**, revisando a decisão 1 da v4 a pedido do dono, mas fica em aberto se a
-   comparação deve ser a tela principal.
+6. **Comparar é aba de Rotas** (decidido em 2026-11-05, decisão 18 do doc 01), revisando a decisão 1
+   da v4 a pedido do dono. Não é a tela principal.
 7. **Mundo**: lista "no seu caminho agora" e "feitas há pouco"; o painel de entidade é o mesmo em todas
    as telas e abre por cima, sem sair da página.
 8. **Conta**: skills e quests com fonte e idade primeiro, depois containers com frescor, fontes no fim.
@@ -110,4 +111,6 @@ Decisões da v6, tomadas com o dono numa sessão paralela e registradas nas nota
 Portado das páginas antigas para a v6 na consolidação: Agora e Rota com a BRUHsailer (1440 e 640),
 Comparar, Agora com fonte falhou / Fixar outro / recorrentes, estados sem dados, sessão, primeiro
 acesso e Automação (Microbot: cockpit, rotinas, plugins, 640). Os artboards portados usam a casca da
-v6; passar neles o registro da v6 (menos texto de sistema) fica para a próxima iteração.
+v6 e, desde 2026-11-05, também o registro da v6 (sem texto de sistema, explicações no `title`, um bisel
+só). A página v6 é a referência para a implementação, tela por tela, começando pelo Agora. Em aberto:
+recorrentes com `ready_at` como entidade (decisão 20 do doc 01).

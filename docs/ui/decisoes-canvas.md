@@ -140,9 +140,12 @@ se a API vem depois):
    (diff entre snapshots) nem o módulo do Microbot (doc 08); recorrentes com prazo seguem como proposta
    (decisão 31 do doc 01). A aba Grafo do Mundo fica desabilitada; "Nesta sessão" no rodapé do Agora
    conta as últimas 6 h de eventos, sem o link "ver".
-2. **Equipamento em grade**: o contrato do plugin não traz a posição de cada slot, então o equipamento
-   aparece em grade como o inventário, não no boneco de V6Conta1440. Rune pouch e seed vault não são
-   lidos pelo plugin e não aparecem.
+2. **Equipamento no boneco pelo slot do catálogo**: o contrato do plugin não traz a posição, mas cada
+   item equipável ocupa um slot só, o `equipment_slot` da wiki em `content/reference/items.json`
+   (exposto em `entities.ItemForm` e em `/api/account/state`); arma de duas mãos ocupa a arma e deixa o
+   escudo vazio. Rune pouch e seed vault não são lidos pelo plugin e não aparecem. Itens fora dos
+   ícones baixados (`tools/fetch_wiki_icons.py` cobre os itens citados pelos guias) aparecem com as
+   três primeiras letras do nome.
 3. **Banco sem abas e sem "só o que a rota pede"**: o contrato não traz as abas do banco.
 4. **Diaries sem lista de tarefas**: o catálogo tem só os tiers; a área aberta mostra os quatro tiers.
 5. **Presets do guia** (Metas) não existem no conteúdo; a lista termina em "+ fixar qualquer entidade".

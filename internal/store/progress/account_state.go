@@ -45,11 +45,14 @@ type DiaryView struct {
 	FactSource
 }
 
-// ItemView is one item stack of a container.
+// ItemView is one item stack of a container. Slot is the item's equipment
+// slot from the catalog ("head", "2h", ...): an item fits one slot only, so
+// the equipment container needs no slot positions from the plugin.
 type ItemView struct {
 	ID   int    `json:"id"`
 	Name string `json:"name"`
 	Qty  int64  `json:"qty"`
+	Slot string `json:"slot,omitempty"`
 }
 
 // ContainerView is one item container with its freshness (docs/04 section
@@ -145,6 +148,7 @@ func (r *Repository) AccountState(ctx context.Context, accountID string) (Accoun
 			if r.catalog != nil {
 				if f, ok := r.catalog.Item(id); ok {
 					item.Name = f.Name
+					item.Slot = f.EquipmentSlot
 				}
 			}
 			cv.Items = append(cv.Items, item)

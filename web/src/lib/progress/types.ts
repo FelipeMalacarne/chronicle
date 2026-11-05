@@ -458,7 +458,8 @@ export interface ContainerView {
 	state: ContainerState;
 	observed_at: string;
 	complete: boolean;
-	items: { id: number; name: string; qty: number }[];
+	/** slot: o slot de equipamento do item no catálogo ("head", "2h", ...). */
+	items: { id: number; name: string; qty: number; slot?: string }[];
 }
 
 /** GET /api/account/state: o que a Conta mostra, cada fato com fonte e idade. */

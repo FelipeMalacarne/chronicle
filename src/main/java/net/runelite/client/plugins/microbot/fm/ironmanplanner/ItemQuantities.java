@@ -28,8 +28,9 @@ final class ItemQuantities
 
 	/**
 	 * Accumulates one stack into {@code totals}: stacks of the same id add up, ids and
-	 * quantities that are not positive are skipped, and {@code onlyItemIds} (when not null)
-	 * limits the accepted ids.
+	 * quantities that are not positive are skipped, and {@code onlyItemIds} limits the accepted
+	 * ids. An absent ({@code null}) or empty list means no filter, the whole container, as the
+	 * server reads it: the generated manifest no longer fills {@code only_item_ids}.
 	 */
 	static void add(Map<String, Long> totals, int itemId, long quantity, Collection<Integer> onlyItemIds)
 	{
@@ -37,7 +38,7 @@ final class ItemQuantities
 		{
 			return;
 		}
-		if (onlyItemIds != null && !onlyItemIds.contains(itemId))
+		if (onlyItemIds != null && !onlyItemIds.isEmpty() && !onlyItemIds.contains(itemId))
 		{
 			return;
 		}

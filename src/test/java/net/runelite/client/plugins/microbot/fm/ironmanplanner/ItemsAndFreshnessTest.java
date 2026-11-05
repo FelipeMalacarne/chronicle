@@ -9,7 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.google.gson.Gson;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 
@@ -35,6 +37,32 @@ class ItemsAndFreshnessTest
 		ItemQuantities.add(totals, 995, 100, Arrays.asList(4151));
 		ItemQuantities.add(totals, 4151, 1, Arrays.asList(4151));
 		assertEquals(map(4151, 1), totals);
+	}
+
+	@Test
+	void absentOrEmptyOnlyItemIdsSendsTheWholeContainer()
+	{
+		Map<String, Long> absent = ItemQuantities.empty();
+		ItemQuantities.add(absent, 995, 100, null);
+		ItemQuantities.add(absent, 4151, 1, null);
+		Map<String, Long> empty = ItemQuantities.empty();
+		ItemQuantities.add(empty, 995, 100, Collections.emptyList());
+		ItemQuantities.add(empty, 4151, 1, Collections.emptyList());
+		assertEquals(map(995, 100, 4151, 1), absent);
+		assertEquals(absent, empty);
+	}
+
+	@Test
+	void manifestWithoutOnlyItemIdsParsesAsNoFilter()
+	{
+		IngestContract.Manifest m = new Gson().fromJson("{\"contract_version\":1,\"manifest_version\":3,"
+			+ "\"token_scopes\":[\"state:write\",\"items:bank\"],\"varbits\":[],\"varps\":[101],"
+			+ "\"collections\":[],\"items\":{\"bank\":true,\"inventory\":false,\"equipment\":false}}",
+			IngestContract.Manifest.class);
+		assertNull(m.items.onlyItemIds);
+		Map<String, Long> totals = ItemQuantities.empty();
+		ItemQuantities.add(totals, 995, 100, m.items.onlyItemIds);
+		assertEquals(map(995, 100), totals);
 	}
 
 	@Test

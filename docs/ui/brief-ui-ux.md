@@ -239,3 +239,32 @@ que não me agrada no canvas e na UI atual, qual direção visual seguir e como 
 rotas (seções 0, 6 e 7 do brief). Trabalhe numa página nova v4, com dados reais dos guias, sem apagar
 as páginas antigas e sem mexer no código. Pergunte sempre que precisar.
 ```
+
+## 11. Próxima rodada: busca e trechos da Rota (2026-11-04)
+
+Queixa do dono, usando a tela: "a busca e esses trechos com abas estão ruins em UI/UX; as seções não
+dizem nada e foi difícil achar o passo em que eu estou (o da Grand Tree)". O artboard de referência é
+**Rota · Oziris 1.1 por trecho de banco** (`/rotas/oziris-main/1.1`).
+
+Já corrigido no código, só no comportamento e sem mudar o layout (decisão do dono, 2026-11-04): com busca
+ou filtro (Pendentes, Com objetivo) ativos, os trechos sem resultado somem, os com resultado abrem
+sozinhos com todos os resultados, o contador vira "3 de 107 passos" e, sem nenhum resultado, aparece
+"Nenhum passo com “…” nesta seção". Esse estado ainda não existe no canvas: desenhá-lo é parte desta
+rodada.
+
+O que falta desenhar:
+
+1. **Cabeçalho do trecho que diga o que tem dentro.** Hoje mostra o intervalo e a frase de banco do guia,
+   que quase sempre é só `"bank"`. Com dados reais, o trecho 1.1.178–1.1.282 do Oziris tem 107 passos e
+   passa por 49 locais em sequência (Lumbridge, Fred's Farm, HAM Hideout… Gnome Stronghold, Hazelmere's
+   Island, Karamja… Al Kharid). Uma lista de locais não cabe; escolher o que resumir (quests concluídas,
+   locais principais, objetivos de skill) e decidir se trechos longos se subdividem (por local, por
+   quest) dentro do trecho de banco.
+2. **Estado de busca** na Rota: realce do termo no texto, contagem total na seção, atalho para o primeiro
+   resultado, e o que acontece com o cursor e com a linha de banco no passo-parágrafo do BRUHsailer.
+3. **Achar o meu passo.** "Ir ao cursor" existe no topo, mas o dono não o achou. Rever a posição dele e
+   o destaque do trecho e do passo do cursor ao abrir a seção.
+4. **Busca global ⌘K** ("Buscar entidade, passo, rota…", já na sidebar do canvas e não implementada):
+   resultados de passos de todas as seções e das duas rotas, entidades do Mundo e metas, com destino
+   claro de cada tipo. A busca da Rota vale só para a seção aberta, e é preciso saber a seção para
+   achar o passo.

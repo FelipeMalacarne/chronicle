@@ -11,6 +11,7 @@ import (
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/ironman-planner/internal/events"
 	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
 )
 
@@ -48,6 +49,12 @@ type Options struct {
 	// Catalog relates noted/unnoted item ids and knows stackability for the
 	// readiness evaluator; nil compares ids exactly.
 	Catalog *entities.Registry
+	// Events streams each account's invalidation signals (GET /api/events,
+	// dev-mode-only like every account-addressed route). nil disables it.
+	Events *events.Hub
+	// EventsHeartbeat is the period of the stream's keep-alive comment; zero
+	// means 25 s.
+	EventsHeartbeat time.Duration
 	// DevMode exposes the one-time ingest-token bootstrap endpoint and the
 	// account-addressed readiness routes. It must never be enabled by a
 	// production authentication mode.
@@ -133,6 +140,10 @@ func (s *Server) routes() {
 		s.mux.HandleFunc("GET /api/setup/lookup", s.handleSetupLookup)
 		s.mux.HandleFunc("POST /api/accounts", s.handleCreateAccount)
 	}
+	// The live stream is addressed by account id: dev-mode-only (rule 10).
+	if s.opts.Events != nil && s.opts.DevMode {
+		s.mux.HandleFunc("GET /api/events", s.handleLiveEvents)
+	}
 	if s.opts.Sync != nil && s.opts.DevMode {
 		s.mux.HandleFunc("POST /api/sync", s.handleSync)
 		s.mux.HandleFunc("GET /api/sync/runs", s.handleSyncRuns)
@@ -181,12 +192,16 @@ func (w *statusWriter) Write(b []byte) (int, error) {
 	return n, err
 }
 
-// Flush forwards to the underlying writer when it supports streaming (SSE later).
+// Flush forwards to the underlying writer when it supports streaming.
 func (w *statusWriter) Flush() {
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}
 }
+
+// Unwrap lets http.ResponseController reach the connection (flush, write
+// deadline) through the logging wrapper.
+func (w *statusWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 
 func logRequests(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -68,6 +68,12 @@
       "note": "decision named-places-enter-catalog"
     },
     {
+      "id": "braindeath_island",
+      "name": "Braindeath Island",
+      "wiki_key": "Braindeath Island",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "brimhaven",
       "name": "Brimhaven",
       "wiki_key": "Brimhaven",
@@ -389,6 +395,12 @@
       "note": "named-places-enter-catalog (oziris-main 1.3.7)"
     },
     {
+      "id": "mos_leharmless",
+      "name": "Mos Le'Harmless",
+      "wiki_key": "Mos Le'Harmless",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "mudskipper_point",
       "name": "Mudskipper Point",
       "wiki_key": "Mudskipper Point",
@@ -415,6 +427,12 @@
         "ZMI"
       ],
       "note": "decision named-places-enter-catalog; the guide's 'ZMI Bank' is the Ourania Altar bank"
+    },
+    {
+      "id": "pest_control",
+      "name": "Pest Control",
+      "wiki_key": "Pest Control",
+      "note": "decision named-places-enter-catalog"
     },
     {
       "id": "pollnivneach",
@@ -483,6 +501,12 @@
       "note": "decision named-places-enter-catalog; the quest of the same name is quest:shilo_village"
     },
     {
+      "id": "sophanem",
+      "name": "Sophanem",
+      "wiki_key": "Sophanem",
+      "note": "decision named-places-enter-catalog"
+    },
+    {
       "id": "taverley",
       "name": "Taverley",
       "wiki_key": "Taverley",
@@ -512,6 +536,12 @@
       "aliases": [
         "Gnome Stronghold"
       ],
+      "note": "decision named-places-enter-catalog"
+    },
+    {
+      "id": "trollheim",
+      "name": "Trollheim",
+      "wiki_key": "Trollheim",
       "note": "decision named-places-enter-catalog"
     },
     {

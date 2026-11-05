@@ -4,13 +4,13 @@
   "guide_id": "oziris-main",
   "summary": {
     "steps": 576,
-    "annotated": 480,
+    "annotated": 501,
     "stale": 0,
-    "pending": 96,
-    "submitted": 480,
-    "first_submit_accepted": 474,
-    "owner_confirmed": 53,
-    "decisions_applied": 188
+    "pending": 75,
+    "submitted": 501,
+    "first_submit_accepted": 492,
+    "owner_confirmed": 86,
+    "decisions_applied": 211
   },
   "sections": [
     {
@@ -60,13 +60,13 @@
     {
       "section_id": "1.5",
       "steps": 21,
-      "annotated": 0,
+      "annotated": 21,
       "stale": 0,
-      "pending": 21,
-      "submitted": 0,
-      "first_submit_accepted": 0,
-      "owner_confirmed": 0,
-      "decisions_applied": 0
+      "pending": 0,
+      "submitted": 21,
+      "first_submit_accepted": 18,
+      "owner_confirmed": 33,
+      "decisions_applied": 23
     },
     {
       "section_id": "2.0",
@@ -92,8 +92,8 @@
     }
   ],
   "rule_agreement": {
-    "rules": 179,
-    "reproduced": 164,
+    "rules": 236,
+    "reproduced": 216,
     "divergent": [
       {
         "step_id": "1.1.95",
@@ -194,6 +194,40 @@
         "key": "skill:magic>=60",
         "role": "requires",
         "comment": "Conditional ('If you have 60 magic'; conditional-step-no-objectives): no mage arena cape objective. The rule requires magic>=60 matches the condition and stays."
+      },
+      {
+        "step_id": "1.5.1",
+        "key": "quest:recipe_for_disaster@started",
+        "role": "starts",
+        "comment": "The 7 remaining freeing subquests (owner); Evil Dave finished at 1.3.57, Culinaromancer at 1.5.17. The tip only allows postponing Awowogei. Rule starts recipe_for_disaster (derived) not repeated: RFD was already in progress (Evil Dave at 1.3.36); harmless. Location 'Various'."
+      },
+      {
+        "step_id": "1.5.5a",
+        "key": "skill:slayer>=48",
+        "role": "completes",
+        "suppressed": true,
+        "reason": "Floating step: 48 Slayer is the quest's requirement, and the route only reaches it in 2.0 (2.0.16).",
+        "comment": "Floating step (owner, floating-step-quest-only): quest only, the level from the rule is suppressed. Pending until the quest is done."
+      },
+      {
+        "step_id": "1.5.5c",
+        "key": "skill:agility>=62",
+        "role": "requires",
+        "suppressed": true,
+        "reason": "Floating step: the route only reaches 62 Agility in 2.0 (2.0.21).",
+        "comment": "Floating step (owner, floating-step-quest-only): quest only, the rule's requires agility>=62 is suppressed."
+      },
+      {
+        "step_id": "1.5.10",
+        "key": "diary:ardougne:easy@complete",
+        "role": "completes",
+        "comment": "All easy and medium tiers (owner) except Ardougne easy (1.1.265) and Varrock easy (1.2.30), already completed; their rules here are already met (harmless divergence). The tip postpones Kourend, Wilderness/Fremennik/Falador medium, kept per owner. Location 'Various'."
+      },
+      {
+        "step_id": "1.5.10",
+        "key": "diary:varrock:easy@complete",
+        "role": "completes",
+        "comment": "All easy and medium tiers (owner) except Ardougne easy (1.1.265) and Varrock easy (1.2.30), already completed; their rules here are already met (harmless divergence). The tip postpones Kourend, Wilderness/Fremennik/Falador medium, kept per owner. Location 'Various'."
       }
     ]
   },
@@ -1473,6 +1507,309 @@
       "what": "quest:the_hand_in_the_sand@finished completes",
       "quote": "Do Hand in the sand quest",
       "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.1",
+      "what": "quest:recipe_for_disaster_freeing_the_goblin_generals@finished completes",
+      "quote": "Do all of the RFD subquests"
+    },
+    {
+      "step_id": "1.5.1",
+      "what": "quest:recipe_for_disaster_freeing_the_mountain_dwarf@finished completes",
+      "quote": "Do all of the RFD subquests"
+    },
+    {
+      "step_id": "1.5.1",
+      "what": "quest:recipe_for_disaster_freeing_pirate_pete@finished completes",
+      "quote": "Do all of the RFD subquests"
+    },
+    {
+      "step_id": "1.5.1",
+      "what": "quest:recipe_for_disaster_freeing_the_lumbridge_guide@finished completes",
+      "quote": "Do all of the RFD subquests"
+    },
+    {
+      "step_id": "1.5.1",
+      "what": "quest:recipe_for_disaster_freeing_skrach_uglogwee@finished completes",
+      "quote": "Do all of the RFD subquests"
+    },
+    {
+      "step_id": "1.5.1",
+      "what": "quest:recipe_for_disaster_freeing_sir_amik_varze@finished completes",
+      "quote": "Do all of the RFD subquests"
+    },
+    {
+      "step_id": "1.5.1",
+      "what": "quest:recipe_for_disaster_freeing_king_awowogei@finished completes",
+      "quote": "Do all of the RFD subquests"
+    },
+    {
+      "step_id": "1.5.4",
+      "what": "item:9419x1 completes",
+      "quote": "Make a mithril grapple"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:a_souls_bane@finished completes",
+      "quote": "A soul's bane",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:another_slice_of_h_a_m@finished completes",
+      "quote": "Another slice of H.A.M",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:icthlarins_little_helper@finished completes",
+      "quote": "Icthlarin's little helper",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:contact@finished completes",
+      "quote": "Contact!",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:in_search_of_the_myreque@finished completes",
+      "quote": "In search of the Myreque",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:in_aid_of_the_myreque@finished completes",
+      "quote": "In aid of the Myreque",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:eagles_peak@finished completes",
+      "quote": "Eagles' peak",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:enakhras_lament@finished completes",
+      "quote": "Enakhra's Lament",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:ratcatchers@finished completes",
+      "quote": "Rat catchers",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:olafs_quest@finished completes",
+      "quote": "Olaf's quest",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:between_a_rock@finished completes",
+      "quote": "Between a rock",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:tai_bwo_wannai_trio@finished completes",
+      "quote": "Tai bwo wannai trio",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5",
+      "what": "quest:zogre_flesh_eaters@finished completes",
+      "quote": "Zogre flesh eater",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.5a",
+      "what": "suppresses skill:slayer>=48 completes",
+      "quote": "Floating step: 48 Slayer is the quest's requirement, and the route only reaches it in 2.0 (2.0.16).",
+      "decision": "floating-step-quest-only"
+    },
+    {
+      "step_id": "1.5.5c",
+      "what": "suppresses skill:agility>=62 requires",
+      "quote": "Floating step: the route only reaches 62 Agility in 2.0 (2.0.21).",
+      "decision": "floating-step-quest-only"
+    },
+    {
+      "step_id": "1.5.6",
+      "what": "quest:rum_deal@finished completes",
+      "quote": "Rum deal",
+      "decision": "bare-quest-name-means-finish"
+    },
+    {
+      "step_id": "1.5.7",
+      "what": "quest:cabin_fever@finished completes",
+      "quote": "Cabin fever",
+      "decision": "bare-quest-name-means-finish"
+    },
+    {
+      "step_id": "1.5.8",
+      "what": "quest:one_small_favour@finished completes",
+      "quote": "One small favour",
+      "decision": "bare-quest-name-means-finish"
+    },
+    {
+      "step_id": "1.5.9",
+      "what": "quest:watchtower@finished completes",
+      "quote": "Watchtower quest",
+      "decision": "bare-quest-name-means-finish"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:desert:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:falador:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:fremennik:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:kandarin:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:karamja:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:kourend_and_kebos:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:lumbridge_and_draynor:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:morytania:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:western_provinces:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:wilderness:easy@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:ardougne:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:desert:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:falador:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:fremennik:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:kandarin:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:karamja:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:kourend_and_kebos:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:lumbridge_and_draynor:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:morytania:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:varrock:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:western_provinces:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.10",
+      "what": "diary:wilderness:medium@complete completes",
+      "quote": "Do all easy and medium diaries"
+    },
+    {
+      "step_id": "1.5.11",
+      "what": "skill:ranged>=50 completes",
+      "quote": "Lumby 50 range req"
+    },
+    {
+      "step_id": "1.5.11",
+      "what": "item Dorgeshuun crossbow = item:8880",
+      "quote": "bone cbow",
+      "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "1.5.13",
+      "what": "item:4587x1 completes",
+      "quote": "Buy Dragon scim"
+    },
+    {
+      "step_id": "1.5.14",
+      "what": "quest:eadgars_ruse@finished completes",
+      "quote": "Do Eadgar's ruse",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.15",
+      "what": "quest:my_arms_big_adventure@finished completes",
+      "quote": "Do My arm's big adventure",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.16",
+      "what": "quest:desert_treasure_i@finished completes",
+      "quote": "Do Desert Treasure",
+      "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "1.5.17",
+      "what": "item:7462x1 completes",
+      "quote": "buy B gloves"
     }
   ],
   "steps": {
@@ -4217,6 +4554,124 @@
       "submits": 1,
       "first_submit_accepted": true,
       "comment": "Teleport only."
+    },
+    "1.5.1": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "The 7 remaining freeing subquests (owner); Evil Dave finished at 1.3.57, Culinaromancer at 1.5.17. The tip only allows postponing Awowogei. Rule starts recipe_for_disaster (derived) not repeated: RFD was already in progress (Evil Dave at 1.3.36); harmless. Location 'Various'."
+    },
+    "1.5.10": {
+      "section_id": "1.5",
+      "submits": 2,
+      "comment": "All easy and medium tiers (owner) except Ardougne easy (1.1.265) and Varrock easy (1.2.30), already completed; their rules here are already met (harmless divergence). The tip postpones Kourend, Wilderness/Fremennik/Falador medium, kept per owner. Location 'Various'."
+    },
+    "1.5.11": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Ranged 50 for the Lumbridge medium (owner). 'bone cbow' -> Dorgeshuun crossbow; alias candidate. Tip: 70cb/void bottoms advice."
+    },
+    "1.5.12": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "1.5.13": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "4587, not the LMS 20406 (owner). 'Dragon scim' alias candidate. Tip: dragon battleaxe not needed."
+    },
+    "1.5.14": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.5.15": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.5.16": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Tips (magic logs, nature implings; GOTR note on ToG) are advice. Location 'Various'."
+    },
+    "1.5.17": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "7462, not the LMS 23593 (owner). 'B gloves' alias candidate."
+    },
+    "1.5.2": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'a bunch of chocolate dust' and energy pots have no number."
+    },
+    "1.5.3": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Patch state not catalogued; 'some Toadflax seeds' vague. Tip: Brimhaven vouchers. Location 'Various'."
+    },
+    "1.5.4": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Finished grapple 9419, not '(unf)' 9418 (owner). 'mithril grapple' -> Mith grapple; alias candidate. Location 'Various'."
+    },
+    "1.5.5": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Quest list under 'Do these quests'. Location 'Various'."
+    },
+    "1.5.5a": {
+      "section_id": "1.5",
+      "submits": 2,
+      "comment": "Floating step (owner, floating-step-quest-only): quest only, the level from the rule is suppressed. Pending until the quest is done."
+    },
+    "1.5.5b": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "'+ prerequisites' not itemized. Location 'Various'."
+    },
+    "1.5.5c": {
+      "section_id": "1.5",
+      "submits": 2,
+      "comment": "Floating step (owner, floating-step-quest-only): quest only, the rule's requires agility>=62 is suppressed."
+    },
+    "1.5.5d": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.5.6": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Mazchna task is conditional ('if you don't have one'). Tip: ancient mace boost for 47 prayer."
+    },
+    "1.5.7": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true
+    },
+    "1.5.8": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true,
+      "comment": "Location 'Various'."
+    },
+    "1.5.9": {
+      "section_id": "1.5",
+      "submits": 1,
+      "first_submit_accepted": true
     }
   }
 }

@@ -1,0 +1,1603 @@
+{
+  "schema_version": 1,
+  "kind": "section",
+  "guide_id": "oziris-main",
+  "section_id": "1.5",
+  "skill_version": "annotate-guide@3",
+  "steps": [
+    {
+      "step_id": "1.5.1",
+      "text_hash": "sha256:d50f314e66e233af4e97a6d03d8f4c160892942551a676ae3e73c1c2c1a46b06",
+      "objectives": [
+        {
+          "key": "quest:recipe_for_disaster_freeing_the_goblin_generals@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all of the RFD subquests",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_the_mountain_dwarf@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all of the RFD subquests",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_pirate_pete@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all of the RFD subquests",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_the_lumbridge_guide@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all of the RFD subquests",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_skrach_uglogwee@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all of the RFD subquests",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_sir_amik_varze@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all of the RFD subquests",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "quest:recipe_for_disaster_freeing_king_awowogei@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all of the RFD subquests",
+            "span": [
+              0,
+              27
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.5.2",
+      "text_hash": "sha256:ea34ddc11c26a64831a1464bc294ec43df92efc9e135ce8741940f8609436b72",
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.3",
+      "text_hash": "sha256:06a38dc79838d5d4221927949cd3381ed21ab630376d8d83c2ef3d4d971cba17"
+    },
+    {
+      "step_id": "1.5.4",
+      "text_hash": "sha256:e8bbd265449ac1f003029890a14f52b0237301ac969a694b1a78378c695e1510",
+      "objectives": [
+        {
+          "key": "item:9419x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make a mithril grapple",
+            "span": [
+              0,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.5.5",
+      "text_hash": "sha256:8836405d0d8daeab39500b3fa69159165c1afd4a3dac9ca2336c0648126457d2",
+      "objectives": [
+        {
+          "key": "quest:a_souls_bane@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "A soul's bane",
+            "span": [
+              36,
+              49
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:another_slice_of_h_a_m@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Another slice of H.A.M",
+            "span": [
+              51,
+              73
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:icthlarins_little_helper@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Icthlarin's little helper",
+            "span": [
+              75,
+              100
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:contact@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Contact!",
+            "span": [
+              102,
+              110
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:in_search_of_the_myreque@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "In search of the Myreque",
+            "span": [
+              112,
+              136
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:in_aid_of_the_myreque@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "In aid of the Myreque",
+            "span": [
+              138,
+              159
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:eagles_peak@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Eagles' peak",
+            "span": [
+              161,
+              173
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:enakhras_lament@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Enakhra's Lament",
+            "span": [
+              175,
+              191
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:ratcatchers@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Rat catchers",
+            "span": [
+              193,
+              205
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:olafs_quest@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Olaf's quest",
+            "span": [
+              207,
+              219
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:between_a_rock@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Between a rock",
+            "span": [
+              221,
+              235
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:tai_bwo_wannai_trio@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Tai bwo wannai trio",
+            "span": [
+              237,
+              256
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "quest:zogre_flesh_eaters@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Zogre flesh eater",
+            "span": [
+              258,
+              275
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.5.5a",
+      "text_hash": "sha256:dd024778e751be4f8a41721f5eeef6bf61bc863b126911ab1d56c4be05618e2a",
+      "objectives": [
+        {
+          "key": "quest:perilous_moons@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Perilous Moons quest",
+            "span": [
+              0,
+              29
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "quest:twilights_promise@finished",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "requires Twilight's Promise done",
+            "span": [
+              56,
+              88
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "suppressed": [
+        {
+          "key": "skill:slayer>=48",
+          "role": "completes",
+          "reason": "Floating step: 48 Slayer is the quest's requirement, and the route only reaches it in 2.0 (2.0.16).",
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "floating-step-quest-only"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varlamore",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varlamore",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.5b",
+      "text_hash": "sha256:fa1f1d28cb64784b0d1f9f6b3ffa56fedc5abbcbe384bf87abc656970aeca26a",
+      "objectives": [
+        {
+          "key": "quest:defender_of_varrock@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Defender of Varrock quest",
+            "span": [
+              0,
+              34
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:smithing>=55",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "55 Smithing",
+            "span": [
+              36,
+              47
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:hunter>=52",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "52 Hunter",
+            "span": [
+              49,
+              58
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.5.5c",
+      "text_hash": "sha256:e73186cfb7db6c2959d57ebd9c6fdab03bf3e9ebb913908aa946e309a7a5390e",
+      "objectives": [
+        {
+          "key": "quest:beneath_cursed_sands@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete Beneath Cursed Sands",
+            "span": [
+              0,
+              29
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "quest:contact@finished",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "requires Contact! done",
+            "span": [
+              57,
+              79
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "suppressed": [
+        {
+          "key": "skill:agility>=62",
+          "role": "requires",
+          "reason": "Floating step: the route only reaches 62 Agility in 2.0 (2.0.21).",
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "floating-step-quest-only"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:sophanem",
+        "evidence": {
+          "field": "/location",
+          "quote": "Sophanem",
+          "span": [
+            0,
+            8
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.5d",
+      "text_hash": "sha256:af9f442dda271da7cb311cad2e4615a8e74ffb1aa4143392db41083a297a461f",
+      "objectives": [
+        {
+          "key": "quest:at_first_light@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete At First Light quest",
+            "span": [
+              0,
+              29
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "quest:eagles_peak@finished",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "now that Eagles' Peak is done",
+            "span": [
+              31,
+              60
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:hunter>=46",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "46 Hunter",
+            "span": [
+              73,
+              82
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:herblore>=30",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "30 Herblore",
+            "span": [
+              84,
+              95
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "skill:construction>=27",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "27 Construction",
+            "span": [
+              97,
+              112
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:varlamore",
+        "evidence": {
+          "field": "/location",
+          "quote": "Varlamore",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.6",
+      "text_hash": "sha256:c4c3de05c2e4e4a70423aa09153288a4efa4cc34b31e7ed57497c12dcb743a62",
+      "objectives": [
+        {
+          "key": "quest:rum_deal@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Rum deal",
+            "span": [
+              0,
+              8
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "bare-quest-name-means-finish"
+          }
+        },
+        {
+          "key": "skill:slayer>=42",
+          "role": "requires",
+          "evidence": {
+            "field": "/text",
+            "quote": "Req 42 slayer",
+            "span": [
+              10,
+              23
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:braindeath_island",
+        "evidence": {
+          "field": "/location",
+          "quote": "Braindeath Island",
+          "span": [
+            0,
+            17
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.7",
+      "text_hash": "sha256:7cea2ce9d378a8ab86f71a0aa030d8537edf6f42d3b0329784da0491088c80e3",
+      "objectives": [
+        {
+          "key": "quest:cabin_fever@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Cabin fever",
+            "span": [
+              0,
+              11
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "bare-quest-name-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:mos_leharmless",
+        "evidence": {
+          "field": "/location",
+          "quote": "Mos Le'Harmless",
+          "span": [
+            0,
+            15
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.8",
+      "text_hash": "sha256:ae92cb15a3e23825d5a099de4da278abb739efc8ddf2e4f9f2131fe292981b20",
+      "objectives": [
+        {
+          "key": "quest:one_small_favour@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "One small favour",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "bare-quest-name-means-finish"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.5.9",
+      "text_hash": "sha256:0964accf24d2e3ac63ff9f5ca58a6af51feb538e8c7128cddfd65eb445050622",
+      "objectives": [
+        {
+          "key": "quest:watchtower@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Watchtower quest",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "bare-quest-name-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:yanille",
+        "evidence": {
+          "field": "/location",
+          "quote": "Yanille",
+          "span": [
+            0,
+            7
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.10",
+      "text_hash": "sha256:6df24082fa326508566a3132900991cd4d10b0701423a3b8cd958d8bd20fe26d",
+      "objectives": [
+        {
+          "key": "diary:desert:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:falador:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:fremennik:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:kandarin:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:karamja:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:kourend_and_kebos:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:lumbridge_and_draynor:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:morytania:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:western_provinces:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:wilderness:easy@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:ardougne:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:desert:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:falador:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:fremennik:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:kandarin:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:karamja:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:kourend_and_kebos:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:lumbridge_and_draynor:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:morytania:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:varrock:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:western_provinces:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "diary:wilderness:medium@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do all easy and medium diaries",
+            "span": [
+              0,
+              30
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.5.11",
+      "text_hash": "sha256:25c518640f72116fed7ee7b85fd45eaeb50236c3426bdd9b05941e353db5e2dd",
+      "objectives": [
+        {
+          "key": "skill:ranged>=50",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Lumby 50 range req",
+            "span": [
+              4,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Dorgeshuun crossbow",
+          "item_id": 8880,
+          "source_text": "bone cbow",
+          "slot": "equipment",
+          "evidence": {
+            "field": "/text",
+            "quote": "bone cbow",
+            "span": [
+              66,
+              75
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "item-shorthand-to-catalog-name"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:pest_control",
+        "evidence": {
+          "field": "/location",
+          "quote": "Pest Control",
+          "span": [
+            0,
+            12
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.12",
+      "text_hash": "sha256:675780ce6b7c61e76959201629d56500f20f522274aeb8664f7b151f4226bddd",
+      "objectives": [
+        {
+          "key": "skill:attack>=60",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "until 60 attack",
+            "span": [
+              10,
+              25
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.5.13",
+      "text_hash": "sha256:383f5a652c81a52762b82e401048cd49ad81c78d9d6c8fa3a36365b6084d8b76",
+      "objectives": [
+        {
+          "key": "item:4587x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy Dragon scim",
+            "span": [
+              0,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:ape_atoll",
+        "evidence": {
+          "field": "/location",
+          "quote": "Ape Atoll",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.14",
+      "text_hash": "sha256:3f44653fd20ba7d8e55cfcd76f27fbfa2b7af51fc3583c6050fe1cb4914249f2",
+      "objectives": [
+        {
+          "key": "quest:eadgars_ruse@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Eadgar's ruse",
+            "span": [
+              0,
+              16
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:trollheim",
+        "evidence": {
+          "field": "/location",
+          "quote": "Trollheim",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.15",
+      "text_hash": "sha256:4ee65c452060db5d43b80243d98359cabd8422a9875958a7154669ee2367154a",
+      "objectives": [
+        {
+          "key": "quest:my_arms_big_adventure@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do My arm's big adventure",
+            "span": [
+              0,
+              25
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:trollheim",
+        "evidence": {
+          "field": "/location",
+          "quote": "Trollheim",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    },
+    {
+      "step_id": "1.5.16",
+      "text_hash": "sha256:3dd3489ecee66be8a4e8ea0d6e7013da60d9082bcc6b9138d767a8b18366ab4c",
+      "objectives": [
+        {
+          "key": "quest:desert_treasure_i@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Do Desert Treasure",
+            "span": [
+              0,
+              18
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner",
+            "decision": "do-quest-means-finish"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "1.5.17",
+      "text_hash": "sha256:c4e514692c2abbf16f2611edc8f488af5d0c751a57fab39ddb0ce317c79788d6",
+      "objectives": [
+        {
+          "key": "quest:recipe_for_disaster@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Finish RFD",
+            "span": [
+              0,
+              10
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@3"
+          }
+        },
+        {
+          "key": "item:7462x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy B gloves",
+            "span": [
+              12,
+              24
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@3",
+            "confirmed_by": "owner"
+          }
+        }
+      ],
+      "location": {
+        "ref": "location:lumbridge",
+        "evidence": {
+          "field": "/location",
+          "quote": "Lumbridge",
+          "span": [
+            0,
+            9
+          ]
+        },
+        "source": {
+          "method": "llm",
+          "confidence": "high",
+          "skill_version": "annotate-guide@3"
+        }
+      }
+    }
+  ]
+}

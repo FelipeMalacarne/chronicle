@@ -187,6 +187,27 @@
         "1.4.12",
         "1.4.13"
       ]
+    },
+    {
+      "id": "when-you-reach-is-requirement",
+      "question": "\"Complete <quest> when you reach N <skill>\": o nível é meta do passo (completes) ou pré-requisito?",
+      "answer": "Pré-requisito: requires no nível. Quando a regra diz completes nesse nível, ela é suprimida com esta decisão.",
+      "scope": "oziris-main, todas as seções: passos \"when you reach N <skill>\"",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.5.5a"
+      ]
+    },
+    {
+      "id": "floating-step-quest-only",
+      "question": "Passo \"flutuante\" (\"Complete <quest> when you reach N <skill>\") posto antes do ponto em que a rota atinge N: o verificador rejeita o requisito fora de ordem. Como fica?",
+      "answer": "Só a quest (completes) e os requisitos de quest que o texto cita; o nível da regra (completes ou requires) é suprimido com esta decisão. O passo fica pendente até a quest ser feita; o dono usa skipped/pinned se quiser avançar a rota. Vale no lugar de when-you-reach-is-requirement quando a rota só atinge o nível depois.",
+      "scope": "oziris-main, todas as seções: passos \"when you reach N\" antes de a rota atingir N",
+      "decided_at": "2026-11-04",
+      "step_ids": [
+        "1.5.5a",
+        "1.5.5c"
+      ]
     }
   ]
 }

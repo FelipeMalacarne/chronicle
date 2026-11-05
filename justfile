@@ -148,11 +148,18 @@ sqlc:
 # psql inside the stack's Postgres container (it has no host port)
 stack_psql := compose + " exec -T postgres sh -c 'psql -v ON_ERROR_STOP=1 -U \"$POSTGRES_USER\" -d \"$POSTGRES_DB\" \"$@\"' psql"
 
-# Build, migrate (one-shot `migrate` service) and start Postgres + app from compose.yaml
+# Build the stack images from the committed HEAD (git archive: never the working tree, where the
+# extraction keeps work in progress), then migrate and start Postgres + app from compose.yaml
 up:
-    VERSION={{version}} {{compose}} up -d --build
+    #!/usr/bin/env bash
+    set -euo pipefail
+    rev="$(git describe --tags --always)"
+    git archive --format=tar HEAD | docker build --build-arg VERSION="$rev" --target migrate -t ironman-planner-migrate:stack -
+    git archive --format=tar HEAD | docker build --build-arg VERSION="$rev" --target runtime -t ironman-planner:stack -
+    {{compose}} up -d --no-build
+    echo "stack on $rev (content and catalogs of that commit)"
 
-# Restart the app: picks up content/ changes (mounted read-only) without a rebuild
+# Restart the app container (same image; new content needs a commit and `just up`)
 restart:
     {{compose}} restart app
 

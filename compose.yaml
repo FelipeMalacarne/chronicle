@@ -1,7 +1,7 @@
 # Local stack on zaros: Postgres 17 + migrations + the app image built from this repo.
 #
 #   cp .env.example .env              # set POSTGRES_PASSWORD
-#   just up                           # build, migrate, start
+#   just up                           # build from HEAD, migrate, start
 #   just stack-account-create "<RSN>" # once: the account (id acc_<rsn>)
 #   open http://localhost:8080/?account=acc_<rsn>
 #
@@ -9,7 +9,10 @@
 #   (the server never migrates: only `ironman serve` opens the database, CLAUDE.md rule 1).
 # - The app listens on 127.0.0.1 only: AUTH_MODE=dev has no login, so whoever reaches the port
 #   reads and writes progress. Set IRONMAN_BIND=0.0.0.0 in .env only on purpose (phone, Tailscale).
-# - content/ is mounted read-only: a newly extracted section shows up after `just restart`.
+# - The images are built by `just up` from the committed HEAD (git archive), never from the
+#   working tree: the entity catalogs are embedded in the binary and must match the guides and
+#   annotations, and the extraction keeps unfinished batches in the working tree. A newly
+#   extracted section shows up after it is committed and `just up` runs again.
 # - Postgres has no host port (it would clash with compose.dev.yaml); use `just stack-psql`,
 #   `just db-backup` and the stack-account recipes, which go through `docker compose exec`.
 #
@@ -42,10 +45,7 @@ services:
       start_period: 10s
 
   migrate:
-    build:
-      context: .
-      target: migrate
-    image: ironman-planner-migrate:${VERSION:-dev}
+    image: ironman-planner-migrate:stack
     restart: "no"
     depends_on:
       postgres:
@@ -54,12 +54,7 @@ services:
       GOOSE_DBSTRING: *database-url
 
   app:
-    build:
-      context: .
-      target: runtime
-      args:
-        VERSION: ${VERSION:-dev}
-    image: ironman-planner:${VERSION:-dev}
+    image: ironman-planner:stack
     restart: unless-stopped
     depends_on:
       postgres:
@@ -75,8 +70,6 @@ services:
       DATABASE_URL: *database-url
     ports:
       - "${IRONMAN_BIND:-127.0.0.1}:${IRONMAN_PORT:-8080}:8080"
-    volumes:
-      - ./content:/app/content:ro
     healthcheck:
       test: ["CMD", "/ironman", "health"]
       interval: 30s

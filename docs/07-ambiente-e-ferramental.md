@@ -59,10 +59,10 @@ o goose e sai, e o app (imagem distroless), que só sobe depois da migração.
 
 ```
 cp .env.example .env                 # POSTGRES_PASSWORD
-just up                              # build, migrate, start
+just up                              # imagens do HEAD commitado, migrate, start
 just stack-account-create "<RSN>"    # uma vez: conta acc_<rsn> (modo ironman, rota Oziris)
 open http://localhost:8080/?account=acc_<rsn>
-just restart                         # recarrega content/ (montado só leitura) sem rebuild
+just restart                         # reinicia o app (mesma imagem)
 just logs                            # logs do app; `just logs migrate` mostra a migração
 just db-backup                       # pg_dump em backups/ (fora do git)
 just stack-accounts / stack-account-guide <id> <guia> / stack-psql
@@ -73,7 +73,10 @@ just stack-accounts / stack-account-guide <id> <guia> / stack-psql
 - O Postgres da stack não tem porta no host, então não conflita com o `compose.dev.yaml`; as receitas
   `stack-*` e o `db-backup` entram pelo `docker compose exec`.
 - Healthcheck: `/ironman health`, que só faz GET em `/api/health` e falha se o banco não responde.
-- Código novo pede `just up` (rebuild); conteúdo novo da extração, só `just restart`.
+- As imagens saem do HEAD commitado (`git archive`), nunca do diretório de trabalho: os catálogos de
+  entidades vão embutidos no binário e precisam bater com guias e anotações, e a extração deixa lotes
+  em andamento no diretório (decisão do dono, 2026-11-04). Código ou conteúdo novo: commit e
+  `just up`.
 
 ### 3.3 saradomin
 

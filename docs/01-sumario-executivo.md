@@ -79,6 +79,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 30 | O produto se chama **Chronicle** (wordmark Alegreya 700 com o livro e a runa); "Ironman Planner" vira descrição | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
 | 31 | Recorrentes (birdhouses, herb run, kingdom) como entidades com `ready_at` no doc 09 | **aberta** (proposta no canvas v6) | docs/ui/decisoes-canvas.md, seção 5 |
 | 32 | Modelo de execução: fatos por fonte com junção pura, comandos do dono como log, projeções reconstruíveis, tarefas tipadas, receitas por objetivo, planos e executor no plugin | E1 a E4 **resolvidas** (2026-11-05: fatos por fonte, log de comandos, rebuild no CI e aviso no boot, contrato por fixtures; a geração de tipos foi adiada, com OpenAPI como candidato no lugar do tygo); E5 a E10 **abertas** | doc 10 |
+| 33 | Tudo funciona no zaros (`AUTH_MODE=dev`, local-first) antes de qualquer deploy; o deploy no saradomin com OIDC, a tela de login/sair, a auth do plugin em `oidc` e o agent remoto do doc 08 vão juntos para o fim da sequência; o controle do Microbot (doc 08, fases 1 a 4) anda no zaros antes disso | resolvida (2026-11-06) | doc 04, seção 9 (itens 11, 15 e 18); doc 08, fases |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais

@@ -39,6 +39,9 @@ linters:
 
     misspell:
       locale: US
+      # OSRS skill names keep the game's spelling.
+      ignore-rules:
+        - defence
 
     gocritic:
       enabled-tags:

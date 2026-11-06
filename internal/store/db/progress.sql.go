@@ -55,6 +55,29 @@ func (q *Queries) DeleteStepMarksByStep(ctx context.Context, arg DeleteStepMarks
 	return err
 }
 
+const getMarkCommand = `-- name: GetMarkCommand :one
+SELECT seq, id, account_id, guide_id, kind, actor, via, step_id, revokes_id, effects, at FROM mark_commands WHERE id = $1
+`
+
+func (q *Queries) GetMarkCommand(ctx context.Context, id string) (MarkCommand, error) {
+	row := q.db.QueryRow(ctx, getMarkCommand, id)
+	var i MarkCommand
+	err := row.Scan(
+		&i.Seq,
+		&i.ID,
+		&i.AccountID,
+		&i.GuideID,
+		&i.Kind,
+		&i.Actor,
+		&i.Via,
+		&i.StepID,
+		&i.RevokesID,
+		&i.Effects,
+		&i.At,
+	)
+	return i, err
+}
+
 const getRouteCursor = `-- name: GetRouteCursor :one
 SELECT account_id, guide_id, step_id, cause, updated_at FROM route_cursor WHERE account_id = $1 AND guide_id = $2
 `
@@ -75,6 +98,71 @@ func (q *Queries) GetRouteCursor(ctx context.Context, arg GetRouteCursorParams) 
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const insertImpliedMark = `-- name: InsertImpliedMark :execrows
+INSERT INTO step_marks (account_id, guide_id, step_id, kind, implied_by_step_id, implied_at, marked_at)
+VALUES ($1, $2, $3, 'implied', $4, $5, now())
+ON CONFLICT (account_id, guide_id, step_id) DO NOTHING
+`
+
+type InsertImpliedMarkParams struct {
+	AccountID       string             `json:"account_id"`
+	GuideID         string             `json:"guide_id"`
+	StepID          string             `json:"step_id"`
+	ImpliedByStepID pgtype.Text        `json:"implied_by_step_id"`
+	ImpliedAt       pgtype.Timestamptz `json:"implied_at"`
+}
+
+// The implied cascade's only write (docs/09 section 9.1). It never replaces a
+// mark: the owner's mark always wins, so a conflict leaves the row as it is
+// (CLAUDE.md rule 2). Owner writes use UpsertStepMark.
+func (q *Queries) InsertImpliedMark(ctx context.Context, arg InsertImpliedMarkParams) (int64, error) {
+	result, err := q.db.Exec(ctx, insertImpliedMark,
+		arg.AccountID,
+		arg.GuideID,
+		arg.StepID,
+		arg.ImpliedByStepID,
+		arg.ImpliedAt,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const insertMarkCommand = `-- name: InsertMarkCommand :exec
+
+INSERT INTO mark_commands (id, account_id, guide_id, kind, actor, via, step_id, revokes_id, effects)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+`
+
+type InsertMarkCommandParams struct {
+	ID        string          `json:"id"`
+	AccountID string          `json:"account_id"`
+	GuideID   string          `json:"guide_id"`
+	Kind      string          `json:"kind"`
+	Actor     string          `json:"actor"`
+	Via       pgtype.Text     `json:"via"`
+	StepID    pgtype.Text     `json:"step_id"`
+	RevokesID pgtype.Text     `json:"revokes_id"`
+	Effects   json.RawMessage `json:"effects"`
+}
+
+// Mark commands (docs/10 section 6): every change to step_marks, in order.
+func (q *Queries) InsertMarkCommand(ctx context.Context, arg InsertMarkCommandParams) error {
+	_, err := q.db.Exec(ctx, insertMarkCommand,
+		arg.ID,
+		arg.AccountID,
+		arg.GuideID,
+		arg.Kind,
+		arg.Actor,
+		arg.Via,
+		arg.StepID,
+		arg.RevokesID,
+		arg.Effects,
+	)
+	return err
 }
 
 const insertObjectiveProgressEvent = `-- name: InsertObjectiveProgressEvent :exec
@@ -104,8 +192,8 @@ func (q *Queries) InsertObjectiveProgressEvent(ctx context.Context, arg InsertOb
 }
 
 const insertStepStatusEvent = `-- name: InsertStepStatusEvent :exec
-INSERT INTO step_status_events (id, account_id, guide_id, step_id, from_status, to_status, cause, snapshot_id, at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, clock_timestamp())
+INSERT INTO step_status_events (id, account_id, guide_id, step_id, from_status, to_status, cause, snapshot_id, command_id, at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, clock_timestamp())
 `
 
 type InsertStepStatusEventParams struct {
@@ -117,6 +205,7 @@ type InsertStepStatusEventParams struct {
 	ToStatus   string      `json:"to_status"`
 	Cause      string      `json:"cause"`
 	SnapshotID pgtype.Text `json:"snapshot_id"`
+	CommandID  pgtype.Text `json:"command_id"`
 }
 
 // clock_timestamp(), not now(): several events of one transaction must keep
@@ -131,6 +220,7 @@ func (q *Queries) InsertStepStatusEvent(ctx context.Context, arg InsertStepStatu
 		arg.ToStatus,
 		arg.Cause,
 		arg.SnapshotID,
+		arg.CommandID,
 	)
 	return err
 }
@@ -205,8 +295,45 @@ func (q *Queries) ListLastStepStatusesByGuide(ctx context.Context, arg ListLastS
 	return items, nil
 }
 
+const listMarkCommands = `-- name: ListMarkCommands :many
+SELECT seq, id, account_id, guide_id, kind, actor, via, step_id, revokes_id, effects, at FROM mark_commands WHERE account_id = $1 ORDER BY seq
+`
+
+// The replay order of one account's log.
+func (q *Queries) ListMarkCommands(ctx context.Context, accountID string) ([]MarkCommand, error) {
+	rows, err := q.db.Query(ctx, listMarkCommands, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []MarkCommand{}
+	for rows.Next() {
+		var i MarkCommand
+		if err := rows.Scan(
+			&i.Seq,
+			&i.ID,
+			&i.AccountID,
+			&i.GuideID,
+			&i.Kind,
+			&i.Actor,
+			&i.Via,
+			&i.StepID,
+			&i.RevokesID,
+			&i.Effects,
+			&i.At,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMovedStepMarks = `-- name: ListMovedStepMarks :many
-SELECT account_id, kind FROM step_marks WHERE guide_id = $1 AND step_id = $2
+SELECT account_id, kind, implied_by_step_id, note FROM step_marks WHERE guide_id = $1 AND step_id = $2
 `
 
 type ListMovedStepMarksParams struct {
@@ -215,8 +342,10 @@ type ListMovedStepMarksParams struct {
 }
 
 type ListMovedStepMarksRow struct {
-	AccountID string `json:"account_id"`
-	Kind      string `json:"kind"`
+	AccountID       string      `json:"account_id"`
+	Kind            string      `json:"kind"`
+	ImpliedByStepID pgtype.Text `json:"implied_by_step_id"`
+	Note            pgtype.Text `json:"note"`
 }
 
 func (q *Queries) ListMovedStepMarks(ctx context.Context, arg ListMovedStepMarksParams) ([]ListMovedStepMarksRow, error) {
@@ -228,7 +357,12 @@ func (q *Queries) ListMovedStepMarks(ctx context.Context, arg ListMovedStepMarks
 	items := []ListMovedStepMarksRow{}
 	for rows.Next() {
 		var i ListMovedStepMarksRow
-		if err := rows.Scan(&i.AccountID, &i.Kind); err != nil {
+		if err := rows.Scan(
+			&i.AccountID,
+			&i.Kind,
+			&i.ImpliedByStepID,
+			&i.Note,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -737,6 +871,7 @@ type UpsertStepMarkParams struct {
 	Note            pgtype.Text        `json:"note"`
 }
 
+// Owner writes only (marks, confirming implied); the engine uses InsertImpliedMark.
 func (q *Queries) UpsertStepMark(ctx context.Context, arg UpsertStepMarkParams) error {
 	_, err := q.db.Exec(ctx, upsertStepMark,
 		arg.AccountID,

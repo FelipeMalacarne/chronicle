@@ -15,6 +15,7 @@ import (
 
 	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
 )
 
 // facts accumulates the snapshot_facts rows of one push; they are copied in
@@ -35,7 +36,7 @@ func (r *Repository) persistNormalized(ctx context.Context, q *storedb.Queries, 
 			replaced = append(replaced, coreingest.FacetQuest)
 		}
 		for _, facet := range replaced {
-			if err := q.DeletePlayerStateFacet(ctx, storedb.DeletePlayerStateFacetParams{AccountID: accountID, Facet: facet}); err != nil {
+			if err := q.DeleteObservationFacet(ctx, storedb.DeleteObservationFacetParams{AccountID: accountID, Facet: facet, Source: pluginSource}); err != nil {
 				return fmt.Errorf("replace %s state: %w", facet, err)
 			}
 		}
@@ -72,7 +73,39 @@ func (r *Repository) persistNormalized(ctx context.Context, q *storedb.Queries, 
 			return fmt.Errorf("insert snapshot facts: %w", err)
 		}
 	}
-	return nil
+	return state.Project(ctx, q, accountID, touchedFacets(push)...)
+}
+
+// pluginSource is the source of every observation the ingest writes.
+const pluginSource = "plugin"
+
+// touchedFacets lists the facets a push may have changed, which the
+// projection rewrites (docs/10 section 5).
+func touchedFacets(push coreingest.Push) []string {
+	var out []string
+	d := push.Data
+	if push.Kind == coreingest.PushFull {
+		out = append(out, "varbit", "varp", "skill", coreingest.FacetDiary)
+	}
+	if d.Varbits != nil {
+		out = append(out, "varbit", coreingest.FacetDiary)
+	}
+	if d.Varps != nil {
+		out = append(out, "varp", coreingest.FacetDiary)
+	}
+	if d.Quests != nil {
+		out = append(out, coreingest.FacetQuest)
+	}
+	if d.Levels != nil || d.XP != nil || d.Boosted != nil {
+		out = append(out, "skill")
+	}
+	if d.CollectionLogSlots != nil {
+		out = append(out, "collection_log")
+	}
+	if d.Items != nil {
+		out = append(out, "item")
+	}
+	return out
 }
 
 func persistVars(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID, kind string, values *coreingest.IntMap, observedAt time.Time) error {
@@ -132,9 +165,9 @@ func persistSkills(ctx context.Context, q *storedb.Queries, rows *facts, account
 			value["boosted"] = boosted
 		}
 		rawValue, _ := json.Marshal(value)
-		if err := q.UpsertPlayerStateJSONPatch(ctx, storedb.UpsertPlayerStateJSONPatchParams{
+		if err := q.PatchObservation(ctx, storedb.PatchObservationParams{
 			AccountID: accountID, Facet: "skill", Key: skill, Value: rawValue,
-			Source: "plugin", SnapshotID: snapshotID, ObservedAt: timestamptz(push.SentAt),
+			Source: pluginSource, SnapshotID: snapshotID, ObservedAt: timestamptz(push.SentAt),
 		}); err != nil {
 			return fmt.Errorf("merge skill %q: %w", skill, err)
 		}
@@ -148,7 +181,7 @@ func (r *Repository) persistCollectionLog(ctx context.Context, q *storedb.Querie
 		return nil
 	}
 	// collectionLogSlots is always a complete bitset, including on delta pushes.
-	if err := q.DeletePlayerStateFacet(ctx, storedb.DeletePlayerStateFacetParams{AccountID: accountID, Facet: "collection_log"}); err != nil {
+	if err := q.DeleteObservationFacet(ctx, storedb.DeleteObservationFacetParams{AccountID: accountID, Facet: "collection_log", Source: pluginSource}); err != nil {
 		return fmt.Errorf("replace collection log state: %w", err)
 	}
 	bits, err := base64.StdEncoding.DecodeString(*push.Data.CollectionLogSlots)
@@ -237,8 +270,8 @@ func persistItemObservation(ctx context.Context, q *storedb.Queries, rows *facts
 		return nil
 	}
 	if kind == coreingest.PushFull {
-		if err := q.DeletePlayerStateItemsByContainer(ctx, storedb.DeletePlayerStateItemsByContainerParams{
-			AccountID: accountID, Container: container,
+		if err := q.DeleteObservationItemsByContainer(ctx, storedb.DeleteObservationItemsByContainerParams{
+			AccountID: accountID, Source: pluginSource, Container: container,
 		}); err != nil {
 			return fmt.Errorf("replace %s state: %w", container, err)
 		}
@@ -246,7 +279,7 @@ func persistItemObservation(ctx context.Context, q *storedb.Queries, rows *facts
 	for rawID, qty := range *obs.Quantities {
 		key := container + ":" + rawID
 		if qty == 0 {
-			if err := q.DeletePlayerStateFact(ctx, storedb.DeletePlayerStateFactParams{AccountID: accountID, Facet: "item", Key: key}); err != nil {
+			if err := q.DeleteObservation(ctx, storedb.DeleteObservationParams{AccountID: accountID, Facet: "item", Key: key, Source: pluginSource}); err != nil {
 				return fmt.Errorf("delete %s tombstone: %w", key, err)
 			}
 			continue
@@ -264,16 +297,16 @@ func persistItemObservation(ctx context.Context, q *storedb.Queries, rows *facts
 	return nil
 }
 
-// upsertFact merges one plugin fact into player_state and returns its JSON
-// value for the snapshot_facts row.
+// upsertFact records one plugin observation (player_state is its projection)
+// and returns its JSON value for the snapshot_facts row.
 func upsertFact(ctx context.Context, q *storedb.Queries, accountID, snapshotID, facet, key string, value any, observedAt time.Time) (json.RawMessage, error) {
 	raw, err := json.Marshal(value)
 	if err != nil {
 		return nil, err
 	}
-	if err := q.UpsertPlayerStateFact(ctx, storedb.UpsertPlayerStateFactParams{
+	if err := q.UpsertObservation(ctx, storedb.UpsertObservationParams{
 		AccountID: accountID, Facet: facet, Key: key, Value: raw,
-		Source: "plugin", SnapshotID: snapshotID, ObservedAt: timestamptz(observedAt),
+		Source: pluginSource, SnapshotID: snapshotID, ObservedAt: timestamptz(observedAt),
 	}); err != nil {
 		return nil, fmt.Errorf("merge %s %q: %w", facet, key, err)
 	}

@@ -30,6 +30,7 @@ type ProgressService interface {
 	RemoveGoal(ctx context.Context, accountID, goalID string) error
 	GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error)
 	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
+	Check(ctx context.Context, accountID string) (storeprogress.CheckReport, error)
 }
 
 // handleAccountState is the account screen (V6Conta1440): skills, quests and
@@ -82,6 +83,8 @@ type markRequest struct {
 	Kind coreprogress.MarkAction `json:"kind"`
 	// Note: absent keeps the current note, "" clears it.
 	Note *string `json:"note,omitempty"`
+	// Revokes: for an undo, the command_id of the write it takes back.
+	Revokes string `json:"revokes,omitempty"`
 }
 
 // batchMarkRequest is either a batch (every pending or implied step before
@@ -89,6 +92,8 @@ type markRequest struct {
 type batchMarkRequest struct {
 	BeforeStepID string                      `json:"before_step_id,omitempty"`
 	Restore      []storeprogress.MarkRestore `json:"restore,omitempty"`
+	// Revokes: with restore, the command_id of the batch it takes back.
+	Revokes string `json:"revokes,omitempty"`
 }
 
 type cursorRequest struct {
@@ -119,7 +124,8 @@ func (s *Server) handleMark(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
-	board, err := s.opts.Progress.Mark(r.Context(), account, r.PathValue("guide"), r.PathValue("id"), req.Kind, req.Note)
+	ctx := storeprogress.WithCommand(r.Context(), storeprogress.CommandMeta{Via: storeprogress.ViaWeb, Revokes: req.Revokes})
+	board, err := s.opts.Progress.Mark(ctx, account, r.PathValue("guide"), r.PathValue("id"), req.Kind, req.Note)
 	s.writeProgress(w, board, err)
 }
 
@@ -132,12 +138,13 @@ func (s *Server) handleBatchMarks(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
+	ctx := storeprogress.WithCommand(r.Context(), storeprogress.CommandMeta{Via: storeprogress.ViaWeb, Revokes: req.Revokes})
 	switch {
-	case req.BeforeStepID != "" && len(req.Restore) == 0:
-		board, err := s.opts.Progress.MarkBefore(r.Context(), account, r.PathValue("guide"), req.BeforeStepID)
+	case req.BeforeStepID != "" && len(req.Restore) == 0 && req.Revokes == "":
+		board, err := s.opts.Progress.MarkBefore(ctx, account, r.PathValue("guide"), req.BeforeStepID)
 		s.writeProgress(w, board, err)
 	case req.BeforeStepID == "" && len(req.Restore) > 0 && len(req.Restore) <= 2000:
-		board, err := s.opts.Progress.RestoreMarks(r.Context(), account, r.PathValue("guide"), req.Restore)
+		board, err := s.opts.Progress.RestoreMarks(ctx, account, r.PathValue("guide"), req.Restore)
 		s.writeProgress(w, board, err)
 	default:
 		writeError(w, http.StatusBadRequest, "send either before_step_id or restore (1 to 2000 steps)")
@@ -193,6 +200,22 @@ func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.writeProgressSummary(w, r, account)
+}
+
+// handleProgressCheck is GET /api/progress/check: every projection of the
+// account recomputed from its sources, read only (`ironman progress check`,
+// docs/10 section 6).
+func (s *Server) handleProgressCheck(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	rep, err := s.opts.Progress.Check(r.Context(), account)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, rep)
 }
 
 func (s *Server) writeProgressSummary(w http.ResponseWriter, r *http.Request, account string) {
@@ -298,6 +321,8 @@ func (s *Server) writeProgressError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "step not found")
 	case errors.Is(err, coreprogress.ErrInvalidAction):
 		writeError(w, http.StatusBadRequest, "kind must be manual_done, skipped, pinned_open, confirm_implied or clear")
+	case errors.Is(err, storeprogress.ErrInvalidRevokes):
+		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, coreprogress.ErrNotImplied), errors.Is(err, coreprogress.ErrStepDone):
 		writeError(w, http.StatusConflict, err.Error())
 	default:

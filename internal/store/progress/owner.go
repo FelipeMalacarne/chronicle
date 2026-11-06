@@ -37,6 +37,9 @@ type BoardView struct {
 	// RestoreMarks needs to put each one back.
 	Marked []string      `json:"marked,omitempty"`
 	Undo   []MarkRestore `json:"undo,omitempty"`
+	// CommandID is the mark command a write logged; an undo names it in
+	// revokes (docs/10 section 6).
+	CommandID string `json:"command_id,omitempty"`
 	coreprogress.Board
 }
 
@@ -68,14 +71,14 @@ func (r *Repository) Board(ctx context.Context, accountID, guideID string) (Boar
 
 // Mark applies an owner's mark action to one step and returns the board.
 func (r *Repository) Mark(ctx context.Context, accountID, guideID, stepID string, action coreprogress.MarkAction, note *string) (BoardView, error) {
-	return r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
+	return r.ownerWrite(ctx, accountID, guideID, kindMark, stepID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
 		return coreprogress.PlanMark(in, stepID, action, note)
 	})
 }
 
 // ConfirmImplied confirms every implied mark of the guide.
 func (r *Repository) ConfirmImplied(ctx context.Context, accountID, guideID string) (BoardView, error) {
-	return r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
+	return r.ownerWrite(ctx, accountID, guideID, kindConfirmImplied, "", func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
 		return coreprogress.PlanConfirmImplied(in), nil
 	})
 }
@@ -84,7 +87,7 @@ func (r *Repository) ConfirmImplied(ctx context.Context, accountID, guideID stri
 // returns the board with the ids it marked.
 func (r *Repository) MarkBefore(ctx context.Context, accountID, guideID, stepID string) (BoardView, error) {
 	var undo []coreprogress.MarkChange
-	out, err := r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
+	out, err := r.ownerWrite(ctx, accountID, guideID, kindMarkBefore, stepID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
 		p, u, err := coreprogress.PlanMarkBefore(in, stepID)
 		undo = u
 		return p, err
@@ -109,19 +112,21 @@ func (r *Repository) RestoreMarks(ctx context.Context, accountID, guideID string
 	for _, m := range restores {
 		changes = append(changes, coreprogress.MarkChange{StepID: m.StepID, Mark: m.Mark})
 	}
-	return r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
+	return r.ownerWrite(ctx, accountID, guideID, kindRestore, "", func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
 		return coreprogress.PlanRestore(in, changes), nil
 	})
 }
 
 // PinCursor pins the guide's cursor on a step; an empty stepID unpins it.
 func (r *Repository) PinCursor(ctx context.Context, accountID, guideID, stepID string) (BoardView, error) {
-	return r.ownerWrite(ctx, accountID, guideID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
+	return r.ownerWrite(ctx, accountID, guideID, kindPin, stepID, func(in coreprogress.GuideInput) (coreprogress.OwnerPlan, error) {
 		return coreprogress.PlanPin(in, stepID)
 	})
 }
 
-func (r *Repository) ownerWrite(ctx context.Context, accountID, guideID string, plan func(coreprogress.GuideInput) (coreprogress.OwnerPlan, error)) (BoardView, error) {
+// ownerWrite runs one owner command: plan, log it with its effects, apply it
+// and return the board, all in one transaction.
+func (r *Repository) ownerWrite(ctx context.Context, accountID, guideID, kind, stepID string, plan func(coreprogress.GuideInput) (coreprogress.OwnerPlan, error)) (BoardView, error) {
 	var out BoardView
 	err := r.inTx(ctx, func(tx pgx.Tx) error {
 		q := r.queries.WithTx(tx)
@@ -133,10 +138,15 @@ func (r *Repository) ownerWrite(ctx context.Context, accountID, guideID string, 
 		if err != nil {
 			return err
 		}
-		if applyErr := r.applyOwnerPlan(ctx, q, accountID, &in, p); applyErr != nil {
+		commandID, err := logCommand(ctx, q, accountID, guideID, kind, actorOwner, stepID, commandMeta(ctx), coreprogress.EffectsOf(in.Marks, p.Marks))
+		if err != nil {
+			return err
+		}
+		if applyErr := r.applyOwnerPlan(ctx, q, accountID, &in, p, commandID); applyErr != nil {
 			return applyErr
 		}
 		out, err = r.boardView(ctx, q, accountID, in, regressed)
+		out.CommandID = commandID
 		return err
 	})
 	if err == nil {
@@ -146,7 +156,7 @@ func (r *Repository) ownerWrite(ctx context.Context, accountID, guideID string, 
 }
 
 // applyOwnerPlan writes an owner plan and mirrors it in in.
-func (r *Repository) applyOwnerPlan(ctx context.Context, q *storedb.Queries, accountID string, in *coreprogress.GuideInput, p coreprogress.OwnerPlan) error {
+func (r *Repository) applyOwnerPlan(ctx context.Context, q *storedb.Queries, accountID string, in *coreprogress.GuideInput, p coreprogress.OwnerPlan, commandID string) error {
 	guideID := in.Guide.ID
 	now := r.now()
 	for _, c := range p.Marks {
@@ -162,7 +172,7 @@ func (r *Repository) applyOwnerPlan(ctx context.Context, q *storedb.Queries, acc
 		}
 		in.Marks[c.StepID] = *c.Mark
 	}
-	if err := insertEvents(ctx, q, accountID, "", p.Events); err != nil {
+	if err := insertEvents(ctx, q, accountID, "", p.Events, func(coreprogress.StepEvent) string { return commandID }); err != nil {
 		return err
 	}
 	if p.Cursor != nil {

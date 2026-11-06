@@ -132,7 +132,8 @@ func (s *Server) handlePluginMark(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
-	if _, err := s.opts.Progress.Mark(r.Context(), p.AccountID, r.PathValue("guide"), r.PathValue("id"), req.Kind, req.Note); err != nil {
+	ctx := storeprogress.WithCommand(r.Context(), storeprogress.CommandMeta{Via: storeprogress.ViaPluginPanel, Revokes: req.Revokes})
+	if _, err := s.opts.Progress.Mark(ctx, p.AccountID, r.PathValue("guide"), r.PathValue("id"), req.Kind, req.Note); err != nil {
 		s.writeProgressError(w, err)
 		return
 	}
@@ -159,7 +160,8 @@ func (s *Server) handlePluginRestore(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "send restore (1 to 2000 steps)")
 		return
 	}
-	if _, err := s.opts.Progress.RestoreMarks(r.Context(), p.AccountID, r.PathValue("guide"), req.Restore); err != nil {
+	ctx := storeprogress.WithCommand(r.Context(), storeprogress.CommandMeta{Via: storeprogress.ViaPluginPanel, Revokes: req.Revokes})
+	if _, err := s.opts.Progress.RestoreMarks(ctx, p.AccountID, r.PathValue("guide"), req.Restore); err != nil {
 		s.writeProgressError(w, err)
 		return
 	}

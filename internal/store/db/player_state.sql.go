@@ -12,12 +12,82 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const deleteObservation = `-- name: DeleteObservation :exec
+DELETE FROM observations WHERE account_id = $1 AND facet = $2 AND key = $3 AND source = $4
+`
+
+type DeleteObservationParams struct {
+	AccountID string `json:"account_id"`
+	Facet     string `json:"facet"`
+	Key       string `json:"key"`
+	Source    string `json:"source"`
+}
+
+func (q *Queries) DeleteObservation(ctx context.Context, arg DeleteObservationParams) error {
+	_, err := q.db.Exec(ctx, deleteObservation,
+		arg.AccountID,
+		arg.Facet,
+		arg.Key,
+		arg.Source,
+	)
+	return err
+}
+
+const deleteObservationFacet = `-- name: DeleteObservationFacet :exec
+DELETE FROM observations WHERE account_id = $1 AND facet = $2 AND source = $3
+`
+
+type DeleteObservationFacetParams struct {
+	AccountID string `json:"account_id"`
+	Facet     string `json:"facet"`
+	Source    string `json:"source"`
+}
+
+// A full push of a source replaces that source's facet; other sources stay.
+func (q *Queries) DeleteObservationFacet(ctx context.Context, arg DeleteObservationFacetParams) error {
+	_, err := q.db.Exec(ctx, deleteObservationFacet, arg.AccountID, arg.Facet, arg.Source)
+	return err
+}
+
+const deleteObservationItemsByContainer = `-- name: DeleteObservationItemsByContainer :exec
+DELETE FROM observations
+WHERE account_id = $1
+  AND facet = 'item'
+  AND source = $2
+  AND key LIKE $3::text || ':%'
+`
+
+type DeleteObservationItemsByContainerParams struct {
+	AccountID string `json:"account_id"`
+	Source    string `json:"source"`
+	Container string `json:"container"`
+}
+
+func (q *Queries) DeleteObservationItemsByContainer(ctx context.Context, arg DeleteObservationItemsByContainerParams) error {
+	_, err := q.db.Exec(ctx, deleteObservationItemsByContainer, arg.AccountID, arg.Source, arg.Container)
+	return err
+}
+
 const deletePlayerStateByAccount = `-- name: DeletePlayerStateByAccount :exec
 DELETE FROM player_state WHERE account_id = $1
 `
 
 func (q *Queries) DeletePlayerStateByAccount(ctx context.Context, accountID string) error {
 	_, err := q.db.Exec(ctx, deletePlayerStateByAccount, accountID)
+	return err
+}
+
+const deletePlayerStateFacetProjection = `-- name: DeletePlayerStateFacetProjection :exec
+DELETE FROM player_state WHERE account_id = $1 AND facet = $2
+`
+
+type DeletePlayerStateFacetProjectionParams struct {
+	AccountID string `json:"account_id"`
+	Facet     string `json:"facet"`
+}
+
+func (q *Queries) DeletePlayerStateFacetProjection(ctx context.Context, arg DeletePlayerStateFacetProjectionParams) error {
+	_, err := q.db.Exec(ctx, deletePlayerStateFacetProjection, arg.AccountID, arg.Facet)
 	return err
 }
 
@@ -46,38 +116,14 @@ func (q *Queries) GetPlayerStateFact(ctx context.Context, arg GetPlayerStateFact
 	return i, err
 }
 
-const getPlayerStateFreshness = `-- name: GetPlayerStateFreshness :many
-SELECT source, max(observed_at)::timestamptz AS last_observed_at, count(*) AS facts
-FROM player_state
-WHERE account_id = $1
-GROUP BY source
-`
-
-type GetPlayerStateFreshnessRow struct {
-	Source         string             `json:"source"`
-	LastObservedAt pgtype.Timestamptz `json:"last_observed_at"`
-	Facts          int64              `json:"facts"`
-}
-
-// Newest observation per source, for the "stale" indicator.
-func (q *Queries) GetPlayerStateFreshness(ctx context.Context, accountID string) ([]GetPlayerStateFreshnessRow, error) {
-	rows, err := q.db.Query(ctx, getPlayerStateFreshness, accountID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []GetPlayerStateFreshnessRow{}
-	for rows.Next() {
-		var i GetPlayerStateFreshnessRow
-		if err := rows.Scan(&i.Source, &i.LastObservedAt, &i.Facts); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+type InsertPlayerStateProjectionParams struct {
+	AccountID  string             `json:"account_id"`
+	Facet      string             `json:"facet"`
+	Key        string             `json:"key"`
+	Value      json.RawMessage    `json:"value"`
+	Source     string             `json:"source"`
+	SnapshotID string             `json:"snapshot_id"`
+	ObservedAt pgtype.Timestamptz `json:"observed_at"`
 }
 
 const listCurrentQuests = `-- name: ListCurrentQuests :many
@@ -134,6 +180,69 @@ func (q *Queries) ListCurrentSkills(ctx context.Context, accountID string) ([]VC
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listObservationsByFacet = `-- name: ListObservationsByFacet :many
+SELECT account_id, facet, key, source, value, snapshot_id, observed_at FROM observations WHERE account_id = $1 AND facet = $2 ORDER BY key, source
+`
+
+type ListObservationsByFacetParams struct {
+	AccountID string `json:"account_id"`
+	Facet     string `json:"facet"`
+}
+
+func (q *Queries) ListObservationsByFacet(ctx context.Context, arg ListObservationsByFacetParams) ([]Observation, error) {
+	rows, err := q.db.Query(ctx, listObservationsByFacet, arg.AccountID, arg.Facet)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Observation{}
+	for rows.Next() {
+		var i Observation
+		if err := rows.Scan(
+			&i.AccountID,
+			&i.Facet,
+			&i.Key,
+			&i.Source,
+			&i.Value,
+			&i.SnapshotID,
+			&i.ObservedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listObservedFacets = `-- name: ListObservedFacets :many
+SELECT DISTINCT o.facet FROM observations o WHERE o.account_id = $1::text
+UNION
+SELECT DISTINCT p.facet FROM player_state p WHERE p.account_id = $1::text
+`
+
+func (q *Queries) ListObservedFacets(ctx context.Context, accountID string) ([]string, error) {
+	rows, err := q.db.Query(ctx, listObservedFacets, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []string{}
+	for rows.Next() {
+		var facet string
+		if err := rows.Scan(&facet); err != nil {
+			return nil, err
+		}
+		items = append(items, facet)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -247,37 +356,107 @@ func (q *Queries) ListPlayerStateBySource(ctx context.Context, arg ListPlayerSta
 	return items, nil
 }
 
-const upsertPlayerStateFact = `-- name: UpsertPlayerStateFact :exec
-INSERT INTO player_state (account_id, facet, key, value, source, snapshot_id, observed_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (account_id, facet, key) DO UPDATE SET
-  value       = EXCLUDED.value,
-  source      = EXCLUDED.source,
-  snapshot_id = EXCLUDED.snapshot_id,
-  observed_at = EXCLUDED.observed_at
-WHERE EXCLUDED.observed_at >= player_state.observed_at
+const observationFreshness = `-- name: ObservationFreshness :many
+SELECT source, max(observed_at)::timestamptz AS last_observed_at, count(*) AS facts
+FROM observations
+WHERE account_id = $1
+GROUP BY source
 `
 
-type UpsertPlayerStateFactParams struct {
+type ObservationFreshnessRow struct {
+	Source         string             `json:"source"`
+	LastObservedAt pgtype.Timestamptz `json:"last_observed_at"`
+	Facts          int64              `json:"facts"`
+}
+
+// Newest observation per source, for the "stale" indicator.
+func (q *Queries) ObservationFreshness(ctx context.Context, accountID string) ([]ObservationFreshnessRow, error) {
+	rows, err := q.db.Query(ctx, observationFreshness, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ObservationFreshnessRow{}
+	for rows.Next() {
+		var i ObservationFreshnessRow
+		if err := rows.Scan(&i.Source, &i.LastObservedAt, &i.Facts); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const patchObservation = `-- name: PatchObservation :exec
+INSERT INTO observations (account_id, facet, key, source, value, snapshot_id, observed_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (account_id, facet, key, source) DO UPDATE SET
+  value       = observations.value || EXCLUDED.value,
+  snapshot_id = EXCLUDED.snapshot_id,
+  observed_at = EXCLUDED.observed_at
+WHERE EXCLUDED.observed_at >= observations.observed_at
+`
+
+type PatchObservationParams struct {
 	AccountID  string             `json:"account_id"`
 	Facet      string             `json:"facet"`
 	Key        string             `json:"key"`
-	Value      json.RawMessage    `json:"value"`
 	Source     string             `json:"source"`
+	Value      json.RawMessage    `json:"value"`
 	SnapshotID string             `json:"snapshot_id"`
 	ObservedAt pgtype.Timestamptz `json:"observed_at"`
 }
 
-// "Last observation wins": the row is only replaced when the new observation is
-// not older than the stored one. Source priority on ties is resolved by the
-// caller (plugin > wikisync > hiscores > wom) before calling this.
-func (q *Queries) UpsertPlayerStateFact(ctx context.Context, arg UpsertPlayerStateFactParams) error {
-	_, err := q.db.Exec(ctx, upsertPlayerStateFact,
+// Skill deltas carry only some fields (xp, boosted): merge them into the
+// source's last observation instead of erasing level.
+func (q *Queries) PatchObservation(ctx context.Context, arg PatchObservationParams) error {
+	_, err := q.db.Exec(ctx, patchObservation,
 		arg.AccountID,
 		arg.Facet,
 		arg.Key,
-		arg.Value,
 		arg.Source,
+		arg.Value,
+		arg.SnapshotID,
+		arg.ObservedAt,
+	)
+	return err
+}
+
+const upsertObservation = `-- name: UpsertObservation :exec
+
+INSERT INTO observations (account_id, facet, key, source, value, snapshot_id, observed_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
+ON CONFLICT (account_id, facet, key, source) DO UPDATE SET
+  value       = EXCLUDED.value,
+  snapshot_id = EXCLUDED.snapshot_id,
+  observed_at = EXCLUDED.observed_at
+WHERE EXCLUDED.observed_at >= observations.observed_at
+`
+
+type UpsertObservationParams struct {
+	AccountID  string             `json:"account_id"`
+	Facet      string             `json:"facet"`
+	Key        string             `json:"key"`
+	Source     string             `json:"source"`
+	Value      json.RawMessage    `json:"value"`
+	SnapshotID string             `json:"snapshot_id"`
+	ObservedAt pgtype.Timestamptz `json:"observed_at"`
+}
+
+// Observations per source (docs/10 section 5). Writers use these; only the
+// projection below writes player_state.
+// The last observation of one source for one fact. An older observation of the
+// same source never replaces a newer one.
+func (q *Queries) UpsertObservation(ctx context.Context, arg UpsertObservationParams) error {
+	_, err := q.db.Exec(ctx, upsertObservation,
+		arg.AccountID,
+		arg.Facet,
+		arg.Key,
+		arg.Source,
+		arg.Value,
 		arg.SnapshotID,
 		arg.ObservedAt,
 	)

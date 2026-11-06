@@ -34,32 +34,6 @@ WHERE
   )
 RETURNING *;
 
--- name: DeletePlayerStateItemsByContainer :exec
-DELETE FROM player_state
-WHERE account_id = sqlc.arg(account_id)
-  AND facet = 'item'
-  AND key LIKE sqlc.arg(container)::text || ':%';
-
--- name: DeletePlayerStateFact :exec
-DELETE FROM player_state
-WHERE account_id = $1 AND facet = $2 AND key = $3;
-
--- name: DeletePlayerStateFacet :exec
-DELETE FROM player_state
-WHERE account_id = $1 AND facet = $2;
-
--- name: UpsertPlayerStateJSONPatch :exec
--- Skill deltas can carry only xp or boosted; merge those fields into the
--- existing skill object instead of erasing level.
-INSERT INTO player_state (account_id, facet, key, value, source, snapshot_id, observed_at)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (account_id, facet, key) DO UPDATE SET
-  value       = player_state.value || EXCLUDED.value,
-  source      = EXCLUDED.source,
-  snapshot_id = EXCLUDED.snapshot_id,
-  observed_at = EXCLUDED.observed_at
-WHERE EXCLUDED.observed_at >= player_state.observed_at;
-
 -- name: ListItemContainerFreshness :many
 -- Latest accepted observation per item container, plus whether a full push
 -- observed the container in that same state and live epoch. Without such a

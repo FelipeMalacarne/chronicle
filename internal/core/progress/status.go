@@ -81,6 +81,13 @@ func Blocked(st *content.Step, verdicts Verdicts, reg *entities.Registry) []stri
 // out: requirements met during the quest, boostable ones (the guides count on
 // boosts) and the objectives the step itself completes.
 func CatalogRequires(st *content.Step, reg *entities.Registry) []string {
+	return catalogRequires(st, reg, false)
+}
+
+// catalogRequires is CatalogRequires; withBoostable also keeps the boostable
+// requirements, which never block a step but still get a verdict (the
+// entity panel shows them, docs/10 section 13).
+func catalogRequires(st *content.Step, reg *entities.Registry, withBoostable bool) []string {
 	if reg == nil {
 		return nil
 	}
@@ -98,7 +105,7 @@ func CatalogRequires(st *content.Step, reg *entities.Registry) []string {
 			continue
 		}
 		for _, req := range q.Requires {
-			if req.DuringQuest || req.Boostable || completes(req.Key) {
+			if req.DuringQuest || (req.Boostable && !withBoostable) || completes(req.Key) {
 				continue
 			}
 			if k := req.Key.String(); !slices.Contains(out, k) {

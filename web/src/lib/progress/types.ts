@@ -85,6 +85,8 @@ export interface Board {
 	/** Passos marcados por um lote (marcar tudo antes) e como desfazê-lo. */
 	marked?: string[];
 	undo?: MarkRestore[];
+	/** O comando que esta escrita registrou; um desfazer o cita em `revokes`. */
+	command_id?: string;
 }
 
 /** Um passo do desfazer de um lote: a marca que ele tinha (null: nenhuma). */
@@ -95,6 +97,7 @@ export interface MarkRestore {
 
 export interface GuideSource {
 	origin?: string;
+	original_id?: string;
 	author?: string;
 	url?: string;
 	license?: string;
@@ -156,9 +159,25 @@ export interface EventsView {
 
 /* ------------------------------------------------------------------ conteúdo composto */
 
+/** Como um dado estruturado do conteúdo foi obtido (content.Provenance). */
+export interface Provenance {
+	method: string;
+	confidence: string;
+	step_ids: string[] | null;
+	evidence?: string;
+}
+
 export interface Objective {
 	key: string;
 	role: Role;
+	evidence?: { field: string; quote?: string; span?: number[] };
+	source?: {
+		method: string;
+		confidence: string;
+		skill_version?: string;
+		confirmed_by?: string;
+		decision?: string;
+	};
 }
 
 export interface ItemRequirement {
@@ -176,6 +195,7 @@ export interface BankAction {
 	type: string;
 	position: string;
 	text: string;
+	source?: Provenance;
 }
 
 export interface Occurrence {
@@ -201,13 +221,60 @@ export interface Link {
 	text?: string;
 }
 
+/**
+ * O passo como o conteúdo o guarda (content.Step): é o que os trechos de uma seção trazem.
+ * Campos que a web não lê ficam como `unknown`.
+ */
+export interface GuideStep {
+	id: string;
+	text?: string;
+	location?: string;
+	notes?: Note[];
+	items?: (
+		string | { name: string; item_id?: number; qty?: number; equip?: boolean; note?: string }
+	)[];
+	links?: Link[];
+	complete_when?: unknown;
+	prerequisites?: unknown;
+	requires?: string[];
+	recommended_after?: string[];
+	unlocks?: string[];
+	tags?: string[];
+	modes?: string[];
+	layers?: string[];
+	phase?: string;
+	optional?: boolean;
+	estimate_minutes?: number;
+	replaces?: string[];
+	source?: GuideSource;
+	entities?: unknown[];
+	objectives?: Objective[];
+	location_ref?: string;
+	requirements?: ItemRequirement[];
+	bank_actions?: BankAction[];
+}
+
 export interface ContentStep {
 	id: string;
 	text: string;
 	location?: string;
 	notes?: Note[];
-	items?: (string | { name: string; qty?: number })[];
+	items?: (
+		string | { name: string; item_id?: number; qty?: number; equip?: boolean; note?: string }
+	)[];
 	links?: Link[];
+	complete_when?: unknown;
+	prerequisites?: unknown;
+	requires?: string[];
+	recommended_after?: string[];
+	unlocks?: string[];
+	tags?: string[];
+	phase?: string;
+	optional?: boolean;
+	estimate_minutes?: number;
+	replaces?: string[];
+	source?: GuideSource;
+	entities?: unknown[];
 	layers?: string[];
 	modes?: string[];
 	objectives?: Objective[];
@@ -228,6 +295,8 @@ export interface Loadout {
 	status: 'known' | 'partial' | 'unknown';
 	inventory?: ItemRequirement[];
 	equipment?: ItemRequirement[];
+	empty_slots?: number;
+	source?: Provenance;
 }
 
 export interface ContentSegment {
@@ -236,7 +305,8 @@ export interface ContentSegment {
 	title?: string;
 	bank_actions?: BankAction[];
 	loadout?: Loadout;
-	steps: { id: string }[];
+	source?: Provenance;
+	steps: GuideStep[];
 }
 
 export interface ContentSection {
@@ -245,6 +315,8 @@ export interface ContentSection {
 	title: string;
 	description?: string;
 	kind?: string;
+	related?: unknown[];
+	tags?: string[];
 	guide: string;
 	segments?: ContentSegment[];
 	steps: ContentStep[];
@@ -253,6 +325,7 @@ export interface ContentSection {
 
 export interface GuideInfo {
 	id: string;
+	slug?: string;
 	title: string;
 	version?: string;
 	source?: GuideSource;
@@ -260,6 +333,7 @@ export interface GuideInfo {
 	segments: number;
 	sections: {
 		id: string;
+		guide: string;
 		slug: string;
 		title: string;
 		kind: string;
@@ -275,8 +349,20 @@ export type ContainerState = 'unavailable' | 'restored' | 'live';
 export interface Ownership {
 	verdict: Verdict;
 	stale?: boolean;
-	held?: number;
-	containers: Partial<Record<string, { state?: ContainerState; observed: boolean; qty: number }>>;
+	held: number;
+	required?: number;
+	containers: Partial<
+		Record<
+			string,
+			{
+				state?: ContainerState;
+				observed: boolean;
+				complete?: boolean;
+				qty: number;
+				observed_at?: string;
+			}
+		>
+	>;
 	reason?: string;
 }
 
@@ -286,6 +372,7 @@ export interface ReadinessItem {
 	item_id?: number;
 	any_of?: number[];
 	family?: string;
+	noted?: boolean;
 	matched_id?: number;
 	slot: 'inventory' | 'equipment';
 	required: number;
@@ -303,10 +390,18 @@ export interface SegmentReadiness {
 	segment_id: string;
 	section_id: string;
 	kind: 'bank_leg' | 'sequence';
+	title?: string;
 	first_step_id?: string;
 	status: 'ready' | 'listed_ready' | 'not_ready' | 'unknown' | 'no_loadout';
 	loadout_status: 'known' | 'partial' | 'unknown';
 	items: ReadinessItem[];
+	empty_slots?: {
+		required: number;
+		free_min?: number;
+		free_max?: number;
+		verdict: Verdict;
+		reason?: string;
+	};
 	bank_actions: BankAction[];
 	freshness: Record<
 		string,
@@ -553,4 +648,27 @@ export interface GoalPlan {
 	nodes: GoalNode[];
 	bottlenecks: Bottleneck[];
 	routes: StepPlace[];
+}
+
+/* ------------------------------------------------------------------ envelopes das respostas */
+
+export interface GoalsResponse {
+	account: string;
+	goals: Goal[];
+}
+
+export interface GoalPlanResponse {
+	account: string;
+	goal: Goal;
+	plan: GoalPlan;
+}
+
+export interface WorldResponse {
+	account: string;
+	entities: WorldEntity[];
+}
+
+export interface SyncRunsResponse {
+	account: string;
+	runs: SyncRun[];
 }

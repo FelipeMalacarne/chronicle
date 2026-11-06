@@ -465,9 +465,13 @@ erDiagram
 - **`player_state`**: uma linha por fato `(facet, key)` com `value` JSON, fonte e `observed_at`. Facetas:
   `skill`, `activity`, `quest`, `diary_task`, `combat_achievement`, `collection_log`, `varbit`, `varp`,
   `item` e `diary` (tier completa, chave `area:tier`, valor `{"complete":bool}`, derivada dos varbits
-  de referência; migration 0005). A chave de `quest` é o nome canônico da wiki do catálogo. O merge é "observação mais nova vence dentro da faceta", com prioridade
-  `plugin > wikisync > hiscores > wom` em empate. O motor só lê essa tabela, carregada em memória como
-  `rules.PlayerState`.
+  de referência; migration 0005). A chave de `quest` é o nome canônico da wiki do catálogo. Desde a migration 0008, `player_state` é uma projeção:
+  cada fonte grava a própria última observação em **`observations`** `(facet, key, source)`, e
+  `internal/core/facts.Merge` junta as fontes (o maior valor para o que só cresce: XP e nível, quest,
+  diary, score de atividade; o `boosted` vem do plugin; a observação mais nova para o resto, com
+  `plugin > wikisync > hiscores > wom` só no empate exato). Quem grava projeta as facetas que tocou na
+  mesma transação, e o boot reprojeta todas as contas (doc 10, seção 5). O motor só lê `player_state`,
+  carregado em memória como `rules.PlayerState`.
 - **`ingest_container_freshness`** e **`snapshot_item_containers`**: estado (`unavailable`/`restored`/
   `live`), `revision` e `live_epoch` por container; `restored` nunca vira `live` (seção 6.4).
 - **`objective_progress`** guarda o veredito por `(conta, chave de objetivo)` com evidência, snapshot,
@@ -1023,6 +1027,13 @@ Componentes em `web/src/lib/v6`. Verificação: testes HTTP das duas rotas novas
 `TestQuestAndDiaryFactsPostgres` com o estado da conta, `node --test` dos módulos puros (Agora, Rota,
 Conta) e capturas em 1440 e 640 contra o servidor real com um Postgres local.
 
+Integração da fase 0 com a web v6 (2026-11-06): a branch da fase 0 foi rebaseada sobre a v6 e ficou
+com as telas da v6. O Agora e a Rota da v6 passaram a usar `undo.ts`: board, escritas e desfazer
+presos à conta e à rota, uma escrita por vez, o desfazer entra na pilha só depois que a escrita deu
+certo e manda `revokes` com o comando que desfaz. A reavaliação passou a dar veredito também aos
+requisitos boostable do catálogo (nunca bloqueiam o cursor), para o "Requer" do painel de entidade não
+mostrá-los como "não sabemos". `/rotas` espera o resumo da conta antes de abrir a rota ativa.
+
 Ainda não existe: deploy no saradomin, device flow do plugin,
 CLI/MCP sobre o cliente, grafo (a aba Grafo do Mundo fica desabilitada),
 sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e o módulo de controle
@@ -1049,6 +1060,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito nos branches** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); falta instalar e conferir no jogo |
 | 15 | Auth do plugin em `oidc`: aplicação nativa no Zitadel, `GET /api/auth/plugin`, validação do JWT pela JWKS, roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | junto do deploy no saradomin (item 11) |
 | 16 | Plugin 1.2.x: posição e mundo (`data.position`, opt-in) com destaque na web dos passos pendentes no lugar (desenho no canvas antes), collection log e combat achievements (decisão 24 do doc 01) | por entrega |
+| 17 | Fase 0 do doc 10 (endurecimento), em fatias: (a) restrições e locks no banco: trava do `met`, evidência não vazia, FKs de snapshot por conta, query do motor só para `implied`, ordem de locks credencial → conta → fatos, lock por conta no sync, `observed_at` limitado ao servidor (**feita** 2026-11-05: migration 0007, `TestIntegrityPostgres`, `TestSyncConcurrentRunsPostgres` e `TestPushAndSyncConcurrentPostgres`, que reproduz o deadlock 40P01 sem os locks); (b) web: undo com guia e conta, escritas serializadas, recursos por rota (**feita** 2026-11-05: `web/src/lib/progress/undo.ts` com testes, Agora e Rota; conferida no navegador trocando a rota ativa com um desfazer pendente); (c) `observations` por fonte e `player_state` como projeção da junção pura (**feita** 2026-11-05: migration 0008, que recupera do último snapshot do hiscores os fatos que o plugin tinha sobrescrito; `internal/core/facts` com testes de tabela e de independência da ordem; `TestFactsMergePostgres`); (d) log de comandos de marca, autor na evidência e tabela `guides` com FKs (**feita** 2026-11-05: migration 0009 com `guides` e `mark_commands`, que começa com uma semente das marcas existentes; `revokes` no desfazer da web e do painel; `VerifyMarks` repete o log e compara com `step_marks`, conferido no teste de ciclo de vida do progresso e no navegador); (e) `ironman progress rebuild --check` (CI e comando; aviso no boot) (**feita** 2026-11-05 como `ironman progress check` sobre `GET /api/progress/check`; boot avisa antes de reavaliar; o job `go` do CI ganhou Postgres 17 e os testes de integração do store, que antes eram pulados no CI, passam a rodar lá e terminam com a checagem); (f) contrato gerado com tygo e fixtures Zod (**fixtures feitas** 2026-11-05, sem Zod: `TestContractPostgres` sobe a API real sobre o conteúdo real e grava em `web/src/lib/api/contract/` uma resposta real por rota como `export const fixture = {…} satisfies <tipo da web>`; o `svelte-check` recusa campo faltando, `null` indevido, enum fora da união e campo desconhecido, e o teste Go recusa mudança de forma sem `-update`; a primeira rodada achou e corrigiu 16 divergências no `types.ts`. **Geração de tipos adiada** pelo dono em 2026-11-05, com OpenAPI como candidato no lugar do tygo, começando pelo contrato do plugin; doc 10, seção 12). **Fase 0 fechada** com isso | cada fatia com teste no Postgres; `rebuild --check` sem diferença no CI e no banco do zaros; teste de concorrência ingest + sync + marca |
 
 Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.
 

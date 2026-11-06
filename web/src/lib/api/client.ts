@@ -6,7 +6,8 @@ import type {
 	ContentSection,
 	EventsView,
 	Goal,
-	GoalPlan,
+	GoalPlanResponse,
+	GoalsResponse,
 	GuideInfo,
 	MarkAction,
 	MarkRestore,
@@ -14,8 +15,9 @@ import type {
 	Readiness,
 	SetupLookup,
 	SyncRun,
-	WorldEntity,
-	WorldEntityDetail
+	SyncRunsResponse,
+	WorldEntityDetail,
+	WorldResponse
 } from '../progress/types';
 import { untrack } from 'svelte';
 import { sync, markOk, markFail } from './sync.svelte';
@@ -133,20 +135,32 @@ export const progressApi = {
 		request<Readiness>(
 			`/guides/${enc(guide)}/readiness?account=${enc(account)}${step ? `&step=${enc(step)}` : ''}`
 		),
-	mark: (guide: string, step: string, account: string, kind: MarkAction, note?: string) =>
+	/** `revokes`: num desfazer, o `command_id` da escrita que ele desfaz (doc 10, seção 6). */
+	mark: (
+		guide: string,
+		step: string,
+		account: string,
+		kind: MarkAction,
+		note?: string,
+		revokes?: string
+	) =>
 		request<Board>(
 			`/guides/${enc(guide)}/steps/${enc(step)}/mark?account=${enc(account)}`,
-			json('PATCH', note === undefined ? { kind } : { kind, note })
+			json('PATCH', {
+				kind,
+				...(note === undefined ? {} : { note }),
+				...(revokes ? { revokes } : {})
+			})
 		),
 	markBefore: (guide: string, account: string, step: string) =>
 		request<Board>(
 			`/guides/${enc(guide)}/marks?account=${enc(account)}`,
 			json('POST', { before_step_id: step })
 		),
-	restoreMarks: (guide: string, account: string, restore: MarkRestore[]) =>
+	restoreMarks: (guide: string, account: string, restore: MarkRestore[], revokes?: string) =>
 		request<Board>(
 			`/guides/${enc(guide)}/marks?account=${enc(account)}`,
-			json('POST', { restore })
+			json('POST', { restore, ...(revokes ? { revokes } : {}) })
 		),
 	confirmImplied: (guide: string, account: string) =>
 		request<Board>(`/guides/${enc(guide)}/implied/confirm?account=${enc(account)}`, json('POST')),
@@ -155,22 +169,21 @@ export const progressApi = {
 			`/guides/${enc(guide)}/cursor?account=${enc(account)}`,
 			json('PUT', { step_id: step })
 		),
-	goals: (account: string) => request<{ goals: Goal[] }>(`/goals?account=${enc(account)}`),
+	goals: (account: string) => request<GoalsResponse>(`/goals?account=${enc(account)}`),
 	addGoal: (account: string, key: string) =>
 		request<Goal>(`/goals?account=${enc(account)}`, json('POST', { objective_key: key })),
 	goalPlan: (account: string, id: string) =>
-		request<{ goal: Goal; plan: GoalPlan }>(`/goals/${enc(id)}/plan?account=${enc(account)}`),
+		request<GoalPlanResponse>(`/goals/${enc(id)}/plan?account=${enc(account)}`),
 	removeGoal: (account: string, id: string) =>
 		request<null>(`/goals/${enc(id)}?account=${enc(account)}`, json('DELETE')),
-	world: (account: string) =>
-		request<{ entities: WorldEntity[] }>(`/world?account=${enc(account)}`),
+	world: (account: string) => request<WorldResponse>(`/world?account=${enc(account)}`),
 	accountState: (account: string) =>
 		request<AccountState>(`/account/state?account=${enc(account)}`),
 	entity: (account: string, ref: string) =>
 		request<WorldEntityDetail>(`/world/entity?account=${enc(account)}&ref=${enc(ref)}`),
 	sync: (account: string) => request<SyncRun>(`/sync?account=${enc(account)}`, json('POST')),
 	syncRuns: (account: string, limit = 5) =>
-		request<{ runs: SyncRun[] }>(`/sync/runs?account=${enc(account)}&limit=${limit}`),
+		request<SyncRunsResponse>(`/sync/runs?account=${enc(account)}&limit=${limit}`),
 	setupLookup: (rsn: string) => request<SetupLookup>(`/setup/lookup?rsn=${enc(rsn)}`),
 	createAccount: (input: { rsn: string; mode: AccountMode; guide_id: string; layer: string }) =>
 		request<AccountView>('/accounts', json('POST', input)),

@@ -2607,3 +2607,10 @@ button.rt {
 	cursor: pointer;
 	text-decoration: underline;
 }
+/*
+ * A bolinha .v (V6Mundo1440) vem depois das cores de veredito da folha e herdava a cor do fundo:
+ * o "?" de não sabemos sumia. No artboard as cores vêm por último; aqui a especificidade resolve.
+ */
+.v.v-unk {
+	color: var(--ink-subtle);
+}

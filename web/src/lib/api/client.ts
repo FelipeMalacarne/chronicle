@@ -8,6 +8,7 @@ import type {
 	Goal,
 	GoalPlanResponse,
 	GoalsResponse,
+	GraphResponse,
 	GuideInfo,
 	MarkAction,
 	MarkRestore,
@@ -179,6 +180,10 @@ export const progressApi = {
 	world: (account: string) => request<WorldResponse>(`/world?account=${enc(account)}`),
 	accountState: (account: string) =>
 		request<AccountState>(`/account/state?account=${enc(account)}`),
+	graph: (account: string, focus: string, depth = 3) =>
+		request<GraphResponse>(
+			`/world/graph?account=${enc(account)}&focus=${enc(focus)}&depth=${depth}`
+		),
 	entity: (account: string, ref: string) =>
 		request<WorldEntityDetail>(`/world/entity?account=${enc(account)}&ref=${enc(ref)}`),
 	sync: (account: string) => request<SyncRun>(`/sync?account=${enc(account)}`, json('POST')),

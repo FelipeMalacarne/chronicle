@@ -163,7 +163,9 @@ func (s *Server) routes() {
 		account("GET /api/goals/{id}/plan", s.handleGoalPlan)
 		account("GET /api/world", s.handleWorld)
 		account("GET /api/world/entity", s.handleWorldEntity)
+		account("GET /api/world/graph", s.handleWorldGraph)
 		account("GET /api/account/state", s.handleAccountState)
+		account("GET /api/route", s.handleRoute)
 	}
 	// The setup picks or creates an account by name, of the dev user or of
 	// the session user.

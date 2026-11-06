@@ -164,6 +164,7 @@ func TestContractPostgres(t *testing.T) {
 		{name: "goals", method: "GET", path: "/api/goals" + acc, tsImports: []string{"GoalsResponse"}, tsType: "GoalsResponse"},
 		{name: "goal-plan", method: "GET", path: "/api/goals/" + goal.ID + "/plan" + acc, tsImports: []string{"GoalPlanResponse"}, tsType: "GoalPlanResponse"},
 		{name: "world", method: "GET", path: "/api/world" + acc, tsImports: []string{"WorldResponse"}, tsType: "WorldResponse"},
+		{name: "graph", method: "GET", path: "/api/world/graph" + acc + "&focus=quest:recipe_for_disaster@finished&depth=3", tsImports: []string{"GraphResponse"}, tsType: "GraphResponse"},
 		{name: "sync", method: "POST", path: "/api/sync" + acc, tsImports: []string{"SyncRun"}, tsType: "SyncRun"},
 		{name: "sync-runs", method: "GET", path: "/api/sync/runs" + acc + "&limit=5", tsImports: []string{"SyncRunsResponse"}, tsType: "SyncRunsResponse"},
 	}

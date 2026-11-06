@@ -158,6 +158,17 @@ func (f *fakeProgress) GoalPlan(ctx context.Context, accountID, goalID string) (
 	return storeprogress.GoalPlanView{Goal: goals[0], Plan: coreprogress.GoalPlan{Goal: goals[0].Key, Requirements: true, Total: 1}}, nil
 }
 
+func (f *fakeProgress) Graph(_ context.Context, accountID, focus string, depth int) (coreprogress.Graph, error) {
+	f.call, f.step = "graph", focus
+	if accountID != "acc-1" {
+		return coreprogress.Graph{}, storeprogress.ErrAccountNotFound
+	}
+	if !strings.Contains(focus, ":") {
+		return coreprogress.Graph{}, storeprogress.ErrInvalidFocus
+	}
+	return coreprogress.Graph{Focus: focus, Depth: depth, Nodes: []coreprogress.GraphNode{}, Critical: []coreprogress.PathStep{}}, nil
+}
+
 func (f *fakeProgress) RemoveGoal(_ context.Context, _, goalID string) error {
 	f.call, f.step = "removeGoal", goalID
 	if goalID != "goal_1" {

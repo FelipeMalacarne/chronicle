@@ -171,7 +171,7 @@ Table mark_commands {
   mark_commands_effects_check: CHECK ((jsonb_typeof(effects) = 'array'::text))
   mark_commands_kind_check: CHECK ((kind = ANY (ARRAY['mark'::text, 'confirm_implied'::text, 'mark_before'::text, 'restore'::text, 'pin'::text, 'implied'::text, 'alias'::text, 'migration'::text])))
   mark_commands_owner_has_via: CHECK (((actor = 'owner'::text) = (via IS NOT NULL)))
-  mark_commands_via_check: CHECK ((via = ANY (ARRAY['web'::text, 'plugin_panel'::text])))
+  mark_commands_via_check: CHECK ((via = ANY (ARRAY['web'::text, 'plugin_panel'::text, 'cli'::text, 'mcp'::text])))
   '''
 }
 

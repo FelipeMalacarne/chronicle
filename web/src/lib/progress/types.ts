@@ -650,6 +650,53 @@ export interface GoalPlan {
 	routes: StepPlace[];
 }
 
+/* ------------------------------------------------------------------ grafo por foco (F10) */
+
+/** Um nó do grafo: o foco (profundidade 0) ou um requisito, com o tipo da chave. */
+export interface GraphNode extends GoalNode {
+	/** quest, skill, diary, item, …; "qp" para quest points. */
+	kind: string;
+	/** Nível atual do skill (ou a contagem de quest points), quando um fato sabe. */
+	have?: number;
+	/** O nó está no caminho crítico. */
+	critical?: boolean;
+}
+
+/** O que o foco destrava: uma quest cujos requisitos do catálogo o foco alcança. */
+export interface GraphLink {
+	key: string;
+	ref: string;
+	label: string;
+	kind: string;
+	verdict: Verdict;
+	/** Requisitos diretos ainda não feitos (o foco incluído, se não feito). */
+	missing: number;
+}
+
+/** Grafo de requisitos de um foco (V6Grafo1440, V6Grafo640). */
+export interface Graph {
+	focus: string;
+	label: string;
+	kind: string;
+	depth: number;
+	max_depth: number;
+	hidden: number;
+	requirements: boolean;
+	met: number;
+	total: number;
+	presumed: number;
+	nodes: GraphNode[];
+	/**
+	 * O caminho crítico, do foco ao requisito aberto mais distante (qualquer que seja a
+	 * profundidade mostrada); vazio quando o foco está feito.
+	 */
+	critical: { key: string; label: string }[];
+	unlocks: GraphLink[];
+	unlocks_total: number;
+	bottlenecks: Bottleneck[];
+	routes: StepPlace[];
+}
+
 /* ------------------------------------------------------------------ envelopes das respostas */
 
 export interface GoalsResponse {
@@ -661,6 +708,10 @@ export interface GoalPlanResponse {
 	account: string;
 	goal: Goal;
 	plan: GoalPlan;
+}
+
+export interface GraphResponse extends Graph {
+	account: string;
 }
 
 export interface WorldResponse {

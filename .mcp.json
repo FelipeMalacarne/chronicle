@@ -4,6 +4,11 @@
       "type": "stdio",
       "command": "go",
       "args": ["run", "./cmd/ironman", "content", "mcp", "--content-dir", "content"]
+    },
+    "ironman": {
+      "type": "stdio",
+      "command": "go",
+      "args": ["run", "./cmd/ironman", "mcp"]
     }
   }
 }

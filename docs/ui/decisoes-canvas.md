@@ -130,16 +130,17 @@ classe). Artboards seguidos:
 | Comparar | V6Comparar1440 | `/compare` |
 | Mundo › Entidades | V6Mundo1440, V6Mundo640 | `/mundo` |
 | Mundo › Metas | V6Metas1440, V6Metas640 | `/mundo/metas` |
+| Mundo › Grafo (2026-11-06) | V6Grafo1440 (colunas), V6Grafo640 (árvore) | `/mundo/grafo?foco=<chave>` |
 | Conta | V6Conta1440, V6Conta640 | `/conta` |
 | Primeiro acesso | V6Setup1440 | `/setup` |
 
 Onde o código diverge do canvas, por falta de dado ou de API (para o dono decidir se o canvas muda ou
 se a API vem depois):
 
-1. **Grafo, Sessão, Automação e recorrentes** não foram implementados: não há API de grafo, de sessão
-   (diff entre snapshots) nem o módulo do Microbot (doc 08); recorrentes com prazo seguem como proposta
-   (decisão 31 do doc 01). A aba Grafo do Mundo fica desabilitada; "Nesta sessão" no rodapé do Agora
-   conta as últimas 6 h de eventos, sem o link "ver".
+1. **Sessão, Automação e recorrentes** não foram implementados: não há API de sessão (diff entre
+   snapshots) nem o módulo do Microbot (doc 08); recorrentes com prazo seguem como proposta (decisão
+   31 do doc 01). "Nesta sessão" no rodapé do Agora conta as últimas 6 h de eventos, sem o link "ver".
+   O grafo entrou em 2026-11-06 (item 11 abaixo).
 2. **Equipamento no boneco pelo slot do catálogo**: o contrato do plugin não traz a posição, mas cada
    item equipável ocupa um slot só, o `equipment_slot` da wiki em `content/reference/items.json`
    (exposto em `entities.ItemForm` e em `/api/account/state`); arma de duas mãos ocupa a arma e deixa o
@@ -158,3 +159,14 @@ se a API vem depois):
    na UI.
 10. A Rota abre o trecho do cursor numa janela (3 passos antes, 10 depois) com "mostrar tudo", como em
     V6Rota1440; trechos sem título no conteúdo recebem o nome dos locais e das quests concluídas.
+11. **Grafo** (V6Grafo1440 e V6Grafo640): o foco é uma meta fixada ou qualquer entidade pelo "Focar
+    aqui", que entra no painel de entidade de sempre só nesta tela (o drawer do artboard é o mesmo
+    painel, decisão 7). Só quests têm requisitos no catálogo, então item, unlock e passo como foco não
+    têm colunas, só o destrava; "passo" como foco não existe. O destrava lista as quests que pedem o
+    foco (até 12), sem unlocks nem seções de rota: o catálogo não liga um requisito a eles. A coluna
+    de nível mais funda é a do requisito mais fundo, mesmo com profundidade maior. Níveis abertos que
+    um nó só pede viram uma linha, como no artboard; um nível que não atende é "disponível" (se treina
+    agora), bloqueado fica para quests com requisito em aberto. O caminho crítico é a cadeia mais longa
+    de requisitos em aberto (em nós, não em tempo: não há estimativas). No estreito, os filtros de
+    caminho crítico e de tipo saem, como em V6Grafo640, e "colunas · árvore" troca a disposição. As
+    subquests de Recipe for Disaster aparecem curtas ("RFD · Sir Amik Varze"), como no canvas.

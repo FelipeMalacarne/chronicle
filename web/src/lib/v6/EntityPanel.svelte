@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
+	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import Glyph from './Glyph.svelte';
 	import { progressApi } from '#lib/api/client';
@@ -103,6 +105,15 @@
 		} finally {
 			busy = false;
 		}
+	}
+
+	// No grafo (V6Grafo1440/640) o painel ganha "Focar aqui": o grafo passa a entrar por esta entidade.
+	const onGraph = $derived(page.url.pathname === resolve('/mundo/grafo'));
+	function focusHere() {
+		if (!goalKey) return;
+		closeEntity();
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query do foco
+		void goto(`${resolve('/mundo/grafo')}?foco=${encodeURIComponent(goalKey)}`, { replace: true });
 	}
 
 	const sheet = $derived(narrow.value);
@@ -213,10 +224,13 @@
 			{/if}
 			{#if failure}<p class="red sm">A meta não mudou: {failure}</p>{/if}
 			<div class="acts">
+				{#if onGraph && goalKey && !inline}
+					<button class="btn btn-p" type="button" onclick={focusHere}>Focar aqui</button>
+				{/if}
 				{#if goalKey}
 					<button
 						class="btn"
-						class:btn-p={!goal}
+						class:btn-p={!goal && !onGraph}
 						type="button"
 						disabled={busy}
 						aria-pressed={!!goal}

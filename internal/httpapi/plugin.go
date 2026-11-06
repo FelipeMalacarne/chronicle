@@ -168,6 +168,21 @@ func (s *Server) handlePluginRestore(w http.ResponseWriter, r *http.Request) {
 	s.writeRouteWindow(w, r, p.AccountID, limit)
 }
 
+// handleRoute is GET /api/route?account=: the same window of the active route
+// as the plugin panel, addressed by account like the web's routes. The CLI
+// (`ironman now`) and the account MCP server read it.
+func (s *Server) handleRoute(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	limit, ok := windowLimit(w, r)
+	if !ok {
+		return
+	}
+	s.writeRouteWindow(w, r, account, limit)
+}
+
 func (s *Server) writeRouteWindow(w http.ResponseWriter, r *http.Request, accountID string, limit int) {
 	window, err := s.routeWindow(r.Context(), accountID, limit)
 	if err != nil {

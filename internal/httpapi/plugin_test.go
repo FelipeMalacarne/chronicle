@@ -266,3 +266,43 @@ func TestPluginMarks(t *testing.T) {
 		t.Fatalf("token mark outside dev mode = %d", status)
 	}
 }
+
+func TestAccountRouteWindow(t *testing.T) {
+	server, _, _, prog := newPluginServer(t, true)
+	status, raw := pluginDo(t, "GET", server.URL+"/api/route?account=acc_cli&limit=1", "", "", "", "")
+	if status != http.StatusOK {
+		t.Fatalf("route = %d: %s", status, raw)
+	}
+	var w panel.Window
+	if err := json.Unmarshal(raw, &w); err != nil {
+		t.Fatal(err)
+	}
+	if prog.account != "acc_cli" || w.Cursor == nil || w.Cursor.StepID != "2" || len(w.Steps) != 2 {
+		t.Fatalf("window = %+v (account %q)", w, prog.account)
+	}
+	if status, _ := pluginDo(t, "GET", server.URL+"/api/route", "", "", "", ""); status != http.StatusBadRequest {
+		t.Fatalf("route without account = %d", status)
+	}
+	if status, _ := pluginDo(t, "GET", server.URL+"/api/route?account=missing", "", "", "", ""); status != http.StatusNotFound {
+		t.Fatalf("route of a missing account = %d", status)
+	}
+	if status, _ := pluginDo(t, "GET", server.URL+"/api/route?account=acc_cli&limit=99", "", "", "", ""); status != http.StatusBadRequest {
+		t.Fatalf("limit 99 = %d", status)
+	}
+	off, _, _, _ := newPluginServer(t, false)
+	if status, _ := pluginDo(t, "GET", off.URL+"/api/route?account=acc_cli", "", "", "", ""); status != http.StatusNotFound {
+		t.Fatalf("route outside dev mode without oidc = %d", status)
+	}
+}
+
+func TestCommandVia(t *testing.T) {
+	for header, want := range map[string]string{"": "web", "cli": "cli", "mcp": "mcp", "plugin_panel": "web", "CLI": "web"} {
+		r := httptest.NewRequest("PATCH", "/", nil)
+		if header != "" {
+			r.Header.Set(HeaderClient, header)
+		}
+		if got := commandVia(r); got != want {
+			t.Errorf("%s %q = %q, want %q", HeaderClient, header, got, want)
+		}
+	}
+}

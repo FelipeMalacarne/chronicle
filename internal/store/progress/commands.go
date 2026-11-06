@@ -20,6 +20,10 @@ import (
 const (
 	ViaWeb         = "web"
 	ViaPluginPanel = "plugin_panel"
+	// ViaCLI and ViaMCP are the terminal and the account MCP server, both
+	// clients of the same API as the web (X-Ironman-Client).
+	ViaCLI = "cli"
+	ViaMCP = "mcp"
 )
 
 // Kinds and actors of mark_commands.

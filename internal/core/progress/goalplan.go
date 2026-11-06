@@ -268,7 +268,9 @@ func (p *planner) classify(n *GoalNode) {
 		n.Group = GroupPresumed
 	case n.Verdict == rules.Unknown:
 		n.Group = GroupUnknown
-	case len(n.Requires) > 0 && len(n.Missing) == 0:
+	case len(n.Missing) == 0 && !isLevelKey(n.Key):
+		// Every requirement is met (or there are none: a quest without
+		// requirements can be started now).
 		n.Group = GroupAvailable
 	default:
 		// An unmet level or quest point total is a bottleneck: there is
@@ -386,10 +388,8 @@ func (p *planner) bottlenecks() []Bottleneck {
 			Key: n.Key, Skill: skill, Target: k.N, Met: n.Verdict == rules.Met,
 			Boostable: n.Boostable, DuringQuest: n.DuringQuest, For: n.For, Step: n.Step,
 		}
-		if s, ok := p.in.State.Skills[skill]; ok && skill != "qp" {
-			level := s.Level
-			b.Level = &level
-		}
+		// The level the facts know, or the quest point count (varp 101).
+		b.Level = have(k, p.in)
 		if b.Step == nil {
 			b.Reach, b.ReachStep = p.reach(k)
 		}
@@ -420,6 +420,12 @@ func (p *planner) reach(k entities.ObjectiveKey) (int, *StepPlace) {
 		}
 	}
 	return level, at
+}
+
+// isLevelKey reports a skill level or quest point key.
+func isLevelKey(key string) bool {
+	k, err := entities.ParseObjectiveKey(key)
+	return err == nil && (k.Ref.Kind == entities.KindSkill || k.IsQuestPoints())
 }
 
 func target(n *GoalNode) int {

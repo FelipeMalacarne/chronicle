@@ -160,21 +160,62 @@ func (r *Repository) GoalPlan(ctx context.Context, accountID, goalID string) (Go
 		return GoalPlanView{}, fmt.Errorf("%w: %v", ErrInvalidGoal, err)
 	}
 	err = r.inTx(ctx, func(tx pgx.Tx) error {
-		q := r.queries.WithTx(tx)
-		ps, _, loadErr := state.Load(ctx, q, accountID, r.catalog)
-		if loadErr != nil {
-			return loadErr
-		}
-		in := coreprogress.GoalPlanInput{Goal: key, Registry: r.catalog, State: ps}
-		for _, g := range r.content.Guides {
-			gi, _, inErr := r.guideInput(ctx, q, accountID, g.ID, false)
-			if inErr != nil {
-				return inErr
-			}
-			in.Verdicts = gi.Verdicts
-			in.Guides = append(in.Guides, gi)
+		in, inErr := r.goalPlanInput(ctx, r.queries.WithTx(tx), accountID, key)
+		if inErr != nil {
+			return inErr
 		}
 		out.Plan = coreprogress.BuildGoalPlan(in)
+		return nil
+	})
+	return out, err
+}
+
+// goalPlanInput loads what a goal plan or a graph reads: the account's
+// facts, verdicts and the input of every guide.
+func (r *Repository) goalPlanInput(ctx context.Context, q *storedb.Queries, accountID string, key entities.ObjectiveKey) (coreprogress.GoalPlanInput, error) {
+	ps, _, err := state.Load(ctx, q, accountID, r.catalog)
+	if err != nil {
+		return coreprogress.GoalPlanInput{}, err
+	}
+	in := coreprogress.GoalPlanInput{Goal: key, Registry: r.catalog, State: ps}
+	for _, g := range r.content.Guides {
+		gi, _, inErr := r.guideInput(ctx, q, accountID, g.ID, false)
+		if inErr != nil {
+			return coreprogress.GoalPlanInput{}, inErr
+		}
+		in.Verdicts = gi.Verdicts
+		in.Guides = append(in.Guides, gi)
+	}
+	return in, nil
+}
+
+// ErrInvalidFocus is a graph focus that is not a canonical objective key of
+// the catalog.
+var ErrInvalidFocus = errors.New("invalid focus")
+
+// Graph computes the requirement graph of any objective key for the account
+// (Mundo › Grafo): the goal plan's closure plus depth, critical path and what
+// the key unlocks. The key need not be a pinned goal.
+func (r *Repository) Graph(ctx context.Context, accountID, focus string, depth int) (coreprogress.Graph, error) {
+	k, err := entities.ParseObjectiveKey(focus)
+	if err != nil {
+		return coreprogress.Graph{}, fmt.Errorf("%w: %v", ErrInvalidFocus, err)
+	}
+	if r.catalog != nil {
+		if why := r.catalog.KnownObjective(k); why != "" {
+			return coreprogress.Graph{}, fmt.Errorf("%w: %s", ErrInvalidFocus, why)
+		}
+	}
+	if _, accErr := getAccount(ctx, r.queries, accountID); accErr != nil {
+		return coreprogress.Graph{}, accErr
+	}
+	var out coreprogress.Graph
+	err = r.inTx(ctx, func(tx pgx.Tx) error {
+		in, inErr := r.goalPlanInput(ctx, r.queries.WithTx(tx), accountID, k)
+		if inErr != nil {
+			return inErr
+		}
+		out = coreprogress.BuildGraph(in, depth)
 		return nil
 	})
 	return out, err

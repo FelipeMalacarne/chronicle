@@ -29,6 +29,7 @@ type ProgressService interface {
 	AddGoal(ctx context.Context, accountID, key, label string) (storeprogress.GoalView, error)
 	RemoveGoal(ctx context.Context, accountID, goalID string) error
 	GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error)
+	Graph(ctx context.Context, accountID, focus string, depth int) (coreprogress.Graph, error)
 	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
 	Check(ctx context.Context, accountID string) (storeprogress.CheckReport, error)
 }
@@ -124,7 +125,7 @@ func (s *Server) handleMark(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
-	ctx := storeprogress.WithCommand(r.Context(), storeprogress.CommandMeta{Via: storeprogress.ViaWeb, Revokes: req.Revokes})
+	ctx := storeprogress.WithCommand(r.Context(), storeprogress.CommandMeta{Via: commandVia(r), Revokes: req.Revokes})
 	board, err := s.opts.Progress.Mark(ctx, account, r.PathValue("guide"), r.PathValue("id"), req.Kind, req.Note)
 	s.writeProgress(w, board, err)
 }
@@ -138,7 +139,7 @@ func (s *Server) handleBatchMarks(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
-	ctx := storeprogress.WithCommand(r.Context(), storeprogress.CommandMeta{Via: storeprogress.ViaWeb, Revokes: req.Revokes})
+	ctx := storeprogress.WithCommand(r.Context(), storeprogress.CommandMeta{Via: commandVia(r), Revokes: req.Revokes})
 	switch {
 	case req.BeforeStepID != "" && len(req.Restore) == 0 && req.Revokes == "":
 		board, err := s.opts.Progress.MarkBefore(ctx, account, r.PathValue("guide"), req.BeforeStepID)
@@ -321,7 +322,7 @@ func (s *Server) writeProgressError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "step not found")
 	case errors.Is(err, coreprogress.ErrInvalidAction):
 		writeError(w, http.StatusBadRequest, "kind must be manual_done, skipped, pinned_open, confirm_implied or clear")
-	case errors.Is(err, storeprogress.ErrInvalidRevokes):
+	case errors.Is(err, storeprogress.ErrInvalidRevokes), errors.Is(err, storeprogress.ErrInvalidFocus):
 		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, coreprogress.ErrNotImplied), errors.Is(err, coreprogress.ErrStepDone):
 		writeError(w, http.StatusConflict, err.Error())
@@ -329,4 +330,19 @@ func (s *Server) writeProgressError(w http.ResponseWriter, err error) {
 		s.log.Error("progress", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not update progress")
 	}
+}
+
+// HeaderClient names the API client that sent an owner write: "cli" or
+// "mcp" (the ironman binary); anything else, or none, is the web.
+const HeaderClient = "X-Ironman-Client"
+
+// commandVia is where an owner command came from, for mark_commands.
+func commandVia(r *http.Request) string {
+	switch r.Header.Get(HeaderClient) {
+	case storeprogress.ViaCLI:
+		return storeprogress.ViaCLI
+	case storeprogress.ViaMCP:
+		return storeprogress.ViaMCP
+	}
+	return storeprogress.ViaWeb
 }

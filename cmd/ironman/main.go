@@ -1,6 +1,7 @@
 // Command ironman is the single binary of the Ironman planner: web server
-// (serve), content tooling (content validate|migrate) and, later, the CLI and
-// MCP clients of the API.
+// (serve), content tooling (content validate|migrate|mcp), and the CLI (now,
+// done, plan, graph, state, sync, progress check) and MCP (mcp) clients of
+// the API.
 package main
 
 import (
@@ -33,8 +34,14 @@ func newRoot() *cobra.Command {
 		newVersionCmd(),
 		newHealthCmd(),
 		newProgressCmd(),
+		newNowCmd(),
+		newDoneCmd(),
+		newPlanCmd(),
+		newGraphCmd(),
+		newStateCmd(),
+		newSyncCmd(),
+		newAccountMCPCmd(),
 	)
-	root.AddCommand(stubCommands()...)
 	return root
 }
 
@@ -47,32 +54,4 @@ func newVersionCmd() *cobra.Command {
 			fmt.Fprintln(cmd.OutOrStdout(), buildinfo.String())
 		},
 	}
-}
-
-// exitCodeNotImplemented is returned by stub subcommands.
-const exitCodeNotImplemented = 2
-
-func stubCommands() []*cobra.Command {
-	stubs := []struct{ use, short string }{
-		{"now", "Show the next step, items to bring and blockers (client of the API)"},
-		{"done", "Mark a step done, skipped or add a note"},
-		{"plan", "Ordered plan to reach a goal"},
-		{"sync", "Force a sync from a data source"},
-		{"state", "Show player state (skills, quests, diaries)"},
-		{"mcp", "Run the MCP server over stdio"},
-	}
-	out := make([]*cobra.Command, 0, len(stubs))
-	for _, s := range stubs {
-		use := s.use
-		out = append(out, &cobra.Command{
-			Use:                use,
-			Short:              s.short + " [not implemented yet]",
-			DisableFlagParsing: true,
-			Run: func(cmd *cobra.Command, _ []string) {
-				fmt.Fprintf(cmd.ErrOrStderr(), "ironman %s: not implemented yet\n", use)
-				os.Exit(exitCodeNotImplemented)
-			},
-		})
-	}
-	return out
 }

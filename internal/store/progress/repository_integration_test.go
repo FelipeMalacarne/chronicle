@@ -613,6 +613,19 @@ func TestMarkBeforePostgres(t *testing.T) {
 	if n := count(ctx, t, pool, `SELECT count(*) FROM mark_commands WHERE kind = 'restore' AND via = 'plugin_panel' AND revokes_id = '`+batch+`'`); n != 1 {
 		t.Fatalf("restore command = %d", n)
 	}
+	// The CLI and the account MCP server are clients of the same API; the
+	// log records which one wrote (migration 0010).
+	for _, via := range []string{ViaCLI, ViaMCP} {
+		if _, err = repo.Mark(WithCommand(ctx, CommandMeta{Via: via}), "account-1", "g1", "a1", coreprogress.ActionPinnedOpen, nil); err != nil {
+			t.Fatalf("mark via %s: %v", via, err)
+		}
+		if _, err = repo.Mark(WithCommand(ctx, CommandMeta{Via: via}), "account-1", "g1", "a1", coreprogress.ActionClear, nil); err != nil {
+			t.Fatalf("clear via %s: %v", via, err)
+		}
+		if n := count(ctx, t, pool, `SELECT count(*) FROM mark_commands WHERE kind = 'mark' AND step_id = 'a1' AND via = '`+via+`'`); n != 2 {
+			t.Fatalf("mark commands via %s = %d", via, n)
+		}
+	}
 	assertConsistent(ctx, t, repo, "account-1")
 	// The log is append-only, and a write that bypasses it shows in the replay.
 	if _, err := pool.Exec(ctx, `UPDATE mark_commands SET kind = 'mark' WHERE id = '`+batch+`'`); err == nil {
@@ -654,5 +667,22 @@ func TestGoalPlanPostgres(t *testing.T) {
 	}
 	if _, err = repo.GoalPlan(ctx, "account-1", "goal_missing"); !errors.Is(err, ErrGoalNotFound) {
 		t.Fatalf("missing goal: %v", err)
+	}
+
+	// The graph takes any key of the catalog, pinned or not.
+	g, err := repo.Graph(ctx, "account-1", "quest:shilo_village@finished", 1)
+	if err != nil || g.Total != 5 || g.MaxDepth != 2 || g.Hidden != 2 || len(g.Nodes) != 4 || len(g.Critical) < 2 || g.Critical[0].Key != "quest:shilo_village@finished" || g.Critical[0].Label != "Shilo Village" {
+		t.Fatalf("graph = %+v, %v", g, err)
+	}
+	if g, err = repo.Graph(ctx, "account-1", "quest:jungle_potion@finished", 3); err != nil || g.UnlocksTotal == 0 {
+		t.Fatalf("graph of an unpinned key = %+v, %v", g, err)
+	}
+	for _, bad := range []string{"quest:nope@finished", "skill:agility:70", ""} {
+		if _, err = repo.Graph(ctx, "account-1", bad, 3); !errors.Is(err, ErrInvalidFocus) {
+			t.Fatalf("focus %q: %v", bad, err)
+		}
+	}
+	if _, err = repo.Graph(ctx, "account-missing", "quest:shilo_village@finished", 3); !errors.Is(err, ErrAccountNotFound) {
+		t.Fatalf("missing account: %v", err)
 	}
 }

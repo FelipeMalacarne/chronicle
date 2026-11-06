@@ -57,7 +57,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 8 | `unlock` e `location` entram já nesta revisão, povoados pela extração | resolvida (2026-11-04) | doc 09, 3.1 |
 | 9 | Controle do Microbot pelo planner (agent no zaros, VNC, plugins, rotinas), módulo separado e desligado por padrão, risco aceito | resolvida (2026-11-04) | doc 08 |
 | 10 | Revisão crítica do doc 09 (D1 a D10): faceta `data.quest` no contrato, eventos por guia, anotações como sidecar, item não exato sem chave, `content_steps` mínimo, ids posicionais do BRUHsailer, ordem da sequência mantida, catálogo de itens do bucket, doc 04 reescrito, `manual_ok` fora | resolvida (2026-11-04) | doc 09, 9.3 |
-| 11 | Grafo visual na v1 junto com a lista em árvore, ou só a lista primeiro | **aberta** | doc 03, F10 |
+| 11 | Grafo visual na v1 junto com a lista em árvore, ou só a lista primeiro | resolvida (2026-11-06): os dois, como no canvas: colunas por profundidade no largo (V6Grafo1440) e árvore no estreito (V6Grafo640), sempre a partir de um foco | doc 03, F10; doc 04, seção 9 |
 | 12 | Modos iniciais: ironman + HCIM; UIM e GIM ficam fora até alguém pedir | **aberta** (recomendação: sim) | doc 03, F11 |
 | 13 | Mobile como PWA instalável | **aberta** (recomendação: sim) | doc 03, seção 4 |
 | 14 | Metas pré-definidas iniciais: títulos das 7 seções, Barrows gloves, Fire cape, Quest cape, Bowfa | **aberta** | doc 03, F9 |

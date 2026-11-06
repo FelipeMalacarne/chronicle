@@ -1027,6 +1027,13 @@ Componentes em `web/src/lib/v6`. Verificação: testes HTTP das duas rotas novas
 `TestQuestAndDiaryFactsPostgres` com o estado da conta, `node --test` dos módulos puros (Agora, Rota,
 Conta) e capturas em 1440 e 640 contra o servidor real com um Postgres local.
 
+Integração da fase 0 com a web v6 (2026-11-06): a branch da fase 0 foi rebaseada sobre a v6 e ficou
+com as telas da v6. O Agora e a Rota da v6 passaram a usar `undo.ts`: board, escritas e desfazer
+presos à conta e à rota, uma escrita por vez, o desfazer entra na pilha só depois que a escrita deu
+certo e manda `revokes` com o comando que desfaz. A reavaliação passou a dar veredito também aos
+requisitos boostable do catálogo (nunca bloqueiam o cursor), para o "Requer" do painel de entidade não
+mostrá-los como "não sabemos". `/rotas` espera o resumo da conta antes de abrir a rota ativa.
+
 Ainda não existe: deploy no saradomin, device flow do plugin,
 CLI/MCP sobre o cliente, grafo (a aba Grafo do Mundo fica desabilitada),
 sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e o módulo de controle

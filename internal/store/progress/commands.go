@@ -110,7 +110,7 @@ func verifyMarks(ctx context.Context, q *storedb.Queries, accountID string) ([]s
 	byGuide := map[string][][]coreprogress.MarkEffect{}
 	for _, c := range cmds {
 		var effects []coreprogress.MarkEffect
-		if err := json.Unmarshal(c.Effects, &effects); err != nil {
+		if err = json.Unmarshal(c.Effects, &effects); err != nil {
 			return nil, fmt.Errorf("decode effects of %s: %w", c.ID, err)
 		}
 		byGuide[c.GuideID] = append(byGuide[c.GuideID], effects)

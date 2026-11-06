@@ -61,7 +61,7 @@ func TestContractPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := pool.Exec(ctx, `
+	if _, err = pool.Exec(ctx, `
 		INSERT INTO users (id, subject, username) VALUES ('dev', 'dev', 'dev') ON CONFLICT DO NOTHING;
 		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
 		VALUES ('acc_contract', 'dev', 'ironman260', 'ironman260', 'ironman', 'oziris-main', 'enhanced');
@@ -69,10 +69,10 @@ func TestContractPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	progress := storeprogress.New(pool, cnt, catalog)
-	if _, err := progress.IndexContent(ctx, "test"); err != nil {
+	if _, err = progress.IndexContent(ctx, "test"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := progress.ReevaluateAll(ctx); err != nil {
+	if _, err = progress.ReevaluateAll(ctx); err != nil {
 		t.Fatal(err)
 	}
 	ingest := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).WithReevaluator(progress)

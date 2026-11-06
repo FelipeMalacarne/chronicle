@@ -586,7 +586,7 @@ func TestMarkBeforePostgres(t *testing.T) {
 	}
 	repo := New(pool, loadContent(t), catalog)
 	// Boot: the fixture's marks get their statuses and cursors, as serve does.
-	if _, err := repo.ReevaluateAll(ctx); err != nil {
+	if _, err = repo.ReevaluateAll(ctx); err != nil {
 		t.Fatal(err)
 	}
 	board, err := repo.MarkBefore(ctx, "account-1", "g1", "a5")

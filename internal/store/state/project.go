@@ -1,6 +1,7 @@
 package state
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -125,9 +126,9 @@ func Diff(ctx context.Context, q *storedb.Queries, accountID string) ([]string, 
 func sameJSON(a, b []byte) bool {
 	var x, y any
 	if json.Unmarshal(a, &x) != nil || json.Unmarshal(b, &y) != nil {
-		return string(a) == string(b)
+		return bytes.Equal(a, b)
 	}
 	ca, _ := json.Marshal(x)
 	cb, _ := json.Marshal(y)
-	return string(ca) == string(cb)
+	return bytes.Equal(ca, cb)
 }

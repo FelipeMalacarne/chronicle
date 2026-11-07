@@ -37,6 +37,8 @@ public class TickFisherScript extends Script
 	/** Between the spots of the Shilo river, east and west of the bank path. */
 	private static final WorldPoint FISHING_AREA = new WorldPoint(2846, 2975, 0);
 	private static final int FISHING_AREA_RADIUS = 16;
+	/** On the bank path by the river: where to walk when far from it (the area's centre is water). */
+	private static final WorldPoint RIVER_BANK = new WorldPoint(2842, 2969, 0);
 	/** Farther than this from the river at start: not at Shilo. */
 	private static final int START_RADIUS = 40;
 	private static final int FLY_FISHING_LEVEL = 20;
@@ -161,8 +163,19 @@ public class TickFisherScript extends Script
 		Rs2NpcModel target = currentSpot(s);
 		if (target == null)
 		{
-			Microbot.status = "Tick Fisher: looking for a fishing spot";
-			Rs2Walker.walkTo(FISHING_AREA, 3);
+			// Shilo has few spots, and after a move none may show for up to a minute: wait by the
+			// river rather than walk.
+			WorldPoint me = Rs2Player.getWorldLocation();
+			if (me != null && me.distanceTo(RIVER_BANK) > FISHING_AREA_RADIUS)
+			{
+				Microbot.status = "Tick Fisher: walking to the river";
+				Rs2Walker.walkTo(RIVER_BANK, 2);
+			}
+			else
+			{
+				Microbot.status = "Tick Fisher: waiting for a fishing spot";
+				s.spotWaitTicks++;
+			}
 			return;
 		}
 		if (!nextTo(target))

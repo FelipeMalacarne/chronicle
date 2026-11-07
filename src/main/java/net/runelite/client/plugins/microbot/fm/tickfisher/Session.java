@@ -33,6 +33,8 @@ final class Session
 	volatile int realigns;
 	/** Walks to a spot: after a move, a bank trip, or not standing next to it. */
 	volatile int approaches;
+	/** Ticks with no spot in reach (after a move none may show for a while). */
+	volatile int spotWaitTicks;
 
 	Session(int startTick, int startXp)
 	{
@@ -83,6 +85,7 @@ final class Session
 		counters.put("breathers", breathers);
 		counters.put("realigns", realigns);
 		counters.put("approaches", approaches);
+		counters.put("spotWaitTicks", spotWaitTicks);
 		return counters;
 	}
 }

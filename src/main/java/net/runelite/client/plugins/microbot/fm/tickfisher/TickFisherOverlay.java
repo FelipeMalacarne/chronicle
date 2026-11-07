@@ -95,7 +95,7 @@ class TickFisherOverlay extends OverlayPanel
 		{
 			line("Bank trips", String.valueOf(s.bankTrips));
 		}
-		line("Spot moves", String.valueOf(s.spotMoves));
+		line("Spot moves", s.spotMoves + (s.spotWaitTicks > 0 ? String.format(" (waited %ds)", s.spotWaitTicks * 600 / 1000) : ""));
 		if (s.stopReason != null)
 		{
 			line("Stopping", s.stopReason);

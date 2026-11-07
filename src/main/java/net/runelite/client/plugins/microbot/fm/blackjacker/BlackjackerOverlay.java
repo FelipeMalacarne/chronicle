@@ -14,9 +14,14 @@ import net.runelite.client.ui.overlay.components.TitleComponent;
 class BlackjackerOverlay extends OverlayPanel
 {
 	private static final String STATUS_PREFIX = "Blackjacker: ";
+	// XP/h recomputed this often: per frame it changes with every millisecond and flickers.
+	private static final long RATE_REFRESH_MS = 1000;
 
 	private final BlackjackerPlugin plugin;
 	private final BlackjackerConfig config;
+	private long rateAt;
+	private long rate;
+	private Session rateSession;
 
 	@Inject
 	BlackjackerOverlay(BlackjackerPlugin plugin, BlackjackerConfig config)
@@ -60,7 +65,14 @@ class BlackjackerOverlay extends OverlayPanel
 		line("Runtime", duration(elapsed));
 		int stopAt = config.stopAtLevel();
 		line("Thieving", s.events.thievingLevel() + (stopAt > 0 ? " (stop at " + stopAt + ")" : ""));
-		line("XP gained", String.format("%,d (%,d/h)", xp, xp * 3_600_000L / elapsed));
+		long now = System.currentTimeMillis();
+		if (s != rateSession || now - rateAt >= RATE_REFRESH_MS)
+		{
+			rateSession = s;
+			rateAt = now;
+			rate = xp * 3_600_000L / elapsed;
+		}
+		line("XP gained", String.format("%,d (%,d/h)", xp, rate));
 		line("Knock-outs", s.knockouts + (attempts > 0 ? " (" + (100 * s.knockoutFails / attempts) + "% glanced)" : ""));
 		line("Picks", String.valueOf(s.picks));
 		line("Wine", s.wines + " jugs (" + s.winesBought + " bought)");

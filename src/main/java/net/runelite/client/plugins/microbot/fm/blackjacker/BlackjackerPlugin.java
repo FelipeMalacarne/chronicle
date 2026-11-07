@@ -33,7 +33,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class BlackjackerPlugin extends Plugin
 {
-	static final String VERSION = "1.13.0";
+	static final String VERSION = "1.13.1";
 
 	@Inject
 	private BlackjackerConfig config;

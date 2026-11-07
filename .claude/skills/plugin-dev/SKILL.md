@@ -28,5 +28,8 @@ Follow `AGENTS.md`. The goal is behavior confirmed in the dev client, not code t
 8. **Confirm.** `mb-client stop`, then `mb-test <pkg>` for a clean end-to-end run. Report
    the `result.json` checks and the evidence (state output, screenshot paths).
 
+If the plugin can take damage or must click within game ticks, follow the `live-test` skill
+too: consent, an HP watchdog, safe redeploys, and the timing/API gotchas in its reference.
+
 If an `mb` command itself misbehaves, say so with the raw output instead of working around
 it silently: it may be an upstream bug in the pinned version.

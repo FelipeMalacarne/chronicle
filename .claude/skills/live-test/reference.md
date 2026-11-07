@@ -54,6 +54,11 @@ Measured in the dev client on client 2.6.52 while building `fm/blackjacker`. Re-
   class gives Guice a second, idle instance.
 - Values derived from elapsed time (XP/h) flicker when recomputed every frame; cache them for
   about a second.
+- **An `Error` thrown in `render` kills the game thread** (`[Client] ERROR injected-client -
+  Client error`, then "Client thread did not run task within 10000ms" and a frozen client that
+  needs `mb-client restart` and a new login). Seen with a package-private enum returned by a
+  config method: the config proxy throws `IllegalAccessError` when the overlay calls it. Enums
+  (and any type) used in a `Config` interface must be `public`.
 
 ## Game mechanics that matter for skilling bots
 

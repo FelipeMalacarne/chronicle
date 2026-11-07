@@ -37,11 +37,15 @@
           pkgs.jq
           pkgs.curl
           pkgs.git
+          # Java LSP for editors; .nvim.lua enables it in Neovim
+          pkgs.jdt-language-server
           # mb-client --headless: own X display + VNC for remote viewing
           pkgs.xvfb
           pkgs.x11vnc
         ];
         JAVA_HOME = "${pkgs.jdk21}";
+        # jdtls needs the Lombok agent, or every @Getter/@Slf4j reads as an error.
+        JDTLS_JVM_ARGS = "-javaagent:${pkgs.lombok}/share/java/lombok.jar";
         MICROBOT_VERSION = pin.version;
         MICROBOT_CLIENT_JAR = "${microbot-client}";
         MICROBOT_HWID_AGENT_JAR = "${hwid-agent}";

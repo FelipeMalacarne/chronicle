@@ -57,10 +57,45 @@ public interface BlackjackerConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "stopAtLevel",
+		name = "Stop at Thieving level",
+		description = "Stop once Thieving reaches this level (0 = never). The stop waits until nothing is hitting us",
+		position = 4
+	)
+	@Range(min = 0, max = 99)
+	default int stopAtLevel()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		keyName = "stopAfterMinutes",
+		name = "Stop after minutes",
+		description = "Stop after running this long (0 = never). The stop waits until nothing is hitting us",
+		position = 5
+	)
+	@Range(min = 0, max = 1440)
+	default int stopAfterMinutes()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		keyName = "showOverlay",
+		name = "Show overlay",
+		description = "Progress panel: what it is doing, XP and XP/h, knock-outs, picks, wine and climbs",
+		position = 6
+	)
+	default boolean showOverlay()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "testCycles",
 		name = "Test cycles",
 		description = "In test mode, successful knock-outs to observe before writing the result and exiting",
-		position = 4
+		position = 7
 	)
 	default int testCycles()
 	{

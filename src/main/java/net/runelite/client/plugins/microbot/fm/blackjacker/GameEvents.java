@@ -37,6 +37,8 @@ final class GameEvents
 	private volatile int hits;
 	private volatile int hp;
 	private volatile int maxHp;
+	private volatile int thievingLevel;
+	private volatile int thievingXp;
 
 	void reset()
 	{
@@ -48,6 +50,8 @@ final class GameEvents
 		hits = 0;
 		hp = 0;
 		maxHp = 0;
+		thievingLevel = 0;
+		thievingXp = 0;
 	}
 
 	/** A hitsplat landed on the local player: the only reliable sign we are being attacked. */
@@ -65,6 +69,12 @@ final class GameEvents
 	{
 		hp = boosted;
 		maxHp = real;
+	}
+
+	void onThieving(int level, int xp)
+	{
+		thievingLevel = level;
+		thievingXp = xp;
 	}
 
 	void onChat(ChatMessageType type, String raw)
@@ -173,5 +183,15 @@ final class GameEvents
 	int maxHp()
 	{
 		return maxHp;
+	}
+
+	int thievingLevel()
+	{
+		return thievingLevel;
+	}
+
+	int thievingXp()
+	{
+		return thievingXp;
 	}
 }

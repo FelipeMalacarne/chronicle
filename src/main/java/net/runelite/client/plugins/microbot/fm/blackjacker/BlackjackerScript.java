@@ -33,7 +33,8 @@ public class BlackjackerScript extends Script
 
 	private final GameEvents events = new GameEvents();
 	private BlackjackerConfig config;
-	private Session session;
+	// Read by the overlay on the client thread.
+	private volatile Session session;
 	private List<Step> steps;
 	private TestResult testResult;
 	private int startXp = -1;
@@ -43,6 +44,18 @@ public class BlackjackerScript extends Script
 	GameEvents events()
 	{
 		return events;
+	}
+
+	/** The run in progress, or null before it starts and after it stops. */
+	Session session()
+	{
+		return session;
+	}
+
+	/** Thieving XP gained this run. */
+	int xpGained()
+	{
+		return startXp < 0 || events.thievingXp() == 0 ? 0 : events.thievingXp() - startXp;
 	}
 
 	public boolean run(BlackjackerConfig config)
@@ -86,6 +99,7 @@ public class BlackjackerScript extends Script
 		{
 			return;
 		}
+		checkLimits(s);
 		if (s.stopReason != null && (s.room.upstairs(s.me) || !s.attacked))
 		{
 			stop(s.stopReason);
@@ -118,7 +132,8 @@ public class BlackjackerScript extends Script
 		}
 		log.info("Blackjacker target: {} (Thieving {})", target, thieving);
 		events.onHitpoints(Rs2Player.getBoostedSkillLevel(Skill.HITPOINTS), Rs2Player.getRealSkillLevel(Skill.HITPOINTS));
-		startXp = thievingXp();
+		events.onThieving(thieving, thievingXp());
+		startXp = events.thievingXp();
 		session = new Session(config, events, target);
 
 		Healing healing = new Healing();
@@ -146,6 +161,21 @@ public class BlackjackerScript extends Script
 			new EnterRoom(),
 			blackjacking::strike);
 		return true;
+	}
+
+	/** The configured stop conditions; like every stop, it waits until nothing is hitting us. */
+	private void checkLimits(Session s)
+	{
+		int level = config.stopAtLevel();
+		if (level > 0 && events.thievingLevel() >= level)
+		{
+			s.stop("Reached Thieving " + events.thievingLevel());
+		}
+		int minutes = config.stopAfterMinutes();
+		if (minutes > 0 && s.now - s.startedAt >= minutes * 60_000L)
+		{
+			s.stop("Ran for " + minutes + " minutes");
+		}
 	}
 
 	/**
@@ -214,7 +244,7 @@ public class BlackjackerScript extends Script
 		Session s = session;
 		Map<String, Object> progress = new LinkedHashMap<>();
 		progress.put("target", s == null ? null : s.target.name());
-		progress.put("thievingXpGained", startXp < 0 ? 0 : thievingXp() - startXp);
+		progress.put("thievingXpGained", xpGained());
 		if (s != null)
 		{
 			progress.putAll(s.counters());
@@ -237,7 +267,7 @@ public class BlackjackerScript extends Script
 		Session s = session;
 		int knockouts = s == null ? 0 : s.knockouts;
 		int picks = s == null ? 0 : s.picks;
-		int xp = startXp < 0 ? 0 : thievingXp() - startXp;
+		int xp = xpGained();
 		check("knock-outs: " + knockouts + "/" + config.testCycles(), knockouts >= config.testCycles(), reason);
 		check("successful pickpockets: " + picks, picks > 0, "no successful pickpocket");
 		check("thieving xp gained: " + xp, xp > 0, "no Thieving XP gained");

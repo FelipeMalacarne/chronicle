@@ -5,11 +5,13 @@ import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.plugins.microbot.Microbot;
+import net.runelite.client.plugins.microbot.globval.enums.InterfaceTab;
 import net.runelite.client.plugins.microbot.util.Global;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.shop.Rs2Shop;
+import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.world.Rs2WorldUtil;
 import net.runelite.http.api.worlds.World;
@@ -162,6 +164,8 @@ final class Restock implements Step
 		if (Microbot.hopToWorld(world))
 		{
 			Global.sleepUntil(() -> Microbot.getClient().getWorld() == world && Microbot.isLoggedIn(), 15000);
+			// The hop leaves the world list open; the next drink should not wait on a tab switch.
+			Rs2Tab.switchTo(InterfaceTab.INVENTORY);
 		}
 		else
 		{

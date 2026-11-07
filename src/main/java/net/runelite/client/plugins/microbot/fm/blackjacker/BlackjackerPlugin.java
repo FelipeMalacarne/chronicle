@@ -12,6 +12,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
 
 /**
  * Pollnivneach blackjacking: picks the target for the Thieving level, lures one into a room
@@ -32,7 +33,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 @Slf4j
 public class BlackjackerPlugin extends Plugin
 {
-	static final String VERSION = "1.12.2";
+	static final String VERSION = "1.13.0";
 
 	@Inject
 	private BlackjackerConfig config;
@@ -40,22 +41,35 @@ public class BlackjackerPlugin extends Plugin
 	@Inject
 	private BlackjackerScript script;
 
+	@Inject
+	private BlackjackerOverlay overlay;
+
+	@Inject
+	private OverlayManager overlayManager;
+
 	@Provides
 	BlackjackerConfig provideConfig(ConfigManager configManager)
 	{
 		return configManager.getConfig(BlackjackerConfig.class);
 	}
 
+	BlackjackerScript script()
+	{
+		return script;
+	}
+
 	@Override
 	protected void startUp()
 	{
 		log.info("Blackjacker {} starting", VERSION);
+		overlayManager.add(overlay);
 		script.run(config);
 	}
 
 	@Override
 	protected void shutDown()
 	{
+		overlayManager.remove(overlay);
 		script.shutdown();
 	}
 
@@ -80,6 +94,10 @@ public class BlackjackerPlugin extends Plugin
 		if (event.getSkill() == Skill.HITPOINTS)
 		{
 			script.events().onHitpoints(event.getBoostedLevel(), event.getLevel());
+		}
+		else if (event.getSkill() == Skill.THIEVING)
+		{
+			script.events().onThieving(event.getLevel(), event.getXp());
 		}
 	}
 }

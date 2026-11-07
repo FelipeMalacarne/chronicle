@@ -18,6 +18,7 @@ final class Session
 	final GameEvents events;
 	final BlackjackTarget target;
 	final Room room;
+	final long startedAt = System.currentTimeMillis();
 	String stopReason;
 
 	// A hidden or minimized window drops the client to ~1 FPS and every reaction to seconds.
@@ -40,6 +41,8 @@ final class Session
 	boolean mustEscape;
 	/** Too few frames to react in time: only safety runs, nothing new is started. */
 	boolean throttled;
+	/** Jugs of wine in the inventory, for the overlay. */
+	volatile int wines;
 
 	// Counters for the progress report.
 	int knockouts;
@@ -78,6 +81,7 @@ final class Session
 		attacked = (events.beingAttacked(now) && (victim == null || !unconscious(victim))) || targeting;
 		mustEscape = attacked && (events.refused(now) || hp() <= dangerHp());
 		throttled = throttled();
+		wines = Healing.wines();
 		return true;
 	}
 

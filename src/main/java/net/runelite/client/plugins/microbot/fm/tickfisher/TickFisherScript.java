@@ -245,6 +245,7 @@ public class TickFisherScript extends Script
 			{
 				// Off the cycle (after a hesitation, a breather or a lost click): the skilling
 				// timer is at zero on a drop tick, so a cycle started now is in step again.
+				log.info("Tick Fisher: XP drop on phase {} at tick {}, re-anchoring", dropPhase, tick);
 				anchorTick = tick;
 				s.realigns++;
 			}
@@ -425,16 +426,23 @@ public class TickFisherScript extends Script
 		return nearest;
 	}
 
+	/**
+	 * Next to the spot. Distance only: Rs2Player.isMoving compares the pose animation with the
+	 * idle one and is true while turning or fishing, which read as walking threw the cycle away
+	 * and waited up to 8 s (0.3.1: about half the XP drops off the cycle).
+	 */
 	private static boolean nextTo(Rs2NpcModel target)
 	{
 		WorldPoint me = Rs2Player.getWorldLocation();
-		return me != null && me.distanceTo(target.getWorldLocation()) <= 1 && !Rs2Player.isMoving();
+		return me != null && me.distanceTo(target.getWorldLocation()) <= 1;
 	}
 
 	/** Walks to the spot by clicking it, then starts a fresh cycle on the next tick. */
 	private void approach(Rs2NpcModel target)
 	{
 		Microbot.status = "Tick Fisher: walking to the spot";
+		session.approaches++;
+		log.info("Tick Fisher: walking to the spot at {} from {}", target.getWorldLocation(), Rs2Player.getWorldLocation());
 		anchorTick = -1;
 		if (!clicks.npc(target, SPOT_ACTION))
 		{

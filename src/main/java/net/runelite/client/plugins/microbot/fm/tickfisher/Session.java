@@ -31,6 +31,8 @@ final class Session
 	volatile int slips;
 	volatile int breathers;
 	volatile int realigns;
+	/** Walks to a spot: after a move, a bank trip, or not standing next to it. */
+	volatile int approaches;
 
 	Session(int startTick, int startXp)
 	{
@@ -80,6 +82,7 @@ final class Session
 		counters.put("slips", slips);
 		counters.put("breathers", breathers);
 		counters.put("realigns", realigns);
+		counters.put("approaches", approaches);
 		return counters;
 	}
 }

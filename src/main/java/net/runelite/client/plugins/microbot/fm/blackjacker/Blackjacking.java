@@ -23,8 +23,9 @@ import net.runelite.client.plugins.microbot.util.player.Rs2Player;
  * pickpocket twice. The target's fall (animation 838) shows a tick before the "You smack..."
  * message, but a pick clicked then is dropped: we are still finishing the knock-out. So the
  * first pick goes out on the message and the second two ticks later, both inside the few ticks
- * it stays down. When HP is low a drink takes the second pick's slot: the target cannot hit
- * back while it is down. A glance is knocked out again.
+ * it stays down. Healing waits until it is up: it stands up out of combat, so a drink before the
+ * next knock-out costs nothing, while one in a pick's place costs the pick. A glance is knocked
+ * out again.
  */
 @Slf4j
 final class Blackjacking
@@ -65,7 +66,6 @@ final class Blackjacking
 
 	/** NPC options by NPC id, read once: the click must not wait on the client thread. */
 	private final Map<Integer, String[]> optionsById = new HashMap<>();
-	private final Healing healing;
 	private boolean knockOutPending;
 	private long knockOutClickedAt;
 	private long downAt;
@@ -75,14 +75,8 @@ final class Blackjacking
 	private long knockOutMessageAt;
 	private long firstPickAt;
 	private int picksSent;
-	private boolean drankWhileDown;
 	private long holdUntil;
 	private long stunnedSince;
-
-	Blackjacking(Healing healing)
-	{
-		this.healing = healing;
-	}
 
 	/** Step: wield a blackjack from the inventory when none is wielded. */
 	boolean wield(Session s)
@@ -145,8 +139,7 @@ final class Blackjacking
 	 * glance has to be answered, only the timing matters. It reads results and picks, and after a
 	 * glance it knocks out again ahead of a drink while HP is above {@link Session#retryFloor()}:
 	 * a drink there costs the tick the next knock-out needs before the target's first hit, which
-	 * starts a fight (wine goes in the knock-out window instead). Other knock-outs are left to the
-	 * last step, after healing.
+	 * starts a fight. Other knock-outs are left to the last step, after healing.
 	 */
 	boolean burst(Session s)
 	{
@@ -286,7 +279,7 @@ final class Blackjacking
 
 	/**
 	 * While the target is down: the first pick once the knock-out message is in (within a tick
-	 * of it), then two ticks later the second, or a drink in its place when HP is low.
+	 * of it), then two ticks later the second.
 	 */
 	private void down(Session s, Rs2NpcModel victim)
 	{
@@ -319,12 +312,6 @@ final class Blackjacking
 		{
 			return;
 		}
-		if (!drankWhileDown && s.lowHp() && healing.drinkIfReady(s))
-		{
-			// Low: the drink takes the second pick's slot, while it is down and cannot hit back.
-			drankWhileDown = true;
-			return;
-		}
 		pick(s, victim);
 	}
 
@@ -344,7 +331,6 @@ final class Blackjacking
 		knockOutPending = false;
 		downAt = now;
 		picksSent = 0;
-		drankWhileDown = false;
 	}
 
 	/** Counts what chat reports; false when the run has to stop or wait on it. */

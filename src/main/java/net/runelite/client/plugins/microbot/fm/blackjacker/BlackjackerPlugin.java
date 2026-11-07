@@ -32,7 +32,7 @@ import net.runelite.client.plugins.PluginDescriptor;
 @Slf4j
 public class BlackjackerPlugin extends Plugin
 {
-	static final String VERSION = "1.12.1";
+	static final String VERSION = "1.12.2";
 
 	@Inject
 	private BlackjackerConfig config;

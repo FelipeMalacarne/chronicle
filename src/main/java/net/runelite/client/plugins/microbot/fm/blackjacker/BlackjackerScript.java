@@ -123,12 +123,13 @@ public class BlackjackerScript extends Script
 
 		Healing healing = new Healing();
 		LadderEscape ladder = new LadderEscape(healing);
-		Blackjacking blackjacking = new Blackjacking(healing);
+		Blackjacking blackjacking = new Blackjacking();
 		steps = Arrays.asList(
 			// Out of a fight first.
 			ladder,
 			// A knock-out in flight or a target down: straight to the picks, ahead of healing. A
-			// downed target is not hitting us, and a drink there would cost the second pick.
+			// downed target is not hitting us; the drink comes once it is up, before the next
+			// knock-out.
 			blackjacking::burst,
 			healing,
 			new UnarmedReset(ladder),

@@ -112,8 +112,8 @@ final class Session
 
 	/**
 	 * Drink at the configured share of max HP, but never later than one max hit above
-	 * {@link #dangerHp()}: a knock-out is only tried above it, so a glance's hit cannot take us
-	 * into the emergency zone.
+	 * {@link #dangerHp()}: a knock-out is only started above it (the drink goes first, once the
+	 * target is up), so a glance's hit cannot take us into the emergency zone.
 	 */
 	int drinkAt()
 	{

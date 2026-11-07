@@ -163,10 +163,10 @@ public class TickFisherScript extends Script
 		Rs2NpcModel target = currentSpot(s);
 		if (target == null)
 		{
-			// Shilo has few spots, and after a move none may show for up to a minute: wait by the
-			// river rather than walk.
+			// Shilo has few spots, and after a move none may show for up to a minute: wait on the
+			// river bank (from the bank itself no spot is in view).
 			WorldPoint me = Rs2Player.getWorldLocation();
-			if (me != null && me.distanceTo(RIVER_BANK) > FISHING_AREA_RADIUS)
+			if (me != null && me.distanceTo(RIVER_BANK) > 3)
 			{
 				Microbot.status = "Tick Fisher: walking to the river";
 				Rs2Walker.walkTo(RIVER_BANK, 2);

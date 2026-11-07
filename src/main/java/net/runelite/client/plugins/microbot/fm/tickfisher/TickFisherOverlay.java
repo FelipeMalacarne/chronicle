@@ -81,6 +81,11 @@ class TickFisherOverlay extends OverlayPanel
 				line("Spot click a tick late", String.valueOf(s.spotNextTick));
 			}
 			line("Rolls in step", s.inStepPercent() + "%");
+			if (config.varyRhythm())
+			{
+				line("Hesitations / breathers", s.slips + " / " + s.breathers);
+				line("Re-anchored", String.valueOf(s.realigns));
+			}
 			if (s.stocksMade > 0)
 			{
 				line("Teak stocks made", String.valueOf(s.stocksMade));

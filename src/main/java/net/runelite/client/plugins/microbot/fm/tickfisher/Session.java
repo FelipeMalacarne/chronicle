@@ -27,6 +27,10 @@ final class Session
 	/** Teak stocks made: a cycle where the spot click did not land and the fletch completed. */
 	volatile int stocksMade;
 	volatile int spotMoves;
+	/** Cycles skipped on purpose, plain-fishing breathers, and re-anchors on an off-cycle drop. */
+	volatile int slips;
+	volatile int breathers;
+	volatile int realigns;
 
 	Session(int startTick, int startXp)
 	{
@@ -73,6 +77,9 @@ final class Session
 		counters.put("bankTrips", bankTrips);
 		counters.put("stocksMade", stocksMade);
 		counters.put("spotMoves", spotMoves);
+		counters.put("slips", slips);
+		counters.put("breathers", breathers);
+		counters.put("realigns", realigns);
 		return counters;
 	}
 }

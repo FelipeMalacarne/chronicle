@@ -18,6 +18,7 @@ import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.bank.enums.BankLocation;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
+import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 
@@ -59,6 +60,14 @@ public class TickFisherScript extends Script
 	private int handledTick = -1;
 	private int countedDropTick = -1;
 	private int bankFailures;
+	/**
+	 * The varied rhythm: cycles until the next hesitation and how many cycles it still skips;
+	 * when the current plain-fishing breather ends and the next one starts.
+	 */
+	private int cyclesToSlip;
+	private int slipCycles;
+	private long breatherUntil;
+	private long nextBreatherAt;
 
 	FishingEvents events()
 	{
@@ -87,6 +96,10 @@ public class TickFisherScript extends Script
 		countedDropTick = -1;
 		bankFailures = 0;
 		clicks = new Clicks(config.mouse());
+		cyclesToSlip = nextSlip();
+		slipCycles = 0;
+		breatherUntil = 0;
+		nextBreatherAt = System.currentTimeMillis() + nextBreatherGap();
 		testResult = Boolean.getBoolean("microbot.test.mode") ? new TestResult("Tick Fisher") : null;
 		mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
 			try
@@ -158,7 +171,7 @@ public class TickFisherScript extends Script
 			return;
 		}
 		s.fishingTicks++;
-		if (config.threeTick())
+		if (config.threeTick() && !breather(s))
 		{
 			cycle(s, target);
 		}
@@ -227,7 +240,18 @@ public class TickFisherScript extends Script
 		{
 			countedDropTick = drop;
 			s.catches++;
-			s.dropsByPhase[Math.floorMod(drop - anchorTick, 3)]++;
+			int dropPhase = Math.floorMod(drop - anchorTick, 3);
+			if (dropPhase != 0 && drop == tick)
+			{
+				// Off the cycle (after a hesitation, a breather or a lost click): the skilling
+				// timer is at zero on a drop tick, so a cycle started now is in step again.
+				anchorTick = tick;
+				s.realigns++;
+			}
+			else
+			{
+				s.dropsByPhase[dropPhase]++;
+			}
 		}
 		int phase = Math.floorMod(tick - anchorTick, 3);
 		Rs2ItemModel knife = Rs2Inventory.get(ItemID.KNIFE);
@@ -239,6 +263,11 @@ public class TickFisherScript extends Script
 		switch (phase)
 		{
 			case 0:
+				if (hesitate(s))
+				{
+					Microbot.status = "Tick Fisher: hesitating";
+					break;
+				}
 				Microbot.status = "Tick Fisher: 3-tick fishing";
 				if (!knifeSelected())
 				{
@@ -281,6 +310,65 @@ public class TickFisherScript extends Script
 				clicks.hover(teak);
 				break;
 		}
+	}
+
+	/**
+	 * A cycle skipped on purpose now and then: the roll still comes, on the 5-tick timer, and the
+	 * cycle finds its step again on the next off-cycle drop.
+	 */
+	private boolean hesitate(Session s)
+	{
+		if (!config.varyRhythm())
+		{
+			return false;
+		}
+		if (slipCycles > 0)
+		{
+			slipCycles--;
+			return true;
+		}
+		if (--cyclesToSlip > 0)
+		{
+			return false;
+		}
+		cyclesToSlip = nextSlip();
+		slipCycles = Rs2Random.betweenInclusive(0, 1);
+		s.slips++;
+		return true;
+	}
+
+	/** Every few minutes, fish plainly for a while; true while it lasts. */
+	private boolean breather(Session s)
+	{
+		if (!config.varyRhythm())
+		{
+			return false;
+		}
+		long now = System.currentTimeMillis();
+		if (now >= nextBreatherAt)
+		{
+			breatherUntil = now + Rs2Random.betweenInclusive(10_000, 40_000);
+			nextBreatherAt = breatherUntil + nextBreatherGap();
+			s.breathers++;
+		}
+		if (now >= breatherUntil)
+		{
+			return false;
+		}
+		Microbot.status = "Tick Fisher: fishing plainly for a bit";
+		plain(s, spot);
+		anchorTick = -1;
+		return true;
+	}
+
+	private static int nextSlip()
+	{
+		return Rs2Random.betweenInclusive(25, 70);
+	}
+
+	private static long nextBreatherGap()
+	{
+		return Rs2Random.betweenInclusive(4 * 60_000, 9 * 60_000);
 	}
 
 	/** Plain fishing: click the spot whenever we are not already on it. */
@@ -476,6 +564,13 @@ public class TickFisherScript extends Script
 
 	private void stop(String reason)
 	{
+		Rs2NpcModel last = spot;
+		if (config.threeTick() && last != null && Rs2Inventory.hasItem(ItemID.TEAK_LOGS))
+		{
+			// A knife-on-teak may still be running: one more spot click cancels it, or the fletch
+			// completes and takes the log.
+			clicks.npc(last, SPOT_ACTION);
+		}
 		Microbot.status = "Tick Fisher stopped: " + reason;
 		log.info("Tick Fisher stopped: {}", reason);
 		report(true, reason);

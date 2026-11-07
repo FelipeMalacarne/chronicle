@@ -44,10 +44,21 @@ public interface TickFisherConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "varyRhythm",
+		name = "Vary the rhythm",
+		description = "Now and then hesitate for a cycle or two, and every few minutes fish plainly for a while, as a person does. Costs some XP",
+		position = 3
+	)
+	default boolean varyRhythm()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "stopAtLevel",
 		name = "Stop at Fishing level",
 		description = "Stop once Fishing reaches this level (0 = never)",
-		position = 3
+		position = 4
 	)
 	@Range(min = 0, max = 99)
 	default int stopAtLevel()
@@ -59,7 +70,7 @@ public interface TickFisherConfig extends Config
 		keyName = "stopAfterMinutes",
 		name = "Stop after minutes",
 		description = "Stop after running this long (0 = never). Perfect 3-tick for hours is not something a person does",
-		position = 4
+		position = 5
 	)
 	@Range(min = 0, max = 1440)
 	default int stopAfterMinutes()
@@ -71,7 +82,7 @@ public interface TickFisherConfig extends Config
 		keyName = "showOverlay",
 		name = "Show overlay",
 		description = "Progress panel: XP and XP/h, catches, and how well the 3-tick cycle is kept",
-		position = 5
+		position = 6
 	)
 	default boolean showOverlay()
 	{
@@ -82,7 +93,7 @@ public interface TickFisherConfig extends Config
 		keyName = "testCatches",
 		name = "Test catches",
 		description = "In test mode, fish to catch before writing the result and exiting",
-		position = 6
+		position = 7
 	)
 	default int testCatches()
 	{

@@ -12,13 +12,13 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 case "${1:-}" in
 	--list) mb_api GET /scripts/deploy | jq .; exit 0 ;;
 	--undeploy)
-		read -r pkg _ <<<"$(mb_plugin_dir "${2:?plugin}")" || die "unknown plugin: $2"
+		{ read -r pkg _ <<<"$(mb_plugin_dir "${2:?plugin}")" && [[ -n "$pkg" ]]; } || die "unknown plugin: $2"
 		mb_api POST /scripts/deploy/undeploy "{\"name\":\"$pkg\"}" | jq .
 		exit 0 ;;
 	-h|--help|"") sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
 esac
 
-read -r pkg cls <<<"$(mb_plugin_dir "$1")" || die "unknown plugin: $1"
+{ read -r pkg cls <<<"$(mb_plugin_dir "$1")" && [[ -n "$cls" ]]; } || die "unknown plugin: $1"
 
 jar="$MB_PLUGIN_DIR/$cls.jar"
 if [[ -f "$jar" ]]; then

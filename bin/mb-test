@@ -8,7 +8,7 @@
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-read -r _ cls <<<"$(mb_plugin_dir "${1:?plugin}")" || die "unknown plugin: $1"
+{ read -r _ cls <<<"$(mb_plugin_dir "${1:?plugin}")" && [[ -n "$cls" ]]; } || die "unknown plugin: $1"
 src="$(ls "$MB_PLUGIN_SRC"/*/"$cls.java")"
 # TestRunner matches the @PluginDescriptor name with the color prefix stripped.
 descriptor="$(grep -oP 'Mocrosoft \+ "\K[^"]+' "$src" || grep -oP 'name = "\K[^"]+' "$src")"

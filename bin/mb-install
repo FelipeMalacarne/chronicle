@@ -24,7 +24,7 @@ if [[ $# -eq 0 ]]; then
 	done
 else
 	for arg in "$@"; do
-		read -r _ cls <<<"$(mb_plugin_dir "$arg")" || die "unknown plugin: $arg"
+		{ read -r _ cls <<<"$(mb_plugin_dir "$arg")" && [[ -n "$cls" ]]; } || die "unknown plugin: $arg"
 		[[ "$cls" == DevBootstrapPlugin && "$dest" != "$MB_PLUGIN_DIR" ]] && die "DevBootstrap is dev-home only"
 		names+=("$cls")
 	done

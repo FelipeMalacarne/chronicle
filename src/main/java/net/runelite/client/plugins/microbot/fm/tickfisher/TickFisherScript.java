@@ -69,6 +69,8 @@ public class TickFisherScript extends Script
 	private int countedDropTick = -1;
 	private int bankFailures;
 	private int missingTicks;
+	/** Paused by a break handler or logged out since the last tick acted on. */
+	private volatile boolean interrupted;
 	/** Fish count before the knife went on a fish (-1: no cut pending), misses in a row, given up. */
 	private int fishBeforeCut = -1;
 	private int cutFailures;
@@ -126,8 +128,21 @@ public class TickFisherScript extends Script
 		mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
 			try
 			{
-				if (!Microbot.isLoggedIn()) return;
-				if (!super.run()) return;
+				// A break handler pauses scripts (and may log out): afterwards the spot and the
+				// cycle are stale (after a logout the NPCs are new objects), so start them over.
+				if (!Microbot.isLoggedIn() || !super.run())
+				{
+					interrupted = true;
+					return;
+				}
+				if (interrupted)
+				{
+					interrupted = false;
+					spot = null;
+					anchorTick = -1;
+					lookout = -1;
+					log.info("Tick Fisher: resuming after a pause or logout");
+				}
 				// Once per tick, as early in it as we can. A step that ran into the next tick (a
 				// slow natural movement) does not wait for another: that tick is acted on now.
 				if (events.tick() == handledTick && !Global.sleepUntilNextTick(2000)) return;

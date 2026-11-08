@@ -9,6 +9,7 @@ final class Session
 	final long startedAt = System.currentTimeMillis();
 	final int startTick;
 	final int startXp;
+	final int startAgilityXp;
 	volatile String stopReason;
 
 	/** Cycles started (knife on teak, then the spot). */
@@ -39,10 +40,11 @@ final class Session
 	/** Ticks with no spot in reach (after a move none may show for a while). */
 	volatile int spotWaitTicks;
 
-	Session(int startTick, int startXp)
+	Session(int startTick, int startXp, int startAgilityXp)
 	{
 		this.startTick = startTick;
 		this.startXp = startXp;
+		this.startAgilityXp = startAgilityXp;
 	}
 
 	void stop(String reason)

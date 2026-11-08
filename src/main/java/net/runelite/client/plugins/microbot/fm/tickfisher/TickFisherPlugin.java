@@ -31,7 +31,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class TickFisherPlugin extends Plugin
 {
-	static final String VERSION = "0.9.2";
+	static final String VERSION = "0.9.3";
 
 	@Inject
 	private TickFisherConfig config;
@@ -87,7 +87,7 @@ public class TickFisherPlugin extends Plugin
 		}
 		else if (event.getSkill() == Skill.AGILITY)
 		{
-			script.events().onAgility(event.getLevel());
+			script.events().onAgility(event.getLevel(), event.getXp());
 		}
 	}
 

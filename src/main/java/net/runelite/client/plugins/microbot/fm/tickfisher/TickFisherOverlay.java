@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
 import javax.inject.Inject;
+import net.runelite.api.Experience;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.overlay.OverlayPanel;
 import net.runelite.client.ui.overlay.OverlayPosition;
@@ -66,12 +67,12 @@ class TickFisherOverlay extends OverlayPanel
 			line("Delay", config.delay().toString());
 		}
 		line("Runtime", duration(elapsed));
-		int stopAt = config.stopAtLevel();
-		line("Fishing", script.events().fishingLevel() + (stopAt > 0 ? " (stop at " + stopAt + ")" : ""));
+		FishingEvents events = script.events();
+		skill("Fishing", events.fishingLevel(), events.fishingXp(), s.startXp, config.stopAtLevel(), elapsed);
 		int agilityAt = config.stopAtAgilityLevel();
 		if (config.place() == FishingPlace.OTTO || agilityAt > 0)
 		{
-			line("Agility", script.events().agilityLevel() + (agilityAt > 0 ? " (stop at " + agilityAt + ")" : ""));
+			skill("Agility", events.agilityLevel(), events.agilityXp(), s.startAgilityXp, agilityAt, elapsed);
 		}
 		long now = System.currentTimeMillis();
 		if (s != rateSession || now - rateAt >= RATE_REFRESH_MS)
@@ -115,6 +116,24 @@ class TickFisherOverlay extends OverlayPanel
 			line("Stopping", s.stopReason);
 		}
 		return super.render(graphics);
+	}
+
+	/**
+	 * A skill's level and, with a stop level set, the time to reach it at this session's pace
+	 * ("Agility 38 -> 50", "3:12:40, 61,234 xp"); "..." until the session has gained some.
+	 */
+	private void skill(String name, int level, int xp, int startXp, int stopAt, long elapsedMs)
+	{
+		if (stopAt <= level || xp <= 0)
+		{
+			line(name, String.valueOf(level));
+			return;
+		}
+		line(name, level + " -> " + stopAt);
+		int left = Math.max(0, Experience.getXpForLevel(stopAt) - xp);
+		int gained = xp - startXp;
+		String eta = gained > 0 ? duration((long) ((double) left * elapsedMs / gained)) : "...";
+		line("  to " + stopAt, String.format("%s, %,d xp", eta, left));
 	}
 
 	private void line(String left, String right)

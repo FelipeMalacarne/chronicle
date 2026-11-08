@@ -277,10 +277,11 @@ public class TickFisherScript extends Script
 			return false;
 		}
 		herbloreLevel = Rs2Player.getRealSkillLevel(Skill.HERBLORE);
-		int xp = fishingXp();
+		int xp = skillXp(Skill.FISHING);
 		events.onFishing(level, xp);
-		events.onAgility(agility);
-		session = new Session(events.tick(), xp);
+		int agilityXp = skillXp(Skill.AGILITY);
+		events.onAgility(agility, agilityXp);
+		session = new Session(events.tick(), xp, agilityXp);
 		log.info("Tick Fisher {}: {}, Fishing {}, Agility {}, 3-tick {} ({}), fish {}, mouse {}", TickFisherPlugin.VERSION, place, level, agility, config.threeTick(), delay, config.fishHandling(), config.mouse());
 		return true;
 	}
@@ -1068,10 +1069,10 @@ public class TickFisherScript extends Script
 		testResult.addCheck(name, passed, passed ? null : failure);
 	}
 
-	private static int fishingXp()
+	private static int skillXp(Skill skill)
 	{
 		return Microbot.getClientThread()
-			.runOnClientThreadOptional(() -> Microbot.getClient().getSkillExperience(Skill.FISHING))
+			.runOnClientThreadOptional(() -> Microbot.getClient().getSkillExperience(skill))
 			.orElse(0);
 	}
 }

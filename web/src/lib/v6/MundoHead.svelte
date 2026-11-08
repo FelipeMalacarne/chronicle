@@ -2,12 +2,12 @@
 	import { resolve } from '$app/paths';
 	import type { Snippet } from 'svelte';
 
-	/** Cabeçalho do Mundo (V6Mundo1440, V6Metas1440): título e as abas Entidades · Metas · Grafo. */
+	/** Cabeçalho do Mundo (V6Mundo1440, V6Metas1440, V6Grafo1440): título e as abas Entidades · Metas · Grafo. */
 	let {
 		title,
 		current,
 		children
-	}: { title: string; current: 'entidades' | 'metas'; children?: Snippet } = $props();
+	}: { title: string; current: 'entidades' | 'metas' | 'grafo'; children?: Snippet } = $props();
 </script>
 
 <header class="mh">
@@ -26,10 +26,10 @@
 			href={resolve('/mundo/metas')}
 			aria-current={current === 'metas' ? 'page' : undefined}>Metas</a
 		>
-		<span
-			class="off"
-			aria-disabled="true"
-			title="O grafo por profundidade ainda não tem API (item 11 da sequência)">Grafo</span
+		<a
+			class:on={current === 'grafo'}
+			href={resolve('/mundo/grafo')}
+			aria-current={current === 'grafo' ? 'page' : undefined}>Grafo</a
 		>
 	</nav>
 	{@render children?.()}
@@ -54,19 +54,5 @@
 	}
 	.ttl h1 {
 		font-size: 26px;
-	}
-	.off {
-		display: inline-flex;
-		align-items: center;
-		height: 36px;
-		padding: 0 14px;
-		color: var(--ink-subtle);
-		opacity: 0.6;
-		border-left: 1px solid var(--border);
-		font:
-			500 13px Inter,
-			system-ui,
-			sans-serif;
-		cursor: not-allowed;
 	}
 </style>

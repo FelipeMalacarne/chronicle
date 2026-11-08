@@ -13,7 +13,7 @@
 
 	/**
 	 * Painel de entidade (V6Entidade; comportamento em V6Agora1440/640 e V6Mundo1440): estado com
-	 * a fonte, onde cada rota faz isso, requer → destrava e "Virar meta". Lateral no desktop,
+	 * a fonte, onde cada rota faz isso, requer → destrava, "Virar meta" e "Focar aqui" (o grafo). Lateral no desktop,
 	 * folha de baixo na janela estreita. `inline` desenha o mesmo painel dentro da página (Mundo).
 	 */
 	let { inline = false, refOverride }: { inline?: boolean; refOverride?: string | null } = $props();
@@ -221,6 +221,14 @@
 						disabled={busy}
 						aria-pressed={!!goal}
 						onclick={toggleGoal}>{goal ? 'Meta fixada ✓ · tirar' : 'Virar meta'}</button
+					>
+				{/if}
+				{#if goalKey}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query do foco -->
+					<a
+						class="btn btn-g"
+						href={`${resolve('/mundo/grafo')}?focus=${encodeURIComponent(goalKey)}`}
+						onclick={() => !inline && closeEntity()}>Focar aqui</a
 					>
 				{/if}
 				{#if !inline}

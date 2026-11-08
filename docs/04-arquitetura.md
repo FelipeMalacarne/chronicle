@@ -18,7 +18,7 @@ documento onde houver conflito.
 | Conteúdo | JSON em `content/guides/<id>/` (`oziris-main` e `bruhsailer-main`, rotas independentes), gerado por importadores e validado contra `content/schema/guide.schema.json` no boot e na CI; objetivos extraídos em sidecars `annotations/` (doc 09, seção 4.2). Ids sempre escopados por guia. |
 | Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o motor. |
 | Motor | Função pura `(regras, PlayerState) → {veredito, evidência}` em `internal/core/rules`; status do passo derivado dos objetivos em `internal/core/progress`; reavaliação completa a cada snapshot. |
-| Grafo | Calculado no servidor em memória a partir de `content/` + catálogos + cache do wiki; renderizado com **Cytoscape.js + ELK**. Nós são chaves de objetivo. |
+| Grafo | Calculado no servidor em memória a partir de `content/` e dos catálogos (`progress.BuildGraph`), por foco; renderizado em colunas de cartões (1440) e árvore (640), em HTML, como o canvas v6 desenhou (seção 5). Nós são chaves de objetivo. |
 | Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06), com painel da rota e marcas a partir da 1.2.0. Hoje autentica com token `ipl_` por cliente; planejado (decisão 28 do doc 01): sem token em `AUTH_MODE=dev` (só de `127.0.0.1`) e device flow do Zitadel em `oidc`. |
 | Execução | Local-first na estação `zaros` com `AUTH_MODE=dev`; depois a mesma imagem no `saradomin` com Postgres e Zitadel existentes (seção 8). |
 | Auth | `AUTH_MODE=dev` (usuário fixo) no zaros; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs` no Postgres) feito para a web, falta o deploy no saradomin (seção 8). Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). CLI e `ironman mcp`: nada em dev, device flow do Zitadel e access token JWT como bearer em `oidc` (seção 2.5). |
@@ -36,7 +36,7 @@ por formato compartilhando o mesmo pacote de domínio.
 | API e scheduler | `net/http` com o mux da biblioteca padrão; scheduler in-process; adapters de fonte em `internal/sources/{hiscores,wom,wiki}`. |
 | Banco | Postgres 17 em todos os ambientes; `pgx` + `sqlc` (queries em `db/queries`, tipos gerados em `internal/store/db`) + `goose` (`db/migrations`). |
 | Auth | `AUTH_MODE=dev` ou `oidc` (`coreos/go-oidc` + `golang.org/x/oauth2`, PKCE; sessão `alexedwards/scs` com `pgxstore`). |
-| Frontend | Svelte 5 + SvelteKit `adapter-static` + Vite em `web/`; `web/dist` embutido com `embed.FS`; Cytoscape + ELK para o grafo. Tipos TS espelham o contrato HTTP à mão (`web/src/lib/progress/types.ts`). |
+| Frontend | Svelte 5 + SvelteKit `adapter-static` + Vite em `web/`; `web/dist` embutido com `embed.FS`; o grafo é HTML (colunas e árvore), sem biblioteca de grafo. Tipos TS espelham o contrato HTTP à mão (`web/src/lib/progress/types.ts`). |
 | Plugin | Java no Microbot, repositório `microbot-plugins`; só o contrato HTTP é compartilhado. |
 | Deploy | Imagem `distroless` não-root com o binário; `docker compose`. |
 
@@ -317,7 +317,7 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/world?account=` | feita (dev, oidc) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
 | `GET /api/world/entity?account=&ref=` | feita (dev, oidc) | uma entidade para o painel de entidade da v6: a mesma visão do `/api/world`, os requisitos diretos do catálogo (com o veredito da conta) e as quests que ela destrava |
 | `GET /api/account/state?account=` | feita (dev, oidc) | a Conta (V6Conta1440): conta, total e quest points, skills, quests e diaries com fonte e idade de cada fato, containers com frescor e itens; faceta nunca lida fica vazia |
-| `GET /api/graph?focus=&depth=`, `GET /api/plan?goal=` | planejadas | grafo e plano da meta (esperam os requisitos de quest no catálogo) |
+| `GET /api/graph?account=&focus=&depth=` | feita (dev, oidc) | grafo por foco (seção 5): colunas de requisitos até `depth` (1 a 3, padrão 2), foco, destrava, caminho crítico; o plano da meta é `GET /api/goals/{id}/plan` |
 | `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
 
 Janela do painel (`internal/core/panel`, montagem pura; o plugin não tem catálogo, então todo
@@ -555,6 +555,29 @@ Semântica:
    `internal/core/.../testdata`.
 
 ## 5. Grafo de requisitos
+
+> **Implementado (2026-11-08), mais simples que o desenho abaixo.** O grafo por foco (Mundo › Grafo,
+> artboards V6Grafo1440 e V6Grafo640; decisão 11 do doc 01) é `progress.BuildGraph` em
+> `internal/core/progress/graph.go`, sobre o mesmo percurso do plano de meta (F9), servido em
+> `GET /api/graph?account=&focus=<chave>&depth=1..3`. Não há `internal/core/graph`, `graph_cache` nem
+> Cytoscape/ELK: o canvas desenhou colunas de cartões em HTML, sem layout de grafo.
+> - Foco: qualquer chave de objetivo (meta, quest, nível, item, unlock, diary); a web entra pela primeira
+>   meta fixada ou por "Focar aqui" no painel de entidade.
+> - Arestas: só os requisitos de quest do catálogo (`content/reference/quests.json`: quests, níveis,
+>   `qp`). Foco em item ou unlock mostra só o próprio nó, onde cada rota o faz e o que destrava, até
+>   haver requisitos de item no catálogo (por isso Barrows gloves → subquests de RFD, o exemplo do
+>   canvas, ainda não aparece; o próprio RFD da wiki lista níveis e QP, não os subquests).
+> - Colunas "Requer · nível 1 a 3" com os feitos à parte (recolhidos em "+N feitos" por padrão); os
+>   níveis exigidos por uma quest num cartão só ("56 Magic · 52 Mining · 50 Agility…"); "Destrava" são as
+>   quests do catálogo que pedem o foco diretamente.
+> - Grupos do plano de meta: feito, em progresso (presumido por marca), disponível (nada faltando antes,
+>   também quest sem requisitos), bloqueado e não sabemos.
+> - Caminho crítico: a partir do foco, o requisito aberto com mais nós abertos abaixo dele, repetido até
+>   acabar (desempate: o primeiro passo da rota ativa, depois o nome). Sem estimativa de tempo (F14).
+> - No estreito, a árvore com recuo: cada nó sob o primeiro nó que ele atende.
+>
+> O resto desta seção é o desenho original, mantido como referência para quando houver arestas de item e
+> de passo.
 
 ### 5.1 Nós e arestas
 
@@ -1064,7 +1087,15 @@ testes da CLI contra uma API falsa (marcas enviadas, atribuição no `now`, erro
 `accounts`, `now`, `plan`, `state` e o MCP por stdio contra o `just dev`. Falta conferir contra o
 Zitadel real, junto do deploy (item 17).
 
-Ainda não existe: deploy no saradomin, device flow do plugin, grafo (a aba Grafo do Mundo fica desabilitada),
+Grafo por foco (item 11, 2026-11-08): Mundo › Grafo pelos artboards V6Grafo1440 (colunas por
+profundidade, filtros, legenda, caminho crítico) e V6Grafo640 (árvore com recuo), "Focar aqui" no
+painel de entidade, `GET /api/graph` e `progress.BuildGraph` (seção 5). Verificação: testes de tabela
+do core com o catálogo real (colunas, feitos à parte, níveis agrupados, caminho crítico, destrava,
+profundidade fora do intervalo, quest sem requisitos disponível), teste HTTP da rota, `node --test` do
+view-model (`web/src/lib/progress/grafo.ts`) e capturas em 1440 e 640 contra o `just dev` com o
+Legends' Quest e o Heroes' Quest da conta do dono.
+
+Ainda não existe: deploy no saradomin, device flow do plugin,
 sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e o módulo de controle
 do Microbot (doc 08; Automação no canvas).
 
@@ -1083,7 +1114,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
-| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 17 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6); **CLI e `ironman mcp` feitos** (2026-11-08): `internal/client`, `login/logout/accounts/use/now/done/skip/undo/plan/sync/state/mcp`, `GET /api/auth/client`, `GET /api/route` e bearer JWT da aplicação nativa nas rotas por conta em oidc (seções 2.2 e 2.5); conferido contra o `just dev` |
+| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 17 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6); **CLI e `ironman mcp` feitos** (2026-11-08): `internal/client`, `login/logout/accounts/use/now/done/skip/undo/plan/sync/state/mcp`, `GET /api/auth/client`, `GET /api/route` e bearer JWT da aplicação nativa nas rotas por conta em oidc (seções 2.2 e 2.5); conferido contra o `just dev`; **grafo feito** (2026-11-08): Mundo › Grafo e `GET /api/graph` (seção 5) |
 | 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05); conferido ao vivo com o plugin no zaros (2026-11-08) |
 | 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito** (2026-11-05, `feat/push-por-evento`); em uso no jogo (2026-11-08) |
 | 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); em uso no jogo com o plugin 1.2.1 (2026-11-08) |

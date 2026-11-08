@@ -530,6 +530,53 @@ export interface GoalNode {
 	step?: StepPlace;
 }
 
+/** Um cartão do grafo por foco (GET /api/graph): um objetivo ou os níveis de uma quest juntos. */
+export interface GraphNode {
+	key: string;
+	ref?: string;
+	/** quest, skill, item, unlock, diary, qp ou levels (os níveis de um nó, num cartão só). */
+	kind: string;
+	label: string;
+	depth: number;
+	verdict: Verdict;
+	group: GoalGroup;
+	/** Os nós da coluna mais perto do foco que pedem este. */
+	for?: string[];
+	/** Os requisitos diretos ainda não cumpridos. */
+	missing?: string[];
+	requires?: number;
+	step?: StepPlace;
+	critical?: boolean;
+	levels?: GraphLevel[];
+}
+
+export interface GraphLevel {
+	key: string;
+	skill: string;
+	target: number;
+	level?: number;
+	verdict: Verdict;
+}
+
+export interface GraphColumn {
+	depth: number;
+	nodes: GraphNode[];
+	done: GraphNode[];
+}
+
+/** Grafo por foco (F10, V6Grafo1440/640): colunas de requisitos, o foco e o que ele destrava. */
+export interface Graph {
+	focus: GraphNode;
+	depth: number;
+	max_depth: number;
+	columns: GraphColumn[];
+	unlocks: GraphNode[];
+	critical: string[];
+	nodes: number;
+	done_nodes: number;
+	routes: StepPlace[];
+}
+
 export interface Bottleneck {
 	key: string;
 	skill: string;

@@ -89,6 +89,9 @@ public class TickFisherScript extends Script
 	private int slipCycles;
 	private long breatherUntil;
 	private long nextBreatherAt;
+	/** Plain stretches: when the current 3-tick stretch ends, and when the plain one after it ends. */
+	private long threeTickUntil;
+	private long plainUntil;
 
 	FishingEvents events()
 	{
@@ -131,6 +134,8 @@ public class TickFisherScript extends Script
 		slipCycles = 0;
 		breatherUntil = 0;
 		nextBreatherAt = System.currentTimeMillis() + nextBreatherGap();
+		threeTickUntil = System.currentTimeMillis() + stretch(config.threeTickStretchMinutes());
+		plainUntil = 0;
 		testResult = Boolean.getBoolean("microbot.test.mode") ? new TestResult("Tick Fisher") : null;
 		mainScheduledFuture = scheduledExecutorService.scheduleWithFixedDelay(() -> {
 			try
@@ -496,11 +501,15 @@ public class TickFisherScript extends Script
 	/** Every few minutes, fish plainly for a while; true while it lasts. */
 	private boolean breather(Session s)
 	{
+		long now = System.currentTimeMillis();
+		if (plainStretch(s, now))
+		{
+			return true;
+		}
 		if (!config.varyRhythm())
 		{
 			return false;
 		}
-		long now = System.currentTimeMillis();
 		if (now >= nextBreatherAt)
 		{
 			breatherUntil = now + Rs2Random.betweenInclusive(10_000, 40_000);
@@ -521,6 +530,68 @@ public class TickFisherScript extends Script
 		plain(s, spot);
 		anchorTick = -1;
 		return true;
+	}
+
+	/**
+	 * Plain stretches: after a 3-tick stretch, minutes of plain fishing, then 3-tick again; nobody
+	 * 3-ticks for hours on end. True while a plain stretch lasts.
+	 */
+	private boolean plainStretch(Session s, long now)
+	{
+		int plainMinutes = config.plainStretchMinutes();
+		if (plainMinutes <= 0)
+		{
+			return false;
+		}
+		if (plainUntil == 0 && now >= threeTickUntil)
+		{
+			plainUntil = now + stretch(plainMinutes);
+			s.plainStretches++;
+			log.info("Tick Fisher: plain fishing for {} min", (plainUntil - now) / 60_000);
+			if (!Rs2Antiban.takeMicroBreakByChance() && Rs2AntibanSettings.moveMouseOffScreen)
+			{
+				Rs2Antiban.moveMouseOffScreen(Rs2AntibanSettings.moveMouseOffScreenChance);
+			}
+		}
+		if (plainUntil == 0)
+		{
+			return false;
+		}
+		if (now >= plainUntil)
+		{
+			plainUntil = 0;
+			threeTickUntil = now + stretch(config.threeTickStretchMinutes());
+			log.info("Tick Fisher: back to 3-tick for {} min", (threeTickUntil - now) / 60_000);
+			return false;
+		}
+		Microbot.status = "Tick Fisher: plain fishing, " + duration(plainUntil - now) + " to 3-tick";
+		plain(s, spot);
+		anchorTick = -1;
+		return true;
+	}
+
+	/** Minutes, varied by up to 40% either way, in ms. */
+	private static long stretch(int minutes)
+	{
+		long ms = minutes * 60_000L;
+		return ms + (long) ((Rs2Random.betweenInclusive(-40, 40) / 100.0) * ms);
+	}
+
+	private static String duration(long ms)
+	{
+		long seconds = Math.max(0, ms / 1000);
+		return String.format("%d:%02d", seconds / 60, seconds % 60);
+	}
+
+	/** When the current stretch (3-tick or plain) ends, for the overlay; 0 with plain stretches off. */
+	long stretchEndsAt()
+	{
+		return config == null || config.plainStretchMinutes() <= 0 ? 0 : plainUntil != 0 ? plainUntil : threeTickUntil;
+	}
+
+	boolean inPlainStretch()
+	{
+		return plainUntil != 0;
 	}
 
 	private static int nextSlip()

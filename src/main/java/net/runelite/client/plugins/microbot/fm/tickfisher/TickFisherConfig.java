@@ -77,10 +77,34 @@ public interface TickFisherConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "threeTickStretchMinutes",
+		name = "3-tick stretch (min)",
+		description = "With plain stretches on: minutes of 3-tick fishing before a plain stretch (each one varies by up to 40%)",
+		position = 5
+	)
+	@Range(min = 5, max = 600)
+	default int threeTickStretchMinutes()
+	{
+		return 45;
+	}
+
+	@ConfigItem(
+		keyName = "plainStretchMinutes",
+		name = "Plain stretch (min)",
+		description = "Minutes of plain (5-tick) fishing between 3-tick stretches, as a person resting from 3-ticking does (varies by up to 40%; 0 = never)",
+		position = 6
+	)
+	@Range(min = 0, max = 600)
+	default int plainStretchMinutes()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = "stopAtLevel",
 		name = "Stop at Fishing level",
 		description = "Stop once Fishing reaches this level (0 = never)",
-		position = 5
+		position = 7
 	)
 	@Range(min = 0, max = 99)
 	default int stopAtLevel()
@@ -92,7 +116,7 @@ public interface TickFisherConfig extends Config
 		keyName = "stopAtAgilityLevel",
 		name = "Stop at Agility level",
 		description = "Barbarian fishing: stop once Agility reaches this level (0 = never)",
-		position = 6
+		position = 8
 	)
 	@Range(min = 0, max = 99)
 	default int stopAtAgilityLevel()
@@ -104,7 +128,7 @@ public interface TickFisherConfig extends Config
 		keyName = "stopAfterMinutes",
 		name = "Stop after minutes",
 		description = "Stop after running this long (0 = never). Perfect 3-tick for hours is not something a person does",
-		position = 7
+		position = 9
 	)
 	@Range(min = 0, max = 1440)
 	default int stopAfterMinutes()
@@ -116,7 +140,7 @@ public interface TickFisherConfig extends Config
 		keyName = "showOverlay",
 		name = "Show overlay",
 		description = "Progress panel: XP and XP/h, catches, and how well the 3-tick cycle is kept",
-		position = 8
+		position = 10
 	)
 	default boolean showOverlay()
 	{
@@ -127,7 +151,7 @@ public interface TickFisherConfig extends Config
 		keyName = "testCatches",
 		name = "Test catches",
 		description = "In test mode, fish to catch before writing the result and exiting",
-		position = 9
+		position = 11
 	)
 	default int testCatches()
 	{

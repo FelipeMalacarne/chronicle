@@ -70,6 +70,11 @@ class TickFisherOverlay extends OverlayPanel
 			line("Delay", config.delay().toString());
 		}
 		line("Runtime", duration(elapsed));
+		long stretchEnd = script.stretchEndsAt();
+		if (config.threeTick() && stretchEnd > 0)
+		{
+			line(script.inPlainStretch() ? "Plain, 3-tick in" : "3-tick, plain in", duration(Math.max(0, stretchEnd - System.currentTimeMillis())));
+		}
 		// Rates and estimates once a second: per frame they change with every millisecond and flicker.
 		long now = System.currentTimeMillis();
 		boolean refresh = s != rateSession || now - rateAt >= RATE_REFRESH_MS;

@@ -34,6 +34,7 @@ final class Session
 	/** Cycles skipped on purpose, plain-fishing breathers, and re-anchors on an off-cycle drop. */
 	volatile int slips;
 	volatile int breathers;
+	volatile int plainStretches;
 	volatile int realigns;
 	/** Walks to a spot: after a move, a bank trip, or not standing next to it. */
 	volatile int approaches;
@@ -90,6 +91,7 @@ final class Session
 		counters.put("spotMoves", spotMoves);
 		counters.put("slips", slips);
 		counters.put("breathers", breathers);
+		counters.put("plainStretches", plainStretches);
 		counters.put("realigns", realigns);
 		counters.put("approaches", approaches);
 		counters.put("spotWaitTicks", spotWaitTicks);

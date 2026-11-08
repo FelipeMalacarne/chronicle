@@ -287,15 +287,22 @@ public class TickFisherScript extends Script
 			int dropPhase = Math.floorMod(drop - anchorTick, 3);
 			if (dropPhase != 0 && drop == tick)
 			{
-				// Off the cycle (after a hesitation, a breather or a lost click): the skilling
-				// timer is at zero on a drop tick, so a cycle started now is in step again.
+				// Off the cycle: after a hesitation, a breather or a lost click.
 				log.info("Tick Fisher: XP drop on phase {} at tick {}, re-anchoring", dropPhase, tick);
-				anchorTick = tick;
 				s.realigns++;
 			}
 			else
 			{
 				s.dropsByPhase[dropPhase]++;
+			}
+			if (drop == tick)
+			{
+				// A catch puts the next roll 5 ticks away and the delay cannot bring it closer
+				// (measured at Otto: never two catches less than 5 ticks apart; with the cycle kept
+				// on 3, the next came after 6). So the next delay goes 2 ticks after the catch, for
+				// a roll at +5, and the 3-tick cycle runs from there. The catch tick itself is phase
+				// 1: dropping or cutting the fish then costs nothing, the fishing restarts at +2.
+				anchorTick = drop + 2;
 			}
 		}
 		int phase = Math.floorMod(tick - anchorTick, 3);
@@ -306,7 +313,11 @@ public class TickFisherScript extends Script
 			return;
 		}
 		// Cut-eat: roe or caviar from a cut fish is the delay while there is one, else knife on teak.
-		Rs2ItemModel roe = cutting() ? Rs2Inventory.get(ROE) : null;
+		// Not in the first cycle after a catch: eaten there, the roll at +5 never came (0 of 21;
+		// teak 18 of 24), as if eating adds 3 ticks to the timer the catch left running.
+		// Phase 2 gets ready for the delay of the next tick.
+		boolean afterCatch = (phase == 2 ? tick + 1 : tick) == countedDropTick + 2;
+		Rs2ItemModel roe = cutting() && !afterCatch ? Rs2Inventory.get(ROE) : null;
 		switch (phase)
 		{
 			case 0:
@@ -348,9 +359,10 @@ public class TickFisherScript extends Script
 				break;
 			case 1:
 				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-				if (fish != null && cutting())
+				if (fish != null && cutting() && drop == tick)
 				{
-					// Cutting does not touch the skilling timer: it fits between the rolls.
+					// Cutting stops the fishing, so only on the catch tick: the next roll is 5 ticks
+					// away anyway and phase 0 clicks the spot again. A fish left over waits for that.
 					fishBeforeCut = fishCount();
 					if (!knifeSelected())
 					{

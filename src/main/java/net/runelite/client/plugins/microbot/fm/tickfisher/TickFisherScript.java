@@ -306,13 +306,12 @@ public class TickFisherScript extends Script
 			}
 			if (drop == tick)
 			{
-				// Knife on teak: a catch puts the next roll 5 ticks away and the delay cannot bring
-				// it closer (measured at Otto: never two catches less than 5 ticks apart; with the
-				// cycle kept on 3, the next came after 6). So the next delay goes 2 ticks after the
-				// catch, for a roll at +5, and the 3-tick cycle runs from there. The catch tick is
-				// then phase 1: dropping or cutting the fish costs nothing, the fishing restarts at
-				// +2. Herb tar keeps the cycle on 3 (afterCatch 0).
-				anchorTick = drop + delay.afterCatch;
+				// After a catch the next roll cannot come 3 ticks later. With the delay and the spot
+				// in one tick it came at +6 (+5 at best, moving the cycle); a 3-tick player at 99
+				// gets +4 (video, frame by frame: 20+ catches 2.40 s apart) by clicking the delay
+				// on the catch tick and the spot alone on the next one. The cycle then runs from
+				// that spot tick: next roll at +4.
+				anchorTick = drop + 1;
 			}
 		}
 		int phase = Math.floorMod(tick - anchorTick, 3);
@@ -324,13 +323,36 @@ public class TickFisherScript extends Script
 		{
 			return;
 		}
+		if (countedDropTick >= 0 && tick == countedDropTick)
+		{
+			// The catch tick: the delay alone (the item, not roe: eating adds 3 ticks to a timer
+			// the catch left running, and the roll never came).
+			Microbot.status = "Tick Fisher: 3-tick fishing";
+			selectTool(tool);
+			clicks.useOn(delayOn);
+			return;
+		}
+		if (countedDropTick >= 0 && tick == countedDropTick + 1)
+		{
+			// The tick after: cut the fish first if cutting (it stops the fishing, the spot click
+			// after it starts it again), then the spot alone.
+			Rs2ItemModel fish = Rs2Inventory.get(place.fish);
+			if (fish != null && knife != null && cutting())
+			{
+				fishBeforeCut = fishCount();
+				selectTool(knife);
+				clicks.useOn(fish);
+			}
+			clicks.npc(target, place.spotAction);
+			s.cycles++;
+			if (events.tick() == tick)
+			{
+				s.onTime++;
+			}
+			return;
+		}
 		// Cut-eat: roe or caviar from a cut fish is the delay while there is one.
-		// Not in the first cycle after a catch: eaten there, the roll at +5 never came (0 of 21;
-		// teak 18 of 24): eating adds 3 ticks to the timer, the catch left it running.
-		// Phase 2 gets ready for the delay of the next tick.
-		boolean afterCatch = countedDropTick >= 0
-			&& (phase == 2 ? tick + 1 : tick) == countedDropTick + delay.afterCatch;
-		Rs2ItemModel roe = cutting() && !afterCatch ? Rs2Inventory.get(ROE) : null;
+		Rs2ItemModel roe = cutting() ? Rs2Inventory.get(ROE) : null;
 		switch (phase)
 		{
 			case 0:
@@ -366,21 +388,7 @@ public class TickFisherScript extends Script
 				break;
 			case 1:
 				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-				if (fish != null && knife != null && cutting() && tick - countedDropTick <= 1)
-				{
-					// Cutting stops the fishing, so only right after a catch. Knife on teak: the
-					// next roll is 5 ticks away anyway and phase 0 clicks the spot again. Herb tar:
-					// the roll is in 2 ticks, so the spot is clicked again at once.
-					fishBeforeCut = fishCount();
-					selectTool(knife);
-					clicks.useOn(fish);
-					if (delay.afterCatch == 0)
-					{
-						clicks.npc(target, place.spotAction);
-					}
-					break;
-				}
-				if (fish != null && config.fishHandling() != FishHandling.BANK)
+				if (fish != null && config.fishHandling() != FishHandling.BANK && !cutting())
 				{
 					clicks.drop(fish);
 					s.fishDropped++;
@@ -728,7 +736,7 @@ public class TickFisherScript extends Script
 			{
 				return "a pestle and mortar";
 			}
-			if (Rs2Inventory.count(ItemID.SWAMP_TAR) < MIN_SWAMP_TAR)
+			if (Rs2Inventory.itemQuantity(ItemID.SWAMP_TAR) < MIN_SWAMP_TAR)
 			{
 				return MIN_SWAMP_TAR + " swamp tar";
 			}

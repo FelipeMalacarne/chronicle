@@ -14,6 +14,9 @@ import net.runelite.client.plugins.microbot.api.npc.models.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.testing.TestResult;
 import net.runelite.client.plugins.microbot.testing.TestResultWriter;
 import net.runelite.client.plugins.microbot.util.Global;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2Antiban;
+import net.runelite.client.plugins.microbot.util.antiban.Rs2AntibanSettings;
+import net.runelite.client.plugins.microbot.util.antiban.enums.Activity;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
@@ -109,6 +112,10 @@ public class TickFisherScript extends Script
 		this.config = config;
 		place = config.place();
 		delay = config.delay();
+		// The client's antiban (its panel, its natural mouse profile, micro breaks): tell it what
+		// we do. Its actionCooldown (a random pause after an action) is never called: any pause
+		// mid-cycle loses the cycle; the varied rhythm pauses where the cycle can pick up again.
+		Rs2Antiban.setActivity(place == FishingPlace.SHILO ? Activity.CATCHING_TROUT_AND_SALMON : Activity.GENERAL_FISHING);
 		session = null;
 		spot = null;
 		anchorTick = -1;
@@ -162,6 +169,7 @@ public class TickFisherScript extends Script
 	public void shutdown()
 	{
 		super.shutdown();
+		Rs2Antiban.resetAntibanSettings();
 		session = null;
 	}
 
@@ -492,6 +500,12 @@ public class TickFisherScript extends Script
 			breatherUntil = now + Rs2Random.betweenInclusive(10_000, 40_000);
 			nextBreatherAt = breatherUntil + nextBreatherGap();
 			s.breathers++;
+			// A pause in the cycle anyway: the panel's micro break (the break handler pauses us)
+			// and mouse off screen, when turned on there.
+			if (!Rs2Antiban.takeMicroBreakByChance() && Rs2AntibanSettings.moveMouseOffScreen)
+			{
+				Rs2Antiban.moveMouseOffScreen(Rs2AntibanSettings.moveMouseOffScreenChance);
+			}
 		}
 		if (now >= breatherUntil)
 		{
@@ -594,6 +608,8 @@ public class TickFisherScript extends Script
 				return spot;
 			}
 			s.spotMoves++;
+			// The cycle is broken anyway: a natural moment for the panel's micro break.
+			Rs2Antiban.takeMicroBreakByChance();
 			spot = null;
 			anchorTick = -1;
 		}
@@ -820,6 +836,7 @@ public class TickFisherScript extends Script
 			return;
 		}
 		s.bankTrips++;
+		Rs2Antiban.takeMicroBreakByChance();
 		Rs2Bank.closeBank();
 		Global.sleepUntil(() -> !Rs2Bank.isOpen(), 2400);
 		spot = null;
@@ -877,6 +894,7 @@ public class TickFisherScript extends Script
 		Rs2Bank.closeBank();
 		Global.sleepUntil(() -> !Rs2Bank.isOpen(), 2400);
 		s.bankTrips++;
+		Rs2Antiban.takeMicroBreakByChance();
 		missingTicks = 0;
 		spot = null;
 		lookout = -1;

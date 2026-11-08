@@ -31,7 +31,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class TickFisherPlugin extends Plugin
 {
-	static final String VERSION = "0.8.0";
+	static final String VERSION = "0.8.1";
 
 	@Inject
 	private TickFisherConfig config;

@@ -335,12 +335,15 @@ public class TickFisherScript extends Script
 					break;
 				}
 				Microbot.status = "Tick Fisher: 3-tick fishing";
-				// The fish stay in the inventory between rolls: dropping or cutting one removes the
-				// interaction with the spot (guide, 2t teaks: "log dropping"), and doing it every
-				// cycle lost the roll after each catch (0.4-0.7: never two catches 3 ticks apart in
-				// 400+, ~47-52k XP/h at 58; kept: 27 of 46 apart, ~71k while fishing). Every few
-				// catches a batch goes at once, on this tick before the delay: it costs that roll.
-				if (fishCount() >= batchAt && config.fishHandling() != FishHandling.BANK)
+				// Dropping or cutting a fish removes the interaction with the spot (guide, 2t teaks:
+				// "log dropping"). Done on the tick after the spot click it lost the roll after each
+				// catch (0.4-0.7: never two catches 3 ticks apart in 400+, ~47-52k XP/h at 58; fish
+				// kept: 27 of 46 apart, ~71k while fishing). A 3-tick player does it on this tick in
+				// the order delay, knife on the fish, spot (cut-eat video and the guide): four or
+				// five clicks in one tick, which only the quick mouse makes. The natural mouse lets
+				// the fish pile up and handles a batch every few catches, at the cost of that roll.
+				boolean perCycle = config.mouse() == MouseMode.QUICK;
+				if (!perCycle && fishCount() >= batchAt && config.fishHandling() != FishHandling.BANK)
 				{
 					handleBatch(s, knife);
 					roe = cutting() ? Rs2Inventory.get(ROE) : null;
@@ -355,6 +358,18 @@ public class TickFisherScript extends Script
 				{
 					selectTool(tool);
 					clicks.useOn(delayOn);
+				}
+				Rs2ItemModel fish = perCycle && config.fishHandling() != FishHandling.BANK ? Rs2Inventory.get(place.fish) : null;
+				if (fish != null && cutting() && knife != null)
+				{
+					fishBeforeCut = fishCount();
+					clicks.select(knife);
+					clicks.useOn(fish);
+				}
+				else if (fish != null)
+				{
+					clicks.drop(fish);
+					s.fishDropped++;
 				}
 				boolean delayInTime = events.tick() == tick;
 				clicks.npc(target, place.spotAction);

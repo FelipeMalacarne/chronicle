@@ -39,8 +39,8 @@ public class TickFisherScript extends Script
 	private static final int START_RADIUS = 40;
 	/** Eaten as the 3-tick delay in place of knife on teak (food: the timer goes to 3). */
 	private static final int[] ROE = {ItemID.BRUT_ROE, ItemID.BRUT_CAVIAR};
-	/** Cuts in a row that left the fish in place: cutting does not work here (Cooking level?). */
-	private static final int MAX_CUT_FAILURES = 3;
+	/** Cuts in a row that left the fish in place before giving up on cutting (one miss is a lost click). */
+	private static final int MAX_CUT_FAILURES = 20;
 	/** Clean herbs that make a tar, and the Herblore level each needs. */
 	private static final int[] TAR_HERBS = {ItemID.GUAM_LEAF, ItemID.MARENTILL, ItemID.TARROMIN, ItemID.HARRALANDER};
 	private static final int[] TAR_HERB_LEVELS = {19, 31, 39, 44};
@@ -455,12 +455,24 @@ public class TickFisherScript extends Script
 			s.fishCut++;
 			cutFailures = 0;
 		}
-		else if (++cutFailures >= MAX_CUT_FAILURES)
+		else
 		{
-			cuttingFailed = true;
-			log.warn("Tick Fisher: {} cuts in a row left the fish, dropping them instead (Cooking level?)", cutFailures);
+			giveUpCuttingAfter(++cutFailures);
 		}
 		fishBeforeCut = -1;
+	}
+
+	/**
+	 * Leaping fish need no Cooking level, so cuts fail only when a click does not land, and the
+	 * fish is cut on the next try. Only a long run of them means cutting does not work here.
+	 */
+	private void giveUpCuttingAfter(int failures)
+	{
+		if (failures >= MAX_CUT_FAILURES && !cuttingFailed)
+		{
+			cuttingFailed = true;
+			log.warn("Tick Fisher: {} cuts in a row left the fish, dropping them instead", failures);
+		}
 	}
 
 	private int fishCount()
@@ -1049,11 +1061,13 @@ public class TickFisherScript extends Script
 			clicks.useOn(fish);
 			if (!Global.sleepUntil(() -> fishCount() < before, 1800))
 			{
-				cuttingFailed = true;
-				log.warn("Tick Fisher: knife on a fish did nothing, dropping them instead (Cooking level?)");
+				// One cut that did not land (a click lost to the fishing animation) says nothing:
+				// 0.9.5 gave up on the first and dropped every fish for the rest of the run.
+				giveUpCuttingAfter(++cutFailures);
 				return;
 			}
 			s.fishCut++;
+			cutFailures = 0;
 			Rs2ItemModel roe = Rs2Inventory.get(ROE);
 			if (roe != null && Rs2Inventory.isFull())
 			{

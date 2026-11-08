@@ -124,6 +124,30 @@ public interface TickFisherConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "catchDelayTick",
+		name = "Delay after a catch",
+		description = "Ticks from a catch (its XP drop) to the delay click",
+		position = 20,
+		hidden = true
+	)
+	default int catchDelayTick()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
+		keyName = "catchSpotTick",
+		name = "Spot after a catch",
+		description = "Ticks from a catch to the spot click; the 3-tick cycle runs from there",
+		position = 21,
+		hidden = true
+	)
+	default int catchSpotTick()
+	{
+		return 1;
+	}
+
+	@ConfigItem(
 		keyName = "testCatches",
 		name = "Test catches",
 		description = "In test mode, fish to catch before writing the result and exiting",

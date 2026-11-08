@@ -311,7 +311,7 @@ public class TickFisherScript extends Script
 				// gets +4 (video, frame by frame: 20+ catches 2.40 s apart) by clicking the delay
 				// on the catch tick and the spot alone on the next one. The cycle then runs from
 				// that spot tick: next roll at +4.
-				anchorTick = drop + 1;
+				anchorTick = drop + config.catchSpotTick();
 			}
 		}
 		int phase = Math.floorMod(tick - anchorTick, 3);
@@ -323,7 +323,9 @@ public class TickFisherScript extends Script
 		{
 			return;
 		}
-		if (countedDropTick >= 0 && tick == countedDropTick)
+		int delayAt = config.catchDelayTick();
+		int spotAt = config.catchSpotTick();
+		if (countedDropTick >= 0 && tick == countedDropTick + delayAt && delayAt < spotAt)
 		{
 			// The catch tick: the delay alone (the item, not roe: eating adds 3 ticks to a timer
 			// the catch left running, and the roll never came).
@@ -332,7 +334,7 @@ public class TickFisherScript extends Script
 			clicks.useOn(delayOn);
 			return;
 		}
-		if (countedDropTick >= 0 && tick == countedDropTick + 1)
+		if (countedDropTick >= 0 && tick == countedDropTick + spotAt)
 		{
 			// The tick after: cut the fish first if cutting (it stops the fishing, the spot click
 			// after it starts it again), then the spot alone.
@@ -342,6 +344,12 @@ public class TickFisherScript extends Script
 				fishBeforeCut = fishCount();
 				selectTool(knife);
 				clicks.useOn(fish);
+			}
+			if (delayAt >= spotAt)
+			{
+				// Delay and spot in the same tick.
+				selectTool(tool);
+				clicks.useOn(delayOn);
 			}
 			clicks.npc(target, place.spotAction);
 			s.cycles++;

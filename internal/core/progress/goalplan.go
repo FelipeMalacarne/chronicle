@@ -268,13 +268,21 @@ func (p *planner) classify(n *GoalNode) {
 		n.Group = GroupPresumed
 	case n.Verdict == rules.Unknown:
 		n.Group = GroupUnknown
-	case len(n.Requires) > 0 && len(n.Missing) == 0:
+	case len(n.Missing) == 0 && !trainOnly(n.Key):
+		// Nothing left before it (a quest without requirements included).
 		n.Group = GroupAvailable
 	default:
 		// An unmet level or quest point total is a bottleneck: there is
 		// nothing to start, only to train.
 		n.Group = GroupBlocked
 	}
+}
+
+// trainOnly reports a level or quest point total: never "available", since
+// there is nothing to start, only to train.
+func trainOnly(key string) bool {
+	k, err := entities.ParseObjectiveKey(key)
+	return err != nil || k.IsQuestPoints() || k.Ref.Kind == entities.KindSkill
 }
 
 // order is a topological order of the plan (requirements first); among the

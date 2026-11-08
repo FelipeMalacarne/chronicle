@@ -162,6 +162,7 @@ func (s *Server) routes() {
 		account("POST /api/goals", s.handleAddGoal)
 		account("DELETE /api/goals/{id}", s.handleRemoveGoal)
 		account("GET /api/goals/{id}/plan", s.handleGoalPlan)
+		account("GET /api/graph", s.handleGraph)
 		account("GET /api/world", s.handleWorld)
 		account("GET /api/world/entity", s.handleWorldEntity)
 		account("GET /api/account/state", s.handleAccountState)

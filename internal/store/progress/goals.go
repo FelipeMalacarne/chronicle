@@ -160,21 +160,48 @@ func (r *Repository) GoalPlan(ctx context.Context, accountID, goalID string) (Go
 		return GoalPlanView{}, fmt.Errorf("%w: %v", ErrInvalidGoal, err)
 	}
 	err = r.inTx(ctx, func(tx pgx.Tx) error {
-		q := r.queries.WithTx(tx)
-		ps, _, loadErr := state.Load(ctx, q, accountID, r.catalog)
-		if loadErr != nil {
-			return loadErr
-		}
-		in := coreprogress.GoalPlanInput{Goal: key, Registry: r.catalog, State: ps}
-		for _, g := range r.content.Guides {
-			gi, _, inErr := r.guideInput(ctx, q, accountID, g.ID, false)
-			if inErr != nil {
-				return inErr
-			}
-			in.Verdicts = gi.Verdicts
-			in.Guides = append(in.Guides, gi)
+		in, inErr := r.planInput(ctx, r.queries.WithTx(tx), accountID, key)
+		if inErr != nil {
+			return inErr
 		}
 		out.Plan = coreprogress.BuildGoalPlan(in)
+		return nil
+	})
+	return out, err
+}
+
+// planInput is what a goal plan or a focus graph reads about the account:
+// the facts, the stored verdicts and every guide with its marks.
+func (r *Repository) planInput(ctx context.Context, q *storedb.Queries, accountID string, focus entities.ObjectiveKey) (coreprogress.GoalPlanInput, error) {
+	ps, _, err := state.Load(ctx, q, accountID, r.catalog)
+	if err != nil {
+		return coreprogress.GoalPlanInput{}, err
+	}
+	in := coreprogress.GoalPlanInput{Goal: focus, Registry: r.catalog, State: ps}
+	for _, g := range r.content.Guides {
+		gi, _, err := r.guideInput(ctx, q, accountID, g.ID, false)
+		if err != nil {
+			return coreprogress.GoalPlanInput{}, err
+		}
+		in.Verdicts = gi.Verdicts
+		in.Guides = append(in.Guides, gi)
+	}
+	return in, nil
+}
+
+// Graph is the focus graph of F10 for the account: the focus, its
+// requirements up to depth and what it unlocks.
+func (r *Repository) Graph(ctx context.Context, accountID string, focus entities.ObjectiveKey, depth int) (coreprogress.Graph, error) {
+	if _, err := getAccount(ctx, r.queries, accountID); err != nil {
+		return coreprogress.Graph{}, err
+	}
+	var out coreprogress.Graph
+	err := r.inTx(ctx, func(tx pgx.Tx) error {
+		in, err := r.planInput(ctx, r.queries.WithTx(tx), accountID, focus)
+		if err != nil {
+			return err
+		}
+		out = coreprogress.BuildGraph(coreprogress.GraphInput{GoalPlanInput: in, Depth: depth})
 		return nil
 	})
 	return out, err

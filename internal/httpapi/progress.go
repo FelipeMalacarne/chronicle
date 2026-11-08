@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 )
@@ -29,6 +30,7 @@ type ProgressService interface {
 	AddGoal(ctx context.Context, accountID, key, label string) (storeprogress.GoalView, error)
 	RemoveGoal(ctx context.Context, accountID, goalID string) error
 	GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error)
+	Graph(ctx context.Context, accountID string, focus entities.ObjectiveKey, depth int) (coreprogress.Graph, error)
 	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
 }
 

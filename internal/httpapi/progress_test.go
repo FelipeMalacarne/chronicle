@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
 	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 )
@@ -151,6 +152,14 @@ func (f *fakeProgress) GoalPlan(ctx context.Context, accountID, goalID string) (
 		return storeprogress.GoalPlanView{}, storeprogress.ErrGoalNotFound
 	}
 	return storeprogress.GoalPlanView{Goal: goals[0], Plan: coreprogress.GoalPlan{Goal: goals[0].Key, Requirements: true, Total: 1}}, nil
+}
+
+func (f *fakeProgress) Graph(_ context.Context, accountID string, focus entities.ObjectiveKey, depth int) (coreprogress.Graph, error) {
+	f.call, f.step = "graph", focus.String()
+	if accountID == "missing" {
+		return coreprogress.Graph{}, storeprogress.ErrAccountNotFound
+	}
+	return coreprogress.Graph{Depth: depth, Focus: coreprogress.GraphNode{Key: focus.String()}}, nil
 }
 
 func (f *fakeProgress) RemoveGoal(_ context.Context, _, goalID string) error {
@@ -302,6 +311,33 @@ func TestProgressRoutes(t *testing.T) {
 		fake.err = tc.err
 		if status, _ := do(t, "PATCH", base+"/guides/oziris-main/steps/1/mark?account=acc-1", `{"kind":"manual_done"}`); status != tc.want {
 			t.Fatalf("%v = %d, want %d", tc.err, status, tc.want)
+		}
+	}
+}
+
+func TestGraphRoute(t *testing.T) {
+	prog := &fakeProgress{}
+	srv := httptest.NewServer(New(Options{Version: "test", DevMode: true, Progress: prog, Logger: slog.New(slog.NewTextHandler(io.Discard, nil))}))
+	defer srv.Close()
+	get := func(path string) int {
+		resp, err := http.Get(srv.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		resp.Body.Close()
+		return resp.StatusCode
+	}
+	if code := get("/api/graph?account=acc_1&focus=quest:dragon_slayer_i@finished&depth=3"); code != http.StatusOK || prog.call != "graph" || prog.step != "quest:dragon_slayer_i@finished" {
+		t.Fatalf("graph = %d (%s %s)", code, prog.call, prog.step)
+	}
+	for path, want := range map[string]int{
+		"/api/graph?account=acc_1&focus=dragon slayer":                          http.StatusBadRequest,
+		"/api/graph?account=acc_1&focus=quest:dragon_slayer_i@finished&depth=4": http.StatusBadRequest,
+		"/api/graph?focus=quest:dragon_slayer_i@finished":                       http.StatusBadRequest,
+		"/api/graph?account=missing&focus=quest:dragon_slayer_i@finished":       http.StatusNotFound,
+	} {
+		if code := get(path); code != want {
+			t.Errorf("%s = %d, want %d", path, code, want)
 		}
 	}
 }

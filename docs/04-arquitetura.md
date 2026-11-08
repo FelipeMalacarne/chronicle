@@ -922,7 +922,7 @@ o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis
   do servidor.
 - Nada no código distingue os dois ambientes além da configuração (doc 07).
 
-## 9. Estado em 2026-11-04 e sequência vigente
+## 9. Estado em 2026-11-08 e sequência vigente
 
 Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/microbot-plugins`, commit
 `68fc1c6`):
@@ -989,7 +989,7 @@ em memória por conta em `internal/events`, publicação depois do commit no ing
 e nas escritas do dono; na web, releitura silenciosa por etiqueta dos recursos abertos e o toast de
 detecção (seção 6.6). Verificação: testes do hub com `-race`, teste HTTP do stream, eventos nos testes
 de integração de ingest, sync e progresso, `node --test` do view-model e o stream passando pelo proxy
-do Vite. Falta ver ao vivo com o plugin no zaros.
+do Vite. Conferido ao vivo com o plugin no zaros (2026-11-08).
 
 Sessão web por OIDC (parte web do item 11, 2026-11-05, branch `feat/oidc-web`): `/auth/login`,
 `/auth/callback`, `/auth/logout`, `GET /api/me`, sessão scs no `pgxstore`, política por `sub` ou role
@@ -1012,7 +1012,7 @@ Verificação: testes de tabela (conta de dev, janela, rótulos, `Plan.Route`), 
 aceito em dev, peer remoto recusado mesmo com `X-Forwarded-For`, nada sem token fora de dev,
 token inalterado, `marks:write`), `TestDevInstallationPostgres` e a rota da resposta em
 `TestProgressPostgresLifecycle`, goose up/down/up da 0006 com dados, `just dbml`; no plugin, 92
-testes JUnit e o jar. Falta usar no jogo.
+testes JUnit e o jar. Em uso no jogo com o plugin 1.2.1 (2026-11-08).
 
 Web v6 (2026-11-05, branch `claude/epic-hypatia-xujppt`): as telas seguem a página v6 do canvas
 "Chronicle — Telas" (docs/ui/decisoes-canvas.md, seção 6). Casca Chronicle com a sidebar A e a barra
@@ -1043,12 +1043,13 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
-| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois OIDC e saradomin (sessão web por PKCE e device flow do plugin, item 15); depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`) | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); falta o deploy no saradomin e a tela de login/sair |
-| 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05): falta conferir ao vivo com o plugin |
-| 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito no branch** (2026-11-05, `feat/push-por-evento`), falta instalar e conferir no jogo |
-| 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito nos branches** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); falta instalar e conferir no jogo |
-| 15 | Auth do plugin em `oidc`: aplicação nativa no Zitadel, `GET /api/auth/plugin`, validação do JWT pela JWKS, roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | junto do deploy no saradomin (item 11) |
+| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 17 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6) |
+| 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05); conferido ao vivo com o plugin no zaros (2026-11-08) |
+| 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito** (2026-11-05, `feat/push-por-evento`); em uso no jogo (2026-11-08) |
+| 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); em uso no jogo com o plugin 1.2.1 (2026-11-08) |
+| 15 | Auth do plugin em `oidc`: aplicação nativa no Zitadel, `GET /api/auth/plugin`, validação do JWT pela JWKS, roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | junto do deploy no saradomin (item 17) |
 | 16 | Plugin 1.2.x: posição e mundo (`data.position`, opt-in) com destaque na web dos passos pendentes no lugar (desenho no canvas antes), collection log e combat achievements (decisão 24 do doc 01) | por entrega |
+| 17 | Deploy no saradomin (doc 07, seção 3.3): imagem atrás do proxy, `AUTH_MODE=oidc` com o Zitadel, tela de login/sair (desenho no canvas antes) e o item 15. Por último, decidido pelo dono em 2026-11-08 | o dono usa o planner pelo saradomin, com login web e o plugin autenticado |
 
 Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.
 

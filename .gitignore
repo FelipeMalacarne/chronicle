@@ -36,3 +36,6 @@ result-*
 
 # Database dumps of the local stack (just db-backup)
 backups/
+
+# Playwright MCP screenshots and logs
+.playwright-mcp/

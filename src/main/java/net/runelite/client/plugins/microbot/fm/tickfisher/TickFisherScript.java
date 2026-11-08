@@ -61,6 +61,11 @@ public class TickFisherScript extends Script
 	/** The spot being fished, its tile when picked, and the tick phase 0 counts from. */
 	private Rs2NpcModel spot;
 	private WorldPoint spotTile;
+	/**
+	 * Where the game put us to fish the spot when that is not next to it (a spot off the shore is
+	 * fished from two tiles away), so standing there counts as next to it.
+	 */
+	private WorldPoint reachTile;
 	private int anchorTick = -1;
 	/** The last tick the loop acted on, and the last XP drop tick counted. */
 	private int handledTick = -1;
@@ -431,6 +436,7 @@ public class TickFisherScript extends Script
 			lookout = -1;
 			spot = nearest;
 			spotTile = nearest.getWorldLocation();
+			reachTile = null;
 			events.clearDespawned();
 		}
 		return nearest;
@@ -480,10 +486,10 @@ public class TickFisherScript extends Script
 	 * idle one and is true while turning or fishing, which read as walking threw the cycle away
 	 * and waited up to 8 s (0.3.1: about half the XP drops off the cycle).
 	 */
-	private static boolean nextTo(Rs2NpcModel target)
+	private boolean nextTo(Rs2NpcModel target)
 	{
 		WorldPoint me = Rs2Player.getWorldLocation();
-		return me != null && me.distanceTo(target.getWorldLocation()) <= 1;
+		return me != null && (me.distanceTo(target.getWorldLocation()) <= 1 || me.equals(reachTile));
 	}
 
 	/** Walks to the spot by clicking it, then starts a fresh cycle on the next tick. */
@@ -498,7 +504,32 @@ public class TickFisherScript extends Script
 			Rs2Walker.walkTo(target.getWorldLocation(), 1);
 			return;
 		}
-		Global.sleepUntil(() -> nextTo(target), 8000);
+		// Arrived where the click put us: next to the spot, or standing still close to it (some
+		// spots are fished from two tiles away; 0.3.5 re-clicked such a spot every tick).
+		WorldPoint[] last = {Rs2Player.getWorldLocation()};
+		long[] since = {System.currentTimeMillis()};
+		Global.sleepUntil(() ->
+		{
+			if (nextTo(target))
+			{
+				return true;
+			}
+			WorldPoint me = Rs2Player.getWorldLocation();
+			long now = System.currentTimeMillis();
+			if (me == null || !me.equals(last[0]))
+			{
+				last[0] = me;
+				since[0] = now;
+				return false;
+			}
+			return me.distanceTo(target.getWorldLocation()) <= 2 && now - since[0] >= 1200;
+		}, 8000);
+		WorldPoint me = Rs2Player.getWorldLocation();
+		if (me != null && !nextTo(target) && me.distanceTo(target.getWorldLocation()) <= 2)
+		{
+			reachTile = me;
+			log.info("Tick Fisher: fishing the spot at {} from {}", target.getWorldLocation(), me);
+		}
 	}
 
 	// ----- inventory, bank ---------------------------------------------------------------------

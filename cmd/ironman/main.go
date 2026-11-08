@@ -1,6 +1,6 @@
 // Command ironman is the single binary of the Ironman planner: web server
-// (serve), content tooling (content validate|migrate) and, later, the CLI and
-// MCP clients of the API.
+// (serve), content tooling (content validate|migrate|mcp) and the CLI and MCP
+// clients of the API (login, now, done, plan, sync, state, mcp).
 package main
 
 import (
@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
+	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
 )
 
 func main() {
@@ -32,8 +33,19 @@ func newRoot() *cobra.Command {
 		newContentCmd(),
 		newVersionCmd(),
 		newHealthCmd(),
+		newLoginCmd(),
+		newLogoutCmd(),
+		newAccountsCmd(),
+		newUseCmd(),
+		newNowCmd(),
+		markCmd("done", "Mark a step of the active route done (the current one by default)", coreprogress.ActionManualDone, "Feito"),
+		markCmd("skip", "Skip a step of the active route (the current one by default)", coreprogress.ActionSkipped, "Pulado"),
+		markCmd("undo", "Clear your mark on a step of the active route", coreprogress.ActionClear, "Desfeito"),
+		newPlanCmd(),
+		newSyncCmd(),
+		newStateCmd(),
+		newMCPCmd(),
 	)
-	root.AddCommand(stubCommands()...)
 	return root
 }
 
@@ -46,32 +58,4 @@ func newVersionCmd() *cobra.Command {
 			fmt.Fprintln(cmd.OutOrStdout(), buildinfo.String())
 		},
 	}
-}
-
-// exitCodeNotImplemented is returned by stub subcommands.
-const exitCodeNotImplemented = 2
-
-func stubCommands() []*cobra.Command {
-	stubs := []struct{ use, short string }{
-		{"now", "Show the next step, items to bring and blockers (client of the API)"},
-		{"done", "Mark a step done, skipped or add a note"},
-		{"plan", "Ordered plan to reach a goal"},
-		{"sync", "Force a sync from a data source"},
-		{"state", "Show player state (skills, quests, diaries)"},
-		{"mcp", "Run the MCP server over stdio"},
-	}
-	out := make([]*cobra.Command, 0, len(stubs))
-	for _, s := range stubs {
-		use := s.use
-		out = append(out, &cobra.Command{
-			Use:                use,
-			Short:              s.short + " [not implemented yet]",
-			DisableFlagParsing: true,
-			Run: func(cmd *cobra.Command, _ []string) {
-				fmt.Fprintf(cmd.ErrOrStderr(), "ironman %s: not implemented yet\n", use)
-				os.Exit(exitCodeNotImplemented)
-			},
-		})
-	}
-	return out
 }

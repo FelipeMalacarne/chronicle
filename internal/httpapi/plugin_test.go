@@ -266,3 +266,31 @@ func TestPluginMarks(t *testing.T) {
 		t.Fatalf("token mark outside dev mode = %d", status)
 	}
 }
+
+// GET /api/route is the same window addressed by ?account= (the CLI's
+// `now`): it needs the account and checks the limit.
+func TestAccountRouteWindow(t *testing.T) {
+	server, _, _, prog := newPluginServer(t, true)
+	resp, err := http.Get(server.URL + "/api/route?account=acc_dev&limit=5")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer resp.Body.Close()
+	var w panel.Window
+	if err := json.NewDecoder(resp.Body).Decode(&w); err != nil || resp.StatusCode != http.StatusOK {
+		t.Fatalf("route = %d %v", resp.StatusCode, err)
+	}
+	if prog.account != "acc_dev" || w.Cursor == nil || w.Cursor.StepID != "2" || w.Attribution == "" {
+		t.Fatalf("window = %+v (account %q)", w, prog.account)
+	}
+	for path, want := range map[string]int{"/api/route": http.StatusBadRequest, "/api/route?account=acc_dev&limit=0": http.StatusBadRequest} {
+		r, err := http.Get(server.URL + path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		r.Body.Close()
+		if r.StatusCode != want {
+			t.Errorf("%s = %d, want %d", path, r.StatusCode, want)
+		}
+	}
+}

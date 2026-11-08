@@ -54,6 +54,8 @@ type Identity interface {
 	DevUser(ctx context.Context) (identity.User, bool, error)
 	Accounts(ctx context.Context, userID string) ([]storeprogress.AccountView, error)
 	OwnsAccount(ctx context.Context, userID, accountID string) (bool, error)
+	// UserBySubject is the existing user of a bearer token (never created).
+	UserBySubject(ctx context.Context, issuer, subject string) (identity.User, error)
 }
 
 // OIDCOptions turns on AUTH_MODE=oidc: the /auth routes and the session that
@@ -92,13 +94,23 @@ func NewSessionManager(store scs.Store, secure bool) *scs.SessionManager {
 	return sm
 }
 
-type userKey struct{}
+type (
+	userKey  struct{}
+	rolesKey struct{}
+)
 
-// sessionUser is the user of the request in AUTH_MODE=oidc; "" in dev mode
-// (the store then means the dev user).
+// sessionUser is the user of the request in AUTH_MODE=oidc (of the session
+// or of the bearer token); "" in dev mode (the store then means the dev
+// user).
 func sessionUser(r *http.Request) string {
 	id, _ := r.Context().Value(userKey{}).(string)
 	return id
+}
+
+// requestRoles are the project roles of the request's session or token.
+func requestRoles(r *http.Request) []string {
+	roles, _ := r.Context().Value(rolesKey{}).([]string)
+	return roles
 }
 
 func safeMethod(m string) bool {
@@ -110,15 +122,17 @@ func safeMethod(m string) bool {
 func (s *Server) accountRoutes() bool { return s.opts.DevMode || s.opts.OIDC != nil }
 
 // authed wraps an account-addressed handler. Dev mode passes through. OIDC
-// mode loads the session, answers 401 without a user, re-checks the policy
-// (an allow list changed by a restart applies to open sessions too), demands
-// the CSRF header on state-changing methods and puts the user in the context.
+// mode authenticates by a bearer token when the request carries
+// Authorization (bearerAuthed), else by the session: it loads the session,
+// answers 401 without a user, re-checks the policy (an allow list changed by
+// a restart applies to open sessions too), demands the CSRF header on
+// state-changing methods and puts the user in the context.
 func (s *Server) authed(h http.HandlerFunc) http.Handler {
 	if s.opts.DevMode {
 		return h
 	}
 	o := s.opts.OIDC
-	return o.Sessions.LoadAndSave(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+	session := o.Sessions.LoadAndSave(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 		uid := o.Sessions.GetString(ctx, keyUserID)
 		if uid == "" {
@@ -135,8 +149,62 @@ func (s *Server) authed(h http.HandlerFunc) http.Handler {
 			writeError(w, http.StatusForbidden, "missing "+CSRFHeader+" header")
 			return
 		}
-		h(w, r.WithContext(context.WithValue(ctx, userKey{}, uid)))
+		ctx = context.WithValue(ctx, userKey{}, uid)
+		h(w, r.WithContext(context.WithValue(ctx, rolesKey{}, roles)))
 	}))
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") != "" {
+			s.bearerAuthed(h, w, r)
+			return
+		}
+		session.ServeHTTP(w, r)
+	})
+}
+
+// bearerAuthed authenticates by the JWT access token of the native client
+// (CLI, `ironman mcp`, later the plugin; docs/04 section 2.5): signature,
+// issuer, audience and expiry by the cached JWKS, the same policy as the
+// session, and an existing user of (issuer, sub). The session is never
+// consulted, so a bad token is 401 even with a valid cookie, and no CSRF
+// header is needed: the browser never attaches a bearer token by itself.
+func (s *Server) bearerAuthed(h http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
+	o := s.opts.OIDC
+	unauthorized := func(msg string) {
+		w.Header().Set("WWW-Authenticate", `Bearer realm="ironman"`)
+		writeError(w, http.StatusUnauthorized, msg)
+	}
+	scheme, raw, _ := strings.Cut(r.Header.Get("Authorization"), " ")
+	raw = strings.TrimSpace(raw)
+	if !strings.EqualFold(scheme, "Bearer") || raw == "" {
+		unauthorized("Authorization must be a Bearer token")
+		return
+	}
+	id, err := o.Provider.VerifyAccessToken(r.Context(), raw)
+	if errors.Is(err, auth.ErrNoNativeClient) {
+		unauthorized("bearer login is not configured (OIDC_NATIVE_CLIENT_ID)")
+		return
+	}
+	if err != nil {
+		s.log.Info("auth: bearer token refused", "err", err)
+		unauthorized("invalid or expired token")
+		return
+	}
+	if !o.Policy.Allows(id.Subject, id.Roles) {
+		writeError(w, http.StatusForbidden, deniedMessage)
+		return
+	}
+	u, err := s.opts.Identity.UserBySubject(r.Context(), id.Issuer, id.Subject)
+	if errors.Is(err, identity.ErrUserNotFound) {
+		writeError(w, http.StatusForbidden, "unknown user: sign in on the web once before using a token")
+		return
+	}
+	if err != nil {
+		s.log.Error("auth: bearer user", "err", err)
+		writeError(w, http.StatusInternalServerError, "could not load the user")
+		return
+	}
+	ctx := context.WithValue(r.Context(), userKey{}, u.ID)
+	h(w, r.WithContext(context.WithValue(ctx, rolesKey{}, id.Roles)))
 }
 
 // accountParam reads ?account=. In oidc mode the account must belong to the
@@ -308,11 +376,13 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 		out.AuthMode = "oidc"
 		out.User, err = s.opts.Identity.User(ctx, sessionUser(r))
 		if errors.Is(err, identity.ErrUserNotFound) {
-			_ = s.opts.OIDC.Sessions.Destroy(ctx)
+			if r.Header.Get("Authorization") == "" {
+				_ = s.opts.OIDC.Sessions.Destroy(ctx)
+			}
 			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "login required", "status": http.StatusUnauthorized, "login": "/auth/login"})
 			return
 		}
-		if roles, ok := s.opts.OIDC.Sessions.Get(ctx, keyRoles).([]string); ok {
+		if roles := requestRoles(r); roles != nil {
 			out.Roles = roles
 		}
 	}

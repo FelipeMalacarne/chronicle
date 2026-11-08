@@ -185,6 +185,24 @@ func (r *Repository) User(ctx context.Context, id string) (User, error) {
 	return userOf(u), nil
 }
 
+// UserBySubject returns the OIDC user of (issuer, subject): the user a bearer
+// token of the native client speaks for. It never creates one; the first
+// login of a subject is the web's (LoginOIDC), which also runs the dev
+// account claim. A subject of another issuer or of the dev user is not found.
+func (r *Repository) UserBySubject(ctx context.Context, issuer, subject string) (User, error) {
+	u, err := r.queries.GetUserBySubject(ctx, subject)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return User{}, ErrUserNotFound
+	}
+	if err != nil {
+		return User{}, fmt.Errorf("get user: %w", err)
+	}
+	if issuer == "" || !u.Issuer.Valid || u.Issuer.String != issuer {
+		return User{}, ErrUserNotFound
+	}
+	return userOf(u), nil
+}
+
 // DevUser returns the AUTH_MODE=dev user; found is false before the first
 // account exists.
 func (r *Repository) DevUser(ctx context.Context) (User, bool, error) {

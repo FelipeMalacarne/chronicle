@@ -114,6 +114,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/guide/{section}", s.handleLegacySection)
 	s.mux.HandleFunc("GET /api/steps/{id}", s.handleLegacyStep)
 	s.mux.HandleFunc("GET /api/now", s.handleLegacyNow)
+	s.mux.HandleFunc("GET /api/auth/client", s.handleAuthClient)
 	if s.opts.Ingest != nil {
 		s.mux.HandleFunc("GET /api/ingest/manifest", s.handleIngestManifest)
 		s.mux.HandleFunc("POST /api/ingest", s.handleIngestPush)
@@ -148,6 +149,7 @@ func (s *Server) routes() {
 	}
 	if s.opts.Progress != nil && s.accountRoutes() {
 		account("GET /api/guides/{guide}/board", s.handleBoard)
+		account("GET /api/route", s.handleRoute)
 		account("PATCH /api/guides/{guide}/steps/{id}/mark", s.handleMark)
 		account("POST /api/guides/{guide}/implied/confirm", s.handleConfirmImplied)
 		account("POST /api/guides/{guide}/marks", s.handleBatchMarks)

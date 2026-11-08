@@ -17,6 +17,8 @@ import (
 var (
 	ErrNoIDToken = errors.New("auth: token response has no id_token")
 	ErrNonce     = errors.New("auth: ID token nonce does not match the login")
+	// ErrNoNativeClient: bearer login is off (no native application).
+	ErrNoNativeClient = errors.New("auth: no native client configured")
 )
 
 // Config is the client registration at the issuer: a public Web application
@@ -28,6 +30,10 @@ type Config struct {
 	// ProjectID pins the project-scoped role claim to one Zitadel project;
 	// empty accepts any project id.
 	ProjectID string
+	// NativeClientID is the public native application of the device flow
+	// (CLI, MCP, plugin). Its JWT access tokens must carry it in `aud`;
+	// empty turns bearer login off.
+	NativeClientID string
 	// HTTPClient talks to the issuer (discovery, JWKS, token, userinfo); nil
 	// uses http.DefaultClient.
 	HTTPClient *http.Client
@@ -54,6 +60,8 @@ type Provider struct {
 	issuer     string
 	endSession string
 	projectID  string
+	native     string
+	access     *oidc.IDTokenVerifier
 }
 
 // NewProvider discovers the issuer (/.well-known/openid-configuration). The
@@ -77,6 +85,12 @@ func NewProvider(ctx context.Context, cfg Config) (*Provider, error) {
 	endpoint := p.Endpoint()
 	// Public client: client_id goes in the token request body, no secret.
 	endpoint.AuthStyle = oauth2.AuthStyleInParams
+	var access *oidc.IDTokenVerifier
+	if cfg.NativeClientID != "" {
+		// A JWT access token has the shape go-oidc verifies for ID tokens:
+		// signature by the JWKS, iss, aud (the native client) and exp.
+		access = p.Verifier(&oidc.Config{ClientID: cfg.NativeClientID})
+	}
 	return &Provider{
 		provider: p,
 		oauth: oauth2.Config{
@@ -88,7 +102,44 @@ func NewProvider(ctx context.Context, cfg Config) (*Provider, error) {
 		issuer:     cfg.Issuer,
 		endSession: extra.EndSession,
 		projectID:  cfg.ProjectID,
+		native:     cfg.NativeClientID,
+		access:     access,
 	}, nil
+}
+
+// NativeClientID is the public native application of the device flow, ""
+// when bearer login is off.
+func (p *Provider) NativeClientID() string { return p.native }
+
+// DeviceScopes are the scopes a native client asks for: the refresh token
+// (offline_access), the project roles in the tokens and, with a project id,
+// the project in the access token's audience.
+func (p *Provider) DeviceScopes() []string {
+	scopes := []string{oidc.ScopeOpenID, "profile", "email", oidc.ScopeOfflineAccess, "urn:zitadel:iam:org:projects:roles"}
+	if p.projectID != "" {
+		scopes = append(scopes, "urn:zitadel:iam:org:project:id:"+p.projectID+":aud")
+	}
+	return scopes
+}
+
+// VerifyAccessToken checks a JWT access token of the native client (the
+// bearer of the CLI, MCP and plugin) without calling the issuer: signature by
+// the cached JWKS, iss, aud and exp. The identity carries the issuer, the
+// subject and the project roles of the token; Zitadel puts the roles there
+// with "Assert Roles on Authentication" on the project.
+func (p *Provider) VerifyAccessToken(ctx context.Context, raw string) (Identity, error) {
+	if p.access == nil {
+		return Identity{}, ErrNoNativeClient
+	}
+	tok, err := p.access.Verify(oidc.ClientContext(ctx, p.client), raw)
+	if err != nil {
+		return Identity{}, fmt.Errorf("auth: verify access token: %w", err)
+	}
+	var claims map[string]json.RawMessage
+	if err := tok.Claims(&claims); err != nil {
+		return Identity{}, fmt.Errorf("auth: access token claims: %w", err)
+	}
+	return Identity{Issuer: tok.Issuer, Subject: tok.Subject, Roles: RolesFromClaims(claims, p.projectID)}, nil
 }
 
 // Issuer is the configured issuer URL (the `iss` every ID token must carry).

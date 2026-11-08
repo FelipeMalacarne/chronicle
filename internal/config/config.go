@@ -63,6 +63,13 @@ type Config struct {
 	// project; empty accepts any project id. Env: OIDC_PROJECT_ID.
 	OIDCProjectID string
 
+	// OIDCNativeClientID is the public native application (Device Code grant,
+	// no secret) that the CLI, `ironman mcp` and, later, the plugin log in
+	// with (docs/04 section 2.5). Its JWT access tokens are accepted as
+	// `Authorization: Bearer` on the account routes; empty disables bearer
+	// login, leaving only the web session. Env: OIDC_NATIVE_CLIENT_ID.
+	OIDCNativeClientID string
+
 	// SessionSecret keys the encrypted cookie that carries the login state
 	// (state, nonce, PKCE verifier) between /auth/login and /auth/callback; the
 	// session itself is a random token over the sessions table. 32+ characters
@@ -123,18 +130,19 @@ func FromLookup(lookup func(string) (string, bool)) (Config, error) {
 		return def
 	}
 	c := Config{
-		Addr:             get("IRONMAN_ADDR", DefaultAddr),
-		DatabaseURL:      get("DATABASE_URL", ""),
-		AuthMode:         strings.ToLower(get("AUTH_MODE", DefaultAuthMode)),
-		OIDCIssuer:       get("OIDC_ISSUER", ""),
-		OIDCClientID:     get("OIDC_CLIENT_ID", ""),
-		OIDCRedirectURL:  get("OIDC_REDIRECT_URL", ""),
-		OIDCRequiredRole: get("OIDC_REQUIRED_ROLE", ""),
-		OIDCProjectID:    get("OIDC_PROJECT_ID", ""),
-		SessionSecret:    get("SESSION_SECRET", ""),
-		ContentDir:       get("CONTENT_DIR", DefaultContentDir),
-		LogLevel:         strings.ToLower(get("LOG_LEVEL", DefaultLogLevel)),
-		PublicBaseURL:    strings.TrimRight(get("PUBLIC_BASE_URL", ""), "/"),
+		Addr:               get("IRONMAN_ADDR", DefaultAddr),
+		DatabaseURL:        get("DATABASE_URL", ""),
+		AuthMode:           strings.ToLower(get("AUTH_MODE", DefaultAuthMode)),
+		OIDCIssuer:         get("OIDC_ISSUER", ""),
+		OIDCClientID:       get("OIDC_CLIENT_ID", ""),
+		OIDCRedirectURL:    get("OIDC_REDIRECT_URL", ""),
+		OIDCRequiredRole:   get("OIDC_REQUIRED_ROLE", ""),
+		OIDCProjectID:      get("OIDC_PROJECT_ID", ""),
+		OIDCNativeClientID: get("OIDC_NATIVE_CLIENT_ID", ""),
+		SessionSecret:      get("SESSION_SECRET", ""),
+		ContentDir:         get("CONTENT_DIR", DefaultContentDir),
+		LogLevel:           strings.ToLower(get("LOG_LEVEL", DefaultLogLevel)),
+		PublicBaseURL:      strings.TrimRight(get("PUBLIC_BASE_URL", ""), "/"),
 	}
 	minutes, err := strconv.Atoi(get("SYNC_HISCORES_MINUTES", strconv.Itoa(DefaultSyncHiscoresMinutes)))
 	if err != nil || minutes < 0 {

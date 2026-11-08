@@ -46,6 +46,7 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `just up` / `just down` / `just logs` / `just restart` | the stack used on zaros (`compose.yaml`): images built from the committed HEAD (`git archive`), Postgres + one-shot `migrate` (goose) + app on 127.0.0.1 |
 | `just stack-account-create <rsn>` / `stack-account-guide` / `stack-accounts` / `stack-psql` / `db-backup` | accounts, psql and `pg_dump` (to `backups/`) inside the stack's Postgres, which has no host port |
 | `ironman health` | GET `/api/health` of a running server (container healthcheck; never opens the database) |
+| `ironman login` / `now` / `done` / `plan` / `state` / `mcp` | API clients (docs/04 section 2.2): server from `--url`, `IRONMAN_URL`, `~/.config/ironman/config.json`, default `http://localhost:8080`; dev needs no login, oidc uses the Zitadel device flow; `IRONMAN_TOKEN` overrides the stored login. `done`/`skip`/`undo` write the owner's marks: never run them on the owner's account unasked |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
 
@@ -54,8 +55,9 @@ Run `just` alone to list everything. All tools also work without Nix (`go run pk
 ```
 cmd/ironman/          cobra subcommands: serve, content (migrate, validate, import-bruhsailer, mcp: the
                       offline extraction server over content/ only, docs/09 section 6; there is no
-                      merge step: annotations are sidecars composed by the loader);
-                      planned: now, done, plan, sync, state, mcp (account, over the API)
+                      merge step: annotations are sidecars composed by the loader); API clients:
+                      login, logout, accounts, use, now, done, skip, undo, plan, sync, state and mcp
+                      (the account's MCP server, over the API)
 internal/core/        PURE domain (no DB/HTTP imports):
   content/            loader, schema validation, guide/variant/section/segment/step model
   content/derive/     deterministic bank-leg segments, bank actions and loadouts
@@ -71,12 +73,15 @@ internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical gui
 internal/store/       repositories (identity: OIDC users, dev-account claim, ownership; ingest: tokens, pushes, holdings; progress: reevaluation, marks,
                       cursor, board, goals, content index and step id aliases at boot; state:
                       PlayerState from player_state; syncrun: hiscores runs, backoff, scheduler); internal/store/db is sqlc OUTPUT
-internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy); authtest: fake issuer for tests
+internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
+                      client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)
 internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* and /api/me, account routes
                       (incl. /api/world/entity for the entity panel, /api/account/state for Conta)
                       (dev without session, oidc behind it), dev-only token bootstrap
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
-                      planned: internal/client
+internal/client/      typed API client of the CLI and `ironman mcp`: config.json and credentials.json
+                      under ~/.config/ironman, device-flow login (RFC 8628), token refresh; never
+                      imports internal/store
 web/                  Svelte SPA; web/embed.go embeds web/dist (`//go:embed all:dist`);
                       web/src/lib/progress: view-model (view.ts is pure and node-tested), API types;
                       web/src/lib/v6: components of the v6 screens (Pergaminho design system, canvas page v6)
@@ -142,7 +147,9 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
 
 Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
 (`dev` | `oidc`, default `dev`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL` (`PUBLIC_BASE_URL/auth/callback`), `OIDC_ALLOWED_SUBJECTS`,
-`OIDC_REQUIRED_ROLE` (oidc needs one of the two; both set = both required), `OIDC_PROJECT_ID`, `SESSION_SECRET` (32+ chars in oidc),
+`OIDC_REQUIRED_ROLE` (oidc needs one of the two; both set = both required), `OIDC_PROJECT_ID`, `OIDC_NATIVE_CLIENT_ID`
+(Zitadel native app of the device flow: its JWT access tokens are bearers on the account routes; empty = web
+session only), `SESSION_SECRET` (32+ chars in oidc),
 `CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler). `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 

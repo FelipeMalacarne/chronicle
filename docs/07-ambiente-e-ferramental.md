@@ -104,15 +104,21 @@ A sessão web por OIDC está pronta (doc 04, seção 2.5); falta só o deploy.
      (`https://auth.<domínio>`; conferir em `/.well-known/openid-configuration`).
    - O `sub` do dono é o **ID** do usuário em Users (número de 18 dígitos), para
      `OIDC_ALLOWED_SUBJECTS`.
-   Para o plugin (decisão 28 do doc 01, item 15 do doc 04): criar também uma aplicação **nativa**
-   pública com o grant Device Code, e as roles do projeto `ingest`, `items:bank`, `items:inventory`,
-   `items:equipment` e `marks:write`, atribuídas ao usuário do dono; o access token deve ser JWT com as
-   roles no token. O planner informa o `client_id` dela ao plugin, que só precisa da URL.
+   Para a CLI, o `ironman mcp` e depois o plugin (decisão 28 do doc 01; doc 04, seção 2.5): criar
+   também uma aplicação **nativa** pública (Applications → New → Native) com o grant **Device Code**
+   e o **Refresh Token**, **Auth Token Type: JWT**, e no projeto ligar **Assert Roles on
+   Authentication** (as roles vão no access token, que o planner valida sem chamar o Zitadel). O
+   **Client ID** dela vai em `OIDC_NATIVE_CLIENT_ID`. O planner informa issuer, `client_id` e scopes em
+   `GET /api/auth/client`, então cliente nenhum precisa de mais que a URL (`ironman login --url
+   https://planner.<domínio>`). Para o plugin (item 15), as roles do projeto `ingest`, `items:bank`,
+   `items:inventory`, `items:equipment` e `marks:write`, atribuídas ao usuário do dono.
 4. `.env` com `AUTH_MODE=oidc`, `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `PUBLIC_BASE_URL=https://planner.<domínio>`
    (https liga o `Secure` do cookie; `OIDC_REDIRECT_URL` pode ficar vazio e vira
    `PUBLIC_BASE_URL/auth/callback`), `SESSION_SECRET` novo (`openssl rand -hex 32`; o valor do
    `.env.example` é recusado) e pelo menos um de `OIDC_ALLOWED_SUBJECTS` e `OIDC_REQUIRED_ROLE` (com os
-   dois, o login precisa dos dois); `OIDC_PROJECT_ID` com o id do projeto do planner. Sem nenhum dos dois, ou sem `DATABASE_URL`, o `serve` não sobe.
+   dois, o login precisa dos dois); `OIDC_PROJECT_ID` com o id do projeto do planner e
+   `OIDC_NATIVE_CLIENT_ID` com o da aplicação nativa (vazio: só a web entra). Sem nenhum dos dois
+   primeiros, ou sem `DATABASE_URL`, o `serve` não sobe.
 5. Usar só o serviço `app` do `compose.yaml` (remover `postgres` e o `depends_on`) ou declarar o
    serviço no compose do servidor com a mesma imagem. Health em `GET /api/health`. O proxy reverso
    termina o TLS e repassa cookies; para o SSE (`/api/events`), sem buffer e sem timeout curto de

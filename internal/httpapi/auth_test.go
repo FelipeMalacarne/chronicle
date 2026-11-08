@@ -34,7 +34,10 @@ import (
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 )
 
-const testClientID = "planner-web"
+const (
+	testClientID       = "planner-web"
+	testNativeClientID = "planner-native"
+)
 
 // memIdentity is Identity in memory with the same claim rule as the store:
 // the first OIDC user takes the dev user's accounts.
@@ -103,6 +106,16 @@ func (m *memIdentity) Accounts(_ context.Context, userID string) ([]storeprogres
 	return out, nil
 }
 
+func (m *memIdentity) UserBySubject(_ context.Context, _, subject string) (identity.User, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	id, ok := m.subs[subject]
+	if !ok || id == "dev" {
+		return identity.User{}, identity.ErrUserNotFound
+	}
+	return m.users[id], nil
+}
+
 func (m *memIdentity) OwnsAccount(_ context.Context, userID, accountID string) (bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -126,6 +139,7 @@ func newOIDCEnv(t *testing.T, ident Identity, store scs.Store, policy auth.Polic
 	t.Cleanup(e.srv.Close)
 	provider, err := auth.NewProvider(context.Background(), auth.Config{
 		Issuer: e.fake.Issuer(), ClientID: testClientID, RedirectURL: e.srv.URL + "/auth/callback",
+		NativeClientID: testNativeClientID,
 	})
 	if err != nil {
 		t.Fatal(err)

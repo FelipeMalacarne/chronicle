@@ -21,7 +21,7 @@ documento onde houver conflito.
 | Grafo | Calculado no servidor em memória a partir de `content/` + catálogos + cache do wiki; renderizado com **Cytoscape.js + ELK**. Nós são chaves de objetivo. |
 | Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06), com painel da rota e marcas a partir da 1.2.0. Hoje autentica com token `ipl_` por cliente; planejado (decisão 28 do doc 01): sem token em `AUTH_MODE=dev` (só de `127.0.0.1`) e device flow do Zitadel em `oidc`. |
 | Execução | Local-first na estação `zaros` com `AUTH_MODE=dev`; depois a mesma imagem no `saradomin` com Postgres e Zitadel existentes (seção 8). |
-| Auth | `AUTH_MODE=dev` (usuário fixo) no zaros; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs` no Postgres) feito para a web, falta o deploy no saradomin (seção 8). Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). Tokens de API para CLI e MCP. |
+| Auth | `AUTH_MODE=dev` (usuário fixo) no zaros; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs` no Postgres) feito para a web, falta o deploy no saradomin (seção 8). Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). CLI e `ironman mcp`: nada em dev, device flow do Zitadel e access token JWT como bearer em `oidc` (seção 2.5). |
 
 ## 1. Stack
 
@@ -117,18 +117,26 @@ ironman content validate [path]      # schema + checagens semânticas de guide.j
 ironman content migrate              # data/guide/normalized → content/guides/oziris-main
 ironman content import-bruhsailer    # DOCX pinados → content/guides/bruhsailer-main
 ironman content mcp                  # servidor MCP stdio da extração, só sobre content/ (doc 09, seção 6)
-ironman now [--json]                 # próximo passo, itens a levar, bloqueios (cliente da API)
-ironman done <step> | skip | note    # marcar passo
-ironman plan <meta>                  # plano ordenado de uma meta
-ironman sync [--source hiscores]     # força sync
-ironman state skills|quests|diaries
+ironman login | logout                # entra no servidor (device flow em oidc; nada em dev) e o torna padrão
+ironman accounts | use <conta>       # contas do usuário; conta padrão da CLI e do MCP
+ironman now [--limit N] [--json]     # passo atual da rota ativa, objetivos, o que levar, próximos passos
+ironman done | skip | undo [passo] [--note]  # marca do dono (o passo atual sem argumento)
+ironman plan [meta]                  # metas; com uma, o plano ordenado dela
+ironman sync                         # força o sync do hiscores
+ironman state [skills|quests|diaries]
 ironman mcp                          # servidor MCP por stdio para agentes, sobre a API da conta
 ```
 
-Regra: só `serve` abre o banco. CLI e `ironman mcp` são clientes da API com token (`IRONMAN_URL`,
-`IRONMAN_TOKEN`), então funcionam de qualquer máquina e o modelo de permissão é um só. O MCP usa o SDK
-oficial `github.com/modelcontextprotocol/go-sdk`. `now`, `done`, `plan`, `sync`, `state` e `mcp` ainda
-são stubs.
+Regra: só `serve` abre o banco. CLI e `ironman mcp` são clientes da API (`internal/client`), então
+funcionam de qualquer máquina e o modelo de permissão é o da web. Servidor: `--url`, senão
+`IRONMAN_URL`, senão `config.json`, senão `http://localhost:8080`; conta: `--account`, senão
+`IRONMAN_ACCOUNT`, senão `config.json`, senão a única conta do usuário. A configuração fica em
+`~/.config/ironman/` (ou `IRONMAN_CONFIG_DIR`): `config.json` (URL e conta padrão) e
+`credentials.json` (modo 0600, o login de cada servidor: issuer, `client_id`, access e refresh
+token). `IRONMAN_TOKEN` é um bearer usado como está, no lugar do login guardado (scripts). O MCP da
+conta usa o mesmo `internal/mcp` mínimo do `content mcp` (sem o SDK oficial) com as tools `now`,
+`mark_step`, `goals`, `goal_plan`, `account_state`, `step` e `sync`; `mark_step` grava marcas do
+dono e as instruções do servidor mandam chamá-la só quando o dono pede.
 
 ### 2.3 Fluxo: snapshot → objetivos → status dos passos
 
@@ -220,7 +228,24 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
     accounts}`.
   - Falta: tela de login/logout no canvas (hoje não há botão "Sair"; o logout existe só na API) e as
     páginas de erro do login, que são HTML mínimo fora do design system.
-- **Tokens de API** (`api_tokens`): `Authorization: Bearer apk_…`, para CLI, MCP e scripts.
+- **Clientes nativos** (CLI, `ironman mcp`; o plugin no item 15), feito em 2026-11-08:
+  - `GET /api/auth/client` (público, todo modo): `{auth_mode: "dev"}`, ou em oidc `{auth_mode:
+    "oidc", issuer, client_id, scopes}`. Sem `OIDC_NATIVE_CLIENT_ID` vem sem `client_id`, e o servidor
+    não aceita bearer (só a sessão da web). O cliente só precisa da URL do planner.
+  - `ironman login`: Device Authorization Grant (RFC 8628) no issuer, com a aplicação nativa pública
+    (sem secret, a mesma para toda instalação) e os scopes do servidor: `openid profile email
+    offline_access urn:zitadel:iam:org:projects:roles` e, com `OIDC_PROJECT_ID`,
+    `urn:zitadel:iam:org:project:id:<id>:aud`. Mostra a URL e o código, espera a confirmação e guarda
+    access e refresh token; o cliente renova sozinho e regrava o refresh token rotacionado.
+  - Nas rotas por conta, em oidc, `Authorization: Bearer <JWT>` autentica no lugar da sessão
+    (`Server.authed`, `bearerAuthed`): assinatura pela JWKS em cache, `iss`, `aud` com o
+    `OIDC_NATIVE_CLIENT_ID` e `exp`, sem chamar o Zitadel; roles do próprio token (o projeto precisa de
+    "Assert Roles on Authentication"); a mesma política (`sub`/role) da sessão; o usuário de
+    `(issuer, sub)` já tem de existir (o primeiro login é sempre o da web, que faz o vínculo das contas
+    de dev); `accountParam` restringe às contas dele como na sessão. Token inválido ou vencido é 401
+    com `WWW-Authenticate: Bearer`, nunca cai na sessão do cookie; não pede o cabeçalho CSRF (o
+    navegador nunca manda um bearer sozinho). Em dev, nada muda: sem token, como a web.
+  - A tabela `api_tokens` (tokens `apk_` planejados) fica sem uso: o login da CLI é o do Zitadel.
 - **Tokens do plugin** (`plugin_ingest_tokens`): `Authorization: Bearer ipl_…`, escopo = uma conta,
   mostrados uma vez, sha256 no banco, revogáveis, com `scopes` (`state:write`; `items:*` são opt-in;
   `marks:write` deixa o painel do plugin gravar marcas). Valem em qualquer modo até o device flow
@@ -242,9 +267,9 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
     decida, 422 pedindo a "Conta". O manifest sem token não depende da conta (é pedido antes do
     login). Na stack do compose o app roda num container e o peer é o gateway da bridge, não o
     loopback: lá o plugin usa o token.
-  - **`AUTH_MODE=oidc`, planejado (item 15)**: nada sem token. Device Authorization Grant (RFC 8628) no Zitadel com uma aplicação nativa
-    pública, a mesma para toda instalação, sem dynamic client registration. O plugin descobre issuer e
-    `client_id` em `GET /api/auth/plugin`, mostra o código, guarda o refresh token na config do RuneLite e
+  - **`AUTH_MODE=oidc`, planejado (item 15)**: nada sem token. Device Authorization Grant (RFC 8628) no Zitadel com a aplicação nativa
+    pública da CLI (acima), a mesma para toda instalação, sem dynamic client registration. O plugin descobre issuer e
+    `client_id` em `GET /api/auth/client`, mostra o código, guarda o refresh token na config do RuneLite e
     renova sozinho. O access token é um JWT validado pela JWKS em cache, sem chamar o Zitadel a cada
     push. As roles do projeto (`ingest`, `items:bank`, `items:inventory`, `items:equipment`,
     `marks:write`) substituem os `scopes`.
@@ -266,6 +291,8 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `POST /api/plugin/guides/{guide}/marks?limit=` | feita | Desfazer de uma marca `implied`: só `{restore: [...]}` (o desfazer em lote da web); responde com a janela; token precisa de `marks:write` |
 | `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` | feita (oidc) | login web pelo Zitadel (acima) |
 | `GET /api/me` | feita (dev, oidc) | usuário, roles do projeto e contas dele |
+| `GET /api/auth/client` | feita | como um cliente nativo entra: modo, issuer, `client_id` e scopes do device flow (acima) |
+| `GET /api/route?account=&limit=` | feita (dev, oidc) | a janela da rota ativa do painel do plugin (`panel.Window`), por conta: o `now` da CLI e do MCP |
 | `POST /api/dev/ingest-token` | feita (só dev) | bootstrap de token sem UI |
 | `GET /api/guides/{guide}/readiness?account=&step=`, `GET /api/guides/{guide}/segments/{segment}/readiness?account=` | feita (dev, oidc) | readiness do trecho (seção 6.4.1) |
 | `GET /api/guides/{guide}/board?account=` | feita (dev, oidc) | status derivado e veredito por objetivo de cada passo, marcas, cursor, contagens, órfãos; frescor fica para o item 9 |
@@ -864,7 +891,7 @@ internal/core/        domínio puro: content (loader, schema, derive, migrate), 
                       annotate (extração por agente); planejados: progress, graph
 internal/importer/    bruhsailer (DOCX pinados → guia canônico)
 internal/store/       repositórios (ingest); internal/store/db é saída do sqlc
-internal/httpapi/     handlers; internal/sources/hiscores é o adapter do hiscores; planejado: internal/client
+internal/httpapi/     handlers; internal/sources/hiscores é o adapter do hiscores; internal/client é o cliente da API da CLI e do MCP
 internal/mcp/         servidor MCP stdio mínimo (JSON-RPC, só tools), usado por content mcp e pelo mcp da conta
 web/                  SPA Svelte; web/src/lib/progress é o view-model (view.ts puro e testado em node)
 content/              guides/<id>/{guide.json, README.md, entities.report.json, annotations/},
@@ -1023,8 +1050,18 @@ Componentes em `web/src/lib/v6`. Verificação: testes HTTP das duas rotas novas
 `TestQuestAndDiaryFactsPostgres` com o estado da conta, `node --test` dos módulos puros (Agora, Rota,
 Conta) e capturas em 1440 e 640 contra o servidor real com um Postgres local.
 
-Ainda não existe: deploy no saradomin, device flow do plugin,
-CLI/MCP sobre o cliente, grafo (a aba Grafo do Mundo fica desabilitada),
+CLI e MCP da conta (item 11, 2026-11-08): `internal/client` (cliente tipado da API, `config.json` e
+`credentials.json`, device flow e renovação do token), os comandos da seção 2.2 e o `ironman mcp`;
+no servidor, `GET /api/auth/client`, `GET /api/route` e o bearer JWT da aplicação nativa nas rotas
+por conta em oidc (`OIDC_NATIVE_CLIENT_ID`; seção 2.5). Verificação: o device flow completo contra o
+issuer falso (`authtest`: device authorization, polling, refresh rotacionado gravado), testes HTTP do
+bearer na memória e no Postgres (antes do primeiro login web, conta de outro usuário, assinatura
+adulterada, vencido, outra audiência, sem role, token ruim com cookie válido, login desligado),
+testes da CLI contra uma API falsa (marcas enviadas, atribuição no `now`, erro de login) e `login`,
+`accounts`, `now`, `plan`, `state` e o MCP por stdio contra o `just dev`. Falta conferir contra o
+Zitadel real, junto do deploy (item 17).
+
+Ainda não existe: deploy no saradomin, device flow do plugin, grafo (a aba Grafo do Mundo fica desabilitada),
 sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e o módulo de controle
 do Microbot (doc 08; Automação no canvas).
 
@@ -1043,11 +1080,11 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
-| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 17 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6) |
+| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 17 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6); **CLI e `ironman mcp` feitos** (2026-11-08): `internal/client`, `login/logout/accounts/use/now/done/skip/undo/plan/sync/state/mcp`, `GET /api/auth/client`, `GET /api/route` e bearer JWT da aplicação nativa nas rotas por conta em oidc (seções 2.2 e 2.5); conferido contra o `just dev` |
 | 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05); conferido ao vivo com o plugin no zaros (2026-11-08) |
 | 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito** (2026-11-05, `feat/push-por-evento`); em uso no jogo (2026-11-08) |
 | 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); em uso no jogo com o plugin 1.2.1 (2026-11-08) |
-| 15 | Auth do plugin em `oidc`: aplicação nativa no Zitadel, `GET /api/auth/plugin`, validação do JWT pela JWKS, roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | junto do deploy no saradomin (item 17) |
+| 15 | Auth do plugin em `oidc`: a aplicação nativa da CLI no Zitadel, `GET /api/auth/client`, validação do JWT pela JWKS (já feita para a CLI), roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | junto do deploy no saradomin (item 17) |
 | 16 | Plugin 1.2.x: posição e mundo (`data.position`, opt-in) com destaque na web dos passos pendentes no lugar (desenho no canvas antes), collection log e combat achievements (decisão 24 do doc 01) | por entrega |
 | 17 | Deploy no saradomin (doc 07, seção 3.3): imagem atrás do proxy, `AUTH_MODE=oidc` com o Zitadel, tela de login/sair (desenho no canvas antes) e o item 15. Por último, decidido pelo dono em 2026-11-08 | o dono usa o planner pelo saradomin, com login web e o plugin autenticado |
 

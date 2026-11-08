@@ -3641,8 +3641,7 @@
           "method": "llm",
           "confidence": "medium",
           "skill_version": "annotate-guide@5",
-          "confirmed_by": "owner",
-          "decision": "agent-judgment-delegated"
+          "confirmed_by": "owner"
         }
       }
     },
@@ -4482,8 +4481,7 @@
           "method": "llm",
           "confidence": "medium",
           "skill_version": "annotate-guide@5",
-          "confirmed_by": "owner",
-          "decision": "agent-judgment-delegated"
+          "confirmed_by": "owner"
         }
       }
     },
@@ -4591,8 +4589,7 @@
             "method": "llm",
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "confirmed_by": "owner"
           }
         },
         {
@@ -4610,8 +4607,7 @@
             "method": "llm",
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "confirmed_by": "owner"
           }
         }
       ],
@@ -5564,27 +5560,6 @@
     {
       "step_id": "bruh-2.2-113470bd76c7",
       "text_hash": "sha256:0729eb6a75fd551d51557d44776c6c50c9fc08f5282d81388519cb2f0ccbfddd",
-      "objectives": [
-        {
-          "key": "skill:prayer>=70",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "Cash in the prayer xp at the Chaos Altar",
-            "span": [
-              2,
-              42
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
-          }
-        }
-      ],
       "items": [
         {
           "name": "Bones",
@@ -5664,8 +5639,7 @@
             "method": "llm",
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "confirmed_by": "owner"
           }
         }
       ],
@@ -6484,7 +6458,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "two-level-target-takes-minimum"
           }
         }
       ],
@@ -6570,8 +6544,7 @@
           "method": "llm",
           "confidence": "medium",
           "skill_version": "annotate-guide@5",
-          "confirmed_by": "owner",
-          "decision": "agent-judgment-delegated"
+          "confirmed_by": "owner"
         }
       }
     },
@@ -6611,8 +6584,7 @@
             "method": "llm",
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "confirmed_by": "owner"
           }
         }
       ],

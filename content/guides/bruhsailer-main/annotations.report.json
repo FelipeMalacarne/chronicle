@@ -9,8 +9,8 @@
     "pending": 0,
     "submitted": 226,
     "first_submit_accepted": 206,
-    "owner_confirmed": 13,
-    "decisions_applied": 256
+    "owner_confirmed": 45,
+    "decisions_applied": 223
   },
   "sections": [
     {
@@ -43,8 +43,8 @@
       "pending": 0,
       "submitted": 31,
       "first_submit_accepted": 28,
-      "owner_confirmed": 0,
-      "decisions_applied": 37
+      "owner_confirmed": 12,
+      "decisions_applied": 25
     },
     {
       "section_id": "bruh-1.4",
@@ -54,8 +54,8 @@
       "pending": 0,
       "submitted": 34,
       "first_submit_accepted": 34,
-      "owner_confirmed": 0,
-      "decisions_applied": 34
+      "owner_confirmed": 3,
+      "decisions_applied": 31
     },
     {
       "section_id": "bruh-2.1",
@@ -65,8 +65,8 @@
       "pending": 0,
       "submitted": 46,
       "first_submit_accepted": 41,
-      "owner_confirmed": 0,
-      "decisions_applied": 55
+      "owner_confirmed": 4,
+      "decisions_applied": 51
     },
     {
       "section_id": "bruh-2.2",
@@ -76,8 +76,8 @@
       "pending": 0,
       "submitted": 39,
       "first_submit_accepted": 36,
-      "owner_confirmed": 0,
-      "decisions_applied": 32
+      "owner_confirmed": 7,
+      "decisions_applied": 24
     },
     {
       "section_id": "bruh-2.3",
@@ -98,8 +98,8 @@
       "pending": 0,
       "submitted": 16,
       "first_submit_accepted": 15,
-      "owner_confirmed": 0,
-      "decisions_applied": 18
+      "owner_confirmed": 5,
+      "decisions_applied": 13
     },
     {
       "section_id": "bruh-3.2",
@@ -109,8 +109,8 @@
       "pending": 0,
       "submitted": 13,
       "first_submit_accepted": 12,
-      "owner_confirmed": 0,
-      "decisions_applied": 11
+      "owner_confirmed": 1,
+      "decisions_applied": 10
     }
   ],
   "rule_agreement": {
@@ -346,43 +346,43 @@
       "step_id": "bruh-1.2-8d771b72bcd5",
       "what": "item:10006x1 completes",
       "quote": "grab 1-3 bird snares",
-      "decision": "agent-judgment-delegated"
+      "decision": "quest-drop-pickup-completes-x1"
     },
     {
       "step_id": "bruh-1.2-e20dc116045b",
       "what": "item:7824x1 completes",
       "quote": "the giant rat bone",
-      "decision": "agent-judgment-delegated"
+      "decision": "quest-drop-pickup-completes-x1"
     },
     {
       "step_id": "bruh-1.2-e20dc116045b",
       "what": "skill:thieving>=40 completes",
       "quote": "to almost level 41 thieving (40,583 xp or higher)",
-      "decision": "agent-judgment-delegated"
+      "decision": "two-level-target-takes-minimum"
     },
     {
       "step_id": "bruh-1.2-3b82582ee229",
       "what": "item:1381x1 completes",
       "quote": "Buy one of each elemental staff",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-3b82582ee229",
       "what": "item:1383x1 completes",
       "quote": "Buy one of each elemental staff",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-3b82582ee229",
       "what": "item:1385x1 completes",
       "quote": "Buy one of each elemental staff",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-3b82582ee229",
       "what": "item:1387x1 completes",
       "quote": "Buy one of each elemental staff",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-3b82582ee229",
@@ -418,7 +418,7 @@
       "step_id": "bruh-1.2-93715f553218",
       "what": "item:88x1 completes",
       "quote": "grab some Boots of Lightness",
-      "decision": "agent-judgment-delegated"
+      "decision": "quest-drop-pickup-completes-x1"
     },
     {
       "step_id": "bruh-1.2-93715f553218",
@@ -430,25 +430,25 @@
       "step_id": "bruh-1.2-6092b29396cf",
       "what": "item:13258x1 completes",
       "quote": "a complete Angler’s outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-6092b29396cf",
       "what": "item:13259x1 completes",
       "quote": "a complete Angler’s outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-6092b29396cf",
       "what": "item:13260x1 completes",
       "quote": "a complete Angler’s outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-6092b29396cf",
       "what": "item:13261x1 completes",
       "quote": "a complete Angler’s outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-d540dff03e35",
@@ -466,31 +466,31 @@
       "step_id": "bruh-1.2-ccdfb374312f",
       "what": "item:5554x1 completes",
       "quote": "Collect the Rogues outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-ccdfb374312f",
       "what": "item:5553x1 completes",
       "quote": "Collect the Rogues outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-ccdfb374312f",
       "what": "item:5555x1 completes",
       "quote": "Collect the Rogues outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-ccdfb374312f",
       "what": "item:5556x1 completes",
       "quote": "Collect the Rogues outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.2-ccdfb374312f",
       "what": "item:5557x1 completes",
       "quote": "Collect the Rogues outfit",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-1.3-222177cc65b3",
@@ -514,13 +514,12 @@
       "step_id": "bruh-1.3-66399bbbcf31",
       "what": "item:7833x1 completes",
       "quote": "one wing",
-      "decision": "agent-judgment-delegated"
+      "decision": "quest-drop-pickup-completes-x1"
     },
     {
       "step_id": "bruh-1.3-886f0784d3aa",
       "what": "quest:dragon_slayer_i@started starts",
-      "quote": "start Dragon Slayer I",
-      "decision": "agent-judgment-delegated"
+      "quote": "start Dragon Slayer I"
     },
     {
       "step_id": "bruh-1.3-49c2af9c4816",
@@ -531,38 +530,33 @@
     {
       "step_id": "bruh-1.3-de6f39e70583",
       "what": "quest:recipe_for_disaster_another_cooks_quest@started starts",
-      "quote": "start and complete RFD/Cook",
-      "decision": "agent-judgment-delegated"
+      "quote": "start and complete RFD/Cook"
     },
     {
       "step_id": "bruh-1.3-de6f39e70583",
       "what": "quest:recipe_for_disaster_another_cooks_quest@finished completes",
-      "quote": "start and complete RFD/Cook",
-      "decision": "agent-judgment-delegated"
+      "quote": "start and complete RFD/Cook"
     },
     {
       "step_id": "bruh-1.3-de6f39e70583",
       "what": "quest:recipe_for_disaster_freeing_the_goblin_generals@started starts",
-      "quote": "Start RFD/Goblin",
-      "decision": "agent-judgment-delegated"
+      "quote": "Start RFD/Goblin"
     },
     {
       "step_id": "bruh-1.3-de6f39e70583",
       "what": "quest:recipe_for_disaster_freeing_the_mountain_dwarf@started starts",
-      "quote": "RFD/Dwarf",
-      "decision": "agent-judgment-delegated"
+      "quote": "RFD/Dwarf"
     },
     {
       "step_id": "bruh-1.3-de6f39e70583",
       "what": "quest:recipe_for_disaster_freeing_pirate_pete@started starts",
-      "quote": "RFD/Pirate",
-      "decision": "agent-judgment-delegated"
+      "quote": "RFD/Pirate"
     },
     {
       "step_id": "bruh-1.3-de6f39e70583",
       "what": "item:7812x1 completes",
       "quote": "the Goblin skull",
-      "decision": "agent-judgment-delegated"
+      "decision": "quest-drop-pickup-completes-x1"
     },
     {
       "step_id": "bruh-1.3-792a43e8b277",
@@ -591,14 +585,12 @@
     {
       "step_id": "bruh-1.3-8ab026e97122",
       "what": "item bronze/adamant pickaxe = any_of [1271 1265]",
-      "quote": "bronze/adamant pickaxe",
-      "decision": "agent-judgment-delegated"
+      "quote": "bronze/adamant pickaxe"
     },
     {
       "step_id": "bruh-1.3-ffd94c28254c",
       "what": "item adamant/bronze pickaxe = any_of [1271 1265]",
-      "quote": "adamant/bronze pickaxe",
-      "decision": "agent-judgment-delegated"
+      "quote": "adamant/bronze pickaxe"
     },
     {
       "step_id": "bruh-1.3-4c7daf877fc6",
@@ -615,8 +607,7 @@
     {
       "step_id": "bruh-1.3-323a43cc70b4",
       "what": "item rune/addy/bronze pickaxe = any_of [1275 1271 1265]",
-      "quote": "rune/addy/bronze pickaxe",
-      "decision": "agent-judgment-delegated"
+      "quote": "rune/addy/bronze pickaxe"
     },
     {
       "step_id": "bruh-1.3-899bab1deb77",
@@ -663,26 +654,23 @@
     {
       "step_id": "bruh-1.3-3ef671dc2287",
       "what": "quest:recipe_for_disaster_freeing_the_goblin_generals@finished completes",
-      "quote": "complete the three RFD quests started earlier",
-      "decision": "agent-judgment-delegated"
+      "quote": "complete the three RFD quests started earlier"
     },
     {
       "step_id": "bruh-1.3-3ef671dc2287",
       "what": "quest:recipe_for_disaster_freeing_the_mountain_dwarf@finished completes",
-      "quote": "complete the three RFD quests started earlier",
-      "decision": "agent-judgment-delegated"
+      "quote": "complete the three RFD quests started earlier"
     },
     {
       "step_id": "bruh-1.3-3ef671dc2287",
       "what": "quest:recipe_for_disaster_freeing_pirate_pete@finished completes",
-      "quote": "complete the three RFD quests started earlier",
-      "decision": "agent-judgment-delegated"
+      "quote": "complete the three RFD quests started earlier"
     },
     {
       "step_id": "bruh-1.3-23186d9745a8",
       "what": "item:7908x1 completes",
       "quote": "kill a big frog for the big frog leg",
-      "decision": "agent-judgment-delegated"
+      "decision": "quest-drop-pickup-completes-x1"
     },
     {
       "step_id": "bruh-1.3-23186d9745a8",
@@ -700,13 +688,13 @@
       "step_id": "bruh-1.3-d3777eb19fe9",
       "what": "item:7854x1 completes",
       "quote": "kill a monkey for a monkey paw",
-      "decision": "agent-judgment-delegated"
+      "decision": "quest-drop-pickup-completes-x1"
     },
     {
       "step_id": "bruh-1.3-aa4ae9967d70",
       "what": "item:7818x1 completes",
       "quote": "kill a ram in the for the ram skull",
-      "decision": "agent-judgment-delegated"
+      "decision": "quest-drop-pickup-completes-x1"
     },
     {
       "step_id": "bruh-1.3-aa4ae9967d70",
@@ -753,8 +741,7 @@
     {
       "step_id": "bruh-1.4-f5be032f82bc",
       "what": "item wig = item:2419",
-      "quote": "wig",
-      "decision": "agent-judgment-delegated"
+      "quote": "wig"
     },
     {
       "step_id": "bruh-1.4-e48ffb9700ee",
@@ -807,8 +794,7 @@
     {
       "step_id": "bruh-1.4-5ac241c01adc",
       "what": "skill:smithing>=40 completes",
-      "quote": "taking you (well) past level 40 smithing",
-      "decision": "agent-judgment-delegated"
+      "quote": "taking you (well) past level 40 smithing"
     },
     {
       "step_id": "bruh-1.4-9e184c2c912d",
@@ -825,8 +811,7 @@
     {
       "step_id": "bruh-1.4-f4094588deb7",
       "what": "skill:prayer>=43 completes",
-      "quote": "Kill green dragons with water bolt for 43 prayer",
-      "decision": "agent-judgment-delegated"
+      "quote": "Kill green dragons with water bolt for 43 prayer"
     },
     {
       "step_id": "bruh-1.4-2865faf1ac70",
@@ -958,7 +943,7 @@
       "step_id": "bruh-2.1-416becab96cd",
       "what": "item:25527x2000 completes",
       "quote": "you need to have mined 2000 stardust by now. If you haven’t, do that first",
-      "decision": "agent-judgment-delegated"
+      "decision": "conditional-checkpoint-completes"
     },
     {
       "step_id": "bruh-2.1-51f63ebcd43e",
@@ -970,19 +955,19 @@
       "step_id": "bruh-2.1-51f63ebcd43e",
       "what": "item:5574x1 completes",
       "quote": "buy full initiate",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-2.1-51f63ebcd43e",
       "what": "item:5575x1 completes",
       "quote": "buy full initiate",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-2.1-51f63ebcd43e",
       "what": "item:5576x1 completes",
       "quote": "buy full initiate",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-2.1-0df7e3567b4f",
@@ -1060,19 +1045,19 @@
       "step_id": "bruh-2.1-5d6413257d18",
       "what": "item Initiate sallet = item:5574",
       "quote": "full initiate",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-2.1-5d6413257d18",
       "what": "item Initiate hauberk = item:5575",
       "quote": "full initiate",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-2.1-5d6413257d18",
       "what": "item Initiate cuisse = item:5576",
       "quote": "full initiate",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-2.1-5d6413257d18",
@@ -1143,14 +1128,12 @@
     {
       "step_id": "bruh-2.1-48a59fd10d49",
       "what": "item Iban staff = any_of [12658 1409]",
-      "quote": "Iban staff",
-      "decision": "agent-judgment-delegated"
+      "quote": "Iban staff"
     },
     {
       "step_id": "bruh-2.1-ee011a2788f9",
       "what": "item Iban staff = any_of [12658 1409]",
-      "quote": "Iban staff",
-      "decision": "agent-judgment-delegated"
+      "quote": "Iban staff"
     },
     {
       "step_id": "bruh-2.1-ee011a2788f9",
@@ -1179,8 +1162,7 @@
     {
       "step_id": "bruh-2.1-88a164ca2aa0",
       "what": "skill:smithing>=50 completes",
-      "quote": "Buy and smelt 1100 gold ore (or exactly as many as it takes to get to level 50)",
-      "decision": "agent-judgment-delegated"
+      "quote": "Buy and smelt 1100 gold ore (or exactly as many as it takes to get to level 50)"
     },
     {
       "step_id": "bruh-2.1-88a164ca2aa0",
@@ -1227,8 +1209,7 @@
     {
       "step_id": "bruh-2.1-5288472eda47",
       "what": "item Iban staff = any_of [12658 1409]",
-      "quote": "Iban staff",
-      "decision": "agent-judgment-delegated"
+      "quote": "Iban staff"
     },
     {
       "step_id": "bruh-2.1-5288472eda47",
@@ -1299,8 +1280,7 @@
     {
       "step_id": "bruh-2.2-64fa57c14ed0",
       "what": "no bank actions",
-      "quote": "The only 'bank' in the text is the place name 'west bank anvils' (world hop spot); no bank is opened. Items needed are 'all for next section'.",
-      "decision": "agent-judgment-delegated"
+      "quote": "The only 'bank' in the text is the place name 'west bank anvils' (world hop spot); no bank is opened. Items needed are 'all for next section'."
     },
     {
       "step_id": "bruh-2.2-77a91e47362f",
@@ -1317,20 +1297,17 @@
     {
       "step_id": "bruh-2.2-77a91e47362f",
       "what": "no bank actions",
-      "quote": "The derived 'deposit' comes from the Motherlode Mine 'deposit chute' in the tick-manipulation notes, not a bank.",
-      "decision": "agent-judgment-delegated"
+      "quote": "The derived 'deposit' comes from the Motherlode Mine 'deposit chute' in the tick-manipulation notes, not a bank."
     },
     {
       "step_id": "bruh-2.2-31164de7dfc7",
       "what": "item:22601x100 completes",
-      "quote": "100 each of Stony and Icy basalt",
-      "decision": "agent-judgment-delegated"
+      "quote": "100 each of Stony and Icy basalt"
     },
     {
       "step_id": "bruh-2.2-31164de7dfc7",
       "what": "item:22599x100 completes",
-      "quote": "100 each of Stony and Icy basalt",
-      "decision": "agent-judgment-delegated"
+      "quote": "100 each of Stony and Icy basalt"
     },
     {
       "step_id": "bruh-2.2-85e0148637e3",
@@ -1357,12 +1334,6 @@
       "decision": "do-quest-means-finish"
     },
     {
-      "step_id": "bruh-2.2-113470bd76c7",
-      "what": "skill:prayer>=70 completes",
-      "quote": "Cash in the prayer xp at the Chaos Altar",
-      "decision": "agent-judgment-delegated"
-    },
-    {
       "step_id": "bruh-2.2-f67c5d8b717f",
       "what": "item:22275x1 completes",
       "quote": "Make a green d’hide shield",
@@ -1377,8 +1348,7 @@
     {
       "step_id": "bruh-2.2-f67c5d8b717f",
       "what": "skill:fletching>=60 completes",
-      "quote": "to get to level 60 and make all into headless arrows",
-      "decision": "agent-judgment-delegated"
+      "quote": "to get to level 60 and make all into headless arrows"
     },
     {
       "step_id": "bruh-2.2-c3ccb2b3f486",
@@ -1420,19 +1390,17 @@
       "step_id": "bruh-2.2-68fb6e6f6386",
       "what": "skill:hunter>=60 completes",
       "quote": "catch blue crabs until 61 hunter (300k xp, level 60, is actually fine)",
-      "decision": "agent-judgment-delegated"
+      "decision": "two-level-target-takes-minimum"
     },
     {
       "step_id": "bruh-2.2-68fb6e6f6386",
       "what": "no bank actions",
-      "quote": "Both derived bank actions come from the conditional sardine note ('If you did not have enough banked fish offcuts ... banking by speaking with Peer the Seer ... at the bank boat'), not from the step's main instructions.",
-      "decision": "agent-judgment-delegated"
+      "quote": "Both derived bank actions come from the conditional sardine note ('If you did not have enough banked fish offcuts ... banking by speaking with Peer the Seer ... at the bank boat'), not from the step's main instructions."
     },
     {
       "step_id": "bruh-2.2-eebcc93d77e7",
       "what": "item:10499x1 completes",
-      "quote": "Buy an upgraded device from Ava at level 50",
-      "decision": "agent-judgment-delegated"
+      "quote": "Buy an upgraded device from Ava at level 50"
     },
     {
       "step_id": "bruh-2.2-be73f7328c3b",
@@ -1551,8 +1519,7 @@
     {
       "step_id": "bruh-3.1-f9adca2c86c3",
       "what": "no bank actions",
-      "quote": "The only 'bank' is 'the bank chest on Sunbleak Island', a conditional POH/building mention, not a banking action of the step.",
-      "decision": "agent-judgment-delegated"
+      "quote": "The only 'bank' is 'the bank chest on Sunbleak Island', a conditional POH/building mention, not a banking action of the step."
     },
     {
       "step_id": "bruh-3.1-741b6d084f3b",
@@ -1563,14 +1530,13 @@
     {
       "step_id": "bruh-3.1-d54a651e72e9",
       "what": "item:family/pharaohs_sceptrex1 completes",
-      "quote": "Do Pyramid Plunder for one",
-      "decision": "agent-judgment-delegated"
+      "quote": "Do Pyramid Plunder for one"
     },
     {
       "step_id": "bruh-3.1-9f47e4966d68",
       "what": "skill:crafting>=75 completes",
       "quote": "train your crafting level to 80 (or 75, boosting after)",
-      "decision": "agent-judgment-delegated"
+      "decision": "two-level-target-takes-minimum"
     },
     {
       "step_id": "bruh-3.1-9f47e4966d68",
@@ -1587,44 +1553,41 @@
     {
       "step_id": "bruh-3.1-9f47e4966d68",
       "what": "diary:wilderness:hard@complete completes",
-      "quote": "68 slayer - Wilderness Hard diary",
-      "decision": "agent-judgment-delegated"
+      "quote": "68 slayer - Wilderness Hard diary"
     },
     {
       "step_id": "bruh-3.1-9f47e4966d68",
       "what": "diary:falador:hard@complete completes",
-      "quote": "72 slayer - Falador Hard diary",
-      "decision": "agent-judgment-delegated"
+      "quote": "72 slayer - Falador Hard diary"
     },
     {
       "step_id": "bruh-3.1-9f47e4966d68",
       "what": "diary:desert:hard@complete completes",
-      "quote": "Slayer Helmet - Desert Hard diary",
-      "decision": "agent-judgment-delegated"
+      "quote": "Slayer Helmet - Desert Hard diary"
     },
     {
       "step_id": "bruh-3.1-d9882d6568dc",
       "what": "item:13072x1 completes",
       "quote": "full elite void range",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-3.1-d9882d6568dc",
       "what": "item:13073x1 completes",
       "quote": "full elite void range",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-3.1-d9882d6568dc",
       "what": "item:8842x1 completes",
       "quote": "full elite void range",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-3.1-d9882d6568dc",
       "what": "item:11664x1 completes",
       "quote": "full elite void range",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-3.1-ce8a3d375f1f",
@@ -1660,31 +1623,31 @@
       "step_id": "bruh-3.2-fb4df86421f2",
       "what": "item:26850x1 completes",
       "quote": "the full Raiments of the Eye",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-3.2-fb4df86421f2",
       "what": "item:26852x1 completes",
       "quote": "the full Raiments of the Eye",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-3.2-fb4df86421f2",
       "what": "item:26854x1 completes",
       "quote": "the full Raiments of the Eye",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-3.2-fb4df86421f2",
       "what": "item:26856x1 completes",
       "quote": "the full Raiments of the Eye",
-      "decision": "agent-judgment-delegated"
+      "decision": "full-set-is-each-piece"
     },
     {
       "step_id": "bruh-3.2-088b648d6eee",
       "what": "quest:while_guthix_sleeps@finished completes",
       "quote": "Do While Guthix Sleeps if you haven’t already",
-      "decision": "agent-judgment-delegated"
+      "decision": "conditional-checkpoint-completes"
     },
     {
       "step_id": "bruh-3.2-b8b380586eac",
@@ -1713,14 +1676,13 @@
     {
       "step_id": "bruh-3.2-470660b81402",
       "what": "no bank actions",
-      "quote": "The only 'bank' is 'build the bank chest there if you want to' on Sunbleak Island, an optional construction, not a banking action.",
-      "decision": "agent-judgment-delegated"
+      "quote": "The only 'bank' is 'build the bank chest there if you want to' on Sunbleak Island, an optional construction, not a banking action."
     },
     {
       "step_id": "bruh-3.2-3eced1efbd16",
       "what": "skill:thieving>=91 completes",
       "quote": "If you aren’t 91 thieving yet, arteglass the molten glass until you are",
-      "decision": "agent-judgment-delegated"
+      "decision": "conditional-checkpoint-completes"
     }
   ],
   "steps": {
@@ -1843,8 +1805,7 @@
     },
     "bruh-1.2-3b82582ee229": {
       "section_id": "bruh-1.2",
-      "submits": 2,
-      "comment": "Elemental staves expanded to the four basic staves (agent judgment). Phoenix crossbows, portrait, molten glass and the bear drops are mid-quest/consumed and left out. Eye of newt pack is not an item. Aliases to add: 'Falador tab' -> Falador teleport, 'wind staff' -> Staff of air, 'rat meat' -> Raw rat meat."
+      "submits": 3
     },
     "bruh-1.2-4196de54f07d": {
       "section_id": "bruh-1.2",
@@ -1860,9 +1821,8 @@
     },
     "bruh-1.2-6092b29396cf": {
       "section_id": "bruh-1.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Angler's outfit expanded into its four pieces (agent judgment). Cut sapphires are partly consumed in the step and left out; cosmic runes left out (text allows stopping at 20 of 200). Rusty sword / polished buttons are incidental. Below Ice Mountain only progressed."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.2-61ac68a4f552": {
       "section_id": "bruh-1.2",
@@ -1871,14 +1831,12 @@
     },
     "bruh-1.2-8d771b72bcd5": {
       "section_id": "bruh-1.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Knight's Sword only progressed (already started in 1.1). Redberry pie left out (\"try to make\", no firm target). Optional fletching feathers left out. Bird snare uses the minimum of the 1-3 range."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.2-93715f553218": {
       "section_id": "bruh-1.2",
-      "submits": 2,
-      "comment": "Boots of lightness = the inventory item (item:88), which also counts while banked. Alias to add: 'empty pot' -> Pot. 'light source or tinderbox' left out of items (no single item). Steel arrowtips for 46 fletching are conditional and 46 fletching was already reached in 1.1. Flax is consumed into linen yarn in the step. Fishing Contest only progressed. Firemaking cape, fish barrel and Tempoross CAs are optional."
+      "submits": 3
     },
     "bruh-1.2-946daba9de99": {
       "section_id": "bruh-1.2",
@@ -1898,9 +1856,8 @@
     },
     "bruh-1.2-ccdfb374312f": {
       "section_id": "bruh-1.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Rogues outfit expanded into its five pieces (agent judgment). Trout/salmon/raw swordfish are kept for later quests and the Ardougne medium diary (uses). Wall safe is a diary task, not tracked here."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.2-d540dff03e35": {
       "section_id": "bruh-1.2",
@@ -1910,8 +1867,7 @@
     },
     "bruh-1.2-e20dc116045b": {
       "section_id": "bruh-1.2",
-      "submits": 2,
-      "comment": "\"almost level 41 thieving (40,583 xp or higher)\" = level 40 guaranteed (41 needs 41,171 xp). Giant rat bone = the unpolished drop (item:7824) for Rag and Bone Man. Rat meat and compost pack left out; Estate Agent talk has no state."
+      "submits": 3
     },
     "bruh-1.3-029eac528407": {
       "section_id": "bruh-1.3",
@@ -1957,15 +1913,13 @@
     },
     "bruh-1.3-23186d9745a8": {
       "section_id": "bruh-1.3",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Big frog leg = unpolished drop (item:7908) for Rag and Bone Man (agent judgment). '2000 seeds' (all seeds in every world) names no single seed; left out. Cave bug, willow logs, agility lap and zombie are diary tasks; the Fairytale skull is a quest item; compost optional."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.3-323a43cc70b4": {
       "section_id": "bruh-1.3",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "'You should have level 46 fletching by now' left out: 46 fletching was already completed in bruh-1.1. 'deposit your buckets' is the sand grinder, not a bank, so the explicit bank action replaces the derived deposit. Stardust collection is spread over later steps (until Ch2St11), not a target of this step."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.3-36256ee31acc": {
       "section_id": "bruh-1.3",
@@ -1975,9 +1929,8 @@
     },
     "bruh-1.3-3ef671dc2287": {
       "section_id": "bruh-1.3",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "'the three RFD quests started earlier' = RFD/Goblin, RFD/Dwarf, RFD/Pirate started in bruh-1.3-de6f39e70583 (agent judgment). Botanical pies left out ('all your' tops, no fixed number). Lost Tribe progressed up to Reldo. Prayer lamp has no level target. Rock cake, fishcake and the light-source entries left out of items."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.3-49c2af9c4816": {
       "section_id": "bruh-1.3",
@@ -1999,8 +1952,7 @@
     },
     "bruh-1.3-66399bbbcf31": {
       "section_id": "bruh-1.3",
-      "submits": 2,
-      "comment": "Bat wing = the unpolished drop (item:7833) for Rag and Bone Man (agent judgment). Merlin's Crystal and Family Crest only progressed. Raw cods left out (one or two depending on cooking level), mackerel is a diary task, bass goes to Caleb. Plant pot pack has no item quantity. Alias to add: 'big net' -> Big fishing net."
+      "submits": 3
     },
     "bruh-1.3-792a43e8b277": {
       "section_id": "bruh-1.3",
@@ -2022,9 +1974,8 @@
     },
     "bruh-1.3-886f0784d3aa": {
       "section_id": "bruh-1.3",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Dragon Slayer I start read as unconditional (the Black Arm Gang condition covers only the Valaine purchase) - agent judgment. GP '27313 + 7708 (Black Arm Gang)' left out of items (conditional sum). Cup of tea is stolen during the step, not a carried requirement. Priest gown (top and bottom share one name) and '(any) fur' left out. The Golem and Priest in Peril only progressed."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.3-899bab1deb77": {
       "section_id": "bruh-1.3",
@@ -2034,9 +1985,8 @@
     },
     "bruh-1.3-8ab026e97122": {
       "section_id": "bruh-1.3",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Golden warbler and phoenix feather are quest steps; gems 'as mentioned on the wiki' have no list. Statuette (quest item) left out of items."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.3-9c60757b38e7": {
       "section_id": "bruh-1.3",
@@ -2052,9 +2002,8 @@
     },
     "bruh-1.3-aa4ae9967d70": {
       "section_id": "bruh-1.3",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Ram skull = unpolished drop (item:7818) for Rag and Bone Man (agent judgment). Dragon Slayer I, Romeo & Juliet and The Lost Tribe only progressed. Oak planks are consumed in the step; POH move not in catalogs. Compost, diary, R&B bones and marrentill potion(unf) entries left out of items."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.3-b1f58ecada03": {
       "section_id": "bruh-1.3",
@@ -2064,8 +2013,7 @@
     },
     "bruh-1.3-d3777eb19fe9": {
       "section_id": "bruh-1.3",
-      "submits": 2,
-      "comment": "Monkey paw = unpolished drop (item:7854) for Rag and Bone Man II (agent judgment). Holy Grail only progressed. Food from Alfonse has no number. Moss Giant swing and gold ore are diary tasks. 'trout/salmon' and 'strike runes' left out of items."
+      "submits": 3
     },
     "bruh-1.3-d5efce343ca4": {
       "section_id": "bruh-1.3",
@@ -2075,8 +2023,7 @@
     },
     "bruh-1.3-de6f39e70583": {
       "section_id": "bruh-1.3",
-      "submits": 2,
-      "comment": "RFD/Cook, RFD/Goblin, RFD/Dwarf, RFD/Pirate mapped to the RFD subquest catalog names (agent judgment). Goblin skull = unpolished drop (item:7812) for Rag and Bone Man (agent judgment). Goblin/cow bones left out (generic Bones). Extra jewellery from Tempoross loot and the bronze spear are conditional."
+      "submits": 3
     },
     "bruh-1.3-f70731ae83d5": {
       "section_id": "bruh-1.3",
@@ -2092,9 +2039,8 @@
     },
     "bruh-1.3-ffd94c28254c": {
       "section_id": "bruh-1.3",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "'notes' (research notes) left out of items. Demon Slayer key, Prince Ali Rescue key imprint are quest progress; Martin pickpocket is a diary task."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.4-0a7a65caad28": {
       "section_id": "bruh-1.4",
@@ -2158,9 +2104,8 @@
     },
     "bruh-1.4-5ac241c01adc": {
       "section_id": "bruh-1.4",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Smithing 40 is the stated result of the 108 gold bars (agent judgment). Bars made (steel/iron inventories, 50 silver, 108 gold with 27 left in the dispenser) left out: dispenser bars are not holdings and counts are mixed."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.4-5fcc565b7ed8": {
       "section_id": "bruh-1.4",
@@ -2284,15 +2229,13 @@
     },
     "bruh-1.4-f4094588deb7": {
       "section_id": "bruh-1.4",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Prayer 43 is the step's target: the bones are offered within the step at the Wilderness altar (agent judgment). 70-80 green dragons is a means, not a count goal; spare dragon bones vague. HCIM alternatives are conditional."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.4-f5be032f82bc": {
       "section_id": "bruh-1.4",
-      "submits": 2,
-      "first_submit_accepted": true,
-      "comment": "'Free Prince Ali with your key' is not the end of Prince Ali Rescue: the guide completes it in bruh-1.4-47973d5db7fb. Twilight's Promise, AIS axe and extra slayer gems are optional (conditional-step-no-objectives). Holy Grail and The Grand Tree only progressed. Many shop items without numbers left out; anti-dragon shields 'a few' vague. Wig = dyed (2419) since Prince Ali's disguise needs the dyed wig (agent judgment). Fairy ring access is an unlock not in the catalog, left out."
+      "submits": 3,
+      "first_submit_accepted": true
     },
     "bruh-1.4-fdc177159a82": {
       "section_id": "bruh-1.4",
@@ -2349,9 +2292,8 @@
     },
     "bruh-2.1-416becab96cd": {
       "section_id": "bruh-2.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Stardust x2000 is a catch-up checkpoint ('do that first'), spent on the celestial ring next step. Ice giants for Rag and Bone Man II is partial progress. No step location (no-step-location)."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.1-4197aeaa19f0": {
       "section_id": "bruh-2.1",
@@ -2372,21 +2314,18 @@
     },
     "bruh-2.1-48a59fd10d49": {
       "section_id": "bruh-2.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Limestone is conditional (skip if from Wintertodt); a single plank is minor and the player already holds planks. Salve crystals 'one inventory' has no number. 'Iban staff' = the upgraded Iban's staff (u) from Underground Pass, or the plain one. No step location (no-step-location)."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.1-51f63ebcd43e": {
       "section_id": "bruh-2.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "'full initiate' = Initiate sallet, hauberk and cuisse (the full set). 'full initiate' in /items is bought in the step, left out. Wanted! continues only to Taverley dungeon. 'rebank' has no precise bank action. No step location (no-step-location)."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.1-5288472eda47": {
       "section_id": "bruh-2.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Scorpion Catcher only continues (third scorpion); the hand-in to Thormac is not stated. Dragon axe is optional; agility lap, lighthouse and dagannoth kills are diary/Rag and Bone tasks. Rex kill count not numbered. 'premade chocolate bombs(/other ...)' and 'etc. (standard Rex gear)' left out of items. Alias to add: 'bronze sword'. No step location (no-step-location)."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.1-568d9176f7bc": {
       "section_id": "bruh-2.1",
@@ -2402,9 +2341,8 @@
     },
     "bruh-2.1-5d6413257d18": {
       "section_id": "bruh-2.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Enchanted catspeak amulet: 'Catspeak amulet (e)' not in the catalog, left out. 'full initiate' = Initiate sallet/hauberk/cuisse worn (prayer at the Altar of Guthix). Lava eel, scorpion, Wanted! and Rag and Bone Man II are mid-quest progress; the bones set is unspecified. Seaweed/Attas/contracts are ongoing advice. 'kitten/cat' and 'crude(r) carving' left out of items; alias to add: 'damaged soulbearer'. No step location (no-step-location)."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.1-5feeed266369": {
       "section_id": "bruh-2.1",
@@ -2450,8 +2388,7 @@
     },
     "bruh-2.1-88a164ca2aa0": {
       "section_id": "bruh-2.1",
-      "submits": 2,
-      "comment": "Smithing 50 read from 'smelt 1100 gold ore (or exactly as many as it takes to get to level 50)': the gold ore count is an estimate of the level target. Gold bars kept ('a few hundred') have no number. Rune pouch/LMS is conditional; mithril grapple paragraph is optional (conditional-step-no-objectives). Uglug's Stuffsies unlock not in the catalog. Alias to add: 'gold gauntlets', 'ring of charos (a)' with a space. No step location (no-step-location)."
+      "submits": 3
     },
     "bruh-2.1-8d2899a29d62": {
       "section_id": "bruh-2.1",
@@ -2556,9 +2493,8 @@
     },
     "bruh-2.1-ee011a2788f9": {
       "section_id": "bruh-2.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Blue dragon kill is a diary task. Black armour is the Black Arm Gang variant (Phoenix players use another set). Aliases to add: 'games neck', 'cooked lava eel'. No step location (no-step-location)."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.1-f578b1e34d33": {
       "section_id": "bruh-2.1",
@@ -2597,9 +2533,9 @@
     },
     "bruh-2.2-113470bd76c7": {
       "section_id": "bruh-2.2",
-      "submits": 1,
+      "submits": 2,
       "first_submit_accepted": true,
-      "comment": "Prayer 70: the previous step states that using these bones on the Chaos Altar brings prayer to 70. Pest Control games are not tracked objectives. Varrock hard diary/fossil block is conditional (enough fossils and Curse of the Empty Lord), else postponed to step 79."
+      "comment": "Sem objetivo de nível: o texto não dá número para o prayer da Chaos Altar (o 70 inferido foi tirado pelo dono)."
     },
     "bruh-2.2-1515ef531d2b": {
       "section_id": "bruh-2.2",
@@ -2615,9 +2551,8 @@
     },
     "bruh-2.2-31164de7dfc7": {
       "section_id": "bruh-2.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Basalt teleports: the minimum the text sets is 100 each of Stony and Icy basalt (made inside the mine), kept as the targets; raw salt totals (750 Te, 900 Efh, 950 Urt, 200 basalt) are consumed into those and left out. Optional salts and the rabbit's foot are conditional. Three diaries only 'progressed' by eagle rides. Rune spear (kp), Ardy cloak, melee gear, prayer/energy pots, necklace of passage left out of items."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.2-39f76eab7532": {
       "section_id": "bruh-2.2",
@@ -2645,15 +2580,13 @@
     },
     "bruh-2.2-64fa57c14ed0": {
       "section_id": "bruh-2.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Eagle disguises are quest items for Eagles' Peak; spottier cape conditional on hunter level. Items needed are for the next section: left out."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.2-68fb6e6f6386": {
       "section_id": "bruh-2.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Hunter target set to 60, which the text explicitly accepts ('level 60, is actually fine') instead of 61. Sailing 51-53 optional. Crew recruits, charting, schematics, medallion fragments and 50 pilar fragments are sailing unlocks/quest items not in the catalogs as checked. '8 nails' left out of items."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.2-6f26d7191bf5": {
       "section_id": "bruh-2.2",
@@ -2663,9 +2596,8 @@
     },
     "bruh-2.2-77a91e47362f": {
       "section_id": "bruh-2.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Falador hard diary: only one step done here, not the diary. Prospector hat from Volcanic Mine left out (name not verified). 72 mining is needed 'by step 71': later goal, not here."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.2-7ddf391d4fd0": {
       "section_id": "bruh-2.2",
@@ -2787,9 +2719,8 @@
     },
     "bruh-2.2-eebcc93d77e7": {
       "section_id": "bruh-2.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "~1.5k grey/red chins are consumed while training: left out (the ranged level is the target). 'Upgraded device' = Ava's accumulator. Optional alternatives (crabs, A Night at the Theatre, Fight Caves) and kyatts/antelope ('at your convenience') not extracted. Ballistic attractor schematic, salve (ei), crossbow, teak log left out."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.2-f55110ed5551": {
       "section_id": "bruh-2.2",
@@ -2798,9 +2729,8 @@
     },
     "bruh-2.2-f67c5d8b717f": {
       "section_id": "bruh-2.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Level 60 is fletching by context (arrow shafts + feathers into headless arrows). Maple shortbow and superantipoison are diary actions, not extracted. Alching the bodies has no target. Steel nails and Kharedst's memoirs left out of items (support items)."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-2.3-0924d45a29ca": {
       "section_id": "bruh-2.3",
@@ -2923,9 +2853,8 @@
     },
     "bruh-3.1-9f47e4966d68": {
       "section_id": "bruh-3.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Crafting: the text accepts 75 with boosting, so 75 is the target. Diaries listed as milestones 'complete them at your convenience along the way' are taken as this step's completions; Ardougne Hard is already completed in 3.1-741b6d084f3b (shield left half note), so not repeated. Western Provinces explicitly ignored. Combat level 100, ~75 slayer and 78 HP are expectations, not extracted (no combat-level kind). While Guthix Sleeps is 'at your own convenience ... alternatively, postpone': left out. His Faithful Servants was already completed in 2.2-4b907585b095: not repeated. 10k karambwans (raw total, cooked at convenience) and the 520 opal/520 jade/52 red topaz inputs left out. Broader Fletching is not in the unlock catalog. CA easy/medium tier rewards are not CA tasks: left out. Slayer helmet purchase is conditional on points."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-3.1-a0193944b404": {
       "section_id": "bruh-3.1",
@@ -2947,15 +2876,13 @@
     },
     "bruh-3.1-d54a651e72e9": {
       "section_id": "bruh-3.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "2300 sand is consumed into the crafting level (gather-for-level). Pharaoh's sceptre as family (charged variants); the second sceptre is recommended later. ~200 gold artefacts are 'needed later'. Superantipoison batch is 'if you haven't already'. 'any food' left out."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-3.1-d9882d6568dc": {
       "section_id": "bruh-3.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "'Full elite void range' = elite void top, elite void robe, void knight gloves and void ranger helm (1250 points). The other two helmets are optional. Broad arrowhead packs: no count ('most of your money')."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-3.1-dd6cc83d3302": {
       "section_id": "bruh-3.1",
@@ -2977,15 +2904,13 @@
     },
     "bruh-3.1-f9adca2c86c3": {
       "section_id": "bruh-3.1",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "POH furniture builds are not catalog unlocks. The total item list is a shopping list for the builds (some optional): not extracted. Items needed: tbd."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-3.2-088b648d6eee": {
       "section_id": "bruh-3.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "While Guthix Sleeps: 3.1 left it 'at your own convenience', so this is the route's last point to finish it (no earlier annotation completes it). Vorkath kc is 'up to 50' for the assembler: the item is the target."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-3.2-15c96591367f": {
       "section_id": "bruh-3.2",
@@ -3001,15 +2926,13 @@
     },
     "bruh-3.2-3eced1efbd16": {
       "section_id": "bruh-3.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Thieving 91: the conditional only skips the work if already 91, so 91 thieving holds at the end. 20k sand (93 crafting) vs 70k sand (99 crafting) are alternatives and the crafting XP comes from blowing the glass later: no crafting target."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-3.2-470660b81402": {
       "section_id": "bruh-3.2",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Gwenith Glide shark rank / Heart of ithell, ship facilities, schematics, charting and bounty-task drops are not in the catalogs as checked. 50 Horizon's lure and 20 ironwood planks (logs, voucher-dependent) left out. Bloodbark outfit is optional."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-3.2-5af9f14b4c7f": {
       "section_id": "bruh-3.2",
@@ -3049,8 +2972,7 @@
     },
     "bruh-3.2-fb4df86421f2": {
       "section_id": "bruh-3.2",
-      "submits": 2,
-      "comment": "Full Raiments of the Eye expanded into its four pieces. Colossal pouch: new or degraded both count. The Ardougne Hard diary is already completed in 3.1-741b6d084f3b: not repeated here. Derived deposits are the GotR Deposit Pool (acts as a deposit box): kept."
+      "submits": 3
     },
     "bruh-3.2-fde1d3314bd8": {
       "section_id": "bruh-3.2",

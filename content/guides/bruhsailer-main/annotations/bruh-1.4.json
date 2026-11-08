@@ -1192,8 +1192,7 @@
             "method": "llm",
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "confirmed_by": "owner"
           }
         },
         {
@@ -4934,8 +4933,7 @@
             "method": "llm",
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "confirmed_by": "owner"
           }
         },
         {
@@ -6175,8 +6173,7 @@
             "method": "llm",
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "confirmed_by": "owner"
           }
         }
       ],

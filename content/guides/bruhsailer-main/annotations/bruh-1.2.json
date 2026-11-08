@@ -459,7 +459,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "quest-drop-pickup-completes-x1"
           }
         },
         {
@@ -630,7 +630,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "quest-drop-pickup-completes-x1"
           }
         },
         {
@@ -649,7 +649,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "two-level-target-takes-minimum"
           }
         },
         {
@@ -838,7 +838,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -857,7 +857,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -876,7 +876,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -895,7 +895,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -2404,7 +2404,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "quest-drop-pickup-completes-x1"
           }
         },
         {
@@ -2752,7 +2752,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -2771,7 +2771,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -2790,7 +2790,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -2809,7 +2809,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -3916,7 +3916,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -3935,7 +3935,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -3954,7 +3954,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -3973,7 +3973,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {
@@ -3992,7 +3992,7 @@
             "confidence": "medium",
             "skill_version": "annotate-guide@5",
             "confirmed_by": "owner",
-            "decision": "agent-judgment-delegated"
+            "decision": "full-set-is-each-piece"
           }
         },
         {

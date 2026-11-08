@@ -163,6 +163,63 @@
       "answer": "Não: metas abertas (goals, F9). Só entram com um número explícito de drops ou de kill count como alvo. (Adotada do oziris-main.)",
       "scope": "bruhsailer-main, todas as seções: farm por drops",
       "decided_at": "2026-11-05"
+    },
+    {
+      "id": "full-set-is-each-piece",
+      "question": "Conjunto inteiro no texto (\"a complete Angler's outfit\", \"buy full initiate\", \"one of each elemental staff\"): como vira objetivo?",
+      "answer": "Um completes x1 por peça do conjunto (e, quando o passo usa o conjunto vestido, cada peça em items com slot equipment).",
+      "scope": "bruhsailer-main, todas as seções: conjuntos e outfits citados inteiros",
+      "decided_at": "2026-11-08",
+      "step_ids": [
+        "bruh-1.2-3b82582ee229",
+        "bruh-1.2-6092b29396cf",
+        "bruh-1.2-ccdfb374312f",
+        "bruh-2.1-51f63ebcd43e",
+        "bruh-2.1-5d6413257d18",
+        "bruh-3.1-d9882d6568dc",
+        "bruh-3.2-fb4df86421f2"
+      ]
+    },
+    {
+      "id": "quest-drop-pickup-completes-x1",
+      "question": "Item de quest ou drop pego no caminho (\"the giant rat bone\", \"kill a monkey for a monkey paw\", \"grab 1-3 bird snares\"): vira objetivo?",
+      "answer": "Sim: completes x1 (o menor número quando o texto dá uma faixa). O veredito trava, então gastar o item depois na quest não desfaz o passo.",
+      "scope": "bruhsailer-main, todas as seções: itens de quest e drops pegos num passo",
+      "decided_at": "2026-11-08",
+      "step_ids": [
+        "bruh-1.2-8d771b72bcd5",
+        "bruh-1.2-e20dc116045b",
+        "bruh-1.2-93715f553218",
+        "bruh-1.3-66399bbbcf31",
+        "bruh-1.3-de6f39e70583",
+        "bruh-1.3-23186d9745a8",
+        "bruh-1.3-d3777eb19fe9",
+        "bruh-1.3-aa4ae9967d70"
+      ]
+    },
+    {
+      "id": "two-level-target-takes-minimum",
+      "question": "O texto dá dois níveis para o mesmo treino (\"until 61 hunter (… level 60, is actually fine)\", \"to 80 (or 75, boosting after)\", \"almost level 41\"): qual vira o completes?",
+      "answer": "O menor nível que o guia aceita: o passo fecha nele.",
+      "scope": "bruhsailer-main, todas as seções: alvos de nível com duas opções",
+      "decided_at": "2026-11-08",
+      "step_ids": [
+        "bruh-1.2-e20dc116045b",
+        "bruh-2.2-68fb6e6f6386",
+        "bruh-3.1-9f47e4966d68"
+      ]
+    },
+    {
+      "id": "conditional-checkpoint-completes",
+      "question": "\"Do X if you haven't already\", \"If you aren't N yet, … until you are\", \"you need to have X by now. If you haven't, do that first\": é condicional (fica fora) ou objetivo?",
+      "answer": "Objetivo: completes. O passo garante o estado ao terminar; não é um trecho opcional (conditional-step-no-objectives não se aplica).",
+      "scope": "bruhsailer-main, todas as seções: checkpoints \"garanta X antes de seguir\"",
+      "decided_at": "2026-11-08",
+      "step_ids": [
+        "bruh-3.2-088b648d6eee",
+        "bruh-3.2-3eced1efbd16",
+        "bruh-2.1-416becab96cd"
+      ]
     }
   ]
 }

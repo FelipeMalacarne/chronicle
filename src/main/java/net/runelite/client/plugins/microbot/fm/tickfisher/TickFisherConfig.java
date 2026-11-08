@@ -57,7 +57,7 @@ public interface TickFisherConfig extends Config
 	@ConfigItem(
 		keyName = "mouse",
 		name = "Mouse",
-		description = "Natural: the cursor travels a human path and waits on the next target during the free ticks. Quick: clicks land at once and the cursor jumps (tightest timing, easy to spot)",
+		description = "Natural: the cursor travels a human path; fish pile up and go in batches, since the delay tick has no room for more clicks. Natural, quick delay tick: natural moves, but the 3-4 clicks of the delay tick (delay, fish, spot) go out at once, so each fish is dropped or cut as it comes, like a 3-tick player. Quick: every click at once (easy to spot)",
 		position = 3
 	)
 	default MouseMode mouse()

@@ -70,6 +70,7 @@ public class TickFisherScript extends Script
 	private int handledTick = -1;
 	private int countedDropTick = -1;
 	private int bankFailures;
+	private int missingTicks;
 	/** Fish to let pile up before dropping or cutting them all at once. */
 	private int batchAt;
 	/** Fish count before the knife went on a fish (-1: no cut pending), misses in a row, given up. */
@@ -171,12 +172,18 @@ public class TickFisherScript extends Script
 		{
 			if (place.bank == null)
 			{
-				s.stop("Missing " + missingGear());
+				// Confirmed over a few ticks: read mid-batch the inventory once lacked the teak
+				// log it held (0.8.1 stopped with the log in place).
+				if (++missingTicks >= 3)
+				{
+					s.stop("Missing " + missingGear());
+				}
 				return;
 			}
 			gearUp(s);
 			return;
 		}
+		missingTicks = 0;
 		if (Rs2Inventory.isFull())
 		{
 			if (config.fishHandling() == FishHandling.BANK)
@@ -342,7 +349,8 @@ public class TickFisherScript extends Script
 				// the order delay, knife on the fish, spot (cut-eat video and the guide): four or
 				// five clicks in one tick, which only the quick mouse makes. The natural mouse lets
 				// the fish pile up and handles a batch every few catches, at the cost of that roll.
-				boolean perCycle = config.mouse() == MouseMode.QUICK;
+				boolean perCycle = config.mouse() != MouseMode.NATURAL;
+				clicks.burst(true);
 				if (!perCycle && fishCount() >= batchAt && config.fishHandling() != FishHandling.BANK)
 				{
 					handleBatch(s, knife);
@@ -373,6 +381,7 @@ public class TickFisherScript extends Script
 				}
 				boolean delayInTime = events.tick() == tick;
 				clicks.npc(target, place.spotAction);
+				clicks.burst(false);
 				int late = events.tick() - tick;
 				s.cycles++;
 				if (late == 0)

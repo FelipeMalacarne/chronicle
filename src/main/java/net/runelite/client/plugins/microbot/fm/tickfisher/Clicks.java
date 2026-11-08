@@ -33,6 +33,8 @@ final class Clicks
 	};
 
 	private final MouseMode mode;
+	/** Hybrid: the clicks in between go out quick. */
+	private volatile boolean burst;
 	/** NPC options by NPC id, read once: the click must not wait on the client thread. */
 	private final Map<Integer, String[]> optionsById = new HashMap<>();
 
@@ -102,7 +104,7 @@ final class Clicks
 	/** Natural mode: brings the cursor onto the item's slot without clicking. */
 	void hover(Rs2ItemModel item)
 	{
-		if (mode != MouseMode.NATURAL)
+		if (!natural())
 		{
 			return;
 		}
@@ -165,16 +167,27 @@ final class Clicks
 	private Point aim(Rectangle target)
 	{
 		java.awt.Point at = Microbot.getMouse().getMousePosition();
-		if (mode == MouseMode.NATURAL && at != null && target.contains(at))
+		if (natural() && at != null && target.contains(at))
 		{
 			return new Point(at.x, at.y);
 		}
 		Point point = Rs2UiHelper.getClickingPoint(target, true, false);
-		if (mode == MouseMode.NATURAL)
+		if (natural())
 		{
 			Microbot.naturalMouse.moveTo(point.getX(), point.getY());
 		}
 		return point;
+	}
+
+	/** Hybrid mouse: clicks between {@code burst(true)} and {@code burst(false)} go out quick. */
+	void burst(boolean on)
+	{
+		burst = on;
+	}
+
+	private boolean natural()
+	{
+		return mode == MouseMode.NATURAL || (mode == MouseMode.HYBRID && !burst);
 	}
 
 	private static final class SlotView

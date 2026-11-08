@@ -126,25 +126,25 @@ public interface TickFisherConfig extends Config
 	@ConfigItem(
 		keyName = "catchDelayTick",
 		name = "Delay after a catch",
-		description = "Ticks from a catch (its XP drop) to the delay click",
+		description = "Ticks from a catch to the delay click (with Spot after a catch above 0)",
 		position = 20,
 		hidden = true
 	)
 	default int catchDelayTick()
 	{
-		return 0;
+		return 2;
 	}
 
 	@ConfigItem(
 		keyName = "catchSpotTick",
 		name = "Spot after a catch",
-		description = "Ticks from a catch to the spot click; the 3-tick cycle runs from there",
+		description = "Ticks from a catch to the spot click (0: the delay, fish and spot all on the catch tick)",
 		position = 21,
 		hidden = true
 	)
 	default int catchSpotTick()
 	{
-		return 1;
+		return 2;
 	}
 
 	@ConfigItem(

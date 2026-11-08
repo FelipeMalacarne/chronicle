@@ -306,11 +306,9 @@ public class TickFisherScript extends Script
 			}
 			if (drop == tick)
 			{
-				// After a catch the next roll cannot come 3 ticks later. With the delay and the spot
-				// in one tick it came at +6 (+5 at best, moving the cycle); a 3-tick player at 99
-				// gets +4 (video, frame by frame: 20+ catches 2.40 s apart) by clicking the delay
-				// on the catch tick and the spot alone on the next one. The cycle then runs from
-				// that spot tick: next roll at +4.
+				// After a catch: the fish handled on the catch tick, the delay and the spot click on
+				// the ticks set below (measuring which gives the next roll soonest), the 3-tick cycle
+				// from the spot tick.
 				anchorTick = drop + config.catchSpotTick();
 			}
 		}
@@ -325,32 +323,39 @@ public class TickFisherScript extends Script
 		}
 		int delayAt = config.catchDelayTick();
 		int spotAt = config.catchSpotTick();
-		if (countedDropTick >= 0 && tick == countedDropTick + delayAt && delayAt < spotAt)
+		if (countedDropTick >= 0 && spotAt > 0 && tick >= countedDropTick && tick < countedDropTick + spotAt)
 		{
-			// The catch tick: the delay alone (the item, not roe: eating adds 3 ticks to a timer
-			// the catch left running, and the roll never came).
-			Microbot.status = "Tick Fisher: 3-tick fishing";
-			selectTool(tool);
-			clicks.useOn(delayOn);
-			return;
-		}
-		if (countedDropTick >= 0 && tick == countedDropTick + spotAt)
-		{
-			// The tick after: cut the fish first if cutting (it stops the fishing, the spot click
-			// after it starts it again), then the spot alone.
-			Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-			if (fish != null && knife != null && cutting())
+			if (tick == countedDropTick)
 			{
-				fishBeforeCut = fishCount();
-				selectTool(knife);
-				clicks.useOn(fish);
+				// The catch tick: drop or cut the fish now.
+				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
+				if (fish != null && knife != null && cutting())
+				{
+					fishBeforeCut = fishCount();
+					selectTool(knife);
+					clicks.useOn(fish);
+				}
+				else if (fish != null && config.fishHandling() != FishHandling.BANK)
+				{
+					clicks.drop(fish);
+					s.fishDropped++;
+				}
 			}
-			if (delayAt >= spotAt)
+			if (tick == countedDropTick + delayAt)
 			{
-				// Delay and spot in the same tick.
 				selectTool(tool);
 				clicks.useOn(delayOn);
 			}
+			else if (tick == countedDropTick + spotAt - 1)
+			{
+				selectTool(tool);
+				clicks.hover(tick + 1 == countedDropTick + delayAt ? delayOn : delayOn);
+			}
+			return;
+		}
+		if (countedDropTick >= 0 && spotAt > 0 && tick == countedDropTick + spotAt && delayAt < spotAt)
+		{
+			// The spot alone: the delay went out on an earlier tick.
 			clicks.npc(target, place.spotAction);
 			s.cycles++;
 			if (events.tick() == tick)
@@ -370,13 +375,30 @@ public class TickFisherScript extends Script
 					break;
 				}
 				Microbot.status = "Tick Fisher: 3-tick fishing";
+				// Everything that touches the inventory goes in this tick, before the spot click:
+				// dropping (or cutting) an item removes the interaction with the spot (guide,
+				// 2t teaks: "log dropping"). Up to 0.6 a fish was dropped or cut on the tick after
+				// the spot click, which lost the roll after every catch: never two catches 3 ticks
+				// apart in 400+. The guide's cut-eat order: eat, cut, spot.
 				if (roe != null)
 				{
 					deselect();
 					clicks.eat(roe);
 					s.roeEaten++;
 				}
-				else
+				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
+				if (fish != null && knife != null && cutting())
+				{
+					fishBeforeCut = fishCount();
+					selectTool(knife);
+					clicks.useOn(fish);
+				}
+				else if (fish != null && config.fishHandling() != FishHandling.BANK)
+				{
+					clicks.drop(fish);
+					s.fishDropped++;
+				}
+				if (roe == null)
 				{
 					selectTool(tool);
 					clicks.useOn(delayOn);
@@ -391,20 +413,19 @@ public class TickFisherScript extends Script
 				}
 				else if (delayInTime && late == 1)
 				{
+					// Still in time: the spot click may land on the tick after the delay.
 					s.spotNextTick++;
 				}
 				break;
 			case 1:
-				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-				if (fish != null && config.fishHandling() != FishHandling.BANK && !cutting())
+				// Nothing that touches the inventory until the roll: selecting is client-side only.
+				checkCut(s);
+				if (roe == null)
 				{
-					clicks.drop(fish);
-					s.fishDropped++;
+					selectTool(tool);
 				}
-				selectTool(tool);
 				break;
 			default:
-				checkCut(s);
 				if (roe != null)
 				{
 					// Clicking the roe with an item selected would use that item on it.

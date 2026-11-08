@@ -61,6 +61,10 @@ class TickFisherOverlay extends OverlayPanel
 		int xp = script.xpGained();
 		line("Place", config.place().toString());
 		line("Mode", (config.threeTick() ? "3-tick" : "Plain") + ", " + config.fishHandling() + ", " + config.mouse());
+		if (config.threeTick())
+		{
+			line("Delay", config.delay().toString());
+		}
 		line("Runtime", duration(elapsed));
 		int stopAt = config.stopAtLevel();
 		line("Fishing", script.events().fishingLevel() + (stopAt > 0 ? " (stop at " + stopAt + ")" : ""));

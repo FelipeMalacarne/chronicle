@@ -38,11 +38,18 @@ public class TickFisherScript extends Script
 	private static final int[] ROE = {ItemID.BRUT_ROE, ItemID.BRUT_CAVIAR};
 	/** Cuts in a row that left the fish in place: cutting does not work here (Cooking level?). */
 	private static final int MAX_CUT_FAILURES = 3;
+	/** Clean herbs that make a tar, and the Herblore level each needs. */
+	private static final int[] TAR_HERBS = {ItemID.GUAM_LEAF, ItemID.MARENTILL, ItemID.TARROMIN, ItemID.HARRALANDER};
+	private static final int[] TAR_HERB_LEVELS = {19, 31, 39, 44};
+	/** Making a tar takes 15 swamp tar; with fewer the action fails and sets no timer. */
+	private static final int MIN_SWAMP_TAR = 15;
 
 	private final FishingEvents events = new FishingEvents();
 	private Clicks clicks;
 	private TickFisherConfig config;
 	private FishingPlace place;
+	private DelayMethod delay;
+	private int herbloreLevel;
 	// Read by the overlay on the client thread.
 	private volatile Session session;
 	private TestResult testResult;
@@ -98,6 +105,7 @@ public class TickFisherScript extends Script
 	{
 		this.config = config;
 		place = config.place();
+		delay = config.delay();
 		session = null;
 		spot = null;
 		anchorTick = -1;
@@ -238,11 +246,12 @@ public class TickFisherScript extends Script
 			stop("Start at " + place);
 			return false;
 		}
+		herbloreLevel = Rs2Player.getRealSkillLevel(Skill.HERBLORE);
 		int xp = fishingXp();
 		events.onFishing(level, xp);
 		events.onAgility(agility);
 		session = new Session(events.tick(), xp);
-		log.info("Tick Fisher {}: {}, Fishing {}, Agility {}, 3-tick {}, fish {}, mouse {}", TickFisherPlugin.VERSION, place, level, agility, config.threeTick(), config.fishHandling(), config.mouse());
+		log.info("Tick Fisher {}: {}, Fishing {}, Agility {}, 3-tick {} ({}), fish {}, mouse {}", TickFisherPlugin.VERSION, place, level, agility, config.threeTick(), delay, config.fishHandling(), config.mouse());
 		return true;
 	}
 
@@ -297,26 +306,30 @@ public class TickFisherScript extends Script
 			}
 			if (drop == tick)
 			{
-				// A catch puts the next roll 5 ticks away and the delay cannot bring it closer
-				// (measured at Otto: never two catches less than 5 ticks apart; with the cycle kept
-				// on 3, the next came after 6). So the next delay goes 2 ticks after the catch, for
-				// a roll at +5, and the 3-tick cycle runs from there. The catch tick itself is phase
-				// 1: dropping or cutting the fish then costs nothing, the fishing restarts at +2.
-				anchorTick = drop + 2;
+				// Knife on teak: a catch puts the next roll 5 ticks away and the delay cannot bring
+				// it closer (measured at Otto: never two catches less than 5 ticks apart; with the
+				// cycle kept on 3, the next came after 6). So the next delay goes 2 ticks after the
+				// catch, for a roll at +5, and the 3-tick cycle runs from there. The catch tick is
+				// then phase 1: dropping or cutting the fish costs nothing, the fishing restarts at
+				// +2. Herb tar keeps the cycle on 3 (afterCatch 0).
+				anchorTick = drop + delay.afterCatch;
 			}
 		}
 		int phase = Math.floorMod(tick - anchorTick, 3);
+		// The delay: the tool (knife or herb) used on the target (teak log or swamp tar).
+		Rs2ItemModel tool = delayTool();
+		Rs2ItemModel delayOn = Rs2Inventory.get(delay == DelayMethod.TEAK ? ItemID.TEAK_LOGS : ItemID.SWAMP_TAR);
 		Rs2ItemModel knife = Rs2Inventory.get(ItemID.KNIFE);
-		Rs2ItemModel teak = Rs2Inventory.get(ItemID.TEAK_LOGS);
-		if (knife == null || teak == null)
+		if (tool == null || delayOn == null)
 		{
 			return;
 		}
-		// Cut-eat: roe or caviar from a cut fish is the delay while there is one, else knife on teak.
+		// Cut-eat: roe or caviar from a cut fish is the delay while there is one.
 		// Not in the first cycle after a catch: eaten there, the roll at +5 never came (0 of 21;
-		// teak 18 of 24), as if eating adds 3 ticks to the timer the catch left running.
+		// teak 18 of 24): eating adds 3 ticks to the timer, the catch left it running.
 		// Phase 2 gets ready for the delay of the next tick.
-		boolean afterCatch = (phase == 2 ? tick + 1 : tick) == countedDropTick + 2;
+		boolean afterCatch = countedDropTick >= 0
+			&& (phase == 2 ? tick + 1 : tick) == countedDropTick + delay.afterCatch;
 		Rs2ItemModel roe = cutting() && !afterCatch ? Rs2Inventory.get(ROE) : null;
 		switch (phase)
 		{
@@ -329,20 +342,14 @@ public class TickFisherScript extends Script
 				Microbot.status = "Tick Fisher: 3-tick fishing";
 				if (roe != null)
 				{
-					if (knifeSelected())
-					{
-						clicks.select(knife);
-					}
+					deselect();
 					clicks.eat(roe);
 					s.roeEaten++;
 				}
 				else
 				{
-					if (!knifeSelected())
-					{
-						clicks.select(knife);
-					}
-					clicks.useOn(teak);
+					selectTool(tool);
+					clicks.useOn(delayOn);
 				}
 				boolean delayInTime = events.tick() == tick;
 				clicks.npc(target, place.spotAction);
@@ -359,16 +366,18 @@ public class TickFisherScript extends Script
 				break;
 			case 1:
 				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-				if (fish != null && cutting() && drop == tick)
+				if (fish != null && knife != null && cutting() && tick - countedDropTick <= 1)
 				{
-					// Cutting stops the fishing, so only on the catch tick: the next roll is 5 ticks
-					// away anyway and phase 0 clicks the spot again. A fish left over waits for that.
+					// Cutting stops the fishing, so only right after a catch. Knife on teak: the
+					// next roll is 5 ticks away anyway and phase 0 clicks the spot again. Herb tar:
+					// the roll is in 2 ticks, so the spot is clicked again at once.
 					fishBeforeCut = fishCount();
-					if (!knifeSelected())
-					{
-						clicks.select(knife);
-					}
+					selectTool(knife);
 					clicks.useOn(fish);
+					if (delay.afterCatch == 0)
+					{
+						clicks.npc(target, place.spotAction);
+					}
 					break;
 				}
 				if (fish != null && config.fishHandling() != FishHandling.BANK)
@@ -376,28 +385,19 @@ public class TickFisherScript extends Script
 					clicks.drop(fish);
 					s.fishDropped++;
 				}
-				if (!knifeSelected())
-				{
-					clicks.select(knife);
-				}
+				selectTool(tool);
 				break;
 			default:
 				checkCut(s);
 				if (roe != null)
 				{
-					// Clicking the roe with the knife selected would use the knife on it.
-					if (knifeSelected())
-					{
-						clicks.select(knife);
-					}
+					// Clicking the roe with an item selected would use that item on it.
+					deselect();
 					clicks.hover(roe);
 					break;
 				}
-				if (!knifeSelected())
-				{
-					clicks.select(knife);
-				}
-				clicks.hover(teak);
+				selectTool(tool);
+				clicks.hover(delayOn);
 				break;
 		}
 	}
@@ -513,9 +513,52 @@ public class TickFisherScript extends Script
 		}
 	}
 
-	private static boolean knifeSelected()
+	/** The knife, or the one clean tar herb (the first usable one; several open a Make-X). */
+	private Rs2ItemModel delayTool()
 	{
-		return Rs2Inventory.isItemSelected() && Rs2Inventory.getSelectedItemId() == ItemID.KNIFE;
+		if (delay == DelayMethod.TEAK)
+		{
+			return Rs2Inventory.get(ItemID.KNIFE);
+		}
+		for (int i = 0; i < TAR_HERBS.length; i++)
+		{
+			if (herbloreLevel >= TAR_HERB_LEVELS[i] && Rs2Inventory.hasItem(TAR_HERBS[i]))
+			{
+				return Rs2Inventory.get(TAR_HERBS[i]);
+			}
+		}
+		return null;
+	}
+
+	private void selectTool(Rs2ItemModel item)
+	{
+		if (!(Rs2Inventory.isItemSelected() && Rs2Inventory.getSelectedItemId() == item.getId()))
+		{
+			clicks.select(item);
+		}
+	}
+
+	/** "Use" on the selected item again drops the selection (what Rs2Inventory.deselect does). */
+	private void deselect()
+	{
+		if (Rs2Inventory.isItemSelected())
+		{
+			Rs2ItemModel selected = Rs2Inventory.get(Rs2Inventory.getSelectedItemId());
+			if (selected != null)
+			{
+				clicks.select(selected);
+			}
+		}
+	}
+
+	private int tarHerbCount()
+	{
+		int count = 0;
+		for (int id : TAR_HERBS)
+		{
+			count += Rs2Inventory.count(id);
+		}
+		return count;
 	}
 
 	// ----- the spot ----------------------------------------------------------------------------
@@ -669,14 +712,30 @@ public class TickFisherScript extends Script
 		{
 			return place.bank == null ? "feathers or fish offcuts" : "feathers";
 		}
-		if ((config.threeTick() || config.fishHandling() == FishHandling.CUT) && !Rs2Inventory.hasItem(ItemID.KNIFE))
+		boolean teak = config.threeTick() && delay == DelayMethod.TEAK;
+		if ((teak || config.fishHandling() == FishHandling.CUT) && !Rs2Inventory.hasItem(ItemID.KNIFE))
 		{
 			return "a knife";
 		}
-		// Exactly one log: with more, knife on teak opens a Make-X window and loses the tick.
-		if (config.threeTick() && Rs2Inventory.count(ItemID.TEAK_LOGS) != 1)
+		// Exactly one log or herb: with more, the delay opens a Make-X window and loses the tick.
+		if (teak && Rs2Inventory.count(ItemID.TEAK_LOGS) != 1)
 		{
 			return "exactly one teak log";
+		}
+		if (config.threeTick() && delay == DelayMethod.HERB_TAR)
+		{
+			if (!Rs2Inventory.hasItem(ItemID.PESTLE_AND_MORTAR))
+			{
+				return "a pestle and mortar";
+			}
+			if (Rs2Inventory.count(ItemID.SWAMP_TAR) < MIN_SWAMP_TAR)
+			{
+				return MIN_SWAMP_TAR + " swamp tar";
+			}
+			if (tarHerbCount() != 1 || delayTool() == null)
+			{
+				return "exactly one clean guam leaf (or a marrentill, tarromin, harralander your Herblore can use)";
+			}
 		}
 		return null;
 	}
@@ -695,7 +754,8 @@ public class TickFisherScript extends Script
 			s.stocksMade += Rs2Inventory.count(ItemID.XBOWS_CROSSBOW_STOCK_TEAK);
 		}
 		Rs2Bank.depositAllExcept(ItemID.FLY_FISHING_ROD, ItemID.FISHINGROD_PEARL_FLY, ItemID.FEATHER,
-			ItemID.KNIFE, ItemID.TEAK_LOGS, ItemID.COINS);
+			ItemID.KNIFE, ItemID.TEAK_LOGS, ItemID.COINS, ItemID.PESTLE_AND_MORTAR, ItemID.SWAMP_TAR,
+			ItemID.GUAM_LEAF, ItemID.MARENTILL, ItemID.TARROMIN, ItemID.HARRALANDER);
 		if (!Rs2Inventory.hasItem(place.rods) && !withdraw(ItemID.FLY_FISHING_ROD, 1, "fly fishing rod"))
 		{
 			return;
@@ -704,7 +764,13 @@ public class TickFisherScript extends Script
 		{
 			return;
 		}
-		if (config.threeTick())
+		if (config.threeTick() && delay == DelayMethod.HERB_TAR && missingGear() != null)
+		{
+			// The herb tar kit is not taken from the bank: bring it.
+			session.stop("Missing " + missingGear());
+			return;
+		}
+		if (config.threeTick() && delay == DelayMethod.TEAK)
 		{
 			if (!Rs2Inventory.hasItem(ItemID.KNIFE) && !withdraw(ItemID.KNIFE, 1, "knife"))
 			{
@@ -810,10 +876,7 @@ public class TickFisherScript extends Script
 				return;
 			}
 			int before = fishCount();
-			if (!knifeSelected())
-			{
-				clicks.select(knife);
-			}
+			selectTool(knife);
 			clicks.useOn(fish);
 			if (!Global.sleepUntil(() -> fishCount() < before, 1800))
 			{
@@ -837,10 +900,10 @@ public class TickFisherScript extends Script
 	private void stop(String reason)
 	{
 		Rs2NpcModel last = spot;
-		if (config.threeTick() && last != null && Rs2Inventory.hasItem(ItemID.TEAK_LOGS))
+		if (config.threeTick() && last != null && Microbot.isLoggedIn())
 		{
-			// A knife-on-teak may still be running: one more spot click cancels it, or the fletch
-			// completes and takes the log.
+			// A knife-on-teak or a herb tar may still be running: one more spot click cancels it,
+			// or it completes and takes the log (or 15 tar and the herb).
 			clicks.npc(last, place.spotAction);
 		}
 		Microbot.status = "Tick Fisher stopped: " + reason;
@@ -873,6 +936,7 @@ public class TickFisherScript extends Script
 		progress.put("place", place == null ? null : place.name());
 		progress.put("agilityLevel", events.agilityLevel());
 		progress.put("threeTick", config.threeTick());
+		progress.put("delay", delay == null ? null : delay.name());
 		progress.put("fishHandling", config.fishHandling().name());
 		progress.put("mouse", config.mouse().name());
 		progress.put("fishingLevel", events.fishingLevel());

@@ -24,7 +24,7 @@ public interface TickFisherConfig extends Config
 	@ConfigItem(
 		keyName = "threeTick",
 		name = "3-tick",
-		description = "Knife on a teak log, then the spot, every 3 ticks: a roll every 3 ticks instead of 5. Needs a knife and exactly one teak log (at Shilo taken from the bank). Off: plain fishing",
+		description = "Knife on a teak log, then the spot, every 3 ticks: a roll every 3 ticks instead of 5. Needs the delay items (see 3-tick delay). Off: plain fishing",
 		position = 0
 	)
 	default boolean threeTick()
@@ -33,10 +33,21 @@ public interface TickFisherConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "delay",
+		name = "3-tick delay",
+		description = "Knife on teak: one teak log and a knife. Herb on swamp tar: one clean guam (or marrentill, tarromin, harralander) at a time, 15+ swamp tar, a pestle and mortar; the tar is not used up. With cut-eat, roe or caviar stands in for either now and then",
+		position = 1
+	)
+	default DelayMethod delay()
+	{
+		return DelayMethod.TEAK;
+	}
+
+	@ConfigItem(
 		keyName = "fishHandling",
 		name = "Fish",
 		description = "Drop: one fish between rolls, fastest XP. Bank (Shilo): keep them, deposit at the Shilo bank when the inventory is full. Cut (Otto): knife on the fish between rolls for Cooking XP; the roe or caviar is eaten as the 3-tick delay when there is one, the offcuts are bait",
-		position = 1
+		position = 2
 	)
 	default FishHandling fishHandling()
 	{
@@ -47,7 +58,7 @@ public interface TickFisherConfig extends Config
 		keyName = "mouse",
 		name = "Mouse",
 		description = "Natural: the cursor travels a human path and waits on the next target during the free ticks. Quick: clicks land at once and the cursor jumps (tightest timing, easy to spot)",
-		position = 2
+		position = 3
 	)
 	default MouseMode mouse()
 	{
@@ -58,7 +69,7 @@ public interface TickFisherConfig extends Config
 		keyName = "varyRhythm",
 		name = "Vary the rhythm",
 		description = "Now and then hesitate for a cycle or two, and every few minutes fish plainly for a while, as a person does. Costs some XP",
-		position = 3
+		position = 4
 	)
 	default boolean varyRhythm()
 	{
@@ -69,7 +80,7 @@ public interface TickFisherConfig extends Config
 		keyName = "stopAtLevel",
 		name = "Stop at Fishing level",
 		description = "Stop once Fishing reaches this level (0 = never)",
-		position = 4
+		position = 5
 	)
 	@Range(min = 0, max = 99)
 	default int stopAtLevel()
@@ -81,7 +92,7 @@ public interface TickFisherConfig extends Config
 		keyName = "stopAtAgilityLevel",
 		name = "Stop at Agility level",
 		description = "Barbarian fishing: stop once Agility reaches this level (0 = never)",
-		position = 5
+		position = 6
 	)
 	@Range(min = 0, max = 99)
 	default int stopAtAgilityLevel()
@@ -93,7 +104,7 @@ public interface TickFisherConfig extends Config
 		keyName = "stopAfterMinutes",
 		name = "Stop after minutes",
 		description = "Stop after running this long (0 = never). Perfect 3-tick for hours is not something a person does",
-		position = 6
+		position = 7
 	)
 	@Range(min = 0, max = 1440)
 	default int stopAfterMinutes()
@@ -105,7 +116,7 @@ public interface TickFisherConfig extends Config
 		keyName = "showOverlay",
 		name = "Show overlay",
 		description = "Progress panel: XP and XP/h, catches, and how well the 3-tick cycle is kept",
-		position = 7
+		position = 8
 	)
 	default boolean showOverlay()
 	{
@@ -116,7 +127,7 @@ public interface TickFisherConfig extends Config
 		keyName = "testCatches",
 		name = "Test catches",
 		description = "In test mode, fish to catch before writing the result and exiting",
-		position = 8
+		position = 9
 	)
 	default int testCatches()
 	{

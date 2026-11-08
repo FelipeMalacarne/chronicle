@@ -298,12 +298,12 @@ public class TickFisherScript extends Script
 
 	private void checkLimits(Session s)
 	{
-		int level = config.stopAtLevel();
+		int level = config.stopAtGoals() ? config.stopAtLevel() : 0;
 		if (level > 0 && events.fishingLevel() >= level)
 		{
 			s.stop("Reached Fishing " + events.fishingLevel());
 		}
-		int agility = config.stopAtAgilityLevel();
+		int agility = config.stopAtGoals() ? config.stopAtAgilityLevel() : 0;
 		if (agility > 0 && events.agilityLevel() >= agility)
 		{
 			s.stop("Reached Agility " + events.agilityLevel());

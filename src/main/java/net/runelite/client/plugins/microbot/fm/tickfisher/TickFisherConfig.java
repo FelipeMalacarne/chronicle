@@ -102,8 +102,8 @@ public interface TickFisherConfig extends Config
 
 	@ConfigItem(
 		keyName = "stopAtLevel",
-		name = "Stop at Fishing level",
-		description = "Stop once Fishing reaches this level (0 = never)",
+		name = "Fishing goal",
+		description = "Fishing level to aim for: the overlay shows the time to it, and the plugin stops there if Stop at goals is on (0 = none)",
 		position = 7
 	)
 	@Range(min = 0, max = 99)
@@ -114,8 +114,8 @@ public interface TickFisherConfig extends Config
 
 	@ConfigItem(
 		keyName = "stopAtAgilityLevel",
-		name = "Stop at Agility level",
-		description = "Barbarian fishing: stop once Agility reaches this level (0 = never)",
+		name = "Agility goal",
+		description = "Barbarian fishing: Agility level to aim for, shown and stopped at like the Fishing goal (0 = none)",
 		position = 8
 	)
 	@Range(min = 0, max = 99)
@@ -125,10 +125,21 @@ public interface TickFisherConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "stopAtGoals",
+		name = "Stop at goals",
+		description = "Stop once a goal level is reached. Off, the goals only show the time left and the plugin keeps fishing",
+		position = 9
+	)
+	default boolean stopAtGoals()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "stopAfterMinutes",
 		name = "Stop after minutes",
 		description = "Stop after running this long (0 = never). Perfect 3-tick for hours is not something a person does",
-		position = 9
+		position = 10
 	)
 	@Range(min = 0, max = 1440)
 	default int stopAfterMinutes()
@@ -140,7 +151,7 @@ public interface TickFisherConfig extends Config
 		keyName = "logoutOnStop",
 		name = "Log out when stopping",
 		description = "Log out when it stops on its own (a stop level, the time limit, missing gear) and keep the break handler and AutoLogin from logging back in to stand idle. Logging in by hand or starting another script lifts that",
-		position = 10
+		position = 11
 	)
 	default boolean logoutOnStop()
 	{
@@ -151,7 +162,7 @@ public interface TickFisherConfig extends Config
 		keyName = "showOverlay",
 		name = "Show overlay",
 		description = "Progress panel: XP and XP/h, catches, and how well the 3-tick cycle is kept",
-		position = 11
+		position = 12
 	)
 	default boolean showOverlay()
 	{
@@ -162,7 +173,7 @@ public interface TickFisherConfig extends Config
 		keyName = "testCatches",
 		name = "Test catches",
 		description = "In test mode, fish to catch before writing the result and exiting",
-		position = 12
+		position = 13
 	)
 	default int testCatches()
 	{

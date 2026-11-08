@@ -1,8 +1,10 @@
 package net.runelite.client.plugins.microbot.fm.tickfisher;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
@@ -68,6 +70,8 @@ public class TickFisherScript extends Script
 	private int handledTick = -1;
 	private int countedDropTick = -1;
 	private int bankFailures;
+	/** Fish to let pile up before dropping or cutting them all at once. */
+	private int batchAt;
 	/** Fish count before the knife went on a fish (-1: no cut pending), misses in a row, given up. */
 	private int fishBeforeCut = -1;
 	private int cutFailures;
@@ -116,6 +120,7 @@ public class TickFisherScript extends Script
 		fishBeforeCut = -1;
 		cutFailures = 0;
 		cuttingFailed = false;
+		batchAt = nextBatch();
 		clicks = new Clicks(config.mouse());
 		cyclesToSlip = nextSlip();
 		slipCycles = 0;
@@ -306,10 +311,8 @@ public class TickFisherScript extends Script
 			}
 			if (drop == tick)
 			{
-				// After a catch: the fish handled on the catch tick, the delay and the spot click on
-				// the ticks set below (measuring which gives the next roll soonest), the 3-tick cycle
-				// from the spot tick.
-				anchorTick = drop + config.catchSpotTick();
+				// The skilling timer is at -1 on the tick after a roll: phase 0 is the drop tick.
+				anchorTick = drop;
 			}
 		}
 		int phase = Math.floorMod(tick - anchorTick, 3);
@@ -319,49 +322,6 @@ public class TickFisherScript extends Script
 		Rs2ItemModel knife = Rs2Inventory.get(ItemID.KNIFE);
 		if (tool == null || delayOn == null)
 		{
-			return;
-		}
-		int delayAt = config.catchDelayTick();
-		int spotAt = config.catchSpotTick();
-		if (countedDropTick >= 0 && spotAt > 0 && tick >= countedDropTick && tick < countedDropTick + spotAt)
-		{
-			if (tick == countedDropTick)
-			{
-				// The catch tick: drop or cut the fish now.
-				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-				if (fish != null && knife != null && cutting() && !config.keepFish())
-				{
-					fishBeforeCut = fishCount();
-					selectTool(knife);
-					clicks.useOn(fish);
-				}
-				else if (fish != null && config.fishHandling() != FishHandling.BANK && !config.keepFish())
-				{
-					clicks.drop(fish);
-					s.fishDropped++;
-				}
-			}
-			if (tick == countedDropTick + delayAt)
-			{
-				selectTool(tool);
-				clicks.useOn(delayOn);
-			}
-			else if (tick == countedDropTick + spotAt - 1)
-			{
-				selectTool(tool);
-				clicks.hover(tick + 1 == countedDropTick + delayAt ? delayOn : delayOn);
-			}
-			return;
-		}
-		if (countedDropTick >= 0 && spotAt > 0 && tick == countedDropTick + spotAt && delayAt < spotAt)
-		{
-			// The spot alone: the delay went out on an earlier tick.
-			clicks.npc(target, place.spotAction);
-			s.cycles++;
-			if (events.tick() == tick)
-			{
-				s.onTime++;
-			}
 			return;
 		}
 		// Cut-eat: roe or caviar from a cut fish is the delay while there is one.
@@ -375,28 +335,21 @@ public class TickFisherScript extends Script
 					break;
 				}
 				Microbot.status = "Tick Fisher: 3-tick fishing";
-				// Everything that touches the inventory goes in this tick, before the spot click:
-				// dropping (or cutting) an item removes the interaction with the spot (guide,
-				// 2t teaks: "log dropping"). Up to 0.6 a fish was dropped or cut on the tick after
-				// the spot click, which lost the roll after every catch: never two catches 3 ticks
-				// apart in 400+. The guide's cut-eat order: eat, cut, spot.
+				// The fish stay in the inventory between rolls: dropping or cutting one removes the
+				// interaction with the spot (guide, 2t teaks: "log dropping"), and doing it every
+				// cycle lost the roll after each catch (0.4-0.7: never two catches 3 ticks apart in
+				// 400+, ~47-52k XP/h at 58; kept: 27 of 46 apart, ~71k while fishing). Every few
+				// catches a batch goes at once, on this tick before the delay: it costs that roll.
+				if (fishCount() >= batchAt && config.fishHandling() != FishHandling.BANK)
+				{
+					handleBatch(s, knife);
+					roe = cutting() ? Rs2Inventory.get(ROE) : null;
+				}
 				if (roe != null)
 				{
 					deselect();
 					clicks.eat(roe);
 					s.roeEaten++;
-				}
-				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-				if (fish != null && knife != null && cutting() && !config.keepFish())
-				{
-					fishBeforeCut = fishCount();
-					selectTool(knife);
-					clicks.useOn(fish);
-				}
-				else if (fish != null && config.fishHandling() != FishHandling.BANK && !config.keepFish())
-				{
-					clicks.drop(fish);
-					s.fishDropped++;
 				}
 				if (roe == null)
 				{
@@ -437,6 +390,53 @@ public class TickFisherScript extends Script
 				clicks.hover(delayOn);
 				break;
 		}
+	}
+
+	/**
+	 * Drops (or cuts) every fish in the inventory, each slot once from a list taken first: the
+	 * inventory updates a tick later, so asking it again would click the same fish over and over.
+	 * No deselecting before a drop: the drop goes through with the knife selected (0.7.0), and
+	 * guessing the selection selected fish and used them on each other (0.8.0, which let a teak
+	 * stock complete).
+	 */
+	private void handleBatch(Session s, Rs2ItemModel knife)
+	{
+		boolean cut = cutting() && knife != null;
+		Microbot.status = cut ? "Tick Fisher: cutting fish" : "Tick Fisher: dropping fish";
+		List<Rs2ItemModel> fish = Rs2Inventory.items(item -> isFish(item.getId())).collect(Collectors.toList());
+		for (Rs2ItemModel one : fish)
+		{
+			if (!isRunning())
+			{
+				break;
+			}
+			if (cut)
+			{
+				clicks.select(knife);
+				clicks.useOn(one);
+				s.fishCut++;
+				// One cut a tick: the next waits for this one.
+				Global.sleepUntilNextTick(1200);
+			}
+			else
+			{
+				clicks.drop(one);
+				s.fishDropped++;
+			}
+		}
+		if (cut && fishCount() >= fish.size() && !fish.isEmpty())
+		{
+			cuttingFailed = true;
+			log.warn("Tick Fisher: knife on the fish did nothing, dropping them instead (Cooking level?)");
+		}
+		batchAt = nextBatch();
+		// The delay and the spot go out now, however many ticks the batch took.
+		anchorTick = events.tick();
+	}
+
+	private int nextBatch()
+	{
+		return cutting() ? Rs2Random.betweenInclusive(3, 6) : Rs2Random.betweenInclusive(5, 9);
 	}
 
 	/** Cut-eat, unless cutting turned out not to work. */

@@ -1,10 +1,8 @@
 package net.runelite.client.plugins.microbot.fm.tickfisher;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
@@ -71,8 +69,6 @@ public class TickFisherScript extends Script
 	private int countedDropTick = -1;
 	private int bankFailures;
 	private int missingTicks;
-	/** Fish to let pile up before dropping or cutting them all at once. */
-	private int batchAt;
 	/** Fish count before the knife went on a fish (-1: no cut pending), misses in a row, given up. */
 	private int fishBeforeCut = -1;
 	private int cutFailures;
@@ -121,7 +117,6 @@ public class TickFisherScript extends Script
 		fishBeforeCut = -1;
 		cutFailures = 0;
 		cuttingFailed = false;
-		batchAt = nextBatch();
 		clicks = new Clicks(config.mouse());
 		cyclesToSlip = nextSlip();
 		slipCycles = 0;
@@ -176,7 +171,7 @@ public class TickFisherScript extends Script
 				// log it held (0.8.1 stopped with the log in place).
 				if (++missingTicks >= 3)
 				{
-					s.stop("Missing " + missingGear());
+					restock(s);
 				}
 				return;
 			}
@@ -344,18 +339,10 @@ public class TickFisherScript extends Script
 				Microbot.status = "Tick Fisher: 3-tick fishing";
 				// Dropping or cutting a fish removes the interaction with the spot (guide, 2t teaks:
 				// "log dropping"). Done on the tick after the spot click it lost the roll after each
-				// catch (0.4-0.7: never two catches 3 ticks apart in 400+, ~47-52k XP/h at 58; fish
-				// kept: 27 of 46 apart, ~71k while fishing). A 3-tick player does it on this tick in
-				// the order delay, knife on the fish, spot (cut-eat video and the guide): four or
-				// five clicks in one tick, which only the quick mouse makes. The natural mouse lets
-				// the fish pile up and handles a batch every few catches, at the cost of that roll.
-				boolean perCycle = config.mouse() != MouseMode.NATURAL;
+				// catch (0.4-0.7: never two catches 3 ticks apart in 400+, ~47-52k XP/h at 58). A
+				// 3-tick player does it on this tick in the order delay, knife on the fish, spot
+				// (cut-eat video and the guide): 3-4 clicks in one tick (measured: ~74k at 60).
 				clicks.burst(true);
-				if (!perCycle && fishCount() >= batchAt && config.fishHandling() != FishHandling.BANK)
-				{
-					handleBatch(s, knife);
-					roe = cutting() ? Rs2Inventory.get(ROE) : null;
-				}
 				if (roe != null)
 				{
 					deselect();
@@ -367,7 +354,7 @@ public class TickFisherScript extends Script
 					selectTool(tool);
 					clicks.useOn(delayOn);
 				}
-				Rs2ItemModel fish = perCycle && config.fishHandling() != FishHandling.BANK ? Rs2Inventory.get(place.fish) : null;
+				Rs2ItemModel fish = config.fishHandling() != FishHandling.BANK ? Rs2Inventory.get(place.fish) : null;
 				if (fish != null && cutting() && knife != null)
 				{
 					fishBeforeCut = fishCount();
@@ -414,53 +401,6 @@ public class TickFisherScript extends Script
 				clicks.hover(delayOn);
 				break;
 		}
-	}
-
-	/**
-	 * Drops (or cuts) every fish in the inventory, each slot once from a list taken first: the
-	 * inventory updates a tick later, so asking it again would click the same fish over and over.
-	 * No deselecting before a drop: the drop goes through with the knife selected (0.7.0), and
-	 * guessing the selection selected fish and used them on each other (0.8.0, which let a teak
-	 * stock complete).
-	 */
-	private void handleBatch(Session s, Rs2ItemModel knife)
-	{
-		boolean cut = cutting() && knife != null;
-		Microbot.status = cut ? "Tick Fisher: cutting fish" : "Tick Fisher: dropping fish";
-		List<Rs2ItemModel> fish = Rs2Inventory.items(item -> isFish(item.getId())).collect(Collectors.toList());
-		for (Rs2ItemModel one : fish)
-		{
-			if (!isRunning())
-			{
-				break;
-			}
-			if (cut)
-			{
-				clicks.select(knife);
-				clicks.useOn(one);
-				s.fishCut++;
-				// One cut a tick: the next waits for this one.
-				Global.sleepUntilNextTick(1200);
-			}
-			else
-			{
-				clicks.drop(one);
-				s.fishDropped++;
-			}
-		}
-		if (cut && fishCount() >= fish.size() && !fish.isEmpty())
-		{
-			cuttingFailed = true;
-			log.warn("Tick Fisher: knife on the fish did nothing, dropping them instead (Cooking level?)");
-		}
-		batchAt = nextBatch();
-		// The delay and the spot go out now, however many ticks the batch took.
-		anchorTick = events.tick();
-	}
-
-	private int nextBatch()
-	{
-		return cutting() ? Rs2Random.betweenInclusive(3, 6) : Rs2Random.betweenInclusive(5, 9);
 	}
 
 	/** Cut-eat, unless cutting turned out not to work. */
@@ -870,13 +810,71 @@ public class TickFisherScript extends Script
 		spot = null;
 	}
 
+	/**
+	 * No bank at the spot: fetch what ran out (a teak log used up by a slipped cycle, a knife,
+	 * feathers) from the nearest bank, deposit the teak stock and the fish, and walk back. Herb tar
+	 * kits are not restocked: missing one still stops the run.
+	 */
+	private void restock(Session s)
+	{
+		String missing = missingGear();
+		boolean herbTar = config.threeTick() && delay == DelayMethod.HERB_TAR;
+		boolean herbKit = herbTar && missing != null
+			&& (missing.contains("pestle") || missing.contains("swamp tar") || missing.contains("guam"));
+		if (place.restock == null || herbKit)
+		{
+			s.stop("Missing " + missing);
+			return;
+		}
+		Microbot.status = "Tick Fisher: fetching " + missing;
+		log.info("Tick Fisher: missing {}, restocking at {}", missing, place.restock);
+		if (!openBank())
+		{
+			return;
+		}
+		Rs2Bank.depositAll(item -> isFish(item.getId()) || item.getId() == ItemID.XBOWS_CROSSBOW_STOCK_TEAK);
+		Global.sleepUntil(() -> !Rs2Inventory.hasItem(ItemID.XBOWS_CROSSBOW_STOCK_TEAK), 2400);
+		if (!Rs2Inventory.hasItem(place.rods) && !withdraw(place.rods[0], 1, "barbarian rod"))
+		{
+			return;
+		}
+		if (!Rs2Inventory.hasItem(place.bait) && !withdraw(ItemID.FEATHER, -1, "feathers"))
+		{
+			return;
+		}
+		boolean teak = config.threeTick() && delay == DelayMethod.TEAK;
+		if ((teak || config.fishHandling() == FishHandling.CUT) && !Rs2Inventory.hasItem(ItemID.KNIFE) && !withdraw(ItemID.KNIFE, 1, "knife"))
+		{
+			return;
+		}
+		if (teak)
+		{
+			if (Rs2Inventory.count(ItemID.TEAK_LOGS) > 1)
+			{
+				Rs2Bank.depositAll(ItemID.TEAK_LOGS);
+				Global.sleepUntil(() -> !Rs2Inventory.hasItem(ItemID.TEAK_LOGS), 2400);
+			}
+			if (!Rs2Inventory.hasItem(ItemID.TEAK_LOGS) && !withdraw(ItemID.TEAK_LOGS, 1, "teak logs"))
+			{
+				return;
+			}
+		}
+		Rs2Bank.closeBank();
+		Global.sleepUntil(() -> !Rs2Bank.isOpen(), 2400);
+		s.bankTrips++;
+		missingTicks = 0;
+		spot = null;
+		lookout = -1;
+		anchorTick = -1;
+	}
+
 	private boolean openBank()
 	{
 		if (Rs2Bank.isOpen())
 		{
 			return true;
 		}
-		if (Rs2Bank.walkToBankAndUseBank(place.bank) && Global.sleepUntil(Rs2Bank::isOpen, 5000))
+		if (Rs2Bank.walkToBankAndUseBank(place.bank != null ? place.bank : place.restock) && Global.sleepUntil(Rs2Bank::isOpen, 5000))
 		{
 			bankFailures = 0;
 			return true;

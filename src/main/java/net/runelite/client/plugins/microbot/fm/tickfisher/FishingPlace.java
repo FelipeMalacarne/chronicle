@@ -19,7 +19,7 @@ public enum FishingPlace
 		new int[]{ItemID.FLY_FISHING_ROD, ItemID.FISHINGROD_PEARL_FLY},
 		new int[]{ItemID.FEATHER},
 		new int[]{ItemID.RAW_TROUT, ItemID.RAW_SALMON},
-		20, 0, BankLocation.SHILO_VILLAGE),
+		20, 0, BankLocation.SHILO_VILLAGE, BankLocation.SHILO_VILLAGE),
 	/** Barbarian fishing by Otto's Grotto (Oziris 1.2.16). No bank: bring the gear. */
 	OTTO("Otto's Grotto (barbarian)", "Fishing spot", "Use-rod",
 		// Spots seen at x 2500 (y 3506-3512) and x 2504 (y 3497, 3516): all in view from the shore.
@@ -29,7 +29,7 @@ public enum FishingPlace
 		// Offcuts are used as bait before feathers.
 		new int[]{ItemID.BRUT_FISH_CUTS, ItemID.FEATHER},
 		new int[]{ItemID.BRUT_SPAWNING_TROUT, ItemID.BRUT_SPAWNING_SALMON, ItemID.BRUT_STURGEON},
-		48, 15, null);
+		48, 15, null, BankLocation.BARBARIAN_OUTPOST);
 
 	private final String label;
 	final String spotName;
@@ -47,10 +47,12 @@ public enum FishingPlace
 	final int agilityStrengthLevel;
 	/** Null: no bank at hand, the gear comes along and the fish are dropped or cut. */
 	final BankLocation bank;
+	/** Where to fetch a knife, a teak log or feathers when one runs out (Otto: the Barbarian Outpost). */
+	final BankLocation restock;
 
 	FishingPlace(String label, String spotName, String spotAction, WorldPoint centre, int radius,
 		WorldPoint[] lookouts, int[] rods, int[] bait, int[] fish, int fishingLevel, int agilityStrengthLevel,
-		BankLocation bank)
+		BankLocation bank, BankLocation restock)
 	{
 		this.label = label;
 		this.spotName = spotName;
@@ -64,6 +66,7 @@ public enum FishingPlace
 		this.fishingLevel = fishingLevel;
 		this.agilityStrengthLevel = agilityStrengthLevel;
 		this.bank = bank;
+		this.restock = restock;
 	}
 
 	@Override

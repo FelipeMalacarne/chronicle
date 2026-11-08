@@ -1,6 +1,7 @@
 package net.runelite.client.plugins.microbot.fm.tickfisher;
 
 import java.awt.Rectangle;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import net.runelite.api.MenuAction;
@@ -13,6 +14,13 @@ import net.runelite.client.plugins.microbot.api.npc.models.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 import net.runelite.client.plugins.microbot.util.menu.NewMenuEntry;
 import net.runelite.client.plugins.microbot.util.misc.Rs2UiHelper;
+import net.runelite.client.plugins.microbot.util.mouse.naturalmouse.api.MouseMotionFactory;
+import net.runelite.client.plugins.microbot.util.mouse.naturalmouse.support.DefaultMouseMotionNature;
+import net.runelite.client.plugins.microbot.util.mouse.naturalmouse.support.DefaultOvershootManager;
+import net.runelite.client.plugins.microbot.util.mouse.naturalmouse.support.DefaultSpeedManager;
+import net.runelite.client.plugins.microbot.util.mouse.naturalmouse.support.Flow;
+import net.runelite.client.plugins.microbot.util.mouse.naturalmouse.support.MouseMotionNature;
+import net.runelite.client.plugins.microbot.util.mouse.naturalmouse.util.FlowTemplates;
 
 /**
  * The clicks of the cycle, built as the menu entries Rs2Inventory.invokeMenu and
@@ -33,8 +41,9 @@ final class Clicks
 	};
 
 	private final MouseMode mode;
-	/** Hybrid: the clicks in between go out quick. */
+	/** The delay tick: natural moves go as fast strokes. */
 	private volatile boolean burst;
+	private MouseMotionFactory strokes;
 	/** NPC options by NPC id, read once: the click must not wait on the client thread. */
 	private final Map<Integer, String[]> optionsById = new HashMap<>();
 
@@ -104,7 +113,7 @@ final class Clicks
 	/** Natural mode: brings the cursor onto the item's slot without clicking. */
 	void hover(Rs2ItemModel item)
 	{
-		if (!natural())
+		if (mode != MouseMode.NATURAL)
 		{
 			return;
 		}
@@ -167,27 +176,62 @@ final class Clicks
 	private Point aim(Rectangle target)
 	{
 		java.awt.Point at = Microbot.getMouse().getMousePosition();
-		if (natural() && at != null && target.contains(at))
+		if (mode == MouseMode.NATURAL && at != null && target.contains(at))
 		{
 			return new Point(at.x, at.y);
 		}
 		Point point = Rs2UiHelper.getClickingPoint(target, true, false);
-		if (natural())
+		if (mode == MouseMode.NATURAL && burst)
+		{
+			stroke(point);
+		}
+		else if (mode == MouseMode.NATURAL)
 		{
 			Microbot.naturalMouse.moveTo(point.getX(), point.getY());
 		}
 		return point;
 	}
 
-	/** Hybrid mouse: clicks between {@code burst(true)} and {@code burst(false)} go out quick. */
+	/** Natural mouse: moves between {@code burst(true)} and {@code burst(false)} are fast strokes. */
 	void burst(boolean on)
 	{
 		burst = on;
 	}
 
-	private boolean natural()
+	/**
+	 * A fast natural stroke: a curved, noisy path like the client's natural mouse, but ~60 ms of
+	 * movement, little reaction time and no overshoot, as a 3-tick player flicks between slots.
+	 * The client's own profiles take 350-600 ms a click: 4 of them do not fit a tick (30% on time).
+	 * Its own nature object, so the client's shared natural mouse keeps its settings.
+	 */
+	private void stroke(Point to)
 	{
-		return mode == MouseMode.NATURAL || (mode == MouseMode.HYBRID && !burst);
+		if (strokes == null)
+		{
+			MouseMotionNature shared = Microbot.naturalMouse.nature;
+			DefaultMouseMotionNature nature = new DefaultMouseMotionNature();
+			nature.setSystemCalls(shared.getSystemCalls());
+			nature.setMouseInfo(shared.getMouseInfo());
+			nature.setReactionTimeBaseMs(10);
+			nature.setReactionTimeVariationMs(30);
+			MouseMotionFactory factory = new MouseMotionFactory(nature);
+			DefaultSpeedManager speed = new DefaultSpeedManager(Arrays.asList(
+				new Flow(FlowTemplates.variatingFlow()),
+				new Flow(FlowTemplates.adjustingFlow()),
+				new Flow(FlowTemplates.jaggedFlow())));
+			speed.setMouseMovementBaseTimeMs(60);
+			factory.setSpeedManager(speed);
+			((DefaultOvershootManager) factory.getOvershootManager()).setOvershoots(0);
+			strokes = factory;
+		}
+		try
+		{
+			strokes.build(to.getX(), to.getY()).move();
+		}
+		catch (InterruptedException e)
+		{
+			Thread.currentThread().interrupt();
+		}
 	}
 
 	private static final class SlotView

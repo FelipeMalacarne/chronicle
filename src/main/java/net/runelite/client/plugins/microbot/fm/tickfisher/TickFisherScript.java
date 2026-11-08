@@ -36,9 +36,13 @@ public class TickFisherScript extends Script
 	private static final String SPOT_ACTION = "Lure";
 	/** Between the spots of the Shilo river, east and west of the bank path. */
 	private static final WorldPoint FISHING_AREA = new WorldPoint(2846, 2975, 0);
-	private static final int FISHING_AREA_RADIUS = 16;
-	/** On the bank path by the river: where to walk when far from it (the area's centre is water). */
-	private static final WorldPoint RIVER_BANK = new WorldPoint(2842, 2969, 0);
+	private static final int FISHING_AREA_RADIUS = 24;
+	/**
+	 * Where to watch for spots while none is in view, on the bank path west and east along the
+	 * river. The game only sends NPCs within about 15 tiles: from the west end the spots at the
+	 * east end (x 2860 and beyond) never show, so the wait moves between the two.
+	 */
+	private static final WorldPoint[] LOOKOUTS = {new WorldPoint(2842, 2969, 0), new WorldPoint(2857, 2971, 0)};
 	/** Farther than this from the river at start: not at Shilo. */
 	private static final int START_RADIUS = 40;
 	private static final int FLY_FISHING_LEVEL = 20;
@@ -62,6 +66,9 @@ public class TickFisherScript extends Script
 	private int handledTick = -1;
 	private int countedDropTick = -1;
 	private int bankFailures;
+	/** The lookout being walked to or watched from (-1: none yet), and when to try the other. */
+	private int lookout = -1;
+	private long lookoutUntil;
 	/**
 	 * The varied rhythm: cycles until the next hesitation and how many cycles it still skips;
 	 * when the current plain-fishing breather ends and the next one starts.
@@ -97,6 +104,7 @@ public class TickFisherScript extends Script
 		handledTick = -1;
 		countedDropTick = -1;
 		bankFailures = 0;
+		lookout = -1;
 		clicks = new Clicks(config.mouse());
 		cyclesToSlip = nextSlip();
 		slipCycles = 0;
@@ -163,19 +171,7 @@ public class TickFisherScript extends Script
 		Rs2NpcModel target = currentSpot(s);
 		if (target == null)
 		{
-			// Shilo has few spots, and after a move none may show for up to a minute: wait on the
-			// river bank (from the bank itself no spot is in view).
-			WorldPoint me = Rs2Player.getWorldLocation();
-			if (me != null && me.distanceTo(RIVER_BANK) > 3)
-			{
-				Microbot.status = "Tick Fisher: walking to the river";
-				Rs2Walker.walkTo(RIVER_BANK, 2);
-			}
-			else
-			{
-				Microbot.status = "Tick Fisher: waiting for a fishing spot";
-				s.spotWaitTicks++;
-			}
+			waitForSpot(s);
 			return;
 		}
 		if (!nextTo(target))
@@ -432,11 +428,51 @@ public class TickFisherScript extends Script
 			.nearestOnClientThread();
 		if (nearest != null)
 		{
+			lookout = -1;
 			spot = nearest;
 			spotTile = nearest.getWorldLocation();
 			events.clearDespawned();
 		}
 		return nearest;
+	}
+
+	/**
+	 * Shilo has few spots, and after a move none may show for up to a minute: watch from a
+	 * lookout on the river bank for a while, then from the other one (from the bank itself, or
+	 * from one end of the river, the spots elsewhere are out of sight).
+	 */
+	private void waitForSpot(Session s)
+	{
+		WorldPoint me = Rs2Player.getWorldLocation();
+		if (me == null)
+		{
+			return;
+		}
+		long now = System.currentTimeMillis();
+		if (lookout < 0)
+		{
+			lookout = me.distanceTo(LOOKOUTS[0]) <= me.distanceTo(LOOKOUTS[1]) ? 0 : 1;
+			lookoutUntil = 0;
+		}
+		else if (lookoutUntil > 0 && now >= lookoutUntil)
+		{
+			lookout = 1 - lookout;
+			lookoutUntil = 0;
+			log.info("Tick Fisher: no spot in view, looking from {}", LOOKOUTS[lookout]);
+		}
+		WorldPoint at = LOOKOUTS[lookout];
+		if (me.distanceTo(at) > 2)
+		{
+			Microbot.status = "Tick Fisher: walking along the river";
+			Rs2Walker.walkTo(at, 2);
+			return;
+		}
+		if (lookoutUntil == 0)
+		{
+			lookoutUntil = now + Rs2Random.betweenInclusive(8_000, 20_000);
+		}
+		Microbot.status = "Tick Fisher: waiting for a fishing spot";
+		s.spotWaitTicks++;
 	}
 
 	/**

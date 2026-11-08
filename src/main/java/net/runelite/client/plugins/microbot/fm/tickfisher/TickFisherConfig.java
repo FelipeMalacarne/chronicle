@@ -11,9 +11,20 @@ public interface TickFisherConfig extends Config
 	String GROUP = "fm-tickfisher";
 
 	@ConfigItem(
+		keyName = "place",
+		name = "Place",
+		description = "Shilo Village: fly fishing on the river by the bank (fly fishing rod, feathers). Otto's Grotto: barbarian fishing (barbarian rod, feathers or offcuts; no bank, bring the gear)",
+		position = -1
+	)
+	default FishingPlace place()
+	{
+		return FishingPlace.SHILO;
+	}
+
+	@ConfigItem(
 		keyName = "threeTick",
 		name = "3-tick",
-		description = "Knife on a teak log, then the spot, every 3 ticks: a roll every 3 ticks instead of 5. Needs a knife and exactly one teak log (taken from the bank). Off: plain fishing",
+		description = "Knife on a teak log, then the spot, every 3 ticks: a roll every 3 ticks instead of 5. Needs a knife and exactly one teak log (at Shilo taken from the bank). Off: plain fishing",
 		position = 0
 	)
 	default boolean threeTick()
@@ -24,7 +35,7 @@ public interface TickFisherConfig extends Config
 	@ConfigItem(
 		keyName = "fishHandling",
 		name = "Fish",
-		description = "Drop: one fish between rolls, fastest XP. Bank: keep them, deposit at the Shilo bank when the inventory is full",
+		description = "Drop: one fish between rolls, fastest XP. Bank (Shilo): keep them, deposit at the Shilo bank when the inventory is full. Cut (Otto): knife on the fish between rolls for Cooking XP; the roe or caviar is eaten as the 3-tick delay when there is one, the offcuts are bait",
 		position = 1
 	)
 	default FishHandling fishHandling()
@@ -67,10 +78,22 @@ public interface TickFisherConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "stopAtAgilityLevel",
+		name = "Stop at Agility level",
+		description = "Barbarian fishing: stop once Agility reaches this level (0 = never)",
+		position = 5
+	)
+	@Range(min = 0, max = 99)
+	default int stopAtAgilityLevel()
+	{
+		return 0;
+	}
+
+	@ConfigItem(
 		keyName = "stopAfterMinutes",
 		name = "Stop after minutes",
 		description = "Stop after running this long (0 = never). Perfect 3-tick for hours is not something a person does",
-		position = 5
+		position = 6
 	)
 	@Range(min = 0, max = 1440)
 	default int stopAfterMinutes()
@@ -82,7 +105,7 @@ public interface TickFisherConfig extends Config
 		keyName = "showOverlay",
 		name = "Show overlay",
 		description = "Progress panel: XP and XP/h, catches, and how well the 3-tick cycle is kept",
-		position = 6
+		position = 7
 	)
 	default boolean showOverlay()
 	{
@@ -93,7 +116,7 @@ public interface TickFisherConfig extends Config
 		keyName = "testCatches",
 		name = "Test catches",
 		description = "In test mode, fish to catch before writing the result and exiting",
-		position = 7
+		position = 8
 	)
 	default int testCatches()
 	{

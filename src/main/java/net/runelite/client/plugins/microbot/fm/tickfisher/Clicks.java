@@ -89,6 +89,11 @@ final class Clicks
 		return item(item, "Use", MenuAction.WIDGET_TARGET_ON_WIDGET);
 	}
 
+	boolean eat(Rs2ItemModel item)
+	{
+		return item(item, "Eat", MenuAction.CC_OP);
+	}
+
 	boolean drop(Rs2ItemModel item)
 	{
 		return item(item, "Drop", MenuAction.CC_OP);

@@ -15,7 +15,6 @@ import net.runelite.client.plugins.microbot.testing.TestResult;
 import net.runelite.client.plugins.microbot.testing.TestResultWriter;
 import net.runelite.client.plugins.microbot.util.Global;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
-import net.runelite.client.plugins.microbot.util.bank.enums.BankLocation;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 import net.runelite.client.plugins.microbot.util.math.Rs2Random;
@@ -23,36 +22,27 @@ import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 
 /**
- * 3-tick fly fishing at Shilo Village. The loop runs once per game tick, one phase of the cycle
- * (wiki, Tick manipulation): on phase 0 knife on teak sets the skilling timer to 3 and the spot
- * click turns it into a fishing roll 3 ticks later, instead of 5. Phase 1 drops a fish and
- * selects the knife, phase 2 brings the cursor onto the teak log, so phase 0 starts with a click
- * where the cursor already is. The teak log is never used up: the spot click cancels the fletch.
+ * 3-tick rod fishing, fly at Shilo Village or barbarian at Otto's Grotto. The loop runs once per
+ * game tick, one phase of the cycle (wiki, Tick manipulation): on phase 0 knife on teak (or eating
+ * roe or caviar) sets the skilling timer to 3 and the spot click turns it into a fishing roll 3
+ * ticks later, instead of 5. Phase 1 drops or cuts a fish, phase 2 brings the cursor onto the
+ * teak log or the roe, so phase 0 starts with a click where the cursor already is. The teak log
+ * is never used up: the spot click cancels the fletch.
  */
 @Slf4j
 public class TickFisherScript extends Script
 {
-	static final String SPOT_NAME = "Rod Fishing spot";
-	private static final String SPOT_ACTION = "Lure";
-	/** Between the spots of the Shilo river, east and west of the bank path. */
-	private static final WorldPoint FISHING_AREA = new WorldPoint(2846, 2975, 0);
-	private static final int FISHING_AREA_RADIUS = 24;
-	/**
-	 * Where to watch for spots while none is in view, on the bank path west and east along the
-	 * river. The game only sends NPCs within about 15 tiles: from the west end the spots at the
-	 * east end (x 2860 and beyond) never show, so the wait moves between the two.
-	 */
-	private static final WorldPoint[] LOOKOUTS = {new WorldPoint(2842, 2969, 0), new WorldPoint(2857, 2971, 0)};
-	/** Farther than this from the river at start: not at Shilo. */
+	/** Farther than this from the place's centre at start: not there. */
 	private static final int START_RADIUS = 40;
-	private static final int FLY_FISHING_LEVEL = 20;
-
-	private static final int[] RODS = {ItemID.FLY_FISHING_ROD, ItemID.FISHINGROD_PEARL_FLY};
-	private static final int[] FISH = {ItemID.RAW_TROUT, ItemID.RAW_SALMON};
+	/** Eaten as the 3-tick delay in place of knife on teak (food: the timer goes to 3). */
+	private static final int[] ROE = {ItemID.BRUT_ROE, ItemID.BRUT_CAVIAR};
+	/** Cuts in a row that left the fish in place: cutting does not work here (Cooking level?). */
+	private static final int MAX_CUT_FAILURES = 3;
 
 	private final FishingEvents events = new FishingEvents();
 	private Clicks clicks;
 	private TickFisherConfig config;
+	private FishingPlace place;
 	// Read by the overlay on the client thread.
 	private volatile Session session;
 	private TestResult testResult;
@@ -71,6 +61,10 @@ public class TickFisherScript extends Script
 	private int handledTick = -1;
 	private int countedDropTick = -1;
 	private int bankFailures;
+	/** Fish count before the knife went on a fish (-1: no cut pending), misses in a row, given up. */
+	private int fishBeforeCut = -1;
+	private int cutFailures;
+	private boolean cuttingFailed;
 	/** The lookout being walked to or watched from (-1: none yet), and when to try the other. */
 	private int lookout = -1;
 	private long lookoutUntil;
@@ -103,6 +97,7 @@ public class TickFisherScript extends Script
 	public boolean run(TickFisherConfig config)
 	{
 		this.config = config;
+		place = config.place();
 		session = null;
 		spot = null;
 		anchorTick = -1;
@@ -110,6 +105,9 @@ public class TickFisherScript extends Script
 		countedDropTick = -1;
 		bankFailures = 0;
 		lookout = -1;
+		fishBeforeCut = -1;
+		cutFailures = 0;
+		cuttingFailed = false;
 		clicks = new Clicks(config.mouse());
 		cyclesToSlip = nextSlip();
 		slipCycles = 0;
@@ -156,8 +154,13 @@ public class TickFisherScript extends Script
 			stop(s.stopReason);
 			return;
 		}
-		if (!hasGear() || (Rs2Bank.isOpen()))
+		if (!hasGear() || (place.bank != null && Rs2Bank.isOpen()))
 		{
+			if (place.bank == null)
+			{
+				s.stop("Missing " + missingGear());
+				return;
+			}
 			gearUp(s);
 			return;
 		}
@@ -166,6 +169,10 @@ public class TickFisherScript extends Script
 			if (config.fishHandling() == FishHandling.BANK)
 			{
 				bankFish(s);
+			}
+			else if (cutting())
+			{
+				cutAllFish(s);
 			}
 			else
 			{
@@ -199,9 +206,26 @@ public class TickFisherScript extends Script
 	private boolean start()
 	{
 		int level = Rs2Player.getRealSkillLevel(Skill.FISHING);
-		if (level < FLY_FISHING_LEVEL)
+		if (level < place.fishingLevel)
 		{
-			stop("Fly fishing needs " + FLY_FISHING_LEVEL + " Fishing (have " + level + ")");
+			stop(place + " needs " + place.fishingLevel + " Fishing (have " + level + ")");
+			return false;
+		}
+		int agility = Rs2Player.getRealSkillLevel(Skill.AGILITY);
+		int strength = Rs2Player.getRealSkillLevel(Skill.STRENGTH);
+		if (agility < place.agilityStrengthLevel || strength < place.agilityStrengthLevel)
+		{
+			stop(place + " needs " + place.agilityStrengthLevel + " Agility and Strength");
+			return false;
+		}
+		if (config.fishHandling() == FishHandling.BANK && place.bank == null)
+		{
+			stop("No bank at " + place + ": set Fish to Drop or Cut");
+			return false;
+		}
+		if (config.fishHandling() == FishHandling.CUT && place.bank != null)
+		{
+			stop("Cut is for barbarian fish: set Fish to Drop or Bank");
 			return false;
 		}
 		WorldPoint me = Rs2Player.getWorldLocation();
@@ -209,15 +233,16 @@ public class TickFisherScript extends Script
 		{
 			return false;
 		}
-		if (me.distanceTo(FISHING_AREA) > START_RADIUS)
+		if (me.distanceTo(place.centre) > START_RADIUS)
 		{
-			stop("Start at Shilo Village (the river by the bank)");
+			stop("Start at " + place);
 			return false;
 		}
 		int xp = fishingXp();
 		events.onFishing(level, xp);
+		events.onAgility(agility);
 		session = new Session(events.tick(), xp);
-		log.info("Tick Fisher {}: Fishing {}, 3-tick {}, fish {}, mouse {}", TickFisherPlugin.VERSION, level, config.threeTick(), config.fishHandling(), config.mouse());
+		log.info("Tick Fisher {}: {}, Fishing {}, Agility {}, 3-tick {}, fish {}, mouse {}", TickFisherPlugin.VERSION, place, level, agility, config.threeTick(), config.fishHandling(), config.mouse());
 		return true;
 	}
 
@@ -227,6 +252,11 @@ public class TickFisherScript extends Script
 		if (level > 0 && events.fishingLevel() >= level)
 		{
 			s.stop("Reached Fishing " + events.fishingLevel());
+		}
+		int agility = config.stopAtAgilityLevel();
+		if (agility > 0 && events.agilityLevel() >= agility)
+		{
+			s.stop("Reached Agility " + events.agilityLevel());
 		}
 		int minutes = config.stopAfterMinutes();
 		if (minutes > 0 && System.currentTimeMillis() - s.startedAt >= minutes * 60_000L)
@@ -275,6 +305,8 @@ public class TickFisherScript extends Script
 		{
 			return;
 		}
+		// Cut-eat: roe or caviar from a cut fish is the delay while there is one, else knife on teak.
+		Rs2ItemModel roe = cutting() ? Rs2Inventory.get(ROE) : null;
 		switch (phase)
 		{
 			case 0:
@@ -284,33 +316,53 @@ public class TickFisherScript extends Script
 					break;
 				}
 				Microbot.status = "Tick Fisher: 3-tick fishing";
-				if (!knifeSelected())
+				if (roe != null)
 				{
-					clicks.select(knife);
+					if (knifeSelected())
+					{
+						clicks.select(knife);
+					}
+					clicks.eat(roe);
+					s.roeEaten++;
 				}
-				clicks.useOn(teak);
-				boolean teakInTime = events.tick() == tick;
-				clicks.npc(target, SPOT_ACTION);
+				else
+				{
+					if (!knifeSelected())
+					{
+						clicks.select(knife);
+					}
+					clicks.useOn(teak);
+				}
+				boolean delayInTime = events.tick() == tick;
+				clicks.npc(target, place.spotAction);
 				int late = events.tick() - tick;
 				s.cycles++;
 				if (late == 0)
 				{
 					s.onTime++;
 				}
-				else if (teakInTime && late == 1)
+				else if (delayInTime && late == 1)
 				{
 					s.spotNextTick++;
 				}
 				break;
 			case 1:
-				if (config.fishHandling() == FishHandling.DROP)
+				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
+				if (fish != null && cutting())
 				{
-					Rs2ItemModel fish = Rs2Inventory.get(FISH);
-					if (fish != null)
+					// Cutting does not touch the skilling timer: it fits between the rolls.
+					fishBeforeCut = fishCount();
+					if (!knifeSelected())
 					{
-						clicks.drop(fish);
-						s.fishDropped++;
+						clicks.select(knife);
 					}
+					clicks.useOn(fish);
+					break;
+				}
+				if (fish != null && config.fishHandling() != FishHandling.BANK)
+				{
+					clicks.drop(fish);
+					s.fishDropped++;
 				}
 				if (!knifeSelected())
 				{
@@ -318,6 +370,17 @@ public class TickFisherScript extends Script
 				}
 				break;
 			default:
+				checkCut(s);
+				if (roe != null)
+				{
+					// Clicking the roe with the knife selected would use the knife on it.
+					if (knifeSelected())
+					{
+						clicks.select(knife);
+					}
+					clicks.hover(roe);
+					break;
+				}
 				if (!knifeSelected())
 				{
 					clicks.select(knife);
@@ -325,6 +388,42 @@ public class TickFisherScript extends Script
 				clicks.hover(teak);
 				break;
 		}
+	}
+
+	/** Cut-eat, unless cutting turned out not to work. */
+	private boolean cutting()
+	{
+		return config.fishHandling() == FishHandling.CUT && !cuttingFailed;
+	}
+
+	/** After a cut on phase 1: one fish fewer now, or the cut did nothing (dropping instead after a few). */
+	private void checkCut(Session s)
+	{
+		if (fishBeforeCut < 0)
+		{
+			return;
+		}
+		if (fishCount() < fishBeforeCut)
+		{
+			s.fishCut++;
+			cutFailures = 0;
+		}
+		else if (++cutFailures >= MAX_CUT_FAILURES)
+		{
+			cuttingFailed = true;
+			log.warn("Tick Fisher: {} cuts in a row left the fish, dropping them instead (Cooking level?)", cutFailures);
+		}
+		fishBeforeCut = -1;
+	}
+
+	private int fishCount()
+	{
+		int count = 0;
+		for (int id : place.fish)
+		{
+			count += Rs2Inventory.count(id);
+		}
+		return count;
 	}
 
 	/**
@@ -398,7 +497,7 @@ public class TickFisherScript extends Script
 		Microbot.status = "Tick Fisher: fishing";
 		if (!Rs2Player.isInteracting() && !Rs2Player.isAnimating())
 		{
-			clicks.npc(target, SPOT_ACTION);
+			clicks.npc(target, place.spotAction);
 		}
 	}
 
@@ -428,8 +527,8 @@ public class TickFisherScript extends Script
 			anchorTick = -1;
 		}
 		Rs2NpcModel nearest = Microbot.getRs2NpcCache().query()
-			.where(npc -> SPOT_NAME.equals(npc.getName()))
-			.where(npc -> npc.getWorldLocation().distanceTo(FISHING_AREA) <= FISHING_AREA_RADIUS)
+			.where(npc -> place.spotName.equals(npc.getName()))
+			.where(npc -> npc.getWorldLocation().distanceTo(place.centre) <= place.radius)
 			.nearestOnClientThread();
 		if (nearest != null)
 		{
@@ -444,8 +543,8 @@ public class TickFisherScript extends Script
 
 	/**
 	 * Shilo has few spots, and after a move none may show for up to a minute: watch from a
-	 * lookout on the river bank for a while, then from the other one (from the bank itself, or
-	 * from one end of the river, the spots elsewhere are out of sight).
+	 * lookout for a while, then from the next one (from the bank itself, or from one end of the
+	 * river, the spots elsewhere are out of sight).
 	 */
 	private void waitForSpot(Session s)
 	{
@@ -455,21 +554,29 @@ public class TickFisherScript extends Script
 			return;
 		}
 		long now = System.currentTimeMillis();
+		WorldPoint[] lookouts = place.lookouts;
 		if (lookout < 0)
 		{
-			lookout = me.distanceTo(LOOKOUTS[0]) <= me.distanceTo(LOOKOUTS[1]) ? 0 : 1;
+			lookout = 0;
+			for (int i = 1; i < lookouts.length; i++)
+			{
+				if (me.distanceTo(lookouts[i]) < me.distanceTo(lookouts[lookout]))
+				{
+					lookout = i;
+				}
+			}
 			lookoutUntil = 0;
 		}
-		else if (lookoutUntil > 0 && now >= lookoutUntil)
+		else if (lookoutUntil > 0 && now >= lookoutUntil && lookouts.length > 1)
 		{
-			lookout = 1 - lookout;
+			lookout = (lookout + 1) % lookouts.length;
 			lookoutUntil = 0;
-			log.info("Tick Fisher: no spot in view, looking from {}", LOOKOUTS[lookout]);
+			log.info("Tick Fisher: no spot in view, looking from {}", lookouts[lookout]);
 		}
-		WorldPoint at = LOOKOUTS[lookout];
+		WorldPoint at = lookouts[lookout];
 		if (me.distanceTo(at) > 2)
 		{
-			Microbot.status = "Tick Fisher: walking along the river";
+			Microbot.status = "Tick Fisher: walking to look for a spot";
 			Rs2Walker.walkTo(at, 2);
 			return;
 		}
@@ -499,7 +606,7 @@ public class TickFisherScript extends Script
 		session.approaches++;
 		log.info("Tick Fisher: walking to the spot at {} from {}", target.getWorldLocation(), Rs2Player.getWorldLocation());
 		anchorTick = -1;
-		if (!clicks.npc(target, SPOT_ACTION))
+		if (!clicks.npc(target, place.spotAction))
 		{
 			Rs2Walker.walkTo(target.getWorldLocation(), 1);
 			return;
@@ -536,13 +643,30 @@ public class TickFisherScript extends Script
 
 	private boolean hasGear()
 	{
-		if (!Rs2Inventory.hasItem(RODS) || !Rs2Inventory.hasItem(ItemID.FEATHER))
+		return missingGear() == null;
+	}
+
+	/** What the inventory lacks for this place and mode, null when nothing. */
+	private String missingGear()
+	{
+		if (!Rs2Inventory.hasItem(place.rods))
 		{
-			return false;
+			return place.bank == null ? "a barbarian rod" : "a fly fishing rod";
+		}
+		if (!Rs2Inventory.hasItem(place.bait))
+		{
+			return place.bank == null ? "feathers or fish offcuts" : "feathers";
+		}
+		if ((config.threeTick() || config.fishHandling() == FishHandling.CUT) && !Rs2Inventory.hasItem(ItemID.KNIFE))
+		{
+			return "a knife";
 		}
 		// Exactly one log: with more, knife on teak opens a Make-X window and loses the tick.
-		return !config.threeTick()
-			|| (Rs2Inventory.hasItem(ItemID.KNIFE) && Rs2Inventory.count(ItemID.TEAK_LOGS) == 1);
+		if (config.threeTick() && Rs2Inventory.count(ItemID.TEAK_LOGS) != 1)
+		{
+			return "exactly one teak log";
+		}
+		return null;
 	}
 
 	/** At the Shilo bank: keeps rod, feathers, knife and coins, and takes exactly one teak log. */
@@ -560,7 +684,7 @@ public class TickFisherScript extends Script
 		}
 		Rs2Bank.depositAllExcept(ItemID.FLY_FISHING_ROD, ItemID.FISHINGROD_PEARL_FLY, ItemID.FEATHER,
 			ItemID.KNIFE, ItemID.TEAK_LOGS, ItemID.COINS);
-		if (!Rs2Inventory.hasItem(RODS) && !withdraw(ItemID.FLY_FISHING_ROD, 1, "fly fishing rod"))
+		if (!Rs2Inventory.hasItem(place.rods) && !withdraw(ItemID.FLY_FISHING_ROD, 1, "fly fishing rod"))
 		{
 			return;
 		}
@@ -596,8 +720,8 @@ public class TickFisherScript extends Script
 		{
 			return;
 		}
-		Rs2Bank.depositAll(item -> item.getId() == ItemID.RAW_TROUT || item.getId() == ItemID.RAW_SALMON);
-		if (!Global.sleepUntil(() -> !Rs2Inventory.hasItem(FISH), 3000))
+		Rs2Bank.depositAll(item -> isFish(item.getId()));
+		if (!Global.sleepUntil(() -> !Rs2Inventory.hasItem(place.fish), 3000))
 		{
 			return;
 		}
@@ -613,14 +737,14 @@ public class TickFisherScript extends Script
 		{
 			return true;
 		}
-		if (Rs2Bank.walkToBankAndUseBank(BankLocation.SHILO_VILLAGE) && Global.sleepUntil(Rs2Bank::isOpen, 5000))
+		if (Rs2Bank.walkToBankAndUseBank(place.bank) && Global.sleepUntil(Rs2Bank::isOpen, 5000))
 		{
 			bankFailures = 0;
 			return true;
 		}
 		if (++bankFailures >= 5)
 		{
-			session.stop("Could not open the Shilo bank");
+			session.stop("Could not open the bank");
 		}
 		return false;
 	}
@@ -637,15 +761,63 @@ public class TickFisherScript extends Script
 		return clicked && Global.sleepUntil(() -> Rs2Inventory.hasItem(id), 3000);
 	}
 
+	private boolean isFish(int id)
+	{
+		for (int fish : place.fish)
+		{
+			if (fish == id)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/** Full inventory while dropping: only when the drops between rolls fell behind. */
 	private void dropAllFish(Session s)
 	{
 		Microbot.status = "Tick Fisher: dropping fish";
-		int before = Rs2Inventory.count(ItemID.RAW_TROUT) + Rs2Inventory.count(ItemID.RAW_SALMON);
-		Rs2Inventory.dropAll(FISH);
-		Global.sleepUntil(() -> !Rs2Inventory.hasItem(FISH), 6000);
-		s.fishDropped += before - Rs2Inventory.count(ItemID.RAW_TROUT) - Rs2Inventory.count(ItemID.RAW_SALMON);
+		int before = fishCount();
+		Rs2Inventory.dropAll(place.fish);
+		Global.sleepUntil(() -> !Rs2Inventory.hasItem(place.fish), 6000);
+		s.fishDropped += before - fishCount();
 		anchorTick = -1;
+	}
+
+	/** Full inventory while cutting (plain fishing, or cuts that fell behind): cut them all, a tick each. */
+	private void cutAllFish(Session s)
+	{
+		Microbot.status = "Tick Fisher: cutting fish";
+		anchorTick = -1;
+		for (int i = 0; i < 28 && isRunning(); i++)
+		{
+			Rs2ItemModel knife = Rs2Inventory.get(ItemID.KNIFE);
+			Rs2ItemModel fish = Rs2Inventory.get(place.fish);
+			if (knife == null || fish == null)
+			{
+				return;
+			}
+			int before = fishCount();
+			if (!knifeSelected())
+			{
+				clicks.select(knife);
+			}
+			clicks.useOn(fish);
+			if (!Global.sleepUntil(() -> fishCount() < before, 1800))
+			{
+				cuttingFailed = true;
+				log.warn("Tick Fisher: knife on a fish did nothing, dropping them instead (Cooking level?)");
+				return;
+			}
+			s.fishCut++;
+			Rs2ItemModel roe = Rs2Inventory.get(ROE);
+			if (roe != null && Rs2Inventory.isFull())
+			{
+				clicks.eat(roe);
+				s.roeEaten++;
+			}
+			Global.sleepUntilNextTick(1200);
+		}
 	}
 
 	// ----- stopping and reporting --------------------------------------------------------------
@@ -657,7 +829,7 @@ public class TickFisherScript extends Script
 		{
 			// A knife-on-teak may still be running: one more spot click cancels it, or the fletch
 			// completes and takes the log.
-			clicks.npc(last, SPOT_ACTION);
+			clicks.npc(last, place.spotAction);
 		}
 		Microbot.status = "Tick Fisher stopped: " + reason;
 		log.info("Tick Fisher stopped: {}", reason);
@@ -686,6 +858,8 @@ public class TickFisherScript extends Script
 		lastReport = now;
 		Session s = session;
 		Map<String, Object> progress = new LinkedHashMap<>();
+		progress.put("place", place == null ? null : place.name());
+		progress.put("agilityLevel", events.agilityLevel());
 		progress.put("threeTick", config.threeTick());
 		progress.put("fishHandling", config.fishHandling().name());
 		progress.put("mouse", config.mouse().name());

@@ -9,6 +9,7 @@ final class FishingEvents
 	private volatile int tick;
 	private volatile int fishingXp;
 	private volatile int fishingLevel;
+	private volatile int agilityLevel;
 	private volatile int lastDropTick = -1;
 	private volatile int despawnedIndex = -1;
 	private boolean dropPending;
@@ -46,6 +47,11 @@ final class FishingEvents
 		fishingLevel = level;
 	}
 
+	void onAgility(int level)
+	{
+		agilityLevel = level;
+	}
+
 	void onNpcDespawned(int index)
 	{
 		despawnedIndex = index;
@@ -69,6 +75,11 @@ final class FishingEvents
 	int fishingLevel()
 	{
 		return fishingLevel;
+	}
+
+	int agilityLevel()
+	{
+		return agilityLevel;
 	}
 
 	int lastDropTick()

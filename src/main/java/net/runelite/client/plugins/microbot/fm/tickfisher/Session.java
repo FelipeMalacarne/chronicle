@@ -23,6 +23,9 @@ final class Session
 	/** Ticks spent fishing at a spot (cycling or plain), the base for catches per 100 ticks. */
 	volatile int fishingTicks;
 	volatile int fishDropped;
+	/** Fish cut with the knife, and roe or caviar eaten as the 3-tick delay instead of knife on teak. */
+	volatile int fishCut;
+	volatile int roeEaten;
 	volatile int bankTrips;
 	/** Teak stocks made: a cycle where the spot click did not land and the fletch completed. */
 	volatile int stocksMade;
@@ -78,6 +81,8 @@ final class Session
 		counters.put("catches", catches);
 		counters.put("fishingTicks", fishingTicks);
 		counters.put("fishDropped", fishDropped);
+		counters.put("fishCut", fishCut);
+		counters.put("roeEaten", roeEaten);
 		counters.put("bankTrips", bankTrips);
 		counters.put("stocksMade", stocksMade);
 		counters.put("spotMoves", spotMoves);

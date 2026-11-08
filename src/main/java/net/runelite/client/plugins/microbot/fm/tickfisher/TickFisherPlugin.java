@@ -14,15 +14,14 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 /**
- * 3-tick fly fishing at Shilo Village: knife on a teak log and the spot every 3 ticks, dropping
- * a fish between rolls or banking them at the Shilo bank. Takes rod, feathers, knife and one
- * teak log from the bank. The first mode of a fishing plugin that grows into barbarian fishing
- * and Barblore.
+ * 3-tick rod fishing: knife on a teak log (or eating roe) and the spot every 3 ticks. Fly fishing at
+ * Shilo Village, dropping a fish between rolls or banking them, or barbarian fishing at Otto's
+ * Grotto, dropping or cutting them for Cooking XP. Grows into Barblore.
  */
 @PluginDescriptor(
 	name = PluginDescriptor.Mocrosoft + "Tick Fisher",
-	description = "3-tick fly fishing at Shilo Village (knife + teak), drop or bank, natural or quick mouse",
-	tags = {"fishing", "3-tick", "tick manipulation", "fly fishing", "shilo", "ironman"},
+	description = "3-tick fly fishing at Shilo (drop or bank) and barbarian fishing at Otto's Grotto (drop or cut-eat)",
+	tags = {"fishing", "3-tick", "tick manipulation", "fly fishing", "barbarian", "shilo", "otto", "ironman"},
 	authors = {"FelipeMalacarne"},
 	version = TickFisherPlugin.VERSION,
 	minClientVersion = "2.6.52",
@@ -32,7 +31,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class TickFisherPlugin extends Plugin
 {
-	static final String VERSION = "0.3.6";
+	static final String VERSION = "0.4.0";
 
 	@Inject
 	private TickFisherConfig config;
@@ -86,12 +85,16 @@ public class TickFisherPlugin extends Plugin
 		{
 			script.events().onFishing(event.getLevel(), event.getXp());
 		}
+		else if (event.getSkill() == Skill.AGILITY)
+		{
+			script.events().onAgility(event.getLevel());
+		}
 	}
 
 	@Subscribe
 	public void onNpcDespawned(NpcDespawned event)
 	{
-		if (TickFisherScript.SPOT_NAME.equals(event.getNpc().getName()))
+		if (config.place().spotName.equals(event.getNpc().getName()))
 		{
 			script.events().onNpcDespawned(event.getNpc().getIndex());
 		}

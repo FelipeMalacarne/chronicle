@@ -59,10 +59,16 @@ class TickFisherOverlay extends OverlayPanel
 
 		long elapsed = Math.max(1, System.currentTimeMillis() - s.startedAt);
 		int xp = script.xpGained();
+		line("Place", config.place().toString());
 		line("Mode", (config.threeTick() ? "3-tick" : "Plain") + ", " + config.fishHandling() + ", " + config.mouse());
 		line("Runtime", duration(elapsed));
 		int stopAt = config.stopAtLevel();
 		line("Fishing", script.events().fishingLevel() + (stopAt > 0 ? " (stop at " + stopAt + ")" : ""));
+		int agilityAt = config.stopAtAgilityLevel();
+		if (config.place() == FishingPlace.OTTO || agilityAt > 0)
+		{
+			line("Agility", script.events().agilityLevel() + (agilityAt > 0 ? " (stop at " + agilityAt + ")" : ""));
+		}
 		long now = System.currentTimeMillis();
 		if (s != rateSession || now - rateAt >= RATE_REFRESH_MS)
 		{
@@ -90,6 +96,10 @@ class TickFisherOverlay extends OverlayPanel
 			{
 				line("Teak stocks made", String.valueOf(s.stocksMade));
 			}
+		}
+		if (config.fishHandling() == FishHandling.CUT)
+		{
+			line("Cut / roe eaten", s.fishCut + " / " + s.roeEaten);
 		}
 		if (config.fishHandling() == FishHandling.BANK)
 		{

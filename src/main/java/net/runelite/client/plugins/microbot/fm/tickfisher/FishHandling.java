@@ -3,7 +3,10 @@ package net.runelite.client.plugins.microbot.fm.tickfisher;
 public enum FishHandling
 {
 	DROP("Drop"),
-	BANK("Bank");
+	/** Shilo only: deposit at the bank when the inventory is full. */
+	BANK("Bank"),
+	/** Barbarian fish: knife on the fish for Cooking XP, roe or caviar (eaten as the delay) and offcuts (bait). */
+	CUT("Cut");
 
 	private final String label;
 

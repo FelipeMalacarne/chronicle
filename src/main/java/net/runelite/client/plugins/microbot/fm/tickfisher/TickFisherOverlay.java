@@ -3,6 +3,8 @@ package net.runelite.client.plugins.microbot.fm.tickfisher;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics2D;
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Inject;
 import net.runelite.api.Experience;
 import net.runelite.client.plugins.microbot.Microbot;
@@ -23,6 +25,7 @@ class TickFisherOverlay extends OverlayPanel
 	private long rateAt;
 	private long rate;
 	private Session rateSession;
+	private final Map<String, String> etas = new HashMap<>();
 
 	@Inject
 	TickFisherOverlay(TickFisherPlugin plugin, TickFisherConfig config)
@@ -67,19 +70,21 @@ class TickFisherOverlay extends OverlayPanel
 			line("Delay", config.delay().toString());
 		}
 		line("Runtime", duration(elapsed));
-		FishingEvents events = script.events();
-		skill("Fishing", events.fishingLevel(), events.fishingXp(), s.startXp, config.stopAtLevel(), elapsed);
-		int agilityAt = config.stopAtAgilityLevel();
-		if (config.place() == FishingPlace.OTTO || agilityAt > 0)
-		{
-			skill("Agility", events.agilityLevel(), events.agilityXp(), s.startAgilityXp, agilityAt, elapsed);
-		}
+		// Rates and estimates once a second: per frame they change with every millisecond and flicker.
 		long now = System.currentTimeMillis();
-		if (s != rateSession || now - rateAt >= RATE_REFRESH_MS)
+		boolean refresh = s != rateSession || now - rateAt >= RATE_REFRESH_MS;
+		if (refresh)
 		{
 			rateSession = s;
 			rateAt = now;
 			rate = xp * 3_600_000L / elapsed;
+		}
+		FishingEvents events = script.events();
+		skill("Fishing", events.fishingLevel(), events.fishingXp(), s.startXp, config.stopAtLevel(), elapsed, refresh);
+		int agilityAt = config.stopAtAgilityLevel();
+		if (config.place() == FishingPlace.OTTO || agilityAt > 0)
+		{
+			skill("Agility", events.agilityLevel(), events.agilityXp(), s.startAgilityXp, agilityAt, elapsed, refresh);
 		}
 		line("XP gained", String.format("%,d (%,d/h)", xp, rate));
 		int ticks = s.fishingTicks;
@@ -122,7 +127,7 @@ class TickFisherOverlay extends OverlayPanel
 	 * A skill's level and, with a stop level set, the time to reach it at this session's pace
 	 * ("Agility 38 -> 50", "3:12:40, 61,234 xp"); "..." until the session has gained some.
 	 */
-	private void skill(String name, int level, int xp, int startXp, int stopAt, long elapsedMs)
+	private void skill(String name, int level, int xp, int startXp, int stopAt, long elapsedMs, boolean refresh)
 	{
 		if (stopAt <= level || xp <= 0)
 		{
@@ -130,10 +135,15 @@ class TickFisherOverlay extends OverlayPanel
 			return;
 		}
 		line(name, level + " -> " + stopAt);
-		int left = Math.max(0, Experience.getXpForLevel(stopAt) - xp);
-		int gained = xp - startXp;
-		String eta = gained > 0 ? duration((long) ((double) left * elapsedMs / gained)) : "...";
-		line("  to " + stopAt, String.format("%s, %,d xp", eta, left));
+		String eta = etas.get(name);
+		if (refresh || eta == null)
+		{
+			int left = Math.max(0, Experience.getXpForLevel(stopAt) - xp);
+			int gained = xp - startXp;
+			eta = String.format("%s, %,d xp", gained > 0 ? duration((long) ((double) left * elapsedMs / gained)) : "...", left);
+			etas.put(name, eta);
+		}
+		line("  to " + stopAt, eta);
 	}
 
 	private void line(String left, String right)

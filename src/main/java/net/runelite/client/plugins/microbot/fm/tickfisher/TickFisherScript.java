@@ -244,6 +244,11 @@ public class TickFisherScript extends Script
 	private boolean start()
 	{
 		int level = Rs2Player.getRealSkillLevel(Skill.FISHING);
+		if (level <= 0)
+		{
+			// Just logged in: the skills are not loaded yet (0.9.3 stopped with "have 0").
+			return false;
+		}
 		if (level < place.fishingLevel)
 		{
 			stop(place + " needs " + place.fishingLevel + " Fishing (have " + level + ")");

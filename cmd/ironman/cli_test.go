@@ -123,3 +123,34 @@ func TestExplainLoginRequired(t *testing.T) {
 		t.Fatalf("now without login = %v", err)
 	}
 }
+
+func TestAccountStateParts(t *testing.T) {
+	var st client.AccountState
+	if err := json.Unmarshal([]byte(`{"account":{"id":"acc_x"},"skills":[{"skill":"agility","level":45}],
+		"quests":[{"name":"Waterfall Quest","state":"FINISHED"},{"name":"Dragon Slayer I","state":"NOT_STARTED"}],
+		"diaries":[{"area":"ardougne","tier":"easy","complete":true},{"area":"ardougne","tier":"medium"}],
+		"containers":[{"container":"bank","state":"live","items":[{"id":1,"name":"Rune pickaxe","qty":1},{"id":2,"name":"Coins","qty":5}]}]}`), &st); err != nil {
+		t.Fatal(err)
+	}
+	sum, err := accountStatePart(st, "", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, _ := json.Marshal(sum)
+	for _, want := range []string{`"agility":45`, `"FINISHED":1`, `"diaries_complete":["ardougne easy"]`, `"items":2`} {
+		if !strings.Contains(string(b), want) {
+			t.Errorf("summary %s lacks %s", b, want)
+		}
+	}
+	items, _ := accountStatePart(st, "items", "PICKAXE")
+	if b, _ := json.Marshal(items); string(b) != `[{"container":"bank","name":"Rune pickaxe","qty":1}]` {
+		t.Errorf("items = %s", b)
+	}
+	quests, _ := accountStatePart(st, "quests", "not_started")
+	if b, _ := json.Marshal(quests); string(b) != `[{"name":"Dragon Slayer I","state":"NOT_STARTED"}]` {
+		t.Errorf("quests = %s", b)
+	}
+	if _, err := accountStatePart(st, "bank", ""); err == nil {
+		t.Error("unknown part accepted")
+	}
+}

@@ -360,6 +360,18 @@ type AccountState struct {
 		Tier     string `json:"tier"`
 		Complete bool   `json:"complete"`
 	} `json:"diaries"`
+	Containers []struct {
+		Container  string    `json:"container"`
+		State      string    `json:"state"`
+		ObservedAt time.Time `json:"observed_at"`
+		Complete   bool      `json:"complete"`
+		Items      []struct {
+			ID   int    `json:"id"`
+			Name string `json:"name"`
+			Qty  int64  `json:"qty"`
+			Slot string `json:"slot,omitempty"`
+		} `json:"items"`
+	} `json:"containers"`
 }
 
 // AccountState is GET /api/account/state.

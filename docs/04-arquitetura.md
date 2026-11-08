@@ -136,7 +136,10 @@ funcionam de qualquer máquina e o modelo de permissão é o da web. Servidor: `
 token). `IRONMAN_TOKEN` é um bearer usado como está, no lugar do login guardado (scripts). O MCP da
 conta usa o mesmo `internal/mcp` mínimo do `content mcp` (sem o SDK oficial) com as tools `now`,
 `mark_step`, `goals`, `goal_plan`, `account_state`, `step` e `sync`; `mark_step` grava marcas do
-dono e as instruções do servidor mandam chamá-la só quando o dono pede.
+dono e as instruções do servidor mandam chamá-la só quando o dono pede. `account_state` devolve uma
+parte por vez (`summary` por padrão, `skills`, `quests`, `diaries`, `items`, com `search` por nome):
+o estado inteiro passa de 70 mil caracteres (217 quests e o banco) e o Claude Code recusa um
+resultado desse tamanho.
 
 ### 2.3 Fluxo: snapshot → objetivos → status dos passos
 

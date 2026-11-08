@@ -146,13 +146,23 @@ func newAccountMCPServer(c *client.Client) *mcp.Server {
 			},
 			{
 				Name:        "account_state",
-				Description: "What the planner knows of the account: skills, quests, diaries, quest points and the item containers (inventory, equipment, bank) with their freshness.",
-				InputSchema: noArgs,
+				Description: "What the planner knows of the account, one part at a time: summary (default: levels, quest and diary counts, item containers with their freshness), skills, quests, diaries or items (inventory, equipment, bank). search filters quests and items by name.",
+				InputSchema: schema(`{"type":"object","additionalProperties":false,"properties":{
+ "part":{"type":"string","enum":["summary","skills","quests","diaries","items"],"description":"default summary"},
+ "search":{"type":"string","description":"case-insensitive piece of a quest or item name (or a quest state: FINISHED, IN_PROGRESS, NOT_STARTED)"}}}`),
 				Handler: func(ctx context.Context, raw json.RawMessage) (any, error) {
-					if err := empty(raw); err != nil {
+					var a struct {
+						Part   string `json:"part"`
+						Search string `json:"search"`
+					}
+					if err := mcp.Decode(raw, &a); err != nil {
 						return nil, err
 					}
-					return c.Get(ctx, "/api/account/state", nil, true)
+					st, err := c.AccountState(ctx)
+					if err != nil {
+						return nil, err
+					}
+					return accountStatePart(st, a.Part, a.Search)
 				},
 			},
 			{

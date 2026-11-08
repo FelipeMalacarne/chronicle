@@ -76,6 +76,8 @@ public class TickFisherScript extends Script
 	private volatile boolean interrupted;
 	/** Fish count before the knife went on a fish (-1: no cut pending), misses in a row, given up. */
 	private int fishBeforeCut = -1;
+	/** The last catch's tick when the cut was clicked: a catch after it adds a fish of its own. */
+	private int dropTickAtCut;
 	private int cutFailures;
 	private boolean cuttingFailed;
 	/** The lookout being walked to or watched from (-1: none yet), and when to try the other. */
@@ -392,6 +394,7 @@ public class TickFisherScript extends Script
 				if (fish != null && cutting() && knife != null)
 				{
 					fishBeforeCut = fishCount();
+					dropTickAtCut = events.lastDropTick();
 					clicks.select(knife);
 					clicks.useOn(fish);
 				}
@@ -450,7 +453,7 @@ public class TickFisherScript extends Script
 		{
 			return;
 		}
-		if (fishCount() < fishBeforeCut)
+		if (fishCount() - caughtSince(dropTickAtCut) < fishBeforeCut)
 		{
 			s.fishCut++;
 			cutFailures = 0;
@@ -473,6 +476,15 @@ public class TickFisherScript extends Script
 			cuttingFailed = true;
 			log.warn("Tick Fisher: {} cuts in a row left the fish, dropping them instead", failures);
 		}
+	}
+
+	/**
+	 * Fish caught since a cut was clicked. A catch landing with the cut (a cycle that slipped)
+	 * keeps the count level, which 0.9.5 took for a failed cut and gave up cutting.
+	 */
+	private int caughtSince(int dropTick)
+	{
+		return events.lastDropTick() > dropTick ? 1 : 0;
 	}
 
 	private int fishCount()
@@ -1057,9 +1069,10 @@ public class TickFisherScript extends Script
 				return;
 			}
 			int before = fishCount();
+			int dropTick = events.lastDropTick();
 			selectTool(knife);
 			clicks.useOn(fish);
-			if (!Global.sleepUntil(() -> fishCount() < before, 1800))
+			if (!Global.sleepUntil(() -> fishCount() - caughtSince(dropTick) < before, 1800))
 			{
 				// One cut that did not land (a click lost to the fishing animation) says nothing:
 				// 0.9.5 gave up on the first and dropped every fish for the rest of the run.

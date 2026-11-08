@@ -148,6 +148,18 @@ public interface TickFisherConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "keepFish",
+		name = "Keep fish while fishing",
+		description = "Leave caught fish in the inventory during the cycle; drop (or cut) them all when it is full",
+		position = 22,
+		hidden = true
+	)
+	default boolean keepFish()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "testCatches",
 		name = "Test catches",
 		description = "In test mode, fish to catch before writing the result and exiting",

@@ -329,13 +329,13 @@ public class TickFisherScript extends Script
 			{
 				// The catch tick: drop or cut the fish now.
 				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-				if (fish != null && knife != null && cutting())
+				if (fish != null && knife != null && cutting() && !config.keepFish())
 				{
 					fishBeforeCut = fishCount();
 					selectTool(knife);
 					clicks.useOn(fish);
 				}
-				else if (fish != null && config.fishHandling() != FishHandling.BANK)
+				else if (fish != null && config.fishHandling() != FishHandling.BANK && !config.keepFish())
 				{
 					clicks.drop(fish);
 					s.fishDropped++;
@@ -387,13 +387,13 @@ public class TickFisherScript extends Script
 					s.roeEaten++;
 				}
 				Rs2ItemModel fish = Rs2Inventory.get(place.fish);
-				if (fish != null && knife != null && cutting())
+				if (fish != null && knife != null && cutting() && !config.keepFish())
 				{
 					fishBeforeCut = fishCount();
 					selectTool(knife);
 					clicks.useOn(fish);
 				}
-				else if (fish != null && config.fishHandling() != FishHandling.BANK)
+				else if (fish != null && config.fishHandling() != FishHandling.BANK && !config.keepFish())
 				{
 					clicks.drop(fish);
 					s.fishDropped++;

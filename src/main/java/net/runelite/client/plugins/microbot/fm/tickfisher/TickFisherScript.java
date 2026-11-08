@@ -209,7 +209,8 @@ public class TickFisherScript extends Script
 			return;
 		}
 		missingTicks = 0;
-		if (Rs2Inventory.isFull())
+		// Cutting needs a free slot (for the offcuts), so cut while one is left.
+		if (Rs2Inventory.isFull() || (cutting() && Rs2Inventory.emptySlotCount() <= 1 && fishCount() > 0))
 		{
 			if (config.fishHandling() == FishHandling.BANK)
 			{
@@ -1068,6 +1069,24 @@ public class TickFisherScript extends Script
 			{
 				return;
 			}
+			if (Rs2Inventory.emptySlotCount() == 0)
+			{
+				// A cut with no free slot does nothing: make one, roe first.
+				Rs2ItemModel roe = Rs2Inventory.get(ROE);
+				deselect();
+				if (roe != null)
+				{
+					clicks.eat(roe);
+					s.roeEaten++;
+				}
+				else
+				{
+					clicks.drop(fish);
+					s.fishDropped++;
+				}
+				Global.sleepUntilNextTick(1200);
+				continue;
+			}
 			int before = fishCount();
 			int dropTick = events.lastDropTick();
 			selectTool(knife);
@@ -1082,7 +1101,7 @@ public class TickFisherScript extends Script
 			s.fishCut++;
 			cutFailures = 0;
 			Rs2ItemModel roe = Rs2Inventory.get(ROE);
-			if (roe != null && Rs2Inventory.isFull())
+			if (roe != null && Rs2Inventory.emptySlotCount() == 0)
 			{
 				clicks.eat(roe);
 				s.roeEaten++;

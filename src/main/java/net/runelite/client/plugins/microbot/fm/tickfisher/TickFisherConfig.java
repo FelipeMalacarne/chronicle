@@ -62,7 +62,7 @@ public interface TickFisherConfig extends Config
 	)
 	default MouseMode mouse()
 	{
-		return MouseMode.NATURAL;
+		return MouseMode.HYBRID;
 	}
 
 	@ConfigItem(

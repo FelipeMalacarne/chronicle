@@ -1083,6 +1083,13 @@ public class TickFisherScript extends Script
 			finishTest(reason);
 			return;
 		}
+		if (config.logoutOnStop() && Microbot.isLoggedIn())
+		{
+			// Left logged in, the game logs the player out for idling and a break handler logs
+			// straight back in, every 25 minutes for hours. This logout tells them it was meant.
+			Global.sleepUntilNextTick(1200);
+			log.info("Tick Fisher: logging out ({})", Rs2Player.logoutWithoutAutoLogin());
+		}
 		shutdown();
 	}
 

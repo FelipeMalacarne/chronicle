@@ -137,10 +137,21 @@ public interface TickFisherConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "logoutOnStop",
+		name = "Log out when stopping",
+		description = "Log out when it stops on its own (a stop level, the time limit, missing gear) and keep the break handler and AutoLogin from logging back in to stand idle. Logging in by hand or starting another script lifts that",
+		position = 10
+	)
+	default boolean logoutOnStop()
+	{
+		return true;
+	}
+
+	@ConfigItem(
 		keyName = "showOverlay",
 		name = "Show overlay",
 		description = "Progress panel: XP and XP/h, catches, and how well the 3-tick cycle is kept",
-		position = 10
+		position = 11
 	)
 	default boolean showOverlay()
 	{
@@ -151,7 +162,7 @@ public interface TickFisherConfig extends Config
 		keyName = "testCatches",
 		name = "Test catches",
 		description = "In test mode, fish to catch before writing the result and exiting",
-		position = 11
+		position = 12
 	)
 	default int testCatches()
 	{

@@ -11,7 +11,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 { read -r _ cls <<<"$(mb_plugin_dir "${1:?plugin}")" && [[ -n "$cls" ]]; } || die "unknown plugin: $1"
 src="$(ls "$MB_PLUGIN_SRC"/*/"$cls.java")"
 # TestRunner matches the @PluginDescriptor name with the color prefix stripped.
-descriptor="$(grep -oP 'Mocrosoft \+ "\K[^"]+' "$src" || grep -oP 'name = "\K[^"]+' "$src")"
+descriptor="$(grep -oP 'name = \w+\.TAG \+ "\K[^"]+' "$src" || grep -oP 'Mocrosoft \+ "\K[^"]+' "$src" || grep -oP 'name = "\K[^"]+' "$src")"
 [[ -n "$descriptor" ]] || die "could not read the descriptor name from $src"
 
 mb_client_pid >/dev/null && die "dev client already running; stop it first: mb-client stop"

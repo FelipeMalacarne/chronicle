@@ -15,7 +15,7 @@ import net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin;
  * was launched with -Dmicrobot.dev.harness=true, so it never touches the everyday client.
  */
 @PluginDescriptor(
-	name = PluginDescriptor.Mocrosoft + "Dev Bootstrap",
+	name = DevBootstrapPlugin.TAG + "Dev Bootstrap",
 	description = "Starts the Agent Server for the agent dev harness",
 	tags = {"dev", "agent", "harness"},
 	authors = {"FelipeMalacarne"},
@@ -27,6 +27,8 @@ import net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin;
 public class DevBootstrapPlugin extends Plugin
 {
 	static final String VERSION = "1.0.0";
+	/** Name prefix of our own plugins in the plugin list. */
+	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	// Used only if the socket cannot bind and the server falls back to TCP; keeps it off 8081.
 	static final int FALLBACK_PORT = 8091;

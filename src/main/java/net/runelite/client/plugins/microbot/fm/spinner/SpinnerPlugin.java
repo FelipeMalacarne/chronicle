@@ -13,7 +13,7 @@ import net.runelite.client.plugins.PluginDescriptor;
  * Needs shears in the inventory or the bank.
  */
 @PluginDescriptor(
-	name = PluginDescriptor.Mocrosoft + "Lumbridge Spinner",
+	name = SpinnerPlugin.TAG + "Lumbridge Spinner",
 	description = "Shears Lumbridge sheep, spins balls of wool in the castle, banks them",
 	tags = {"crafting", "wool", "spinning", "ironman", "lumbridge"},
 	authors = {"FelipeMalacarne"},
@@ -26,6 +26,8 @@ import net.runelite.client.plugins.PluginDescriptor;
 public class SpinnerPlugin extends Plugin
 {
 	static final String VERSION = "1.0.2";
+	/** Name prefix of our own plugins in the plugin list. */
+	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 
 	@Inject
 	private SpinnerConfig config;

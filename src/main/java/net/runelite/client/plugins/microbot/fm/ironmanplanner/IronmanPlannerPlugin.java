@@ -52,7 +52,7 @@ import okhttp3.OkHttpClient;
  * Its HTTP runs on a third thread ({@code ironman-planner-panel}), its Swing work on the EDT.
  */
 @PluginDescriptor(
-	name = PluginDescriptor.Mocrosoft + "Ironman Planner",
+	name = IronmanPlannerPlugin.TAG + "Ironman Planner",
 	description = "Syncs skills, quests, diary varbits and opted-in items to your Ironman Planner server and shows its route in a side panel",
 	tags = {"ironman", "tracker", "planner", "guide", "panel"},
 	authors = {"FelipeMalacarne"},
@@ -65,6 +65,8 @@ import okhttp3.OkHttpClient;
 public class IronmanPlannerPlugin extends Plugin
 {
 	static final String VERSION = "1.2.1";
+	/** Name prefix of our own plugins in the plugin list. */
+	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 	private static final long CAPTURE_TIMEOUT_MS = 2_000;
 	/** How often the sync thread looks at the engine: well under {@link CaptureTrigger#DEBOUNCE}. */
 	private static final long TICK_PERIOD_MS = 250;

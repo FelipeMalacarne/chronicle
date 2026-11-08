@@ -13,7 +13,7 @@ import net.runelite.client.plugins.PluginDescriptor;
  * test-mode result.json. Copy this package to start a new plugin.
  */
 @PluginDescriptor(
-	name = PluginDescriptor.Mocrosoft + "Hello Agent",
+	name = HelloAgentPlugin.TAG + "Hello Agent",
 	description = "Harness template: observes game state and reports it to agents",
 	tags = {"example", "agent"},
 	authors = {"FelipeMalacarne"},
@@ -26,6 +26,8 @@ import net.runelite.client.plugins.PluginDescriptor;
 public class HelloAgentPlugin extends Plugin
 {
 	static final String VERSION = "1.0.0";
+	/** Name prefix of our own plugins in the plugin list. */
+	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 
 	@Inject
 	private HelloAgentScript script;

@@ -21,7 +21,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
  * barman with coins. Needs a blackjack, coins and partial completion of The Feud.
  */
 @PluginDescriptor(
-	name = PluginDescriptor.Mocrosoft + "Blackjacker",
+	name = BlackjackerPlugin.TAG + "Blackjacker",
 	description = "Pollnivneach blackjacking: auto target, lure, knock-out + pickpocket, buys wine",
 	tags = {"thieving", "blackjack", "pollnivneach", "bandit", "ironman"},
 	authors = {"FelipeMalacarne"},
@@ -34,6 +34,8 @@ import net.runelite.client.ui.overlay.OverlayManager;
 public class BlackjackerPlugin extends Plugin
 {
 	static final String VERSION = "1.13.1";
+	/** Name prefix of our own plugins in the plugin list. */
+	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 
 	@Inject
 	private BlackjackerConfig config;

@@ -8,7 +8,7 @@
 	import { rowChip, whoDid } from '#lib/progress/agora';
 	import { ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { narrow } from '#lib/progress/narrow.svelte';
-	import { highlight, legSummary } from '#lib/progress/rota';
+	import { highlight, legSummary, snippet, stepMatches } from '#lib/progress/rota';
 	import { loadSummary, session } from '#lib/progress/session.svelte';
 	import {
 		blockedBadge,
@@ -27,7 +27,13 @@
 		stepNotes,
 		type SegmentView
 	} from '#lib/progress/view';
-	import type { Board, ContentStep, ItemRequirement, MarkAction } from '#lib/progress/types';
+	import type {
+		Board,
+		ContentSection,
+		ContentStep,
+		ItemRequirement,
+		MarkAction
+	} from '#lib/progress/types';
 	import ChipGroups from '#lib/v6/ChipGroups.svelte';
 	import Glyph from '#lib/v6/Glyph.svelte';
 	import ObjectiveChip from '#lib/v6/ObjectiveChip.svelte';
@@ -107,18 +113,45 @@
 		)
 			return false;
 		if (!enhanced && s.layers?.length === 1 && s.layers[0] === 'enhanced') return false;
-		const q = query.trim().toLowerCase();
-		if (q) {
-			const hay = [s.ref, s.text, s.location ?? '', ...Object.values(s.names)]
-				.join(' ')
-				.toLowerCase();
-			if (!hay.includes(q)) return false;
-		}
-		return true;
+		return stepMatches(s, query);
 	}
-	const narrowed = $derived(query.trim() !== '' || filter !== 'all');
+	const searching = $derived(query.trim() !== '');
+	const narrowed = $derived(searching || filter !== 'all');
 	const total = $derived(section.data?.steps.length ?? 0);
 	const matches = $derived(segments.reduce((n, g) => n + g.steps.filter(shown).length, 0));
+
+	/*
+	 * A busca vale para a rota inteira: as outras seções vêm uma vez por rota, quando a primeira
+	 * busca começa, e os passos delas que batem aparecem abaixo dos desta seção, com link.
+	 */
+	const OTHER_LIMIT = 5;
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity -- cache de requisições, fora do grafo reativo
+	const sectionsOf = new Map<string, Promise<ContentSection[]>>();
+	let others = $state<{ guide: string; sections: ContentSection[] } | null>(null);
+	$effect(() => {
+		if (!searching || !sectionsNav.length) return;
+		const g = guideId;
+		let p = sectionsOf.get(g);
+		if (!p) {
+			p = Promise.all(sectionsNav.map((sec) => progressApi.section(g, sec.id)));
+			sectionsOf.set(g, p);
+		}
+		p.then(
+			(sections) => (others = { guide: g, sections }),
+			() => sectionsOf.delete(g)
+		);
+	});
+	const othersLoading = $derived(searching && others?.guide !== guideId);
+	const otherHits = $derived(
+		!searching || !others || others.guide !== guideId
+			? []
+			: others.sections
+					.filter((sec) => sec.id !== sectionId)
+					.map((sec) => ({ sec, steps: sec.steps.filter(shown) }))
+					.filter((h) => h.steps.length)
+	);
+	const otherCount = $derived(otherHits.reduce((n, h) => n + h.steps.length, 0));
+	const elsewhere = $derived(paragraph ? 'outros capítulos' : 'outras seções');
 
 	/* Trechos abertos e o passo expandido: o do cursor por padrão, ou o da âncora #passo-<id>. */
 	let open = $state<Record<string, boolean>>({});
@@ -552,9 +585,12 @@
 					><Glyph name="search" size={14} /><input
 						type="search"
 						bind:value={query}
-						placeholder={`buscar ${narrow.value ? '' : paragraph ? 'neste capítulo: ' : 'nesta seção: '}texto, item, local, quest`}
-						aria-label="Buscar passos"
-					/>{#if query.trim()}<span class="cnt">{matches} de {total}</span>{/if}</label
+						placeholder={`buscar ${narrow.value ? '' : 'na rota: '}texto, item, local, quest`}
+						aria-label="Buscar passos na rota"
+					/>{#if searching}<span class="cnt"
+							>{matches} de {total}{#if otherCount}
+								· +{otherCount} em {elsewhere}{/if}</span
+						>{/if}</label
 				>
 				<div class="seg" role="group" aria-label="Quais passos">
 					{#each [['pending', 'Pendentes'], ['all', 'Todos'], ['objectives', 'Com objetivo']] as [k, l] (k)}
@@ -600,7 +636,10 @@
 			<div class="legs ruled">
 				{#if narrowed && !matches}
 					<p class="su empty">
-						Nenhum passo {query.trim() ? `com “${query.trim()}”` : 'com este filtro'} nesta seção.
+						Nenhum passo {searching ? `com “${query.trim()}”` : 'com este filtro'}
+						{paragraph ? 'neste capítulo' : 'nesta seção'}{otherCount
+							? `; ${otherCount} em ${elsewhere}`
+							: ''}.
 					</p>
 				{/if}
 				{#each segments as seg, si (seg.id)}
@@ -677,6 +716,41 @@
 						{/if}
 					{/if}
 				{/each}
+				{#if othersLoading}
+					<p class="su tiny pad">buscando em {elsewhere}…</p>
+				{:else if otherHits.length}
+					<p class="lbl pad oth">Em {elsewhere} · {otherCount}</p>
+					{#each otherHits as h (h.sec.id)}
+						<a class="leg" href={secHref(h.sec.id)}
+							><span class="mono rng">{sectionLabel(h.sec.id)}</span>{h.sec.title}<span class="r"
+								>{h.steps.length} com “{query.trim()}”</span
+							></a
+						>
+						{#each h.steps.slice(0, OTHER_LIMIT) as s (s.id)}
+							{@const b = boardById.get(s.id)}
+							{@const v = statusView(b?.status, s.id === cursorId, !!b?.blocked_by?.length)}
+							<a
+								class="row"
+								class:row-done={v.done}
+								class:row-skip={b?.status === 'skipped'}
+								href={`${secHref(h.sec.id)}#passo-${s.id}`}
+								><span class="st {v.st}"
+									>{#if v.done}<Glyph name="check" size={10} />{/if}</span
+								><span class="id" class:wid={paragraph}>{s.ref}</span><span class="tx"
+									>{@render parts(snippet(s.text, query))}</span
+								></a
+							>
+						{/each}
+						{#if h.steps.length > OTHER_LIMIT}
+							<div class="row last">
+								<span class="st hid"></span><span class="id">…</span>
+								<a class="lnk more" href={secHref(h.sec.id)}
+									>mais {h.steps.length - OTHER_LIMIT} em {sectionLabel(h.sec.id)}</a
+								>
+							</div>
+						{/if}
+					{/each}
+				{/if}
 			</div>
 			<p class="su tiny">
 				{#if guideId.startsWith('bruhsailer')}BRUHsailer por So Iron BRUH e ParasailerOSRS.{:else}Guia
@@ -917,6 +991,9 @@
 	}
 	.empty {
 		margin: 12px;
+	}
+	.oth {
+		margin: 18px 0 0;
 	}
 	.small {
 		font-size: 12px;

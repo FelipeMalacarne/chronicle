@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { highlight, legSummary } from './rota.ts';
+import { highlight, legSummary, snippet, stepMatches } from './rota.ts';
 import type { ContentStep } from './types.ts';
 
 const step = (location: string, quests: string[] = []) =>
@@ -41,4 +41,28 @@ test('highlight marks every match, case-insensitive', () => {
 		{ t: ' tree', m: false }
 	]);
 	assert.deepEqual(highlight('abc', ''), [{ t: 'abc', m: false }]);
+});
+
+test('stepMatches looks at ref, text, location and resolved names', () => {
+	const s = {
+		ref: 'CH1.31',
+		text: 'Barb fish to 50 agility',
+		location: 'Otto',
+		names: { 'quest:death_on_the_isle': 'Death on the Isle' }
+	};
+	assert.equal(stepMatches(s, 'ch1.31'), true);
+	assert.equal(stepMatches(s, 'AGILITY'), true);
+	assert.equal(stepMatches(s, 'otto'), true);
+	assert.equal(stepMatches(s, 'death on'), true);
+	assert.equal(stepMatches(s, 'corrupted'), false);
+	assert.equal(stepMatches(s, '  '), true);
+});
+
+test('snippet centers on the first match and marks cut ends', () => {
+	const text = `${'a '.repeat(100)}Corrupted Gauntlet${' b'.repeat(100)}`;
+	const cut = snippet(text, 'corrupted', 60);
+	assert.ok(cut.startsWith('…') && cut.endsWith('…'));
+	assert.ok(cut.includes('Corrupted Gauntlet'));
+	assert.equal(snippet('short\n text', 'x'), 'short text');
+	assert.ok(snippet(text, 'nowhere', 60).startsWith('a a'));
 });

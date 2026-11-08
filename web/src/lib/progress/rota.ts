@@ -84,3 +84,30 @@ export function highlight(text: string, term: string): { t: string; m: boolean }
 	if (from < text.length) out.push({ t: text.slice(from), m: false });
 	return out;
 }
+
+/** A busca da Rota: o termo no ref, no texto, no local ou num nome resolvido do passo. */
+export function stepMatches(
+	s: Pick<ContentStep, 'ref' | 'text' | 'location' | 'names'>,
+	term: string
+): boolean {
+	const q = term.trim().toLowerCase();
+	if (!q) return true;
+	return [s.ref, s.text, s.location ?? '', ...Object.values(s.names ?? {})]
+		.join(' ')
+		.toLowerCase()
+		.includes(q);
+}
+
+/**
+ * Recorte de `text` em volta da primeira ocorrência de `term`, com reticências nas pontas
+ * cortadas; sem ocorrência no texto (o termo bateu num nome ou no local), o começo.
+ */
+export function snippet(text: string, term: string, width = 140): string {
+	const flat = text.replace(/\s+/g, ' ').trim();
+	if (flat.length <= width) return flat;
+	const q = term.trim().toLowerCase();
+	const at = q ? flat.toLowerCase().indexOf(q) : -1;
+	const from = at < 0 ? 0 : Math.max(0, Math.min(at - Math.floor(width / 3), flat.length - width));
+	const to = Math.min(flat.length, from + width);
+	return `${from > 0 ? '…' : ''}${flat.slice(from, to).trim()}${to < flat.length ? '…' : ''}`;
+}

@@ -40,6 +40,8 @@ public class TickFisherScript extends Script
 	/** Eaten as the 3-tick delay in place of knife on teak (food: the timer goes to 3). */
 	private static final int[] ROE = {ItemID.BRUT_ROE, ItemID.BRUT_CAVIAR};
 	private static final int[] ROE_ONLY = {ItemID.BRUT_ROE};
+	/** Keeping the caviar: bank it once this few slots are left. */
+	private static final int CAVIAR_BANK_FREE_SLOTS = 2;
 	/** Cuts in a row that left the fish in place before giving up on cutting (one miss is a lost click). */
 	private static final int MAX_CUT_FAILURES = 20;
 	/** Clean herbs that make a tar, and the Herblore level each needs. */
@@ -216,8 +218,14 @@ public class TickFisherScript extends Script
 			return;
 		}
 		missingTicks = 0;
-		// Cutting needs a free slot (for the offcuts), so cut while one is left; keeping the
-		// caviar, bank it once the fish are cut and that slot is the last.
+		// Keeping the caviar, bank it while two slots are still free: with one left the cuts
+		// stopped landing and 20 misses gave up cutting (2026-11-09 08:31).
+		if (keepCaviar() && Rs2Inventory.emptySlotCount() <= CAVIAR_BANK_FREE_SLOTS)
+		{
+			bankCaviar(s);
+			return;
+		}
+		// Cutting needs a free slot (for the offcuts), so cut while one is left.
 		boolean full = Rs2Inventory.isFull();
 		boolean lastSlot = cutting() && Rs2Inventory.emptySlotCount() <= 1;
 		if (full || (lastSlot && (fishCount() > 0 || keepCaviar())))

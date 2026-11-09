@@ -273,6 +273,10 @@ trilha da última troca). Desenhar no canvas antes da entrega 2.
 
 ### Cliente headless num N95
 
+Plano do dono (2026-11-09): o webapp roda no saradomin, como já previsto; o agent e o cliente
+headless vão para o N95 e, se faltar CPU, para o zaros. Com o executor no agent (R1), ele vai junto
+com o cliente e trocar de máquina é só onde o `ironman agent` roda, sem mudança de código.
+
 Medido no zaros (Ryzen 7 7800X3D) em 2026-11-09, com o cliente de dev **em janela** pescando (Tick
 Fisher e Kitten ligados, o cockpit lendo): 1,1 a 2 núcleos e 2,7 GB de RSS (`-Xmx2g`), com o 117 HD
 desenhando na RTX 4070 SUPER e FPS sem limite (`fpscontrol.limitFps=false`). Esse número não serve

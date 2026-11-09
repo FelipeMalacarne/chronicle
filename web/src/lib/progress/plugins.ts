@@ -4,7 +4,13 @@
  * ("<html>[<font>M</font>] Web Walker"); o GET /plugins?installed=true traz os do Plugin Hub, cujo
  * internalName é o nome simples da classe. Puro, testado em node.
  */
-import type { HubPlugin, PluginsView, ScriptDetail } from '../api/microbot.ts';
+import type {
+	HubPlugin,
+	PluginSchema,
+	PluginsView,
+	SchemaItem,
+	ScriptDetail
+} from '../api/microbot.ts';
 
 export type Source = 'hub' | 'meus' | 'cliente';
 
@@ -165,4 +171,49 @@ function healthLine(h: unknown): string | null {
 			return bits.join(' · ');
 		})
 		.join('; ');
+}
+
+export interface FormSection {
+	key: string;
+	name: string;
+	description?: string;
+	closed: boolean;
+	items: SchemaItem[];
+}
+
+/** As opções visíveis por seção, na ordem do painel; as sem seção abrem a lista como "Geral". */
+export function formSections(s: PluginSchema | null): FormSection[] {
+	if (!s) return [];
+	const visible = s.items.filter((i) => !i.hidden);
+	const out: FormSection[] = [];
+	const loose = visible.filter((i) => !i.section || !s.sections.some((x) => x.key === i.section));
+	if (loose.length) out.push({ key: '', name: 'Geral', closed: false, items: loose });
+	for (const sec of s.sections) {
+		const items = visible.filter((i) => i.section === sec.key);
+		if (items.length)
+			out.push({
+				key: sec.key,
+				name: sec.name,
+				description: sec.description || undefined,
+				closed: !!sec.closedByDefault,
+				items
+			});
+	}
+	return out;
+}
+
+/** O valor de uma opção vale para gravar? Números no intervalo, enum entre os valores. */
+export function fieldError(item: SchemaItem, raw: string): string | null {
+	raw = String(raw ?? '');
+	if (item.type === 'int' || item.type === 'double') {
+		const n = Number(raw);
+		if (raw.trim() === '' || !Number.isFinite(n)) return 'número';
+		if (item.type === 'int' && !Number.isInteger(n)) return 'inteiro';
+		if (item.min !== undefined && n < item.min) return `mínimo ${item.min}`;
+		if (item.max !== undefined && n > item.max) return `máximo ${item.max}`;
+	}
+	if (item.type === 'enum' && !(item.values ?? []).some((v) => v.value === raw))
+		return 'escolha um valor';
+	if (item.type === 'boolean' && raw !== 'true' && raw !== 'false') return 'sim ou não';
+	return null;
 }

@@ -19,6 +19,7 @@
 		type PluginRow
 	} from '#lib/progress/plugins';
 	import Glyph from '#lib/v6/Glyph.svelte';
+	import ConfigForm from '#lib/v6/ConfigForm.svelte';
 	import { untrack } from 'svelte';
 
 	/*
@@ -145,6 +146,10 @@
 	let edits = $state<Record<string, string>>({});
 	let newKey = $state('');
 	let cfgError = $state<string | null>(null);
+	/** O Dev Bootstrap exportou as opções deste plugin: mostra o formulário; senão, o chave/valor cru. */
+	let formOk = $state(false);
+	let formWhy = $state<string | null>(null);
+	let rawMode = $state(false);
 	const cfgStore = (c: string) => `ironman.microbot.config.${c}`;
 
 	$effect(() => {
@@ -165,6 +170,9 @@
 		values = {};
 		edits = {};
 		cfgError = null;
+		formOk = false;
+		formWhy = null;
+		rawMode = false;
 		untrack(() => void readCfg());
 	});
 	function saveCfg() {
@@ -441,83 +449,105 @@
 			{#if !r.protected}
 				<div class="cfg">
 					<div class="cfgh">
-						<p class="ey">Configuração · chave/valor</p>
-						<span
-							class="badge badge-stale"
-							title="O Agent Server só lê e grava chave/valor; os nomes vêm do @ConfigGroup e dos keyName do plugin"
-							>V1: o Agent Server não lista opções</span
-						>
-						<label class="grp"
-							><span class="k">grupo</span><input
-								class="cell-in mono"
-								bind:value={group}
-								onchange={() => {
-									saveCfg();
-									void readCfg();
-								}}
-							/></label
-						>
-						<button class="btn btn-g btn-s" type="button" onclick={readCfg} disabled={!keys.length}
-							>Ler</button
-						>
+						<p class="ey">Configuração{formOk && !rawMode ? '' : ' · chave/valor'}</p>
+						{#if formOk}
+							<button class="lnk" type="button" onclick={() => (rawMode = !rawMode)}
+								>{rawMode ? 'formulário' : 'chave/valor cru'}</button
+							>
+						{:else}
+							<span class="badge badge-stale" title={formWhy ?? undefined}
+								>sem as opções do plugin: chave/valor cru</span
+							>
+						{/if}
 					</div>
-					{#if cfgError}<p class="err tiny">{cfgError}</p>{/if}
-					<table class="cfgt">
-						<thead><tr><th>chave</th><th>valor</th><th></th></tr></thead>
-						<tbody>
-							{#each keys as k (k)}
+					<ConfigForm
+						className={r.className}
+						{running}
+						onschema={(ok, why) => {
+							formOk = ok;
+							formWhy = why ?? null;
+						}}
+						onwrite={() => void load()}
+					/>
+				</div>
+				{#if !formOk || rawMode}
+					<div class="cfg">
+						<div class="cfgh">
+							<label class="grp"
+								><span class="k">grupo</span><input
+									class="cell-in mono"
+									bind:value={group}
+									onchange={() => {
+										saveCfg();
+										void readCfg();
+									}}
+								/></label
+							>
+							<button
+								class="btn btn-g btn-s"
+								type="button"
+								onclick={readCfg}
+								disabled={!keys.length}>Ler</button
+							>
+						</div>
+						{#if cfgError}<p class="err tiny">{cfgError}</p>{/if}
+						<table class="cfgt">
+							<thead><tr><th>chave</th><th>valor</th><th></th></tr></thead>
+							<tbody>
+								{#each keys as k (k)}
+									<tr>
+										<td class="mono">{k}</td>
+										<td
+											><input
+												class="cell-in mono"
+												aria-label="Valor de {k}"
+												placeholder={k in values && values[k] === null ? '(padrão)' : ''}
+												bind:value={edits[k]}
+											/></td
+										>
+										<td class="rowacts">
+											<button
+												class="btn btn-s"
+												type="button"
+												disabled={!!busy || (edits[k] ?? '') === (values[k] ?? '')}
+												onclick={() => writeCfg(k, edits[k] ?? '')}
+												>{lbl(`cfg:${k}`, 'Gravar')}</button
+											>
+											<button
+												class="lnk"
+												type="button"
+												title="Volta ao padrão do plugin (apaga a chave)"
+												disabled={!!busy || values[k] === null}
+												onclick={() => writeCfg(k, null)}>padrão</button
+											>
+											<button
+												class="lnk"
+												type="button"
+												title="Tira a chave desta lista (não muda o cliente)"
+												onclick={() => dropKey(k)}>×</button
+											>
+										</td>
+									</tr>
+								{/each}
 								<tr>
-									<td class="mono">{k}</td>
-									<td
-										><input
-											class="cell-in mono"
-											aria-label="Valor de {k}"
-											placeholder={k in values && values[k] === null ? '(padrão)' : ''}
-											bind:value={edits[k]}
-										/></td
-									>
-									<td class="rowacts">
-										<button
-											class="btn btn-s"
-											type="button"
-											disabled={!!busy || (edits[k] ?? '') === (values[k] ?? '')}
-											onclick={() => writeCfg(k, edits[k] ?? '')}
-											>{lbl(`cfg:${k}`, 'Gravar')}</button
-										>
-										<button
-											class="lnk"
-											type="button"
-											title="Volta ao padrão do plugin (apaga a chave)"
-											disabled={!!busy || values[k] === null}
-											onclick={() => writeCfg(k, null)}>padrão</button
-										>
-										<button
-											class="lnk"
-											type="button"
-											title="Tira a chave desta lista (não muda o cliente)"
-											onclick={() => dropKey(k)}>×</button
-										>
+									<td colspan="3">
+										<form class="addk" onsubmit={addKey}>
+											<input
+												class="cell-in mono"
+												placeholder="keyName"
+												aria-label="Nova chave"
+												bind:value={newKey}
+											/>
+											<button class="btn btn-g btn-s" type="submit" disabled={!newKey.trim()}
+												>+ chave</button
+											>
+										</form>
 									</td>
 								</tr>
-							{/each}
-							<tr>
-								<td colspan="3">
-									<form class="addk" onsubmit={addKey}>
-										<input
-											class="cell-in mono"
-											placeholder="keyName"
-											aria-label="Nova chave"
-											bind:value={newKey}
-										/>
-										<button class="btn btn-g btn-s" type="submit" disabled={!newKey.trim()}
-											>+ chave</button
-										>
-									</form>
-								</td>
-							</tr>
-						</tbody>
-					</table>
-				</div>
+							</tbody>
+						</table>
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</section>

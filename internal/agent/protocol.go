@@ -32,7 +32,7 @@ var Commands = []string{
 	CmdScriptsPause, CmdScriptsResume, CmdScriptDetail, CmdConfigGet, CmdConfigSet,
 	CmdGameView, CmdWalk, CmdInventoryUse, CmdInventoryDrop, CmdBankOpen, CmdBankClose, CmdBankDeposit,
 	CmdBankWithdraw, CmdNPCInteract, CmdObjectInteract, CmdGroundPickup, CmdDialogueContinue, CmdDialogueSelect,
-	CmdClientLogs, CmdAccountShow, CmdAccountUse, CmdWorldHop,
+	CmdClientLogs, CmdAccountShow, CmdAccountUse, CmdWorldHop, CmdConfigSchema,
 }
 
 // Known reports whether name is in the closed list.

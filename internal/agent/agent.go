@@ -66,7 +66,7 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 			return nil, err
 		}
 		return toJPEG(png), nil
-	case CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet:
+	case CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet, CmdConfigSchema:
 		return e.plugin(ctx, command, params)
 	case CmdGameView:
 		return e.gameView(ctx), nil

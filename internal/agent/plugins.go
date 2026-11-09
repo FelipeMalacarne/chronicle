@@ -140,7 +140,7 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 			return nil, errors.New("plugin: bad version")
 		}
 		return p, nil
-	case CmdScriptStart, CmdScriptStop, CmdScriptDetail:
+	case CmdScriptStart, CmdScriptStop, CmdScriptDetail, CmdConfigSchema:
 		var p ScriptParams
 		if err := decodeParams(raw, &p); err != nil {
 			return nil, err
@@ -148,7 +148,7 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 		if len(p.ClassName) > 256 || !reClassName.MatchString(p.ClassName) {
 			return nil, errors.New("script: className must be a fully qualified class name")
 		}
-		if command != CmdScriptDetail && Protected(p.ClassName) {
+		if command != CmdScriptDetail && command != CmdConfigSchema && Protected(p.ClassName) {
 			return nil, fmt.Errorf("script: %s is not controlled from the planner", p.ClassName)
 		}
 		return p, nil
@@ -279,6 +279,8 @@ func (e *Executor) plugin(ctx context.Context, command string, params json.RawMe
 			return g.JSON(ctx, http.MethodPost, "/scripts/stop", nil, map[string]any{"className": pp.ClassName}, 30*time.Second)
 		case CmdScriptDetail:
 			return e.scriptDetail(ctx, pp.ClassName), nil
+		case CmdConfigSchema:
+			return e.configSchema(pp.ClassName)
 		}
 	case ConfigGetParams:
 		out := ConfigValues{Group: pp.Group, Values: map[string]*string{}}

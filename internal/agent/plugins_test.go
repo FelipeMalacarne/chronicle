@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"net/url"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -198,5 +200,35 @@ func TestGameActions(t *testing.T) {
 		if !Known(cmd) {
 			t.Errorf("%s is not in the closed list", cmd)
 		}
+	}
+}
+
+func TestConfigSchema(t *testing.T) {
+	home := t.TempDir()
+	e := &Executor{Home: home}
+	if _, err := e.configSchema("a.b.GotrPlugin"); !errors.Is(err, ErrNoSchema) {
+		t.Fatalf("no export = %v", err)
+	}
+	export := `{"version":1,"plugins":[
+		{"className":"a.b.GotrPlugin","name":"GOTR","group":"gotr","sections":[{"key":"general","name":"General","position":0}],
+		 "items":[{"key":"mode","name":"Mode","position":1,"type":"enum","values":[{"value":"FAST","label":"Fast"}]},
+		          {"key":"apiToken","name":"Token","position":2,"type":"string"},
+		          {"key":"eat","name":"Eat at","position":3,"type":"int","min":1,"max":99}]},
+		{"className":"a.b.AgentServerPlugin","name":"Agent Server","group":"agentServer","items":[]}]}`
+	if err := os.MkdirAll(filepath.Join(home, ".runelite", "agent"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(home, SchemaFile), []byte(export), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := e.configSchema("a.b.GotrPlugin")
+	if err != nil || s.Group != "gotr" || len(s.Items) != 2 || s.Items[0].Values[0].Label != "Fast" || *s.Items[1].Max != 99 {
+		t.Fatalf("schema = %+v %v", s, err)
+	}
+	if _, err = e.configSchema("a.b.AgentServerPlugin"); err == nil || !strings.Contains(err.Error(), "not edited") {
+		t.Fatalf("protected group = %v", err)
+	}
+	if _, err = e.configSchema("a.b.Other"); err == nil {
+		t.Fatal("a plugin without options returned a schema")
 	}
 }

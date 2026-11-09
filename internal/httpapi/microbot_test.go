@@ -225,6 +225,7 @@ func TestMicrobotRoutes(t *testing.T) {
 		{"POST", "/api/microbot/world", `{"world":42}`},
 		{"POST", "/api/microbot/account", `{"index":0}`},
 		{"GET", "/api/microbot/client/logs?lines=5000", ""},
+		{"GET", "/api/microbot/config/schema?className=NotQualified", ""},
 	} {
 		if status, _, _ = call(t, c.method, srv.URL+c.path, c.body); status != http.StatusBadRequest {
 			t.Fatalf("%s %s = %d, want 400", c.method, c.path, status)

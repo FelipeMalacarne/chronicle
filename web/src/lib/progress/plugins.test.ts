@@ -1,8 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cleanName, detailFacts, pluginRows, rowLine, rowVersion } from './plugins.ts';
+import {
+	cleanName,
+	detailFacts,
+	fieldError,
+	formSections,
+	pluginRows,
+	rowLine,
+	rowVersion
+} from './plugins.ts';
 import { auditLine } from './automacao.ts';
-import type { PluginsView } from '../api/microbot.ts';
+import type { PluginSchema, PluginsView } from '../api/microbot.ts';
 
 const view: PluginsView = {
 	scripts: {
@@ -130,5 +138,37 @@ test('auditLine names the plugin actions', () => {
 			error: '409'
 		}),
 		'instalar plugin · GotrPlugin · falhou: 409'
+	);
+});
+
+test('formSections groups visible options by section, loose ones first', () => {
+	const schema: PluginSchema = {
+		className: 'a.B',
+		name: 'B',
+		group: 'b',
+		sections: [
+			{ key: 'adv', name: 'Avançado', position: 1, closedByDefault: true },
+			{ key: 'empty', name: 'Vazia', position: 2 }
+		],
+		items: [
+			{ key: 'speed', name: 'Speed', position: 0, type: 'int', min: 1, max: 10 },
+			{ key: 'debug', name: 'Debug', position: 1, type: 'boolean', section: 'adv' },
+			{ key: 'secretish', name: 'x', position: 2, type: 'string', hidden: true }
+		]
+	};
+	assert.deepEqual(
+		formSections(schema).map((s) => [s.name, s.closed, s.items.map((i) => i.key)]),
+		[
+			['Geral', false, ['speed']],
+			['Avançado', true, ['debug']]
+		]
+	);
+	const speed = schema.items[0];
+	assert.equal(fieldError(speed, '5'), null);
+	assert.equal(fieldError(speed, '11'), 'máximo 10');
+	assert.equal(fieldError(speed, '2.5'), 'inteiro');
+	assert.equal(
+		fieldError({ ...speed, type: 'enum', values: [{ value: 'A', label: 'a' }] }, 'B'),
+		'escolha um valor'
 	);
 });

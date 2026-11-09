@@ -142,7 +142,8 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 
 ## Lacunas conhecidas
 
-- **Esquema de configuração dos plugins**: o Agent Server só lê e grava chave/valor; não lista as
+- **Esquema de configuração dos plugins** (resolvido em 2026-11-08 pelo Dev Bootstrap 1.1.0, ver
+  "Configuração com formulário"): o Agent Server só lê e grava chave/valor; não lista as
   opções de um plugin (nome, tipo, valores, seções). V1: edição chave/valor crua mais presets salvos
   por plugin. V2: endpoint de descritores de config (`ConfigDescriptor`), de preferência como PR
   upstream no Agent Server, ou num plugin companheiro no `microbot-plugins`.
@@ -280,6 +281,26 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   cliente" (fechado por padrão; reler, acompanhar a cada 5 s, filtro).
 - Verificado no zaros, só leituras: a lista de personagens e 300 linhas do log, com as máscaras só em
   hashes do Nix e dos jars.
+
+**Configuração com formulário** (2026-11-08): fecha a lacuna "esquema de configuração dos plugins"
+abaixo, pelo caminho do plugin companheiro.
+
+- `microbot-plugins`, Dev Bootstrap 1.1.0: escreve `.runelite/agent/config-schema.json` com as
+  opções de cada plugin do Microbot carregado (grupo, seções, itens com tipo, intervalo, unidade,
+  nomes e rótulos de enum e o aviso do plugin), sem os itens `secret`, e reescreve quando um plugin
+  carrega, descarrega ou muda. Os valores não vão no arquivo: continuam no `/settings/plugin`.
+- `config_schema` (leitura): o agent lê o arquivo e devolve o formulário de um plugin, com as regras
+  do `config_get` (sem grupo protegido, sem chave que pareça segredo). `GET
+  /api/microbot/config/schema?className=`.
+- Web, em Plugins: o formulário por seção (as fechadas por padrão começam fechadas), com o controle
+  do tipo (caixa para booleano, número com mínimo, máximo e unidade, lista para enum, texto para o
+  resto, amostra de cor), "Gravar" por opção alterada (segundo clique quando o plugin tem aviso) e
+  "padrão" para apagar a chave. Sem o arquivo (Dev Bootstrap antigo), a tela cai no chave/valor cru,
+  que também fica a um clique como alternativa.
+- Para ligar no zaros: `mb-install devbootstrap` (home de dev, nunca `--live`) e reiniciar o cliente.
+- Verificado: testes do export (tipos e enums) no `microbot-plugins`, do agent (arquivo, grupo
+  protegido, chave de segredo) e do formulário com dados falsos no navegador (validação, edição
+  que sobrevive ao polling).
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

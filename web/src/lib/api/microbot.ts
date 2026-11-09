@@ -119,6 +119,36 @@ export interface ScriptDetail {
 	errors?: Record<string, string>;
 }
 
+/** O formulário de config de um plugin, exportado pelo Dev Bootstrap (doc 08, fase D). */
+export interface PluginSchema {
+	className: string;
+	name: string;
+	group: string;
+	sections: {
+		key: string;
+		name: string;
+		position: number;
+		description?: string;
+		closedByDefault?: boolean;
+	}[];
+	items: SchemaItem[];
+}
+
+export interface SchemaItem {
+	key: string;
+	name: string;
+	description?: string;
+	position: number;
+	section?: string;
+	hidden?: boolean;
+	warning?: string;
+	type: 'boolean' | 'int' | 'double' | 'string' | 'enum' | 'color' | 'keybind' | 'other';
+	values?: { value: string; label: string }[];
+	min?: number;
+	max?: number;
+	units?: string;
+}
+
 export interface ConfigValues {
 	group: string;
 	values: Record<string, string | null>;
@@ -305,6 +335,8 @@ export const microbotApi = {
 	hub: (q: string) => call<HubList>(`/hub?q=${encodeURIComponent(q)}`),
 	scriptDetail: (className: string) =>
 		call<ScriptDetail>(`/scripts/detail?className=${encodeURIComponent(className)}`),
+	configSchema: (className: string) =>
+		call<PluginSchema>(`/config/schema?className=${encodeURIComponent(className)}`),
 	config: (group: string, keys: string[]) =>
 		call<ConfigValues>(
 			`/config?group=${encodeURIComponent(group)}&keys=${encodeURIComponent(keys.join(','))}`

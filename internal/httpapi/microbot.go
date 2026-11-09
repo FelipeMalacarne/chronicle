@@ -69,6 +69,9 @@ func (s *Server) microbotRoutes() {
 	control("GET /api/microbot/scripts/detail", s.microbotRead(agent.CmdScriptDetail, func(r *http.Request) any {
 		return agent.ScriptParams{ClassName: r.URL.Query().Get("className")}
 	}))
+	control("GET /api/microbot/config/schema", s.microbotRead(agent.CmdConfigSchema, func(r *http.Request) any {
+		return agent.ScriptParams{ClassName: r.URL.Query().Get("className")}
+	}))
 	control("GET /api/microbot/config", s.microbotRead(agent.CmdConfigGet, func(r *http.Request) any {
 		var keys []string
 		for k := range strings.SplitSeq(r.URL.Query().Get("keys"), ",") {

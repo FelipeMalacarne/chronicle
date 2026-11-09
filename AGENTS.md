@@ -9,7 +9,8 @@ Personal Microbot plugins, built as sideloadable jars against the pinned officia
   `net.runelite.client.plugins.microbot` (the client filters plugin lists and logs by it).
 - `fm/helloagent/` — template plugin. Copy it to start a new one.
 - `fm/devbootstrap/` — starts the Agent Server in the dev client. Dev home only, never `--live`.
-- `fm/ironmanplanner/` — Chronicle's plugin: read-only tracking everywhere; in the dev harness client
+- `fm/chroniclelink/` — Chronicle Link, Chronicle's plugin (was `fm/ironmanplanner`; config group
+  still `fm-ironmanplanner`): read-only tracking everywhere; in the dev harness client
   only, also the control bridge (`.runelite/agent/bridge.sock`) and the config-options export.
 - `bin/` — harness (on PATH inside `nix develop`/direnv).
 - `vendor/microbot/` — sparse upstream checkout at the pinned tag (`mb-vendor`), gitignored.

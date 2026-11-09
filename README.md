@@ -25,9 +25,12 @@ before each launch.
 
 Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
 
-## Ironman Planner (`fm/ironmanplanner`, 1.3.0)
+## Chronicle Link (`fm/chroniclelink`, 1.4.0)
 
-Chronicle's plugin. Its tracking is read-only: it pushes skills, quest states, the manifest's
+Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
+1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
+rename, and `mb-install` removes the old `IronmanPlannerPlugin.jar` when it installs this one. Its
+tracking is read-only: it pushes skills, quest states, the manifest's
 varbits/varps and, when switched on, bank/inventory/equipment (ingest contract v1,
 `ironman-planner/docs/04-arquitetura.md` 6.4), and never performs a game action.
 
@@ -40,7 +43,7 @@ Agent Server's token; without it nothing answers. It also keeps `.runelite/agent
 with every loaded Microbot plugin's config options, for Chronicle's config form. In the everyday
 client none of this starts.
 
-**Route panel.** A side panel (toolbar icon "Ironman Planner") shows the planner's active
+**Route panel.** A side panel (toolbar icon "Chronicle") shows the planner's active
 route from the cursor on, in RuneLite's look:
 
 - header: the route's short name (Oziris, BRUHsailer; full title in the tooltip), a thin

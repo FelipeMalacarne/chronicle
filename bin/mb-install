@@ -34,7 +34,17 @@ mkdir -p "$dest"
 # The client deletes non-Hub jars whose mtime is older than 3 days. Jars named in this list
 # get touched by the Microbot launcher wrapper (nix-config) before every launch.
 keep="$dest/.sideload-keep"
+# Renamed plugins: installing the new jar retires the old one in the same place, so the two never
+# load together (old name -> new name).
+declare -A renamed=([IronmanPlannerPlugin]=ChronicleLinkPlugin)
 for name in "${names[@]}"; do
+	for old in "${!renamed[@]}"; do
+		if [[ "${renamed[$old]}" == "$name" && -e "$dest/$old.jar" ]]; then
+			rm -f "$dest/$old.jar"
+			[[ -f "$keep" ]] && sed -i "/^$old\.jar\$/d" "$keep"
+			echo "removed $old.jar (renamed to $name) from $dest"
+		fi
+	done
 	install -m644 "$MB_BUILD_PLUGINS/$name.jar" "$dest/$name.jar"
 	touch "$dest/$name.jar"
 	grep -qxF "$name.jar" "$keep" 2>/dev/null || echo "$name.jar" >>"$keep"

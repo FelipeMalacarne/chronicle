@@ -12,7 +12,7 @@ import net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin;
 /**
  * Turns the isolated dev client into an agent-drivable one: starts the Agent Server on a
  * Unix socket inside the dev home. (Chronicle's control bridge and config export live in the
- * Ironman Planner plugin since 1.3.0.)
+ * Chronicle Link plugin, fm/chroniclelink.)
  * Only installed by bin/mb-client, and inert unless the JVM was launched with
  * -Dmicrobot.dev.harness=true, so it never touches the everyday client.
  */

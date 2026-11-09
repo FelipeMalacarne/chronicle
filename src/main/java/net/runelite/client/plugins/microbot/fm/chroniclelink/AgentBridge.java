@@ -280,9 +280,12 @@ final class AgentBridge
 				m.put("position", position(o.getWorldLocation()));
 				return m;
 			})
-			// Most nearby tiles hold unnamed scenery: drop those first, then take the nearest named
-			// ones (the stream is lazy past the sort, so it reads compositions only until it has them).
-			.filter(m -> m.get("name") != null && !"null".equals(m.get("name")))
+			// Most nearby tiles hold scenery (unnamed, or named with no action, like bullrushes): drop
+			// those first, then take the nearest usable ones (the stream is lazy past the sort, so it
+			// reads compositions only until it has them). The composition resolves impostors, so
+			// farming patches and varbit doors keep their current actions.
+			.filter(m -> m.get("name") != null && !"null".equals(m.get("name"))
+				&& !((List<?>) m.get("actions")).isEmpty())
 			.limit(limit)
 			.collect(Collectors.toList());
 	}

@@ -170,7 +170,7 @@ fit_headless_window() {
 	local size="${MB_HEADLESS_SIZE:-1280x900x24}" w h id i
 	IFS=x read -r w h _ <<<"$size"
 	for ((i = 0; i < 20; i++)); do
-		id="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool search --name '^RuneLite' 2>/dev/null | head -1)"
+		id="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool search --name '^RuneLite( - .*)?$' 2>/dev/null | head -1)"
 		if [[ -n "$id" ]]; then
 			DISPLAY="$MB_HEADLESS_DISPLAY" xdotool windowmove "$id" 0 0 windowsize "$id" "$w" "$h" && echo "window fitted to ${w}x${h}"
 			return 0

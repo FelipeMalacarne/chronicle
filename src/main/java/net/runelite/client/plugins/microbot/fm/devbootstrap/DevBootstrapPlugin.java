@@ -1,8 +1,12 @@
 package net.runelite.client.plugins.microbot.fm.devbootstrap;
 
+import com.google.gson.Gson;
 import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.events.ExternalPluginsChanged;
+import net.runelite.client.events.PluginChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.plugins.microbot.Microbot;
@@ -11,8 +15,10 @@ import net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin;
 
 /**
  * Turns the isolated dev client into an agent-drivable one: starts the Agent Server on a
- * Unix socket inside the dev home. Only installed by bin/mb-client, and inert unless the JVM
- * was launched with -Dmicrobot.dev.harness=true, so it never touches the everyday client.
+ * Unix socket inside the dev home, and keeps .runelite/agent/config-schema.json with the config
+ * options of every loaded Microbot plugin (the planner's agent builds its config form from it).
+ * Only installed by bin/mb-client, and inert unless the JVM was launched with
+ * -Dmicrobot.dev.harness=true, so it never touches the everyday client.
  */
 @PluginDescriptor(
 	name = DevBootstrapPlugin.TAG + "Dev Bootstrap",
@@ -26,7 +32,7 @@ import net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin;
 @Slf4j
 public class DevBootstrapPlugin extends Plugin
 {
-	static final String VERSION = "1.0.0";
+	static final String VERSION = "1.1.0";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
@@ -35,6 +41,11 @@ public class DevBootstrapPlugin extends Plugin
 
 	@Inject
 	private ConfigManager configManager;
+
+	@Inject
+	private Gson gson;
+
+	private ConfigSchemaExporter exporter;
 
 	@Override
 	protected void startUp()
@@ -61,5 +72,33 @@ public class DevBootstrapPlugin extends Plugin
 			Microbot.startPlugin(agentServer);
 		}
 		log.info("Dev Bootstrap: Agent Server requested over UDS");
+
+		exporter = new ConfigSchemaExporter(Microbot.getPluginManager(), configManager, gson);
+		exporter.export();
+	}
+
+	@Override
+	protected void shutDown()
+	{
+		exporter = null;
+	}
+
+	/** A plugin loaded, unloaded, installed or removed: its options come or go. */
+	@Subscribe
+	public void onPluginChanged(PluginChanged event)
+	{
+		if (exporter != null)
+		{
+			exporter.export();
+		}
+	}
+
+	@Subscribe
+	public void onExternalPluginsChanged(ExternalPluginsChanged event)
+	{
+		if (exporter != null)
+		{
+			exporter.export();
+		}
 	}
 }

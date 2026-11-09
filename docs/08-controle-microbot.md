@@ -252,18 +252,41 @@ run_event        run_id, at, state, kind, detail (jsonb)    -- trilha, screensho
 3. **Automático**: o relógio dispara sozinho, várias recorrentes em fila por prioridade, paralelos.
 4. **Eventos e preparo**: troca do gato por evento de chat e loadout com banco antes do run.
 
+O ciclo do gato (resposta do dono, R3): o filhote fica com o KittenPlugin (paralela: alimentar e
+afagar até crescer); quando cresce, a troca é uma recorrente disparada pelo evento, que leva o gato
+a um Civilian em West Ardougne e troca por death runes, compra um filhote novo com a Gertrude e
+volta ao principal. Precisa de coins no inventário para o filhote. Sem plugin conhecido no Hub para
+isso, é candidato a plugin nosso no `microbot-plugins`.
+
 A tela "Rotinas" do canvas (V6MicrobotRotinas1440, página 5) foi desenhada para passos em sequência;
 este cenário pede outra forma (o principal, a fila de recorrentes com o relógio de cada uma e a
 trilha da última troca). Desenhar no canvas antes da entrega 2.
 
 ### Decisões para o dono
 
-| # | Pergunta | Recomendação |
+| # | Pergunta | Estado |
 |---|---|---|
-| R1 | O executor roda no `serve` (estado e auditoria num lugar só) ou no agent no zaros (sobrevive a queda do link durante um run)? | no `serve` nas entregas 2 e 3, com o run tendo timeout próprio no plugin; rever no deploy do saradomin, quando o link passa a ser remoto |
-| R2 | Delegar aos plugins do Hub (Herbrun, FornBirdhouseRuns, FarmTreeRun) ou escrever os nossos no `microbot-plugins`? | delegar primeiro; escrever só o que não avisa o fim ou não faz o próprio banco |
-| R3 | "Trocar de gato" é trocar o gato crescido por um filhote novo com a Gertrude? Para quê (diary, Civilians, só criar)? | confirmar antes da entrega 4 |
-| R4 | Começar pela entrega 1 (relógios) agora? | sim: valor imediato, sem risco, e o spike do Time Tracking decide a fonte do relógio |
+| R1 | O executor roda no `serve` (estado e auditoria num lugar só) ou no agent, ao lado do cliente (sobrevive a queda do link durante um run)? | aberta. O dono considera o cliente headless num mini PC com Intel N95, sempre ligado. Recomendação revista: **no agent**, porque o `serve` reinicia (o `air` a cada mudança em Go no `just dev`, deploys no saradomin) e o link passa a ser remoto; o `serve` guarda as rotinas, dispara o "fazer agora" e recebe a trilha, e o agent manda as ações para a auditoria (com fila se o link cair). Só pesa a partir da entrega 2 |
+| R2 | Delegar aos plugins do Hub (Herbrun, FornBirdhouseRuns, FarmTreeRun) ou escrever os nossos no `microbot-plugins`? | decidida (2026-11-09): os dois. A tarefa aponta para uma classe de plugin com um preset, venha do Hub ou do `microbot-plugins`; começar pelos do Hub e escrever o que faltar (fim sem aviso, sem banco, a troca do gato) |
+| R3 | "Trocar de gato" é o quê? | decidida (2026-11-09): o ciclo do gato descrito nas entregas |
+| R4 | Começar pela entrega 1 (relógios) agora? | recomendação: sim; não depende de R1 |
+
+### Cliente headless num N95
+
+Medido no zaros (Ryzen 7 7800X3D) em 2026-11-09, com o cliente de dev **em janela** pescando (Tick
+Fisher e Kitten ligados, o cockpit lendo): 1,1 a 2 núcleos e 2,7 GB de RSS (`-Xmx2g`). O perfil
+estava no pior caso: FPS sem limite (`fpscontrol.limitFps=false`) e o 117 HD ligado. O N95 tem 4
+núcleos e 4 threads e cerca de metade do desempenho por núcleo; nessa configuração ficaria no limite.
+
+O headless corta o que mais pesa: sem GPU e sem 117 HD (o `mb-client start --headless` já desliga).
+Junto, limitar o FPS (FPS Control em 15 a 20; o bot age por tick de 600 ms) e deixar o cockpit ler
+menos quando ninguém olha (o `/observe` com o que está por perto custa ~2 s de cliente). Um cliente
+deve caber com folga em 8 GB de RAM; dois, provavelmente não no CPU.
+
+Antes de decidir: medir o headless com FPS limitado (CPU por 10 min fazendo a atividade principal)
+no zaros, e depois no N95. Levar o cliente para outra máquina leva junto o harness (Nix), a sessão
+da conta (`mb-account`) e os IDs de
+aparelho do HWID agent (`~/.runelite/spoofed-*.properties`); quem move isso é o dono.
 
 ## Estado (2026-11-08)
 

@@ -269,7 +269,7 @@ trilha da última troca). Desenhar no canvas antes da entrega 2.
 | R1 | O executor roda no `serve` (estado e auditoria num lugar só) ou no agent, ao lado do cliente (sobrevive a queda do link durante um run)? | aberta. O dono considera o cliente headless num mini PC com Intel N95, sempre ligado. Recomendação revista: **no agent**, porque o `serve` reinicia (o `air` a cada mudança em Go no `just dev`, deploys no saradomin) e o link passa a ser remoto; o `serve` guarda as rotinas, dispara o "fazer agora" e recebe a trilha, e o agent manda as ações para a auditoria (com fila se o link cair). Só pesa a partir da entrega 2 |
 | R2 | Delegar aos plugins do Hub (Herbrun, FornBirdhouseRuns, FarmTreeRun) ou escrever os nossos no `microbot-plugins`? | decidida (2026-11-09): os dois. A tarefa aponta para uma classe de plugin com um preset, venha do Hub ou do `microbot-plugins`; começar pelos do Hub e escrever o que faltar (fim sem aviso, sem banco, a troca do gato) |
 | R3 | "Trocar de gato" é o quê? | decidida (2026-11-09): o ciclo do gato descrito nas entregas |
-| R4 | Começar pela entrega 1 (relógios) agora? | recomendação: sim; não depende de R1 |
+| R4 | Começar pela entrega 1 (relógios) agora? | decidida (2026-11-09): sim, feita (ver Estado) |
 
 ### Cliente headless num N95
 
@@ -497,6 +497,25 @@ destino da viagem):
   x, y" no mesmo menu, que anda pelo `walk` (webwalker do Microbot); dá para digitar coordenadas.
 - Para ligar no zaros: `mb-install chroniclelink` e reiniciar o cliente, o `just agent` e o
   `just dev`.
+
+**Fase 4, entrega 1: relógios** (2026-11-09, R4 aceita pelo dono):
+
+- `microbot-plugins`, Chronicle Link 1.6.0: `GET /bridge/timers` lê os rastreadores do próprio
+  plugin Time Tracking (`FarmingTracker`, `BirdHouseTracker`, `FarmingContractManager`, singletons
+  do injector dele, pela API pública, sem reflexão): cada aba de farming, as birdhouses e o
+  contrato, com o resumo (`COMPLETED`, `IN_PROGRESS`, `OCCUPIED`, `EMPTY`, `UNKNOWN`) e, crescendo
+  ou pronto, quando fica pronto (segundos desde a época). Com o Time Tracking desligado,
+  `enabled: false` e nada.
+- Agent: `timers` (leitura) na lista fechada; `GET /api/microbot/timers`.
+- Web: o cartão "Relógios" no topo da coluna da direita do Cockpit (artboard
+  V6MicrobotRelogios1440, página 6c do canvas): pronto primeiro, depois o que cresce pela hora
+  ("em 23 min", a hora no title), plantado e vazio; os que o Time Tracking nunca viu neste perfil
+  numa linha "Não vistos" (desconhecido não é vazio). Relê a cada minuto e conta o tempo entre
+  leituras pelo relógio da máquina do jogo.
+- Verificado: testes do plugin, do agent e da view; o cartão no Cockpit com relógios falsos.
+  Falta ver com o cliente de verdade (`mb-install chroniclelink` e reiniciar o cliente e o
+  `just agent`).
+- Ainda não: o `ready_at` como fato no planner (Agora), que entra com o executor (entrega 2).
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

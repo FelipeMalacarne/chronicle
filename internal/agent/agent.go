@@ -78,6 +78,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.plugin(ctx, command, params)
 	case CmdGameView:
 		return e.gameView(ctx), nil
+	case CmdTimers:
+		return e.timers(ctx)
 	case CmdClientLogs, CmdAccountShow:
 		return e.client(ctx, command, params)
 	}

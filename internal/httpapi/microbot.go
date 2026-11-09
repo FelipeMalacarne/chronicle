@@ -56,6 +56,7 @@ func (s *Server) microbotRoutes() {
 	// Plugins, scripts and config (docs/08 phase 3).
 	control("GET /api/microbot/plugins", s.microbotRead(agent.CmdPlugins, func(*http.Request) any { return nil }))
 	control("GET /api/microbot/game", s.microbotRead(agent.CmdGameView, func(*http.Request) any { return nil }))
+	control("GET /api/microbot/timers", s.microbotRead(agent.CmdTimers, func(*http.Request) any { return nil }))
 	control("GET /api/microbot/client/logs", s.microbotRead(agent.CmdClientLogs, func(r *http.Request) any {
 		n, _ := strconv.Atoi(r.URL.Query().Get("lines"))
 		return agent.LogsParams{Lines: n}

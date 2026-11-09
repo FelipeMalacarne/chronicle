@@ -300,6 +300,24 @@ export interface GameView {
 	errors?: Record<string, string>;
 }
 
+/** Um relógio do Time Tracking do RuneLite (doc 08, fase 4): uma aba de farming, as birdhouses ou o contrato. */
+export interface Timer {
+	key: string;
+	label: string;
+	state: 'COMPLETED' | 'IN_PROGRESS' | 'OCCUPIED' | 'EMPTY' | 'UNKNOWN';
+	/** Quando fica (ou ficou) pronto, em segundos desde a época; só crescendo ou pronto. */
+	readyAt?: number;
+}
+
+/** GET /api/microbot/timers: os relógios pela ponte (Chronicle Link 1.6+). */
+export interface Timers {
+	/** O relógio da máquina do jogo na leitura, em segundos. */
+	now: number;
+	/** false: o plugin Time Tracking está desligado no cliente. */
+	enabled: boolean;
+	timers: Timer[];
+}
+
 /** Ações de plugins, scripts e configuração (doc 08, fase 3); todas vão para a auditoria. */
 export type PluginAction =
 	| { path: 'plugins/install' | 'plugins/remove'; body: { name: string; version?: string } }
@@ -362,6 +380,7 @@ export const microbotApi = {
 	audit: (limit = 30) => call<{ entries: AuditEntry[] }>(`/audit?limit=${limit}`),
 	plugins: () => call<PluginsView>('/plugins'),
 	game: () => call<GameView>('/game'),
+	timers: () => call<Timers>('/timers'),
 	/** O fim do log do cliente, com o que parece segredo mascarado pelo agent. */
 	logs: (lines = 200) => call<{ file: string; lines: string[] }>(`/client/logs?lines=${lines}`),
 	account: () => call<ClientAccount>('/account'),

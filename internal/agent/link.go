@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -41,6 +42,7 @@ type Link struct {
 	hello   Hello
 	since   time.Time
 	pending map[string]chan Message
+	vnc     map[string]chan net.Conn
 	wmu     sync.Mutex
 }
 

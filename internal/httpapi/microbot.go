@@ -11,6 +11,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/coder/websocket"
+
 	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
 	storemicrobot "github.com/FelipeMalacarne/ironman-planner/internal/store/microbot"
 )
@@ -40,29 +42,33 @@ func (s *Server) microbotRoutes() {
 	if m == nil || !s.accountRoutes() {
 		return
 	}
-	s.mux.HandleFunc("GET /api/microbot/agent", s.handleMicrobotAgent)
+	s.mux.HandleFunc("GET /api/microbot/agent", s.agentToken(s.opts.Microbot.Link.Serve))
+	s.mux.HandleFunc("GET /api/microbot/agent/vnc", s.agentToken(s.opts.Microbot.Link.ServeVNC))
 	control := func(pattern string, h http.HandlerFunc) { s.mux.Handle(pattern, s.authed(s.microbotControl(h))) }
 	control("GET /api/microbot/status", s.handleMicrobotStatus)
 	control("GET /api/microbot/screenshot", s.handleMicrobotScreenshot)
 	control("GET /api/microbot/audit", s.handleMicrobotAudit)
+	control("GET /api/microbot/vnc", s.handleMicrobotVNC)
 	control("POST /api/microbot/client/start", s.microbotAction(agent.CmdClientStart, 6*time.Minute))
 	control("POST /api/microbot/client/stop", s.microbotAction(agent.CmdClientStop, 3*time.Minute))
 	control("POST /api/microbot/login", s.microbotAction(agent.CmdLogin, 90*time.Second))
 	control("POST /api/microbot/logout", s.microbotAction(agent.CmdLogout, 45*time.Second))
 }
 
-// handleMicrobotAgent is the agent's websocket (docs/08): the machine token,
-// never a user session. The link holds the connection until it closes.
-func (s *Server) handleMicrobotAgent(w http.ResponseWriter, r *http.Request) {
-	scheme, token, _ := strings.Cut(r.Header.Get("Authorization"), " ")
-	want := s.opts.Microbot.AgentToken
-	if !strings.EqualFold(scheme, "Bearer") || want == "" ||
-		subtle.ConstantTimeCompare([]byte(strings.TrimSpace(token)), []byte(want)) != 1 {
-		w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent"`)
-		writeError(w, http.StatusUnauthorized, "agent token required")
-		return
+// agentToken guards the agent's websockets (docs/08): the link and the
+// per-session VNC streams take the machine token, never a user session.
+func (s *Server) agentToken(h http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		scheme, token, _ := strings.Cut(r.Header.Get("Authorization"), " ")
+		want := s.opts.Microbot.AgentToken
+		if !strings.EqualFold(scheme, "Bearer") || want == "" ||
+			subtle.ConstantTimeCompare([]byte(strings.TrimSpace(token)), []byte(want)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent"`)
+			writeError(w, http.StatusUnauthorized, "agent token required")
+			return
+		}
+		h(w, r)
 	}
-	s.opts.Microbot.Link.Serve(w, r)
 }
 
 // microbotControl adds the module's own checks to an authed route: in dev
@@ -140,6 +146,56 @@ func (s *Server) handleMicrobotAudit(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"entries": entries})
 }
 
+// handleMicrobotVNC is the browser's live VNC (docs/08 phase 2): a websocket
+// of raw RFB bytes, spliced through the agent to the harness's x11vnc. The
+// websocket library checks that Origin matches Host, so another site cannot
+// open it with the owner's cookie. Opening a session goes to the audit: it
+// hands the mouse and keyboard of the game to the browser.
+func (s *Server) handleMicrobotVNC(w http.ResponseWriter, r *http.Request) {
+	link := s.opts.Microbot.Link
+	if !link.Info().Connected {
+		s.writeMicrobotError(w, agent.ErrNoAgent)
+		return
+	}
+	conn, err := websocket.Accept(w, r, nil)
+	if err != nil {
+		return
+	}
+	conn.SetReadLimit(-1)
+	ctx := r.Context()
+	stream, err := link.OpenVNC(ctx)
+	s.auditMicrobot(r, agent.CmdVNCOpen, nil, err)
+	if err != nil {
+		_ = conn.Close(websocket.StatusTryAgainLater, truncateReason(err.Error()))
+		return
+	}
+	agent.Splice(websocket.NetConn(ctx, conn, websocket.MessageBinary), stream)
+}
+
+// truncateReason fits a websocket close reason (125 bytes per frame).
+func truncateReason(s string) string {
+	if len(s) > 120 {
+		return s[:120]
+	}
+	return s
+}
+
+// auditMicrobot appends one control action from the web, whatever its
+// result; a failed write is logged, not returned.
+func (s *Server) auditMicrobot(r *http.Request, command string, params json.RawMessage, err error) {
+	actor := sessionUser(r)
+	if actor == "" {
+		actor = "dev"
+	}
+	entry := storemicrobot.Entry{Actor: actor, Origin: "web", Action: command, Params: params, OK: err == nil}
+	if err != nil {
+		entry.Error = err.Error()
+	}
+	if _, aerr := s.opts.Microbot.Audit.Append(context.WithoutCancel(r.Context()), entry); aerr != nil {
+		s.log.Error("microbot audit", "err", aerr)
+	}
+}
+
 // microbotAction is a control command from the web: it runs on the agent,
 // and the attempt and its result go to the audit either way.
 func (s *Server) microbotAction(command string, timeout time.Duration) http.HandlerFunc {
@@ -160,17 +216,7 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 		defer cancel()
 		var data json.RawMessage
 		err := s.opts.Microbot.Link.Call(ctx, command, params, &data)
-		actor := sessionUser(r)
-		if actor == "" {
-			actor = "dev"
-		}
-		entry := storemicrobot.Entry{Actor: actor, Origin: "web", Action: command, Params: params, OK: err == nil}
-		if err != nil {
-			entry.Error = err.Error()
-		}
-		if _, aerr := s.opts.Microbot.Audit.Append(context.WithoutCancel(r.Context()), entry); aerr != nil {
-			s.log.Error("microbot audit", "err", aerr)
-		}
+		s.auditMicrobot(r, command, params, err)
 		if err != nil {
 			s.writeMicrobotError(w, err)
 			return

@@ -82,6 +82,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.Game.Login(ctx, p.World)
 	case CmdLogout:
 		return e.Game.Logout(ctx)
+	case CmdVNCOpen:
+		return nil, errors.New("vnc_open is served by the agent's link, not the executor")
 	}
 	return nil, fmt.Errorf("command %q is not in the agent's closed list", command)
 }
@@ -165,6 +167,9 @@ type Agent struct {
 	Executor *Executor
 	Hello    Hello
 	Log      *slog.Logger
+	// VNCAddr is the harness's x11vnc (loopback only); empty means
+	// 127.0.0.1:5999.
+	VNCAddr string
 }
 
 // Run connects and reconnects until ctx ends.
@@ -239,9 +244,16 @@ func (a *Agent) session(ctx context.Context) error {
 		}
 		go func(m Message) {
 			res := Message{Type: TypeResult, ID: m.ID}
-			if !Known(m.Command) {
+			switch {
+			case !Known(m.Command):
 				res.Error = fmt.Sprintf("command %q is not in the agent's closed list", m.Command)
-			} else {
+			case m.Command == CmdVNCOpen:
+				if err := a.openVNC(ctx, m.Params); err != nil {
+					res.Error = err.Error()
+				} else {
+					res.OK = true
+				}
+			default:
 				data, err := a.Executor.Execute(ctx, m.Command, m.Params)
 				if err != nil {
 					res.Error = err.Error()

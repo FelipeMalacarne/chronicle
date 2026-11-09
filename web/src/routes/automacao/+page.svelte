@@ -9,12 +9,13 @@
 	} from '#lib/api/microbot';
 	import { auditLine, auditWho, cards, stateRows } from '#lib/progress/automacao';
 	import Glyph from '#lib/v6/Glyph.svelte';
+	import VncView, { type VncPhase } from '#lib/v6/VncView.svelte';
 
 	/*
-	 * Automação › Cockpit (V6Microbot1440; no estreito, o modo só dashboard do V6Microbot640), doc 08
-	 * fase 1: o estado do cliente pelo agent, a tela por screenshot a cada 5 s, iniciar e parar o
-	 * cliente headless, login e logout, e a auditoria. O VNC ao vivo (fase 2) e os plugins (fase 3)
-	 * entram depois; Rotinas ficam para depois das receitas.
+	 * Automação › Cockpit (V6Microbot1440; no estreito, o modo só dashboard do V6Microbot640), doc 08:
+	 * o estado do cliente pelo agent, a tela por screenshot a cada 5 s ou ao vivo por VNC (fase 2, só
+	 * no largo e com o cliente headless), iniciar e parar o cliente, login e logout, e a auditoria. Os
+	 * plugins (fase 3) entram depois; Rotinas ficam para depois das receitas.
 	 */
 	let status = $state<MicrobotStatus | null>(null);
 	let off = $state(false);
@@ -26,6 +27,10 @@
 	let failure = $state<string | null>(null);
 	let armed = $state<string | null>(null);
 	let world = $state('');
+	let live = $state(false);
+	let intervene = $state(false);
+	let vnc = $state<{ phase: VncPhase; reason?: string }>({ phase: 'closed' });
+	let wide = $state(true);
 
 	const client = $derived(status?.client);
 	const running = $derived(!!client?.running);
@@ -34,6 +39,27 @@
 	const rows = $derived(stateRows(status));
 	const pos = $derived(client?.state?.player?.position);
 	const dev = $derived(status?.dev ?? true);
+	/** O VNC só existe com o x11vnc do headless e fora do celular (V6Microbot640: sem websocket). */
+	const vncReady = $derived(running && !!client?.vnc && wide);
+	const showLive = $derived(live && vncReady);
+	const vncURL = () =>
+		`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/microbot/vnc`;
+	function setLive(on: boolean) {
+		live = on;
+		intervene = false;
+	}
+	function onVnc(phase: VncPhase, reason?: string) {
+		vnc = { phase, reason };
+		if (phase === 'closed') intervene = false;
+		if (phase !== 'connecting') void refreshAudit();
+	}
+	$effect(() => {
+		const mq = matchMedia('(min-width: 700px)');
+		wide = mq.matches;
+		const on = () => (wide = mq.matches);
+		mq.addEventListener('change', on);
+		return () => mq.removeEventListener('change', on);
+	});
 
 	async function refresh() {
 		try {
@@ -73,9 +99,9 @@
 			clearInterval(au);
 		};
 	});
-	// Screenshot a cada 5 s enquanto o cliente roda e a aba está à vista (V6Microbot640).
+	// Screenshot a cada 5 s enquanto o cliente roda, a aba está à vista e o VNC não está aberto.
 	$effect(() => {
-		if (!running) return;
+		if (!running || showLive) return;
 		shoot();
 		const t = setInterval(() => {
 			if (!document.hidden) shoot();
@@ -146,8 +172,24 @@
 		<a href="#auditoria">Auditoria</a>
 	</div>
 	<div class="seg modes" role="group" aria-label="Modo">
-		<button type="button" class="on" aria-pressed="true">só dashboard</button>
-		<button type="button" disabled title="VNC ao vivo: fase 2 do doc 08">VNC ao vivo</button>
+		<button
+			type="button"
+			class:on={!showLive}
+			aria-pressed={!showLive}
+			onclick={() => setLive(false)}>só dashboard</button
+		>
+		<button
+			type="button"
+			class:on={showLive}
+			aria-pressed={showLive}
+			disabled={!vncReady}
+			title={vncReady
+				? 'A tela ao vivo pelo agent; mouse e teclado só depois de "Intervir"'
+				: !wide
+					? 'Sem VNC no celular: só dashboard'
+					: 'O VNC precisa do cliente headless rodando no zaros'}
+			onclick={() => setLive(true)}>VNC ao vivo</button
+		>
 	</div>
 	<span
 		class="badge badge-gold"
@@ -216,15 +258,35 @@
 		<div class="main">
 			<section class="panel">
 				<div class="plaque">
-					Tela do jogo<span class="r"
-						>{running ? 'screenshot a cada 5 s' : 'cliente parado'}{client?.headless
-							? ' · headless'
-							: ''}</span
+					{showLive ? 'Tela ao vivo · VNC' : 'Tela do jogo'}<span class="r"
+						>{showLive
+							? vnc.phase === 'connected'
+								? intervene
+									? 'você no controle'
+									: 'só olhando'
+								: vnc.phase === 'connecting'
+									? 'conectando…'
+									: (vnc.reason ?? 'desconectado')
+							: running
+								? 'screenshot a cada 5 s'
+								: 'cliente parado'}{client?.headless ? ' · headless' : ''}</span
 					>
 				</div>
 				<div class="pad">
 					<div class="shot">
-						{#if running && shotAt}
+						{#if showLive}
+							<VncView url={vncURL()} viewOnly={!intervene} onphase={onVnc} />
+							{#if vnc.phase !== 'connected'}
+								<div class="ph">
+									<Glyph name="automacao" size={28} />
+									<span
+										>{vnc.phase === 'connecting'
+											? 'Abrindo o VNC pelo agent…'
+											: `VNC fechado${vnc.reason ? `: ${vnc.reason}` : ''}`}</span
+									>
+								</div>
+							{/if}
+						{:else if running && shotAt}
 							<img
 								src={microbotApi.screenshotURL(shotAt)}
 								alt="Tela do cliente do Microbot"
@@ -238,7 +300,7 @@
 								<span>só dashboard</span>
 							</div>
 						{/if}
-						{#if !running || !shotOk}
+						{#if !showLive && (!running || !shotOk)}
 							<div class="ph">
 								<Glyph name="automacao" size={28} />
 								<span
@@ -251,6 +313,23 @@
 							</div>
 						{/if}
 					</div>
+					{#if showLive}
+						<div class="under">
+							<span class="su tiny"
+								>{intervene
+									? 'Mouse e teclado vão para o jogo. Um script rodando disputa o input com você.'
+									: 'Abrir o VNC fica na auditoria.'}</span
+							>
+							<button
+								class="btn btn-s"
+								class:btn-g={!intervene}
+								type="button"
+								disabled={vnc.phase !== 'connected'}
+								onclick={() => (intervene = !intervene)}
+								>{intervene ? 'Devolver: só olhar' : 'Intervir com mouse e teclado'}</button
+							>
+						</div>
+					{/if}
 				</div>
 			</section>
 
@@ -439,6 +518,14 @@
 		width: 100%;
 		height: 100%;
 		object-fit: contain;
+	}
+	.under {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+		align-items: center;
+		justify-content: space-between;
+		padding-top: 10px;
 	}
 	.shot .ph {
 		position: relative;

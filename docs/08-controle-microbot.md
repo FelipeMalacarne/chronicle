@@ -189,7 +189,25 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   auditoria registrou as duas ações. Login e logout ficaram nos testes com Agent Server falso, porque
   logam a conta.
 
-Fora da fase 1, ainda: o VNC ao vivo (fase 2), plugins (fase 3), rotinas (fase 4), o serviço systemd e
+**Fase 2 feita** (VNC ao vivo):
+
+- Comando `vnc_open` na lista fechada. O navegador abre o websocket `/api/microbot/vnc` (mesmas
+  checagens das outras rotas de controle; a biblioteca de websocket confere `Origin` contra `Host`, então
+  outro site não abre o VNC com o cookie do dono). O `serve` pede ao agent uma sessão com um id; o agent
+  conecta no `x11vnc` em `127.0.0.1:$MB_VNC_PORT` (padrão 5999) e abre um segundo websocket de **saída**,
+  `/api/microbot/agent/vnc?session=<id>` com o token de máquina; o `serve` emenda os dois fluxos de bytes
+  RFB. A máquina do jogo continua sem porta aberta e o VNC nunca sai do loopback. Cada sessão aberta
+  (ou que falhou ao abrir) vai para a auditoria.
+- Web: o seletor "só dashboard / VNC ao vivo" do V6Microbot1440 e o noVNC (`@novnc/novnc` 1.7.0,
+  carregado só ao abrir). A sessão abre só olhando (`viewOnly`); "Intervir com mouse e teclado" passa
+  o input ao navegador, "Devolver: só olhar" o tira. No celular (abaixo de 700 px) não há VNC, como no
+  V6Microbot640. O screenshot periódico para enquanto o VNC está aberto.
+- O `viewOnly` é do navegador: quem abre o VNC pode mandar input. O controle de quem abre é o mesmo das
+  outras ações (dev só loopback, oidc com o papel), e a abertura fica na auditoria.
+- Verificado no zaros: o cliente headless subiu pelo web e a tela de login apareceu ao vivo no cockpit
+  pelo túnel; a sessão fecha quando a página sai.
+
+Fora das fases 1 e 2, ainda: plugins (fase 3), rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no
 jogo, então o cartão "Input humano" do artboard não existe na tela.
 

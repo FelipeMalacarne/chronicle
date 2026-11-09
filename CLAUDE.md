@@ -85,7 +85,8 @@ internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* an
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
 internal/microbot/    typed client of the Microbot Agent Server (Unix socket of the harness dev home); agent only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
-                      websocket, and the server-side Link; the server never talks to the game directly
+                      websocket, the server-side Link and the VNC tunnel (browser <-> server <-> agent <->
+                      loopback x11vnc); the server never talks to the game directly
 internal/client/      typed API client of the CLI and `ironman mcp`: config.json and credentials.json
                       under ~/.config/ironman, device-flow login (RFC 8628), token refresh; never
                       imports internal/store
@@ -166,7 +167,7 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 session only), `SESSION_SECRET` (32+ chars in oidc),
 `CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler),
 `MICROBOT_CONTROL` (`off`; `on` enables the Microbot control module, docs/08) and `MICROBOT_AGENT_TOKEN` (32+ chars, required
-with it on). `ironman agent` reads `IRONMAN_URL`, `MICROBOT_AGENT_TOKEN`, `MICROBOT_HARNESS_DIR` and `MICROBOT_HOME`. `.env.example` documents each one;
+with it on). `ironman agent` reads `IRONMAN_URL`, `MICROBOT_AGENT_TOKEN`, `MICROBOT_HARNESS_DIR`, `MICROBOT_HOME` and `MB_VNC_PORT`. `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 
 - **local-first (workstation "zaros")**: `compose.yaml` Postgres (shared by the stack and `just dev`), `AUTH_MODE=dev`.

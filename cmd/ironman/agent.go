@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"log/slog"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -27,6 +28,7 @@ import (
 //	MICROBOT_HARNESS_DIR   the microbot-plugins checkout; mb-client runs through its
 //	                       Nix dev shell (Xvfb, x11vnc and the JDK come from it)
 //	MICROBOT_CLIENT_CMD    instead of the above, the command that runs mb-client
+//	MB_VNC_PORT            the harness's x11vnc port (default 5999), always on loopback
 func newAgentCmd() *cobra.Command {
 	var url string
 	cmd := &cobra.Command{
@@ -48,7 +50,7 @@ func newAgentCmd() *cobra.Command {
 			host, _ := os.Hostname()
 			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 			a := &agent.Agent{
-				URL: url, Token: token, Log: log,
+				URL: url, Token: token, Log: log, VNCAddr: vncAddr(),
 				Hello: agent.Hello{Host: host, Version: buildinfo.String()},
 				Executor: &agent.Executor{
 					Game: &microbot.Client{Home: home}, Home: home, ClientCmd: clientCmd(),
@@ -73,4 +75,14 @@ func clientCmd() []string {
 		return []string{"nix", "develop", dir, "--command", filepath.Join(dir, "bin", "mb-client")}
 	}
 	return nil
+}
+
+// vncAddr is the harness's x11vnc: loopback only, on MB_VNC_PORT like
+// mb-client.
+func vncAddr() string {
+	port := os.Getenv("MB_VNC_PORT")
+	if port == "" {
+		port = "5999"
+	}
+	return net.JoinHostPort("127.0.0.1", port)
 }

@@ -19,10 +19,14 @@ const (
 	CmdLogin       = "login"
 	CmdLogout      = "logout"
 	CmdScreenshot  = "screenshot"
+	// CmdVNCOpen: open one live VNC session (docs/08 phase 2). The agent
+	// connects to the harness's x11vnc on loopback and opens a second
+	// outbound websocket to the server for that session's bytes.
+	CmdVNCOpen = "vnc_open"
 )
 
 // Commands lists every command of the protocol, in display order.
-var Commands = []string{CmdStatus, CmdClientStart, CmdClientStop, CmdLogin, CmdLogout, CmdScreenshot}
+var Commands = []string{CmdStatus, CmdClientStart, CmdClientStop, CmdLogin, CmdLogout, CmdScreenshot, CmdVNCOpen}
 
 // Known reports whether name is in the closed list.
 func Known(name string) bool { return slices.Contains(Commands, name) }
@@ -59,6 +63,12 @@ type Hello struct {
 // LoginParams are the parameters of CmdLogin: world 0 keeps the profile's.
 type LoginParams struct {
 	World int `json:"world,omitempty"`
+}
+
+// VNCParams are the parameters of CmdVNCOpen: the server's id of the browser
+// session waiting for the agent's stream.
+type VNCParams struct {
+	Session string `json:"session"`
 }
 
 // Status is the answer to CmdStatus.

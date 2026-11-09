@@ -58,12 +58,19 @@ var quiet = slog.New(slog.NewTextHandler(io.Discard, nil))
 
 // linked starts a server with a Link (token checked like httpapi does) and
 // an agent linked to it.
-func linked(t *testing.T, game *fakeGame) *Link {
+func linked(t *testing.T, game *fakeGame) *Link { return linkedWith(t, game, "") }
+
+// linkedWith is linked with the agent's x11vnc address.
+func linkedWith(t *testing.T, game *fakeGame, vncAddr string) *Link {
 	t.Helper()
 	link := &Link{Log: quiet}
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Authorization") != "Bearer machine-token" {
 			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if strings.HasSuffix(r.URL.Path, "/vnc") {
+			link.ServeVNC(w, r)
 			return
 		}
 		link.Serve(w, r)
@@ -72,7 +79,7 @@ func linked(t *testing.T, game *fakeGame) *Link {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	a := &Agent{
-		URL: srv.URL, Token: "machine-token", Log: quiet, Hello: Hello{Host: "zaros", Version: "test"},
+		URL: srv.URL, Token: "machine-token", Log: quiet, Hello: Hello{Host: "zaros", Version: "test"}, VNCAddr: vncAddr,
 		// The fake mb-client echoes its arguments.
 		Executor: &Executor{Game: game, Home: t.TempDir(), ClientCmd: []string{"echo", "mb-client"}},
 	}

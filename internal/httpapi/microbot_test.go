@@ -5,12 +5,15 @@ import (
 	"encoding/json"
 	"io"
 	"log/slog"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/coder/websocket"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
 	storemicrobot "github.com/FelipeMalacarne/ironman-planner/internal/store/microbot"
@@ -33,6 +36,12 @@ func (m *memAudit) List(_ context.Context, limit int) ([]storemicrobot.Entry, er
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return append([]storemicrobot.Entry(nil), m.entries...), nil
+}
+
+func (m *memAudit) last() storemicrobot.Entry {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.entries[len(m.entries)-1]
 }
 
 type stubGame struct{}
@@ -94,14 +103,22 @@ func TestMicrobotRoutes(t *testing.T) {
 		t.Fatalf("audit = %+v", audit.entries)
 	}
 
-	// The agent link needs the machine token.
+	if status, _, _ = call(t, "GET", srv.URL+"/api/microbot/vnc", ""); status != http.StatusServiceUnavailable {
+		t.Fatalf("vnc without agent = %d", status)
+	}
+
+	// The agent link and its VNC streams need the machine token.
 	if status, _, _ = call(t, "GET", srv.URL+"/api/microbot/agent", ""); status != http.StatusUnauthorized {
 		t.Fatalf("agent without token = %d", status)
 	}
+	if status, _, _ = call(t, "GET", srv.URL+"/api/microbot/agent/vnc?session=x", ""); status != http.StatusUnauthorized {
+		t.Fatalf("agent vnc stream without token = %d", status)
+	}
+	vncAddr := fakeX11vnc(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
-	a := &agent.Agent{URL: srv.URL, Token: agentToken, Log: quiet, Hello: agent.Hello{Host: "zaros"},
+	a := &agent.Agent{URL: srv.URL, Token: agentToken, Log: quiet, Hello: agent.Hello{Host: "zaros"}, VNCAddr: vncAddr,
 		Executor: &agent.Executor{Game: stubGame{}, Home: t.TempDir(), ClientCmd: []string{"echo"}}}
 	go func() { _ = a.Run(ctx) }()
 	deadline := time.Now().Add(5 * time.Second)
@@ -137,6 +154,50 @@ func TestMicrobotRoutes(t *testing.T) {
 	if entries, _ := body["entries"].([]any); status != http.StatusOK || len(entries) != 2 {
 		t.Fatalf("audit route = %d %v", status, body)
 	}
+
+	// Live VNC: the browser's websocket reaches x11vnc through the agent, and
+	// opening it is audited. Another site's origin is refused.
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/api/microbot/vnc"
+	if _, resp, err := websocket.Dial(ctx, wsURL, &websocket.DialOptions{
+		HTTPHeader: http.Header{"Origin": {"https://evil.example"}},
+	}); err == nil || resp == nil || resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("vnc from another origin = %v", err)
+	}
+	ws, _, err := websocket.Dial(ctx, wsURL, nil)
+	if err != nil {
+		t.Fatalf("vnc dial: %v", err)
+	}
+	vnc := websocket.NetConn(ctx, ws, websocket.MessageBinary)
+	_ = vnc.SetDeadline(time.Now().Add(5 * time.Second))
+	greet := make([]byte, 12)
+	if _, err = io.ReadFull(vnc, greet); err != nil || string(greet) != "RFB 003.008\n" {
+		t.Fatalf("vnc greeting = %q %v", greet, err)
+	}
+	_ = vnc.Close()
+	if last := audit.last(); !last.OK || last.Action != agent.CmdVNCOpen {
+		t.Fatalf("vnc audit = %+v", last)
+	}
+}
+
+// fakeX11vnc greets like RFB on loopback.
+func fakeX11vnc(t *testing.T) string {
+	t.Helper()
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = ln.Close() })
+	go func() {
+		for {
+			c, err := ln.Accept()
+			if err != nil {
+				return
+			}
+			_, _ = c.Write([]byte("RFB 003.008\n"))
+			go func() { _, _ = io.Copy(io.Discard, c); _ = c.Close() }()
+		}
+	}()
+	return ln.Addr().String()
 }
 
 // Without MICROBOT_CONTROL no route exists.

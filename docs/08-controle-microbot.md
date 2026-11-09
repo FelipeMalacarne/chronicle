@@ -163,6 +163,108 @@ quem é o usuário; as camadas abaixo cobrem o resto.
    ACL; junto com o deploy do planner no `saradomin`. Como o agent existe desde a fase 1, aqui muda
    só configuração.
 
+## Fase 4: rotinas com atividade principal e runs com relógio (desenho, 2026-11-09)
+
+**Estado: proposta para o dono revisar antes de codar.** Substitui o rascunho de "Modelo de rotina"
+acima no que se sobrepõe e segue o doc 10 (decisão 31 do doc 01: recorrentes com `ready_at`;
+`train` por delegação a plugins de terceiros).
+
+### O cenário
+
+Pedido do dono (2026-11-09): fazer uma atividade longa (o fishing de hoje, com o Tick Fisher) e, ao
+mesmo tempo, manter herb runs, tree runs, birdhouse runs e o gato (cuidar e trocar). Três tipos de
+coisa, com regras diferentes:
+
+| Tipo | Exemplo | Como roda |
+|---|---|---|
+| Principal | Tick Fisher (barbarian fishing) | fica ligado enquanto nada mais precisa do personagem |
+| Recorrente com relógio | herb run (Herbrun), birdhouses (FornBirdhouseRuns), árvores (FarmTreeRun) | quando vence, interrompe o principal, roda e devolve |
+| Paralela | gato (KittenPlugin: fome, atenção, crescimento) | fica ligada junto do principal; ações curtas |
+
+Fato observado: na sessão do dono o `KITTENSCRIPT` já rodava ao lado do `TickFisherPlugin`, então o
+paralelo funciona hoje. O que falta é o meio: parar o principal num ponto seguro, rodar o run e
+voltar.
+
+### O relógio
+
+Ordem das fontes, da melhor para a pior:
+
+1. **Time Tracking do RuneLite pela ponte**: `FarmingTracker.getSummary(Tab)` e
+   `getCompletionTime(Tab)` (HERB, TREE, FRUIT_TREE, ALLOTMENT, …) e `BirdHouseTracker`, os mesmos
+   números do painel Time Tracking do cliente. Os varbits de canteiro só valem perto do canteiro
+   (são compartilhados entre regiões), por isso não dá para ler do ingest; o Time Tracking registra
+   quando o personagem passa pelo canteiro e prevê pelos ciclos de crescimento. A ponte ganharia
+   `GET /bridge/timers`; o spike é alcançar a instância do plugin (pelo `PluginManager`) ou, se não
+   der, ler as chaves persistidas do grupo `timetracking` do perfil e recalcular.
+2. **Intervalo fixo desde o fim do último run** (herb 80 min, birdhouse 50 min, árvore pelo tipo),
+   quando o Time Tracking ainda não conhece o canteiro.
+3. **Evento de chat**, para o que não tem relógio: "Your kitten has grown into a healthy cat" dispara
+   a troca do gato.
+
+O `ready_at` de cada recorrente vira fato no planner (decisão 31): aparece no Agora e na Automação
+mesmo sem rotina ligada, o que já tem valor sozinho.
+
+### A troca (onde está o difícil)
+
+Estados do executor, um por cliente, com lock (só existe um personagem):
+
+```
+PRINCIPAL ──(recorrente vence e não há break)──▶ PARANDO ──▶ PREPARO ──▶ RUN ──▶ RETORNO ──▶ PRINCIPAL
+     ▲                                                                     │
+     └──────────────── falha ou timeout: para tudo, screenshot, avisa ◀────┘
+```
+
+- **PARANDO**: guarda a posição e para o plugin principal (`script_stop`, não `scripts_pause`, que
+  pausaria o gato também); espera o personagem ficar parado (sem animação nem movimento por ~3 s).
+- **PREPARO**: o run precisa do inventário certo (sementes, compost, spade, rake, teleports). Duas
+  saídas: o plugin do Hub faz o próprio banco (cada um precisa ser verificado), ou a rotina declara um
+  loadout e o executor usa o banco antes (o planner já sabe ler posse e loadout, `internal/core/planning`).
+- **RUN**: liga o plugin do run com o preset de config salvo. Fim por, nesta ordem: o plugin se
+  desligar sozinho (`/scripts/status`), a state machine chegar ao estado final (`/debug/snapshot`), ou
+  timeout por tipo (herb run: 15 min). Sucesso só com estado observado (regra 2 do CLAUDE.md): o Time
+  Tracking mostra os canteiros plantados de novo, ou o chat confirma.
+- **RETORNO**: `walk` (webwalker) até a posição guardada e liga o principal com o mesmo preset.
+- **Paralelos** continuam ligados no PRINCIPAL; durante PREPARO e RUN ficam desligados, para um afago
+  no gato não roubar o mouse no meio de um teleporte.
+- **Breaks**: com o Break Handler ligado, nada começa durante um break. Falta verificar como ele
+  trata um run em andamento (se espera o script ou desloga no meio); até lá, o executor não começa
+  um run quando o próximo break está a menos que o timeout do run.
+- **Dono no controle**: abrir o VNC em modo intervir pausa o executor; ele não retoma sozinho.
+
+### Modelo de dados (amplia o rascunho)
+
+```
+routine          id, client, name, enabled, created_at
+routine_task     routine_id, kind (principal | recorrente | paralela), plugin (className),
+                 preset (config jsonb), trigger (timetracking:<tab> | interval:<min> | chat:<texto>),
+                 loadout (jsonb, opcional), return_to (posição | nenhuma), timeout_s, priority
+routine_run      id, routine_id, task, started_at, finished_at, status, trigger
+run_event        run_id, at, state, kind, detail (jsonb)    -- trilha, screenshots e evidências
+```
+
+### Entregas
+
+1. **Relógios** (só leitura): `/bridge/timers` na ponte e um cartão "Relógios" no cockpit (herb em
+   23 min, birdhouses prontas, árvores amanhã 14:10), mais o `ready_at` como fato. Sem risco e útil
+   já.
+2. **Fazer agora**: o executor com uma recorrente e o principal, disparado pelo dono num botão
+   ("fazer o herb run agora e voltar a pescar"). Valida PARANDO, RUN, fim e RETORNO com o dono olhando.
+3. **Automático**: o relógio dispara sozinho, várias recorrentes em fila por prioridade, paralelos.
+4. **Eventos e preparo**: troca do gato por evento de chat e loadout com banco antes do run.
+
+A tela "Rotinas" do canvas (V6MicrobotRotinas1440, página 5) foi desenhada para passos em sequência;
+este cenário pede outra forma (o principal, a fila de recorrentes com o relógio de cada uma e a
+trilha da última troca). Desenhar no canvas antes da entrega 2.
+
+### Decisões para o dono
+
+| # | Pergunta | Recomendação |
+|---|---|---|
+| R1 | O executor roda no `serve` (estado e auditoria num lugar só) ou no agent no zaros (sobrevive a queda do link durante um run)? | no `serve` nas entregas 2 e 3, com o run tendo timeout próprio no plugin; rever no deploy do saradomin, quando o link passa a ser remoto |
+| R2 | Delegar aos plugins do Hub (Herbrun, FornBirdhouseRuns, FarmTreeRun) ou escrever os nossos no `microbot-plugins`? | delegar primeiro; escrever só o que não avisa o fim ou não faz o próprio banco |
+| R3 | "Trocar de gato" é trocar o gato crescido por um filhote novo com a Gertrude? Para quê (diary, Civilians, só criar)? | confirmar antes da entrega 4 |
+| R4 | Começar pela entrega 1 (relógios) agora? | sim: valor imediato, sem risco, e o spike do Time Tracking decide a fonte do relógio |
+
 ## Estado (2026-11-08)
 
 **Fase 1 feita.** O que existe:

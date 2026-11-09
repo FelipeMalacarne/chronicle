@@ -135,17 +135,23 @@ classe). Artboards seguidos:
 | Conta | V6Conta1440, V6Conta640 | `/conta` |
 | Primeiro acesso | V6Setup1440 | `/setup` |
 | Automação › Cockpit (2026-11-08, doc 08 fases 1 e 2) | V6Microbot1440 (só dashboard e VNC ao vivo), V6Microbot640 (só dashboard) | `/automacao` |
+| Automação › Plugins (2026-11-08, doc 08 fase 3) | V6MicrobotPlugins1440 | `/automacao/plugins` |
 
 Onde o código diverge do canvas, por falta de dado ou de API (para o dono decidir se o canvas muda ou
 se a API vem depois):
 
 1. **Sessão e recorrentes** não foram implementados: não há API de sessão (diff entre snapshots);
    recorrentes com prazo seguem como proposta (decisão 31 do doc 01). A Automação entrou em
-   2026-11-08 só com o Cockpit (doc 08, fases 1 e 2): Plugins aparece desabilitado até a fase 3,
-   Rotinas não aparece (fica para depois das receitas), o cartão "Input humano" não existe (o Agent
+   2026-11-08 com o Cockpit e Plugins (doc 08, fases 1 a 3). Rotinas não aparece (fica para depois
+   das receitas), o cartão "Input humano" não existe (o Agent
    Server não informa se o dono está jogando) e o painel "Script ativo" (state machine) espera a fase 3.
    O "VNC ao vivo" só habilita com o cliente headless (o x11vnc é dele) e a 700 px ou mais; abre só
-   olhando, e "Intervir com mouse e teclado" alterna com "Devolver: só olhar". "Nesta sessão" no rodapé do Agora conta as últimas 6 h de eventos, sem o link "ver". O
+   olhando, e "Intervir com mouse e teclado" alterna com "Devolver: só olhar". Em Plugins: sem
+   "Usado por" (não há rotinas) e sem presets de configuração (sem onde guardá-los ainda); o grupo e as
+   chaves de cada plugin ficam no navegador; "Pausar" vira "Pausar todos", porque o Agent Server pausa
+   todos os loops; a lista tem três grupos (Hub, seus, do cliente) e os do cliente ficam escondidos.
+   A classe `.dot-off` (ponto cinza de parado) entrou no `pergaminho.css`: os artboards a usam, mas o
+   design system não a definia. "Nesta sessão" no rodapé do Agora conta as últimas 6 h de eventos, sem o link "ver". O
    Grafo entrou em 2026-11-08 (doc 04, seção 5); ele diverge do canvas em três pontos: o foco padrão é
    a primeira meta fixada, escolhida num menu do botão "Foco"; a profundidade padrão é 2 (o artboard
    mostra 3); e só há requisitos de quest no catálogo, então Barrows gloves (o exemplo do artboard)

@@ -70,6 +70,58 @@ export interface AuditEntry {
 
 export type MicrobotAction = 'client/start' | 'client/stop' | 'login' | 'logout';
 
+/** Uma linha do GET /scripts do Agent Server: todo plugin do Microbot carregado no cliente. */
+export interface ScriptEntry {
+	name: string;
+	className: string;
+	active: boolean;
+	enabled: boolean;
+}
+
+/** Uma entrada do Plugin Hub (GET /plugins). */
+export interface HubPlugin {
+	internalName: string;
+	name: string;
+	description?: string;
+	latestVersion?: string;
+	installedVersion?: string | null;
+	loaded: boolean;
+	health?: string;
+	installable?: boolean;
+}
+
+export interface HubList {
+	count: number;
+	total: number;
+	plugins: HubPlugin[];
+}
+
+export interface PluginsView {
+	scripts: { count: number; scripts: ScriptEntry[] };
+	installed: HubList;
+}
+
+/** Detalhe de um plugin: cada parte é o JSON do Agent Server; a que falhou vem em `errors`. */
+export interface ScriptDetail {
+	status?: { status?: string; active?: boolean; startedAt?: string; runtimeMs?: number };
+	health?: unknown;
+	results?: { count?: number; results?: Record<string, unknown>[] };
+	machines?: unknown;
+	errors?: Record<string, string>;
+}
+
+export interface ConfigValues {
+	group: string;
+	values: Record<string, string | null>;
+}
+
+/** Ações de plugins, scripts e configuração (doc 08, fase 3); todas vão para a auditoria. */
+export type PluginAction =
+	| { path: 'plugins/install' | 'plugins/remove'; body: { name: string; version?: string } }
+	| { path: 'scripts/start' | 'scripts/stop'; body: { className: string } }
+	| { path: 'scripts/pause' | 'scripts/resume'; body?: undefined }
+	| { path: 'config'; body: { group: string; key: string; value: string | null } };
+
 export class MicrobotError extends Error {
 	constructor(
 		message: string,
@@ -123,6 +175,19 @@ export const microbotApi = {
 			body: JSON.stringify(body ?? {})
 		}),
 	audit: (limit = 30) => call<{ entries: AuditEntry[] }>(`/audit?limit=${limit}`),
+	plugins: () => call<PluginsView>('/plugins'),
+	hub: (q: string) => call<HubList>(`/hub?q=${encodeURIComponent(q)}`),
+	scriptDetail: (className: string) =>
+		call<ScriptDetail>(`/scripts/detail?className=${encodeURIComponent(className)}`),
+	config: (group: string, keys: string[]) =>
+		call<ConfigValues>(
+			`/config?group=${encodeURIComponent(group)}&keys=${encodeURIComponent(keys.join(','))}`
+		),
+	plugin: (a: PluginAction) =>
+		call<{ ok: boolean; result: unknown }>(`/${a.path}`, {
+			method: 'POST',
+			body: JSON.stringify(a.body ?? {})
+		}),
 	/** URL do screenshot; `t` força uma imagem nova a cada pedido. */
 	screenshotURL: (t: number) => `${BASE}/screenshot?t=${t}`
 };

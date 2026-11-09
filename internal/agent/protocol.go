@@ -26,7 +26,11 @@ const (
 )
 
 // Commands lists every command of the protocol, in display order.
-var Commands = []string{CmdStatus, CmdClientStart, CmdClientStop, CmdLogin, CmdLogout, CmdScreenshot, CmdVNCOpen}
+var Commands = []string{
+	CmdStatus, CmdClientStart, CmdClientStop, CmdLogin, CmdLogout, CmdScreenshot, CmdVNCOpen,
+	CmdPlugins, CmdHubSearch, CmdPluginInstall, CmdPluginRemove, CmdScriptStart, CmdScriptStop,
+	CmdScriptsPause, CmdScriptsResume, CmdScriptDetail, CmdConfigGet, CmdConfigSet,
+}
 
 // Known reports whether name is in the closed list.
 func Known(name string) bool { return slices.Contains(Commands, name) }

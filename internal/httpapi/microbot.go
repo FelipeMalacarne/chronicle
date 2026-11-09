@@ -53,6 +53,56 @@ func (s *Server) microbotRoutes() {
 	control("POST /api/microbot/client/stop", s.microbotAction(agent.CmdClientStop, 3*time.Minute))
 	control("POST /api/microbot/login", s.microbotAction(agent.CmdLogin, 90*time.Second))
 	control("POST /api/microbot/logout", s.microbotAction(agent.CmdLogout, 45*time.Second))
+	// Plugins, scripts and config (docs/08 phase 3).
+	control("GET /api/microbot/plugins", s.microbotRead(agent.CmdPlugins, func(*http.Request) any { return nil }))
+	control("GET /api/microbot/hub", s.microbotRead(agent.CmdHubSearch, func(r *http.Request) any {
+		return agent.HubParams{Q: r.URL.Query().Get("q")}
+	}))
+	control("GET /api/microbot/scripts/detail", s.microbotRead(agent.CmdScriptDetail, func(r *http.Request) any {
+		return agent.ScriptParams{ClassName: r.URL.Query().Get("className")}
+	}))
+	control("GET /api/microbot/config", s.microbotRead(agent.CmdConfigGet, func(r *http.Request) any {
+		var keys []string
+		for k := range strings.SplitSeq(r.URL.Query().Get("keys"), ",") {
+			if k = strings.TrimSpace(k); k != "" {
+				keys = append(keys, k)
+			}
+		}
+		return agent.ConfigGetParams{Group: r.URL.Query().Get("group"), Keys: keys}
+	}))
+	control("POST /api/microbot/plugins/install", s.microbotAction(agent.CmdPluginInstall, 160*time.Second))
+	control("POST /api/microbot/plugins/remove", s.microbotAction(agent.CmdPluginRemove, 100*time.Second))
+	control("POST /api/microbot/scripts/start", s.microbotAction(agent.CmdScriptStart, 40*time.Second))
+	control("POST /api/microbot/scripts/stop", s.microbotAction(agent.CmdScriptStop, 40*time.Second))
+	control("POST /api/microbot/scripts/pause", s.microbotAction(agent.CmdScriptsPause, 20*time.Second))
+	control("POST /api/microbot/scripts/resume", s.microbotAction(agent.CmdScriptsResume, 20*time.Second))
+	control("POST /api/microbot/config", s.microbotAction(agent.CmdConfigSet, 20*time.Second))
+}
+
+// microbotRead is a read through the agent (not audited): params come from
+// the query and are validated before the agent sees them.
+func (s *Server) microbotRead(command string, params func(*http.Request) any) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		raw, err := json.Marshal(params(r))
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if _, err = agent.ValidateParams(command, raw); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+		defer cancel()
+		var data json.RawMessage
+		if err = s.opts.Microbot.Link.Call(ctx, command, json.RawMessage(raw), &data); err != nil {
+			s.writeMicrobotError(w, err)
+			return
+		}
+		w.Header().Set("Cache-Control", "no-store")
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(data)
+	}
 }
 
 // agentToken guards the agent's websockets (docs/08): the link and the
@@ -201,7 +251,8 @@ func (s *Server) auditMicrobot(r *http.Request, command string, params json.RawM
 func (s *Server) microbotAction(command string, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var params json.RawMessage
-		if command == agent.CmdLogin {
+		switch command {
+		case agent.CmdLogin:
 			var p agent.LoginParams
 			if r.ContentLength != 0 && !decodeBody(w, r, &p) {
 				return
@@ -211,6 +262,22 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 				return
 			}
 			params, _ = json.Marshal(p)
+		case agent.CmdClientStart, agent.CmdClientStop, agent.CmdLogout:
+		default:
+			// Plugin commands: the agent's own validation, before anything
+			// reaches it; the params that pass are the ones audited.
+			if r.ContentLength != 0 && !decodeBody(w, r, &params) {
+				return
+			}
+			p, err := agent.ValidateParams(command, params)
+			if err != nil {
+				writeError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			params = nil
+			if p != nil {
+				params, _ = json.Marshal(p)
+			}
 		}
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()

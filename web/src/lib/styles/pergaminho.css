@@ -553,6 +553,9 @@ body {
 .dot-w {
 	background: var(--stale);
 }
+.dot-off {
+	background: var(--ink-subtle);
+}
 .bar {
 	display: flex;
 	align-items: center;

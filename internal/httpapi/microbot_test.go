@@ -8,6 +8,7 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync"
 	"testing"
@@ -59,6 +60,11 @@ func (stubGame) Logout(context.Context) (json.RawMessage, error) {
 	return json.RawMessage(`{"success":true}`), nil
 }
 func (stubGame) Screenshot(context.Context) ([]byte, error) { return []byte("\x89PNG"), nil }
+
+// JSON answers every plugin command with the request it got.
+func (stubGame) JSON(_ context.Context, method, path string, _ url.Values, _ any, _ time.Duration) (json.RawMessage, error) {
+	return json.Marshal(map[string]string{"request": method + " " + path})
+}
 
 const agentToken = "0123456789abcdef0123456789abcdef"
 
@@ -153,6 +159,41 @@ func TestMicrobotRoutes(t *testing.T) {
 	status, body, _ = call(t, "GET", srv.URL+"/api/microbot/audit", "")
 	if entries, _ := body["entries"].([]any); status != http.StatusOK || len(entries) != 2 {
 		t.Fatalf("audit route = %d %v", status, body)
+	}
+
+	// Plugins (phase 3): reads go through the agent, refusals never reach it,
+	// actions are audited with the params that passed validation.
+	status, body, _ = call(t, "GET", srv.URL+"/api/microbot/plugins", "")
+	if status != http.StatusOK || body["scripts"] == nil {
+		t.Fatalf("plugins = %d %v", status, body)
+	}
+	status, body, _ = call(t, "GET", srv.URL+"/api/microbot/config?group=qol&keys=speed,%20mode", "")
+	if status != http.StatusOK || body["group"] != "qol" {
+		t.Fatalf("config = %d %v", status, body)
+	}
+	before := len(audit.entries)
+	for _, c := range []struct{ method, path, body string }{
+		{"POST", "/api/microbot/scripts/stop", `{"className":"net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin"}`},
+		{"POST", "/api/microbot/config", `{"group":"agentServer","key":"port","value":"1"}`},
+		{"POST", "/api/microbot/plugins/install", `{"name":"x/../y"}`},
+		{"GET", "/api/microbot/config?group=fm-ironmanplanner&keys=url", ""},
+	} {
+		if status, _, _ = call(t, c.method, srv.URL+c.path, c.body); status != http.StatusBadRequest {
+			t.Fatalf("%s %s = %d, want 400", c.method, c.path, status)
+		}
+	}
+	if len(audit.entries) != before {
+		t.Fatalf("refused requests were audited: %+v", audit.entries[before:])
+	}
+	status, body, _ = call(t, "POST", srv.URL+"/api/microbot/scripts/start", `{"className":"a.b.GotrPlugin"}`)
+	if status != http.StatusOK || body["ok"] != true {
+		t.Fatalf("start = %d %v", status, body)
+	}
+	if last := audit.last(); !last.OK || last.Action != agent.CmdScriptStart || string(last.Params) != `{"className":"a.b.GotrPlugin"}` {
+		t.Fatalf("start audit = %+v", last)
+	}
+	if status, _, _ = call(t, "POST", srv.URL+"/api/microbot/scripts/pause", ""); status != http.StatusOK {
+		t.Fatalf("pause = %d", status)
 	}
 
 	// Live VNC: the browser's websocket reaches x11vnc through the agent, and

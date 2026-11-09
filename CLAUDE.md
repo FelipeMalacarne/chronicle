@@ -85,8 +85,9 @@ internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* an
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
 internal/microbot/    typed client of the Microbot Agent Server (Unix socket of the harness dev home); agent only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
-                      websocket, the server-side Link and the VNC tunnel (browser <-> server <-> agent <->
-                      loopback x11vnc); the server never talks to the game directly
+                      websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->
+                      loopback x11vnc) and the plugin/script/config commands, whose params are validated
+                      by ValidateParams on both sides; the server never talks to the game directly
 internal/client/      typed API client of the CLI and `ironman mcp`: config.json and credentials.json
                       under ~/.config/ironman, device-flow login (RFC 8628), token refresh; never
                       imports internal/store

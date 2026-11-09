@@ -11,6 +11,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"sync"
 	"testing"
@@ -23,6 +24,38 @@ type fakeGame struct {
 	mu      sync.Mutex
 	running bool
 	worlds  []int
+	// requests records the Agent Server requests of the plugin commands.
+	requests []string
+}
+
+// JSON answers like the Agent Server for the paths the plugin commands use,
+// and records each request as "METHOD path?query body".
+func (g *fakeGame) JSON(_ context.Context, method, path string, query url.Values, body any, _ time.Duration) (json.RawMessage, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	req := method + " " + path
+	if len(query) > 0 {
+		req += "?" + query.Encode()
+	}
+	if body != nil {
+		b, _ := json.Marshal(body)
+		req += " " + string(b)
+	}
+	g.requests = append(g.requests, req)
+	switch path {
+	case "/scripts":
+		return json.RawMessage(`{"count":1,"scripts":[{"name":"QoL","className":"a.QoLPlugin","active":true,"enabled":true}]}`), nil
+	case "/settings/plugin":
+		if method == http.MethodGet {
+			if query.Get("key") == "unset" {
+				return json.RawMessage(`{"group":"qol","key":"unset"}`), nil
+			}
+			return json.RawMessage(`{"group":"qol","key":"` + query.Get("key") + `","value":"v"}`), nil
+		}
+	case "/scripts/health":
+		return nil, errors.New("HTTP 404: no script")
+	}
+	return json.RawMessage(`{"ok":true}`), nil
 }
 
 func (g *fakeGame) State(context.Context) (json.RawMessage, error) {

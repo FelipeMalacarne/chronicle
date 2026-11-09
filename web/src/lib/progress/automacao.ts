@@ -92,13 +92,26 @@ const ACTION_LABEL: Record<string, string> = {
 	login: 'login',
 	logout: 'logout',
 	screenshot: 'screenshot',
-	status: 'estado'
+	status: 'estado',
+	vnc_open: 'abrir VNC ao vivo',
+	plugin_install: 'instalar plugin',
+	plugin_remove: 'remover plugin',
+	script_start: 'iniciar plugin',
+	script_stop: 'parar plugin',
+	scripts_pause: 'pausar scripts',
+	scripts_resume: 'retomar scripts',
+	config_set: 'configuração'
 };
 
 /** Uma linha da auditoria: "login · mundo 303 · ok". */
 export function auditLine(e: AuditEntry): string {
 	const parts = [ACTION_LABEL[e.action] ?? e.action];
-	if (typeof e.params?.world === 'number') parts.push(`mundo ${e.params.world}`);
+	const p = e.params ?? {};
+	if (typeof p.world === 'number') parts.push(`mundo ${p.world}`);
+	if (typeof p.name === 'string') parts.push(p.version ? `${p.name} ${String(p.version)}` : p.name);
+	if (typeof p.className === 'string') parts.push(p.className.split('.').pop() ?? p.className);
+	if (typeof p.group === 'string' && typeof p.key === 'string')
+		parts.push(`${p.group}.${p.key} = ${p.value === null ? '(padrão)' : String(p.value)}`);
 	parts.push(e.ok ? 'ok' : `falhou: ${e.error ?? ''}`.trim());
 	return parts.join(' · ');
 }

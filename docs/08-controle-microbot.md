@@ -207,7 +207,33 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 - Verificado no zaros: o cliente headless subiu pelo web e a tela de login apareceu ao vivo no cockpit
   pelo túnel; a sessão fecha quando a página sai.
 
-Fora das fases 1 e 2, ainda: plugins (fase 3), rotinas (fase 4), o serviço systemd e
+**Fase 3 feita** (plugins):
+
+- Comandos tipados na lista fechada: `plugins` (`GET /scripts` e `GET /plugins?installed=true`),
+  `hub_search`, `plugin_install` e `plugin_remove` (pelo `internalName` do Hub), `script_start` e
+  `script_stop` (pelo nome completo da classe), `scripts_pause` e `scripts_resume` (todos os loops, como
+  o Agent Server faz), `script_detail` (`/scripts/status`, `/health`, `/results` e `/debug/snapshot`),
+  `config_get` e `config_set` (`/settings/plugin`). A validação fica em `agent.ValidateParams`: o `serve`
+  a usa para recusar com 400 antes de falar com o agent (e sem auditar, porque nada chegou a ele), e o
+  agent a usa de novo antes de agir.
+- Recusas da lista fechada: iniciar ou parar o núcleo do controle (Microbot, Agent Server, Dev
+  Bootstrap) e o plugin de tracking do planner; ler ou gravar os grupos `agentServer` (porta, token),
+  `runelite`, `microbot` e `fm-ironmanplanner` (credencial do planner); chaves que parecem segredo
+  (token, senha, cookie, PIN); nomes fora do formato (só o `internalName` do Hub, classe Java
+  qualificada, grupo e chave `[A-Za-z0-9_.-]`).
+- Web: Automação › Plugins (`/automacao/plugins`, V6MicrobotPlugins1440). A lista junta o `/scripts`
+  com o Hub pelo nome simples da classe (é o `internalName`), em três grupos: do Hub, seus (pacote `fm`,
+  sideload) e do cliente (escondidos por padrão). O detalhe tem iniciar e parar (segundo clique),
+  pausar e retomar todos, atualizar e remover (Hub), status, saúde e último resultado, os JSONs da state
+  machine e dos resultados, e a configuração chave/valor: o grupo (palpite pelo nome da classe) e as
+  chaves de cada plugin ficam neste navegador, porque o Agent Server não lista as opções. A busca no
+  Hub instala ou atualiza.
+- Verificado no zaros com o cliente headless na tela de login, só leituras: a lista (26 plugins, 5 do
+  Hub, 2 com atualização), a busca no Hub, o detalhe, a state machine e a leitura de uma chave; o grupo
+  `agentServer` foi recusado. Instalar, iniciar, parar e gravar config ficaram nos testes com Agent
+  Server falso.
+
+Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no
 jogo, então o cartão "Input humano" do artboard não existe na tela.
 

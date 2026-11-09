@@ -11,6 +11,7 @@ import (
 	_ "image/png" // decode the Agent Server's frames
 	"log/slog"
 	"net/http"
+	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -32,6 +33,9 @@ type Game interface {
 	Login(ctx context.Context, world int) (json.RawMessage, error)
 	Logout(ctx context.Context) (json.RawMessage, error)
 	Screenshot(ctx context.Context) ([]byte, error)
+	// JSON is one Agent Server request; only the executor's fixed commands
+	// call it (internal/microbot.Client.JSON).
+	JSON(ctx context.Context, method, path string, query url.Values, body any, timeout time.Duration) (json.RawMessage, error)
 }
 
 // Executor runs the closed list of commands on this machine.
@@ -59,6 +63,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 			return nil, err
 		}
 		return toJPEG(png), nil
+	case CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet:
+		return e.plugin(ctx, command, params)
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -84,6 +90,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.Game.Logout(ctx)
 	case CmdVNCOpen:
 		return nil, errors.New("vnc_open is served by the agent's link, not the executor")
+	case CmdPluginInstall, CmdPluginRemove, CmdScriptStart, CmdScriptStop, CmdScriptsPause, CmdScriptsResume, CmdConfigSet:
+		return e.plugin(ctx, command, params)
 	}
 	return nil, fmt.Errorf("command %q is not in the agent's closed list", command)
 }

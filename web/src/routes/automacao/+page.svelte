@@ -15,7 +15,7 @@
 	 * Automação › Cockpit (V6Microbot1440; no estreito, o modo só dashboard do V6Microbot640), doc 08:
 	 * o estado do cliente pelo agent, a tela por screenshot a cada 5 s ou ao vivo por VNC (fase 2, só
 	 * no largo e com o cliente headless), iniciar e parar o cliente, login e logout, e a auditoria. Os
-	 * plugins (fase 3) entram depois; Rotinas ficam para depois das receitas.
+	 * plugins (fase 3) têm a página deles; Rotinas ficam para depois das receitas.
 	 */
 	let status = $state<MicrobotStatus | null>(null);
 	let off = $state(false);
@@ -168,7 +168,7 @@
 	</div>
 	<div class="seg" role="tablist" aria-label="Automação">
 		<a class="on" href={resolve('/automacao')} aria-current="page">Cockpit</a>
-		<span class="soon" title="Plugins do Hub: fase 3 do doc 08">Plugins</span>
+		<a href={resolve('/automacao/plugins')}>Plugins</a>
 		<a href="#auditoria">Auditoria</a>
 	</div>
 	<div class="seg modes" role="group" aria-label="Modo">
@@ -389,8 +389,7 @@
 	.modes {
 		margin-left: auto;
 	}
-	.seg a,
-	.seg .soon {
+	.seg a {
 		display: inline-flex;
 		align-items: center;
 		height: 32px;
@@ -403,8 +402,7 @@
 		text-decoration: none;
 		background: var(--elevated);
 	}
-	.seg a + .soon,
-	.seg .soon + a {
+	.seg a + a {
 		border-left: 1px solid var(--border);
 	}
 	.seg a.on {
@@ -412,7 +410,6 @@
 		color: var(--gold);
 		box-shadow: var(--bevel-frame);
 	}
-	.seg .soon,
 	.seg button:disabled {
 		opacity: 0.55;
 		cursor: not-allowed;

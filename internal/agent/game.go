@@ -29,7 +29,7 @@ type GameView struct {
 	Bank      json.RawMessage `json:"bank,omitempty"`
 	Ground    json.RawMessage `json:"ground,omitempty"`   // GET /ground-items nearby
 	Machines  json.RawMessage `json:"machines,omitempty"` // GET /debug/snapshot
-	// Bridge is what the Dev Bootstrap bridge adds: the real menus of NPCs,
+	// Bridge is what the control bridge adds: the real menus of NPCs,
 	// objects and worn items, the prayers and the spellbook. Absent without
 	// the bridge (errors["bridge"] says why).
 	Bridge *BridgeView       `json:"bridge,omitempty"`
@@ -101,7 +101,7 @@ func (e *Executor) bridgeView(ctx context.Context, fail func(name, err string)) 
 	} {
 		raw, err := e.Bridge.JSON(ctx, http.MethodGet, part.path, part.query, nil, 10*time.Second)
 		if err != nil {
-			fail("bridge", fmt.Sprintf("%s: %v (Dev Bootstrap 1.2+ serves the bridge)", part.path, err))
+			fail("bridge", fmt.Sprintf("%s: %v (the Ironman Planner plugin 1.3+ serves the bridge in the dev client)", part.path, err))
 			return nil
 		}
 		*part.into = raw
@@ -126,7 +126,7 @@ const (
 	CmdDialogueContinue = "dialogue_continue"
 	CmdDialogueSelect   = "dialogue_select" // an option by text or 1-based index
 
-	// Through the Dev Bootstrap bridge.
+	// Through the control bridge of the Ironman Planner plugin.
 	CmdEquipmentUse = "equipment_use"  // a worn item's action (Remove, Rub, Operate)
 	CmdPrayerToggle = "prayer_toggle"  // a prayer on or off
 	CmdSpellCast    = "spell_cast"     // a spell, or an alchemy spell on an item
@@ -418,10 +418,10 @@ func (e *Executor) act(ctx context.Context, command string, params json.RawMessa
 	return nil, fmt.Errorf("command %q is not in the agent's closed list", command)
 }
 
-// bridgeAct runs an action through the Dev Bootstrap bridge.
+// bridgeAct runs an action through the control bridge.
 func (e *Executor) bridgeAct(ctx context.Context, p any) (any, error) {
 	if e.Bridge == nil {
-		return nil, errors.New("this action needs the Dev Bootstrap bridge (microbot-plugins fm/devbootstrap 1.2+)")
+		return nil, errors.New("this action needs the control bridge (Ironman Planner plugin 1.3+ in the dev client)")
 	}
 	post := func(path string, body any) (any, error) {
 		return e.Bridge.JSON(ctx, http.MethodPost, path, nil, body, 30*time.Second)

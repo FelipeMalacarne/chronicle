@@ -56,7 +56,7 @@ type Executor struct {
 	ClientCmd []string
 	// AccountCmd runs the harness's mb-account the same way.
 	AccountCmd []string
-	// Bridge is the Dev Bootstrap bridge socket (microbot.BridgeSocket):
+	// Bridge is the control bridge socket of the Ironman Planner plugin (microbot.BridgeSocket):
 	// the menus and actions the Agent Server lacks; nil turns them off.
 	Bridge Requester
 

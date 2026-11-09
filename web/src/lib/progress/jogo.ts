@@ -81,7 +81,7 @@ export interface NearRow {
 	detail: string;
 	distance: number | null;
 	position?: Pos;
-	/** As opções do jogo, quando a ponte do Dev Bootstrap as dá (NPC e objeto). */
+	/** As opções do jogo, quando a ponte de controle as dá (NPC e objeto). */
 	actions?: string[];
 }
 

@@ -281,7 +281,7 @@ func TestGameViewWithBridge(t *testing.T) {
 	}
 	// Without the bridge the view still works and says why.
 	v = (&Executor{Game: &loggedInGame{}, Bridge: failing{}}).gameView(ctx)
-	if v.Bridge != nil || !strings.Contains(v.Errors["bridge"], "Dev Bootstrap") || v.Inventory == nil {
+	if v.Bridge != nil || !strings.Contains(v.Errors["bridge"], "Ironman Planner") || v.Inventory == nil {
 		t.Fatalf("view without a bridge = %+v", v)
 	}
 }

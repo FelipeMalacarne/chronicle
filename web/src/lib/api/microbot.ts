@@ -119,7 +119,7 @@ export interface ScriptDetail {
 	errors?: Record<string, string>;
 }
 
-/** O formulário de config de um plugin, exportado pelo Dev Bootstrap (doc 08, fase D). */
+/** O formulário de config de um plugin, exportado pelo plugin Ironman Planner no cliente de dev (doc 08). */
 export interface PluginSchema {
 	className: string;
 	name: string;
@@ -246,7 +246,7 @@ export type GameCommand =
 	| 'spell_cast'
 	| 'bank_deposit_x';
 
-/** O que a ponte do Dev Bootstrap acrescenta: os menus reais, as orações e o livro de feitiços. */
+/** O que a ponte de controle (plugin Ironman Planner) acrescenta: os menus reais, as orações e o livro de feitiços. */
 export interface BridgeView {
 	entities?: {
 		npcs: {

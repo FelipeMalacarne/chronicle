@@ -93,6 +93,15 @@ O dono decidiu controlar o Microbot pelo webapp (ver o jogo ao vivo, iniciar e p
 rotinas). Isso vive num módulo de controle separado, desligado por padrão, descrito no doc 08. O
 plugin de tracking deste doc continua somente leitura.
 
+## Adendo de 2026-11-09: um só plugin do Chronicle
+
+Decisão do dono: um só plugin do Chronicle no microbot-plugins. A ponte de controle do doc 08 (menus
+de NPC, objeto e equipamento, orações, feitiços e as ações tipadas deles) e o export das opções de
+config saíram do Dev Bootstrap para o `fm/ironmanplanner` 1.3.0. Eles só sobem no cliente de dev do
+harness (`-Dmicrobot.dev.harness=true`, o do `mb-client`) e só respondem com o token do Agent
+Server; no cliente do dia a dia o plugin continua só lendo e nada disso existe. O tracking (o
+escopo abaixo) segue somente leitura em qualquer cliente.
+
 ## Adendo de 2026-11-04: plugin implementado
 
 O plugin existe em `FelipeMalacarne/microbot-plugins` (repositório privado), pacote

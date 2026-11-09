@@ -142,7 +142,7 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 
 ## Lacunas conhecidas
 
-- **Esquema de configuração dos plugins** (resolvido em 2026-11-08 pelo Dev Bootstrap 1.1.0, ver
+- **Esquema de configuração dos plugins** (resolvido em 2026-11-08, hoje pelo plugin Ironman Planner 1.3.0, ver
   "Configuração com formulário"): o Agent Server só lê e grava chave/valor; não lista as
   opções de um plugin (nome, tipo, valores, seções). V1: edição chave/valor crua mais presets salvos
   por plugin. V2: endpoint de descritores de config (`ConfigDescriptor`), de preferência como PR
@@ -285,7 +285,8 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 **Configuração com formulário** (2026-11-08): fecha a lacuna "esquema de configuração dos plugins"
 abaixo, pelo caminho do plugin companheiro.
 
-- `microbot-plugins`, Dev Bootstrap 1.1.0: escreve `.runelite/agent/config-schema.json` com as
+- `microbot-plugins`, plugin Ironman Planner 1.3.0 no cliente de dev (até 2026-11-09 era o Dev
+  Bootstrap 1.1): escreve `.runelite/agent/config-schema.json` com as
   opções de cada plugin do Microbot carregado (grupo, seções, itens com tipo, intervalo, unidade,
   nomes e rótulos de enum e o aviso do plugin), sem os itens `secret`, e reescreve quando um plugin
   carrega, descarrega ou muda. Os valores não vão no arquivo: continuam no `/settings/plugin`.
@@ -295,9 +296,9 @@ abaixo, pelo caminho do plugin companheiro.
 - Web, em Plugins: o formulário por seção (as fechadas por padrão começam fechadas), com o controle
   do tipo (caixa para booleano, número com mínimo, máximo e unidade, lista para enum, texto para o
   resto, amostra de cor), "Gravar" por opção alterada (segundo clique quando o plugin tem aviso) e
-  "padrão" para apagar a chave. Sem o arquivo (Dev Bootstrap antigo), a tela cai no chave/valor cru,
+  "padrão" para apagar a chave. Sem o arquivo (plugin antigo), a tela cai no chave/valor cru,
   que também fica a um clique como alternativa.
-- Para ligar no zaros: `mb-install devbootstrap` (home de dev, nunca `--live`) e reiniciar o cliente.
+- Para ligar no zaros: `mb-install ironmanplanner` (home de dev, nunca `--live`) e reiniciar o cliente.
 - Verificado: testes do export (tipos e enums) no `microbot-plugins`, do agent (arquivo, grupo
   protegido, chave de segredo) e do formulário com dados falsos no navegador (validação, edição
   que sobrevive ao polling).
@@ -316,7 +317,9 @@ do cliente fixo, com a pele do jogo dentro e o Pergaminho fora.
   clique no próprio menu.
 - Entrega 1 (feita): o que o agent já faz. Oração e Magia aparecem desabilitadas; NPC e objeto têm
   Walk here e a ação digitada, e o equipamento só mostra.
-- Entrega 2 (a ponte, feita): o Dev Bootstrap 1.2.0 do microbot-plugins serve um segundo socket,
+- Entrega 2 (a ponte, feita): o plugin Ironman Planner 1.3.0 do microbot-plugins (no começo era o
+  Dev Bootstrap 1.2; em 2026-11-09 o dono preferiu um só plugin do Chronicle, doc 06) serve, só no
+  cliente de dev do harness, um segundo socket,
   `.runelite/agent/bridge.sock`, com o `UdsHttpServer` e o `AgentHandler` do próprio cliente: o mesmo
   token do Agent Server, Host de loopback, sem Origin, e nada responde antes de o token existir.
   Leituras: `/bridge/entities` (NPCs e objetos por perto com as opções reais do menu),
@@ -334,7 +337,7 @@ do cliente fixo, com a pele do jogo dentro e o Pergaminho fora.
   menu; Withdraw-X já funcionava pelo `bank_withdraw`) e um feitiço de item (alquimia) seleciona e o
   próximo clique no inventário vira "Cast … -> item", como no jogo. Sprites de oração e feitiço vêm
   da wiki pelo `tools/fetch_wiki_icons.py` (lista em `data/wiki/book_icons.json`, as chaves do cliente).
-- Para ligar no zaros: `mb-install devbootstrap` (home de dev) e reiniciar o cliente.
+- Para ligar no zaros: `mb-install ironmanplanner` (home de dev) e reiniciar o cliente.
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

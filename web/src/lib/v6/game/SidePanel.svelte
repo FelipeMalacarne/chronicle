@@ -21,7 +21,7 @@
 	/*
 	 * O painel lateral do cliente (doc 08, V6MicrobotCliente1440 e V6MicrobotClienteEstados1440): as
 	 * abas do jogo com os ícones do jogo. Itens abre o "Choose Option" com as ações reais do item (com
-	 * o banco aberto, as de depósito). Com a ponte do Dev Bootstrap, os itens vestidos ganham o menu
+	 * o banco aberto, as de depósito). Com a ponte de controle (plugin Ironman Planner no cliente de dev), os itens vestidos ganham o menu
 	 * deles e as abas Oração e Magia ligam; sem ela, Equipado só mostra e as duas ficam desligadas.
 	 */
 	let { view }: { view: GameView } = $props();
@@ -60,7 +60,7 @@
 				aria-selected={tab === k}
 				aria-label={label}
 				disabled={!ok}
-				title={ok ? label : `${label}: precisa da ponte do Dev Bootstrap 1.2 no cliente`}
+				title={ok ? label : `${label}: precisa do plugin Ironman Planner 1.3 no cliente de dev`}
 				onclick={() => (tab = k)}
 				>{#if icon}<img src={icon} alt="" />{:else}{label}{/if}</button
 			>

@@ -8,8 +8,8 @@ import (
 	"path/filepath"
 )
 
-// CmdConfigSchema is the config form of one plugin: the options Dev Bootstrap
-// (microbot-plugins fm/devbootstrap 1.1+) exports to
+// CmdConfigSchema is the config form of one plugin: the options the Ironman
+// Planner plugin (1.3+, dev client only) exports to
 // .runelite/agent/config-schema.json, because the Agent Server reads and
 // writes values but does not list a plugin's options. The values still go
 // through CmdConfigGet and CmdConfigSet.
@@ -20,7 +20,7 @@ const SchemaFile = ".runelite/agent/config-schema.json"
 
 // ErrNoSchema: the dev client has not exported the options (an older Dev
 // Bootstrap, or the client has not started yet).
-var ErrNoSchema = errors.New("config schema: the dev client exported no options (Dev Bootstrap 1.1+: mb-install devbootstrap and restart the client)")
+var ErrNoSchema = errors.New("config schema: the dev client exported no options (Ironman Planner plugin 1.3+: mb-install ironmanplanner and restart the client)")
 
 // PluginSchema is one plugin's config form.
 type PluginSchema struct {

@@ -146,7 +146,7 @@
 	let edits = $state<Record<string, string>>({});
 	let newKey = $state('');
 	let cfgError = $state<string | null>(null);
-	/** O Dev Bootstrap exportou as opções deste plugin: mostra o formulário; senão, o chave/valor cru. */
+	/** O plugin Ironman Planner exportou as opções deste plugin: mostra o formulário; senão, o chave/valor cru. */
 	let formOk = $state(false);
 	let formWhy = $state<string | null>(null);
 	let rawMode = $state(false);

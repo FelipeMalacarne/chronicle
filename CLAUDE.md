@@ -84,7 +84,7 @@ internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* an
                       (incl. /api/world/entity for the entity panel, /api/account/state for Conta)
                       (dev without session, oidc behind it), dev-only token bootstrap
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
-internal/microbot/    typed client of the Microbot Agent Server and of the Dev Bootstrap bridge (Unix sockets of the
+internal/microbot/    typed client of the Microbot Agent Server and of Chronicle's control bridge (Ironman Planner plugin; Unix sockets of the
                       harness dev home, same token); agent only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
                       websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->

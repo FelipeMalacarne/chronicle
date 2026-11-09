@@ -32,11 +32,11 @@ type Client struct {
 	// Timeout bounds one call that does not set its own; zero means 30 s.
 	Timeout time.Duration
 	// Socket is the socket file under Home/.runelite/agent: empty is the
-	// Agent Server's (agent.sock); BridgeSocket is the Dev Bootstrap bridge.
+	// Agent Server's (agent.sock); BridgeSocket is Chronicle's control bridge.
 	Socket string
 }
 
-// BridgeSocket is the Dev Bootstrap bridge (microbot-plugins fm/devbootstrap
+// BridgeSocket is Chronicle's control bridge (microbot-plugins fm/ironmanplanner
 // 1.2+): NPC, object and worn-item menus, prayers, spells and the actions
 // the Agent Server lacks, behind the same token.
 const BridgeSocket = "bridge.sock"

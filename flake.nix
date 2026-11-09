@@ -42,6 +42,8 @@
           # mb-client --headless: own X display + VNC for remote viewing
           pkgs.xvfb
           pkgs.x11vnc
+          # fits the game window to the headless display
+          pkgs.xdotool
         ];
         JAVA_HOME = "${pkgs.jdk21}";
         # jdtls needs the Lombok agent, or every @Getter/@Slf4j reads as an error.

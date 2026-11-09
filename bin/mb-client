@@ -154,10 +154,30 @@ start() {
 	echo $! >"$MB_PIDFILE"
 	if [[ -z "$test_name" ]]; then
 		wait_ready "${MB_START_TIMEOUT:-180}"
-		[[ -n "$headless" ]] && mute_headless
+		if [[ -n "$headless" ]]; then
+			fit_headless_window
+			mute_headless
+		fi
 	else
 		echo "test mode: pid $(cat "$MB_PIDFILE"); results in $MB_RL/test-results"
 	fi
+}
+
+# The client reopens at the size it last had, often a desktop's (2536x1382), and VNC then shows
+# only the top-left of it: fit it to the display.
+fit_headless_window() {
+	command -v xdotool >/dev/null || { echo "window: no xdotool, not resized"; return 0; }
+	local size="${MB_HEADLESS_SIZE:-1280x900x24}" w h id i
+	IFS=x read -r w h _ <<<"$size"
+	for ((i = 0; i < 20; i++)); do
+		id="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool search --name '^RuneLite' 2>/dev/null | head -1)"
+		if [[ -n "$id" ]]; then
+			DISPLAY="$MB_HEADLESS_DISPLAY" xdotool windowmove "$id" 0 0 windowsize "$id" "$w" "$h" && echo "window fitted to ${w}x${h}"
+			return 0
+		fi
+		sleep 1
+	done
+	echo "window: not found, not resized"
 }
 
 # Nobody listens to a headless client. Mutes its stream once it plays (the login music);

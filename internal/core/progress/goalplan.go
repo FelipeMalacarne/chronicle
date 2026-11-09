@@ -387,7 +387,7 @@ func (p *planner) bottlenecks() []Bottleneck {
 			best[skill] = n
 		}
 	}
-	var out []Bottleneck
+	out := []Bottleneck{}
 	for skill, n := range best {
 		k := entities.MustParseObjectiveKey(n.Key)
 		b := Bottleneck{
@@ -455,7 +455,7 @@ func boolInt(b bool) int {
 // routes lists, per guide, the steps that complete or start the goal's
 // entity (the active guide first).
 func (p *planner) routes() []StepPlace {
-	var out []StepPlace
+	out := []StepPlace{}
 	goal := p.in.Goal
 	guides := slices.Clone(p.in.Guides)
 	slices.SortStableFunc(guides, func(a, b GuideInput) int {

@@ -145,7 +145,7 @@
 		},
 		{ tags: ['progress'] }
 	);
-	const gargalo = $derived(plan.data?.bottlenecks.find((b) => !b.met) ?? null);
+	const gargalo = $derived(plan.data?.bottlenecks?.find((b) => !b.met) ?? null);
 	function markIn(guide: string) {
 		const b = boardOf(guide);
 		const occ = mark?.routes.find((o) => o.guide === guide);

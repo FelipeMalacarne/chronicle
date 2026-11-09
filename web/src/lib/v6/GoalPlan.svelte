@@ -165,9 +165,9 @@
 		</div>
 	</section>
 
-	{#if plan.requirements || plan.bottlenecks.length}
+	{#if plan.requirements || plan.bottlenecks?.length}
 		<div class="two">
-			{#if plan.bottlenecks.length}
+			{#if plan.bottlenecks?.length}
 				<section class="panel pb">
 					<div class="plaque">
 						Gargalos de nível<span class="r" title="Requisitos da wiki, conferidos na extração"

@@ -106,13 +106,13 @@
 	function goalLine(g: Goal): string {
 		const plan = plans[g.id];
 		const parts: string[] = [];
-		const b = plan?.bottlenecks.find((x) => !x.met);
+		const b = plan?.bottlenecks?.find((x) => !x.met);
 		if (b)
 			parts.push(
 				`Gargalo: ${b.target} ${b.skill.charAt(0).toUpperCase() + b.skill.slice(1)}${b.level !== null ? ` (está em ${b.level})` : ''}.`
 			);
 		const here =
-			plan?.routes.find((r) => r.guide_id === guideId && r.goal) ??
+			plan?.routes?.find((r) => r.guide_id === guideId && r.goal) ??
 			g.routes.find((r) => r.guide === guideId);
 		parts.push(here ? `Esta rota chega lá em ${here.ref}.` : 'Esta rota não conclui.');
 		return parts.join(' ');

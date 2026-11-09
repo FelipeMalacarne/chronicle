@@ -3,6 +3,7 @@ package progress
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
@@ -121,5 +122,23 @@ func TestBuildGoalPlanLatchAndItem(t *testing.T) {
 	item := BuildGoalPlan(goalInput(t, "item:7462x1"))
 	if item.Requirements || item.Total != 0 || len(item.Nodes) != 1 || len(item.Routes) != 0 {
 		t.Fatalf("item goal = %+v", item)
+	}
+}
+
+// An item goal has no requirements in the catalog: the plan's lists are empty,
+// never null, so the web can read them without a guard.
+func TestBuildGoalPlanItemListsAreEmpty(t *testing.T) {
+	p := BuildGoalPlan(goalInput(t, "item:7462x1"))
+	b, err := json.Marshal(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{`"bottlenecks":[]`, `"nodes":[`} {
+		if !strings.Contains(string(b), field) {
+			t.Errorf("plan %s lacks %s", b, field)
+		}
+	}
+	if strings.Contains(string(b), "null") {
+		t.Errorf("plan has a null: %s", b)
 	}
 }

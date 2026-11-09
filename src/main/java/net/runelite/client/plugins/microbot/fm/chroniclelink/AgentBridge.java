@@ -271,7 +271,6 @@ final class AgentBridge
 		return Microbot.getRs2TileObjectCache().query().within(distance).toListOnClientThread().stream()
 			.sorted(Comparator.comparingInt((Rs2TileObjectModel o) ->
 				me == null || o.getWorldLocation() == null ? Integer.MAX_VALUE : me.distanceTo(o.getWorldLocation())))
-			.limit(limit)
 			.map(o -> {
 				ObjectComposition def = o.getObjectComposition();
 				Map<String, Object> m = new LinkedHashMap<>();
@@ -281,7 +280,10 @@ final class AgentBridge
 				m.put("position", position(o.getWorldLocation()));
 				return m;
 			})
+			// Most nearby tiles hold unnamed scenery: drop those first, then take the nearest named
+			// ones (the stream is lazy past the sort, so it reads compositions only until it has them).
 			.filter(m -> m.get("name") != null && !"null".equals(m.get("name")))
+			.limit(limit)
 			.collect(Collectors.toList());
 	}
 

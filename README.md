@@ -25,7 +25,7 @@ before each launch.
 
 Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
 
-## Chronicle Link (`fm/chroniclelink`, 1.4.0)
+## Chronicle Link (`fm/chroniclelink`, 1.4.1)
 
 Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
 1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the

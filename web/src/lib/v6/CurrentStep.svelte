@@ -60,16 +60,19 @@
 		[where, ...meta.map((m) => `${m.label} ${m.value}`)].filter(Boolean).join(' · ')
 	);
 	// "também na <rota>": onde a outra rota conclui as mesmas entidades; as que ela não tem ficam
-	// de fora, e uma rota sem nenhuma some.
+	// de fora, e uma rota sem nenhuma some. Inicia e conclui da mesma quest no mesmo passo da
+	// outra rota viram um link só.
 	const cross = $derived.by(() => {
 		const completing = chips.filter((c) => c.role === 'completes' || c.role === 'starts');
 		return others
 			.map((g) => ({
 				...g,
-				entries: completing.flatMap((c) => {
-					const occ = step.also?.[c.key]?.find((o) => o.guide === g.guide);
-					return occ ? [{ label: c.label, occ }] : [];
-				})
+				entries: completing
+					.flatMap((c) => {
+						const occ = step.also?.[c.key]?.find((o) => o.guide === g.guide);
+						return occ ? [{ id: `${c.label}|${occ.step}`, label: c.label, occ }] : [];
+					})
+					.filter((e, i, all) => all.findIndex((x) => x.id === e.id) === i)
 			}))
 			.filter((g) => g.entries.length > 0);
 	});
@@ -162,7 +165,7 @@
 		{#each cross as c (c.guide)}
 			<div class="line">
 				<span class="lbl">também na {c.label}</span>
-				{#each c.entries as e (e.label)}
+				{#each c.entries as e (e.id)}
 					<a
 						href={`${resolve('/rotas/[guide]/[section]', { guide: e.occ.guide, section: e.occ.section })}#passo-${e.occ.step}`}
 						>{e.label} · {e.occ.ref}</a

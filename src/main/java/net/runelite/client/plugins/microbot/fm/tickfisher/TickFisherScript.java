@@ -39,6 +39,7 @@ public class TickFisherScript extends Script
 	private static final int START_RADIUS = 40;
 	/** Eaten as the 3-tick delay in place of knife on teak (food: the timer goes to 3). */
 	private static final int[] ROE = {ItemID.BRUT_ROE, ItemID.BRUT_CAVIAR};
+	private static final int[] ROE_ONLY = {ItemID.BRUT_ROE};
 	/** Cuts in a row that left the fish in place before giving up on cutting (one miss is a lost click). */
 	private static final int MAX_CUT_FAILURES = 20;
 	/** Clean herbs that make a tar, and the Herblore level each needs. */
@@ -195,8 +196,14 @@ public class TickFisherScript extends Script
 		}
 		if (!hasGear() || (place.bank != null && Rs2Bank.isOpen()))
 		{
-			if (place.bank == null)
+			if (place.barbarian())
 			{
+				if (hasGear())
+				{
+					// The bank left open (a trip cut short): nothing to fetch.
+					Rs2Bank.closeBank();
+					return;
+				}
 				// Confirmed over a few ticks: read mid-batch the inventory once lacked the teak
 				// log it held (0.8.1 stopped with the log in place).
 				if (++missingTicks >= 3)
@@ -209,12 +216,19 @@ public class TickFisherScript extends Script
 			return;
 		}
 		missingTicks = 0;
-		// Cutting needs a free slot (for the offcuts), so cut while one is left.
-		if (Rs2Inventory.isFull() || (cutting() && Rs2Inventory.emptySlotCount() <= 1 && fishCount() > 0))
+		// Cutting needs a free slot (for the offcuts), so cut while one is left; keeping the
+		// caviar, bank it once the fish are cut and that slot is the last.
+		boolean full = Rs2Inventory.isFull();
+		boolean lastSlot = cutting() && Rs2Inventory.emptySlotCount() <= 1;
+		if (full || (lastSlot && (fishCount() > 0 || keepCaviar())))
 		{
 			if (config.fishHandling() == FishHandling.BANK)
 			{
 				bankFish(s);
+			}
+			else if (keepCaviar() && (full || fishCount() == 0))
+			{
+				bankCaviar(s);
 			}
 			else if (cutting())
 			{
@@ -274,7 +288,7 @@ public class TickFisherScript extends Script
 			stop("No bank at " + place + ": set Fish to Drop or Cut");
 			return false;
 		}
-		if (config.fishHandling() == FishHandling.CUT && place.bank != null)
+		if (config.fishHandling() == FishHandling.CUT && !place.barbarian())
 		{
 			stop("Cut is for barbarian fish: set Fish to Drop or Bank");
 			return false;
@@ -364,7 +378,7 @@ public class TickFisherScript extends Script
 			return;
 		}
 		// Cut-eat: roe or caviar from a cut fish is the delay while there is one.
-		Rs2ItemModel roe = cutting() ? Rs2Inventory.get(ROE) : null;
+		Rs2ItemModel roe = cutting() ? eatableRoe() : null;
 		switch (phase)
 		{
 			case 0:
@@ -439,6 +453,18 @@ public class TickFisherScript extends Script
 				clicks.hover(delayOn);
 				break;
 		}
+	}
+
+	/** Roe (or caviar, unless it is kept) to eat as the delay or to make room; null when none. */
+	private Rs2ItemModel eatableRoe()
+	{
+		return Rs2Inventory.get(keepCaviar() ? ROE_ONLY : ROE);
+	}
+
+	/** Cutting where there is a bank: the caviar goes to the bank for Barbarian Herblore. */
+	private boolean keepCaviar()
+	{
+		return cutting() && place.bank != null;
 	}
 
 	/** Cut-eat, unless cutting turned out not to work. */
@@ -840,11 +866,11 @@ public class TickFisherScript extends Script
 	{
 		if (!Rs2Inventory.hasItem(place.rods))
 		{
-			return place.bank == null ? "a barbarian rod" : "a fly fishing rod";
+			return place.barbarian() ? "a barbarian rod" : "a fly fishing rod";
 		}
 		if (!Rs2Inventory.hasItem(place.bait))
 		{
-			return place.bank == null ? "feathers or fish offcuts" : "feathers";
+			return place.barbarian() ? "feathers or fish offcuts" : "feathers";
 		}
 		boolean teak = config.threeTick() && delay == DelayMethod.TEAK;
 		if ((teak || config.fishHandling() == FishHandling.CUT) && !Rs2Inventory.hasItem(ItemID.KNIFE))
@@ -944,6 +970,31 @@ public class TickFisherScript extends Script
 		spot = null;
 	}
 
+	/** Keeping the caviar: deposit it (and any fish left) when the inventory fills, and walk back. */
+	private void bankCaviar(Session s)
+	{
+		Microbot.status = "Tick Fisher: banking caviar";
+		if (!openBank())
+		{
+			return;
+		}
+		int caviar = Rs2Inventory.count(ItemID.BRUT_CAVIAR);
+		Rs2Bank.depositAll(item -> isFish(item.getId()) || item.getId() == ItemID.BRUT_CAVIAR
+			|| item.getId() == ItemID.XBOWS_CROSSBOW_STOCK_TEAK);
+		if (!Global.sleepUntil(() -> !Rs2Inventory.hasItem(ItemID.BRUT_CAVIAR) && !Rs2Inventory.hasItem(place.fish), 3000))
+		{
+			return;
+		}
+		s.caviarBanked += caviar;
+		s.bankTrips++;
+		Rs2Antiban.takeMicroBreakByChance();
+		Rs2Bank.closeBank();
+		Global.sleepUntil(() -> !Rs2Bank.isOpen(), 2400);
+		spot = null;
+		lookout = -1;
+		anchorTick = -1;
+	}
+
 	/**
 	 * No bank at the spot: fetch what ran out (a teak log used up by a slipped cycle, a knife,
 	 * feathers) from the nearest bank, deposit the teak stock and the fish, and walk back. Herb tar
@@ -966,7 +1017,8 @@ public class TickFisherScript extends Script
 		{
 			return;
 		}
-		Rs2Bank.depositAll(item -> isFish(item.getId()) || item.getId() == ItemID.XBOWS_CROSSBOW_STOCK_TEAK);
+		Rs2Bank.depositAll(item -> isFish(item.getId()) || item.getId() == ItemID.XBOWS_CROSSBOW_STOCK_TEAK
+			|| (keepCaviar() && item.getId() == ItemID.BRUT_CAVIAR));
 		Global.sleepUntil(() -> !Rs2Inventory.hasItem(ItemID.XBOWS_CROSSBOW_STOCK_TEAK), 2400);
 		if (!Rs2Inventory.hasItem(place.rods) && !withdraw(place.rods[0], 1, "barbarian rod"))
 		{
@@ -1072,7 +1124,7 @@ public class TickFisherScript extends Script
 			if (Rs2Inventory.emptySlotCount() == 0)
 			{
 				// A cut with no free slot does nothing: make one, roe first.
-				Rs2ItemModel roe = Rs2Inventory.get(ROE);
+				Rs2ItemModel roe = eatableRoe();
 				deselect();
 				if (roe != null)
 				{
@@ -1100,7 +1152,7 @@ public class TickFisherScript extends Script
 			}
 			s.fishCut++;
 			cutFailures = 0;
-			Rs2ItemModel roe = Rs2Inventory.get(ROE);
+			Rs2ItemModel roe = eatableRoe();
 			if (roe != null && Rs2Inventory.emptySlotCount() == 0)
 			{
 				clicks.eat(roe);

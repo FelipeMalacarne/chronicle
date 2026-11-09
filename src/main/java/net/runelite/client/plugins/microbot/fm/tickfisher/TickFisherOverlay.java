@@ -87,7 +87,7 @@ class TickFisherOverlay extends OverlayPanel
 		FishingEvents events = script.events();
 		skill("Fishing", events.fishingLevel(), events.fishingXp(), s.startXp, config.stopAtLevel(), elapsed, refresh);
 		int agilityAt = config.stopAtAgilityLevel();
-		if (config.place() == FishingPlace.OTTO || agilityAt > 0)
+		if (config.place().barbarian() || agilityAt > 0)
 		{
 			skill("Agility", events.agilityLevel(), events.agilityXp(), s.startAgilityXp, agilityAt, elapsed, refresh);
 		}
@@ -115,6 +115,10 @@ class TickFisherOverlay extends OverlayPanel
 		if (config.fishHandling() == FishHandling.CUT)
 		{
 			line("Cut / roe eaten", s.fishCut + " / " + s.roeEaten);
+			if (s.caviarBanked > 0 || s.bankTrips > 0)
+			{
+				line("Caviar banked", s.caviarBanked + " (" + s.bankTrips + " trips)");
+			}
 		}
 		if (config.fishHandling() == FishHandling.BANK)
 		{

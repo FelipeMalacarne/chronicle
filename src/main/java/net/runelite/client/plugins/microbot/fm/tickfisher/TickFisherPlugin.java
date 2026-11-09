@@ -20,7 +20,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
  */
 @PluginDescriptor(
 	name = TickFisherPlugin.TAG + "Tick Fisher",
-	description = "3-tick fly fishing at Shilo (drop or bank) and barbarian fishing at Otto's Grotto (drop or cut-eat)",
+	description = "3-tick fly fishing at Shilo (drop or bank) and barbarian fishing at Otto's Grotto (drop or cut-eat) or Mount Quidamortem (cut-eat, caviar banked)",
 	tags = {"fishing", "3-tick", "tick manipulation", "fly fishing", "barbarian", "shilo", "otto", "ironman"},
 	authors = {"FelipeMalacarne"},
 	version = TickFisherPlugin.VERSION,
@@ -31,7 +31,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class TickFisherPlugin extends Plugin
 {
-	static final String VERSION = "0.9.10";
+	static final String VERSION = "0.10.0";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 

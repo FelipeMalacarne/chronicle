@@ -27,6 +27,7 @@ final class Session
 	/** Fish cut with the knife, and roe or caviar eaten as the 3-tick delay instead of knife on teak. */
 	volatile int fishCut;
 	volatile int roeEaten;
+	volatile int caviarBanked;
 	volatile int bankTrips;
 	/** Teak stocks made: a cycle where the spot click did not land and the fletch completed. */
 	volatile int stocksMade;
@@ -86,6 +87,7 @@ final class Session
 		counters.put("fishDropped", fishDropped);
 		counters.put("fishCut", fishCut);
 		counters.put("roeEaten", roeEaten);
+		counters.put("caviarBanked", caviarBanked);
 		counters.put("bankTrips", bankTrips);
 		counters.put("stocksMade", stocksMade);
 		counters.put("spotMoves", spotMoves);

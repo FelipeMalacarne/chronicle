@@ -29,7 +29,19 @@ public enum FishingPlace
 		// Offcuts are used as bait before feathers.
 		new int[]{ItemID.BRUT_FISH_CUTS, ItemID.FEATHER},
 		new int[]{ItemID.BRUT_SPAWNING_TROUT, ItemID.BRUT_SPAWNING_SALMON, ItemID.BRUT_STURGEON},
-		48, 15, null, BankLocation.BARBARIAN_OUTPOST);
+		48, 15, null, BankLocation.BARBARIAN_OUTPOST),
+	/**
+	 * Barbarian fishing in the lake on Mount Quidamortem (Chambers of Xeric), a short walk from
+	 * the bank chest: the caviar is kept and banked for Barbarian Herblore.
+	 */
+	QUIDAMORTEM("Mount Quidamortem (barbarian)", "Fishing spot", "Use-rod",
+		// Spots at x 1253-1272, y 3541-3547 (wiki); the lookout is on the north shore, towards the bank.
+		new WorldPoint(1263, 3544, 0), 16,
+		new WorldPoint[]{new WorldPoint(1262, 3551, 0)},
+		new int[]{ItemID.BRUT_FISHING_ROD},
+		new int[]{ItemID.BRUT_FISH_CUTS, ItemID.FEATHER},
+		new int[]{ItemID.BRUT_SPAWNING_TROUT, ItemID.BRUT_SPAWNING_SALMON, ItemID.BRUT_STURGEON},
+		48, 15, BankLocation.MOUNT_QUIDAMORTEM, BankLocation.MOUNT_QUIDAMORTEM);
 
 	private final String label;
 	final String spotName;
@@ -45,7 +57,7 @@ public enum FishingPlace
 	final int fishingLevel;
 	/** Barbarian fishing also needs this Agility and Strength. */
 	final int agilityStrengthLevel;
-	/** Null: no bank at hand, the gear comes along and the fish are dropped or cut. */
+	/** Null: no bank at hand, the gear comes along and the fish are dropped or cut. With a bank, barbarian fishing keeps the caviar. */
 	final BankLocation bank;
 	/** Where to fetch a knife, a teak log or feathers when one runs out (Otto: the Barbarian Outpost). */
 	final BankLocation restock;
@@ -67,6 +79,12 @@ public enum FishingPlace
 		this.agilityStrengthLevel = agilityStrengthLevel;
 		this.bank = bank;
 		this.restock = restock;
+	}
+
+	/** Barbarian fishing: a barbarian rod, leaping fish that can be cut. */
+	boolean barbarian()
+	{
+		return agilityStrengthLevel > 0;
 	}
 
 	@Override

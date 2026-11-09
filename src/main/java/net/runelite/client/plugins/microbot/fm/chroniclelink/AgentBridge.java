@@ -5,6 +5,7 @@ import com.sun.net.httpserver.HttpExchange;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,6 +25,8 @@ import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.RuneLite;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.plugins.Plugin;
+import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.agentserver.AgentServerConfig;
 import net.runelite.client.plugins.microbot.agentserver.handler.AgentHandler;
@@ -41,13 +44,19 @@ import net.runelite.client.plugins.microbot.util.magic.Rs2Spells;
 import net.runelite.client.plugins.microbot.util.magic.Spell;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2PrayerEnum;
+import net.runelite.client.plugins.timetracking.SummaryState;
+import net.runelite.client.plugins.timetracking.Tab;
+import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
+import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
+import net.runelite.client.plugins.timetracking.farming.FarmingTracker;
+import net.runelite.client.plugins.timetracking.hunter.BirdHouseTracker;
 
 /**
  * Chronicle's control bridge to what the Agent Server does not expose (docs/08 in ironman-planner),
  * started by the plugin only in the dev harness client (-Dmicrobot.dev.harness=true):
  * the real menu options of nearby NPCs and objects and of worn items, the prayer book and the
- * spellbook, and typed actions for them (Remove/Rub a worn item, toggle a prayer, cast a spell,
- * Deposit-X). It listens on its own Unix socket, .runelite/agent/bridge.sock, next to the Agent
+ * spellbook, the clocks of RuneLite's Time Tracking (farming tabs, bird houses, the farming
+ * contract), and typed actions (Remove/Rub a worn item, toggle a prayer, cast a spell, Deposit-X). It listens on its own Unix socket, .runelite/agent/bridge.sock, next to the Agent
  * Server's, and every request needs the Agent Server's token (the same X-Agent-Token, loopback
  * Host and no Origin as AgentHandler checks); with no token configured it answers nothing.
  */
@@ -147,6 +156,14 @@ final class AgentBridge
 				protected void serve(HttpExchange ex) throws IOException
 				{
 					sendJson(ex, 200, spells());
+				}
+			},
+			new Handler(gson, "/bridge/timers")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					sendJson(ex, 200, timers());
 				}
 			},
 			new Handler(gson, "/bridge/equipment/interact")
@@ -528,6 +545,70 @@ final class AgentBridge
 		}
 	}
 
+	/**
+	 * The Time Tracking panel's clocks, read from the plugin's own trackers (singletons of its
+	 * injector), so they are the numbers the client shows. Farming patches are only seen near them;
+	 * the tracker predicts from the last visit. Nothing when the plugin is off.
+	 */
+	private static Map<String, Object> timers()
+	{
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("now", Instant.now().getEpochSecond());
+		TimeTrackingPlugin plugin = timeTracking();
+		out.put("enabled", plugin != null);
+		List<Map<String, Object>> rows = new ArrayList<>();
+		if (plugin != null)
+		{
+			BirdHouseTracker birds = plugin.getInjector().getInstance(BirdHouseTracker.class);
+			rows.add(timer(Tab.BIRD_HOUSE.name(), Tab.BIRD_HOUSE.getName(), birds.getSummary(), birds.getCompletionTime()));
+			FarmingTracker farming = plugin.getInjector().getInstance(FarmingTracker.class);
+			for (Tab tab : Tab.FARMING_TABS)
+			{
+				rows.add(timer(tab.name(), tab.getName(), farming.getSummary(tab), farming.getCompletionTime(tab)));
+			}
+			FarmingContractManager contract = plugin.getInjector().getInstance(FarmingContractManager.class);
+			if (contract.hasContract())
+			{
+				rows.add(timer("FARMING_CONTRACT", "Farming contract: " + contract.getContractName(),
+					contract.getSummary(), contract.getCompletionTime()));
+			}
+		}
+		out.put("timers", rows);
+		return out;
+	}
+
+	private static TimeTrackingPlugin timeTracking()
+	{
+		PluginManager pm = Microbot.getPluginManager();
+		if (pm == null)
+		{
+			return null;
+		}
+		for (Plugin p : pm.getPlugins())
+		{
+			if (p instanceof TimeTrackingPlugin && pm.isPluginActive(p) && p.getInjector() != null)
+			{
+				return (TimeTrackingPlugin) p;
+			}
+		}
+		return null;
+	}
+
+	/** One clock: the tab's summary and, while growing or done, when it is ready (epoch seconds). */
+	static Map<String, Object> timer(String key, String label, SummaryState state, long completion)
+	{
+		Map<String, Object> m = new LinkedHashMap<>();
+		m.put("key", key);
+		m.put("label", label);
+		m.put("state", state == null ? SummaryState.UNKNOWN.name() : state.name());
+		// The trackers use -1 (and 0 before the first load) for "not known".
+		if (completion > 0 && (state == SummaryState.IN_PROGRESS || state == SummaryState.COMPLETED))
+		{
+			m.put("readyAt", completion);
+		}
+		return m;
+	}
+
 	private static Map<String, Object> result(boolean ok, String reason)
 	{
 		Map<String, Object> m = new LinkedHashMap<>();
@@ -539,7 +620,6 @@ final class AgentBridge
 		return m;
 	}
 
-	/** A bridge endpoint: AgentHandler's checks, and nothing at all without the Agent Server's token. */
 	/** The game state does not allow the action (item not in the inventory, NPC gone): a 409. */
 	static final class ConflictException extends RuntimeException
 	{
@@ -549,6 +629,7 @@ final class AgentBridge
 		}
 	}
 
+	/** A bridge endpoint: AgentHandler's checks, and nothing at all without the Agent Server's token. */
 	private abstract class Handler extends AgentHandler
 	{
 		private final String path;

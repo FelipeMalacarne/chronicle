@@ -169,7 +169,8 @@ session only), `SESSION_SECRET` (32+ chars in oidc),
 `CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler),
 `MICROBOT_CONTROL` (`off`; `on` enables the Microbot control module, docs/08; in oidc it needs `OIDC_PROJECT_ID`, the
 audience of the agent's machine-user token). `ironman agent` reads `IRONMAN_URL`, `MICROBOT_AGENT_CLIENT_ID`,
-`MICROBOT_AGENT_CLIENT_SECRET` (or `_SECRET_FILE`; oidc only), `MICROBOT_HARNESS_DIR`, `MICROBOT_HOME` and `MB_VNC_PORT`. `.env.example` documents each one;
+`MICROBOT_AGENT_CLIENT_SECRET` (or `_SECRET_FILE`; oidc only), `MICROBOT_HARNESS_DIR`, `MICROBOT_HOME`, `MB_VNC_PORT` and, to override the
+harness tools it runs, `MICROBOT_CLIENT_CMD` and `MICROBOT_ACCOUNT_CMD`. `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 
 - **local-first (workstation "zaros")**: `compose.yaml` Postgres (shared by the stack and `just dev`), `AUTH_MODE=dev`.

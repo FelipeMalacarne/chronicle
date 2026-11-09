@@ -11,6 +11,8 @@
 	import Glyph from '#lib/v6/Glyph.svelte';
 	import VncView, { type VncPhase } from '#lib/v6/VncView.svelte';
 	import JogoView from '#lib/v6/JogoView.svelte';
+	import ClientLog from '#lib/v6/ClientLog.svelte';
+	import ClientAccount from '#lib/v6/ClientAccount.svelte';
 	import type { GameView } from '#lib/api/microbot';
 
 	/*
@@ -136,14 +138,19 @@
 		'client/start': 'Iniciar cliente',
 		'client/stop': 'Parar cliente',
 		login: 'Login',
-		logout: 'Logout'
+		logout: 'Logout',
+		world: 'Trocar de mundo'
 	};
 	/** Ações que mexem na conta pedem um segundo clique em até 4 s. */
-	const CONFIRM: MicrobotAction[] = ['client/stop', 'login', 'logout'];
+	const CONFIRM: MicrobotAction[] = ['client/stop', 'login', 'logout', 'world'];
 	let disarm: ReturnType<typeof setTimeout> | undefined;
 
 	async function act(a: MicrobotAction) {
 		if (busy) return;
+		if (a === 'world' && !(Number(world) > 0)) {
+			failure = 'Escreva o mundo para onde trocar.';
+			return;
+		}
 		if (CONFIRM.includes(a) && armed !== a) {
 			armed = a;
 			clearTimeout(disarm);
@@ -155,7 +162,10 @@
 		failure = null;
 		try {
 			const w = Number(world);
-			await microbotApi.action(a, a === 'login' && w > 0 ? { world: w } : undefined);
+			await microbotApi.action(
+				a,
+				(a === 'login' || a === 'world') && w > 0 ? { world: w } : undefined
+			);
 		} catch (e) {
 			failure = e instanceof MicrobotError ? e.message : String(e);
 		} finally {
@@ -250,17 +260,18 @@
 					>Screenshot</button
 				>
 				{#if running}
+					<label class="wl"
+						><span class="vh">Mundo</span><input
+							class="world"
+							inputmode="numeric"
+							placeholder="mundo"
+							bind:value={world}
+						/></label
+					>
 					{#if loggedIn}
+						{@render button('world')}
 						{@render button('logout')}
 					{:else}
-						<label class="wl"
-							><span class="vh">Mundo</span><input
-								class="world"
-								inputmode="numeric"
-								placeholder="mundo"
-								bind:value={world}
-							/></label
-						>
 						{@render button('login')}
 					{/if}
 					{@render button('client/stop', true)}
@@ -364,6 +375,10 @@
 				/>
 			{/if}
 
+			{#if status?.agent.connected}
+				<ClientLog />
+			{/if}
+
 			<section class="panel">
 				<div class="plaque">Estado · GET /state<span class="r">a cada 3 s</span></div>
 				<div class="pad grid2">
@@ -393,6 +408,9 @@
 					{/each}
 				</div>
 			</section>
+			{#if status?.agent.connected}
+				<ClientAccount {running} onchange={refreshAudit} />
+			{/if}
 			<p class="su tiny">
 				Cliente de terceiros, fora do planner. Parar tudo: Ctrl+C no <code>ironman agent</code> no zaros.
 				Login derruba o mesmo personagem de outro cliente.

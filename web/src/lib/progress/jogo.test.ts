@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
 	chatLines,
-	scriptBusy,
+	loopScripts,
 	dialogueLine,
 	equipItems,
 	invSlots,
@@ -107,7 +107,7 @@ test('nearRows sorts by distance and drops nameless objects', () => {
 		nearRows(view).map((r) => [r.kind, r.name, r.distance, r.detail]),
 		[
 			['objeto', 'Oak tree', 2, ''],
-			['npc', 'Guard', 5, 'nível 21'],
+			['npc', 'Guard', 7, 'nível 21'],
 			['chão', 'Bones', 8, '×2']
 		]
 	);
@@ -130,21 +130,31 @@ test('machines, chat and dialogue', () => {
 	assert.equal(dialogueLine({ observe: { dialogue: { inDialogue: false } } }), null);
 });
 
-test('scriptBusy: a recent heartbeat with the scripts running', () => {
+test('loopScripts: recent heartbeats while the scripts run', () => {
 	const busy: GameView = {
 		observe: {
 			scriptsPaused: false,
 			scripts: [{ scriptClassName: 'a.B', status: 'OK', stalledMs: 300 }]
 		}
 	};
-	assert.equal(scriptBusy(busy), true);
-	assert.equal(scriptBusy({ observe: { ...busy.observe, scriptsPaused: true } }), false);
-	assert.equal(
-		scriptBusy({ observe: { scripts: [{ scriptClassName: 'a.B', status: 'NO_HEARTBEAT' }] } }),
-		false
+	assert.deepEqual(loopScripts(busy), ['B']);
+	assert.deepEqual(loopScripts({ observe: { ...busy.observe, scriptsPaused: true } }), []);
+	assert.deepEqual(
+		loopScripts({ observe: { scripts: [{ scriptClassName: 'a.B', status: 'NO_HEARTBEAT' }] } }),
+		[]
 	);
-	assert.equal(
-		scriptBusy({ observe: { scripts: [{ scriptClassName: 'a.B', stalledMs: 60000 }] } }),
-		false
+	assert.deepEqual(
+		loopScripts({ observe: { scripts: [{ scriptClassName: 'a.B', stalledMs: 60000 }] } }),
+		[]
 	);
+});
+
+test('NPC distance in tiles from the position, not local units', () => {
+	const v: GameView = {
+		observe: {
+			player: { position: { x: 1678, y: 2966, plane: 0 } },
+			npcs: [{ id: 1, name: 'Snake', distance: 286, position: { x: 1680, y: 2966, plane: 0 } }]
+		}
+	};
+	assert.equal(nearRows(v)[0].distance, 2);
 });

@@ -30,7 +30,9 @@ import (
 //	MICROBOT_HOME          the harness dev home (default ~/.local/share/microbot-dev)
 //	MICROBOT_HARNESS_DIR   the microbot-plugins checkout; mb-client runs through its
 //	                       Nix dev shell (Xvfb, x11vnc and the JDK come from it)
-//	MICROBOT_CLIENT_CMD    instead of the above, the command that runs mb-client
+//	MICROBOT_CLIENT_CMD, MICROBOT_ACCOUNT_CMD
+//	                       instead of the above, the commands that run mb-client
+//	                       and mb-account
 //	MB_VNC_PORT            the harness's x11vnc port (default 5999), always on loopback
 func newAgentCmd() *cobra.Command {
 	var url string
@@ -57,7 +59,8 @@ func newAgentCmd() *cobra.Command {
 				Token: (&client.AgentAuth{URL: url, ClientID: os.Getenv("MICROBOT_AGENT_CLIENT_ID"), ClientSecret: secret}).Token,
 				Hello: agent.Hello{Host: host, Version: buildinfo.String()},
 				Executor: &agent.Executor{
-					Game: &microbot.Client{Home: home}, Home: home, ClientCmd: clientCmd(),
+					Game: &microbot.Client{Home: home}, Home: home,
+					ClientCmd: harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"), AccountCmd: harnessCmd("MICROBOT_ACCOUNT_CMD", "mb-account"),
 				},
 			}
 			log.Info("agent: starting", "server", url, "microbot_home", home, "client_cmd", strings.Join(a.Executor.ClientCmd, " "))
@@ -70,13 +73,14 @@ func newAgentCmd() *cobra.Command {
 	return cmd
 }
 
-// clientCmd is the argv that runs the harness's mb-client.
-func clientCmd() []string {
-	if c := strings.Fields(os.Getenv("MICROBOT_CLIENT_CMD")); len(c) > 0 {
+// harnessCmd is the argv that runs one of the harness's tools: the command
+// in env, else the tool through the harness's Nix dev shell.
+func harnessCmd(env, tool string) []string {
+	if c := strings.Fields(os.Getenv(env)); len(c) > 0 {
 		return c
 	}
 	if dir := os.Getenv("MICROBOT_HARNESS_DIR"); dir != "" {
-		return []string{"nix", "develop", dir, "--command", filepath.Join(dir, "bin", "mb-client")}
+		return []string{"nix", "develop", dir, "--command", filepath.Join(dir, "bin", tool)}
 	}
 	return nil
 }

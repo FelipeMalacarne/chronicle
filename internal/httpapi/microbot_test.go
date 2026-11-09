@@ -214,6 +214,22 @@ func TestMicrobotRoutes(t *testing.T) {
 	if status, _, _ = call(t, "POST", srv.URL+"/api/microbot/game/keyboard", `{}`); status != http.StatusNotFound && status != http.StatusMethodNotAllowed {
 		t.Fatalf("unknown game action = %d", status)
 	}
+	// Logs, account and world (docs/08): world hop is audited; bad params are 400.
+	if status, body, _ = call(t, "POST", srv.URL+"/api/microbot/world", `{"world":330}`); status != http.StatusOK {
+		t.Fatalf("world hop = %d %v", status, body)
+	}
+	if last := audit.last(); last.Action != agent.CmdWorldHop || string(last.Params) != `{"world":330}` {
+		t.Fatalf("world hop audit = %+v", last)
+	}
+	for _, c := range []struct{ method, path, body string }{
+		{"POST", "/api/microbot/world", `{"world":42}`},
+		{"POST", "/api/microbot/account", `{"index":0}`},
+		{"GET", "/api/microbot/client/logs?lines=5000", ""},
+	} {
+		if status, _, _ = call(t, c.method, srv.URL+c.path, c.body); status != http.StatusBadRequest {
+			t.Fatalf("%s %s = %d, want 400", c.method, c.path, status)
+		}
+	}
 	status, body, _ = call(t, "GET", srv.URL+"/api/microbot/game", "")
 	if status != http.StatusOK || body["observe"] == nil {
 		t.Fatalf("game view = %d %v", status, body)

@@ -15,7 +15,7 @@
 		invSlots,
 		machineRows,
 		nearRows,
-		scriptBusy,
+		loopScripts,
 		skillCells,
 		SUGGESTED,
 		type NearRow
@@ -39,7 +39,7 @@
 	const dialogue = $derived(dialogueLine(view));
 	const heartbeats = $derived(view?.observe?.scripts ?? []);
 	const bank = $derived(view?.bank);
-	const busyScript = $derived(scriptBusy(view));
+	const loops = $derived(loopScripts(view));
 	const me = $derived(view?.observe?.player?.position);
 	const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
 	const short = (c: string) => c.split('.').pop() ?? c;
@@ -104,7 +104,7 @@
 	}
 	const lbl = (id: string, text: string) =>
 		busy === id ? `${text}…` : armed === id ? `Confirmar: ${text.toLowerCase()}` : text;
-	const off = $derived(!!busy || busyScript);
+	const off = $derived(!!busy);
 
 	function walk(e?: SubmitEvent) {
 		e?.preventDefault();
@@ -139,10 +139,11 @@
 	>
 {/snippet}
 
-{#if busyScript}
-	<div class="band" role="status">
+{#if loops.length}
+	<div class="band" role="status" title={loops.join(', ')}>
 		<Glyph name="alert" /><span
-			>Um script está rodando e disputa o mouse com você; as ações ficam travadas até pausar.</span
+			>Scripts de loop ativos ({loops.length}). Se algum estiver jogando, ele disputa o mouse com as
+			ações daqui.</span
 		>
 		<button class="btn btn-s" type="button" disabled={!!busy} onclick={pause}
 			>{busy === 'pause' ? 'Pausando…' : 'Pausar todos os scripts'}</button

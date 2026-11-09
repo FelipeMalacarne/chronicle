@@ -115,7 +115,9 @@ const ACTION_LABEL: Record<string, string> = {
 	object_interact: 'objeto',
 	ground_pickup: 'pegar do chão',
 	dialogue_continue: 'continuar diálogo',
-	dialogue_select: 'opção de diálogo'
+	dialogue_select: 'opção de diálogo',
+	world_hop: 'trocar de mundo',
+	account_use: 'trocar personagem'
 };
 
 /** Uma linha da auditoria: "login · mundo 303 · ok". */

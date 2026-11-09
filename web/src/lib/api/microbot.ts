@@ -70,7 +70,14 @@ export interface AuditEntry {
 	error?: string;
 }
 
-export type MicrobotAction = 'client/start' | 'client/stop' | 'login' | 'logout';
+export type MicrobotAction = 'client/start' | 'client/stop' | 'login' | 'logout' | 'world';
+
+/** O personagem com que o cliente de dev sobe (mb-account) e os que o launcher conhece. */
+export interface ClientAccount {
+	current: string;
+	characters: string[];
+	error?: string;
+}
 
 /** Uma linha do GET /scripts do Agent Server: todo plugin do Microbot carregado no cliente. */
 export interface ScriptEntry {
@@ -281,6 +288,14 @@ export const microbotApi = {
 	audit: (limit = 30) => call<{ entries: AuditEntry[] }>(`/audit?limit=${limit}`),
 	plugins: () => call<PluginsView>('/plugins'),
 	game: () => call<GameView>('/game'),
+	/** O fim do log do cliente, com o que parece segredo mascarado pelo agent. */
+	logs: (lines = 200) => call<{ file: string; lines: string[] }>(`/client/logs?lines=${lines}`),
+	account: () => call<ClientAccount>('/account'),
+	accountUse: (index: number) =>
+		call<{ ok: boolean; result: unknown }>('/account', {
+			method: 'POST',
+			body: JSON.stringify({ index })
+		}),
 	/** Uma ação no jogo (doc 08): validada no servidor e no agent, e auditada. */
 	gameAction: (command: GameCommand, body?: Record<string, unknown>) =>
 		call<{ ok: boolean; result: unknown }>(`/game/${command}`, {

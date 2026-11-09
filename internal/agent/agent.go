@@ -49,6 +49,8 @@ type Executor struct {
 	// ("start --headless", "stop"), e.g. [nix develop <dir> --command
 	// <dir>/bin/mb-client].
 	ClientCmd []string
+	// AccountCmd runs the harness's mb-account the same way.
+	AccountCmd []string
 
 	mu sync.Mutex // one client lifecycle/login action at a time
 }
@@ -68,6 +70,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.plugin(ctx, command, params)
 	case CmdGameView:
 		return e.gameView(ctx), nil
+	case CmdClientLogs, CmdAccountShow:
+		return e.client(ctx, command, params)
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -99,6 +103,9 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 	if slices.Contains(GameActions, command) {
 		return e.act(ctx, command, params)
 	}
+	if command == CmdAccountUse || command == CmdWorldHop {
+		return e.client(ctx, command, params)
+	}
 	return nil, fmt.Errorf("command %q is not in the agent's closed list", command)
 }
 
@@ -124,15 +131,22 @@ func (e *Executor) runClient(ctx context.Context, timeout time.Duration, args ..
 	if len(e.ClientCmd) == 0 {
 		return "", errors.New("no mb-client command configured (MICROBOT_HARNESS_DIR or MICROBOT_CLIENT_CMD)")
 	}
+	return runArgv(ctx, e.ClientCmd, timeout, args...)
+}
+
+// runArgv runs a harness tool (base is its argv, e.g. nix develop ...
+// --command <dir>/bin/mb-client) with args and returns the tail of its
+// output.
+func runArgv(ctx context.Context, base []string, timeout time.Duration, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
-	argv := append(append([]string{}, e.ClientCmd[1:]...), args...)
-	cmd := exec.CommandContext(ctx, e.ClientCmd[0], argv...) //nolint:gosec // the closed list fixes the argv
+	argv := append(append([]string{}, base[1:]...), args...)
+	cmd := exec.CommandContext(ctx, base[0], argv...) //nolint:gosec // the closed list fixes the argv
 	cmd.Env = os.Environ()
 	out, err := cmd.CombinedOutput()
-	tail := lastLines(string(out), 20)
+	tail := lastLines(string(out), 60)
 	if err != nil {
-		return tail, fmt.Errorf("mb-client %s: %w", strings.Join(args, " "), err)
+		return tail, fmt.Errorf("%s %s: %w", filepath.Base(base[len(base)-1]), strings.Join(args, " "), err)
 	}
 	return tail, nil
 }

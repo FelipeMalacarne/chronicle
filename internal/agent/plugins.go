@@ -190,6 +190,10 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 	if slices.Contains(GameActions, command) {
 		return validateGame(command, raw)
 	}
+	switch command {
+	case CmdClientLogs, CmdAccountShow, CmdAccountUse, CmdWorldHop:
+		return validateClient(command, raw)
+	}
 	return nil, fmt.Errorf("%w: %q", ErrUnknownCommand, command)
 }
 

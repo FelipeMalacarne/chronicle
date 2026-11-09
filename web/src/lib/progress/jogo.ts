@@ -99,7 +99,9 @@ export function nearRows(v: GameView | null): NearRow[] {
 			id: n.id,
 			name: n.name,
 			detail: n.combatLevel ? `nível ${n.combatLevel}` : '',
-			distance: n.distance ?? tiles(me, n.position),
+			// The Agent Server's `distance` is in local units (128 per tile): tiles come from the position.
+			distance:
+				tiles(me, n.position) ?? (n.distance !== undefined ? Math.round(n.distance / 128) : null),
 			position: n.position
 		});
 	for (const o of v?.observe?.objects ?? [])
@@ -180,13 +182,16 @@ export function dialogueLine(
 }
 
 /**
- * Um script de loop está mandando no input agora: heartbeat recente e os scripts não pausados.
- * Ação manual nessa hora disputa o mouse com ele, então a tela pede para pausar antes.
+ * Os scripts de loop com heartbeat recente, com os scripts não pausados. Plugins ligados mantêm
+ * loops passivos (PIN do banco, ataque especial, antiban), então isso só avisa: uma ação manual
+ * pode disputar o mouse com um script que esteja jogando.
  */
-export function scriptBusy(v: GameView | null): boolean {
+export function loopScripts(v: GameView | null): string[] {
 	const o = v?.observe;
-	if (!o || o.scriptsPaused) return false;
-	return (o.scripts ?? []).some((h) => h.status !== 'NO_HEARTBEAT' && (h.stalledMs ?? 0) < 15000);
+	if (!o || o.scriptsPaused) return [];
+	return (o.scripts ?? [])
+		.filter((h) => h.status !== 'NO_HEARTBEAT' && (h.stalledMs ?? 0) < 15000)
+		.map((h) => h.scriptClassName.split('.').pop() ?? h.scriptClassName);
 }
 
 /** Ações comuns para sugerir (o jogo aceita qualquer uma do menu; o campo é livre). */

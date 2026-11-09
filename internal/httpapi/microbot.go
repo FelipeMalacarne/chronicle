@@ -56,6 +56,13 @@ func (s *Server) microbotRoutes() {
 	// Plugins, scripts and config (docs/08 phase 3).
 	control("GET /api/microbot/plugins", s.microbotRead(agent.CmdPlugins, func(*http.Request) any { return nil }))
 	control("GET /api/microbot/game", s.microbotRead(agent.CmdGameView, func(*http.Request) any { return nil }))
+	control("GET /api/microbot/client/logs", s.microbotRead(agent.CmdClientLogs, func(r *http.Request) any {
+		n, _ := strconv.Atoi(r.URL.Query().Get("lines"))
+		return agent.LogsParams{Lines: n}
+	}))
+	control("GET /api/microbot/account", s.microbotRead(agent.CmdAccountShow, func(*http.Request) any { return nil }))
+	control("POST /api/microbot/account", s.microbotAction(agent.CmdAccountUse, 90*time.Second))
+	control("POST /api/microbot/world", s.microbotAction(agent.CmdWorldHop, 120*time.Second))
 	control("GET /api/microbot/hub", s.microbotRead(agent.CmdHubSearch, func(r *http.Request) any {
 		return agent.HubParams{Q: r.URL.Query().Get("q")}
 	}))

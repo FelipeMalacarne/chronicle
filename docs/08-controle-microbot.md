@@ -256,11 +256,30 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   as ações do item, dropar e depositar com segundo clique, andar até, ações comuns do NPC ou objeto
   e um campo livre, pegar do chão, sacar do banco), andar até coordenadas, diálogo com as opções e
   continuar, por perto, script ativo (state machines e heartbeats), banco (abrir o mais perto,
-  depositar tudo, fechar), skills e o chat do jogo, lidos a cada 3 s. Com um script de loop com
-  heartbeat recente e os scripts não pausados, as ações ficam travadas e a tela oferece "Pausar todos
-  os scripts", porque o script disputa o mouse.
-- Verificado com dados falsos no navegador (as rotas `/api/microbot/*` interceptadas): a tela em
-  1440 e 640. Contra o jogo de verdade, só com a conta logada pelo dono.
+  depositar tudo, fechar), skills e o chat do jogo, lidos a cada 3 s. Com scripts de loop com
+  heartbeat recente e não pausados, a tela avisa e oferece "Pausar todos os scripts", sem travar:
+  plugins ligados mantêm loops passivos o tempo todo (PIN do banco, ataque especial, antiban), e
+  travar deixaria as ações sempre desligadas.
+- A distância dos NPCs sai da posição (tiles, como o RuneLite): o `distance` do Agent Server vem em
+  unidades locais (128 por tile).
+- Verificado com dados falsos no navegador em 1440 e 640, e com a conta logada pelo dono, só lendo:
+  inventário, equipamento, por perto, script ativo e skills de verdade.
+
+**Logs e conta** (2026-11-08):
+
+- `client_logs` (leitura): o fim do `client.log` do home de dev (ou do `run/client.out`), como
+  `mb-client logs`, com o que parece segredo mascarado no agent (pares token/sessão/senha, JWT,
+  sequências opacas de 32+ caracteres). `GET /api/microbot/client/logs?lines=`.
+- `account_show` (leitura) e `account_use` (pelo número na lista, 1 a 50): o agent roda
+  `mb-account show`, `list` e `use <n>` pelo dev shell do harness (`MICROBOT_ACCOUNT_CMD` troca o
+  comando); saem só os nomes, as sessões do launcher ficam no zaros. Trocar é recusado com o cliente
+  rodando (vale no próximo início). `GET` e `POST /api/microbot/account`.
+- `world_hop` (mundo 301 a 999): logout e login no mundo novo. `POST /api/microbot/world`.
+- Web: "Trocar de mundo" na faixa do Cockpit (segundo clique), o painel "Conta do cliente" na coluna
+  da auditoria (personagem atual e a lista, "Usar" com segundo clique e o cliente parado) e o "Log do
+  cliente" (fechado por padrão; reler, acompanhar a cada 5 s, filtro).
+- Verificado no zaros, só leituras: a lista de personagens e 300 linhas do log, com as máscaras só em
+  hashes do Nix e dos jars.
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

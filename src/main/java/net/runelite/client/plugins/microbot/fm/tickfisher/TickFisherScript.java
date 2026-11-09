@@ -218,12 +218,22 @@ public class TickFisherScript extends Script
 			return;
 		}
 		missingTicks = 0;
-		// Keeping the caviar, bank it while two slots are still free: with one left the cuts
-		// stopped landing and 20 misses gave up cutting (2026-11-09 08:31).
-		if (keepCaviar() && Rs2Inventory.emptySlotCount() <= CAVIAR_BANK_FREE_SLOTS)
+		// Keeping the caviar: cut the fish while two slots are still free (with one left the cuts
+		// stopped landing and 20 misses gave up cutting, 2026-11-09 08:31), then bank the caviar.
+		// Cut first: banking first took a plain stretch's fish to the bank uncut (0.10.1).
+		int free = Rs2Inventory.emptySlotCount();
+		if (keepCaviar() && free <= CAVIAR_BANK_FREE_SLOTS + 1)
 		{
-			bankCaviar(s);
-			return;
+			if (fishCount() > 0 && free >= CAVIAR_BANK_FREE_SLOTS)
+			{
+				cutAllFish(s);
+				return;
+			}
+			if (free <= CAVIAR_BANK_FREE_SLOTS)
+			{
+				bankCaviar(s);
+				return;
+			}
 		}
 		// Cutting needs a free slot (for the offcuts), so cut while one is left.
 		boolean full = Rs2Inventory.isFull();

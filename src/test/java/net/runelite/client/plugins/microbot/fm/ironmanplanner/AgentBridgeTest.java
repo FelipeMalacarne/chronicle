@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.fm.devbootstrap;
+package net.runelite.client.plugins.microbot.fm.ironmanplanner;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

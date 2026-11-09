@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.fm.devbootstrap;
+package net.runelite.client.plugins.microbot.fm.ironmanplanner;
 
 import com.google.gson.Gson;
 import com.sun.net.httpserver.HttpExchange;
@@ -40,7 +40,8 @@ import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2PrayerEnum;
 
 /**
- * The planner's bridge to what the Agent Server does not expose (docs/08 in ironman-planner):
+ * Chronicle's control bridge to what the Agent Server does not expose (docs/08 in ironman-planner),
+ * started by the plugin only in the dev harness client (-Dmicrobot.dev.harness=true):
  * the real menu options of nearby NPCs and objects and of worn items, the prayer book and the
  * spellbook, and typed actions for them (Remove/Rub a worn item, toggle a prayer, cast a spell,
  * Deposit-X). It listens on its own Unix socket, .runelite/agent/bridge.sock, next to the Agent
@@ -69,7 +70,7 @@ final class AgentBridge
 	{
 		Path socket = new File(new File(RuneLite.RUNELITE_DIR, "agent"), SOCKET).toPath();
 		executor = Executors.newFixedThreadPool(2, r -> {
-			Thread t = new Thread(r, "DevBootstrap-Bridge");
+			Thread t = new Thread(r, "IronmanPlanner-Bridge");
 			t.setDaemon(true);
 			return t;
 		});
@@ -81,11 +82,11 @@ final class AgentBridge
 				server.createContext(h.getPath(), h);
 			}
 			server.start();
-			log.info("Dev Bootstrap: bridge on {}", socket);
+			log.info("Ironman Planner: control bridge on {}", socket);
 		}
 		catch (IOException | RuntimeException e)
 		{
-			log.warn("Dev Bootstrap: bridge did not start: {}", e.getMessage());
+			log.warn("Ironman Planner: control bridge did not start: {}", e.getMessage());
 			stop();
 		}
 	}

@@ -1,4 +1,4 @@
-package net.runelite.client.plugins.microbot.fm.devbootstrap;
+package net.runelite.client.plugins.microbot.fm.ironmanplanner;
 
 import com.google.gson.Gson;
 import java.awt.Color;
@@ -78,7 +78,7 @@ final class ConfigSchemaExporter
 		}
 		catch (RuntimeException | IOException e)
 		{
-			log.warn("Dev Bootstrap: config schema export failed", e);
+			log.warn("Ironman Planner: config schema export failed", e);
 		}
 	}
 

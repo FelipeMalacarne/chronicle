@@ -24,8 +24,11 @@ import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.events.ConfigChanged;
+import net.runelite.client.events.ExternalPluginsChanged;
+import net.runelite.client.events.PluginChanged;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -64,7 +67,9 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class IronmanPlannerPlugin extends Plugin
 {
-	static final String VERSION = "1.2.1";
+	static final String VERSION = "1.3.0";
+	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
+	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 	private static final long CAPTURE_TIMEOUT_MS = 2_000;
@@ -97,6 +102,10 @@ public class IronmanPlannerPlugin extends Plugin
 
 	@Inject
 	private ConfigManager configManager;
+
+	/** Chronicle's control part, dev harness client only: config options and the bridge. */
+	private ConfigSchemaExporter configSchema;
+	private AgentBridge bridge;
 
 	/** Client thread only. */
 	private StateCollector collector;
@@ -141,6 +150,15 @@ public class IronmanPlannerPlugin extends Plugin
 	protected void startUp()
 	{
 		log.info("Ironman Planner {} starting", VERSION);
+		if (Boolean.getBoolean(HARNESS_PROPERTY))
+		{
+			// Tracking stays read-only; only the dev harness client also serves the control bridge
+			// (behind the Agent Server's token) and the config options for Chronicle's form.
+			configSchema = new ConfigSchemaExporter(Microbot.getPluginManager(), configManager, gson);
+			configSchema.export();
+			bridge = new AgentBridge(gson, configManager);
+			bridge.start();
+		}
 		installationId = InstallationId.ensure(config.installationId(),
 			id -> configManager.setConfiguration(IronmanPlannerConfig.GROUP, InstallationId.CONFIG_KEY, id),
 			UUID::randomUUID);
@@ -305,6 +323,12 @@ public class IronmanPlannerPlugin extends Plugin
 	@Override
 	protected void shutDown()
 	{
+		configSchema = null;
+		if (bridge != null)
+		{
+			bridge.stop();
+			bridge = null;
+		}
 		if (executor != null)
 		{
 			executor.shutdownNow();
@@ -339,6 +363,25 @@ public class IronmanPlannerPlugin extends Plugin
 	SyncStatus getStatus()
 	{
 		return status;
+	}
+
+	/** A plugin loaded, unloaded, installed or removed: its config options come or go. */
+	@Subscribe
+	public void onPluginChanged(PluginChanged event)
+	{
+		if (configSchema != null)
+		{
+			configSchema.export();
+		}
+	}
+
+	@Subscribe
+	public void onExternalPluginsChanged(ExternalPluginsChanged event)
+	{
+		if (configSchema != null)
+		{
+			configSchema.export();
+		}
 	}
 
 	@Subscribe

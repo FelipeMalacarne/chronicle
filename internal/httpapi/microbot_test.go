@@ -200,6 +200,25 @@ func TestMicrobotRoutes(t *testing.T) {
 		t.Fatalf("pause = %d", status)
 	}
 
+	// Game actions (docs/08): typed, validated before the agent, audited.
+	status, body, _ = call(t, "POST", srv.URL+"/api/microbot/game/walk", `{"x":3222,"y":3218,"plane":0}`)
+	if status != http.StatusOK || body["ok"] != true {
+		t.Fatalf("walk = %d %v", status, body)
+	}
+	if last := audit.last(); !last.OK || last.Action != agent.CmdWalk || string(last.Params) != `{"x":3222,"y":3218,"plane":0}` {
+		t.Fatalf("walk audit = %+v", last)
+	}
+	if status, _, _ = call(t, "POST", srv.URL+"/api/microbot/game/walk", `{"x":-1,"y":3218}`); status != http.StatusBadRequest {
+		t.Fatalf("bad walk = %d", status)
+	}
+	if status, _, _ = call(t, "POST", srv.URL+"/api/microbot/game/keyboard", `{}`); status != http.StatusNotFound && status != http.StatusMethodNotAllowed {
+		t.Fatalf("unknown game action = %d", status)
+	}
+	status, body, _ = call(t, "GET", srv.URL+"/api/microbot/game", "")
+	if status != http.StatusOK || body["observe"] == nil {
+		t.Fatalf("game view = %d %v", status, body)
+	}
+
 	// Live VNC: the browser's websocket reaches x11vnc through the agent, and
 	// opening it is audited. Another site's origin is refused.
 	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") + "/api/microbot/vnc"

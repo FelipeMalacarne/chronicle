@@ -239,6 +239,29 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   `agentServer` foi recusado. Instalar, iniciar, parar e gravar config ficaram nos testes com Agent
   Server falso.
 
+**Ver e agir no jogo** (2026-11-08, pedido do dono depois da fase 3):
+
+- `game_view` (leitura, sem trava): `GET /observe` com o que está por perto (estado, inventário,
+  equipamento, diálogo, chat do jogo, nunca de jogadores, erros e heartbeats), mais `/inventory` (as
+  ações de cada item), `/skills`, `/bank`, `/ground-items` e `/debug/snapshot`. Deslogado, só o
+  `/observe`. Rota `GET /api/microbot/game`.
+- Ações tipadas na lista fechada, em `POST /api/microbot/game/<ação>`, validadas dos dois lados e
+  auditadas: `walk` (webwalker até um tile, sem bloquear), `inventory_use`, `inventory_drop`,
+  `bank_open`, `bank_close`, `bank_deposit`, `bank_withdraw`, `npc_interact`, `object_interact`,
+  `ground_pickup`, `dialogue_continue` e `dialogue_select`. Nome ou id (nunca os dois), ação como o
+  menu do jogo mostra, uma linha imprimível; coordenadas no intervalo do mundo. Fora: teclado e
+  widgets crus e o Grand Exchange (conta ironman).
+- Web, no Cockpit com a conta logada: inventário em grade e equipamento no boneco (células e sprites
+  da Conta), o painel Ação (clicar num item, NPC, objeto ou item do chão mostra o que dá para fazer:
+  as ações do item, dropar e depositar com segundo clique, andar até, ações comuns do NPC ou objeto
+  e um campo livre, pegar do chão, sacar do banco), andar até coordenadas, diálogo com as opções e
+  continuar, por perto, script ativo (state machines e heartbeats), banco (abrir o mais perto,
+  depositar tudo, fechar), skills e o chat do jogo, lidos a cada 3 s. Com um script de loop com
+  heartbeat recente e os scripts não pausados, as ações ficam travadas e a tela oferece "Pausar todos
+  os scripts", porque o script disputa o mouse.
+- Verificado com dados falsos no navegador (as rotas `/api/microbot/*` interceptadas): a tela em
+  1440 e 640. Contra o jogo de verdade, só com a conta logada pelo dono.
+
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no
 jogo, então o cartão "Input humano" do artboard não existe na tela.

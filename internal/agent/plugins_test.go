@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"net/url"
 	"slices"
 	"strings"
 	"testing"
@@ -116,5 +117,86 @@ func TestPluginCommandsThroughTheLink(t *testing.T) {
 	defer game.mu.Unlock()
 	if !slices.Equal(game.requests, want) {
 		t.Fatalf("requests:\n%s\nwant:\n%s", strings.Join(game.requests, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+func TestGameView(t *testing.T) {
+	ctx := context.Background()
+	// Logged out: only /observe.
+	out := &fakeGame{}
+	view := (&Executor{Game: out}).gameView(ctx)
+	if view.Observe == nil || view.Inventory != nil || len(out.requests) != 1 || out.requests[0] != "GET /observe?nearby=15&nearbyLimit=12" {
+		t.Fatalf("logged out view = %+v, requests %v", view, out.requests)
+	}
+	// Logged in: every part, and a failing part carries its error.
+	in := &loggedInGame{}
+	view = (&Executor{Game: in}).gameView(ctx)
+	if view.Inventory == nil || view.Skills == nil || view.Bank == nil || view.Ground == nil || view.Errors["machines"] == "" {
+		t.Fatalf("logged in view = %+v", view)
+	}
+	if _, err := ValidateParams(CmdGameView, nil); err != nil {
+		t.Fatal(err)
+	}
+}
+
+type loggedInGame struct{ fakeGame }
+
+func (g *loggedInGame) JSON(_ context.Context, _, path string, _ url.Values, _ any, _ time.Duration) (json.RawMessage, error) {
+	switch path {
+	case "/observe":
+		return json.RawMessage(`{"loggedIn":true}`), nil
+	case "/debug/snapshot":
+		return nil, errors.New("HTTP 500")
+	}
+	return json.RawMessage(`{}`), nil
+}
+
+func TestGameActions(t *testing.T) {
+	cases := []struct {
+		command, params string
+		bad             string
+		want            string // the Agent Server request
+	}{
+		{CmdWalk, `{"x":3222,"y":3218,"plane":0}`, "", `POST /walk {"plane":0,"wait":false,"x":3222,"y":3218}`},
+		{CmdWalk, `{"x":0,"y":3218}`, "between 1 and 16383", ""},
+		{CmdWalk, `{"x":3222,"y":3218,"plane":4}`, "plane", ""},
+		{CmdInventoryUse, `{"name":"Lobster","action":"Eat"}`, "", `POST /inventory/interact {"action":"Eat","name":"Lobster"}`},
+		{CmdInventoryUse, `{"name":"Lobster"}`, "action is required", ""},
+		{CmdInventoryUse, `{"name":"Lobster","id":379,"action":"Eat"}`, "not both", ""},
+		{CmdInventoryUse, `{"name":"Lob\nster","action":"Eat"}`, "printable", ""},
+		{CmdNPCInteract, `{"id":3010,"action":"Bank"}`, "", `POST /npcs/interact {"action":"Bank","id":3010}`},
+		{CmdObjectInteract, `{"name":"Oak tree","action":"Chop down"}`, "", `POST /objects/interact {"action":"Chop down","name":"Oak tree"}`},
+		{CmdGroundPickup, `{"name":"Bones"}`, "", `POST /ground-items/pickup {"name":"Bones"}`},
+		{CmdGroundPickup, `{"name":"Bones","action":"Take"}`, "no action", ""},
+		{CmdInventoryDrop, `{"name":"Logs","all":true}`, "", `POST /inventory/drop {"all":true,"name":"Logs"}`},
+		{CmdInventoryDrop, `{"all":true}`, "name is required", ""},
+		{CmdBankDeposit, `{"all":true}`, "", `POST /bank/deposit {"all":true}`},
+		{CmdBankDeposit, `{"name":"Logs","all":true}`, "not both", ""},
+		{CmdBankWithdraw, `{"name":"Pure essence","quantity":28,"noted":false}`, "", `POST /bank/withdraw {"name":"Pure essence","noted":false,"quantity":28}`},
+		{CmdBankWithdraw, `{"name":"Pure essence"}`, "quantity", ""},
+		{CmdBankOpen, ``, "", `POST /bank/open {}`},
+		{CmdDialogueContinue, ``, "", `POST /dialogue/continue {}`},
+		{CmdDialogueSelect, `{"index":2}`, "", `POST /dialogue/select {"index":2}`},
+		{CmdDialogueSelect, `{"option":"Yes","index":2}`, "not both", ""},
+		{CmdWalk, `{"x":1,"y":1,"keys":"F1"}`, "unknown field", ""},
+	}
+	for _, c := range cases {
+		g := &fakeGame{}
+		_, err := (&Executor{Game: g}).act(context.Background(), c.command, json.RawMessage(c.params))
+		switch {
+		case c.bad != "":
+			if err == nil || !strings.Contains(err.Error(), c.bad) || len(g.requests) != 0 {
+				t.Errorf("%s %s: error %v (want %q), requests %v", c.command, c.params, err, c.bad, g.requests)
+			}
+		case err != nil:
+			t.Errorf("%s %s: %v", c.command, c.params, err)
+		case len(g.requests) != 1 || g.requests[0] != c.want:
+			t.Errorf("%s %s: requests %v, want %q", c.command, c.params, g.requests, c.want)
+		}
+	}
+	for _, cmd := range GameActions {
+		if !Known(cmd) {
+			t.Errorf("%s is not in the closed list", cmd)
+		}
 	}
 }

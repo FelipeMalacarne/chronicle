@@ -103,7 +103,19 @@ const ACTION_LABEL: Record<string, string> = {
 	script_stop: 'parar plugin',
 	scripts_pause: 'pausar scripts',
 	scripts_resume: 'retomar scripts',
-	config_set: 'configuração'
+	config_set: 'configuração',
+	walk: 'andar',
+	inventory_use: 'usar item',
+	inventory_drop: 'dropar',
+	bank_open: 'abrir banco',
+	bank_close: 'fechar banco',
+	bank_deposit: 'depositar',
+	bank_withdraw: 'sacar',
+	npc_interact: 'NPC',
+	object_interact: 'objeto',
+	ground_pickup: 'pegar do chão',
+	dialogue_continue: 'continuar diálogo',
+	dialogue_select: 'opção de diálogo'
 };
 
 /** Uma linha da auditoria: "login · mundo 303 · ok". */
@@ -111,6 +123,14 @@ export function auditLine(e: AuditEntry): string {
 	const parts = [ACTION_LABEL[e.action] ?? e.action];
 	const p = e.params ?? {};
 	if (typeof p.world === 'number') parts.push(`mundo ${p.world}`);
+	if (typeof p.x === 'number' && typeof p.y === 'number')
+		parts.push(`${p.x}, ${p.y}${typeof p.plane === 'number' && p.plane ? `, ${p.plane}` : ''}`);
+	if (typeof p.action === 'string') parts.push(p.action);
+	if (typeof p.id === 'number' && typeof p.name !== 'string') parts.push(`id ${p.id}`);
+	if (typeof p.quantity === 'number') parts.push(`×${p.quantity}`);
+	if (p.all === true) parts.push('tudo');
+	if (typeof p.option === 'string') parts.push(p.option);
+	if (typeof p.index === 'number') parts.push(`opção ${p.index}`);
 	if (typeof p.name === 'string') parts.push(p.version ? `${p.name} ${String(p.version)}` : p.name);
 	if (typeof p.className === 'string') parts.push(p.className.split('.').pop() ?? p.className);
 	if (typeof p.group === 'string' && typeof p.key === 'string')

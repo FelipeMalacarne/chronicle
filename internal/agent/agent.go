@@ -15,6 +15,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -65,6 +66,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return toJPEG(png), nil
 	case CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet:
 		return e.plugin(ctx, command, params)
+	case CmdGameView:
+		return e.gameView(ctx), nil
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -92,6 +95,9 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return nil, errors.New("vnc_open is served by the agent's link, not the executor")
 	case CmdPluginInstall, CmdPluginRemove, CmdScriptStart, CmdScriptStop, CmdScriptsPause, CmdScriptsResume, CmdConfigSet:
 		return e.plugin(ctx, command, params)
+	}
+	if slices.Contains(GameActions, command) {
+		return e.act(ctx, command, params)
 	}
 	return nil, fmt.Errorf("command %q is not in the agent's closed list", command)
 }

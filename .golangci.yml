@@ -39,9 +39,11 @@ linters:
 
     misspell:
       locale: US
-      # OSRS skill names keep the game's spelling.
+      # OSRS skill names keep the game's spelling; "dialogue" is the game's
+      # word and the Microbot Agent Server's path (/dialogue).
       ignore-rules:
         - defence
+        - dialogue
 
     gocritic:
       enabled-tags:

@@ -55,6 +55,7 @@ func (s *Server) microbotRoutes() {
 	control("POST /api/microbot/logout", s.microbotAction(agent.CmdLogout, 45*time.Second))
 	// Plugins, scripts and config (docs/08 phase 3).
 	control("GET /api/microbot/plugins", s.microbotRead(agent.CmdPlugins, func(*http.Request) any { return nil }))
+	control("GET /api/microbot/game", s.microbotRead(agent.CmdGameView, func(*http.Request) any { return nil }))
 	control("GET /api/microbot/hub", s.microbotRead(agent.CmdHubSearch, func(r *http.Request) any {
 		return agent.HubParams{Q: r.URL.Query().Get("q")}
 	}))
@@ -77,6 +78,10 @@ func (s *Server) microbotRoutes() {
 	control("POST /api/microbot/scripts/pause", s.microbotAction(agent.CmdScriptsPause, 20*time.Second))
 	control("POST /api/microbot/scripts/resume", s.microbotAction(agent.CmdScriptsResume, 20*time.Second))
 	control("POST /api/microbot/config", s.microbotAction(agent.CmdConfigSet, 20*time.Second))
+	// Game actions (docs/08): POST /api/microbot/game/<command>.
+	for _, cmd := range agent.GameActions {
+		control("POST /api/microbot/game/"+cmd, s.microbotAction(cmd, 30*time.Second))
+	}
 }
 
 // microbotRead is a read through the agent (not audited): params come from

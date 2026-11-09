@@ -117,6 +117,108 @@ export interface ConfigValues {
 	values: Record<string, string | null>;
 }
 
+export interface Pos {
+	x: number;
+	y: number;
+	plane: number;
+}
+
+/** Item do inventário (GET /inventory traz as ações) ou do banco. */
+export interface GameItem {
+	id: number;
+	name: string;
+	quantity: number;
+	slot?: number;
+	actions?: string[];
+	noted?: boolean;
+	stackable?: boolean;
+}
+
+export interface NearNpc {
+	id: number;
+	index?: number;
+	name: string;
+	combatLevel?: number;
+	distance?: number;
+	interacting?: boolean;
+	position?: Pos;
+}
+
+export interface NearObject {
+	id: number;
+	name: string;
+	type?: string;
+	reachable?: boolean;
+	position?: Pos;
+}
+
+export interface GroundItem {
+	id: number;
+	name: string;
+	quantity: number;
+	lootable?: boolean;
+	position?: Pos;
+}
+
+export interface Dialogue {
+	inDialogue: boolean;
+	hasContinue?: boolean;
+	hasOptions?: boolean;
+	dialogueText?: string;
+	question?: string;
+	options?: string[];
+}
+
+/** GET /observe do Agent Server: o /state mais inventário, equipamento, diálogo, chat do jogo
+ * (nunca o chat de jogadores), erros recentes, heartbeats e o que está por perto. */
+export interface Observe extends GameState {
+	inventory?: { count: number; capacity: number; freeSlots: number; items: GameItem[] };
+	equipment?: { slot: string; id: number; name: string; quantity: number }[];
+	dialogue?: Dialogue;
+	npcs?: NearNpc[];
+	objects?: NearObject[];
+	chat?: { cursor: number; messages: { type: string; message: string; seq: number; at: number }[] };
+	errors?: { cursor: number; recent: { logger?: string; message?: string; at?: number }[] };
+	scripts?: { scriptClassName: string; loopCount?: number; stalledMs?: number; status?: string }[];
+}
+
+export interface StateMachine {
+	name: string;
+	currentState: string | null;
+	loopCount?: number;
+	transitionCount?: number;
+	msInCurrentState?: number;
+}
+
+/** As ações no jogo da lista fechada do agent (internal/agent/game.go). */
+export type GameCommand =
+	| 'walk'
+	| 'inventory_use'
+	| 'inventory_drop'
+	| 'bank_open'
+	| 'bank_close'
+	| 'bank_deposit'
+	| 'bank_withdraw'
+	| 'npc_interact'
+	| 'object_interact'
+	| 'ground_pickup'
+	| 'dialogue_continue'
+	| 'dialogue_select';
+
+/** GET /api/microbot/game: uma leitura de tudo o que o cockpit mostra do jogo. */
+export interface GameView {
+	observe?: Observe;
+	inventory?: { count: number; capacity: number; items: GameItem[] };
+	skills?: {
+		totalLevel?: number;
+		skills: { name: string; level: number; boostedLevel: number; xp: number }[];
+	};
+	bank?: { open: boolean; count?: number; items?: GameItem[] };
+	ground?: { items: GroundItem[] };
+	machines?: { count: number; scripts: StateMachine[] };
+	errors?: Record<string, string>;
+}
+
 /** Ações de plugins, scripts e configuração (doc 08, fase 3); todas vão para a auditoria. */
 export type PluginAction =
 	| { path: 'plugins/install' | 'plugins/remove'; body: { name: string; version?: string } }
@@ -178,6 +280,13 @@ export const microbotApi = {
 		}),
 	audit: (limit = 30) => call<{ entries: AuditEntry[] }>(`/audit?limit=${limit}`),
 	plugins: () => call<PluginsView>('/plugins'),
+	game: () => call<GameView>('/game'),
+	/** Uma ação no jogo (doc 08): validada no servidor e no agent, e auditada. */
+	gameAction: (command: GameCommand, body?: Record<string, unknown>) =>
+		call<{ ok: boolean; result: unknown }>(`/game/${command}`, {
+			method: 'POST',
+			body: JSON.stringify(body ?? {})
+		}),
 	hub: (q: string) => call<HubList>(`/hub?q=${encodeURIComponent(q)}`),
 	scriptDetail: (className: string) =>
 		call<ScriptDetail>(`/scripts/detail?className=${encodeURIComponent(className)}`),

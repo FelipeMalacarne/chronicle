@@ -10,6 +10,8 @@
 	import { auditLine, auditWho, cards, stateRows } from '#lib/progress/automacao';
 	import Glyph from '#lib/v6/Glyph.svelte';
 	import VncView, { type VncPhase } from '#lib/v6/VncView.svelte';
+	import JogoView from '#lib/v6/JogoView.svelte';
+	import type { GameView } from '#lib/api/microbot';
 
 	/*
 	 * Automação › Cockpit (V6Microbot1440; no estreito, o modo só dashboard do V6Microbot640), doc 08:
@@ -27,6 +29,7 @@
 	let failure = $state<string | null>(null);
 	let armed = $state<string | null>(null);
 	let world = $state('');
+	let game = $state<GameView | null>(null);
 	let live = $state(false);
 	let intervene = $state(false);
 	let vnc = $state<{ phase: VncPhase; reason?: string }>({ phase: 'closed' });
@@ -99,6 +102,26 @@
 			clearInterval(au);
 		};
 	});
+	// O jogo (inventário, skills, por perto, diálogo...) a cada 3 s enquanto a conta está logada.
+	async function refreshGame() {
+		try {
+			game = await microbotApi.game();
+		} catch {
+			/* o estado do cliente já mostra o erro */
+		}
+	}
+	$effect(() => {
+		if (!running || !loggedIn) {
+			game = null;
+			return;
+		}
+		void refreshGame();
+		const t = setInterval(() => {
+			if (!document.hidden) void refreshGame();
+		}, 3000);
+		return () => clearInterval(t);
+	});
+
 	// Screenshot a cada 5 s enquanto o cliente roda, a aba está à vista e o VNC não está aberto.
 	$effect(() => {
 		if (!running || showLive) return;
@@ -330,6 +353,16 @@
 					{/if}
 				</div>
 			</section>
+
+			{#if loggedIn && game}
+				<JogoView
+					view={game}
+					onchange={() => {
+						void refreshGame();
+						void refreshAudit();
+					}}
+				/>
+			{/if}
 
 			<section class="panel">
 				<div class="plaque">Estado · GET /state<span class="r">a cada 3 s</span></div>

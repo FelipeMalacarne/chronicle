@@ -15,8 +15,9 @@ import net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin;
 
 /**
  * Turns the isolated dev client into an agent-drivable one: starts the Agent Server on a
- * Unix socket inside the dev home, and keeps .runelite/agent/config-schema.json with the config
- * options of every loaded Microbot plugin (the planner's agent builds its config form from it).
+ * Unix socket inside the dev home, keeps .runelite/agent/config-schema.json with the config
+ * options of every loaded Microbot plugin (the planner's agent builds its config form from it),
+ * and serves the planner's bridge (AgentBridge) on .runelite/agent/bridge.sock.
  * Only installed by bin/mb-client, and inert unless the JVM was launched with
  * -Dmicrobot.dev.harness=true, so it never touches the everyday client.
  */
@@ -32,7 +33,7 @@ import net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin;
 @Slf4j
 public class DevBootstrapPlugin extends Plugin
 {
-	static final String VERSION = "1.1.0";
+	static final String VERSION = "1.2.0";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
@@ -46,6 +47,7 @@ public class DevBootstrapPlugin extends Plugin
 	private Gson gson;
 
 	private ConfigSchemaExporter exporter;
+	private AgentBridge bridge;
 
 	@Override
 	protected void startUp()
@@ -75,12 +77,19 @@ public class DevBootstrapPlugin extends Plugin
 
 		exporter = new ConfigSchemaExporter(Microbot.getPluginManager(), configManager, gson);
 		exporter.export();
+		bridge = new AgentBridge(gson, configManager);
+		bridge.start();
 	}
 
 	@Override
 	protected void shutDown()
 	{
 		exporter = null;
+		if (bridge != null)
+		{
+			bridge.stop();
+			bridge = null;
+		}
 	}
 
 	/** A plugin loaded, unloaded, installed or removed: its options come or go. */

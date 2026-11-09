@@ -10,7 +10,9 @@ Personal Microbot plugins, built as sideloadable jars against the pinned officia
 - `fm/helloagent/` — template plugin. Copy it to start a new one.
 - `fm/devbootstrap/` — starts the Agent Server in the dev client and keeps
   `.runelite/agent/config-schema.json` (every loaded Microbot plugin's config options, for the
-  planner's config form). Dev home only, never `--live`.
+  planner's config form) and the planner's bridge on `.runelite/agent/bridge.sock` (NPC, object and
+  worn-item menus, prayers, spellbook and their typed actions, behind the Agent Server's token).
+  Dev home only, never `--live`.
 - `bin/` — harness (on PATH inside `nix develop`/direnv).
 - `vendor/microbot/` — sparse upstream checkout at the pinned tag (`mb-vendor`), gitignored.
   This is the API you compile against: read it instead of guessing.

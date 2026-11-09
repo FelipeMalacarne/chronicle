@@ -4,7 +4,7 @@
 #   mb-client start [--headless] [--test <Plugin descriptor name>] [-- extra JVM args]
 #   mb-client stop | restart | status | logs [N] | wait [timeoutSec]
 #
-# --headless runs the game on its own Xvfb display (MB_HEADLESS_DISPLAY, default :99) instead
+# --headless runs the game muted on its own Xvfb display (MB_HEADLESS_DISPLAY, default :99) instead
 # of a window on the desktop, and shares it over VNC on 127.0.0.1:MB_VNC_PORT (default 5999).
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
@@ -12,6 +12,7 @@ source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 usage() { sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 MB_HEADLESS_DISPLAY="${MB_HEADLESS_DISPLAY:-:99}"
+MB_HEADLESS_AUDIO_NAME="Microbot headless"
 MB_VNC_PORT="${MB_VNC_PORT:-5999}"
 MB_XVFB_PIDFILE="$MB_RUN/xvfb.pid"
 MB_VNC_PIDFILE="$MB_RUN/vnc.pid"
@@ -139,6 +140,9 @@ start() {
 		done
 		start_display
 		display="$MB_HEADLESS_DISPLAY"
+		# Its own name in PipeWire, so WirePlumber remembers the mute for this client only (the
+		# everyday client is "PipeWire ALSA [java]" too).
+		export PIPEWIRE_ALSA="{ application.name = \"$MB_HEADLESS_AUDIO_NAME\" }"
 	fi
 
 	echo "starting Microbot $MB_VERSION (home $MB_DEV_HOME)"
@@ -150,9 +154,27 @@ start() {
 	echo $! >"$MB_PIDFILE"
 	if [[ -z "$test_name" ]]; then
 		wait_ready "${MB_START_TIMEOUT:-180}"
+		[[ -n "$headless" ]] && mute_headless
 	else
 		echo "test mode: pid $(cat "$MB_PIDFILE"); results in $MB_RL/test-results"
 	fi
+}
+
+# Nobody listens to a headless client. Mutes its stream once it plays (the login music);
+# WirePlumber then keeps it muted on later starts.
+mute_headless() {
+	command -v pw-dump >/dev/null && command -v wpctl >/dev/null || { echo "audio: no PipeWire tools, not muted"; return 0; }
+	local id i
+	for ((i = 0; i < 20; i++)); do
+		id="$(pw-dump 2>/dev/null | jq -r --arg n "$MB_HEADLESS_AUDIO_NAME" \
+			'.[] | select(.info.props["application.name"] == $n and .info.props["media.class"] == "Stream/Output/Audio") | .id' | head -1)"
+		if [[ -n "$id" ]]; then
+			wpctl set-mute "$id" 1 && echo "audio muted"
+			return 0
+		fi
+		sleep 1
+	done
+	echo "audio: no stream yet, not muted"
 }
 
 stop() {

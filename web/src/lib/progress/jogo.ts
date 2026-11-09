@@ -3,7 +3,7 @@
  * diálogo, o que está por perto, as state machines e o chat do jogo, a partir de GET
  * /api/microbot/game. Puro, testado em node.
  */
-import type { GameItem, GameView, Pos } from '../api/microbot.ts';
+import type { GameCommand, GameItem, GameView, Pos } from '../api/microbot.ts';
 import { SKILL_ORDER } from './conta.ts';
 
 /** EquipmentInventorySlot do RuneLite para os slots do boneco da Conta. */
@@ -199,3 +199,88 @@ export const SUGGESTED: Record<'npc' | 'objeto', string[]> = {
 	npc: ['Talk-to', 'Attack', 'Bank', 'Trade', 'Pickpocket'],
 	objeto: ['Open', 'Bank', 'Chop down', 'Mine', 'Climb-up', 'Climb-down', 'Search']
 };
+
+/** Uma opção do menu "Choose Option", como o jogo mostra: a ação e o alvo na cor do tipo. */
+export interface MenuOption {
+	label: string;
+	target: string;
+	tone: 'item' | 'npc' | 'object';
+	command?: GameCommand;
+	body?: Record<string, unknown>;
+	/** Perde coisa (dropar, depositar tudo): pede um segundo clique. */
+	confirm?: boolean;
+	/** Pede o nome da ação ao dono (NPC e objeto: o Agent Server não diz as opções deles). */
+	ask?: boolean;
+}
+
+/**
+ * As opções de um item do inventário: exatamente as do jogo (GET /inventory traz as ações do item).
+ * Com o banco aberto o jogo troca o menu pelo de depósito; o Microbot procura a ação no widget do
+ * inventário do banco, então Deposit-1, 5, 10 e All passam pelo mesmo inventory_use (Deposit-X
+ * pede um número no jogo e fica para a ponte).
+ */
+export function itemMenu(it: GameItem, bankOpen: boolean): MenuOption[] {
+	const base = { target: it.name, tone: 'item' as const };
+	if (bankOpen)
+		return ['Deposit-1', 'Deposit-5', 'Deposit-10', 'Deposit-All'].map((a) => ({
+			...base,
+			label: a,
+			command: 'inventory_use' as const,
+			body: { name: it.name, action: a },
+			confirm: a === 'Deposit-All'
+		}));
+	return (it.actions ?? []).map((a) =>
+		a === 'Drop'
+			? {
+					...base,
+					label: a,
+					command: 'inventory_drop' as const,
+					body: { name: it.name },
+					confirm: true
+				}
+			: { ...base, label: a, command: 'inventory_use' as const, body: { name: it.name, action: a } }
+	);
+}
+
+/** As opções de um item do banco que o agent sabe fazer: Withdraw-1, 5, 10 e All. */
+export function bankMenu(it: GameItem): MenuOption[] {
+	const base = { target: it.name, tone: 'item' as const, command: 'bank_withdraw' as const };
+	return [
+		...[1, 5, 10].map((n) => ({
+			...base,
+			label: `Withdraw-${n}`,
+			body: { name: it.name, quantity: n }
+		})),
+		{ ...base, label: 'Withdraw-All', body: { name: it.name, all: true } }
+	];
+}
+
+/**
+ * NPC, objeto ou item do chão. Do chão o jogo tem Take; de NPC e objeto o Agent Server não diz as
+ * opções, então em vez de inventar o menu pede a ação ao dono. Walk here vale para todos.
+ */
+export function nearMenu(r: NearRow): MenuOption[] {
+	const tone = r.kind === 'npc' ? 'npc' : r.kind === 'objeto' ? 'object' : 'item';
+	const out: MenuOption[] = [];
+	if (r.kind === 'chão')
+		out.push({ label: 'Take', target: r.name, tone, command: 'ground_pickup', body: { id: r.id } });
+	else
+		out.push({
+			label: 'Ação…',
+			target: r.name,
+			tone,
+			ask: true,
+			command: r.kind === 'npc' ? 'npc_interact' : 'object_interact',
+			body: { id: r.id }
+		});
+	if (r.position)
+		out.push({ label: 'Walk here', target: '', tone, command: 'walk', body: { ...r.position } });
+	return out;
+}
+
+/** A quantidade como o jogo escreve no slot: amarelo até 99.999, branco em K, verde em M. */
+export function qtyLabel(q: number): { text: string; tone: 'y' | 'w' | 'g' } {
+	if (q >= 10_000_000) return { text: `${Math.floor(q / 1_000_000)}M`, tone: 'g' };
+	if (q >= 100_000) return { text: `${Math.floor(q / 1000)}K`, tone: 'w' };
+	return { text: String(q), tone: 'y' };
+}

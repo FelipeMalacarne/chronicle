@@ -302,6 +302,24 @@ abaixo, pelo caminho do plugin companheiro.
   protegido, chave de segredo) e do formulário com dados falsos no navegador (validação, edição
   que sobrevive ao polling).
 
+**Cockpit como o cliente do jogo** (2026-11-09; página 6 do canvas, aprovada pelo dono): a réplica
+do cliente fixo, com a pele do jogo dentro e o Pergaminho fora.
+
+- A tela (screenshot ou VNC) com o chat embaixo (mensagens do jogo e o diálogo com as opções
+  clicáveis e o "Click here to continue") e, à direita, o painel lateral com as abas do jogo: Itens,
+  Equipado, Skills, Oração e Magia. Embaixo, Por perto, Script ativo e Banco.
+- Um só menu "Choose Option" (cores do jogo) para inventário, banco, chão, NPC e objeto; clique
+  esquerdo ou direito abre e nada acontece sem escolher. Só aparecem as opções reais: as ações do
+  item que o `/inventory` traz; com o banco aberto, Deposit-1, 5, 10 e All (o Microbot procura a ação
+  no widget do inventário do banco, então passam pelo `inventory_use`); no banco, Withdraw-1, 5, 10 e
+  All (o `bank_withdraw` ganhou `all`); no chão, Take e Walk here. Drop e Deposit-All pedem o segundo
+  clique no próprio menu.
+- Entrega 1 (feita): o que o agent já faz. Oração e Magia aparecem desabilitadas; NPC e objeto têm
+  Walk here e a ação digitada, e o equipamento só mostra.
+- Entrega 2 (a ponte): uma peça no Dev Bootstrap do microbot-plugins com as opções de NPC, objeto e
+  equipamento, as orações e o livro de feitiços, e as ações tipadas que faltam (ativar oração, lançar
+  feitiço, Remove, Deposit/Withdraw-X).
+
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no
 jogo, então o cartão "Input humano" do artboard não existe na tela.

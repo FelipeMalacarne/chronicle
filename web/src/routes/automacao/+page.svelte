@@ -11,6 +11,10 @@
 	import Glyph from '#lib/v6/Glyph.svelte';
 	import VncView, { type VncPhase } from '#lib/v6/VncView.svelte';
 	import JogoView from '#lib/v6/JogoView.svelte';
+	import SidePanel from '#lib/v6/game/SidePanel.svelte';
+	import Chatbox from '#lib/v6/game/Chatbox.svelte';
+	import GameMenu from '#lib/v6/game/GameMenu.svelte';
+	import { gameMenu } from '#lib/v6/game/menu.svelte';
 	import ClientLog from '#lib/v6/ClientLog.svelte';
 	import ClientAccount from '#lib/v6/ClientAccount.svelte';
 	import type { GameView } from '#lib/api/microbot';
@@ -112,6 +116,17 @@
 			/* o estado do cliente já mostra o erro */
 		}
 	}
+	// Depois de cada ação do menu, o jogo e a auditoria são relidos.
+	$effect(() => {
+		gameMenu.onDone = () => {
+			void refreshGame();
+			void refreshAudit();
+		};
+		return () => {
+			gameMenu.onDone = null;
+		};
+	});
+	const inGame = $derived(loggedIn && !!game);
 	$effect(() => {
 		if (!running || !loggedIn) {
 			game = null;
@@ -290,7 +305,7 @@
 		<div class="main">
 			<section class="panel">
 				<div class="plaque">
-					{showLive ? 'Tela ao vivo · VNC' : 'Tela do jogo'}<span class="r"
+					{inGame ? 'Jogo' : showLive ? 'Tela ao vivo · VNC' : 'Tela do jogo'}<span class="r"
 						>{showLive
 							? vnc.phase === 'connected'
 								? intervene
@@ -305,45 +320,52 @@
 					>
 				</div>
 				<div class="pad">
-					<div class="shot">
-						{#if showLive}
-							<VncView url={vncURL()} viewOnly={!intervene} onphase={onVnc} />
-							{#if vnc.phase !== 'connected'}
-								<div class="ph">
-									<Glyph name="automacao" size={28} />
-									<span
-										>{vnc.phase === 'connecting'
-											? 'Abrindo o VNC pelo agent…'
-											: `VNC fechado${vnc.reason ? `: ${vnc.reason}` : ''}`}</span
-									>
-								</div>
-							{/if}
-						{:else if running && shotAt}
-							<img
-								src={microbotApi.screenshotURL(shotAt)}
-								alt="Tela do cliente do Microbot"
-								onload={() => (shotOk = true)}
-								onerror={() => (shotOk = false)}
-							/>
-							<div class="hud">
-								{#if client?.state?.player?.name}<span>{client.state.player.name}</span>{/if}
-								{#if client?.login?.currentWorld}<span>mundo {client.login.currentWorld}</span>{/if}
-								{#if pos}<span>{pos.x}, {pos.y}, {pos.plane}</span>{/if}
-								<span>só dashboard</span>
+					<div class="client" class:game={inGame}>
+						<div class="vp">
+							<div class="shot">
+								{#if showLive}
+									<VncView url={vncURL()} viewOnly={!intervene} onphase={onVnc} />
+									{#if vnc.phase !== 'connected'}
+										<div class="ph">
+											<Glyph name="automacao" size={28} />
+											<span
+												>{vnc.phase === 'connecting'
+													? 'Abrindo o VNC pelo agent…'
+													: `VNC fechado${vnc.reason ? `: ${vnc.reason}` : ''}`}</span
+											>
+										</div>
+									{/if}
+								{:else if running && shotAt}
+									<img
+										src={microbotApi.screenshotURL(shotAt)}
+										alt="Tela do cliente do Microbot"
+										onload={() => (shotOk = true)}
+										onerror={() => (shotOk = false)}
+									/>
+									<div class="hud">
+										{#if client?.state?.player?.name}<span>{client.state.player.name}</span>{/if}
+										{#if client?.login?.currentWorld}<span>mundo {client.login.currentWorld}</span
+											>{/if}
+										{#if pos}<span>{pos.x}, {pos.y}, {pos.plane}</span>{/if}
+										<span>só dashboard</span>
+									</div>
+								{/if}
+								{#if !showLive && (!running || !shotOk)}
+									<div class="ph">
+										<Glyph name="automacao" size={28} />
+										<span
+											>{!status?.agent.connected
+												? 'Sem agent: rode `ironman agent` no zaros'
+												: running
+													? 'Carregando a tela…'
+													: 'Cliente parado: “Iniciar cliente” sobe o headless no zaros'}</span
+										>
+									</div>
+								{/if}
 							</div>
-						{/if}
-						{#if !showLive && (!running || !shotOk)}
-							<div class="ph">
-								<Glyph name="automacao" size={28} />
-								<span
-									>{!status?.agent.connected
-										? 'Sem agent: rode `ironman agent` no zaros'
-										: running
-											? 'Carregando a tela…'
-											: 'Cliente parado: “Iniciar cliente” sobe o headless no zaros'}</span
-								>
-							</div>
-						{/if}
+							{#if inGame && game}<Chatbox view={game} />{/if}
+						</div>
+						{#if inGame && game}<SidePanel view={game} />{/if}
 					</div>
 					{#if showLive}
 						<div class="under">
@@ -365,14 +387,8 @@
 				</div>
 			</section>
 
-			{#if loggedIn && game}
-				<JogoView
-					view={game}
-					onchange={() => {
-						void refreshGame();
-						void refreshAudit();
-					}}
-				/>
+			{#if inGame && game}
+				<JogoView view={game} />
 			{/if}
 
 			{#if status?.agent.connected}
@@ -418,6 +434,8 @@
 		</aside>
 	</div>
 {/if}
+
+<GameMenu />
 
 <style>
 	.mh {
@@ -547,6 +565,23 @@
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 10px 16px;
+	}
+	.client {
+		display: flex;
+		gap: 10px;
+		align-items: stretch;
+	}
+	.vp {
+		flex: 1 1 auto;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+	}
+	@media (max-width: 900px) {
+		.client.game {
+			flex-direction: column;
+		}
 	}
 	.shot {
 		position: relative;

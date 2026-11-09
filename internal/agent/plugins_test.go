@@ -176,6 +176,8 @@ func TestGameActions(t *testing.T) {
 		{CmdBankDeposit, `{"name":"Logs","all":true}`, "not both", ""},
 		{CmdBankWithdraw, `{"name":"Pure essence","quantity":28,"noted":false}`, "", `POST /bank/withdraw {"name":"Pure essence","noted":false,"quantity":28}`},
 		{CmdBankWithdraw, `{"name":"Pure essence"}`, "quantity", ""},
+		{CmdBankWithdraw, `{"name":"Pure essence","all":true}`, "", `POST /bank/withdraw {"name":"Pure essence","quantity":0}`},
+		{CmdBankWithdraw, `{"name":"Pure essence","quantity":5,"all":true}`, "not both", ""},
 		{CmdBankOpen, ``, "", `POST /bank/open {}`},
 		{CmdDialogueContinue, ``, "", `POST /dialogue/continue {}`},
 		{CmdDialogueSelect, `{"index":2}`, "", `POST /dialogue/select {"index":2}`},

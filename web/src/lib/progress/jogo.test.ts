@@ -3,6 +3,10 @@ import assert from 'node:assert/strict';
 import {
 	chatLines,
 	loopScripts,
+	itemMenu,
+	bankMenu,
+	nearMenu,
+	qtyLabel,
 	dialogueLine,
 	equipItems,
 	invSlots,
@@ -157,4 +161,58 @@ test('NPC distance in tiles from the position, not local units', () => {
 		}
 	};
 	assert.equal(nearRows(v)[0].distance, 2);
+});
+
+test('menus carry only what the game and the agent can do', () => {
+	const lobster = {
+		id: 379,
+		name: 'Lobster',
+		quantity: 1,
+		slot: 1,
+		actions: ['Eat', 'Use', 'Drop']
+	};
+	assert.deepEqual(
+		itemMenu(lobster, false).map((o) => [o.label, o.command, !!o.confirm]),
+		[
+			['Eat', 'inventory_use', false],
+			['Use', 'inventory_use', false],
+			['Drop', 'inventory_drop', true]
+		]
+	);
+	assert.deepEqual(itemMenu({ ...lobster, actions: [] }, false), []);
+	assert.deepEqual(
+		itemMenu(lobster, true).map((o) => [o.label, o.command, !!o.confirm]),
+		[
+			['Deposit-1', 'inventory_use', false],
+			['Deposit-5', 'inventory_use', false],
+			['Deposit-10', 'inventory_use', false],
+			['Deposit-All', 'inventory_use', true]
+		]
+	);
+
+	assert.deepEqual(
+		bankMenu(lobster).map((o) => [o.label, o.body]),
+		[
+			['Withdraw-1', { name: 'Lobster', quantity: 1 }],
+			['Withdraw-5', { name: 'Lobster', quantity: 5 }],
+			['Withdraw-10', { name: 'Lobster', quantity: 10 }],
+			['Withdraw-All', { name: 'Lobster', all: true }]
+		]
+	);
+	const rows = nearRows(view);
+	assert.deepEqual(
+		nearMenu(rows.find((r) => r.kind === 'chão')!).map((o) => o.label),
+		['Take', 'Walk here']
+	);
+	const npc = nearMenu(rows.find((r) => r.kind === 'npc')!);
+	assert.deepEqual(
+		npc.map((o) => [o.label, !!o.ask]),
+		[
+			['Ação…', true],
+			['Walk here', false]
+		]
+	);
+	assert.deepEqual(qtyLabel(1200), { text: '1200', tone: 'y' });
+	assert.deepEqual(qtyLabel(613_400), { text: '613K', tone: 'w' });
+	assert.deepEqual(qtyLabel(12_500_000), { text: '12M', tone: 'g' });
 });

@@ -107,11 +107,13 @@ type AllParams struct {
 	All  bool   `json:"all,omitempty"`
 }
 
-// WithdrawParams are the parameters of CmdBankWithdraw.
+// WithdrawParams are the parameters of CmdBankWithdraw: a quantity, or All
+// (the game's Withdraw-All).
 type WithdrawParams struct {
 	Name     string `json:"name,omitempty"`
 	ID       int    `json:"id,omitempty"`
-	Quantity int    `json:"quantity"`
+	Quantity int    `json:"quantity,omitempty"`
+	All      bool   `json:"all,omitempty"`
 	Noted    *bool  `json:"noted,omitempty"`
 }
 
@@ -204,8 +206,8 @@ func validateGame(command string, raw json.RawMessage) (any, error) {
 		if err := checkTarget(TargetParams{Name: p.Name, ID: p.ID}, false); err != nil {
 			return nil, err
 		}
-		if p.Quantity < 1 {
-			return nil, errors.New("withdraw: quantity of at least 1")
+		if (p.Quantity < 1) == !p.All {
+			return nil, errors.New("withdraw: a quantity of at least 1 or all, not both")
 		}
 		return p, nil
 	case CmdDialogueSelect:
@@ -271,7 +273,7 @@ func (e *Executor) act(ctx context.Context, command string, params json.RawMessa
 		return post(path, body, 20*time.Second)
 	case WithdrawParams:
 		body := target(TargetParams{Name: pp.Name, ID: pp.ID})
-		body["quantity"] = pp.Quantity
+		body["quantity"] = pp.Quantity // the Agent Server withdraws all with 0
 		if pp.Noted != nil {
 			body["noted"] = *pp.Noted
 		}

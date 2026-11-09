@@ -12,7 +12,9 @@ import {
 	prayerMenu,
 	spellCells,
 	spellMenu,
-	castOnMenu,
+	selectedItemMenu,
+	selectedNearMenu,
+	selectedLabel,
 	dialogueLine,
 	equipItems,
 	invSlots,
@@ -180,8 +182,8 @@ test('menus carry only what the game and the agent can do', () => {
 	assert.deepEqual(
 		itemMenu(lobster, false).map((o) => [o.label, o.command, !!o.confirm]),
 		[
+			// Use sem a ponte deixaria o item selecionado no jogo sem alvo: fica de fora.
 			['Eat', 'inventory_use', false],
-			['Use', 'inventory_use', false],
 			['Drop', 'inventory_drop', true]
 		]
 	);
@@ -235,6 +237,7 @@ test('with the bridge, menus come from the game', () => {
 				npcs: [
 					{
 						id: 3010,
+						index: 77,
 						name: 'Banker',
 						actions: ['Talk-to', 'Bank', 'Collect'],
 						position: { x: 3220, y: 3218, plane: 0 }
@@ -276,6 +279,7 @@ test('with the bridge, menus come from the game', () => {
 						name: 'Varrock Teleport',
 						level: 25,
 						castable: true,
+						target: 'none',
 						onItem: false
 					},
 					{
@@ -283,7 +287,24 @@ test('with the bridge, menus come from the game', () => {
 						name: 'Low Level Alchemy',
 						level: 21,
 						castable: true,
+						target: 'item',
 						onItem: true
+					},
+					{
+						key: 'WIND_STRIKE',
+						name: 'Wind Strike',
+						level: 1,
+						castable: true,
+						target: 'npc',
+						onItem: false
+					},
+					{
+						key: 'ENCHANT_SAPPHIRE_JEWELLERY',
+						name: 'Lvl-1 Enchant',
+						level: 7,
+						castable: true,
+						target: 'unsupported',
+						onItem: false
 					},
 					{
 						key: 'CAMELOT_TELEPORT',
@@ -322,17 +343,93 @@ test('with the bridge, menus come from the game', () => {
 	assert.deepEqual(prayerMenu(locked), []);
 	const spells = spellCells(v);
 	assert.deepEqual(
-		spells.map((s) => s.key),
-		['LOW_LEVEL_ALCHEMY', 'VARROCK_TELEPORT', 'CAMELOT_TELEPORT']
+		spells.map((s) => [s.key, s.target]),
+		[
+			['WIND_STRIKE', 'npc'],
+			['ENCHANT_SAPPHIRE_JEWELLERY', 'unsupported'],
+			['LOW_LEVEL_ALCHEMY', 'item'],
+			['VARROCK_TELEPORT', 'none'],
+			['CAMELOT_TELEPORT', 'none']
+		]
 	);
-	assert.equal(spellMenu(spells[0])[0].command, undefined);
-	assert.equal(spellMenu(spells[1])[0].command, 'spell_cast');
-	assert.deepEqual(spellMenu(spells[2]), []);
-	const lobster = { id: 379, name: 'Lobster', quantity: 1, actions: ['Eat'] };
-	assert.deepEqual(castOnMenu(spells[0], lobster)[0].body, {
+	const [strike, enchant, alch, varrock, camelot] = spells;
+	// Feitiço com alvo seleciona, como no jogo; sem alvo lança; sem alvo alcançável, nada.
+	assert.deepEqual(spellMenu(alch)[0].select, {
+		kind: 'spell',
 		key: 'LOW_LEVEL_ALCHEMY',
-		item: 'Lobster'
+		name: 'Low Level Alchemy',
+		target: 'item'
 	});
+	assert.equal(spellMenu(varrock)[0].command, 'spell_cast');
+	assert.deepEqual(spellMenu(enchant), []);
+	assert.deepEqual(spellMenu(camelot), []);
+	const lobster = { id: 379, name: 'Lobster', quantity: 1, slot: 4, actions: ['Eat', 'Use'] };
+	const alchSel = spellMenu(alch)[0].select!;
+	assert.equal(selectedLabel(alchSel), 'Cast Low Level Alchemy ->');
+	assert.deepEqual(
+		selectedItemMenu(alchSel, lobster).map((o) => [o.label, o.target, o.command, o.body]),
+		[
+			[
+				'Cast Low Level Alchemy ->',
+				'Lobster',
+				'spell_cast',
+				{ key: 'LOW_LEVEL_ALCHEMY', item: 'Lobster' }
+			]
+		]
+	);
+	// Um feitiço de NPC lança no NPC pelo índice da ponte; num objeto só sobra andar e cancelar.
+	const strikeSel = spellMenu(strike)[0].select!;
+	assert.deepEqual(
+		selectedNearMenu(strikeSel, rows[0]).map((o) => [o.label, o.command, o.body]),
+		[
+			['Cast Wind Strike ->', 'spell_cast', { key: 'WIND_STRIKE', npc: 77 }],
+			['Walk here', 'walk', { x: 3220, y: 3218, plane: 0 }]
+		]
+	);
+	assert.deepEqual(
+		selectedNearMenu(strikeSel, rows[1]).map((o) => o.label),
+		['Walk here']
+	);
+	// Use seleciona o item; o alvo é outro item, um NPC ou um objeto, nunca o próprio slot.
+	// O jogo põe Use em todo item, antes do Drop; as ações do item não o trazem.
+	assert.deepEqual(
+		itemMenu({ id: 946, name: 'Knife', quantity: 1, actions: ['Drop'] }, false, true).map(
+			(o) => o.label
+		),
+		['Use', 'Drop']
+	);
+	assert.deepEqual(
+		itemMenu({ id: 1351, name: 'Bronze axe', quantity: 1, actions: ['Wield'] }, false, true).map(
+			(o) => o.label
+		),
+		['Wield', 'Use']
+	);
+	const use = itemMenu(lobster, false, true).find((o) => o.label === 'Use')!;
+	assert.deepEqual(use.select, { kind: 'item', name: 'Lobster', slot: 4 });
+	assert.deepEqual(
+		itemMenu(lobster, false, false).map((o) => o.label),
+		['Eat']
+	);
+	const sel = use.select!;
+	assert.deepEqual(
+		selectedItemMenu(sel, { id: 590, name: 'Tinderbox', quantity: 1, slot: 0 }).map((o) => [
+			o.label,
+			o.body
+		]),
+		[['Use Lobster ->', { item: 'Lobster', onItem: 'Tinderbox' }]]
+	);
+	assert.deepEqual(
+		selectedItemMenu(sel, lobster).map((o) => o.label),
+		[]
+	);
+	assert.deepEqual(
+		selectedNearMenu(sel, rows[0]).map((o) => [o.label, o.body]),
+		[
+			['Use Lobster ->', { item: 'Lobster', npc: 77 }],
+			['Walk here', { x: 3220, y: 3218, plane: 0 }]
+		]
+	);
+	assert.deepEqual(selectedNearMenu(sel, rows[1])[0].body, { item: 'Lobster', object: 10820 });
 	assert.deepEqual(
 		itemMenu(lobster, true, true).map((o) => [o.label, o.ask ?? '']),
 		[

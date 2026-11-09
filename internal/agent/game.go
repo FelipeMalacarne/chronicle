@@ -9,6 +9,7 @@ import (
 	"net/url"
 	"regexp"
 	"slices"
+	"sync"
 	"time"
 	"unicode"
 )
@@ -49,35 +50,46 @@ const nearby = "15"
 
 func (e *Executor) gameView(ctx context.Context) GameView {
 	var v GameView
+	var mu sync.Mutex // v.Errors: the bridge reads in its own goroutine
+	fail := func(name, err string) {
+		mu.Lock()
+		defer mu.Unlock()
+		if v.Errors == nil {
+			v.Errors = map[string]string{}
+		}
+		v.Errors[name] = err
+	}
 	get := func(name, path string, q url.Values) json.RawMessage {
 		raw, err := e.Game.JSON(ctx, http.MethodGet, path, q, nil, 10*time.Second)
 		if err != nil {
-			if v.Errors == nil {
-				v.Errors = map[string]string{}
-			}
-			v.Errors[name] = err.Error()
+			fail(name, err.Error())
 		}
 		return raw
 	}
-	v.Observe = get("observe", "/observe", url.Values{"nearby": {nearby}, "nearbyLimit": {"12"}})
+	// The plain observe is cheap and says whether the rest has anything to say.
+	v.Observe = get("observe", "/observe", nil)
 	var st struct {
 		LoggedIn bool `json:"loggedIn"`
 	}
 	if v.Observe == nil || json.Unmarshal(v.Observe, &st) != nil || !st.LoggedIn {
-		// Logged out: the rest has nothing to say.
 		return v
 	}
+	// The bridge has its own socket and server: it reads while the Agent Server does.
+	bridge := make(chan *BridgeView, 1)
+	go func() { bridge <- e.bridgeView(ctx, fail) }()
 	v.Inventory = get("inventory", "/inventory", nil)
 	v.Skills = get("skills", "/skills", nil)
 	v.Bank = get("bank", "/bank", nil)
 	v.Ground = get("ground", "/ground-items", url.Values{"maxDistance": {nearby}, "limit": {"12"}})
 	v.Machines = get("machines", "/debug/snapshot", nil)
-	v.Bridge = e.bridgeView(ctx, func(name, err string) {
-		if v.Errors == nil {
-			v.Errors = map[string]string{}
+	v.Bridge = <-bridge
+	if v.Bridge == nil {
+		// Without the bridge, nearby NPCs and objects come from the Agent Server's observe, which
+		// takes seconds (it reads them on the client thread); with it, the bridge's have the menus.
+		if o := get("observe", "/observe", url.Values{"nearby": {nearby}, "nearbyLimit": {"12"}}); o != nil {
+			v.Observe = o
 		}
-		v.Errors[name] = err
-	})
+	}
 	return v
 }
 
@@ -129,19 +141,20 @@ const (
 	// Through the control bridge of the Chronicle Link plugin.
 	CmdEquipmentUse = "equipment_use"  // a worn item's action (Remove, Rub, Operate)
 	CmdPrayerToggle = "prayer_toggle"  // a prayer on or off
-	CmdSpellCast    = "spell_cast"     // a spell, or an alchemy spell on an item
+	CmdSpellCast    = "spell_cast"     // a spell, on an NPC or an inventory item when it takes one
 	CmdBankDepositX = "bank_deposit_x" // Deposit-X with the bank open
+	CmdItemUseOn    = "item_use_on"    // the game's "Use X -> Y": on an item, an NPC or an object
 )
 
 // GameActions are the game action commands.
 var GameActions = []string{
 	CmdWalk, CmdInventoryUse, CmdInventoryDrop, CmdBankOpen, CmdBankClose, CmdBankDeposit,
 	CmdBankWithdraw, CmdNPCInteract, CmdObjectInteract, CmdGroundPickup, CmdDialogueContinue, CmdDialogueSelect,
-	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX,
+	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX, CmdItemUseOn,
 }
 
 // bridgeActions are the game actions served by the bridge.
-var bridgeActions = []string{CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX}
+var bridgeActions = []string{CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX, CmdItemUseOn}
 
 // PrayerParams are the parameters of CmdPrayerToggle: the client's
 // Rs2PrayerEnum key (THICK_SKIN).
@@ -150,11 +163,32 @@ type PrayerParams struct {
 	On  bool   `json:"on"`
 }
 
-// SpellParams are the parameters of CmdSpellCast: the client's Rs2Spells key
-// and, for the alchemy spells, the inventory item.
+// SpellParams are the parameters of CmdSpellCast: the client's spell key
+// (Rs2Spells or Rs2CombatSpells) and at most one target, an inventory item
+// (alchemy, Superheat) or a nearby NPC by its index (combat spells, curses).
+// The bridge checks that the spell takes that target.
 type SpellParams struct {
 	Key  string `json:"key"`
 	Item string `json:"item,omitempty"`
+	NPC  *int   `json:"npc,omitempty"`
+}
+
+// UseOnParams are the parameters of CmdItemUseOn: an inventory item and one
+// target, another inventory item, a nearby NPC by its index or an object by
+// its id.
+type UseOnParams struct {
+	Item   string `json:"item"`
+	OnItem string `json:"onItem,omitempty"`
+	NPC    *int   `json:"npc,omitempty"`
+	Object int    `json:"object,omitempty"`
+}
+
+// npcIndex checks an NPC index: the client's are below 65536.
+func npcIndex(i *int) error {
+	if i != nil && (*i < 0 || *i > 65535) {
+		return errors.New("npc: bad index")
+	}
+	return nil
 }
 
 // DepositXParams are the parameters of CmdBankDepositX.
@@ -334,6 +368,39 @@ func validateGame(command string, raw json.RawMessage) (any, error) {
 		if err := gameText("item", p.Item, 80, false); err != nil {
 			return nil, err
 		}
+		if p.Item != "" && p.NPC != nil {
+			return nil, errors.New("spell: one target, an item or an npc")
+		}
+		if err := npcIndex(p.NPC); err != nil {
+			return nil, err
+		}
+		return p, nil
+	case CmdItemUseOn:
+		var p UseOnParams
+		if err := decodeParams(raw, &p); err != nil {
+			return nil, err
+		}
+		if err := gameText("item", p.Item, 80, true); err != nil {
+			return nil, err
+		}
+		if err := gameText("onItem", p.OnItem, 80, false); err != nil {
+			return nil, err
+		}
+		n := 0
+		for _, set := range []bool{p.OnItem != "", p.NPC != nil, p.Object != 0} {
+			if set {
+				n++
+			}
+		}
+		if n != 1 {
+			return nil, errors.New("use: one target, onItem, npc or object")
+		}
+		if err := npcIndex(p.NPC); err != nil {
+			return nil, err
+		}
+		if p.Object < 0 || p.Object > 200000 {
+			return nil, errors.New("use: bad object id")
+		}
 		return p, nil
 	case CmdBankDepositX:
 		var p DepositXParams
@@ -436,7 +503,21 @@ func (e *Executor) bridgeAct(ctx context.Context, p any) (any, error) {
 		if pp.Item != "" {
 			body["item"] = pp.Item
 		}
+		if pp.NPC != nil {
+			body["npc"] = *pp.NPC
+		}
 		return post("/bridge/spells/cast", body)
+	case UseOnParams:
+		body := map[string]any{"item": pp.Item}
+		switch {
+		case pp.OnItem != "":
+			body["onItem"] = pp.OnItem
+		case pp.NPC != nil:
+			body["npc"] = *pp.NPC
+		default:
+			body["object"] = pp.Object
+		}
+		return post("/bridge/inventory/use-on", body)
 	case DepositXParams:
 		return post("/bridge/bank/deposit-x", map[string]any{"name": pp.Name, "amount": pp.Amount})
 	}

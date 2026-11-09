@@ -1,5 +1,5 @@
 {
-	"source": "Microbot client 2.6.52: Rs2PrayerEnum and Rs2Spells (the keys the Chronicle Link plugin's control bridge sends)",
+	"source": "Microbot client 2.6.52: Rs2PrayerEnum, Rs2Spells and Rs2CombatSpells (the keys the Chronicle Link plugin's control bridge sends)",
 	"prayers": [
 		{
 			"key": "THICK_SKIN",
@@ -949,6 +949,222 @@
 			"name": "Death Charge",
 			"level": 80,
 			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "WIND_STRIKE",
+			"name": "Wind Strike",
+			"level": 1,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WATER_STRIKE",
+			"name": "Water Strike",
+			"level": 5,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "EARTH_STRIKE",
+			"name": "Earth Strike",
+			"level": 9,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "FIRE_STRIKE",
+			"name": "Fire Strike",
+			"level": 13,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WIND_BOLT",
+			"name": "Wind Bolt",
+			"level": 17,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WATER_BOLT",
+			"name": "Water Bolt",
+			"level": 23,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "EARTH_BOLT",
+			"name": "Earth Bolt",
+			"level": 29,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "FIRE_BOLT",
+			"name": "Fire Bolt",
+			"level": 35,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WIND_BLAST",
+			"name": "Wind Blast",
+			"level": 41,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WATER_BLAST",
+			"name": "Water Blast",
+			"level": 47,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "EARTH_BLAST",
+			"name": "Earth Blast",
+			"level": 53,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "FIRE_BLAST",
+			"name": "Fire Blast",
+			"level": 59,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WIND_WAVE",
+			"name": "Wind Wave",
+			"level": 62,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WATER_WAVE",
+			"name": "Water Wave",
+			"level": 65,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "EARTH_WAVE",
+			"name": "Earth Wave",
+			"level": 70,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "FIRE_WAVE",
+			"name": "Fire Wave",
+			"level": 75,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WIND_SURGE",
+			"name": "Wind Surge",
+			"level": 81,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WATER_SURGE",
+			"name": "Water Surge",
+			"level": 85,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "EARTH_SURGE",
+			"name": "Earth Surge",
+			"level": 90,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "FIRE_SURGE",
+			"name": "Fire Surge",
+			"level": 95,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "SMOKE_RUSH",
+			"name": "Smoke Rush",
+			"level": 50,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "SHADOW_RUSH",
+			"name": "Shadow Rush",
+			"level": 52,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "BLOOD_RUSH",
+			"name": "Blood Rush",
+			"level": 56,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "ICE_RUSH",
+			"name": "Ice Rush",
+			"level": 58,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "SMOKE_BURST",
+			"name": "Smoke Burst",
+			"level": 62,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "SHADOW_BURST",
+			"name": "Shadow Burst",
+			"level": 64,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "BLOOD_BURST",
+			"name": "Blood Burst",
+			"level": 68,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "ICE_BURST",
+			"name": "Ice Burst",
+			"level": 70,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "SMOKE_BLITZ",
+			"name": "Smoke Blitz",
+			"level": 74,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "SHADOW_BLITZ",
+			"name": "Shadow Blitz",
+			"level": 76,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "BLOOD_BLITZ",
+			"name": "Blood Blitz",
+			"level": 80,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "ICE_BLITZ",
+			"name": "Ice Blitz",
+			"level": 82,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "SMOKE_BARRAGE",
+			"name": "Smoke Barrage",
+			"level": 86,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "SHADOW_BARRAGE",
+			"name": "Shadow Barrage",
+			"level": 88,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "BLOOD_BARRAGE",
+			"name": "Blood Barrage",
+			"level": 92,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "ICE_BARRAGE",
+			"name": "Ice Barrage",
+			"level": 94,
+			"spellbook": "ANCIENT"
 		}
 	]
 }

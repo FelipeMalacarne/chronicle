@@ -1,5 +1,5 @@
-import { microbotApi, MicrobotError } from '#lib/api/microbot';
-import type { MenuOption } from '#lib/progress/jogo';
+import { microbotApi, MicrobotError, type Pos } from '#lib/api/microbot';
+import type { MenuOption, Selected } from '#lib/progress/jogo';
 
 /*
  * O menu "Choose Option" do cockpit (doc 08): um só para o inventário, o banco, o chão, os NPCs e
@@ -15,16 +15,24 @@ export const gameMenu = $state({
 	armed: -1,
 	busy: false,
 	error: null as string | null,
-	/** Feitiço de item selecionado (Cast em alquimia): o próximo clique no inventário lança nele. */
-	spell: null as { key: string; name: string } | null,
+	/**
+	 * O item ("Use") ou feitiço com alvo selecionado: o próximo clique num item, NPC ou objeto vira
+	 * "Use X -> alvo" ou "Cast X -> alvo", como no jogo. A seleção fica só aqui; o jogo só recebe
+	 * a ação inteira.
+	 */
+	selected: null as Selected | null,
 	/** Chamado depois de cada ação: o cockpit relê o jogo e a auditoria. */
 	onDone: null as (() => void) | null
 });
 
+/** O mapa do mundo do cockpit: aberto pelo orb do cliente ou por "andar até"; dest é o último clique. */
+export const gameMap = $state({ open: false, dest: null as Pos | null });
+
 export function openMenu(e: MouseEvent, options: MenuOption[]) {
 	e.preventDefault();
 	e.stopPropagation();
-	if (!options.length) return;
+	// Com algo selecionado o menu abre mesmo sem alvo possível: sobra o Cancel, como no jogo.
+	if (!options.length && !gameMenu.selected) return;
 	gameMenu.x = e.clientX;
 	gameMenu.y = e.clientY;
 	gameMenu.options = options;
@@ -74,15 +82,21 @@ export async function pick(i: number, typed?: string) {
 		const v = askedValue(o, typed);
 		if (v === null) return;
 		closeMenu();
+		gameMenu.selected = null;
 		await runAction(o, { [o.askField ?? 'action']: v });
 		return;
 	}
 	closeMenu();
-	if (!o.command && typeof o.body?.key === 'string') {
-		// Cast num feitiço de item: seleciona e espera o item, como no jogo.
-		gameMenu.spell = { key: o.body.key, name: o.target };
+	if (o.select) {
+		gameMenu.selected = o.select;
 		return;
 	}
-	gameMenu.spell = null;
+	gameMenu.selected = null;
 	await runAction(o);
+}
+
+/** Esc desfaz a seleção e fecha o menu, como no jogo. */
+export function cancelSelection() {
+	gameMenu.selected = null;
+	closeMenu();
 }

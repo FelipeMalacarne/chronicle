@@ -3,7 +3,6 @@
 	import { equipmentLayout } from '#lib/progress/conta';
 	import { iconFor, itemIcon, prayerIcon, spellIcon } from '#lib/progress/icons';
 	import {
-		castOnMenu,
 		equipItems,
 		equipMenu,
 		invSlots,
@@ -11,6 +10,7 @@
 		prayerCells,
 		prayerMenu,
 		qtyLabel,
+		selectedItemMenu,
 		skillCells,
 		spellCells,
 		spellMenu
@@ -39,9 +39,15 @@
 	const bridge = $derived(!!view.bridge);
 	const prayers = $derived(prayerCells(view));
 	const spells = $derived(spellCells(view));
-	/** O menu de um item do inventário: com um feitiço de item selecionado, só lançar nele. */
+	/** O menu de um item do inventário: com algo selecionado, "Use/Cast X -> item" e Cancel. */
 	const menuOf = (it: GameItem) =>
-		gameMenu.spell ? castOnMenu(gameMenu.spell, it) : itemMenu(it, bankOpen, bridge);
+		gameMenu.selected ? selectedItemMenu(gameMenu.selected, it) : itemMenu(it, bankOpen, bridge);
+	const sel = $derived(gameMenu.selected);
+	// Um feitiço de item selecionado leva à aba Itens, onde está o alvo (no jogo a aba troca sozinha).
+	const wantsItems = $derived(sel?.kind === 'spell' && sel.target === 'item');
+	$effect(() => {
+		if (wantsItems) tab = 'itens';
+	});
 
 	const slots = $derived(invSlots(view));
 	const equip = $derived(equipmentLayout(equipItems(view)));
@@ -76,6 +82,7 @@
 					<button
 						type="button"
 						class="gslot"
+						class:sel={sel?.kind === 'item' && sel.slot === it.slot}
 						title={it.name}
 						onclick={(e) => openMenu(e, menuOf(it))}
 						oncontextmenu={(e) => openMenu(e, menuOf(it))}
@@ -88,13 +95,7 @@
 				{/if}
 			{/each}
 		</div>
-		{#if gameMenu.spell}
-			<p class="ghint">
-				Cast {gameMenu.spell.name}: escolha o item.
-				<button class="glink" type="button" onclick={() => (gameMenu.spell = null)}>Cancelar</button
-				>
-			</p>
-		{:else if bankOpen}<p class="ghint">Banco aberto: o menu dos itens deposita.</p>{/if}
+		{#if bankOpen && !sel}<p class="ghint">Banco aberto: o menu dos itens deposita.</p>{/if}
 	{:else if tab === 'equipado'}
 		<div class="geqw">
 			<div class="geq">
@@ -157,9 +158,14 @@
 					type="button"
 					class="gspc"
 					class:off={!sp.castable}
-					class:sel={gameMenu.spell?.key === sp.key}
-					title="{sp.name} · nível {sp.level}{sp.castable ? '' : ' · sem nível ou runas'}"
-					disabled={!sp.castable}
+					class:sel={sel?.kind === 'spell' && sel.key === sp.key}
+					class:na={sp.target === 'unsupported'}
+					title="{sp.name} · nível {sp.level}{!sp.castable
+						? ' · sem nível ou runas'
+						: sp.target === 'unsupported'
+							? ' · o Chronicle ainda não lança este no alvo'
+							: ''}"
+					disabled={!sp.castable || sp.target === 'unsupported'}
 					onclick={(e) => openMenu(e, spellMenu(sp))}
 					oncontextmenu={(e) => openMenu(e, spellMenu(sp))}
 					>{#if icon}<img src={icon} alt={sp.name} />{:else}<span class="gab"
@@ -168,11 +174,8 @@
 				>
 			{/each}
 		</div>
-		{#if gameMenu.spell}
-			<p class="ghint">
-				Cast {gameMenu.spell.name}: escolha o item na aba Itens.
-				<button class="glink" type="button" onclick={() => (tab = 'itens')}>Ir para Itens</button>
-			</p>
+		{#if sel?.kind === 'spell' && sel.target === 'npc'}
+			<p class="ghint">Escolha o NPC em Por perto.</p>
 		{/if}
 	{:else}
 		<div class="gsk">
@@ -274,6 +277,11 @@
 	}
 	.gslot.e {
 		cursor: default;
+	}
+	/* O item selecionado com "Use": no jogo ganha o contorno branco. */
+	.gslot.sel img {
+		filter: drop-shadow(1px 0 0 #fff) drop-shadow(-1px 0 0 #fff) drop-shadow(0 1px 0 #fff)
+			drop-shadow(0 -1px 0 #fff);
 	}
 	.gslot img,
 	.ges img {
@@ -382,6 +390,13 @@
 	}
 	.gspc.sel {
 		box-shadow: 0 0 0 1px #fff;
+	}
+	/* Lançável no jogo, mas o alvo ainda não chega pela ponte (enchant, orbs). */
+	.gspc.na {
+		cursor: default;
+	}
+	.gspc.na img {
+		opacity: 0.5;
 	}
 	.gspc img {
 		max-width: 26px;

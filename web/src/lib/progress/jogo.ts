@@ -3,7 +3,7 @@
  * diálogo, o que está por perto, as state machines e o chat do jogo, a partir de GET
  * /api/microbot/game. Puro, testado em node.
  */
-import type { GameCommand, GameItem, GameView, Pos } from '../api/microbot.ts';
+import type { GameCommand, GameItem, GameView, Pos, SpellTarget } from '../api/microbot.ts';
 import { SKILL_ORDER } from './conta.ts';
 
 /** EquipmentInventorySlot do RuneLite para os slots do boneco da Conta. */
@@ -83,6 +83,8 @@ export interface NearRow {
 	position?: Pos;
 	/** As opções do jogo, quando a ponte de controle as dá (NPC e objeto). */
 	actions?: string[];
+	/** O índice do NPC no cliente (pela ponte): o alvo de "Use X ->" e dos feitiços. */
+	index?: number;
 }
 
 /** Distância em tiles como o RuneLite (WorldPoint.distanceTo): no mesmo plano, o maior eixo. */
@@ -105,7 +107,8 @@ export function nearRows(v: GameView | null): NearRow[] {
 			detail: n.combatLevel ? `nível ${n.combatLevel}` : '',
 			distance: tiles(me, n.position),
 			position: n.position,
-			actions: n.actions
+			actions: n.actions,
+			index: n.index
 		});
 	for (const o of ent?.objects ?? [])
 		rows.push({
@@ -239,14 +242,33 @@ export interface MenuOption {
 	 */
 	ask?: 'action' | 'number';
 	askField?: string;
+	/** Seleciona em vez de agir: "Use" num item, Cast num feitiço com alvo (como no jogo). */
+	select?: Selected;
+}
+
+/**
+ * O que está selecionado, como no jogo depois de "Use" num item ou de clicar num feitiço com alvo:
+ * o próximo clique num item, NPC ou objeto vira "Use X -> alvo" ou "Cast X -> alvo".
+ */
+export type Selected =
+	| { kind: 'item'; name: string; slot?: number }
+	| { kind: 'spell'; key: string; name: string; target: 'item' | 'npc' };
+
+/** O texto do topo do jogo enquanto algo está selecionado ("Use Lobster ->"). */
+export function selectedLabel(s: Selected): string {
+	return `${s.kind === 'item' ? 'Use' : 'Cast'} ${s.name} ->`;
 }
 
 /**
  * As opções de um item do inventário: exatamente as do jogo (GET /inventory traz as ações do item).
  * Com o banco aberto o jogo troca o menu pelo de depósito; o Microbot procura a ação no widget do
  * inventário do banco, então Deposit-1, 5, 10 e All passam pelo mesmo inventory_use (Deposit-X
- * pede um número no jogo e fica para a ponte).
+ * pede um número no jogo e fica para a ponte). Com a ponte, Use seleciona o item como no jogo; o
+ * alvo vem no clique seguinte (selectedItemMenu, selectedNearMenu).
  */
+/** As opções que o jogo põe depois de Use, no fim do menu de um item. */
+const LAST_OPS = new Set(['Drop', 'Destroy', 'Release']);
+
 export function itemMenu(it: GameItem, bankOpen: boolean, bridge = false): MenuOption[] {
 	const base = { target: it.name, tone: 'item' as const };
 	if (bankOpen) {
@@ -268,7 +290,14 @@ export function itemMenu(it: GameItem, bankOpen: boolean, bridge = false): MenuO
 			});
 		return out;
 	}
-	return (it.actions ?? []).map((a) =>
+	// O jogo acrescenta Use a todo item, antes do Drop/Destroy (a última opção); as ações do item
+	// não o trazem. Sem a ponte, Use deixaria o item selecionado no jogo sem como escolher o alvo.
+	const actions = (it.actions ?? []).filter((a) => a !== 'Use');
+	if (bridge) {
+		const last = actions.findIndex((a) => LAST_OPS.has(a));
+		actions.splice(last < 0 ? actions.length : last, 0, 'Use');
+	}
+	return actions.map((a) =>
 		a === 'Drop'
 			? {
 					...base,
@@ -277,7 +306,14 @@ export function itemMenu(it: GameItem, bankOpen: boolean, bridge = false): MenuO
 					body: { name: it.name },
 					confirm: true
 				}
-			: { ...base, label: a, command: 'inventory_use' as const, body: { name: it.name, action: a } }
+			: a === 'Use' && bridge
+				? { ...base, label: a, select: { kind: 'item' as const, name: it.name, slot: it.slot } }
+				: {
+						...base,
+						label: a,
+						command: 'inventory_use' as const,
+						body: { name: it.name, action: a }
+					}
 	);
 }
 
@@ -379,35 +415,71 @@ export interface SpellCell {
 	name: string;
 	level: number;
 	castable: boolean;
-	onItem: boolean;
+	target: SpellTarget;
 }
 
-/** Os feitiços do livro atual, por nível como o jogo os ordena. */
+/** Os feitiços do livro atual, por nível como o jogo os ordena (os de combate entre eles). */
 export function spellCells(v: GameView | null): SpellCell[] {
-	return [...(v?.bridge?.spells?.spells ?? [])].sort((a, b) => a.level - b.level);
+	return (v?.bridge?.spells?.spells ?? [])
+		.map((s) => ({
+			key: s.key,
+			name: s.name,
+			level: s.level,
+			castable: s.castable,
+			target: s.target ?? (s.onItem ? ('item' as const) : ('none' as const))
+		}))
+		.sort((a, b) => a.level - b.level);
 }
 
 /**
- * O menu de um feitiço: Cast. Feitiço de item (alquimia) só seleciona, sem comando; o próximo
- * clique num item do inventário lança nele, como no jogo.
+ * O menu de um feitiço: Cast. Com alvo (item ou NPC) só seleciona, como no jogo; o próximo clique
+ * num item ou NPC lança nele. Sem alvo que a ponte alcance (enchant), nada.
  */
 export function spellMenu(s: SpellCell): MenuOption[] {
-	if (!s.castable) return [];
-	if (s.onItem) return [{ label: 'Cast', target: s.name, tone: 'object', body: { key: s.key } }];
+	if (!s.castable || s.target === 'unsupported') return [];
+	if (s.target === 'item' || s.target === 'npc')
+		return [
+			{
+				label: 'Cast',
+				target: s.name,
+				tone: 'object',
+				select: { kind: 'spell', key: s.key, name: s.name, target: s.target }
+			}
+		];
 	return [
 		{ label: 'Cast', target: s.name, tone: 'object', command: 'spell_cast', body: { key: s.key } }
 	];
 }
 
-/** Com um feitiço de item selecionado, o menu do item é só "Cast <feitiço> -> <item>". */
-export function castOnMenu(spell: { key: string; name: string }, it: GameItem): MenuOption[] {
-	return [
-		{
-			label: `Cast ${spell.name} ->`,
-			target: it.name,
-			tone: 'item',
-			command: 'spell_cast',
-			body: { key: spell.key, item: it.name }
-		}
-	];
+/**
+ * Com algo selecionado, o menu de um item do inventário: "Use X -> item" (item selecionado, em
+ * outro slot) ou "Cast X -> item" (feitiço de item). O Cancel do menu desfaz a seleção.
+ */
+export function selectedItemMenu(sel: Selected, it: GameItem): MenuOption[] {
+	const out: MenuOption[] = [];
+	const base = { label: selectedLabel(sel), target: it.name, tone: 'item' as const };
+	if (sel.kind === 'item' && (sel.slot === undefined || sel.slot !== it.slot))
+		out.push({ ...base, command: 'item_use_on', body: { item: sel.name, onItem: it.name } });
+	if (sel.kind === 'spell' && sel.target === 'item')
+		out.push({ ...base, command: 'spell_cast', body: { key: sel.key, item: it.name } });
+	return out;
+}
+
+/**
+ * Com algo selecionado, o menu de um NPC ou objeto por perto: "Use X -> alvo" (item em NPC ou
+ * objeto) ou "Cast X -> NPC" (feitiço de NPC) e Walk here. O NPC vai pelo índice da ponte.
+ */
+export function selectedNearMenu(sel: Selected, r: NearRow): MenuOption[] {
+	const tone = r.kind === 'npc' ? 'npc' : r.kind === 'objeto' ? 'object' : 'item';
+	const out: MenuOption[] = [];
+	const base = { label: selectedLabel(sel), target: r.name, tone } as const;
+	if (sel.kind === 'item' && r.kind === 'npc' && r.index !== undefined)
+		out.push({ ...base, command: 'item_use_on', body: { item: sel.name, npc: r.index } });
+	if (sel.kind === 'item' && r.kind === 'objeto')
+		out.push({ ...base, command: 'item_use_on', body: { item: sel.name, object: r.id } });
+	if (sel.kind === 'spell' && sel.target === 'npc' && r.kind === 'npc' && r.index !== undefined)
+		out.push({ ...base, command: 'spell_cast', body: { key: sel.key, npc: r.index } });
+	if (r.position)
+		out.push({ label: 'Walk here', target: '', tone, command: 'walk', body: { ...r.position } });
+	return out;
 }

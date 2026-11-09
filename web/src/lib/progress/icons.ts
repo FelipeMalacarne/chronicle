@@ -56,6 +56,11 @@ export function prayerIcon(key: string): string | undefined {
 }
 
 /** Ícone de um feitiço pela chave do cliente (Rs2Spells). */
+/** Um ícone avulso da interface do jogo (o orb do mapa do mundo). */
+export function miscIcon(key: string): string | undefined {
+	return url('misc', key);
+}
+
 export function spellIcon(key: string): string | undefined {
 	return url('spell', key);
 }

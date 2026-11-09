@@ -244,7 +244,11 @@ export type GameCommand =
 	| 'equipment_use'
 	| 'prayer_toggle'
 	| 'spell_cast'
-	| 'bank_deposit_x';
+	| 'bank_deposit_x'
+	| 'item_use_on';
+
+/** No que um feitiço é lançado: `unsupported` é um alvo que a ponte ainda não alcança (enchant). */
+export type SpellTarget = 'item' | 'npc' | 'none' | 'unsupported';
 
 /** O que a ponte de controle (plugin Chronicle Link) acrescenta: os menus reais, as orações e o livro de feitiços. */
 export interface BridgeView {
@@ -269,7 +273,15 @@ export interface BridgeView {
 	};
 	spells?: {
 		spellbook: string | null;
-		spells: { key: string; name: string; level: number; castable: boolean; onItem: boolean }[];
+		spells: {
+			key: string;
+			name: string;
+			level: number;
+			castable: boolean;
+			/** No que o feitiço é lançado (Chronicle Link 1.5+); antes só `onItem`. */
+			target?: SpellTarget;
+			onItem: boolean;
+		}[];
 	};
 }
 

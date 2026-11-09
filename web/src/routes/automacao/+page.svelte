@@ -14,7 +14,10 @@
 	import SidePanel from '#lib/v6/game/SidePanel.svelte';
 	import Chatbox from '#lib/v6/game/Chatbox.svelte';
 	import GameMenu from '#lib/v6/game/GameMenu.svelte';
-	import { gameMenu } from '#lib/v6/game/menu.svelte';
+	import WorldMap from '#lib/v6/game/WorldMap.svelte';
+	import { cancelSelection, gameMap, gameMenu } from '#lib/v6/game/menu.svelte';
+	import { selectedLabel } from '#lib/progress/jogo';
+	import { miscIcon } from '#lib/progress/icons';
 	import ClientLog from '#lib/v6/ClientLog.svelte';
 	import ClientAccount from '#lib/v6/ClientAccount.svelte';
 	import type { GameView } from '#lib/api/microbot';
@@ -109,11 +112,18 @@
 		};
 	});
 	// O jogo (inventário, skills, por perto, diálogo...) a cada 3 s enquanto a conta está logada.
+	// Uma leitura leva alguns segundos (várias do Agent Server e da ponte): uma por vez, senão as
+	// leituras se acumulam e esgotam as conexões do navegador com o servidor.
+	let gameBusy = false;
 	async function refreshGame() {
+		if (gameBusy) return;
+		gameBusy = true;
 		try {
 			game = await microbotApi.game();
 		} catch {
 			/* o estado do cliente já mostra o erro */
+		} finally {
+			gameBusy = false;
 		}
 	}
 	// Depois de cada ação do menu, o jogo e a auditoria são relidos.
@@ -342,7 +352,7 @@
 										onload={() => (shotOk = true)}
 										onerror={() => (shotOk = false)}
 									/>
-									<div class="hud">
+									<div class="hud" class:hidden={!!gameMenu.selected}>
 										{#if client?.state?.player?.name}<span>{client.state.player.name}</span>{/if}
 										{#if client?.login?.currentWorld}<span>mundo {client.login.currentWorld}</span
 											>{/if}
@@ -361,6 +371,23 @@
 													: 'Cliente parado: “Iniciar cliente” sobe o headless no zaros'}</span
 										>
 									</div>
+								{/if}
+								{#if inGame && game}
+									{#if gameMenu.selected}
+										<!-- O texto do topo do jogo enquanto algo está selecionado. -->
+										<div class="uptext" role="status">
+											<span>{selectedLabel(gameMenu.selected)}</span>
+											<button type="button" onclick={cancelSelection}>Cancel</button>
+										</div>
+									{/if}
+									<button
+										class="orb"
+										type="button"
+										title="Mapa do mundo: clique num lugar para andar até ele"
+										aria-label="Mapa do mundo"
+										onclick={() => (gameMap.open = true)}
+										><img src={miscIcon('world_map')} alt="" /></button
+									>
 								{/if}
 							</div>
 							{#if inGame && game}<Chatbox view={game} />{/if}
@@ -436,6 +463,7 @@
 {/if}
 
 <GameMenu />
+{#if gameMap.open}<WorldMap me={game?.observe?.player?.position ?? pos} />{/if}
 
 <style>
 	.mh {
@@ -626,6 +654,58 @@
 		display: flex;
 		gap: 6px;
 		flex-wrap: wrap;
+	}
+	.shot .hud.hidden {
+		display: none;
+	}
+	/* O texto do topo do jogo: "Use Lobster ->" em branco sobre a tela, com sombra preta. */
+	.uptext {
+		position: absolute;
+		left: 8px;
+		top: 6px;
+		display: flex;
+		align-items: baseline;
+		gap: 10px;
+		font:
+			700 13px/1.2 'JetBrains Mono',
+			monospace;
+		color: #fff;
+		text-shadow: 1px 1px 0 #000;
+	}
+	.uptext button {
+		border: 0;
+		background: none;
+		padding: 0;
+		font: inherit;
+		color: #ff9040;
+		text-shadow: 1px 1px 0 #000;
+		text-decoration: underline;
+		cursor: pointer;
+	}
+	/* O orb do mapa do mundo, no canto do minimapa do jogo. */
+	.orb {
+		position: absolute;
+		right: 8px;
+		top: 8px;
+		width: 38px;
+		height: 38px;
+		border-radius: 50%;
+		border: 2px solid #3e3529;
+		background: radial-gradient(circle at 40% 35%, #5a4d3a, #2a2218);
+		box-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		cursor: pointer;
+		padding: 0;
+	}
+	.orb:hover {
+		border-color: #c8a14a;
+	}
+	.orb img {
+		max-width: 24px;
+		max-height: 24px;
+		image-rendering: pixelated;
 	}
 	.shot .hud span {
 		background: rgba(0, 0, 0, 0.55);

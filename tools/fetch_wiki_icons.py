@@ -245,6 +245,7 @@ def main():
     for s in skills:
         wanted[("skill", s["id"])] = [s["name"] + " icon.png"]
     wanted[("misc", "quest_point")] = ["Quest point icon.png"]
+    wanted[("misc", "world_map")] = ["World map icon.png"]
     book = load_json(os.path.join(ROOT, "data", "wiki", "book_icons.json"))
     for p in book["prayers"]:
         wanted[("prayer", p["key"])] = book_titles(p["name"])

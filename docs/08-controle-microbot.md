@@ -339,6 +339,36 @@ do cliente fixo, com a pele do jogo dentro e o Pergaminho fora.
   da wiki pelo `tools/fetch_wiki_icons.py` (lista em `data/wiki/book_icons.json`, as chaves do cliente).
 - Para ligar no zaros: `mb-install chroniclelink` (home de dev) e reiniciar o cliente.
 
+**Usar em, feitiços com alvo e mapa do mundo** (2026-11-09, pedido do dono depois de testar o
+cockpit: "não sei se consigo usar uma magia em algum item do inventário", e um mapa para escolher o
+destino da viagem):
+
+- Seleção como no jogo: "Use" num item (o jogo põe Use em todo item, antes do Drop; as ações do item
+  não o trazem, então a web o insere quando há ponte) ou Cast num feitiço com alvo seleciona; o
+  texto "Use Knife ->" aparece no topo da tela com o item contornado, e o próximo clique num item,
+  NPC ou objeto abre "Use Knife -> Teak logs" ou "Cast Wind Strike -> Goblin". O Cancel do menu, o
+  link no topo e o Esc desfazem. A seleção vive só na web; o jogo recebe a ação inteira.
+- Ponte (Chronicle Link 1.5.0): `POST /bridge/inventory/use-on` (item em outro item, em NPC pelo
+  índice ou em objeto pelo id); `/bridge/spells/cast` aceita `npc` (combate, curses, grasps,
+  demonbanes, pelo `castOn`) além de `item` (alquimia e agora Superheat); `/bridge/spells` lista
+  também os 36 feitiços de combate (`Rs2CombatSpells`) e diz em cada um o `target`: `item`, `npc`,
+  `none` ou `unsupported` (alvo que a ponte ainda não alcança: enchant de joia, orbs, Telekinetic
+  Grab, outro jogador, canteiro, cabeças), que a web mostra apagado e a ponte recusa, para o jogo
+  não ficar com o feitiço selecionado. Item ausente ou NPC que sumiu responde 409. Desde a 1.4.2 Por
+  perto lista só objetos com alguma ação (some o cenário como Bullrushes).
+- Agent: `item_use_on` na lista fechada e `npc` no `spell_cast` (um alvo só, índice abaixo de
+  65536). O `game_view` lê a ponte em paralelo com o Agent Server e, com ponte, pula o `observe`
+  com vizinhos (2 s no cliente; a ponte já traz NPCs e objetos com os menus): a leitura caiu de uns
+  6 s para uns 3 s. A web faz uma leitura por vez, porque leituras sobrepostas esgotavam as
+  conexões do navegador.
+- Mapa do mundo: o orb no canto do minimapa (ou "Mapa" ao lado de "andar até") abre um Leaflet com
+  os tiles renderizados de `mejrs/layers_osrs` (a base do mapa da OSRS Wiki), carregados do GitHub
+  pelo navegador, com o crédito no canto (decisão do dono: online, sem baixar para o repositório).
+  O jogador é o ponto amarelo, o último destino o vermelho; planos 0 a 3; clicar abre "Walk here
+  x, y" no mesmo menu, que anda pelo `walk` (webwalker do Microbot); dá para digitar coordenadas.
+- Para ligar no zaros: `mb-install chroniclelink` e reiniciar o cliente, o `just agent` e o
+  `just dev`.
+
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no
 jogo, então o cartão "Input humano" do artboard não existe na tela.

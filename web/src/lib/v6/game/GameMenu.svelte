@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { closeMenu, gameMenu, pick } from './menu.svelte';
+	import { cancelSelection, closeMenu, gameMenu, pick } from './menu.svelte';
 
 	/*
 	 * O "Choose Option" do jogo: fundo e cores do menu do OSRS (ação em branco, alvo na cor do tipo:
@@ -26,14 +26,24 @@
 			if (box && !box.contains(e.target as Node)) closeMenu();
 		};
 		const esc = (e: KeyboardEvent) => e.key === 'Escape' && closeMenu();
+		// Só a página rolando tira o menu do lugar; o chat e o log rolam sozinhos a cada leitura.
+		const scrolled = (e: Event) => e.target === document && closeMenu();
 		window.addEventListener('pointerdown', away, true);
 		window.addEventListener('keydown', esc);
-		window.addEventListener('scroll', closeMenu, true);
+		window.addEventListener('scroll', scrolled, true);
 		return () => {
 			window.removeEventListener('pointerdown', away, true);
 			window.removeEventListener('keydown', esc);
-			window.removeEventListener('scroll', closeMenu, true);
+			window.removeEventListener('scroll', scrolled, true);
 		};
+	});
+
+	// Com algo selecionado e o menu fechado, Esc desfaz a seleção.
+	$effect(() => {
+		if (!gameMenu.selected || gameMenu.open) return;
+		const esc = (e: KeyboardEvent) => e.key === 'Escape' && cancelSelection();
+		window.addEventListener('keydown', esc);
+		return () => window.removeEventListener('keydown', esc);
 	});
 
 	function choose(i: number) {
@@ -82,7 +92,8 @@
 				>
 			{/if}
 		{/each}
-		<button class="mop" role="menuitem" type="button" onclick={closeMenu}
+		<!-- Cancel fecha o menu e, como no jogo, desfaz o item ou feitiço selecionado. -->
+		<button class="mop" role="menuitem" type="button" onclick={cancelSelection}
 			><span class="ma">Cancel</span></button
 		>
 	</div>

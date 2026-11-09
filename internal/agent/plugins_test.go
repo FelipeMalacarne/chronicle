@@ -125,10 +125,10 @@ func TestPluginCommandsThroughTheLink(t *testing.T) {
 
 func TestGameView(t *testing.T) {
 	ctx := context.Background()
-	// Logged out: only /observe.
+	// Logged out: only the plain /observe.
 	out := &fakeGame{}
 	view := (&Executor{Game: out}).gameView(ctx)
-	if view.Observe == nil || view.Inventory != nil || len(out.requests) != 1 || out.requests[0] != "GET /observe?nearby=15&nearbyLimit=12" {
+	if view.Observe == nil || view.Inventory != nil || len(out.requests) != 1 || out.requests[0] != "GET /observe" {
 		t.Fatalf("logged out view = %+v, requests %v", view, out.requests)
 	}
 	// Logged in: every part, and a failing part carries its error.
@@ -246,6 +246,10 @@ func TestBridgeActions(t *testing.T) {
 		{CmdSpellCast, `{"key":"LOW_LEVEL_ALCHEMY","item":"Oak longbow"}`, `POST /bridge/spells/cast {"item":"Oak longbow","key":"LOW_LEVEL_ALCHEMY"}`},
 		{CmdSpellCast, `{"key":"VARROCK_TELEPORT"}`, `POST /bridge/spells/cast {"key":"VARROCK_TELEPORT"}`},
 		{CmdBankDepositX, `{"name":"Lobster","amount":7}`, `POST /bridge/bank/deposit-x {"amount":7,"name":"Lobster"}`},
+		{CmdSpellCast, `{"key":"WIND_STRIKE","npc":0}`, `POST /bridge/spells/cast {"key":"WIND_STRIKE","npc":0}`},
+		{CmdItemUseOn, `{"item":"Knife","onItem":"Logs"}`, `POST /bridge/inventory/use-on {"item":"Knife","onItem":"Logs"}`},
+		{CmdItemUseOn, `{"item":"Bones","npc":312}`, `POST /bridge/inventory/use-on {"item":"Bones","npc":312}`},
+		{CmdItemUseOn, `{"item":"Raw shrimps","object":26185}`, `POST /bridge/inventory/use-on {"item":"Raw shrimps","object":26185}`},
 	} {
 		bridge.requests = nil
 		if _, err := e.act(ctx, c.command, json.RawMessage(c.params)); err != nil {
@@ -260,6 +264,11 @@ func TestBridgeActions(t *testing.T) {
 		{CmdSpellCast, `{"key":"X; rm"}`, "spell key"},
 		{CmdEquipmentUse, `{"id":1712,"action":"Rub"}`, "by name"},
 		{CmdBankDepositX, `{"name":"Lobster","amount":0}`, "at least 1"},
+		{CmdSpellCast, `{"key":"HIGH_LEVEL_ALCHEMY","item":"Logs","npc":3}`, "one target"},
+		{CmdSpellCast, `{"key":"WIND_STRIKE","npc":70000}`, "bad index"},
+		{CmdItemUseOn, `{"item":"Knife"}`, "one target"},
+		{CmdItemUseOn, `{"item":"Knife","onItem":"Logs","object":1}`, "one target"},
+		{CmdItemUseOn, `{"onItem":"Logs"}`, "item is required"},
 	} {
 		if _, err := e.act(ctx, c.command, json.RawMessage(c.params)); err == nil || !strings.Contains(err.Error(), c.bad) {
 			t.Errorf("%s %s: %v, want %q", c.command, c.params, err, c.bad)
@@ -280,11 +289,38 @@ func TestGameViewWithBridge(t *testing.T) {
 	if len(bridge.requests) != 4 || bridge.requests[0] != "GET /bridge/entities?distance=15&limit=12" {
 		t.Fatalf("bridge requests = %v", bridge.requests)
 	}
-	// Without the bridge the view still works and says why.
-	v = (&Executor{Game: &loggedInGame{}, Bridge: failing{}}).gameView(ctx)
+	// Without the bridge the view still works, says why and takes the nearby NPCs and objects
+	// from the Agent Server's observe (with the bridge, the slow observe is skipped).
+	game := &recordingLoggedIn{}
+	v = (&Executor{Game: game, Bridge: failing{}}).gameView(ctx)
 	if v.Bridge != nil || !strings.Contains(v.Errors["bridge"], "Chronicle Link") || v.Inventory == nil {
 		t.Fatalf("view without a bridge = %+v", v)
 	}
+	if last := game.paths[len(game.paths)-1]; last != "/observe?nearby=15&nearbyLimit=12" {
+		t.Fatalf("without a bridge the last read is %q", last)
+	}
+	game.paths = nil
+	(&Executor{Game: game, Bridge: &fakeGame{}}).gameView(ctx)
+	if slices.Contains(game.paths, "/observe?nearby=15&nearbyLimit=12") {
+		t.Fatalf("with a bridge the nearby observe ran: %v", game.paths)
+	}
+}
+
+// recordingLoggedIn is a logged-in Agent Server that records the paths it served.
+type recordingLoggedIn struct {
+	fakeGame
+	paths []string
+}
+
+func (g *recordingLoggedIn) JSON(_ context.Context, _, path string, q url.Values, _ any, _ time.Duration) (json.RawMessage, error) {
+	if len(q) > 0 {
+		path += "?" + q.Encode()
+	}
+	g.paths = append(g.paths, path)
+	if strings.HasPrefix(path, "/observe") {
+		return json.RawMessage(`{"loggedIn":true}`), nil
+	}
+	return json.RawMessage(`{}`), nil
 }
 
 type failing struct{}

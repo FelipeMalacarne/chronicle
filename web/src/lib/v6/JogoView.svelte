@@ -8,10 +8,11 @@
 		nearMenu,
 		nearRows,
 		qtyLabel,
+		selectedNearMenu,
 		type NearRow
 	} from '#lib/progress/jogo';
 	import Glyph from '#lib/v6/Glyph.svelte';
-	import { gameMenu, openMenu, runAction } from './game/menu.svelte';
+	import { gameMap, gameMenu, openMenu, runAction } from './game/menu.svelte';
 
 	/*
 	 * O que fica em volta do cliente no cockpit (doc 08): o aviso dos scripts de loop, o que está por
@@ -29,6 +30,9 @@
 	const me = $derived(view.observe?.player?.position);
 	const short = (c: string) => c.split('.').pop() ?? c;
 	const key = (r: NearRow) => `${r.kind}:${r.id}:${r.position?.x}:${r.position?.y}`;
+	/** Com algo selecionado ("Use X ->", feitiço de NPC), o menu é o do alvo, como no jogo. */
+	const menuOf = (r: NearRow) =>
+		gameMenu.selected ? selectedNearMenu(gameMenu.selected, r) : nearMenu(r);
 
 	let walkTo = $state({ x: '', y: '', plane: '0' });
 	let pausing = $state(false);
@@ -105,8 +109,8 @@
 				<button
 					class="nr"
 					type="button"
-					onclick={(e) => openMenu(e, nearMenu(r))}
-					oncontextmenu={(e) => openMenu(e, nearMenu(r))}
+					onclick={(e) => openMenu(e, menuOf(r))}
+					oncontextmenu={(e) => openMenu(e, menuOf(r))}
 					title={r.position ? `${r.position.x}, ${r.position.y}, ${r.position.plane}` : undefined}
 				>
 					<span class="kind">{r.kind}</span><span class="nm">{r.name}</span><span class="d"
@@ -124,6 +128,9 @@
 			<input class="wnum sm" placeholder="0" aria-label="plano" bind:value={walkTo.plane} />
 			<button class="btn btn-s" type="submit" disabled={gameMenu.busy || !walkTo.x || !walkTo.y}
 				>Andar</button
+			>
+			<button class="btn btn-s btn-g" type="button" onclick={() => (gameMap.open = true)}
+				>Mapa</button
 			>
 			{#if me}<span class="su tiny">você: {me.x}, {me.y}, {me.plane}</span>{/if}
 		</form>

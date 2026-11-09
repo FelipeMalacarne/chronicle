@@ -104,6 +104,15 @@
                       "text": "Total time: 35 minutes"
                     }
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        253,
+                        364
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.1"
@@ -1693,6 +1702,43 @@
                     "saw",
                     "30 air/mind runes"
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        540,
+                        681
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        1174,
+                        1260
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        1380,
+                        1461
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        1553,
+                        1838
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        1839,
+                        2025
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.13"
@@ -2593,6 +2639,36 @@
                     "tinderbox",
                     "cakes"
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        1416,
+                        1582
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        2621,
+                        2760
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        2761,
+                        3120
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        5464,
+                        5711
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.18"
@@ -3255,6 +3331,15 @@
                     "leather gloves",
                     "cakes"
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        45,
+                        471
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.22"
@@ -3778,6 +3863,15 @@
                       "text": "OSRS blackjacking (270k xp/h)"
                     }
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        1559,
+                        1633
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.24"
@@ -4280,6 +4374,15 @@
                       "text": "https://www.youtube.com/watch?v=zDkz186YgME"
                     }
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        1709,
+                        1833
+                      ],
+                      "color": "orange"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.26"
@@ -4763,6 +4866,50 @@
                       "text": "OSRSRecklessLadHowDoesFoodWorkV2.png"
                     }
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        389,
+                        395
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        397,
+                        404
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        422,
+                        426
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        428,
+                        434
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        436,
+                        441
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        443,
+                        452
+                      ],
+                      "color": "orange"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.30"
@@ -5031,6 +5178,15 @@
                       "type": "other",
                       "url": "https://www.youtube.com/watch?v=6wuG8IvxHbM",
                       "text": "OSRS blackjacking (270k xp/h)"
+                    }
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        446,
+                        993
+                      ],
+                      "color": "red"
                     }
                   ],
                   "source": {
@@ -6063,6 +6219,22 @@
                     "charcoal",
                     "tinderbox",
                     "cup of tea (stolen)"
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        154,
+                        271
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        593,
+                        624
+                      ],
+                      "color": "red"
+                    }
                   ],
                   "source": {
                     "origin": "other",
@@ -7810,6 +7982,15 @@
                     "If you get asked for a bar that you cannot smith you can reset them",
                     "If you do this too often you will be sent back for more ore tasks",
                     "but it is still the fastest way of progressing this quest"
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        1446,
+                        1762
+                      ],
+                      "color": "red"
+                    }
                   ],
                   "source": {
                     "origin": "other",
@@ -15036,6 +15217,15 @@
                     "law runes",
                     "half a mushroom pie"
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        120,
+                        164
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.84"
@@ -15836,6 +16026,43 @@
                     "anti-dragon shield",
                     "salmon"
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        564,
+                        601
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        606,
+                        667
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        674,
+                        994
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        1001,
+                        1261
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        1268,
+                        1795
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.89"
@@ -16175,6 +16402,15 @@
                     "3 Ugthanki dung",
                     "empty bucket",
                     "jangerberry"
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        1396,
+                        1669
+                      ],
+                      "color": "orange"
+                    }
                   ],
                   "source": {
                     "origin": "other",
@@ -16543,6 +16779,29 @@
                       "type": "guide",
                       "url": "https://docs.google.com/document/d/1rAnKmezSQmnqFOCti4RWze-kvMoW8i4Kyk5xswJ-9Qc/edit#",
                       "text": "20260816FarmingGuide"
+                    }
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        3686,
+                        4369
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        7250,
+                        7293
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        7314,
+                        7524
+                      ],
+                      "color": "red"
                     }
                   ],
                   "source": {
@@ -17288,6 +17547,15 @@
                       "text": "Low level earth orbs"
                     }
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        926,
+                        996
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH1.96"
@@ -17897,6 +18165,15 @@
                     "digsite pendant",
                     "games necklace"
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        1447,
+                        1580
+                      ],
+                      "color": "orange"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH2.2"
@@ -18052,6 +18329,22 @@
                       "type": "other",
                       "url": "https://www.youtube.com/watch?v=GFH6-oJrJ0o",
                       "text": "https://www.youtube.com/watch?v=GFH6-oJrJ0o"
+                    }
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        74,
+                        81
+                      ],
+                      "color": "red"
+                    },
+                    {
+                      "span": [
+                        126,
+                        193
+                      ],
+                      "color": "red"
                     }
                   ],
                   "source": {
@@ -20075,6 +20368,15 @@
                     "tinderbox",
                     "mining helmet"
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        391,
+                        423
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH2.16"
@@ -21760,6 +22062,15 @@
                     "20 pure essence",
                     "catspeak amulet",
                     "cat"
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        52,
+                        142
+                      ],
+                      "color": "orange"
+                    }
                   ],
                   "source": {
                     "origin": "other",
@@ -24542,6 +24853,15 @@
                       "text": "an example setup here"
                     }
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        699,
+                        1343
+                      ],
+                      "color": "red"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH2.43"
@@ -24745,6 +25065,15 @@
                       "type": "other",
                       "url": "https://www.youtube.com/watch?v=eDaAFEwqzqE",
                       "text": "Imbue Any Item in Just 10 Minutes with This Amazing Method"
+                    }
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        818,
+                        1049
+                      ],
+                      "color": "red"
                     }
                   ],
                   "source": {
@@ -29160,6 +29489,22 @@
                       "text": "Easy Tempoross Solo | Guaranteed Kills Guide ALL Levels"
                     }
                   ],
+                  "marks": [
+                    {
+                      "span": [
+                        1390,
+                        1482
+                      ],
+                      "color": "orange"
+                    },
+                    {
+                      "span": [
+                        1538,
+                        1605
+                      ],
+                      "color": "orange"
+                    }
+                  ],
                   "source": {
                     "origin": "other",
                     "original_id": "CH2.71"
@@ -29636,6 +29981,15 @@
                       "type": "other",
                       "url": "https://www.youtube.com/watch?v=cgZepwdI-FU",
                       "text": "Gravestone Prayer Training (minimal risk)"
+                    }
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        2421,
+                        2680
+                      ],
+                      "color": "red"
                     }
                   ],
                   "source": {
@@ -32045,6 +32399,15 @@
                       "type": "guide",
                       "url": "https://docs.google.com/document/d/1y4fh4-oWjLiIRKht3mt_MOG5M-GQJiw9RtLEZhwYEjQ/edit#",
                       "text": "Fragment of Seren written guide"
+                    }
+                  ],
+                  "marks": [
+                    {
+                      "span": [
+                        1443,
+                        1456
+                      ],
+                      "color": "red"
                     }
                   ],
                   "source": {

@@ -210,6 +210,34 @@
         }
       }
     },
+    "textMark": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "span",
+        "color"
+      ],
+      "properties": {
+        "span": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2,
+          "description": "[início, fim) em bytes dentro de text."
+        },
+        "color": {
+          "type": "string",
+          "enum": [
+            "red",
+            "orange",
+            "green"
+          ]
+        }
+      }
+    },
     "link": {
       "type": "object",
       "additionalProperties": false,
@@ -886,6 +914,13 @@
           "items": {
             "$ref": "#/$defs/link"
           }
+        },
+        "marks": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/textMark"
+          },
+          "description": "Trechos coloridos do texto da fonte, em ordem (o BRUHsailer diz \"cheapest in red\" e pinta as palavras)."
         },
         "complete_when": {
           "$ref": "#/$defs/ruleList",

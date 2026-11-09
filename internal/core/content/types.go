@@ -275,26 +275,29 @@ const (
 
 // Step is one actionable line of the guide.
 type Step struct {
-	ID               string   `json:"id"`
-	Text             string   `json:"text"`
-	Location         string   `json:"location,omitempty"`
-	Notes            []Note   `json:"notes,omitempty"`
-	Items            []Item   `json:"items,omitempty"`
-	Links            []Link   `json:"links,omitempty"`
-	CompleteWhen     RuleList `json:"complete_when,omitempty"`
-	Prerequisites    RuleList `json:"prerequisites,omitempty"`
-	ManualOK         *bool    `json:"manual_ok,omitempty"`
-	Requires         []string `json:"requires,omitempty"`
-	RecommendedAfter []string `json:"recommended_after,omitempty"`
-	Unlocks          []string `json:"unlocks,omitempty"`
-	Tags             []string `json:"tags,omitempty"`
-	Modes            []string `json:"modes,omitempty"`
-	Layers           []string `json:"layers,omitempty"`
-	Phase            string   `json:"phase,omitempty"`
-	Optional         bool     `json:"optional,omitempty"`
-	EstimateMinutes  *int     `json:"estimate_minutes,omitempty"`
-	Replaces         []string `json:"replaces,omitempty"`
-	Source           *Source  `json:"source,omitempty"`
+	ID       string `json:"id"`
+	Text     string `json:"text"`
+	Location string `json:"location,omitempty"`
+	Notes    []Note `json:"notes,omitempty"`
+	Items    []Item `json:"items,omitempty"`
+	Links    []Link `json:"links,omitempty"`
+	// Marks are the colored runs of the source text, in text order (the
+	// BRUHsailer DOCX says "cheapest in red" and colors the words).
+	Marks            []TextMark `json:"marks,omitempty"`
+	CompleteWhen     RuleList   `json:"complete_when,omitempty"`
+	Prerequisites    RuleList   `json:"prerequisites,omitempty"`
+	ManualOK         *bool      `json:"manual_ok,omitempty"`
+	Requires         []string   `json:"requires,omitempty"`
+	RecommendedAfter []string   `json:"recommended_after,omitempty"`
+	Unlocks          []string   `json:"unlocks,omitempty"`
+	Tags             []string   `json:"tags,omitempty"`
+	Modes            []string   `json:"modes,omitempty"`
+	Layers           []string   `json:"layers,omitempty"`
+	Phase            string     `json:"phase,omitempty"`
+	Optional         bool       `json:"optional,omitempty"`
+	EstimateMinutes  *int       `json:"estimate_minutes,omitempty"`
+	Replaces         []string   `json:"replaces,omitempty"`
+	Source           *Source    `json:"source,omitempty"`
 	// Entities are the exactly resolved entity references of the step,
 	// written by internal/core/entities/enrich.
 	Entities []EntityMention `json:"entities,omitempty"`
@@ -383,6 +386,20 @@ type Link struct {
 	Type string `json:"type"`
 	URL  string `json:"url"`
 	Text string `json:"text,omitempty"`
+}
+
+// Mark colors: the hue family of a colored run of the source text.
+const (
+	MarkRed    = "red"
+	MarkOrange = "orange"
+	MarkGreen  = "green"
+)
+
+// TextMark is a colored run of the step text: Span is [start, end) in bytes
+// of Text.
+type TextMark struct {
+	Span  [2]int `json:"span"`
+	Color string `json:"color"`
 }
 
 // Source records where a guide or step came from, for attribution and diffing.

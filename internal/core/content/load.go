@@ -235,6 +235,7 @@ func (g *Guide) check(name string) Errors {
 			seenStep[st.ID] = ptr
 		}
 		st.TextHash = StepTextHash(st)
+		issues = append(issues, checkStepMarks(name, ptr, st)...)
 		if reg != nil {
 			issues = append(issues, g.checkStepEntities(name, ptr, st, reg)...)
 			issues = append(issues, g.checkStepObjectives(name, ptr, st, reg)...)

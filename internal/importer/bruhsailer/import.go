@@ -112,7 +112,14 @@ type Step struct {
 	Notes  []Note   `json:"notes,omitempty"`
 	Items  []string `json:"items,omitempty"`
 	Links  []Link   `json:"links,omitempty"`
+	Marks  []Mark   `json:"marks,omitempty"`
 	Source Source   `json:"source"`
+}
+
+// Mark is a colored run of the step text: [start, end) bytes and its hue.
+type Mark struct {
+	Span  [2]int `json:"span"`
+	Color string `json:"color"`
 }
 
 type Note struct {
@@ -236,6 +243,13 @@ type rawBullet struct {
 	Level int
 	Text  string
 	Links []rawLink
+	Marks []rawMark
+}
+
+// rawMark is a colored run, in bytes of the paragraph (or bullet) text.
+type rawMark struct {
+	Start, End int
+	Color      string
 }
 
 type rawLink struct {
@@ -247,6 +261,7 @@ type paragraph struct {
 	Text        string
 	BulletLevel *int
 	Links       []rawLink
+	Marks       []rawMark
 }
 
 var (
@@ -336,7 +351,8 @@ func parseChapter(data []byte, chapterNumber int) (rawChapter, error) {
 			if len(metadata) > 0 && len(bullets) > 0 {
 				closeStep()
 			}
-			bullets = append(bullets, rawBullet{Level: *p.BulletLevel, Text: text, Links: p.Links})
+			lead := len(p.Text) - len(strings.TrimLeftFunc(p.Text, unicode.IsSpace))
+			bullets = append(bullets, rawBullet{Level: *p.BulletLevel, Text: text, Links: p.Links, Marks: shiftMarks(p.Marks, lead, len(text))})
 			continue
 		}
 		if len(bullets) > 0 && len(metadata) == 0 {
@@ -409,7 +425,7 @@ func buildGuide(chapters []rawChapter) (Guide, Result, error) {
 			}
 			for _, sourceStep := range sourceSection.Steps {
 				chapterStep++
-				text := formatBullets(sourceStep.Bullets)
+				text, marks := formatBullets(sourceStep.Bullets)
 				if text == "" {
 					return Guide{}, Result{}, fmt.Errorf("chapter %d section %s contains an empty step", chapter.Number, sourceSection.Ref)
 				}
@@ -426,6 +442,7 @@ func buildGuide(chapters []rawChapter) (Guide, Result, error) {
 						OriginalID: fmt.Sprintf("CH%d.%d", chapter.Number, chapterStep),
 					},
 				}
+				step.Marks = marks
 				step.Links = collectLinks(sourceStep.Bullets)
 				result.Metadata.Links += len(step.Links)
 				appendMetadata(&step, sourceStep.Metadata, &result.Metadata)
@@ -440,9 +457,11 @@ func buildGuide(chapters []rawChapter) (Guide, Result, error) {
 	return guide, result, nil
 }
 
-func formatBullets(bullets []rawBullet) string {
+// formatBullets joins the bullets as "- " lines indented by level, and moves
+// their colored runs to offsets of the joined text.
+func formatBullets(bullets []rawBullet) (string, []Mark) {
 	if len(bullets) == 0 {
-		return ""
+		return "", nil
 	}
 	minLevel := bullets[0].Level
 	for _, bullet := range bullets[1:] {
@@ -451,12 +470,92 @@ func formatBullets(bullets []rawBullet) string {
 		}
 	}
 	lines := make([]string, 0, len(bullets))
+	var marks []Mark
+	offset := 0
 	for _, bullet := range bullets {
 		indent := strings.Repeat("  ", bullet.Level-minLevel)
-		text := strings.ReplaceAll(strings.TrimSpace(bullet.Text), "\n", " ")
-		lines = append(lines, indent+"- "+text)
+		// Bullet text is already trimmed; replacing newlines keeps byte offsets.
+		text := strings.ReplaceAll(bullet.Text, "\n", " ")
+		line := indent + "- " + text
+		base := offset + len(line) - len(text)
+		for _, m := range bullet.Marks {
+			marks = append(marks, Mark{Span: [2]int{base + m.Start, base + m.End}, Color: m.Color})
+		}
+		lines = append(lines, line)
+		offset += len(line) + 1
 	}
-	return strings.Join(lines, "\n")
+	return strings.Join(lines, "\n"), marks
+}
+
+// shiftMarks moves paragraph marks to the text trimmed of lead leading bytes
+// and size bytes long, dropping what the trim cut off.
+func shiftMarks(marks []rawMark, lead, size int) []rawMark {
+	var out []rawMark
+	for _, m := range marks {
+		start, end := max(m.Start-lead, 0), min(m.End-lead, size)
+		if start < end {
+			out = append(out, rawMark{Start: start, End: end, Color: m.Color})
+		}
+	}
+	return out
+}
+
+// markColor maps a DOCX run color (hex RRGGBB) to the hue family the guide
+// uses for emphasis, or "" for black, gray, blue links and the purple of the
+// metadata lines.
+func markColor(hex string) string {
+	var r, g, b int
+	if _, err := fmt.Sscanf(strings.ToLower(hex), "%02x%02x%02x", &r, &g, &b); err != nil {
+		return ""
+	}
+	hi, lo := max(r, g, b), min(r, g, b)
+	if hi < 64 || hi == lo || float64(hi-lo)/float64(hi) < 0.35 {
+		return ""
+	}
+	var hue float64
+	d := float64(hi - lo)
+	switch hi {
+	case r:
+		hue = 60 * float64(g-b) / d
+	case g:
+		hue = 60 * (2 + float64(b-r)/d)
+	default:
+		hue = 60 * (4 + float64(r-g)/d)
+	}
+	if hue < 0 {
+		hue += 360
+	}
+	switch {
+	case hue < 25 || hue >= 340:
+		return corecontent.MarkRed
+	case hue < 50:
+		return corecontent.MarkOrange
+	case hue >= 75 && hue < 170:
+		return corecontent.MarkGreen
+	}
+	return ""
+}
+
+// addMark records text[start:end] as colored, trimmed of surrounding spaces
+// and merged with the previous run when they touch and share the color.
+func addMark(p *paragraph, text string, start, end int, color string) {
+	for start < end && unicode.IsSpace(rune(text[start])) {
+		start++
+	}
+	for end > start && unicode.IsSpace(rune(text[end-1])) {
+		end--
+	}
+	if start >= end {
+		return
+	}
+	if n := len(p.Marks); n > 0 {
+		last := &p.Marks[n-1]
+		if last.Color == color && strings.TrimSpace(text[last.End:start]) == "" {
+			last.End = end
+			return
+		}
+	}
+	p.Marks = append(p.Marks, rawMark{Start: start, End: end, Color: color})
 }
 
 func stableStepID(sectionID string, step rawStep) string {
@@ -663,6 +762,8 @@ func parseParagraphs(data []byte, relationships map[string]string) ([]paragraph,
 	var currentLinkID string
 	var linkText strings.Builder
 	inText := false
+	inRun := false
+	runColor := ""
 	flushLink := func() {
 		if current == nil || currentLinkID == "" {
 			return
@@ -711,6 +812,17 @@ func parseParagraphs(data []byte, relationships map[string]string) ([]paragraph,
 						currentLinkID = attr.Value
 					}
 				}
+			case "r":
+				inRun = true
+				runColor = ""
+			case "color":
+				if inRun {
+					for _, attr := range value.Attr {
+						if attr.Name.Local == "val" {
+							runColor = markColor(attr.Value)
+						}
+					}
+				}
 			case "t":
 				inText = true
 			case "tab":
@@ -730,7 +842,11 @@ func parseParagraphs(data []byte, relationships map[string]string) ([]paragraph,
 			}
 		case xml.CharData:
 			if current != nil && inText {
+				start := text.Len()
 				text.Write([]byte(value))
+				if runColor != "" {
+					addMark(current, text.String(), start, text.Len(), runColor)
+				}
 				if currentLinkID != "" {
 					linkText.Write([]byte(value))
 				}
@@ -739,6 +855,9 @@ func parseParagraphs(data []byte, relationships map[string]string) ([]paragraph,
 			switch value.Name.Local {
 			case "t":
 				inText = false
+			case "r":
+				inRun = false
+				runColor = ""
 			case "hyperlink":
 				flushLink()
 			case "p":

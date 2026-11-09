@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 	"testing"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
@@ -90,6 +91,18 @@ func TestGeneratedGuideSatisfiesCanonicalSchema(t *testing.T) {
 	}
 	if source := segment.Loadout.Source; source == nil || source.Method != content.ProvenanceExplicit || len(source.StepIDs) != 1 || source.StepIDs[0] != step.ID {
 		t.Errorf("CH1.4 loadout provenance = %#v", source)
+	}
+	// CH1.30 says "cheapest in red": the colored produce of the DOCX survive as marks.
+	shop, ok := guide.Step("bruh-1.2-35cd62097568")
+	if !ok {
+		t.Fatal("CH1.30 step not found")
+	}
+	var marked []string
+	for _, m := range shop.Marks {
+		marked = append(marked, m.Color+":"+shop.Text[m.Span[0]:m.Span[1]])
+	}
+	if want := []string{"red:potato", "red:cabbage", "orange:lime", "orange:orange", "orange:lemon", "orange:pineapple"}; strings.Join(marked, ",") != strings.Join(want, ",") {
+		t.Errorf("CH1.30 marks = %q, want %q", marked, want)
 	}
 }
 

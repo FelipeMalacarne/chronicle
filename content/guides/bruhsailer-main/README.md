@@ -43,6 +43,7 @@ does not match the pinned revision.
   as `source.original_id` (for example, `CH1.1`).
 - Ordered bullet paragraphs become the step text, with indentation retained.
 - Hyperlinks become structured `links` in their original order.
+- Colored runs (red, orange and green hues; not black, gray, link blue or the purple metadata lines) become `marks`: `[start, end)` bytes of `text` plus the hue family, so "cheapest in red" still points at something.
 - Items are split into the schema's `items` array while the exact upstream
   string is retained in a note. Exact GP, skills/quests, items and cumulative
   timing strings are retained as notes because schema v1 has no dedicated

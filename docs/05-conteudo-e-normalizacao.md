@@ -308,6 +308,13 @@ Resultado da migração: 7 seções, 576 passos, 209 com regra automática (170 
   `ironman content import-bruhsailer`. Os passos são parágrafos longos (média de 1097 caracteres) e
   **não têm regras `complete_when`**; os metadados da fonte (GP, tempo, itens, skills/quests) ficam como
   notas. Proveniência e mapeamento em `content/guides/bruhsailer-main/README.md`.
+- **Cores do autor** (2026-11-08): o DOCX usa cor de texto como ênfase ("cheapest in red" no CH1.30,
+  laranja para o caminho da Phoenix e vermelho para o da Black Arm no CH1.13, avisos de HCIM). O
+  importador grava cada trecho colorido em `step.marks[]` (`span` em bytes de `text`, `color`
+  `red`/`orange`/`green` pela família do matiz); preto, cinza, o azul dos links e o roxo das linhas de
+  metadados não viram mark. O loader confere que cada span cai dentro do texto, em ordem e sem cortar
+  caractere. Os links da fonte (`links[]`, 158 no BRUHsailer) aparecem na Rota: no texto, quando o
+  autor cita o nome do arquivo ("route in red in Sunset Ocean.png"), ou numa linha "Links".
 - **Segmentos**: os dois guias são divididos em `bank_leg` (começa numa ação de banco explícita) e
   `sequence`, com `bank_actions` e `loadout` `known`/`partial`/`unknown`, sempre com proveniência.
   Oziris: 32 segmentos (25 bank legs, 5 loadouts parciais). BRUHsailer: 102 (99 bank legs, 84 parciais).

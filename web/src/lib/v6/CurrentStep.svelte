@@ -5,12 +5,15 @@
 	import {
 		chipsOf,
 		isParagraphStep,
+		looseLinks,
+		markRanges,
 		metaOf,
 		paragraphOf,
+		piecesOf,
 		statusView,
 		stepNotes
 	} from '#lib/progress/view';
-	import { actionsOf, missingOf, type PassoObjective } from '#lib/progress/passo';
+	import { actionsOf, missingOf, type Action, type PassoObjective } from '#lib/progress/passo';
 	import type { BoardStep, ContentStep } from '#lib/progress/types';
 
 	/**
@@ -81,6 +84,9 @@
 	const missing = $derived(paragraph ? missingOf(passoObjs) : []);
 	/* Sem TL;DR, a primeira ação é o título; sai da lista quando não cita objetivo nenhum. */
 	const headline = $derived(para.tldr ? para.head : (allActions[0]?.text ?? para.head));
+	const headlineAt = $derived(
+		para.tldr ? para.headAt : allActions[0] ? allActions[0].start : para.headAt
+	);
 	const actions = $derived(
 		!para.tldr && allActions[0]?.state === 'plain' ? allActions.slice(1) : allActions
 	);
@@ -100,6 +106,21 @@
 	const meta = $derived(metaOf(step).filter((m) => m.label !== 'itens'));
 	const notes = $derived(stepNotes(step));
 	const wiki = $derived((step.links ?? []).filter((l) => l.type === 'wiki'));
+	/* Cores do autor (step.marks) e links que o texto cita pelo nome; os outros links, fora a wiki
+	 * (linha própria), vão numa linha "links". */
+	const ranges = $derived(markRanges(step.text, step.marks));
+	const cited = $derived((step.links ?? []).filter((l) => l.type !== 'wiki'));
+	const loose = $derived(looseLinks(step.text, cited));
+	const piecesAt = (text: string, at: number) => piecesOf(text, at, ranges, '', cited);
+	/** Os trechos de uma ação (citações de objetivo à parte), cada um com as cores e links. */
+	const actionParts = (a: Action) => {
+		let at = a.start;
+		return a.pieces.map((p) => {
+			const sub = piecesAt(p.text, at);
+			at += p.text.length;
+			return { ...p, sub };
+		});
+	};
 	const plaqueRight = $derived(
 		[where, ...meta.map((m) => `${m.label} ${m.value}`)].filter(Boolean).join(' · ')
 	);
@@ -126,6 +147,13 @@
 
 <!-- eslint-disable svelte/no-navigation-without-resolve -- os hrefs internos vêm de resolve() + âncora; os externos são da wiki -->
 
+{#snippet text(ps: ReturnType<typeof piecesAt>)}{#each ps as x, i (i)}{#if x.href}<a
+				class={x.c ? `mk mk-${x.c}` : undefined}
+				href={x.href}
+				target="_blank"
+				rel="noreferrer">{x.t}</a
+			>{:else if x.c}<span class="mk mk-{x.c}">{x.t}</span>{:else}{x.t}{/if}{/each}{/snippet}
+
 <article class="panel">
 	<div class="plaque">
 		<span class="st st-cur stc" aria-hidden="true"></span>Passo atual · {step.ref}
@@ -151,7 +179,9 @@
 	<div class="body">
 		{#if paragraph}
 			<h1 class="sr para" class:long={headline.length > 220}>
-				{#if para.tldr}<span class="tl">TL;DR</span>{/if}{headline}
+				{#if para.tldr}<span class="tl">TL;DR</span>{/if}{@render text(
+					piecesAt(headline, headlineAt)
+				)}
 			</h1>
 			{#if missing.length}
 				<p class="falta" title="O que este passo conclui ou inicia e a conta ainda não tem">
@@ -159,7 +189,7 @@
 				</p>
 			{/if}
 		{:else}
-			<h1 class="sr short">{step.text}</h1>
+			<h1 class="sr short">{@render text(piecesAt(step.text, 0))}</h1>
 		{/if}
 
 		{#if chips.length}
@@ -203,11 +233,11 @@
 											size={9}
 										/>{:else if a.state === 'unknown'}?{/if}</span
 								><span class="tx"
-									>{#each a.pieces as p, i (i)}{#if p.objective}<mark
+									>{#each actionParts(a) as p, i (i)}{#if p.objective}<mark
 												class="q q-{p.objective.verdict}"
 												title={`${ROLE_WORD[p.objective.role] ?? p.objective.role} ${p.objective.label} · ${VERDICT_WORD[p.objective.verdict]}`}
-												>{p.text}</mark
-											>{:else}{p.text}{/if}{/each}</span
+												>{@render text(p.sub)}</mark
+											>{:else}{@render text(p.sub)}{/if}{/each}</span
 								>
 							</li>
 						{/each}
@@ -222,6 +252,14 @@
 				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- link externo da wiki -->
 				{#each wiki as l (l.url)}<a href={l.url} target="_blank" rel="noreferrer"
 						>{l.text ?? l.url}</a
+					>{/each}
+			</div>
+		{/if}
+		{#if loose.length}
+			<div class="line">
+				<span class="lbl">links</span>
+				{#each loose as l, i (l.url + i)}<a href={l.url} target="_blank" rel="noreferrer"
+						>{l.text?.trim() || l.url}</a
 					>{/each}
 			</div>
 		{/if}
@@ -258,6 +296,19 @@
 </article>
 
 <style>
+	/* Cores do autor no texto (BRUHsailer), como na Rota. */
+	.mk {
+		font-weight: 600;
+	}
+	.mk-red {
+		color: var(--not-started);
+	}
+	.mk-orange {
+		color: var(--stale);
+	}
+	.mk-green {
+		color: var(--done);
+	}
 	article {
 		display: flex;
 		flex-direction: column;

@@ -274,14 +274,14 @@ trilha da última troca). Desenhar no canvas antes da entrega 2.
 ### Cliente headless num N95
 
 Medido no zaros (Ryzen 7 7800X3D) em 2026-11-09, com o cliente de dev **em janela** pescando (Tick
-Fisher e Kitten ligados, o cockpit lendo): 1,1 a 2 núcleos e 2,7 GB de RSS (`-Xmx2g`). O perfil
-estava no pior caso: FPS sem limite (`fpscontrol.limitFps=false`) e o 117 HD ligado. O N95 tem 4
-núcleos e 4 threads e cerca de metade do desempenho por núcleo; nessa configuração ficaria no limite.
-
-O headless corta o que mais pesa: sem GPU e sem 117 HD (o `mb-client start --headless` já desliga).
-Junto, limitar o FPS (FPS Control em 15 a 20; o bot age por tick de 600 ms) e deixar o cockpit ler
-menos quando ninguém olha (o `/observe` com o que está por perto custa ~2 s de cliente). Um cliente
-deve caber com folga em 8 GB de RAM; dois, provavelmente não no CPU.
+Fisher e Kitten ligados, o cockpit lendo): 1,1 a 2 núcleos e 2,7 GB de RSS (`-Xmx2g`), com o 117 HD
+desenhando na RTX 4070 SUPER e FPS sem limite (`fpscontrol.limitFps=false`). Esse número não serve
+para o headless: lá não há GPU (Xvfb), o 117 HD fica desligado e o cliente volta ao renderizador do
+jogo, que desenha no CPU. O que muda o custo é o FPS: limitar no FPS Control (15 a 20; o bot age por
+tick de 600 ms). O N95 tem 4 núcleos e 4 threads, com cerca de metade do desempenho por núcleo do
+7800X3D; um cliente deve caber, dois provavelmente não. Sem o 117 HD a memória também cai (no início
+ele deixou 66 MiB livres dos 2 GiB); 8 GB de RAM bastam para um. O cockpit pesa no cliente: o
+`/observe` com o que está por perto custa ~2 s, então ler menos quando ninguém olha.
 
 Antes de decidir: medir o headless com FPS limitado (CPU por 10 min fazendo a atividade principal)
 no zaros, e depois no N95. Levar o cliente para outra máquina leva junto o harness (Nix), a sessão

@@ -171,13 +171,25 @@ fit_headless_window() {
 	IFS=x read -r w h _ <<<"$size"
 	for ((i = 0; i < 20; i++)); do
 		id="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool search --name '^RuneLite( - .*)?$' 2>/dev/null | head -1)"
-		if [[ -n "$id" ]]; then
-			DISPLAY="$MB_HEADLESS_DISPLAY" xdotool windowmove "$id" 0 0 windowsize "$id" "$w" "$h" && echo "window fitted to ${w}x${h}"
-			return 0
+		[[ -n "$id" ]] && break
+		sleep 1
+	done
+	[[ -n "$id" ]] || { echo "window: not found, not resized"; return 0; }
+	# The client applies its saved size a few seconds after the Agent Server is up: keep fitting
+	# until it holds. Only while logged out: a resize during a mouse movement leaves the target
+	# off screen and the movement never ends (it froze Tick Fisher, 2026-11-09).
+	local held=0 geometry
+	for ((i = 0; i < 30 && held < 5; i++)); do
+		geometry="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool getwindowgeometry "$id" 2>/dev/null | awk '/Geometry/ {print $2}')"
+		if [[ "$geometry" == "${w}x${h}" ]]; then
+			held=$((held + 1))
+		else
+			held=0
+			DISPLAY="$MB_HEADLESS_DISPLAY" xdotool windowmove "$id" 0 0 windowsize "$id" "$w" "$h"
 		fi
 		sleep 1
 	done
-	echo "window: not found, not resized"
+	echo "window fitted to ${w}x${h}"
 }
 
 # Nobody listens to a headless client. Mutes its stream once it plays (the login music);

@@ -988,7 +988,10 @@ public class TickFisherScript extends Script
 		spot = null;
 	}
 
-	/** Keeping the caviar: deposit it (and any fish left) when the inventory fills, and walk back. */
+	/**
+	 * Keeping the caviar: deposit it, the roe a plain stretch's cuts piled up (22 of them filled
+	 * the inventory, 0.10.2) and any fish left when the inventory fills, and walk back.
+	 */
 	private void bankCaviar(Session s)
 	{
 		Microbot.status = "Tick Fisher: banking caviar";
@@ -998,9 +1001,16 @@ public class TickFisherScript extends Script
 		}
 		int caviar = Rs2Inventory.count(ItemID.BRUT_CAVIAR);
 		Rs2Bank.depositAll(item -> isFish(item.getId()) || item.getId() == ItemID.BRUT_CAVIAR
-			|| item.getId() == ItemID.XBOWS_CROSSBOW_STOCK_TEAK);
-		if (!Global.sleepUntil(() -> !Rs2Inventory.hasItem(ItemID.BRUT_CAVIAR) && !Rs2Inventory.hasItem(place.fish), 3000))
+			|| item.getId() == ItemID.BRUT_ROE || item.getId() == ItemID.XBOWS_CROSSBOW_STOCK_TEAK);
+		if (!Global.sleepUntil(() -> !Rs2Inventory.hasItem(ItemID.BRUT_CAVIAR) && !Rs2Inventory.hasItem(ItemID.BRUT_ROE)
+			&& !Rs2Inventory.hasItem(place.fish), 3000))
 		{
+			return;
+		}
+		if (Rs2Inventory.emptySlotCount() <= CAVIAR_BANK_FREE_SLOTS)
+		{
+			// Something else fills the inventory: banking again would not make room.
+			s.stop("No room in the inventory after banking the caviar");
 			return;
 		}
 		s.caviarBanked += caviar;

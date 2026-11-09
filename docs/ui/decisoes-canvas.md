@@ -134,8 +134,8 @@ classe). Artboards seguidos:
 | Agora · passo-parágrafo por dentro (2026-11-08, implementado direto) | V6PassoAcoes640, página "1b · Agora · passo-parágrafo por dentro" | `/` |
 | Conta | V6Conta1440, V6Conta640 | `/conta` |
 | Primeiro acesso | V6Setup1440 | `/setup` |
-| Automação › Cockpit (2026-11-08, doc 08 fases 1 e 2) | V6Microbot1440 (só dashboard e VNC ao vivo), V6Microbot640 (só dashboard) | `/automacao` |
-| Automação › Plugins (2026-11-08, doc 08 fase 3) | V6MicrobotPlugins1440 | `/automacao/plugins` |
+| Automação › Cockpit (2026-11-08, doc 08 fases 1 e 2) | V6Microbot1440 (só dashboard e VNC ao vivo), V6Microbot640 (só dashboard); com a conta logada, V6MicrobotJogo1440 (página 5b) | `/automacao` |
+| Automação › Plugins (2026-11-08, doc 08 fase 3) | V6MicrobotPlugins1440; o formulário de config, V6MicrobotConfig1440 (página 5b) | `/automacao/plugins` |
 
 Onde o código diverge do canvas, por falta de dado ou de API (para o dono decidir se o canvas muda ou
 se a API vem depois):
@@ -151,10 +151,10 @@ se a API vem depois):
    chaves de cada plugin ficam no navegador; "Pausar" vira "Pausar todos", porque o Agent Server pausa
    todos os loops; a lista tem três grupos (Hub, seus, do cliente) e os do cliente ficam escondidos.
    A classe `.dot-off` (ponto cinza de parado) entrou no `pergaminho.css`: os artboards a usam, mas o
-   design system não a definia. O Cockpit ganhou, sem artboard (o dono aprovou implementar e publicar a
-   página no canvas depois), os painéis do jogo com a conta logada: inventário, equipamento, Ação,
-   diálogo, por perto, script ativo, banco, skills e chat do jogo; e, também sem artboard, "Trocar de
-   mundo" na faixa, "Conta do cliente" e "Log do cliente"; e o formulário de configuração em Plugins
+   design system não a definia. O Cockpit ganhou, implementados direto e publicados depois na página
+   "5b · Automação · ver e agir, logs, conta e config" (artboards V6MicrobotJogo1440 e
+   V6MicrobotConfig1440, aprovação de 2026-11-05), os painéis do jogo com a conta logada: inventário, equipamento, Ação,
+   diálogo, por perto, script ativo, banco, skills e chat do jogo; e "Trocar de mundo" na faixa, "Conta do cliente" e "Log do cliente"; e o formulário de configuração em Plugins
    (no lugar do chave/valor do artboard, que fica como alternativa). "Nesta sessão" no rodapé do Agora conta as últimas 6 h de eventos, sem o link "ver". O
    Grafo entrou em 2026-11-08 (doc 04, seção 5); ele diverge do canvas em três pontos: o foco padrão é
    a primeira meta fixada, escolhida num menu do botão "Foco"; a profundidade padrão é 2 (o artboard

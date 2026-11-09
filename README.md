@@ -25,7 +25,7 @@ before each launch.
 
 Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
 
-## Chronicle Link (`fm/chroniclelink`, 1.4.2)
+## Chronicle Link (`fm/chroniclelink`, 1.5.0)
 
 Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
 1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
@@ -38,7 +38,10 @@ varbits/varps and, when switched on, bank/inventory/equipment (ingest contract v
 (`-Dmicrobot.dev.harness=true`) the plugin also serves Chronicle's control bridge on
 `.runelite/agent/bridge.sock` (`ironman-planner/docs/08-controle-microbot.md`): the real menu options
 of nearby NPCs, objects (only those with an action) and worn items, the prayer book and the spellbook, and typed actions for
-them (toggle a prayer, cast a spell, Remove/Rub a worn item, Deposit-X). Every request needs the
+them (toggle a prayer; cast a spell, on an NPC for combat spells and curses or on an item for
+alchemy and Superheat; use an inventory item on another item, an NPC or an object; Remove/Rub a worn
+item; Deposit-X). The spellbook lists combat spells too, each with what it is cast on (`target`:
+`item`, `npc`, `none`, or `unsupported` for targets the bridge cannot reach yet, like enchanting). Every request needs the
 Agent Server's token; without it nothing answers. It also keeps `.runelite/agent/config-schema.json`
 with every loaded Microbot plugin's config options, for Chronicle's config form. In the everyday
 client none of this starts.

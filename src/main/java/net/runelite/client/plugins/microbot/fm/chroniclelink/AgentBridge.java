@@ -32,10 +32,13 @@ import net.runelite.client.plugins.microbot.api.npc.models.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.api.tileobject.models.Rs2TileObjectModel;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
+import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
+import net.runelite.client.plugins.microbot.util.magic.Rs2CombatSpells;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Magic;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Spellbook;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Spells;
+import net.runelite.client.plugins.microbot.util.magic.Spell;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2PrayerEnum;
 
@@ -176,23 +179,83 @@ final class AgentBridge
 				protected void serve(HttpExchange ex) throws IOException
 				{
 					Map<String, Object> body = post(ex);
-					Rs2Spells spell = enumOf(Rs2Spells.class, required(body, "key"));
+					String key = required(body, "key");
+					Spell spell = spellOf(key);
+					String target = targetOf(key);
 					String item = getStringField(body, "item");
+					Integer npcIndex = getIntField(body, "npc");
 					boolean ok;
 					if (item != null && !item.isEmpty())
 					{
-						if (spell != Rs2Spells.LOW_LEVEL_ALCHEMY && spell != Rs2Spells.HIGH_LEVEL_ALCHEMY)
+						if (!"item".equals(target))
 						{
-							throw new BadRequestException("only the alchemy spells take an item");
+							throw new BadRequestException("this spell does not take an item");
 						}
-						Rs2Magic.alch(item);
+						Rs2ItemModel it = inventoryItem(item);
+						if (spell == Rs2Spells.SUPERHEAT_ITEM)
+						{
+							Rs2Magic.superHeat(it);
+						}
+						else
+						{
+							Rs2Magic.alch(it);
+						}
 						ok = true;
+					}
+					else if (npcIndex != null)
+					{
+						if (!"npc".equals(target))
+						{
+							throw new BadRequestException("this spell is not cast on an NPC");
+						}
+						Rs2NpcModel npc = npcAt(npcIndex);
+						ok = Rs2Magic.castOn(spell, npc.getNpc());
 					}
 					else
 					{
+						if (!"none".equals(target))
+						{
+							throw new BadRequestException("unsupported".equals(target)
+								? "the bridge cannot cast this spell on its target yet"
+								: "this spell needs a target (item or npc)");
+						}
 						ok = Rs2Magic.cast(spell);
 					}
 					sendJson(ex, ok ? 200 : 409, result(ok, ok ? null : "the spell was not cast (level, runes or the spellbook)"));
+				}
+			},
+			new Handler(gson, "/bridge/inventory/use-on")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					// The game's "Use X -> Y": an inventory item on another item, an NPC or an object.
+					Map<String, Object> body = post(ex);
+					Rs2ItemModel it = inventoryItem(required(body, "item"));
+					String other = getStringField(body, "onItem");
+					Integer npcIndex = getIntField(body, "npc");
+					Integer objectId = getIntField(body, "object");
+					int targets = (other != null && !other.isEmpty() ? 1 : 0) + (npcIndex != null ? 1 : 0)
+						+ (objectId != null ? 1 : 0);
+					if (targets != 1)
+					{
+						throw new BadRequestException("one target: onItem, npc or object");
+					}
+					boolean ok;
+					if (npcIndex != null)
+					{
+						ok = Rs2Inventory.useItemOnNpc(it.getId(),
+							new net.runelite.client.plugins.microbot.util.npc.Rs2NpcModel(npcAt(npcIndex).getNpc()));
+					}
+					else if (objectId != null)
+					{
+						ok = Rs2Inventory.useItemOnObject(it.getId(), objectId);
+					}
+					else
+					{
+						ok = Rs2Inventory.combine(it, inventoryItem(other));
+					}
+					sendJson(ex, ok ? 200 : 409, result(ok, ok ? null : "the game did not take the use (target gone or out of reach)"));
 				}
 			},
 			new Handler(gson, "/bridge/bank/deposit-x")
@@ -341,22 +404,88 @@ final class AgentBridge
 		return out;
 	}
 
+	/** Spells cast on an inventory item that the client has a way to cast (enchanting is not one yet). */
+	static final java.util.Set<String> ITEM_SPELLS = new java.util.HashSet<>(Arrays.asList(
+		"LOW_LEVEL_ALCHEMY", "HIGH_LEVEL_ALCHEMY", "SUPERHEAT_ITEM"));
+
+	/** Spells of the client's Rs2Spells cast on an NPC (curses, grasps, demonbanes); every combat spell is too. */
+	static final java.util.Set<String> NPC_SPELLS = new java.util.HashSet<>(Arrays.asList(
+		"CONFUSE", "WEAKEN", "CURSE", "BIND", "SNARE", "VULNERABILITY", "ENFEEBLE", "ENTANGLE", "STUN",
+		"MONSTER_EXAMINE", "GHOSTLY_GRASP", "SKELETAL_GRASP", "UNDEAD_GRASP", "INFERIOR_DEMONBANE",
+		"SUPERIOR_DEMONBANE", "DARK_DEMONBANE", "DARK_LURE"));
+
+	/**
+	 * Spells that wait for a target the bridge cannot give yet (jewellery and orbs, ground items,
+	 * other players, farming patches, heads): a plain cast would leave the spell selected in game.
+	 */
+	static final java.util.Set<String> UNSUPPORTED_SPELLS = new java.util.HashSet<>(Arrays.asList(
+		"ENCHANT_SAPPHIRE_JEWELLERY", "ENCHANT_EMERALD_JEWELLERY", "ENCHANT_RUBY_JEWELLERY",
+		"ENCHANT_DIAMOND_JEWELLERY", "ENCHANT_DRAGONSTONE_JEWELLERY", "ENCHANT_ONYX_JEWELLERY",
+		"ENCHANT_ZENYTE_JEWELLERY", "CHARGE_WATER_ORB", "CHARGE_EARTH_ORB", "CHARGE_FIRE_ORB",
+		"CHARGE_AIR_ORB", "TELEKINETIC_GRAB", "TELE_BLOCK", "CURE_OTHER", "STAT_SPY", "ENERGY_TRANSFER",
+		"HEAL_OTHER", "VENGEANCE_OTHER", "PLANK_MAKE", "CURE_PLANT", "FERTILE_SOIL", "RESURRECT_CROPS",
+		"BASIC_REANIMATION", "ADEPT_REANIMATION", "EXPERT_REANIMATION", "MASTER_REANIMATION"));
+
+	/**
+	 * What a spell is cast on: "item", "npc", "none" (teleports, Bones to Bananas, Vengeance) or
+	 * "unsupported" (a target the bridge cannot give yet; the planner does not offer it).
+	 */
+	static String targetOf(String key)
+	{
+		if (UNSUPPORTED_SPELLS.contains(key))
+		{
+			return "unsupported";
+		}
+		if (ITEM_SPELLS.contains(key))
+		{
+			return "item";
+		}
+		if (NPC_SPELLS.contains(key) || isCombatSpell(key))
+		{
+			return "npc";
+		}
+		return "none";
+	}
+
+	static boolean isCombatSpell(String key)
+	{
+		return Arrays.stream(Rs2CombatSpells.values()).anyMatch(s -> s.name().equals(key));
+	}
+
+	/** A spell by the client's key, from Rs2Spells or, for combat spells, Rs2CombatSpells. */
+	static Spell spellOf(String key)
+	{
+		return isCombatSpell(key) ? enumOf(Rs2CombatSpells.class, key) : enumOf(Rs2Spells.class, key);
+	}
+
 	private static Map<String, Object> spells()
 	{
 		Rs2Spellbook book = Rs2Spellbook.getCurrentSpellbook();
 		List<Map<String, Object>> list = new ArrayList<>();
+		List<Map.Entry<String, Spell>> all = new ArrayList<>();
 		for (Rs2Spells s : Rs2Spells.values())
 		{
+			all.add(new java.util.AbstractMap.SimpleEntry<>(s.name(), s));
+		}
+		for (Rs2CombatSpells s : Rs2CombatSpells.values())
+		{
+			all.add(new java.util.AbstractMap.SimpleEntry<>(s.name(), s));
+		}
+		for (Map.Entry<String, Spell> e : all)
+		{
+			Spell s = e.getValue();
 			if (s.getSpellbook() != book)
 			{
 				continue;
 			}
+			String target = targetOf(e.getKey());
 			Map<String, Object> m = new LinkedHashMap<>();
-			m.put("key", s.name());
-			m.put("name", s.getName());
+			m.put("key", e.getKey());
+			m.put("name", s instanceof Rs2Spells ? ((Rs2Spells) s).getName() : ((Rs2CombatSpells) s).getName());
 			m.put("level", s.getRequiredLevel());
 			m.put("castable", Rs2Magic.canCast(s));
-			m.put("onItem", s == Rs2Spells.LOW_LEVEL_ALCHEMY || s == Rs2Spells.HIGH_LEVEL_ALCHEMY);
+			m.put("target", target);
+			m.put("onItem", "item".equals(target)); // planner before 1.5
 			list.add(m);
 		}
 		list.sort(Comparator.comparingInt(m -> (int) m.get("level")));
@@ -364,6 +493,27 @@ final class AgentBridge
 		out.put("spellbook", book == null ? null : book.name());
 		out.put("spells", list);
 		return out;
+	}
+
+	/** An inventory item by its exact name (case-insensitive), or a 409 when it is not there. */
+	private static Rs2ItemModel inventoryItem(String name)
+	{
+		Rs2ItemModel it = Rs2Inventory.get(i -> i != null && name.equalsIgnoreCase(i.getName()));
+		if (it == null)
+		{
+			throw new ConflictException("not in the inventory: " + name);
+		}
+		return it;
+	}
+
+	/** A nearby NPC by its index (unique while it is loaded), or a 409 when it is gone. */
+	private static Rs2NpcModel npcAt(int index)
+	{
+		return Microbot.getClientThread().runOnClientThreadOptional(() ->
+				Microbot.getRs2NpcCache().query().within(MAX_DISTANCE).toList().stream()
+					.filter(n -> n.getIndex() == index).findFirst())
+			.flatMap(o -> o)
+			.orElseThrow(() -> new ConflictException("the NPC is gone"));
 	}
 
 	static <E extends Enum<E>> E enumOf(Class<E> type, String key)
@@ -390,6 +540,15 @@ final class AgentBridge
 	}
 
 	/** A bridge endpoint: AgentHandler's checks, and nothing at all without the Agent Server's token. */
+	/** The game state does not allow the action (item not in the inventory, NPC gone): a 409. */
+	static final class ConflictException extends RuntimeException
+	{
+		ConflictException(String message)
+		{
+			super(message);
+		}
+	}
+
 	private abstract class Handler extends AgentHandler
 	{
 		private final String path;
@@ -427,7 +586,14 @@ final class AgentBridge
 				sendOpaqueNotFound(exchange);
 				return;
 			}
-			serve(exchange);
+			try
+			{
+				serve(exchange);
+			}
+			catch (ConflictException e)
+			{
+				sendJson(exchange, 409, result(false, e.getMessage()));
+			}
 		}
 
 		protected abstract void serve(HttpExchange exchange) throws IOException;

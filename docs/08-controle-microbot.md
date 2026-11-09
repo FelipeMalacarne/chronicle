@@ -316,9 +316,25 @@ do cliente fixo, com a pele do jogo dentro e o Pergaminho fora.
   clique no próprio menu.
 - Entrega 1 (feita): o que o agent já faz. Oração e Magia aparecem desabilitadas; NPC e objeto têm
   Walk here e a ação digitada, e o equipamento só mostra.
-- Entrega 2 (a ponte): uma peça no Dev Bootstrap do microbot-plugins com as opções de NPC, objeto e
-  equipamento, as orações e o livro de feitiços, e as ações tipadas que faltam (ativar oração, lançar
-  feitiço, Remove, Deposit/Withdraw-X).
+- Entrega 2 (a ponte, feita): o Dev Bootstrap 1.2.0 do microbot-plugins serve um segundo socket,
+  `.runelite/agent/bridge.sock`, com o `UdsHttpServer` e o `AgentHandler` do próprio cliente: o mesmo
+  token do Agent Server, Host de loopback, sem Origin, e nada responde antes de o token existir.
+  Leituras: `/bridge/entities` (NPCs e objetos por perto com as opções reais do menu),
+  `/bridge/equipment` (itens vestidos com as ações), `/bridge/prayers` (cada oração com nível,
+  liberada, ativa e os pontos) e `/bridge/spells` (o livro atual com nível e se dá para lançar).
+  Ações: `/bridge/equipment/interact`, `/bridge/prayers/toggle`, `/bridge/spells/cast` (alquimia num
+  item) e `/bridge/bank/deposit-x`.
+- No planner, o agent fala com a ponte por um segundo `microbot.Client` (`Socket: bridge.sock`): o
+  `game_view` traz a parte `bridge` (ou `errors.bridge` dizendo por que faltou) e a lista fechada
+  ganhou `equipment_use`, `prayer_toggle`, `spell_cast` e `bank_deposit_x`, validados como as outras
+  (chaves do cliente em `[A-Z0-9_]`, nome e ação numa linha, quantidade positiva).
+- Web: com a ponte, Por perto mostra as opções reais de NPC e objeto (sem o campo digitado), os itens
+  vestidos abrem o menu deles, Oração (halo nas ativas, apagadas as fora do nível, pontos) e Magia
+  (apagados os sem nível ou runas) ligam, o banco ganha Deposit-X e Withdraw-X (o número no próprio
+  menu; Withdraw-X já funcionava pelo `bank_withdraw`) e um feitiço de item (alquimia) seleciona e o
+  próximo clique no inventário vira "Cast … -> item", como no jogo. Sprites de oração e feitiço vêm
+  da wiki pelo `tools/fetch_wiki_icons.py` (lista em `data/wiki/book_icons.json`, as chaves do cliente).
+- Para ligar no zaros: `mb-install devbootstrap` (home de dev) e reiniciar o cliente.
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

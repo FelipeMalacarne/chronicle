@@ -240,7 +240,38 @@ export type GameCommand =
 	| 'object_interact'
 	| 'ground_pickup'
 	| 'dialogue_continue'
-	| 'dialogue_select';
+	| 'dialogue_select'
+	| 'equipment_use'
+	| 'prayer_toggle'
+	| 'spell_cast'
+	| 'bank_deposit_x';
+
+/** O que a ponte do Dev Bootstrap acrescenta: os menus reais, as orações e o livro de feitiços. */
+export interface BridgeView {
+	entities?: {
+		npcs: {
+			id: number;
+			index?: number;
+			name: string;
+			combatLevel?: number;
+			actions: string[];
+			position?: Pos;
+		}[];
+		objects: { id: number; name: string; actions: string[]; position?: Pos }[];
+	};
+	equipment?: {
+		items: { slot: string; id: number; name: string; quantity: number; actions: string[] }[];
+	};
+	prayers?: {
+		level: number;
+		points: number;
+		prayers: { key: string; name: string; level: number; unlocked: boolean; active: boolean }[];
+	};
+	spells?: {
+		spellbook: string | null;
+		spells: { key: string; name: string; level: number; castable: boolean; onItem: boolean }[];
+	};
+}
 
 /** GET /api/microbot/game: uma leitura de tudo o que o cockpit mostra do jogo. */
 export interface GameView {
@@ -253,6 +284,7 @@ export interface GameView {
 	bank?: { open: boolean; count?: number; items?: GameItem[] };
 	ground?: { items: GroundItem[] };
 	machines?: { count: number; scripts: StateMachine[] };
+	bridge?: BridgeView;
 	errors?: Record<string, string>;
 }
 

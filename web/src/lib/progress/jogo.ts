@@ -81,6 +81,8 @@ export interface NearRow {
 	detail: string;
 	distance: number | null;
 	position?: Pos;
+	/** As opções do jogo, quando a ponte do Dev Bootstrap as dá (NPC e objeto). */
+	actions?: string[];
 }
 
 /** Distância em tiles como o RuneLite (WorldPoint.distanceTo): no mesmo plano, o maior eixo. */
@@ -93,7 +95,29 @@ export function tiles(from: Pos | undefined, to: Pos | undefined): number | null
 export function nearRows(v: GameView | null): NearRow[] {
 	const me = v?.observe?.player?.position;
 	const rows: NearRow[] = [];
-	for (const n of v?.observe?.npcs ?? [])
+	const ent = v?.bridge?.entities;
+	// Com a ponte, NPCs e objetos vêm dela, com as opções reais do menu.
+	for (const n of ent?.npcs ?? [])
+		rows.push({
+			kind: 'npc',
+			id: n.id,
+			name: n.name,
+			detail: n.combatLevel ? `nível ${n.combatLevel}` : '',
+			distance: tiles(me, n.position),
+			position: n.position,
+			actions: n.actions
+		});
+	for (const o of ent?.objects ?? [])
+		rows.push({
+			kind: 'objeto',
+			id: o.id,
+			name: o.name,
+			detail: '',
+			distance: tiles(me, o.position),
+			position: o.position,
+			actions: o.actions
+		});
+	for (const n of ent ? [] : (v?.observe?.npcs ?? []))
 		rows.push({
 			kind: 'npc',
 			id: n.id,
@@ -104,7 +128,7 @@ export function nearRows(v: GameView | null): NearRow[] {
 				tiles(me, n.position) ?? (n.distance !== undefined ? Math.round(n.distance / 128) : null),
 			position: n.position
 		});
-	for (const o of v?.observe?.objects ?? [])
+	for (const o of ent ? [] : (v?.observe?.objects ?? []))
 		rows.push({
 			kind: 'objeto',
 			id: o.id,
@@ -209,8 +233,12 @@ export interface MenuOption {
 	body?: Record<string, unknown>;
 	/** Perde coisa (dropar, depositar tudo): pede um segundo clique. */
 	confirm?: boolean;
-	/** Pede o nome da ação ao dono (NPC e objeto: o Agent Server não diz as opções deles). */
-	ask?: boolean;
+	/**
+	 * Pede um valor ao dono antes de agir: o nome da ação (NPC e objeto sem a ponte) ou um número
+	 * (Deposit-X, Withdraw-X), que vai no campo `askField` do corpo.
+	 */
+	ask?: 'action' | 'number';
+	askField?: string;
 }
 
 /**
@@ -219,16 +247,27 @@ export interface MenuOption {
  * inventário do banco, então Deposit-1, 5, 10 e All passam pelo mesmo inventory_use (Deposit-X
  * pede um número no jogo e fica para a ponte).
  */
-export function itemMenu(it: GameItem, bankOpen: boolean): MenuOption[] {
+export function itemMenu(it: GameItem, bankOpen: boolean, bridge = false): MenuOption[] {
 	const base = { target: it.name, tone: 'item' as const };
-	if (bankOpen)
-		return ['Deposit-1', 'Deposit-5', 'Deposit-10', 'Deposit-All'].map((a) => ({
+	if (bankOpen) {
+		const out: MenuOption[] = ['Deposit-1', 'Deposit-5', 'Deposit-10', 'Deposit-All'].map((a) => ({
 			...base,
 			label: a,
 			command: 'inventory_use' as const,
 			body: { name: it.name, action: a },
 			confirm: a === 'Deposit-All'
 		}));
+		if (bridge)
+			out.splice(3, 0, {
+				...base,
+				label: 'Deposit-X',
+				command: 'bank_deposit_x',
+				body: { name: it.name },
+				ask: 'number',
+				askField: 'amount'
+			});
+		return out;
+	}
 	return (it.actions ?? []).map((a) =>
 		a === 'Drop'
 			? {
@@ -251,6 +290,13 @@ export function bankMenu(it: GameItem): MenuOption[] {
 			label: `Withdraw-${n}`,
 			body: { name: it.name, quantity: n }
 		})),
+		{
+			...base,
+			label: 'Withdraw-X',
+			body: { name: it.name },
+			ask: 'number' as const,
+			askField: 'quantity'
+		},
 		{ ...base, label: 'Withdraw-All', body: { name: it.name, all: true } }
 	];
 }
@@ -262,15 +308,20 @@ export function bankMenu(it: GameItem): MenuOption[] {
 export function nearMenu(r: NearRow): MenuOption[] {
 	const tone = r.kind === 'npc' ? 'npc' : r.kind === 'objeto' ? 'object' : 'item';
 	const out: MenuOption[] = [];
+	const command = r.kind === 'npc' ? ('npc_interact' as const) : ('object_interact' as const);
 	if (r.kind === 'chão')
 		out.push({ label: 'Take', target: r.name, tone, command: 'ground_pickup', body: { id: r.id } });
+	else if (r.actions)
+		for (const a of r.actions)
+			out.push({ label: a, target: r.name, tone, command, body: { id: r.id, action: a } });
 	else
 		out.push({
 			label: 'Ação…',
 			target: r.name,
 			tone,
-			ask: true,
-			command: r.kind === 'npc' ? 'npc_interact' : 'object_interact',
+			ask: 'action',
+			askField: 'action',
+			command,
 			body: { id: r.id }
 		});
 	if (r.position)
@@ -283,4 +334,80 @@ export function qtyLabel(q: number): { text: string; tone: 'y' | 'w' | 'g' } {
 	if (q >= 10_000_000) return { text: `${Math.floor(q / 1_000_000)}M`, tone: 'g' };
 	if (q >= 100_000) return { text: `${Math.floor(q / 1000)}K`, tone: 'w' };
 	return { text: String(q), tone: 'y' };
+}
+
+/** O menu de um item vestido: as ações dele pela ponte (Remove, Rub, Operate). */
+export function equipMenu(v: GameView | null, name: string): MenuOption[] {
+	const item = v?.bridge?.equipment?.items.find((i) => i.name === name);
+	return (item?.actions ?? []).map((a) => ({
+		label: a,
+		target: name,
+		tone: 'item' as const,
+		command: 'equipment_use' as const,
+		body: { name, action: a }
+	}));
+}
+
+export interface PrayerCell {
+	key: string;
+	name: string;
+	level: number;
+	unlocked: boolean;
+	active: boolean;
+}
+
+/** As orações na ordem do livro (o enum do cliente segue o jogo). */
+export function prayerCells(v: GameView | null): PrayerCell[] {
+	return v?.bridge?.prayers?.prayers ?? [];
+}
+
+export function prayerMenu(p: PrayerCell): MenuOption[] {
+	if (!p.unlocked) return [];
+	return [
+		{
+			label: p.active ? 'Deactivate' : 'Activate',
+			target: p.name,
+			tone: 'object',
+			command: 'prayer_toggle',
+			body: { key: p.key, on: !p.active }
+		}
+	];
+}
+
+export interface SpellCell {
+	key: string;
+	name: string;
+	level: number;
+	castable: boolean;
+	onItem: boolean;
+}
+
+/** Os feitiços do livro atual, por nível como o jogo os ordena. */
+export function spellCells(v: GameView | null): SpellCell[] {
+	return [...(v?.bridge?.spells?.spells ?? [])].sort((a, b) => a.level - b.level);
+}
+
+/**
+ * O menu de um feitiço: Cast. Feitiço de item (alquimia) só seleciona, sem comando; o próximo
+ * clique num item do inventário lança nele, como no jogo.
+ */
+export function spellMenu(s: SpellCell): MenuOption[] {
+	if (!s.castable) return [];
+	if (s.onItem) return [{ label: 'Cast', target: s.name, tone: 'object', body: { key: s.key } }];
+	return [
+		{ label: 'Cast', target: s.name, tone: 'object', command: 'spell_cast', body: { key: s.key } }
+	];
+}
+
+/** Com um feitiço de item selecionado, o menu do item é só "Cast <feitiço> -> <item>". */
+export function castOnMenu(spell: { key: string; name: string }, it: GameItem): MenuOption[] {
+	return [
+		{
+			label: `Cast ${spell.name} ->`,
+			target: it.name,
+			tone: 'item',
+			command: 'spell_cast',
+			body: { key: spell.key, item: it.name }
+		}
+	];
 }

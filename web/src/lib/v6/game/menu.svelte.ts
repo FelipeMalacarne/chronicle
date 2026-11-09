@@ -15,6 +15,8 @@ export const gameMenu = $state({
 	armed: -1,
 	busy: false,
 	error: null as string | null,
+	/** Feitiço de item selecionado (Cast em alquimia): o próximo clique no inventário lança nele. */
+	spell: null as { key: string; name: string } | null,
 	/** Chamado depois de cada ação: o cockpit relê o jogo e a auditoria. */
 	onDone: null as (() => void) | null
 });
@@ -50,6 +52,17 @@ export async function runAction(o: MenuOption, extra?: Record<string, unknown>) 
 	}
 }
 
+/** O valor pedido no menu, no tipo do campo: um número positivo ou o nome de uma ação. */
+export function askedValue(o: MenuOption, typed: string | undefined): string | number | null {
+	const t = typed?.trim() ?? '';
+	if (!t) return null;
+	if (o.ask === 'number') {
+		const n = Number(t.replace(/k$/i, '000').replace(/m$/i, '000000'));
+		return Number.isInteger(n) && n > 0 ? n : null;
+	}
+	return t;
+}
+
 export async function pick(i: number, typed?: string) {
 	const o = gameMenu.options[i];
 	if (!o) return;
@@ -57,7 +70,19 @@ export async function pick(i: number, typed?: string) {
 		gameMenu.armed = i;
 		return;
 	}
-	if (o.ask && !typed?.trim()) return;
+	if (o.ask) {
+		const v = askedValue(o, typed);
+		if (v === null) return;
+		closeMenu();
+		await runAction(o, { [o.askField ?? 'action']: v });
+		return;
+	}
 	closeMenu();
-	await runAction(o, o.ask ? { action: typed!.trim() } : undefined);
+	if (!o.command && typeof o.body?.key === 'string') {
+		// Cast num feitiço de item: seleciona e espera o item, como no jogo.
+		gameMenu.spell = { key: o.body.key, name: o.target };
+		return;
+	}
+	gameMenu.spell = null;
+	await runAction(o);
 }

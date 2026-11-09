@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"regexp"
+	"slices"
 	"time"
 	"unicode"
 )
@@ -21,13 +23,25 @@ type GameView struct {
 	// Observe is GET /observe with the nearest NPCs and objects: state,
 	// inventory, equipment, dialogue, game chat (never player chat), recent
 	// errors and script heartbeats.
-	Observe   json.RawMessage   `json:"observe,omitempty"`
-	Inventory json.RawMessage   `json:"inventory,omitempty"` // GET /inventory: the items' actions
-	Skills    json.RawMessage   `json:"skills,omitempty"`
-	Bank      json.RawMessage   `json:"bank,omitempty"`
-	Ground    json.RawMessage   `json:"ground,omitempty"`   // GET /ground-items nearby
-	Machines  json.RawMessage   `json:"machines,omitempty"` // GET /debug/snapshot
-	Errors    map[string]string `json:"errors,omitempty"`
+	Observe   json.RawMessage `json:"observe,omitempty"`
+	Inventory json.RawMessage `json:"inventory,omitempty"` // GET /inventory: the items' actions
+	Skills    json.RawMessage `json:"skills,omitempty"`
+	Bank      json.RawMessage `json:"bank,omitempty"`
+	Ground    json.RawMessage `json:"ground,omitempty"`   // GET /ground-items nearby
+	Machines  json.RawMessage `json:"machines,omitempty"` // GET /debug/snapshot
+	// Bridge is what the Dev Bootstrap bridge adds: the real menus of NPCs,
+	// objects and worn items, the prayers and the spellbook. Absent without
+	// the bridge (errors["bridge"] says why).
+	Bridge *BridgeView       `json:"bridge,omitempty"`
+	Errors map[string]string `json:"errors,omitempty"`
+}
+
+// BridgeView is the bridge's part of GameView, each the bridge's own JSON.
+type BridgeView struct {
+	Entities  json.RawMessage `json:"entities,omitempty"`  // GET /bridge/entities
+	Equipment json.RawMessage `json:"equipment,omitempty"` // GET /bridge/equipment
+	Prayers   json.RawMessage `json:"prayers,omitempty"`   // GET /bridge/prayers
+	Spells    json.RawMessage `json:"spells,omitempty"`    // GET /bridge/spells
 }
 
 // nearby is how far the view looks for NPCs, objects and ground items.
@@ -58,7 +72,41 @@ func (e *Executor) gameView(ctx context.Context) GameView {
 	v.Bank = get("bank", "/bank", nil)
 	v.Ground = get("ground", "/ground-items", url.Values{"maxDistance": {nearby}, "limit": {"12"}})
 	v.Machines = get("machines", "/debug/snapshot", nil)
+	v.Bridge = e.bridgeView(ctx, func(name, err string) {
+		if v.Errors == nil {
+			v.Errors = map[string]string{}
+		}
+		v.Errors[name] = err
+	})
 	return v
+}
+
+// bridgeView reads the bridge; the first failure (no bridge on this client)
+// is reported once as "bridge" and the rest is skipped.
+func (e *Executor) bridgeView(ctx context.Context, fail func(name, err string)) *BridgeView {
+	if e.Bridge == nil {
+		fail("bridge", "no bridge configured")
+		return nil
+	}
+	var b BridgeView
+	for _, part := range []struct {
+		into  *json.RawMessage
+		path  string
+		query url.Values
+	}{
+		{&b.Entities, "/bridge/entities", url.Values{"distance": {nearby}, "limit": {"12"}}},
+		{&b.Equipment, "/bridge/equipment", nil},
+		{&b.Prayers, "/bridge/prayers", nil},
+		{&b.Spells, "/bridge/spells", nil},
+	} {
+		raw, err := e.Bridge.JSON(ctx, http.MethodGet, part.path, part.query, nil, 10*time.Second)
+		if err != nil {
+			fail("bridge", fmt.Sprintf("%s: %v (Dev Bootstrap 1.2+ serves the bridge)", part.path, err))
+			return nil
+		}
+		*part.into = raw
+	}
+	return &b
 }
 
 // Game actions: each one is a fixed Agent Server request from typed,
@@ -77,13 +125,45 @@ const (
 	CmdGroundPickup     = "ground_pickup"   // an item on the ground
 	CmdDialogueContinue = "dialogue_continue"
 	CmdDialogueSelect   = "dialogue_select" // an option by text or 1-based index
+
+	// Through the Dev Bootstrap bridge.
+	CmdEquipmentUse = "equipment_use"  // a worn item's action (Remove, Rub, Operate)
+	CmdPrayerToggle = "prayer_toggle"  // a prayer on or off
+	CmdSpellCast    = "spell_cast"     // a spell, or an alchemy spell on an item
+	CmdBankDepositX = "bank_deposit_x" // Deposit-X with the bank open
 )
 
 // GameActions are the game action commands.
 var GameActions = []string{
 	CmdWalk, CmdInventoryUse, CmdInventoryDrop, CmdBankOpen, CmdBankClose, CmdBankDeposit,
 	CmdBankWithdraw, CmdNPCInteract, CmdObjectInteract, CmdGroundPickup, CmdDialogueContinue, CmdDialogueSelect,
+	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX,
 }
+
+// bridgeActions are the game actions served by the bridge.
+var bridgeActions = []string{CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX}
+
+// PrayerParams are the parameters of CmdPrayerToggle: the client's
+// Rs2PrayerEnum key (THICK_SKIN).
+type PrayerParams struct {
+	Key string `json:"key"`
+	On  bool   `json:"on"`
+}
+
+// SpellParams are the parameters of CmdSpellCast: the client's Rs2Spells key
+// and, for the alchemy spells, the inventory item.
+type SpellParams struct {
+	Key  string `json:"key"`
+	Item string `json:"item,omitempty"`
+}
+
+// DepositXParams are the parameters of CmdBankDepositX.
+type DepositXParams struct {
+	Name   string `json:"name"`
+	Amount int    `json:"amount"`
+}
+
+var reEnumKey = regexp.MustCompile(`^[A-Z0-9_]{1,48}$`)
 
 // WalkParams are the parameters of CmdWalk: a world tile.
 type WalkParams struct {
@@ -222,6 +302,51 @@ func validateGame(command string, raw json.RawMessage) (any, error) {
 			return nil, err
 		}
 		return p, nil
+	case CmdEquipmentUse:
+		var p TargetParams
+		if err := decodeParams(raw, &p); err != nil {
+			return nil, err
+		}
+		if p.ID != 0 {
+			return nil, errors.New("equipment: the worn item by name")
+		}
+		if err := checkTarget(p, true); err != nil {
+			return nil, err
+		}
+		return p, nil
+	case CmdPrayerToggle:
+		var p PrayerParams
+		if err := decodeParams(raw, &p); err != nil {
+			return nil, err
+		}
+		if !reEnumKey.MatchString(p.Key) {
+			return nil, errors.New("prayer: the client's prayer key (THICK_SKIN)")
+		}
+		return p, nil
+	case CmdSpellCast:
+		var p SpellParams
+		if err := decodeParams(raw, &p); err != nil {
+			return nil, err
+		}
+		if !reEnumKey.MatchString(p.Key) {
+			return nil, errors.New("spell: the client's spell key (LOW_LEVEL_ALCHEMY)")
+		}
+		if err := gameText("item", p.Item, 80, false); err != nil {
+			return nil, err
+		}
+		return p, nil
+	case CmdBankDepositX:
+		var p DepositXParams
+		if err := decodeParams(raw, &p); err != nil {
+			return nil, err
+		}
+		if err := gameText("name", p.Name, 80, true); err != nil {
+			return nil, err
+		}
+		if p.Amount < 1 {
+			return nil, errors.New("deposit: amount of at least 1")
+		}
+		return p, nil
 	case CmdBankOpen, CmdBankClose, CmdDialogueContinue:
 		return nil, nil
 	}
@@ -233,6 +358,9 @@ func (e *Executor) act(ctx context.Context, command string, params json.RawMessa
 	p, err := validateGame(command, params)
 	if err != nil {
 		return nil, err
+	}
+	if slices.Contains(bridgeActions, command) {
+		return e.bridgeAct(ctx, p)
 	}
 	post := func(path string, body any, timeout time.Duration) (any, error) {
 		return e.Game.JSON(ctx, http.MethodPost, path, nil, body, timeout)
@@ -288,4 +416,29 @@ func (e *Executor) act(ctx context.Context, command string, params json.RawMessa
 		return post(path, map[string]any{}, 20*time.Second)
 	}
 	return nil, fmt.Errorf("command %q is not in the agent's closed list", command)
+}
+
+// bridgeAct runs an action through the Dev Bootstrap bridge.
+func (e *Executor) bridgeAct(ctx context.Context, p any) (any, error) {
+	if e.Bridge == nil {
+		return nil, errors.New("this action needs the Dev Bootstrap bridge (microbot-plugins fm/devbootstrap 1.2+)")
+	}
+	post := func(path string, body any) (any, error) {
+		return e.Bridge.JSON(ctx, http.MethodPost, path, nil, body, 30*time.Second)
+	}
+	switch pp := p.(type) {
+	case TargetParams:
+		return post("/bridge/equipment/interact", map[string]any{"name": pp.Name, "action": pp.Action})
+	case PrayerParams:
+		return post("/bridge/prayers/toggle", map[string]any{"key": pp.Key, "on": pp.On})
+	case SpellParams:
+		body := map[string]any{"key": pp.Key}
+		if pp.Item != "" {
+			body["item"] = pp.Item
+		}
+		return post("/bridge/spells/cast", body)
+	case DepositXParams:
+		return post("/bridge/bank/deposit-x", map[string]any{"name": pp.Name, "amount": pp.Amount})
+	}
+	return nil, errors.New("not a bridge action")
 }

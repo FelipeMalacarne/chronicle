@@ -3,8 +3,10 @@
 
 Copies into web/static/icons the inventory icon of every obtainable item of
 the catalog (content/reference/items.json: equipment, bank and inventory can
-hold any item, not only the ones the guides cite), the 24 skill icons and the
-quest point icon, all from the Old School RuneScape Wiki. It writes the small
+hold any item, not only the ones the guides cite), the 24 skill icons, the
+quest point icon and the prayer and spellbook icons of the Microbot cockpit
+(data/wiki/book_icons.json: the keys the Dev Bootstrap bridge sends), all from
+the Old School RuneScape Wiki. It writes the small
 manifest the SPA imports (web/src/lib/icons/manifest.json: attribution, skill
 and misc files, and the item ids with an icon as compact ranges) and the full
 id -> wiki file map with the missing ones in data/wiki/icons.json, which stays
@@ -199,6 +201,20 @@ def fetch(title, url, cache_dir, refresh):
     return data
 
 
+def book_titles(name):
+    """Wiki file candidates for a prayer or spell icon: the client's names
+    differ from the wiki's in case ("Rapid heal", "Bones To Bananas") and a few
+    spells share one icon (the crossbow bolt enchantments)."""
+    small = {"Of", "To", "The", "From", "On", "Of", "And", "In"}
+    words = name.replace("_", " ").split(" ")
+    wiki_case = " ".join(w if i == 0 or w not in small else w.lower() for i, w in enumerate(words))
+    title_case = " ".join(w[:1].upper() + w[1:] for w in words)
+    out = [name + ".png", wiki_case + ".png", title_case + ".png"]
+    if name.startswith("Enchant ") and name.endswith(" Bolt"):
+        out.append("Enchant Crossbow Bolt.png")
+    return list(dict.fromkeys(out))
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     ap.add_argument("--refresh", action="store_true")
@@ -228,6 +244,11 @@ def main():
     for s in skills:
         wanted[("skill", s["id"])] = [s["name"] + " icon.png"]
     wanted[("misc", "quest_point")] = ["Quest point icon.png"]
+    book = load_json(os.path.join(ROOT, "data", "wiki", "book_icons.json"))
+    for p in book["prayers"]:
+        wanted[("prayer", p["key"])] = book_titles(p["name"])
+    for sp in book["spells"]:
+        wanted[("spell", sp["key"])] = book_titles(sp["name"])
 
     urls = resolve_urls({t for ts in wanted.values() for t in ts}, args.cache_dir, args.refresh)
 
@@ -244,7 +265,7 @@ def main():
 
     staging = args.out + ".tmp"
     shutil.rmtree(staging, ignore_errors=True)
-    files = {"item": {}, "skill": {}, "misc": {}}
+    files = {"item": {}, "skill": {}, "misc": {}, "prayer": {}, "spell": {}}
     missing = []
     for (kind, ident) in keys:
         title, data = results[(kind, ident)]
@@ -264,6 +285,8 @@ def main():
         "item_ids": id_ranges(int(i) for i in files["item"]),
         "skill": files["skill"],
         "misc": files["misc"],
+        "prayer": files["prayer"],
+        "spell": files["spell"],
     }
     os.makedirs(os.path.dirname(args.manifest), exist_ok=True)
     with open(args.manifest, "w", encoding="utf-8") as f:

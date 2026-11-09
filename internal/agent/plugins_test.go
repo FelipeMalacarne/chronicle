@@ -234,3 +234,60 @@ func TestConfigSchema(t *testing.T) {
 		t.Fatal("a plugin without options returned a schema")
 	}
 }
+
+func TestBridgeActions(t *testing.T) {
+	ctx := context.Background()
+	bridge := &fakeGame{}
+	e := &Executor{Game: &fakeGame{}, Bridge: bridge}
+	for _, c := range []struct{ command, params, want string }{
+		{CmdEquipmentUse, `{"name":"Amulet of glory","action":"Rub"}`, `POST /bridge/equipment/interact {"action":"Rub","name":"Amulet of glory"}`},
+		{CmdPrayerToggle, `{"key":"PROTECT_ITEM","on":true}`, `POST /bridge/prayers/toggle {"key":"PROTECT_ITEM","on":true}`},
+		{CmdSpellCast, `{"key":"LOW_LEVEL_ALCHEMY","item":"Oak longbow"}`, `POST /bridge/spells/cast {"item":"Oak longbow","key":"LOW_LEVEL_ALCHEMY"}`},
+		{CmdSpellCast, `{"key":"VARROCK_TELEPORT"}`, `POST /bridge/spells/cast {"key":"VARROCK_TELEPORT"}`},
+		{CmdBankDepositX, `{"name":"Lobster","amount":7}`, `POST /bridge/bank/deposit-x {"amount":7,"name":"Lobster"}`},
+	} {
+		bridge.requests = nil
+		if _, err := e.act(ctx, c.command, json.RawMessage(c.params)); err != nil {
+			t.Fatalf("%s: %v", c.command, err)
+		}
+		if len(bridge.requests) != 1 || bridge.requests[0] != c.want {
+			t.Errorf("%s: requests %v, want %q", c.command, bridge.requests, c.want)
+		}
+	}
+	for _, c := range []struct{ command, params, bad string }{
+		{CmdPrayerToggle, `{"key":"protect item"}`, "prayer key"},
+		{CmdSpellCast, `{"key":"X; rm"}`, "spell key"},
+		{CmdEquipmentUse, `{"id":1712,"action":"Rub"}`, "by name"},
+		{CmdBankDepositX, `{"name":"Lobster","amount":0}`, "at least 1"},
+	} {
+		if _, err := e.act(ctx, c.command, json.RawMessage(c.params)); err == nil || !strings.Contains(err.Error(), c.bad) {
+			t.Errorf("%s %s: %v, want %q", c.command, c.params, err, c.bad)
+		}
+	}
+	if _, err := (&Executor{Game: &fakeGame{}}).act(ctx, CmdPrayerToggle, json.RawMessage(`{"key":"PROTECT_ITEM","on":true}`)); err == nil || !strings.Contains(err.Error(), "bridge") {
+		t.Fatalf("bridge action without a bridge = %v", err)
+	}
+}
+
+func TestGameViewWithBridge(t *testing.T) {
+	ctx := context.Background()
+	bridge := &fakeGame{}
+	v := (&Executor{Game: &loggedInGame{}, Bridge: bridge}).gameView(ctx)
+	if v.Bridge == nil || v.Bridge.Prayers == nil || v.Errors["bridge"] != "" {
+		t.Fatalf("view with a bridge = %+v", v)
+	}
+	if len(bridge.requests) != 4 || bridge.requests[0] != "GET /bridge/entities?distance=15&limit=12" {
+		t.Fatalf("bridge requests = %v", bridge.requests)
+	}
+	// Without the bridge the view still works and says why.
+	v = (&Executor{Game: &loggedInGame{}, Bridge: failing{}}).gameView(ctx)
+	if v.Bridge != nil || !strings.Contains(v.Errors["bridge"], "Dev Bootstrap") || v.Inventory == nil {
+		t.Fatalf("view without a bridge = %+v", v)
+	}
+}
+
+type failing struct{}
+
+func (failing) JSON(context.Context, string, string, url.Values, any, time.Duration) (json.RawMessage, error) {
+	return nil, errors.New("microbot: client not running")
+}

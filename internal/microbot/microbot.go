@@ -31,7 +31,15 @@ type Client struct {
 	Home string
 	// Timeout bounds one call that does not set its own; zero means 30 s.
 	Timeout time.Duration
+	// Socket is the socket file under Home/.runelite/agent: empty is the
+	// Agent Server's (agent.sock); BridgeSocket is the Dev Bootstrap bridge.
+	Socket string
 }
+
+// BridgeSocket is the Dev Bootstrap bridge (microbot-plugins fm/devbootstrap
+// 1.2+): NPC, object and worn-item menus, prayers, spells and the actions
+// the Agent Server lacks, behind the same token.
+const BridgeSocket = "bridge.sock"
 
 // DefaultHome is the harness dev home, resolved like the harness's lib.sh:
 // MICROBOT_HOME, else MB_DEV_HOME, else $XDG_DATA_HOME/microbot-dev, else
@@ -49,9 +57,13 @@ func DefaultHome() string {
 	return filepath.Join(home, ".local", "share", "microbot-dev")
 }
 
-// SocketPath is the Agent Server's Unix socket.
+// SocketPath is the Unix socket this client talks to.
 func (c *Client) SocketPath() string {
-	return filepath.Join(c.Home, ".runelite", "agent", "agent.sock")
+	name := c.Socket
+	if name == "" {
+		name = "agent.sock"
+	}
+	return filepath.Join(c.Home, ".runelite", "agent", name)
 }
 
 // TokenPath is the file with the X-Agent-Token; it changes when the client

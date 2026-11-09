@@ -39,6 +39,7 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `just account-create <rsn>` / `account-guide <id> <guide>` / `accounts` | dev accounts (id `acc_<rsn>`) and the active route, until the account screen exists |
 | `just dbml` | regenerate `docs/arquitetura/modelo-de-dados.dbml` from the migrated `DATABASE_URL` |
 | `go test ./internal/core/entities/catalogbuild -update` | regenerate the derived catalogs in `content/reference` (offline) |
+| `python3 tools/fetch_wiki_icons.py` | refresh `web/static/icons` and `web/src/lib/icons/manifest.json` from the OSRS Wiki: items, skills, quest point, and the cockpit's prayers and spells (`data/wiki/book_icons.json`, keyed by the Microbot client's enum names); cached under `~/.cache/ironman-planner/icons` |
 | `python3 tools/extract_wiki_items.py` | refresh `data/wiki/items.json` with every item page of the OSRS wiki (the only step that uses the network; cached under `~/.cache/ironman-planner`); then `-update` above and re-run both importers |
 | `python3 data/wiki/scripts/build_quests.py data/samples/wiki-bucket/quest_all_p1.json 'data/samples/wiki-wikitext/quest_pages/batch*.json' <guide-list> data/wiki/quests.json` | rebuild `data/wiki/quests.json` (requirements, QP, quest XP rewards) offline from the saved bucket and wikitext; `<guide-list>` is a file of quest names to cross-check (may be empty) |
 | `go run ./cmd/ironman content mcp` | extraction MCP server on stdio (Claude Code starts it from `.mcp.json`; skill `annotate-guide`) |
@@ -83,7 +84,8 @@ internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* an
                       (incl. /api/world/entity for the entity panel, /api/account/state for Conta)
                       (dev without session, oidc behind it), dev-only token bootstrap
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
-internal/microbot/    typed client of the Microbot Agent Server (Unix socket of the harness dev home); agent only
+internal/microbot/    typed client of the Microbot Agent Server and of the Dev Bootstrap bridge (Unix sockets of the
+                      harness dev home, same token); agent only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
                       websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->
                       loopback x11vnc) and the plugin/script/config commands, whose params are validated

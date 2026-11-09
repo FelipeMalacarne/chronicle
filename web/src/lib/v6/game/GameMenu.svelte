@@ -67,8 +67,9 @@
 					<!-- svelte-ignore a11y_autofocus -->
 					<input
 						autofocus
-						placeholder="ação do menu do jogo"
-						aria-label="Ação em {o.target}"
+						inputmode={o.ask === 'number' ? 'numeric' : 'text'}
+						placeholder={o.ask === 'number' ? 'quantidade (ex. 14, 2k)' : 'ação do menu do jogo'}
+						aria-label="{o.label} em {o.target}"
 						bind:value={typed}
 					/>
 				</form>

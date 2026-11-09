@@ -7,6 +7,12 @@ import {
 	bankMenu,
 	nearMenu,
 	qtyLabel,
+	equipMenu,
+	prayerCells,
+	prayerMenu,
+	spellCells,
+	spellMenu,
+	castOnMenu,
 	dialogueLine,
 	equipItems,
 	invSlots,
@@ -196,6 +202,7 @@ test('menus carry only what the game and the agent can do', () => {
 			['Withdraw-1', { name: 'Lobster', quantity: 1 }],
 			['Withdraw-5', { name: 'Lobster', quantity: 5 }],
 			['Withdraw-10', { name: 'Lobster', quantity: 10 }],
+			['Withdraw-X', { name: 'Lobster' }],
 			['Withdraw-All', { name: 'Lobster', all: true }]
 		]
 	);
@@ -206,13 +213,138 @@ test('menus carry only what the game and the agent can do', () => {
 	);
 	const npc = nearMenu(rows.find((r) => r.kind === 'npc')!);
 	assert.deepEqual(
-		npc.map((o) => [o.label, !!o.ask]),
+		npc.map((o) => [o.label, o.ask ?? '']),
 		[
-			['Ação…', true],
-			['Walk here', false]
+			['Ação…', 'action'],
+			['Walk here', '']
 		]
 	);
 	assert.deepEqual(qtyLabel(1200), { text: '1200', tone: 'y' });
 	assert.deepEqual(qtyLabel(613_400), { text: '613K', tone: 'w' });
 	assert.deepEqual(qtyLabel(12_500_000), { text: '12M', tone: 'g' });
+});
+
+test('with the bridge, menus come from the game', () => {
+	const v: GameView = {
+		observe: {
+			player: { position: { x: 3222, y: 3218, plane: 0 } },
+			npcs: [{ id: 9, name: 'Old', position: { x: 1, y: 1, plane: 0 } }]
+		},
+		bridge: {
+			entities: {
+				npcs: [
+					{
+						id: 3010,
+						name: 'Banker',
+						actions: ['Talk-to', 'Bank', 'Collect'],
+						position: { x: 3220, y: 3218, plane: 0 }
+					}
+				],
+				objects: [
+					{
+						id: 10820,
+						name: 'Oak tree',
+						actions: ['Chop down'],
+						position: { x: 3224, y: 3218, plane: 0 }
+					}
+				]
+			},
+			equipment: {
+				items: [
+					{
+						slot: 'AMULET',
+						id: 1712,
+						name: 'Amulet of glory',
+						quantity: 1,
+						actions: ['Remove', 'Rub']
+					}
+				]
+			},
+			prayers: {
+				level: 43,
+				points: 31,
+				prayers: [
+					{ key: 'PROTECT_ITEM', name: 'Protect Item', level: 25, unlocked: true, active: false },
+					{ key: 'EAGLE_EYE', name: 'Eagle Eye', level: 44, unlocked: false, active: false }
+				]
+			},
+			spells: {
+				spellbook: 'MODERN',
+				spells: [
+					{
+						key: 'VARROCK_TELEPORT',
+						name: 'Varrock Teleport',
+						level: 25,
+						castable: true,
+						onItem: false
+					},
+					{
+						key: 'LOW_LEVEL_ALCHEMY',
+						name: 'Low Level Alchemy',
+						level: 21,
+						castable: true,
+						onItem: true
+					},
+					{
+						key: 'CAMELOT_TELEPORT',
+						name: 'Camelot Teleport',
+						level: 45,
+						castable: false,
+						onItem: false
+					}
+				]
+			}
+		}
+	};
+	const rows = nearRows(v);
+	assert.deepEqual(
+		rows.map((r) => r.name),
+		['Banker', 'Oak tree']
+	);
+	assert.deepEqual(
+		nearMenu(rows[0]).map((o) => [o.label, o.command, o.body]),
+		[
+			['Talk-to', 'npc_interact', { id: 3010, action: 'Talk-to' }],
+			['Bank', 'npc_interact', { id: 3010, action: 'Bank' }],
+			['Collect', 'npc_interact', { id: 3010, action: 'Collect' }],
+			['Walk here', 'walk', { x: 3220, y: 3218, plane: 0 }]
+		]
+	);
+	assert.deepEqual(
+		equipMenu(v, 'Amulet of glory').map((o) => o.label),
+		['Remove', 'Rub']
+	);
+	const [item, locked] = prayerCells(v);
+	assert.deepEqual(
+		prayerMenu(item).map((o) => [o.label, o.body]),
+		[['Activate', { key: 'PROTECT_ITEM', on: true }]]
+	);
+	assert.deepEqual(prayerMenu(locked), []);
+	const spells = spellCells(v);
+	assert.deepEqual(
+		spells.map((s) => s.key),
+		['LOW_LEVEL_ALCHEMY', 'VARROCK_TELEPORT', 'CAMELOT_TELEPORT']
+	);
+	assert.equal(spellMenu(spells[0])[0].command, undefined);
+	assert.equal(spellMenu(spells[1])[0].command, 'spell_cast');
+	assert.deepEqual(spellMenu(spells[2]), []);
+	const lobster = { id: 379, name: 'Lobster', quantity: 1, actions: ['Eat'] };
+	assert.deepEqual(castOnMenu(spells[0], lobster)[0].body, {
+		key: 'LOW_LEVEL_ALCHEMY',
+		item: 'Lobster'
+	});
+	assert.deepEqual(
+		itemMenu(lobster, true, true).map((o) => [o.label, o.ask ?? '']),
+		[
+			['Deposit-1', ''],
+			['Deposit-5', ''],
+			['Deposit-10', ''],
+			['Deposit-X', 'number'],
+			['Deposit-All', '']
+		]
+	);
+	assert.deepEqual(
+		bankMenu(lobster).map((o) => o.label),
+		['Withdraw-1', 'Withdraw-5', 'Withdraw-10', 'Withdraw-X', 'Withdraw-All']
+	);
 });

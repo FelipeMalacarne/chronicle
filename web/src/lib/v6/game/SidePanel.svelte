@@ -1,28 +1,47 @@
 <script lang="ts">
 	import type { GameView } from '#lib/api/microbot';
 	import { equipmentLayout } from '#lib/progress/conta';
-	import { iconFor, itemIcon } from '#lib/progress/icons';
-	import { equipItems, invSlots, itemMenu, qtyLabel, skillCells } from '#lib/progress/jogo';
-	import { openMenu } from './menu.svelte';
+	import { iconFor, itemIcon, prayerIcon, spellIcon } from '#lib/progress/icons';
+	import {
+		castOnMenu,
+		equipItems,
+		equipMenu,
+		invSlots,
+		itemMenu,
+		prayerCells,
+		prayerMenu,
+		qtyLabel,
+		skillCells,
+		spellCells,
+		spellMenu
+	} from '#lib/progress/jogo';
+	import type { GameItem } from '#lib/api/microbot';
+	import { gameMenu, openMenu } from './menu.svelte';
 
 	/*
-	 * O painel lateral do cliente (doc 08, V6MicrobotCliente1440): as abas do jogo com os ícones do
-	 * jogo. Itens abre o "Choose Option" com as ações reais do item (com o banco aberto, as de
-	 * depósito); Equipado e Skills só mostram, porque o Agent Server não tem ação de equipamento.
-	 * Oração e Magia esperam a ponte do Dev Bootstrap (V6MicrobotClienteEstados1440).
+	 * O painel lateral do cliente (doc 08, V6MicrobotCliente1440 e V6MicrobotClienteEstados1440): as
+	 * abas do jogo com os ícones do jogo. Itens abre o "Choose Option" com as ações reais do item (com
+	 * o banco aberto, as de depósito). Com a ponte do Dev Bootstrap, os itens vestidos ganham o menu
+	 * deles e as abas Oração e Magia ligam; sem ela, Equipado só mostra e as duas ficam desligadas.
 	 */
 	let { view }: { view: GameView } = $props();
 
 	type Tab = 'itens' | 'equipado' | 'skills' | 'oracao' | 'magia';
 	let tab = $state<Tab>('itens');
 	/** [aba, nome, ícone, disponível] */
-	const TABS: [Tab, string, string | undefined, boolean][] = [
+	const TABS = $derived<[Tab, string, string | undefined, boolean][]>([
 		['itens', 'Itens', itemIcon(995), true],
 		['equipado', 'Equipado', itemIcon(1127), true],
 		['skills', 'Skills', iconFor('skill:attack'), true],
-		['oracao', 'Oração', iconFor('skill:prayer'), false],
-		['magia', 'Magia', iconFor('skill:magic'), false]
-	];
+		['oracao', 'Oração', iconFor('skill:prayer'), !!view.bridge?.prayers],
+		['magia', 'Magia', iconFor('skill:magic'), !!view.bridge?.spells]
+	]);
+	const bridge = $derived(!!view.bridge);
+	const prayers = $derived(prayerCells(view));
+	const spells = $derived(spellCells(view));
+	/** O menu de um item do inventário: com um feitiço de item selecionado, só lançar nele. */
+	const menuOf = (it: GameItem) =>
+		gameMenu.spell ? castOnMenu(gameMenu.spell, it) : itemMenu(it, bankOpen, bridge);
 
 	const slots = $derived(invSlots(view));
 	const equip = $derived(equipmentLayout(equipItems(view)));
@@ -41,7 +60,7 @@
 				aria-selected={tab === k}
 				aria-label={label}
 				disabled={!ok}
-				title={ok ? label : `${label}: precisa da ponte do Dev Bootstrap (próxima entrega)`}
+				title={ok ? label : `${label}: precisa da ponte do Dev Bootstrap 1.2 no cliente`}
 				onclick={() => (tab = k)}
 				>{#if icon}<img src={icon} alt="" />{:else}{label}{/if}</button
 			>
@@ -58,8 +77,8 @@
 						type="button"
 						class="gslot"
 						title={it.name}
-						onclick={(e) => openMenu(e, itemMenu(it, bankOpen))}
-						oncontextmenu={(e) => openMenu(e, itemMenu(it, bankOpen))}
+						onclick={(e) => openMenu(e, menuOf(it))}
+						oncontextmenu={(e) => openMenu(e, menuOf(it))}
 						>{#if icon}<img src={icon} alt={it.name} />{:else}<span class="gab"
 								>{it.name.slice(0, 4)}</span
 							>{/if}{#if q}<span class="gq {q.tone}">{q.text}</span>{/if}</button
@@ -69,27 +88,92 @@
 				{/if}
 			{/each}
 		</div>
-		{#if bankOpen}<p class="ghint">Banco aberto: o menu dos itens deposita.</p>{/if}
+		{#if gameMenu.spell}
+			<p class="ghint">
+				Cast {gameMenu.spell.name}: escolha o item.
+				<button class="glink" type="button" onclick={() => (gameMenu.spell = null)}>Cancelar</button
+				>
+			</p>
+		{:else if bankOpen}<p class="ghint">Banco aberto: o menu dos itens deposita.</p>{/if}
 	{:else if tab === 'equipado'}
 		<div class="geqw">
 			<div class="geq">
 				{#each equip.cells as c (c.slot)}
-					<div
-						class="ges"
-						style="grid-row: {c.row}; grid-column: {c.col};"
-						title={c.item ? c.item.name : `${c.label}: vazio`}
-					>
-						{#if c.item}
-							{@const icon = itemIcon(c.item.id)}
-							{#if icon}<img src={icon} alt={c.item.name} />{:else}<span class="gab"
+					{#if c.item}
+						{@const icon = itemIcon(c.item.id)}
+						{@const menu = equipMenu(view, c.item.name)}
+						<button
+							type="button"
+							class="ges"
+							style="grid-row: {c.row}; grid-column: {c.col};"
+							title={c.item.name}
+							disabled={!menu.length}
+							onclick={(e) => openMenu(e, menu)}
+							oncontextmenu={(e) => openMenu(e, menu)}
+							>{#if icon}<img src={icon} alt={c.item.name} />{:else}<span class="gab"
 									>{c.item.name.slice(0, 4)}</span
-								>{/if}
-							{#if c.item.qty > 1}<span class="gq y">{qtyLabel(c.item.qty).text}</span>{/if}
-						{/if}
-					</div>
+								>{/if}{#if c.item.qty > 1}<span class="gq y">{qtyLabel(c.item.qty).text}</span
+								>{/if}</button
+						>
+					{:else}
+						<span
+							class="ges"
+							style="grid-row: {c.row}; grid-column: {c.col};"
+							title="{c.label}: vazio"
+						></span>
+					{/if}
 				{/each}
 			</div>
 		</div>
+	{:else if tab === 'oracao'}
+		<div class="gpr">
+			{#each prayers as p (p.key)}
+				{@const icon = prayerIcon(p.key)}
+				<button
+					type="button"
+					class="gpc"
+					class:on={p.active}
+					class:off={!p.unlocked}
+					title="{p.name} · nível {p.level}{p.active ? ' · ativa' : ''}"
+					disabled={!p.unlocked}
+					onclick={(e) => openMenu(e, prayerMenu(p))}
+					oncontextmenu={(e) => openMenu(e, prayerMenu(p))}
+					>{#if icon}<img src={icon} alt={p.name} />{:else}<span class="gab"
+							>{p.name.slice(0, 4)}</span
+						>{/if}</button
+				>
+			{/each}
+		</div>
+		<div class="gpts">
+			<span>Prayer</span><span
+				>{view.bridge?.prayers?.points ?? '—'} / {view.bridge?.prayers?.level ?? '—'}</span
+			>
+		</div>
+	{:else if tab === 'magia'}
+		<div class="gsp">
+			{#each spells as sp (sp.key)}
+				{@const icon = spellIcon(sp.key)}
+				<button
+					type="button"
+					class="gspc"
+					class:off={!sp.castable}
+					class:sel={gameMenu.spell?.key === sp.key}
+					title="{sp.name} · nível {sp.level}{sp.castable ? '' : ' · sem nível ou runas'}"
+					disabled={!sp.castable}
+					onclick={(e) => openMenu(e, spellMenu(sp))}
+					oncontextmenu={(e) => openMenu(e, spellMenu(sp))}
+					>{#if icon}<img src={icon} alt={sp.name} />{:else}<span class="gab"
+							>{sp.name.slice(0, 4)}</span
+						>{/if}</button
+				>
+			{/each}
+		</div>
+		{#if gameMenu.spell}
+			<p class="ghint">
+				Cast {gameMenu.spell.name}: escolha o item na aba Itens.
+				<button class="glink" type="button" onclick={() => (tab = 'itens')}>Ir para Itens</button>
+			</p>
+		{/if}
 	{:else}
 		<div class="gsk">
 			{#each skills as s (s.skill)}
@@ -223,6 +307,101 @@
 	}
 	.gq.g {
 		color: #00ff80;
+	}
+	.gpr {
+		display: grid;
+		grid-template-columns: repeat(5, 1fr);
+		gap: 4px;
+		justify-items: center;
+		padding: 6px 2px;
+		background: #2e2720;
+		border: 1px solid #000;
+		border-radius: 3px;
+		min-height: 264px;
+		align-content: start;
+		box-sizing: border-box;
+	}
+	.gpc,
+	.gspc {
+		width: 36px;
+		height: 36px;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		border: 0;
+		border-radius: 50%;
+		background: transparent;
+		padding: 0;
+		cursor: pointer;
+	}
+	.gpc.on {
+		background: radial-gradient(circle, #c8a14a66 0, #c8a14a22 60%, transparent 70%);
+		box-shadow: 0 0 0 1px #c8a14a;
+	}
+	.gpc.off,
+	.gspc.off {
+		cursor: default;
+	}
+	.gpc.off img,
+	.gspc.off img {
+		filter: grayscale(1) brightness(0.45);
+	}
+	.gpc img {
+		max-width: 30px;
+		max-height: 30px;
+	}
+	.gpts {
+		display: flex;
+		justify-content: space-between;
+		margin-top: 6px;
+		padding: 4px 6px;
+		background: #1c160d;
+		border-radius: 2px;
+		font:
+			600 11px 'JetBrains Mono',
+			monospace;
+		color: #ffff00;
+	}
+	.gsp {
+		display: grid;
+		grid-template-columns: repeat(6, 1fr);
+		gap: 3px;
+		justify-items: center;
+		padding: 6px 2px;
+		background: #2e2720;
+		border: 1px solid #000;
+		border-radius: 3px;
+		min-height: 264px;
+		align-content: start;
+		box-sizing: border-box;
+	}
+	.gspc {
+		width: 30px;
+		height: 30px;
+		border-radius: 3px;
+	}
+	.gspc.sel {
+		box-shadow: 0 0 0 1px #fff;
+	}
+	.gspc img {
+		max-width: 26px;
+		max-height: 26px;
+	}
+	button.ges {
+		cursor: pointer;
+		padding: 0;
+	}
+	button.ges:disabled {
+		cursor: default;
+	}
+	.glink {
+		border: 0;
+		background: none;
+		padding: 0;
+		color: #ff9040;
+		font: inherit;
+		text-decoration: underline;
+		cursor: pointer;
 	}
 	.ghint {
 		margin: 6px 2px 0;

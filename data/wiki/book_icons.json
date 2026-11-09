@@ -1,0 +1,954 @@
+{
+	"source": "Microbot client 2.6.52: Rs2PrayerEnum and Rs2Spells (the keys the Dev Bootstrap bridge sends)",
+	"prayers": [
+		{
+			"key": "THICK_SKIN",
+			"name": "Thick Skin",
+			"level": 1
+		},
+		{
+			"key": "BURST_STRENGTH",
+			"name": "Burst of Strength",
+			"level": 4
+		},
+		{
+			"key": "CLARITY_THOUGHT",
+			"name": "Clarity of Thought",
+			"level": 7
+		},
+		{
+			"key": "SHARP_EYE",
+			"name": "Sharp Eye",
+			"level": 8
+		},
+		{
+			"key": "MYSTIC_WILL",
+			"name": "Mystic Will",
+			"level": 9
+		},
+		{
+			"key": "ROCK_SKIN",
+			"name": "Rock Skin",
+			"level": 10
+		},
+		{
+			"key": "SUPERHUMAN_STRENGTH",
+			"name": "Superhuman Strength",
+			"level": 13
+		},
+		{
+			"key": "IMPROVED_REFLEXES",
+			"name": "Improved Reflexes",
+			"level": 16
+		},
+		{
+			"key": "RAPID_RESTORE",
+			"name": "Rapid Restore",
+			"level": 19
+		},
+		{
+			"key": "RAPID_HEAL",
+			"name": "Rapid heal",
+			"level": 22
+		},
+		{
+			"key": "PROTECT_ITEM",
+			"name": "Protect Item",
+			"level": 25
+		},
+		{
+			"key": "HAWK_EYE",
+			"name": "Hawk eye",
+			"level": 26
+		},
+		{
+			"key": "MYSTIC_LORE",
+			"name": "Mystic Lore",
+			"level": 27
+		},
+		{
+			"key": "STEEL_SKIN",
+			"name": "Steel Skin",
+			"level": 28
+		},
+		{
+			"key": "ULTIMATE_STRENGTH",
+			"name": "Ultimate Strength",
+			"level": 31
+		},
+		{
+			"key": "INCREDIBLE_REFLEXES",
+			"name": "Incredible Reflexes",
+			"level": 34
+		},
+		{
+			"key": "PROTECT_MAGIC",
+			"name": "Protect From Magic",
+			"level": 37
+		},
+		{
+			"key": "PROTECT_RANGE",
+			"name": "Protect From Missiles",
+			"level": 40
+		},
+		{
+			"key": "PROTECT_MELEE",
+			"name": "Protect From Melee",
+			"level": 43
+		},
+		{
+			"key": "EAGLE_EYE",
+			"name": "Eagle Eye",
+			"level": 44
+		},
+		{
+			"key": "DEAD_EYE",
+			"name": "Deadeye",
+			"level": 44
+		},
+		{
+			"key": "MYSTIC_MIGHT",
+			"name": "Mystic Might",
+			"level": 45
+		},
+		{
+			"key": "MYSTIC_VIGOUR",
+			"name": "Mystic Vigour",
+			"level": 45
+		},
+		{
+			"key": "RETRIBUTION",
+			"name": "Retribution",
+			"level": 46
+		},
+		{
+			"key": "REDEMPTION",
+			"name": "Redemption",
+			"level": 49
+		},
+		{
+			"key": "SMITE",
+			"name": "Smite",
+			"level": 52
+		},
+		{
+			"key": "PRESERVE",
+			"name": "Preserve",
+			"level": 55
+		},
+		{
+			"key": "CHIVALRY",
+			"name": "Chivalry",
+			"level": 60
+		},
+		{
+			"key": "PIETY",
+			"name": "Piety",
+			"level": 70
+		},
+		{
+			"key": "RIGOUR",
+			"name": "Rigour",
+			"level": 74
+		},
+		{
+			"key": "AUGURY",
+			"name": "Augury",
+			"level": 77
+		}
+	],
+	"spells": [
+		{
+			"key": "CONFUSE",
+			"name": "Confuse",
+			"level": 3,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WEAKEN",
+			"name": "Weaken",
+			"level": 11,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "CURSE",
+			"name": "Curse",
+			"level": 19,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "BIND",
+			"name": "Bind",
+			"level": 20,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "SNARE",
+			"name": "Snare",
+			"level": 50,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "VULNERABILITY",
+			"name": "Vulnerability",
+			"level": 66,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENFEEBLE",
+			"name": "Enfeeble",
+			"level": 73,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENTANGLE",
+			"name": "Entangle",
+			"level": 79,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "STUN",
+			"name": "Stun",
+			"level": 80,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "TELE_BLOCK",
+			"name": "Tele Block",
+			"level": 85,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "LUMBRIDGE_HOME_TELEPORT",
+			"name": "Lumbridge Home Teleport",
+			"level": 0,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "VARROCK_TELEPORT",
+			"name": "Varrock Teleport",
+			"level": 25,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "LUMBRIDGE_TELEPORT",
+			"name": "Lumbridge Teleport",
+			"level": 31,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "FALADOR_TELEPORT",
+			"name": "Falador Teleport",
+			"level": 37,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "TELEPORT_TO_HOUSE",
+			"name": "Teleport To House",
+			"level": 40,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "CAMELOT_TELEPORT",
+			"name": "Camelot Teleport",
+			"level": 45,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ARDOUGNE_TELEPORT",
+			"name": "Ardougne Teleport",
+			"level": 51,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "WATCHTOWER_TELEPORT",
+			"name": "Watchtower Teleport",
+			"level": 58,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "TROLLHEIM_TELEPORT",
+			"name": "Trollheim Teleport",
+			"level": 61,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "CIVITAS_ILLA_FORTIS_TELEPORT",
+			"name": "Civitas illa Fortis Teleport",
+			"level": 54,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "KOUREND_CASTLE_TELEPORT",
+			"name": "Kourend Castle Teleport",
+			"level": 48,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "TELEKINETIC_GRAB",
+			"name": "Telekinetic Grab",
+			"level": 33,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "BONES_TO_BANANAS",
+			"name": "Bones To Bananas",
+			"level": 15,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "BONES_TO_PEACHES",
+			"name": "Bones To Peaches",
+			"level": 60,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "LOW_LEVEL_ALCHEMY",
+			"name": "Low Level Alchemy",
+			"level": 21,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "SUPERHEAT_ITEM",
+			"name": "Superheat Item",
+			"level": 43,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "HIGH_LEVEL_ALCHEMY",
+			"name": "High Level Alchemy",
+			"level": 55,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_OPAL_BOLTS",
+			"name": "Enchant Opal Bolt",
+			"level": 4,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_SAPPHIRE_BOLT",
+			"name": "Enchant Sapphire Bolt",
+			"level": 7,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_JADE_BOLT",
+			"name": "Enchant Jade Bolt",
+			"level": 14,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_PEARL_BOLT",
+			"name": "Enchant Pearl Bolt",
+			"level": 24,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_EMERALD_BOLT",
+			"name": "Enchant Emerald Bolt",
+			"level": 27,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_TOPAZ_BOLT",
+			"name": "Enchant Topaz Bolt",
+			"level": 29,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_RUBY_BOLT",
+			"name": "Enchant Ruby Bolt",
+			"level": 49,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_DIAMOND_BOLT",
+			"name": "Enchant Diamond Bolt",
+			"level": 57,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_DRAGONSTONE_BOLT",
+			"name": "Enchant Dragonstone Bolt",
+			"level": 68,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_ONYX_BOLT",
+			"name": "Enchant Onyx Bolt",
+			"level": 87,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_SAPPHIRE_JEWELLERY",
+			"name": "Lvl-1 Enchant",
+			"level": 7,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_EMERALD_JEWELLERY",
+			"name": "Lvl-2 Enchant",
+			"level": 27,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_RUBY_JEWELLERY",
+			"name": "Lvl-3 Enchant",
+			"level": 49,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_DIAMOND_JEWELLERY",
+			"name": "Lvl-4 Enchant",
+			"level": 57,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_DRAGONSTONE_JEWELLERY",
+			"name": "Lvl-5 Enchant",
+			"level": 68,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_ONYX_JEWELLERY",
+			"name": "Lvl-6 Enchant",
+			"level": 87,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "ENCHANT_ZENYTE_JEWELLERY",
+			"name": "Lvl-7 Enchant",
+			"level": 93,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "CHARGE_WATER_ORB",
+			"name": "Charge Water Orb",
+			"level": 56,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "CHARGE_EARTH_ORB",
+			"name": "Charge Earth Orb",
+			"level": 60,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "CHARGE_FIRE_ORB",
+			"name": "Charge Fire Orb",
+			"level": 63,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "CHARGE_AIR_ORB",
+			"name": "Charge Air Orb",
+			"level": 66,
+			"spellbook": "MODERN"
+		},
+		{
+			"key": "PADDEWWA_TELEPORT",
+			"name": "Paddewwa Teleport",
+			"level": 54,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "SENNTISTEN_TELEPORT",
+			"name": "Senntisten Teleport",
+			"level": 60,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "KHARYRLL_TELEPORT",
+			"name": "Kharyrll Teleport",
+			"level": 66,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "LASSAR_TELEPORT",
+			"name": "Lassar Teleport",
+			"level": 72,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "DAREEYAK_TELEPORT",
+			"name": "Dareeyak Teleport",
+			"level": 78,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "CARRALLANGER_TELEPORT",
+			"name": "Carrallanger Teleport",
+			"level": 84,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "ANNAKARL_TELEPORT",
+			"name": "Annakarl Teleport",
+			"level": 90,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "GHORROCK_TELEPORT",
+			"name": "Ghorrock Teleport",
+			"level": 96,
+			"spellbook": "ANCIENT"
+		},
+		{
+			"key": "MONSTER_EXAMINE",
+			"name": "Monster Examine",
+			"level": 66,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "CURE_OTHER",
+			"name": "Cure Other",
+			"level": 68,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "CURE_ME",
+			"name": "Cure Me",
+			"level": 71,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "CURE_GROUP",
+			"name": "Cure Group",
+			"level": 74,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "STAT_SPY",
+			"name": "Stat Spy",
+			"level": 75,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "DREAM",
+			"name": "Dream",
+			"level": 79,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "STAT_RESTORE_POT_SHARE",
+			"name": "Stat Restore Pot Share",
+			"level": 81,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "BOOST_POTION_SHARE",
+			"name": "Boost Potion Share",
+			"level": 84,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "ENERGY_TRANSFER",
+			"name": "Energy Transfer",
+			"level": 91,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "HEAL_OTHER",
+			"name": "Heal Other",
+			"level": 92,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "VENGEANCE_OTHER",
+			"name": "Vengeance Other",
+			"level": 93,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "VENGEANCE",
+			"name": "Vengeance",
+			"level": 94,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "HEAL_GROUP",
+			"name": "Heal Group",
+			"level": 95,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "MOONCLAN_TELEPORT",
+			"name": "Moonclan Teleport",
+			"level": 69,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "TELE_GROUP_MOONCLAN",
+			"name": "Tele Group Moonclan",
+			"level": 70,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "OURANIA_TELEPORT",
+			"name": "Ourania Teleport",
+			"level": 71,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "WATERBIRTH_TELEPORT",
+			"name": "Waterbirth Teleport",
+			"level": 72,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "TELE_GROUP_WATERBIRTH",
+			"name": "Tele Group Waterbirth",
+			"level": 73,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "BARBARIAN_TELEPORT",
+			"name": "Barbarian Teleport",
+			"level": 75,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "TELE_GROUP_BARBARIAN",
+			"name": "Tele Group Barbarian",
+			"level": 76,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "KHAZARD_TELEPORT",
+			"name": "Khazard Teleport",
+			"level": 78,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "TELE_GROUP_KHAZARD",
+			"name": "Tele Group Khazard",
+			"level": 79,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "FISHING_GUILD_TELEPORT",
+			"name": "Fishing Guild Teleport",
+			"level": 85,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "TELE_GROUP_FISHING_GUILD",
+			"name": "Tele Group Fishing Guild",
+			"level": 86,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "CATHERBY_TELEPORT",
+			"name": "Catherby Teleport",
+			"level": 87,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "TELE_GROUP_CATHERBY",
+			"name": "Tele Group Catherby",
+			"level": 88,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "ICE_PLATEAU_TELEPORT",
+			"name": "Ice Plateau Teleport",
+			"level": 89,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "TELE_GROUP_ICE_PLATEAU",
+			"name": "Tele Group Ice Plateau",
+			"level": 90,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "BAKE_PIE",
+			"name": "Bake Pie",
+			"level": 65,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "GEOMANCY",
+			"name": "Geomancy",
+			"level": 65,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "CURE_PLANT",
+			"name": "Cure Plant",
+			"level": 66,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "NPC_CONTACT",
+			"name": "Npc Contact",
+			"level": 67,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "HUMIDIFY",
+			"name": "Humidify",
+			"level": 68,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "HUNTER_KIT",
+			"name": "Hunter Kit",
+			"level": 71,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "SPIN_FLAX",
+			"name": "Spin Flax",
+			"level": 76,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "SUPERGLASS_MAKE",
+			"name": "Superglass Make",
+			"level": 77,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "TAN_LEATHER",
+			"name": "Tan Leather",
+			"level": 78,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "STRING_JEWELLERY",
+			"name": "String Jewellery",
+			"level": 80,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "MAGIC_IMBUE",
+			"name": "Magic Imbue",
+			"level": 82,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "FERTILE_SOIL",
+			"name": "Fertile Soil",
+			"level": 83,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "PLANK_MAKE",
+			"name": "Plank Make",
+			"level": 86,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "RECHARGE_DRAGONSTONE",
+			"name": "Recharge Dragonstone",
+			"level": 89,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "SPELLBOOK_SWAP",
+			"name": "Spellbook Swap",
+			"level": 96,
+			"spellbook": "LUNAR"
+		},
+		{
+			"key": "ARCEUUS_LIBRARY_TELEPORT",
+			"name": "Arceuus Library Teleport",
+			"level": 6,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "DRAYNOR_MANOR_TELEPORT",
+			"name": "Draynor Manor Teleport",
+			"level": 17,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "BATTLEFRONT_TELEPORT",
+			"name": "Battlefront Teleport",
+			"level": 23,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "MIND_ALTAR_TELEPORT",
+			"name": "Mind Altar Teleport",
+			"level": 28,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "RESPAWN_TELEPORT",
+			"name": "Respawn Teleport",
+			"level": 34,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "SALVE_GRAVEYARD_TELEPORT",
+			"name": "Salve Graveyard Teleport",
+			"level": 40,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "FENKENSTRAINS_CASTLE_TELEPORT",
+			"name": "Fenkenstrain's Castle Teleport",
+			"level": 48,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "HARMONY_ISLAND_TELEPORT",
+			"name": "Harmony Island Teleport",
+			"level": 65,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "CEMETERY_TELEPORT",
+			"name": "Cemetery Teleport",
+			"level": 71,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "BARROWS_TELEPORT",
+			"name": "Barrows Teleport",
+			"level": 83,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "APE_ATOLL_TELEPORT",
+			"name": "Ape Atoll Teleport",
+			"level": 90,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "GHOSTLY_GRASP",
+			"name": "Ghostly Grasp",
+			"level": 35,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "SKELETAL_GRASP",
+			"name": "Skeletal Grasp",
+			"level": 56,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "UNDEAD_GRASP",
+			"name": "Undead Grasp",
+			"level": 79,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "INFERIOR_DEMONBANE",
+			"name": "Inferior Demonbane",
+			"level": 44,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "SUPERIOR_DEMONBANE",
+			"name": "Superior Demonbane",
+			"level": 62,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "DARK_DEMONBANE",
+			"name": "Dark Demonbane",
+			"level": 82,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "LESSER_CORRUPTION",
+			"name": "Lesser Corruption",
+			"level": 64,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "GREATER_CORRUPTION",
+			"name": "Greater Corruption",
+			"level": 85,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "DARK_LURE",
+			"name": "Dark Lure",
+			"level": 50,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "MARK_OF_DARKNESS",
+			"name": "Mark of Darkness",
+			"level": 59,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "WARD_OF_ARCEUUS",
+			"name": "Ward of Arceuus",
+			"level": 73,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "BASIC_REANIMATION",
+			"name": "Basic Reanimation",
+			"level": 16,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "ADEPT_REANIMATION",
+			"name": "Adept Reanimation",
+			"level": 41,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "EXPERT_REANIMATION",
+			"name": "Expert Reanimation",
+			"level": 72,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "MASTER_REANIMATION",
+			"name": "Master Reanimation",
+			"level": 90,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "DEMONIC_OFFERING",
+			"name": "Demonic Offering",
+			"level": 84,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "SINISTER_OFFERING",
+			"name": "Sinister Offering",
+			"level": 92,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "SHADOW_VEIL",
+			"name": "Shadow Veil",
+			"level": 47,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "VILE_VIGOUR",
+			"name": "Vile Vigour",
+			"level": 66,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "DEGRIME",
+			"name": "Degrime",
+			"level": 70,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "RESURRECT_CROPS",
+			"name": "Resurrect Crops",
+			"level": 78,
+			"spellbook": "ARCEUUS"
+		},
+		{
+			"key": "DEATH_CHARGE",
+			"name": "Death Charge",
+			"level": 80,
+			"spellbook": "ARCEUUS"
+		}
+	]
+}

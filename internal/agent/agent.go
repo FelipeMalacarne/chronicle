@@ -39,6 +39,11 @@ type Game interface {
 	JSON(ctx context.Context, method, path string, query url.Values, body any, timeout time.Duration) (json.RawMessage, error)
 }
 
+// Requester is one JSON request to a socket of the dev client.
+type Requester interface {
+	JSON(ctx context.Context, method, path string, query url.Values, body any, timeout time.Duration) (json.RawMessage, error)
+}
+
 // Executor runs the closed list of commands on this machine.
 type Executor struct {
 	Game Game
@@ -51,6 +56,9 @@ type Executor struct {
 	ClientCmd []string
 	// AccountCmd runs the harness's mb-account the same way.
 	AccountCmd []string
+	// Bridge is the Dev Bootstrap bridge socket (microbot.BridgeSocket):
+	// the menus and actions the Agent Server lacks; nil turns them off.
+	Bridge Requester
 
 	mu sync.Mutex // one client lifecycle/login action at a time
 }

@@ -13,6 +13,9 @@ const files = manifest as unknown as {
 	item?: Record<string, string>;
 	skill: Record<string, string>;
 	misc: Record<string, string>;
+	/** Orações e feitiços do cockpit, pela chave do cliente (THICK_SKIN, LOW_LEVEL_ALCHEMY). */
+	prayer?: Record<string, string>;
+	spell?: Record<string, string>;
 };
 const items = files.item_ids
 	? parseRanges(files.item_ids)
@@ -21,7 +24,7 @@ const items = files.item_ids
 /** Atribuição dos ícones (decisão 8 do v4); toda tela com ícone mostra no rodapé. */
 export const ICON_ATTRIBUTION = files.attribution;
 
-function url(kind: 'item' | 'skill' | 'misc', id: string): string | undefined {
+function url(kind: 'item' | 'skill' | 'misc' | 'prayer' | 'spell', id: string): string | undefined {
 	const has = kind === 'item' ? items.has(Number(id)) : !!files[kind]?.[id];
 	return has ? `/icons/${kind}/${id}.png` : undefined;
 }
@@ -45,4 +48,14 @@ export function iconFor(subject: string): string | undefined {
 
 export function itemIcon(id: number | undefined): string | undefined {
 	return id === undefined ? undefined : url('item', String(id));
+}
+
+/** Ícone de uma oração pela chave do cliente (Rs2PrayerEnum). */
+export function prayerIcon(key: string): string | undefined {
+	return url('prayer', key);
+}
+
+/** Ícone de um feitiço pela chave do cliente (Rs2Spells). */
+export function spellIcon(key: string): string | undefined {
+	return url('spell', key);
 }

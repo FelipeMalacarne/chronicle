@@ -175,6 +175,26 @@ Table mark_commands {
   '''
 }
 
+Table microbot_audit {
+  id bigint [pk, default: `nextval('microbot_audit_id_seq'::regclass)`]
+  at timestamptz [not null, default: `now()`]
+  actor text [not null]
+  origin text [not null]
+  action text [not null]
+  params jsonb [not null, default: `'{}'::jsonb`]
+  ok boolean [not null]
+  error text [not null, default: `''::text`]
+
+  indexes {
+    (at) [name: 'microbot_audit_at_idx']
+  }
+
+  Note: '''
+  Every Microbot control action (docs/08): who, when, what, result. Append-only.
+  microbot_audit_origin: CHECK ((origin = ANY (ARRAY['web'::text, 'agent'::text, 'routine'::text])))
+  '''
+}
+
 Table objective_progress {
   account_id text [not null]
   objective_key text [not null, note: 'canonical key (entities.ObjectiveKey), e.g. skill:agility>=70']
@@ -599,6 +619,10 @@ TableGroup metas_e_caches {
   goals
   wiki_cache
   graph_cache
+}
+
+TableGroup controle_microbot {
+  microbot_audit
 }
 
 // Views (fora do DBML): v_current_quests, v_current_skills

@@ -14,6 +14,7 @@
 		| 'sun'
 		| 'sync'
 		| 'book'
+		| 'automacao'
 		| 'x';
 	let { name, size = 16 }: { name: Name; size?: number } = $props();
 </script>
@@ -61,6 +62,10 @@
 		<path d="M11 7h16a2 2 0 0 1 2 2v24H13a2 2 0 0 1-2-2z" /><path
 			d="M11 29a2 2 0 0 1 2-2h16"
 		/><path d="M20 12l3 5-3 5-3-5z" />
+	{:else if name === 'automacao'}
+		<rect x="3" y="4" width="18" height="12" rx="1" /><path
+			d="M8 20h8M12 16v4M9 10h.01M15 10h.01"
+		/>
 	{:else if name === 'x'}
 		<path d="M6 6l12 12M18 6L6 18" />
 	{/if}

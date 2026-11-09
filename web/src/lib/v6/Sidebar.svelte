@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import Glyph from './Glyph.svelte';
+	import { microbotModule, probeMicrobot } from '#lib/progress/microbot.svelte';
 	import { forgetAccount } from '#lib/progress/account.svelte';
 	import { setTheme, theme } from '#lib/progress/theme.svelte';
 	import { ago, STALE_SOURCE_MS } from '#lib/progress/view';
@@ -73,8 +74,22 @@
 			label: 'Conta',
 			icon: 'conta' as const,
 			on: path.startsWith('/conta')
-		}
+		},
+		// Automação só existe com o módulo do Microbot ligado no servidor (doc 08).
+		...(microbotModule.enabled
+			? [
+					{
+						href: resolve('/automacao'),
+						label: 'Automação',
+						icon: 'automacao' as const,
+						on: path.startsWith('/automacao')
+					}
+				]
+			: [])
 	]);
+	$effect(() => {
+		void probeMicrobot();
+	});
 	const initial = $derived((name ?? account ?? '?').replace(/^acc_/, '').charAt(0).toUpperCase());
 
 	/** Sair: em oidc encerra a sessão; em dev (sem /auth) esquece a conta e volta ao setup. */

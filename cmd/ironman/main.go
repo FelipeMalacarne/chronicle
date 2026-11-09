@@ -46,6 +46,7 @@ func newRoot() *cobra.Command {
 		newStateCmd(),
 		newMCPCmd(),
 		newProgressCmd(),
+		newAgentCmd(),
 	)
 	return root
 }

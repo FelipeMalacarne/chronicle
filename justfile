@@ -51,6 +51,12 @@ dev: db-up
     (cd web && pnpm dev) &
     if command -v air >/dev/null 2>&1; then air; else go run ./cmd/ironman serve; fi
 
+# Microbot control agent (docs/08) on this machine: links to the planner (IRONMAN_URL, default
+# :8080) with MICROBOT_AGENT_TOKEN and drives the dev client of the microbot-plugins harness
+# (MICROBOT_HARNESS_DIR, default the sibling checkout). The server needs MICROBOT_CONTROL=on.
+agent:
+    MICROBOT_HARNESS_DIR="${MICROBOT_HARNESS_DIR:-$(realpath ../microbot-plugins)}" go run ./cmd/ironman agent
+
 # Vite dev server for the SPA alone (the API must already run on :8080)
 web-dev:
     cd web && pnpm dev

@@ -70,6 +70,9 @@ type Options struct {
 	// Static is the SPA filesystem rooted at the site (index.html at its root).
 	// nil disables the SPA and / returns 404.
 	Static fs.FS
+	// Microbot turns on the Microbot control module (docs/08); nil leaves
+	// every /api/microbot route out.
+	Microbot *MicrobotOptions
 	// Logger receives request logs; nil uses slog.Default().
 	Logger *slog.Logger
 }
@@ -183,6 +186,7 @@ func (s *Server) routes() {
 		account("POST /api/sync", s.handleSync)
 		account("GET /api/sync/runs", s.handleSyncRuns)
 	}
+	s.microbotRoutes()
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
 	})

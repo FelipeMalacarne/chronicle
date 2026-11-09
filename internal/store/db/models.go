@@ -116,6 +116,18 @@ type MarkCommand struct {
 	At        pgtype.Timestamptz `json:"at"`
 }
 
+// Every Microbot control action (docs/08): who, when, what, result. Append-only.
+type MicrobotAudit struct {
+	ID     int64              `json:"id"`
+	At     pgtype.Timestamptz `json:"at"`
+	Actor  string             `json:"actor"`
+	Origin string             `json:"origin"`
+	Action string             `json:"action"`
+	Params json.RawMessage    `json:"params"`
+	Ok     bool               `json:"ok"`
+	Error  string             `json:"error"`
+}
+
 // Verdict per account and objective, shared by every guide. A met verdict is latched with the evidence of the snapshot that proved it.
 type ObjectiveProgress struct {
 	AccountID          string             `json:"account_id"`

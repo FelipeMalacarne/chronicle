@@ -33,6 +33,7 @@ GROUPS = {
         "route_cursor",
     ],
     "metas_e_caches": ["goals", "wiki_cache", "graph_cache"],
+    "controle_microbot": ["microbot_audit"],
 }
 
 QUERY = r"""

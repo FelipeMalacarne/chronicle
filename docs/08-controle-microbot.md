@@ -157,6 +157,42 @@ quem é o usuário; as camadas abaixo cobrem o resto.
    ACL; junto com o deploy do planner no `saradomin`. Como o agent existe desde a fase 1, aqui muda
    só configuração.
 
+## Estado (2026-11-08)
+
+**Fase 1 feita.** O que existe:
+
+- `internal/microbot`: cliente do Agent Server pelo socket Unix do home de dev do harness, com o token
+  relido a cada chamada. O Agent Server confere o `Host`: o cliente manda `127.0.0.1`, como o `mb_api`
+  do harness.
+- `internal/agent`: protocolo, executor da lista fechada (`status`, `client_start`, `client_stop`,
+  `login`, `logout`, `screenshot`) e o link. O agent abre um websocket de **saída** para
+  `/api/microbot/agent` com `Authorization: Bearer <MICROBOT_AGENT_TOKEN>`, se apresenta e responde
+  comandos por id; reconecta sozinho (1 s a 30 s). O lado do `serve` aceita um agent por vez (uma
+  conexão nova substitui a antiga) e recusa comando fora da lista nos dois lados.
+- `client_start` roda `mb-client start --headless` pelo dev shell Nix do harness
+  (`nix develop $MICROBOT_HARNESS_DIR --command .../bin/mb-client`, ou `MICROBOT_CLIENT_CMD`);
+  `client_stop` roda `mb-client stop`. O screenshot sai do Agent Server em PNG (megabytes no cliente em
+  janela) e o agent o recodifica em JPEG antes do link.
+- `serve` com `MICROBOT_CONTROL=on` e `MICROBOT_AGENT_TOKEN` (32+ caracteres; exige `DATABASE_URL`):
+  `GET /api/microbot/status`, `GET /api/microbot/screenshot`, `GET /api/microbot/audit`,
+  `POST /api/microbot/client/start|client/stop|login|logout`. Em dev, só de um peer loopback; em oidc,
+  a sessão ou o bearer e o papel `microbot:control`. Toda ação (não as leituras) vai para
+  `microbot_audit` (migration 0010) com quem, origem e resultado, inclusive as que falham.
+- Web: Automação › Cockpit (`/automacao`, artboards V6Microbot1440 e V6Microbot640): estado do cliente,
+  da conta e do agent, a tela por screenshot a cada 5 s, o `/state` a cada 3 s, iniciar e parar o
+  cliente, login (com mundo opcional) e logout com segundo clique de confirmação, e a auditoria. A
+  navegação só mostra "Automação" quando o servidor tem o módulo ligado.
+- Rodar no zaros: `MICROBOT_CONTROL=on` e `MICROBOT_AGENT_TOKEN` no `.env` do planner, e `just agent`
+  (mesmo token no ambiente; `MICROBOT_HARNESS_DIR` assume o checkout irmão `../microbot-plugins`).
+- Verificado no zaros: o agent leu o cliente em janela que estava aberto (estado, mundo e screenshot),
+  subiu o headless pelo web em 38 s (tela de login, deslogado), tirou screenshot dele e o parou; a
+  auditoria registrou as duas ações. Login e logout ficaram nos testes com Agent Server falso, porque
+  logam a conta.
+
+Fora da fase 1, ainda: o VNC ao vivo (fase 2), plugins (fase 3), rotinas (fase 4), o serviço systemd e
+o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no
+jogo, então o cartão "Input humano" do artboard não existe na tela.
+
 ## Impacto nos outros docs
 
 - Doc 06: adendo apontando para este doc; o plugin de tracking continua somente leitura.

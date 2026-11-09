@@ -317,6 +317,8 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/world?account=` | feita (dev, oidc) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
 | `GET /api/world/entity?account=&ref=` | feita (dev, oidc) | uma entidade para o painel de entidade da v6: a mesma visão do `/api/world`, os requisitos diretos do catálogo (com o veredito da conta) e as quests que ela destrava |
 | `GET /api/account/state?account=` | feita (dev, oidc) | a Conta (V6Conta1440): conta, total e quest points, skills, quests e diaries com fonte e idade de cada fato, containers com frescor e itens; faceta nunca lida fica vazia |
+| `GET /api/microbot/agent` | feita (`MICROBOT_CONTROL=on`) | websocket do `ironman agent`: só com `Authorization: Bearer <MICROBOT_AGENT_TOKEN>`, nunca sessão (doc 08) |
+| `GET /api/microbot/status`, `/screenshot`, `/audit`; `POST /api/microbot/client/start`, `/client/stop`, `/login`, `/logout` | feita (`MICROBOT_CONTROL=on`; dev só loopback, oidc com o papel `microbot:control`) | controle do cliente pelo agent; toda ação vai para `microbot_audit` (doc 08) |
 | `GET /api/graph?account=&focus=&depth=` | feita (dev, oidc) | grafo por foco (seção 5): colunas de requisitos até `depth` (1 a 3, padrão 2), foco, destrava, caminho crítico; o plano da meta é `GET /api/goals/{id}/plan` |
 | `GET /api/export`, `POST /api/import` | planejadas | JSON completo da conta |
 
@@ -1106,9 +1108,18 @@ profundidade fora do intervalo, quest sem requisitos disponível), teste HTTP da
 view-model (`web/src/lib/progress/grafo.ts`) e capturas em 1440 e 640 contra o `just dev` com o
 Legends' Quest e o Heroes' Quest da conta do dono.
 
+Controle do Microbot, fase 1 (item 11, 2026-11-08; doc 08, seção "Estado"): `internal/microbot`
+(cliente do Agent Server), `internal/agent` (lista fechada, link por websocket de saída com token de
+máquina), `ironman agent` (`just agent`), as rotas `/api/microbot/*` atrás de `MICROBOT_CONTROL=on`,
+auditoria em `microbot_audit` (migration 0010) e Automação › Cockpit na web (V6Microbot1440/640).
+Verificação: testes do cliente contra um Agent Server falso no socket Unix, do link de ponta a ponta
+com `-race`, das rotas (token do agent, auditoria, sem agent, papel em oidc, só loopback em dev,
+módulo desligado), `node --test` do view-model, e no zaros o agent subindo e parando o cliente
+headless pelo web.
+
 Ainda não existe: deploy no saradomin, device flow do plugin,
-sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e o módulo de controle
-do Microbot (doc 08; Automação no canvas).
+sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e as fases 2 a 5 do
+controle do Microbot (VNC ao vivo, plugins, rotinas, serviço no zaros; doc 08).
 
 Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam para cá. A ordem dos itens
 2 a 9 foi decidida pelo dono (doc 09, decisão D7): extração completa antes do progresso persistido.
@@ -1125,7 +1136,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
-| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 18 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6); **CLI e `ironman mcp` feitos** (2026-11-08): `internal/client`, `login/logout/accounts/use/now/done/skip/undo/plan/sync/state/mcp`, `GET /api/auth/client`, `GET /api/route` e bearer JWT da aplicação nativa nas rotas por conta em oidc (seções 2.2 e 2.5); conferido contra o `just dev`; **grafo feito** (2026-11-08): Mundo › Grafo e `GET /api/graph` (seção 5) |
+| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 18 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6); **CLI e `ironman mcp` feitos** (2026-11-08): `internal/client`, `login/logout/accounts/use/now/done/skip/undo/plan/sync/state/mcp`, `GET /api/auth/client`, `GET /api/route` e bearer JWT da aplicação nativa nas rotas por conta em oidc (seções 2.2 e 2.5); conferido contra o `just dev`; **grafo feito** (2026-11-08): Mundo › Grafo e `GET /api/graph` (seção 5); **controle do Microbot, fase 1 feita** (2026-11-08): agent, cockpit, iniciar e parar o headless, login e logout, auditoria (doc 08); fases 2 (VNC) e 3 (plugins) em seguida |
 | 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05); conferido ao vivo com o plugin no zaros (2026-11-08) |
 | 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito** (2026-11-05, `feat/push-por-evento`); em uso no jogo (2026-11-08) |
 | 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); em uso no jogo com o plugin 1.2.1 (2026-11-08) |

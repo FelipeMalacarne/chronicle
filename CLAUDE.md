@@ -48,6 +48,7 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `ironman health` | GET `/api/health` of a running server (container healthcheck; never opens the database) |
 | `ironman login` / `now` / `done` / `plan` / `state` / `mcp` | API clients (docs/04 section 2.2): server from `--url`, `IRONMAN_URL`, `~/.config/ironman/config.json`, default `http://localhost:8080`; dev needs no login, oidc uses the Zitadel device flow; `IRONMAN_TOKEN` overrides the stored login. `done`/`skip`/`undo` write the owner's marks: never run them on the owner's account unasked |
 | `DATABASE_URL=... go test ./internal/httpapi -run TestContract -update` | rewrite `web/src/lib/api/contract/`: one real API answer per route the web reads, as `export const fixture = {…} satisfies <web type>`; then `pnpm check`. Without `-update` the test fails when an answer changes shape |
+| `just agent` / `ironman agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (`MICROBOT_CONTROL=on` there, same `MICROBOT_AGENT_TOKEN`), runs only the closed command list against the harness's dev client. Never log the client in for a test without the owner's agreement |
 | `ironman progress check --account <id>` | GET `/api/progress/check` of a running server (`IRONMAN_URL`): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
@@ -82,6 +83,9 @@ internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* an
                       (incl. /api/world/entity for the entity panel, /api/account/state for Conta)
                       (dev without session, oidc behind it), dev-only token bootstrap
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
+internal/microbot/    typed client of the Microbot Agent Server (Unix socket of the harness dev home); agent only
+internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
+                      websocket, and the server-side Link; the server never talks to the game directly
 internal/client/      typed API client of the CLI and `ironman mcp`: config.json and credentials.json
                       under ~/.config/ironman, device-flow login (RFC 8628), token refresh; never
                       imports internal/store
@@ -99,7 +103,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0004 progress over objectives, 0005 snapshot facts, 0006 plugin installations,
                       0007 integrity: met latch trigger, non-empty evidence, key shape, same-account snapshots,
                       0008 observations per source, player_state as their projection,
-                      0009 guides + mark_commands: append-only log of every step_marks change)
+                      0009 guides + mark_commands: append-only log of every step_marks change,
+                      0010 microbot_audit: every Microbot control action)
 db/queries/           sqlc queries; sqlc.yaml at the root
 data/                 original extraction: guide/ (input of `content migrate`), sources/bruhsailer (pinned DOCX)
 docs/                 numbered design docs (PT-BR); tools/ has the Python extraction scripts
@@ -159,7 +164,9 @@ Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATA
 `OIDC_REQUIRED_ROLE` (oidc needs one of the two; both set = both required), `OIDC_PROJECT_ID`, `OIDC_NATIVE_CLIENT_ID`
 (Zitadel native app of the device flow: its JWT access tokens are bearers on the account routes; empty = web
 session only), `SESSION_SECRET` (32+ chars in oidc),
-`CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler). `.env.example` documents each one;
+`CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler),
+`MICROBOT_CONTROL` (`off`; `on` enables the Microbot control module, docs/08) and `MICROBOT_AGENT_TOKEN` (32+ chars, required
+with it on). `ironman agent` reads `IRONMAN_URL`, `MICROBOT_AGENT_TOKEN`, `MICROBOT_HARNESS_DIR` and `MICROBOT_HOME`. `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 
 - **local-first (workstation "zaros")**: `compose.yaml` Postgres (shared by the stack and `just dev`), `AUTH_MODE=dev`.

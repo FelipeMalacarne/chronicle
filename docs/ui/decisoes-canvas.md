@@ -130,16 +130,21 @@ classe). Artboards seguidos:
 | Comparar | V6Comparar1440 | `/compare` |
 | Mundo › Entidades | V6Mundo1440, V6Mundo640 | `/mundo` |
 | Mundo › Metas | V6Metas1440, V6Metas640 | `/mundo/metas` |
+| Mundo › Grafo (2026-11-08) | V6Grafo1440 (colunas), V6Grafo640 (árvore) | `/mundo/grafo?focus=` |
+| Agora · passo-parágrafo por dentro (2026-11-08, implementado direto) | V6PassoAcoes640, página "1b · Agora · passo-parágrafo por dentro" | `/` |
 | Conta | V6Conta1440, V6Conta640 | `/conta` |
 | Primeiro acesso | V6Setup1440 | `/setup` |
 
 Onde o código diverge do canvas, por falta de dado ou de API (para o dono decidir se o canvas muda ou
 se a API vem depois):
 
-1. **Grafo, Sessão, Automação e recorrentes** não foram implementados: não há API de grafo, de sessão
-   (diff entre snapshots) nem o módulo do Microbot (doc 08); recorrentes com prazo seguem como proposta
-   (decisão 31 do doc 01). A aba Grafo do Mundo fica desabilitada; "Nesta sessão" no rodapé do Agora
-   conta as últimas 6 h de eventos, sem o link "ver".
+1. **Sessão, Automação e recorrentes** não foram implementados: não há API de sessão (diff entre
+   snapshots) nem o módulo do Microbot (doc 08); recorrentes com prazo seguem como proposta (decisão 31
+   do doc 01). "Nesta sessão" no rodapé do Agora conta as últimas 6 h de eventos, sem o link "ver". O
+   Grafo entrou em 2026-11-08 (doc 04, seção 5); ele diverge do canvas em três pontos: o foco padrão é
+   a primeira meta fixada, escolhida num menu do botão "Foco"; a profundidade padrão é 2 (o artboard
+   mostra 3); e só há requisitos de quest no catálogo, então Barrows gloves (o exemplo do artboard)
+   ainda não mostra os subquests do RFD.
 2. **Equipamento no boneco pelo slot do catálogo**: o contrato do plugin não traz a posição, mas cada
    item equipável ocupa um slot só, o `equipment_slot` da wiki em `content/reference/items.json`
    (exposto em `entities.ItemForm` e em `/api/account/state`); arma de duas mãos ocupa a arma e deixa o

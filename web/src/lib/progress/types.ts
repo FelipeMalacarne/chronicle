@@ -159,6 +159,8 @@ export interface EventsView {
 export interface Objective {
 	key: string;
 	role: Role;
+	/** Onde a anotação cita o objetivo: span em bytes UTF-8 do campo (passo.ts converte). */
+	evidence?: { field?: string; quote: string; span?: [number, number] };
 }
 
 export interface ItemRequirement {

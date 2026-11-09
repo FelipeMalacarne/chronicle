@@ -10,12 +10,14 @@
 		statusView,
 		stepNotes
 	} from '#lib/progress/view';
+	import { actionsOf, missingOf, type PassoObjective } from '#lib/progress/passo';
 	import type { BoardStep, ContentStep } from '#lib/progress/types';
 
 	/**
 	 * O passo atual (V6Agora1440/640 e V6AgoraBruh1440/640): os dois anteriores com quem os fez, o
-	 * título (ou o TL;DR do passo-parágrafo do BRUHsailer), os chips agrupados por papel, a nota do
-	 * autor, o passo a passo do autor, a wiki, "também na <rota>" e Feito/Pular/Desfazer.
+	 * título (o TL;DR do passo-parágrafo do BRUHsailer, ou a primeira frase), o que falta no passo, os
+	 * chips agrupados por papel, a nota do autor, o passo a passo do autor em ações com os objetivos
+	 * citados em cada uma, a wiki, "também na <rota>" e Feito/Pular/Desfazer.
 	 */
 	let {
 		step,
@@ -53,6 +55,47 @@
 	const chips = $derived(chipsOf(step, board));
 	const paragraph = $derived(isParagraphStep(step));
 	const para = $derived(paragraphOf(step.text));
+	/* Passo-parágrafo por dentro: as ações (frases do autor) com os objetivos citados em cada uma,
+	 * e o que ainda falta no passo. A linha do TL;DR já é o título, então fica fora das ações. */
+	const passoObjs = $derived<PassoObjective[]>(
+		chips.map((c) => {
+			const ev = step.objectives?.find((o) => o.key === c.key && o.role === c.role)?.evidence;
+			const onText = ev?.span && (ev.field ?? '/text') === '/text';
+			return {
+				key: c.key,
+				role: c.role,
+				label: c.label,
+				verdict: c.verdict,
+				span: onText ? ev?.span : undefined
+			};
+		})
+	);
+	const tldrLine = $derived(/^.*TL;?DR.*$/im.exec(step.text));
+	const allActions = $derived.by(() => {
+		if (!paragraph) return [];
+		const all = actionsOf(step.text, passoObjs);
+		const t = tldrLine;
+		return t ? all.filter((a) => a.start < t.index || a.start >= t.index + t[0].length) : all;
+	});
+	const missing = $derived(paragraph ? missingOf(passoObjs) : []);
+	/* Sem TL;DR, a primeira ação é o título; sai da lista quando não cita objetivo nenhum. */
+	const headline = $derived(para.tldr ? para.head : (allActions[0]?.text ?? para.head));
+	const actions = $derived(
+		!para.tldr && allActions[0]?.state === 'plain' ? allActions.slice(1) : allActions
+	);
+	const openActions = $derived(actions.filter((a) => a.state === 'open').length);
+	const ACT_GLYPH = { done: 'v-met', open: 'v-unmet', unknown: 'v-unk', plain: 'plain' } as const;
+	const ROLE_WORD: Record<string, string> = {
+		completes: 'conclui',
+		starts: 'inicia',
+		requires: 'requer',
+		uses: 'usa'
+	};
+	const VERDICT_WORD: Record<string, string> = {
+		met: 'feito',
+		unmet: 'falta',
+		unknown: 'não sabemos'
+	};
 	const meta = $derived(metaOf(step).filter((m) => m.label !== 'itens'));
 	const notes = $derived(stepNotes(step));
 	const wiki = $derived((step.links ?? []).filter((l) => l.type === 'wiki'));
@@ -106,9 +149,14 @@
 	{/if}
 	<div class="body">
 		{#if paragraph}
-			<h1 class="sr para" class:long={para.head.length > 220}>
-				{#if para.tldr}<span class="tl">TL;DR</span>{/if}{para.head}
+			<h1 class="sr para" class:long={headline.length > 220}>
+				{#if para.tldr}<span class="tl">TL;DR</span>{/if}{headline}
 			</h1>
+			{#if missing.length}
+				<p class="falta" title="O que este passo conclui ou inicia e a conta ainda não tem">
+					<span class="lbl">Falta</span>{missing.join(' · ')}
+				</p>
+			{/if}
 		{:else}
 			<h1 class="sr short">{step.text}</h1>
 		{/if}
@@ -131,7 +179,7 @@
 			</p>
 		{/each}
 
-		{#if paragraph && para.rest.length}
+		{#if paragraph && actions.length > 0}
 			<div class="steps">
 				<button
 					class="tog"
@@ -139,16 +187,30 @@
 					aria-expanded={expanded}
 					onclick={() => (open = !expanded)}
 					><Glyph name="chevron" size={12} /><span class="lbl"
-						>Passo a passo · {para.rest.length}
-						{para.rest.length === 1 ? 'parágrafo' : 'parágrafos'}{step.bank_actions?.length
-							? ' · banco dentro do passo'
-							: ''}</span
+						>Passo a passo · {actions.length} ações{openActions
+							? ` · ${openActions} com o que falta`
+							: ''}{step.bank_actions?.length ? ' · banco dentro do passo' : ''}</span
 					></button
 				>
 				{#if expanded}
-					<div class="prose box">
-						{#each para.rest as p, i (i)}<p>{p}</p>{/each}
-					</div>
+					<ol class="alist box">
+						{#each actions as a (a.start)}
+							<li class="act act-{a.state}">
+								<span class="v {ACT_GLYPH[a.state]}" aria-hidden="true"
+									>{#if a.state === 'done'}<Glyph
+											name="check"
+											size={9}
+										/>{:else if a.state === 'unknown'}?{/if}</span
+								><span class="tx"
+									>{#each a.pieces as p, i (i)}{#if p.objective}<mark
+												class="q q-{p.objective.verdict}"
+												title={`${ROLE_WORD[p.objective.role] ?? p.objective.role} ${p.objective.label} · ${VERDICT_WORD[p.objective.verdict]}`}
+												>{p.text}</mark
+											>{:else}{p.text}{/if}{/each}</span
+								>
+							</li>
+						{/each}
+					</ol>
 				{/if}
 			</div>
 		{/if}
@@ -296,6 +358,72 @@
 		padding: 10px 14px;
 		border-radius: 4px;
 		border: 1px solid var(--hairline);
+	}
+	.falta {
+		margin: 0;
+		font-size: 14px;
+		color: var(--not-started);
+	}
+	.falta .lbl {
+		margin-right: 8px;
+		color: var(--not-started);
+	}
+	.alist {
+		list-style: none;
+		margin: 0;
+		padding: 2px 14px;
+		display: flex;
+		flex-direction: column;
+	}
+	.act {
+		display: grid;
+		grid-template-columns: 14px 1fr;
+		gap: 10px;
+		align-items: start;
+		padding: 7px 0;
+		border-bottom: 1px solid var(--hairline);
+		font-size: 14px;
+		line-height: 1.45;
+		max-width: 80ch;
+	}
+	.act:last-child {
+		border-bottom: 0;
+	}
+	.act .v {
+		margin-top: 3px;
+	}
+	.act-done .tx,
+	.act-plain .tx {
+		color: var(--ink-muted);
+	}
+	.act-open .tx {
+		color: var(--ink);
+		font-weight: 500;
+	}
+	.v.plain {
+		border: 0;
+		width: 14px;
+		height: 14px;
+		background: radial-gradient(circle, var(--ink-subtle) 2px, transparent 2.5px);
+	}
+	mark.q {
+		background: transparent;
+		color: inherit;
+		box-shadow: none;
+		text-decoration-line: underline;
+		text-decoration-thickness: 2px;
+		text-underline-offset: 3px;
+	}
+	mark.q-met {
+		text-decoration-color: var(--done);
+	}
+	mark.q-unmet {
+		text-decoration-color: var(--not-started);
+		color: var(--ink);
+	}
+	mark.q-unknown {
+		text-decoration-style: dotted;
+		text-decoration-color: var(--ink-subtle);
 	}
 	.line {
 		display: flex;

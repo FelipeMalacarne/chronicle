@@ -137,6 +137,9 @@ start() {
 		for profile in "$MB_RL"/microbot-profiles/*.properties; do
 			[[ -f "$profile" ]] || continue
 			sed -i -E 's/^runelite\.(gpuplugin|hdplugin)=true$/runelite.\1=false/' "$profile"
+			# Open at the display's size: resized after it starts, the game kept drawing at the
+			# old size in the top-left and left stale pixels around it.
+			sed -i -E "s/^runelite\.clientBounds=.*/runelite.clientBounds=0:0:$(headless_game_size):g/" "$profile"
 		done
 		start_display
 		display="$MB_HEADLESS_DISPLAY"
@@ -161,6 +164,14 @@ start() {
 	else
 		echo "test mode: pid $(cat "$MB_PIDFILE"); results in $MB_RL/test-results"
 	fi
+}
+
+# Game canvas size for the headless display, as clientBounds wants it (w:h): the display less
+# the side panel (283 px measured at 1280 wide).
+headless_game_size() {
+	local w h
+	IFS=x read -r w h _ <<<"${MB_HEADLESS_SIZE:-1280x900x24}"
+	echo "$((w - 283)):$h"
 }
 
 # The client reopens at the size it last had, often a desktop's (2536x1382), and VNC then shows

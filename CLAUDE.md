@@ -4,7 +4,8 @@ Self-hosted planner/tracker for an OSRS Ironman account. It follows two independ
 the Oziris Ironman Efficiency Guide (`oziris-main`, 576 steps) and BRUHsailer (`bruhsailer-main`, 226
 steps). One Go binary (`ironman`) serves the API + embedded Svelte SPA, and doubles as CLI and MCP
 server; progress is auto-tracked from hiscores, Wise Old Man and a read-only Microbot (RuneLite) plugin
-that lives in the separate `microbot-plugins` repository (`fm/ironmanplanner`).
+that lives in the separate `microbot-plugins` repository (Chronicle Link, `fm/chroniclelink`; it was
+`fm/ironmanplanner` until 1.3).
 
 Current state and the active build sequence: `docs/04-arquitetura.md` section 9. The domain model is
 built around objectives (`docs/09-modelo-de-dominio.md`, approved 2026-11-04; decisions in sections
@@ -84,7 +85,7 @@ internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* an
                       (incl. /api/world/entity for the entity panel, /api/account/state for Conta)
                       (dev without session, oidc behind it), dev-only token bootstrap
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
-internal/microbot/    typed client of the Microbot Agent Server and of Chronicle's control bridge (Ironman Planner plugin; Unix sockets of the
+internal/microbot/    typed client of the Microbot Agent Server and of Chronicle's control bridge (Chronicle Link plugin; Unix sockets of the
                       harness dev home, same token); agent only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
                       websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->

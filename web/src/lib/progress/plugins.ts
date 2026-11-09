@@ -32,12 +32,15 @@ const PROTECTED = new Set([
 	'net.runelite.client.plugins.microbot.MicrobotPlugin',
 	'net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin',
 	'net.runelite.client.plugins.microbot.fm.devbootstrap.DevBootstrapPlugin',
+	'net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin',
 	'net.runelite.client.plugins.microbot.fm.ironmanplanner.IronmanPlannerPlugin'
 ]);
 
-/** O planner lê este plugin (doc 06); ele não é controlado daqui. */
-export const PLANNER_PLUGIN =
-	'net.runelite.client.plugins.microbot.fm.ironmanplanner.IronmanPlannerPlugin';
+/** O plugin do próprio Chronicle (Chronicle Link; antes Ironman Planner, doc 06): não é controlado daqui. */
+const CHRONICLE_PLUGINS = new Set([
+	'net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin',
+	'net.runelite.client.plugins.microbot.fm.ironmanplanner.IronmanPlannerPlugin'
+]);
 
 /** "<html>[<b><font>F</font><font>M</font></b>] Tick Fisher" vira "Tick Fisher". */
 export function cleanName(raw: string): string {
@@ -83,7 +86,8 @@ export function pluginRows(v: PluginsView | null): PluginRow[] {
 
 /** A linha de baixo de cada plugin na lista. */
 export function rowLine(r: PluginRow): string {
-	if (r.className === PLANNER_PLUGIN) return 'tracking · somente leitura · não é controlado daqui';
+	if (CHRONICLE_PLUGINS.has(r.className))
+		return 'o plugin do Chronicle · tracking e ponte · não é controlado daqui';
 	if (r.protected)
 		return `${r.active ? 'rodando' : 'parado'} · núcleo do controle, fica fora daqui`;
 	const parts = [r.active ? 'rodando' : 'parado'];

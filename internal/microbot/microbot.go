@@ -36,7 +36,7 @@ type Client struct {
 	Socket string
 }
 
-// BridgeSocket is Chronicle's control bridge (microbot-plugins fm/ironmanplanner
+// BridgeSocket is Chronicle's control bridge (microbot-plugins fm/chroniclelink
 // 1.2+): NPC, object and worn-item menus, prayers, spells and the actions
 // the Agent Server lacks, behind the same token.
 const BridgeSocket = "bridge.sock"

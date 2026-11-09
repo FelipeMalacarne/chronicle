@@ -5,8 +5,8 @@ Copies into web/static/icons the inventory icon of every obtainable item of
 the catalog (content/reference/items.json: equipment, bank and inventory can
 hold any item, not only the ones the guides cite), the 24 skill icons, the
 quest point icon and the prayer and spellbook icons of the Microbot cockpit
-(data/wiki/book_icons.json: the keys the control bridge of the Ironman
-Planner plugin sends), all from
+(data/wiki/book_icons.json: the keys the control bridge of the Chronicle
+Link plugin sends), all from
 the Old School RuneScape Wiki. It writes the small
 manifest the SPA imports (web/src/lib/icons/manifest.json: attribution, skill
 and misc files, and the item ids with an icon as compact ranges) and the full

@@ -29,8 +29,8 @@ const view: PluginsView = {
 				enabled: true
 			},
 			{
-				name: '<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] Ironman Planner',
-				className: 'net.runelite.client.plugins.microbot.fm.ironmanplanner.IronmanPlannerPlugin',
+				name: '<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] Chronicle Link',
+				className: 'net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin',
 				active: true,
 				enabled: true
 			},
@@ -83,7 +83,7 @@ test('pluginRows joins the Hub by class name and orders hub, mine, client', () =
 		[
 			['Kitten Tracker', 'hub', 'ok', false],
 			['GuardiansOfTheRift', 'hub', 'warn', false],
-			['Ironman Planner', 'meus', 'ok', true],
+			['Chronicle Link', 'meus', 'ok', true],
 			['Tick Fisher', 'meus', 'off', false],
 			['Agent Server', 'cliente', 'ok', true]
 		]
@@ -91,7 +91,10 @@ test('pluginRows joins the Hub by class name and orders hub, mine, client', () =
 	const gotr = rows[1];
 	assert.equal(rowVersion(gotr), '1.5.14 → 1.5.15');
 	assert.equal(rowLine(gotr), 'parado · atualização disponível no Hub');
-	assert.equal(rowLine(rows[2]), 'tracking · somente leitura · não é controlado daqui');
+	assert.equal(
+		rowLine(rows[2]),
+		'o plugin do Chronicle · tracking e ponte · não é controlado daqui'
+	);
 	assert.equal(rowVersion(rows[3]), 'seu · sideload');
 	assert.deepEqual(pluginRows(null), []);
 });

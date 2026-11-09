@@ -101,7 +101,7 @@ func (e *Executor) bridgeView(ctx context.Context, fail func(name, err string)) 
 	} {
 		raw, err := e.Bridge.JSON(ctx, http.MethodGet, part.path, part.query, nil, 10*time.Second)
 		if err != nil {
-			fail("bridge", fmt.Sprintf("%s: %v (the Ironman Planner plugin 1.3+ serves the bridge in the dev client)", part.path, err))
+			fail("bridge", fmt.Sprintf("%s: %v (the Chronicle Link plugin 1.4+ serves the bridge in the dev client)", part.path, err))
 			return nil
 		}
 		*part.into = raw
@@ -126,7 +126,7 @@ const (
 	CmdDialogueContinue = "dialogue_continue"
 	CmdDialogueSelect   = "dialogue_select" // an option by text or 1-based index
 
-	// Through the control bridge of the Ironman Planner plugin.
+	// Through the control bridge of the Chronicle Link plugin.
 	CmdEquipmentUse = "equipment_use"  // a worn item's action (Remove, Rub, Operate)
 	CmdPrayerToggle = "prayer_toggle"  // a prayer on or off
 	CmdSpellCast    = "spell_cast"     // a spell, or an alchemy spell on an item
@@ -421,7 +421,7 @@ func (e *Executor) act(ctx context.Context, command string, params json.RawMessa
 // bridgeAct runs an action through the control bridge.
 func (e *Executor) bridgeAct(ctx context.Context, p any) (any, error) {
 	if e.Bridge == nil {
-		return nil, errors.New("this action needs the control bridge (Ironman Planner plugin 1.3+ in the dev client)")
+		return nil, errors.New("this action needs the control bridge (Chronicle Link plugin 1.4+ in the dev client)")
 	}
 	post := func(path string, body any) (any, error) {
 		return e.Bridge.JSON(ctx, http.MethodPost, path, nil, body, 30*time.Second)

@@ -98,11 +98,13 @@ var (
 
 // protectedClasses are never started or stopped from the web: the control
 // path itself (Agent Server, the Microbot core, the bootstrap that starts the
-// server) and the planner's read-only tracking plugin (docs/06).
+// server) and Chronicle's own plugin, Chronicle Link (tracking and the control
+// bridge, docs/06), also under its old name while an old jar may linger.
 var protectedClasses = []string{
 	"net.runelite.client.plugins.microbot.MicrobotPlugin",
 	"net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin",
 	"net.runelite.client.plugins.microbot.fm.devbootstrap.DevBootstrapPlugin",
+	"net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin",
 	"net.runelite.client.plugins.microbot.fm.ironmanplanner.IronmanPlannerPlugin",
 }
 

@@ -1,5 +1,5 @@
 {
-	"source": "Microbot client 2.6.52: Rs2PrayerEnum and Rs2Spells (the keys the Ironman Planner plugin's control bridge sends)",
+	"source": "Microbot client 2.6.52: Rs2PrayerEnum and Rs2Spells (the keys the Chronicle Link plugin's control bridge sends)",
 	"prayers": [
 		{
 			"key": "THICK_SKIN",

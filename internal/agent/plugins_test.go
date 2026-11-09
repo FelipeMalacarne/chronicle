@@ -29,6 +29,7 @@ func TestValidateParams(t *testing.T) {
 		{CmdScriptStart, `{"className":"net.runelite.client.plugins.microbot.gotr.GotrPlugin"}`, ""},
 		{CmdScriptStart, `{"className":"GotrPlugin"}`, "fully qualified"},
 		{CmdScriptStop, `{"className":"net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin"}`, "not controlled"},
+		{CmdScriptStop, `{"className":"net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin"}`, "not controlled"},
 		{CmdScriptStop, `{"className":"net.runelite.client.plugins.microbot.fm.ironmanplanner.IronmanPlannerPlugin"}`, "not controlled"},
 		// Reading a protected plugin's status is fine.
 		{CmdScriptDetail, `{"className":"net.runelite.client.plugins.microbot.fm.ironmanplanner.IronmanPlannerPlugin"}`, ""},
@@ -281,7 +282,7 @@ func TestGameViewWithBridge(t *testing.T) {
 	}
 	// Without the bridge the view still works and says why.
 	v = (&Executor{Game: &loggedInGame{}, Bridge: failing{}}).gameView(ctx)
-	if v.Bridge != nil || !strings.Contains(v.Errors["bridge"], "Ironman Planner") || v.Inventory == nil {
+	if v.Bridge != nil || !strings.Contains(v.Errors["bridge"], "Chronicle Link") || v.Inventory == nil {
 		t.Fatalf("view without a bridge = %+v", v)
 	}
 }

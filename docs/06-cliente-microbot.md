@@ -102,6 +102,15 @@ harness (`-Dmicrobot.dev.harness=true`, o do `mb-client`) e só respondem com o 
 Server; no cliente do dia a dia o plugin continua só lendo e nada disso existe. O tracking (o
 escopo abaixo) segue somente leitura em qualquer cliente.
 
+## Adendo de 2026-11-09: o plugin se chama Chronicle Link
+
+O plugin passou a se chamar Chronicle Link (`fm/chroniclelink`, `ChronicleLinkPlugin`, versão 1.4.0):
+"[FM] Chronicle Link" na lista do RuneLite e "Chronicle" no botão da barra, no overlay e no painel.
+O grupo de config continua `fm-ironmanplanner`, para a URL, o token e a conta do dono sobreviverem,
+e nada do contrato de ingest nomeia o plugin, então o servidor não mudou. O `mb-install` remove o
+`IronmanPlannerPlugin.jar` antigo ao instalar o novo, nos dois clientes. As seções abaixo descrevem a
+versão 1.0 com o nome antigo e ficam como registro.
+
 ## Adendo de 2026-11-04: plugin implementado
 
 O plugin existe em `FelipeMalacarne/microbot-plugins` (repositório privado), pacote

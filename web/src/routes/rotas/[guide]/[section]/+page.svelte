@@ -15,10 +15,13 @@
 		chipsOf,
 		isParagraphStep,
 		loadoutItems,
+		looseLinks,
+		markRanges,
 		loadoutLabel,
 		metaOf,
 		paragraphOf,
 		pct,
+		piecesOf,
 		routeLabel,
 		routeTitle,
 		sectionLabel,
@@ -32,6 +35,7 @@
 		ContentSection,
 		ContentStep,
 		ItemRequirement,
+		Link,
 		MarkAction
 	} from '#lib/progress/types';
 	import ChipGroups from '#lib/v6/ChipGroups.svelte';
@@ -273,6 +277,15 @@
 			(it, i) => all.findIndex((x) => x.name === it.name && x.qty === it.qty) === i
 		);
 	}
+	/** Nome do link como o autor escreveu; sem texto, o host. */
+	const linkLabel = (l: Link) => {
+		if (l.text?.trim()) return l.text.trim();
+		try {
+			return new URL(l.url).hostname;
+		} catch {
+			return l.url;
+		}
+	};
 	const itemLabel = (it: ItemRequirement) =>
 		it.qty && it.qty > 1 ? `${it.name} ×${it.qty}` : it.name;
 	function bankLine(prev: SegmentView, seg: SegmentView): string {
@@ -337,6 +350,13 @@
 	{@const notes = stepNotes(s).filter((n) => n.kind !== 'hcim')}
 	{@const meta = metaOf(s).filter((m) => m.label !== 'itens')}
 	{@const para = paragraph ? paragraphOf(s.text) : null}
+	{@const shown = para
+		? para.tldr
+			? para.rest.map((t, i) => ({ t, at: para.restAt[i] }))
+			: [{ t: para.head, at: para.headAt }, ...para.rest.map((t, i) => ({ t, at: para.restAt[i] }))]
+		: []}
+	{@const ranges = markRanges(s.text, s.marks)}
+	{@const loose = looseLinks(shown.map((p) => p.t).join('\n'), s.links)}
 	<div class="exp">
 		{#if meta.length || (paragraph && s.bank_actions?.length)}
 			<div class="metas">
@@ -363,12 +383,23 @@
 		{/if}
 		{#if para}
 			<div class="prose box">
-				{#each para.tldr ? para.rest : [para.head, ...para.rest] as p, i (i)}<p>
-						{#each highlight(p, (s.bank_actions ?? [])[0]?.text ?? '') as x, j (j)}{#if x.m}<mark
-									>{x.t}</mark
-								>{:else}{x.t}{/if}{/each}
+				{#each shown as p, i (i)}<p>
+						{#each piecesOf(p.t, p.at, ranges, (s.bank_actions ?? [])[0]?.text ?? '', s.links) as x, j (j)}{#if x.href}<a
+									class={x.c ? `mk mk-${x.c}` : undefined}
+									href={x.href}
+									target="_blank"
+									rel="noreferrer">{x.t}</a
+								>{:else if x.m}<mark class={x.c ? `mk mk-${x.c}` : undefined}>{x.t}</mark
+								>{:else if x.c}<span class="mk mk-{x.c}">{x.t}</span>{:else}{x.t}{/if}{/each}
 					</p>{/each}
 			</div>
+		{/if}
+		{#if loose.length}
+			<p class="su small its">
+				<span class="lbl">Links</span>
+				{#each loose as l, i (l.url + i)}{#if i},
+					{/if}<a href={l.url} target="_blank" rel="noreferrer">{linkLabel(l)}</a>{/each}
+			</p>
 		{/if}
 		{#if account}
 			<div class="acts">
@@ -971,6 +1002,19 @@
 	}
 	.its .lbl {
 		margin-right: 6px;
+	}
+	/* Cores do autor no texto (BRUHsailer: "cheapest in red", rota da Phoenix em laranja). */
+	.mk {
+		font-weight: 600;
+	}
+	.mk-red {
+		color: var(--not-started);
+	}
+	.mk-orange {
+		color: var(--stale);
+	}
+	.mk-green {
+		color: var(--done);
 	}
 	.box {
 		padding: 10px 14px;

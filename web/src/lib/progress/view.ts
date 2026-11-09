@@ -13,12 +13,14 @@ import type {
 	Coverage,
 	EventsView,
 	ItemRequirement,
+	Link,
 	Loadout,
 	ReadinessItem,
 	Role,
 	SegmentReadiness,
 	StepStatus,
 	SyncRun,
+	TextMark,
 	Verdict
 } from './types.ts';
 
@@ -186,7 +188,16 @@ export function chipsOf(
 	board: Pick<BoardStep, 'objectives'> | undefined
 ): Chip[] {
 	const verdicts = new Map((board?.objectives ?? []).map((o) => [`${o.role}|${o.key}`, o]));
-	return (step.objectives ?? []).map((o) => {
+	// "Start and complete X" in one step: the completion says it all, so the start chip goes.
+	const completed = new Set(
+		(step.objectives ?? [])
+			.filter((o) => o.role === 'completes')
+			.map((o) => parseKey(o.key)?.ref ?? o.key)
+	);
+	const objectives = (step.objectives ?? []).filter(
+		(o) => o.role !== 'starts' || !completed.has(parseKey(o.key)?.ref ?? o.key)
+	);
+	return objectives.map((o) => {
 		const b = verdicts.get(`${o.role}|${o.key}`);
 		const verdict = b?.verdict ?? 'unknown';
 		const k = parseKey(o.key);
@@ -263,9 +274,13 @@ export function blockedBadge(keys: string[] | undefined, names: Record<string, s
 export interface Paragraph {
 	/** Texto aberto: o TL;DR do autor, ou o primeiro bullet quando não há TL;DR. */
 	head: string;
+	/** Onde head começa no texto (índice de string), ou -1 quando o TL;DR estava no meio do bullet. */
+	headAt: number;
 	tldr: boolean;
 	/** O que fica recolhido em "Passo a passo do autor". */
 	rest: string[];
+	/** Onde cada bullet de rest começa no texto. */
+	restAt: number[];
 	bullets: number;
 	chars: number;
 }
@@ -274,18 +289,132 @@ const TLDR = /TL;DR:?\s*/i;
 
 /** Divide o texto do autor em bullets e acha o TL;DR (decisão do dono, 2026-11-04). */
 export function paragraphOf(text: string): Paragraph {
-	const bullets = text
-		.split(/\n+/)
-		.map((l) => l.replace(/^\s*[-•]\s*/, '').trim())
-		.filter(Boolean);
-	const i = bullets.findIndex((b) => TLDR.test(b));
-	if (i >= 0) {
-		const head = bullets[i].replace(TLDR, '').trim();
-		const rest = bullets.filter((_, j) => j !== i);
-		return { head, tldr: true, rest, bullets: rest.length, chars: rest.join(' ').length };
+	const bullets: { t: string; at: number }[] = [];
+	for (const line of text.matchAll(/[^\n]+/g)) {
+		const lead = (/^\s*[-•]\s*/.exec(line[0]) ?? /^\s*/.exec(line[0]))![0].length;
+		const t = line[0].slice(lead).trimEnd();
+		if (t) bullets.push({ t, at: line.index + lead });
 	}
-	const [head = '', ...rest] = bullets;
-	return { head, tldr: false, rest, bullets: rest.length, chars: rest.join(' ').length };
+	const i = bullets.findIndex((b) => TLDR.test(b.t));
+	const rest = bullets.filter((_, j) => j !== (i >= 0 ? i : 0));
+	const tail = {
+		rest: rest.map((b) => b.t),
+		restAt: rest.map((b) => b.at),
+		bullets: rest.length,
+		chars: rest.map((b) => b.t).join(' ').length
+	};
+	if (i >= 0) {
+		const b = bullets[i];
+		const m = TLDR.exec(b.t)!;
+		const head = b.t.replace(TLDR, '').trim();
+		return { head, headAt: m.index === 0 ? b.at + m[0].length : -1, tldr: true, ...tail };
+	}
+	return { head: bullets[0]?.t ?? '', headAt: bullets[0]?.at ?? -1, tldr: false, ...tail };
+}
+
+/* ------------------------------------------------------------------ texto do autor */
+
+export type MarkColor = TextMark['color'];
+
+/** Um pedaço do texto: a cor da fonte, o termo realçado e o link que o texto cita. */
+export interface Piece {
+	t: string;
+	c?: MarkColor;
+	m?: boolean;
+	href?: string;
+}
+
+export interface MarkRange {
+	start: number;
+	end: number;
+	c: MarkColor;
+}
+
+const utf8Len = (cp: number) => (cp < 0x80 ? 1 : cp < 0x800 ? 2 : cp < 0x10000 ? 3 : 4);
+
+/** Os trechos coloridos do passo (bytes UTF-8, como o Go grava) em índices de string. */
+export function markRanges(text: string, marks: TextMark[] | undefined): MarkRange[] {
+	if (!marks?.length) return [];
+	const at = new Map<number, number>();
+	let b = 0;
+	let i = 0;
+	for (const ch of text) {
+		at.set(b, i);
+		b += utf8Len(ch.codePointAt(0)!);
+		i += ch.length;
+	}
+	at.set(b, i);
+	const out: MarkRange[] = [];
+	for (const m of marks) {
+		const start = at.get(m.span[0]);
+		const end = at.get(m.span[1]);
+		if (start !== undefined && end !== undefined && start < end)
+			out.push({ start, end, c: m.color });
+	}
+	return out;
+}
+
+/**
+ * O trecho `part` do texto, que começa em `at` (índice de string; -1 = sem cor), em pedaços: a cor
+ * dos marks, o termo realçado (busca ou ação de banco) e o link cujo texto aparece ali (o
+ * BRUHsailer cita a imagem pelo nome: "route in red in Sunset Ocean.png").
+ */
+export function piecesOf(
+	part: string,
+	at: number,
+	ranges: MarkRange[],
+	term = '',
+	links: Pick<Link, 'url' | 'text'>[] = []
+): Piece[] {
+	type Span = { s: number; e: number };
+	const colors: (Span & { c: MarkColor })[] =
+		at < 0
+			? []
+			: ranges
+					.map((r) => ({ s: r.start - at, e: r.end - at, c: r.c }))
+					.filter((r) => r.e > 0 && r.s < part.length);
+	const hits: Span[] = [];
+	const q = term.trim().toLowerCase();
+	const lower = part.toLowerCase();
+	if (q)
+		for (let i = lower.indexOf(q); i >= 0; i = lower.indexOf(q, i + q.length))
+			hits.push({ s: i, e: i + q.length });
+	const anchors: (Span & { href: string })[] = [];
+	for (const l of links) {
+		const t = l.text?.trim();
+		const i = t && t.length >= 3 ? part.indexOf(t) : -1;
+		if (t && i >= 0 && !anchors.some((a) => a.s < i + t.length && i < a.e))
+			anchors.push({ s: i, e: i + t.length, href: l.url });
+	}
+	const cuts = new Set([0, part.length]);
+	for (const x of [...colors, ...hits, ...anchors]) {
+		cuts.add(Math.max(0, x.s));
+		cuts.add(Math.min(part.length, x.e));
+	}
+	const points = [...cuts].sort((a, b) => a - b);
+	const out: Piece[] = [];
+	for (let k = 0; k + 1 < points.length; k++) {
+		const [s, e] = [points[k], points[k + 1]];
+		const inside = (x: Span) => x.s <= s && e <= x.e;
+		const p: Piece = { t: part.slice(s, e) };
+		const c = colors.find(inside)?.c;
+		const href = anchors.find(inside)?.href;
+		if (c) p.c = c;
+		if (hits.some(inside)) p.m = true;
+		if (href) p.href = href;
+		const last = out[out.length - 1];
+		if (last && last.c === p.c && last.m === p.m && last.href === p.href) last.t += p.t;
+		else out.push(p);
+	}
+	return out;
+}
+
+/** Links do passo que o texto não cita pelo nome: vão numa linha à parte. */
+export function looseLinks(text: string, links: Link[] | undefined): Link[] {
+	return (links ?? []).filter((l) => {
+		const t = l.text?.trim();
+		return !t || t.length < 3 || !text.includes(t);
+	});
 }
 
 /** Passo de parágrafo: texto longo em bullets, como no BRUHsailer. */

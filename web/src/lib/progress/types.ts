@@ -203,6 +203,12 @@ export interface Link {
 	text?: string;
 }
 
+/** Trecho colorido do texto da fonte (BRUHsailer): span em bytes UTF-8 do texto (view.ts converte). */
+export interface TextMark {
+	span: [number, number];
+	color: 'red' | 'orange' | 'green';
+}
+
 export interface ContentStep {
 	id: string;
 	text: string;
@@ -210,6 +216,7 @@ export interface ContentStep {
 	notes?: Note[];
 	items?: (string | { name: string; qty?: number })[];
 	links?: Link[];
+	marks?: TextMark[];
 	layers?: string[];
 	modes?: string[];
 	objectives?: Objective[];

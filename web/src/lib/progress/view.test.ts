@@ -12,6 +12,9 @@ import {
 	bankColumns,
 	checkboxLine,
 	chipsOf,
+	looseLinks,
+	markRanges,
+	piecesOf,
 	eventLines,
 	entityVerdict,
 	freshnessLabel,
@@ -692,4 +695,65 @@ test('step notes keep every author note, updates first, without metadata', () =>
 		{ kind: 'hcim', label: 'HCIM', text: 'Bring food.' }
 	]);
 	assert.deepEqual(stepNotes({}), []);
+});
+
+test('a step that starts and completes the same quest shows only the completion', () => {
+	const st = step('a', {
+		objectives: [
+			{ key: 'quest:children_of_the_sun@started', role: 'starts' },
+			{ key: 'quest:children_of_the_sun@finished', role: 'completes' },
+			{ key: 'quest:priest_in_peril@started', role: 'starts' }
+		]
+	});
+	assert.deepEqual(
+		chipsOf(st, undefined).map((c) => `${c.role} ${c.key}`),
+		['completes quest:children_of_the_sun@finished', 'starts quest:priest_in_peril@started']
+	);
+});
+
+test('paragraph offsets point at each bullet in the text', () => {
+	const text = '- TL;DR: café run\n  - Buy potato\n- Then lime';
+	const p = paragraphOf(text);
+	assert.equal(text.slice(p.headAt, p.headAt + p.head.length), p.head);
+	p.rest.forEach((r, i) => assert.equal(text.slice(p.restAt[i], p.restAt[i] + r.length), r));
+	assert.equal(paragraphOf('- Do X. TL;DR: y\n- z').headAt, -1);
+});
+
+test('marks in UTF-8 bytes become colored pieces, with search and cited links', () => {
+	// "é" and "’" take 2 and 3 bytes: the byte spans must land on "potato" and "lime".
+	const text = '- Café’s list: potato, lime\n- See Sunset Ocean.png now';
+	const bytes = new TextEncoder().encode(text);
+	const span = (w: string): [number, number] => {
+		const s = new TextEncoder().encode(text.slice(0, text.indexOf(w))).length;
+		return [s, s + new TextEncoder().encode(w).length];
+	};
+	assert.ok(bytes.length > text.length);
+	const ranges = markRanges(text, [
+		{ span: span('potato'), color: 'red' },
+		{ span: span('lime'), color: 'orange' }
+	]);
+	const p = paragraphOf(text);
+	assert.deepEqual(piecesOf(p.head, p.headAt, ranges, 'ist'), [
+		{ t: 'Café’s l' },
+		{ t: 'ist', m: true },
+		{ t: ': ' },
+		{ t: 'potato', c: 'red' },
+		{ t: ', ' },
+		{ t: 'lime', c: 'orange' }
+	]);
+	const links = [
+		{ type: 'guide', url: 'https://x/sunset', text: 'Sunset Ocean.png' },
+		{ type: 'wiki', url: 'https://x/w', text: 'Lost schematics - OSRS Wiki' }
+	];
+	assert.deepEqual(piecesOf(p.rest[0], p.restAt[0], ranges, '', links), [
+		{ t: 'See ' },
+		{ t: 'Sunset Ocean.png', href: 'https://x/sunset' },
+		{ t: ' now' }
+	]);
+	assert.deepEqual(
+		looseLinks(text, links).map((l) => l.url),
+		['https://x/w']
+	);
+	// No offset (TL;DR mid-bullet): no color, the rest still works.
+	assert.deepEqual(piecesOf('potato', -1, ranges), [{ t: 'potato' }]);
 });

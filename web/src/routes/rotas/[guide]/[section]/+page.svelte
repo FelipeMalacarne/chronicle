@@ -42,6 +42,7 @@
 	import Glyph from '#lib/v6/Glyph.svelte';
 	import ObjectiveChip from '#lib/v6/ObjectiveChip.svelte';
 	import RouteTabs from '#lib/v6/RouteTabs.svelte';
+	import { boardIn, type Scope } from '#lib/progress/undo';
 
 	/*
 	 * Rota (V6Rota1440 e V6Rota640; BRUHsailer em V6RotaBruh1440): abas de rota no topo, seções à
@@ -67,11 +68,15 @@
 	const route = $derived(session.summary?.routes.find((r) => r.guide === guideId) ?? null);
 	const activeRoute = $derived(session.summary?.routes.find((r) => r.active) ?? null);
 	const guide = $derived(guides.data?.guides.find((g) => g.id === guideId) ?? null);
-	const boardById = $derived(new Map((board.data?.steps ?? []).map((s) => [s.id, s])));
-	const cursorId = $derived(board.data?.cursor?.step_id);
+	/* O board de outra rota (ainda na tela enquanto o novo carrega) nunca alimenta esta seção nem
+	 * as escritas: ids de passo se repetem entre guias (regra 7). */
+	const scope = $derived(account && guideId ? { account, guide: guideId } : null);
+	const boardData = $derived(boardIn(board.data, scope));
+	const boardById = $derived(new Map((boardData?.steps ?? []).map((s) => [s.id, s])));
+	const cursorId = $derived(boardData?.cursor?.step_id);
 	const cursorStep = $derived(cursorId ? boardById.get(cursorId) : undefined);
 	const cursorHere = $derived(!!cursorStep && cursorStep.section_id === sectionId);
-	const counts = $derived(board.data?.sections.find((s) => s.id === sectionId)?.counts);
+	const counts = $derived(boardData?.sections.find((s) => s.id === sectionId)?.counts);
 	const segments = $derived(section.data ? segmentsOf(section.data) : []);
 	const paragraph = $derived(
 		!!section.data &&
@@ -226,13 +231,18 @@
 	/* Marcas. */
 	let busy = $state(false);
 	let failure = $state<string | null>(null);
-	async function write(run: () => Promise<Board>) {
+	/** Uma escrita por vez, presa à conta e à rota em que foi pedida. */
+	async function write(run: (at: Scope) => Promise<Board>) {
+		const at = scope;
+		if (!at || busy) return;
 		busy = true;
 		failure = null;
 		try {
-			board.set(await run());
+			const b = await run(at);
+			if (boardIn(b, scope)) board.set(b);
+			else board.reload();
 			events.reload();
-			void loadSummary(account);
+			void loadSummary(at.account);
 		} catch (e) {
 			failure = e instanceof Error ? e.message : String(e);
 		} finally {
@@ -240,8 +250,8 @@
 		}
 	}
 	const mark = (id: string, kind: MarkAction) =>
-		account && write(() => progressApi.mark(guideId, id, account, kind));
-	const confirmAll = () => account && write(() => progressApi.confirmImplied(guideId, account));
+		write((at) => progressApi.mark(at.guide, id, at.account, kind));
+	const confirmAll = () => write((at) => progressApi.confirmImplied(at.guide, at.account));
 	async function activate() {
 		if (!account) return;
 		try {
@@ -591,13 +601,13 @@
 								><span class="mono">{pct(counts.done, counts.total)}%</span>
 							</div>
 							<div class="xp"><span style="width: {pct(counts.done, counts.total)}%"></span></div>
-							{#if (board.data?.counts.implied ?? 0) > 0}
+							{#if (boardData?.counts.implied ?? 0) > 0}
 								<button
 									class="lnk sm"
 									type="button"
 									disabled={busy}
 									title="Presumidos são passos que um passo posterior implica; confirmar vira feito à mão."
-									onclick={confirmAll}>confirmar {board.data?.counts.implied} presumidos</button
+									onclick={confirmAll}>confirmar {boardData?.counts.implied} presumidos</button
 								>
 							{/if}
 						</div>

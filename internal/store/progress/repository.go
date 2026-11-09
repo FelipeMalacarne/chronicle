@@ -86,34 +86,9 @@ func (r *Repository) ReevaluateRoute(ctx context.Context, tx pgx.Tx, accountID, 
 	if err != nil {
 		return 0, coreingest.RouteUpdate{}, err
 	}
-	ps, obs, err := state.Load(ctx, q, accountID, r.catalog)
+	in, err := r.engineInput(ctx, q, accountID, acc)
 	if err != nil {
 		return 0, coreingest.RouteUpdate{}, err
-	}
-	in := coreprogress.Input{
-		Guides: r.content.Guides, Registry: r.catalog, State: ps, Observations: obs,
-		Account: acc, Now: r.now(),
-	}
-	if in.Objectives, err = loadObjectives(ctx, q, accountID); err != nil {
-		return 0, coreingest.RouteUpdate{}, err
-	}
-	if in.Marks, err = loadMarks(ctx, q, accountID); err != nil {
-		return 0, coreingest.RouteUpdate{}, err
-	}
-	if in.LastStatus, err = loadLastStatus(ctx, q, accountID); err != nil {
-		return 0, coreingest.RouteUpdate{}, err
-	}
-	if in.Cursors, err = loadCursors(ctx, q, accountID); err != nil {
-		return 0, coreingest.RouteUpdate{}, err
-	}
-	goals, err := q.ListGoalsByAccount(ctx, accountID)
-	if err != nil {
-		return 0, coreingest.RouteUpdate{}, fmt.Errorf("list goals: %w", err)
-	}
-	for _, g := range goals {
-		if g.Status == "active" {
-			in.Goals = append(in.Goals, g.ObjectiveKey)
-		}
 	}
 	plan := coreprogress.Reevaluate(in)
 	if err := writePlan(ctx, q, accountID, snapshotID, in.Now, plan); err != nil {
@@ -127,8 +102,43 @@ func (r *Repository) ReevaluateRoute(ctx context.Context, tx pgx.Tx, accountID, 
 	return plan.StepsChanged, route, nil
 }
 
-// ReevaluateAll reevaluates every active account, each in its own
-// transaction (boot and content reload).
+// engineInput loads everything the engine reads for one account.
+func (r *Repository) engineInput(ctx context.Context, q *storedb.Queries, accountID string, acc coreprogress.Account) (coreprogress.Input, error) {
+	ps, obs, err := state.Load(ctx, q, accountID, r.catalog)
+	if err != nil {
+		return coreprogress.Input{}, err
+	}
+	in := coreprogress.Input{
+		Guides: r.content.Guides, Registry: r.catalog, State: ps, Observations: obs,
+		Account: acc, Now: r.now(),
+	}
+	if in.Objectives, err = loadObjectives(ctx, q, accountID); err != nil {
+		return in, err
+	}
+	if in.Marks, err = loadMarks(ctx, q, accountID); err != nil {
+		return in, err
+	}
+	if in.LastStatus, err = loadLastStatus(ctx, q, accountID); err != nil {
+		return in, err
+	}
+	if in.Cursors, err = loadCursors(ctx, q, accountID); err != nil {
+		return in, err
+	}
+	goals, err := q.ListGoalsByAccount(ctx, accountID)
+	if err != nil {
+		return in, fmt.Errorf("list goals: %w", err)
+	}
+	for _, g := range goals {
+		if g.Status == "active" {
+			in.Goals = append(in.Goals, g.ObjectiveKey)
+		}
+	}
+	return in, nil
+}
+
+// ReevaluateAll re-projects the facts and reevaluates every active account,
+// each in its own transaction (boot and content reload). The projection runs
+// here too, so a change of facts.Merge reaches player_state at the next boot.
 func (r *Repository) ReevaluateAll(ctx context.Context) (int, error) {
 	accounts, err := r.queries.ListActiveAccounts(ctx)
 	if err != nil {
@@ -136,6 +146,13 @@ func (r *Repository) ReevaluateAll(ctx context.Context) (int, error) {
 	}
 	for _, acc := range accounts {
 		if err := r.inTx(ctx, func(tx pgx.Tx) error {
+			q := r.queries.WithTx(tx)
+			if _, err := lockAccount(ctx, q, acc.ID); err != nil {
+				return err
+			}
+			if err := state.ProjectAll(ctx, q, acc.ID); err != nil {
+				return err
+			}
 			_, err := r.Reevaluate(ctx, tx, acc.ID, "")
 			return err
 		}); err != nil {
@@ -275,12 +292,31 @@ func writePlan(ctx context.Context, q *storedb.Queries, accountID, snapshotID st
 			return fmt.Errorf("achieve goals: %w", err)
 		}
 	}
+	implied := map[string][]coreprogress.MarkEffect{}
 	for _, w := range plan.Marks {
-		if err := upsertMark(ctx, q, accountID, w.Ref.GuideID, w.Ref.StepID, w.Mark, now); err != nil {
+		inserted, err := insertImpliedMark(ctx, q, accountID, w, now)
+		if err != nil {
 			return err
 		}
+		if inserted {
+			m := w.Mark
+			implied[w.Ref.GuideID] = append(implied[w.Ref.GuideID], coreprogress.MarkEffect{StepID: w.Ref.StepID, To: &m})
+		}
 	}
-	if err := insertEvents(ctx, q, accountID, snapshotID, plan.StepEvents); err != nil {
+	impliedCommand := map[string]string{}
+	for guideID, effects := range implied {
+		id, err := logCommand(ctx, q, accountID, guideID, kindImplied, actorEngine, "", CommandMeta{}, effects)
+		if err != nil {
+			return err
+		}
+		impliedCommand[guideID] = id
+	}
+	if err := insertEvents(ctx, q, accountID, snapshotID, plan.StepEvents, func(e coreprogress.StepEvent) string {
+		if e.Cause == coreprogress.CauseImplied {
+			return impliedCommand[e.Ref.GuideID]
+		}
+		return ""
+	}); err != nil {
 		return err
 	}
 	for _, c := range plan.Cursors {
@@ -305,11 +341,30 @@ func upsertMark(ctx context.Context, q *storedb.Queries, accountID, guideID, ste
 	return nil
 }
 
-func insertEvents(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, events []coreprogress.StepEvent) error {
+// insertImpliedMark writes one mark of the implied cascade. The engine writes
+// nothing else to step_marks, and the query never replaces an existing mark.
+func insertImpliedMark(ctx context.Context, q *storedb.Queries, accountID string, w coreprogress.MarkWrite, now time.Time) (bool, error) {
+	if w.Mark.Kind != coreprogress.MarkImplied || w.Mark.ImpliedBy == "" {
+		return false, fmt.Errorf("engine mark %s/%s is %q: the engine writes only implied marks", w.Ref.GuideID, w.Ref.StepID, w.Mark.Kind)
+	}
+	n, err := q.InsertImpliedMark(ctx, storedb.InsertImpliedMarkParams{
+		AccountID: accountID, GuideID: w.Ref.GuideID, StepID: w.Ref.StepID,
+		ImpliedByStepID: text(w.Mark.ImpliedBy), ImpliedAt: timestamptz(&now),
+	})
+	if err != nil {
+		return false, fmt.Errorf("insert implied mark %s/%s: %w", w.Ref.GuideID, w.Ref.StepID, err)
+	}
+	return n == 1, nil
+}
+
+// insertEvents writes step status events; commandOf names the mark command
+// behind each one ("" for none).
+func insertEvents(ctx context.Context, q *storedb.Queries, accountID, snapshotID string, events []coreprogress.StepEvent, commandOf func(coreprogress.StepEvent) string) error {
 	for _, e := range events {
 		if err := q.InsertStepStatusEvent(ctx, storedb.InsertStepStatusEventParams{
 			ID: newID("sse_"), AccountID: accountID, GuideID: e.Ref.GuideID, StepID: e.Ref.StepID,
 			FromStatus: text(string(e.From)), ToStatus: string(e.To), Cause: string(e.Cause), SnapshotID: text(snapshotID),
+			CommandID: text(commandOf(e)),
 		}); err != nil {
 			return fmt.Errorf("insert step event %s/%s: %w", e.Ref.GuideID, e.Ref.StepID, err)
 		}

@@ -157,6 +157,7 @@ func (s *Server) routes() {
 		account("GET /api/objectives", s.handleObjectives)
 		account("GET /api/guides/{guide}/events", s.handleEvents)
 		account("GET /api/progress", s.handleProgress)
+		account("GET /api/progress/check", s.handleProgressCheck)
 		account("PUT /api/account/guide", s.handleActiveGuide)
 		account("GET /api/goals", s.handleGoals)
 		account("POST /api/goals", s.handleAddGoal)

@@ -19,15 +19,15 @@
 		sourceBand,
 		statusView
 	} from '#lib/progress/view';
-	import type {
-		Board,
-		BoardStep,
-		Goal,
-		GoalPlan,
-		Mark,
-		MarkAction,
-		MarkRestore
-	} from '#lib/progress/types';
+	import type { Board, BoardStep, Goal, GoalPlan, MarkAction } from '#lib/progress/types';
+	import {
+		boardIn,
+		popUndo,
+		restoreAction,
+		undoable,
+		type Scope,
+		type UndoEntry
+	} from '#lib/progress/undo';
 	import BankPanel from '#lib/v6/BankPanel.svelte';
 	import CurrentStep from '#lib/v6/CurrentStep.svelte';
 	import Glyph from '#lib/v6/Glyph.svelte';
@@ -52,8 +52,12 @@
 		() => (account && guideId ? progressApi.board(guideId, account) : Promise.resolve(null)),
 		{ tags: ['progress'] }
 	);
-	const cursorId = $derived(board.data?.cursor?.step_id);
-	const boardById = $derived(new Map((board.data?.steps ?? []).map((s) => [s.id, s])));
+	/* Conta e rota atuais. O board de outra rota (ainda na tela enquanto o novo carrega) nunca
+	 * alimenta seção, banco nem escritas: ids de passo se repetem entre guias. */
+	const scope = $derived(account && guideId ? { account, guide: guideId } : null);
+	const boardData = $derived(boardIn(board.data, scope));
+	const cursorId = $derived(boardData?.cursor?.step_id);
+	const boardById = $derived(new Map((boardData?.steps ?? []).map((s) => [s.id, s])));
 	const refOf = (id: string) => boardById.get(id)?.ref ?? id;
 	const sectionId = $derived(cursorId ? boardById.get(cursorId)?.section_id : undefined);
 	const section = createResource(() =>
@@ -122,7 +126,7 @@
 	const segments = $derived(section.data ? segmentsOf(section.data) : []);
 	const segOf = $derived(new Map(segments.flatMap((g) => g.steps.map((s) => [s.id, g] as const))));
 	const segment = $derived(cursorId ? (segOf.get(cursorId) ?? null) : null);
-	const mainSteps = $derived((board.data?.steps ?? []).filter((s) => s.main && s.visible));
+	const mainSteps = $derived((boardData?.steps ?? []).filter((s) => s.main && s.visible));
 	const cursorIndex = $derived(mainSteps.findIndex((s) => s.id === cursorId));
 	const prev = $derived(
 		cursorIndex > 0
@@ -148,7 +152,7 @@
 		if (!a || !b || a.id === b.id || b.kind !== 'bank_leg') return '';
 		return `banco · entre ${cur.ref} e ${s.ref}`;
 	}
-	const sectionCounts = $derived(board.data?.sections.find((s) => s.id === sectionId)?.counts);
+	const sectionCounts = $derived(boardData?.sections.find((s) => s.id === sectionId)?.counts);
 	const others = $derived(
 		(session.summary?.routes ?? [])
 			.filter((r) => r.guide !== guideId)
@@ -210,80 +214,105 @@
 		}
 	}
 
-	/* Feito / Pular / Desfazer: marcas do dono pela API; o motor nunca as sobrescreve. */
+	/* Feito / Pular / Desfazer: marcas do dono pela API; o motor nunca as sobrescreve.
+	 * Uma escrita por vez, sempre com a conta e a rota em que foi pedida; o desfazer só entra na
+	 * pilha depois que a escrita deu certo, só vale nesse mesmo escopo e revoga o comando que
+	 * desfaz (mark_commands, docs/10 seção 6). */
 	let busy = $state(false);
-	let undo = $state<{ step: string; ref: string; prev?: Mark }[]>([]);
+	let undo = $state<UndoEntry[]>([]);
 	let toast = $state<{ title: string; text: string; undo: boolean } | null>(null);
 	let pinning = $state(false);
 	let failure = $state<string | null>(null);
+	const canUndo = $derived(undoable(undo, scope) > 0);
 
-	async function write(run: () => Promise<Board>) {
+	/** Roda uma escrita do dono; devolve o board novo, ou null se recusada ou falhou. */
+	async function write(at: Scope, run: () => Promise<Board>): Promise<Board | null> {
+		if (busy) return null;
 		busy = true;
 		failure = null;
 		try {
-			board.set(await run());
+			const b = await run();
+			// A rota pode ter mudado enquanto a escrita ia: o board dela não entra na tela atual.
+			if (boardIn(b, scope)) board.set(b);
+			else board.reload();
 			events.reload();
-			void loadSummary(account);
+			void loadSummary(at.account);
+			return b;
 		} catch (e) {
 			failure = e instanceof Error ? e.message : String(e);
+			return null;
 		} finally {
 			busy = false;
 		}
 	}
 
-	function mark(kind: MarkAction) {
-		if (!account || !guideId || !step || busy) return;
-		batch = null;
-		const current: BoardStep | undefined = boardById.get(step.id);
+	async function mark(kind: MarkAction) {
+		const at = scope;
+		if (!at || !step || busy) return;
 		const id = step.id;
 		const ref = step.ref;
-		undo = [...undo, { step: id, ref, prev: current?.mark }];
+		const prev: BoardStep['mark'] = boardById.get(id)?.mark;
+		const done = await write(at, () => progressApi.mark(at.guide, id, at.account, kind));
+		if (!done) return;
+		undo = [...undo, { kind: 'mark', scope: at, step: id, ref, prev, command: done.command_id }];
 		toast = {
 			title: kind === 'manual_done' ? 'Feito' : 'Pulado',
 			text: `${ref} marcado`,
 			undo: true
 		};
-		void write(() => progressApi.mark(guideId, id, account, kind));
 	}
 
-	function undoLast() {
-		if (batch && batch.length && account && guideId) {
-			const restore = batch;
-			batch = null;
-			toast = { title: 'Desfeito', text: `${restore.length} passos voltaram`, undo: false };
-			void write(() => progressApi.restoreMarks(guideId, account, restore));
-			return;
-		}
-		const last = undo[undo.length - 1];
-		if (!last || !account || !guideId || busy) return;
-		undo = undo.slice(0, -1);
-		// Uma marca implied não volta pela API: desfazer limpa a marca e o motor decide.
-		const kind: MarkAction =
-			last.prev && last.prev.kind !== 'implied' ? (last.prev.kind as MarkAction) : 'clear';
-		toast = { title: 'Desfeito', text: `${last.ref} voltou`, undo: false };
-		void write(() => progressApi.mark(guideId, last.step, account, kind, last.prev?.note));
+	async function undoLast() {
+		const at = scope;
+		if (!at || busy) return;
+		const { entry, rest } = popUndo(undo, at);
+		if (!entry) return;
+		const done =
+			entry.kind === 'batch'
+				? await write(at, () =>
+						progressApi.restoreMarks(at.guide, at.account, entry.restore, entry.command)
+					)
+				: await write(at, () => {
+						const r = restoreAction(entry.prev);
+						return progressApi.mark(
+							at.guide,
+							entry.step,
+							at.account,
+							r.kind,
+							r.note,
+							entry.command
+						);
+					});
+		if (!done) return;
+		undo = rest;
+		toast = {
+			title: 'Desfeito',
+			text:
+				entry.kind === 'batch' ? `${entry.restore.length} passos voltaram` : `${entry.ref} voltou`,
+			undo: false
+		};
 	}
 
-	let batch = $state<MarkRestore[] | null>(null);
-	function pin(stepId: string, before: boolean) {
-		if (!account || !guideId) return;
+	async function pin(stepId: string, before: boolean) {
+		const at = scope;
+		if (!at) return;
 		pinning = false;
 		const ref = refOf(stepId);
 		if (!before) {
-			toast = { title: 'Fixado', text: `${ref} é o passo atual`, undo: false };
-			void write(() => progressApi.pin(guideId, account, stepId));
+			if (await write(at, () => progressApi.pin(at.guide, at.account, stepId)))
+				toast = { title: 'Fixado', text: `${ref} é o passo atual`, undo: false };
 			return;
 		}
-		void write(async () => {
-			const b = await progressApi.markBefore(guideId, account, stepId);
-			batch = b.undo ?? [];
-			toast = {
-				title: 'Marcados',
-				text: `${batch.length} passos antes de ${ref}`,
-				undo: batch.length > 0
-			};
-			return b;
-		});
+		const b = await write(at, () => progressApi.markBefore(at.guide, at.account, stepId));
+		if (!b) return;
+		const restore = b.undo ?? [];
+		if (restore.length)
+			undo = [...undo, { kind: 'batch', scope: at, restore, command: b.command_id }];
+		toast = {
+			title: 'Marcados',
+			text: `${restore.length} passos antes de ${ref}`,
+			undo: restore.length > 0
+		};
 	}
 
 	async function activate(guide: string) {
@@ -386,7 +415,7 @@
 			onclick={() => (loadSummary(account), board.reload())}>Tentar de novo</button
 		>
 	</div>
-{:else if !route || !board.data}
+{:else if !route || !boardData}
 	<p class="su" aria-busy="true">Carregando a rota ativa…</p>
 {:else}
 	{#if band}
@@ -458,7 +487,7 @@
 						{rotaHref}
 						{busy}
 						narrow={narrow.value}
-						canUndo={undo.length > 0 || !!batch?.length}
+						{canUndo}
 						ondone={() => mark('manual_done')}
 						onskip={() => mark('skipped')}
 						onundo={undoLast}
@@ -531,7 +560,7 @@
 	</footer>
 {/if}
 
-{#if pinning && board.data}
+{#if pinning && boardData}
 	<PinDialog
 		guideLabel={label}
 		steps={mainSteps}

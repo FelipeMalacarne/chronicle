@@ -45,6 +45,7 @@ func newRoot() *cobra.Command {
 		newSyncCmd(),
 		newStateCmd(),
 		newMCPCmd(),
+		newProgressCmd(),
 	)
 	return root
 }

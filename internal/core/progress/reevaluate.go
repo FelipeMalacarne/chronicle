@@ -238,7 +238,8 @@ func hasMark(marks map[StepRef]Mark, ref StepRef) bool {
 }
 
 // objectiveKeys returns the sorted keys of every objective of every guide,
-// the catalog requirements that can block their steps, and the extra ones
+// the catalog requirements of the quests their steps complete (boostable ones
+// too: they never block, but are shown with a verdict), and the extra ones
 // (goals).
 func objectiveKeys(guides []*content.Guide, reg *entities.Registry, extra []string) []string {
 	seen := map[string]bool{}
@@ -250,7 +251,7 @@ func objectiveKeys(guides []*content.Guide, reg *entities.Registry, extra []stri
 			for _, o := range st.Objectives {
 				seen[o.Key.String()] = true
 			}
-			for _, k := range CatalogRequires(st, reg) {
+			for _, k := range catalogRequires(st, reg, true) {
 				seen[k] = true
 			}
 		}

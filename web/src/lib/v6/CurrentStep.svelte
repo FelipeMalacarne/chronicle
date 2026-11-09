@@ -60,13 +60,14 @@
 	const passoObjs = $derived<PassoObjective[]>(
 		chips.map((c) => {
 			const ev = step.objectives?.find((o) => o.key === c.key && o.role === c.role)?.evidence;
-			const onText = ev?.span && (ev.field ?? '/text') === '/text';
+			const s = ev?.span;
+			const onText = s?.length === 2 && (ev?.field ?? '/text') === '/text';
 			return {
 				key: c.key,
 				role: c.role,
 				label: c.label,
 				verdict: c.verdict,
-				span: onText ? ev?.span : undefined
+				span: onText ? ([s[0], s[1]] as [number, number]) : undefined
 			};
 		})
 	);

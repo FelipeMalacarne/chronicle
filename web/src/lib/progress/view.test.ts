@@ -283,7 +283,7 @@ test('bank columns: with you, in the bank, the guide says', () => {
 				qty_stated: false,
 				verdict: 'met',
 				carried: 1,
-				owned: { verdict: 'met', containers: { bank: { observed: true, qty: 1 } } }
+				owned: { verdict: 'met', held: 1, containers: { bank: { observed: true, qty: 1 } } }
 			},
 			{
 				name: 'Saw',
@@ -294,7 +294,7 @@ test('bank columns: with you, in the bank, the guide says', () => {
 				qty_stated: false,
 				verdict: 'unmet',
 				carried: 0,
-				owned: { verdict: 'unmet', containers: { bank: { observed: true, qty: 0 } } }
+				owned: { verdict: 'unmet', held: 0, containers: { bank: { observed: true, qty: 0 } } }
 			},
 			{
 				name: 'arrow shafts',
@@ -315,7 +315,12 @@ test('bank columns: with you, in the bank, the guide says', () => {
 				qty_stated: true,
 				verdict: 'met',
 				carried: 0,
-				owned: { verdict: 'met', stale: true, containers: { bank: { observed: true, qty: 120 } } }
+				owned: {
+					verdict: 'met',
+					stale: true,
+					held: 120,
+					containers: { bank: { observed: true, qty: 120 } }
+				}
 			}
 		]
 	};

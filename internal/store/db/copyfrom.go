@@ -46,6 +46,44 @@ func (q *Queries) InsertContentSteps(ctx context.Context, arg []InsertContentSte
 	return q.db.CopyFrom(ctx, []string{"content_steps"}, []string{"guide_id", "step_id", "section_id", "position", "text_hash", "content_version_id"}, &iteratorForInsertContentSteps{rows: arg})
 }
 
+// iteratorForInsertPlayerStateProjection implements pgx.CopyFromSource.
+type iteratorForInsertPlayerStateProjection struct {
+	rows                 []InsertPlayerStateProjectionParams
+	skippedFirstNextCall bool
+}
+
+func (r *iteratorForInsertPlayerStateProjection) Next() bool {
+	if len(r.rows) == 0 {
+		return false
+	}
+	if !r.skippedFirstNextCall {
+		r.skippedFirstNextCall = true
+		return true
+	}
+	r.rows = r.rows[1:]
+	return len(r.rows) > 0
+}
+
+func (r iteratorForInsertPlayerStateProjection) Values() ([]interface{}, error) {
+	return []interface{}{
+		r.rows[0].AccountID,
+		r.rows[0].Facet,
+		r.rows[0].Key,
+		r.rows[0].Value,
+		r.rows[0].Source,
+		r.rows[0].SnapshotID,
+		r.rows[0].ObservedAt,
+	}, nil
+}
+
+func (r iteratorForInsertPlayerStateProjection) Err() error {
+	return nil
+}
+
+func (q *Queries) InsertPlayerStateProjection(ctx context.Context, arg []InsertPlayerStateProjectionParams) (int64, error) {
+	return q.db.CopyFrom(ctx, []string{"player_state"}, []string{"account_id", "facet", "key", "value", "source", "snapshot_id", "observed_at"}, &iteratorForInsertPlayerStateProjection{rows: arg})
+}
+
 // iteratorForInsertSnapshotFacts implements pgx.CopyFromSource.
 type iteratorForInsertSnapshotFacts struct {
 	rows                 []InsertSnapshotFactsParams

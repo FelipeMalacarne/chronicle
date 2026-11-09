@@ -81,6 +81,14 @@ type GraphCache struct {
 	EdgesJson        json.RawMessage    `json:"edges_json"`
 }
 
+// Every guide the server loaded (upserted at boot); progress rows reference it.
+type Guide struct {
+	ID           string             `json:"id"`
+	Title        string             `json:"title"`
+	FirstSeenAt  pgtype.Timestamptz `json:"first_seen_at"`
+	LastLoadedAt pgtype.Timestamptz `json:"last_loaded_at"`
+}
+
 // Latest accepted item-container observation; restored is never promoted to live.
 type IngestContainerFreshness struct {
 	AccountID  string             `json:"account_id"`
@@ -91,6 +99,21 @@ type IngestContainerFreshness struct {
 	LiveEpoch  pgtype.Text        `json:"live_epoch"`
 	SnapshotID string             `json:"snapshot_id"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+// Append-only log of every step_marks change (owner, engine implied, alias moves) with its effects; step_marks is its projection.
+type MarkCommand struct {
+	Seq       int64              `json:"seq"`
+	ID        string             `json:"id"`
+	AccountID string             `json:"account_id"`
+	GuideID   string             `json:"guide_id"`
+	Kind      string             `json:"kind"`
+	Actor     string             `json:"actor"`
+	Via       pgtype.Text        `json:"via"`
+	StepID    pgtype.Text        `json:"step_id"`
+	RevokesID pgtype.Text        `json:"revokes_id"`
+	Effects   json.RawMessage    `json:"effects"`
+	At        pgtype.Timestamptz `json:"at"`
 }
 
 // Verdict per account and objective, shared by every guide. A met verdict is latched with the evidence of the snapshot that proved it.
@@ -117,7 +140,18 @@ type ObjectiveProgressEvent struct {
 	At           pgtype.Timestamptz `json:"at"`
 }
 
-// Current merged fact per (account, facet, key). Rewritten after every snapshot.
+// Last observation of each source per fact; player_state is its merge (internal/core/facts).
+type Observation struct {
+	AccountID  string             `json:"account_id"`
+	Facet      string             `json:"facet"`
+	Key        string             `json:"key"`
+	Source     string             `json:"source"`
+	Value      json.RawMessage    `json:"value"`
+	SnapshotID string             `json:"snapshot_id"`
+	ObservedAt pgtype.Timestamptz `json:"observed_at"`
+}
+
+// Projection: the merge of observations per fact (internal/core/facts.Merge). Written only by the projection.
 type PlayerState struct {
 	AccountID  string             `json:"account_id"`
 	Facet      string             `json:"facet"`
@@ -232,6 +266,8 @@ type StepStatusEvent struct {
 	Cause      string             `json:"cause"`
 	SnapshotID pgtype.Text        `json:"snapshot_id"`
 	At         pgtype.Timestamptz `json:"at"`
+	// the mark command behind a user, implied or migration change
+	CommandID pgtype.Text `json:"command_id"`
 }
 
 // One row per sync attempt (scheduler, manual, plugin push).

@@ -36,6 +36,7 @@ SELECT * FROM step_marks WHERE account_id = $1 ORDER BY guide_id, step_id;
 SELECT * FROM step_marks WHERE account_id = $1 AND guide_id = $2 ORDER BY step_id;
 
 -- name: UpsertStepMark :exec
+-- Owner writes only (marks, confirming implied); the engine uses InsertImpliedMark.
 INSERT INTO step_marks (account_id, guide_id, step_id, kind, implied_by_step_id, implied_at, note, marked_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7, now())
 ON CONFLICT (account_id, guide_id, step_id) DO UPDATE SET
@@ -45,14 +46,22 @@ ON CONFLICT (account_id, guide_id, step_id) DO UPDATE SET
   note               = EXCLUDED.note,
   marked_at          = now();
 
+-- name: InsertImpliedMark :execrows
+-- The implied cascade's only write (docs/09 section 9.1). It never replaces a
+-- mark: the owner's mark always wins, so a conflict leaves the row as it is
+-- (CLAUDE.md rule 2). Owner writes use UpsertStepMark.
+INSERT INTO step_marks (account_id, guide_id, step_id, kind, implied_by_step_id, implied_at, marked_at)
+VALUES (@account_id, @guide_id, @step_id, 'implied', @implied_by_step_id, @implied_at, now())
+ON CONFLICT (account_id, guide_id, step_id) DO NOTHING;
+
 -- name: DeleteStepMark :exec
 DELETE FROM step_marks WHERE account_id = $1 AND guide_id = $2 AND step_id = $3;
 
 -- name: InsertStepStatusEvent :exec
 -- clock_timestamp(), not now(): several events of one transaction must keep
 -- their order, because the newest event of a step is its last known status.
-INSERT INTO step_status_events (id, account_id, guide_id, step_id, from_status, to_status, cause, snapshot_id, at)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8, clock_timestamp());
+INSERT INTO step_status_events (id, account_id, guide_id, step_id, from_status, to_status, cause, snapshot_id, command_id, at)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, clock_timestamp());
 
 -- name: ListLastStepStatuses :many
 SELECT DISTINCT ON (guide_id, step_id) guide_id, step_id, to_status
@@ -132,7 +141,7 @@ WHERE m.guide_id = @guide_id AND m.step_id = @old_step_id
   );
 
 -- name: ListMovedStepMarks :many
-SELECT account_id, kind FROM step_marks WHERE guide_id = $1 AND step_id = $2;
+SELECT account_id, kind, implied_by_step_id, note FROM step_marks WHERE guide_id = $1 AND step_id = $2;
 
 -- name: DeleteStepMarksByStep :exec
 DELETE FROM step_marks WHERE guide_id = $1 AND step_id = $2;
@@ -144,3 +153,16 @@ WHERE guide_id = @guide_id AND step_id = @old_step_id;
 -- name: MoveRouteCursors :exec
 UPDATE route_cursor SET step_id = @new_step_id, updated_at = now()
 WHERE guide_id = @guide_id AND step_id = @old_step_id;
+
+-- Mark commands (docs/10 section 6): every change to step_marks, in order.
+
+-- name: InsertMarkCommand :exec
+INSERT INTO mark_commands (id, account_id, guide_id, kind, actor, via, step_id, revokes_id, effects)
+VALUES (@id, @account_id, @guide_id, @kind, @actor, sqlc.narg(via), sqlc.narg(step_id), sqlc.narg(revokes_id), @effects);
+
+-- name: GetMarkCommand :one
+SELECT * FROM mark_commands WHERE id = $1;
+
+-- name: ListMarkCommands :many
+-- The replay order of one account's log.
+SELECT * FROM mark_commands WHERE account_id = $1 ORDER BY seq;

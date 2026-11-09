@@ -71,12 +71,29 @@ jobs:
           if-no-files-found: error
 
   # --------------------------------------------------------------------------
-  # Go: build, vet, lint, test, content validation.
+  # Go: build, vet, lint, test, content validation. The store integration
+  # tests (each in a throwaway schema) need DATABASE_URL; they end with the
+  # progress check, so CI fails when a projection drifts from its sources
+  # (docs/10 decision E3).
   # --------------------------------------------------------------------------
   go:
     name: go (build, vet, lint, test)
     runs-on: ubuntu-latest
     needs: web
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ironman
+          POSTGRES_PASSWORD: ironman
+          POSTGRES_DB: ironman_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ironman -d ironman_test"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 12
     steps:
       - uses: actions/checkout@v4
 
@@ -101,10 +118,11 @@ jobs:
           # Go cache is already handled by setup-go.
           skip-cache: false
 
-      - name: go test (race needs cgo)
+      - name: go test (race needs cgo; store integration tests on postgres 17)
         run: go test -race -count=1 ./...
         env:
           CGO_ENABLED: "1"
+          DATABASE_URL: postgres://ironman:ironman@localhost:5432/ironman_test?sslmode=disable
 
       - name: Validate content
         run: go run ./cmd/ironman content validate

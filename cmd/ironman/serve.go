@@ -230,6 +230,7 @@ func bootProgress(ctx context.Context, repo *storeprogress.Repository, logger *s
 	for _, w := range report.Warnings {
 		logger.Warn("step id alias not applied", "issue", w)
 	}
+	checkProgress(ctx, repo, logger)
 	accounts, err := repo.ReevaluateAll(ctx)
 	if err != nil {
 		return fmt.Errorf("reevaluate progress: %w", err)
@@ -237,6 +238,29 @@ func bootProgress(ctx context.Context, repo *storeprogress.Repository, logger *s
 	logger.Info("progress: content indexed", "content_version", report.ContentVersionID,
 		"steps", report.Steps, "aliases_applied", report.AliasesApplied, "accounts_reevaluated", accounts)
 	return nil
+}
+
+// checkProgress runs `ironman progress check` on every account before the
+// boot reevaluation and only logs (docs/10 decision E3): a difference is a bug
+// to look at, and the reevaluation then fixes verdicts, statuses and cursors;
+// the facts and the mark log are reported, never rewritten by it.
+func checkProgress(ctx context.Context, repo *storeprogress.Repository, logger *slog.Logger) {
+	reports, err := repo.CheckAll(ctx)
+	if err != nil {
+		logger.Warn("progress check failed", "err", err)
+		return
+	}
+	for _, rep := range reports {
+		if rep.OK {
+			continue
+		}
+		shown := rep.Differences
+		if len(shown) > 10 {
+			shown = shown[:10]
+		}
+		logger.Warn("progress check: projections out of step with their sources",
+			"account", rep.Account, "differences", len(rep.Differences), "first", shown)
+	}
 }
 
 // connectDB opens a pgx pool and pings it. In dev mode a failing ping is

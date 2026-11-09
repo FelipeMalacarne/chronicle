@@ -52,8 +52,9 @@ dev: db-up
     if command -v air >/dev/null 2>&1; then air; else go run ./cmd/ironman serve; fi
 
 # Microbot control agent (docs/08) on this machine: links to the planner (IRONMAN_URL, default
-# :8080) with MICROBOT_AGENT_TOKEN and drives the dev client of the microbot-plugins harness
-# (MICROBOT_HARNESS_DIR, default the sibling checkout). The server needs MICROBOT_CONTROL=on.
+# :8080; a dev server needs no token, an oidc one the MICROBOT_AGENT_CLIENT_* machine user) and drives
+# the dev client of the microbot-plugins harness (MICROBOT_HARNESS_DIR, default the sibling
+# checkout). The server needs MICROBOT_CONTROL=on.
 agent:
     MICROBOT_HARNESS_DIR="${MICROBOT_HARNESS_DIR:-$(realpath ../microbot-plugins)}" go run ./cmd/ironman agent
 

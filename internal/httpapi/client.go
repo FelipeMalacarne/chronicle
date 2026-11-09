@@ -12,6 +12,9 @@ type authClientResponse struct {
 	Issuer   string   `json:"issuer,omitempty"`
 	ClientID string   `json:"client_id,omitempty"`
 	Scopes   []string `json:"scopes,omitempty"`
+	// AgentScopes are the scopes of the Microbot agent's machine user in the
+	// client_credentials grant (docs/08); only with MICROBOT_CONTROL=on.
+	AgentScopes []string `json:"agent_scopes,omitempty"`
 }
 
 func (s *Server) handleAuthClient(w http.ResponseWriter, _ *http.Request) {
@@ -24,6 +27,9 @@ func (s *Server) handleAuthClient(w http.ResponseWriter, _ *http.Request) {
 		out.AuthMode, out.Issuer = "oidc", p.Issuer()
 		if p.NativeClientID() != "" {
 			out.ClientID, out.Scopes = p.NativeClientID(), p.DeviceScopes()
+		}
+		if s.opts.Microbot != nil {
+			out.AgentScopes = p.MachineScopes()
 		}
 	}
 	writeJSON(w, http.StatusOK, out)

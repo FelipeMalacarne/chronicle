@@ -62,7 +62,7 @@ O cliente do jogo roda no `zaros`; o planner roda no `zaros` agora (doc 04, seç
 navegador ──Zitadel (OIDC) + papel──> ironman serve (saradomin; ou zaros no modo local-first)
                                             ▲
                                             │ websocket de SAÍDA, dentro do Tailscale,
-                                            │ token de máquina; carrega comandos, eventos e o VNC
+                                            │ machine user do Zitadel; carrega comandos, eventos e o VNC
                                             │
                                  ironman agent (zaros, serviço systemd do usuário)
                                             ├── UDS + token ──> Agent Server (cliente Microbot no Xvfb)
@@ -115,8 +115,13 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 2. **Autorização, não só autenticação**: toda rota de controle exige o papel `microbot:control`
    atribuído no Zitadel (claim de roles). Em `AUTH_MODE=dev` o servidor só escuta em loopback ou na
    interface do Tailscale.
-3. **Credencial de máquina para o agent**: o agent não usa OIDC. Usa um token próprio (escopo só de
-   agent, rotacionável, guardado com sops no `nix-config`). Reforço: o `serve` confere pela
+3. **Credencial de máquina para o agent** (decidido com o dono em 2026-11-08): em `AUTH_MODE=dev` o
+   agent entra sem token e só do loopback, como as rotas de controle. Em `oidc` ele é um machine user
+   do Zitadel com o papel `microbot:agent` (que nenhuma pessoa tem): pega o access token pelo
+   `client_credentials`, com os escopos que `GET /api/auth/client` dá em `agent_scopes` (papéis do
+   projeto e a audiência `OIDC_PROJECT_ID`), e o `serve` o valida offline pelo JWKS
+   (`Provider.VerifyMachineToken`). O segredo do machine user fica com sops no `nix-config`
+   (`MICROBOT_AGENT_CLIENT_SECRET_FILE`); revogar é no Zitadel. Reforço: o `serve` confere pela
    identidade do Tailscale (`WhoIs`) que a conexão vem do `zaros`.
 4. **Lista fechada de comandos no agent** (a camada mais importante): o agent nunca repassa
    requisições cruas ao Agent Server. Só executa comandos tipados: abrir e fechar o cliente,
@@ -153,7 +158,7 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 3. Plugins: listar, instalar do Hub, iniciar/parar, status/saúde/resultados, snapshot da state
    machine, config chave/valor.
 4. Rotinas: modelo, executor com lock, agendamento, histórico com screenshots.
-5. Agent remoto: serviço systemd no `nix-config`, token de máquina via sops, `WhoIs` do Tailscale e
+5. Agent remoto: serviço systemd no `nix-config`, machine user do Zitadel com o segredo via sops, `WhoIs` do Tailscale e
    ACL; junto com o deploy do planner no `saradomin`. Como o agent existe desde a fase 1, aqui muda
    só configuração.
 
@@ -166,14 +171,14 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   do harness.
 - `internal/agent`: protocolo, executor da lista fechada (`status`, `client_start`, `client_stop`,
   `login`, `logout`, `screenshot`) e o link. O agent abre um websocket de **saída** para
-  `/api/microbot/agent` com `Authorization: Bearer <MICROBOT_AGENT_TOKEN>`, se apresenta e responde
+  `/api/microbot/agent` (autenticado conforme o modo, item 3 de Segurança), se apresenta e responde
   comandos por id; reconecta sozinho (1 s a 30 s). O lado do `serve` aceita um agent por vez (uma
   conexão nova substitui a antiga) e recusa comando fora da lista nos dois lados.
 - `client_start` roda `mb-client start --headless` pelo dev shell Nix do harness
   (`nix develop $MICROBOT_HARNESS_DIR --command .../bin/mb-client`, ou `MICROBOT_CLIENT_CMD`);
   `client_stop` roda `mb-client stop`. O screenshot sai do Agent Server em PNG (megabytes no cliente em
   janela) e o agent o recodifica em JPEG antes do link.
-- `serve` com `MICROBOT_CONTROL=on` e `MICROBOT_AGENT_TOKEN` (32+ caracteres; exige `DATABASE_URL`):
+- `serve` com `MICROBOT_CONTROL=on` (exige `DATABASE_URL`; em oidc, `OIDC_PROJECT_ID`):
   `GET /api/microbot/status`, `GET /api/microbot/screenshot`, `GET /api/microbot/audit`,
   `POST /api/microbot/client/start|client/stop|login|logout`. Em dev, só de um peer loopback; em oidc,
   a sessão ou o bearer e o papel `microbot:control`. Toda ação (não as leituras) vai para
@@ -182,8 +187,9 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   da conta e do agent, a tela por screenshot a cada 5 s, o `/state` a cada 3 s, iniciar e parar o
   cliente, login (com mundo opcional) e logout com segundo clique de confirmação, e a auditoria. A
   navegação só mostra "Automação" quando o servidor tem o módulo ligado.
-- Rodar no zaros: `MICROBOT_CONTROL=on` e `MICROBOT_AGENT_TOKEN` no `.env` do planner, e `just agent`
-  (mesmo token no ambiente; `MICROBOT_HARNESS_DIR` assume o checkout irmão `../microbot-plugins`).
+- Rodar no zaros: `MICROBOT_CONTROL=on` no `.env` do planner e `just agent` (em dev sem token;
+  `MICROBOT_HARNESS_DIR` assume o checkout irmão `../microbot-plugins`). Contra um `serve` em oidc:
+  `MICROBOT_AGENT_CLIENT_ID` e `MICROBOT_AGENT_CLIENT_SECRET` (ou `_SECRET_FILE`) do machine user.
 - Verificado no zaros: o agent leu o cliente em janela que estava aberto (estado, mundo e screenshot),
   subiu o headless pelo web em 38 s (tela de login, deslogado), tirou screenshot dele e o parou; a
   auditoria registrou as duas ações. Login e logout ficaram nos testes com Agent Server falso, porque
@@ -195,7 +201,7 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   checagens das outras rotas de controle; a biblioteca de websocket confere `Origin` contra `Host`, então
   outro site não abre o VNC com o cookie do dono). O `serve` pede ao agent uma sessão com um id; o agent
   conecta no `x11vnc` em `127.0.0.1:$MB_VNC_PORT` (padrão 5999) e abre um segundo websocket de **saída**,
-  `/api/microbot/agent/vnc?session=<id>` com o token de máquina; o `serve` emenda os dois fluxos de bytes
+  `/api/microbot/agent/vnc?session=<id>`, autenticado como o link; o `serve` emenda os dois fluxos de bytes
   RFB. A máquina do jogo continua sem porta aberta e o VNC nunca sai do loopback. Cada sessão aberta
   (ou que falhou ao abrir) vai para a auditoria.
 - Web: o seletor "só dashboard / VNC ao vivo" do V6Microbot1440 e o noVNC (`@novnc/novnc` 1.7.0,

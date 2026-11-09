@@ -71,6 +71,15 @@ type Provider struct {
 	DeviceScope string
 	// Refreshes counts the refresh_token grants served.
 	Refreshes int
+	machines  map[string]machine
+	// MachineGrants counts the client_credentials grants served.
+	MachineGrants int
+}
+
+// machine is a machine user of the client_credentials grant.
+type machine struct {
+	secret string
+	user   User
 }
 
 type deviceGrant struct {
@@ -93,7 +102,7 @@ func New(t testing.TB, clientID string) *Provider {
 	}
 	p := &Provider{
 		ClientID: clientID, key: key, codes: map[string]grant{}, tokens: map[string]User{},
-		devices: map[string]*deviceGrant{}, refresh: map[string]refreshGrant{},
+		devices: map[string]*deviceGrant{}, refresh: map[string]refreshGrant{}, machines: map[string]machine{},
 	}
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /.well-known/openid-configuration", p.discovery)
@@ -186,6 +195,9 @@ func (p *Provider) token(w http.ResponseWriter, r *http.Request) {
 	case "refresh_token":
 		p.refreshToken(w, r)
 		return
+	case "client_credentials":
+		p.clientCredentials(w, r)
+		return
 	}
 	p.mu.Lock()
 	g, ok := p.codes[r.PostForm.Get("code")]
@@ -242,6 +254,56 @@ func (p *Provider) AccessToken(u User, clientID string, ttl time.Duration) (stri
 	}
 	addRoles(claims, u)
 	return p.sign(claims)
+}
+
+// AddMachine registers a machine user for the client_credentials grant: its
+// client id, secret and who the tokens are for (subject, roles).
+func (p *Provider) AddMachine(clientID, secret string, u User) {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	p.machines[clientID] = machine{secret: secret, user: u}
+}
+
+// clientCredentials serves a machine user's grant like Zitadel: client id and
+// secret by HTTP Basic (or the form), and a JWT access token whose audience
+// has the client and, with the project audience scope, the project id.
+func (p *Provider) clientCredentials(w http.ResponseWriter, r *http.Request) {
+	id, secret, ok := r.BasicAuth()
+	if !ok {
+		id, secret = r.PostForm.Get("client_id"), r.PostForm.Get("client_secret")
+	}
+	p.mu.Lock()
+	m, known := p.machines[id]
+	if known && m.secret == secret {
+		p.MachineGrants++
+	}
+	p.mu.Unlock()
+	if !known || m.secret != secret {
+		writeJSON(w, http.StatusUnauthorized, map[string]string{"error": "invalid_client"})
+		return
+	}
+	aud := []string{id}
+	for s := range strings.FieldsSeq(r.PostForm.Get("scope")) {
+		if rest, found := strings.CutPrefix(s, "urn:zitadel:iam:org:project:id:"); found {
+			aud = append(aud, strings.TrimSuffix(rest, ":aud"))
+		}
+	}
+	ttl := p.AccessTTL
+	if ttl == 0 {
+		ttl = time.Hour
+	}
+	now := time.Now()
+	claims := map[string]any{
+		"iss": p.Issuer(), "sub": m.user.Subject, "aud": aud, "client_id": id,
+		"iat": now.Unix(), "exp": now.Add(ttl).Unix(),
+	}
+	addRoles(claims, m.user)
+	access, err := p.sign(claims)
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"access_token": access, "token_type": "Bearer", "expires_in": int(ttl.Seconds())})
 }
 
 // deviceAuthorization starts a device flow (RFC 8628) for any client id.

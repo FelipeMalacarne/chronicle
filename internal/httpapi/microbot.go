@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -21,6 +20,10 @@ import (
 // AUTH_MODE=oidc (docs/08, Segurança item 2).
 const MicrobotRole = "microbot:control"
 
+// MicrobotAgentRole is the project role of the agent's machine user in
+// AUTH_MODE=oidc; people never hold it.
+const MicrobotAgentRole = "microbot:agent"
+
 // MicrobotAudit persists the control actions (internal/store/microbot).
 type MicrobotAudit interface {
 	Append(ctx context.Context, e storemicrobot.Entry) (storemicrobot.Entry, error)
@@ -32,9 +35,6 @@ type MicrobotAudit interface {
 type MicrobotOptions struct {
 	Link  *agent.Link
 	Audit MicrobotAudit
-	// AgentToken is the machine token `ironman agent` presents
-	// (MICROBOT_AGENT_TOKEN).
-	AgentToken string
 }
 
 func (s *Server) microbotRoutes() {
@@ -42,8 +42,8 @@ func (s *Server) microbotRoutes() {
 	if m == nil || !s.accountRoutes() {
 		return
 	}
-	s.mux.HandleFunc("GET /api/microbot/agent", s.agentToken(s.opts.Microbot.Link.Serve))
-	s.mux.HandleFunc("GET /api/microbot/agent/vnc", s.agentToken(s.opts.Microbot.Link.ServeVNC))
+	s.mux.HandleFunc("GET /api/microbot/agent", s.agentAuth(s.opts.Microbot.Link.Serve))
+	s.mux.HandleFunc("GET /api/microbot/agent/vnc", s.agentAuth(s.opts.Microbot.Link.ServeVNC))
 	control := func(pattern string, h http.HandlerFunc) { s.mux.Handle(pattern, s.authed(s.microbotControl(h))) }
 	control("GET /api/microbot/status", s.handleMicrobotStatus)
 	control("GET /api/microbot/screenshot", s.handleMicrobotScreenshot)
@@ -105,19 +105,38 @@ func (s *Server) microbotRead(command string, params func(*http.Request) any) ht
 	}
 }
 
-// agentToken guards the agent's websockets (docs/08): the link and the
-// per-session VNC streams take the machine token, never a user session.
-func (s *Server) agentToken(h http.HandlerFunc) http.HandlerFunc {
+// agentAuth guards the agent's websockets (docs/08), the link and the
+// per-session VNC streams; never a user session. In dev mode the agent links
+// only from loopback, with no token. In oidc mode it presents a Zitadel
+// machine user's JWT access token: audience the project, role
+// microbot:agent.
+func (s *Server) agentAuth(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		scheme, token, _ := strings.Cut(r.Header.Get("Authorization"), " ")
-		want := s.opts.Microbot.AgentToken
-		if !strings.EqualFold(scheme, "Bearer") || want == "" ||
-			subtle.ConstantTimeCompare([]byte(strings.TrimSpace(token)), []byte(want)) != 1 {
-			w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent"`)
-			writeError(w, http.StatusUnauthorized, "agent token required")
+		if s.opts.DevMode {
+			if !isLoopback(r.RemoteAddr) {
+				writeError(w, http.StatusForbidden, "in dev mode the agent links only from this machine")
+				return
+			}
+			h(w, r.WithContext(agent.WithIdentity(r.Context(), "dev")))
 			return
 		}
-		h(w, r)
+		scheme, raw, _ := strings.Cut(r.Header.Get("Authorization"), " ")
+		if s.opts.OIDC == nil || !strings.EqualFold(scheme, "Bearer") || strings.TrimSpace(raw) == "" {
+			w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent"`)
+			writeError(w, http.StatusUnauthorized, "agent token required (a Zitadel machine user's access token)")
+			return
+		}
+		id, err := s.opts.OIDC.Provider.VerifyMachineToken(r.Context(), strings.TrimSpace(raw))
+		if err != nil {
+			w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent", error="invalid_token"`)
+			writeError(w, http.StatusUnauthorized, "invalid agent token")
+			return
+		}
+		if !slices.Contains(id.Roles, MicrobotAgentRole) {
+			writeError(w, http.StatusForbidden, "the agent's machine user needs the "+MicrobotAgentRole+" role")
+			return
+		}
+		h(w, r.WithContext(agent.WithIdentity(r.Context(), id.Subject)))
 	}
 }
 

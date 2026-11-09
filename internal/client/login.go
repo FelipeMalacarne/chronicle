@@ -28,6 +28,8 @@ type AuthClient struct {
 	Issuer   string   `json:"issuer,omitempty"`
 	ClientID string   `json:"client_id,omitempty"`
 	Scopes   []string `json:"scopes,omitempty"`
+	// AgentScopes are the Microbot agent's machine-user scopes (docs/08).
+	AgentScopes []string `json:"agent_scopes,omitempty"`
 }
 
 // DevicePrompt is what the user must do to approve the login: open URL (or

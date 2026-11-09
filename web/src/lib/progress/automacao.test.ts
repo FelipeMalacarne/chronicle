@@ -86,3 +86,12 @@ test('audit lines', () => {
 		'parar cliente · falhou: no agent connected'
 	);
 });
+
+test('the agent card names who the server authenticated', () => {
+	const s: MicrobotStatus = {
+		...running,
+		agent: { connected: true, host: 'zaros', version: 'v1', identity: 'machine-agent' }
+	};
+	const agent = cards(s).find((c) => c.k === 'Agent');
+	assert.equal(agent?.title, 'v1 · identidade machine-agent');
+});

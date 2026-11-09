@@ -1,7 +1,7 @@
 package main
 
 import (
-	"errors"
+	"fmt"
 	"log/slog"
 	"net"
 	"os"
@@ -23,7 +23,10 @@ import (
 // list of control commands against the Microbot dev client of the harness.
 //
 //	IRONMAN_URL            the planner server (default http://localhost:8080)
-//	MICROBOT_AGENT_TOKEN   the machine token the server expects (required)
+//	MICROBOT_AGENT_CLIENT_ID, MICROBOT_AGENT_CLIENT_SECRET (or _SECRET_FILE)
+//	                       the Zitadel machine user (role microbot:agent) when the
+//	                       server runs AUTH_MODE=oidc; a dev server needs nothing and
+//	                       takes the link only from loopback
 //	MICROBOT_HOME          the harness dev home (default ~/.local/share/microbot-dev)
 //	MICROBOT_HARNESS_DIR   the microbot-plugins checkout; mb-client runs through its
 //	                       Nix dev shell (Xvfb, x11vnc and the JDK come from it)
@@ -36,9 +39,9 @@ func newAgentCmd() *cobra.Command {
 		Short: "Link this machine's Microbot client to the planner server (docs/08)",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
-			token := os.Getenv("MICROBOT_AGENT_TOKEN")
-			if token == "" {
-				return errors.New("MICROBOT_AGENT_TOKEN is required (the same value as the server's)")
+			secret, err := agentSecret()
+			if err != nil {
+				return err
 			}
 			if url == "" {
 				url = os.Getenv("IRONMAN_URL")
@@ -50,7 +53,8 @@ func newAgentCmd() *cobra.Command {
 			host, _ := os.Hostname()
 			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
 			a := &agent.Agent{
-				URL: url, Token: token, Log: log, VNCAddr: vncAddr(),
+				URL: url, Log: log, VNCAddr: vncAddr(),
+				Token: (&client.AgentAuth{URL: url, ClientID: os.Getenv("MICROBOT_AGENT_CLIENT_ID"), ClientSecret: secret}).Token,
 				Hello: agent.Hello{Host: host, Version: buildinfo.String()},
 				Executor: &agent.Executor{
 					Game: &microbot.Client{Home: home}, Home: home, ClientCmd: clientCmd(),
@@ -85,4 +89,17 @@ func vncAddr() string {
 		port = "5999"
 	}
 	return net.JoinHostPort("127.0.0.1", port)
+}
+
+// agentSecret is the machine user's secret: MICROBOT_AGENT_CLIENT_SECRET, or
+// the file MICROBOT_AGENT_CLIENT_SECRET_FILE names (a sops secret).
+func agentSecret() (string, error) {
+	if f := os.Getenv("MICROBOT_AGENT_CLIENT_SECRET_FILE"); f != "" {
+		b, err := os.ReadFile(f)
+		if err != nil {
+			return "", fmt.Errorf("MICROBOT_AGENT_CLIENT_SECRET_FILE: %w", err)
+		}
+		return strings.TrimSpace(string(b)), nil
+	}
+	return os.Getenv("MICROBOT_AGENT_CLIENT_SECRET"), nil
 }

@@ -206,9 +206,7 @@
 			O controle do Microbot está desligado neste servidor. Ligue com <code
 				>MICROBOT_CONTROL=on</code
 			>
-			e
-			<code>MICROBOT_AGENT_TOKEN</code> no <code>serve</code>, e rode <code>ironman agent</code> na máquina
-			do jogo.
+			no <code>serve</code> e rode <code>ironman agent</code> na máquina do jogo.
 		</p>
 	</section>
 {:else}

@@ -108,3 +108,23 @@ func TestSyncHiscoresMinutes(t *testing.T) {
 		}
 	}
 }
+
+// The Microbot agent needs no token in dev; in oidc its machine-user token is
+// verified against the project id.
+func TestMicrobotControl(t *testing.T) {
+	db := map[string]string{"MICROBOT_CONTROL": "on", "DATABASE_URL": "postgres://x"}
+	if c, err := FromLookup(lookup(db)); err != nil || !c.MicrobotControl {
+		t.Fatalf("dev with control on = %+v %v", c, err)
+	}
+	if _, err := FromLookup(lookup(map[string]string{"MICROBOT_CONTROL": "on"})); err == nil {
+		t.Error("control on without DATABASE_URL: accepted")
+	}
+	over := map[string]string{"MICROBOT_CONTROL": "on", "DATABASE_URL": "postgres://x"}
+	if _, err := FromLookup(lookup(oidcEnv(over))); err == nil || !strings.Contains(err.Error(), "OIDC_PROJECT_ID") {
+		t.Errorf("oidc control without a project id = %v", err)
+	}
+	over["OIDC_PROJECT_ID"] = "proj-1"
+	if _, err := FromLookup(lookup(oidcEnv(over))); err != nil {
+		t.Errorf("oidc control with a project id = %v", err)
+	}
+}

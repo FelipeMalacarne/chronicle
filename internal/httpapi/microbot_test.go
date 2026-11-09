@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"io"
 	"log/slog"
 	"net"
@@ -14,9 +15,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/coder/websocket"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
+	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
+	"github.com/FelipeMalacarne/ironman-planner/internal/auth/authtest"
+	"github.com/FelipeMalacarne/ironman-planner/internal/client"
 	storemicrobot "github.com/FelipeMalacarne/ironman-planner/internal/store/microbot"
 )
 
@@ -66,15 +71,13 @@ func (stubGame) JSON(_ context.Context, method, path string, _ url.Values, _ any
 	return json.Marshal(map[string]string{"request": method + " " + path})
 }
 
-const agentToken = "0123456789abcdef0123456789abcdef"
-
 func microbotServer(t *testing.T) (*httptest.Server, *memAudit) {
 	t.Helper()
 	audit := &memAudit{}
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
 	srv := httptest.NewServer(New(Options{
 		Version: "test", DevMode: true, Logger: quiet,
-		Microbot: &MicrobotOptions{Link: &agent.Link{Log: quiet}, Audit: audit, AgentToken: agentToken},
+		Microbot: &MicrobotOptions{Link: &agent.Link{Log: quiet}, Audit: audit},
 	}))
 	t.Cleanup(srv.Close)
 	return srv, audit
@@ -113,24 +116,25 @@ func TestMicrobotRoutes(t *testing.T) {
 		t.Fatalf("vnc without agent = %d", status)
 	}
 
-	// The agent link and its VNC streams need the machine token.
-	if status, _, _ = call(t, "GET", srv.URL+"/api/microbot/agent", ""); status != http.StatusUnauthorized {
-		t.Fatalf("agent without token = %d", status)
-	}
-	if status, _, _ = call(t, "GET", srv.URL+"/api/microbot/agent/vnc?session=x", ""); status != http.StatusUnauthorized {
-		t.Fatalf("agent vnc stream without token = %d", status)
+	// In dev mode the agent links from loopback with no token; a VNC stream
+	// nobody waits for is refused.
+	if status, _, _ = call(t, "GET", srv.URL+"/api/microbot/agent/vnc?session=x", ""); status != http.StatusNotFound {
+		t.Fatalf("agent vnc stream for no session = %d", status)
 	}
 	vncAddr := fakeX11vnc(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
-	a := &agent.Agent{URL: srv.URL, Token: agentToken, Log: quiet, Hello: agent.Hello{Host: "zaros"}, VNCAddr: vncAddr,
+	a := &agent.Agent{URL: srv.URL, Log: quiet, Hello: agent.Hello{Host: "zaros"}, VNCAddr: vncAddr,
 		Executor: &agent.Executor{Game: stubGame{}, Home: t.TempDir(), ClientCmd: []string{"echo"}}}
 	go func() { _ = a.Run(ctx) }()
 	deadline := time.Now().Add(5 * time.Second)
 	for {
 		_, body, _ = call(t, "GET", srv.URL+"/api/microbot/status", "")
-		if body["agent"].(map[string]any)["connected"] == true {
+		if info := body["agent"].(map[string]any); info["connected"] == true {
+			if info["identity"] != "dev" {
+				t.Fatalf("dev agent identity = %v", info)
+			}
 			break
 		}
 		if time.Now().After(deadline) {
@@ -278,5 +282,104 @@ func TestMicrobotControlCheck(t *testing.T) {
 	}
 	if code := run(oidc, "100.64.0.7:5000", []string{"owner", MicrobotRole}); code != http.StatusNoContent {
 		t.Errorf("oidc with the role = %d", code)
+	}
+}
+
+// In dev mode the agent links only from loopback.
+func TestMicrobotAgentDevLoopback(t *testing.T) {
+	ok := func(w http.ResponseWriter, _ *http.Request) { w.WriteHeader(http.StatusNoContent) }
+	s := &Server{opts: Options{DevMode: true}}
+	for remote, want := range map[string]int{"127.0.0.1:5000": http.StatusNoContent, "100.64.0.7:5000": http.StatusForbidden} {
+		r := httptest.NewRequest("GET", "/api/microbot/agent", nil)
+		r.RemoteAddr = remote
+		w := httptest.NewRecorder()
+		s.agentAuth(ok)(w, r)
+		if w.Code != want {
+			t.Errorf("dev agent from %s = %d, want %d", remote, w.Code, want)
+		}
+	}
+}
+
+// In oidc mode the agent is a Zitadel machine user: it learns the scopes from
+// /api/auth/client, gets a token by client_credentials, and the server takes
+// it only with the project audience and the microbot:agent role.
+func TestMicrobotAgentOIDC(t *testing.T) {
+	const projectID = "proj-1"
+	fake := authtest.New(t, testClientID)
+	fake.AddMachine("agent-zaros", "s3cret", authtest.User{Subject: "machine-agent", Roles: []string{MicrobotAgentRole}, ProjectID: projectID})
+	fake.AddMachine("not-agent", "s3cret", authtest.User{Subject: "machine-other", Roles: []string{"owner"}, ProjectID: projectID})
+	provider, err := auth.NewProvider(context.Background(), auth.Config{
+		Issuer: fake.Issuer(), ClientID: testClientID, RedirectURL: "http://planner/auth/callback",
+		ProjectID: projectID, NativeClientID: testNativeClientID,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sealer, _ := auth.NewSealer("0123456789abcdef0123456789abcdef")
+	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
+	link := &agent.Link{Log: quiet}
+	srv := httptest.NewServer(New(Options{
+		Version: "test", Progress: &fakeProgress{}, Identity: newMemIdentity(), Logger: quiet,
+		OIDC:     &OIDCOptions{Provider: provider, Policy: auth.Policy{RequiredRole: "owner"}, Sessions: NewSessionManager(memstore.New(), false), Flow: sealer},
+		Microbot: &MicrobotOptions{Link: link, Audit: &memAudit{}},
+	}))
+	defer srv.Close()
+
+	dial := func(header http.Header) int {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		conn, resp, derr := websocket.Dial(ctx, agent.LinkURL(srv.URL), &websocket.DialOptions{HTTPHeader: header})
+		if derr == nil {
+			_ = conn.CloseNow()
+			return http.StatusSwitchingProtocols
+		}
+		if resp == nil {
+			t.Fatalf("dial: %v", derr)
+		}
+		return resp.StatusCode
+	}
+	if code := dial(nil); code != http.StatusUnauthorized {
+		t.Fatalf("agent without a token = %d", code)
+	}
+	// A person's device-flow token has the project audience too, but not the role.
+	userTok, _ := fake.AccessToken(authtest.User{Subject: "owner-1", Roles: []string{"owner", MicrobotRole}, ProjectID: projectID}, projectID, time.Hour)
+	if code := dial(http.Header{"Authorization": {"Bearer " + userTok}}); code != http.StatusForbidden {
+		t.Fatalf("agent with a person's token = %d", code)
+	}
+	// A token for the native client alone (no project audience) is not taken.
+	nativeTok, _ := fake.AccessToken(authtest.User{Subject: "machine-agent", Roles: []string{MicrobotAgentRole}, ProjectID: projectID}, testNativeClientID, time.Hour)
+	if code := dial(http.Header{"Authorization": {"Bearer " + nativeTok}}); code != http.StatusUnauthorized {
+		t.Fatalf("agent token without the project audience = %d", code)
+	}
+	other := &client.AgentAuth{URL: srv.URL, ClientID: "not-agent", ClientSecret: "s3cret"}
+	tok, err := other.Token(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if code := dial(http.Header{"Authorization": {"Bearer " + tok}}); code != http.StatusForbidden {
+		t.Fatalf("machine user without the agent role = %d", code)
+	}
+	if _, err = (&client.AgentAuth{URL: srv.URL}).Token(context.Background()); !errors.Is(err, client.ErrNoAgentCredentials) {
+		t.Fatalf("oidc agent without credentials = %v", err)
+	}
+
+	// The real agent, end to end.
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	a := &agent.Agent{
+		URL: srv.URL, Log: quiet, Hello: agent.Hello{Host: "zaros"},
+		Token:    (&client.AgentAuth{URL: srv.URL, ClientID: "agent-zaros", ClientSecret: "s3cret"}).Token,
+		Executor: &agent.Executor{Game: stubGame{}, Home: t.TempDir(), ClientCmd: []string{"echo"}},
+	}
+	go func() { _ = a.Run(ctx) }()
+	deadline := time.Now().Add(5 * time.Second)
+	for !link.Info().Connected {
+		if time.Now().After(deadline) {
+			t.Fatal("machine-user agent never linked")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	if info := link.Info(); info.Identity != "machine-agent" {
+		t.Fatalf("agent identity = %+v", info)
 	}
 }

@@ -22,7 +22,10 @@ export function cards(s: MicrobotStatus | null): Card[] {
 				k: 'Agent',
 				v: `conectado${s.agent.host ? ` · ${s.agent.host}` : ''}`,
 				tone: 'ok',
-				title: s.agent.version
+				title:
+					[s.agent.version, s.agent.identity && `identidade ${s.agent.identity}`]
+						.filter(Boolean)
+						.join(' · ') || undefined
 			}
 		: { k: 'Agent', v: 'desconectado · rode `ironman agent` no zaros', tone: 'off' };
 	if (!s.agent.connected || !c) {

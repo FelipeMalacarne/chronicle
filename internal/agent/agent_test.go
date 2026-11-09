@@ -112,7 +112,7 @@ func linkedWith(t *testing.T, game *fakeGame, vncAddr string) *Link {
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
 	a := &Agent{
-		URL: srv.URL, Token: "machine-token", Log: quiet, Hello: Hello{Host: "zaros", Version: "test"}, VNCAddr: vncAddr,
+		URL: srv.URL, Token: StaticToken("machine-token"), Log: quiet, Hello: Hello{Host: "zaros", Version: "test"}, VNCAddr: vncAddr,
 		// The fake mb-client echoes its arguments.
 		Executor: &Executor{Game: game, Home: t.TempDir(), ClientCmd: []string{"echo", "mb-client"}},
 	}

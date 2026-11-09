@@ -111,7 +111,7 @@ func runServe(parent context.Context) error {
 			}
 			if cfg.MicrobotControl {
 				microbotOpts = &httpapi.MicrobotOptions{
-					Link: &agent.Link{Log: logger}, Audit: storemicrobot.New(pool), AgentToken: cfg.MicrobotAgentToken,
+					Link: &agent.Link{Log: logger}, Audit: storemicrobot.New(pool),
 				}
 				logger.Warn("microbot: control module ON (docs/08): /api/microbot routes and the agent link are enabled")
 			}

@@ -102,12 +102,10 @@ type Config struct {
 	// agent link and every /api/microbot route. Off by default; with it off
 	// the planner behaves exactly as without the module.
 	// Env: MICROBOT_CONTROL (on|off). Default off.
+	// The agent authenticates by mode: in dev only from loopback, with no
+	// token; in oidc with a Zitadel machine user's JWT access token, whose
+	// audience is OIDC_PROJECT_ID and which carries the microbot:agent role.
 	MicrobotControl bool
-
-	// MicrobotAgentToken is the machine token `ironman agent` presents on
-	// its link (32+ characters). Required when MicrobotControl is on.
-	// Env: MICROBOT_AGENT_TOKEN.
-	MicrobotAgentToken string
 }
 
 // Defaults applied when a variable is unset or empty.
@@ -167,7 +165,6 @@ func FromLookup(lookup func(string) (string, bool)) (Config, error) {
 	default:
 		return c, fmt.Errorf("config: MICROBOT_CONTROL must be on or off")
 	}
-	c.MicrobotAgentToken = get("MICROBOT_AGENT_TOKEN", "")
 	for _, sub := range strings.Split(get("OIDC_ALLOWED_SUBJECTS", ""), ",") {
 		if sub = strings.TrimSpace(sub); sub != "" {
 			c.OIDCAllowedSubjects = append(c.OIDCAllowedSubjects, sub)
@@ -210,8 +207,8 @@ func (c Config) Validate() error {
 	if _, err := c.SlogLevel(); err != nil {
 		return err
 	}
-	if c.MicrobotControl && len(c.MicrobotAgentToken) < MinSessionSecret {
-		return fmt.Errorf("config: MICROBOT_CONTROL=on needs MICROBOT_AGENT_TOKEN with %d+ random characters (openssl rand -hex 32)", MinSessionSecret)
+	if c.MicrobotControl && c.AuthMode == AuthModeOIDC && c.OIDCProjectID == "" {
+		return fmt.Errorf("config: MICROBOT_CONTROL=on with AUTH_MODE=oidc needs OIDC_PROJECT_ID (the audience of the agent's machine-user token)")
 	}
 	if c.MicrobotControl && c.DatabaseURL == "" {
 		return fmt.Errorf("config: MICROBOT_CONTROL=on needs DATABASE_URL (the control audit lives in Postgres)")

@@ -19,6 +19,8 @@ var (
 	ErrNonce     = errors.New("auth: ID token nonce does not match the login")
 	// ErrNoNativeClient: bearer login is off (no native application).
 	ErrNoNativeClient = errors.New("auth: no native client configured")
+	// ErrNoProject: machine tokens need the project id (their audience).
+	ErrNoProject = errors.New("auth: no project id configured")
 )
 
 // Config is the client registration at the issuer: a public Web application
@@ -62,6 +64,7 @@ type Provider struct {
 	projectID  string
 	native     string
 	access     *oidc.IDTokenVerifier
+	machine    *oidc.IDTokenVerifier
 }
 
 // NewProvider discovers the issuer (/.well-known/openid-configuration). The
@@ -91,6 +94,12 @@ func NewProvider(ctx context.Context, cfg Config) (*Provider, error) {
 		// signature by the JWKS, iss, aud (the native client) and exp.
 		access = p.Verifier(&oidc.Config{ClientID: cfg.NativeClientID})
 	}
+	var machine *oidc.IDTokenVerifier
+	if cfg.ProjectID != "" {
+		// A machine user's token (client_credentials) asked with the
+		// project's audience scope carries the project id in `aud`.
+		machine = p.Verifier(&oidc.Config{ClientID: cfg.ProjectID})
+	}
 	return &Provider{
 		provider: p,
 		oauth: oauth2.Config{
@@ -104,6 +113,7 @@ func NewProvider(ctx context.Context, cfg Config) (*Provider, error) {
 		projectID:  cfg.ProjectID,
 		native:     cfg.NativeClientID,
 		access:     access,
+		machine:    machine,
 	}, nil
 }
 
@@ -138,6 +148,36 @@ func (p *Provider) VerifyAccessToken(ctx context.Context, raw string) (Identity,
 	var claims map[string]json.RawMessage
 	if err := tok.Claims(&claims); err != nil {
 		return Identity{}, fmt.Errorf("auth: access token claims: %w", err)
+	}
+	return Identity{Issuer: tok.Issuer, Subject: tok.Subject, Roles: RolesFromClaims(claims, p.projectID)}, nil
+}
+
+// MachineScopes are the scopes a machine user (the Microbot agent) asks for
+// in the client_credentials grant: the project roles in the token and the
+// project in its audience. Nil without a project id.
+func (p *Provider) MachineScopes() []string {
+	if p.projectID == "" {
+		return nil
+	}
+	return []string{oidc.ScopeOpenID, "urn:zitadel:iam:org:projects:roles", "urn:zitadel:iam:org:project:id:" + p.projectID + ":aud"}
+}
+
+// VerifyMachineToken checks a JWT access token whose audience is the project
+// (a machine user's, docs/08): signature, iss, aud and exp, offline like
+// VerifyAccessToken. The caller decides by the roles; a user's device-flow
+// token also has the project in its audience, so a role only machine users
+// hold is what tells them apart.
+func (p *Provider) VerifyMachineToken(ctx context.Context, raw string) (Identity, error) {
+	if p.machine == nil {
+		return Identity{}, ErrNoProject
+	}
+	tok, err := p.machine.Verify(oidc.ClientContext(ctx, p.client), raw)
+	if err != nil {
+		return Identity{}, fmt.Errorf("auth: verify machine token: %w", err)
+	}
+	var claims map[string]json.RawMessage
+	if err := tok.Claims(&claims); err != nil {
+		return Identity{}, fmt.Errorf("auth: machine token claims: %w", err)
 	}
 	return Identity{Issuer: tok.Issuer, Subject: tok.Subject, Roles: RolesFromClaims(claims, p.projectID)}, nil
 }

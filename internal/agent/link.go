@@ -40,6 +40,7 @@ type Link struct {
 	mu      sync.Mutex
 	conn    *websocket.Conn
 	hello   Hello
+	who     string
 	since   time.Time
 	pending map[string]chan Message
 	vnc     map[string]chan net.Conn
@@ -52,6 +53,16 @@ type Info struct {
 	Since     time.Time `json:"since,omitzero"`
 	Host      string    `json:"host,omitempty"`
 	Version   string    `json:"version,omitempty"`
+	// Identity is who the server authenticated: "dev" (loopback) or the
+	// machine user's subject.
+	Identity string `json:"identity,omitempty"`
+}
+
+type identityKey struct{}
+
+// WithIdentity tells Serve who the server authenticated on this request.
+func WithIdentity(ctx context.Context, who string) context.Context {
+	return context.WithValue(ctx, identityKey{}, who)
 }
 
 // Info reports the agent's connection.
@@ -61,11 +72,12 @@ func (l *Link) Info() Info {
 	if l.conn == nil {
 		return Info{}
 	}
-	return Info{Connected: true, Since: l.since, Host: l.hello.Host, Version: l.hello.Version}
+	return Info{Connected: true, Since: l.since, Host: l.hello.Host, Version: l.hello.Version, Identity: l.who}
 }
 
 // Serve upgrades an authenticated request to the agent's websocket and holds
-// it until it closes. The caller has checked the machine token.
+// it until it closes. The caller has authenticated the agent (httpapi's
+// agentAuth: loopback in dev, a machine user's token in oidc).
 func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
@@ -88,11 +100,12 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 		_ = l.conn.Close(websocket.StatusNormalClosure, "replaced by a new agent connection")
 	}
 	l.conn, l.hello, l.since = conn, *hello.Hello, time.Now()
+	l.who, _ = r.Context().Value(identityKey{}).(string)
 	if l.pending == nil {
 		l.pending = map[string]chan Message{}
 	}
 	l.mu.Unlock()
-	l.Log.Info("agent link: connected", "host", hello.Hello.Host, "version", hello.Hello.Version)
+	l.Log.Info("agent link: connected", "host", hello.Hello.Host, "version", hello.Hello.Version, "identity", l.who)
 	defer func() {
 		l.mu.Lock()
 		if l.conn == conn {

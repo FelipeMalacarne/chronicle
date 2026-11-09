@@ -170,8 +170,9 @@ func pidAlive(file string) bool {
 type Agent struct {
 	// URL is the planner server (http(s)://host:port).
 	URL string
-	// Token is the machine token (MICROBOT_AGENT_TOKEN).
-	Token    string
+	// Token gives the bearer of each connection (the link and every VNC
+	// stream); nil or "" sends none, as a dev server expects.
+	Token    func(ctx context.Context) (string, error)
 	Executor *Executor
 	Hello    Hello
 	Log      *slog.Logger
@@ -202,6 +203,27 @@ func (a *Agent) Run(ctx context.Context) error {
 	}
 }
 
+// header is the Authorization of one connection to the server.
+func (a *Agent) header(ctx context.Context) (http.Header, error) {
+	h := http.Header{}
+	if a.Token == nil {
+		return h, nil
+	}
+	tok, err := a.Token(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("agent token: %w", err)
+	}
+	if tok != "" {
+		h.Set("Authorization", "Bearer "+tok)
+	}
+	return h, nil
+}
+
+// StaticToken is a Token that always gives tok.
+func StaticToken(tok string) func(context.Context) (string, error) {
+	return func(context.Context) (string, error) { return tok, nil }
+}
+
 // LinkURL is the server's agent endpoint for base.
 func LinkURL(base string) string {
 	u := strings.TrimRight(base, "/")
@@ -211,9 +233,11 @@ func LinkURL(base string) string {
 }
 
 func (a *Agent) session(ctx context.Context) error {
-	conn, resp, err := websocket.Dial(ctx, LinkURL(a.URL), &websocket.DialOptions{
-		HTTPHeader: http.Header{"Authorization": {"Bearer " + a.Token}},
-	})
+	header, err := a.header(ctx)
+	if err != nil {
+		return err
+	}
+	conn, resp, err := websocket.Dial(ctx, LinkURL(a.URL), &websocket.DialOptions{HTTPHeader: header})
 	if err != nil {
 		if resp != nil {
 			return fmt.Errorf("dial: HTTP %d: %w", resp.StatusCode, err)

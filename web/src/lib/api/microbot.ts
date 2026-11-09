@@ -10,6 +10,8 @@ export interface AgentInfo {
 	since?: string;
 	host?: string;
 	version?: string;
+	/** Quem o servidor autenticou: "dev" (loopback) ou o subject do machine user do Zitadel. */
+	identity?: string;
 }
 
 /** O que o agent diz do cliente: o /state e o /login do Agent Server como vieram. */

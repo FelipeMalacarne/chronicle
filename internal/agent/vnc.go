@@ -44,10 +44,13 @@ func (a *Agent) openVNC(ctx context.Context, params json.RawMessage) error {
 	if err != nil {
 		return fmt.Errorf("vnc_open: x11vnc not reachable on %s (is the client headless?): %w", addr, err)
 	}
+	header, err := a.header(dctx)
+	if err != nil {
+		_ = vnc.Close()
+		return err
+	}
 	u := LinkURL(a.URL) + "/vnc?session=" + url.QueryEscape(p.Session)
-	ws, _, err := websocket.Dial(dctx, u, &websocket.DialOptions{
-		HTTPHeader: http.Header{"Authorization": {"Bearer " + a.Token}},
-	})
+	ws, _, err := websocket.Dial(dctx, u, &websocket.DialOptions{HTTPHeader: header})
 	if err != nil {
 		_ = vnc.Close()
 		return fmt.Errorf("vnc_open: stream to the server: %w", err)
@@ -124,7 +127,7 @@ func (l *Link) OpenVNC(ctx context.Context) (net.Conn, error) {
 	}
 }
 
-// ServeVNC is the agent's per-session stream (the caller checked the machine
+// ServeVNC is the agent's per-session stream (the caller authenticated the
 // token): it hands the connection to the waiting browser session and holds
 // the request until the session ends.
 func (l *Link) ServeVNC(w http.ResponseWriter, r *http.Request) {

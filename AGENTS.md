@@ -12,6 +12,9 @@ Personal Microbot plugins, built as sideloadable jars against the pinned officia
 - `fm/chroniclelink/` — Chronicle Link, Chronicle's plugin (was `fm/ironmanplanner`; config group
   still `fm-ironmanplanner`): read-only tracking everywhere; in the dev harness client
   only, also the control bridge (`.runelite/agent/bridge.sock`) and the config-options export.
+- `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
+  sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
+  Chronicle's routine executor runs it between the main activity and the return (planner docs/08).
 - `bin/` — harness (on PATH inside `nix develop`/direnv).
 - `vendor/microbot/` — sparse upstream checkout at the pinned tag (`mb-vendor`), gitignored.
   This is the API you compile against: read it instead of guessing.

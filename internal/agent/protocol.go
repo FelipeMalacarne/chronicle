@@ -34,6 +34,7 @@ var Commands = []string{
 	CmdBankWithdraw, CmdNPCInteract, CmdObjectInteract, CmdGroundPickup, CmdDialogueContinue, CmdDialogueSelect,
 	CmdClientLogs, CmdAccountShow, CmdAccountUse, CmdWorldHop, CmdConfigSchema,
 	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX, CmdItemUseOn, CmdTimers,
+	CmdRunStart, CmdRunStatus, CmdRunCancel,
 }
 
 // Known reports whether name is in the closed list.

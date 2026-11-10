@@ -21,6 +21,7 @@
 	import ClientLog from '#lib/v6/ClientLog.svelte';
 	import ClientAccount from '#lib/v6/ClientAccount.svelte';
 	import Relogios from '#lib/v6/Relogios.svelte';
+	import FazerAgora from '#lib/v6/FazerAgora.svelte';
 	import type { GameView } from '#lib/api/microbot';
 
 	/*
@@ -440,6 +441,15 @@
 		<aside class="side-col">
 			{#if status?.agent.connected}
 				<Relogios {running} />
+				{#if running}
+					<FazerAgora
+						{loggedIn}
+						onchange={() => {
+							void refreshAudit();
+							void refreshGame();
+						}}
+					/>
+				{/if}
 			{/if}
 			<section class="panel" id="auditoria">
 				<div class="plaque">Auditoria<span class="r">quem · quando · o quê</span></div>

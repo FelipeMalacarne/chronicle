@@ -60,12 +60,21 @@ type Executor struct {
 	// the menus and actions the Agent Server lacks; nil turns them off.
 	Bridge Requester
 
-	mu sync.Mutex // one client lifecycle/login action at a time
+	// RunPoll is how often a run reads the game (default 3 s; tests shorten it).
+	RunPoll time.Duration
+
+	mu   sync.Mutex // one client lifecycle/login action at a time
+	runs runner
 }
 
 // Execute runs one command of the closed list.
 func (e *Executor) Execute(ctx context.Context, command string, params json.RawMessage) (any, error) {
+	if !slices.Contains(readCommands, command) && e.going() {
+		return nil, ErrRunGoing
+	}
 	switch command {
+	case CmdRunStart, CmdRunStatus, CmdRunCancel:
+		return e.runCommand(command, params)
 	case CmdStatus:
 		return e.status(ctx), nil
 	case CmdScreenshot:

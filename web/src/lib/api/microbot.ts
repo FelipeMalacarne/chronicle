@@ -318,6 +318,28 @@ export interface Timers {
 	timers: Timer[];
 }
 
+/** Um "fazer agora" (doc 08, fase 4): o agent para o principal, roda um plugin até o fim, volta e religa. */
+export interface Run {
+	id: string;
+	className: string;
+	stop: string[];
+	state: 'stopping' | 'running' | 'returning' | 'restarting' | 'done' | 'failed' | 'canceled';
+	startedAt: string;
+	finishedAt?: string;
+	from?: Pos;
+	/** O último resultado do plugin rodado ({"outcome":"done"} no Cat Swap). */
+	result?: Record<string, unknown>;
+	error?: string;
+	events: { at: string; state: Run['state']; text: string }[];
+}
+
+export interface RunParams {
+	className: string;
+	stop?: string[];
+	timeoutS?: number;
+	stay?: boolean;
+}
+
 /** Ações de plugins, scripts e configuração (doc 08, fase 3); todas vão para a auditoria. */
 export type PluginAction =
 	| { path: 'plugins/install' | 'plugins/remove'; body: { name: string; version?: string } }
@@ -381,6 +403,14 @@ export const microbotApi = {
 	plugins: () => call<PluginsView>('/plugins'),
 	game: () => call<GameView>('/game'),
 	timers: () => call<Timers>('/timers'),
+	run: () => call<{ run: Run | null }>('/run'),
+	runStart: (p: RunParams) =>
+		call<{ ok: boolean; result: { run: Run } }>('/run', {
+			method: 'POST',
+			body: JSON.stringify(p)
+		}),
+	runCancel: () =>
+		call<{ ok: boolean; result: unknown }>('/run/cancel', { method: 'POST', body: '{}' }),
 	/** O fim do log do cliente, com o que parece segredo mascarado pelo agent. */
 	logs: (lines = 200) => call<{ file: string; lines: string[] }>(`/client/logs?lines=${lines}`),
 	account: () => call<ClientAccount>('/account'),

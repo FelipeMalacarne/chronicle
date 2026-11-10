@@ -57,6 +57,10 @@ func (s *Server) microbotRoutes() {
 	control("GET /api/microbot/plugins", s.microbotRead(agent.CmdPlugins, func(*http.Request) any { return nil }))
 	control("GET /api/microbot/game", s.microbotRead(agent.CmdGameView, func(*http.Request) any { return nil }))
 	control("GET /api/microbot/timers", s.microbotRead(agent.CmdTimers, func(*http.Request) any { return nil }))
+	// Fazer agora (docs/08 phase 4): one run, driven by the agent; start and cancel are audited.
+	control("GET /api/microbot/run", s.microbotRead(agent.CmdRunStatus, func(*http.Request) any { return nil }))
+	control("POST /api/microbot/run", s.microbotAction(agent.CmdRunStart, 30*time.Second))
+	control("POST /api/microbot/run/cancel", s.microbotAction(agent.CmdRunCancel, 30*time.Second))
 	control("GET /api/microbot/client/logs", s.microbotRead(agent.CmdClientLogs, func(r *http.Request) any {
 		n, _ := strconv.Atoi(r.URL.Query().Get("lines"))
 		return agent.LogsParams{Lines: n}

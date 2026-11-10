@@ -186,7 +186,9 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 			return nil, errors.New("config: value of at most 2000 characters")
 		}
 		return p, nil
-	case CmdPlugins, CmdScriptsPause, CmdScriptsResume, CmdGameView, CmdTimers:
+	case CmdRunStart:
+		return validateRun(raw)
+	case CmdPlugins, CmdScriptsPause, CmdScriptsResume, CmdGameView, CmdTimers, CmdRunStatus, CmdRunCancel:
 		return nil, nil
 	}
 	if slices.Contains(GameActions, command) {

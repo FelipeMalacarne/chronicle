@@ -248,9 +248,13 @@ run_event        run_id, at, state, kind, detail (jsonb)    -- trilha, screensho
    23 min, birdhouses prontas, árvores amanhã 14:10), mais o `ready_at` como fato. Sem risco e útil
    já.
 2. **Fazer agora**: o executor com uma recorrente e o principal, disparado pelo dono num botão
-   ("fazer o herb run agora e voltar a pescar"). Valida PARANDO, RUN, fim e RETORNO com o dono olhando.
-3. **Automático**: o relógio dispara sozinho, várias recorrentes em fila por prioridade, paralelos.
-4. **Eventos e preparo**: troca do gato por evento de chat e loadout com banco antes do run.
+   ("trocar o gato agora e voltar a pescar"). Valida PARANDO, RUN, fim e RETORNO com o dono olhando.
+   Reordenado em 2026-11-09: a conta ainda não tem os requisitos dos runs com relógio (Farming 1,
+   sem Bone Voyage), então a primeira recorrente é a troca do gato.
+3. **Evento**: a troca do gato disparada pela mensagem "Your kitten has grown into a healthy cat that
+   can hunt for itself." (o KittenPlugin já a vê).
+4. **Automático e preparo**: o relógio dispara herb, tree e birdhouse quando a conta tiver os
+   requisitos, várias recorrentes em fila por prioridade, e loadout com banco antes do run.
 
 O ciclo do gato (resposta do dono, R3): o filhote fica com o KittenPlugin (paralela: alimentar e
 afagar até crescer); quando cresce, a troca é uma recorrente disparada pelo evento, que leva o gato
@@ -266,7 +270,7 @@ trilha da última troca). Desenhar no canvas antes da entrega 2.
 
 | # | Pergunta | Estado |
 |---|---|---|
-| R1 | O executor roda no `serve` (estado e auditoria num lugar só) ou no agent, ao lado do cliente (sobrevive a queda do link durante um run)? | aberta. O dono considera o cliente headless num mini PC com Intel N95, sempre ligado. Recomendação revista: **no agent**, porque o `serve` reinicia (o `air` a cada mudança em Go no `just dev`, deploys no saradomin) e o link passa a ser remoto; o `serve` guarda as rotinas, dispara o "fazer agora" e recebe a trilha, e o agent manda as ações para a auditoria (com fila se o link cair). Só pesa a partir da entrega 2 |
+| R1 | O executor roda no `serve` (estado e auditoria num lugar só) ou no agent, ao lado do cliente (sobrevive a queda do link durante um run)? | decidida (2026-11-09): no agent. O dono considera o cliente headless num mini PC com Intel N95, sempre ligado. Recomendação revista: **no agent**, porque o `serve` reinicia (o `air` a cada mudança em Go no `just dev`, deploys no saradomin) e o link passa a ser remoto; o `serve` guarda as rotinas, dispara o "fazer agora" e recebe a trilha, e o agent manda as ações para a auditoria (com fila se o link cair). Só pesa a partir da entrega 2 |
 | R2 | Delegar aos plugins do Hub (Herbrun, FornBirdhouseRuns, FarmTreeRun) ou escrever os nossos no `microbot-plugins`? | decidida (2026-11-09): os dois. A tarefa aponta para uma classe de plugin com um preset, venha do Hub ou do `microbot-plugins`; começar pelos do Hub e escrever o que faltar (fim sem aviso, sem banco, a troca do gato) |
 | R3 | "Trocar de gato" é o quê? | decidida (2026-11-09): o ciclo do gato descrito nas entregas |
 | R4 | Começar pela entrega 1 (relógios) agora? | decidida (2026-11-09): sim, feita (ver Estado) |
@@ -516,6 +520,37 @@ destino da viagem):
   Falta ver com o cliente de verdade (`mb-install chroniclelink` e reiniciar o cliente e o
   `just agent`).
 - Ainda não: o `ready_at` como fato no planner (Agora), que entra com o executor (entrega 2).
+
+**Fase 4, entrega 2: fazer agora, com a troca do gato** (2026-11-09):
+
+- `microbot-plugins`, plugin **Cat Swap 1.0.0** (`fm/catswap`): uma troca e se desliga. Pega o gato
+  crescido (adulto, lazy, wily, overgrown ou hell; filhote nunca), anda até os Civilians de West
+  Ardougne (porta do muro de Ardougne, aberta pela Biohazard) e usa o gato num deles (é o que dá as
+  runas; o Talk-to só conversa), anda até a Gertrude e compra com o "Kitten" do menu (100 coins, sem
+  diálogo), solta o filhote para seguir. Recusa sem gato crescido, com o filhote ainda crescendo ou
+  sem 100 coins no inventário. O resultado (`outcome` done ou failed, o motivo, as death runes
+  ganhas) vai para o `ScriptResultStore` antes de o plugin se desligar.
+- Agent: `run_start`, `run_status` e `run_cancel` na lista fechada. O executor roda numa goroutine
+  do agent (decisão R1): guarda a posição, para os plugins marcados, espera o personagem ficar
+  parado, liga o plugin do run, espera ele se desligar sozinho (timeout de 30 min por padrão), lê o
+  último resultado (`outcome: failed` falha o run), volta ao lugar pelo webwalker (reemite o walk
+  quando o personagem para no caminho) e religa o que parou. Falha, timeout ou cancelamento deixam
+  o principal parado para o dono olhar. Enquanto um run dirige o personagem, o agent recusa as
+  outras ações (só leituras e o cancelamento passam). `GET /api/microbot/run`, `POST
+  /api/microbot/run` e `POST /api/microbot/run/cancel`; começar e cancelar vão para a auditoria.
+- Web: o painel "Fazer agora" no Cockpit, abaixo dos Relógios (artboard V6MicrobotFazer1440,
+  página 6d do canvas): o plugin a rodar (o Cat Swap primeiro), os plugins ligados a parar e religar
+  (o Kitten fica ligado por padrão, porque precisa ver "Gertrude gives you another kitten." para
+  zerar o crescimento), voltar ao lugar, e o botão com segundo clique. Rodando: o estado, a trilha e
+  cancelar. Depois: o último run com o resultado (+100 death runes, filhote seguindo).
+- Verificado: testes do Cat Swap (ids de seguidor e de item; filhote nunca conta como gato), do
+  executor (a ordem parar, rodar, andar, religar; falha sem religar; ações recusadas durante o run;
+  cancelar para o plugin) e da view; o painel no Cockpit com runs falsos. **Falta o teste no jogo**,
+  com o dono logado e olhando: `mb-install catswap chroniclelink`, reiniciar o cliente e o
+  `just agent`.
+- Lacunas conhecidas: a trilha vive na memória do agent (some se ele reiniciar) e as ações que o
+  executor faz sozinho não vão uma a uma para a auditoria (só o começar e o cancelar); cancelar
+  durante a volta não para o webwalker já em curso.
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

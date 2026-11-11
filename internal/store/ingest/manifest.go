@@ -32,8 +32,9 @@ type Definition struct {
 }
 
 // BuildDefinition derives the v1 manifest from the reference vars of the
-// catalog (content/reference/varbits.json: diary tiers and quest points;
-// the proof of every unlock in unlocks.json; docs/09 section 3.2) plus every
+// catalog (content/reference/varbits.json: diary tiers, quest points and the
+// counts of the account screen; the proof of every unlock in unlocks.json and
+// of every combat achievement; docs/09 section 3.2) plus every
 // var and item the loaded guide rules name. The plugin reads whatever ids the
 // manifest lists, so a new proof needs only catalog work, never a plugin change.
 // The version is a stable positive 31-bit truncation of the canonical
@@ -46,6 +47,11 @@ func BuildDefinition(c *content.Content, reg *entities.Registry) Definition {
 		tests := reg.ProofVars()
 		for _, v := range reg.Vars() {
 			tests = append(tests, entities.VarTest{Var: v.Var, ID: v.ID})
+		}
+		for _, c := range reg.CombatAchievements() {
+			if c.Proof != nil {
+				tests = append(tests, *c.Proof)
+			}
 		}
 		for _, t := range tests {
 			switch t.Var {

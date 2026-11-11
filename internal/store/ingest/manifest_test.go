@@ -24,11 +24,19 @@ func TestBuildDefinitionAsksForReferenceVars(t *testing.T) {
 			t.Errorf("varbits %v miss diary varbit %d", with.Varbits, id)
 		}
 	}
-	if !slices.Equal(with.Varps, []int64{101}) {
-		t.Errorf("varps = %v, want [101]", with.Varps)
+	// QUEST_POINTS, COLLECTION_COUNT and _MAX, and the 21 CA_TASK_COMPLETED_<n>
+	// varps that hold the combat achievements (0, 12, 13 and 20 checked).
+	if len(with.Varps) != 24 || !slices.IsSorted(with.Varps) {
+		t.Errorf("varps = %v, want 24 sorted", with.Varps)
 	}
-	if len(with.Varbits) != 48 || !slices.IsSorted(with.Varbits) {
-		t.Errorf("varbits = %v, want the 48 diary tiers sorted", with.Varbits)
+	for _, id := range []int64{101, 2943, 2944, 3116, 3128, 3387, 5673} {
+		if !slices.Contains(with.Varps, id) {
+			t.Errorf("varps %v miss %d", with.Varps, id)
+		}
+	}
+	// The 48 diary tiers and the six CA_TOTAL_TASKS_COMPLETED_<tier>.
+	if len(with.Varbits) != 54 || !slices.IsSorted(with.Varbits) || !slices.Contains(with.Varbits, 12890) {
+		t.Errorf("varbits = %v, want the 48 diary tiers and 6 CA totals sorted", with.Varbits)
 	}
 	if with.Version == without.Version {
 		t.Error("the reference vars must change the manifest version")

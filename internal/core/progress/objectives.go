@@ -79,9 +79,18 @@ func EvaluateObjective(k entities.ObjectiveKey, ps rules.PlayerState, reg *entit
 		if proof == nil {
 			return unknown("unlock has no proof var in the catalog; only the owner can mark it")
 		}
-		return evaluateVar(*proof, proof.Eq, proof.Min, ps)
+		return evaluateVar(*proof, ps)
 	case entities.KindCombatAchievement:
-		return unknown("combat achievements are not observed yet")
+		var proof *entities.VarTest
+		if id, ok := k.Ref.Int(); ok && reg != nil {
+			if c, ok := reg.CombatAchievement(id); ok {
+				proof = c.Proof
+			}
+		}
+		if proof == nil {
+			return unknown("combat achievement has no proof var in the catalog")
+		}
+		return evaluateVar(*proof, ps)
 	}
 	return unknown("objective kind " + string(k.Ref.Kind) + " has no fact source")
 }
@@ -154,7 +163,7 @@ func questPoints(n int, ps rules.PlayerState, reg *entities.Registry) Evaluation
 	if reg != nil {
 		for _, v := range reg.VarsFor(entities.QuestPoints) {
 			if v.Semantics == entities.VarCount {
-				return evaluateVar(entities.VarTest{Var: v.Var, ID: v.ID}, nil, &n, ps)
+				return evaluateVar(entities.VarTest{Var: v.Var, ID: v.ID, Min: &n}, ps)
 			}
 		}
 	}
@@ -163,12 +172,12 @@ func questPoints(n int, ps rules.PlayerState, reg *entities.Registry) Evaluation
 
 // evaluateVar evaluates a varbit/varp test as the matching engine rule; the
 // fact is the var row of player_state.
-func evaluateVar(t entities.VarTest, eq, atLeast *int, ps rules.PlayerState) Evaluation {
+func evaluateVar(t entities.VarTest, ps rules.PlayerState) Evaluation {
 	fact := Fact{Facet: string(t.Var), Key: strconv.Itoa(t.ID)}
 	if t.Var == entities.Varp {
-		return evaluate(content.VarpRule{RuleHeader: header(content.TypeVarp), ID: t.ID, Eq: eq, Min: atLeast}, ps, fact)
+		return evaluate(content.VarpRule{RuleHeader: header(content.TypeVarp), ID: t.ID, Eq: t.Eq, Min: t.Min, Bit: t.Bit}, ps, fact)
 	}
-	return evaluate(content.VarbitRule{RuleHeader: header(content.TypeVarbit), ID: t.ID, Eq: eq, Min: atLeast}, ps, fact)
+	return evaluate(content.VarbitRule{RuleHeader: header(content.TypeVarbit), ID: t.ID, Eq: t.Eq, Min: t.Min, Bit: t.Bit}, ps, fact)
 }
 
 func lookupQuest(reg *entities.Registry, id string) (string, bool) {

@@ -154,7 +154,7 @@ cada faceta é parte do modelo (princípio 6):
 | `diary@complete` | `diary_tier` | `diary` | plugin, varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` listados em `content/reference/varbits.json` e pedidos no manifest |
 | `unlock@done` | `varbit`/`varp` do catálogo, senão só manual | `varbit`/`varp` | plugin, varbit do catálogo de unlocks no manifest |
 | `boss>=N` | `boss_kc` | `activity` | hiscores (plugin não vê KC) |
-| `ca@done` | `combat_achievement` | `combat_achievement` | plugin, varps do manifest (fase posterior; fora do piloto) |
+| `ca@done` | `varp` com `bit` (o `proof` da task em `combat_achievements.json`) | `varp` | plugin: a task `id` é o bit `id%32` do varp `CA_TASK_COMPLETED_<id/32>`, pedido no manifest (2026-11-10; conferido no jogo contra `CA_TOTAL_TASKS_COMPLETED_<TIER>`) |
 | `qp>=N` | `varp` 101 (`QUEST_POINTS`) | `varp` | plugin; fallback: soma dos QP das quests concluídas pelo catálogo |
 
 O manifest do ingest passa a ser construído a partir dessas tabelas de referência (varbits de diary,

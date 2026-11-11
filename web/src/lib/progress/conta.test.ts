@@ -1,6 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { combatLevel, equipmentLayout, shortQty, toNext, XP_TABLE } from './conta.ts';
+import {
+	caMismatch,
+	caTotals,
+	combatLevel,
+	equipmentLayout,
+	shortQty,
+	toNext,
+	XP_TABLE
+} from './conta.ts';
 
 test('XP table matches the game', () => {
 	assert.equal(XP_TABLE[2], 83);
@@ -60,4 +68,19 @@ test('equipmentLayout puts each item in its one slot, 2h in the weapon slot', ()
 		rest.map((r) => r.id),
 		[9999, 1155]
 	);
+});
+
+test('caTotals and caMismatch', () => {
+	const t = (tier: 'easy' | 'hard', done: number, total: number, game_done?: number) => ({
+		tier,
+		done,
+		total,
+		game_done,
+		source: 'plugin',
+		observed_at: ''
+	});
+	assert.deepEqual(caTotals([t('easy', 30, 37), t('hard', 2, 99)]), { done: 32, total: 136 });
+	assert.equal(caMismatch(t('easy', 30, 37, 30)), null);
+	assert.equal(caMismatch(t('easy', 30, 37)), null);
+	assert.match(caMismatch(t('easy', 30, 37, 31)) ?? '', /jogo conta 31/);
 });

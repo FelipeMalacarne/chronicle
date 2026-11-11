@@ -1,4 +1,4 @@
-import type { SkillView } from './types.ts';
+import type { CATierView, SkillView } from './types.ts';
 
 /** Pedaços puros da Conta (V6Conta1440): XP por nível, progresso até o próximo e combate. */
 
@@ -130,4 +130,31 @@ export function equipmentLayout(
 		}
 	}
 	return { cells, rest };
+}
+
+/** Os tiers de combat achievements como o jogo os chama. */
+export const CA_TIER_LABEL: Record<CATierView['tier'], string> = {
+	easy: 'Easy',
+	medium: 'Medium',
+	hard: 'Hard',
+	elite: 'Elite',
+	master: 'Master',
+	grandmaster: 'Grandmaster'
+};
+
+/** Feitos e total somando os tiers lidos. */
+export function caTotals(tiers: CATierView[]): { done: number; total: number } {
+	return tiers.reduce((a, t) => ({ done: a.done + t.done, total: a.total + t.total }), {
+		done: 0,
+		total: 0
+	});
+}
+
+/**
+ * Quando a contagem pelos bits não bate com o total do próprio jogo (catálogo do wiki atrás do jogo,
+ * ou um bit lido errado), o aviso que vai no title da linha; null quando bate ou o jogo não disse.
+ */
+export function caMismatch(t: CATierView): string | null {
+	if (t.game_done === undefined || t.game_done === t.done) return null;
+	return `o jogo conta ${t.game_done} feitos neste tier; o catálogo, ${t.done}`;
 }

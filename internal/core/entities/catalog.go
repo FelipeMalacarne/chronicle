@@ -169,6 +169,8 @@ type CombatAchievementEntry struct {
 	Type    string  `json:"type"`
 	Monster string  `json:"monster,omitempty"`
 	WikiKey WikiKey `json:"wiki_key"`
+	// Proof is the task's bit in its CA_TASK_COMPLETED_<id/32> varp.
+	Proof *VarTest `json:"proof,omitempty"`
 }
 
 // UnlockCatalog is content/reference/unlocks.json. Entries are added only
@@ -197,6 +199,9 @@ type VarTest struct {
 	ID  int     `json:"id"`
 	Eq  *int    `json:"eq,omitempty"`
 	Min *int    `json:"min,omitempty"`
+	// Bit: the var has this bit set (a combat achievement in its
+	// CA_TASK_COMPLETED_<n> varp).
+	Bit *int `json:"bit,omitempty"`
 }
 
 // VarKind is "varbit" or "varp".
@@ -251,6 +256,12 @@ const (
 	VarFlag  = "flag"
 	VarCount = "count"
 )
+
+// CountSubject prefixes the subjects of count vars that measure no objective,
+// only a number the account screen shows: "count:ca:<tier>" (the game's own
+// total of done combat achievements of a tier), "count:collection_log" and
+// "count:collection_log_max".
+const CountSubject = "count:"
 
 // Registry indexes every catalog. It is immutable after Load.
 type Registry struct {
@@ -517,6 +528,11 @@ func Load(fsys fs.FS) (*Registry, error) {
 			fail("%s: duplicate combat achievement id %d", CombatAchievementsFile, c.ID)
 			continue
 		}
+		if c.Proof != nil {
+			if msg := c.Proof.check(); msg != "" {
+				fail("%s: %d: proof: %s", CombatAchievementsFile, c.ID, msg)
+			}
+		}
 		r.cas[c.ID] = c
 		r.caNames.add(c.Name, strconv.Itoa(c.ID), MatchName)
 		r.addWiki(c.WikiKey, Ref{Kind: KindCombatAchievement, ID: strconv.Itoa(c.ID)})
@@ -584,7 +600,7 @@ func Load(fsys fs.FS) (*Registry, error) {
 			}
 		}
 		seenVar[key] = true
-		if v.Subject != QuestPoints {
+		if v.Subject != QuestPoints && !strings.HasPrefix(v.Subject, CountSubject) {
 			ref, err := ParseRef(v.Subject)
 			if err != nil {
 				fail("%s: %s: %v", VarbitsFile, key, err)
@@ -705,7 +721,8 @@ func (r *Registry) Unlock(id string) (*UnlockEntry, bool) {
 }
 
 // ProofVars returns the var tests of every unlock that has a proof, sorted by
-// unlock id. With Vars they are the reference vars the ingest manifest asks for.
+// unlock id. With Vars and the combat achievements' proofs they are the
+// reference vars the ingest manifest asks for.
 func (r *Registry) ProofVars() []VarTest {
 	ids := make([]string, 0, len(r.unlocks))
 	for id, u := range r.unlocks {
@@ -766,10 +783,29 @@ func (t VarTest) check() string {
 		return fmt.Sprintf("unknown var kind %q", t.Var)
 	case t.ID < 0:
 		return fmt.Sprintf("invalid var id %d", t.ID)
-	case (t.Eq == nil) == (t.Min == nil):
-		return "a var test needs exactly one of eq and min"
+	case btoi(t.Eq != nil)+btoi(t.Min != nil)+btoi(t.Bit != nil) != 1:
+		return "a var test needs exactly one of eq, min and bit"
+	case t.Bit != nil && (*t.Bit < 0 || *t.Bit > 31):
+		return fmt.Sprintf("invalid bit %d", *t.Bit)
 	}
 	return ""
+}
+
+func btoi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// CombatAchievements returns every task, sorted by id.
+func (r *Registry) CombatAchievements() []*CombatAchievementEntry {
+	out := make([]*CombatAchievementEntry, 0, len(r.cas))
+	for _, c := range r.cas {
+		out = append(out, c)
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID < out[j].ID })
+	return out
 }
 
 // Quest returns a quest entry by id.

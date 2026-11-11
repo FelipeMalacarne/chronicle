@@ -272,6 +272,12 @@ ela vier `true`:
 Combat achievements e unlocks, quando o catálogo tiver os vars, chegam pelos `varbits`/`varps` do
 manifest, sem mudar o plugin.
 
+**Feito em 2026-11-10 para os combat achievements e o contador do collection log**, sem mudar o
+plugin: o manifest passou a pedir os 21 varps `CA_TASK_COMPLETED_<n>` (cada task é o bit `id%32` do
+varp `id/32`), os varbits `CA_TOTAL_TASKS_COMPLETED_<TIER>` e os varps `COLLECTION_COUNT` e
+`COLLECTION_COUNT_MAX`. O `data.ca` reservado não é necessário. O collection log por item
+(`collectionLogSlots`) continua sem envio: o jogo só diz quais itens você tem com o log aberto.
+
 ## Adendo de 2026-11-05: em uso, push por evento, painel da rota e auth
 
 **Em uso no zaros.** O plugin 1.1.0 rodou no cliente de dev com a conta do dono: o primeiro `full` levou as

@@ -65,17 +65,40 @@ type ContainerView struct {
 	Items      []ItemView `json:"items"`
 }
 
+// CATierView is one combat achievement tier: how many of the catalog's tasks
+// the account has done, from each task's bit in the CA_TASK_COMPLETED_<n>
+// varps, and the game's own total of the tier (CA_TOTAL_TASKS_COMPLETED_<tier>),
+// which should agree.
+type CATierView struct {
+	Tier     string `json:"tier"`
+	Done     int    `json:"done"`
+	Total    int    `json:"total"`
+	GameDone *int64 `json:"game_done,omitempty"`
+	FactSource
+}
+
+// CollectionLogView is the game's collection log count (COLLECTION_COUNT and
+// COLLECTION_COUNT_MAX); the plugin never opens the log.
+type CollectionLogView struct {
+	Obtained int64  `json:"obtained"`
+	Total    *int64 `json:"total,omitempty"`
+	FactSource
+}
+
 // AccountState is what the account screen shows: skills and quests with
 // source and age first, then the containers with their freshness. Facets the
 // account never reported are empty, never guessed.
 type AccountState struct {
-	Account     AccountView     `json:"account"`
-	TotalLevel  int             `json:"total_level,omitempty"`
-	QuestPoints *int64          `json:"quest_points,omitempty"`
-	Skills      []SkillView     `json:"skills"`
-	Quests      []QuestView     `json:"quests"`
-	Diaries     []DiaryView     `json:"diaries"`
-	Containers  []ContainerView `json:"containers"`
+	Account     AccountView `json:"account"`
+	TotalLevel  int         `json:"total_level,omitempty"`
+	QuestPoints *int64      `json:"quest_points,omitempty"`
+	Skills      []SkillView `json:"skills"`
+	Quests      []QuestView `json:"quests"`
+	Diaries     []DiaryView `json:"diaries"`
+	// CombatAchievements is empty until the plugin sends the CA varps.
+	CombatAchievements []CATierView       `json:"combat_achievements"`
+	CollectionLog      *CollectionLogView `json:"collection_log,omitempty"`
+	Containers         []ContainerView    `json:"containers"`
 }
 
 // questPointsVarp is the varp the game keeps the quest point total in.
@@ -97,6 +120,7 @@ func (r *Repository) AccountState(ctx context.Context, accountID string) (Accoun
 	out := AccountState{
 		Account: accountView(acc),
 		Skills:  []SkillView{}, Quests: []QuestView{}, Diaries: []DiaryView{}, Containers: []ContainerView{},
+		CombatAchievements: []CATierView{},
 	}
 	src := func(facet, key string) FactSource {
 		o := obs[coreprogress.Fact{Facet: facet, Key: key}]
@@ -140,6 +164,10 @@ func (r *Repository) AccountState(ctx context.Context, accountID string) (Accoun
 	})
 	if qp, ok := ps.Varps[questPointsVarp]; ok {
 		out.QuestPoints = &qp
+	}
+	if r.catalog != nil {
+		out.CombatAchievements = caTiers(r.catalog, ps.Varps, ps.Varbits, src)
+		out.CollectionLog = collectionLog(r.catalog, ps.Varps, src)
 	}
 	for name, c := range ps.Items {
 		cv := ContainerView{Container: name, State: string(c.State), ObservedAt: c.ObservedAt, Complete: c.Complete, Items: []ItemView{}}
@@ -191,4 +219,82 @@ func containerRank(c string) int {
 		return 2
 	}
 	return 3
+}
+
+// caTiers counts the done combat achievements per tier, in tier order. A tier
+// counts only when every varp holding its tasks was observed.
+func caTiers(reg *entities.Registry, varps, varbits map[int]int64, src func(facet, key string) FactSource) []CATierView {
+	type tally struct {
+		done, total int
+		seen        bool
+		varp        int
+	}
+	by := map[string]*tally{}
+	var order []string
+	for _, c := range reg.CombatAchievements() {
+		t := by[c.Tier]
+		if t == nil {
+			t = &tally{seen: true}
+			by[c.Tier] = t
+			order = append(order, c.Tier)
+		}
+		t.total++
+		if c.Proof == nil || c.Proof.Bit == nil {
+			t.seen = false
+			continue
+		}
+		v, ok := varps[c.Proof.ID]
+		if !ok {
+			t.seen = false
+			continue
+		}
+		t.varp = c.Proof.ID
+		if v&(1<<*c.Proof.Bit) != 0 {
+			t.done++
+		}
+	}
+	sort.SliceStable(order, func(i, j int) bool { return caTierRank(order[i]) < caTierRank(order[j]) })
+	out := []CATierView{}
+	for _, tier := range order {
+		t := by[tier]
+		if !t.seen {
+			continue
+		}
+		view := CATierView{Tier: tier, Done: t.done, Total: t.total, FactSource: src("varp", strconv.Itoa(t.varp))}
+		for _, v := range reg.VarsFor(entities.CountSubject + "ca:" + tier) {
+			if n, ok := varbits[v.ID]; ok && v.Var == entities.Varbit {
+				view.GameDone = &n
+			}
+		}
+		out = append(out, view)
+	}
+	return out
+}
+
+func caTierRank(t string) int {
+	for i, x := range []string{"easy", "medium", "hard", "elite", "master", "grandmaster"} {
+		if x == t {
+			return i
+		}
+	}
+	return 6
+}
+
+// collectionLog reads the game's collection log counts, nil until observed.
+func collectionLog(reg *entities.Registry, varps map[int]int64, src func(facet, key string) FactSource) *CollectionLogView {
+	var out *CollectionLogView
+	for _, v := range reg.VarsFor(entities.CountSubject + "collection_log") {
+		if n, ok := varps[v.ID]; ok && v.Var == entities.Varp {
+			out = &CollectionLogView{Obtained: n, FactSource: src("varp", strconv.Itoa(v.ID))}
+		}
+	}
+	if out == nil {
+		return nil
+	}
+	for _, v := range reg.VarsFor(entities.CountSubject + "collection_log_max") {
+		if n, ok := varps[v.ID]; ok && v.Var == entities.Varp && n > 0 {
+			out.Total = &n
+		}
+	}
+	return out
 }

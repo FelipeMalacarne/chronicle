@@ -131,7 +131,11 @@ func TestEvaluateObjective(t *testing.T) {
 		{"diary other tier only", "diary:ardougne:medium@complete", rules.PlayerState{Diaries: map[string]map[string]bool{"ardougne": {"easy": true}}}, rules.Unknown, nil},
 		{"boss by hiscores name", "boss:zulrah>=50", rules.PlayerState{BossKC: map[string]int{"Zulrah": 51}}, rules.Met, []Fact{{"activity", "Zulrah"}}},
 		{"unlock without a proof var", "unlock:fairy_rings@done", rules.PlayerState{Varbits: map[int]int64{1: 1}}, rules.Unknown, nil},
-		{"combat achievement has no source yet", "ca:574@done", rules.PlayerState{}, rules.Unknown, nil},
+		// Task 574 is bit 30 of CA_TASK_COMPLETED_17 (varp 4204); task 0 is bit 0 of varp 3116.
+		{"combat achievement varp not observed", "ca:574@done", rules.PlayerState{Varps: map[int]int64{3116: 1}}, rules.Unknown, nil},
+		{"combat achievement done", "ca:574@done", rules.PlayerState{Varps: map[int]int64{4204: 1 << 30}}, rules.Met, []Fact{{"varp", "4204"}}},
+		{"combat achievement not done", "ca:574@done", rules.PlayerState{Varps: map[int]int64{4204: 1<<29 | 1<<31}}, rules.Unmet, []Fact{{"varp", "4204"}}},
+		{"first combat achievement", "ca:0@done", rules.PlayerState{Varps: map[int]int64{3116: 1}}, rules.Met, []Fact{{"varp", "3116"}}},
 		{"quest points without varps", "qp>=107", rules.PlayerState{}, rules.Unknown, nil},
 		{"quest points varp 101 missing", "qp>=107", rules.PlayerState{Varps: map[int]int64{1: 200}}, rules.Unknown, nil},
 		{"quest points met", "qp>=32", rules.PlayerState{Varps: map[int]int64{101: 33}}, rules.Met, []Fact{{"varp", "101"}}},

@@ -2,7 +2,16 @@
 	import { progressApi } from '#lib/api/client';
 	import { quietDetection } from '#lib/api/events.svelte';
 	import { createResource } from '#lib/api/resource.svelte';
-	import { combatLevel, equipmentLayout, shortQty, SKILL_ORDER, toNext } from '#lib/progress/conta';
+	import {
+		CA_TIER_LABEL,
+		caMismatch,
+		caTotals,
+		combatLevel,
+		equipmentLayout,
+		shortQty,
+		SKILL_ORDER,
+		toNext
+	} from '#lib/progress/conta';
 	import { openEntity } from '#lib/progress/entity.svelte';
 	import { iconFor, itemIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { loadMe, me } from '#lib/progress/me.svelte';
@@ -93,6 +102,10 @@
 		}));
 	});
 	const doneD = $derived((st?.diaries ?? []).filter((d) => d.complete).length);
+	/* Combat achievements por tier e o contador do collection log (varps do jogo). */
+	const ca = $derived(st?.combat_achievements ?? []);
+	const caSum = $derived(caTotals(ca));
+	const clog = $derived(st?.collection_log);
 	const dSrc = $derived(
 		st?.diaries[0] ? `${st.diaries[0].source} · ${age(st.diaries[0].observed_at)}` : ''
 	);
@@ -396,6 +409,62 @@
 		</section>
 	</div>
 
+	<div class="cgrid" id="conquistas">
+		<section class="panel pb" id="ca">
+			<div class="plaque">
+				Combat achievements<span class="r"
+					>{#if ca.length}{st.combat_achievements[0].source} · {age(
+							st.combat_achievements[0].observed_at
+						)} · {caSum.done} de {caSum.total}{:else}sem leitura{/if}</span
+				>
+			</div>
+			{#if ca.length}
+				<div class="cabody">
+					{#each ca as t (t.tier)}
+						{@const warn = caMismatch(t)}
+						<div class="catier" title={warn ?? `${t.done} de ${t.total} ${CA_TIER_LABEL[t.tier]}`}>
+							<span>{CA_TIER_LABEL[t.tier]}</span><span class="cabar"
+								><span style="width: {(100 * t.done) / Math.max(1, t.total)}%"></span></span
+							><span class="n" class:warn>{t.done}/{t.total}</span>
+						</div>
+					{/each}
+				</div>
+			{:else}
+				<div
+					class="emp"
+					title="Os combat achievements vêm de varps que o plugin lê sozinho, pelo manifest"
+				>
+					<span>o plugin ainda não leu os combat achievements</span>
+				</div>
+			{/if}
+		</section>
+		<section class="panel pb" id="clog">
+			<div class="plaque">
+				Collection log<span class="r"
+					>{#if clog}{clog.source} · {age(clog.observed_at)}{:else}sem leitura{/if}</span
+				>
+			</div>
+			{#if clog}
+				<div class="cabody">
+					<p class="clog">
+						<span class="sr">{clog.obtained.toLocaleString('pt-BR')}</span>{#if clog.total}<span
+								class="su"
+							>
+								de {clog.total.toLocaleString('pt-BR')}</span
+							>{/if}
+					</p>
+					{#if clog.total}<span class="cabar wide"
+							><span style="width: {(100 * clog.obtained) / clog.total}%"></span></span
+						>{/if}
+				</div>
+			{:else}
+				<div class="emp" title="O contador do collection log vem de um varp do jogo">
+					<span>o plugin ainda não leu o collection log</span>
+				</div>
+			{/if}
+		</section>
+	</div>
+
 	<div class="cgrid" id="itens">
 		{@render container('Equipamento', eq, 0, true)}
 		{@render container('Inventário', inv, 28)}
@@ -605,6 +674,54 @@
 	}
 	.cgrid {
 		grid-template-columns: repeat(auto-fit, minmax(min(220px, 100%), 1fr));
+	}
+	.cabody {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		padding: 12px 14px;
+	}
+	.catier {
+		display: grid;
+		grid-template-columns: 96px minmax(0, 1fr) 64px;
+		align-items: center;
+		gap: 10px;
+		padding: 2px 0;
+		font-size: 13px;
+	}
+	.cabar {
+		display: block;
+		height: 6px;
+		border-radius: 3px;
+		background: var(--hairline);
+		overflow: hidden;
+	}
+	.cabar > span {
+		display: block;
+		height: 100%;
+		background: var(--done);
+	}
+	.cabar.wide {
+		height: 8px;
+	}
+	.catier .n {
+		font:
+			500 12px 'JetBrains Mono',
+			monospace;
+		color: var(--ink-muted);
+		text-align: right;
+	}
+	.catier .n.warn {
+		color: var(--stale);
+	}
+	.clog {
+		margin: 0;
+		display: flex;
+		align-items: baseline;
+		gap: 6px;
+	}
+	.clog .sr {
+		font-size: 28px;
 	}
 	.bbody {
 		display: flex;

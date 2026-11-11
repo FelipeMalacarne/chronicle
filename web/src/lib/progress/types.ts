@@ -573,7 +573,28 @@ export interface AccountState {
 	skills: SkillView[];
 	quests: QuestView[];
 	diaries: DiaryView[];
+	/** Por tier, na ordem do jogo; vazio até o plugin mandar os varps dos CA. */
+	combat_achievements: CATierView[];
+	collection_log?: CollectionLogView;
 	containers: ContainerView[];
+}
+
+/** Um tier de combat achievements: feitos pelos bits dos varps, e o total que o próprio jogo guarda. */
+export interface CATierView {
+	tier: 'easy' | 'medium' | 'hard' | 'elite' | 'master' | 'grandmaster';
+	done: number;
+	total: number;
+	game_done?: number;
+	source: string;
+	observed_at: string;
+}
+
+/** O collection log pelos contadores do jogo (o plugin não abre o log). */
+export interface CollectionLogView {
+	obtained: number;
+	total?: number;
+	source: string;
+	observed_at: string;
 }
 
 /* ------------------------------------------------------------------ setup (V4Setup) */

@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.events.ItemContainerChanged;
@@ -68,7 +69,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class ChronicleLinkPlugin extends Plugin
 {
-	static final String VERSION = "1.6.0";
+	static final String VERSION = "1.7.0";
 	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */
@@ -106,7 +107,7 @@ public class ChronicleLinkPlugin extends Plugin
 
 	/** Chronicle's control part, dev harness client only: config options and the bridge. */
 	private ConfigSchemaExporter configSchema;
-	private AgentBridge bridge;
+	private volatile AgentBridge bridge;
 
 	/** Client thread only. */
 	private StateCollector collector;
@@ -382,6 +383,17 @@ public class ChronicleLinkPlugin extends Plugin
 		if (configSchema != null)
 		{
 			configSchema.export();
+		}
+	}
+
+	/** Chat messages feed the bridge's game events (dev harness client only). */
+	@Subscribe
+	public void onChatMessage(ChatMessage event)
+	{
+		AgentBridge b = bridge;
+		if (b != null)
+		{
+			b.onChat(event.getType(), event.getMessage());
 		}
 	}
 

@@ -18,6 +18,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.ChatMessageType;
 import net.runelite.api.EquipmentInventorySlot;
 import net.runelite.api.NPCComposition;
 import net.runelite.api.ObjectComposition;
@@ -56,7 +57,7 @@ import net.runelite.client.plugins.timetracking.hunter.BirdHouseTracker;
  * started by the plugin only in the dev harness client (-Dmicrobot.dev.harness=true):
  * the real menu options of nearby NPCs and objects and of worn items, the prayer book and the
  * spellbook, the clocks of RuneLite's Time Tracking (farming tabs, bird houses, the farming
- * contract), and typed actions (Remove/Rub a worn item, toggle a prayer, cast a spell, Deposit-X). It listens on its own Unix socket, .runelite/agent/bridge.sock, next to the Agent
+ * contract), the game events the agent's triggers wait for (/bridge/events, {@link GameEvents}), and typed actions (Remove/Rub a worn item, toggle a prayer, cast a spell, Deposit-X). It listens on its own Unix socket, .runelite/agent/bridge.sock, next to the Agent
  * Server's, and every request needs the Agent Server's token (the same X-Agent-Token, loopback
  * Host and no Origin as AgentHandler checks); with no token configured it answers nothing.
  */
@@ -69,6 +70,7 @@ final class AgentBridge
 
 	private final Gson gson;
 	private final ConfigManager configManager;
+	private final GameEvents events = new GameEvents();
 	private UdsHttpServer server;
 	private ExecutorService executor;
 
@@ -115,6 +117,12 @@ final class AgentBridge
 			executor.shutdownNow();
 			executor = null;
 		}
+	}
+
+	/** A chat message, from the plugin's event bus: recorded when it is one of {@link GameEvents}. */
+	void onChat(ChatMessageType type, String message)
+	{
+		events.onChat(type, message, Instant.now());
 	}
 
 	private List<Handler> handlers()
@@ -164,6 +172,14 @@ final class AgentBridge
 				protected void serve(HttpExchange ex) throws IOException
 				{
 					sendJson(ex, 200, timers());
+				}
+			},
+			new Handler(gson, "/bridge/events")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					sendJson(ex, 200, events.since(afterParam(parseQuery(ex.getRequestURI()).get("after"))));
 				}
 			},
 			new Handler(gson, "/bridge/equipment/interact")
@@ -292,6 +308,23 @@ final class AgentBridge
 				}
 			}
 		);
+	}
+
+	/** The {@code after} of /bridge/events: a seq, 0 when absent. */
+	static long afterParam(String raw)
+	{
+		if (raw == null || raw.isEmpty())
+		{
+			return 0;
+		}
+		try
+		{
+			return Math.max(0, Long.parseLong(raw));
+		}
+		catch (NumberFormatException e)
+		{
+			throw new AgentHandler.BadRequestException("after must be a number");
+		}
 	}
 
 	static int clamp(int v, int lo, int hi)

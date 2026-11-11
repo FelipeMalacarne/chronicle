@@ -23,12 +23,25 @@ final class PlayerSnapshot
 	final Map<String, Long> boosted;
 	/** Quest name -> state, or {@code null} when quests are not collected (manifest or read failure). */
 	final Map<String, String> quest;
+	/** Time Tracking tab -> clock, or {@code null} when not collected (manifest, plugin off). */
+	final Map<String, IngestContract.Timer> timers;
+	/** Where the character stands, or {@code null} without the owner's opt-in. */
+	final IngestContract.Position position;
 	final Map<ContainerKind, ContainerSnapshot> containers;
 
 	PlayerSnapshot(String username, String profile, String accountType, long manifestVersion,
 		Map<String, Long> varb, Map<String, Long> varp,
 		Map<String, Long> level, Map<String, Long> xp, Map<String, Long> boosted,
 		Map<String, String> quest, Map<ContainerKind, ContainerSnapshot> containers)
+	{
+		this(username, profile, accountType, manifestVersion, varb, varp, level, xp, boosted, quest, null, null, containers);
+	}
+
+	PlayerSnapshot(String username, String profile, String accountType, long manifestVersion,
+		Map<String, Long> varb, Map<String, Long> varp,
+		Map<String, Long> level, Map<String, Long> xp, Map<String, Long> boosted,
+		Map<String, String> quest, Map<String, IngestContract.Timer> timers, IngestContract.Position position,
+		Map<ContainerKind, ContainerSnapshot> containers)
 	{
 		this.username = Objects.requireNonNull(username);
 		this.profile = Objects.requireNonNull(profile);
@@ -40,6 +53,8 @@ final class PlayerSnapshot
 		this.xp = frozen(xp);
 		this.boosted = frozen(boosted);
 		this.quest = quest == null ? null : Collections.unmodifiableMap(new TreeMap<>(quest));
+		this.timers = timers == null ? null : Collections.unmodifiableMap(new TreeMap<>(timers));
+		this.position = position;
 		EnumMap<ContainerKind, ContainerSnapshot> c = new EnumMap<>(ContainerKind.class);
 		for (ContainerKind kind : ContainerKind.values())
 		{

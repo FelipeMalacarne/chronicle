@@ -3,6 +3,8 @@ package net.runelite.client.plugins.microbot.fm.chroniclelink;
 import com.google.gson.annotations.SerializedName;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import net.runelite.client.plugins.timetracking.SummaryState;
 
 /**
  * Wire DTOs of the planner's ingest contract v1 (ironman-planner docs/04-arquitetura.md 6.4).
@@ -37,6 +39,9 @@ final class IngestContract
 		Boolean skills;
 		/** The server accepts {@code data.quest}; absent (older server) means it would reject it. */
 		Boolean quests;
+		/** The server accepts {@code data.timers} and {@code data.position} (planner 2026-11-10). */
+		Boolean timers;
+		Boolean position;
 		ItemSelection items;
 		@SerializedName("interval_seconds")
 		Integer intervalSeconds;
@@ -50,6 +55,16 @@ final class IngestContract
 		boolean questsEnabled()
 		{
 			return quests != null && quests;
+		}
+
+		boolean timersEnabled()
+		{
+			return timers != null && timers;
+		}
+
+		boolean positionEnabled()
+		{
+			return position != null && position;
 		}
 
 		int intervalSecondsOrDefault()
@@ -114,7 +129,76 @@ final class IngestContract
 		Map<String, Long> boosted;
 		/** RuneLite {@code Quest.getName()} -> {@code QuestState} name; only when the manifest allows it. */
 		Map<String, String> quest;
+		/** Time Tracking tab -> clock; only when the manifest allows it and the plugin is on. */
+		Map<String, Timer> timers;
+		/** Where the character stands; only with the owner's opt-in and the manifest's flag. */
+		Position position;
 		ItemContainers items;
+	}
+
+	/** One Time Tracking clock: the summary and, growing or done, when it is ready (epoch seconds). */
+	static final class Timer
+	{
+		String state;
+		Long readyAt;
+		String label;
+
+		static Timer of(String label, SummaryState state, long completion)
+		{
+			Timer t = new Timer();
+			t.label = label;
+			t.state = state == null ? "UNKNOWN" : state.name();
+			// The trackers use -1 (and 0 before the first load) for "not known".
+			if (completion > 0 && ("IN_PROGRESS".equals(t.state) || "COMPLETED".equals(t.state)))
+			{
+				t.readyAt = completion;
+			}
+			return t;
+		}
+
+		@Override
+		public boolean equals(Object o)
+		{
+			if (!(o instanceof Timer))
+			{
+				return false;
+			}
+			Timer t = (Timer) o;
+			return Objects.equals(state, t.state) && Objects.equals(readyAt, t.readyAt) && Objects.equals(label, t.label);
+		}
+
+		@Override
+		public int hashCode()
+		{
+			return Objects.hash(state, readyAt, label);
+		}
+	}
+
+	/** A tile and the world. */
+	static final class Position
+	{
+		int world;
+		int x;
+		int y;
+		int plane;
+
+		Position(int world, int x, int y, int plane)
+		{
+			this.world = world;
+			this.x = x;
+			this.y = y;
+			this.plane = plane;
+		}
+
+		/**
+		 * Worth a push: another world or plane, or at least {@code tiles} away. Walking sends the
+		 * position again every few seconds otherwise.
+		 */
+		boolean movedFrom(Position before, int tiles)
+		{
+			return before == null || world != before.world || plane != before.plane
+				|| Math.max(Math.abs(x - before.x), Math.abs(y - before.y)) >= tiles;
+		}
 	}
 
 	static final class ItemContainers

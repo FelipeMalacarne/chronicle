@@ -25,14 +25,19 @@ before each launch.
 
 Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
 
-## Chronicle Link (`fm/chroniclelink`, 1.7.0)
+## Chronicle Link (`fm/chroniclelink`, 1.8.0)
 
 Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
 1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
 rename, and `mb-install` removes the old `IronmanPlannerPlugin.jar` when it installs this one. Its
 tracking is read-only: it pushes skills, quest states, the manifest's
-varbits/varps and, when switched on, bank/inventory/equipment (ingest contract v1,
-`ironman-planner/docs/04-arquitetura.md` 6.4), and never performs a game action.
+varbits/varps (diary tiers, quest points, combat achievements, the collection log count), the
+clocks of RuneLite's Time Tracking (`data.timers`: each farming tab, the bird houses and the farming
+contract, with when they are ready; the planner's recurring tasks) and, when switched on,
+bank/inventory/equipment and the character's position (`data.position`, "Send position", off by
+default; a move alone is sent only 16 tiles away or on another world or plane) (ingest contract v1,
+`ironman-planner/docs/04-arquitetura.md` 6.4), and never performs a game action. Timers and
+position go only to a planner whose manifest offers them.
 
 **Control bridge (dev harness client only).** In the client `bin/mb-client` runs
 (`-Dmicrobot.dev.harness=true`) the plugin also serves Chronicle's control bridge on

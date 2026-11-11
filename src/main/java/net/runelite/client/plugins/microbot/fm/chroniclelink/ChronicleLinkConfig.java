@@ -135,6 +135,17 @@ public interface ChronicleLinkConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = "sendPosition",
+		name = "Send position",
+		description = "Share where the character stands (tile and world), so the planner can show the steps nearby",
+		position = 7
+	)
+	default boolean sendPosition()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "showStatus",
 		name = "Show status",
 		description = "Show the sync status indicator overlay",

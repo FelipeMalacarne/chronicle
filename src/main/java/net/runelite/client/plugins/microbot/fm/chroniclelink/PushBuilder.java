@@ -11,6 +11,8 @@ final class PushBuilder
 {
 	static final String FULL = "full";
 	static final String DELTA = "delta";
+	/** A position change alone is worth a push only this many tiles away (or another world or plane). */
+	static final int POSITION_TILES = 16;
 
 	private PushBuilder()
 	{
@@ -28,7 +30,8 @@ final class PushBuilder
 			|| acked.manifestVersion != current.manifestVersion
 			|| !acked.varb.keySet().equals(current.varb.keySet())
 			|| !acked.varp.keySet().equals(current.varp.keySet())
-			|| !sameKeys(acked.quest, current.quest))
+			|| !sameKeys(acked.quest, current.quest)
+			|| !sameKeys(acked.timers, current.timers))
 		{
 			return true;
 		}
@@ -53,6 +56,8 @@ final class PushBuilder
 		data.boosted = new TreeMap<>(current.boosted);
 		// every quest, {} when there are none; absent only when quests are not collected
 		data.quest = current.quest == null ? null : new TreeMap<>(current.quest);
+		data.timers = current.timers == null ? null : new TreeMap<>(current.timers);
+		data.position = current.position;
 		data.items = new IngestContract.ItemContainers();
 		data.items.bank = observation(current.container(ContainerKind.BANK), null, sentAt);
 		data.items.inventory = observation(current.container(ContainerKind.INVENTORY), null, sentAt);
@@ -72,6 +77,8 @@ final class PushBuilder
 		data.boosted = changed(acked.boosted, current.boosted);
 		data.quest = current.quest == null ? null
 			: acked.quest == null ? new TreeMap<>(current.quest) : changed(acked.quest, current.quest);
+		data.timers = current.timers == null ? null
+			: acked.timers == null ? new TreeMap<>(current.timers) : changed(acked.timers, current.timers);
 
 		IngestContract.ItemContainers items = new IngestContract.ItemContainers();
 		items.bank = changedObservation(acked, current, ContainerKind.BANK, sentAt);
@@ -81,8 +88,15 @@ final class PushBuilder
 
 		boolean headerChanged = !acked.profile.equals(current.profile)
 			|| !Objects.equals(acked.accountType, current.accountType);
-		if (data.varb == null && data.varp == null && data.level == null && data.xp == null
-			&& data.boosted == null && data.quest == null && data.items == null && !headerChanged)
+		boolean other = data.varb != null || data.varp != null || data.level != null || data.xp != null
+			|| data.boosted != null || data.quest != null || data.timers != null || data.items != null || headerChanged;
+		// The position rides along any push once it changed; alone it waits for a real move.
+		IngestContract.Position pos = current.position;
+		if (pos != null && pos.movedFrom(acked.position, other ? 1 : POSITION_TILES))
+		{
+			data.position = pos;
+		}
+		if (!other && data.position == null)
 		{
 			return null;
 		}

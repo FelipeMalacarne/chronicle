@@ -15,6 +15,7 @@ import net.runelite.api.GameState;
 import net.runelite.api.Player;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
+import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
@@ -152,6 +153,16 @@ final class StateCollector
 		Map<String, Long> varb = readVars(manifest.varbits, client::getVarbitValue);
 		Map<String, Long> varp = readVars(manifest.varps, client::getVarpValue);
 		Map<String, String> quest = readQuests(manifest, quests);
+		Map<String, IngestContract.Timer> timers = TimeTrackingClocks.forIngest(manifest);
+		IngestContract.Position position = null;
+		if (manifest.positionEnabled() && config.sendPosition() && local != null)
+		{
+			WorldPoint at = WorldPoint.fromLocalInstance(client, local.getLocalLocation());
+			if (at != null)
+			{
+				position = new IngestContract.Position(client.getWorld(), at.getX(), at.getY(), at.getPlane());
+			}
+		}
 
 		Map<String, Long> level = new TreeMap<>();
 		Map<String, Long> xp = new TreeMap<>();
@@ -184,7 +195,7 @@ final class StateCollector
 
 		return new PlayerSnapshot(username, profile(RuneScapeProfileType.getCurrent(client)),
 			accountType(client.getVarbitValue(VarbitID.IRONMAN)), manifest.manifestVersion,
-			varb, varp, level, xp, boosted, quest, containers);
+			varb, varp, level, xp, boosted, quest, timers, position, containers);
 	}
 
 	private ContainerSnapshot captureBank(boolean allowed, List<Integer> only, Instant now)

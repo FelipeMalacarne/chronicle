@@ -46,11 +46,7 @@ import net.runelite.client.plugins.microbot.util.magic.Spell;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2PrayerEnum;
 import net.runelite.client.plugins.timetracking.SummaryState;
-import net.runelite.client.plugins.timetracking.Tab;
 import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
-import net.runelite.client.plugins.timetracking.farming.FarmingContractManager;
-import net.runelite.client.plugins.timetracking.farming.FarmingTracker;
-import net.runelite.client.plugins.timetracking.hunter.BirdHouseTracker;
 
 /**
  * Chronicle's control bridge to what the Agent Server does not expose (docs/08 in ironman-planner),
@@ -578,68 +574,29 @@ final class AgentBridge
 		}
 	}
 
-	/**
-	 * The Time Tracking panel's clocks, read from the plugin's own trackers (singletons of its
-	 * injector), so they are the numbers the client shows. Farming patches are only seen near them;
-	 * the tracker predicts from the last visit. Nothing when the plugin is off.
-	 */
+	/** The Time Tracking panel's clocks ({@link TimeTrackingClocks}); nothing when the plugin is off. */
 	private static Map<String, Object> timers()
 	{
 		Map<String, Object> out = new LinkedHashMap<>();
 		out.put("now", Instant.now().getEpochSecond());
-		TimeTrackingPlugin plugin = timeTracking();
+		TimeTrackingPlugin plugin = TimeTrackingClocks.plugin();
 		out.put("enabled", plugin != null);
 		List<Map<String, Object>> rows = new ArrayList<>();
 		if (plugin != null)
 		{
-			BirdHouseTracker birds = plugin.getInjector().getInstance(BirdHouseTracker.class);
-			rows.add(timer(Tab.BIRD_HOUSE.name(), Tab.BIRD_HOUSE.getName(), birds.getSummary(), birds.getCompletionTime()));
-			FarmingTracker farming = plugin.getInjector().getInstance(FarmingTracker.class);
-			for (Tab tab : Tab.FARMING_TABS)
+			for (TimeTrackingClocks.Clock c : TimeTrackingClocks.read(plugin))
 			{
-				rows.add(timer(tab.name(), tab.getName(), farming.getSummary(tab), farming.getCompletionTime(tab)));
-			}
-			FarmingContractManager contract = plugin.getInjector().getInstance(FarmingContractManager.class);
-			if (contract.hasContract())
-			{
-				rows.add(timer("FARMING_CONTRACT", "Farming contract: " + contract.getContractName(),
-					contract.getSummary(), contract.getCompletionTime()));
+				rows.add(timer(c.key, c.label, c.state, c.completion));
 			}
 		}
 		out.put("timers", rows);
 		return out;
 	}
 
-	private static TimeTrackingPlugin timeTracking()
-	{
-		PluginManager pm = Microbot.getPluginManager();
-		if (pm == null)
-		{
-			return null;
-		}
-		for (Plugin p : pm.getPlugins())
-		{
-			if (p instanceof TimeTrackingPlugin && pm.isPluginActive(p) && p.getInjector() != null)
-			{
-				return (TimeTrackingPlugin) p;
-			}
-		}
-		return null;
-	}
-
 	/** One clock: the tab's summary and, while growing or done, when it is ready (epoch seconds). */
 	static Map<String, Object> timer(String key, String label, SummaryState state, long completion)
 	{
-		Map<String, Object> m = new LinkedHashMap<>();
-		m.put("key", key);
-		m.put("label", label);
-		m.put("state", state == null ? SummaryState.UNKNOWN.name() : state.name());
-		// The trackers use -1 (and 0 before the first load) for "not known".
-		if (completion > 0 && (state == SummaryState.IN_PROGRESS || state == SummaryState.COMPLETED))
-		{
-			m.put("readyAt", completion);
-		}
-		return m;
+		return TimeTrackingClocks.row(key, label, state, completion);
 	}
 
 	private static Map<String, Object> result(boolean ok, String reason)

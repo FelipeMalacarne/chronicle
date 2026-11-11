@@ -62,9 +62,12 @@ type RunEvent struct {
 
 // Run is a run and its trail.
 type Run struct {
-	ID         string     `json:"id"`
-	ClassName  string     `json:"className"`
-	Stop       []string   `json:"stop"`
+	ID        string   `json:"id"`
+	ClassName string   `json:"className"`
+	Stop      []string `json:"stop"`
+	// Trigger is the game event that started the run (EventKittenGrown); empty
+	// when the owner did.
+	Trigger    string     `json:"trigger,omitempty"`
 	State      string     `json:"state"`
 	StartedAt  time.Time  `json:"startedAt"`
 	FinishedAt *time.Time `json:"finishedAt,omitempty"`
@@ -89,6 +92,8 @@ func (r *Run) Final() bool {
 var readCommands = []string{
 	CmdStatus, CmdScreenshot, CmdVNCOpen, CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet,
 	CmdConfigSchema, CmdGameView, CmdClientLogs, CmdAccountShow, CmdTimers, CmdRunStatus, CmdRunCancel,
+	// Not reads, but they never touch the game: switching the trigger off during its own run is fine.
+	CmdTriggerGet, CmdTriggerSet,
 }
 
 // ErrRunGoing refuses an action while a run drives the character.
@@ -169,6 +174,17 @@ func (e *Executor) runCommand(command string, raw json.RawMessage) (any, error) 
 	if err != nil {
 		return nil, err
 	}
+	run, err := e.startRun(p, "")
+	if err != nil {
+		return nil, err
+	}
+	return RunStatus{Run: run}, nil
+}
+
+// startRun starts a run of validated params; trigger names the event that
+// fired it ("" when the owner did).
+func (e *Executor) startRun(p RunParams, trigger string) (*Run, error) {
+	r := &e.runs
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	if r.run != nil && !r.run.Final() {
@@ -181,12 +197,13 @@ func (e *Executor) runCommand(command string, raw json.RawMessage) (any, error) 
 		ID:        "run-" + strconv.Itoa(r.seq),
 		ClassName: p.ClassName,
 		Stop:      append([]string{}, p.Stop...),
+		Trigger:   trigger,
 		State:     RunStopping,
 		StartedAt: time.Now().UTC(),
 		Events:    []RunEvent{},
 	}
 	go e.drive(ctx, p)
-	return RunStatus{Run: r.snapshot()}, nil
+	return r.snapshot(), nil
 }
 
 // going reports whether a run is driving the character.

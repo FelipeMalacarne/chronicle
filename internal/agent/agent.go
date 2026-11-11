@@ -62,9 +62,15 @@ type Executor struct {
 
 	// RunPoll is how often a run reads the game (default 3 s; tests shorten it).
 	RunPoll time.Duration
+	// TriggerFile keeps the triggers (DefaultTriggerFile); empty keeps them in
+	// memory only.
+	TriggerFile string
+	// WatchPoll is how often the triggers' watcher reads the bridge (default 5 s).
+	WatchPoll time.Duration
 
-	mu   sync.Mutex // one client lifecycle/login action at a time
-	runs runner
+	mu    sync.Mutex // one client lifecycle/login action at a time
+	runs  runner
+	watch watcher
 }
 
 // Execute runs one command of the closed list.
@@ -75,6 +81,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 	switch command {
 	case CmdRunStart, CmdRunStatus, CmdRunCancel:
 		return e.runCommand(command, params)
+	case CmdTriggerGet, CmdTriggerSet:
+		return e.triggerCommand(command, params)
 	case CmdStatus:
 		return e.status(ctx), nil
 	case CmdScreenshot:
@@ -220,8 +228,10 @@ type Agent struct {
 	VNCAddr string
 }
 
-// Run connects and reconnects until ctx ends.
+// Run connects and reconnects until ctx ends. The triggers' watcher runs
+// beside the link, so a trigger fires while the server is away.
 func (a *Agent) Run(ctx context.Context) error {
+	go a.Executor.Watch(ctx)
 	backoff := time.Second
 	for {
 		start := time.Now()

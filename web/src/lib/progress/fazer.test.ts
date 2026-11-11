@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { runFinal, runnable, stoppable } from './fazer.ts';
+import { firingText, runFinal, runnable, stoppable } from './fazer.ts';
 import type { PluginRow } from './plugins.ts';
 
 const row = (className: string, over: Partial<PluginRow> = {}): PluginRow => ({
@@ -49,4 +49,21 @@ test('runFinal', () => {
 	assert.equal(runFinal(null), false);
 	assert.equal(runFinal({ state: 'running' } as never), false);
 	assert.equal(runFinal({ state: 'canceled' } as never), true);
+});
+
+test('firingText: what the trigger did with the last event', () => {
+	const at = '2026-11-10T22:00:00Z';
+	assert.equal(firingText(undefined), null);
+	assert.equal(
+		firingText({ at, event: 'kitten_grown', runId: 'run-3' }),
+		'o filhote cresceu: disparou'
+	);
+	assert.equal(
+		firingText({ at, event: 'kitten_grown', skipped: 'trigger off' }),
+		'o filhote cresceu com o gatilho desligado'
+	);
+	assert.equal(
+		firingText({ at, event: 'kitten_grown', skipped: 'run: another run is going' }),
+		'o filhote cresceu durante outro run'
+	);
 });

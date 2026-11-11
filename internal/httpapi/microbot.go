@@ -61,6 +61,8 @@ func (s *Server) microbotRoutes() {
 	control("GET /api/microbot/run", s.microbotRead(agent.CmdRunStatus, func(*http.Request) any { return nil }))
 	control("POST /api/microbot/run", s.microbotAction(agent.CmdRunStart, 30*time.Second))
 	control("POST /api/microbot/run/cancel", s.microbotAction(agent.CmdRunCancel, 30*time.Second))
+	control("GET /api/microbot/triggers", s.microbotRead(agent.CmdTriggerGet, func(*http.Request) any { return nil }))
+	control("POST /api/microbot/triggers", s.microbotAction(agent.CmdTriggerSet, 30*time.Second))
 	control("GET /api/microbot/client/logs", s.microbotRead(agent.CmdClientLogs, func(r *http.Request) any {
 		n, _ := strconv.Atoi(r.URL.Query().Get("lines"))
 		return agent.LogsParams{Lines: n}

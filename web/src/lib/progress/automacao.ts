@@ -119,7 +119,8 @@ const ACTION_LABEL: Record<string, string> = {
 	world_hop: 'trocar de mundo',
 	account_use: 'trocar personagem',
 	run_start: 'fazer agora',
-	run_cancel: 'cancelar o fazer agora'
+	run_cancel: 'cancelar o fazer agora',
+	trigger_set: 'gatilho'
 };
 
 /** Uma linha da auditoria: "login · mundo 303 · ok". */
@@ -137,6 +138,10 @@ export function auditLine(e: AuditEntry): string {
 	if (typeof p.index === 'number') parts.push(`opção ${p.index}`);
 	if (typeof p.name === 'string') parts.push(p.version ? `${p.name} ${String(p.version)}` : p.name);
 	if (typeof p.className === 'string') parts.push(p.className.split('.').pop() ?? p.className);
+	if (e.action === 'trigger_set')
+		parts.push(
+			`${p.event === 'kitten_grown' ? 'quando o filhote crescer' : String(p.event)}: ${p.enabled ? 'ligado' : 'desligado'}`
+		);
 	if (typeof p.group === 'string' && typeof p.key === 'string')
 		parts.push(`${p.group}.${p.key} = ${p.value === null ? '(padrão)' : String(p.value)}`);
 	parts.push(e.ok ? 'ok' : `falhou: ${e.error ?? ''}`.trim());

@@ -252,7 +252,8 @@ run_event        run_id, at, state, kind, detail (jsonb)    -- trilha, screensho
    Reordenado em 2026-11-09: a conta ainda não tem os requisitos dos runs com relógio (Farming 1,
    sem Bone Voyage), então a primeira recorrente é a troca do gato.
 3. **Evento**: a troca do gato disparada pela mensagem "Your kitten has grown into a healthy cat that
-   can hunt for itself." (o KittenPlugin já a vê).
+   can hunt for itself." (o KittenPlugin já a vê). Feita em 2026-11-10 pelo Chronicle Link (a ponte serve o evento) e por
+   um gatilho no agent (ver Estado).
 4. **Automático e preparo**: o relógio dispara herb, tree e birdhouse quando a conta tiver os
    requisitos, várias recorrentes em fila por prioridade, e loadout com banco antes do run.
 
@@ -551,6 +552,35 @@ destino da viagem):
 - Lacunas conhecidas: a trilha vive na memória do agent (some se ele reiniciar) e as ações que o
   executor faz sozinho não vão uma a uma para a auditoria (só o começar e o cancelar); cancelar
   durante a volta não para o webwalker já em curso.
+
+**Fase 4, entrega 3: sozinho, a troca do gato quando o filhote cresce** (2026-11-10):
+
+- `microbot-plugins`, **Chronicle Link 1.7.0**: a ponte ganha `GET /bridge/events?after=<seq>`, os
+  eventos do jogo que os gatilhos esperam. O plugin olha o chat e registra só mensagens do próprio
+  jogo de uma lista fechada (hoje "Your kitten has grown into a healthy cat", `kitten_grown`), nunca
+  chat de jogador, para ninguém disparar um gatilho digitando o texto. Os eventos são numerados desde
+  o início do plugin, com um `boot` que muda quando ele reinicia.
+- Agent: `trigger_get` e `trigger_set` na lista fechada. O gatilho (o evento e o run que ele faz, os
+  mesmos parâmetros do `run_start`) fica num arquivo da máquina do jogo
+  (`~/.config/ironman/agent-triggers.json`), então vale com o cockpit fechado, com o `serve` fora e
+  depois de o agent reiniciar. Um vigia ao lado do link lê a ponte a cada 5 s e, com o gatilho ligado,
+  começa o run salvo, marcado com o evento que o disparou. Eventos de antes de o vigia ver aquele
+  início do plugin não disparam: um agent que reinicia depois de uma troca não troca de novo. Com o
+  gatilho desligado ou com outro run em andamento, o evento só fica anotado (`last`).
+  `GET /api/microbot/triggers` e `POST /api/microbot/triggers` (vai para a auditoria).
+- Web: o bloco "Sozinho" no painel Fazer agora (artboard V6MicrobotSozinho1440, página 6e do canvas):
+  "Quando o filhote crescer, fazer isto" salva as escolhas do painel como o run do gatilho, com
+  segundo clique; ligado, mostra o que vai fazer e Desligar; a última vez que o filhote cresceu
+  (disparou, gatilho desligado, outro run); "sem ler o chat" quando a ponte não serve os eventos. Um
+  run disparado assim aparece como "sozinho".
+- Verificado: testes do plugin (só mensagens do jogo contam; eventos depois de um seq), do agent
+  (dispara o run salvo uma vez; evento antigo e início novo do plugin não disparam; gatilho desligado
+  só anota; o arquivo vale para outro agent) e da view; o bloco no Cockpit com gatilhos falsos.
+  **Falta o teste no jogo**: `mb-install chroniclelink`, reiniciar o cliente e o `just agent`, ligar
+  o gatilho e esperar o filhote crescer, com o dono olhando a primeira vez.
+- Lacunas conhecidas: além das da entrega 2, o vigia não sabe se o personagem está num lugar ruim
+  para sair andando (dentro de um minigame, no meio de um diálogo), e uma mensagem que aparece com o
+  agent desligado se perde (o filhote cresce uma vez; aí é o "Fazer agora").
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

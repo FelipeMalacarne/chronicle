@@ -324,6 +324,8 @@ export interface Run {
 	className: string;
 	stop: string[];
 	state: 'stopping' | 'running' | 'returning' | 'restarting' | 'done' | 'failed' | 'canceled';
+	/** O evento do jogo que disparou o run (kitten_grown); vazio quando foi o dono. */
+	trigger?: TriggerEvent;
 	startedAt: string;
 	finishedAt?: string;
 	from?: Pos;
@@ -338,6 +340,26 @@ export interface RunParams {
 	stop?: string[];
 	timeoutS?: number;
 	stay?: boolean;
+}
+
+/** Os eventos do jogo que um gatilho espera (doc 08, fase 4, entrega 3). */
+export type TriggerEvent = 'kitten_grown';
+
+/** Um gatilho salvo no agent: o evento e o run que ele dispara. */
+export interface Trigger {
+	event: TriggerEvent;
+	enabled: boolean;
+	run: RunParams;
+}
+
+/** GET /api/microbot/triggers: os gatilhos e o vigia do agent (Chronicle Link 1.7+). */
+export interface Triggers {
+	triggers: Trigger[];
+	/** O vigia lê os eventos pela ponte; watchError diz por que não. */
+	watching: boolean;
+	watchError?: string;
+	/** O último evento visto, disparado ou não (skipped diz por quê). */
+	last?: { at: string; event: TriggerEvent; runId?: string; skipped?: string };
 }
 
 /** Ações de plugins, scripts e configuração (doc 08, fase 3); todas vão para a auditoria. */
@@ -411,6 +433,12 @@ export const microbotApi = {
 		}),
 	runCancel: () =>
 		call<{ ok: boolean; result: unknown }>('/run/cancel', { method: 'POST', body: '{}' }),
+	triggers: () => call<Triggers>('/triggers'),
+	triggerSet: (t: Trigger) =>
+		call<{ ok: boolean; result: Triggers }>('/triggers', {
+			method: 'POST',
+			body: JSON.stringify(t)
+		}),
 	/** O fim do log do cliente, com o que parece segredo mascarado pelo agent. */
 	logs: (lines = 200) => call<{ file: string; lines: string[] }>(`/client/logs?lines=${lines}`),
 	account: () => call<ClientAccount>('/account'),

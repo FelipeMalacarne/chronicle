@@ -89,7 +89,9 @@ func BuildDefinition(c *content.Content, reg *entities.Registry) Definition {
 		Collections []int64 `json:"collections"`
 		OnlyItemIDs []int64 `json:"only_item_ids"`
 		Quests      bool    `json:"quests"`
-	}{d.Varbits, d.Varps, d.Collections, d.OnlyItemIDs, reg != nil})
+		// The clocks and the position, offered since 2026-11-10.
+		Timers bool `json:"timers_position"`
+	}{d.Varbits, d.Varps, d.Collections, d.OnlyItemIDs, reg != nil, true})
 	hash := sha256.Sum256(canonical)
 	d.Version = int64(binary.BigEndian.Uint32(hash[:4]) & math.MaxInt32)
 	if d.Version == 0 {
@@ -148,6 +150,8 @@ func (d Definition) manifest(scopes []coreingest.TokenScope, resync bool) corein
 		Collections:     append([]int64{}, d.Collections...),
 		Skills:          true,
 		Quests:          d.Catalog != nil,
+		Timers:          true,
+		Position:        true,
 		Items: coreingest.ItemSelection{
 			Bank:        has[coreingest.ScopeItemsBank],
 			Inventory:   has[coreingest.ScopeItemsInventory],

@@ -105,6 +105,15 @@ func (f *fakeProgress) Sources(_ context.Context, accountID string) ([]storeprog
 	return []storeprogress.SourceView{{Source: "plugin", Facts: 3}}, nil
 }
 
+func (f *fakeProgress) Timers(_ context.Context, accountID string) (storeprogress.TimersView, error) {
+	f.call = "timers"
+	if accountID != "acc-1" {
+		return storeprogress.TimersView{}, storeprogress.ErrAccountNotFound
+	}
+	ready := int64(1794361000)
+	return storeprogress.TimersView{Timers: []storeprogress.TimerView{{Key: "HERB", Label: "Herbs", State: "IN_PROGRESS", ReadyAt: &ready}}}, nil
+}
+
 func (f *fakeProgress) AccountState(_ context.Context, accountID string) (storeprogress.AccountState, error) {
 	f.call = "state"
 	if accountID != "acc-1" {
@@ -219,6 +228,7 @@ func TestProgressRoutesAreDevOnly(t *testing.T) {
 		{"GET", "/api/progress?account=acc-1", ""},
 		{"PUT", "/api/account/guide?account=acc-1", `{"guide_id":"oziris-main"}`},
 		{"GET", "/api/account/state?account=acc-1", ""},
+		{"GET", "/api/account/timers?account=acc-1", ""},
 		{"GET", "/api/world/entity?account=acc-1&ref=quest:the_grand_tree", ""},
 	} {
 		if status, _ := do(t, r.method, server.URL+r.path, r.body); status != http.StatusNotFound && status != http.StatusMethodNotAllowed {
@@ -243,6 +253,12 @@ func TestProgressRoutes(t *testing.T) {
 	}
 	if status, body := do(t, "GET", base+"/account/state?account=acc-1", ""); status != http.StatusOK || fake.call != "state" || body["total_level"] != float64(701) || body["account"].(map[string]any)["rsn"] != "Iron One" {
 		t.Fatalf("account state = %d %v", status, body)
+	}
+	if status, body := do(t, "GET", base+"/account/timers?account=acc-1", ""); status != http.StatusOK || fake.call != "timers" || len(body["timers"].([]any)) != 1 {
+		t.Fatalf("timers = %d %v", status, body)
+	}
+	if status, _ := do(t, "GET", base+"/account/timers?account=nobody", ""); status != http.StatusNotFound {
+		t.Fatalf("timers of another account = %d", status)
 	}
 	if status, _ := do(t, "GET", base+"/account/state?account=nobody", ""); status != http.StatusNotFound {
 		t.Fatalf("account state of an unknown account = %d", status)

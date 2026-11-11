@@ -375,3 +375,18 @@ painel na `ironman-planner-panel`, Swing só no EDT. Nenhum HTTP no EDT nem na t
 Verificação: 92 testes JUnit (janela e resposta do ingest com campos novos e antigos, chamadas HTTP de
 Feito/Pular/Desfazer, gatilhos de releitura, cache offline, credenciais, id de instalação, textos) e o
 jar; render sem tela do painel conferido. Falta instalar e usar no jogo.
+
+## Adendo de 2026-11-10: relógios e posição (Chronicle Link 1.8.0)
+
+Contrato v1, campos opcionais com flag no manifest, como `quests` (spec no doc 04, seção 6.4):
+
+| Campo do push | Flag do manifest | Conteúdo |
+|---|---|---|
+| `data.timers` | `timers` | as abas do Time Tracking do RuneLite (`BIRD_HOUSE`, cada aba de farming, `FARMING_CONTRACT`) com o resumo e, crescendo ou pronto, `readyAt` em segundos; lidas dos rastreadores do próprio plugin Time Tracking (a mesma leitura da ponte, `TimeTrackingClocks`); nada com ele desligado |
+| `data.position` | `position` | `{"world", "x", "y", "plane"}`, só com "Send position" ligado (desligado por padrão); sozinha, vai num push a 16 tiles ou em outro mundo ou plano, e pega carona em qualquer outro push |
+
+O servidor grava as facetas `timer` (os Recorrentes do Agora, `GET /api/account/timers`; decisão 31 do
+doc 01) e `position` (só a última, sem histórico). Um plugin 1.7 ignora as flags novas; um servidor
+anterior não as anuncia e o 1.8 não manda os campos. Verificação: testes JUnit (`readyAt` só crescendo
+ou pronto, `full` e `delta` dos relógios, aba nova pede `full`, limiar da posição; 111 no pacote) e,
+no servidor, testes de contrato e `TestTimersAndPositionPostgres`.

@@ -2,6 +2,8 @@ package ingest
 
 import (
 	"fmt"
+	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -117,6 +119,14 @@ func (p Push) Validate() error {
 
 	if p.Data.Quests != nil {
 		validateQuests(&errs, *p.Data.Quests)
+	}
+	if p.Data.Timers != nil {
+		validateTimers(&errs, *p.Data.Timers)
+	}
+	if pos := p.Data.Position; pos != nil {
+		if pos.X < 0 || pos.X > 16383 || pos.Y < 0 || pos.Y > 16383 || pos.Plane < 0 || pos.Plane > 3 || pos.World < 0 || pos.World > 9999 {
+			errs = append(errs, "data.position is outside the game map")
+		}
 	}
 
 	switch p.Kind {
@@ -240,6 +250,12 @@ func (p Push) ValidateAgainst(m Manifest) error {
 	if p.Data.Quests != nil && !m.Quests {
 		errs = append(errs, "data.quest is not enabled by the manifest")
 	}
+	if p.Data.Timers != nil && !m.Timers {
+		errs = append(errs, "data.timers is not enabled by the manifest")
+	}
+	if p.Data.Position != nil && !m.Position {
+		errs = append(errs, "data.position is not enabled by the manifest")
+	}
 	if p.Data.Items == nil {
 		return errs.err()
 	}
@@ -281,6 +297,37 @@ func (r Response) Validate() error {
 		errs = append(errs, "steps_changed must not be negative")
 	}
 	return errs.err()
+}
+
+var timerKey = regexp.MustCompile(`^[A-Z][A-Z0-9_]{0,39}$`)
+
+func validateTimers(errs *validationErrors, timers TimerMap) {
+	if timers == nil {
+		*errs = append(*errs, "data.timers must be a JSON object (use {} when empty)")
+		return
+	}
+	if len(timers) > MaxTimers {
+		*errs = append(*errs, fmt.Sprintf("data.timers has more than %d clocks", MaxTimers))
+		return
+	}
+	keys := make([]string, 0, len(timers))
+	for k := range timers {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		t := timers[k]
+		switch {
+		case !timerKey.MatchString(k):
+			*errs = append(*errs, fmt.Sprintf("data.timers key %q must be an upper-case tab name", k))
+		case !slices.Contains(TimerStates, t.State):
+			*errs = append(*errs, fmt.Sprintf("data.timers[%q].state %q is invalid", k, t.State))
+		case t.ReadyAt != nil && *t.ReadyAt <= 0:
+			*errs = append(*errs, fmt.Sprintf("data.timers[%q].readyAt must be positive", k))
+		case len(t.Label) > 80:
+			*errs = append(*errs, fmt.Sprintf("data.timers[%q].label is longer than 80 bytes", k))
+		}
+	}
 }
 
 func validateQuests(errs *validationErrors, quests QuestMap) {

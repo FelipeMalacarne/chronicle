@@ -69,3 +69,30 @@ export function clockRows(timers: Timer[], now: number): { rows: ClockRow[]; uns
 	rows.sort((a, b) => (a.tone === 'ready' ? 0 : 1) - (b.tone === 'ready' ? 0 : 1));
 	return { rows, unseen };
 }
+
+/** Uma linha dos Recorrentes do Agora (V6AgoraEstados1440): só o que tem prazo. */
+export interface RecurringRow {
+	key: string;
+	label: string;
+	ready: boolean;
+	/** "pronto em 38 min", "pronto há 12 min", "pronto". */
+	when: string;
+	at?: number;
+}
+
+/**
+ * Os Recorrentes do Agora a partir dos relógios que o plugin mandou (decisão 31 do doc 01): o que
+ * está pronto primeiro, depois o que fica pronto antes. Vazio, plantado e não visto ficam no
+ * cockpit; aqui só o que tem prazo.
+ */
+export function recurringRows(timers: Timer[], now: number): RecurringRow[] {
+	return clockRows(timers, now)
+		.rows.filter((r) => r.tone !== 'idle')
+		.map((r) => {
+			const ready = r.tone === 'ready';
+			let when = 'crescendo';
+			if (ready) when = r.at && now - r.at >= 60 ? `pronto há ${duration(now - r.at)}` : 'pronto';
+			else if (r.at) when = `pronto em ${duration(r.at - now)}`;
+			return { key: r.key, label: r.label, ready, when, at: r.at };
+		});
+}

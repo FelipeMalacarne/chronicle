@@ -589,6 +589,22 @@ export interface CATierView {
 	observed_at: string;
 }
 
+/** Um relógio do Time Tracking que o plugin mandou (decisão 31 do doc 01: recorrentes com ready_at). */
+export interface TimerView {
+	key: string;
+	label?: string;
+	state: 'COMPLETED' | 'IN_PROGRESS' | 'OCCUPIED' | 'EMPTY' | 'UNKNOWN';
+	/** Quando fica (ou ficou) pronto, em segundos desde a época; só crescendo ou pronto. */
+	ready_at?: number;
+	source: string;
+	observed_at: string;
+}
+
+/** GET /api/account/timers: os Recorrentes do Agora. */
+export interface TimersView {
+	timers: TimerView[];
+}
+
 /** O collection log pelos contadores do jogo (o plugin não abre o log). */
 export interface CollectionLogView {
 	obtained: number;

@@ -35,6 +35,9 @@ func (r *Repository) persistNormalized(ctx context.Context, q *storedb.Queries, 
 		if push.Data.Quests != nil {
 			replaced = append(replaced, coreingest.FacetQuest)
 		}
+		if push.Data.Timers != nil {
+			replaced = append(replaced, coreingest.FacetTimer)
+		}
 		for _, facet := range replaced {
 			if err := q.DeleteObservationFacet(ctx, storedb.DeleteObservationFacetParams{AccountID: accountID, Facet: facet, Source: pluginSource}); err != nil {
 				return fmt.Errorf("replace %s state: %w", facet, err)
@@ -61,6 +64,16 @@ func (r *Repository) persistNormalized(ctx context.Context, q *storedb.Queries, 
 	}
 	if err := persistSkills(ctx, q, &rows, accountID, snapshotID, push); err != nil {
 		return err
+	}
+	if err := persistTimers(ctx, q, &rows, accountID, snapshotID, push); err != nil {
+		return err
+	}
+	if p := push.Data.Position; p != nil {
+		// The last position only: no snapshot_facts row, it is not history.
+		v := map[string]int{"world": p.World, "x": p.X, "y": p.Y, "plane": p.Plane, "region": p.Region()}
+		if _, err := upsertFact(ctx, q, accountID, snapshotID, coreingest.FacetPosition, "player", v, push.SentAt); err != nil {
+			return err
+		}
 	}
 	if err := r.persistCollectionLog(ctx, q, &rows, accountID, snapshotID, push); err != nil {
 		return err
@@ -95,6 +108,12 @@ func touchedFacets(push coreingest.Push) []string {
 	}
 	if d.Quests != nil {
 		out = append(out, coreingest.FacetQuest)
+	}
+	if d.Timers != nil {
+		out = append(out, coreingest.FacetTimer)
+	}
+	if d.Position != nil {
+		out = append(out, coreingest.FacetPosition)
 	}
 	if d.Levels != nil || d.XP != nil || d.Boosted != nil {
 		out = append(out, "skill")
@@ -134,6 +153,29 @@ func persistDerived(ctx context.Context, q *storedb.Queries, rows *facts, accoun
 			return err
 		}
 		rows.add(snapshotID, f.Facet, f.Key, raw)
+	}
+	return nil
+}
+
+// persistTimers keeps each Time Tracking clock as a fact (decision 31 of doc
+// 01: the recurring tasks with their ready_at).
+func persistTimers(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID string, push coreingest.Push) error {
+	if push.Data.Timers == nil {
+		return nil
+	}
+	for key, t := range *push.Data.Timers {
+		v := map[string]any{"state": t.State}
+		if t.ReadyAt != nil {
+			v["ready_at"] = *t.ReadyAt
+		}
+		if t.Label != "" {
+			v["label"] = t.Label
+		}
+		raw, err := upsertFact(ctx, q, accountID, snapshotID, coreingest.FacetTimer, key, v, push.SentAt)
+		if err != nil {
+			return err
+		}
+		rows.add(snapshotID, coreingest.FacetTimer, key, raw)
 	}
 	return nil
 }

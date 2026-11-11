@@ -502,7 +502,7 @@ erDiagram
   quests e diaries).
 - **`player_state`**: uma linha por fato `(facet, key)` com `value` JSON, fonte e `observed_at`. Facetas:
   `skill`, `activity`, `quest`, `diary_task`, `combat_achievement`, `collection_log`, `varbit`, `varp`,
-  `item` e `diary` (tier completa, chave `area:tier`, valor `{"complete":bool}`, derivada dos varbits
+  `item`, `timer` e `position` (migration 0011) e `diary` (tier completa, chave `area:tier`, valor `{"complete":bool}`, derivada dos varbits
   de referência; migration 0005). A chave de `quest` é o nome canônico da wiki do catálogo. Desde a migration 0008, `player_state` é uma projeção:
   cada fonte grava a própria última observação em **`observations`** `(facet, key, source)`, e
   `internal/core/facts.Merge` junta as fontes (o maior valor para o que só cresce: XP e nível, quest,
@@ -737,7 +737,14 @@ Detalhes do contrato (tipos Go em `internal/core/ingest/contract.go`; espelho Zo
   com o nome canônico da wiki; nome que não resolve para exatamente uma quest do catálogo é descartado,
   nunca adivinhado (fica no `raw`). Os 216 nomes do `Quest.java` pinado resolvem (teste
   `TestRuneLiteQuestNamesResolve`). O servidor rejeita campos desconhecidos (`DisallowUnknownFields`),
-  então ele sobe antes do plugin.
+  então ele sobe antes do plugin. Desde 2026-11-10 (Chronicle Link 1.8.0, migration 0011), com o
+  manifest anunciando `timers: true` e `position: true`: `timers`, mapa aba do Time Tracking
+  (`BIRD_HOUSE`, `HERB`, `FARMING_CONTRACT`, …) → `{"state": SummaryState, "readyAt": segundos,
+  "label"}` (`readyAt` só crescendo ou pronto; num `full` substitui as abas guardadas, num `delta` leva
+  as que mudaram), gravado na faceta `timer` (decisão 31 do doc 01); e `position`, `{"world", "x",
+  "y", "plane"}`, opt-in no cliente ("Send position"), gravado na faceta `position` (chave `player`,
+  com a `region` calculada) só como a última observação, sem linha em `snapshot_facts`. Sozinha, a
+  posição só vai num push a 16 tiles ou em outro mundo ou plano.
 - **Vars genéricos**: o plugin lê **todo** varbit/varp que o manifest listar (`client.getVarbitValue`,
   `client.getVarpValue`) e manda em `varb`/`varp`, sem saber o que significam. O servidor deriva os fatos:
   a faceta `diary` dos varbits `DIARY_<ÁREA>_<TIER>_COMPLETED`, `qp>=N` do varp 101 (`QUEST_POINTS`) e,

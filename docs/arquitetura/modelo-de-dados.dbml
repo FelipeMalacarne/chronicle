@@ -260,7 +260,7 @@ Table observations {
 
   Note: '''
   Last observation of each source per fact; player_state is its merge (internal/core/facts).
-  observations_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
+  observations_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text])))
   observations_source_check: CHECK ((source = ANY (ARRAY['hiscores'::text, 'wom'::text, 'wikisync'::text, 'plugin'::text, 'import'::text])))
   '''
 }
@@ -281,7 +281,7 @@ Table player_state {
 
   Note: '''
   Projection: the merge of observations per fact (internal/core/facts.Merge). Written only by the projection.
-  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
+  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text])))
   '''
 }
 
@@ -369,7 +369,7 @@ Table snapshot_facts {
 
   Note: '''
   Normalized facts of one snapshot, with the shape of player_state (history for charts and diffs).
-  snapshot_facts_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text])))
+  snapshot_facts_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text])))
   '''
 }
 

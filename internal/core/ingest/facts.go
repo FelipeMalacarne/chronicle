@@ -12,6 +12,11 @@ import (
 const (
 	FacetQuest = "quest"
 	FacetDiary = "diary"
+	// FacetTimer: one fact per Time Tracking tab, value {state, ready_at,
+	// label}; FacetPosition: one fact, key "player", value {world, x, y,
+	// plane, region}.
+	FacetTimer    = "timer"
+	FacetPosition = "position"
 )
 
 // Fact is one derived player_state fact: (facet, key) and its JSON value.

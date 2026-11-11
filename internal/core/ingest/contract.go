@@ -31,7 +31,12 @@ type Manifest struct {
 	// Quests tells the client the server accepts data.quest. A client must
 	// not send data.quest unless it is true (an older server rejects the
 	// unknown field).
-	Quests          bool          `json:"quests"`
+	Quests bool `json:"quests"`
+	// Timers tells the client the server accepts data.timers (the Time
+	// Tracking clocks, docs/06 adendo 2026-11-10); Position, data.position.
+	// The client sends position only when its owner opted in.
+	Timers          bool          `json:"timers"`
+	Position        bool          `json:"position"`
 	Items           ItemSelection `json:"items"`
 	IntervalSeconds int           `json:"interval_seconds"`
 	Resync          bool          `json:"resync"`
@@ -88,7 +93,42 @@ type PushData struct {
 	// present in a full push it is the complete quest list and replaces the
 	// stored quests, in a delta it carries only the quests that changed.
 	Quests *QuestMap `json:"quest,omitempty"`
+	// Timers maps a Time Tracking tab (BIRD_HOUSE, HERB, FARMING_CONTRACT,
+	// ...) to its clock. A full push carries every tab and replaces the
+	// stored ones; a delta carries the tabs that changed.
+	Timers *TimerMap `json:"timers,omitempty"`
+	// Position is where the character stands, sent only with the client's
+	// opt-in; it is kept as the last observation, never as history.
+	Position *Position `json:"position,omitempty"`
 }
+
+// TimerMap is a JSON object tab -> clock (Map<String, Timer> in Java).
+type TimerMap map[string]Timer
+
+// Timer is one Time Tracking clock: its summary (the client's SummaryState)
+// and, while growing or done, when it is ready in epoch seconds.
+type Timer struct {
+	State   string `json:"state"`
+	ReadyAt *int64 `json:"readyAt,omitempty"`
+	Label   string `json:"label,omitempty"`
+}
+
+// Timer states, as RuneLite's SummaryState enum names them.
+var TimerStates = []string{"COMPLETED", "IN_PROGRESS", "OCCUPIED", "EMPTY", "UNKNOWN"}
+
+// MaxTimers bounds data.timers.
+const MaxTimers = 40
+
+// Position is a tile and the world the character is on.
+type Position struct {
+	World int `json:"world"`
+	X     int `json:"x"`
+	Y     int `json:"y"`
+	Plane int `json:"plane"`
+}
+
+// Region is the map region of the tile, as RuneLite's WorldPoint.getRegionID.
+func (p Position) Region() int { return (p.X>>6)<<8 | p.Y>>6 }
 
 // QuestMap is a JSON object RuneLite quest name -> NOT_STARTED |
 // IN_PROGRESS | FINISHED, which maps to Map<String, String> in Java.

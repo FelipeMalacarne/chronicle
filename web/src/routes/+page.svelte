@@ -7,6 +7,7 @@
 	import { openEntity } from '#lib/progress/entity.svelte';
 	import { iconFor, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { narrow } from '#lib/progress/narrow.svelte';
+	import { recurringRows } from '#lib/progress/relogios';
 	import { loadSummary, session } from '#lib/progress/session.svelte';
 	import {
 		chipsOf,
@@ -83,6 +84,13 @@
 		{ tags: ['progress'] }
 	);
 
+	/* Recorrentes (decisão 31 do doc 01; V6AgoraEstados1440): os relógios do Time Tracking que o
+	 * plugin manda, só o que tem prazo. */
+	const timers = createResource(
+		() => (account ? progressApi.timers(account).catch(() => null) : Promise.resolve(null)),
+		{ tags: ['progress'] }
+	);
+
 	let now = $state(Date.now());
 	$effect(() => {
 		const t = setInterval(() => (now = Date.now()), 30_000);
@@ -93,6 +101,26 @@
 		return s ? Date.parse(s.last_observed_at) : undefined;
 	});
 	const band = $derived(sourceBand(runs.data?.runs[0], hiscoresAt, now));
+
+	const recurring = $derived(
+		recurringRows(
+			(timers.data?.timers ?? []).map((t) => ({
+				key: t.key,
+				label: t.label ?? t.key,
+				state: t.state,
+				readyAt: t.ready_at
+			})),
+			now / 1000
+		)
+	);
+	const recurringSrc = $derived.by(() => {
+		const at = timers.data?.timers[0]?.observed_at;
+		if (!at) return '';
+		const m = Math.round((now - Date.parse(at)) / 60000);
+		return `Time Tracking · ${m < 1 ? 'agora' : m < 60 ? `há ${m} min` : `há ${Math.round(m / 60)} h`}`;
+	});
+	const hm = (s: number) =>
+		new Date(s * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
 	/* Metas fixadas com o plano: "14 de 31", o gargalo e onde esta rota chega. */
 	const pinned = $derived((goals.data?.goals ?? []).filter((g) => g.status === 'active'));
@@ -389,6 +417,23 @@
 	{/if}
 {/snippet}
 
+{#snippet recurringPanel()}
+	{#if recurring.length}
+		<section class="panel" id="recorrentes">
+			<div class="plaque">Recorrentes<span class="r">{recurringSrc}</span></div>
+			<div class="recs">
+				{#each recurring as r (r.key)}
+					<div class="rrow" title={r.at ? `pronto às ${hm(r.at)}` : undefined}>
+						<span class="rdot" class:rdot-w={r.ready}></span>{r.label}<span class="rw"
+							>{r.when}</span
+						>
+					</div>
+				{/each}
+			</div>
+		</section>
+	{/if}
+{/snippet}
+
 {#snippet footLine()}
 	<div class="foot" class:col={!narrow.value}>
 		{#if pinned.length === 0}
@@ -498,7 +543,7 @@
 				{/if}
 				{#if narrow.value}{@render bank()}{/if}
 				{@render nextList()}
-				{#if narrow.value}{@render footLine()}{/if}
+				{#if narrow.value}{@render recurringPanel()}{@render footLine()}{/if}
 			</div>
 
 			{#if !narrow.value}
@@ -528,6 +573,7 @@
 							</div>
 						</section>
 					{/if}
+					{@render recurringPanel()}
 					{#if others.length}
 						<section class="panel">
 							<div class="plaque">Outras rotas<span class="r">cursor guardado</span></div>
@@ -669,6 +715,36 @@
 		padding: 6px 14px 8px;
 		display: flex;
 		flex-direction: column;
+	}
+	.rrow {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 36px;
+		padding: 0 4px;
+		border-bottom: 1px solid var(--hairline);
+		font-size: 13px;
+	}
+	.rrow:last-child {
+		border-bottom: 0;
+	}
+	.rdot {
+		width: 7px;
+		height: 7px;
+		border-radius: 50%;
+		background: var(--done);
+		flex: 0 0 auto;
+	}
+	.rdot-w {
+		background: var(--stale);
+	}
+	.rw {
+		margin-left: auto;
+		font:
+			400 11px 'JetBrains Mono',
+			monospace;
+		color: var(--ink-subtle);
+		text-align: right;
 	}
 	button.rec {
 		border: 0;

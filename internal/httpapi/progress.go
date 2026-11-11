@@ -32,6 +32,7 @@ type ProgressService interface {
 	GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error)
 	Graph(ctx context.Context, accountID string, focus entities.ObjectiveKey, depth int) (coreprogress.Graph, error)
 	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
+	Timers(ctx context.Context, accountID string) (storeprogress.TimersView, error)
 	Check(ctx context.Context, accountID string) (storeprogress.CheckReport, error)
 }
 
@@ -48,6 +49,21 @@ func (s *Server) handleAccountState(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, st)
+}
+
+// handleTimers is the Agora's Recorrentes (decision 31 of doc 01): the
+// account's Time Tracking clocks as the plugin last sent them.
+func (s *Server) handleTimers(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	v, err := s.opts.Progress.Timers(r.Context(), account)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, v)
 }
 
 // routeSummary is one route of the Rotas list: its cursor, counts per section

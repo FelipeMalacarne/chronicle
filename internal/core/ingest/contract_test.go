@@ -554,3 +554,61 @@ func TestQuestFacetWireShape(t *testing.T) {
 		t.Fatalf("manifest must announce quests: %s", manifest)
 	}
 }
+
+func TestTimersAndPositionValidation(t *testing.T) {
+	ready := int64(1794361000)
+	zero := int64(0)
+	cases := []struct {
+		name    string
+		timers  *TimerMap
+		pos     *Position
+		wantErr string
+	}{
+		{"clocks and a tile", &TimerMap{"HERB": {State: "IN_PROGRESS", ReadyAt: &ready, Label: "Herbs"}, "BIRD_HOUSE": {State: "EMPTY"}}, &Position{World: 330, X: 2662, Y: 3305}, ""},
+		{"empty clocks", &TimerMap{}, nil, ""},
+		{"null clocks", func() *TimerMap { var m TimerMap; return &m }(), nil, "data.timers must be a JSON object"},
+		{"lower-case tab", &TimerMap{"herb": {State: "EMPTY"}}, nil, "upper-case tab name"},
+		{"unknown state", &TimerMap{"HERB": {State: "GROWING"}}, nil, `state "GROWING" is invalid`},
+		{"non-positive ready", &TimerMap{"HERB": {State: "COMPLETED", ReadyAt: &zero}}, nil, "readyAt must be positive"},
+		{"off the map", nil, &Position{X: 20000, Y: 3305}, "outside the game map"},
+		{"bad plane", nil, &Position{X: 3222, Y: 3218, Plane: 4}, "outside the game map"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			push := fullPush()
+			push.Data.Timers, push.Data.Position = tc.timers, tc.pos
+			err := push.Validate()
+			if tc.wantErr == "" && err != nil {
+				t.Fatalf("Validate() = %v", err)
+			}
+			if tc.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tc.wantErr)) {
+				t.Fatalf("Validate() = %v, want %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestTimersAndPositionNeedManifest(t *testing.T) {
+	manifest := Manifest{
+		ContractVersion: ContractVersion, ManifestVersion: 7, TokenScopes: []TokenScope{ScopeStateWrite},
+		Varbits: []int64{}, Varps: []int64{}, Collections: []int64{}, IntervalSeconds: 10,
+	}
+	push := fullPush()
+	push.Data.Timers = &TimerMap{"HERB": {State: "EMPTY"}}
+	push.Data.Position = &Position{World: 330, X: 3222, Y: 3218}
+	err := push.ValidateAgainst(manifest)
+	if err == nil || !strings.Contains(err.Error(), "data.timers is not enabled") || !strings.Contains(err.Error(), "data.position is not enabled") {
+		t.Fatalf("ValidateAgainst() = %v, want both gates", err)
+	}
+	manifest.Timers, manifest.Position = true, true
+	if err := push.ValidateAgainst(manifest); err != nil {
+		t.Fatalf("ValidateAgainst() with the flags = %v", err)
+	}
+	encoded, _ := json.Marshal(push.Data)
+	if !strings.Contains(string(encoded), `"timers":{"HERB":{"state":"EMPTY"}}`) || !strings.Contains(string(encoded), `"position":{"world":330,"x":3222,"y":3218,"plane":0}`) {
+		t.Fatalf("wire shape: %s", encoded)
+	}
+	if r := (Position{X: 3222, Y: 3218}).Region(); r != 12850 {
+		t.Fatalf("Lumbridge region = %d", r)
+	}
+}

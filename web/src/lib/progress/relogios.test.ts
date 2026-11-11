@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clockRows, duration } from './relogios.ts';
+import { clockRows, duration, recurringRows } from './relogios.ts';
 
 test('duration reads like the cockpit', () => {
 	assert.equal(duration(0), '<1 min');
@@ -35,4 +35,26 @@ test('clockRows: ready first, then by time; unseen apart', () => {
 		]
 	);
 	assert.deepEqual(unseen, ['Hops']);
+});
+
+test('recurringRows: ready first (longest ready on top), then the soonest; idle and unseen stay out', () => {
+	const now = 1_000_000;
+	const rows = recurringRows(
+		[
+			{ key: 'HERB', label: 'Herbs', state: 'IN_PROGRESS', readyAt: now + 38 * 60 },
+			{ key: 'TREE', label: 'Trees', state: 'COMPLETED', readyAt: now - 12 * 60 },
+			{ key: 'BIRD_HOUSE', label: 'Bird Houses', state: 'COMPLETED' },
+			{ key: 'ALLOTMENT', label: 'Allotments', state: 'EMPTY' },
+			{ key: 'HOPS', label: 'Hops', state: 'UNKNOWN' }
+		],
+		now
+	);
+	assert.deepEqual(
+		rows.map((r) => [r.label, r.ready, r.when]),
+		[
+			['Trees', true, 'pronto há 12 min'],
+			['Bird Houses', true, 'pronto'],
+			['Herbs', false, 'pronto em 38 min']
+		]
+	);
 });

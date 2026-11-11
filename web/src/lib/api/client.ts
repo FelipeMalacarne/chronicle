@@ -17,6 +17,7 @@ import type {
 	SetupLookup,
 	SyncRun,
 	SyncRunsResponse,
+	TimersView,
 	WorldEntityDetail,
 	WorldResponse
 } from '../progress/types';
@@ -182,6 +183,7 @@ export const progressApi = {
 	world: (account: string) => request<WorldResponse>(`/world?account=${enc(account)}`),
 	accountState: (account: string) =>
 		request<AccountState>(`/account/state?account=${enc(account)}`),
+	timers: (account: string) => request<TimersView>(`/account/timers?account=${enc(account)}`),
 	entity: (account: string, ref: string) =>
 		request<WorldEntityDetail>(`/world/entity?account=${enc(account)}&ref=${enc(ref)}`),
 	sync: (account: string) => request<SyncRun>(`/sync?account=${enc(account)}`, json('POST')),

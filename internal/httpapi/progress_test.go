@@ -105,6 +105,14 @@ func (f *fakeProgress) Sources(_ context.Context, accountID string) ([]storeprog
 	return []storeprogress.SourceView{{Source: "plugin", Facts: 3}}, nil
 }
 
+func (f *fakeProgress) Nearby(_ context.Context, accountID, guideID string, limit int) (storeprogress.NearbyView, error) {
+	f.call = "nearby"
+	if accountID != "acc-1" {
+		return storeprogress.NearbyView{}, storeprogress.ErrAccountNotFound
+	}
+	return storeprogress.NearbyView{Radius: limit, Steps: []coreprogress.NearStep{{ID: "s1", Ref: "1.1", Location: "location:al_kharid"}}}, nil
+}
+
 func (f *fakeProgress) Timers(_ context.Context, accountID string) (storeprogress.TimersView, error) {
 	f.call = "timers"
 	if accountID != "acc-1" {
@@ -229,6 +237,7 @@ func TestProgressRoutesAreDevOnly(t *testing.T) {
 		{"PUT", "/api/account/guide?account=acc-1", `{"guide_id":"oziris-main"}`},
 		{"GET", "/api/account/state?account=acc-1", ""},
 		{"GET", "/api/account/timers?account=acc-1", ""},
+		{"GET", "/api/guides/oziris-main/nearby?account=acc-1", ""},
 		{"GET", "/api/world/entity?account=acc-1&ref=quest:the_grand_tree", ""},
 	} {
 		if status, _ := do(t, r.method, server.URL+r.path, r.body); status != http.StatusNotFound && status != http.StatusMethodNotAllowed {
@@ -256,6 +265,9 @@ func TestProgressRoutes(t *testing.T) {
 	}
 	if status, body := do(t, "GET", base+"/account/timers?account=acc-1", ""); status != http.StatusOK || fake.call != "timers" || len(body["timers"].([]any)) != 1 {
 		t.Fatalf("timers = %d %v", status, body)
+	}
+	if status, body := do(t, "GET", base+"/guides/oziris-main/nearby?account=acc-1", ""); status != http.StatusOK || fake.call != "nearby" || body["radius"] != float64(5) {
+		t.Fatalf("nearby = %d %v", status, body)
 	}
 	if status, _ := do(t, "GET", base+"/account/timers?account=nobody", ""); status != http.StatusNotFound {
 		t.Fatalf("timers of another account = %d", status)

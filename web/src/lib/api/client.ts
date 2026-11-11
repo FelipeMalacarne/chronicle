@@ -18,6 +18,7 @@ import type {
 	SyncRun,
 	SyncRunsResponse,
 	TimersView,
+	NearbyView,
 	WorldEntityDetail,
 	WorldResponse
 } from '../progress/types';
@@ -184,6 +185,8 @@ export const progressApi = {
 	accountState: (account: string) =>
 		request<AccountState>(`/account/state?account=${enc(account)}`),
 	timers: (account: string) => request<TimersView>(`/account/timers?account=${enc(account)}`),
+	nearby: (guide: string, account: string) =>
+		request<NearbyView>(`/guides/${enc(guide)}/nearby?account=${enc(account)}`),
 	entity: (account: string, ref: string) =>
 		request<WorldEntityDetail>(`/world/entity?account=${enc(account)}&ref=${enc(ref)}`),
 	sync: (account: string) => request<SyncRun>(`/sync?account=${enc(account)}`, json('POST')),

@@ -33,6 +33,7 @@ type ProgressService interface {
 	Graph(ctx context.Context, accountID string, focus entities.ObjectiveKey, depth int) (coreprogress.Graph, error)
 	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
 	Timers(ctx context.Context, accountID string) (storeprogress.TimersView, error)
+	Nearby(ctx context.Context, accountID, guideID string, limit int) (storeprogress.NearbyView, error)
 	Check(ctx context.Context, accountID string) (storeprogress.CheckReport, error)
 }
 
@@ -131,6 +132,21 @@ func (s *Server) handleBoard(w http.ResponseWriter, r *http.Request) {
 	}
 	board, err := s.opts.Progress.Board(r.Context(), account, r.PathValue("guide"))
 	s.writeProgress(w, board, err)
+}
+
+// handleNearby is the Agora's "Aqui perto": the open steps of the route near
+// the position the plugin last sent (item 16 of docs/04 section 9).
+func (s *Server) handleNearby(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	v, err := s.opts.Progress.Nearby(r.Context(), account, r.PathValue("guide"), 5)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, v)
 }
 
 func (s *Server) handleMark(w http.ResponseWriter, r *http.Request) {

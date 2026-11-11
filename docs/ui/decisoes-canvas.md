@@ -124,7 +124,7 @@ classe). Artboards seguidos:
 | Tela | Artboards | Rota |
 |---|---|---|
 | Casca (Chronicle, sidebar A, barra estreita) | V6Agora1440, V6Agora640, V6Sidebars (opção A) | todas |
-| Agora | V6Agora1440, V6Agora640, V6AgoraBruh1440, V6AgoraBruh640, V6AgoraEstados1440 (fonte falhou, Fixar outro; o painel Recorrentes implementado em 2026-11-10 com os relógios do Time Tracking: a placa diz "Time Tracking · há 3 min" no lugar de "proposta", sem o sufixo "· Microbot"/"· manual", e a 640 o painel vem antes do rodapé) | `/` |
+| Agora | V6Agora1440, V6Agora640, V6AgoraBruh1440, V6AgoraBruh640, V6AgoraEstados1440 (fonte falhou, Fixar outro; o painel Recorrentes implementado em 2026-11-10 com os relógios do Time Tracking: a placa diz "Time Tracking · há 3 min" no lugar de "proposta", sem o sufixo "· Microbot"/"· manual", e a 640 o painel vem antes do rodapé); Recorrentes e Aqui perto com os estados, V6AgoraPerto1440 (página 1c, 2026-11-10, implementada direto e sincronizada no canvas) | `/` |
 | Painel de entidade | V6Entidade, comportamento em V6Agora1440/640 e V6Mundo1440 | sobre qualquer tela |
 | Rota | V6Rota1440, V6Rota640, V6RotaBruh1440 | `/rotas/<guia>/<seção>` |
 | Comparar | V6Comparar1440 | `/compare` |

@@ -91,6 +91,16 @@
 		{ tags: ['progress'] }
 	);
 
+	/* Aqui perto (item 16): os passos abertos da rota perto da última posição que o plugin mandou
+	 * (opt-in "Send position" no Chronicle Link 1.8). Sem posição, o painel não aparece. */
+	const nearby = createResource(
+		() =>
+			account && guideId
+				? progressApi.nearby(guideId, account).catch(() => null)
+				: Promise.resolve(null),
+		{ tags: ['progress'] }
+	);
+
 	let now = $state(Date.now());
 	$effect(() => {
 		const t = setInterval(() => (now = Date.now()), 30_000);
@@ -119,6 +129,18 @@
 		const m = Math.round((now - Date.parse(at)) / 60000);
 		return `Time Tracking · ${m < 1 ? 'agora' : m < 60 ? `há ${m} min` : `há ${Math.round(m / 60)} h`}`;
 	});
+	const nearRows = $derived(
+		guideId
+			? (nearby.data?.steps ?? []).map((s) => ({
+					...s,
+					href: `${resolve('/rotas/[guide]/[section]', { guide: guideId, section: s.section_id })}#passo-${s.id}`
+				}))
+			: []
+	);
+	const ago = (iso: string) => {
+		const m = Math.round((now - Date.parse(iso)) / 60000);
+		return m < 1 ? 'agora' : m < 60 ? `há ${m} min` : `há ${Math.round(m / 60)} h`;
+	};
 	const hm = (s: number) =>
 		new Date(s * 1000).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
@@ -434,6 +456,31 @@
 	{/if}
 {/snippet}
 
+{#snippet nearbyPanel()}
+	{@const pos = nearby.data?.position}
+	{#if pos && guideId}
+		<section class="panel" id="aqui-perto">
+			<div class="plaque">
+				Aqui perto<span class="r" title="{pos.x}, {pos.y}, {pos.plane} · região {pos.region}"
+					>mundo {pos.world} · {ago(pos.observed_at)}</span
+				>
+			</div>
+			<div class="recs">
+				{#each nearRows as s (s.id)}
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() plus the step's anchor, built in nearRows -->
+					<a class="nrow" href={s.href} title={s.title}
+						><span class="mono su">{s.ref}</span><span class="nt">{s.title}</span><span class="rw"
+							>{s.location_name} · {s.distance} tiles</span
+						></a
+					>
+				{:else}
+					<p class="su small nemp">Nada aberto da rota a {nearby.data?.radius} tiles daqui.</p>
+				{/each}
+			</div>
+		</section>
+	{/if}
+{/snippet}
+
 {#snippet footLine()}
 	<div class="foot" class:col={!narrow.value}>
 		{#if pinned.length === 0}
@@ -543,7 +590,7 @@
 				{/if}
 				{#if narrow.value}{@render bank()}{/if}
 				{@render nextList()}
-				{#if narrow.value}{@render recurringPanel()}{@render footLine()}{/if}
+				{#if narrow.value}{@render recurringPanel()}{@render nearbyPanel()}{@render footLine()}{/if}
 			</div>
 
 			{#if !narrow.value}
@@ -574,6 +621,7 @@
 						</section>
 					{/if}
 					{@render recurringPanel()}
+					{@render nearbyPanel()}
 					{#if others.length}
 						<section class="panel">
 							<div class="plaque">Outras rotas<span class="r">cursor guardado</span></div>
@@ -725,8 +773,34 @@
 		border-bottom: 1px solid var(--hairline);
 		font-size: 13px;
 	}
-	.rrow:last-child {
+	.rrow:last-child,
+	.nrow:last-child {
 		border-bottom: 0;
+	}
+	.nrow {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 36px;
+		padding: 0 4px;
+		border-bottom: 1px solid var(--hairline);
+		font-size: 13px;
+		color: var(--ink);
+		text-decoration: none;
+		min-width: 0;
+	}
+	.nrow:hover .nt {
+		text-decoration: underline;
+	}
+	.nt {
+		flex: 1;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.nemp {
+		margin: 8px 4px;
 	}
 	.rdot {
 		width: 7px;

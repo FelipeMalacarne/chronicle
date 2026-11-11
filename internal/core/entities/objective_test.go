@@ -294,3 +294,26 @@ func TestQuestRequirements(t *testing.T) {
 		t.Errorf("Load = %v", err)
 	}
 }
+
+func TestLocationMaps(t *testing.T) {
+	reg, err := Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := fs.ReadFile(reference.FS, LocationMapsFile)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var mc LocationMapCatalog
+	if err := json.Unmarshal(data, &mc); err != nil {
+		t.Fatal(err)
+	}
+	for _, m := range mc.Maps {
+		if _, ok := reg.LocationMap(m.ID); !ok {
+			t.Errorf("%s: %s is not in locations.json; rerun tools/fetch_wiki_locations.py", LocationMapsFile, m.ID)
+		}
+	}
+	if m, ok := reg.LocationMap("al_kharid"); !ok || m.X < 3200 || m.X > 3350 || m.Plane != 0 {
+		t.Fatalf("al_kharid = %+v, %v", m, ok)
+	}
+}

@@ -600,6 +600,31 @@ export interface TimerView {
 	observed_at: string;
 }
 
+/** GET /api/guides/{guide}/nearby: os passos abertos da rota perto do personagem (item 16). */
+export interface NearbyView {
+	/** A última posição que o plugin mandou (opt-in "Send position"); null até mandar. */
+	position: {
+		world: number;
+		x: number;
+		y: number;
+		plane: number;
+		region: number;
+		source: string;
+		observed_at: string;
+	} | null;
+	/** Até onde conta como perto, em tiles. */
+	radius: number;
+	steps: {
+		id: string;
+		ref: string;
+		title: string;
+		section_id: string;
+		location: string;
+		location_name: string;
+		distance: number;
+	}[];
+}
+
 /** GET /api/account/timers: os Recorrentes do Agora. */
 export interface TimersView {
 	timers: TimerView[];

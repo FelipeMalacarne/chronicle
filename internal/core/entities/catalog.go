@@ -21,7 +21,10 @@ const (
 	CombatAchievementsFile = "combat_achievements.json"
 	UnlocksFile            = "unlocks.json"
 	LocationsFile          = "locations.json"
-	VarbitsFile            = "varbits.json"
+	// LocationMapsFile is optional: the map point of each location, generated
+	// by tools/fetch_wiki_locations.py.
+	LocationMapsFile = "location_maps.json"
+	VarbitsFile      = "varbits.json"
 )
 
 // CatalogHeader versions a catalog file.
@@ -229,6 +232,20 @@ type LocationEntry struct {
 	Note    string   `json:"note,omitempty"`
 }
 
+// LocationMapCatalog is content/reference/location_maps.json.
+type LocationMapCatalog struct {
+	CatalogHeader
+	Maps []LocationMap `json:"maps"`
+}
+
+// LocationMap is the point of a location's wiki infobox map.
+type LocationMap struct {
+	ID    string `json:"id"`
+	X     int    `json:"x"`
+	Y     int    `json:"y"`
+	Plane int    `json:"plane"`
+}
+
 // VarCatalog is content/reference/varbits.json: the reference vars the ingest
 // manifest asks the plugin for besides those named by content rules
 // (docs/09 sections 3.2 and 7).
@@ -290,6 +307,7 @@ type Registry struct {
 	unlocks       map[string]*UnlockEntry
 	unlockNames   nameIndex
 	locations     map[string]*LocationEntry
+	locationMaps  map[string]LocationMap
 	locationNames nameIndex
 	vars          []VarEntry
 
@@ -373,7 +391,7 @@ func Load(fsys fs.FS) (*Registry, error) {
 		diaries: map[string]*DiaryEntry{}, diaryAreas: map[string]string{}, diaryByArea: map[string][]string{},
 		cas: map[int]*CombatAchievementEntry{}, caNames: nameIndex{},
 		unlocks: map[string]*UnlockEntry{}, unlockNames: nameIndex{},
-		locations: map[string]*LocationEntry{}, locationNames: nameIndex{},
+		locations: map[string]*LocationEntry{}, locationNames: nameIndex{}, locationMaps: map[string]LocationMap{},
 		familyBySlug: map[string]string{},
 		byWiki:       map[WikiKey][]Ref{},
 	}
@@ -579,6 +597,20 @@ func Load(fsys fs.FS) (*Registry, error) {
 		}
 		r.addWiki(l.WikiKey, ref)
 	}
+	if data, err := fs.ReadFile(fsys, LocationMapsFile); err == nil {
+		var mc LocationMapCatalog
+		if err := json.Unmarshal(data, &mc); err != nil {
+			fail("%s: %v", LocationMapsFile, err)
+		}
+		// A point of a location the catalog no longer has (renamed since the
+		// file was generated) is dropped; TestLocationMaps keeps the real file
+		// in step with locations.json.
+		for _, m := range mc.Maps {
+			if _, ok := r.locations[m.ID]; ok {
+				r.locationMaps[m.ID] = m
+			}
+		}
+	}
 	seenVar := map[string]bool{}
 	for _, v := range vc.Vars {
 		key := fmt.Sprintf("%s/%d", v.Var, v.ID)
@@ -736,6 +768,12 @@ func (r *Registry) ProofVars() []VarTest {
 		out = append(out, *r.unlocks[id].Proof)
 	}
 	return out
+}
+
+// LocationMap returns the map point of a location, when the wiki has one.
+func (r *Registry) LocationMap(id string) (LocationMap, bool) {
+	m, ok := r.locationMaps[id]
+	return m, ok
 }
 
 // Location returns a location entry by id.

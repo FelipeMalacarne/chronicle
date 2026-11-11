@@ -152,6 +152,7 @@ func (s *Server) routes() {
 	}
 	if s.opts.Progress != nil && s.accountRoutes() {
 		account("GET /api/guides/{guide}/board", s.handleBoard)
+		account("GET /api/guides/{guide}/nearby", s.handleNearby)
 		account("GET /api/route", s.handleRoute)
 		account("PATCH /api/guides/{guide}/steps/{id}/mark", s.handleMark)
 		account("POST /api/guides/{guide}/implied/confirm", s.handleConfirmImplied)

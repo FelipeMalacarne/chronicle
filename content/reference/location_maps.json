@@ -1,0 +1,794 @@
+{
+  "catalog": "location_maps",
+  "version": "2026.11.0",
+  "source": "OSRS Wiki infobox maps of the pages in locations.json (tools/fetch_wiki_locations.py)",
+  "notes": "Generated. The point of each location's infobox map (the centre of its points), used to list the pending steps near the character. Locations without a map, or whose map is an instance, are listed under unmapped and never placed.",
+  "maps": [
+    {
+      "id": "al_kharid",
+      "x": 3290,
+      "y": 3185,
+      "plane": 0,
+      "page": "Al Kharid",
+      "revid": 15397410
+    },
+    {
+      "id": "ape_atoll",
+      "x": 2750,
+      "y": 2750,
+      "plane": 0,
+      "page": "Ape Atoll",
+      "revid": 15317976
+    },
+    {
+      "id": "ardougne",
+      "x": 2570,
+      "y": 3300,
+      "plane": 0,
+      "page": "Ardougne",
+      "revid": 15396069
+    },
+    {
+      "id": "ardougne_monastery",
+      "x": 2606,
+      "y": 3212,
+      "plane": 0,
+      "page": "Ardougne Monastery",
+      "revid": 15398349
+    },
+    {
+      "id": "barbarian_assault",
+      "x": 2533,
+      "y": 3571,
+      "plane": 0,
+      "page": "Barbarian Assault",
+      "revid": 15372493
+    },
+    {
+      "id": "barbarian_outpost",
+      "x": 2549,
+      "y": 3558,
+      "plane": 0,
+      "page": "Barbarian Outpost",
+      "revid": 15351255
+    },
+    {
+      "id": "barbarian_village",
+      "x": 3080,
+      "y": 3427,
+      "plane": 0,
+      "page": "Barbarian Village",
+      "revid": 15357598
+    },
+    {
+      "id": "baxtorian_falls",
+      "x": 2513,
+      "y": 3483,
+      "plane": 0,
+      "page": "Baxtorian Falls",
+      "revid": 15204671
+    },
+    {
+      "id": "brimhaven",
+      "x": 2760,
+      "y": 3195,
+      "plane": 0,
+      "page": "Brimhaven",
+      "revid": 15361451
+    },
+    {
+      "id": "burthorpe",
+      "x": 2870,
+      "y": 3544,
+      "plane": 0,
+      "page": "Burthorpe",
+      "revid": 15359027
+    },
+    {
+      "id": "camelot",
+      "x": 2758,
+      "y": 3507,
+      "plane": 0,
+      "page": "Camelot",
+      "revid": 15390606
+    },
+    {
+      "id": "canifis",
+      "x": 3493,
+      "y": 3488,
+      "plane": 0,
+      "page": "Canifis",
+      "revid": 15397565
+    },
+    {
+      "id": "castle_wars",
+      "x": 2407,
+      "y": 3105,
+      "plane": 0,
+      "page": "Castle Wars",
+      "revid": 15389602
+    },
+    {
+      "id": "catherby",
+      "x": 2814,
+      "y": 3443,
+      "plane": 0,
+      "page": "Catherby",
+      "revid": 15377832
+    },
+    {
+      "id": "chambers_of_xeric",
+      "x": 1245,
+      "y": 3557,
+      "plane": 0,
+      "page": "Chambers of Xeric",
+      "revid": 15398481
+    },
+    {
+      "id": "champions_guild",
+      "x": 3191,
+      "y": 3357,
+      "plane": 0,
+      "page": "Champions' Guild",
+      "revid": 15364426
+    },
+    {
+      "id": "clan_wars",
+      "x": 3130,
+      "y": 3622,
+      "plane": 0,
+      "page": "Clan Wars",
+      "revid": 15379109
+    },
+    {
+      "id": "crandor",
+      "x": 2836,
+      "y": 3271,
+      "plane": 0,
+      "page": "Crandor",
+      "revid": 15386558
+    },
+    {
+      "id": "desert_quarry",
+      "x": 3172,
+      "y": 2912,
+      "plane": 0,
+      "page": "Quarry",
+      "revid": 15393070
+    },
+    {
+      "id": "digsite",
+      "x": 3354,
+      "y": 3420,
+      "plane": 0,
+      "page": "Digsite",
+      "revid": 15364110
+    },
+    {
+      "id": "draynor_manor",
+      "x": 3104,
+      "y": 3355,
+      "plane": 0,
+      "page": "Draynor Manor",
+      "revid": 15363363
+    },
+    {
+      "id": "draynor_village",
+      "x": 3103,
+      "y": 3265,
+      "plane": 0,
+      "page": "Draynor Village",
+      "revid": 15393864
+    },
+    {
+      "id": "edgeville",
+      "x": 3080,
+      "y": 3492,
+      "plane": 0,
+      "page": "Edgeville",
+      "revid": 15390181
+    },
+    {
+      "id": "entrana",
+      "x": 2840,
+      "y": 3358,
+      "plane": 0,
+      "page": "Entrana",
+      "revid": 15389346
+    },
+    {
+      "id": "falador",
+      "x": 3000,
+      "y": 3360,
+      "plane": 0,
+      "page": "Falador",
+      "revid": 15398202
+    },
+    {
+      "id": "falador_park",
+      "x": 3010,
+      "y": 3379,
+      "plane": 0,
+      "page": "Falador Park",
+      "revid": 15363368
+    },
+    {
+      "id": "farming_guild",
+      "x": 1249,
+      "y": 3737,
+      "plane": 0,
+      "page": "Farming Guild",
+      "revid": 15274002
+    },
+    {
+      "id": "ferox_enclave",
+      "x": 3137,
+      "y": 3623,
+      "plane": 0,
+      "page": "Ferox Enclave",
+      "revid": 15397011
+    },
+    {
+      "id": "fight_arena",
+      "x": 2592,
+      "y": 3168,
+      "plane": 0,
+      "page": "Fight Arena (location)",
+      "revid": 15211786
+    },
+    {
+      "id": "fishing_guild",
+      "x": 2609,
+      "y": 3424,
+      "plane": 0,
+      "page": "Fishing Guild",
+      "revid": 15385734
+    },
+    {
+      "id": "fortis_colosseum",
+      "x": 1824,
+      "y": 3107,
+      "plane": 0,
+      "page": "Fortis Colosseum",
+      "revid": 15390022
+    },
+    {
+      "id": "fossil_island",
+      "x": 3730,
+      "y": 3807,
+      "plane": 0,
+      "page": "Fossil Island",
+      "revid": 15369932
+    },
+    {
+      "id": "freds_farm",
+      "x": 3189,
+      "y": 3273,
+      "plane": 0,
+      "page": "Fred the Farmer",
+      "revid": 15394032
+    },
+    {
+      "id": "giants_foundry",
+      "x": 3360,
+      "y": 3151,
+      "plane": 0,
+      "page": "Giants' Foundry",
+      "revid": 15392923
+    },
+    {
+      "id": "great_kourend",
+      "x": 1630,
+      "y": 3730,
+      "plane": 0,
+      "page": "Great Kourend",
+      "revid": 15386318
+    },
+    {
+      "id": "ham_hideout",
+      "x": 3162,
+      "y": 9626,
+      "plane": 0,
+      "page": "H.A.M. Hideout",
+      "revid": 15394468
+    },
+    {
+      "id": "hosidius",
+      "x": 1762,
+      "y": 3598,
+      "plane": 0,
+      "page": "Hosidius",
+      "revid": 15369322
+    },
+    {
+      "id": "ice_mountain",
+      "x": 3010,
+      "y": 3486,
+      "plane": 0,
+      "page": "Ice Mountain",
+      "revid": 15390013
+    },
+    {
+      "id": "isafdar",
+      "x": 2244,
+      "y": 3182,
+      "plane": 0,
+      "page": "Isafdar",
+      "revid": 15023312
+    },
+    {
+      "id": "karamja",
+      "x": 2843,
+      "y": 3070,
+      "plane": 0,
+      "page": "Karamja",
+      "revid": 15364631
+    },
+    {
+      "id": "keep_le_faye",
+      "x": 2769,
+      "y": 3401,
+      "plane": 0,
+      "page": "Keep Le Faye",
+      "revid": 15275380
+    },
+    {
+      "id": "khazard_battlefield",
+      "x": 2520,
+      "y": 3232,
+      "plane": 0,
+      "page": "Battlefield",
+      "revid": 15351869
+    },
+    {
+      "id": "lighthouse",
+      "x": 2509,
+      "y": 3641,
+      "plane": 0,
+      "page": "Lighthouse",
+      "revid": 15375076
+    },
+    {
+      "id": "lumber_yard",
+      "x": 3306,
+      "y": 3503,
+      "plane": 0,
+      "page": "Lumber Yard",
+      "revid": 15267116
+    },
+    {
+      "id": "lumbridge",
+      "x": 3188,
+      "y": 3220,
+      "plane": 0,
+      "page": "Lumbridge",
+      "revid": 15398494
+    },
+    {
+      "id": "lumbridge_castle",
+      "x": 3217,
+      "y": 3219,
+      "plane": 0,
+      "page": "Lumbridge Castle",
+      "revid": 15398497
+    },
+    {
+      "id": "lumbridge_swamp",
+      "x": 3188,
+      "y": 3163,
+      "plane": 0,
+      "page": "Lumbridge Swamp",
+      "revid": 15396661
+    },
+    {
+      "id": "lunar_isle",
+      "x": 2117,
+      "y": 3903,
+      "plane": 0,
+      "page": "Lunar Isle",
+      "revid": 15375264
+    },
+    {
+      "id": "mage_arena",
+      "x": 3106,
+      "y": 3933,
+      "plane": 0,
+      "page": "Mage Arena",
+      "revid": 15326168
+    },
+    {
+      "id": "mage_bank",
+      "x": 3090,
+      "y": 3956,
+      "plane": 0,
+      "page": "Mage Arena bank",
+      "revid": 15340075
+    },
+    {
+      "id": "mcgrubors_wood",
+      "x": 2652,
+      "y": 3485,
+      "plane": 0,
+      "page": "McGrubor's Wood",
+      "revid": 15290184
+    },
+    {
+      "id": "miscellania",
+      "x": 2560,
+      "y": 3870,
+      "plane": 0,
+      "page": "Miscellania",
+      "revid": 15351046
+    },
+    {
+      "id": "mortton",
+      "x": 3487,
+      "y": 3288,
+      "plane": 0,
+      "page": "Mort'ton",
+      "revid": 15359045
+    },
+    {
+      "id": "mos_leharmless",
+      "x": 3735,
+      "y": 2999,
+      "plane": 0,
+      "page": "Mos Le'Harmless",
+      "revid": 15315082
+    },
+    {
+      "id": "mudskipper_point",
+      "x": 2999,
+      "y": 3122,
+      "plane": 0,
+      "page": "Mudskipper Point",
+      "revid": 15364640
+    },
+    {
+      "id": "nardah",
+      "x": 3427,
+      "y": 2911,
+      "plane": 0,
+      "page": "Nardah",
+      "revid": 15397328
+    },
+    {
+      "id": "observatory",
+      "x": 2441,
+      "y": 3162,
+      "plane": 0,
+      "page": "Observatory",
+      "revid": 15104819
+    },
+    {
+      "id": "ourania_altar",
+      "x": 2452,
+      "y": 3231,
+      "plane": 0,
+      "page": "Ourania Altar",
+      "revid": 15366061
+    },
+    {
+      "id": "pest_control",
+      "x": 2658,
+      "y": 2625,
+      "plane": 0,
+      "page": "Pest Control",
+      "revid": 15385975
+    },
+    {
+      "id": "pollnivneach",
+      "x": 3358,
+      "y": 2974,
+      "plane": 0,
+      "page": "Pollnivneach",
+      "revid": 15325443
+    },
+    {
+      "id": "port_khazard",
+      "x": 2653,
+      "y": 3159,
+      "plane": 0,
+      "page": "Port Khazard",
+      "revid": 15394798
+    },
+    {
+      "id": "port_phasmatys",
+      "x": 3679,
+      "y": 3486,
+      "plane": 0,
+      "page": "Port Phasmatys",
+      "revid": 15381748
+    },
+    {
+      "id": "port_sarim",
+      "x": 3029,
+      "y": 3221,
+      "plane": 0,
+      "page": "Port Sarim",
+      "revid": 15359040
+    },
+    {
+      "id": "prifddinas",
+      "x": 3263,
+      "y": 6083,
+      "plane": 0,
+      "page": "Prifddinas",
+      "revid": 15374558
+    },
+    {
+      "id": "rellekka",
+      "x": 2658,
+      "y": 3677,
+      "plane": 0,
+      "page": "Rellekka",
+      "revid": 15387537
+    },
+    {
+      "id": "rimmington",
+      "x": 2952,
+      "y": 3221,
+      "plane": 0,
+      "page": "Rimmington",
+      "revid": 15364082
+    },
+    {
+      "id": "rogues_den",
+      "x": 2906,
+      "y": 3537,
+      "plane": 0,
+      "page": "Rogues' Den",
+      "revid": 15379507
+    },
+    {
+      "id": "seers_village",
+      "x": 2710,
+      "y": 3485,
+      "plane": 0,
+      "page": "Seers' Village",
+      "revid": 15394749
+    },
+    {
+      "id": "shantay_pass",
+      "x": 3304,
+      "y": 3123,
+      "plane": 0,
+      "page": "Shantay Pass",
+      "revid": 15360728
+    },
+    {
+      "id": "shilo_village",
+      "x": 2849,
+      "y": 2972,
+      "plane": 0,
+      "page": "Shilo Village (location)",
+      "revid": 15360727
+    },
+    {
+      "id": "sophanem",
+      "x": 3297,
+      "y": 2783,
+      "plane": 0,
+      "page": "Sophanem",
+      "revid": 15397557
+    },
+    {
+      "id": "taverley",
+      "x": 2910,
+      "y": 3451,
+      "plane": 0,
+      "page": "Taverley",
+      "revid": 15360699
+    },
+    {
+      "id": "taverley_dungeon",
+      "x": 2884,
+      "y": 3398,
+      "plane": 0,
+      "page": "Taverley Dungeon",
+      "revid": 15385689
+    },
+    {
+      "id": "tempoross_cove",
+      "x": 3035,
+      "y": 2850,
+      "plane": 0,
+      "page": "Tempoross Cove",
+      "revid": 15102380
+    },
+    {
+      "id": "theatre_of_blood",
+      "x": 3663,
+      "y": 3219,
+      "plane": 0,
+      "page": "Theatre of Blood",
+      "revid": 15393349
+    },
+    {
+      "id": "tombs_of_amascut",
+      "x": 3345,
+      "y": 2725,
+      "plane": 0,
+      "page": "Tombs of Amascut",
+      "revid": 15391794
+    },
+    {
+      "id": "tree_gnome_stronghold",
+      "x": 2440,
+      "y": 3460,
+      "plane": 0,
+      "page": "Tree Gnome Stronghold",
+      "revid": 15376538
+    },
+    {
+      "id": "trollheim",
+      "x": 2891,
+      "y": 3678,
+      "plane": 0,
+      "page": "Trollheim",
+      "revid": 15364775
+    },
+    {
+      "id": "uzer",
+      "x": 3480,
+      "y": 3095,
+      "plane": 0,
+      "page": "Ruins of Uzer",
+      "revid": 15387729
+    },
+    {
+      "id": "varlamore",
+      "x": 1580,
+      "y": 3120,
+      "plane": 0,
+      "page": "Varlamore",
+      "revid": 15355752
+    },
+    {
+      "id": "varrock",
+      "x": 3210,
+      "y": 3448,
+      "plane": 0,
+      "page": "Varrock",
+      "revid": 15385112
+    },
+    {
+      "id": "varrock_museum",
+      "x": 3260,
+      "y": 3449,
+      "plane": 0,
+      "page": "Varrock Museum",
+      "revid": 15375570
+    },
+    {
+      "id": "varrock_sawmill",
+      "x": 3302,
+      "y": 3492,
+      "plane": 0,
+      "page": "Sawmill",
+      "revid": 15364777
+    },
+    {
+      "id": "warriors_guild",
+      "x": 2864,
+      "y": 3544,
+      "plane": 0,
+      "page": "Warriors' Guild",
+      "revid": 15366588
+    },
+    {
+      "id": "weiss",
+      "x": 2870,
+      "y": 3940,
+      "plane": 0,
+      "page": "Weiss",
+      "revid": 15273365
+    },
+    {
+      "id": "white_wolf_mountain",
+      "x": 2845,
+      "y": 3483,
+      "plane": 0,
+      "page": "White Wolf Mountain",
+      "revid": 15370252
+    },
+    {
+      "id": "wintertodt",
+      "x": 1630,
+      "y": 3981,
+      "plane": 0,
+      "page": "Wintertodt",
+      "revid": 15388947
+    },
+    {
+      "id": "witchaven",
+      "x": 2720,
+      "y": 3287,
+      "plane": 0,
+      "page": "Witchaven",
+      "revid": 15367150
+    },
+    {
+      "id": "wizards_tower",
+      "x": 3109,
+      "y": 3160,
+      "plane": 0,
+      "page": "Wizards' Tower",
+      "revid": 15393782
+    },
+    {
+      "id": "wyrmscraig",
+      "x": 2571,
+      "y": 2240,
+      "plane": 0,
+      "page": "Wyrmscraig",
+      "revid": 15394575
+    },
+    {
+      "id": "yanille",
+      "x": 2577,
+      "y": 3090,
+      "plane": 0,
+      "page": "Yanille",
+      "revid": 15359059
+    }
+  ],
+  "unmapped": [
+    {
+      "id": "braindeath_island",
+      "reason": "map id 4"
+    },
+    {
+      "id": "dorgesh_kaan",
+      "reason": "map id 5"
+    },
+    {
+      "id": "enchanted_valley",
+      "reason": "map id 10055"
+    },
+    {
+      "id": "fisher_realm",
+      "reason": "map id 10063"
+    },
+    {
+      "id": "goblin_village",
+      "reason": "map without a point"
+    },
+    {
+      "id": "god_wars_dungeon",
+      "reason": "map id 7"
+    },
+    {
+      "id": "hazelmeres_island",
+      "reason": "no wiki page"
+    },
+    {
+      "id": "keldagrim",
+      "reason": "map id 10"
+    },
+    {
+      "id": "kharidian_desert",
+      "reason": "no map"
+    },
+    {
+      "id": "morytania",
+      "reason": "no map"
+    },
+    {
+      "id": "tower_of_life",
+      "reason": "no wiki_key"
+    },
+    {
+      "id": "underground_pass",
+      "reason": "no wiki page"
+    },
+    {
+      "id": "wilderness",
+      "reason": "no map"
+    },
+    {
+      "id": "zanaris",
+      "reason": "map id 28"
+    }
+  ]
+}

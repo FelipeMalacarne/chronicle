@@ -323,7 +323,15 @@ export interface Run {
 	id: string;
 	className: string;
 	stop: string[];
-	state: 'stopping' | 'running' | 'returning' | 'restarting' | 'done' | 'failed' | 'canceled';
+	state:
+		| 'waiting'
+		| 'stopping'
+		| 'running'
+		| 'returning'
+		| 'restarting'
+		| 'done'
+		| 'failed'
+		| 'canceled';
 	/** O evento do jogo que disparou o run (kitten_grown); vazio quando foi o dono. */
 	trigger?: TriggerEvent;
 	startedAt: string;
@@ -333,6 +341,13 @@ export interface Run {
 	result?: Record<string, unknown>;
 	error?: string;
 	events: { at: string; state: Run['state']; text: string }[];
+}
+
+/** GET /api/microbot/runs: os últimos runs do agent, o mais novo primeiro (guardados na máquina do jogo). */
+export interface RunHistory {
+	runs: Run[];
+	/** Por que o agent não conseguiu gravar o histórico. */
+	error?: string;
 }
 
 export interface RunParams {
@@ -426,6 +441,7 @@ export const microbotApi = {
 	game: () => call<GameView>('/game'),
 	timers: () => call<Timers>('/timers'),
 	run: () => call<{ run: Run | null }>('/run'),
+	runs: () => call<RunHistory>('/runs'),
 	runStart: (p: RunParams) =>
 		call<{ ok: boolean; result: { run: Run } }>('/run', {
 			method: 'POST',

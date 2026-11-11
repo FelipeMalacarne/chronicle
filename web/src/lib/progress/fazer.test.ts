@@ -1,6 +1,15 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { firingText, runFinal, runnable, stoppable } from './fazer.ts';
+import {
+	firingText,
+	runDuration,
+	runFinal,
+	runOutcome,
+	runWhen,
+	runnable,
+	stoppable
+} from './fazer.ts';
+import type { Run } from '../api/microbot.ts';
 import type { PluginRow } from './plugins.ts';
 
 const row = (className: string, over: Partial<PluginRow> = {}): PluginRow => ({
@@ -66,4 +75,36 @@ test('firingText: what the trigger did with the last event', () => {
 		firingText({ at, event: 'kitten_grown', skipped: 'run: another run is going' }),
 		'o filhote cresceu durante outro run'
 	);
+});
+
+const aRun = (over: Partial<Run> = {}): Run => ({
+	id: 'run-1',
+	className: 'a.fm.catswap.CatSwapPlugin',
+	stop: [],
+	state: 'done',
+	startedAt: '2026-11-10T14:00:00Z',
+	events: [],
+	...over
+});
+
+test('runDuration: minutes, hours, unfinished', () => {
+	assert.equal(runDuration(aRun()), null);
+	assert.equal(runDuration(aRun({ finishedAt: '2026-11-10T14:00:20Z' })), 'menos de 1 min');
+	assert.equal(runDuration(aRun({ finishedAt: '2026-11-10T14:04:10Z' })), '4 min');
+	assert.equal(runDuration(aRun({ finishedAt: '2026-11-10T15:05:00Z' })), '1 h 05 min');
+});
+
+test('runOutcome: what Cat Swap left', () => {
+	assert.equal(runOutcome(aRun()), '');
+	assert.equal(
+		runOutcome(aRun({ result: { outcome: 'done', deathRunesGained: 100, kittenFollows: true } })),
+		'+100 death runes · filhote seguindo'
+	);
+});
+
+test('runWhen: today, yesterday, older', () => {
+	const now = new Date(2026, 10, 10, 18, 0);
+	assert.match(runWhen(new Date(2026, 10, 10, 14, 2).toISOString(), now), /^hoje 14:02$/);
+	assert.match(runWhen(new Date(2026, 10, 9, 23, 10).toISOString(), now), /^ontem 23:10$/);
+	assert.match(runWhen(new Date(2026, 10, 8, 9, 15).toISOString(), now), /^08\/11 09:15$/);
 });

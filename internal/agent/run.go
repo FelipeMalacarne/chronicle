@@ -16,7 +16,8 @@ import (
 
 // "Fazer agora" (docs/08 phase 4, delivery 2): one run of a plugin between
 // the main activity and the return, executed by the agent so it survives the
-// server restarting or the link dropping. The run stops the plugins it is
+// server restarting or the link dropping. The run waits for a safe point
+// (safe.go), stops the plugins it is
 // told to (the main activity), waits for the character to settle, starts the
 // run plugin and waits for it to switch itself off, walks back to where the
 // character stood and starts the stopped plugins again. A failure, a timeout
@@ -29,6 +30,7 @@ const (
 
 // Run states, in order; the last three are final.
 const (
+	RunWaiting    = "waiting" // for a safe point (safe.go)
 	RunStopping   = "stopping"
 	RunRunning    = "running"
 	RunReturning  = "returning"
@@ -91,7 +93,7 @@ func (r *Run) Final() bool {
 // readCommands are what the owner may still do while a run drives the character.
 var readCommands = []string{
 	CmdStatus, CmdScreenshot, CmdVNCOpen, CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet,
-	CmdConfigSchema, CmdGameView, CmdClientLogs, CmdAccountShow, CmdTimers, CmdRunStatus, CmdRunCancel,
+	CmdConfigSchema, CmdGameView, CmdClientLogs, CmdAccountShow, CmdTimers, CmdRunStatus, CmdRunHistory, CmdRunCancel,
 	// Not reads, but they never touch the game: switching the trigger off during its own run is fine.
 	CmdTriggerGet, CmdTriggerSet,
 }
@@ -117,6 +119,10 @@ type runner struct {
 	run    *Run
 	cancel context.CancelFunc
 	seq    int
+	// The history (history.go): the runs before run, oldest first.
+	loaded  bool
+	past    []Run
+	saveErr string
 }
 
 func validateRun(raw json.RawMessage) (RunParams, error) {
@@ -160,7 +166,10 @@ func (e *Executor) runCommand(command string, raw json.RawMessage) (any, error) 
 	case CmdRunStatus:
 		r.mu.Lock()
 		defer r.mu.Unlock()
+		e.loadRuns()
 		return RunStatus{Run: r.snapshot()}, nil
+	case CmdRunHistory:
+		return e.runHistory(), nil
 	case CmdRunCancel:
 		r.mu.Lock()
 		defer r.mu.Unlock()
@@ -187,9 +196,11 @@ func (e *Executor) startRun(p RunParams, trigger string) (*Run, error) {
 	r := &e.runs
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	e.loadRuns()
 	if r.run != nil && !r.run.Final() {
 		return nil, errors.New("run: another run is going")
 	}
+	r.retire()
 	r.seq++
 	ctx, cancel := context.WithCancel(context.Background())
 	r.cancel = cancel
@@ -198,10 +209,11 @@ func (e *Executor) startRun(p RunParams, trigger string) (*Run, error) {
 		ClassName: p.ClassName,
 		Stop:      append([]string{}, p.Stop...),
 		Trigger:   trigger,
-		State:     RunStopping,
+		State:     RunWaiting,
 		StartedAt: time.Now().UTC(),
 		Events:    []RunEvent{},
 	}
+	e.saveRuns()
 	go e.drive(ctx, p)
 	return r.snapshot(), nil
 }
@@ -230,6 +242,7 @@ func (e *Executor) note(state, text string) {
 	defer r.mu.Unlock()
 	r.run.State = state
 	r.run.Events = append(r.run.Events, RunEvent{At: time.Now().UTC(), State: state, Text: text})
+	e.saveRuns()
 }
 
 func (e *Executor) end(state, text, errText string) {
@@ -240,6 +253,7 @@ func (e *Executor) end(state, text, errText string) {
 	now := time.Now().UTC()
 	r.run.FinishedAt = &now
 	r.run.Error = errText
+	e.saveRuns()
 	r.cancel()
 }
 
@@ -258,6 +272,11 @@ func (e *Executor) drive(ctx context.Context, p RunParams) {
 			return
 		}
 		e.end(RunFailed, err.Error()+"; o que estava parado continua parado", err.Error())
+	}
+	// Nothing moves before the character is at a safe point.
+	if err := e.waitSafe(ctx); err != nil {
+		fail(err)
+		return
 	}
 	// PARANDO: where the character is, stop the main activity, let it settle.
 	st, err := e.runState(ctx)
@@ -347,9 +366,11 @@ func (e *Executor) drive(ctx context.Context, p RunParams) {
 type runPlayer struct {
 	LoggedIn bool `json:"loggedIn"`
 	Player   struct {
-		Animating bool        `json:"animating"`
-		Moving    bool        `json:"moving"`
-		Position  *WalkParams `json:"position"`
+		// HealthRatio is -1 unless the health bar shows (a fight).
+		HealthRatio *int        `json:"healthRatio"`
+		Animating   bool        `json:"animating"`
+		Moving      bool        `json:"moving"`
+		Position    *WalkParams `json:"position"`
 	} `json:"player"`
 }
 

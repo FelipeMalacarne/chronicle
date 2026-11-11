@@ -62,6 +62,11 @@ type Executor struct {
 
 	// RunPoll is how often a run reads the game (default 3 s; tests shorten it).
 	RunPoll time.Duration
+	// SafeWait bounds a run's wait for a safe point (default 1 h).
+	SafeWait time.Duration
+	// RunFile keeps the runs' history (DefaultRunFile); empty keeps it in
+	// memory only.
+	RunFile string
 	// TriggerFile keeps the triggers (DefaultTriggerFile); empty keeps them in
 	// memory only.
 	TriggerFile string
@@ -79,7 +84,7 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return nil, ErrRunGoing
 	}
 	switch command {
-	case CmdRunStart, CmdRunStatus, CmdRunCancel:
+	case CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel:
 		return e.runCommand(command, params)
 	case CmdTriggerGet, CmdTriggerSet:
 		return e.triggerCommand(command, params)

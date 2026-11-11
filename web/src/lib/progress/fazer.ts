@@ -8,6 +8,7 @@ import type { PluginRow } from './plugins.ts';
 
 /** O estado do run como a tela diz. */
 export const RUN_LABEL: Record<Run['state'], string> = {
+	waiting: 'esperando um ponto seguro',
 	stopping: 'parando o principal',
 	running: 'rodando',
 	returning: 'voltando ao lugar',
@@ -50,4 +51,33 @@ export function firingText(last: Triggers['last']): string | null {
 	if (last.skipped === 'trigger off') return 'o filhote cresceu com o gatilho desligado';
 	if (last.skipped?.includes('another run')) return 'o filhote cresceu durante outro run';
 	return `o filhote cresceu, não disparou: ${last.skipped ?? ''}`.trim();
+}
+
+/** O que o plugin rodado deixou no resultado: "+100 death runes · filhote seguindo". */
+export function runOutcome(r: Run): string {
+	const res = r.result ?? {};
+	const parts: string[] = [];
+	if (typeof res.deathRunesGained === 'number') parts.push(`+${res.deathRunesGained} death runes`);
+	if (res.kittenFollows === true) parts.push('filhote seguindo');
+	return parts.join(' · ');
+}
+
+/** Quanto o run levou: "4 min", "menos de 1 min", "1 h 05 min". Sem fim, nada. */
+export function runDuration(r: Run): string | null {
+	if (!r.finishedAt) return null;
+	const m = Math.round((Date.parse(r.finishedAt) - Date.parse(r.startedAt)) / 60000);
+	if (m < 1) return 'menos de 1 min';
+	if (m < 60) return `${m} min`;
+	return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')} min`;
+}
+
+/** Quando o run começou, pelo dia da máquina do navegador: "hoje 14:02", "ontem 23:10", "08/11 09:15". */
+export function runWhen(iso: string, now: Date = new Date()): string {
+	const d = new Date(iso);
+	const hm = d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+	const day = (x: Date) => new Date(x.getFullYear(), x.getMonth(), x.getDate()).getTime();
+	const diff = Math.round((day(now) - day(d)) / 86400000);
+	if (diff === 0) return `hoje ${hm}`;
+	if (diff === 1) return `ontem ${hm}`;
+	return `${d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} ${hm}`;
 }

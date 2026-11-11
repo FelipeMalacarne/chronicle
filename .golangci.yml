@@ -40,10 +40,13 @@ linters:
     misspell:
       locale: US
       # OSRS skill names keep the game's spelling; "dialogue" is the game's
-      # word and the Microbot Agent Server's path (/dialogue).
+      # word and the Microbot Agent Server's path (/dialogue); the other two
+      # are place names (Hallowed Sepulchre, Theatre of Blood).
       ignore-rules:
         - defence
         - dialogue
+        - sepulchre
+        - theatre
 
     gocritic:
       enabled-tags:

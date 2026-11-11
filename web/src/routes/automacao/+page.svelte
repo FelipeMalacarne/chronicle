@@ -22,6 +22,7 @@
 	import ClientAccount from '#lib/v6/ClientAccount.svelte';
 	import Relogios from '#lib/v6/Relogios.svelte';
 	import FazerAgora from '#lib/v6/FazerAgora.svelte';
+	import HistoricoRuns from '#lib/v6/HistoricoRuns.svelte';
 	import type { GameView } from '#lib/api/microbot';
 
 	/*
@@ -45,6 +46,8 @@
 	let intervene = $state(false);
 	let vnc = $state<{ phase: VncPhase; reason?: string }>({ phase: 'closed' });
 	let wide = $state(true);
+	/** Bumped when a run ends, so the Runs panel reads the history again. */
+	let runsVersion = $state(0);
 
 	const client = $derived(status?.client);
 	const running = $derived(!!client?.running);
@@ -445,11 +448,13 @@
 					<FazerAgora
 						{loggedIn}
 						onchange={() => {
+							runsVersion++;
 							void refreshAudit();
 							void refreshGame();
 						}}
 					/>
 				{/if}
+				<HistoricoRuns version={runsVersion} />
 			{/if}
 			<section class="panel" id="auditoria">
 				<div class="plaque">Auditoria<span class="r">quem · quando · o quê</span></div>

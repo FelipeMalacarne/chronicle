@@ -172,18 +172,7 @@ func (e *Executor) saveTriggers(ts []Trigger) error {
 	if e.TriggerFile == "" {
 		return nil
 	}
-	b, err := json.MarshalIndent(ts, "", "  ")
-	if err != nil {
-		return err
-	}
-	if err = os.MkdirAll(filepath.Dir(e.TriggerFile), 0o700); err != nil {
-		return fmt.Errorf("trigger: %w", err)
-	}
-	tmp := e.TriggerFile + ".tmp"
-	if err = os.WriteFile(tmp, b, 0o600); err != nil {
-		return fmt.Errorf("trigger: %w", err)
-	}
-	if err = os.Rename(tmp, e.TriggerFile); err != nil {
+	if err := writeJSONFile(e.TriggerFile, ts); err != nil {
 		return fmt.Errorf("trigger: %w", err)
 	}
 	return nil

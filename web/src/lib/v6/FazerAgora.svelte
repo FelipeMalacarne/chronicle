@@ -6,6 +6,7 @@
 		firingText,
 		isCatSwap,
 		runFinal,
+		runOutcome,
 		runnable,
 		stoppable
 	} from '#lib/progress/fazer';
@@ -164,14 +165,7 @@
 		new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 	const nameOf = (className: string) =>
 		rows.find((r) => r.className === className)?.name ?? className.split('.').pop();
-	const outcome = (r: Run) => {
-		const res = r.result ?? {};
-		const parts: string[] = [];
-		if (typeof res.deathRunesGained === 'number')
-			parts.push(`+${res.deathRunesGained} death runes`);
-		if (res.kittenFollows === true) parts.push('filhote seguindo');
-		return parts.join(' · ');
-	};
+	const outcome = runOutcome;
 </script>
 
 <section class="panel">

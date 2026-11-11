@@ -62,6 +62,7 @@ func newAgentCmd() *cobra.Command {
 					Game: &microbot.Client{Home: home}, Home: home,
 					Bridge:      &microbot.Client{Home: home, Socket: microbot.BridgeSocket},
 					TriggerFile: agent.DefaultTriggerFile(),
+					RunFile:     agent.DefaultRunFile(),
 					ClientCmd:   harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"), AccountCmd: harnessCmd("MICROBOT_ACCOUNT_CMD", "mb-account"),
 				},
 			}

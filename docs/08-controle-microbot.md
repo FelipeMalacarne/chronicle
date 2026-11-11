@@ -578,9 +578,30 @@ destino da viagem):
   só anota; o arquivo vale para outro agent) e da view; o bloco no Cockpit com gatilhos falsos.
   **Falta o teste no jogo**: `mb-install chroniclelink`, reiniciar o cliente e o `just agent`, ligar
   o gatilho e esperar o filhote crescer, com o dono olhando a primeira vez.
-- Lacunas conhecidas: além das da entrega 2, o vigia não sabe se o personagem está num lugar ruim
-  para sair andando (dentro de um minigame, no meio de um diálogo), e uma mensagem que aparece com o
-  agent desligado se perde (o filhote cresce uma vez; aí é o "Fazer agora").
+- Lacunas conhecidas: além das da entrega 2, uma mensagem que aparece com o agent desligado se perde
+  (o filhote cresce uma vez; aí é o "Fazer agora"). O lugar ruim para sair andando foi resolvido logo
+  depois com o ponto seguro (abaixo).
+
+**Fase 4: ponto seguro e histórico dos runs** (2026-11-10, pedido do dono depois da entrega 3):
+
+- Ponto seguro: todo run, do dono ou do gatilho, começa no estado `waiting` e só para o principal
+  quando o personagem está logado (fora de um break), sem barra de vida (fora de combate), fora de
+  diálogo (`/dialogue` do Agent Server) e fora das regiões de minigame, raid e boss (a lista do plugin
+  Discord do RuneLite, mais o Fishing Trawler afundando). Cada motivo novo vai para a trilha
+  ("esperando: em Fishing Trawler"); sem ponto seguro em 60 min o run falha sem ter tocado em nada.
+  Não pega instância fora dessas regiões: o Agent Server não diz se a região é instanciada.
+- Histórico: o agent grava os últimos 30 runs com a trilha em `~/.config/ironman/agent-runs.json` a
+  cada linha da trilha. Depois de reiniciar, o último run volta a ser o atual (o "Último" do Fazer
+  agora) e a numeração continua; um run que o agent não terminou aparece como falhou ("o agent parou
+  no meio do run"). `run_history` (leitura) na lista fechada; `GET /api/microbot/runs`.
+- Web: o painel "Runs" abaixo do Fazer agora (artboard V6MicrobotRuns1440, página 6f do canvas): o
+  mais novo primeiro, "sozinho" nos do gatilho, resultado, quando, quanto levou, o que o plugin
+  deixou, e a trilha ao clicar; o estado "esperando um ponto seguro" no Fazer agora.
+- Verificado: testes do agent (espera diálogo, combate e Trawler na ordem e só depois para o
+  principal; desiste sem tocar em nada; o arquivo vale para outro agent, ids continuam, run morto vira
+  falhou, guarda só os últimos 30; tudo com `-race`) e da view; o painel no Cockpit com runs falsos.
+- Ainda não: o histórico fica na máquina do jogo, não no banco do planner (o link não tem mensagens do
+  agent para o servidor; entra com a fila de recorrentes, entrega 4).
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

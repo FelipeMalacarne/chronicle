@@ -4,9 +4,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 )
 
 // Catalog ids used below: Plank 960 (noted 961), Prayer potion(4) 2434,

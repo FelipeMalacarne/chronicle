@@ -15,9 +15,9 @@ import (
 	"github.com/alexedwards/scs/v2/memstore"
 	"github.com/coder/websocket"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth/authtest"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/auth"
+	"github.com/FelipeMalacarne/chronicle/internal/auth/authtest"
 )
 
 // fakeWorkers takes "pod:<name>:<account>" tokens.

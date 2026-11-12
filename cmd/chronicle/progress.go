@@ -12,7 +12,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/client"
 )
 
 // newProgressCmd groups the account progress commands. They talk to a running

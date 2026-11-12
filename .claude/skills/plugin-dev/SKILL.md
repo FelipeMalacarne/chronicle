@@ -1,18 +1,20 @@
 ---
 name: plugin-dev
-description: Build or change a Microbot plugin in this repo and verify it in the running dev client. Use when asked to create a plugin, change plugin behavior, or test/confirm a plugin works in game.
+description: Build or change a Microbot plugin (microbot/) in this repo and verify it in the running dev client. Use when asked to create a plugin, change plugin behavior, or test/confirm a plugin works in game.
 ---
 
 # Plugin dev loop
 
-Follow `AGENTS.md`. The goal is behavior confirmed in the dev client, not code that compiles.
+Follow `microbot/AGENTS.md`. Plugin packages are under
+`microbot/src/main/java/net/runelite/client/plugins/microbot/fm/` (`fm/<pkg>` below); the harness
+(`mb-*`, `mb`) is `microbot/bin`, on PATH in the dev shell. The goal is behavior confirmed in the dev client, not code that compiles.
 
 1. **Orient.** `mb-vendor` (no-op if current). Read the upstream AGENTS.md files and the
-   util/API classes you will call under `vendor/microbot/`. Check entity guides for the
+   util/API classes you will call under `microbot/vendor/microbot/`. Check entity guides for the
    entities involved.
 2. **Scaffold.** New plugin: copy `fm/helloagent/` to `fm/<pkg>/`, rename the classes,
    config group and descriptor name. Keep the package self-contained.
-3. **Compile.** `gradle pluginJars`. Fix errors before touching the client.
+3. **Compile.** `gradle -p microbot pluginJars`. Fix errors before touching the client.
 4. **Client.** `mb-client status`; if down, `mb-client start`. Check login with `mb state`.
    If logged out, ask the user before logging in. `mb-account show` names the character;
    if it says none, ask the user which character to use (`mb-account list`).

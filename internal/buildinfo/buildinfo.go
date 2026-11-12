@@ -2,7 +2,7 @@
 //
 // Version is set at build time with
 //
-//	-ldflags "-X github.com/FelipeMalacarne/ironman-planner/internal/buildinfo.Version=v1.2.3"
+//	-ldflags "-X github.com/FelipeMalacarne/chronicle/internal/buildinfo.Version=v1.2.3"
 //
 // and falls back to the VCS revision recorded by the Go toolchain, then "dev".
 package buildinfo

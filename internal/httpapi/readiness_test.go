@@ -10,11 +10,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/planning"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/planning"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 )
 
 type fakeHoldings map[string]rules.ItemHoldings

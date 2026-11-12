@@ -3,8 +3,8 @@ package progress
 import (
 	"strings"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
 
 // ObjectiveState is the verdict of one objective of a step.

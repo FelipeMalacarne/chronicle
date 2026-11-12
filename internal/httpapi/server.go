@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	"github.com/FelipeMalacarne/ironman-planner/internal/events"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 )
 
 // DBPinger is the subset of a connection pool the API needs for health checks.

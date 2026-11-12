@@ -13,8 +13,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	"github.com/FelipeMalacarne/ironman-planner/internal/kube"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/kube"
 )
 
 // Desired is one worker row as the reconciler needs it.

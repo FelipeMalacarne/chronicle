@@ -7,7 +7,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
 )
 
 // SessionInfo is what the server tells of an account's stored game session

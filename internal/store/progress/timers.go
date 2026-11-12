@@ -8,9 +8,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // TimerView is one recurring clock of the account (decision 31 of doc 01):

@@ -6,8 +6,9 @@ web/dist/*
 web/.svelte-kit/
 web/build/
 
-# Go
-bin/
+# Go (just build writes bin/chronicle; microbot/bin is the harness)
+/bin/
+/chronicle
 tmp/
 *.test
 *.out

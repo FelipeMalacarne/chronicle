@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 // DB status values reported by /api/health.

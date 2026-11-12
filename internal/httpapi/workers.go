@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	storemicrobot "github.com/FelipeMalacarne/ironman-planner/internal/store/microbot"
-	storeworkers "github.com/FelipeMalacarne/ironman-planner/internal/store/workers"
-	"github.com/FelipeMalacarne/ironman-planner/internal/workerctl"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	storemicrobot "github.com/FelipeMalacarne/chronicle/internal/store/microbot"
+	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
+	"github.com/FelipeMalacarne/chronicle/internal/workerctl"
 )
 
 // WorkerStore is the database side of the workers (internal/store/workers):

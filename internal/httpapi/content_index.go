@@ -1,9 +1,9 @@
 package httpapi
 
 import (
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 )
 
 // occurrence is where a route completes (or starts) an entity.

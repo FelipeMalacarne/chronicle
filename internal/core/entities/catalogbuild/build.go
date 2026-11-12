@@ -29,7 +29,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // Input paths relative to the repository root.

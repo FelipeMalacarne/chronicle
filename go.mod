@@ -1,4 +1,4 @@
-module github.com/FelipeMalacarne/ironman-planner
+module github.com/FelipeMalacarne/chronicle
 
 go 1.27
 

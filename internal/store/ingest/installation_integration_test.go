@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 )
 
 // testIngestPool opens a pool on a throwaway schema of DATABASE_URL with every

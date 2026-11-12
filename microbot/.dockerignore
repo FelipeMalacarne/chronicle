@@ -1,3 +1,0 @@
-# The only docker build here is worker/Dockerfile, and it needs only the plugin jars.
-*
-!build/plugins/*.jar

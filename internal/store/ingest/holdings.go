@@ -7,9 +7,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/store/state"
 )
 
 // ItemHoldings returns the merged item containers of an account for the

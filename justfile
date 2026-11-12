@@ -1,5 +1,6 @@
-# Chronicle (ironman-planner) task runner. `just` lists targets; `just <target>`.
-# Works from the Nix dev shell or from any machine with go, node/pnpm, docker.
+# Chronicle task runner. `just` lists targets; `just <target>`.
+# Works from the Nix dev shell (direnv) or from any machine with go, node/pnpm, docker; the
+# microbot/ recipes need the dev shell (the pinned client jar) and the harness is microbot/bin.
 
 set dotenv-load := true
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -18,7 +19,7 @@ sqlc := "go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest"
 database_url := env("DATABASE_URL", "postgres://ironman:ironman@localhost:5432/ironman_planner?sslmode=disable")
 
 # Version symbol is internal/buildinfo.Version (falls back to the VCS revision when unset).
-ldflags := "-s -w -X github.com/FelipeMalacarne/ironman-planner/internal/buildinfo.Version=" + version
+ldflags := "-s -w -X github.com/FelipeMalacarne/chronicle/internal/buildinfo.Version=" + version
 
 # List targets
 default:
@@ -54,10 +55,10 @@ dev: db-up
 # Microbot control agent (docs/08) on this machine: links to the planner (--url, CHRONICLE_URL,
 # config.json, default saradomin; CHRONICLE_URL=http://localhost:8080 for `just dev`, which needs no
 # token; an oidc server needs the MICROBOT_AGENT_CLIENT_* machine user) and drives
-# the dev client of the microbot-plugins harness (MICROBOT_HARNESS_DIR, default the sibling
-# checkout). The server needs MICROBOT_CONTROL=on.
+# the dev client of the harness in microbot/ (MICROBOT_HARNESS_DIR, default this checkout). The
+# server needs MICROBOT_CONTROL=on.
 agent:
-    MICROBOT_HARNESS_DIR="${MICROBOT_HARNESS_DIR:-$(realpath ../microbot-plugins)}" go run ./cmd/chronicle agent
+    MICROBOT_HARNESS_DIR="${MICROBOT_HARNESS_DIR:-{{justfile_directory()}}}" go run ./cmd/chronicle agent
 
 # Vite dev server for the SPA alone (the API must already run on :8080)
 web-dev:
@@ -90,23 +91,27 @@ build: web-build
 docker-build:
     docker build --build-arg VERSION={{version}} -t chronicle:{{version}} -t chronicle:latest .
 
-# Pin the microbot-worker-base of the chronicle-worker image (docs/11 section 7.2) by the digest of a
-# GHCR tag (<Microbot version>-<sha7>, from microbot-plugins' CI): just worker-base-bump 2.6.52-abc1234
-worker-base-bump tag:
+# --- microbot ----------------------------------------------------------------
+
+# Build the Microbot plugin jars into microbot/build/plugins (one per plugin)
+plugins:
+    gradle -p microbot --console=plain pluginJars
+
+# Test the Microbot plugins and build their jars (what CI runs)
+test-microbot:
+    gradle -p microbot --console=plain test pluginJars
+
+# Build chronicle-worker-base locally (Nix runtime + plugin jars; docs/11 section 13.4)
+worker-base:
+    deploy/worker/build-base.sh
+
+# Build chronicle-worker locally: the base above plus this tree's binary
+worker-image: worker-base
     #!/usr/bin/env bash
     set -euo pipefail
-    repo=ghcr.io/felipemalacarne/microbot-worker-base
-    if command -v crane >/dev/null 2>&1; then
-      digest="$(crane digest "$repo:{{tag}}")"
-    else
-      digest="$(docker buildx imagetools inspect "$repo:{{tag}}" | awk '$1 == "Digest:" { print $2; exit }')"
-    fi
-    if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
-      echo "could not resolve the digest of $repo:{{tag}} (got '${digest}')" >&2
-      exit 1
-    fi
-    echo "$repo@$digest" > deploy/worker/base.lock
-    echo "deploy/worker/base.lock -> $repo@$digest ({{tag}}); commit it and CI publishes chronicle-worker"
+    base="ghcr.io/felipemalacarne/chronicle-worker-base:$(deploy/worker/build-base.sh --tag)"
+    docker build -f deploy/worker/Dockerfile --build-arg BASE="$base" --build-arg VERSION={{version}} -t chronicle-worker:{{version}} .
+    echo "built chronicle-worker:{{version}} on $base"
 
 # --- quality ---------------------------------------------------------------
 
@@ -126,7 +131,7 @@ lint:
 # gofmt + goimports in place
 fmt:
     gofmt -w $(git ls-files '*.go')
-    if command -v goimports >/dev/null 2>&1; then goimports -w -local github.com/FelipeMalacarne/ironman-planner $(git ls-files '*.go'); fi
+    if command -v goimports >/dev/null 2>&1; then goimports -w -local github.com/FelipeMalacarne/chronicle $(git ls-files '*.go'); fi
 
 # --- content ---------------------------------------------------------------
 

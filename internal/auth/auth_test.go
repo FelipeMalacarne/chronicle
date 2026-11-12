@@ -10,8 +10,8 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth/authtest"
+	"github.com/FelipeMalacarne/chronicle/internal/auth"
+	"github.com/FelipeMalacarne/chronicle/internal/auth/authtest"
 )
 
 func TestPolicyAllows(t *testing.T) {

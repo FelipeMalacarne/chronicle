@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
+	"github.com/FelipeMalacarne/chronicle/internal/appenv"
 )
 
 // DefaultURL is the server a client talks to when nothing else says: the

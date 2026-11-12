@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/syncrun"
+	"github.com/FelipeMalacarne/chronicle/internal/store/syncrun"
 )
 
 // SyncService runs and lists the polling syncs of an account (hiscores).

@@ -52,7 +52,7 @@ COPY --from=web /src/web/dist ./web/dist
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath \
-      -ldflags "-s -w -X github.com/FelipeMalacarne/ironman-planner/internal/buildinfo.Version=${VERSION}" \
+      -ldflags "-s -w -X github.com/FelipeMalacarne/chronicle/internal/buildinfo.Version=${VERSION}" \
       -o /out/chronicle ./cmd/chronicle
 
 # ---------------------------------------------------------------------------

@@ -24,7 +24,7 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/microbot"
+	"github.com/FelipeMalacarne/chronicle/internal/microbot"
 )
 
 // Game is what the executor needs from the Agent Server (microbot.Client).

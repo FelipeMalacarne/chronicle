@@ -8,7 +8,7 @@ import (
 	"testing"
 	"testing/fstest"
 
-	"github.com/FelipeMalacarne/ironman-planner/content/reference"
+	"github.com/FelipeMalacarne/chronicle/content/reference"
 )
 
 func TestParseObjectiveKey(t *testing.T) {

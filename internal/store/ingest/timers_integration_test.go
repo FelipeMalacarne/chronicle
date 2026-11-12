@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"testing"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 )
 
 // The Time Tracking clocks and the position (docs/06, adendo 2026-11-10): a

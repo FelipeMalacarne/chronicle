@@ -12,11 +12,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
-	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
+	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
 
 // growingFetcher answers the same hiscores sample with the attack XP grown

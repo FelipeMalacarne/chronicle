@@ -10,7 +10,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
+	"github.com/FelipeMalacarne/chronicle/internal/appenv"
 )
 
 // The runs' history (docs/08 phase 4): the agent keeps its last runs with

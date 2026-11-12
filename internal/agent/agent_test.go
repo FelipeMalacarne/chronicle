@@ -17,7 +17,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/microbot"
+	"github.com/FelipeMalacarne/chronicle/internal/microbot"
 )
 
 type fakeGame struct {

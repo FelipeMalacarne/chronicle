@@ -11,10 +11,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
 
 // fakeProgress records the last call and answers with err when set.

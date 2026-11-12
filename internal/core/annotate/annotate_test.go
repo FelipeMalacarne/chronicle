@@ -7,9 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/content/reference"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/content/reference"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // testGuide: section 1.1 has a sequence (a, a2) and a bank leg started by b;

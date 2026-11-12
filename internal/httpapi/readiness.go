@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/planning"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/planning"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 )
 
 // HoldingsSource returns the merged item containers of an account.

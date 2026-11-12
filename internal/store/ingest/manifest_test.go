@@ -4,8 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 )
 
 func TestBuildDefinitionAsksForReferenceVars(t *testing.T) {

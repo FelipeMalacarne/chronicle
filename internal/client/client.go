@@ -19,9 +19,9 @@ import (
 
 	"golang.org/x/oauth2"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/panel"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 )
 
 // Errors the commands explain to the user.

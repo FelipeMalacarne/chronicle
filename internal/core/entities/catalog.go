@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/FelipeMalacarne/ironman-planner/content/reference"
+	"github.com/FelipeMalacarne/chronicle/content/reference"
 )
 
 // Catalog file names under content/reference.

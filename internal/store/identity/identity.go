@@ -15,8 +15,8 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
-	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
+	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
 
 // DevSubject is the subject of the single user of AUTH_MODE=dev.

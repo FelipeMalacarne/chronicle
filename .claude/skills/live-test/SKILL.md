@@ -10,15 +10,15 @@ character is the user's: a death, a used Ring of life or a stuck run is real dam
 
 ## Before the first run
 
-- **Ask.** A run that can take damage is an irreversible in-game action (AGENTS.md safety).
+- **Ask.** A run that can take damage is an irreversible in-game action (`microbot/AGENTS.md` safety).
   Prefer the user watching. Say what the plugin will do and what the safety net is.
 - **Client speed.** A hidden or minimized desktop window drops the client to ~1 FPS and every
   reaction to seconds (that is how a first run got hit down to the Ring of life). Use
   `mb-client start --headless`, or have the user keep the window visible. A plugin that can
   take damage should pause itself below ~15 FPS (`Microbot.getClient().getFPS()`).
-- **Safety net outside the plugin.** Start `scripts/hp-watchdog.sh` as a Monitor before
+- **Safety net outside the plugin.** Start `.claude/skills/live-test/scripts/hp-watchdog.sh` as a Monitor before
   deploying:
-  `scripts/hp-watchdog.sh <plugin fqcn> <limit> ['<escape command>']`. It stops the plugin
+  `.claude/skills/live-test/scripts/hp-watchdog.sh <plugin fqcn> <limit> ['<escape command>']`. It stops the plugin
   and escapes (or eats) at the limit. Keep the limit well above 10% of max HP (Ring of life)
   and below the plugin's own emergency line, so the two do not race.
 - **Game settings that turn skilling into combat**, e.g. auto retaliate: on, a hit makes the
@@ -28,7 +28,7 @@ character is the user's: a death, a used Ring of life or a stuck run is real dam
 
 `mb-deploy` reloads the plugin and drops its state. A reload mid-fight leaves the character
 standing in the fight with a plugin that does not know it is in one. Use
-`scripts/deploy-when-safe.sh <pkg> [min hp]` (env `NPC`, `ATTACK_ANIM`, `SAFE_PLANE`): it waits
+`.claude/skills/live-test/scripts/deploy-when-safe.sh <pkg> [min hp]` (env `NPC`, `ATTACK_ANIM`, `SAFE_PLANE`): it waits
 for a moment with HP above the line and nothing swinging, or a known safe place.
 
 When stopping a plugin by hand, check where the character is right after: it may have just
@@ -38,7 +38,7 @@ walked back into danger.
 
 - **Chat timeline.** Game messages are the ground truth for action results. Line them up
   against the event that matters:
-  `mb observe --chat-since 0 --limit 120 | python3 -I scripts/chat-timeline.py "<anchor text>"`
+  `mb observe --chat-since 0 --limit 120 | python3 -I .claude/skills/live-test/scripts/chat-timeline.py "<anchor text>"`
   prints each message's ms since the anchor (e.g. picks at +600/+1800 after a knock-out).
 - **What was clicked.** `mb observe --menu-since 0` lists the menu actions the client sent,
   including ones the plugin did not mean (an "Attack" from auto retaliate, a cancel).

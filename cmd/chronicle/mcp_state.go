@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/client"
 )
 
 // accountStatePart cuts the account state into what one MCP call can carry:

@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // Load returns the merged state of an account and the provenance of each

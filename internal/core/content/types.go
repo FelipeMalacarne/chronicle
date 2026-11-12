@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // Guide is one ordered list of route variants. The Sections field is the

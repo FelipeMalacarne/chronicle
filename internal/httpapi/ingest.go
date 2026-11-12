@@ -10,8 +10,8 @@ import (
 	"net/http"
 	"strings"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 )
 
 const maxIngestBody = 2 << 20 // 2 MiB; manifests keep normal pushes far below this.

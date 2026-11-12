@@ -9,12 +9,12 @@ import (
 	"strconv"
 	"strings"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/panel"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
-	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
+	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
 
 // Headers of a tokenless dev plugin request (docs/04 section 2.5). They are

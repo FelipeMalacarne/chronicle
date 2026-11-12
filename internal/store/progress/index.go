@@ -10,9 +10,9 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // IndexReport is what IndexContent did.

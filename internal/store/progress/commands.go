@@ -9,8 +9,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // Mark command metadata (docs/10 section 6): every change to step_marks is a

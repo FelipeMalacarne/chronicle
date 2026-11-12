@@ -7,16 +7,16 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
-	"github.com/FelipeMalacarne/ironman-planner/internal/config"
-	"github.com/FelipeMalacarne/ironman-planner/internal/httpapi"
-	"github.com/FelipeMalacarne/ironman-planner/internal/kube"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
-	storemicrobot "github.com/FelipeMalacarne/ironman-planner/internal/store/microbot"
-	storeworkers "github.com/FelipeMalacarne/ironman-planner/internal/store/workers"
-	"github.com/FelipeMalacarne/ironman-planner/internal/vault"
-	"github.com/FelipeMalacarne/ironman-planner/internal/workerctl"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
+	"github.com/FelipeMalacarne/chronicle/internal/config"
+	"github.com/FelipeMalacarne/chronicle/internal/httpapi"
+	"github.com/FelipeMalacarne/chronicle/internal/kube"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
+	storemicrobot "github.com/FelipeMalacarne/chronicle/internal/store/microbot"
+	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
+	"github.com/FelipeMalacarne/chronicle/internal/vault"
+	"github.com/FelipeMalacarne/chronicle/internal/workerctl"
 )
 
 // newMicrobot builds the Microbot control module (docs/08) and, with a

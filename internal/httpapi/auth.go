@@ -12,9 +12,9 @@ import (
 
 	"github.com/alexedwards/scs/v2"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/identity"
-	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/auth"
+	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
+	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
 
 // Session lifetime of AUTH_MODE=oidc (docs/04 section 2.5): a session ends

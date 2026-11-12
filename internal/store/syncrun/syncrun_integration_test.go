@@ -16,11 +16,11 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	"github.com/FelipeMalacarne/ironman-planner/internal/events"
-	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
-	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
+	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
+	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
 
 // recorder keeps the published events as "type:source:status".

@@ -1,23 +1,27 @@
-# Runtime of the microbot-worker-base image (planner docs/11 section 13.4): everything the
-# headless client needs, from the same nixpkgs as the dev shell (a java from another nixpkgs
-# breaks on glibc). The plugin jars are not here: a pure Nix build cannot see gradle's output,
-# so worker/Dockerfile adds build/plugins/*.jar on top (worker/build.sh does both).
+# Runtime of the chronicle-worker-base image (docs/11 section 13.4): everything the headless
+# client needs, from the same nixpkgs as the dev shell (a java from another nixpkgs breaks on
+# glibc). The plugin jars are not here: a pure Nix build cannot see gradle's output, so
+# deploy/worker/base.Dockerfile adds microbot/build/plugins/*.jar on top
+# (deploy/worker/build-base.sh does both).
 {
   pkgs,
-  pin,
-  microbot-client,
-  hwid-agent,
-  microbot-cli,
+  microbot,
 }:
 let
+  inherit (microbot)
+    pin
+    microbot-client
+    hwid-agent
+    microbot-cli
+    ;
   uid = "65532";
 
   # The harness under /opt/microbot: bin/ (on PATH), microbot.json and the pinned microbot-cli.
   harness = pkgs.runCommand "microbot-harness-${pin.version}" { } ''
     mkdir -p $out/opt/microbot/libexec $out/opt/microbot/plugins
-    cp -r ${../bin} $out/opt/microbot/bin
+    cp -r ${../microbot/bin} $out/opt/microbot/bin
     chmod -R u+w,a+rx $out/opt/microbot/bin
-    cp ${../microbot.json} $out/opt/microbot/microbot.json
+    cp ${../microbot/microbot.json} $out/opt/microbot/microbot.json
     install -m755 ${microbot-cli} $out/opt/microbot/libexec/microbot-cli
   '';
 
@@ -40,7 +44,7 @@ let
   '';
 in
 pkgs.dockerTools.streamLayeredImage {
-  name = "microbot-worker-runtime";
+  name = "chronicle-worker-runtime";
   contents = [
     harness
     passwd
@@ -92,7 +96,7 @@ pkgs.dockerTools.streamLayeredImage {
       "SSL_CERT_FILE=${pkgs.cacert}/etc/ssl/certs/ca-bundle.crt"
     ];
     Labels = {
-      "org.opencontainers.image.source" = "https://github.com/FelipeMalacarne/microbot-plugins";
+      "org.opencontainers.image.source" = "https://github.com/FelipeMalacarne/chronicle";
       "org.opencontainers.image.description" = "Headless Microbot ${pin.version} runtime for Chronicle workers";
     };
   };

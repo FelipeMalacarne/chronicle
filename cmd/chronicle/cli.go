@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
-	"github.com/FelipeMalacarne/ironman-planner/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/appenv"
+	"github.com/FelipeMalacarne/chronicle/internal/client"
 )
 
 // clientFlags are the connection flags of every API client command. The

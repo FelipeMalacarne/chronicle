@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
 import type { WorkerRow, WorkersView } from '../api/microbot.ts';
-import { imageTag, workerLine, workerLines } from './workers.ts';
+import { actionLabel, imageTag, workerLine, workerLines } from './workers.ts';
 
 const now = Date.parse('2026-11-12T18:00:00Z');
 
@@ -148,4 +148,34 @@ test('with WORKERS=off a linked worker shows its agent and offers no lifecycle',
 	assert.equal(l.tone, 'ok');
 	assert.deepEqual(l.actions, []);
 	assert.equal(l.cockpit, true);
+});
+
+test('the table cells: where and session in two lines, restart named by the version', () => {
+	const pod = workerLine(
+		row({
+			desired: 'running',
+			image: 'ghcr.io/x/chronicle-worker:87a8e21b4ad51fddce6b848853e4630da5a41133',
+			session: {
+				account_id: 'acc_a',
+				character: 'Iron A',
+				key_id: 'abcd1234',
+				pushed_at: '2026-11-12T17:00:00Z',
+				pushed_by: 'u',
+				last_login_result: 'ok'
+			}
+		}),
+		on,
+		[],
+		now
+	);
+	assert.equal(pod.host, 'saradomin');
+	assert.equal(pod.runtime, 'pod · 87a8e21');
+	assert.equal(pod.sessionWhen, 'push há 60 min');
+	assert.equal(pod.sessionNote, 'último login ok');
+	const stopped = workerLine(row({ session: null }), on, [], now);
+	assert.equal(stopped.host, 'nenhum');
+	assert.equal(stopped.sessionWhen, undefined);
+	assert.equal(actionLabel({ outdated: false }, 'restart'), 'Reiniciar');
+	assert.equal(actionLabel({ outdated: true }, 'restart'), 'Reiniciar na versão nova');
+	assert.equal(actionLabel({ outdated: false }, 'stop'), 'Parar');
 });

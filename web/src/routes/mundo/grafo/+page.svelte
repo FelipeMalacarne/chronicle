@@ -125,7 +125,7 @@
 				>profundidade {g.depth} · {g.nodes} nós · {g.done_nodes} feitos recolhidos</span
 			>{/if}
 	</div>
-	<div class="bar">
+	<div class="tools">
 		<div class="pick">
 			<button
 				class="sel"
@@ -332,7 +332,7 @@
 	.plaque {
 		white-space: nowrap;
 	}
-	.bar {
+	.tools {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;

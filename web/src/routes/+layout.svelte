@@ -58,6 +58,7 @@
 			account={session.account}
 			name={me.state?.account.rsn}
 			sub={accountSub(me.state)}
+			skills={me.state?.skills}
 		/>{/if}
 	<main id="conteudo">
 		{@render children()}

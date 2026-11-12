@@ -411,3 +411,86 @@ E10). A revisão de rotas e objetivos que o dono quer fazer depois é o lugar di
 | W8 | IP e escala de uma frota: proxy por worker, outro nó, outra casa | Adiar até haver mais de 3 contas; registrar o risco |
 | W9 | Desvio de config: salvar sozinho ou pelo botão | Pelo botão ("Salvar no perfil") |
 | W10 | Conta sem rota: `guide_id` nulo e modo `regular` | Sim, na migração da F2 |
+
+## 13. Contratos da implementação (rodada 1, 2026-11-12)
+
+Fixados antes de dividir o trabalho, para as frentes andarem em paralelo. Fora desta rodada: GPU e
+VirtualGL (o pod renderiza por software: 0,43 contra 0,36 núcleo medidos, e a iGPU do Jellyfin fica
+como está), perfis e rotinas no Postgres (F5 e F6), conta sem rota e métricas (F7). A tela segue a
+estrutura da página 7 do canvas sem polimento visual, por decisão do dono (2026-11-12: "tudo
+funcional primeiro, a aparência depois").
+
+### 13.1 Protocolo do link
+
+Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
+
+- `Hello` ganha `account`, `kind` (`attached` | `managed`; vazio é `attached`), `worker` (nome do pod)
+  e `bridge` (versão da ponte do Chronicle Link, vazia sem ponte).
+- Comando `worker_bootstrap` (`BootstrapParams`: conta, `GameSession`, `plugin_token`, `server_url`,
+  `world`; resposta `BootstrapResult`). Só o agent em `--worker` executa; ninguém registra os
+  parâmetros (log ou auditoria), porque levam a sessão.
+- Roteamento: o servidor escolhe o agent pela conta (`?account=`). Sem `?account=` e com um agent só,
+  usa esse (compatível com a web de hoje). Um agent sem conta declarada só atende quando nenhum
+  outro declara aquela conta. Um agent `managed` só pode declarar a conta do seu pod.
+
+### 13.2 Variáveis
+
+| Onde | Variável | O quê |
+|---|---|---|
+| `serve` | `WORKERS` (`off`) | `on` liga o reconciliador e `/api/workers`; exige `MICROBOT_CONTROL=on` e `CHRONICLE_VAULT_KEY` |
+| `serve` | `CHRONICLE_VAULT_KEY` | 32 bytes em base64 (AES-256-GCM); o id da chave são os 8 primeiros hex do SHA-256 dela |
+| `serve` | `WORKER_IMAGE` | imagem `chronicle-worker` (o CI grava no overlay) |
+| `serve` | `WORKER_NAMESPACE` | padrão: o namespace do próprio pod (arquivo da SA) |
+| `serve` | `WORKER_SERVER_URL` | padrão `http://chronicle.<namespace>.svc` (o Service do app, porta 80) |
+| attached | `MICROBOT_AGENT_ACCOUNT` | conta que o agent do zaros declara no hello (opcional) |
+| worker | `WORKER_ACCOUNT`, `CHRONICLE_URL`, `CHRONICLE_AGENT_TOKEN_FILE` | conta do pod, servidor, token projetado (relido a cada conexão) |
+| worker | `MB_DEV_HOME`, `MB_XMX`, `MB_HWID_STORE_DIR`, `MB_PREBUILT_PLUGINS` | opções do `mb-client` (seção 13.4) |
+| worker | `CHRONICLE_LINK_SERVER_URL`, `CHRONICLE_LINK_TOKEN` | o Chronicle Link usa estes no lugar da config quando presentes (credencial `ipl_`) |
+
+### 13.3 O pod
+
+- Deployment `worker-<conta>`: a conta em minúsculas, `_` vira `-` (`acc_iron_man` →
+  `worker-acc-iron-man`). `replicas: 1`, `strategy: Recreate`, `revisionHistoryLimit: 1`.
+- Etiquetas: `app.kubernetes.io/name: chronicle`, `app.kubernetes.io/component: worker`,
+  `chronicle.ftm.dev.br/account: <conta>`. O Argo não gerencia esses objetos.
+- `serviceAccountName: chronicle-worker`, `automountServiceAccountToken: false`, token projetado de
+  audiência `chronicle` em `/var/run/secrets/chronicle/token` (3600 s).
+- Segurança: `runAsUser`/`runAsGroup`/`fsGroup` 65532, `runAsNonRoot`, `seccompProfile:
+  RuntimeDefault`, sem privilégios, `allowPrivilegeEscalation: false`, capabilities `drop: [ALL]`.
+- Recursos: `requests` 500m e 1 GiB; `limits` 1 núcleo e 1792 MiB; `MB_XMX=1024m`.
+- Volumes: `home` (`emptyDir` em disco) em `/home/worker`; `secrets` (`emptyDir` em memória, 1 MiB)
+  em `/run/chronicle` para os arquivos do HWID agent; o PVC `microbot-game-cache` em
+  `/home/worker/microbot-dev/.runelite/jagexcache`; o token projetado.
+- A sessão da Jagex entra só como variável de ambiente do processo do cliente (`JX_SESSION_ID`,
+  `JX_CHARACTER_ID`, `JX_DISPLAY_NAME`, como o launcher faz), nunca em arquivo.
+- O agent segura `flock` em `jagexcache/.chronicle-boot.lock` do início do cliente até o Agent
+  Server responder (seção 7.4).
+
+### 13.4 Imagens
+
+- `ghcr.io/felipemalacarne/microbot-worker-base:<versão do Microbot>-<sha7>` (microbot-plugins):
+  - `/opt/microbot/bin`: o harness, no PATH;
+  - o JDK 21, Xvfb, x11vnc, xdotool, bash, coreutils, util-linux, procps, jq, curl e fontes;
+  - `MICROBOT_CLIENT_JAR` e `MICROBOT_HWID_AGENT_JAR` apontando para os jars fixados;
+  - `MB_PREBUILT_PLUGINS=/opt/microbot/plugins` com os jars do `gradle pluginJars`;
+  - usuário 65532, `HOME=/home/worker`, `MB_DEV_HOME=/home/worker/microbot-dev`.
+- `mb-client` ganha as variáveis abaixo, e sem elas tudo continua como hoje:
+  - `MB_XMX` (padrão `2g`);
+  - `MB_HWID_STORE_DIR` (padrão `$HOME/.runelite`);
+  - `MB_PREBUILT_PLUGINS`: instala os jars dali em vez de compilar o DevBootstrap e copia também o
+    Chronicle Link;
+  - pula o PipeWire e o `xdotool` quando não existem.
+- `ghcr.io/felipemalacarne/chronicle-worker:<sha do chronicle>`: `FROM` a base fixada por digest em
+  `deploy/worker/base.lock`, com o `chronicle` em `/usr/local/bin/chronicle` e
+  `ENTRYPOINT ["chronicle", "agent", "--worker"]`.
+
+### 13.5 Banco (migração 0012)
+
+- `accounts.managed BOOLEAN NOT NULL DEFAULT false`.
+- `game_sessions`: `account_id` PK (FK), `character_name`, `key_id`, `nonce` e `ciphertext` (`bytea`),
+  `pushed_at`, `pushed_by`, `last_login_at`, `last_login_result`.
+- `workers`: `account_id` PK (FK), `desired_state` (`running` | `stopped`), `world`, `image`,
+  `plugin_token_id` (FK do token `ipl_` do worker), `started_at`, `stopped_at`, `updated_at`,
+  `last_error`. Só os gerenciados; os anexados vivem no Hub.
+- `microbot_audit` ganha `account_id` e `agent_id` (texto, vazio nas linhas antigas); o
+  `storemicrobot.Entry` já tem os campos.

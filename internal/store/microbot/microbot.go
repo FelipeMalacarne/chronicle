@@ -23,6 +23,10 @@ type Entry struct {
 	Params json.RawMessage `json:"params"`
 	OK     bool            `json:"ok"`
 	Error  string          `json:"error,omitempty"`
+	// AccountID and AgentID say which account and which agent the action
+	// went to (docs/11); empty for actions from before migration 0012.
+	AccountID string `json:"account_id,omitempty"`
+	AgentID   string `json:"agent_id,omitempty"`
 }
 
 // Repository writes and reads microbot_audit.

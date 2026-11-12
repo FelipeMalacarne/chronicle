@@ -16,7 +16,9 @@ configMapGenerator:
       - PUBLIC_BASE_URL=https://chronicle.saradomin.ftm.dev.br
       - OIDC_REQUIRED_ROLE=owner
       - SYNC_HISCORES_MINUTES=30
-      - MICROBOT_CONTROL=off
+      # docs/08: the agent of zaros links with a Zitadel machine user (role microbot:agent);
+      # the cockpit needs the role microbot:control. OIDC_PROJECT_ID is in chronicle-secrets.
+      - MICROBOT_CONTROL=on
 images:
   - name: chronicle
     newName: ghcr.io/felipemalacarne/chronicle

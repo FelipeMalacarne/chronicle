@@ -7,7 +7,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"time"
+
+	"github.com/FelipeMalacarne/ironman-planner/internal/client"
 )
 
 func TestProgressCheck(t *testing.T) {
@@ -39,7 +40,11 @@ func TestProgressCheck(t *testing.T) {
 	}
 	for _, tt := range tests {
 		var out bytes.Buffer
-		err := progressCheck(context.Background(), &out, srv.URL+"/", tt.account, "tok", time.Second)
+		c, err := client.New(context.Background(), client.Options{URL: srv.URL + "/", Token: "tok"})
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = progressCheck(context.Background(), &out, c, tt.account)
 		if (err != nil) != tt.wantErr || !strings.Contains(out.String(), tt.wantOut) {
 			t.Fatalf("%s: out %q, err %v", tt.account, out.String(), err)
 		}

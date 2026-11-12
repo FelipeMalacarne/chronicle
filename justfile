@@ -51,8 +51,9 @@ dev: db-up
     (cd web && pnpm dev) &
     if command -v air >/dev/null 2>&1; then air; else go run ./cmd/chronicle serve; fi
 
-# Microbot control agent (docs/08) on this machine: links to the planner (CHRONICLE_URL, default
-# :8080; a dev server needs no token, an oidc one the MICROBOT_AGENT_CLIENT_* machine user) and drives
+# Microbot control agent (docs/08) on this machine: links to the planner (--url, CHRONICLE_URL,
+# config.json, default saradomin; CHRONICLE_URL=http://localhost:8080 for `just dev`, which needs no
+# token; an oidc server needs the MICROBOT_AGENT_CLIENT_* machine user) and drives
 # the dev client of the microbot-plugins harness (MICROBOT_HARNESS_DIR, default the sibling
 # checkout). The server needs MICROBOT_CONTROL=on.
 agent:

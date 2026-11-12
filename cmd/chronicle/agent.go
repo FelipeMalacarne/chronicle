@@ -13,7 +13,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
 	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
 	"github.com/FelipeMalacarne/ironman-planner/internal/client"
 	"github.com/FelipeMalacarne/ironman-planner/internal/microbot"
@@ -23,7 +22,7 @@ import (
 // game, links OUTBOUND to the planner server and executes only the closed
 // list of control commands against the Microbot dev client of the harness.
 //
-//	CHRONICLE_URL            the planner server (default http://localhost:8080)
+//	CHRONICLE_URL            the planner server (default: config.json, then https://chronicle.saradomin.ftm.dev.br)
 //	MICROBOT_AGENT_CLIENT_ID, MICROBOT_AGENT_CLIENT_SECRET (or _SECRET_FILE)
 //	                       the Zitadel machine user (role microbot:agent) when the
 //	                       server runs AUTH_MODE=oidc; a dev server needs nothing and
@@ -47,10 +46,13 @@ func newAgentCmd() *cobra.Command {
 				return err
 			}
 			if url == "" {
-				url = appenv.Get("URL")
-			}
-			if url == "" {
-				url = client.DefaultURL
+				store, err := clientStore()
+				if err != nil {
+					return err
+				}
+				if url, _, err = (&clientFlags{}).resolveURL(store); err != nil {
+					return err
+				}
 			}
 			home := microbot.DefaultHome()
 			host, _ := os.Hostname()
@@ -73,7 +75,7 @@ func newAgentCmd() *cobra.Command {
 			return a.Run(ctx)
 		},
 	}
-	cmd.Flags().StringVar(&url, "url", "", "planner server (default: CHRONICLE_URL, "+client.DefaultURL+")")
+	cmd.Flags().StringVar(&url, "url", "", "planner server (default: CHRONICLE_URL, config, "+client.DefaultURL+")")
 	return cmd
 }
 

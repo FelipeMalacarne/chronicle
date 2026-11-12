@@ -164,10 +164,10 @@ workers   id, account_id UNIQUE, placement (attached | managed), desired_state (
 
 ### 4.6 O que não vai para o Postgres
 
-O **cache do jogo** (centenas de MB de arquivos do cliente) não faz sentido no banco. Ele fica num
-`emptyDir` em disco por pod (W5); se o boot ficar lento, vira um PVC compartilhado. Os **jars dos
-plugins** vêm da imagem (os nossos) ou do Hub (baixados no boot). O banco guarda qual plugin e qual
-versão, não o binário.
+O **cache do jogo** (centenas de MB de arquivos do cliente) não faz sentido no banco. Ele vai para
+um **PVC compartilhado** por todos os workers (W5, decidido pelo dono em 2026-11-12), descrito na
+seção 7.4. Os **jars dos plugins** vêm da imagem (os nossos) ou do Hub (baixados no boot). O banco
+guarda qual plugin e qual versão, não o binário.
 
 ## 5. Conectar uma conta
 
@@ -208,7 +208,8 @@ Pela web (Automação › Workers, "Iniciar") ou pela CLI (`chronicle workers st
    - imagem `WORKER_IMAGE` do configMap;
    - `requests` de 500m e 1 GiB, `limits` de 1 núcleo e 1,5 GiB, `gpu.intel.com/i915: 1`;
    - ServiceAccount `chronicle-worker`, com token projetado de audiência `chronicle`;
-   - `emptyDir` em memória para a home e `emptyDir` em disco para o cache;
+   - `emptyDir` em memória para a home e o PVC `microbot-game-cache` montado só no diretório do
+     cache do jogo (seção 7.4);
    - `CHRONICLE_URL=http://chronicle.chronicle.svc:8080`.
 
 ### 6.2 Uma conta num lugar só
@@ -269,7 +270,8 @@ Valem as regras da primeira versão, com dois acréscimos:
   list e watch em `pods`. Nenhuma permissão em secrets. `system:auth-delegator` para a TokenReview.
 - **ValidatingAdmissionPolicy** para pedidos da SA `chronicle` em Deployments: etiqueta
   `component: worker`, SA `chronicle-worker`, imagem `ghcr.io/felipemalacarne/chronicle-worker`,
-  **`replicas <= 1` e `strategy.type == Recreate`** (acréscimo), sem `hostPath`, sem `privileged`.
+  **`replicas <= 1` e `strategy.type == Recreate`** (acréscimo), sem `hostPath`, sem `privileged`,
+  volumes só `emptyDir`, o token projetado e o PVC `microbot-game-cache` (seção 7.4).
 - **SA `chronicle-worker`:** sem permissão nenhuma e com `automountServiceAccountToken: false`, só o
   token projetado.
 - **ResourceQuota** no namespace. Um worker que não cabe fica Pending, e o painel mostra.
@@ -312,6 +314,29 @@ Plugin GPU ligado com draw distance 15–20, MSAA desligado, anisotrópico 0 e s
 desligado; FPS Control em 15–20; Entity Hider escondendo outros jogadores e os pets deles; Low Detail
 ligado; display de 1024×768.
 
+### 7.4 Cache do jogo compartilhado
+
+Um PVC só, `microbot-game-cache`, para todos os workers. Ele é declarado no gielinor (o Chronicle só
+o referencia, então o RBAC não muda) e usa o `local-path`, como o do filebrowser:
+
+- **RWO basta:** o `ReadWriteOnce` do `local-path` é por nó, não por pod, então todos os workers do
+  saradomin montam o mesmo volume. Um segundo nó teria o próprio PVC; o cache é descartável.
+- **Só o cache:** monta-se só o diretório do cache do jogo (`.runelite/jagexcache`, a confirmar no
+  spike da F3), nunca a home, o perfil do RuneLite ou os plugins do Hub, que são por conta.
+- **Nada que identifique o aparelho:** se o `random.dat` ou qualquer arquivo de identidade cair
+  nesse diretório, ele não pode ser compartilhado. Um `random.dat` comum ligaria todas as contas
+  entre si. Na F3, conferir onde o cliente o grava e que o HWID agent o intercepta por conta
+  (`microbot.hwid.randomdat.store`). Se ele estiver no cache, o volume monta só os arquivos do cache
+  (`subPath`).
+- **Vários clientes ao mesmo tempo:** é o caso normal de quem roda dois clientes num mesmo PC, que
+  dividem o `jagexcache`. O risco fica no dia de update do jogo, com dois clientes baixando a mesma
+  atualização. O agent segura um `flock` em `cache.lock` no volume do início do cliente até a tela de
+  login, então os boots acontecem um de cada vez (cerca de 40 s cada).
+- **Admissão:** a ValidatingAdmissionPolicy aceita nos workers só `emptyDir`, o token projetado e
+  esse PVC pelo nome.
+- **Tamanho:** pedido de 2 GiB, para sobrar espaço depois dos updates. O pod roda como 65532, com
+  `fsGroup` para escrever no volume.
+
 ## 8. API e CLI
 
 | Rota | O quê |
@@ -349,7 +374,7 @@ disco.
 | F0 | Link remoto: `MICROBOT_CONTROL=on` no saradomin, machine user do Zitadel para o agent do zaros, serviço no zaros (doc 08, fase 5) | o Cockpit do saradomin controla o cliente do zaros | gielinor, nix-config |
 | F1 | Hub por conta: hello com conta, kind e worker; rotas com `?account=`; mensagens `event` do agent; `microbot_audit.account_id`/`agent_id`; Automação › Workers com o zaros na lista | duas contas no mesmo servidor, cada uma com seu agent (o segundo pode ser um agent de teste no zaros) | chronicle |
 | F2 | Contas e sessões: migração (`regular`, rota opcional, `managed`, `game_sessions`), cofre, `chronicle accounts connect`, Automação da conta na Conta | uma conta sem rota conectada pela CLI; a sessão aparece na web e nunca volta pela API | chronicle |
-| F3 | Imagens e um worker aplicado à mão: as duas imagens e os dois CIs, iGPU compartilhada, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | microbot-plugins, chronicle, gielinor |
+| F3 | Imagens e um worker aplicado à mão: as duas imagens e os dois CIs, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | microbot-plugins, chronicle, gielinor |
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
 | F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle, microbot-plugins (export dos valores) |
 | F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle |
@@ -380,7 +405,7 @@ E10). A revisão de rotas e objetivos que o dono quer fazer depois é o lugar di
 | W2 | Base pelo Nix ou Dockerfile Debian | Nix: o mesmo pin do harness |
 | W3 | O worker entra no jogo sozinho ao subir? | Não; no máximo uma opção por conta, desligada |
 | W4 | Bump da base manual ou automático | Manual (`just worker-base-bump`) |
-| W5 | Cache do jogo por pod ou compartilhado | Por pod (`emptyDir`); PVC se o boot ficar lento |
+| W5 | Cache do jogo por pod ou compartilhado | **Resolvida (2026-11-12):** PVC compartilhado (seção 7.4) |
 | W6 | Lista de workers antes dos gerenciados | **Resolvida** pela F1 |
 | W7 | Como aplicar a config do perfil: escrever o arquivo de perfil do RuneLite antes de o cliente subir, ou `/settings/plugin` depois | Arquivo antes (os plugins já leem a config certa no start); spike na F3 |
 | W8 | IP e escala de uma frota: proxy por worker, outro nó, outra casa | Adiar até haver mais de 3 contas; registrar o risco |

@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Build plugin jars and sideload them.
+#
+#   mb-install [plugin...]          into the dev home (takes effect on mb-client restart)
+#   mb-install --live [plugin...]   into ~/.runelite/microbot-plugins for the everyday client
+#
+# With no plugin names, installs every plugin except DevBootstrap.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+dest="$MB_PLUGIN_DIR"
+if [[ "${1:-}" == "--live" ]]; then
+	dest="$HOME/.runelite/microbot-plugins"
+	shift
+fi
+
+mb_gradle pluginJars
+
+names=()
+if [[ $# -eq 0 ]]; then
+	for jar in "$MB_BUILD_PLUGINS"/*.jar; do
+		name="$(basename "$jar" .jar)"
+		[[ "$name" == DevBootstrapPlugin ]] || names+=("$name")
+	done
+else
+	for arg in "$@"; do
+		{ read -r _ cls <<<"$(mb_plugin_dir "$arg")" && [[ -n "$cls" ]]; } || die "unknown plugin: $arg"
+		[[ "$cls" == DevBootstrapPlugin && "$dest" != "$MB_PLUGIN_DIR" ]] && die "DevBootstrap is dev-home only"
+		names+=("$cls")
+	done
+fi
+
+mkdir -p "$dest"
+# The client deletes non-Hub jars whose mtime is older than 3 days. Jars named in this list
+# get touched by the Microbot launcher wrapper (nix-config) before every launch.
+keep="$dest/.sideload-keep"
+# Renamed plugins: installing the new jar retires the old one in the same place, so the two never
+# load together (old name -> new name).
+declare -A renamed=([IronmanPlannerPlugin]=ChronicleLinkPlugin)
+for name in "${names[@]}"; do
+	for old in "${!renamed[@]}"; do
+		if [[ "${renamed[$old]}" == "$name" && -e "$dest/$old.jar" ]]; then
+			rm -f "$dest/$old.jar"
+			[[ -f "$keep" ]] && sed -i "/^$old\.jar\$/d" "$keep"
+			echo "removed $old.jar (renamed to $name) from $dest"
+		fi
+	done
+	install -m644 "$MB_BUILD_PLUGINS/$name.jar" "$dest/$name.jar"
+	touch "$dest/$name.jar"
+	grep -qxF "$name.jar" "$keep" 2>/dev/null || echo "$name.jar" >>"$keep"
+	echo "installed $name.jar -> $dest"
+done
+echo "restart the client to load them"

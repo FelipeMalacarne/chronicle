@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Sparse, shallow checkout of upstream Microbot at the pinned version into vendor/microbot:
+# the API source, docs and microbot-cli that match the client jar we compile against.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+dest="$MB_REPO/vendor/microbot"
+if [[ -d "$dest/.git" ]]; then
+	current="$(git -C "$dest" describe --tags --exact-match 2>/dev/null || true)"
+	if [[ "$current" == "$MB_VERSION" ]]; then
+		echo "vendor/microbot already at $MB_VERSION"
+		exit 0
+	fi
+	rm -rf "$dest"
+fi
+
+git -c advice.detachedHead=false clone -q --depth 1 --branch "$MB_VERSION" --filter=blob:none --sparse \
+	https://github.com/chsami/Microbot.git "$dest"
+git -C "$dest" sparse-checkout set --no-cone \
+	'/AGENTS.md' '/CLAUDE.md' '/microbot-cli' '/docs/*.md' '/docs/entity-guides/' '/docs/decisions/' \
+	'/runelite-client/src/main/java/net/runelite/client/plugins/microbot/' \
+	'/runelite-client/src/main/java/net/runelite/client/plugins/*.java' \
+	'/runelite-api/src/main/java/'
+echo "vendor/microbot at $MB_VERSION ($(du -sh "$dest" | cut -f1))"

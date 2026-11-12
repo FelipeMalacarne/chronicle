@@ -65,30 +65,30 @@ func TestPluginCommandsThroughTheLink(t *testing.T) {
 	defer cancel()
 
 	var plugins Plugins
-	if err := link.Call(ctx, CmdPlugins, nil, &plugins); err != nil || !strings.Contains(string(plugins.Scripts), "QoLPlugin") {
+	if err := link.Call(ctx, "", CmdPlugins, nil, &plugins); err != nil || !strings.Contains(string(plugins.Scripts), "QoLPlugin") {
 		t.Fatalf("plugins = %s %v", plugins.Scripts, err)
 	}
-	if err := link.Call(ctx, CmdPluginInstall, PluginParams{Name: "GotrPlugin"}, nil); err != nil {
+	if err := link.Call(ctx, "", CmdPluginInstall, PluginParams{Name: "GotrPlugin"}, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := link.Call(ctx, CmdScriptStart, ScriptParams{ClassName: "a.b.GotrPlugin"}, nil); err != nil {
+	if err := link.Call(ctx, "", CmdScriptStart, ScriptParams{ClassName: "a.b.GotrPlugin"}, nil); err != nil {
 		t.Fatal(err)
 	}
-	if err := link.Call(ctx, CmdScriptsPause, nil, nil); err != nil {
+	if err := link.Call(ctx, "", CmdScriptsPause, nil, nil); err != nil {
 		t.Fatal(err)
 	}
 	var values ConfigValues
-	if err := link.Call(ctx, CmdConfigGet, ConfigGetParams{Group: "qol", Keys: []string{"speed", "unset"}}, &values); err != nil {
+	if err := link.Call(ctx, "", CmdConfigGet, ConfigGetParams{Group: "qol", Keys: []string{"speed", "unset"}}, &values); err != nil {
 		t.Fatal(err)
 	}
 	if v := values.Values["speed"]; v == nil || *v != "v" || values.Values["unset"] != nil {
 		t.Fatalf("config values = %+v", values.Values)
 	}
-	if err := link.Call(ctx, CmdConfigSet, ConfigSetParams{Group: "qol", Key: "speed"}, nil); err != nil {
+	if err := link.Call(ctx, "", CmdConfigSet, ConfigSetParams{Group: "qol", Key: "speed"}, nil); err != nil {
 		t.Fatal(err)
 	}
 	var detail ScriptDetail
-	if err := link.Call(ctx, CmdScriptDetail, ScriptParams{ClassName: "a.b.GotrPlugin"}, &detail); err != nil {
+	if err := link.Call(ctx, "", CmdScriptDetail, ScriptParams{ClassName: "a.b.GotrPlugin"}, &detail); err != nil {
 		t.Fatal(err)
 	}
 	if detail.Status == nil || detail.Errors["health"] == "" {
@@ -97,7 +97,7 @@ func TestPluginCommandsThroughTheLink(t *testing.T) {
 
 	// The agent refuses on its own too, whatever the server let through.
 	var cmd *CommandError
-	err := link.Call(ctx, CmdScriptStop, json.RawMessage(`{"className":"net.runelite.client.plugins.microbot.MicrobotPlugin"}`), nil)
+	err := link.Call(ctx, "", CmdScriptStop, json.RawMessage(`{"className":"net.runelite.client.plugins.microbot.MicrobotPlugin"}`), nil)
 	if !errors.As(err, &cmd) || !strings.Contains(cmd.Message, "not controlled") {
 		t.Fatalf("stop the core = %v", err)
 	}

@@ -38,10 +38,16 @@ func (m *memAudit) Append(_ context.Context, e storemicrobot.Entry) (storemicrob
 	return e, nil
 }
 
-func (m *memAudit) List(_ context.Context, limit int, _ string) ([]storemicrobot.Entry, error) {
+func (m *memAudit) List(_ context.Context, limit int, account string) ([]storemicrobot.Entry, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return append([]storemicrobot.Entry(nil), m.entries...), nil
+	var out []storemicrobot.Entry
+	for _, e := range m.entries {
+		if account == "" || e.AccountID == account {
+			out = append(out, e)
+		}
+	}
+	return out, nil
 }
 
 func (m *memAudit) last() storemicrobot.Entry {
@@ -409,13 +415,13 @@ func TestMicrobotAgentOIDC(t *testing.T) {
 	}
 	go func() { _ = a.Run(ctx) }()
 	deadline := time.Now().Add(5 * time.Second)
-	for !link.Info().Connected {
+	for len(link.Agents()) == 0 {
 		if time.Now().After(deadline) {
 			t.Fatal("machine-user agent never linked")
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	if info := link.Info(); info.Identity != "machine-agent" {
+	if info, _ := link.Agent(""); info.Identity != "machine-agent" {
 		t.Fatalf("agent identity = %+v", info)
 	}
 }

@@ -93,16 +93,38 @@ func (c *vncStream) Close() error {
 	return c.Conn.Close()
 }
 
-// OpenVNC asks the agent for a VNC session and returns its stream once the
-// agent brings it; the caller splices it to the browser and closes it.
-func (l *Link) OpenVNC(ctx context.Context) (net.Conn, error) {
+// OpenVNC asks the agent that serves account (Route) for a VNC session and
+// returns its stream once the agent brings it; the caller splices it to the
+// browser and closes it.
+func (l *Link) OpenVNC(ctx context.Context, account string) (net.Conn, error) {
+	l.mu.Lock()
+	c, err := l.route(account)
+	l.mu.Unlock()
+	if err != nil {
+		return nil, err
+	}
+	return l.openVNC(ctx, c)
+}
+
+// OpenVNCAgent is OpenVNC on one connection, by its Info.ID.
+func (l *Link) OpenVNCAgent(ctx context.Context, agentID string) (net.Conn, error) {
+	l.mu.Lock()
+	c := l.agents[agentID]
+	l.mu.Unlock()
+	if c == nil {
+		return nil, ErrNoAgent
+	}
+	return l.openVNC(ctx, c)
+}
+
+func (l *Link) openVNC(ctx context.Context, c *agentConn) (net.Conn, error) {
 	session := newID()
 	stream := make(chan net.Conn, 1)
 	l.mu.Lock()
 	if l.vnc == nil {
-		l.vnc = map[string]chan net.Conn{}
+		l.vnc = map[string]vncWait{}
 	}
-	l.vnc[session] = stream
+	l.vnc[session] = vncWait{stream: stream, subject: c.ident.Subject}
 	l.mu.Unlock()
 	defer func() {
 		l.mu.Lock()
@@ -116,7 +138,7 @@ func (l *Link) OpenVNC(ctx context.Context) (net.Conn, error) {
 	}()
 	cctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
-	if err := l.Call(cctx, CmdVNCOpen, VNCParams{Session: session}, nil); err != nil {
+	if err := l.call(cctx, c, CmdVNCOpen, VNCParams{Session: session}, nil); err != nil {
 		return nil, err
 	}
 	select {
@@ -128,14 +150,15 @@ func (l *Link) OpenVNC(ctx context.Context) (net.Conn, error) {
 }
 
 // ServeVNC is the agent's per-session stream (the caller authenticated the
-// token): it hands the connection to the waiting browser session and holds
-// the request until the session ends.
+// token): it finds the waiting browser session by its id, among every
+// agent's, hands it the connection and holds the request until the session
+// ends. Only the identity of the agent that was asked may bring the stream.
 func (l *Link) ServeVNC(w http.ResponseWriter, r *http.Request) {
 	session := strings.TrimSpace(r.URL.Query().Get("session"))
 	l.mu.Lock()
 	waiting, ok := l.vnc[session]
 	l.mu.Unlock()
-	if !ok {
+	if !ok || waiting.subject != IdentityOf(r.Context()).Subject {
 		http.Error(w, "no browser is waiting for this VNC session", http.StatusNotFound)
 		return
 	}
@@ -147,7 +170,7 @@ func (l *Link) ServeVNC(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	st := &vncStream{Conn: websocket.NetConn(ctx, conn, websocket.MessageBinary), done: make(chan struct{})}
 	select {
-	case waiting <- st:
+	case waiting.stream <- st:
 	default:
 		_ = conn.Close(websocket.StatusPolicyViolation, "session already has a stream")
 		return

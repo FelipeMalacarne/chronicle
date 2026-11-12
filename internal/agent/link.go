@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"cmp"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -10,6 +11,7 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"slices"
 	"sync"
 	"time"
 
@@ -18,8 +20,11 @@ import (
 
 // Link errors.
 var (
-	// ErrNoAgent: no agent is connected.
+	// ErrNoAgent: no connected agent serves the account.
 	ErrNoAgent = errors.New("agent: no agent connected")
+	// ErrAmbiguousAgent: more than one agent could serve the request, and
+	// the request did not say which account (or two agents declare it).
+	ErrAmbiguousAgent = errors.New("agent: more than one agent connected; say which account")
 	// ErrUnknownCommand: the command is not in the closed list.
 	ErrUnknownCommand = errors.New("agent: unknown command")
 )
@@ -32,53 +37,176 @@ type CommandError struct {
 
 func (e *CommandError) Error() string { return e.Command + ": " + e.Message }
 
-// Link is the server end: at most one agent at a time (one game client per
-// machine); a new connection replaces the old one.
+// Link is the server end of the agents' links: the Hub of docs/11. Many
+// agents connect at once, each serving one game client; requests are
+// addressed by account (docs/11 section 13.1) and the Hub picks the
+// connection. A new connection of the same agent (same identity and same
+// worker, or host) replaces only that agent's previous one.
 type Link struct {
 	Log *slog.Logger
+	// OnConnect, when set, is called in its own goroutine after an agent's
+	// connection is registered (the workers' reconciler sends the bootstrap
+	// to managed agents from it).
+	OnConnect func(Info)
 
-	mu      sync.Mutex
+	mu     sync.Mutex
+	agents map[string]*agentConn // by connection id
+	vnc    map[string]vncWait    // browser sessions waiting for a stream, by session id
+}
+
+// agentConn is one agent's websocket.
+type agentConn struct {
+	id      string
+	key     string
 	conn    *websocket.Conn
 	hello   Hello
-	who     string
+	ident   Identity
 	since   time.Time
 	pending map[string]chan Message
-	vnc     map[string]chan net.Conn
 	wmu     sync.Mutex
 }
 
-// Info is what the server knows about the connected agent.
+func (c *agentConn) info() Info {
+	kind := c.hello.Kind
+	if kind == "" {
+		kind = KindAttached
+	}
+	return Info{
+		Connected: true, ID: c.id, Since: c.since, Host: c.hello.Host, Version: c.hello.Version,
+		Identity: c.ident.Subject, Account: c.hello.Account, Kind: kind, Worker: c.hello.Worker, Bridge: c.hello.Bridge,
+	}
+}
+
+// Info is what the server knows about one connected agent.
 type Info struct {
-	Connected bool      `json:"connected"`
-	Since     time.Time `json:"since,omitzero"`
-	Host      string    `json:"host,omitempty"`
-	Version   string    `json:"version,omitempty"`
-	// Identity is who the server authenticated: "dev" (loopback) or the
-	// machine user's subject.
+	Connected bool `json:"connected"`
+	// ID is this connection's id (a reconnect gets a new one).
+	ID      string    `json:"id,omitempty"`
+	Since   time.Time `json:"since,omitzero"`
+	Host    string    `json:"host,omitempty"`
+	Version string    `json:"version,omitempty"`
+	// Identity is who the server authenticated: "dev" (loopback), the
+	// machine user's subject or "pod:<name>" for a managed worker.
 	Identity string `json:"identity,omitempty"`
+	// Account is the account the agent declared in its hello ("" for none).
+	Account string `json:"account,omitempty"`
+	// Kind is KindAttached or KindManaged.
+	Kind string `json:"kind,omitempty"`
+	// Worker is a managed agent's pod name.
+	Worker string `json:"worker,omitempty"`
+	// Bridge is the Chronicle Link bridge version the agent reported.
+	Bridge string `json:"bridge,omitempty"`
+}
+
+// Identity is who agentAuth authenticated on an agent's request.
+type Identity struct {
+	// Subject is "dev", a machine user's subject or "pod:<name>".
+	Subject string
+	// BoundAccount, when set, is the only account this identity may serve:
+	// its hello must declare it, with kind managed (a worker's pod).
+	BoundAccount string
+	// Pod is the worker pod's name, for a pod identity.
+	Pod string
 }
 
 type identityKey struct{}
 
-// WithIdentity tells Serve who the server authenticated on this request.
-func WithIdentity(ctx context.Context, who string) context.Context {
-	return context.WithValue(ctx, identityKey{}, who)
+// WithIdentity tells Serve (and ServeVNC) who the server authenticated on
+// this request.
+func WithIdentity(ctx context.Context, id Identity) context.Context {
+	return context.WithValue(ctx, identityKey{}, id)
 }
 
-// Info reports the agent's connection.
-func (l *Link) Info() Info {
+// IdentityOf is the Identity WithIdentity put in ctx (zero when none).
+func IdentityOf(ctx context.Context) Identity {
+	id, _ := ctx.Value(identityKey{}).(Identity)
+	return id
+}
+
+// Agents lists the connected agents, oldest first.
+func (l *Link) Agents() []Info {
 	l.mu.Lock()
 	defer l.mu.Unlock()
-	if l.conn == nil {
-		return Info{}
+	out := make([]Info, 0, len(l.agents))
+	for _, c := range l.agents {
+		out = append(out, c.info())
 	}
-	return Info{Connected: true, Since: l.since, Host: l.hello.Host, Version: l.hello.Version, Identity: l.who}
+	slices.SortFunc(out, func(a, b Info) int {
+		return cmp.Or(a.Since.Compare(b.Since), cmp.Compare(a.ID, b.ID))
+	})
+	return out
+}
+
+// Agent is the agent that serves account ("" for the only agent).
+func (l *Link) Agent(account string) (Info, bool) {
+	info, err := l.Route(account)
+	return info, err == nil
+}
+
+// Route is the agent that serves account, by the rules of docs/11 section
+// 13.1: with no account, the only agent connected (ErrAmbiguousAgent when
+// there are more); with an account, the agent that declares it, else the
+// only agent that declares none, else ErrNoAgent.
+func (l *Link) Route(account string) (Info, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	c, err := l.route(account)
+	if err != nil {
+		return Info{}, err
+	}
+	return c.info(), nil
+}
+
+// route runs under l.mu.
+func (l *Link) route(account string) (*agentConn, error) {
+	if account == "" {
+		switch len(l.agents) {
+		case 0:
+			return nil, ErrNoAgent
+		case 1:
+			for _, c := range l.agents {
+				return c, nil
+			}
+		}
+		return nil, ErrAmbiguousAgent
+	}
+	var declared, undeclared []*agentConn
+	for _, c := range l.agents {
+		switch c.hello.Account {
+		case account:
+			declared = append(declared, c)
+		case "":
+			undeclared = append(undeclared, c)
+		}
+	}
+	switch {
+	case len(declared) == 1:
+		return declared[0], nil
+	case len(declared) > 1:
+		return nil, fmt.Errorf("%w (%d agents declare %s)", ErrAmbiguousAgent, len(declared), account)
+	case len(undeclared) == 1:
+		return undeclared[0], nil
+	}
+	return nil, ErrNoAgent
+}
+
+// agentKey is what makes two connections the same agent: who authenticated
+// it and which worker (or host) it runs on. A pod bound to an account is one
+// worker per account (a Deployment of one replica, Recreate), so its key is
+// the account: a new pod replaces the old pod's lingering link.
+func agentKey(id Identity, h Hello) string {
+	if id.BoundAccount != "" {
+		return "bound\x00" + id.BoundAccount
+	}
+	return id.Subject + "\x00" + cmp.Or(h.Worker, h.Host)
 }
 
 // Serve upgrades an authenticated request to the agent's websocket and holds
 // it until it closes. The caller has authenticated the agent (httpapi's
-// agentAuth: loopback in dev, a machine user's token in oidc).
+// agentAuth: loopback in dev, a machine user's token in oidc, a pod's token)
+// and put its Identity in the request's context.
 func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
+	ident := IdentityOf(r.Context())
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		l.Log.Warn("agent link: accept", "err", err)
@@ -95,29 +223,55 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 		_ = conn.Close(websocket.StatusPolicyViolation, "expected hello")
 		return
 	}
+	h := *hello.Hello
+	if h.Kind != "" && h.Kind != KindAttached && h.Kind != KindManaged {
+		_ = conn.Close(websocket.StatusPolicyViolation, "unknown agent kind")
+		return
+	}
+	if ident.BoundAccount != "" && (h.Account != ident.BoundAccount || h.Kind != KindManaged) {
+		l.Log.Warn("agent link: refused a hello outside the identity's account", "identity", ident.Subject, "declared", h.Account, "kind", h.Kind)
+		_ = conn.Close(websocket.StatusPolicyViolation, "this identity serves only its own account, as a managed agent")
+		return
+	}
+	ac := &agentConn{
+		id: newID(), key: agentKey(ident, h), conn: conn, hello: h, ident: ident, since: time.Now(),
+		pending: map[string]chan Message{},
+	}
+	var replaced []*agentConn
 	l.mu.Lock()
-	if l.conn != nil {
-		_ = l.conn.Close(websocket.StatusNormalClosure, "replaced by a new agent connection")
+	if l.agents == nil {
+		l.agents = map[string]*agentConn{}
 	}
-	l.conn, l.hello, l.since = conn, *hello.Hello, time.Now()
-	l.who, _ = r.Context().Value(identityKey{}).(string)
-	if l.pending == nil {
-		l.pending = map[string]chan Message{}
+	for id, old := range l.agents {
+		if old.key == ac.key {
+			delete(l.agents, id)
+			replaced = append(replaced, old)
+		}
 	}
+	l.agents[ac.id] = ac
 	l.mu.Unlock()
-	l.Log.Info("agent link: connected", "host", hello.Hello.Host, "version", hello.Hello.Version, "identity", l.who)
+	for _, old := range replaced {
+		go func() { _ = old.conn.Close(websocket.StatusNormalClosure, "replaced by a new agent connection") }()
+	}
+	info := ac.info()
+	l.Log.Info("agent link: connected", "id", ac.id, "host", h.Host, "version", h.Version, "identity", ident.Subject,
+		"account", h.Account, "kind", info.Kind, "worker", h.Worker, "replaced", len(replaced))
+	if l.OnConnect != nil {
+		go l.OnConnect(info)
+	}
 	defer func() {
 		l.mu.Lock()
-		if l.conn == conn {
-			l.conn = nil
-			for id, ch := range l.pending {
-				close(ch)
-				delete(l.pending, id)
-			}
+		if l.agents[ac.id] == ac {
+			delete(l.agents, ac.id)
 		}
+		for id, ch := range ac.pending {
+			close(ch)
+			delete(ac.pending, id)
+		}
+		ac.pending = nil
 		l.mu.Unlock()
 		_ = conn.CloseNow()
-		l.Log.Info("agent link: disconnected", "host", hello.Hello.Host)
+		l.Log.Info("agent link: disconnected", "id", ac.id, "host", h.Host, "account", h.Account)
 	}()
 	for {
 		_, raw, err := conn.Read(ctx)
@@ -129,8 +283,8 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		l.mu.Lock()
-		ch, ok := l.pending[m.ID]
-		delete(l.pending, m.ID)
+		ch, ok := ac.pending[m.ID]
+		delete(ac.pending, m.ID)
 		l.mu.Unlock()
 		if ok {
 			ch <- m
@@ -138,9 +292,30 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Call sends one command to the agent and waits for its result; into, when
-// not nil, receives the result's data.
-func (l *Link) Call(ctx context.Context, command string, params, into any) error {
+// Call sends one command to the agent that serves account (Route) and waits
+// for its result; into, when not nil, receives the result's data.
+func (l *Link) Call(ctx context.Context, account, command string, params, into any) error {
+	l.mu.Lock()
+	c, err := l.route(account)
+	l.mu.Unlock()
+	if err != nil {
+		return err
+	}
+	return l.call(ctx, c, command, params, into)
+}
+
+// CallAgent is Call to one connection, by its Info.ID.
+func (l *Link) CallAgent(ctx context.Context, agentID, command string, params, into any) error {
+	l.mu.Lock()
+	c := l.agents[agentID]
+	l.mu.Unlock()
+	if c == nil {
+		return ErrNoAgent
+	}
+	return l.call(ctx, c, command, params, into)
+}
+
+func (l *Link) call(ctx context.Context, c *agentConn, command string, params, into any) error {
 	if !Known(command) {
 		return fmt.Errorf("%w: %q", ErrUnknownCommand, command)
 	}
@@ -155,16 +330,15 @@ func (l *Link) Call(ctx context.Context, command string, params, into any) error
 	id := newID()
 	ch := make(chan Message, 1)
 	l.mu.Lock()
-	conn := l.conn
-	if conn == nil {
+	if c.pending == nil { // the connection ended meanwhile
 		l.mu.Unlock()
 		return ErrNoAgent
 	}
-	l.pending[id] = ch
+	c.pending[id] = ch
 	l.mu.Unlock()
 	drop := func() {
 		l.mu.Lock()
-		delete(l.pending, id)
+		delete(c.pending, id)
 		l.mu.Unlock()
 	}
 	b, err := json.Marshal(Message{Type: TypeCommand, ID: id, Command: command, Params: raw})
@@ -172,9 +346,9 @@ func (l *Link) Call(ctx context.Context, command string, params, into any) error
 		drop()
 		return err
 	}
-	l.wmu.Lock()
-	err = conn.Write(ctx, websocket.MessageText, b)
-	l.wmu.Unlock()
+	c.wmu.Lock()
+	err = c.conn.Write(ctx, websocket.MessageText, b)
+	c.wmu.Unlock()
 	if err != nil {
 		drop()
 		return fmt.Errorf("agent: send %s: %w", command, err)
@@ -195,6 +369,13 @@ func (l *Link) Call(ctx context.Context, command string, params, into any) error
 		}
 		return nil
 	}
+}
+
+// vncWait is a browser session waiting for its agent's stream: only the
+// identity of the agent that was asked may bring it.
+type vncWait struct {
+	stream  chan net.Conn
+	subject string
 }
 
 func newID() string {

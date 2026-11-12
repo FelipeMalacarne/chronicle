@@ -95,7 +95,7 @@
 
             meta = with pkgs.lib; {
               description = "Ironman Planner server, CLI and MCP in one binary";
-              homepage = "https://github.com/FelipeMalacarne/ironman-planner";
+              homepage = "https://github.com/FelipeMalacarne/chronicle";
               mainProgram = "ironman";
               platforms = platforms.unix;
             };

@@ -126,6 +126,7 @@ func runWorker(ctx context.Context, url string) error {
 //	WORKER_ACCOUNT              the only account the worker serves; required
 //	HOSTNAME                    the pod's name (the hello's worker)
 //	MB_DEV_HOME                 the harness dev home (default ~/.local/share/microbot-dev)
+//	WORKER_GAME_CACHE           the shared game cache volume, linked as <MB_DEV_HOME>/.runelite/jagexcache
 //	MB_HWID_STORE_DIR           where the HWID agent's device files go (default $HOME/.runelite)
 //	MICROBOT_CLIENT_CMD         instead of mb-client from the PATH
 //	MB_VNC_PORT                 the x11vnc port (default 5999), on loopback
@@ -184,7 +185,7 @@ func workerAgent(url string, getenv func(string) string, log *slog.Logger) (*age
 			Game: &microbot.Client{Home: home}, Home: home, Log: log,
 			Bridge:    &microbot.Client{Home: home, Socket: microbot.BridgeSocket},
 			ClientCmd: clientCmd,
-			Worker:    &agent.WorkerConfig{Account: account, HWIDStoreDir: hwid},
+			Worker:    &agent.WorkerConfig{Account: account, HWIDStoreDir: hwid, GameCache: strings.TrimSpace(getenv("WORKER_GAME_CACHE"))},
 		},
 	}, nil
 }

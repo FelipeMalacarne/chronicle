@@ -466,7 +466,10 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
 - Recursos: `requests` 500m e 1 GiB; `limits` 1 núcleo e 1792 MiB; `MB_XMX=1024m`.
 - Volumes: `home` (`emptyDir` em disco) em `/home/worker`; `secrets` (`emptyDir` em memória, 1 MiB)
   em `/run/chronicle` para os arquivos do HWID agent; o PVC `microbot-game-cache` em
-  `/home/worker/microbot-dev/.runelite/jagexcache`; o token projetado.
+  `/var/cache/chronicle/jagexcache` (`WORKER_GAME_CACHE`); o token projetado. O cache fica **fora**
+  da home: montado em `.runelite/jagexcache`, o runtime criava `microbot-dev` e `.runelite` como root
+  (755) e o cliente, uid 65532, não subia (visto no primeiro Iniciar no saradomin, 2026-11-12). O
+  agent cria a `.runelite` e o link `jagexcache` → volume; o lock de boot fica no volume.
 - A sessão da Jagex entra só como variável de ambiente do processo do cliente (`JX_SESSION_ID`,
   `JX_CHARACTER_ID`, `JX_DISPLAY_NAME`, como o launcher faz), nunca em arquivo.
 - O agent segura `flock` em `jagexcache/.chronicle-boot.lock` do início do cliente até o Agent

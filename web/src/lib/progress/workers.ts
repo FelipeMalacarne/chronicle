@@ -106,8 +106,11 @@ export function workerLine(
 			line.tone = row.agent ? 'ok' : 'busy';
 		}
 		if (row.last_error) {
+			// An error after the pod came up is the client's (the bootstrap or a start failed): the
+			// agent being linked says nothing about the game, so the line must not read as fine.
 			line.detail = row.last_error;
-			if (line.tone !== 'ok') line.tone = 'warn';
+			if (row.agent) line.state = 'agent ligado · o cliente não subiu';
+			line.tone = 'warn';
 		}
 		line.actions = !view.enabled ? [] : row.outdated ? ['restart', 'stop'] : ['stop', 'restart'];
 	} else {

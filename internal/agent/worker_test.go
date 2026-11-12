@@ -225,3 +225,33 @@ func TestWorkerRefusesAccountUse(t *testing.T) {
 		t.Fatalf("account_use in worker mode = %v", err)
 	}
 }
+
+// The game cache volume is mounted outside the home (the runtime would make a
+// mount point's parents root-owned): the agent makes .runelite and links
+// .runelite/jagexcache to the volume, where the boot lock also lives.
+func TestWorkerLinksTheGameCache(t *testing.T) {
+	e, _, dir := podExecutor(t)
+	cache := filepath.Join(dir, "cache")
+	if err := os.MkdirAll(cache, 0o777); err != nil {
+		t.Fatal(err)
+	}
+	e.Worker.GameCache = cache
+	if _, err := e.Execute(context.Background(), CmdWorkerBootstrap, bootstrapParams(nil)); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(e.Home, ".runelite", "jagexcache")
+	if target, err := os.Readlink(link); err != nil || target != cache {
+		t.Fatalf("jagexcache link = %q %v", target, err)
+	}
+	if _, err := os.Stat(filepath.Join(cache, ".chronicle-boot.lock")); err != nil {
+		t.Fatalf("boot lock not in the cache volume: %v", err)
+	}
+	// Idempotent, and a link elsewhere is refused rather than replaced.
+	if err := e.prepareWorkerHome(); err != nil {
+		t.Fatalf("second prepare: %v", err)
+	}
+	e.Worker.GameCache = filepath.Join(dir, "other")
+	if err := e.prepareWorkerHome(); err == nil {
+		t.Fatal("a link to another cache was accepted")
+	}
+}

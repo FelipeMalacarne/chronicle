@@ -985,16 +985,17 @@ o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis
   `air` e `pnpm dev` no host (`just dev`). Acesso em `localhost:8080` (dev: `localhost:5173`);
   celular pela rede local ou Tailscale. `AUTH_MODE=dev`. Plugin com `serverUrl=http://localhost:8080` e,
   até a auth planejada do plugin (seção 2.5), token `ipl_` gerado localmente; depois, só a URL. `pg_dump` manual ou via `just`.
-- **saradomin** (decisão de 2026-11-03): Postgres existente (database `ironman_planner`), Zitadel via
-  OIDC com uma aplicação Web (PKCE, sem client secret) e redirect `https://planner.<domínio>/auth/callback`;
+- **saradomin** (decisão de 2026-11-03; montagem de 2026-11-11): o cluster k3s de casa, com os manifests
+  do cluster no repositório `gielinor`. `https://chronicle.saradomin.ftm.dev.br`, só pela tailnet
+  (Ingress do Traefik com o certificado curinga); banco `chronicle` no CloudNativePG compartilhado
+  (`postgres-main`, com o backup dele); Zitadel em `auth.ftm.dev.br` com um projeto "Chronicle", uma
+  aplicação Web (PKCE, sem client secret, redirect `/auth/callback`) e uma nativa (device flow, JWT)
+  para CLI, `ironman mcp` e plugin, roles do projeto no JWT (seção 2.5; decisão 28 do doc 01).
   `/auth/login` inicia o fluxo, `/auth/callback` troca o código, cria ou atualiza `users` por
-  `(issuer, sub)` e grava a sessão em cookie `HttpOnly` (feito; seção 2.5). Autorização:
-  `OIDC_ALLOWED_SUBJECTS` no `.env` e/ou `OIDC_REQUIRED_ROLE` (role do projeto no Zitadel). Passos do
-  console e do `.env` no doc 07, seção 3.3. O plugin autentica pelo device flow do Zitadel, numa aplicação nativa pública,
-  com as roles do projeto no JWT (seção 2.5; decisão 28 do doc 01, que revê o "plugin continua com token
-  `ipl_`" de 2026-11-03). Imagem publicada no registry que o servidor já
-  usa, serviço no compose existente, atrás do reverse proxy; health em `/api/health`; `pg_dump` na rotina
-  do servidor.
+  `(issuer, sub)` e grava a sessão em cookie `HttpOnly`. Autorização: `OIDC_ALLOWED_SUBJECTS` e/ou
+  `OIDC_REQUIRED_ROLE`. As imagens (servidor e migrations do goose) vão para o GHCR a cada push na
+  `main` e o CI grava a tag em `deploy/k8s/overlays/saradomin`, que o Argo CD segue: o commit do CI é o
+  deploy. Passos no doc 07, seção 3.3.
 - Nada no código distingue os dois ambientes além da configuração (doc 07).
 
 ## 9. Estado em 2026-11-08 e sequência vigente

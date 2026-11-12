@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: chronicle
+# The namespace, the database and the Secrets (chronicle-secrets, ghcr-pull) belong to the
+# cluster: gielinor creates them, the database `chronicle` on the shared CloudNativePG cluster
+# (clusters/saradomin/apps/postgres) and the Secrets, encrypted by SOPS, in apps/chronicle.
+# This overlay only says how the app runs.
+resources:
+  - ../../base
+  - ingress.yaml
+configMapGenerator:
+  - name: chronicle-config
+    behavior: merge
+    literals:
+      - AUTH_MODE=oidc
+      - OIDC_ISSUER=https://auth.ftm.dev.br
+      - PUBLIC_BASE_URL=https://chronicle.saradomin.ftm.dev.br
+      - OIDC_REQUIRED_ROLE=owner
+      - SYNC_HISCORES_MINUTES=30
+      - MICROBOT_CONTROL=off
+images:
+  - name: chronicle
+    newName: ghcr.io/felipemalacarne/ironman-planner
+    # CI sets both tags to the images it just pushed, on every push to main.
+    newTag: "unpublished"
+  - name: chronicle-migrate
+    newName: ghcr.io/felipemalacarne/ironman-planner-migrate
+    newTag: "unpublished"

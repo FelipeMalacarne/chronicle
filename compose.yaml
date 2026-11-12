@@ -21,8 +21,8 @@
 # env_file). DATABASE_URL is composed here with host `postgres`, so the same .env keeps
 # working for host dev (`just dev`, localhost).
 #
-# On saradomin (existing Postgres + Zitadel) only the `app` service would be used, with
-# AUTH_MODE=oidc; that needs session auth first (docs/04 section 9, item 11).
+# saradomin does not use this file: it runs the same images on k3s from deploy/k8s, with
+# AUTH_MODE=oidc (docs/07 section 3.3).
 
 name: ironman-planner
 

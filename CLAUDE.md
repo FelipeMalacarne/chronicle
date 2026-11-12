@@ -112,6 +112,9 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0009 guides + mark_commands: append-only log of every step_marks change,
                       0010 microbot_audit: every Microbot control action)
 db/queries/           sqlc queries; sqlc.yaml at the root
+deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
+                      the images to GHCR and writes their tag in the overlay, which Argo CD follows
+                      (docs/07 section 3.3); the cluster side (namespace, database, secrets) is in gielinor
 data/                 original extraction: guide/ (input of `content migrate`), sources/bruhsailer (pinned DOCX)
 docs/                 numbered design docs (PT-BR); tools/ has the Python extraction scripts
 ```

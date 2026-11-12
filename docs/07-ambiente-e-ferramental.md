@@ -82,54 +82,57 @@ just stack-accounts / stack-account-guide <id> <guia> / stack-psql
 
 ### 3.3 saradomin
 
-A sessão web por OIDC está pronta (doc 04, seção 2.5); falta só o deploy.
+O saradomin é o cluster k3s de casa, com Argo CD, CloudNativePG, Traefik e o Zitadel em
+`auth.ftm.dev.br`; os manifests do cluster ficam no repositório `gielinor`
+(`clusters/saradomin`). O Chronicle roda em `https://chronicle.saradomin.ftm.dev.br`, só pela tailnet,
+como os outros `*.saradomin.ftm.dev.br` (certificado curinga do cert-manager, entrypoint `websecure`
+do Traefik). O Zitadel é público, então o login sai do tailnet e volta.
 
-1. Criar database e usuário no Postgres existente; `DATABASE_URL` com `sslmode=require` se aplicável.
-   Para levar o progresso do zaros: `just db-backup` lá e `pg_restore`/`psql` aqui, antes do primeiro
-   login (ver o passo 7).
-2. No console do Zitadel, **projeto** "Ironman Planner" (Projects → New):
-   - em General, ligar **Assert Roles on Authentication** (as roles do projeto vão para o userinfo);
-     opcional: **Check authorization on Authentication** (o próprio Zitadel barra quem não tem role
-     no projeto);
-   - em Roles, criar a role `owner` (é o `OIDC_REQUIRED_ROLE`; outro nome serve, desde que bata);
-   - em Authorizations, dar `owner` ao usuário do dono.
-3. No mesmo projeto, **aplicação** Web (Applications → New → Web), método de autenticação **PKCE**
-   (sem client secret):
-   - Redirect URIs: `https://planner.<domínio>/auth/callback`;
-   - Post Logout URIs: `https://planner.<domínio>/`;
-   - Development Mode desligado (ligar só para testar com `http://localhost:8080/auth/callback`);
-   - em Token Settings, ligar **User roles inside ID Token** e **User Info inside ID Token** (sem eles
-     o planner busca roles e perfil no userinfo, uma chamada a mais no login);
-   - copiar o **Client ID** para `OIDC_CLIENT_ID`. O issuer é o domínio da instância
-     (`https://auth.<domínio>`; conferir em `/.well-known/openid-configuration`).
-   - O `sub` do dono é o **ID** do usuário em Users (número de 18 dígitos), para
+**Neste repositório** (`deploy/k8s`): `base` com o Deployment (a imagem de migrations do goose num
+initContainer, o servidor com `/api/health` de readiness e `/api/version` de liveness, sem disco) e o
+Service; `overlays/saradomin` com o Ingress, a config de `oidc` e as tags das imagens. O CI, a cada push
+na `main`, publica `ghcr.io/felipemalacarne/ironman-planner:<sha>` e `…/ironman-planner-migrate:<sha>` e
+grava o sha no overlay (`deploy: saradomin roda <sha>`); o Argo segue o overlay na `main`, então esse
+commit é o deploy. `secret.example.yaml` lista as chaves do Secret.
+
+**No gielinor** (`clusters/saradomin`): o namespace `chronicle`; o role `chronicle` e o `Database`
+`chronicle` do `postgres-main` (`apps/postgres`); e `apps/chronicle` com a `Application` do Argo, a
+credencial de leitura do repositório (privado) para o Argo, o `ghcr-pull` (o GHCR de um repositório
+privado pede login) e o `chronicle-secrets`, todos cifrados com SOPS.
+
+Uma vez:
+
+1. **Zitadel** (`https://auth.ftm.dev.br/ui/console`), um **projeto** "Chronicle":
+   - em General, ligar **Assert Roles on Authentication**;
+   - em Roles, criar `owner` (é o `OIDC_REQUIRED_ROLE`) e as do plugin: `ingest`, `items:bank`,
+     `items:inventory`, `items:equipment`, `marks:write`;
+   - em Authorizations, dar todas ao usuário do dono;
+   - aplicação **Web**, método **PKCE** (sem secret): Redirect URI
+     `https://chronicle.saradomin.ftm.dev.br/auth/callback`, Post Logout URI
+     `https://chronicle.saradomin.ftm.dev.br/`, Development Mode desligado; em Token Settings,
+     **User roles inside ID Token** e **User Info inside ID Token**. O Client ID vai em `OIDC_CLIENT_ID`;
+   - aplicação **Native**, grants **Device Code** e **Refresh Token**, **Auth Token Type: JWT**. O Client
+     ID vai em `OIDC_NATIVE_CLIENT_ID` (CLI, `ironman mcp` e o plugin);
+   - o id do projeto vai em `OIDC_PROJECT_ID`; o id do usuário do dono (Users, 18 dígitos) em
      `OIDC_ALLOWED_SUBJECTS`.
-   Para a CLI, o `ironman mcp` e depois o plugin (decisão 28 do doc 01; doc 04, seção 2.5): criar
-   também uma aplicação **nativa** pública (Applications → New → Native) com o grant **Device Code**
-   e o **Refresh Token**, **Auth Token Type: JWT**, e no projeto ligar **Assert Roles on
-   Authentication** (as roles vão no access token, que o planner valida sem chamar o Zitadel). O
-   **Client ID** dela vai em `OIDC_NATIVE_CLIENT_ID`. O planner informa issuer, `client_id` e scopes em
-   `GET /api/auth/client`, então cliente nenhum precisa de mais que a URL (`ironman login --url
-   https://planner.<domínio>`). Para o plugin (item 15), as roles do projeto `ingest`, `items:bank`,
-   `items:inventory`, `items:equipment` e `marks:write`, atribuídas ao usuário do dono.
-4. `.env` com `AUTH_MODE=oidc`, `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `PUBLIC_BASE_URL=https://planner.<domínio>`
-   (https liga o `Secure` do cookie; `OIDC_REDIRECT_URL` pode ficar vazio e vira
-   `PUBLIC_BASE_URL/auth/callback`), `SESSION_SECRET` novo (`openssl rand -hex 32`; o valor do
-   `.env.example` é recusado) e pelo menos um de `OIDC_ALLOWED_SUBJECTS` e `OIDC_REQUIRED_ROLE` (com os
-   dois, o login precisa dos dois); `OIDC_PROJECT_ID` com o id do projeto do planner e
-   `OIDC_NATIVE_CLIENT_ID` com o da aplicação nativa (vazio: só a web entra). Sem nenhum dos dois
-   primeiros, ou sem `DATABASE_URL`, o `serve` não sobe.
-5. Usar só o serviço `app` do `compose.yaml` (remover `postgres` e o `depends_on`) ou declarar o
-   serviço no compose do servidor com a mesma imagem. Health em `GET /api/health`. O proxy reverso
-   termina o TLS e repassa cookies; para o SSE (`/api/events`), sem buffer e sem timeout curto de
-   leitura (o servidor já manda `X-Accel-Buffering: no`).
-6. `goose up` com o `DATABASE_URL` do servidor antes de subir a nova versão (a tabela `sessions` já
-   vem da migration 0001).
-7. Primeiro login: o primeiro usuário OIDC do banco recebe todas as contas do usuário dev (regra no
-   doc 04, seção 2.5; o log diz `first OIDC login claimed the dev accounts`). Por isso o dono entra
-   antes de qualquer outro usuário. Os tokens `ipl_` do plugin continuam aceitos, mas o plugin entra pelo próprio login (Credential "Login", Entrar no painel; doc 06, adendo de 2026-11-11), depois do primeiro login na web.
-8. Conferir: `/` sem sessão leva ao Zitadel e volta à mesma tela; `GET /api/me` mostra as contas;
-   um usuário sem a role vê "Acesso negado".
+2. **GHCR**: um token clássico só com `read:packages`, para o `ghcr-pull`.
+3. **Segredos** no gielinor: `chronicle-secrets` com `DATABASE_URL` (a senha gerada para o role
+   `chronicle`), `SESSION_SECRET` (`openssl rand -hex 32`) e os quatro valores do passo 1.
+4. **Banco do zaros**: depois de o `Database` existir e antes de o app subir, `pg_dump --no-owner
+   --no-acl` do banco do zaros restaurado no `chronicle` como o role `chronicle`. O dump traz a
+   `goose_db_version`, então a migrate do initContainer só aplica o que faltar.
+5. **Ligar**: descomentar `apps/chronicle` em `clusters/saradomin/kustomization.yaml` (merge na `main`
+   do gielinor). O `saradomin-root` cria a `Application`, e ela sobe o app.
+6. **Primeiro login**: o dono entra pela web antes de qualquer outro usuário; o primeiro usuário OIDC
+   recebe as contas do usuário dev (log `first OIDC login claimed the dev accounts`; doc 04, seção 2.5).
+7. **Plugin**: Server URL `https://chronicle.saradomin.ftm.dev.br`, Credential "Login (Chronicle
+   panel)" e Entrar no painel (doc 06, adendo de 2026-11-11). **CLI**: `ironman login --url
+   https://chronicle.saradomin.ftm.dev.br`.
+8. Conferir: `/` sem sessão leva ao Zitadel e volta; `GET /api/me` mostra as contas; o painel do plugin
+   mostra a rota; `kubectl --context saradomin -n chronicle get pods` pronto.
+
+O controle do Microbot (`MICROBOT_CONTROL`) fica desligado no saradomin até o agent ter a conta de
+máquina do Zitadel (doc 08); no zaros ele continua pelo `just dev`.
 
 ## 4. Variáveis de ambiente
 

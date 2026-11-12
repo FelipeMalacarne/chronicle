@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+# How Chronicle runs on Kubernetes (docs/07 section 3.3): the server, with the goose migrations
+# in an initContainer (the server never migrates, CLAUDE.md rules 1 and 5), and its Service.
+# The namespace, the database and the Secrets belong to the cluster repository.
+resources:
+  - deployment.yaml
+  - service.yaml
+labels:
+  - pairs:
+      app.kubernetes.io/name: chronicle
+    includeSelectors: true
+configMapGenerator:
+  - name: chronicle-config
+    literals:
+      - IRONMAN_ADDR=:8080
+      - CONTENT_DIR=/app/content
+      - LOG_LEVEL=info

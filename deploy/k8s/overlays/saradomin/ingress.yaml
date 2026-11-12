@@ -1,0 +1,24 @@
+# Only on the tailnet, like the other *.saradomin.ftm.dev.br apps: Traefik's websecure entrypoint
+# with the cluster's wildcard certificate. The login goes through Zitadel at auth.ftm.dev.br,
+# which is public, and comes back here. The SSE stream (/api/events) needs no buffering; Traefik
+# does not buffer by default and the server sends X-Accel-Buffering: no.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: chronicle
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: chronicle.saradomin.ftm.dev.br
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: chronicle
+                port:
+                  name: http

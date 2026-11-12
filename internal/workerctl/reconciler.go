@@ -139,6 +139,12 @@ func (r *Reconciler) Once(ctx context.Context) error {
 		return fmt.Errorf("list worker deployments: %w", err)
 	}
 	running := map[string]bool{}
+	deployed := map[string]string{} // name -> image of the worker container
+	for _, d := range have {
+		if cs := d.Spec.Template.Spec.Containers; len(cs) > 0 {
+			deployed[d.Metadata.Name] = cs[0].Image
+		}
+	}
 	var errs []error
 	for _, w := range want {
 		if !w.Running {
@@ -153,13 +159,18 @@ func (r *Reconciler) Once(ctx context.Context) error {
 			_ = r.Store.SetError(ctx, w.Account, "WORKER_IMAGE is not set on the server")
 			continue
 		}
-		d := kube.WorkerDeployment(r.Namespace, kube.WorkerSpec{Account: w.Account, Image: image, ServerURL: r.ServerURL, Version: r.Version})
-		// Server-side apply of an unchanged spec changes nothing, so the pod
-		// only restarts when the image (a restart) changes.
-		if err := r.Cluster.ApplyDeployment(ctx, d); err != nil {
-			errs = append(errs, fmt.Errorf("apply %s: %w", d.Metadata.Name, err))
-			_ = r.Store.SetError(ctx, w.Account, err.Error())
+		name := kube.WorkerName(w.Account)
+		// A worker that exists on the image it should run is left alone: a
+		// new server version may build another pod template (resources,
+		// variables, mounts), and applying it would restart the pod, logging
+		// the account out in the middle of whatever it does. Template changes
+		// reach a worker only on a start or on the owner's restart (Restart,
+		// or a new image).
+		if img, ok := deployed[name]; ok && img == image {
 			continue
+		}
+		if err := r.apply(ctx, w.Account, image); err != nil {
+			errs = append(errs, err)
 		}
 	}
 	for _, d := range have {
@@ -225,9 +236,37 @@ func (r *Reconciler) refreshPods(ctx context.Context) {
 	r.mu.Unlock()
 }
 
-// Restart deletes the account's worker pods; the Deployment makes a new one,
-// which links and gets a fresh bootstrap. It logs the account out.
+// apply writes the worker Deployment of the current pod template.
+func (r *Reconciler) apply(ctx context.Context, account, image string) error {
+	d := kube.WorkerDeployment(r.Namespace, kube.WorkerSpec{Account: account, Image: image, ServerURL: r.ServerURL, Version: r.Version})
+	if err := r.Cluster.ApplyDeployment(ctx, d); err != nil {
+		_ = r.Store.SetError(ctx, account, err.Error())
+		return fmt.Errorf("apply %s: %w", d.Metadata.Name, err)
+	}
+	return nil
+}
+
+// Restart applies the account's worker Deployment with the current pod
+// template and deletes its pods; the Deployment makes a new one, which links
+// and gets a fresh bootstrap. It logs the account out, so only the owner asks
+// for it.
 func (r *Reconciler) Restart(ctx context.Context, account string) error {
+	want, err := r.Store.Desired(ctx)
+	if err != nil {
+		return err
+	}
+	for _, w := range want {
+		if w.Account != account || !w.Running {
+			continue
+		}
+		image := w.Image
+		if image == "" {
+			image = r.Image
+		}
+		if aerr := r.apply(ctx, account, image); aerr != nil {
+			return aerr
+		}
+	}
 	pods, err := r.Cluster.ListPods(ctx, kube.WorkerSelector)
 	if err != nil {
 		return err

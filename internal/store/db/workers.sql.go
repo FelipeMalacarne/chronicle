@@ -222,6 +222,31 @@ func (q *Queries) LockAccountForWorker(ctx context.Context, id string) (LockAcco
 	return i, err
 }
 
+const otherPluginSeenSince = `-- name: OtherPluginSeenSince :one
+SELECT EXISTS (
+  SELECT 1 FROM plugin_ingest_tokens t
+  WHERE t.account_id = $1
+    AND t.revoked_at IS NULL
+    AND t.last_seen_at > $2::timestamptz
+    AND t.id <> COALESCE((SELECT w.plugin_token_id FROM workers w WHERE w.account_id = $1), '')
+)::boolean AS seen
+`
+
+type OtherPluginSeenSinceParams struct {
+	AccountID string             `json:"account_id"`
+	Since     pgtype.Timestamptz `json:"since"`
+}
+
+// Whether another plugin installation of the account (not the worker's own
+// token) pushed since the given time: the owner is playing on another client,
+// and starting the worker would log them out (docs/11 section 6.2).
+func (q *Queries) OtherPluginSeenSince(ctx context.Context, arg OtherPluginSeenSinceParams) (bool, error) {
+	row := q.db.QueryRow(ctx, otherPluginSeenSince, arg.AccountID, arg.Since)
+	var seen bool
+	err := row.Scan(&seen)
+	return seen, err
+}
+
 const recordGameSessionLogin = `-- name: RecordGameSessionLogin :execrows
 UPDATE game_sessions SET last_login_at = now(), last_login_result = $2 WHERE account_id = $1
 `

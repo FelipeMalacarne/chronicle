@@ -96,3 +96,15 @@ WHERE (w.account_id IS NOT NULL OR s.account_id IS NOT NULL)
   AND (sqlc.arg(account_id)::text = '' OR a.id = sqlc.arg(account_id))
   AND (sqlc.arg(user_id)::text = '' OR a.user_id = sqlc.arg(user_id))
 ORDER BY a.created_at ASC, a.id ASC;
+
+-- name: OtherPluginSeenSince :one
+-- Whether another plugin installation of the account (not the worker's own
+-- token) pushed since the given time: the owner is playing on another client,
+-- and starting the worker would log them out (docs/11 section 6.2).
+SELECT EXISTS (
+  SELECT 1 FROM plugin_ingest_tokens t
+  WHERE t.account_id = sqlc.arg(account_id)
+    AND t.revoked_at IS NULL
+    AND t.last_seen_at > sqlc.arg(since)::timestamptz
+    AND t.id <> COALESCE((SELECT w.plugin_token_id FROM workers w WHERE w.account_id = sqlc.arg(account_id)), '')
+)::boolean AS seen;

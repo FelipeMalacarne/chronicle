@@ -38,6 +38,15 @@ type MicrobotOptions struct {
 	// Workers verifies the token of a managed worker's pod (docs/11 section
 	// 6.3); nil takes no pod tokens.
 	Workers WorkerTokenVerifier
+	// Sessions stores the accounts' game sessions and the workers' desired
+	// state (CHRONICLE_VAULT_KEY set); nil leaves /api/workers and
+	// /api/accounts/session out.
+	Sessions WorkerStore
+	// Control runs the workers in the cluster (WORKERS=on); nil only stores
+	// sessions.
+	Control WorkerControl
+	// WorkerImage is WORKER_IMAGE, the image a start or restart takes.
+	WorkerImage string
 }
 
 // WorkerIdentity is the pod a worker token belongs to and the account the

@@ -345,6 +345,19 @@ func (r *Repository) SetError(ctx context.Context, account, msg string) error {
 	return nil
 }
 
+// OtherClientSince reports whether another plugin installation of the account
+// (not the worker's own token) pushed after since: someone is playing the
+// account on another client (docs/11 section 6.2).
+func (r *Repository) OtherClientSince(ctx context.Context, account string, since time.Time) (bool, error) {
+	seen, err := r.queries.OtherPluginSeenSince(ctx, storedb.OtherPluginSeenSinceParams{
+		AccountID: account, Since: pgtype.Timestamptz{Time: since, Valid: true},
+	})
+	if err != nil {
+		return false, fmt.Errorf("other plugin seen: %w", err)
+	}
+	return seen, nil
+}
+
 // MintPluginToken creates a new ipl_ token for the worker's Chronicle Link
 // (label "worker <account>", scopes state:write and items:*), stores its id
 // and revokes the previous one. The plaintext is returned only here.

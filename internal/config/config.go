@@ -106,6 +106,23 @@ type Config struct {
 	// token; in oidc with a Zitadel machine user's JWT access token, whose
 	// audience is OIDC_PROJECT_ID and which carries the microbot:agent role.
 	MicrobotControl bool
+
+	// VaultKey is the AES-256-GCM key of the accounts' game sessions
+	// (docs/11 section 4.2): 32 bytes in base64. With it and MicrobotControl,
+	// /api/accounts/session and /api/workers exist. Env: CHRONICLE_VAULT_KEY.
+	VaultKey string
+	// Workers turns on the reconciler that runs the managed workers in the
+	// cluster (docs/11). Needs MicrobotControl, VaultKey and the server in a
+	// pod. Env: WORKERS (on|off). Default off.
+	Workers bool
+	// WorkerImage is the chronicle-worker image a start takes. Env: WORKER_IMAGE.
+	WorkerImage string
+	// WorkerNamespace is where the workers live; empty is the server's own
+	// namespace. Env: WORKER_NAMESPACE.
+	WorkerNamespace string
+	// WorkerServerURL is the planner as the pods reach it; empty is
+	// http://chronicle.<namespace>.svc. Env: WORKER_SERVER_URL.
+	WorkerServerURL string
 }
 
 // Defaults applied when a variable is unset or empty.
@@ -165,6 +182,17 @@ func FromLookup(lookup func(string) (string, bool)) (Config, error) {
 	default:
 		return c, fmt.Errorf("config: MICROBOT_CONTROL must be on or off")
 	}
+	c.VaultKey = get("CHRONICLE_VAULT_KEY", get("IRONMAN_VAULT_KEY", ""))
+	c.WorkerImage = get("WORKER_IMAGE", "")
+	c.WorkerNamespace = get("WORKER_NAMESPACE", "")
+	c.WorkerServerURL = strings.TrimRight(get("WORKER_SERVER_URL", ""), "/")
+	switch strings.ToLower(get("WORKERS", "off")) {
+	case "on", "true", "1":
+		c.Workers = true
+	case "off", "false", "0", "":
+	default:
+		return c, fmt.Errorf("config: WORKERS must be on or off")
+	}
 	for _, sub := range strings.Split(get("OIDC_ALLOWED_SUBJECTS", ""), ",") {
 		if sub = strings.TrimSpace(sub); sub != "" {
 			c.OIDCAllowedSubjects = append(c.OIDCAllowedSubjects, sub)
@@ -212,6 +240,9 @@ func (c Config) Validate() error {
 	}
 	if c.MicrobotControl && c.DatabaseURL == "" {
 		return fmt.Errorf("config: MICROBOT_CONTROL=on needs DATABASE_URL (the control audit lives in Postgres)")
+	}
+	if c.Workers && (!c.MicrobotControl || c.VaultKey == "") {
+		return fmt.Errorf("config: WORKERS=on needs MICROBOT_CONTROL=on and CHRONICLE_VAULT_KEY (docs/11)")
 	}
 	return nil
 }

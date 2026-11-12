@@ -30,4 +30,4 @@ images:
   - name: chronicle
     newName: ghcr.io/felipemalacarne/chronicle
     # CI sets this to the image it just pushed, on every push to main.
-    newTag: "1c23945ec25eb1c5c4742c92d57bac3c0290eeeb"
+    newTag: "cb44b3e725e5548387454a170c4b7b6b5b922095"

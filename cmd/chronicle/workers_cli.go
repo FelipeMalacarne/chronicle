@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -24,9 +25,22 @@ type launcherAccount struct {
 	AccountID   string  `json:"accountId"`
 }
 
-// readLauncherAccount finds one character in accounts.json by display name
-// (the launcher shows a character without one as "Not set").
-func readLauncherAccount(path, character string) (agent.GameSession, error) {
+// notSet is how the launcher shows a character whose display name it does not
+// have (accounts.json keeps null).
+const notSet = "Not set"
+
+// launcherPick says which character of accounts.json to connect: by its
+// 1-based number in the launcher's list (Index, like `mb-account use 6`) or by
+// the name the launcher shows (Character); As names a character the launcher
+// still lists as "Not set" (like `mb-account use --as`).
+type launcherPick struct {
+	Character string
+	Index     int
+	As        string
+}
+
+// readLauncherAccount finds one character in accounts.json.
+func readLauncherAccount(path string, pick launcherPick) (agent.GameSession, error) {
 	b, err := os.ReadFile(path) //nolint:gosec // the launcher's file, chosen by the user
 	if err != nil {
 		return agent.GameSession{}, fmt.Errorf("contas do launcher em %s: %w (abra o launcher do Microbot uma vez)", path, err)
@@ -35,21 +49,51 @@ func readLauncherAccount(path, character string) (agent.GameSession, error) {
 	if err := json.Unmarshal(b, &list); err != nil {
 		return agent.GameSession{}, fmt.Errorf("contas do launcher em %s: %w", path, err)
 	}
-	var names []string
-	for _, a := range list {
-		name := "Not set"
-		if a.DisplayName != nil && *a.DisplayName != "" {
-			name = *a.DisplayName
+	names := make([]string, len(list))
+	listed := make([]string, len(list))
+	for i, a := range list {
+		names[i] = notSet
+		if a.DisplayName != nil && strings.TrimSpace(*a.DisplayName) != "" {
+			names[i] = strings.TrimSpace(*a.DisplayName)
 		}
-		names = append(names, name)
-		if strings.EqualFold(name, character) {
-			if a.SessionID == "" || a.AccountID == "" {
-				return agent.GameSession{}, fmt.Errorf("o launcher não tem sessão para %s: abra o launcher e entre de novo", name)
+		listed[i] = fmt.Sprintf("%d %s", i+1, names[i])
+	}
+	choice := -1
+	switch {
+	case pick.Index > 0:
+		if pick.Index > len(list) {
+			return agent.GameSession{}, fmt.Errorf("o launcher tem %d personagens (%s)", len(list), strings.Join(listed, ", "))
+		}
+		choice = pick.Index - 1
+	default:
+		for i, n := range names {
+			if !strings.EqualFold(n, pick.Character) {
+				continue
 			}
-			return agent.GameSession{Character: name, SessionID: a.SessionID, CharacterID: a.AccountID}, nil
+			if choice >= 0 {
+				return agent.GameSession{}, fmt.Errorf("mais de um personagem %q no launcher: escolha pelo número com --index (%s)", pick.Character, strings.Join(listed, ", "))
+			}
+			choice = i
 		}
 	}
-	return agent.GameSession{}, fmt.Errorf("nenhum personagem %q no launcher (há: %s)", character, strings.Join(names, ", "))
+	if choice < 0 {
+		hint := ""
+		if slices.Contains(names, notSet) {
+			hint = `; um personagem que o launcher mostra como "Not set" se conecta com --index <número> --as <nome no jogo>`
+		}
+		return agent.GameSession{}, fmt.Errorf("nenhum personagem %q no launcher (há: %s)%s", pick.Character, strings.Join(listed, ", "), hint)
+	}
+	a, name := list[choice], names[choice]
+	if as := strings.TrimSpace(pick.As); as != "" {
+		name = as
+	}
+	if name == notSet {
+		return agent.GameSession{}, errors.New(`o launcher não tem o nome desse personagem ("Not set"): passe --as <nome no jogo>`)
+	}
+	if a.SessionID == "" || a.AccountID == "" {
+		return agent.GameSession{}, fmt.Errorf("o launcher não tem sessão para %s: abra o launcher e entre de novo", name)
+	}
+	return agent.GameSession{Character: name, SessionID: a.SessionID, CharacterID: a.AccountID}, nil
 }
 
 // hwidLines keeps the lines of an HWID agent store that belong to one
@@ -84,7 +128,8 @@ func hwidLines(path string, needles ...string) (string, error) {
 
 func newAccountsConnectCmd() *cobra.Command {
 	var f clientFlags
-	var character, accountsFile, runeliteDir string
+	var character, as, accountsFile, runeliteDir string
+	var index int
 	cmd := &cobra.Command{
 		Use:   "connect",
 		Short: "Store an account's game session (from the Microbot launcher) on the server, for its worker (docs/11)",
@@ -94,8 +139,8 @@ func newAccountsConnectCmd() *cobra.Command {
 		Args: cobra.NoArgs,
 		RunE: runClient(func(cmd *cobra.Command, _ []string) error {
 			ctx, out := cmd.Context(), cmd.OutOrStdout()
-			if strings.TrimSpace(character) == "" {
-				return errors.New("--character é obrigatório (o nome do personagem no launcher)")
+			if strings.TrimSpace(character) == "" && index <= 0 {
+				return errors.New("diga o personagem: --character <nome no launcher> ou --index <número na lista do launcher>")
 			}
 			home, err := os.UserHomeDir()
 			if err != nil {
@@ -107,7 +152,7 @@ func newAccountsConnectCmd() *cobra.Command {
 			if runeliteDir == "" {
 				runeliteDir = filepath.Join(home, ".runelite")
 			}
-			session, err := readLauncherAccount(accountsFile, character)
+			session, err := readLauncherAccount(accountsFile, launcherPick{Character: character, Index: index, As: as})
 			if err != nil {
 				return err
 			}
@@ -138,6 +183,8 @@ func newAccountsConnectCmd() *cobra.Command {
 	}
 	f.add(cmd, false)
 	cmd.Flags().StringVar(&character, "character", "", "character name as the launcher lists it")
+	cmd.Flags().IntVar(&index, "index", 0, "the character's number in the launcher's list (1-based), instead of --character")
+	cmd.Flags().StringVar(&as, "as", "", `the character's name in game, for one the launcher lists as "Not set"`)
 	cmd.Flags().StringVar(&accountsFile, "accounts-file", "", "launcher accounts (default ~/.microbot/accounts.json)")
 	cmd.Flags().StringVar(&runeliteDir, "runelite-dir", "", "where the HWID agent keeps its stores (default ~/.runelite)")
 	return cmd

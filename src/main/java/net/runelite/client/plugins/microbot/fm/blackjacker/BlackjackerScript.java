@@ -161,7 +161,8 @@ public class BlackjackerScript extends Script
 			blackjacking::wield,
 			new Restock(),
 			blackjacking::openPouches,
-			// A target in the room, then the thieving.
+			// Nobody else in the room, a target in it, then the thieving.
+			new Witness(),
 			new Lure(),
 			new EnterRoom(),
 			blackjacking::strike);

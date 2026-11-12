@@ -41,6 +41,8 @@ final class Session
 	boolean mustEscape;
 	/** Too few frames to react in time: only safety runs, nothing new is started. */
 	boolean throttled;
+	/** When the game last refused a knock-out because someone could see it; 0 once handled. */
+	long seenAt;
 	/** Jugs of wine in the inventory, for the overlay. */
 	volatile int wines;
 

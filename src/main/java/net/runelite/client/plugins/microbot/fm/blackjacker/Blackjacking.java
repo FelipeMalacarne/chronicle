@@ -372,7 +372,9 @@ final class Blackjacking
 					openAllPouches();
 					return false;
 				case SEEN:
-					s.stop("\"Perhaps I shouldn't do this here\": another " + s.target.npcName + " can see the room");
+					// Someone else in the room: Witness hops.
+					knockOutPending = false;
+					s.seenAt = s.now;
 					return false;
 				default:
 					break;

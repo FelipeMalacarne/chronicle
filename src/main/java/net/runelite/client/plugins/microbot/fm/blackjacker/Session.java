@@ -115,22 +115,24 @@ final class Session
 	}
 
 	/**
-	 * Drink at the configured share of max HP, but never below {@link #dangerHp()}: a knock-out
-	 * is only started above it (the drink goes first, once the target is up).
+	 * Drink as soon as a whole jug fits: wine used is the damage taken over its heal either way,
+	 * and drinking early keeps the most HP above {@link #dangerHp()}, so fewer glances end on the
+	 * ladder. Never below dangerHp: a knock-out is only started above it (the drink goes first,
+	 * once the target is up).
 	 */
 	int drinkAt()
 	{
-		return Math.max(events.maxHp() * config.drinkAtPercent() / 100, dangerHp());
+		return Math.max(events.maxHp() - Healing.HEALS, dangerHp());
 	}
 
 	/**
 	 * The lowest HP a knock-out is started or retried at. From here a glance's hit and one more
-	 * on the way up the ladder stay above 10% of max HP (the Ring of life); below it, a target
+	 * on the way up the ladder (it lands in practice) leave at least 1 HP; below it, a target
 	 * still hitting us sends us up the ladder.
 	 */
 	int dangerHp()
 	{
-		return 2 * target.maxHit + events.maxHp() / 10 + 1;
+		return 2 * target.maxHit + 1;
 	}
 
 	boolean lowHp()

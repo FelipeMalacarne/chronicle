@@ -11,6 +11,7 @@ final class Healing implements Step
 {
 	static final int JUG_OF_WINE = 1993;
 	static final int JUG = 1935;
+	static final int HEALS = 11;
 	// Wine has a 3-tick delay.
 	private static final long COOLDOWN_MS = 1800;
 

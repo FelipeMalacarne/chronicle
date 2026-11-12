@@ -22,18 +22,6 @@ public interface BlackjackerConfig extends Config
 	}
 
 	@ConfigItem(
-		keyName = "drinkAtPercent",
-		name = "Drink wine at HP %",
-		description = "Drink a jug of wine at or below this share of max Hitpoints. Never lower than two of the target's max hits plus 10% of max HP. Taken between knock-outs, once the target is up",
-		position = 1
-	)
-	@Range(min = 30, max = 90)
-	default int drinkAtPercent()
-	{
-		return 65;
-	}
-
-	@ConfigItem(
 		keyName = "minWines",
 		name = "Restock below",
 		description = "Walk to the Asp & Snake bar to buy wine when fewer jugs of wine than this are left",

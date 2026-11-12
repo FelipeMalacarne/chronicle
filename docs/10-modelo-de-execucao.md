@@ -24,7 +24,7 @@ Três motivos, na ordem em que apareceram na revisão de 2026-11-05:
 2. **Fonte de verdade só de adição onde a verdade é um fato que aconteceu**: observações das fontes,
    comandos do dono e execuções da automação. Todo o resto é projeção.
 3. **Projeções síncronas e reconstruíveis.** Calculadas na mesma transação do evento, por função pura
-   em `internal/core`, e conferidas por `ironman progress rebuild --check`.
+   em `internal/core`, e conferidas por `chronicle progress rebuild --check`.
 4. **O banco é a última linha de defesa.** Cada invariante do doc 09 vira CHECK, FK ou trigger, além do
    código Go.
 5. **Uma linguagem de predicado só.** A chave de objetivo (doc 09, seção 3.2) é o término do passo, da
@@ -99,11 +99,11 @@ as marcas têm `actor` e `via` em `mark_commands`, e os eventos de status aponta
 (`snapshots.source`, amarrado à conta pela FK composta da 0007), sem coluna repetida. `automation` e
 `run_id` entram com o executor (fases 3 e 4).
 
-**Reconstrução.** `ironman progress rebuild --check` recalcula as projeções do zero e mostra a
+**Reconstrução.** `chronicle progress rebuild --check` recalcula as projeções do zero e mostra a
 diferença para o banco. Roda no CI contra fixtures e pode rodar no boot. A trava do `met` de item usa
 `observed_at` limitado, nunca a ordem de inserção.
 
-Como implementado (fatia e, 2026-11-05), o comando é `ironman progress check --account <id>`: fala
+Como implementado (fatia e, 2026-11-05), o comando é `chronicle progress check --account <id>`: fala
 com `GET /api/progress/check` de um servidor no ar (CLAUDE.md regra 1) e sai com 1 se houver
 diferença. Numa transação só de leitura, o servidor confere três coisas: `step_marks` contra a
 repetição de `mark_commands`; `player_state` contra a junção das `observations`; e vereditos, marcas

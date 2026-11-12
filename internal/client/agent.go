@@ -16,7 +16,7 @@ import (
 // machine user to log in with.
 var ErrNoAgentCredentials = errors.New("client: the server is in oidc mode; set MICROBOT_AGENT_CLIENT_ID and MICROBOT_AGENT_CLIENT_SECRET (a Zitadel machine user with the microbot:agent role)")
 
-// AgentAuth is the bearer of `ironman agent` (docs/08). It asks the server
+// AgentAuth is the bearer of `chronicle agent` (docs/08). It asks the server
 // how to authenticate on the first connection and again after a failure: a
 // dev server takes no token; an oidc server takes the access token of a
 // Zitadel machine user, from the client_credentials grant at the issuer the

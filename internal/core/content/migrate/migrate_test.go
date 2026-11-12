@@ -36,7 +36,7 @@ func TestConvertRealNormalizedGuide(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(data, checkedIn) {
-		t.Fatal("checked-in Oziris guide differs from deterministic migration; run `go run ./cmd/ironman content migrate`")
+		t.Fatal("checked-in Oziris guide differs from deterministic migration; run `go run ./cmd/chronicle content migrate`")
 	}
 	checkedReadme, err := os.ReadFile("../../../../content/guides/oziris-main/README.md")
 	if err != nil {

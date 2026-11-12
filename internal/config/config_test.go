@@ -31,7 +31,7 @@ func TestOIDCRequiresFields(t *testing.T) {
 	c, err := FromLookup(lookup(map[string]string{
 		"AUTH_MODE": "OIDC", "OIDC_ISSUER": "https://x", "OIDC_CLIENT_ID": "id",
 		"OIDC_REDIRECT_URL": "https://p/auth/callback", "SESSION_SECRET": testSecret, "PUBLIC_BASE_URL": "https://p/",
-		"OIDC_ALLOWED_SUBJECTS": " 123, ,456 ", "LOG_LEVEL": "debug", "IRONMAN_ADDR": "127.0.0.1:9000",
+		"OIDC_ALLOWED_SUBJECTS": " 123, ,456 ", "LOG_LEVEL": "debug", "CHRONICLE_ADDR": "127.0.0.1:9000",
 	}))
 	if err != nil {
 		t.Fatal(err)

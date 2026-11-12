@@ -1,4 +1,4 @@
-# ironman-planner task runner. `just` lists targets; `just <target>`.
+# Chronicle (ironman-planner) task runner. `just` lists targets; `just <target>`.
 # Works from the Nix dev shell or from any machine with go, node/pnpm, docker.
 
 set dotenv-load := true
@@ -49,14 +49,14 @@ dev: db-up
     echo "Open http://localhost:5173 (Vite, hot reload); :8080 serves the embedded web/dist build."
     trap 'kill 0' EXIT
     (cd web && pnpm dev) &
-    if command -v air >/dev/null 2>&1; then air; else go run ./cmd/ironman serve; fi
+    if command -v air >/dev/null 2>&1; then air; else go run ./cmd/chronicle serve; fi
 
-# Microbot control agent (docs/08) on this machine: links to the planner (IRONMAN_URL, default
+# Microbot control agent (docs/08) on this machine: links to the planner (CHRONICLE_URL, default
 # :8080; a dev server needs no token, an oidc one the MICROBOT_AGENT_CLIENT_* machine user) and drives
 # the dev client of the microbot-plugins harness (MICROBOT_HARNESS_DIR, default the sibling
 # checkout). The server needs MICROBOT_CONTROL=on.
 agent:
-    MICROBOT_HARNESS_DIR="${MICROBOT_HARNESS_DIR:-$(realpath ../microbot-plugins)}" go run ./cmd/ironman agent
+    MICROBOT_HARNESS_DIR="${MICROBOT_HARNESS_DIR:-$(realpath ../microbot-plugins)}" go run ./cmd/chronicle agent
 
 # Vite dev server for the SPA alone (the API must already run on :8080)
 web-dev:
@@ -80,14 +80,14 @@ db-shell:
 web-build:
     cd web && pnpm build
 
-# Build web then the Go binary into bin/ironman (version from git describe)
+# Build web then the Go binary into bin/chronicle (version from git describe)
 build: web-build
-    CGO_ENABLED=0 go build -trimpath -ldflags "{{ldflags}}" -o bin/ironman ./cmd/ironman
-    @echo "built bin/ironman ({{version}})"
+    CGO_ENABLED=0 go build -trimpath -ldflags "{{ldflags}}" -o bin/chronicle ./cmd/chronicle
+    @echo "built bin/chronicle ({{version}})"
 
 # Build the Docker image (tagged with the git version and latest)
 docker-build:
-    docker build --build-arg VERSION={{version}} -t ironman-planner:{{version}} -t ironman-planner:latest .
+    docker build --build-arg VERSION={{version}} -t chronicle:{{version}} -t chronicle:latest .
 
 # --- quality ---------------------------------------------------------------
 
@@ -113,11 +113,11 @@ fmt:
 
 # Validate content/ against content/schema/guide.schema.json
 content-validate:
-    go run ./cmd/ironman content validate
+    go run ./cmd/chronicle content validate
 
 # Migrate data/guide/normalized into content/guides (idempotent)
 content-migrate:
-    go run ./cmd/ironman content migrate
+    go run ./cmd/chronicle content migrate
 
 # --- database --------------------------------------------------------------
 
@@ -170,8 +170,7 @@ up:
     #!/usr/bin/env bash
     set -euo pipefail
     rev="$(git describe --tags --always)"
-    git archive --format=tar HEAD | docker build --build-arg VERSION="$rev" --target migrate -t ironman-planner-migrate:stack -
-    git archive --format=tar HEAD | docker build --build-arg VERSION="$rev" --target runtime -t ironman-planner:stack -
+    git archive --format=tar HEAD | docker build --build-arg VERSION="$rev" -t chronicle:stack -
     {{compose}} up -d --no-build
     echo "stack on $rev (content and catalogs of that commit)"
 

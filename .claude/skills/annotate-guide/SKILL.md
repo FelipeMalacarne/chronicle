@@ -1,6 +1,6 @@
 ---
 name: annotate-guide
-description: Extract objectives, item requirements, bank actions and locations from the steps of a guide (oziris-main, bruhsailer-main) into the verified annotation sidecars, through the ironman-content MCP server, with the owner watching and answering questions. Use when asked to annotate, extract or reprocess a guide section, or to fix stale annotations.
+description: Extract objectives, item requirements, bank actions and locations from the steps of a guide (oziris-main, bruhsailer-main) into the verified annotation sidecars, through the chronicle-content MCP server, with the owner watching and answering questions. Use when asked to annotate, extract or reprocess a guide section, or to fix stale annotations.
 ---
 
 # annotate-guide
@@ -10,9 +10,9 @@ here whenever the taxonomy or procedure below changes.
 
 You turn guide text into structured annotations (docs/09 section 6). The output is committed in
 `content/guides/<id>/annotations/` and decides when a step is done for the owner's account, so a wrong
-objective is worse than a missing one. Everything goes through the `ironman-content` MCP server
-(`.mcp.json`, `ironman content mcp`). It resolves names, locates quotes, verifies every proposal with
-the same checks as `ironman content validate`, and writes the files.
+objective is worse than a missing one. Everything goes through the `chronicle-content` MCP server
+(`.mcp.json`, `chronicle content mcp`). It resolves names, locates quotes, verifies every proposal with
+the same checks as `chronicle content validate`, and writes the files.
 
 Hard rules:
 
@@ -28,8 +28,8 @@ Hard rules:
 
 ## Before starting
 
-1. Check that the `ironman-content` tools are available. If they are not, tell the owner to approve
-   the project MCP server (it runs `go run ./cmd/ironman content mcp`) and stop.
+1. Check that the `chronicle-content` tools are available. If they are not, tell the owner to approve
+   the project MCP server (it runs `go run ./cmd/chronicle content mcp`) and stop.
 2. Call `status` to see coverage, then `list_decisions` for the guide, and read every decision. Apply
    them without asking again, and cite the decision id in `decision` when you use one.
 3. Agree on the section with the owner if they did not name one. Pilot order: Oziris `1.1`, then
@@ -53,7 +53,7 @@ Hard rules:
    (first-submit acceptance, rule agreement and its divergences, inferred entries, open rejections, and
    `order_issues`: route-order conflicts an earlier annotation gained after a later one moved or suppressed
    an objective) and
-   run `go run ./cmd/ironman content validate`.
+   run `go run ./cmd/chronicle content validate`.
 
 Keep the owner informed with one line per batch: steps done, questions asked, rejections.
 

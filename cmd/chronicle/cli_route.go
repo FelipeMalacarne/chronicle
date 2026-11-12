@@ -290,7 +290,7 @@ func pickGoal(goals []client.Goal, want string) (client.Goal, error) {
 	case 1:
 		return hits[0], nil
 	case 0:
-		return client.Goal{}, fmt.Errorf("nenhuma meta com %q (veja `ironman plan`)", want)
+		return client.Goal{}, fmt.Errorf("nenhuma meta com %q (veja `chronicle plan`)", want)
 	}
 	ids := make([]string, len(hits))
 	for i, g := range hits {

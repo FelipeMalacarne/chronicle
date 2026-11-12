@@ -39,7 +39,7 @@ func newServeCmd() *cobra.Command {
 		Use:   "serve",
 		Short: "Run the API, the web UI and (later) the scheduler",
 		Long: `Start the HTTP server. Configuration comes from the environment; see
-internal/config for the variables (IRONMAN_ADDR, DATABASE_URL, AUTH_MODE, ...).`,
+internal/config for the variables (CHRONICLE_ADDR, DATABASE_URL, AUTH_MODE, ...).`,
 		Args: cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			return runServe(cmd.Context())
@@ -250,7 +250,7 @@ func bootProgress(ctx context.Context, repo *storeprogress.Repository, logger *s
 	return nil
 }
 
-// checkProgress runs `ironman progress check` on every account before the
+// checkProgress runs `chronicle progress check` on every account before the
 // boot reevaluation and only logs (docs/10 decision E3): a difference is a bug
 // to look at, and the reevaluation then fixes verdicts, statuses and cursors;
 // the facts and the mark log are reported, never rewritten by it.

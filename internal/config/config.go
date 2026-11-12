@@ -16,8 +16,8 @@ import (
 
 // Config is the fully resolved configuration of the ironman binary.
 type Config struct {
-	// Addr is the listen address of `ironman serve`.
-	// Env: IRONMAN_ADDR. Default ":8080".
+	// Addr is the listen address of `chronicle serve`.
+	// Env: CHRONICLE_ADDR (or the older IRONMAN_ADDR). Default ":8080".
 	Addr string
 
 	// DatabaseURL is the Postgres connection string (pgx/libpq format, e.g.
@@ -64,7 +64,7 @@ type Config struct {
 	OIDCProjectID string
 
 	// OIDCNativeClientID is the public native application (Device Code grant,
-	// no secret) that the CLI, `ironman mcp` and, later, the plugin log in
+	// no secret) that the CLI, `chronicle mcp` and, later, the plugin log in
 	// with (docs/04 section 2.5). Its JWT access tokens are accepted as
 	// `Authorization: Bearer` on the account routes; empty disables bearer
 	// login, leaving only the web session. Env: OIDC_NATIVE_CLIENT_ID.
@@ -139,7 +139,7 @@ func FromLookup(lookup func(string) (string, bool)) (Config, error) {
 		return def
 	}
 	c := Config{
-		Addr:               get("IRONMAN_ADDR", DefaultAddr),
+		Addr:               get("CHRONICLE_ADDR", get("IRONMAN_ADDR", DefaultAddr)),
 		DatabaseURL:        get("DATABASE_URL", ""),
 		AuthMode:           strings.ToLower(get("AUTH_MODE", DefaultAuthMode)),
 		OIDCIssuer:         get("OIDC_ISSUER", ""),

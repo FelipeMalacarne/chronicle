@@ -306,7 +306,7 @@ func TestProgressPostgresLifecycle(t *testing.T) {
 	assertConsistent(ctx, t, repo, "account-1")
 }
 
-// assertConsistent runs `ironman progress check` on one account: every
+// assertConsistent runs `chronicle progress check` on one account: every
 // projection must match its sources (docs/10 section 6, decision E3).
 func assertConsistent(ctx context.Context, t *testing.T, repo *Repository, accountID string) {
 	t.Helper()

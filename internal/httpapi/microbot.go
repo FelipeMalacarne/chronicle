@@ -341,7 +341,7 @@ func (s *Server) writeMicrobotError(w http.ResponseWriter, err error) {
 	var cmd *agent.CommandError
 	switch {
 	case errors.Is(err, agent.ErrNoAgent):
-		writeError(w, http.StatusServiceUnavailable, "no agent connected (run `ironman agent` on the game machine)")
+		writeError(w, http.StatusServiceUnavailable, "no agent connected (run `chronicle agent` on the game machine)")
 	case errors.As(err, &cmd):
 		writeError(w, http.StatusBadGateway, cmd.Error())
 	case errors.Is(err, context.DeadlineExceeded):

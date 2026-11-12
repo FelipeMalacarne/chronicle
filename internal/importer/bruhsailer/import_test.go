@@ -51,7 +51,7 @@ func TestGeneratePinnedSourceCountsAndDeterminism(t *testing.T) {
 		t.Fatal(err)
 	}
 	if !bytes.Equal(first, checkedIn) {
-		t.Fatal("checked-in guide differs from deterministic importer output; run `go run ./cmd/ironman content import-bruhsailer`")
+		t.Fatal("checked-in guide differs from deterministic importer output; run `go run ./cmd/chronicle content import-bruhsailer`")
 	}
 }
 

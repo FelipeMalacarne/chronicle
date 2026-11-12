@@ -125,7 +125,7 @@ jobs:
           DATABASE_URL: postgres://ironman:ironman@localhost:5432/ironman_test?sslmode=disable
 
       - name: Validate content
-        run: go run ./cmd/ironman content validate
+        run: go run ./cmd/chronicle content validate
 
   # --------------------------------------------------------------------------
   # Migrations: goose up / down / up against a real Postgres 17.
@@ -188,13 +188,13 @@ jobs:
       - run: kubectl kustomize deploy/k8s/overlays/saradomin > /dev/null
 
   # --------------------------------------------------------------------------
-  # Images and deploy, on main only: the server image and the goose migrate
-  # image go to GHCR under the commit's sha, and the saradomin overlay is
-  # pointed at them. Argo CD on saradomin follows that overlay on main, so the
+  # Image and deploy, on main only: the chronicle image (server and embedded
+  # migrations) goes to GHCR under the commit's sha, and the saradomin overlay
+  # is pointed at it. Argo CD on saradomin follows that overlay on main, so the
   # bump commit is the deploy (docs/07 section 3.3).
   # --------------------------------------------------------------------------
   docker:
-    name: images + deploy
+    name: image + deploy
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: [go, web, migrations, manifests]
@@ -221,7 +221,7 @@ jobs:
 
       # GHCR wants lower-case names; the owner has upper-case letters.
       - name: Image names
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/ironman-planner" >> "$GITHUB_ENV"
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/chronicle" >> "$GITHUB_ENV"
 
       - uses: docker/build-push-action@v6
         with:
@@ -232,14 +232,6 @@ jobs:
             VERSION=${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          target: migrate
-          push: true
-          tags: ${{ env.IMAGE }}-migrate:${{ github.sha }}
-          cache-from: type=gha
 
       # A push made with GITHUB_TOKEN starts no other run. If main already has
       # newer commits than this run's (other than deploy bumps), their run

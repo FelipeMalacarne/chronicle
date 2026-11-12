@@ -2,7 +2,7 @@
 
 Self-hosted planner/tracker for an OSRS Ironman account. It follows two independent, comparable routes:
 the Oziris Ironman Efficiency Guide (`oziris-main`, 576 steps) and BRUHsailer (`bruhsailer-main`, 226
-steps). One Go binary (`ironman`) serves the API + embedded Svelte SPA, and doubles as CLI and MCP
+steps). One Go binary (`chronicle`) serves the API + embedded Svelte SPA, and doubles as CLI and MCP
 server; progress is auto-tracked from hiscores, Wise Old Man and a read-only Microbot (RuneLite) plugin
 that lives in the separate `microbot-plugins` repository (Chronicle Link, `fm/chroniclelink`; it was
 `fm/ironmanplanner` until 1.3).
@@ -29,13 +29,13 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | Command | What it does |
 |---|---|
 | `just setup` | `pnpm install` in web/, `go mod download`, first `pnpm build` (go:embed needs `web/dist`) |
-| `just dev` | the stack's Postgres (`compose.yaml`, stops its `app`), `migrate-up`, then `air` (or `go run ./cmd/ironman serve`) on :8080 and Vite with hot reload on :5173 together |
+| `just dev` | the stack's Postgres (`compose.yaml`, stops its `app`), `migrate-up`, then `air` (or `go run ./cmd/chronicle serve`) on :8080 and Vite with hot reload on :5173 together |
 | `just web-dev` | Vite alone (proxied to :8080) |
-| `just build` | web build + `bin/ironman` with `-X .../internal/buildinfo.Version=$(git describe)` |
+| `just build` | web build + `bin/chronicle` with `-X .../internal/buildinfo.Version=$(git describe)` |
 | `just test` / `just lint` / `just fmt` | `go test ./...` + `pnpm check` + `pnpm test`; golangci-lint + gofmt + `pnpm lint` |
-| `just content-validate` | `ironman content validate` against `content/schema/guide.schema.json` |
-| `go run ./cmd/ironman content migrate` | regenerate `content/guides/oziris-main` from `data/guide/normalized` plus the owner's route fixes in `data/guide/route-patches.json` (docs/05 section 12) |
-| `go run ./cmd/ironman content import-bruhsailer` | regenerate `content/guides/bruhsailer-main` from the pinned DOCX in `data/sources/bruhsailer` |
+| `just content-validate` | `chronicle content validate` against `content/schema/guide.schema.json` |
+| `go run ./cmd/chronicle content migrate` | regenerate `content/guides/oziris-main` from `data/guide/normalized` plus the owner's route fixes in `data/guide/route-patches.json` (docs/05 section 12) |
+| `go run ./cmd/chronicle content import-bruhsailer` | regenerate `content/guides/bruhsailer-main` from the pinned DOCX in `data/sources/bruhsailer` |
 | `just migrate-up` / `migrate-status` / `migrate-new <name>` | goose against `DATABASE_URL` |
 | `just account-create <rsn>` / `account-guide <id> <guide>` / `accounts` | dev accounts (id `acc_<rsn>`) and the active route, until the account screen exists |
 | `just dbml` | regenerate `docs/arquitetura/modelo-de-dados.dbml` from the migrated `DATABASE_URL` |
@@ -44,22 +44,22 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `python3 tools/fetch_wiki_locations.py` | refresh `content/reference/location_maps.json`: the OSRS Wiki infobox map point of every location in `locations.json` (the Agora's "Aqui perto"); regions and instances stay unmapped; cached under `~/.cache/ironman-planner/wiki-locations` |
 | `python3 tools/extract_wiki_items.py` | refresh `data/wiki/items.json` with every item page of the OSRS wiki (the only step that uses the network; cached under `~/.cache/ironman-planner`); then `-update` above and re-run both importers |
 | `python3 data/wiki/scripts/build_quests.py data/samples/wiki-bucket/quest_all_p1.json 'data/samples/wiki-wikitext/quest_pages/batch*.json' <guide-list> data/wiki/quests.json` | rebuild `data/wiki/quests.json` (requirements, QP, quest XP rewards) offline from the saved bucket and wikitext; `<guide-list>` is a file of quest names to cross-check (may be empty) |
-| `go run ./cmd/ironman content mcp` | extraction MCP server on stdio (Claude Code starts it from `.mcp.json`; skill `annotate-guide`) |
+| `go run ./cmd/chronicle content mcp` | extraction MCP server on stdio (Claude Code starts it from `.mcp.json`; skill `annotate-guide`) |
 | `just sqlc` | regenerate `internal/store/db` from `db/queries/*.sql` |
 | `just up` / `just down` / `just logs` / `just restart` | the stack used on zaros (`compose.yaml`): images built from the committed HEAD (`git archive`), Postgres + one-shot `migrate` (goose) + app on 127.0.0.1 |
 | `just stack-account-create <rsn>` / `stack-account-guide` / `stack-accounts` / `stack-psql` / `db-backup` | accounts, psql and `pg_dump` (to `backups/`) inside the stack's Postgres, which has no host port |
-| `ironman health` | GET `/api/health` of a running server (container healthcheck; never opens the database) |
-| `ironman login` / `now` / `done` / `plan` / `state` / `mcp` | API clients (docs/04 section 2.2): server from `--url`, `IRONMAN_URL`, `~/.config/ironman/config.json`, default `http://localhost:8080`; dev needs no login, oidc uses the Zitadel device flow; `IRONMAN_TOKEN` overrides the stored login. `done`/`skip`/`undo` write the owner's marks: never run them on the owner's account unasked |
+| `chronicle health` | GET `/api/health` of a running server (container healthcheck; never opens the database) |
+| `chronicle login` / `now` / `done` / `plan` / `state` / `mcp` | API clients (docs/04 section 2.2): server from `--url`, `CHRONICLE_URL`, `~/.config/chronicle/config.json`, default `http://localhost:8080`; dev needs no login, oidc uses the Zitadel device flow; `CHRONICLE_TOKEN` overrides the stored login. `done`/`skip`/`undo` write the owner's marks: never run them on the owner's account unasked |
 | `DATABASE_URL=... go test ./internal/httpapi -run TestContract -update` | rewrite `web/src/lib/api/contract/`: one real API answer per route the web reads, as `export const fixture = {…} satisfies <web type>`; then `pnpm check`. Without `-update` the test fails when an answer changes shape |
-| `just agent` / `ironman agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (`MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client. Never log the client in for a test without the owner's agreement |
-| `ironman progress check --account <id>` | GET `/api/progress/check` of a running server (`IRONMAN_URL`): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
+| `just agent` / `chronicle agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (`MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client. Never log the client in for a test without the owner's agreement |
+| `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (`CHRONICLE_URL`): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
 
 ## Layout
 
 ```
-cmd/ironman/          cobra subcommands: serve, content (migrate, validate, import-bruhsailer, mcp: the
+cmd/chronicle/          cobra subcommands: serve, content (migrate, validate, import-bruhsailer, mcp: the
                       offline extraction server over content/ only, docs/09 section 6; there is no
                       merge step: annotations are sidecars composed by the loader); API clients:
                       login, logout, accounts, use, now, done, skip, undo, plan, sync, state and mcp
@@ -92,8 +92,8 @@ internal/agent/       Microbot control link (docs/08): closed command list, the 
                       websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->
                       loopback x11vnc) and the plugin/script/config commands, whose params are validated
                       by ValidateParams on both sides; the server never talks to the game directly
-internal/client/      typed API client of the CLI and `ironman mcp`: config.json and credentials.json
-                      under ~/.config/ironman, device-flow login (RFC 8628), token refresh; never
+internal/client/      typed API client of the CLI and `chronicle mcp`: config.json and credentials.json
+                      under ~/.config/chronicle, device-flow login (RFC 8628), token refresh; never
                       imports internal/store
 web/                  Svelte SPA; web/embed.go embeds web/dist (`//go:embed all:dist`);
                       web/src/lib/progress: view-model (view.ts is pure and node-tested), API types;
@@ -102,7 +102,7 @@ content/              guides/<id>/guide.json (generated by the importers) + anno
                       sidecars and decisions.json, written only by `content mcp`, docs/09 section 4.2) +
                       annotations.report.json + README + entities.report.json; schema/ (guide +
                       annotations schemas); reference/ (catalogs)
-.mcp.json             declares `content mcp` (server `ironman-content`) and `ironman mcp` (server `ironman`,
+.mcp.json             declares `content mcp` (server `chronicle-content`) and `chronicle mcp` (server `chronicle`,
                       the account's progress over the API of `just dev`) for Claude Code;
 .claude/skills/       annotate-guide: the extraction procedure and taxonomy the agent follows
 db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest freshness, 0003 guide ids,
@@ -113,7 +113,7 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0010 microbot_audit: every Microbot control action)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
-                      the images to GHCR and writes their tag in the overlay, which Argo CD follows
+                      the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows
                       (docs/07 section 3.3); the cluster side (namespace, database, secrets) is in gielinor
 data/                 original extraction: guide/ (input of `content migrate`), sources/bruhsailer (pinned DOCX)
 docs/                 numbered design docs (PT-BR); tools/ has the Python extraction scripts
@@ -121,8 +121,10 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
 
 ## Rules that must hold
 
-1. **Only `ironman serve` opens the database.** CLI and MCP subcommands talk to the HTTP API with a
-   token (`IRONMAN_URL`, `IRONMAN_TOKEN`). Never import `internal/store` from CLI/MCP code.
+1. **Only `chronicle serve` and `chronicle migrate` open the database.** `migrate` only applies the
+   goose migrations embedded in the binary (`db/migrations.go`); the server never migrates. CLI and MCP
+   subcommands talk to the HTTP API with a token (`CHRONICLE_URL`, `CHRONICLE_TOKEN`). Never import
+   `internal/store` from CLI/MCP code.
 2. **Never mark a step done without evidence.** A step's `auto_done` is derived from its objectives;
    an objective is `met` only with an `evidence_snapshot_id` and an `evidence` JSON array in
    `objective_progress`, and `unknown` leaves the step `pending`. The owner's marks live in `step_marks`
@@ -132,7 +134,7 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
    is never `auto_done` (docs/09 section 5).
 3. `content/` is the canonical content (`guide.json` from the importers plus `annotations/` sidecars);
    the DB only indexes it (`content_versions`, `content_steps`). Schemas live in `content/schema/`;
-   `ironman content validate` covers guide and sidecars and must pass in CI.
+   `chronicle content validate` covers guide and sidecars and must pass in CI.
 4. `internal/core` has no DB or HTTP imports. Keep the rule engine pure and table-tested.
 5. Schema changes = new goose migration (`just migrate-new`), then `just sqlc`. Never edit an applied
    migration; never hand-edit `internal/store/db`.
@@ -168,14 +170,19 @@ docs/                 numbered design docs (PT-BR); tools/ has the Python extrac
 
 ## Environment variables
 
-Read by the Go config (defaults in parentheses): `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
+The product was "ironman" until 2026-11-11 (binary, `IRONMAN_*` variables, `~/.config/ironman`):
+`internal/appenv` reads each `CHRONICLE_*` variable with the old `IRONMAN_*` name as a fallback and
+moves `~/.config/ironman` to `~/.config/chronicle` on first use. `IRONMAN_*` names in the game's
+varbits and the account mode `ironman` are the game's, not the product's.
+
+Read by the Go config (defaults in parentheses): `CHRONICLE_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
 (`dev` | `oidc`, default `dev`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL` (`PUBLIC_BASE_URL/auth/callback`), `OIDC_ALLOWED_SUBJECTS`,
 `OIDC_REQUIRED_ROLE` (oidc needs one of the two; both set = both required), `OIDC_PROJECT_ID`, `OIDC_NATIVE_CLIENT_ID`
 (Zitadel native app of the device flow: its JWT access tokens are bearers on the account routes; empty = web
 session only), `SESSION_SECRET` (32+ chars in oidc),
 `CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler),
 `MICROBOT_CONTROL` (`off`; `on` enables the Microbot control module, docs/08; in oidc it needs `OIDC_PROJECT_ID`, the
-audience of the agent's machine-user token). `ironman agent` reads `IRONMAN_URL`, `MICROBOT_AGENT_CLIENT_ID`,
+audience of the agent's machine-user token). `chronicle agent` reads `CHRONICLE_URL`, `MICROBOT_AGENT_CLIENT_ID`,
 `MICROBOT_AGENT_CLIENT_SECRET` (or `_SECRET_FILE`; oidc only), `MICROBOT_HARNESS_DIR`, `MICROBOT_HOME`, `MB_VNC_PORT` and, to override the
 harness tools it runs, `MICROBOT_CLIENT_CMD` and `MICROBOT_ACCOUNT_CMD`. `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:

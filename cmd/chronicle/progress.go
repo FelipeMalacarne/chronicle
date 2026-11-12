@@ -8,11 +8,12 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
+
+	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
 )
 
 // newProgressCmd groups the account progress commands. They talk to a running
@@ -23,7 +24,7 @@ func newProgressCmd() *cobra.Command {
 	return cmd
 }
 
-// newProgressCheckCmd is `ironman progress check` (docs/10 section 6,
+// newProgressCheckCmd is `chronicle progress check` (docs/10 section 6,
 // decision E3): every projection of the account recomputed from its sources
 // by the server, read only. It exits 1 when any differs.
 func newProgressCheckCmd() *cobra.Command {
@@ -37,14 +38,14 @@ func newProgressCheckCmd() *cobra.Command {
 			if strings.TrimSpace(account) == "" {
 				return errors.New("--account is required (e.g. acc_iron_man)")
 			}
-			return progressCheck(cmd.Context(), cmd.OutOrStdout(), baseURL, account, os.Getenv("IRONMAN_TOKEN"), timeout)
+			return progressCheck(cmd.Context(), cmd.OutOrStdout(), baseURL, account, appenv.Get("TOKEN"), timeout)
 		},
 	}
-	def := os.Getenv("IRONMAN_URL")
+	def := appenv.Get("URL")
 	if def == "" {
 		def = "http://127.0.0.1:8080"
 	}
-	cmd.Flags().StringVar(&baseURL, "url", def, "server base URL (IRONMAN_URL)")
+	cmd.Flags().StringVar(&baseURL, "url", def, "server base URL (CHRONICLE_URL)")
 	cmd.Flags().StringVar(&account, "account", "", "account id")
 	cmd.Flags().DurationVar(&timeout, "timeout", 30*time.Second, "request timeout")
 	return cmd

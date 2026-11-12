@@ -10,7 +10,7 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
 )
 
-// CheckReport is the result of `ironman progress check` for one account
+// CheckReport is the result of `chronicle progress check` for one account
 // (docs/10 section 6, decision E3).
 type CheckReport struct {
 	Account     string   `json:"account"`

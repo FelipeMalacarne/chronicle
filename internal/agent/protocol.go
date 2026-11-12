@@ -1,5 +1,5 @@
 // Package agent is the Microbot control link (docs/08): the protocol between
-// `ironman serve` and `ironman agent`, and the agent itself. The agent runs on
+// `chronicle serve` and `chronicle agent`, and the agent itself. The agent runs on
 // the machine with the game, opens an OUTBOUND websocket to the server
 // (/api/microbot/agent, authenticated per mode) and executes only the commands of a
 // closed list; it never relays raw requests to the Agent Server.

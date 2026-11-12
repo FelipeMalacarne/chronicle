@@ -55,16 +55,16 @@ Endpoints do Agent Server que o módulo usa (referência completa em
 
 O cliente do jogo roda no `zaros`; o planner roda no `zaros` agora (doc 04, seção 8) e no
 `saradomin` depois. Para os dois casos funcionarem igual, o controle passa sempre por um **agent** no
-`zaros`, que é o mesmo binário (`ironman agent`) rodando como serviço systemd do usuário, declarado no
+`zaros`, que é o mesmo binário (`chronicle agent`) rodando como serviço systemd do usuário, declarado no
 `nix-config` ao lado do módulo do Microbot.
 
 ```
-navegador ──Zitadel (OIDC) + papel──> ironman serve (saradomin; ou zaros no modo local-first)
+navegador ──Zitadel (OIDC) + papel──> chronicle serve (saradomin; ou zaros no modo local-first)
                                             ▲
                                             │ websocket de SAÍDA, dentro do Tailscale,
                                             │ machine user do Zitadel; carrega comandos, eventos e o VNC
                                             │
-                                 ironman agent (zaros, serviço systemd do usuário)
+                                 chronicle agent (zaros, serviço systemd do usuário)
                                             ├── UDS + token ──> Agent Server (cliente Microbot no Xvfb)
                                             ├── TCP 127.0.0.1:5999 ──> x11vnc ──> Xvfb :99
                                             └── exec ──> mb-client start|stop --headless
@@ -131,7 +131,7 @@ quem é o usuário; as camadas abaixo cobrem o resto.
    `saradomin` comprometido não consegue executar código no `zaros`.
 5. **ACL do Tailscale**: o `zaros` alcança só o `saradomin` na porta do planner; nada na tailnet
    inicia conexão para o `zaros`.
-6. **Controle local**: `systemctl --user stop ironman-agent` (ou `ironman agent pause`) corta tudo
+6. **Controle local**: `systemctl --user stop ironman-agent` (ou `chronicle agent pause`) corta tudo
    no `zaros`. O agent não inicia ações enquanto o Microbot indicar input humano (o dono jogando).
 7. **Web**: sessão exigida também no websocket do VNC, checagem de `Origin`, proteção contra CSRF
    nas rotas que alteram estado.
@@ -152,7 +152,7 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 
 ## Fases
 
-1. `internal/microbot` (client do Agent Server) e `ironman agent` com a lista fechada de comandos,
+1. `internal/microbot` (client do Agent Server) e `chronicle agent` com a lista fechada de comandos,
    conectando no `serve` local; status do cliente, iniciar/parar via `mb-client`, login/logout,
    screenshot; tela **Microbot** com o toggle e o modo só dashboard; papel e auditoria.
 2. VNC ao vivo: fluxo pela conexão do agent e noVNC na SPA.
@@ -280,7 +280,7 @@ trilha da última troca). Desenhar no canvas antes da entrega 2.
 
 Plano do dono (2026-11-09): o webapp roda no saradomin, como já previsto; o agent e o cliente
 headless vão para o N95 e, se faltar CPU, para o zaros. Com o executor no agent (R1), ele vai junto
-com o cliente e trocar de máquina é só onde o `ironman agent` roda, sem mudança de código.
+com o cliente e trocar de máquina é só onde o `chronicle agent` roda, sem mudança de código.
 
 Medido no zaros (Ryzen 7 7800X3D) em 2026-11-09, com o cliente de dev **em janela** pescando (Tick
 Fisher e Kitten ligados, o cockpit lendo): 1,1 a 2 núcleos e 2,7 GB de RSS (`-Xmx2g`), com o 117 HD
@@ -562,7 +562,7 @@ destino da viagem):
   o início do plugin, com um `boot` que muda quando ele reinicia.
 - Agent: `trigger_get` e `trigger_set` na lista fechada. O gatilho (o evento e o run que ele faz, os
   mesmos parâmetros do `run_start`) fica num arquivo da máquina do jogo
-  (`~/.config/ironman/agent-triggers.json`), então vale com o cockpit fechado, com o `serve` fora e
+  (`~/.config/chronicle/agent-triggers.json`), então vale com o cockpit fechado, com o `serve` fora e
   depois de o agent reiniciar. Um vigia ao lado do link lê a ponte a cada 5 s e, com o gatilho ligado,
   começa o run salvo, marcado com o evento que o disparou. Eventos de antes de o vigia ver aquele
   início do plugin não disparam: um agent que reinicia depois de uma troca não troca de novo. Com o
@@ -590,7 +590,7 @@ destino da viagem):
   Discord do RuneLite, mais o Fishing Trawler afundando). Cada motivo novo vai para a trilha
   ("esperando: em Fishing Trawler"); sem ponto seguro em 60 min o run falha sem ter tocado em nada.
   Não pega instância fora dessas regiões: o Agent Server não diz se a região é instanciada.
-- Histórico: o agent grava os últimos 30 runs com a trilha em `~/.config/ironman/agent-runs.json` a
+- Histórico: o agent grava os últimos 30 runs com a trilha em `~/.config/chronicle/agent-runs.json` a
   cada linha da trilha. Depois de reiniciar, o último run volta a ser o atual (o "Último" do Fazer
   agora) e a numeração continua; um run que o agent não terminou aparece como falhou ("o agent parou
   no meio do run"). `run_history` (leitura) na lista fechada; `GET /api/microbot/runs`.

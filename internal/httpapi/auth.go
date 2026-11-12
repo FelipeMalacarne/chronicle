@@ -162,7 +162,7 @@ func (s *Server) authed(h http.HandlerFunc) http.Handler {
 }
 
 // bearerAuthed authenticates by the JWT access token of the native client
-// (CLI, `ironman mcp`; the plugin goes through pluginCredential; docs/04
+// (CLI, `chronicle mcp`; the plugin goes through pluginCredential; docs/04
 // section 2.5). The session is never consulted, so a bad token is 401 even
 // with a valid cookie, and no CSRF header is needed: the browser never
 // attaches a bearer token by itself.
@@ -170,11 +170,11 @@ func (s *Server) bearerAuthed(h http.HandlerFunc, w http.ResponseWriter, r *http
 	scheme, raw, _ := strings.Cut(r.Header.Get("Authorization"), " ")
 	raw = strings.TrimSpace(raw)
 	if !strings.EqualFold(scheme, "Bearer") || raw == "" {
-		w.Header().Set("WWW-Authenticate", `Bearer realm="ironman"`)
+		w.Header().Set("WWW-Authenticate", `Bearer realm="chronicle"`)
 		writeError(w, http.StatusUnauthorized, "Authorization must be a Bearer token")
 		return
 	}
-	uid, roles, ok := s.verifyBearer(w, r, raw, "ironman")
+	uid, roles, ok := s.verifyBearer(w, r, raw, "chronicle")
 	if !ok {
 		return
 	}

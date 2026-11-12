@@ -26,7 +26,7 @@ e só variáveis de ambiente diferentes. Nada no código distingue os dois ambie
 | **Go 1.27** | núcleo: servidor, CLI, MCP, rule engine (`go.mod` exige `go 1.27`) | `nix develop` ou instalação local |
 | **gopls, gotools, delve** | editor, `goimports`, debugger | dev shell |
 | **golangci-lint v2** | lint (`.golangci.yml`, `version: "2"`) | `just lint`; CI usa `golangci-lint-action@v8` |
-| **air** | recompila e reinicia `ironman serve` ao salvar (`.air.toml`) | `just dev` usa se estiver no PATH |
+| **air** | recompila e reinicia `chronicle serve` ao salvar (`.air.toml`) | `just dev` usa se estiver no PATH |
 | **sqlc** | gera `internal/store/db` a partir de `db/queries/*.sql` + `db/migrations` (`sqlc.yaml`) | `just sqlc` (`go run ...@latest`) |
 | **goose** | migrations SQL em `db/migrations` (`-- +goose Up/Down`) | `just migrate-up/down/status/new` |
 | **Node 22 + pnpm 10** | SPA Svelte em `web/`, build para `web/dist` (embutido no binário) | `just setup`, `just web-dev`, `just web-build` |
@@ -70,12 +70,12 @@ just db-backup                       # pg_dump em backups/ (fora do git)
 just stack-accounts / stack-account-guide <id> <guia> / stack-psql
 ```
 
-- O app escuta só em `127.0.0.1`: em `AUTH_MODE=dev` não há login. `IRONMAN_BIND=0.0.0.0` no `.env`
+- O app escuta só em `127.0.0.1`: em `AUTH_MODE=dev` não há login. `CHRONICLE_BIND=0.0.0.0` no `.env`
   abre para a rede (celular, Tailscale), de propósito.
 - O Postgres da stack publica só em `127.0.0.1:${POSTGRES_PORT}`, para o `just dev` usar o mesmo banco;
   as receitas `stack-*` e o `db-backup` entram pelo `docker compose exec`.
-- Healthcheck: `/ironman health`, que só faz GET em `/api/health` e falha se o banco não responde.
-- As imagens saem do HEAD commitado (`git archive`), nunca do diretório de trabalho: os catálogos de
+- Healthcheck: `/chronicle health`, que só faz GET em `/api/health` e falha se o banco não responde.
+- A imagem (uma só: `chronicle serve` no `app`, `chronicle migrate` no `migrate`) sai do HEAD commitado (`git archive`), nunca do diretório de trabalho: os catálogos de
   entidades vão embutidos no binário e precisam bater com guias e anotações, e a extração deixa lotes
   em andamento no diretório (decisão do dono, 2026-11-04). Código ou conteúdo novo: commit e
   `just up`.
@@ -88,17 +88,16 @@ O saradomin é o cluster k3s de casa, com Argo CD, CloudNativePG, Traefik e o Zi
 como os outros `*.saradomin.ftm.dev.br` (certificado curinga do cert-manager, entrypoint `websecure`
 do Traefik). O Zitadel é público, então o login sai do tailnet e volta.
 
-**Neste repositório** (`deploy/k8s`): `base` com o Deployment (a imagem de migrations do goose num
-initContainer, o servidor com `/api/health` de readiness e `/api/version` de liveness, sem disco) e o
-Service; `overlays/saradomin` com o Ingress, a config de `oidc` e as tags das imagens. O CI, a cada push
-na `main`, publica `ghcr.io/felipemalacarne/ironman-planner:<sha>` e `…/ironman-planner-migrate:<sha>` e
-grava o sha no overlay (`deploy: saradomin roda <sha>`); o Argo segue o overlay na `main`, então esse
+**Neste repositório** (`deploy/k8s`): `base` com o Deployment (`chronicle migrate` num initContainer da
+mesma imagem, o servidor com `/api/health` de readiness e `/api/version` de liveness, sem disco) e o
+Service; `overlays/saradomin` com o Ingress, a config de `oidc` e a tag da imagem. O CI, a cada push na
+`main`, publica `ghcr.io/felipemalacarne/chronicle:<sha>` (pacote público, como os dos outros apps do
+saradomin; o repositório continua privado) e grava o sha no overlay (`deploy: saradomin roda <sha>`); o Argo segue o overlay na `main`, então esse
 commit é o deploy. `secret.example.yaml` lista as chaves do Secret.
 
 **No gielinor** (`clusters/saradomin`): o namespace `chronicle`; o role `chronicle` e o `Database`
 `chronicle` do `postgres-main` (`apps/postgres`); e `apps/chronicle` com a `Application` do Argo, a
-credencial de leitura do repositório (privado) para o Argo, o `ghcr-pull` (o GHCR de um repositório
-privado pede login) e o `chronicle-secrets`, todos cifrados com SOPS.
+deploy key de leitura do repositório (privado) para o Argo e o `chronicle-secrets`, cifrados com SOPS.
 
 Uma vez:
 
@@ -112,10 +111,11 @@ Uma vez:
      `https://chronicle.saradomin.ftm.dev.br/`, Development Mode desligado; em Token Settings,
      **User roles inside ID Token** e **User Info inside ID Token**. O Client ID vai em `OIDC_CLIENT_ID`;
    - aplicação **Native**, grants **Device Code** e **Refresh Token**, **Auth Token Type: JWT**. O Client
-     ID vai em `OIDC_NATIVE_CLIENT_ID` (CLI, `ironman mcp` e o plugin);
+     ID vai em `OIDC_NATIVE_CLIENT_ID` (CLI, `chronicle mcp` e o plugin);
    - o id do projeto vai em `OIDC_PROJECT_ID`; o id do usuário do dono (Users, 18 dígitos) em
      `OIDC_ALLOWED_SUBJECTS`.
-2. **GHCR**: um token clássico só com `read:packages`, para o `ghcr-pull`.
+2. **GHCR**: depois do primeiro push, o pacote `chronicle` em Public (Package settings → Change
+   visibility): o k3s baixa sem login.
 3. **Segredos** no gielinor: `chronicle-secrets` com `DATABASE_URL` (a senha gerada para o role
    `chronicle`), `SESSION_SECRET` (`openssl rand -hex 32`) e os quatro valores do passo 1.
 4. **Banco do zaros**: depois de o `Database` existir e antes de o app subir, `pg_dump --no-owner
@@ -126,7 +126,7 @@ Uma vez:
 6. **Primeiro login**: o dono entra pela web antes de qualquer outro usuário; o primeiro usuário OIDC
    recebe as contas do usuário dev (log `first OIDC login claimed the dev accounts`; doc 04, seção 2.5).
 7. **Plugin**: Server URL `https://chronicle.saradomin.ftm.dev.br`, Credential "Login (Chronicle
-   panel)" e Entrar no painel (doc 06, adendo de 2026-11-11). **CLI**: `ironman login --url
+   panel)" e Entrar no painel (doc 06, adendo de 2026-11-11). **CLI**: `chronicle login --url
    https://chronicle.saradomin.ftm.dev.br`.
 8. Conferir: `/` sem sessão leva ao Zitadel e volta; `GET /api/me` mostra as contas; o painel do plugin
    mostra a rota; `kubectl --context saradomin -n chronicle get pods` pronto.
@@ -136,11 +136,11 @@ máquina do Zitadel (doc 08); no zaros ele continua pelo `just dev`.
 
 ## 4. Variáveis de ambiente
 
-Lidas pelo binário (`ironman serve` é o único comando que abre o banco):
+Lidas pelo binário (`chronicle serve` é o único comando que abre o banco):
 
 | Variável | Default | Função |
 |---|---|---|
-| `IRONMAN_ADDR` | `:8080` | endereço de escuta HTTP |
+| `CHRONICLE_ADDR` | `:8080` | endereço de escuta HTTP |
 | `DATABASE_URL` | — | `postgres://user:senha@host:5432/db?sslmode=...` |
 | `AUTH_MODE` | `dev` | `dev` (usuário local fixo, sem login) ou `oidc` |
 | `OIDC_ISSUER` | — | URL do Zitadel (obrigatório em `oidc`) |
@@ -156,7 +156,7 @@ Lidas pelo binário (`ironman serve` é o único comando que abre o banco):
 | `SYNC_HISCORES_MINUTES` | `30` | cadência do sync do hiscores por conta (jitter de ±5 min); `0` desliga o scheduler, o botão Sincronizar continua |
 
 Só para o compose: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`, `POSTGRES_PORT`,
-`IRONMAN_PORT`, `VERSION`. O `compose.yaml` monta o `DATABASE_URL` do container com host `postgres`,
+`CHRONICLE_PORT`, `VERSION`. O `compose.yaml` monta o `DATABASE_URL` do container com host `postgres`,
 então o mesmo `.env` serve para dev no host (localhost) e para o compose.
 
 ## 5. CI (`.github/workflows/ci.yml`)
@@ -164,7 +164,7 @@ então o mesmo `.env` serve para dev no host (localhost) e para o compose.
 | Job | Quando | O que roda |
 |---|---|---|
 | `web` | push em `main` e PRs | `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm build`, publica `web/dist` como artefato |
-| `go` | depois de `web` | baixa `web/dist`, `go build ./...`, `go vet`, golangci-lint (latest, v2), `go test -race`, `ironman content validate` |
+| `go` | depois de `web` | baixa `web/dist`, `go build ./...`, `go vet`, golangci-lint (latest, v2), `go test -race`, `chronicle content validate` |
 | `migrations` | paralelo | Postgres 17 como service; `goose up`, `status`, `down-to 0`, `up`; `sqlc compile` |
 | `docker` | só push em `main` | `docker build` da imagem (sem push), cache GHA |
 

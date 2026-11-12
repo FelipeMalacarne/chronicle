@@ -17,9 +17,9 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/mcp"
 )
 
-// newMCPCmd is `ironman mcp`: the account's progress for agents, over
+// newMCPCmd is `chronicle mcp`: the account's progress for agents, over
 // stdio, as a client of the API like the CLI (docs/04 section 2.2). It is
-// distinct from `ironman content mcp`, which works offline over content/.
+// distinct from `chronicle content mcp`, which works offline over content/.
 func newMCPCmd() *cobra.Command {
 	var f clientFlags
 	cmd := &cobra.Command{
@@ -52,7 +52,7 @@ func newAccountMCPServer(c *client.Client) *mcp.Server {
 	noArgs := schema(`{"type":"object","additionalProperties":false,"properties":{}}`)
 	empty := func(raw json.RawMessage) error { return mcp.Decode(raw, &struct{}{}) }
 	srv := &mcp.Server{
-		Name:         "ironman",
+		Name:         "chronicle",
 		Version:      buildinfo.Version,
 		Instructions: accountMCPInstructions,
 		Tools: []mcp.Tool{

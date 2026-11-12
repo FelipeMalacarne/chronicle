@@ -140,7 +140,7 @@ As duas formas não exatas de item (D4, revisada):
 - **Forma canônica**: como o texto da chave é a chave primária de `objective_progress`, cada objetivo
   tem uma única grafia. Nas alternativas: ids em ordem crescente, sem repetição, ao menos duas, toda
   quantidade explícita e ≥ 1. `ParseObjectiveKey` rejeita qualquer outra grafia (não normaliza) e
-  `String()` devolve a mesma. O parse é sintático; `ironman content validate` e o verificador das
+  `String()` devolve a mesma. O parse é sintático; `chronicle content validate` e o verificador das
   anotações conferem no catálogo que a família existe e que cada id das alternativas é um item.
 
 Cada alvo mapeia para uma regra do motor e para a faceta do `player_state` que a sustenta. A fonte de
@@ -271,9 +271,9 @@ loader. Nunca há dois escritores para o mesmo arquivo (decisão D3, seção 9.3
 | Arquivo | Escritor | Conteúdo |
 |---|---|---|
 | `content/guides/<id>/guide.json` | `content migrate` / `content import-bruhsailer` | texto, segmentos, `complete_when`, `prerequisites`, `items`, menções; regenerável a qualquer momento |
-| `content/guides/<id>/annotations/<section>.json` | `ironman content mcp` (a cada `submit` aceito) | por passo: `step_id`, `text_hash`, `objectives[]`, `items[]`, `bank_actions[]`, `location`; `skill_version`; schema `content/schema/annotations.schema.json` |
-| `content/guides/<id>/annotations/decisions.json` | `ironman content mcp` (`record_decision`) | decisões gerais do dono |
-| `content/guides/<id>/annotations.report.json` | `ironman content mcp` | rejeitados, ambíguos, baixa confiança, pendências |
+| `content/guides/<id>/annotations/<section>.json` | `chronicle content mcp` (a cada `submit` aceito) | por passo: `step_id`, `text_hash`, `objectives[]`, `items[]`, `bank_actions[]`, `location`; `skill_version`; schema `content/schema/annotations.schema.json` |
+| `content/guides/<id>/annotations/decisions.json` | `chronicle content mcp` (`record_decision`) | decisões gerais do dono |
+| `content/guides/<id>/annotations.report.json` | `chronicle content mcp` | rejeitados, ambíguos, baixa confiança, pendências |
 
 O loader compõe os dois: converte `complete_when`/`prerequisites` em objetivos com
 `source.method: explicit` e `derived`, e sobrepõe a anotação do passo (objetivos, requisitos de item,
@@ -362,7 +362,7 @@ BRUHsailer 1.4, tem 45 mil caracteres).
   e corrigir; um script batch não ofereceria isso.
 - **A reprodutibilidade menor não importa aqui.** O resultado fica commitado e verificado, e só passos
   com texto alterado são reprocessados.
-- **Ferramentas em vez de edição livre.** O agente fala com um **MCP stdio local** (`ironman content mcp`,
+- **Ferramentas em vez de edição livre.** O agente fala com um **MCP stdio local** (`chronicle content mcp`,
   declarado em `.mcp.json` na raiz do repositório) e segue uma **skill**. O MCP:
   - entrega lotes pequenos, sem o agente ler o `guide.json` inteiro;
   - expõe o resolvedor de entidades, então o agente não inventa ids;
@@ -370,8 +370,8 @@ BRUHsailer 1.4, tem 45 mil caracteres).
   - guarda o estado nos sidecars, então dá para parar e retomar em outra sessão.
 
   O agente nunca escreve no `guide.json` nem nos sidecars diretamente.
-- **Não viola a regra 1 do CLAUDE.md.** `ironman content mcp` trabalha só sobre `content/`: sem banco e
-  sem rede. É distinto do `ironman mcp` futuro, que é de progresso da conta e fala com a API.
+- **Não viola a regra 1 do CLAUDE.md.** `chronicle content mcp` trabalha só sobre `content/`: sem banco e
+  sem rede. É distinto do `chronicle mcp` futuro, que é de progresso da conta e fala com a API.
 
 ### 6.2 Fluxo
 
@@ -380,7 +380,7 @@ BRUHsailer 1.4, tem 45 mil caracteres).
  ┌──────────────────────────────────────────────────────────────────────────────┐
  │ skill annotate-guide (taxonomia, exemplos +/-, procedimento)                 │
  │                                                                              │
- │  agente ──next_batch(guide, section)──▶ ironman content mcp (stdio, offline) │
+ │  agente ──next_batch(guide, section)──▶ chronicle content mcp (stdio, offline) │
  │    │      ◀── passos: id, hash, texto, notas, itens, contexto ──              │
  │    │                                                                         │
  │    ├──resolve_entity(kind, nome)──────▶ registry → candidatos / ambíguo       │
@@ -396,7 +396,7 @@ BRUHsailer 1.4, tem 45 mil caracteres).
           ▼
  content/guides/<id>/annotations/<section>.json   (saída verificada + hash por passo)
           │
-          ▼ ironman content validate (guide.json + anotações) ──▶ commit
+          ▼ chronicle content validate (guide.json + anotações) ──▶ commit
           │
           ▼ boot do serve: o loader compõe guide.json + anotações, indexa
             content_versions/content_steps e aplica aliases; objetivos avaliados
@@ -451,14 +451,14 @@ pelo dono. O que o dono deixar em aberto fica fora dos sidecars e aparece só no
 
 | Artefato | Papel |
 |---|---|
-| `.mcp.json` | declara `ironman content mcp` como servidor stdio para o Claude Code |
+| `.mcp.json` | declara `chronicle content mcp` como servidor stdio para o Claude Code |
 | `.claude/skills/annotate-guide/SKILL.md` | procedimento, taxonomia fechada, exemplos positivos e negativos, quando e como consultar o dono; versão em `skill_version` |
 | `content/schema/annotations.schema.json` | schema dos sidecars, embutido no binário como o do guia |
 | `content/reference/unlocks.json`, `locations.json`, `varbits.json` | catálogos novos (seções 3.1 e 7) |
 | `content/guides/<id>/annotations/decisions.json` | decisões gerais do dono (pergunta, resposta, escopo), reaplicadas nos lotes seguintes |
 | `internal/core/annotate` | lote, verificação e composição: puro, testado por tabela, sem LLM |
-| `ironman content mcp` | servidor MCP stdio sobre `internal/core/annotate` e o registry |
-| `ironman content validate` | valida `guide.json` e os sidecars juntos; roda na CI sobre o que está commitado |
+| `chronicle content mcp` | servidor MCP stdio sobre `internal/core/annotate` e o registry |
+| `chronicle content validate` | valida `guide.json` e os sidecars juntos; roda na CI sobre o que está commitado |
 | `content/guides/<id>/annotations/<section>.json` | saída aceita, com hash do texto de cada passo e versão da skill |
 | `content/guides/<id>/annotations.report.json` | rejeitados, ambíguos, baixa confiança |
 
@@ -536,7 +536,7 @@ reanotação depois do catálogo completo):
 
 ### 6.8 Contrato das tools (como implementado, item 4)
 
-`ironman content mcp` (servidor `ironman-content` no `.mcp.json`, roda com `go run`) é uma camada fina
+`chronicle content mcp` (servidor `chronicle-content` no `.mcp.json`, roda com `go run`) é uma camada fina
 sobre `internal/core/annotate`; o protocolo é o MCP stdio (JSON-RPC por linha, só tools) de
 `internal/mcp`. Argumentos com campo desconhecido são recusados, para um erro de digitação não sumir
 calado. Antes de cada tool o servidor relê o registry se algum arquivo de `content/reference` mudou no
@@ -672,7 +672,7 @@ Claude Code, fora do MCP; o relatório conta só as respostas registradas.
   ficam por guia.
 - **Extração dos textos por agente no Claude Code**, acompanhada pelo dono, como operação única com
   resultado commitado e verificado (seção 6). Não é recorrente nem automática.
-- **MCP stdio local (`ironman content mcp`) + skill** como interface do agente; saída em JSON
+- **MCP stdio local (`chronicle content mcp`) + skill** como interface do agente; saída em JSON
   commitado, e a app já sobe com esse conteúdo (sem seed de banco à parte).
 - **Objetivo** como unidade rastreável e **Ref canônico** como identidade única.
 - **Consulta interativa**: o dono acompanha a extração e o agente pergunta sempre que precisar (seção

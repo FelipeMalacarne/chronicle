@@ -14,7 +14,7 @@ Guide id: `oziris-main` · content version `2026.11.0` · 1 source variant · 7 
 - Extracted from https://ironman.guide/guide on 2026-11-03 (`tools/extract_page.py`, raw pages under `data/guide/`).
 - Normalised by `tools/normalize_guide.py` into `data/guide/normalized/guide.json` (schema v0.1).
 - Migrated to the canonical schema (`content/schema/guide.schema.json`) by
-  `ironman content migrate` (package `internal/core/content/migrate`).
+  `chronicle content migrate` (package `internal/core/content/migrate`).
   Field mapping: docs/05-conteudo-e-normalizacao.md, "Mapeamento para o schema canônico (Go)".
 - Route corrected by 2 owner patches from `data/guide/route-patches.json` (dropped, moved and added steps;
   added steps have source origin `own`). See docs/05-conteudo-e-normalizacao.md, section 12.
@@ -30,7 +30,7 @@ Guide id: `oziris-main` · content version `2026.11.0` · 1 source variant · 7 
 `guide.json` is generated. Do not hand-edit it while the normalizer is still the source of truth;
 fix the extraction/normalisation (or the route patches) and re-run:
 
-    go run ./cmd/ironman content migrate
-    go run ./cmd/ironman content validate
+    go run ./cmd/chronicle content migrate
+    go run ./cmd/chronicle content validate
 
 Step ids are stable and inherited from ironman.guide; never reuse one.

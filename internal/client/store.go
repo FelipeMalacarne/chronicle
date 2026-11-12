@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
 )
 
 // DefaultURL is the server a client talks to when nothing else says: the
@@ -16,13 +18,13 @@ import (
 const DefaultURL = "http://localhost:8080"
 
 // Settings are the client's defaults, in <dir>/config.json. Flags and the
-// IRONMAN_URL and IRONMAN_ACCOUNT variables override them.
+// CHRONICLE_URL and CHRONICLE_ACCOUNT variables override them.
 type Settings struct {
 	URL     string `json:"url,omitempty"`
 	Account string `json:"account,omitempty"`
 }
 
-// Credential is what `ironman login` keeps for one server: the device flow's
+// Credential is what `chronicle login` keeps for one server: the device flow's
 // client and its tokens. The access token is renewed with the refresh token.
 type Credential struct {
 	Issuer       string    `json:"issuer"`
@@ -40,17 +42,14 @@ type Store struct {
 	Dir string
 }
 
-// DefaultDir is $IRONMAN_CONFIG_DIR, else <user config dir>/ironman
-// (~/.config/ironman on Linux).
+// DefaultDir is the product's config directory (appenv.ConfigDir:
+// $CHRONICLE_CONFIG_DIR, else ~/.config/chronicle on Linux).
 func DefaultDir() (string, error) {
-	if dir := os.Getenv("IRONMAN_CONFIG_DIR"); dir != "" {
-		return dir, nil
-	}
-	base, err := os.UserConfigDir()
+	dir, err := appenv.ConfigDir()
 	if err != nil {
-		return "", fmt.Errorf("client: config directory: %w", err)
+		return "", fmt.Errorf("client: %w", err)
 	}
-	return filepath.Join(base, "ironman"), nil
+	return dir, nil
 }
 
 // NormalizeURL is the key of a server: no trailing slash.

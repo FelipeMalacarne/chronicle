@@ -7,7 +7,7 @@
 // The hub lives outside internal/core because it is runtime plumbing
 // (goroutines, channels, a mutex) shared by internal/store and
 // internal/httpapi, not domain logic; it imports neither the database nor HTTP.
-// It is single-process by design: one `ironman serve` owns the database, so no
+// It is single-process by design: one `chronicle serve` owns the database, so no
 // broker (Redis, LISTEN/NOTIFY) is needed.
 package events
 

@@ -353,7 +353,7 @@ func TestImportersRegenerateCommittedContent(t *testing.T) {
 			t.Fatal(err)
 		}
 		if !bytes.Equal(got, want) {
-			t.Errorf("%s is stale; regenerate with `ironman content migrate` / `ironman content import-bruhsailer`", path)
+			t.Errorf("%s is stale; regenerate with `chronicle content migrate` / `chronicle content import-bruhsailer`", path)
 		}
 	}
 	if result.Entities != (enrich.Tally{Resolved: 1900, Ambiguous: 184, Unresolved: 577}) {

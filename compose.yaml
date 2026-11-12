@@ -4,10 +4,10 @@
 #   just up                           # build from HEAD, migrate, start
 #   open http://localhost:8080        # first access at /setup: name, detected mode, route
 #
-# - `migrate` applies db/migrations with goose and exits; `app` starts only after it succeeded
-#   (the server never migrates: only `ironman serve` opens the database, CLAUDE.md rule 1).
+# - `migrate` runs `chronicle migrate` (the goose migrations embedded in the same image) and exits;
+#   `app` starts only after it succeeded (the server never migrates; CLAUDE.md rule 1).
 # - The app listens on 127.0.0.1 only: AUTH_MODE=dev has no login, so whoever reaches the port
-#   reads and writes progress. Set IRONMAN_BIND=0.0.0.0 in .env only on purpose (phone, Tailscale).
+#   reads and writes progress. Set CHRONICLE_BIND=0.0.0.0 in .env only on purpose (phone, Tailscale).
 # - The images are built by `just up` from the committed HEAD (git archive), never from the
 #   working tree: the entity catalogs are embedded in the binary and must match the guides and
 #   annotations, and the extraction keeps unfinished batches in the working tree. A newly
@@ -48,16 +48,17 @@ services:
       start_period: 10s
 
   migrate:
-    image: ironman-planner-migrate:stack
+    image: chronicle:stack
+    command: ["migrate"]
     restart: "no"
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      GOOSE_DBSTRING: *database-url
+      DATABASE_URL: *database-url
 
   app:
-    image: ironman-planner:stack
+    image: chronicle:stack
     restart: unless-stopped
     depends_on:
       postgres:
@@ -68,13 +69,14 @@ services:
       - path: .env
         required: false   # compose still interpolates ${...} from .env when present
     environment:
-      IRONMAN_ADDR: ":8080"
+      CHRONICLE_ADDR: ":8080"
       CONTENT_DIR: /app/content
       DATABASE_URL: *database-url
     ports:
-      - "${IRONMAN_BIND:-127.0.0.1}:${IRONMAN_PORT:-8080}:8080"
+      # CHRONICLE_BIND/PORT; the IRONMAN_* names of older .env files still work
+      - "${CHRONICLE_BIND:-${IRONMAN_BIND:-127.0.0.1}}:${CHRONICLE_PORT:-${IRONMAN_PORT:-8080}}:8080"
     healthcheck:
-      test: ["CMD", "/ironman", "health"]
+      test: ["CMD", "/chronicle", "health"]
       interval: 30s
       timeout: 5s
       retries: 3

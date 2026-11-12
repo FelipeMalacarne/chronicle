@@ -19,15 +19,13 @@ spec:
         runAsNonRoot: true
         seccompProfile:
           type: RuntimeDefault
-      # GHCR images of a private repository.
-      imagePullSecrets:
-        - name: ghcr-pull
       initContainers:
+        # `chronicle migrate`: the goose migrations embedded in the same image.
         - name: migrate
-          image: chronicle-migrate
-          args: ["up"]
+          image: chronicle
+          args: ["migrate"]
           env:
-            - name: GOOSE_DBSTRING
+            - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
                   name: chronicle-secrets

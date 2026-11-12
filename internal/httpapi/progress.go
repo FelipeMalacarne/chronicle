@@ -237,7 +237,7 @@ func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleProgressCheck is GET /api/progress/check: every projection of the
-// account recomputed from its sources, read only (`ironman progress check`,
+// account recomputed from its sources, read only (`chronicle progress check`,
 // docs/10 section 6).
 func (s *Server) handleProgressCheck(w http.ResponseWriter, r *http.Request) {
 	account, ok := s.accountParam(w, r)

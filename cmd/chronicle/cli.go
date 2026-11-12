@@ -7,19 +7,19 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
 
+	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
 	"github.com/FelipeMalacarne/ironman-planner/internal/client"
 )
 
 // clientFlags are the connection flags of every API client command. The
-// server is --url, else IRONMAN_URL, else config.json, else
-// client.DefaultURL; the account is --account, else IRONMAN_ACCOUNT, else
-// config.json, else the user's only account. IRONMAN_TOKEN is a bearer used
-// as is, in place of the `ironman login` credential.
+// server is --url, else CHRONICLE_URL, else config.json, else
+// client.DefaultURL; the account is --account, else CHRONICLE_ACCOUNT, else
+// config.json, else the user's only account. CHRONICLE_TOKEN is a bearer used
+// as is, in place of the `chronicle login` credential.
 type clientFlags struct {
 	url     string
 	account string
@@ -27,8 +27,8 @@ type clientFlags struct {
 }
 
 func (f *clientFlags) add(cmd *cobra.Command, withJSON bool) {
-	cmd.Flags().StringVar(&f.url, "url", "", "planner server (default: IRONMAN_URL, config, "+client.DefaultURL+")")
-	cmd.Flags().StringVar(&f.account, "account", "", "account id (default: IRONMAN_ACCOUNT, config, the only account)")
+	cmd.Flags().StringVar(&f.url, "url", "", "planner server (default: CHRONICLE_URL, config, "+client.DefaultURL+")")
+	cmd.Flags().StringVar(&f.account, "account", "", "account id (default: CHRONICLE_ACCOUNT, config, the only account)")
 	if withJSON {
 		cmd.Flags().BoolVar(&f.json, "json", false, "print the API's JSON")
 	}
@@ -48,7 +48,7 @@ func (f *clientFlags) resolveURL(store *client.Store) (string, client.Settings, 
 	if err != nil {
 		return "", settings, err
 	}
-	for _, u := range []string{f.url, os.Getenv("IRONMAN_URL"), settings.URL, client.DefaultURL} {
+	for _, u := range []string{f.url, appenv.Get("URL"), settings.URL, client.DefaultURL} {
 		if u = client.NormalizeURL(u); u != "" {
 			return u, settings, nil
 		}
@@ -68,12 +68,12 @@ func (f *clientFlags) connect(ctx context.Context) (*client.Client, error) {
 	}
 	account := f.account
 	if account == "" {
-		account = os.Getenv("IRONMAN_ACCOUNT")
+		account = appenv.Get("ACCOUNT")
 	}
 	if account == "" {
 		account = settings.Account
 	}
-	return client.New(ctx, client.Options{URL: url, Account: account, Token: os.Getenv("IRONMAN_TOKEN"), Store: store})
+	return client.New(ctx, client.Options{URL: url, Account: account, Token: appenv.Get("TOKEN"), Store: store})
 }
 
 // explain turns the client's errors into what the user should do (PT-BR,
@@ -85,9 +85,9 @@ func explain(err error) error {
 	case err == nil:
 		return nil
 	case errors.Is(err, client.ErrLoginRequired):
-		return errors.New("o servidor pede login: rode `ironman login`")
+		return errors.New("o servidor pede login: rode `chronicle login`")
 	case errors.Is(err, client.ErrLoginExpired):
-		return errors.New("o login expirou: rode `ironman login` de novo")
+		return errors.New("o login expirou: rode `chronicle login` de novo")
 	case errors.Is(err, client.ErrNoAccount):
 		return errors.New("nenhuma conta neste servidor: crie a conta pela web")
 	case errors.As(err, &many):
@@ -95,9 +95,9 @@ func explain(err error) error {
 		for i, a := range many.Accounts {
 			ids[i] = a.ID
 		}
-		return fmt.Errorf("várias contas (%s): use --account <id> ou `ironman use <id>`", strings.Join(ids, ", "))
+		return fmt.Errorf("várias contas (%s): use --account <id> ou `chronicle use <id>`", strings.Join(ids, ", "))
 	case errors.As(err, &api) && api.Status == http.StatusUnauthorized:
-		return fmt.Errorf("login recusado pelo servidor (%s): rode `ironman login`", api.Message)
+		return fmt.Errorf("login recusado pelo servidor (%s): rode `chronicle login`", api.Message)
 	case errors.As(err, &api):
 		return fmt.Errorf("%s (HTTP %d)", api.Message, api.Status)
 	}
@@ -253,7 +253,7 @@ func newUseCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			c, err := client.New(ctx, client.Options{URL: url, Token: os.Getenv("IRONMAN_TOKEN"), Store: store})
+			c, err := client.New(ctx, client.Options{URL: url, Token: appenv.Get("TOKEN"), Store: store})
 			if err != nil {
 				return err
 			}
@@ -271,9 +271,9 @@ func newUseCmd() *cobra.Command {
 					return nil
 				}
 			}
-			return fmt.Errorf("conta %q não é sua em %s (veja `ironman accounts`)", args[0], url)
+			return fmt.Errorf("conta %q não é sua em %s (veja `chronicle accounts`)", args[0], url)
 		}),
 	}
-	cmd.Flags().StringVar(&f.url, "url", "", "planner server (default: IRONMAN_URL, config, "+client.DefaultURL+")")
+	cmd.Flags().StringVar(&f.url, "url", "", "planner server (default: CHRONICLE_URL, config, "+client.DefaultURL+")")
 	return cmd
 }

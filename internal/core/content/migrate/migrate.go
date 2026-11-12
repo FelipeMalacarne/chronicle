@@ -175,7 +175,7 @@ func ConvertWithReport(n *Normalized, opts Options) (*content.Guide, *enrich.Rep
 		Title:         n.Guide.Title,
 		Description: "Guide text by " + n.Guide.Source.Author + ", republished, maintained and extended by " +
 			n.Guide.Source.Maintainer + ". Migrated from data/guide/normalized/guide.json (normalizer schema " +
-			n.SchemaVersion + ") by `ironman content migrate`.",
+			n.SchemaVersion + ") by `chronicle content migrate`.",
 		Version:       opts.ContentVersion,
 		DefaultModes:  []string{"ironman", "hcim", "uim", "gim"},
 		DefaultLayers: []string{"classic", "enhanced"},
@@ -511,7 +511,7 @@ Guide id: `+"`%s`"+` · content version `+"`%s`"+` · %d source variant · %d se
 - Extracted from %s on %s (`+"`tools/extract_page.py`"+`, raw pages under `+"`data/guide/`"+`).
 - Normalised by `+"`tools/normalize_guide.py`"+` into `+"`%s`"+` (schema v%s).
 - Migrated to the canonical schema (`+"`content/schema/guide.schema.json`"+`) by
-  `+"`ironman content migrate`"+` (package `+"`internal/core/content/migrate`"+`).
+  `+"`chronicle content migrate`"+` (package `+"`internal/core/content/migrate`"+`).
   Field mapping: docs/05-conteudo-e-normalizacao.md, "Mapeamento para o schema canônico (Go)".%s
 - Explicit bank/deposit/withdraw words deterministically start a bank-leg
   segment. The checked-in result contains %d partial loadouts and %d explicitly
@@ -525,8 +525,8 @@ Guide id: `+"`%s`"+` · content version `+"`%s`"+` · %d source variant · %d se
 `+"`guide.json`"+` is generated. Do not hand-edit it while the normalizer is still the source of truth;
 fix the extraction/normalisation (or the route patches) and re-run:
 
-    go run ./cmd/ironman content migrate
-    go run ./cmd/ironman content validate
+    go run ./cmd/chronicle content migrate
+    go run ./cmd/chronicle content validate
 
 Step ids are stable and inherited from ironman.guide; never reuse one.
 `, g.Title, g.ID, g.Version, len(g.Variants), len(g.Sections), segments, bankLegs, g.StepCount(), withRules, g.StepCount()-withRules,

@@ -1,5 +1,5 @@
-// Command ironman is the single binary of the Ironman planner: web server
-// (serve), content tooling (content validate|migrate|mcp) and the CLI and MCP
+// Command chronicle is the single binary of Chronicle, the Ironman planner: web server
+// (serve), migrations (migrate), content tooling (content validate|migrate|mcp) and the CLI and MCP
 // clients of the API (login, now, done, plan, sync, state, mcp).
 package main
 
@@ -22,7 +22,7 @@ func main() {
 
 func newRoot() *cobra.Command {
 	root := &cobra.Command{
-		Use:           "ironman",
+		Use:           "chronicle",
 		Short:         "Self-hosted OSRS Ironman planner",
 		Version:       buildinfo.String(),
 		SilenceUsage:  true,
@@ -30,6 +30,7 @@ func newRoot() *cobra.Command {
 	}
 	root.AddCommand(
 		newServeCmd(),
+		newMigrateCmd(),
 		newContentCmd(),
 		newVersionCmd(),
 		newHealthCmd(),

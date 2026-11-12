@@ -47,9 +47,9 @@ func (f *fakePlanner) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 func runCLI(t *testing.T, args ...string) (string, error) {
 	t.Helper()
-	t.Setenv("IRONMAN_CONFIG_DIR", t.TempDir())
-	t.Setenv("IRONMAN_TOKEN", "")
-	t.Setenv("IRONMAN_ACCOUNT", "")
+	t.Setenv("CHRONICLE_CONFIG_DIR", t.TempDir())
+	t.Setenv("CHRONICLE_TOKEN", "")
+	t.Setenv("CHRONICLE_ACCOUNT", "")
 	root := newRoot()
 	var out bytes.Buffer
 	root.SetOut(&out)
@@ -119,7 +119,7 @@ func TestExplainLoginRequired(t *testing.T) {
 		_, _ = w.Write([]byte(`{"error":"login required"}`))
 	}))
 	defer srv.Close()
-	if _, err := runCLI(t, "now", "--url", srv.URL); err == nil || !strings.Contains(err.Error(), "ironman login") {
+	if _, err := runCLI(t, "now", "--url", srv.URL); err == nil || !strings.Contains(err.Error(), "chronicle login") {
 		t.Fatalf("now without login = %v", err)
 	}
 }

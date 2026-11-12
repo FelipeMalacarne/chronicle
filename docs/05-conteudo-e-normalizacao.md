@@ -258,7 +258,7 @@ doc 04, seção 9.
 
 ## 10. Mapeamento para o schema canônico (Go)
 
-`ironman content migrate` (pacote `internal/core/content/migrate`) lê `data/guide/normalized/guide.json` (schema v0.1 acima) e escreve `content/guides/oziris-main/guide.json` no schema canônico `content/schema/guide.schema.json`, validando a saída antes de gravar. A saída é determinística (mesmo input ⇒ mesmos bytes) e deve ser regenerada, não editada à mão. Mapeamento campo a campo:
+`chronicle content migrate` (pacote `internal/core/content/migrate`) lê `data/guide/normalized/guide.json` (schema v0.1 acima) e escreve `content/guides/oziris-main/guide.json` no schema canônico `content/schema/guide.schema.json`, validando a saída antes de gravar. A saída é determinística (mesmo input ⇒ mesmos bytes) e deve ser regenerada, não editada à mão. Mapeamento campo a campo:
 
 | v0.1 (normalizador) | Canônico | Regra |
 |---|---|---|
@@ -298,14 +298,14 @@ Ambas aditivas e opcionais; `additionalProperties: false` continua em todos os o
 1. **`$defs/ruleMeta`** e a propriedade **`meta`** em todas as 13 regras atômicas (`skill_level` … `manual`): `{origin: string, inferred: boolean, confidence: high|medium|low, match: string}`. Guarda a proveniência da regra (campo estruturado do site vs. inferida do texto) sem influenciar a avaliação. A UI deve tratar `confidence: medium` como sugestão a confirmar (ressalva da seção 8).
 2. **`step.prerequisites`**: array de regras (mesmo `$defs/rule`), informativo: o que o texto diz que você precisa antes do passo. Não bloqueia conclusão; o grafo pode derivar arestas suaves daí. 20 passos.
 
-Resultado da migração: 7 seções, 576 passos, 209 com regra automática (170 `quest_state`, 59 `skill_level`, 5 `diary_tier`, com sobreposição por passo), 367 manuais; `ironman content validate` passa com 0 erros.
+Resultado da migração: 7 seções, 576 passos, 209 com regra automática (170 `quest_state`, 59 `skill_level`, 5 `diary_tier`, com sobreposição por passo), 367 manuais; `chronicle content validate` passa com 0 erros.
 
 ## 11. Adendo de 2026-11-04: segundo guia, segmentos e entidades
 
 - **BRUHsailer** (So Iron BRUH e ParasailerOSRS) entrou como rota independente em
   `content/guides/bruhsailer-main/`: 226 passos em 9 seções, importados dos três DOCX do mirror
   `Osrsper/BRUHsailer` no commit `b697c0a` (checksums em `data/sources/bruhsailer/`) por
-  `ironman content import-bruhsailer`. Os passos são parágrafos longos (média de 1097 caracteres) e
+  `chronicle content import-bruhsailer`. Os passos são parágrafos longos (média de 1097 caracteres) e
   **não têm regras `complete_when`**; os metadados da fonte (GP, tempo, itens, skills/quests) ficam como
   notas. Proveniência e mapeamento em `content/guides/bruhsailer-main/README.md`.
 - **Cores do autor** (2026-11-08): o DOCX usa cor de texto como ênfase ("cheapest in red" no CH1.30,
@@ -344,7 +344,7 @@ o jogo mudou e o passo ficou impossível ou fora de ordem, a correção entra no
   outro, na mesma seção), `insert` (passo novo, id novo no estilo `1.1.254a`, `source.origin: own`),
   `note` (troca a nota de update que pediu o patch por uma que diz o que foi ajustado) e `items` (troca
   os itens do passo).
-- `ironman content migrate` aplica os patches depois de converter os passos e antes de derivar os
+- `chronicle content migrate` aplica os patches depois de converter os passos e antes de derivar os
   segmentos (`internal/core/content/migrate/patches.go`). Um patch que não casa mais com o guia
   importado é erro, nunca é pulado.
 - Passos movidos mantêm o id: marcas, cursor e anotações continuam valendo, e `content_steps.position`

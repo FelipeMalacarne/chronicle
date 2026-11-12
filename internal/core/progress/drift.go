@@ -5,7 +5,7 @@ import "fmt"
 // Drift lists what this plan would still write. A reevaluation with no new
 // facts right after another must write nothing: every line is a stored
 // projection (verdict, implied mark, status event, cursor) out of step with
-// the engine (docs/10 section 6, `ironman progress check`).
+// the engine (docs/10 section 6, `chronicle progress check`).
 func (p Plan) Drift() []string {
 	var out []string
 	for _, u := range p.Objectives {

@@ -65,7 +65,7 @@ func ProjectAll(ctx context.Context, q *storedb.Queries, accountID string) error
 }
 
 // Diff compares player_state with the merge of the observations, without
-// writing (docs/10 section 6, `ironman progress check`). It returns one line
+// writing (docs/10 section 6, `chronicle progress check`). It returns one line
 // per fact out of step; none means player_state is exactly the projection.
 func Diff(ctx context.Context, q *storedb.Queries, accountID string) ([]string, error) {
 	facets, err := q.ListObservedFacets(ctx, accountID)

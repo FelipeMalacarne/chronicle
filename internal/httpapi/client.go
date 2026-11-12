@@ -3,7 +3,7 @@ package httpapi
 import "net/http"
 
 // authClientResponse is GET /api/auth/client: how a native client (the CLI,
-// `ironman mcp`, later the plugin) logs in to this server. In dev mode it
+// `chronicle mcp`, later the plugin) logs in to this server. In dev mode it
 // needs nothing; in oidc mode it runs the device flow (RFC 8628) at Issuer
 // with ClientID and Scopes and sends the access token as a bearer. Without
 // ClientID the server takes no bearer tokens (only the web session).
@@ -37,7 +37,7 @@ func (s *Server) handleAuthClient(w http.ResponseWriter, _ *http.Request) {
 
 // handleRoute is GET /api/route?account=&limit=: the window of the
 // account's active route (the plugin panel's, panel.Window), for the CLI's
-// `now` and `ironman mcp`.
+// `now` and `chronicle mcp`.
 func (s *Server) handleRoute(w http.ResponseWriter, r *http.Request) {
 	limit, ok := windowLimit(w, r)
 	if !ok {

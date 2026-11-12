@@ -50,7 +50,7 @@ Opcional: `just migrate-up` para aplicar migrations à mão, `just up` para a st
 | Dockerfile multi-stage | imagem distroless não-root | `Dockerfile`, `.dockerignore` |
 | Nix flake + direnv | dev shell reproduzível, `nix build` do binário | `flake.nix`, `.envrc` |
 | GitHub Actions | web, go, migrations, docker build | `.github/workflows/ci.yml` |
-| air | live reload de `ironman serve` | `.air.toml` |
+| air | live reload de `chronicle serve` | `.air.toml` |
 
 Detalhes, variáveis de ambiente e troubleshooting em `docs/07-ambiente-e-ferramental.md`.
 

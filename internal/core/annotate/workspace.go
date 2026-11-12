@@ -3,7 +3,7 @@
 // proposes into canonical refs, verifies each proposal with the same checks
 // the content loader runs, and writes the accepted annotations to the
 // sidecars under content/guides/<id>/annotations/. It never calls an LLM;
-// `ironman content mcp` is a thin MCP layer over it.
+// `chronicle content mcp` is a thin MCP layer over it.
 //
 // Only this package writes the sidecars, decisions.json, the extraction
 // report and the owner-confirmed entries of unlocks.json and locations.json.

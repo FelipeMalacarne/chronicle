@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
 )
 
 // The runs' history (docs/08 phase 4): the agent keeps its last runs with
@@ -27,14 +29,14 @@ type RunHistory struct {
 	Error string `json:"error,omitempty"`
 }
 
-// DefaultRunFile is where `ironman agent` keeps the history: agent-runs.json
+// DefaultRunFile is where `chronicle agent` keeps the history: agent-runs.json
 // next to agent-triggers.json.
 func DefaultRunFile() string {
-	dir, err := os.UserConfigDir()
+	dir, err := appenv.ConfigDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "ironman", "agent-runs.json")
+	return filepath.Join(dir, "agent-runs.json")
 }
 
 // loadRuns reads the history once; the caller holds the runner's lock. The

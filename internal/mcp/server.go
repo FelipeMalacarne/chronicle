@@ -1,6 +1,6 @@
 // Package mcp is a minimal Model Context Protocol server over stdio: JSON-RPC
-// 2.0, one message per line, tools only. It is shared by `ironman content mcp`
-// (offline extraction over content/) and, later, `ironman mcp` (account
+// 2.0, one message per line, tools only. It is shared by `chronicle content mcp`
+// (offline extraction over content/) and, later, `chronicle mcp` (account
 // progress over the API). It knows nothing about either.
 package mcp
 

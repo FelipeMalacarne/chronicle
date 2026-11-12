@@ -1,10 +1,10 @@
-# air live reload for `ironman serve` (used by `just dev` when air is installed).
+# air live reload for `chronicle serve` (used by `just dev` when air is installed).
 root = "."
 tmp_dir = "tmp"
 
 [build]
-  cmd = "go build -o ./tmp/ironman ./cmd/ironman"
-  bin = "./tmp/ironman"
+  cmd = "go build -o ./tmp/chronicle ./cmd/chronicle"
+  bin = "./tmp/chronicle"
   args_bin = ["serve"]
   # Rebuild on Go sources, SQL (sqlc output changes) and content JSON.
   include_ext = ["go", "sql", "json"]

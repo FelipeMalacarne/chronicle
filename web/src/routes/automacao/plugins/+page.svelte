@@ -150,7 +150,7 @@
 	let formOk = $state(false);
 	let formWhy = $state<string | null>(null);
 	let rawMode = $state(false);
-	const cfgStore = (c: string) => `ironman.microbot.config.${c}`;
+	const cfgStore = (c: string) => `chronicle.microbot.config.${c}`;
 
 	$effect(() => {
 		const c = selClass;
@@ -253,7 +253,7 @@
 	<section class="panel pad">
 		<p class="sm0">
 			{!status.agent.connected
-				? 'Sem agent: rode `ironman agent` no zaros.'
+				? 'Sem agent: rode `chronicle agent` no zaros.'
 				: 'O cliente está parado; os plugins aparecem com ele rodando.'}
 			<a href={resolve('/automacao')}>Ir ao Cockpit</a>
 		</p>

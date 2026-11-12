@@ -1,9 +1,8 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 namespace: chronicle
-# The namespace, the database and the Secrets (chronicle-secrets, ghcr-pull) belong to the
-# cluster: gielinor creates them, the database `chronicle` on the shared CloudNativePG cluster
-# (clusters/saradomin/apps/postgres) and the Secrets, encrypted by SOPS, in apps/chronicle.
+# The namespace, the database and the Secret chronicle-secrets belong to the cluster: gielinor creates them, the database `chronicle` on the shared CloudNativePG cluster
+# (clusters/saradomin/apps/postgres) and the Secret, encrypted by SOPS, in apps/chronicle.
 # This overlay only says how the app runs.
 resources:
   - ../../base
@@ -20,9 +19,6 @@ configMapGenerator:
       - MICROBOT_CONTROL=off
 images:
   - name: chronicle
-    newName: ghcr.io/felipemalacarne/ironman-planner
-    # CI sets both tags to the images it just pushed, on every push to main.
-    newTag: "4e180467abcd8b74301172d43a0542a9999c0144"
-  - name: chronicle-migrate
-    newName: ghcr.io/felipemalacarne/ironman-planner-migrate
-    newTag: "4e180467abcd8b74301172d43a0542a9999c0144"
+    newName: ghcr.io/felipemalacarne/chronicle
+    # CI sets this to the image it just pushed, on every push to main.
+    newTag: "unpublished"

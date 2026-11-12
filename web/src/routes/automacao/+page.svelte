@@ -269,7 +269,7 @@
 			O controle do Microbot está desligado neste servidor. Ligue com <code
 				>MICROBOT_CONTROL=on</code
 			>
-			no <code>serve</code> e rode <code>ironman agent</code> na máquina do jogo.
+			no <code>serve</code> e rode <code>chronicle agent</code> na máquina do jogo.
 		</p>
 	</section>
 {:else}
@@ -370,7 +370,7 @@
 										<Glyph name="automacao" size={28} />
 										<span
 											>{!status?.agent.connected
-												? 'Sem agent: rode `ironman agent` no zaros'
+												? 'Sem agent: rode `chronicle agent` no zaros'
 												: running
 													? 'Carregando a tela…'
 													: 'Cliente parado: “Iniciar cliente” sobe o headless no zaros'}</span
@@ -474,7 +474,7 @@
 				<ClientAccount {running} onchange={refreshAudit} />
 			{/if}
 			<p class="su tiny">
-				Cliente de terceiros, fora do planner. Parar tudo: Ctrl+C no <code>ironman agent</code> no zaros.
+				Cliente de terceiros, fora do planner. Parar tudo: Ctrl+C no <code>chronicle agent</code> no zaros.
 				Login derruba o mesmo personagem de outro cliente.
 			</p>
 		</aside>

@@ -3,7 +3,7 @@
   "id": "oziris-main",
   "slug": "oziris-main",
   "title": "OSRS Ironman Efficiency Guide (OzirisLoL)",
-  "description": "Guide text by OzirisLoL, republished, maintained and extended by ironman.guide. Migrated from data/guide/normalized/guide.json (normalizer schema 0.1) by `ironman content migrate`.",
+  "description": "Guide text by OzirisLoL, republished, maintained and extended by ironman.guide. Migrated from data/guide/normalized/guide.json (normalizer schema 0.1) by `chronicle content migrate`.",
   "version": "2026.11.0",
   "default_modes": [
     "ironman",

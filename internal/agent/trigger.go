@@ -13,6 +13,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
 )
 
 // Triggers (docs/08 phase 4, delivery 3): a game event starts a run by
@@ -62,14 +64,14 @@ type TriggerStatus struct {
 	Last *Firing `json:"last,omitempty"`
 }
 
-// DefaultTriggerFile is where `ironman agent` keeps the triggers:
-// agent-triggers.json in the user's config dir, next to the CLI's (~/.config/ironman).
+// DefaultTriggerFile is where `chronicle agent` keeps the triggers:
+// agent-triggers.json in the user's config dir, next to the CLI's (~/.config/chronicle).
 func DefaultTriggerFile() string {
-	dir, err := os.UserConfigDir()
+	dir, err := appenv.ConfigDir()
 	if err != nil {
 		return ""
 	}
-	return filepath.Join(dir, "ironman", "agent-triggers.json")
+	return filepath.Join(dir, "agent-triggers.json")
 }
 
 // watchPoll is how often the watcher reads the bridge's events.

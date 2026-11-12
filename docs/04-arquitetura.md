@@ -13,7 +13,7 @@ documento onde houver conflito.
 
 | Tema | Decisão |
 |---|---|
-| Stack | **Go** como núcleo: um binário (`ironman`) com `serve`, CLI e servidor MCP; Postgres 17 via pgx + sqlc + goose; SPA Svelte 5 embutida no binário. Toolchain no doc 07. |
+| Stack | **Go** como núcleo: um binário (`chronicle`) com `serve`, CLI e servidor MCP; Postgres 17 via pgx + sqlc + goose; SPA Svelte 5 embutida no binário. Toolchain no doc 07. |
 | Domínio | **Objetivo** (entidade canônica + alvo) é a unidade rastreável e o passo é a unidade de navegação; progresso da conta compartilhado entre rotas, marcas e cursor por guia (doc 09). |
 | Conteúdo | JSON em `content/guides/<id>/` (`oziris-main` e `bruhsailer-main`, rotas independentes), gerado por importadores e validado contra `content/schema/guide.schema.json` no boot e na CI; objetivos extraídos em sidecars `annotations/` (doc 09, seção 4.2). Ids sempre escopados por guia. |
 | Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o motor. |
@@ -21,7 +21,7 @@ documento onde houver conflito.
 | Grafo | Calculado no servidor em memória a partir de `content/` e dos catálogos (`progress.BuildGraph`), por foco; renderizado em colunas de cartões (1440) e árvore (640), em HTML, como o canvas v6 desenhou (seção 5). Nós são chaves de objetivo. |
 | Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06), com painel da rota e marcas a partir da 1.2.0. Hoje autentica com token `ipl_` por cliente; planejado (decisão 28 do doc 01): sem token em `AUTH_MODE=dev` (só de `127.0.0.1`) e device flow do Zitadel em `oidc`. |
 | Execução | Local-first na estação `zaros` com `AUTH_MODE=dev`; depois a mesma imagem no `saradomin` com Postgres e Zitadel existentes (seção 8). |
-| Auth | `AUTH_MODE=dev` (usuário fixo) no zaros; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs` no Postgres) feito para a web, falta o deploy no saradomin (seção 8). Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). CLI e `ironman mcp`: nada em dev, device flow do Zitadel e access token JWT como bearer em `oidc` (seção 2.5). |
+| Auth | `AUTH_MODE=dev` (usuário fixo) no zaros; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs` no Postgres) feito para a web, falta o deploy no saradomin (seção 8). Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). CLI e `chronicle mcp`: nada em dev, device flow do Zitadel e access token JWT como bearer em `oidc` (seção 2.5). |
 
 ## 1. Stack
 
@@ -54,7 +54,7 @@ flowchart LR
   subgraph Browser
     UI[SPA Svelte<br/>Agora, Rotas, Mundo, Conta]
   end
-  subgraph Bin["ironman serve (1 processo)"]
+  subgraph Bin["chronicle serve (1 processo)"]
     API[API HTTP<br/>/api/*]
     CL[Content loader<br/>valida, compõe anotações, indexa, aplica aliases]
     RE[Motor<br/>objetivos → status derivado]
@@ -71,7 +71,7 @@ flowchart LR
     RL[Microbot + plugin próprio]
   end
   CONTENT[(content/ no git)]
-  CLI[ironman now/done/plan/state<br/>ironman mcp]
+  CLI[chronicle now/done/plan/state<br/>chronicle mcp]
   UI <--> API
   CLI <--> API
   API --> RE & GS & DB
@@ -112,28 +112,31 @@ Responsabilidades:
 ### 2.2 Formatos do mesmo binário (`cmd/ironman`)
 
 ```
-ironman serve                        # API + SPA + scheduler + ingest (único que abre o Postgres)
-ironman content validate [path]      # schema + checagens semânticas de guide.json e anotações
-ironman content migrate              # data/guide/normalized → content/guides/oziris-main
-ironman content import-bruhsailer    # DOCX pinados → content/guides/bruhsailer-main
-ironman content mcp                  # servidor MCP stdio da extração, só sobre content/ (doc 09, seção 6)
-ironman login | logout                # entra no servidor (device flow em oidc; nada em dev) e o torna padrão
-ironman accounts | use <conta>       # contas do usuário; conta padrão da CLI e do MCP
-ironman now [--limit N] [--json]     # passo atual da rota ativa, objetivos, o que levar, próximos passos
-ironman done | skip | undo [passo] [--note]  # marca do dono (o passo atual sem argumento)
-ironman plan [meta]                  # metas; com uma, o plano ordenado dela
-ironman sync                         # força o sync do hiscores
-ironman state [skills|quests|diaries]
-ironman mcp                          # servidor MCP por stdio para agentes, sobre a API da conta
+chronicle serve                        # API + SPA + scheduler + ingest (único que abre o Postgres)
+chronicle content validate [path]      # schema + checagens semânticas de guide.json e anotações
+chronicle content migrate              # data/guide/normalized → content/guides/oziris-main
+chronicle content import-bruhsailer    # DOCX pinados → content/guides/bruhsailer-main
+chronicle content mcp                  # servidor MCP stdio da extração, só sobre content/ (doc 09, seção 6)
+chronicle login | logout                # entra no servidor (device flow em oidc; nada em dev) e o torna padrão
+chronicle accounts | use <conta>       # contas do usuário; conta padrão da CLI e do MCP
+chronicle now [--limit N] [--json]     # passo atual da rota ativa, objetivos, o que levar, próximos passos
+chronicle done | skip | undo [passo] [--note]  # marca do dono (o passo atual sem argumento)
+chronicle plan [meta]                  # metas; com uma, o plano ordenado dela
+chronicle sync                         # força o sync do hiscores
+chronicle state [skills|quests|diaries]
+chronicle mcp                          # servidor MCP por stdio para agentes, sobre a API da conta
 ```
 
-Regra: só `serve` abre o banco. CLI e `ironman mcp` são clientes da API (`internal/client`), então
+Regra: só `serve` e `migrate` (as migrations do goose embutidas no binário, para o deploy) abrem o banco.
+O binário se chamava `ironman` até 2026-11-11: as variáveis `IRONMAN_*` ainda valem quando a `CHRONICLE_*`
+não está definida, e o `~/.config/ironman` é movido para `~/.config/chronicle` no primeiro uso
+(`internal/appenv`). CLI e `chronicle mcp` são clientes da API (`internal/client`), então
 funcionam de qualquer máquina e o modelo de permissão é o da web. Servidor: `--url`, senão
-`IRONMAN_URL`, senão `config.json`, senão `http://localhost:8080`; conta: `--account`, senão
-`IRONMAN_ACCOUNT`, senão `config.json`, senão a única conta do usuário. A configuração fica em
-`~/.config/ironman/` (ou `IRONMAN_CONFIG_DIR`): `config.json` (URL e conta padrão) e
+`CHRONICLE_URL`, senão `config.json`, senão `http://localhost:8080`; conta: `--account`, senão
+`CHRONICLE_ACCOUNT`, senão `config.json`, senão a única conta do usuário. A configuração fica em
+`~/.config/chronicle/` (ou `CHRONICLE_CONFIG_DIR`): `config.json` (URL e conta padrão) e
 `credentials.json` (modo 0600, o login de cada servidor: issuer, `client_id`, access e refresh
-token). `IRONMAN_TOKEN` é um bearer usado como está, no lugar do login guardado (scripts). O MCP da
+token). `CHRONICLE_TOKEN` é um bearer usado como está, no lugar do login guardado (scripts). O MCP da
 conta usa o mesmo `internal/mcp` mínimo do `content mcp` (sem o SDK oficial) com as tools `now`,
 `mark_step`, `goals`, `goal_plan`, `account_state`, `step` e `sync`; `mark_step` grava marcas do
 dono e as instruções do servidor mandam chamá-la só quando o dono pede. `account_state` devolve uma
@@ -172,7 +175,7 @@ sequenceDiagram
 
 ### 2.4 Configuração
 
-Variáveis lidas por `internal/config`: `IRONMAN_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
+Variáveis lidas por `internal/config`: `CHRONICLE_ADDR` (`:8080`), `DATABASE_URL`, `AUTH_MODE`
 (`dev` | `oidc`), `OIDC_ISSUER`, `OIDC_CLIENT_ID`, `OIDC_REDIRECT_URL`, `OIDC_ALLOWED_SUBJECTS`,
 `OIDC_REQUIRED_ROLE`, `OIDC_PROJECT_ID`, `SESSION_SECRET`, `CONTENT_DIR` (`content`), `LOG_LEVEL`, `PUBLIC_BASE_URL`,
 `SYNC_HISCORES_MINUTES`. `.env.example` documenta cada uma; detalhes, modos e
@@ -231,11 +234,11 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
     accounts}`.
   - Falta: tela de login/logout no canvas (hoje não há botão "Sair"; o logout existe só na API) e as
     páginas de erro do login, que são HTML mínimo fora do design system.
-- **Clientes nativos** (CLI, `ironman mcp`; o plugin no item 15), feito em 2026-11-08:
+- **Clientes nativos** (CLI, `chronicle mcp`; o plugin no item 15), feito em 2026-11-08:
   - `GET /api/auth/client` (público, todo modo): `{auth_mode: "dev"}`, ou em oidc `{auth_mode:
     "oidc", issuer, client_id, scopes}`. Sem `OIDC_NATIVE_CLIENT_ID` vem sem `client_id`, e o servidor
     não aceita bearer (só a sessão da web). O cliente só precisa da URL do planner.
-  - `ironman login`: Device Authorization Grant (RFC 8628) no issuer, com a aplicação nativa pública
+  - `chronicle login`: Device Authorization Grant (RFC 8628) no issuer, com a aplicação nativa pública
     (sem secret, a mesma para toda instalação) e os scopes do servidor: `openid profile email
     offline_access urn:zitadel:iam:org:projects:roles` e, com `OIDC_PROJECT_ID`,
     `urn:zitadel:iam:org:project:id:<id>:aud`. Mostra a URL e o código, espera a confirmação e guarda
@@ -320,7 +323,7 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/world?account=` | feita (dev, oidc) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
 | `GET /api/world/entity?account=&ref=` | feita (dev, oidc) | uma entidade para o painel de entidade da v6: a mesma visão do `/api/world`, os requisitos diretos do catálogo (com o veredito da conta) e as quests que ela destrava |
 | `GET /api/account/state?account=` | feita (dev, oidc) | a Conta (V6Conta1440): conta, total e quest points, skills, quests e diaries com fonte e idade de cada fato, containers com frescor e itens; faceta nunca lida fica vazia |
-| `GET /api/microbot/agent` | feita (`MICROBOT_CONTROL=on`) | websocket do `ironman agent`, nunca sessão (doc 08): em dev sem token e só do loopback; em oidc o access token JWT de um machine user do Zitadel, com audiência `OIDC_PROJECT_ID` e o papel `microbot:agent` |
+| `GET /api/microbot/agent` | feita (`MICROBOT_CONTROL=on`) | websocket do `chronicle agent`, nunca sessão (doc 08): em dev sem token e só do loopback; em oidc o access token JWT de um machine user do Zitadel, com audiência `OIDC_PROJECT_ID` e o papel `microbot:agent` |
 | `GET /api/microbot/agent/vnc?session=` | feita (`MICROBOT_CONTROL=on`) | websocket de saída do agent com os bytes RFB de uma sessão de VNC; mesma autenticação do link (doc 08, fase 2) |
 | `GET /api/microbot/vnc` | feita (como as de controle abaixo) | websocket do navegador (noVNC): o `serve` pede `vnc_open` ao agent e emenda os fluxos; `Origin` precisa bater com `Host`; a abertura vai para a auditoria |
 | `GET /api/microbot/plugins`, `/hub?q=`, `/scripts/detail?className=`, `/config?group=&keys=`; `POST /api/microbot/plugins/install`, `/plugins/remove`, `/scripts/start`, `/scripts/stop`, `/scripts/pause`, `/scripts/resume`, `/config` | feita (como as de controle abaixo) | plugins, scripts e configuração chave/valor pelo agent (doc 08, fase 3); parâmetros validados por `agent.ValidateParams` (400 antes do agent); as ações vão para a auditoria |
@@ -376,7 +379,7 @@ de crédito do guia (regra 6). Exemplo abreviado:
 ## 3. Modelo de conteúdo
 
 Schema canônico: `content/schema/guide.schema.json`, embutido no binário (`content/schema` →
-`internal/core/content`) e usado por `ironman content validate` e pelo loader. Hierarquia:
+`internal/core/content`) e usado por `chronicle content validate` e pelo loader. Hierarquia:
 `Guide → Variant → Section → Segment → Step`. Segmentos são `bank_leg` (começa numa ação de banco
 explícita) ou `sequence`, com `bank_actions` e `loadout` (`known`/`partial`/`unknown`), sempre com
 proveniência (doc 05, seção 11). Os objetivos de cada passo vêm de `complete_when` (convertido pelo
@@ -452,15 +455,15 @@ Marcas (`step_marks`), eventos de passo e cursor são chaveados por `(account_id
 
 ### 3.3 Importadores, derivação e sidecars
 
-- `ironman content migrate` lê `data/guide/normalized/guide.json` (normalizador Python do doc 05) e
+- `chronicle content migrate` lê `data/guide/normalized/guide.json` (normalizador Python do doc 05) e
   escreve `content/guides/oziris-main/`; mapeamento campo a campo no doc 05, seção 10.
-- `ironman content import-bruhsailer` lê os DOCX pinados em `data/sources/bruhsailer/` e escreve
+- `chronicle content import-bruhsailer` lê os DOCX pinados em `data/sources/bruhsailer/` e escreve
   `content/guides/bruhsailer-main/`; proveniência no README do guia.
 - Os dois passam por `internal/core/content/derive` (segmentos, ações de banco, loadouts) e por
   `internal/core/entities/enrich` (menções resolvidas; o resto vai para `entities.report.json`).
 - Saída determinística: mesmo input ⇒ mesmos bytes. `guide.json` nunca é editado à mão (regra 9).
 - Os objetivos extraídos pelo agente vivem em `content/guides/<id>/annotations/*.json`, escritos só por
-  `ironman content mcp` e compostos pelo loader; os importadores nunca os tocam (doc 09, seção 4.2).
+  `chronicle content mcp` e compostos pelo loader; os importadores nunca os tocam (doc 09, seção 4.2).
 
 ## 4. Banco de dados e avaliação
 
@@ -932,7 +935,7 @@ não existe uma segunda fonte de verdade.
 ### 7.1 Layout
 
 ```
-cmd/ironman/          cobra: serve, content (validate, migrate, import-bruhsailer, mcp),
+cmd/chronicle/          cobra: serve, content (validate, migrate, import-bruhsailer, mcp),
                       stubs now/done/plan/sync/state/mcp
 internal/core/        domínio puro: content (loader, schema, derive, migrate), entities (registry,
                       catálogos, resolver, enrich, catalogbuild), ingest (contrato), rules, planning;
@@ -957,11 +960,11 @@ Regra de dependência: `internal/core` não importa banco nem HTTP; CLI e MCP n�
 - `just` lista os alvos: `setup`, `dev` (Postgres do `compose.yaml` + `air` + Vite), `web-dev`, `build`,
   `test`, `lint`, `content-validate`, `migrate-*`, `sqlc`, `up`/`down`/`logs`.
 - **CI (GitHub Actions)** em todo PR: web (`pnpm check`, `pnpm test`, build), Go (build, vet,
-  golangci-lint, `go test -race`, `ironman content validate`), migrations (goose up/down/up no Postgres
+  golangci-lint, `go test -race`, `chronicle content validate`), migrations (goose up/down/up no Postgres
   17) e build da imagem na `main`.
 - Alterar o conteúdo = corrigir o importador ou o normalizador e regenerar (regra 9); o diff do JSON é
   legível porque a saída é determinística com chaves em ordem canônica. Objetivos extraídos mudam só via
-  `ironman content mcp` (doc 09, seção 6).
+  `chronicle content mcp` (doc 09, seção 6).
 - Versionamento: `guide.version` segue `AAAA.MM.N`; o changelog é o git log de `content/`.
 
 ### 7.3 Testes
@@ -990,11 +993,11 @@ o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis
   (Ingress do Traefik com o certificado curinga); banco `chronicle` no CloudNativePG compartilhado
   (`postgres-main`, com o backup dele); Zitadel em `auth.ftm.dev.br` com um projeto "Chronicle", uma
   aplicação Web (PKCE, sem client secret, redirect `/auth/callback`) e uma nativa (device flow, JWT)
-  para CLI, `ironman mcp` e plugin, roles do projeto no JWT (seção 2.5; decisão 28 do doc 01).
+  para CLI, `chronicle mcp` e plugin, roles do projeto no JWT (seção 2.5; decisão 28 do doc 01).
   `/auth/login` inicia o fluxo, `/auth/callback` troca o código, cria ou atualiza `users` por
   `(issuer, sub)` e grava a sessão em cookie `HttpOnly`. Autorização: `OIDC_ALLOWED_SUBJECTS` e/ou
-  `OIDC_REQUIRED_ROLE`. As imagens (servidor e migrations do goose) vão para o GHCR a cada push na
-  `main` e o CI grava a tag em `deploy/k8s/overlays/saradomin`, que o Argo CD segue: o commit do CI é o
+  `OIDC_REQUIRED_ROLE`. A imagem `chronicle` (servidor e migrations embutidas, `chronicle migrate`) vai
+  para o GHCR a cada push na `main` e o CI grava a tag em `deploy/k8s/overlays/saradomin`, que o Argo CD segue: o commit do CI é o
   deploy. Passos no doc 07, seção 3.3.
 - Nada no código distingue os dois ambientes além da configuração (doc 07).
 
@@ -1015,7 +1018,7 @@ Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/mic
 | Plugin Microbot Ironman Planner 1.0.0 (somente leitura) | `microbot-plugins`: `fm/ironmanplanner` | 36 testes JUnit; **nunca rodou no jogo** |
 | Objetivos no conteúdo: `entities.ObjectiveKey`, tipos `unlock`/`location`, `ItemRequirement` (`item_id`/`any_of`/`family`, `noted`), `entityRef`/`objectiveKey`/`graphRef` no schema, sidecars de anotação (`annotations.schema.json`) lidos, verificados e compostos pelo loader; `complete_when`/`prerequisites` viram objetivos no `content.Load` | `internal/core/entities/objective.go`, `internal/core/content/{objectives,annotations}.go`, `content/schema/` | testes de tabela (chaves, conversão das 269 regras, citação dobrada, hash, composição, rejeições); `content validate` |
 | Posse e readiness sobre as variantes de item | `rules.OwnsFamily`/`OwnsAnyOf`, `planning.evaluateItem` | testes de tabela |
-| Ferramental de extração: `ironman content mcp` (stdio, offline) com `status`, `next_batch`, `resolve_entity`, `propose_entity`, `revise_entity`, `submit`, `record_decision`, `list_decisions`, `report`; registry relido quando o catálogo muda no disco; checagem de ordem com XP de recompensa de quest; `.mcp.json`; skill `annotate-guide@2`; o loader exige `confirmed_by: owner` em toda inferência e decisões citadas existentes | `internal/core/annotate`, `internal/mcp`, `cmd/ironman/content_mcp.go`, `.claude/skills/annotate-guide` | testes de tabela (resolução de nomes, requisitos de item, checagens do submit, ordem da rota com XP de quest, ida e volta pelo loader, hash desatualizado, `propose_entity`, `revise_entity`, releitura do registry, contagens do relatório); lote de exemplo do Oziris 1.1 pelo stdio |
+| Ferramental de extração: `chronicle content mcp` (stdio, offline) com `status`, `next_batch`, `resolve_entity`, `propose_entity`, `revise_entity`, `submit`, `record_decision`, `list_decisions`, `report`; registry relido quando o catálogo muda no disco; checagem de ordem com XP de recompensa de quest; `.mcp.json`; skill `annotate-guide@2`; o loader exige `confirmed_by: owner` em toda inferência e decisões citadas existentes | `internal/core/annotate`, `internal/mcp`, `cmd/chronicle/content_mcp.go`, `.claude/skills/annotate-guide` | testes de tabela (resolução de nomes, requisitos de item, checagens do submit, ordem da rota com XP de quest, ida e volta pelo loader, hash desatualizado, `propose_entity`, `revise_entity`, releitura do registry, contagens do relatório); lote de exemplo do Oziris 1.1 pelo stdio |
 | Catálogos gerados: todos os itens do jogo com página na wiki (14.870 ids), XP de recompensa de 167 quests, varbits de referência (48 diaries + quest points); `locations.json` (57 locais) e `unlocks.json` (Player-owned house) povoados pela extração | `tools/extract_wiki_items.py` → `data/wiki/items.json`; `data/wiki/scripts/build_quests.py` → `data/wiki/quests.json`; `internal/core/entities/catalogbuild` | `catalogbuild -update` sem rede; o catálogo contém os 856 ids do anterior com o mesmo nome; nenhum ref já resolvido nos guias mudou de id |
 | Anotações do Oziris 1.1: 286 passos com objetivos, itens, ações de banco e local verificados; 11 decisões gerais do dono | `content/guides/oziris-main/annotations/` | `content validate`; `annotations.report.json` (doc 09, seção 6.6) |
 
@@ -1107,7 +1110,7 @@ requisitos boostable do catálogo (nunca bloqueiam o cursor), para o "Requer" do
 mostrá-los como "não sabemos". `/rotas` espera o resumo da conta antes de abrir a rota ativa.
 
 CLI e MCP da conta (item 11, 2026-11-08): `internal/client` (cliente tipado da API, `config.json` e
-`credentials.json`, device flow e renovação do token), os comandos da seção 2.2 e o `ironman mcp`;
+`credentials.json`, device flow e renovação do token), os comandos da seção 2.2 e o `chronicle mcp`;
 no servidor, `GET /api/auth/client`, `GET /api/route` e o bearer JWT da aplicação nativa nas rotas
 por conta em oidc (`OIDC_NATIVE_CLIENT_ID`; seção 2.5). Verificação: o device flow completo contra o
 issuer falso (`authtest`: device authorization, polling, refresh rotacionado gravado), testes HTTP do
@@ -1127,7 +1130,7 @@ Legends' Quest e o Heroes' Quest da conta do dono.
 
 Controle do Microbot, fase 1 (item 11, 2026-11-08; doc 08, seção "Estado"): `internal/microbot`
 (cliente do Agent Server), `internal/agent` (lista fechada, link por websocket de saída com token de
-máquina), `ironman agent` (`just agent`), as rotas `/api/microbot/*` atrás de `MICROBOT_CONTROL=on`,
+máquina), `chronicle agent` (`just agent`), as rotas `/api/microbot/*` atrás de `MICROBOT_CONTROL=on`,
 auditoria em `microbot_audit` (migration 0010) e Automação › Cockpit na web (V6Microbot1440/640).
 Verificação: testes do cliente contra um Agent Server falso no socket Unix, do link de ponta a ponta
 com `-race`, das rotas (token do agent, auditoria, sem agent, papel em oidc, só loopback em dev,
@@ -1148,20 +1151,20 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 1 | Doc 09 revisado e decisões fechadas | **feito** (2026-11-04; doc 09, seções 9.1 e 9.3) |
 | 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`, schema dos sidecars; loader converte `complete_when` e compõe anotações; readiness e posse avaliam as variantes de item | **feito** (2026-11-04; detalhes da composição no doc 09, seção 4.2) |
 | 3 | Dados e catálogos: script em `tools/` extrai da wiki os itens citados pelos guias mais famílias para `data/wiki/items.json`; `catalogbuild` gera `content/reference/items.json`; `unlocks.json`, `locations.json` e `varbits.json` iniciais | **feito** (2026-11-04). Itens do Oziris sem resolução 96 → 62 e resolvidos 87 → 119; os ambíguos subiram de 11 para 13, porque nomes antes desconhecidos agora caem em vários ids (doc 09, seção 7) |
-| 4 | `internal/core/annotate` (lote, verificação, composição), `ironman content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | **feito** (2026-11-04; contrato das tools no doc 09, seção 6.8) |
+| 4 | `internal/core/annotate` (lote, verificação, composição), `chronicle content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | **feito** (2026-11-04; contrato das tools no doc 09, seção 6.8) |
 | 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6. **Oziris 1.1 feito** (2026-11-04): 99,3% aceitos no primeiro envio; 88 de 95 objetivos de regra reproduzidos (abaixo dos 95%, as 7 divergências explicadas no doc 09, seção 6.6); levou ao catálogo de itens completo, ao XP de quest na ordem e ao `revise_entity`. **BRUHsailer 1.1 feito** (2026-11-04): 17 de 18 aceitos no primeiro envio, 13 perguntas em 3 lotes; expôs o corte da linha "Items needed:" no importador e os itens inobteníveis resolvidos por nome, ambos corrigidos |
 | 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde. **Feito** (2026-11-05): Oziris 576 de 576 e BRUHsailer 226 de 226 (ids posicionais já no importador). O BRUHsailer 1.2 a 3.2 foi extraído com as inferências delegadas ao agente (decisão `agent-judgment-delegated` no `decisions.json`): 206 de 226 aceitos no primeiro envio, 69 entradas medium com essa decisão, para revisão do dono; nenhum conflito de ordem nem rejeição em aberto |
 | 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado. **Servidor feito** (2026-11-04, `feat/item7-contrato`): contrato, manifest, migration 0005, normalizador, avaliação de quest/diary/`qp`, teste no Postgres com o Oziris real, `just dbml`. Plugin 1.1.0 **feito** (2026-11-05, `microbot-plugins`): lê `Quest.getState` e os vars do manifest. **Em uso no zaros** (2026-11-05): o primeiro `full` trouxe as 217 quests (todas resolvidas no catálogo), os 48 varbits de diary e o varp 101; 54 objetivos de quest e 2 de diary saíram de `unknown` como `met` com evidência, e os objetivos de item saíram de `unknown` depois de abrir o banco. **Feito** |
 | 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
 | 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
 | 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
-| 11 | CLI `now/done/plan/state` e `ironman mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 18 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6); **CLI e `ironman mcp` feitos** (2026-11-08): `internal/client`, `login/logout/accounts/use/now/done/skip/undo/plan/sync/state/mcp`, `GET /api/auth/client`, `GET /api/route` e bearer JWT da aplicação nativa nas rotas por conta em oidc (seções 2.2 e 2.5); conferido contra o `just dev`; **grafo feito** (2026-11-08): Mundo › Grafo e `GET /api/graph` (seção 5); **controle do Microbot, fase 1 feita** (2026-11-08): agent, cockpit, iniciar e parar o headless, login e logout, auditoria (doc 08); **VNC ao vivo (fase 2) e plugins (fase 3) feitos** (2026-11-08); rotinas (fase 4) depois das receitas |
+| 11 | CLI `now/done/plan/state` e `chronicle mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 18 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6); **CLI e `chronicle mcp` feitos** (2026-11-08): `internal/client`, `login/logout/accounts/use/now/done/skip/undo/plan/sync/state/mcp`, `GET /api/auth/client`, `GET /api/route` e bearer JWT da aplicação nativa nas rotas por conta em oidc (seções 2.2 e 2.5); conferido contra o `just dev`; **grafo feito** (2026-11-08): Mundo › Grafo e `GET /api/graph` (seção 5); **controle do Microbot, fase 1 feita** (2026-11-08): agent, cockpit, iniciar e parar o headless, login e logout, auditoria (doc 08); **VNC ao vivo (fase 2) e plugins (fase 3) feitos** (2026-11-08); rotinas (fase 4) depois das receitas |
 | 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05); conferido ao vivo com o plugin no zaros (2026-11-08) |
 | 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito** (2026-11-05, `feat/push-por-evento`); em uso no jogo (2026-11-08) |
 | 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); em uso no jogo com o plugin 1.2.1 (2026-11-08) |
 | 15 | Auth do plugin em `oidc`: a aplicação nativa da CLI no Zitadel, `GET /api/auth/client`, validação do JWT pela JWKS (já feita para a CLI), roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | **feito** (2026-11-11): JWT do device flow nas rotas do plugin (manifest, ingest e painel), roles → scopes, instalações por usuário em `plugin_ingest_tokens`; Chronicle Link 1.9.0 com Credential "Login" e Entrar/Sair no painel (doc 06, adendo de 2026-11-11). Falta conferir contra o Zitadel do saradomin no deploy (item 18) |
 | 16 | Plugin 1.2.x: posição e mundo (`data.position`, opt-in) com destaque na web dos passos pendentes no lugar (desenho no canvas antes), collection log e combat achievements (decisão 24 do doc 01) | por entrega. **Combat achievements e contador do collection log feitos** (2026-11-10, só servidor e catálogo, sem versão nova do plugin): o `proof` de cada task (bit `id%32` do varp `CA_TASK_COMPLETED_<id/32>`, lido do `VarPlayerID.java` pinado) entra no manifest com os contadores `CA_TOTAL_TASKS_COMPLETED_<TIER>` e `COLLECTION_COUNT`/`_MAX` (assunto `count:*` em `varbits.json`); `ca:<id>@done` passa a ter veredito; a Conta mostra os tiers e o log (V6ContaConquistas1440, página 4b). Conferido ao vivo: com o manifest novo o plugin em uso mandou os varps e a contagem pelos bits bateu com o total do jogo (3 easy, 3 medium); log 15 de 1.734. **Posição e passos no lugar feitos** (2026-11-10): `data.position` (Chronicle Link 1.8.0, opt-in "Send position"; faceta `position`, migration 0011), o ponto do mapa da wiki de 91 dos 105 locais em `content/reference/location_maps.json` (`tools/fetch_wiki_locations.py`; regiões e instâncias ficam de fora, nunca adivinhadas), `progress.Nearby` (passos abertos da rota principal a até 64 tiles) e `GET /api/guides/{guide}/nearby`, no painel "Aqui perto" do Agora (V6AgoraPerto1440, página 1c). Falta: o log por item (precisa o plugin ler o log aberto) e conferir no jogo com o plugin 1.8 |
-| 17 | Fase 0 do doc 10 (endurecimento), em fatias: (a) restrições e locks no banco: trava do `met`, evidência não vazia, FKs de snapshot por conta, query do motor só para `implied`, ordem de locks credencial → conta → fatos, lock por conta no sync, `observed_at` limitado ao servidor (**feita** 2026-11-05: migration 0007, `TestIntegrityPostgres`, `TestSyncConcurrentRunsPostgres` e `TestPushAndSyncConcurrentPostgres`, que reproduz o deadlock 40P01 sem os locks); (b) web: undo com guia e conta, escritas serializadas, recursos por rota (**feita** 2026-11-05: `web/src/lib/progress/undo.ts` com testes, Agora e Rota; conferida no navegador trocando a rota ativa com um desfazer pendente); (c) `observations` por fonte e `player_state` como projeção da junção pura (**feita** 2026-11-05: migration 0008, que recupera do último snapshot do hiscores os fatos que o plugin tinha sobrescrito; `internal/core/facts` com testes de tabela e de independência da ordem; `TestFactsMergePostgres`); (d) log de comandos de marca, autor na evidência e tabela `guides` com FKs (**feita** 2026-11-05: migration 0009 com `guides` e `mark_commands`, que começa com uma semente das marcas existentes; `revokes` no desfazer da web e do painel; `VerifyMarks` repete o log e compara com `step_marks`, conferido no teste de ciclo de vida do progresso e no navegador); (e) `ironman progress rebuild --check` (CI e comando; aviso no boot) (**feita** 2026-11-05 como `ironman progress check` sobre `GET /api/progress/check`; boot avisa antes de reavaliar; o job `go` do CI ganhou Postgres 17 e os testes de integração do store, que antes eram pulados no CI, passam a rodar lá e terminam com a checagem); (f) contrato gerado com tygo e fixtures Zod (**fixtures feitas** 2026-11-05, sem Zod: `TestContractPostgres` sobe a API real sobre o conteúdo real e grava em `web/src/lib/api/contract/` uma resposta real por rota como `export const fixture = {…} satisfies <tipo da web>`; o `svelte-check` recusa campo faltando, `null` indevido, enum fora da união e campo desconhecido, e o teste Go recusa mudança de forma sem `-update`; a primeira rodada achou e corrigiu 16 divergências no `types.ts`. **Geração de tipos adiada** pelo dono em 2026-11-05, com OpenAPI como candidato no lugar do tygo, começando pelo contrato do plugin; doc 10, seção 12). **Fase 0 fechada** com isso | cada fatia com teste no Postgres; `rebuild --check` sem diferença no CI e no banco do zaros; teste de concorrência ingest + sync + marca |
+| 17 | Fase 0 do doc 10 (endurecimento), em fatias: (a) restrições e locks no banco: trava do `met`, evidência não vazia, FKs de snapshot por conta, query do motor só para `implied`, ordem de locks credencial → conta → fatos, lock por conta no sync, `observed_at` limitado ao servidor (**feita** 2026-11-05: migration 0007, `TestIntegrityPostgres`, `TestSyncConcurrentRunsPostgres` e `TestPushAndSyncConcurrentPostgres`, que reproduz o deadlock 40P01 sem os locks); (b) web: undo com guia e conta, escritas serializadas, recursos por rota (**feita** 2026-11-05: `web/src/lib/progress/undo.ts` com testes, Agora e Rota; conferida no navegador trocando a rota ativa com um desfazer pendente); (c) `observations` por fonte e `player_state` como projeção da junção pura (**feita** 2026-11-05: migration 0008, que recupera do último snapshot do hiscores os fatos que o plugin tinha sobrescrito; `internal/core/facts` com testes de tabela e de independência da ordem; `TestFactsMergePostgres`); (d) log de comandos de marca, autor na evidência e tabela `guides` com FKs (**feita** 2026-11-05: migration 0009 com `guides` e `mark_commands`, que começa com uma semente das marcas existentes; `revokes` no desfazer da web e do painel; `VerifyMarks` repete o log e compara com `step_marks`, conferido no teste de ciclo de vida do progresso e no navegador); (e) `chronicle progress rebuild --check` (CI e comando; aviso no boot) (**feita** 2026-11-05 como `chronicle progress check` sobre `GET /api/progress/check`; boot avisa antes de reavaliar; o job `go` do CI ganhou Postgres 17 e os testes de integração do store, que antes eram pulados no CI, passam a rodar lá e terminam com a checagem); (f) contrato gerado com tygo e fixtures Zod (**fixtures feitas** 2026-11-05, sem Zod: `TestContractPostgres` sobe a API real sobre o conteúdo real e grava em `web/src/lib/api/contract/` uma resposta real por rota como `export const fixture = {…} satisfies <tipo da web>`; o `svelte-check` recusa campo faltando, `null` indevido, enum fora da união e campo desconhecido, e o teste Go recusa mudança de forma sem `-update`; a primeira rodada achou e corrigiu 16 divergências no `types.ts`. **Geração de tipos adiada** pelo dono em 2026-11-05, com OpenAPI como candidato no lugar do tygo, começando pelo contrato do plugin; doc 10, seção 12). **Fase 0 fechada** com isso | cada fatia com teste no Postgres; `rebuild --check` sem diferença no CI e no banco do zaros; teste de concorrência ingest + sync + marca |
 | 18 | Deploy no saradomin (doc 07, seção 3.3): imagem atrás do proxy, `AUTH_MODE=oidc` com o Zitadel, tela de login/sair (desenho no canvas antes) e o item 15. Por último, decidido pelo dono em 2026-11-08 | o dono usa o planner pelo saradomin, com login web e o plugin autenticado |
 
 Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.

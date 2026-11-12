@@ -1,6 +1,6 @@
 // Package microbot is a typed client of the Microbot Agent Server (docs/08):
 // HTTP over the Unix socket of the dev client's home, authenticated by the
-// token file the client writes. Only `ironman agent` uses it, on the machine
+// token file the client writes. Only `chronicle agent` uses it, on the machine
 // that runs the game; the planner server never talks to the game directly.
 package microbot
 

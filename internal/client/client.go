@@ -1,7 +1,7 @@
-// Package client talks to the planner's HTTP API for the CLI and `ironman
+// Package client talks to the planner's HTTP API for the CLI and `chronicle
 // mcp` (docs/04 section 2.2). It never opens the database (CLAUDE.md rule
 // 1): in AUTH_MODE=dev it sends nothing, in oidc it sends the bearer token of
-// the device-flow login (Login) or of IRONMAN_TOKEN.
+// the device-flow login (Login) or of CHRONICLE_TOKEN.
 package client
 
 import (
@@ -65,10 +65,10 @@ type Options struct {
 	URL string
 	// Account is the account id; empty picks the user's only account.
 	Account string
-	// Token is a bearer token used as is (IRONMAN_TOKEN); it wins over the
+	// Token is a bearer token used as is (CHRONICLE_TOKEN); it wins over the
 	// stored credential.
 	Token string
-	// Store holds the login of `ironman login`; nil sends no credential
+	// Store holds the login of `chronicle login`; nil sends no credential
 	// unless Token is set.
 	Store *Store
 	// HTTP is the transport; nil uses a client with a 30 s timeout.
@@ -385,7 +385,7 @@ func (c *Client) AccountState(ctx context.Context) (AccountState, error) {
 	return out, err
 }
 
-// Get is a GET of any API path as raw JSON (for `ironman mcp`). Account
+// Get is a GET of any API path as raw JSON (for `chronicle mcp`). Account
 // routes get ?account= when accountScoped.
 func (c *Client) Get(ctx context.Context, path string, query url.Values, accountScoped bool) (json.RawMessage, error) {
 	if query == nil {

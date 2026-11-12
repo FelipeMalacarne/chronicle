@@ -19,7 +19,7 @@ import (
 )
 
 // Annotation sidecars live next to guide.json (docs/09 section 4.2). Only
-// `ironman content mcp` writes them; the loader composes them into the steps.
+// `chronicle content mcp` writes them; the loader composes them into the steps.
 const (
 	AnnotationsSubdir = "annotations"
 	DecisionsFileName = "decisions.json"
@@ -277,7 +277,7 @@ func (g *Guide) checkAnnotationFile(file string, a *AnnotationFile, decisions *D
 // every quote, every ref, the role of each objective, that inferences were
 // confirmed by the owner and that the decisions it cites exist. stale reports
 // a text hash that differs from the step's, in which case nothing else is
-// checked. Pointers are relative to the annotation. `ironman content mcp`
+// checked. Pointers are relative to the annotation. `chronicle content mcp`
 // runs it on every submit, so it accepts exactly what the loader accepts.
 func (g *Guide) CheckStepAnnotation(sa *StepAnnotation, decisions *DecisionsFile, reg *entities.Registry) (issues Errors, stale bool) {
 	add := func(ptr, format string, args ...any) {

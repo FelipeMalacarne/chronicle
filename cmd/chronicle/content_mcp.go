@@ -60,7 +60,7 @@ the catalogs only through propose_entity after the owner confirms.`
 
 func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
 	srv := &mcp.Server{
-		Name:         "ironman-content",
+		Name:         "chronicle-content",
 		Version:      buildinfo.Version,
 		Instructions: contentMCPInstructions,
 		Tools: []mcp.Tool{

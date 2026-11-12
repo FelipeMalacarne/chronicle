@@ -150,6 +150,24 @@ Uma vez:
 O controle do Microbot (`MICROBOT_CONTROL=on`) está ligado no saradomin: o agent do zaros entra com a
 conta de máquina do Zitadel (role `microbot:agent`) e o Cockpit pede `microbot:control` (doc 08).
 
+### 3.4 O `chronicle` instalado na estação (CLI, MCP e agent)
+
+O flake do repositório expõe o binário como pacote (`packages.<system>.chronicle`) e como overlay
+(`overlays.default`, que dá `pkgs.chronicle`). É o que o nix-config referencia para ter `chronicle
+login`, `accounts connect`, `workers`, `mcp` e `agent` no PATH:
+
+```nix
+# flake.nix do nix-config
+inputs.chronicle.url = "git+ssh://git@github.com/FelipeMalacarne/chronicle";
+# home-manager
+home.packages = [ inputs.chronicle.packages.${pkgs.system}.chronicle ];
+```
+
+Sem nix-config: `nix profile install git+ssh://git@github.com/FelipeMalacarne/chronicle`. O pacote
+leva o placeholder de `web/dist` (o flake só vê arquivos rastreados), então serve para CLI, MCP e
+agent; o servidor com a web continua sendo a imagem Docker. O `vendorHash` do `flake.nix` muda quando
+o `go.sum` muda: rode `nix build .#chronicle` e cole o `got:` do erro.
+
 ## 4. Variáveis de ambiente
 
 Lidas pelo binário (`chronicle serve` é o único comando que abre o banco):

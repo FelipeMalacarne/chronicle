@@ -16,6 +16,8 @@ Personal Microbot plugins, built as sideloadable jars against the pinned officia
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (planner docs/08).
 - `bin/` — harness (on PATH inside `nix develop`/direnv).
+- `worker/` — the `microbot-worker-base` image (Chronicle's managed workers, planner docs/11
+  section 13.4): `image.nix` (flake output `worker-runtime-image`), `Dockerfile`, `build.sh`.
 - `vendor/microbot/` — sparse upstream checkout at the pinned tag (`mb-vendor`), gitignored.
   This is the API you compile against: read it instead of guessing.
 
@@ -58,8 +60,30 @@ frame per second, which makes every action, walk and wait crawl (measured: Agent
 | `gradle pluginJars` | Build all jars to `build/plugins/` |
 | `mb-bump <version>` | Pin a new client release and re-vendor |
 
+`mb-client` reads these, all optional; unset, it behaves as on the workstation:
+
+| Variable | Default | What it does |
+|---|---|---|
+| `MB_DEV_HOME` | `~/.local/share/microbot-dev` | the client's `user.home` |
+| `MB_XMX` | `2g` | java `-Xmx` |
+| `MB_HWID_STORE_DIR` | `~/.runelite` | dir of the HWID agent's `spoofed-device-ids.properties` and `spoofed-random-dats.properties` |
+| `MB_PREBUILT_PLUGINS` | unset | dir of prebuilt jars: `start` installs all of them (must include `DevBootstrapPlugin.jar` and `ChronicleLinkPlugin.jar`) instead of building DevBootstrap with gradle |
+| `MICROBOT_CLI` | `vendor/microbot/microbot-cli` | the upstream CLI `mb` runs |
+
+PipeWire muting and the xdotool window fit are skipped when those tools are missing.
+
 Iterate with `mb-deploy`; confirm with `mb-test` (or `mb-install` + `mb-client restart`).
 A plugin cannot be hot-deployed while its jar is sideloaded in the dev home.
+
+## Worker image
+`worker/build.sh` builds `ghcr.io/felipemalacarne/microbot-worker-base:<Microbot version>-<sha7>`
+on a machine with Nix and Docker: it loads the Nix runtime (`worker/image.nix`: JDK 21 of the dev
+shell's nixpkgs, Xvfb, x11vnc, xdotool, the pinned jars and microbot-cli, the harness in
+`/opt/microbot/bin`, user 65532, `HOME=/home/worker`), runs `gradle test pluginJars` and adds
+`build/plugins/*.jar` in `/opt/microbot/plugins` (`MB_PREBUILT_PLUGINS`). No entrypoint: the
+`chronicle-worker` image sets its own. Nix sees only files git tracks, so `git add` new files
+under `worker/` before building. CI (`.github/workflows/ci.yml`) runs the tests on every push
+and PR and publishes the image from `main`.
 
 ## Verifying behavior
 - Verify game effects, not config values: query state with `mb` (inventory, npcs, widgets,

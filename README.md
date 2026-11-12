@@ -25,7 +25,7 @@ before each launch.
 
 Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
 
-## Chronicle Link (`fm/chroniclelink`, 1.9.0)
+## Chronicle Link (`fm/chroniclelink`, 1.11.0)
 
 Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
 1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
@@ -114,3 +114,9 @@ access token two minutes before it expires; **Sair** in the panel footer forgets
 refresh token signs the panel out; an unreachable issuer keeps the login and retries every
 30 s. The planner needs one web login of the same user first. Tokens, the username and the RSN
 are never logged.
+
+**Managed workers (1.11.0).** When `CHRONICLE_LINK_SERVER_URL` and `CHRONICLE_LINK_TOKEN` are both
+set and not blank in the client's environment (a Chronicle worker pod, planner docs/11 section
+13.2), they replace Server URL and Credential: token mode with that `ipl_` token. Nothing of them is
+written to the profile's config (not even the installation id, which token mode does not send), and
+the panel footer reads "credencial do ambiente". Without them the config decides, as before.

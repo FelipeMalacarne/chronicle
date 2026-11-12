@@ -4,6 +4,7 @@
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-cli="$MB_REPO/vendor/microbot/microbot-cli"
-[[ -x "$cli" ]] || die "vendor/microbot missing; run: mb-vendor"
+# MICROBOT_CLI: a pinned copy outside vendor/ (the worker image has one, and no vendor/).
+cli="${MICROBOT_CLI:-$MB_REPO/vendor/microbot/microbot-cli}"
+[[ -x "$cli" ]] || die "microbot-cli missing ($cli); run: mb-vendor"
 MICROBOT_SOCKET="$MB_SOCKET" MICROBOT_TOKEN_FILE="$MB_TOKEN_FILE" exec "$cli" "$@"

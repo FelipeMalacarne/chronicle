@@ -23,11 +23,23 @@
         url = "https://github.com/chsami/Microbot/releases/download/${pin.version}/hwid-agent-${pin.version}.jar";
         hash = pin.hwidAgentHash;
       };
+
+      # The upstream CLI of the same tag (bin/mb), for the worker image, which has no vendor/.
+      microbot-cli = pkgs.fetchurl {
+        name = "microbot-cli-${pin.version}";
+        url = "https://raw.githubusercontent.com/chsami/Microbot/${pin.version}/microbot-cli";
+        hash = pin.cliHash;
+      };
     in
     {
       packages.${system} = {
-        inherit microbot-client hwid-agent;
+        inherit microbot-client hwid-agent microbot-cli;
         default = microbot-client;
+        # Streams the runtime layers to stdout (`$(nix build --print-out-paths ...) | docker load`);
+        # worker/build.sh adds the plugin jars and tags microbot-worker-base.
+        worker-runtime-image = import ./worker/image.nix {
+          inherit pkgs pin microbot-client hwid-agent microbot-cli;
+        };
       };
 
       devShells.${system}.default = pkgs.mkShell {

@@ -48,6 +48,7 @@ class RoutePanelRenderTest
 			panel.updateLogin(new LoginSession.View(LoginSession.Kind.WAITING, "ABCD-EFGH", "https://auth.example/device", null)));
 		write(out, "-login-sair", real, false, panel ->
 			panel.updateLogin(new LoginSession.View(LoginSession.Kind.SIGNED_IN, null, null, null)));
+		write(out, "-ambiente", real, false, panel -> panel.setFromEnvironment(true));
 	}
 
 	private static void write(String out, String suffix, PanelState state, boolean itemsOpen, Consumer<RoutePanel> after) throws Exception

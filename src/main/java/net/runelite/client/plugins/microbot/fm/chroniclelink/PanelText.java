@@ -89,6 +89,12 @@ final class PanelText
 		return c.blocked + (c.blocked == 1 ? " bloqueado" : " bloqueados");
 	}
 
+	/** Footer line when URL and token come from the environment (managed worker). */
+	static final String ENVIRONMENT_SOURCE = "credencial do ambiente";
+	static final String ENVIRONMENT_SOURCE_TOOLTIP = "URL e token vêm de " + LinkEnvironment.SERVER_URL + " e "
+		+ LinkEnvironment.TOKEN + "; a URL e a credencial das opções do plugin não valem aqui";
+	static final String ENVIRONMENT_URL_INVALID = "A URL de " + LinkEnvironment.SERVER_URL + " não é válida.";
+
 	/** The short status next to the header dot: "há 10 s", "desatualizado", ... */
 	static String connectionShort(PanelState s, Instant now)
 	{

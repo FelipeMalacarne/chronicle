@@ -56,6 +56,10 @@ import okhttp3.OkHttpClient;
  * after an acknowledged push that changed the route, after each mark, on login and every 30 s
  * while visible; the last window stays on screen, marked outdated, while the planner is down.
  * Its HTTP runs on a third thread ({@code chronicle-link-panel}), its Swing work on the EDT.
+ *
+ * <p>Managed workers (1.11.0): {@code CHRONICLE_LINK_SERVER_URL} and {@code CHRONICLE_LINK_TOKEN}
+ * in the environment replace the config's URL and credential ({@link LinkEnvironment}); nothing
+ * of them is written to the profile, and the panel says the credential comes from there.
  */
 @PluginDescriptor(
 	name = ChronicleLinkPlugin.TAG + "Chronicle Link",
@@ -70,7 +74,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class ChronicleLinkPlugin extends Plugin
 {
-	static final String VERSION = "1.10.0";
+	static final String VERSION = "1.11.0";
 	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */
@@ -133,6 +137,9 @@ public class ChronicleLinkPlugin extends Plugin
 	/** What the current manifest makes worth a capture; null ignores every event. */
 	private volatile EventFilter eventFilter;
 
+	/** URL and token from the environment (managed workers), or null: then the config decides. */
+	private volatile LinkEnvironment linkEnv;
+
 	/** This installation's id, generated once into the config. */
 	private volatile String installationId;
 
@@ -165,9 +172,19 @@ public class ChronicleLinkPlugin extends Plugin
 			bridge = new AgentBridge(gson, configManager);
 			bridge.start();
 		}
-		installationId = InstallationId.ensure(config.installationId(),
-			id -> configManager.setConfiguration(ChronicleLinkConfig.GROUP, InstallationId.CONFIG_KEY, id),
-			UUID::randomUUID);
+		linkEnv = LinkEnvironment.read(System::getenv);
+		if (linkEnv != null)
+		{
+			// token mode needs no installation id, and a worker's profile keeps nothing of ours
+			log.info("Chronicle Link: server URL and token from the environment");
+			installationId = config.installationId();
+		}
+		else
+		{
+			installationId = InstallationId.ensure(config.installationId(),
+				id -> configManager.setConfiguration(ChronicleLinkConfig.GROUP, InstallationId.CONFIG_KEY, id),
+				UUID::randomUUID);
+		}
 		login = new LoginSession(new DeviceLogin(okHttpClient, gson), config::loginRefreshToken,
 			token -> configManager.setConfiguration(ChronicleLinkConfig.GROUP, ChronicleLinkConfig.LOGIN_REFRESH_TOKEN, token));
 		collector = new StateCollector(client);
@@ -241,7 +258,7 @@ public class ChronicleLinkPlugin extends Plugin
 			{
 				onPanel(() ->
 				{
-					login.start(PlannerHttpClient.parseServer(config.serverUrl()), Instant.now());
+					login.start(PlannerHttpClient.parseServer(serverUrl()), Instant.now());
 					publishLogin();
 				});
 			}
@@ -289,9 +306,11 @@ public class ChronicleLinkPlugin extends Plugin
 				}
 			}
 		};
+		boolean fromEnvironment = linkEnv != null;
 		RoutePanel.onSwing(() ->
 		{
 			routePanel = new RoutePanel(actions, config.itemsExpanded());
+			routePanel.setFromEnvironment(fromEnvironment);
 			navigationButton = NavigationButton.builder()
 				.tooltip("Chronicle")
 				.icon(RoutePanel.navigationIcon())
@@ -336,7 +355,7 @@ public class ChronicleLinkPlugin extends Plugin
 	/** Hands the login state to the panel; null outside Credential Login. Panel thread. */
 	private void publishLogin()
 	{
-		LoginSession.View view = config.credentialMode() == ChronicleLinkConfig.CredentialMode.LOGIN ? login.view() : null;
+		LoginSession.View view = credentialMode() == ChronicleLinkConfig.CredentialMode.LOGIN ? login.view() : null;
 		RoutePanel.onSwing(() ->
 		{
 			if (routePanel != null)
@@ -378,17 +397,34 @@ public class ChronicleLinkPlugin extends Plugin
 	/** The panel's planner endpoint, or null while not configured. */
 	private RoutePanelController.Endpoint panelEndpoint()
 	{
-		HttpUrl base = PlannerHttpClient.parseServer(config.serverUrl());
+		HttpUrl base = PlannerHttpClient.parseServer(serverUrl());
 		PlannerCredential credential = credential();
 		return base == null || !credential.ready() ? null : new RoutePanelController.Endpoint(base, credential);
 	}
 
+	/** The server URL in effect: the environment's, else the config's. */
+	private String serverUrl()
+	{
+		return LinkEnvironment.serverUrl(linkEnv, config.serverUrl());
+	}
+
+	/** The credential mode in effect: token with the environment, else the config's. */
+	private ChronicleLinkConfig.CredentialMode credentialMode()
+	{
+		return LinkEnvironment.mode(linkEnv, config.credentialMode());
+	}
+
 	private PlannerCredential credential()
 	{
-		if (config.credentialMode() == ChronicleLinkConfig.CredentialMode.LOGIN)
+		LinkEnvironment env = linkEnv;
+		if (env != null)
+		{
+			return env.credential();
+		}
+		if (credentialMode() == ChronicleLinkConfig.CredentialMode.LOGIN)
 		{
 			LoginSession session = login;
-			String access = session == null ? null : session.accessToken(PlannerHttpClient.parseServer(config.serverUrl()), Instant.now());
+			String access = session == null ? null : session.accessToken(PlannerHttpClient.parseServer(serverUrl()), Instant.now());
 			return new LoginCredential(access, installationId, config.account());
 		}
 		return PlannerCredential.of(config.credentialMode(), config.ingestToken(), installationId, config.account());
@@ -436,6 +472,7 @@ public class ChronicleLinkPlugin extends Plugin
 		panelController = null;
 		login = null;
 		panelVisible = false;
+		linkEnv = null;
 		overlayManager.remove(overlay);
 		engine = null;
 		engineKey = null;
@@ -595,7 +632,7 @@ public class ChronicleLinkPlugin extends Plugin
 	{
 		try
 		{
-			HttpUrl base = PlannerHttpClient.parseServer(config.serverUrl());
+			HttpUrl base = PlannerHttpClient.parseServer(serverUrl());
 			PlannerCredential token = credential();
 			if (base == null || !token.ready())
 			{

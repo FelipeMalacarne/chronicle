@@ -90,6 +90,24 @@ build: web-build
 docker-build:
     docker build --build-arg VERSION={{version}} -t chronicle:{{version}} -t chronicle:latest .
 
+# Pin the microbot-worker-base of the chronicle-worker image (docs/11 section 7.2) by the digest of a
+# GHCR tag (<Microbot version>-<sha7>, from microbot-plugins' CI): just worker-base-bump 2.6.52-abc1234
+worker-base-bump tag:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    repo=ghcr.io/felipemalacarne/microbot-worker-base
+    if command -v crane >/dev/null 2>&1; then
+      digest="$(crane digest "$repo:{{tag}}")"
+    else
+      digest="$(docker buildx imagetools inspect "$repo:{{tag}}" | awk '$1 == "Digest:" { print $2; exit }')"
+    fi
+    if ! [[ "$digest" =~ ^sha256:[0-9a-f]{64}$ ]]; then
+      echo "could not resolve the digest of $repo:{{tag}} (got '${digest}')" >&2
+      exit 1
+    fi
+    echo "$repo@$digest" > deploy/worker/base.lock
+    echo "deploy/worker/base.lock -> $repo@$digest ({{tag}}); commit it and CI publishes chronicle-worker"
+
 # --- quality ---------------------------------------------------------------
 
 # go test ./... plus `pnpm check` and `pnpm test` when the web project defines them

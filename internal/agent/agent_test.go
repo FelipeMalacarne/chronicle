@@ -118,7 +118,7 @@ func linkedWith(t *testing.T, game *fakeGame, vncAddr string) *Link {
 	}
 	go func() { _ = a.Run(ctx) }()
 	deadline := time.Now().Add(5 * time.Second)
-	for !link.Info().Connected {
+	for len(link.Agents()) == 0 {
 		if time.Now().After(deadline) {
 			t.Fatal("agent never linked")
 		}
@@ -131,33 +131,33 @@ func TestLinkRunsTheClosedList(t *testing.T) {
 	game := &fakeGame{}
 	link := linked(t, game)
 	ctx := context.Background()
-	if info := link.Info(); info.Host != "zaros" || info.Version != "test" {
+	if info, ok := link.Agent(""); !ok || info.Host != "zaros" || info.Version != "test" || info.Kind != KindAttached || info.ID == "" {
 		t.Fatalf("info = %+v", info)
 	}
 
 	var st Status
-	if err := link.Call(ctx, CmdStatus, nil, &st); err != nil || st.Running || st.Error != "" {
+	if err := link.Call(ctx, "", CmdStatus, nil, &st); err != nil || st.Running || st.Error != "" {
 		t.Fatalf("status with the client down = %+v %v", st, err)
 	}
 	game.mu.Lock()
 	game.running = true
 	game.mu.Unlock()
-	if err := link.Call(ctx, CmdStatus, nil, &st); err != nil || !st.Running || string(st.Login) != `{"currentWorld":303}` {
+	if err := link.Call(ctx, "", CmdStatus, nil, &st); err != nil || !st.Running || string(st.Login) != `{"currentWorld":303}` {
 		t.Fatalf("status = %+v %v", st, err)
 	}
 
 	var out ClientOutput
-	if err := link.Call(ctx, CmdClientStart, nil, &out); err != nil || out.Output != "mb-client start --headless" {
+	if err := link.Call(ctx, "", CmdClientStart, nil, &out); err != nil || out.Output != "mb-client start --headless" {
 		t.Fatalf("client_start = %+v %v", out, err)
 	}
-	if err := link.Call(ctx, CmdLogin, LoginParams{World: 303}, nil); err != nil {
+	if err := link.Call(ctx, "", CmdLogin, LoginParams{World: 303}, nil); err != nil {
 		t.Fatal(err)
 	}
 	var cmdErr *CommandError
-	if err := link.Call(ctx, CmdLogin, LoginParams{World: 666}, nil); !errors.As(err, &cmdErr) || !strings.Contains(cmdErr.Message, "Non-member") {
+	if err := link.Call(ctx, "", CmdLogin, LoginParams{World: 666}, nil); !errors.As(err, &cmdErr) || !strings.Contains(cmdErr.Message, "Non-member") {
 		t.Fatalf("failed login = %v", err)
 	}
-	if err := link.Call(ctx, CmdLogin, LoginParams{World: 5000}, nil); !errors.As(err, &cmdErr) {
+	if err := link.Call(ctx, "", CmdLogin, LoginParams{World: 5000}, nil); !errors.As(err, &cmdErr) {
 		t.Fatalf("world out of range = %v", err)
 	}
 	game.mu.Lock()
@@ -168,20 +168,20 @@ func TestLinkRunsTheClosedList(t *testing.T) {
 	}
 	// Not a decodable PNG: it goes out as it came.
 	var shot Screenshot
-	if err := link.Call(ctx, CmdScreenshot, nil, &shot); err != nil || string(shot.Image) != "\x89PNG" || shot.Type != "image/png" {
+	if err := link.Call(ctx, "", CmdScreenshot, nil, &shot); err != nil || string(shot.Image) != "\x89PNG" || shot.Type != "image/png" {
 		t.Fatalf("screenshot = %q %s %v", shot.Image, shot.Type, err)
 	}
-	if err := link.Call(ctx, "scripts_deploy", nil, nil); !errors.Is(err, ErrUnknownCommand) {
+	if err := link.Call(ctx, "", "scripts_deploy", nil, nil); !errors.Is(err, ErrUnknownCommand) {
 		t.Fatalf("command outside the list = %v", err)
 	}
 }
 
 func TestLinkWithoutAgent(t *testing.T) {
 	link := &Link{Log: quiet}
-	if err := link.Call(context.Background(), CmdStatus, nil, nil); !errors.Is(err, ErrNoAgent) {
+	if err := link.Call(context.Background(), "", CmdStatus, nil, nil); !errors.Is(err, ErrNoAgent) {
 		t.Fatalf("call without an agent = %v", err)
 	}
-	if link.Info().Connected {
+	if len(link.Agents()) != 0 {
 		t.Fatal("connected without an agent")
 	}
 }

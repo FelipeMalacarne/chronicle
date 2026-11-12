@@ -27,7 +27,7 @@ const MicrobotAgentRole = "microbot:agent"
 // MicrobotAudit persists the control actions (internal/store/microbot).
 type MicrobotAudit interface {
 	Append(ctx context.Context, e storemicrobot.Entry) (storemicrobot.Entry, error)
-	List(ctx context.Context, limit int) ([]storemicrobot.Entry, error)
+	List(ctx context.Context, limit int, account string) ([]storemicrobot.Entry, error)
 }
 
 // MicrobotOptions turns on the Microbot control module (MICROBOT_CONTROL=on,
@@ -35,6 +35,31 @@ type MicrobotAudit interface {
 type MicrobotOptions struct {
 	Link  *agent.Link
 	Audit MicrobotAudit
+	// Workers verifies the token of a managed worker's pod (docs/11 section
+	// 6.3); nil takes no pod tokens.
+	Workers WorkerTokenVerifier
+	// Sessions stores the accounts' game sessions and the workers' desired
+	// state (CHRONICLE_VAULT_KEY set); nil leaves /api/workers and
+	// /api/accounts/session out.
+	Sessions WorkerStore
+	// Control runs the workers in the cluster (WORKERS=on); nil only stores
+	// sessions.
+	Control WorkerControl
+	// WorkerImage is WORKER_IMAGE, the image a start or restart takes.
+	WorkerImage string
+}
+
+// WorkerIdentity is the pod a worker token belongs to and the account the
+// pod serves.
+type WorkerIdentity struct {
+	Pod     string
+	Account string
+}
+
+// WorkerTokenVerifier checks a worker pod's token (in the cluster, a
+// TokenReview of its projected service-account token).
+type WorkerTokenVerifier interface {
+	VerifyWorkerToken(ctx context.Context, token string) (WorkerIdentity, error)
 }
 
 func (s *Server) microbotRoutes() {
@@ -106,6 +131,10 @@ func (s *Server) microbotRoutes() {
 // the query and are validated before the agent sees them.
 func (s *Server) microbotRead(command string, params func(*http.Request) any) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		account, ok := s.microbotAccount(w, r)
+		if !ok {
+			return
+		}
 		raw, err := json.Marshal(params(r))
 		if err != nil {
 			writeError(w, http.StatusBadRequest, err.Error())
@@ -118,7 +147,7 @@ func (s *Server) microbotRead(command string, params func(*http.Request) any) ht
 		ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 		defer cancel()
 		var data json.RawMessage
-		if err = s.opts.Microbot.Link.Call(ctx, command, json.RawMessage(raw), &data); err != nil {
+		if err = s.opts.Microbot.Link.Call(ctx, account, command, json.RawMessage(raw), &data); err != nil {
 			s.writeMicrobotError(w, err)
 			return
 		}
@@ -130,37 +159,84 @@ func (s *Server) microbotRead(command string, params func(*http.Request) any) ht
 
 // agentAuth guards the agent's websockets (docs/08), the link and the
 // per-session VNC streams; never a user session. In dev mode the agent links
-// only from loopback, with no token. In oidc mode it presents a Zitadel
-// machine user's JWT access token: audience the project, role
-// microbot:agent.
+// from loopback with no token. In oidc mode it presents a Zitadel machine
+// user's JWT access token: audience the project, role microbot:agent. A
+// worker's pod (docs/11) presents its own token, checked by
+// MicrobotOptions.Workers when it is not a machine user's (or, in dev mode,
+// when the peer is not loopback); the pod's identity is bound to its
+// account.
 func (s *Server) agentAuth(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var workers WorkerTokenVerifier
+		if s.opts.Microbot != nil {
+			workers = s.opts.Microbot.Workers
+		}
+		scheme, raw, _ := strings.Cut(r.Header.Get("Authorization"), " ")
+		token := strings.TrimSpace(raw)
+		if !strings.EqualFold(scheme, "Bearer") {
+			token = ""
+		}
 		if s.opts.DevMode {
-			if !isLoopback(r.RemoteAddr) {
+			if isLoopback(r.RemoteAddr) {
+				h(w, r.WithContext(agent.WithIdentity(r.Context(), agent.Identity{Subject: "dev"})))
+				return
+			}
+			if workers == nil || token == "" {
 				writeError(w, http.StatusForbidden, "in dev mode the agent links only from this machine")
 				return
 			}
-			h(w, r.WithContext(agent.WithIdentity(r.Context(), "dev")))
+			s.workerAgent(w, r, workers, token, h)
 			return
 		}
-		scheme, raw, _ := strings.Cut(r.Header.Get("Authorization"), " ")
-		if s.opts.OIDC == nil || !strings.EqualFold(scheme, "Bearer") || strings.TrimSpace(raw) == "" {
+		if token == "" || (s.opts.OIDC == nil && workers == nil) {
 			w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent"`)
 			writeError(w, http.StatusUnauthorized, "agent token required (a Zitadel machine user's access token)")
 			return
 		}
-		id, err := s.opts.OIDC.Provider.VerifyMachineToken(r.Context(), strings.TrimSpace(raw))
-		if err != nil {
-			w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent", error="invalid_token"`)
-			writeError(w, http.StatusUnauthorized, "invalid agent token")
+		if s.opts.OIDC != nil {
+			id, err := s.opts.OIDC.Provider.VerifyMachineToken(r.Context(), token)
+			if err == nil {
+				if !slices.Contains(id.Roles, MicrobotAgentRole) {
+					writeError(w, http.StatusForbidden, "the agent's machine user needs the "+MicrobotAgentRole+" role")
+					return
+				}
+				h(w, r.WithContext(agent.WithIdentity(r.Context(), agent.Identity{Subject: id.Subject})))
+				return
+			}
+		}
+		if workers != nil {
+			s.workerAgent(w, r, workers, token, h)
 			return
 		}
-		if !slices.Contains(id.Roles, MicrobotAgentRole) {
-			writeError(w, http.StatusForbidden, "the agent's machine user needs the "+MicrobotAgentRole+" role")
-			return
-		}
-		h(w, r.WithContext(agent.WithIdentity(r.Context(), id.Subject)))
+		w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent", error="invalid_token"`)
+		writeError(w, http.StatusUnauthorized, "invalid agent token")
 	}
+}
+
+// workerAgent authenticates a worker pod's token: its identity is
+// pod:<name>, bound to the pod's account.
+func (s *Server) workerAgent(w http.ResponseWriter, r *http.Request, workers WorkerTokenVerifier, token string, h http.HandlerFunc) {
+	wid, err := workers.VerifyWorkerToken(r.Context(), token)
+	if err != nil || wid.Pod == "" || wid.Account == "" {
+		if err != nil {
+			s.log.Warn("microbot: worker token refused", "err", err)
+		}
+		w.Header().Set("WWW-Authenticate", `Bearer realm="microbot-agent", error="invalid_token"`)
+		writeError(w, http.StatusUnauthorized, "invalid agent token")
+		return
+	}
+	id := agent.Identity{Subject: "pod:" + wid.Pod, BoundAccount: wid.Account, Pod: wid.Pod}
+	h(w, r.WithContext(agent.WithIdentity(r.Context(), id)))
+}
+
+// microbotAccount is the optional ?account= of a control route: present, it
+// goes through accountParam (the session user's own account in oidc, rule
+// 10); absent, the account is "" and the Hub picks the only agent.
+func (s *Server) microbotAccount(w http.ResponseWriter, r *http.Request) (string, bool) {
+	if strings.TrimSpace(r.URL.Query().Get("account")) == "" {
+		return "", true
+	}
+	return s.accountParam(w, r)
 }
 
 // microbotControl adds the module's own checks to an authed route: in dev
@@ -183,34 +259,76 @@ func (s *Server) microbotControl(h http.HandlerFunc) http.HandlerFunc {
 type microbotStatus struct {
 	Enabled bool `json:"enabled"`
 	// Dev: AUTH_MODE=dev, where control answers only this machine.
-	Dev    bool          `json:"dev"`
+	Dev bool `json:"dev"`
+	// Account is the ?account= the status was asked for ("" for none).
+	Account string `json:"account,omitempty"`
+	// Agent is the agent that serves the account (or the only agent);
+	// {"connected": false} when none does.
 	Agent  agent.Info    `json:"agent"`
 	Client *agent.Status `json:"client,omitempty"`
 	Error  string        `json:"error,omitempty"`
+	// Agents are every connected agent the caller may see.
+	Agents []agent.Info `json:"agents"`
 }
 
 func (s *Server) handleMicrobotStatus(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.microbotAccount(w, r)
+	if !ok {
+		return
+	}
 	link := s.opts.Microbot.Link
-	out := microbotStatus{Enabled: true, Dev: s.opts.DevMode, Agent: link.Info()}
-	if out.Agent.Connected {
+	out := microbotStatus{Enabled: true, Dev: s.opts.DevMode, Account: account, Agents: s.visibleAgents(r, link.Agents())}
+	info, err := link.Route(account)
+	switch {
+	case err == nil:
+		out.Agent = info
 		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 		defer cancel()
 		var st agent.Status
-		if err := link.Call(ctx, agent.CmdStatus, nil, &st); err != nil {
-			out.Error = err.Error()
+		if cerr := link.CallAgent(ctx, info.ID, agent.CmdStatus, nil, &st); cerr != nil {
+			out.Error = cerr.Error()
 		} else {
 			out.Client = &st
 		}
+	case errors.Is(err, agent.ErrAmbiguousAgent):
+		out.Error = err.Error()
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, out)
 }
 
+// visibleAgents keeps, in oidc mode, the agents that declare none of the
+// accounts or one the session user owns.
+func (s *Server) visibleAgents(r *http.Request, agents []agent.Info) []agent.Info {
+	if s.opts.DevMode {
+		return agents
+	}
+	uid := sessionUser(r)
+	out := make([]agent.Info, 0, len(agents))
+	for _, a := range agents {
+		if a.Account == "" {
+			out = append(out, a)
+			continue
+		}
+		if uid == "" || s.opts.Identity == nil {
+			continue
+		}
+		if ok, err := s.opts.Identity.OwnsAccount(r.Context(), uid, a.Account); err == nil && ok {
+			out = append(out, a)
+		}
+	}
+	return out
+}
+
 func (s *Server) handleMicrobotScreenshot(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.microbotAccount(w, r)
+	if !ok {
+		return
+	}
 	ctx, cancel := context.WithTimeout(r.Context(), 20*time.Second)
 	defer cancel()
 	var shot agent.Screenshot
-	if err := s.opts.Microbot.Link.Call(ctx, agent.CmdScreenshot, nil, &shot); err != nil {
+	if err := s.opts.Microbot.Link.Call(ctx, account, agent.CmdScreenshot, nil, &shot); err != nil {
 		s.writeMicrobotError(w, err)
 		return
 	}
@@ -229,7 +347,11 @@ func (s *Server) handleMicrobotAudit(w http.ResponseWriter, r *http.Request) {
 		}
 		limit = n
 	}
-	entries, err := s.opts.Microbot.Audit.List(r.Context(), limit)
+	account, ok := s.microbotAccount(w, r)
+	if !ok {
+		return
+	}
+	entries, err := s.opts.Microbot.Audit.List(r.Context(), limit, account)
 	if err != nil {
 		s.log.Error("microbot audit", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not read the audit")
@@ -244,9 +366,14 @@ func (s *Server) handleMicrobotAudit(w http.ResponseWriter, r *http.Request) {
 // open it with the owner's cookie. Opening a session goes to the audit: it
 // hands the mouse and keyboard of the game to the browser.
 func (s *Server) handleMicrobotVNC(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.microbotAccount(w, r)
+	if !ok {
+		return
+	}
 	link := s.opts.Microbot.Link
-	if !link.Info().Connected {
-		s.writeMicrobotError(w, agent.ErrNoAgent)
+	info, err := link.Route(account)
+	if err != nil {
+		s.writeMicrobotError(w, err)
 		return
 	}
 	conn, err := websocket.Accept(w, r, nil)
@@ -255,8 +382,8 @@ func (s *Server) handleMicrobotVNC(w http.ResponseWriter, r *http.Request) {
 	}
 	conn.SetReadLimit(-1)
 	ctx := r.Context()
-	stream, err := link.OpenVNC(ctx)
-	s.auditMicrobot(r, agent.CmdVNCOpen, nil, err)
+	stream, err := link.OpenVNCAgent(ctx, info.ID)
+	s.auditMicrobot(r, account, info, agent.CmdVNCOpen, nil, err)
 	if err != nil {
 		_ = conn.Close(websocket.StatusTryAgainLater, truncateReason(err.Error()))
 		return
@@ -273,13 +400,21 @@ func truncateReason(s string) string {
 }
 
 // auditMicrobot appends one control action from the web, whatever its
-// result; a failed write is logged, not returned.
-func (s *Server) auditMicrobot(r *http.Request, command string, params json.RawMessage, err error) {
+// result, with the account it went to (the ?account=, else the account the
+// agent declares) and the agent that served it (empty when none did); a
+// failed write is logged, not returned.
+func (s *Server) auditMicrobot(r *http.Request, account string, served agent.Info, command string, params json.RawMessage, err error) {
 	actor := sessionUser(r)
 	if actor == "" {
 		actor = "dev"
 	}
-	entry := storemicrobot.Entry{Actor: actor, Origin: "web", Action: command, Params: params, OK: err == nil}
+	if account == "" {
+		account = served.Account
+	}
+	entry := storemicrobot.Entry{
+		Actor: actor, Origin: "web", Action: command, Params: params, OK: err == nil,
+		AccountID: account, AgentID: served.ID,
+	}
 	if err != nil {
 		entry.Error = err.Error()
 	}
@@ -292,6 +427,10 @@ func (s *Server) auditMicrobot(r *http.Request, command string, params json.RawM
 // and the attempt and its result go to the audit either way.
 func (s *Server) microbotAction(command string, timeout time.Duration) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		account, ok := s.microbotAccount(w, r)
+		if !ok {
+			return
+		}
 		var params json.RawMessage
 		switch command {
 		case agent.CmdLogin:
@@ -324,8 +463,12 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 		ctx, cancel := context.WithTimeout(r.Context(), timeout)
 		defer cancel()
 		var data json.RawMessage
-		err := s.opts.Microbot.Link.Call(ctx, command, params, &data)
-		s.auditMicrobot(r, command, params, err)
+		link := s.opts.Microbot.Link
+		served, err := link.Route(account)
+		if err == nil {
+			err = link.CallAgent(ctx, served.ID, command, params, &data)
+		}
+		s.auditMicrobot(r, account, served, command, params, err)
 		if err != nil {
 			s.writeMicrobotError(w, err)
 			return
@@ -342,6 +485,8 @@ func (s *Server) writeMicrobotError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, agent.ErrNoAgent):
 		writeError(w, http.StatusServiceUnavailable, "no agent connected (run `chronicle agent` on the game machine)")
+	case errors.Is(err, agent.ErrAmbiguousAgent):
+		writeError(w, http.StatusConflict, "more than one agent connected: pass ?account= to say which")
 	case errors.As(err, &cmd):
 		writeError(w, http.StatusBadGateway, cmd.Error())
 	case errors.Is(err, context.DeadlineExceeded):

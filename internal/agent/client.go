@@ -153,7 +153,15 @@ func tailFile(path string, n int) ([]string, error) {
 
 // account runs `mb-account show` and `list` and keeps only the names.
 func (e *Executor) account(ctx context.Context) Account {
-	var a Account
+	a := Account{Characters: []string{}}
+	if e.Worker != nil {
+		// A worker has one character, the one of its session; there is no
+		// launcher list in the pod.
+		if c := e.Worker.character(); c != "" {
+			a.Current, a.Characters = c, []string{c}
+		}
+		return a
+	}
 	cur, err := e.runAccount(ctx, "show")
 	if err != nil {
 		a.Error = err.Error()
@@ -180,7 +188,7 @@ func (e *Executor) runAccount(ctx context.Context, args ...string) (string, erro
 	if len(e.AccountCmd) == 0 {
 		return "", errors.New("no mb-account command configured (MICROBOT_HARNESS_DIR or MICROBOT_ACCOUNT_CMD)")
 	}
-	return runArgv(ctx, e.AccountCmd, time.Minute, args...)
+	return runArgv(ctx, e.AccountCmd, time.Minute, nil, args...)
 }
 
 // client runs the log, account and world commands.

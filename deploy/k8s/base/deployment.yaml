@@ -15,6 +15,10 @@ spec:
       labels:
         app.kubernetes.io/component: web
     spec:
+      # Its token is how the server reaches the Kubernetes API for the Microbot workers (docs/11
+      # section 7): the Role chronicle-workers, TokenReview and the admission policy live in gielinor,
+      # which must create this ServiceAccount before this Deployment is synced.
+      serviceAccountName: chronicle
       securityContext:
         runAsNonRoot: true
         # distroless "nonroot": the kubelet needs the numeric id to check runAsNonRoot

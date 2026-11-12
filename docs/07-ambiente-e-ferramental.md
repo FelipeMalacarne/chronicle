@@ -95,6 +95,17 @@ Service; `overlays/saradomin` com o Ingress, a config de `oidc` e a tag da image
 saradomin; o repositório continua privado) e grava o sha no overlay (`deploy: saradomin roda <sha>`); o Argo segue o overlay na `main`, então esse
 commit é o deploy. `secret.example.yaml` lista as chaves do Secret.
 
+**Duas imagens.** O mesmo job publica também `ghcr.io/felipemalacarne/chronicle-worker:<sha>`, a dos
+workers do Microbot (doc 11, seções 7.2 e 13.4): a `microbot-worker-base` do `microbot-plugins`,
+fixada por digest em `deploy/worker/base.lock`, mais o binário do mesmo commit
+(`deploy/worker/Dockerfile`, com `chronicle agent --worker`). No commit de deploy, o CI grava também
+`WORKER_IMAGE` no overlay. Com o `base.lock` vazio, o job publica só o servidor e deixa um aviso. A
+base só muda à mão: `just worker-base-bump <tag>` resolve o digest da tag no GHCR e o grava no
+`base.lock`, e o commit disso leva a nova base no próximo push. O Deployment do servidor roda com a SA
+`chronicle`, que o gielinor cria junto com o RBAC, a política de admissão, a quota, a NetworkPolicy e
+o PVC dos workers (`apps/chronicle/README.md` de lá); os workers ficam desligados (`WORKERS=off`) até
+o `CHRONICLE_VAULT_KEY` entrar no `chronicle-secrets`.
+
 **No gielinor** (`clusters/saradomin`): o namespace `chronicle`; o role `chronicle` e o `Database`
 `chronicle` do `postgres-main` (`apps/postgres`); e `apps/chronicle` com a `Application` do Argo, a
 deploy key de leitura do repositório (privado) para o Argo e o `chronicle-secrets`, cifrados com SOPS.
@@ -136,8 +147,8 @@ Uma vez:
 8. Conferir: `/` sem sessão leva ao Zitadel e volta; `GET /api/me` mostra as contas; o painel do plugin
    mostra a rota; `kubectl --context saradomin -n chronicle get pods` pronto.
 
-O controle do Microbot (`MICROBOT_CONTROL`) fica desligado no saradomin até o agent ter a conta de
-máquina do Zitadel (doc 08); no zaros ele continua pelo `just dev`.
+O controle do Microbot (`MICROBOT_CONTROL=on`) está ligado no saradomin: o agent do zaros entra com a
+conta de máquina do Zitadel (role `microbot:agent`) e o Cockpit pede `microbot:control` (doc 08).
 
 ## 4. Variáveis de ambiente
 

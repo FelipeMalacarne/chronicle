@@ -35,6 +35,7 @@ var Commands = []string{
 	CmdClientLogs, CmdAccountShow, CmdAccountUse, CmdWorldHop, CmdConfigSchema,
 	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX, CmdItemUseOn, CmdTimers,
 	CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet, CmdTriggerSet,
+	CmdWorkerBootstrap,
 }
 
 // Known reports whether name is in the closed list.
@@ -67,6 +68,17 @@ type Hello struct {
 	Host     string   `json:"host"`
 	Version  string   `json:"version"`
 	Commands []string `json:"commands"`
+	// Account is the Chronicle account the agent serves (MICROBOT_AGENT_ACCOUNT
+	// for an attached agent, WORKER_ACCOUNT for a managed one); empty on an
+	// agent that declares none (docs/11 section 2).
+	Account string `json:"account,omitempty"`
+	// Kind is KindAttached or KindManaged; empty means attached.
+	Kind string `json:"kind,omitempty"`
+	// Worker is the pod name of a managed agent.
+	Worker string `json:"worker,omitempty"`
+	// Bridge is the Chronicle Link bridge version the agent found, "" when
+	// none answered.
+	Bridge string `json:"bridge,omitempty"`
 }
 
 // LoginParams are the parameters of CmdLogin: world 0 keeps the profile's.

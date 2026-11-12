@@ -24,6 +24,8 @@ type Account struct {
 	Active        bool               `json:"active"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	// The account may run a managed worker; true only while a game_sessions row exists (kept by internal/store/workers).
+	Managed bool `json:"managed"`
 }
 
 // Bearer tokens for the CLI/MCP clients (not for the Microbot plugin).
@@ -57,6 +59,19 @@ type ContentVersion struct {
 	LoadedAt    pgtype.Timestamptz `json:"loaded_at"`
 	// {guide_id: {version, steps, objectives, annotated_steps}}
 	Summary json.RawMessage `json:"summary"`
+}
+
+// Encrypted Jagex game session of an account (docs/11 section 4.2); leaves the server only through the link, to the agent of that account.
+type GameSession struct {
+	AccountID       string             `json:"account_id"`
+	CharacterName   string             `json:"character_name"`
+	KeyID           string             `json:"key_id"`
+	Nonce           []byte             `json:"nonce"`
+	Ciphertext      []byte             `json:"ciphertext"`
+	PushedAt        pgtype.Timestamptz `json:"pushed_at"`
+	PushedBy        string             `json:"pushed_by"`
+	LastLoginAt     pgtype.Timestamptz `json:"last_login_at"`
+	LastLoginResult string             `json:"last_login_result"`
 }
 
 type Goal struct {
@@ -118,14 +133,16 @@ type MarkCommand struct {
 
 // Every Microbot control action (docs/08): who, when, what, result. Append-only.
 type MicrobotAudit struct {
-	ID     int64              `json:"id"`
-	At     pgtype.Timestamptz `json:"at"`
-	Actor  string             `json:"actor"`
-	Origin string             `json:"origin"`
-	Action string             `json:"action"`
-	Params json.RawMessage    `json:"params"`
-	Ok     bool               `json:"ok"`
-	Error  string             `json:"error"`
+	ID        int64              `json:"id"`
+	At        pgtype.Timestamptz `json:"at"`
+	Actor     string             `json:"actor"`
+	Origin    string             `json:"origin"`
+	Action    string             `json:"action"`
+	Params    json.RawMessage    `json:"params"`
+	Ok        bool               `json:"ok"`
+	Error     string             `json:"error"`
+	AccountID string             `json:"account_id"`
+	AgentID   string             `json:"agent_id"`
 }
 
 // Verdict per account and objective, shared by every guide. A met verdict is latched with the evidence of the snapshot that proved it.
@@ -335,4 +352,17 @@ type WikiCache struct {
 	Value     json.RawMessage    `json:"value"`
 	FetchedAt pgtype.Timestamptz `json:"fetched_at"`
 	Etag      pgtype.Text        `json:"etag"`
+}
+
+// Managed workers only (docs/11 section 4.5): what the reconciler should run per account. Attached agents live in the link hub, not here.
+type Worker struct {
+	AccountID     string             `json:"account_id"`
+	DesiredState  string             `json:"desired_state"`
+	World         int32              `json:"world"`
+	Image         string             `json:"image"`
+	PluginTokenID pgtype.Text        `json:"plugin_token_id"`
+	StartedAt     pgtype.Timestamptz `json:"started_at"`
+	StoppedAt     pgtype.Timestamptz `json:"stopped_at"`
+	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	LastError     string             `json:"last_error"`
 }

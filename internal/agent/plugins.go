@@ -120,6 +120,10 @@ func Protected(className string) bool { return slices.Contains(protectedClasses,
 // calls it to refuse early and the agent calls it again before acting.
 func ValidateParams(command string, raw json.RawMessage) (any, error) {
 	switch command {
+	case CmdWorkerBootstrap:
+		// Server → managed agent only, from the workers' reconciler; it
+		// carries the game session and is never taken from a request.
+		return nil, errors.New("worker_bootstrap is never sent from the web")
 	case CmdHubSearch:
 		var p HubParams
 		if err := decodeParams(raw, &p); err != nil {

@@ -23,6 +23,10 @@ type Entry struct {
 	Params json.RawMessage `json:"params"`
 	OK     bool            `json:"ok"`
 	Error  string          `json:"error,omitempty"`
+	// AccountID and AgentID say which account and which agent the action
+	// went to (docs/11); empty for actions from before migration 0012.
+	AccountID string `json:"account_id,omitempty"`
+	AgentID   string `json:"agent_id,omitempty"`
 }
 
 // Repository writes and reads microbot_audit.
@@ -42,6 +46,7 @@ func (r *Repository) Append(ctx context.Context, e Entry) (Entry, error) {
 	}
 	row, err := r.queries.AppendMicrobotAudit(ctx, storedb.AppendMicrobotAuditParams{
 		Actor: e.Actor, Origin: e.Origin, Action: e.Action, Params: e.Params, Ok: e.OK, Error: e.Error,
+		AccountID: e.AccountID, AgentID: e.AgentID,
 	})
 	if err != nil {
 		return Entry{}, fmt.Errorf("append microbot audit: %w", err)
@@ -49,9 +54,13 @@ func (r *Repository) Append(ctx context.Context, e Entry) (Entry, error) {
 	return entryOf(row), nil
 }
 
-// List returns the latest limit entries, newest first.
-func (r *Repository) List(ctx context.Context, limit int) ([]Entry, error) {
-	rows, err := r.queries.ListMicrobotAudit(ctx, int32(min(max(limit, 1), 500))) //nolint:gosec // bounded above
+// List returns the latest limit entries, newest first: of every account when
+// account is empty, else only the ones that went to that account.
+func (r *Repository) List(ctx context.Context, limit int, account string) ([]Entry, error) {
+	rows, err := r.queries.ListMicrobotAudit(ctx, storedb.ListMicrobotAuditParams{
+		AccountID: account,
+		RowLimit:  int32(min(max(limit, 1), 500)), //nolint:gosec // bounded above
+	})
 	if err != nil {
 		return nil, fmt.Errorf("list microbot audit: %w", err)
 	}
@@ -65,6 +74,6 @@ func (r *Repository) List(ctx context.Context, limit int) ([]Entry, error) {
 func entryOf(row storedb.MicrobotAudit) Entry {
 	return Entry{
 		ID: row.ID, At: row.At.Time, Actor: row.Actor, Origin: row.Origin, Action: row.Action,
-		Params: row.Params, OK: row.Ok, Error: row.Error,
+		Params: row.Params, OK: row.Ok, Error: row.Error, AccountID: row.AccountID, AgentID: row.AgentID,
 	}
 }

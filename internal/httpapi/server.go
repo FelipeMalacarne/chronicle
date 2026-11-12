@@ -189,6 +189,7 @@ func (s *Server) routes() {
 		account("GET /api/sync/runs", s.handleSyncRuns)
 	}
 	s.microbotRoutes()
+	s.workerRoutes()
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
 	})

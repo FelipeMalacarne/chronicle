@@ -17,7 +17,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
 	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
 	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
 	"github.com/FelipeMalacarne/ironman-planner/internal/config"
@@ -28,7 +27,6 @@ import (
 	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
 	"github.com/FelipeMalacarne/ironman-planner/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
-	storemicrobot "github.com/FelipeMalacarne/ironman-planner/internal/store/microbot"
 	storeprogress "github.com/FelipeMalacarne/ironman-planner/internal/store/progress"
 	"github.com/FelipeMalacarne/ironman-planner/internal/store/syncrun"
 	"github.com/FelipeMalacarne/ironman-planner/web"
@@ -109,12 +107,6 @@ func runServe(parent context.Context) error {
 				}
 				logger.Info("auth: oidc", "issuer", cfg.OIDCIssuer, "allowed_subjects", len(cfg.OIDCAllowedSubjects), "required_role", cfg.OIDCRequiredRole)
 			}
-			if cfg.MicrobotControl {
-				microbotOpts = &httpapi.MicrobotOptions{
-					Link: &agent.Link{Log: logger}, Audit: storemicrobot.New(pool),
-				}
-				logger.Warn("microbot: control module ON (docs/08): /api/microbot routes and the agent link are enabled")
-			}
 			progressRepo := storeprogress.New(pool, cnt, catalog).WithPublisher(hub)
 			if err = bootProgress(ctx, progressRepo, logger); err != nil {
 				if !cfg.IsDev() {
@@ -127,6 +119,11 @@ func runServe(parent context.Context) error {
 			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).
 				WithReevaluator(progressRepo).WithPublisher(hub).WithDevInstallations(cfg.IsDev())
 			ingestService, holdings, progressService = repo, repo, progressRepo
+			if cfg.MicrobotControl {
+				if microbotOpts, err = newMicrobot(ctx, cfg, pool, repo, logger); err != nil {
+					return err
+				}
+			}
 			hiscoresClient := hiscores.New()
 			hiscoresDetector, accountService = hiscoresClient, progressRepo
 			syncRepo := syncrun.New(pool, hiscoresClient, progressRepo).WithPublisher(hub)

@@ -19,6 +19,7 @@
 		type PluginRow
 	} from '#lib/progress/plugins';
 	import Glyph from '#lib/v6/Glyph.svelte';
+	import AutomacaoTabs from '#lib/v6/AutomacaoTabs.svelte';
 	import ConfigForm from '#lib/v6/ConfigForm.svelte';
 	import { untrack } from 'svelte';
 
@@ -221,11 +222,7 @@
 		<p class="ey">Microbot · controle do cliente · doc 08</p>
 		<h1 class="sr">Plugins</h1>
 	</div>
-	<div class="seg" role="tablist" aria-label="Automação">
-		<a href={resolve('/automacao')}>Cockpit</a>
-		<a class="on" href={resolve('/automacao/plugins')} aria-current="page">Plugins</a>
-		<a href="{resolve('/automacao')}#auditoria">Auditoria</a>
-	</div>
+	<AutomacaoTabs current="plugins" agents={status?.agents ?? []} onaccount={() => void load()} />
 	<form class="hubf" onsubmit={searchHub}>
 		<label class="inp"
 			><Glyph name="search" size={14} /><input
@@ -568,27 +565,6 @@
 	}
 	.ttl h1 {
 		font-size: 24px;
-	}
-	.seg a {
-		display: inline-flex;
-		align-items: center;
-		height: 32px;
-		padding: 0 10px;
-		font:
-			500 12px Inter,
-			system-ui,
-			sans-serif;
-		color: var(--ink-muted);
-		text-decoration: none;
-		background: var(--elevated);
-	}
-	.seg a + a {
-		border-left: 1px solid var(--border);
-	}
-	.seg a.on {
-		background: var(--frame);
-		color: var(--gold);
-		box-shadow: var(--bevel-frame);
 	}
 	.hubf {
 		margin-left: auto;

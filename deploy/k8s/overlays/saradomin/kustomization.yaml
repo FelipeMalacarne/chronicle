@@ -19,6 +19,13 @@ configMapGenerator:
       # docs/08: the agent of zaros links with a Zitadel machine user (role microbot:agent);
       # the cockpit needs the role microbot:control. OIDC_PROJECT_ID is in chronicle-secrets.
       - MICROBOT_CONTROL=on
+      # docs/11: the Microbot workers (one pod per account). Becomes `on` once CHRONICLE_VAULT_KEY is
+      # in chronicle-secrets (SOPS, gielinor apps/chronicle/README.md): the server refuses WORKERS=on
+      # without it.
+      - WORKERS=off
+      # CI sets this to the chronicle-worker image it just pushed (empty until deploy/worker/base.lock
+      # pins a microbot-worker-base).
+      - WORKER_IMAGE=
 images:
   - name: chronicle
     newName: ghcr.io/felipemalacarne/chronicle

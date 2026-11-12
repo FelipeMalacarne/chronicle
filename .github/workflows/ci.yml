@@ -188,10 +188,13 @@ jobs:
       - run: kubectl kustomize deploy/k8s/overlays/saradomin > /dev/null
 
   # --------------------------------------------------------------------------
-  # Image and deploy, on main only: the chronicle image (server and embedded
+  # Images and deploy, on main only: the chronicle image (server and embedded
   # migrations) goes to GHCR under the commit's sha, and the saradomin overlay
   # is pointed at it. Argo CD on saradomin follows that overlay on main, so the
-  # bump commit is the deploy (docs/07 section 3.3).
+  # bump commit is the deploy (docs/07 section 3.3). When deploy/worker/base.lock
+  # pins a microbot-worker-base, the chronicle-worker image (that base plus the
+  # same binary) goes out under the same sha and the overlay's WORKER_IMAGE
+  # follows it (docs/11 sections 7.2 and 13.4).
   # --------------------------------------------------------------------------
   docker:
     name: image + deploy
@@ -221,7 +224,9 @@ jobs:
 
       # GHCR wants lower-case names; the owner has upper-case letters.
       - name: Image names
-        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/chronicle" >> "$GITHUB_ENV"
+        run: |
+          echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/chronicle" >> "$GITHUB_ENV"
+          echo "WORKER_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/chronicle-worker" >> "$GITHUB_ENV"
 
       - uses: docker/build-push-action@v6
         with:
@@ -233,11 +238,49 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # The worker image is built only once `just worker-base-bump <tag>` has
+      # pinned a base; until then the run publishes the server alone.
+      - name: Worker base
+        id: worker
+        run: |
+          base="$(tr -d '[:space:]' < deploy/worker/base.lock)"
+          if [ -z "$base" ]; then
+            echo "::warning title=chronicle-worker not published::deploy/worker/base.lock is empty; pin a microbot-worker-base with just worker-base-bump <tag>"
+            echo "publish=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if ! [[ "$base" =~ ^ghcr\.io/felipemalacarne/microbot-worker-base@sha256:[0-9a-f]{64}$ ]]; then
+            echo "::error file=deploy/worker/base.lock::expected ghcr.io/felipemalacarne/microbot-worker-base@sha256:<digest>, got '${base}'"
+            exit 1
+          fi
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "publish=true" >> "$GITHUB_OUTPUT"
+
+      # Same web and go stages as the server's image: on this builder they are
+      # cache hits. Its own GHA cache scope, so the two builds do not evict
+      # each other's cache.
+      - uses: docker/build-push-action@v6
+        if: steps.worker.outputs.publish == 'true'
+        with:
+          context: .
+          file: deploy/worker/Dockerfile
+          push: true
+          tags: ${{ env.WORKER_IMAGE }}:${{ github.sha }}
+          build-args: |
+            BASE=${{ steps.worker.outputs.base }}
+            VERSION=${{ github.sha }}
+          cache-from: |
+            type=gha
+            type=gha,scope=worker
+          cache-to: type=gha,mode=max,scope=worker
+
       # A push made with GITHUB_TOKEN starts no other run. If main already has
       # newer commits than this run's (other than deploy bumps), their run
       # deploys and this one stands down, so an older image never replaces a
       # newer one.
       - name: Deploy to saradomin
+        env:
+          WORKER_PUBLISHED: ${{ steps.worker.outputs.publish }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -250,6 +293,9 @@ jobs:
             fi
             git checkout --quiet -B deploy origin/main
             sed -i "s|^    newTag: .*|    newTag: \"${GITHUB_SHA}\"|" "$overlay"
+            if [ "$WORKER_PUBLISHED" = true ]; then
+              sed -i "s|^      - WORKER_IMAGE=.*|      - WORKER_IMAGE=${WORKER_IMAGE}:${GITHUB_SHA}|" "$overlay"
+            fi
             git diff --quiet && exit 0
             git commit --quiet -am "deploy: saradomin roda ${GITHUB_SHA::7}"
             git push origin HEAD:main && exit 0

@@ -158,12 +158,13 @@ login`, `accounts connect`, `workers`, `mcp` e `agent` no PATH:
 
 ```nix
 # flake.nix do nix-config
-inputs.chronicle.url = "git+ssh://git@github.com/FelipeMalacarne/chronicle";
+inputs.chronicle.url = "github:FelipeMalacarne/chronicle";
 # home-manager
 home.packages = [ inputs.chronicle.packages.${pkgs.system}.chronicle ];
 ```
 
-Sem nix-config: `nix profile install git+ssh://git@github.com/FelipeMalacarne/chronicle`. O pacote
+O repositório é público (decisão 16 do doc 01), então nada pede credencial. Sem nix-config:
+`nix profile install github:FelipeMalacarne/chronicle`. O pacote
 leva o placeholder de `web/dist` (o flake só vê arquivos rastreados), então serve para CLI, MCP e
 agent; o servidor com a web continua sendo a imagem Docker. O `vendorHash` do `flake.nix` muda quando
 o `go.sum` muda: rode `nix build .#chronicle` e cole o `got:` do erro.

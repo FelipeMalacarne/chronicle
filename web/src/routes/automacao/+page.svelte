@@ -226,18 +226,7 @@
 {/snippet}
 
 <header class="mh">
-	<div class="ttl">
-		<p class="ey">Microbot · controle do cliente · doc 08</p>
-		<h1 class="sr">Cockpit</h1>
-	</div>
-	<AutomacaoTabs
-		current="cockpit"
-		agents={status?.agents ?? []}
-		onaccount={() => {
-			void refresh();
-			void refreshAudit();
-		}}
-	/>
+	<AutomacaoTabs current="cockpit" />
 	<div class="seg modes" role="group" aria-label="Modo">
 		<button
 			type="button"
@@ -494,15 +483,6 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 10px 16px;
-	}
-	.ttl {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		margin-right: 6px;
-	}
-	.ttl h1 {
-		font-size: 24px;
 	}
 	.modes {
 		margin-left: auto;

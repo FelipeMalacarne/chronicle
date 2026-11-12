@@ -218,11 +218,7 @@
 </svelte:head>
 
 <header class="mh">
-	<div class="ttl">
-		<p class="ey">Microbot · controle do cliente · doc 08</p>
-		<h1 class="sr">Plugins</h1>
-	</div>
-	<AutomacaoTabs current="plugins" agents={status?.agents ?? []} onaccount={() => void load()} />
+	<AutomacaoTabs current="plugins" />
 	<form class="hubf" onsubmit={searchHub}>
 		<label class="inp"
 			><Glyph name="search" size={14} /><input
@@ -556,15 +552,6 @@
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 10px 16px;
-	}
-	.ttl {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		margin-right: 6px;
-	}
-	.ttl h1 {
-		font-size: 24px;
 	}
 	.hubf {
 		margin-left: auto;

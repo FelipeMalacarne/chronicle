@@ -12,6 +12,8 @@
 	import { theme } from '#lib/progress/theme.svelte';
 	import Toast from '#lib/v6/Toast.svelte';
 	import EntityPanel from '#lib/v6/EntityPanel.svelte';
+	import AccountHead from '#lib/v6/AccountHead.svelte';
+	import { chooseCockpitAccount } from '#lib/progress/microbot.svelte';
 
 	let { children } = $props();
 	const account = $derived(currentAccount());
@@ -23,11 +25,15 @@
 	// as outras telas são da conta. Nesse caso o shell fica sem a barra lateral.
 	const missing = $derived(session.error instanceof ApiError && session.error.status === 404);
 	const fleetPage = $derived(
-		page.url.pathname.startsWith('/frota') || page.url.pathname.startsWith('/contas/nova')
+		page.url.pathname === '/' || page.url.pathname.startsWith('/contas/nova')
 	);
 	const setup = $derived(fleetPage && (!account || missing));
 	$effect(() => {
-		if (!fleetPage && (!account || missing)) void goto(resolve('/frota'), { replaceState: true });
+		if (!fleetPage && (!account || missing)) void goto(resolve('/'), { replaceState: true });
+	});
+	// O cliente que as telas de Cliente controlam é o da conta aberta (docs/11).
+	$effect.pre(() => {
+		if (account) chooseCockpitAccount(account);
 	});
 	// Tempo real: um stream por conta; os eventos refazem os recursos abertos (docs/04, 6.6).
 	$effect(() => {
@@ -65,6 +71,9 @@
 			skills={me.state?.skills}
 		/>{/if}
 	<main id="conteudo">
+		{#if !fleetPage && me.state && me.state.account.id === account}
+			<AccountHead state={me.state} summary={session.summary} />
+		{/if}
 		{@render children()}
 	</main>
 	{#if !setup}<EntityPanel />{/if}

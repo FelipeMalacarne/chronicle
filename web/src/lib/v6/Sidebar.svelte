@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import Glyph from './Glyph.svelte';
-	import { microbotModule, probeMicrobot } from '#lib/progress/microbot.svelte';
+	import { probeMicrobot } from '#lib/progress/microbot.svelte';
 	import { forgetAccount } from '#lib/progress/account.svelte';
 	import { fleet, loadFleet } from '#lib/progress/fleet.svelte';
 	import { iconFor } from '#lib/progress/icons';
@@ -59,53 +59,20 @@
 	);
 	const sourcesTitle = $derived(sources.map((s) => `${s.label} há ${s.age}`).join(' · '));
 
-	const items = $derived([
-		{ href: resolve('/'), label: 'Agora', icon: 'agora' as const, on: path === '/' },
-		{
-			href: resolve('/rotas'),
-			label: 'Rotas',
-			icon: 'rotas' as const,
-			on: path.startsWith('/rotas') || path.startsWith('/compare'),
-			n: summary?.routes.length
-		},
-		{
-			href: resolve('/mundo'),
-			label: 'Mundo',
-			icon: 'mundo' as const,
-			on: path.startsWith('/mundo')
-		},
-		{
-			href: resolve('/conta'),
-			label: 'Conta',
-			icon: 'conta' as const,
-			on: path === '/conta' || path.startsWith('/conta/')
-		},
-		// Automação só existe com o módulo do Microbot ligado no servidor (doc 08).
-		...(microbotModule.enabled
-			? [
-					{
-						href: resolve('/automacao'),
-						label: 'Automação',
-						icon: 'automacao' as const,
-						on: path.startsWith('/automacao')
-					}
-				]
-			: [])
-	]);
 	$effect(() => {
 		void probeMicrobot();
 		void loadFleet();
 	});
-	const onFleet = $derived(path.startsWith('/frota'));
-	const others = $derived((fleet.accounts ?? []).filter((a) => a.id !== account));
+	const onFleet = $derived(path === '/' || path.startsWith('/contas/nova'));
+	// Até a lista chegar, a conta aberta aparece sozinha.
+	const all = $derived(fleet.accounts ?? (account ? [{ id: account, rsn: name ?? account }] : []));
 	const top = $derived(
 		iconFor(
 			`skill:${[...(skills ?? [])].sort((a, b) => b.level - a.level || b.xp - a.xp)[0]?.skill}`
 		)
 	);
-	const initial = $derived((name ?? account ?? '?').replace(/^acc_/, '').charAt(0).toUpperCase());
 
-	/** Sair: em oidc encerra a sessão; em dev (sem /auth) esquece a conta e volta ao setup. */
+	/** Sair: em oidc encerra a sessão; em dev (sem /auth) esquece a conta e volta à Frota. */
 	async function signOut() {
 		try {
 			const res = await fetch('/auth/logout', {
@@ -121,13 +88,13 @@
 			/* sem servidor de auth: segue como dev */
 		}
 		forgetAccount();
-		void goto(resolve('/frota'));
+		void goto(resolve('/'));
 	}
 </script>
 
 <nav class="side" aria-label="Principal">
 	<div class="brand">
-		<a href={resolve('/frota')} class="sr wm"
+		<a href={resolve('/')} class="sr wm"
 			><span class="logo"><Glyph name="book" size={26} /></span>Chronicle</a
 		>
 	</div>
@@ -137,47 +104,31 @@
 	<a
 		class="nav"
 		class:nav-on={onFleet}
-		href={resolve('/frota')}
+		href={resolve('/')}
 		aria-current={onFleet ? 'page' : undefined}
 	>
 		<Glyph name="frota" />Frota
 		{#if fleet.accounts?.length}<span class="n">{fleet.accounts.length}</span>{/if}
 	</a>
 	<p class="sec">Contas</p>
-	<a
-		class="acn acn-on"
-		href={resolve('/conta')}
-		title={[name ?? account, sub].filter(Boolean).join(' · ')}
-	>
-		<span class="lamp {(account && fleet.tones[account]) || 'unk'}"></span>
-		<span class="who">
-			<b>{name ?? account ?? 'sem conta'}</b>
-			{#if sub}<span>{sub}</span>{/if}
-		</span>
-		{#if top}<img src={top} alt="" />{:else}<span class="av" aria-hidden="true">{initial}</span
-			>{/if}
-	</a>
-	<div class="sub">
-		{#each items as it (it.label)}
-			<!-- eslint-disable svelte/no-navigation-without-resolve -- hrefs dos itens vêm de resolve() -->
-			<a
-				class="nav"
-				class:nav-on={it.on && !onFleet}
-				href={it.href}
-				aria-current={it.on && !onFleet ? 'page' : undefined}
-			>
-				<Glyph name={it.icon} />{it.label}
-				{#if it.n}<span class="n">{it.n}</span>{/if}
-			</a>
-			<!-- eslint-enable svelte/no-navigation-without-resolve -->
-		{/each}
-	</div>
-	{#each others as a (a.id)}
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da conta -->
-		<a class="acn" href={`${resolve('/')}?account=${encodeURIComponent(a.id)}`} title={a.id}>
+	{#each all as a (a.id)}
+		{@const on = a.id === account && !onFleet}
+		<!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() + query da conta -->
+		<a
+			class="acn"
+			class:acn-on={on}
+			href={`${resolve('/agora')}?account=${encodeURIComponent(a.id)}`}
+			aria-current={on ? 'page' : undefined}
+			title={a.id}
+		>
 			<span class="lamp {fleet.tones[a.id] ?? 'unk'}"></span>
-			<span class="who"><b>{a.rsn}</b></span>
+			<span class="who">
+				<b>{a.rsn}</b>
+				{#if a.id === account && sub}<span>{sub}</span>{/if}
+			</span>
+			{#if a.id === account && top}<img src={top} alt="" />{/if}
 		</a>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	{/each}
 	<a class="acn acn-new" href={resolve('/contas/nova')}
 		><Glyph name="plus" size={14} /><span>Nova conta</span></a
@@ -217,22 +168,25 @@
 </nav>
 
 <nav class="bar" aria-label="Principal">
-	<a href={resolve('/frota')} class="sr wm wm-s"
+	<a href={resolve('/')} class="sr wm wm-s"
 		><span class="logo"><Glyph name="book" size={22} /></span>Chronicle</a
 	>
 	<a
 		class="nav"
 		class:nav-on={onFleet}
-		href={resolve('/frota')}
+		href={resolve('/')}
 		aria-current={onFleet ? 'page' : undefined}
 		><Glyph name="frota" /><span class="nl">Frota</span></a
 	>
-	{#each items as it (it.label)}
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- hrefs dos itens vêm de resolve() -->
-		<a class="nav" class:nav-on={it.on} href={it.href} aria-current={it.on ? 'page' : undefined}
-			><Glyph name={it.icon} /><span class="nl">{it.label}</span></a
+	{#if account}
+		<a
+			class="nav"
+			class:nav-on={!onFleet}
+			href={resolve('/agora')}
+			aria-current={!onFleet ? 'page' : undefined}
+			><Glyph name="conta" /><span class="nl">{name ?? account}</span></a
 		>
-	{/each}
+	{/if}
 	<span class="grow"></span>
 	{#if newest}
 		<a class="nav src" href={resolve('/conta')} title={sourcesTitle}
@@ -349,18 +303,6 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
-	}
-	.sub {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		margin: 2px 0 6px 12px;
-		padding-left: 8px;
-		border-left: 1px solid var(--frame-2);
-	}
-	.sub .nav {
-		height: 34px;
-		font-size: 13px;
 	}
 	.lamp {
 		width: 9px;

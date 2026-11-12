@@ -40,12 +40,6 @@
 	});
 	const age = (at: string | undefined) => (at ? ago(Date.parse(at), now).replace('há ', '') : '');
 
-	const MODE: Record<string, string> = {
-		ironman: 'Ironman',
-		hcim: 'Hardcore',
-		uim: 'Ultimate',
-		gim: 'Group'
-	};
 	const skills = $derived(
 		[...(st?.skills ?? [])].sort(
 			(a, b) => SKILL_ORDER.indexOf(a.skill) - SKILL_ORDER.indexOf(b.skill)
@@ -241,17 +235,6 @@
 	<p class="su" aria-busy="true">Carregando a conta…</p>
 {:else}
 	<header class="top">
-		<div class="ttl">
-			<p class="su small">Conta</p>
-			<h1 class="sr">
-				{st.account.rsn}
-				<span class="su sub"
-					>{MODE[st.account.mode] ?? st.account.mode}{st.total_level
-						? ` · ${st.total_level} total`
-						: ''}{st.quest_points !== undefined ? ` · ${st.quest_points} QP` : ''}</span
-				>
-			</h1>
-		</div>
 		<button class="btn btn-s push" type="button" disabled={syncing} onclick={syncNow}
 			><Glyph name="sync" size={14} />{syncing ? 'Sincronizando…' : 'Sincronizar hiscores'}</button
 		>
@@ -549,12 +532,6 @@
 		display: flex;
 		flex-direction: column;
 		gap: 2px;
-	}
-	.ttl p {
-		margin: 0;
-	}
-	.ttl h1 {
-		font-size: 26px;
 	}
 	.sub {
 		font:

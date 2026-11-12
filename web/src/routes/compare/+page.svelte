@@ -269,7 +269,7 @@
 					</div>
 					<div class="acts">
 						{#if r.active}
-							<a class="btn btn-p btn-s" href={resolve('/')}>Abrir no Agora</a>
+							<a class="btn btn-p btn-s" href={resolve('/agora')}>Abrir no Agora</a>
 						{:else}
 							<button
 								class="btn btn-p btn-s"

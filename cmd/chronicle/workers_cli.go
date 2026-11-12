@@ -2,6 +2,8 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -96,11 +98,19 @@ func readLauncherAccount(path string, pick launcherPick) (agent.GameSession, err
 	return agent.GameSession{Character: name, SessionID: a.SessionID, CharacterID: a.AccountID}, nil
 }
 
-// hwidLines keeps the lines of an HWID agent store that belong to one
-// character: those that mention its character id or its name. The rest of
-// the file (the other characters' spoofed identities) never leaves this
-// machine.
-func hwidLines(path string, needles ...string) (string, error) {
+// hwidKey is the key the Microbot HWID agent (pinned hwid-agent jar) gives a
+// Jagex Account character in both of its stores: the lower-case hex SHA-256 of
+// "jx/<JX_CHARACTER_ID>" (DeviceIdStore.keyFor, RandomDatStore.keyFor and
+// HwidAgent.currentIdentifier, read from the 2.6.52 jar).
+func hwidKey(characterID string) string {
+	sum := sha256.Sum256([]byte("jx/" + strings.TrimSpace(characterID)))
+	return hex.EncodeToString(sum[:])
+}
+
+// hwidLines keeps the line of an HWID agent store (a Java properties file)
+// whose key is key: one character's spoofed identity. The rest of the file
+// (the other characters') never leaves this machine.
+func hwidLines(path, key string) (string, error) {
 	f, err := os.Open(path) //nolint:gosec // a fixed file of ~/.runelite
 	if errors.Is(err, os.ErrNotExist) {
 		return "", nil
@@ -113,14 +123,12 @@ func hwidLines(path string, needles ...string) (string, error) {
 	sc := bufio.NewScanner(f)
 	for sc.Scan() {
 		line := sc.Text()
-		if strings.HasPrefix(strings.TrimSpace(line), "#") {
-			continue
+		k, _, ok := strings.Cut(line, "=")
+		if !ok {
+			k, _, ok = strings.Cut(line, ":")
 		}
-		for _, n := range needles {
-			if n != "" && strings.Contains(strings.ToLower(line), strings.ToLower(n)) {
-				out = append(out, line)
-				break
-			}
+		if ok && strings.TrimSpace(k) == key {
+			out = append(out, strings.TrimSpace(line))
 		}
 	}
 	return strings.Join(out, "\n"), sc.Err()
@@ -156,10 +164,10 @@ func newAccountsConnectCmd() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			if session.DeviceIDs, err = hwidLines(filepath.Join(runeliteDir, "spoofed-device-ids.properties"), session.CharacterID, session.Character); err != nil {
+			if session.DeviceIDs, err = hwidLines(filepath.Join(runeliteDir, "spoofed-device-ids.properties"), hwidKey(session.CharacterID)); err != nil {
 				return err
 			}
-			if session.RandomDats, err = hwidLines(filepath.Join(runeliteDir, "spoofed-random-dats.properties"), session.CharacterID, session.Character); err != nil {
+			if session.RandomDats, err = hwidLines(filepath.Join(runeliteDir, "spoofed-random-dats.properties"), hwidKey(session.CharacterID)); err != nil {
 				return err
 			}
 			c, err := f.connect(ctx)
@@ -175,8 +183,15 @@ func newAccountsConnectCmd() *cobra.Command {
 				return err
 			}
 			fmt.Fprintf(out, "Sessão de %s guardada em %s (chave %s).\n", info.Character, account, info.KeyID)
-			if session.DeviceIDs == "" && session.RandomDats == "" {
-				fmt.Fprintln(out, "Aviso: nenhuma identidade de aparelho deste personagem em "+runeliteDir+"; o worker vai gerar outra.")
+			found := func(v string) string {
+				if v == "" {
+					return "não achado"
+				}
+				return "levado"
+			}
+			fmt.Fprintf(out, "Identidade de aparelho em %s: device id %s, random.dat %s.\n", runeliteDir, found(session.DeviceIDs), found(session.RandomDats))
+			if session.DeviceIDs == "" || session.RandomDats == "" {
+				fmt.Fprintln(out, "Aviso: o que faltou o HWID agent cria quando o personagem entra pela primeira vez num cliente do launcher; entre uma vez e rode o connect de novo, senão o worker gera uma identidade nova.")
 			}
 			return nil
 		}),

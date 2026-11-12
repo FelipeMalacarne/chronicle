@@ -469,6 +469,9 @@ export const microbotApi = {
 			throw e;
 		}
 	},
+	/** O estado do cliente de uma conta, sem trocar a conta do Cockpit (Frota). */
+	statusOf: (account: string) => call<MicrobotStatus>('/status', undefined, BASE, account),
+	pluginsOf: (account: string) => call<PluginsView>('/plugins', undefined, BASE, account),
 	action: (action: MicrobotAction, body?: { world?: number }) =>
 		call<{ ok: boolean; result: unknown }>(`/${action}`, {
 			method: 'POST',

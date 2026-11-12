@@ -312,7 +312,10 @@ Sem mudança em relação à primeira versão:
   `gradle test` e, na `main`, publica a imagem.
 - `chronicle-worker`: `FROM` a base fixada por digest em `deploy/worker/base.lock`, mais o binário do
   mesmo commit. O job `docker` publica as duas imagens e grava `WORKER_IMAGE` no overlay.
-- O bump da base no chronicle é manual: `just worker-base-bump <tag>` (W4).
+- O bump da base no chronicle é um PR automático (W4): depois de publicar a base, o CI do
+  microbot-plugins abre (ou atualiza) o PR `bump/microbot-worker-base` no chronicle com o novo digest
+  no `base.lock`, usando o segredo `CHRONICLE_BUMP_TOKEN` de lá. O merge é do dono; sem o segredo, o
+  CI só avisa, e o bump continua à mão com `just worker-base-bump <tag>`.
 
 ### 7.3 Perfil gráfico `minimal`
 
@@ -410,7 +413,7 @@ E10). A revisão de rotas e objetivos que o dono quer fazer depois é o lugar di
 | W1 | `client-go` ou um cliente REST mínimo para a API do k8s | REST mínimo (Deployments e TokenReview) |
 | W2 | Base pelo Nix ou Dockerfile Debian | Nix: o mesmo pin do harness |
 | W3 | O worker entra no jogo sozinho ao subir? | Não; no máximo uma opção por conta, desligada |
-| W4 | Bump da base manual ou automático | Manual (`just worker-base-bump`) |
+| W4 | Bump da base manual ou automático | PR automático aberto pelo CI do microbot-plugins; merge manual (`just worker-base-bump` fica como recurso) |
 | W5 | Cache do jogo por pod ou compartilhado | **Resolvida (2026-11-12):** PVC compartilhado (seção 7.4) |
 | W6 | Lista de workers antes dos gerenciados | **Resolvida** pela F1 |
 | W7 | Como aplicar a config do perfil: escrever o arquivo de perfil do RuneLite antes de o cliente subir, ou `/settings/plugin` depois | Arquivo antes (os plugins já leem a config certa no start); spike na F3 |

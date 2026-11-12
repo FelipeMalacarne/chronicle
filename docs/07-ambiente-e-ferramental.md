@@ -100,8 +100,10 @@ workers do Microbot (doc 11, seções 7.2 e 13.4): a `microbot-worker-base` do `
 fixada por digest em `deploy/worker/base.lock`, mais o binário do mesmo commit
 (`deploy/worker/Dockerfile`, com `chronicle agent --worker`). No commit de deploy, o CI grava também
 `WORKER_IMAGE` no overlay. Com o `base.lock` vazio, o job publica só o servidor e deixa um aviso. A
-base só muda à mão: `just worker-base-bump <tag>` resolve o digest da tag no GHCR e o grava no
-`base.lock`, e o commit disso leva a nova base no próximo push. O Deployment do servidor roda com a SA
+base muda por PR: quando o CI do microbot-plugins publica uma base nova, ele abre (ou atualiza) o PR
+`bump/microbot-worker-base` aqui com o digest no `base.lock` (segredo `CHRONICLE_BUMP_TOKEN` de lá, um
+token fine-grained só deste repositório, com Contents e Pull requests de escrita), e o merge leva a nova
+base. À mão, `just worker-base-bump <tag>` resolve o digest da tag no GHCR e o grava no `base.lock`. O Deployment do servidor roda com a SA
 `chronicle`, que o gielinor cria junto com o RBAC, a política de admissão, a quota, a NetworkPolicy e
 o PVC dos workers (`apps/chronicle/README.md` de lá); os workers ficam desligados (`WORKERS=off`) até
 o `CHRONICLE_VAULT_KEY` entrar no `chronicle-secrets`.

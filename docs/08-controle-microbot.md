@@ -278,6 +278,8 @@ trilha da última troca). Desenhar no canvas antes da entrega 2.
 
 ### Cliente headless num N95
 
+Medido no N95 em 2026-11-12, e a proposta de workers (um pod por conta no saradomin): doc 11.
+
 Plano do dono (2026-11-09): o webapp roda no saradomin, como já previsto; o agent e o cliente
 headless vão para o N95 e, se faltar CPU, para o zaros. Com o executor no agent (R1), ele vai junto
 com o cliente e trocar de máquina é só onde o `chronicle agent` roda, sem mudança de código.

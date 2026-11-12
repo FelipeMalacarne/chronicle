@@ -137,13 +137,13 @@ final class Blackjacking
 	/**
 	 * Step, ahead of healing and upkeep: while a knock-out is in flight, the target is down, or a
 	 * glance has to be answered, only the timing matters. It reads results and picks, and after a
-	 * glance it knocks out again ahead of a drink while HP is above {@link Session#retryFloor()}:
+	 * glance it knocks out again ahead of a drink while HP is at {@link Session#dangerHp()} or above:
 	 * a drink there costs the tick the next knock-out needs before the target's first hit, which
 	 * starts a fight. Other knock-outs are left to the last step, after healing.
 	 */
 	boolean burst(Session s)
 	{
-		boolean retry = s.now - lastGlanceAt < RETRY_WINDOW_MS && s.hp() >= s.retryFloor();
+		boolean retry = s.now - lastGlanceAt < RETRY_WINDOW_MS && s.hp() >= s.dangerHp();
 		return s.victim != null && (knockOutPending || calmPending || retry || s.now - downAt < DOWN_MS) && act(s, retry);
 	}
 

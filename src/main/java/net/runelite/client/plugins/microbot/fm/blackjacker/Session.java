@@ -35,8 +35,8 @@ final class Session
 	/**
 	 * A fight we have to get out of. A glance is not one: knocking out again ends it (wiki:
 	 * "interrupted before its second hit"), with a drink first when low. It is one when the game
-	 * refuses the knock-out "during combat", or, as an emergency, when we are still being hit at
-	 * {@link #dangerHp()}.
+	 * refuses the knock-out "during combat", or, as an emergency, when we are still being hit
+	 * below {@link #dangerHp()}.
 	 */
 	boolean mustEscape;
 	/** Too few frames to react in time: only safety runs, nothing new is started. */
@@ -79,7 +79,7 @@ final class Session
 		// after a restart in the middle of a fight.
 		boolean targeting = victim != null && victim.isInteractingWithPlayer() && !unconscious(victim);
 		attacked = (events.beingAttacked(now) && (victim == null || !unconscious(victim))) || targeting;
-		mustEscape = attacked && (events.refused(now) || hp() <= dangerHp());
+		mustEscape = attacked && (events.refused(now) || hp() < dangerHp());
 		throttled = throttled();
 		wines = Healing.wines();
 		return true;
@@ -115,26 +115,19 @@ final class Session
 	}
 
 	/**
-	 * Drink at the configured share of max HP, but never later than one max hit above
-	 * {@link #dangerHp()}: a knock-out is only started above it (the drink goes first, once the
-	 * target is up), so a glance's hit cannot take us into the emergency zone.
+	 * Drink at the configured share of max HP, but never below {@link #dangerHp()}: a knock-out
+	 * is only started above it (the drink goes first, once the target is up).
 	 */
 	int drinkAt()
 	{
-		return Math.max(events.maxHp() * config.drinkAtPercent() / 100, dangerHp() + target.maxHit);
+		return Math.max(events.maxHp() * config.drinkAtPercent() / 100, dangerHp());
 	}
 
 	/**
-	 * Knock-outs are retried after a glance, ahead of a drink, down to here: the configured share
-	 * of max HP, and never so low that the target's hit and one more on the way up the ladder
-	 * could reach 10% of max HP.
+	 * The lowest HP a knock-out is started or retried at. From here a glance's hit and one more
+	 * on the way up the ladder stay above 10% of max HP (the Ring of life); below it, a target
+	 * still hitting us sends us up the ladder.
 	 */
-	int retryFloor()
-	{
-		return Math.max(events.maxHp() * config.drinkAtPercent() / 100, dangerHp() + 3);
-	}
-
-	/** Two of the target's max hits from here reach 10% of max HP. */
 	int dangerHp()
 	{
 		return 2 * target.maxHit + events.maxHp() / 10 + 1;

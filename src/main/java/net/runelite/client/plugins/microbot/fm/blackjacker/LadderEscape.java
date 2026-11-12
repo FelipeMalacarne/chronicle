@@ -123,7 +123,7 @@ final class LadderEscape implements Step
 			healing.drinkIfReady(s);
 			return;
 		}
-		if (s.hp() <= s.dangerHp())
+		if (s.hp() < s.dangerHp())
 		{
 			// Going back down this low with nothing to drink is not worth it; the loop stops up here.
 			s.stop("Out of wine at " + s.hp() + "/" + s.events.maxHp() + " HP");

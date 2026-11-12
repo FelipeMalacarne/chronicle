@@ -203,6 +203,9 @@ func (r *Reconciler) refreshPods(ctx context.Context) {
 		if cs := d.Spec.Template.Spec.Containers; len(cs) > 0 {
 			info.Image = cs[0].Image
 		}
+		if why, ok := kube.DeploymentBlocked(d); ok {
+			info.State, info.Reason = kube.PodBlocked, why
+		}
 		view[account] = info
 	}
 	for _, p := range pods {

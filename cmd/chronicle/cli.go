@@ -234,6 +234,7 @@ func newAccountsCmd() *cobra.Command {
 		}),
 	}
 	f.add(cmd, true)
+	cmd.AddCommand(newAccountsConnectCmd())
 	return cmd
 }
 

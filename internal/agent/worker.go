@@ -57,10 +57,9 @@ func (w *WorkerConfig) hasSession() bool {
 // workerSettings are the RuneLite settings a worker applies through the
 // Agent Server once the client is up: a fixed list, never from the server.
 // The FPS limit keeps a software-rendered client inside the pod's CPU limit.
-// TODO(a conferir): group and keys follow RuneLite's FpsConfig
-// (@ConfigGroup("fpscontrol"), limitFps, maxFps); the vendored Microbot
-// client was not available to check them, and the FPS Control plugin itself
-// must be on for them to apply.
+// Checked in the pinned client 2.6.52: FpsConfig is @ConfigGroup("fpscontrol")
+// with boolean limitFps and int maxFps; FpsPlugin (workerPlugins) must be on
+// for them to apply.
 var workerSettings = []struct{ group, key, value string }{
 	{"fpscontrol", "limitFps", "true"},
 	{"fpscontrol", "maxFps", "20"},
@@ -188,7 +187,21 @@ func (e *Executor) waitReady(ctx context.Context) error {
 	return nil
 }
 
+// workerPlugins are started through the Agent Server once the client is up
+// (a fixed list): the pod's home is new on every boot, and the Chronicle
+// Link ships disabled by default, so nothing would track the account; the
+// FPS Control plugin makes the FPS limit apply.
+var workerPlugins = []string{
+	"net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin",
+	"net.runelite.client.plugins.fps.FpsPlugin",
+}
+
 func (e *Executor) applyWorkerSettings(ctx context.Context) {
+	for _, class := range workerPlugins {
+		if _, err := e.Game.JSON(ctx, http.MethodPost, "/scripts/start", nil, map[string]any{"className": class}, 30*time.Second); err != nil {
+			e.log().Warn("worker: could not start a plugin", "class", class, "err", err)
+		}
+	}
 	for _, s := range workerSettings {
 		v := s.value
 		if _, err := e.Game.JSON(ctx, http.MethodPost, "/settings/plugin", nil,

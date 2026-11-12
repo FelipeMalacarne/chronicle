@@ -46,8 +46,18 @@ type LabelSelector struct {
 
 // DeploymentStatus is what the controller reports.
 type DeploymentStatus struct {
-	Replicas      int32 `json:"replicas,omitempty"`
-	ReadyReplicas int32 `json:"readyReplicas,omitempty"`
+	Replicas      int32                 `json:"replicas,omitempty"`
+	ReadyReplicas int32                 `json:"readyReplicas,omitempty"`
+	Conditions    []DeploymentCondition `json:"conditions,omitempty"`
+}
+
+// DeploymentCondition is one condition (Available, Progressing,
+// ReplicaFailure: the ReplicaSet could not create the pod, e.g. over quota).
+type DeploymentCondition struct {
+	Type    string `json:"type"`
+	Status  string `json:"status"`
+	Reason  string `json:"reason,omitempty"`
+	Message string `json:"message,omitempty"`
 }
 
 // PodTemplate is a Deployment's pod template.

@@ -139,7 +139,8 @@ func WorkerDeployment(namespace string, s WorkerSpec) Deployment {
 
 // Pod phases the web shows (docs/11 section 2.1, "subindo, passo a passo").
 const (
-	PodPending     = "pending"     // not scheduled: no room (quota or node)
+	PodPending     = "pending"     // not scheduled: no room on the node
+	PodBlocked     = "blocked"     // no pod at all: the ReplicaSet could not create it (over quota)
 	PodPulling     = "pulling"     // scheduled, container not up yet
 	PodStarting    = "starting"    // container up, agent not linked yet
 	PodRunning     = "running"     // container ready
@@ -180,6 +181,17 @@ func PodState(p Pod) (state, reason string) {
 		return PodPulling, p.Status.Reason
 	}
 	return PodStarting, p.Status.Reason
+}
+
+// DeploymentBlocked reports why a Deployment has no pod when its ReplicaSet
+// could not create one (ReplicaFailure, e.g. exceeded quota).
+func DeploymentBlocked(d Deployment) (string, bool) {
+	for _, c := range d.Status.Conditions {
+		if c.Type == "ReplicaFailure" && c.Status == "True" {
+			return firstNonEmpty(c.Message, c.Reason), true
+		}
+	}
+	return "", false
 }
 
 func firstNonEmpty(xs ...string) string {

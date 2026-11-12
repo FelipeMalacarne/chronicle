@@ -57,11 +57,12 @@ func (f *fakeStore) SetError(_ context.Context, account, msg string) error {
 }
 
 type fakeCluster struct {
-	mu      sync.Mutex
-	deps    map[string]kube.Deployment
-	applied []string
-	deleted []string
-	fail    error
+	mu          sync.Mutex
+	deps        map[string]kube.Deployment
+	applied     []string
+	deleted     []string
+	deletedPods []string
+	fail        error
 }
 
 func (f *fakeCluster) ApplyDeployment(_ context.Context, d kube.Deployment) error {
@@ -105,7 +106,12 @@ func (f *fakeCluster) ListPods(context.Context, string) ([]kube.Pod, error) {
 	return out, nil
 }
 
-func (f *fakeCluster) DeletePod(context.Context, string) error { return nil }
+func (f *fakeCluster) DeletePod(_ context.Context, name string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.deletedPods = append(f.deletedPods, name)
+	return nil
+}
 
 type fakeHub struct {
 	mu      sync.Mutex
@@ -223,5 +229,36 @@ func TestOnConnectSkips(t *testing.T) {
 	newRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub3).OnConnect(agent.Info{ID: "z", Account: "acc_b", Kind: agent.KindManaged})
 	if slices.Contains(hub3.calls, agent.CmdWorkerBootstrap) || store.errs["acc_b"] == "" {
 		t.Fatalf("stopped worker bootstrapped: %v %v", hub3.calls, store.errs)
+	}
+}
+
+// A running worker is not touched by a new server's pod template: only its
+// image changing (a restart to the new version) or Restart applies it.
+func TestReconcileLeavesRunningWorkersAlone(t *testing.T) {
+	old := kube.WorkerDeployment("chronicle", kube.WorkerSpec{Account: "acc_a", Image: "img:1"})
+	old.Spec.Template.Spec.Containers[0].Resources.Requests["cpu"] = "500m" // an older template
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true, Image: "img:1"}}}
+	cl := &fakeCluster{deps: map[string]kube.Deployment{old.Metadata.Name: old}}
+	r := newRec(store, cl, &fakeHub{})
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(cl.applied) != 0 {
+		t.Fatalf("a running worker on its image was re-applied: %v", cl.applied)
+	}
+	// Restart applies the current template and replaces the pod.
+	if err := r.Restart(context.Background(), "acc_a"); err != nil {
+		t.Fatal(err)
+	}
+	if len(cl.applied) != 1 || len(cl.deletedPods) != 1 {
+		t.Fatalf("restart: applied %v, deleted pods %v", cl.applied, cl.deletedPods)
+	}
+	// A new image (restart to the new version) is applied by the pass.
+	store.desired[0].Image = "img:2"
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if len(cl.applied) != 2 || cl.deps["worker-acc-a"].Spec.Template.Spec.Containers[0].Image != "img:2" {
+		t.Fatalf("new image not applied: %v", cl.applied)
 	}
 }

@@ -32,6 +32,9 @@ const (
 	workerUID       = int64(65532)
 )
 
+// WorkerDisplay is the worker's Xvfb geometry (MB_HEADLESS_SIZE).
+const WorkerDisplay = "1048x503x24"
+
 // WorkerSelector selects every worker Deployment and pod.
 const WorkerSelector = LabelName + "=" + AppName + "," + LabelComponent + "=" + ComponentWork
 
@@ -111,9 +114,16 @@ func WorkerDeployment(namespace string, s WorkerSpec) Deployment {
 							{Name: "MB_XMX", Value: "1024m"},
 							{Name: "MB_HWID_STORE_DIR", Value: workerSecrets},
 							{Name: "WORKER_GAME_CACHE", Value: workerCacheDir},
+							// The headless display is the client's exact size: the fixed-mode
+							// game (765x503) plus RuneLite's sidebar (283 px), measured on the
+							// first worker; 1280x900 left black around the game and cut the
+							// sidebar, and every extra pixel costs CPU in Xvfb and VNC.
+							{Name: "MB_HEADLESS_SIZE", Value: WorkerDisplay},
 						},
 						Resources: ResourceRequirements{
-							Requests: map[string]string{"cpu": "500m", "memory": "1Gi"},
+							// 645m measured with a script running (software rendering, FPS 20);
+							// the request is what the scheduler and the quota count.
+							Requests: map[string]string{"cpu": "700m", "memory": "1Gi"},
 							Limits:   map[string]string{"cpu": "1", "memory": "1792Mi"},
 						},
 						VolumeMounts: []VolumeMount{

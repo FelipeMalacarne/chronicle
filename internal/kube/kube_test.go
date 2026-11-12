@@ -41,6 +41,9 @@ func TestWorkerDeployment(t *testing.T) {
 	for _, e := range pod.Containers[0].Env {
 		env[e.Name] = e.Value
 	}
+	if env["MB_HEADLESS_SIZE"] != WorkerDisplay || pod.Containers[0].Resources.Requests["cpu"] != "700m" {
+		t.Fatalf("display %q, cpu request %q", env["MB_HEADLESS_SIZE"], pod.Containers[0].Resources.Requests["cpu"])
+	}
 	if env["WORKER_GAME_CACHE"] != workerCacheDir || strings.HasPrefix(workerCacheDir, workerHome+"/") {
 		t.Fatalf("the game cache must be mounted outside the home: %q", env["WORKER_GAME_CACHE"])
 	}

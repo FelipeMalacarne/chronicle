@@ -463,7 +463,10 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
   audiência `chronicle` em `/var/run/secrets/chronicle/token` (3600 s).
 - Segurança: `runAsUser`/`runAsGroup`/`fsGroup` 65532, `runAsNonRoot`, `seccompProfile:
   RuntimeDefault`, sem privilégios, `allowPrivilegeEscalation: false`, capabilities `drop: [ALL]`.
-- Recursos: `requests` 500m e 1 GiB; `limits` 1 núcleo e 1792 MiB; `MB_XMX=1024m`.
+- Recursos: `requests` 700m e 1 GiB; `limits` 1 núcleo e 1792 MiB; `MB_XMX=1024m` (o pedido de CPU
+  subiu de 500m depois da medição da seção 14.4).
+- Display: `MB_HEADLESS_SIZE=1048x503x24`, o tamanho exato do cliente: jogo em modo fixo (765×503)
+  mais a barra lateral do RuneLite (283 px).
 - Volumes: `home` (`emptyDir` em disco) em `/home/worker`; `secrets` (`emptyDir` em memória, 1 MiB)
   em `/run/chronicle` para os arquivos do HWID agent; o PVC `microbot-game-cache` em
   `/var/cache/chronicle/jagexcache` (`WORKER_GAME_CACHE`); o token projetado. O cache fica **fora**
@@ -632,3 +635,48 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
   5. Deixar os pacotes do GHCR públicos.
   6. `WORKERS=on` no overlay.
   7. `accounts connect` no zaros e o primeiro Iniciar.
+
+### 14.4 Primeiro worker no saradomin (2026-11-12)
+
+Conta `acc_eventsourced`, conectada pelo `accounts connect --index 6 --as EventSourced`. O personagem
+é "Not set" no launcher, e o zaros não tem arquivo de device id. O `random.dat` foi levado.
+
+**O que funcionou de ponta a ponta:**
+
+- Iniciar pela web e o pod criado pelo reconciliador.
+- O bootstrap pelo token projetado, o cliente na tela de login e o login no mundo 566 pelo Cockpit.
+- O VNC ao vivo pelo túnel e o Blackjacker iniciado pelo Cockpit.
+- A auditoria por conta.
+
+**O que o primeiro uso real achou e já foi corrigido:**
+
+- PR #9: com o PVC montado em `.runelite/jagexcache`, o runtime criava `microbot-dev` e `.runelite`
+  como root, e o cliente (uid 65532) não subia. O cache passou para `/var/cache/chronicle/jagexcache`,
+  com o link criado pelo agent.
+- PR #10: o fim de um run em dois passos deixava o run seguinte ser cancelado.
+- Display de 1280×900:
+  - a janela do cliente ficou com 1532×900 (painel do jogo de 1249 e barra lateral de 283) e cortava
+    a barra lateral;
+  - o jogo em modo fixo ocupava só 765×503 no meio do preto;
+  - o display passou a 1048×503.
+- O reconciliador reaplicava o Deployment a cada passada, então um template novo vindo de um deploy
+  do servidor (recursos, variáveis, montagens) reiniciaria sozinho os workers em uso, deslogando a
+  conta. Agora:
+  - um worker que já roda a imagem certa não é tocado;
+  - o template novo só chega por um Iniciar, pelo Reiniciar ou por uma imagem nova.
+
+**Medido com o Blackjacker rodando** (render por software, `kubectl top`): **645m de CPU e 784 MiB**.
+Parado na tela de login eram cerca de 0,43 núcleo e 800 MiB. A conclusão da seção 7.1 muda: com script
+ativo, **o limite é a CPU, não a RAM**. Com cerca de 3,4 núcleos livres, cabem uns 4 workers ativos, e
+a RAM daria para uns 8. O pedido subiu para 700m e a quota do namespace acompanha (gielinor). A GPU
+(VirtualGL na iGPU) é o que mais baixaria esse número.
+
+**Pendências deste uso:**
+
+- **Barra lateral:** a do RuneLite fica visível no worker. A web ainda não tem tudo o que ela tem;
+  trazer para o Cockpit, aos poucos, o que fizer falta.
+- **Tour "Welcome to Microbot":** aparece a cada boot por cima do jogo, porque a home do pod é nova.
+  Resolver na F5, com os perfis.
+- **Configuração dos plugins:** a do Blackjacker e a dos outros se perde quando o pod é recriado. É a
+  F5 (perfis no Postgres).
+- **FPS:** conferir no pod se o FPS Control ficou ligado com o limite de 20.

@@ -233,8 +233,7 @@ harness tools it runs, `MICROBOT_CLIENT_CMD` and `MICROBOT_ACCOUNT_CMD`. `.env.e
 contrato de ingest) · 07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC,
 plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por
 agente; decisões em 9.1 e 9.3) · 10 modelo de execução (proposta: fatos por fonte, log de eventos,
-tarefas, receitas, planos; decisões E1 a E10 abertas) · 11 workers do Microbot no saradomin (proposta: vários
-agents, um pod por conta criado pelo Chronicle, imagens, CI/CD; decisões W1 a W6 abertas) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas, v6 vigente) ·
+tarefas, receitas, planos; decisões E1 a E10 abertas) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas, v6 vigente) ·
 `docs/ui/pergaminho.md` + `pergaminho.tokens.json` (design system).
 `docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.

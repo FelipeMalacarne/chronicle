@@ -7,7 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // StepEventView is one recent step status change.

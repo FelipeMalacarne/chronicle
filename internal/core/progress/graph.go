@@ -5,8 +5,8 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
 
 // Graph depth bounds (F10): the graph always enters by a focus and shows its

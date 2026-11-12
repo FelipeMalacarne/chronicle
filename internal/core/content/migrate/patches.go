@@ -7,7 +7,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 // RoutePatches are the owner's corrections to the imported route

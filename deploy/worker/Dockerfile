@@ -1,19 +1,19 @@
 # syntax=docker/dockerfile:1.7
 #
-# chronicle-worker image (docs/11 sections 7.2 and 13.4): the microbot-worker-base of the
-# microbot-plugins repository (JDK, Xvfb, x11vnc, the pinned Microbot client, our plugins and the
-# harness), pinned by digest in deploy/worker/base.lock, plus the chronicle binary of this commit
-# running `chronicle agent --worker`. Built from the repository root:
+# chronicle-worker image (docs/11 sections 7.2 and 13.4): chronicle-worker-base (JDK, Xvfb, x11vnc,
+# the pinned Microbot client, the plugins and the harness of microbot/; deploy/worker/build-base.sh)
+# plus the chronicle binary of this commit running `chronicle agent --worker`. Built from the
+# repository root:
 #
-#   docker build -f deploy/worker/Dockerfile \
-#     --build-arg BASE="$(cat deploy/worker/base.lock)" \
+#   base="$(deploy/worker/build-base.sh | tail -n1)"
+#   docker build -f deploy/worker/Dockerfile --build-arg BASE="$base" \
 #     --build-arg VERSION=$(git describe --tags --always --dirty) -t chronicle-worker .
 #
 # The web and go stages are the server's (Dockerfile at the root), so the binary is the same one
 # and, on the same builder, the layers are shared. Keep them in step with it.
 
-# ghcr.io/felipemalacarne/microbot-worker-base@sha256:... (deploy/worker/base.lock; `just
-# worker-base-bump <tag>`). No default: an empty lock means there is no worker image to build.
+# ghcr.io/felipemalacarne/chronicle-worker-base:<Microbot version>-<sha7> (CI: the tag of
+# `build-base.sh --tag`, built when GHCR lacks it). No default.
 ARG BASE
 ARG VERSION=dev
 
@@ -49,11 +49,11 @@ COPY --from=web /src/web/dist ./web/dist
 RUN --mount=type=cache,target=/go/pkg/mod \
     --mount=type=cache,target=/root/.cache/go-build \
     go build -trimpath \
-      -ldflags "-s -w -X github.com/FelipeMalacarne/ironman-planner/internal/buildinfo.Version=${VERSION}" \
+      -ldflags "-s -w -X github.com/FelipeMalacarne/chronicle/internal/buildinfo.Version=${VERSION}" \
       -o /out/chronicle ./cmd/chronicle
 
 # ---------------------------------------------------------------------------
-# Stage 3: the worker (the pinned base plus the binary)
+# Stage 3: the worker (the base plus the binary)
 # ---------------------------------------------------------------------------
 FROM ${BASE} AS worker
 

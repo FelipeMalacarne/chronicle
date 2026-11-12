@@ -4,8 +4,8 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // TestBoostableRequirementsEvaluatedNotBlocking: a boostable catalog

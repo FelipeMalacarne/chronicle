@@ -13,9 +13,9 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/events"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // adapterVersion 2: snapshot_facts, quests and diary tiers (migration 0005).

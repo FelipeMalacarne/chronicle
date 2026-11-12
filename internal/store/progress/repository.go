@@ -17,14 +17,14 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
-	"github.com/FelipeMalacarne/ironman-planner/internal/events"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/store/state"
 )
 
 // Errors returned to the transport.

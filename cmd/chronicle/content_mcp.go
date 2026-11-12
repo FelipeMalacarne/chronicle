@@ -8,11 +8,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
-	"github.com/FelipeMalacarne/ironman-planner/internal/config"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/annotate"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/mcp"
+	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
+	"github.com/FelipeMalacarne/chronicle/internal/config"
+	"github.com/FelipeMalacarne/chronicle/internal/core/annotate"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/mcp"
 )
 
 func newContentMCPCmd() *cobra.Command {

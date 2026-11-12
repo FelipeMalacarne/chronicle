@@ -10,11 +10,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
-	"github.com/FelipeMalacarne/ironman-planner/internal/client"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/panel"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	"github.com/FelipeMalacarne/ironman-planner/internal/mcp"
+	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
+	"github.com/FelipeMalacarne/chronicle/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/mcp"
 )
 
 // newMCPCmd is `chronicle mcp`: the account's progress for agents, over

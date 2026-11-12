@@ -7,9 +7,9 @@ import (
 	"math"
 	"sort"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 )
 
 // Definition is the token-independent part of an ingest manifest.

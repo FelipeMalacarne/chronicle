@@ -14,8 +14,8 @@ import (
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
 
-	"github.com/FelipeMalacarne/ironman-planner/content/schema"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/content/schema"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // Annotation sidecars live next to guide.json (docs/09 section 4.2). Only

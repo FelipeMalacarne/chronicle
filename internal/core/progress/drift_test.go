@@ -3,7 +3,7 @@ package progress
 import (
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
 
 func TestPlanDrift(t *testing.T) {

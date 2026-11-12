@@ -23,13 +23,13 @@ dono em 2026-11-04, com o risco aceito conscientemente. Para conter o impacto:
 - O tracking continua vindo do plugin somente leitura (ingest). O controle não escreve progresso.
 - Toda ação de controle fica registrada (quem, quando, o quê, resultado) para auditoria.
 
-## O que já existe (repositório `rune/microbot-plugins`)
+## O que já existe (o harness em `microbot/`)
 
 O harness de desenvolvimento de plugins já resolve o lado do cliente:
 
 | Peça | O que faz |
 |---|---|
-| `mb-client start --headless` | Sobe o cliente fixado (versão e hash em `microbot.json`) num display próprio `Xvfb :99`, com home isolada (`~/.local/share/microbot-dev`), HWID agent e Agent Server ligado. GPU e 117 HD ficam desligados (Xvfb não tem GPU). |
+| `mb-client start --headless` | Sobe o cliente fixado (versão e hash em `microbot/microbot.json`) num display próprio `Xvfb :99`, com home isolada (`~/.local/share/microbot-dev`), HWID agent e Agent Server ligado. GPU e 117 HD ficam desligados (Xvfb não tem GPU). |
 | VNC | `x11vnc` só em `127.0.0.1:5999`, sem senha; quem expõe (o planner) autentica. |
 | Agent Server | API HTTP do próprio Microbot num socket Unix (`~/.local/share/microbot-dev/.runelite/agent/agent.sock`), com token em `.agent-token`. |
 | `mb-account` | Escolhe o personagem da Jagex Account com que o cliente abre. |
@@ -39,7 +39,7 @@ por segundo, e tudo (caminhar, clicar, esperar) fica lento. Medido com o persona
 ao Agent Server em ~1000 ms com a janela escondida contra ~18 ms no Xvfb.
 
 Endpoints do Agent Server que o módulo usa (referência completa em
-`microbot-plugins/vendor/microbot/docs/AGENT_SERVER.md`):
+`microbot/vendor/microbot/docs/AGENT_SERVER.md`):
 
 | Necessidade | Endpoint |
 |---|---|
@@ -78,7 +78,7 @@ navegador ──Zitadel (OIDC) + papel──> chronicle serve (saradomin; ou zar
 - **`internal/agent`**: o executor do lado do `zaros`. Recebe comandos tipados, valida contra a
   lista fechada (ver Segurança), executa e devolve resultado e eventos.
 - **Ciclo de vida do cliente**: o agent não reimplementa o launch. Ele chama o `mb-client` do
-  harness (caminho em `MICROBOT_HARNESS_DIR`), que já cuida de JDK, hash do jar, HWID agent,
+  harness (`microbot/bin` do checkout do chronicle em `MICROBOT_HARNESS_DIR`), que já cuida de JDK, hash do jar, HWID agent,
   `user.home` isolado, Xvfb e VNC. Uma fonte de verdade para como o jogo sobe.
 - **VNC no navegador**: o navegador abre `/api/microbot/vnc` no `serve`, que repassa os bytes pela
   conexão do agent até `127.0.0.1:5999`; no lugar do `websockify`. A SPA usa o noVNC
@@ -146,7 +146,7 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   "Configuração com formulário"): o Agent Server só lê e grava chave/valor; não lista as
   opções de um plugin (nome, tipo, valores, seções). V1: edição chave/valor crua mais presets salvos
   por plugin. V2: endpoint de descritores de config (`ConfigDescriptor`), de preferência como PR
-  upstream no Agent Server, ou num plugin companheiro no `microbot-plugins`.
+  upstream no Agent Server, ou num plugin companheiro em `microbot/`.
 - **GPU no modo headless**: desligada. Uma saída headless do Hyprland com `wayvnc` daria GPU real,
   mas depende da sessão gráfica aberta; fica como modo opcional futuro.
 
@@ -261,7 +261,7 @@ O ciclo do gato (resposta do dono, R3): o filhote fica com o KittenPlugin (paral
 afagar até crescer); quando cresce, a troca é uma recorrente disparada pelo evento, que leva o gato
 a um Civilian em West Ardougne e troca por death runes, compra um filhote novo com a Gertrude e
 volta ao principal. Precisa de coins no inventário para o filhote. Sem plugin conhecido no Hub para
-isso, é candidato a plugin nosso no `microbot-plugins`.
+isso, é candidato a plugin nosso em `microbot/`.
 
 A tela "Rotinas" do canvas (V6MicrobotRotinas1440, página 5) foi desenhada para passos em sequência;
 este cenário pede outra forma (o principal, a fila de recorrentes com o relógio de cada uma e a
@@ -272,7 +272,7 @@ trilha da última troca). Desenhar no canvas antes da entrega 2.
 | # | Pergunta | Estado |
 |---|---|---|
 | R1 | O executor roda no `serve` (estado e auditoria num lugar só) ou no agent, ao lado do cliente (sobrevive a queda do link durante um run)? | decidida (2026-11-09): no agent. O dono considera o cliente headless num mini PC com Intel N95, sempre ligado. Recomendação revista: **no agent**, porque o `serve` reinicia (o `air` a cada mudança em Go no `just dev`, deploys no saradomin) e o link passa a ser remoto; o `serve` guarda as rotinas, dispara o "fazer agora" e recebe a trilha, e o agent manda as ações para a auditoria (com fila se o link cair). Só pesa a partir da entrega 2 |
-| R2 | Delegar aos plugins do Hub (Herbrun, FornBirdhouseRuns, FarmTreeRun) ou escrever os nossos no `microbot-plugins`? | decidida (2026-11-09): os dois. A tarefa aponta para uma classe de plugin com um preset, venha do Hub ou do `microbot-plugins`; começar pelos do Hub e escrever o que faltar (fim sem aviso, sem banco, a troca do gato) |
+| R2 | Delegar aos plugins do Hub (Herbrun, FornBirdhouseRuns, FarmTreeRun) ou escrever os nossos (hoje em `microbot/`)? | decidida (2026-11-09): os dois. A tarefa aponta para uma classe de plugin com um preset, venha do Hub ou de `microbot/`; começar pelos do Hub e escrever o que faltar (fim sem aviso, sem banco, a troca do gato) |
 | R3 | "Trocar de gato" é o quê? | decidida (2026-11-09): o ciclo do gato descrito nas entregas |
 | R4 | Começar pela entrega 1 (relógios) agora? | decidida (2026-11-09): sim, feita (ver Estado) |
 
@@ -312,7 +312,9 @@ aparelho do HWID agent (`~/.runelite/spoofed-*.properties`); quem move isso é o
   comandos por id; reconecta sozinho (1 s a 30 s). O lado do `serve` aceita um agent por vez (uma
   conexão nova substitui a antiga) e recusa comando fora da lista nos dois lados.
 - `client_start` roda `mb-client start --headless` pelo dev shell Nix do harness
-  (`nix develop $MICROBOT_HARNESS_DIR --command .../bin/mb-client`, ou `MICROBOT_CLIENT_CMD`);
+  (`nix develop $MICROBOT_HARNESS_DIR#microbot --command $MICROBOT_HARNESS_DIR/microbot/bin/mb-client`, ou
+  `MICROBOT_CLIENT_CMD`; um checkout antigo do `microbot-plugins`, sem `microbot/bin`, ainda roda pelo
+  shell padrão dele e `bin/`);
   `client_stop` roda `mb-client stop`. O screenshot sai do Agent Server em PNG (megabytes no cliente em
   janela) e o agent o recodifica em JPEG antes do link.
 - `serve` com `MICROBOT_CONTROL=on` (exige `DATABASE_URL`; em oidc, `OIDC_PROJECT_ID`):
@@ -325,7 +327,7 @@ aparelho do HWID agent (`~/.runelite/spoofed-*.properties`); quem move isso é o
   cliente, login (com mundo opcional) e logout com segundo clique de confirmação, e a auditoria. A
   navegação só mostra "Automação" quando o servidor tem o módulo ligado.
 - Rodar no zaros: `MICROBOT_CONTROL=on` no `.env` do planner e `just agent` (em dev sem token;
-  `MICROBOT_HARNESS_DIR` assume o checkout irmão `../microbot-plugins`). Contra um `serve` em oidc:
+  `MICROBOT_HARNESS_DIR` é o próprio checkout do chronicle por padrão). Contra um `serve` em oidc:
   `MICROBOT_AGENT_CLIENT_ID` e `MICROBOT_AGENT_CLIENT_SECRET` (ou `_SECRET_FILE`) do machine user.
 - Verificado no zaros: o agent leu o cliente em janela que estava aberto (estado, mundo e screenshot),
   subiu o headless pelo web em 38 s (tela de login, deslogado), tirou screenshot dele e o parou; a

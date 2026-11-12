@@ -20,10 +20,10 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/events"
-	"github.com/FelipeMalacarne/ironman-planner/internal/sources/hiscores"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
+	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/store/state"
 )
 
 // Source is the only polling source so far.

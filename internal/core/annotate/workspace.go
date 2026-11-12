@@ -19,8 +19,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // ReferenceSubdir is the catalog directory under the content dir.

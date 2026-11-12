@@ -11,7 +11,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/microbot"
+	"github.com/FelipeMalacarne/chronicle/internal/microbot"
 )
 
 // podGame is the Agent Server of a worker: up while the fake mb-client's

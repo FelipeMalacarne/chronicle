@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/annotate"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/annotate"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 // copyTree copies the files of src into dst.

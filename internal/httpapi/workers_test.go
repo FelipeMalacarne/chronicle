@@ -11,9 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	storeworkers "github.com/FelipeMalacarne/ironman-planner/internal/store/workers"
-	"github.com/FelipeMalacarne/ironman-planner/internal/workerctl"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
+	"github.com/FelipeMalacarne/chronicle/internal/workerctl"
 )
 
 // memWorkers is an in-memory WorkerStore with the repository's rules that

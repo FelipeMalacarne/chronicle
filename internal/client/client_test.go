@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth/authtest"
+	"github.com/FelipeMalacarne/chronicle/internal/auth"
+	"github.com/FelipeMalacarne/chronicle/internal/auth/authtest"
 )
 
 const nativeClient = "planner-native"

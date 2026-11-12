@@ -16,8 +16,8 @@ import (
 	"golang.org/x/text/language"
 	"golang.org/x/text/message"
 
-	"github.com/FelipeMalacarne/ironman-planner/content/schema"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/content/schema"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // GuidesSubdir is the directory under the content dir that holds one folder per guide.

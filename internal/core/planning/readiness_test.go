@@ -4,10 +4,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
 
 // Catalog ids: Plank 960 (noted 961), Hammer 2347, Bronze axe 1351, Coins 995

@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 )
 
 func main() {

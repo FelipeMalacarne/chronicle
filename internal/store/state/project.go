@@ -9,8 +9,8 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/facts"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/core/facts"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // Project rewrites player_state for the given facets of one account as the

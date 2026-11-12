@@ -9,7 +9,7 @@
 
 	/*
 	 * Formulário de config de um plugin (doc 08, fase D): as opções vêm do plugin Chronicle Link do
-	 * microbot-plugins, que exporta os descritores do RuneLite; os valores são lidos e gravados pelo
+	 * microbot/, que exporta os descritores do RuneLite; os valores são lidos e gravados pelo
 	 * /settings/plugin (chave/valor) do Agent Server. Gravar vai para a auditoria; opção com aviso
 	 * do plugin pede um segundo clique. Sem o export, `onschema(false)` e a página mostra o
 	 * chave/valor cru.

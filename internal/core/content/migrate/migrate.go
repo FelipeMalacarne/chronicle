@@ -14,10 +14,10 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content/derive"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities/enrich"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content/derive"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities/enrich"
 )
 
 // Normalized is the root of the v0.1 normalizer output.

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/client"
 )
 
 func TestProgressCheck(t *testing.T) {

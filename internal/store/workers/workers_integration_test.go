@@ -16,10 +16,10 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/vault"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/store/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/vault"
 )
 
 var session = agent.GameSession{

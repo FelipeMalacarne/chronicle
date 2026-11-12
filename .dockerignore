@@ -20,6 +20,12 @@ result-*
 # Extracted data and samples: not needed at runtime (content/ is the source)
 data
 
+# The Microbot plugins and the Nix files: the worker base is built by
+# deploy/worker/build-base.sh, not from this context
+microbot
+nix
+.claude
+
 # Documentation; keep markdown that lives inside content/ (guide notes)
 docs
 *.md

@@ -9,7 +9,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // ErrInvalidAccount rejects a setup with a bad name, mode, guide or layer.

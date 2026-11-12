@@ -9,7 +9,7 @@ package progress
 import (
 	"slices"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 // Status is the derived status of a step in one guide.

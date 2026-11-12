@@ -11,10 +11,10 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 )
 
 // Item 7 acceptance (docs/04 section 9): a full push with quests and the

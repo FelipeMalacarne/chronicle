@@ -3,8 +3,8 @@ package workerctl
 import (
 	"context"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	storeworkers "github.com/FelipeMalacarne/ironman-planner/internal/store/workers"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
 )
 
 // RepoStore adapts the workers repository to Store.

@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // StepTextHash is the hash the annotations of a step are pinned to: the

@@ -1,0 +1,96 @@
+import groovy.json.JsonSlurper
+
+plugins {
+    id 'java'
+}
+
+def pin = new JsonSlurper().parse(file('microbot.json'))
+def lombokVersion = '1.18.42'
+
+// Compile against the exact client jar the launcher runs. The dev shell exports
+// MICROBOT_CLIENT_JAR (pinned by flake.nix); outside it, fall back to the launcher's copy.
+def clientJar = file(
+    providers.gradleProperty('microbotClientPath')
+        .orElse(providers.environmentVariable('MICROBOT_CLIENT_JAR'))
+        .getOrElse("${System.getProperty('user.home')}/.microbot/microbot-${pin.version}.jar"))
+if (!clientJar.exists()) {
+    throw new GradleException("Microbot client jar not found: ${clientJar}. Run inside `nix develop` or pass -PmicrobotClientPath=...")
+}
+
+repositories {
+    mavenCentral()
+}
+
+configurations {
+    lombok
+}
+
+dependencies {
+    compileOnly files(clientJar)
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
+    lombok "org.projectlombok:lombok:${lombokVersion}"
+
+    testImplementation files(clientJar)
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// The client targets Java 11, and /scripts/deploy compiles with -source 11.
+tasks.withType(JavaCompile).configureEach {
+    options.release = 11
+    options.encoding = 'UTF-8'
+    options.compilerArgs += ['-parameters']
+}
+
+tasks.withType(Test).configureEach {
+    useJUnitPlatform()
+}
+
+// One package per plugin under PLUGIN_ROOT. Each one becomes <XxxPlugin>.jar, because the
+// client keys sideloaded plugins by jar name == plugin class simple name.
+def PLUGIN_ROOT = 'net/runelite/client/plugins/microbot/fm'
+
+def pluginJars = tasks.register('pluginJars') {
+    group = 'microbot'
+    description = 'Builds one jar per plugin into build/plugins'
+}
+
+file("src/main/java/${PLUGIN_ROOT}").listFiles()?.findAll { it.directory }?.each { dir ->
+    def pluginSource = dir.listFiles().find { it.name.endsWith('Plugin.java') }
+    if (pluginSource == null) {
+        return
+    }
+    def pluginName = pluginSource.name - '.java'
+    def jarTask = tasks.register("jar${pluginName}", Jar) {
+        group = 'microbot'
+        archiveFileName = "${pluginName}.jar"
+        destinationDirectory = layout.buildDirectory.dir('plugins')
+        from(sourceSets.main.output) {
+            include "${PLUGIN_ROOT}/${dir.name}/**"
+        }
+    }
+    pluginJars.configure { dependsOn jarTask }
+}
+
+tasks.named('assemble') { dependsOn pluginJars }
+
+// /scripts/deploy compiles sources in-process against the client classpath, which has no
+// Lombok. Hot deploys therefore ship delomboked sources from build/delombok.
+tasks.register('delombok', JavaExec) {
+    group = 'microbot'
+    description = 'Writes Lombok-free sources to build/delombok for hot deploys'
+    def srcDir = file('src/main/java')
+    def outDir = layout.buildDirectory.dir('delombok').get().asFile
+    inputs.dir(srcDir)
+    inputs.file('lombok.config')
+    outputs.dir(outDir)
+    classpath = configurations.lombok
+    mainClass = 'lombok.launch.Main'
+    doFirst {
+        project.delete(outDir)
+        args 'delombok', srcDir.path, '-d', outDir.path,
+            '--classpath', sourceSets.main.compileClasspath.asPath,
+            '--encoding', 'UTF-8'
+    }
+}

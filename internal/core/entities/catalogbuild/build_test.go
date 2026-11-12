@@ -9,7 +9,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 var update = flag.Bool("update", false, "rewrite content/reference generated catalogs")

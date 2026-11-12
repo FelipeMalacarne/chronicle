@@ -15,11 +15,11 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
-	"github.com/FelipeMalacarne/ironman-planner/internal/buildinfo"
-	"github.com/FelipeMalacarne/ironman-planner/internal/client"
-	"github.com/FelipeMalacarne/ironman-planner/internal/microbot"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/appenv"
+	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
+	"github.com/FelipeMalacarne/chronicle/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/microbot"
 )
 
 // newAgentCmd is `chronicle agent` (docs/08): it runs on the machine with the
@@ -32,8 +32,8 @@ import (
 //	                       server runs AUTH_MODE=oidc; a dev server needs nothing and
 //	                       takes the link only from loopback
 //	MICROBOT_HOME          the harness dev home (default ~/.local/share/microbot-dev)
-//	MICROBOT_HARNESS_DIR   the microbot-plugins checkout; mb-client runs through its
-//	                       Nix dev shell (Xvfb, x11vnc and the JDK come from it)
+//	MICROBOT_HARNESS_DIR   the chronicle checkout; mb-client (microbot/bin) runs through
+//	                       its `microbot` Nix dev shell (Xvfb, x11vnc and the JDK)
 //	MICROBOT_CLIENT_CMD, MICROBOT_ACCOUNT_CMD
 //	                       instead of the above, the commands that run mb-client
 //	                       and mb-account
@@ -207,15 +207,26 @@ func tokenFromFile(file string) func(context.Context) (string, error) {
 }
 
 // harnessCmd is the argv that runs one of the harness's tools: the command
-// in env, else the tool through the harness's Nix dev shell.
+// in env, else the tool through the checkout's `microbot` Nix dev shell. A
+// directory without microbot/bin is a checkout of the old microbot-plugins
+// repository (its flake has only the default shell, its tools in bin/).
 func harnessCmd(env, tool string) []string {
 	if c := strings.Fields(os.Getenv(env)); len(c) > 0 {
 		return c
 	}
-	if dir := os.Getenv("MICROBOT_HARNESS_DIR"); dir != "" {
-		return []string{"nix", "develop", dir, "--command", filepath.Join(dir, "bin", tool)}
+	dir := os.Getenv("MICROBOT_HARNESS_DIR")
+	if dir == "" {
+		return nil
 	}
-	return nil
+	if bin := filepath.Join(dir, "microbot", "bin", tool); fileExists(bin) {
+		return []string{"nix", "develop", dir + "#microbot", "--command", bin}
+	}
+	return []string{"nix", "develop", dir, "--command", filepath.Join(dir, "bin", tool)}
+}
+
+func fileExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }
 
 // vncAddr is the harness's x11vnc: loopback only, on MB_VNC_PORT like

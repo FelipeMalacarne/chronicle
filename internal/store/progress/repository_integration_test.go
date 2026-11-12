@@ -15,12 +15,12 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	"github.com/FelipeMalacarne/ironman-planner/internal/events"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 )
 
 // recorder keeps the published events.

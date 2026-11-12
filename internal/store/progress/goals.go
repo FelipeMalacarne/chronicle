@@ -8,10 +8,10 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/store/state"
 )
 
 // Goal errors.

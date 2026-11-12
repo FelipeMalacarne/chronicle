@@ -6,8 +6,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
-	coreprogress "github.com/FelipeMalacarne/ironman-planner/internal/core/progress"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	"github.com/FelipeMalacarne/chronicle/internal/store/state"
 )
 
 // CheckReport is the result of `chronicle progress check` for one account

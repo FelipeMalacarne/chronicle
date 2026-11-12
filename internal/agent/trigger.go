@@ -14,7 +14,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
+	"github.com/FelipeMalacarne/chronicle/internal/appenv"
 )
 
 // Triggers (docs/08 phase 4, delivery 3): a game event starts a run by

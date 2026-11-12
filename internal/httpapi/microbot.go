@@ -12,8 +12,8 @@ import (
 
 	"github.com/coder/websocket"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	storemicrobot "github.com/FelipeMalacarne/ironman-planner/internal/store/microbot"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	storemicrobot "github.com/FelipeMalacarne/chronicle/internal/store/microbot"
 )
 
 // MicrobotRole is the Zitadel project role every control route requires in

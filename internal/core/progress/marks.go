@@ -4,8 +4,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // MarkAction is what the owner asks for in PATCH .../steps/{id}/mark.

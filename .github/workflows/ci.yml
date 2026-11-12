@@ -19,7 +19,7 @@ env:
 jobs:
   # --------------------------------------------------------------------------
   # Svelte SPA: typecheck + build. The dist is handed to the Go job because
-  # cmd/ironman embeds web/dist.
+  # cmd/chronicle embeds web/dist.
   # --------------------------------------------------------------------------
   web:
     name: web (pnpm check + test + build)
@@ -178,6 +178,22 @@ jobs:
         run: go run github.com/sqlc-dev/sqlc/cmd/sqlc@latest vet
 
   # --------------------------------------------------------------------------
+  # Nix and microbot/: the flake's chronicle package (what nix-config installs;
+  # catches a stale vendorHash) and the Microbot plugins, compiled and tested
+  # against the pinned client jar of the microbot dev shell.
+  # --------------------------------------------------------------------------
+  nix:
+    name: nix (chronicle package, microbot plugins)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: nix build .#chronicle
+        run: nix build --print-build-logs .#chronicle && ./result/bin/chronicle --version
+      - name: gradle test pluginJars
+        run: nix develop .#microbot -c gradle -p microbot --console=plain test pluginJars
+
+  # --------------------------------------------------------------------------
   # Kubernetes manifests of the saradomin deploy (deploy/k8s): they must render.
   # --------------------------------------------------------------------------
   manifests:
@@ -191,16 +207,16 @@ jobs:
   # Images and deploy, on main only: the chronicle image (server and embedded
   # migrations) goes to GHCR under the commit's sha, and the saradomin overlay
   # is pointed at it. Argo CD on saradomin follows that overlay on main, so the
-  # bump commit is the deploy (docs/07 section 3.3). When deploy/worker/base.lock
-  # pins a microbot-worker-base, the chronicle-worker image (that base plus the
-  # same binary) goes out under the same sha and the overlay's WORKER_IMAGE
-  # follows it (docs/11 sections 7.2 and 13.4).
+  # bump commit is the deploy (docs/07 section 3.3). The chronicle-worker image
+  # (chronicle-worker-base plus the same binary) goes out under the same sha and
+  # the overlay's WORKER_IMAGE follows it (docs/11 sections 7.2 and 13.4); the
+  # base is built only when GHCR lacks the tag of its inputs.
   # --------------------------------------------------------------------------
   docker:
     name: image + deploy
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: [go, web, migrations, manifests]
+    needs: [go, web, migrations, manifests, nix]
     # One deploy at a time: two runs bumping the same lines race, and the older could win.
     concurrency:
       group: deploy-saradomin
@@ -214,8 +230,6 @@ jobs:
           # the deploy step compares this commit with main's history
           fetch-depth: 0
 
-      - uses: docker/setup-buildx-action@v3
-
       - uses: docker/login-action@v3
         with:
           registry: ghcr.io
@@ -227,6 +241,40 @@ jobs:
         run: |
           echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/chronicle" >> "$GITHUB_ENV"
           echo "WORKER_IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/chronicle-worker" >> "$GITHUB_ENV"
+          echo "WORKER_BASE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/chronicle-worker-base" >> "$GITHUB_ENV"
+
+      # chronicle-worker-base is tagged by the last commit that changed its
+      # inputs (microbot/, nix/, its Dockerfile and script): most runs find it
+      # in GHCR and skip Nix and gradle. Built before setup-buildx, whose
+      # builder could not see the runtime image that `docker load` puts in the
+      # local daemon.
+      - name: Worker base tag
+        id: base
+        run: |
+          ref="${WORKER_BASE}:$(deploy/worker/build-base.sh --tag)"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          if docker manifest inspect "$ref" > /dev/null 2>&1; then
+            echo "$ref already in GHCR"
+            echo "build=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "build=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: cachix/install-nix-action@v31
+        if: steps.base.outputs.build == 'true'
+
+      - name: Build and push chronicle-worker-base
+        if: steps.base.outputs.build == 'true'
+        env:
+          REF: ${{ steps.base.outputs.ref }}
+        run: |
+          built="$(deploy/worker/build-base.sh "$WORKER_BASE" | tail -n1)"
+          [ "$built" = "$REF" ] || { echo "::error::built $built, expected $REF"; exit 1; }
+          docker push "$REF"
+          echo "### chronicle-worker-base" >> "$GITHUB_STEP_SUMMARY"
+          echo "built and pushed \`$REF\`" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: docker/setup-buildx-action@v3
 
       - uses: docker/build-push-action@v6
         with:
@@ -238,36 +286,17 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # The worker image is built only once `just worker-base-bump <tag>` has
-      # pinned a base; until then the run publishes the server alone.
-      - name: Worker base
-        id: worker
-        run: |
-          base="$(tr -d '[:space:]' < deploy/worker/base.lock)"
-          if [ -z "$base" ]; then
-            echo "::warning title=chronicle-worker not published::deploy/worker/base.lock is empty; pin a microbot-worker-base with just worker-base-bump <tag>"
-            echo "publish=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          if ! [[ "$base" =~ ^ghcr\.io/felipemalacarne/microbot-worker-base@sha256:[0-9a-f]{64}$ ]]; then
-            echo "::error file=deploy/worker/base.lock::expected ghcr.io/felipemalacarne/microbot-worker-base@sha256:<digest>, got '${base}'"
-            exit 1
-          fi
-          echo "base=$base" >> "$GITHUB_OUTPUT"
-          echo "publish=true" >> "$GITHUB_OUTPUT"
-
       # Same web and go stages as the server's image: on this builder they are
       # cache hits. Its own GHA cache scope, so the two builds do not evict
       # each other's cache.
       - uses: docker/build-push-action@v6
-        if: steps.worker.outputs.publish == 'true'
         with:
           context: .
           file: deploy/worker/Dockerfile
           push: true
           tags: ${{ env.WORKER_IMAGE }}:${{ github.sha }}
           build-args: |
-            BASE=${{ steps.worker.outputs.base }}
+            BASE=${{ steps.base.outputs.ref }}
             VERSION=${{ github.sha }}
           cache-from: |
             type=gha
@@ -279,8 +308,6 @@ jobs:
       # deploys and this one stands down, so an older image never replaces a
       # newer one.
       - name: Deploy to saradomin
-        env:
-          WORKER_PUBLISHED: ${{ steps.worker.outputs.publish }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -293,9 +320,7 @@ jobs:
             fi
             git checkout --quiet -B deploy origin/main
             sed -i "s|^    newTag: .*|    newTag: \"${GITHUB_SHA}\"|" "$overlay"
-            if [ "$WORKER_PUBLISHED" = true ]; then
-              sed -i "s|^      - WORKER_IMAGE=.*|      - WORKER_IMAGE=${WORKER_IMAGE}:${GITHUB_SHA}|" "$overlay"
-            fi
+            sed -i "s|^      - WORKER_IMAGE=.*|      - WORKER_IMAGE=${WORKER_IMAGE}:${GITHUB_SHA}|" "$overlay"
             git diff --quiet && exit 0
             git commit --quiet -am "deploy: saradomin roda ${GITHUB_SHA::7}"
             git push origin HEAD:main && exit 0

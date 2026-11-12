@@ -114,7 +114,7 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/FelipeMalacarne/ironman-planner
+        - github.com/FelipeMalacarne/chronicle
   exclusions:
     generated: lax
     paths:

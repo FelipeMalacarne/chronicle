@@ -14,8 +14,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // TokenPrefix starts every ipl_ plugin token, which tells it apart from the

@@ -1,0 +1,17 @@
+.direnv/
+.gradle/
+build/
+vendor/
+result
+*.iml
+.idea/
+# jdtls (Eclipse) project files and build output; bin/ itself holds the tracked harness
+.classpath
+.factorypath
+.project
+.settings/
+bin/main/
+bin/test/
+bin/default/
+bin/generated-sources/
+bin/generated-test-sources/

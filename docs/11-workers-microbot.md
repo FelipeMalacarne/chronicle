@@ -1,7 +1,7 @@
 # 11 — Workers do Microbot: contas, perfis e clientes headless no saradomin
 
-**Estado: rodada 1 implementada (2026-11-12) e falta ligar no saradomin; o que foi feito e conferido
-está na seção 14. Perfis (F5), rotinas no servidor (F6), métricas (F7) e GPU continuam como
+**Estado: rodada 1 implementada (2026-11-12) e ligada no saradomin, com o primeiro worker rodando
+(seção 14.4); o que foi feito e conferido está na seção 14. Perfis (F5), rotinas no servidor (F6), métricas (F7) e GPU continuam como
 proposta.**
 Substitui a primeira versão do mesmo dia. A primeira versão definiu o desenho do cluster (imagens,
 RBAC, iGPU e medições), e isso continua valendo. A segunda versão parte de três respostas do dono:
@@ -69,7 +69,7 @@ dono pensa em contas, e o lugar onde a conta roda é só um atributo dela.
 | `chronicle serve` | chronicle | Hub por conta, cofre, perfis, rotinas no banco, reconciliador, rotas `/api/workers` e `/api/accounts/{id}/session` |
 | `chronicle agent` | chronicle | Modo `--worker` (bootstrap pelo link). Nos dois modos, recebe perfil e rotinas do servidor e devolve os eventos |
 | `chronicle accounts connect`, `chronicle workers …` | chronicle | CLI de conectar conta e de iniciar e parar workers |
-| Imagem `microbot-worker-base` | microbot-plugins | Runtime do jogo pelo Nix, cliente fixado e nossos plugins |
+| Imagem `chronicle-worker-base` | chronicle (`microbot/`, `nix/`, `deploy/worker/`) | Runtime do jogo pelo Nix, cliente fixado e nossos plugins |
 | Imagem `chronicle-worker` | chronicle | A base mais o `chronicle` do mesmo commit do servidor |
 | RBAC, quota, GPU, rede | gielinor | O que o cluster precisa para o Chronicle criar workers com segurança |
 
@@ -304,18 +304,22 @@ de outro nó (W8).
 
 ### 7.2 Imagens e CI
 
-Sem mudança em relação à primeira versão:
+Tudo sai deste repositório (decisão 35 do doc 01) e do mesmo CI (doc 07, seções 3.3 e 5):
 
-- `microbot-worker-base` pelo Nix (`dockerTools`), do mesmo `flake.lock` do harness: JDK 21, Xvfb,
-  x11vnc, VirtualGL, Mesa, os jars de `microbot.json`, os nossos plugins e o `bin/` do harness.
-  Usuário 65532, tag `<versão do Microbot>-<sha7>`. O CI novo no `microbot-plugins` roda
-  `gradle test` e, na `main`, publica a imagem.
-- `chronicle-worker`: `FROM` a base fixada por digest em `deploy/worker/base.lock`, mais o binário do
-  mesmo commit. O job `docker` publica as duas imagens e grava `WORKER_IMAGE` no overlay.
-- O bump da base no chronicle é um PR automático (W4): depois de publicar a base, o CI do
-  microbot-plugins abre (ou atualiza) o PR `bump/microbot-worker-base` no chronicle com o novo digest
-  no `base.lock`, usando o segredo `CHRONICLE_BUMP_TOKEN` de lá. O merge é do dono; sem o segredo, o
-  CI só avisa, e o bump continua à mão com `just worker-base-bump <tag>`.
+- `chronicle-worker-base` pelo Nix (`dockerTools`, `nix/worker-runtime.nix`), do mesmo `flake.lock` do
+  harness: JDK 21, Xvfb, x11vnc, os jars de `microbot/microbot.json`, o `microbot/bin` do harness e,
+  por cima (`deploy/worker/base.Dockerfile`), os jars do `gradle -p microbot pluginJars`. Usuário
+  65532. Quem constrói é o `deploy/worker/build-base.sh` (`just worker-base`).
+- A tag da base é `<versão do Microbot>-<sha7 do último commit que mudou uma entrada da base>`. As
+  entradas são `microbot/` (fora `*.md`), `nix/microbot.nix`, `nix/worker-runtime.nix`, `flake.nix`,
+  `flake.lock`, `deploy/worker/base.Dockerfile` e `deploy/worker/build-base.sh`; `build-base.sh --tag`
+  imprime a tag. O job `docker` (só na `main`) calcula a tag e só constrói e publica a base quando o
+  GHCR ainda não a tem.
+- `chronicle-worker:<sha>` (`deploy/worker/Dockerfile`): `FROM` essa base, mais o binário do mesmo
+  commit. O job `docker` sempre a publica e grava `WORKER_IMAGE` no overlay no commit de deploy.
+- Não há bump da base (W4): ela segue o commit. Um worker que já roda só troca de imagem quando o
+  dono clica em Reiniciar (seção 6.5).
+- O job `nix` roda os testes e os jars dos plugins em todo push e PR.
 
 ### 7.3 Perfil gráfico `minimal`
 
@@ -381,11 +385,11 @@ disco.
 | Fase | Entrega | Pronto quando | Onde |
 |---|---|---|---|
 | F0 | Link remoto: `MICROBOT_CONTROL=on` no saradomin, machine user do Zitadel para o agent do zaros, serviço no zaros (doc 08, fase 5) | o Cockpit do saradomin controla o cliente do zaros | gielinor, nix-config |
-| F1 | Hub por conta: hello com conta, kind, worker e a versão da ponte do Chronicle Link (o agent exige uma mínima e diz qual falta, decisão 35 do doc 01); rotas com `?account=`; mensagens `event` do agent; `microbot_audit.account_id`/`agent_id`; Automação › Workers com o zaros na lista | duas contas no mesmo servidor, cada uma com seu agent (o segundo pode ser um agent de teste no zaros) | chronicle |
+| F1 | Hub por conta: hello com conta, kind, worker e a versão da ponte do Chronicle Link (o agent exige uma mínima e diz qual falta); rotas com `?account=`; mensagens `event` do agent; `microbot_audit.account_id`/`agent_id`; Automação › Workers com o zaros na lista | duas contas no mesmo servidor, cada uma com seu agent (o segundo pode ser um agent de teste no zaros) | chronicle |
 | F2 | Contas e sessões: migração (`regular`, rota opcional, `managed`, `game_sessions`), cofre, `chronicle accounts connect`, Automação da conta na Conta | uma conta sem rota conectada pela CLI; a sessão aparece na web e nunca volta pela API | chronicle |
-| F3 | Imagens e um worker aplicado à mão: as duas imagens e os dois CIs, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | microbot-plugins, chronicle, gielinor |
+| F3 | Imagens e um worker aplicado à mão: as duas imagens e o CI delas, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | chronicle (com `microbot/`), gielinor |
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
-| F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle, microbot-plugins (export dos valores) |
+| F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link) |
 | F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle |
 | F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle |
 
@@ -413,7 +417,7 @@ E10). A revisão de rotas e objetivos que o dono quer fazer depois é o lugar di
 | W1 | `client-go` ou um cliente REST mínimo para a API do k8s | REST mínimo (Deployments e TokenReview) |
 | W2 | Base pelo Nix ou Dockerfile Debian | Nix: o mesmo pin do harness |
 | W3 | O worker entra no jogo sozinho ao subir? | Não; no máximo uma opção por conta, desligada |
-| W4 | Bump da base manual ou automático | PR automático aberto pelo CI do microbot-plugins; merge manual (`just worker-base-bump` fica como recurso) |
+| W4 | Bump da base manual ou automático | **Resolvida (2026-11-12):** sem bump. Com o repositório único (decisão 35 do doc 01), a base tem a tag das próprias entradas e segue o commit (seção 7.2) |
 | W5 | Cache do jogo por pod ou compartilhado | **Resolvida (2026-11-12):** PVC compartilhado (seção 7.4) |
 | W6 | Lista de workers antes dos gerenciados | **Resolvida** pela F1 |
 | W7 | Como aplicar a config do perfil: escrever o arquivo de perfil do RuneLite antes de o cliente subir, ou `/settings/plugin` depois | Arquivo antes (os plugins já leem a config certa no start); spike na F3 |
@@ -483,20 +487,21 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
 
 ### 13.4 Imagens
 
-- `ghcr.io/felipemalacarne/microbot-worker-base:<versão do Microbot>-<sha7>` (microbot-plugins):
+- `ghcr.io/felipemalacarne/chronicle-worker-base:<versão do Microbot>-<sha7 das entradas>`
+  (`deploy/worker/build-base.sh`: `nix/worker-runtime.nix` mais os jars em `deploy/worker/base.Dockerfile`):
   - `/opt/microbot/bin`: o harness, no PATH;
   - o JDK 21, Xvfb, x11vnc, xdotool, bash, coreutils, util-linux, procps, jq, curl e fontes;
   - `MICROBOT_CLIENT_JAR` e `MICROBOT_HWID_AGENT_JAR` apontando para os jars fixados;
   - `MB_PREBUILT_PLUGINS=/opt/microbot/plugins` com os jars do `gradle pluginJars`;
   - usuário 65532, `HOME=/home/worker`, `MB_DEV_HOME=/home/worker/microbot-dev`.
-- `mb-client` ganha as variáveis abaixo, e sem elas tudo continua como hoje:
+- `mb-client` (`microbot/bin`) ganha as variáveis abaixo, e sem elas tudo continua como hoje:
   - `MB_XMX` (padrão `2g`);
   - `MB_HWID_STORE_DIR` (padrão `$HOME/.runelite`);
   - `MB_PREBUILT_PLUGINS`: instala os jars dali em vez de compilar o DevBootstrap e copia também o
     Chronicle Link;
   - pula o PipeWire e o `xdotool` quando não existem.
-- `ghcr.io/felipemalacarne/chronicle-worker:<sha do chronicle>`: `FROM` a base fixada por digest em
-  `deploy/worker/base.lock`, com o `chronicle` em `/usr/local/bin/chronicle` e
+- `ghcr.io/felipemalacarne/chronicle-worker:<sha do chronicle>` (`deploy/worker/Dockerfile`): `FROM` a
+  base com a tag das entradas no mesmo commit, com o `chronicle` em `/usr/local/bin/chronicle` e
   `ENTRYPOINT ["chronicle", "agent", "--worker"]`.
 
 ### 13.5 Banco (migração 0012)
@@ -572,14 +577,18 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
   - `just worker-base-bump`;
   - o CI publica `chronicle-worker` e grava `WORKER_IMAGE` no overlay quando o `base.lock` existe.
 
-**microbot-plugins:**
+  O `base.lock` e o `just worker-base-bump` saíram com o repositório único (seção 7.2).
+
+**microbot-plugins** (hoje `microbot/`):
 
 - `mb-client`: `MB_XMX`, `MB_HWID_STORE_DIR` e `MB_PREBUILT_PLUGINS`.
 - Chronicle Link 1.11.0: `CHRONICLE_LINK_SERVER_URL` e `CHRONICLE_LINK_TOKEN` valem no lugar da
   config, e nada é gravado no perfil.
-- A imagem `microbot-worker-base`: `worker/image.nix`, `worker/Dockerfile` e `worker/build.sh`.
+- A imagem `microbot-worker-base`: `worker/image.nix`, `worker/Dockerfile` e `worker/build.sh`. Hoje
+  é a `chronicle-worker-base`: `nix/worker-runtime.nix`, `deploy/worker/base.Dockerfile` e
+  `deploy/worker/build-base.sh`.
 - O `microbot-cli` fixado por `cliHash`.
-- O primeiro CI (`gradle test` e a imagem na `main`).
+- O primeiro CI (`gradle test` e a imagem na `main`), hoje o job `nix` e o job `docker` do chronicle.
 
 **gielinor (`apps/chronicle`):**
 
@@ -634,7 +643,8 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
   1. Fazer o merge do gielinor antes do chronicle: o app precisa da SA.
   2. Pôr o `CHRONICLE_VAULT_KEY` no SOPS.
   3. Criar as roles `microbot:control` e `microbot:agent` no Zitadel.
-  4. Publicar a `microbot-worker-base` e rodar `just worker-base-bump`.
+  4. Publicar a base do worker. Feito então com a `microbot-worker-base` e o `just worker-base-bump`;
+     hoje o CI publica a `chronicle-worker-base` na `main` quando ela falta (seção 7.2).
   5. Deixar os pacotes do GHCR públicos.
   6. `WORKERS=on` no overlay.
   7. `accounts connect` no zaros e o primeiro Iniciar.

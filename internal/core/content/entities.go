@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // checkStepEntities validates a step's entity mentions: catalog-backed refs

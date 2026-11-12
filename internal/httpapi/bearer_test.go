@@ -16,11 +16,11 @@ import (
 	"github.com/alexedwards/scs/v2"
 	"github.com/alexedwards/scs/v2/memstore"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
-	"github.com/FelipeMalacarne/ironman-planner/internal/auth/authtest"
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/identity"
-	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/auth"
+	"github.com/FelipeMalacarne/chronicle/internal/auth/authtest"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
+	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 )
 
 // bearer sends one request with Authorization and no cookie.

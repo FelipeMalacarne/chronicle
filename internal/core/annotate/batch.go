@@ -1,7 +1,7 @@
 package annotate
 
 import (
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 // Batch limits: a batch stops at DefaultBatchSteps steps or once its text

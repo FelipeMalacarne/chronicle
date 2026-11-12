@@ -8,7 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgconn"
 
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // TestIntegrityPostgres checks the invariants migration 0007 moved into the

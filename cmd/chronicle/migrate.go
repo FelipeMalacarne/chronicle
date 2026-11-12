@@ -14,7 +14,7 @@ import (
 	"github.com/pressly/goose/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/db"
+	"github.com/FelipeMalacarne/chronicle/db"
 )
 
 // newMigrateCmd is `chronicle migrate`: the goose migrations embedded in the

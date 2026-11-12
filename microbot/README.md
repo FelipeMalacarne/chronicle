@@ -1,0 +1,124 @@
+# microbot/
+
+Chronicle's Microbot plugins plus an agent-drivable dev harness (the separate `microbot-plugins`
+repository until 2026-11-12). Plugins are sideloaded jars built against the pinned official client;
+there is no client fork.
+
+```sh
+direnv allow            # at the repository root, or: nix develop (.#microbot for this part alone)
+mb-vendor               # upstream sources/docs/CLI at the pinned version
+gradle -p microbot pluginJars   # microbot/build/plugins/*.jar (just plugins)
+mb-client start         # isolated dev client with the Agent Server on
+mb-deploy helloagent    # hot deploy, no restart
+mb state                # microbot-cli against the dev client
+```
+
+The dev client keeps its own config in `~/.local/share/microbot-dev`. To launch it with a
+Jagex Account character (the "Play Now" screen), pick one the Microbot launcher knows:
+`mb-account list`, then `mb-account use <name>` and `mb-client restart`. If the session
+expires, open the Microbot launcher once and run `mb-account use` again.
+
+To use a plugin in the everyday client: `mb-install --live <plugin>` and restart it. The jar
+lands in `~/.runelite/microbot-plugins` and its name goes into `.sideload-keep` there. The
+client deletes non-Hub jars older than 3 days, so the launcher wrapper in nix-config
+(`modules/features/applications/microbot.nix`) touches every jar listed in `.sideload-keep`
+before each launch.
+
+Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
+The worker image built from this directory: [docs/11](../docs/11-workers-microbot.md) and
+`deploy/worker/`.
+
+## Chronicle Link (`fm/chroniclelink`, 1.11.0)
+
+Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
+1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
+rename, and `mb-install` removes the old `IronmanPlannerPlugin.jar` when it installs this one. Its
+tracking is read-only: it pushes skills, quest states, the manifest's
+varbits/varps (diary tiers, quest points, combat achievements, the collection log count), the
+clocks of RuneLite's Time Tracking (`data.timers`: each farming tab, the bird houses and the farming
+contract, with when they are ready; the planner's recurring tasks) and, when switched on,
+bank/inventory/equipment and the character's position (`data.position`, "Send position", off by
+default; a move alone is sent only 16 tiles away or on another world or plane) (ingest contract v1,
+`docs/04-arquitetura.md` 6.4), and never performs a game action. Timers and
+position go only to a planner whose manifest offers them.
+
+**Control bridge (dev harness client only).** In the client `microbot/bin/mb-client` runs
+(`-Dmicrobot.dev.harness=true`) the plugin also serves Chronicle's control bridge on
+`.runelite/agent/bridge.sock` (`docs/08-controle-microbot.md`): the real menu options
+of nearby NPCs, objects (only those with an action) and worn items, the prayer book and the spellbook, and typed actions for
+them (toggle a prayer; cast a spell, on an NPC for combat spells and curses or on an item for
+alchemy and Superheat; use an inventory item on another item, an NPC or an object; Remove/Rub a worn
+item; Deposit-X), plus the clocks of RuneLite's Time Tracking (`/bridge/timers`, read-only: each
+farming tab, the bird houses and the farming contract, with their summary and when they are ready,
+read from the Time Tracking plugin's own trackers, so nothing when it is off), and the game events
+Chronicle's agent triggers wait for (`/bridge/events?after=<seq>`: the game's own chat messages of a
+closed list, never player chat; today only "Your kitten has grown into a healthy cat", `kitten_grown`;
+numbered from the plugin's start, with a `boot` id that changes when it starts again). The spellbook lists combat spells too, each with what it is cast on (`target`:
+`item`, `npc`, `none`, or `unsupported` for targets the bridge cannot reach yet, like enchanting). Every request needs the
+Agent Server's token; without it nothing answers. It also keeps `.runelite/agent/config-schema.json`
+with every loaded Microbot plugin's config options, for Chronicle's config form. In the everyday
+client none of this starts.
+
+**Route panel.** A side panel (toolbar icon "Chronicle") shows the planner's active
+route from the cursor on, in RuneLite's look:
+
+- header: the route's short name (Oziris, BRUHsailer; full title in the tooltip), a thin
+  progress bar with done/total and blocked, a status dot with "há 12 s" (or "desatualizado";
+  the full line in the tooltip), the cursor's section with its description (first line, the
+  rest on click) and the guide's attribution (OzirisLoL / ironman.guide, or So Iron BRUH and
+  ParasailerOSRS);
+- the current step (AGORA): its full text, location, the guide's notes ("Atualização:" in
+  orange, "Dica:"; hcim notes are hidden, the window does not say the account's mode),
+  objectives as rows (icon, label, "feito" / "falta" / "sem dado"), a padlock row "Falta: …"
+  when blocked, and the buttons **Feito**, **Pular** and, after a mark, **Desfazer**;
+- the items to carry, collapsed into one summary ("5 faltam · 2 com você · 19 no banco") that
+  still lists the missing ones; open it for all (a derived preview shows six more and "+N");
+  the choice is remembered (hidden config `itemsExpanded`);
+- the next 8 steps, one line each with a drawn icon (pending, done, presumed, skipped,
+  blocked) and a marker when the step has a note (orange for an update): click one for its
+  text, notes, objectives and Feito/Pular.
+
+The planner is the source of truth: verdicts, statuses and labels come from it, and the marks
+are the web's marks (they show up in the web at once). The panel refetches after each
+acknowledged push that moved the cursor or changed steps, after each mark, on login and every
+30 s while it is visible. The last window stays on screen when the planner is down.
+
+**Setup in dev ("só a URL").** With the planner running `just dev` on this machine
+(`AUTH_MODE=dev`, serving on 127.0.0.1:8080):
+
+1. Server URL: `http://127.0.0.1:8080`.
+2. Credential: `None (dev, URL only)` (the default). No token: the planner accepts loopback
+   requests and keeps this installation's sequence under the installation id the plugin
+   generates once (hidden config `installationId`).
+3. Conta: leave empty. The planner picks the account of the logged-in character, or its only
+   account; fill in the account id (`acc_…`) only when it has several and the character's name
+   matches none.
+4. Send bank / inventory / equipment: switch on what the planner may read.
+
+Tokenless requests only work over loopback in dev mode. For the compose stack or another host in
+dev mode, choose Credential `ipl_ token` and paste a token; panel marks need its `marks:write`
+scope.
+
+**Setup against a planner with Zitadel login (`AUTH_MODE=oidc`, 1.9.0).**
+
+1. Server URL: the planner's address (e.g. `https://chronicle.saradomin.ftm.dev.br`).
+2. Credential: `Login (Chronicle panel)`.
+3. Open the Chronicle side panel and press **Entrar**. The plugin reads issuer and client id
+   from `GET /api/auth/client` and starts the Device Authorization Grant (RFC 8628) with the
+   planner's public native client; **Abrir página** opens the issuer's page with the code filled
+   in. After you confirm, the panel shows the route.
+4. Conta: leave empty unless your user has several accounts.
+
+The access token (a JWT) goes as `Authorization: Bearer` with the installation id; the planner
+acts for the signed-in user, on that user's accounts only, with the project roles as scopes:
+`ingest` (state), `items:bank`, `items:inventory`, `items:equipment` and `marks:write`. The
+refresh token stays in the RuneLite config (hidden, secret `loginRefreshToken`) and renews the
+access token two minutes before it expires; **Sair** in the panel footer forgets it. A refused
+refresh token signs the panel out; an unreachable issuer keeps the login and retries every
+30 s. The planner needs one web login of the same user first. Tokens, the username and the RSN
+are never logged.
+
+**Managed workers (1.11.0).** When `CHRONICLE_LINK_SERVER_URL` and `CHRONICLE_LINK_TOKEN` are both
+set and not blank in the client's environment (a Chronicle worker pod, docs/11 section 13.2), they replace Server URL and Credential: token mode with that `ipl_` token. Nothing of them is
+written to the profile's config (not even the installation id, which token mode does not send), and
+the panel footer reads "credencial do ambiente". Without them the config decides, as before.

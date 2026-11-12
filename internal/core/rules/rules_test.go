@@ -3,7 +3,7 @@ package rules
 import (
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 func hdr(t string) content.RuleHeader { return content.RuleHeader{Type: t} }

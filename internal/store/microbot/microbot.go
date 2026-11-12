@@ -10,7 +10,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
 // Entry is one audited action.

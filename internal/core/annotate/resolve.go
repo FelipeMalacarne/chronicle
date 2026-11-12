@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // Kinds an objective proposal can name. They are the entity kinds plus

@@ -1,6 +1,6 @@
 package planning
 
-import "github.com/FelipeMalacarne/ironman-planner/internal/core/content"
+import "github.com/FelipeMalacarne/chronicle/internal/core/content"
 
 // Legs returns the segment that contains stepID and the next bank leg after
 // it in the same variant's main route (parallel tracks are skipped). An empty

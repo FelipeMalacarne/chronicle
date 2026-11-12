@@ -15,8 +15,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/agent"
-	"github.com/FelipeMalacarne/ironman-planner/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/client"
 )
 
 // launcherAccount is one entry of the Microbot launcher's accounts.json (the

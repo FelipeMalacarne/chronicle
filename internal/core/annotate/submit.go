@@ -6,8 +6,8 @@ import (
 	"slices"
 	"sort"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/content"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
 // SubmitResult says, per step, what was accepted and why the rest was not.

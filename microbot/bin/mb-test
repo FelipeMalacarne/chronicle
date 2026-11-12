@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# End-to-end test-mode run: sideload the plugin jar, launch the dev client in test mode,
+# let it log in with the dev profile, run the plugin, and print result.json.
+#
+#   mb-test <plugin>      (MB_TEST_WORLD=<world> to pick a world, MB_TEST_TIMEOUT_MS to cap it)
+#
+# Exit codes follow TestResult: 0 pass, 1 check failed, 2 timeout, 3 crash, 4 login failure.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+{ read -r _ cls <<<"$(mb_plugin_dir "${1:?plugin}")" && [[ -n "$cls" ]]; } || die "unknown plugin: $1"
+src="$(ls "$MB_PLUGIN_SRC"/*/"$cls.java")"
+# TestRunner matches the @PluginDescriptor name with the color prefix stripped.
+descriptor="$(grep -oP 'name = \w+\.TAG \+ "\K[^"]+' "$src" || grep -oP 'Mocrosoft \+ "\K[^"]+' "$src" || grep -oP 'name = "\K[^"]+' "$src")"
+[[ -n "$descriptor" ]] || die "could not read the descriptor name from $src"
+
+mb_client_pid >/dev/null && die "dev client already running; stop it first: mb-client stop"
+"$MB_REPO/bin/mb-install" "$cls" >/dev/null
+rm -rf "$MB_RL/test-results"
+
+"$MB_REPO/bin/mb-client" start --test "$descriptor"
+pid="$(cat "$MB_PIDFILE")"
+while kill -0 "$pid" 2>/dev/null; do sleep 2; done
+rm -f "$MB_PIDFILE"
+
+result="$MB_RL/test-results/result.json"
+[[ -f "$result" ]] || die "no result.json; see: mb-client logs"
+jq '{script, exitReason, exitCode, durationMs, checks, errors, screenshots}' "$result"
+exit "$(jq -r .exitCode "$result")"

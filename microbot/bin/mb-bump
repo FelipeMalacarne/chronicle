@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# Pin a new Microbot release: mb-bump <version>. Updates microbot.json (read by flake.nix,
+# Gradle and these scripts), then re-vendors the matching sources.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+version="${1:?usage: mb-bump <version>}"
+base="https://github.com/chsami/Microbot/releases/download/$version"
+hash="$(nix store prefetch-file --json "$base/microbot-$version.jar" | jq -r .hash)"
+agent_hash="$(nix store prefetch-file --json "$base/hwid-agent-$version.jar" | jq -r .hash)"
+# microbot-cli of the same tag, for the worker image (which has no vendor/)
+cli_hash="$(nix store prefetch-file --json "https://raw.githubusercontent.com/chsami/Microbot/$version/microbot-cli" | jq -r .hash)"
+jq -n --arg v "$version" --arg h "$hash" --arg a "$agent_hash" --arg c "$cli_hash" \
+	'{version: $v, hash: $h, hwidAgentHash: $a, cliHash: $c}' >"$MB_REPO/microbot.json"
+echo "pinned $version ($hash); re-enter the dev shell (direnv reload) to pick it up"
+MICROBOT_VERSION="$version" "$MB_REPO/bin/mb-vendor"

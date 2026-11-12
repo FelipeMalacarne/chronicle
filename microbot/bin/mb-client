@@ -1,0 +1,290 @@
+#!/usr/bin/env bash
+# Run the pinned Microbot client in the isolated dev home with the Agent Server on.
+#
+#   mb-client start [--headless] [--test <Plugin descriptor name>] [-- extra JVM args]
+#   mb-client stop | restart | status | logs [N] | wait [timeoutSec]
+#
+# --headless runs the game muted on its own Xvfb display (MB_HEADLESS_DISPLAY, default :99) instead
+# of a window on the desktop, and shares it over VNC on 127.0.0.1:MB_VNC_PORT (default 5999).
+#
+# Environment (all optional; unset, everything behaves as on the workstation):
+#   MB_DEV_HOME          the client's user.home (default ~/.local/share/microbot-dev)
+#   MB_XMX               java -Xmx (default 2g)
+#   MB_HWID_STORE_DIR    where the HWID agent keeps its per-account stores, spoofed-device-ids and
+#                        spoofed-random-dats .properties (default ~/.runelite, shared with the
+#                        everyday client)
+#   MB_PREBUILT_PLUGINS  directory of prebuilt plugin jars (the worker image's /opt/microbot/plugins):
+#                        start installs every jar there instead of building DevBootstrap with
+#                        gradle; it must hold DevBootstrapPlugin.jar and ChronicleLinkPlugin.jar
+#   MB_HEADLESS_DISPLAY, MB_HEADLESS_SIZE, MB_VNC_PORT, MB_START_TIMEOUT  see --headless and start
+# PipeWire muting and the xdotool window fit are skipped when their commands are missing.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+
+MB_HEADLESS_DISPLAY="${MB_HEADLESS_DISPLAY:-:99}"
+MB_HEADLESS_AUDIO_NAME="Microbot headless"
+MB_VNC_PORT="${MB_VNC_PORT:-5999}"
+MB_XVFB_PIDFILE="$MB_RUN/xvfb.pid"
+MB_XMX="${MB_XMX:-2g}"
+MB_HWID_STORE_DIR="${MB_HWID_STORE_DIR:-$HOME/.runelite}"
+MB_VNC_PIDFILE="$MB_RUN/vnc.pid"
+
+pid_alive() { [[ -f "$1" ]] && kill -0 "$(cat "$1")" 2>/dev/null; }
+
+kill_pidfile() {
+	local file="$1" pid i
+	pid_alive "$file" || { rm -f "$file"; return 0; }
+	pid="$(cat "$file")"
+	kill "$pid"
+	for ((i = 0; i < 10; i++)); do
+		kill -0 "$pid" 2>/dev/null || break
+		sleep 1
+	done
+	kill -0 "$pid" 2>/dev/null && kill -9 "$pid"
+	rm -f "$file"
+}
+
+# Xvfb is always "visible", so the client never throttles rendering the way a hidden or
+# minimized desktop window does; x11vnc lets a browser (noVNC) watch and drive it.
+start_display() {
+	command -v Xvfb >/dev/null || die "Xvfb not found; run inside nix develop"
+	command -v x11vnc >/dev/null || die "x11vnc not found; run inside nix develop"
+	local n="${MB_HEADLESS_DISPLAY#:}" i
+	if ! pid_alive "$MB_XVFB_PIDFILE"; then
+		[[ -e "/tmp/.X11-unix/X$n" ]] && die "display $MB_HEADLESS_DISPLAY is taken by another X server; set MB_HEADLESS_DISPLAY"
+		setsid nohup Xvfb "$MB_HEADLESS_DISPLAY" -screen 0 "${MB_HEADLESS_SIZE:-1280x900x24}" -nolisten tcp \
+			>"$MB_RUN/xvfb.out" 2>&1 </dev/null &
+		echo $! >"$MB_XVFB_PIDFILE"
+		for ((i = 0; i < 50; i++)); do
+			[[ -S "/tmp/.X11-unix/X$n" ]] && break
+			sleep 0.2
+		done
+		[[ -S "/tmp/.X11-unix/X$n" ]] || die "Xvfb did not come up; see $MB_RUN/xvfb.out"
+	fi
+	if ! pid_alive "$MB_VNC_PIDFILE"; then
+		# Loopback only and no password: whatever exposes it (the planner) must authenticate.
+		# x11vnc refuses to run when it sees a Wayland session, even for an Xvfb display.
+		env -u WAYLAND_DISPLAY XDG_SESSION_TYPE=x11 \
+			setsid nohup x11vnc -display "$MB_HEADLESS_DISPLAY" -localhost -rfbport "$MB_VNC_PORT" \
+			-forever -shared -nopw >"$MB_RUN/vnc.out" 2>&1 </dev/null &
+		echo $! >"$MB_VNC_PIDFILE"
+	fi
+	echo "headless display $MB_HEADLESS_DISPLAY, VNC on 127.0.0.1:$MB_VNC_PORT"
+}
+
+stop_display() {
+	kill_pidfile "$MB_VNC_PIDFILE"
+	kill_pidfile "$MB_XVFB_PIDFILE"
+}
+
+wait_ready() {
+	local timeout="${1:-180}" i
+	for ((i = 0; i < timeout; i++)); do
+		mb_client_pid >/dev/null || die "client exited during startup; see: mb-client logs"
+		if [[ -S "$MB_SOCKET" && -s "$MB_TOKEN_FILE" ]] && mb_api GET /state >/dev/null 2>&1; then
+			echo "ready (pid $(mb_client_pid), socket $MB_SOCKET)"
+			return 0
+		fi
+		sleep 1
+	done
+	die "Agent Server not ready after ${timeout}s; see: mb-client logs"
+}
+
+install_bootstrap() {
+	mkdir -p "$MB_PLUGIN_DIR"
+	if [[ -n "${MB_PREBUILT_PLUGINS:-}" ]]; then
+		# A worker image: no sources or gradle, the jars of `gradle pluginJars` ship with it.
+		local jar
+		for jar in DevBootstrapPlugin ChronicleLinkPlugin; do
+			[[ -f "$MB_PREBUILT_PLUGINS/$jar.jar" ]] || die "$jar.jar missing from MB_PREBUILT_PLUGINS ($MB_PREBUILT_PLUGINS)"
+		done
+		install -m644 "$MB_PREBUILT_PLUGINS"/*.jar "$MB_PLUGIN_DIR/"
+	else
+		mb_gradle jarDevBootstrapPlugin
+		install -m644 "$MB_BUILD_PLUGINS/DevBootstrapPlugin.jar" "$MB_PLUGIN_DIR/"
+	fi
+	# The client deletes non-Hub jars older than 3 days; keep ours fresh.
+	touch "$MB_PLUGIN_DIR"/*.jar 2>/dev/null || true
+}
+
+start() {
+	local test_name="" headless=""
+	local extra=()
+	while [[ $# -gt 0 ]]; do
+		case "$1" in
+			--headless) headless=1; shift ;;
+			--test) test_name="$2"; shift 2 ;;
+			--) shift; extra=("$@"); break ;;
+			*) die "unknown option: $1" ;;
+		esac
+	done
+
+	if pid="$(mb_client_pid)"; then
+		echo "already running (pid $pid)"
+		return 0
+	fi
+	[[ -f "$MB_JAR" ]] || die "client jar not found: $MB_JAR"
+	mkdir -p "$MB_RUN" "$MB_RL"
+	install_bootstrap
+	if [[ -z "$test_name" ]]; then
+		# Test mode enables AutoLogin and leaves it on; outside it, log in only on request.
+		sed -i 's/^runelite\.autologinplugin=true$/runelite.autologinplugin=false/' \
+			"$MB_RL"/microbot-profiles/*.properties 2>/dev/null || true
+	fi
+	rm -f "$MB_SOCKET"
+
+	local cmd=("$(mb_java)" "-Xmx$MB_XMX" -Dfile.encoding=UTF-8
+		"-Duser.home=$MB_DEV_HOME"
+		-Dmicrobot.dev.harness=true
+		-Dmicrobot.disableTelemetry=true)
+	if [[ -n "$test_name" ]]; then
+		cmd+=(-Dmicrobot.test.mode=true "-Dmicrobot.test.script=$test_name"
+			"-Dmicrobot.test.timeout=${MB_TEST_TIMEOUT_MS:-300000}"
+			"-Dmicrobot.test.output=$MB_RL/test-results")
+		[[ -n "${MB_TEST_WORLD:-}" ]] && cmd+=("-Dmicrobot.test.world=$MB_TEST_WORLD")
+	fi
+	# Attach the HWID agent like the launcher does. Its per-account stores stay in the real
+	# ~/.runelite so an account keeps one spoofed identity across the dev and everyday clients
+	# (a worker points MB_HWID_STORE_DIR at its own secrets volume instead).
+	[[ -f "$MB_HWID_AGENT" ]] || die "HWID agent jar not found ('$MB_HWID_AGENT'); run inside nix develop"
+	mkdir -p "$MB_HWID_STORE_DIR"
+	cmd+=("-javaagent:$MB_HWID_AGENT"
+		"-Dmicrobot.hwid.store=$MB_HWID_STORE_DIR/spoofed-device-ids.properties"
+		"-Dmicrobot.hwid.randomdat.store=$MB_HWID_STORE_DIR/spoofed-random-dats.properties")
+	cmd+=("${extra[@]}" -jar "$MB_JAR" --disable-telemetry)
+
+	local display="${DISPLAY:-}"
+	if [[ -n "$headless" ]]; then
+		# Xvfb has no GPU: GPU and 117 HD would fall back to software GL and eat the CPU.
+		local profile
+		for profile in "$MB_RL"/microbot-profiles/*.properties; do
+			[[ -f "$profile" ]] || continue
+			sed -i -E 's/^runelite\.(gpuplugin|hdplugin)=true$/runelite.\1=false/' "$profile"
+			# Open at the display's size: resized after it starts, the game kept drawing at the
+			# old size in the top-left and left stale pixels around it.
+			sed -i -E "s/^runelite\.clientBounds=.*/runelite.clientBounds=0:0:$(headless_game_size):g/" "$profile"
+		done
+		start_display
+		display="$MB_HEADLESS_DISPLAY"
+		# Its own name in PipeWire, so WirePlumber remembers the mute for this client only (the
+		# everyday client is "PipeWire ALSA [java]" too).
+		export PIPEWIRE_ALSA="{ application.name = \"$MB_HEADLESS_AUDIO_NAME\" }"
+	fi
+
+	echo "starting Microbot $MB_VERSION (home $MB_DEV_HOME)"
+	# Own session: the game must outlive the terminal or agent session that started it.
+	# setsid execs in place here (a background job is not a group leader), so $! is java.
+	DISPLAY="$display" \
+	LD_LIBRARY_PATH="${MICROBOT_LD_LIBRARY_PATH:-}${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
+		setsid nohup "${cmd[@]}" >"$MB_STDOUT" 2>&1 </dev/null &
+	echo $! >"$MB_PIDFILE"
+	if [[ -z "$test_name" ]]; then
+		wait_ready "${MB_START_TIMEOUT:-180}"
+		if [[ -n "$headless" ]]; then
+			fit_headless_window
+			mute_headless
+		fi
+	else
+		echo "test mode: pid $(cat "$MB_PIDFILE"); results in $MB_RL/test-results"
+	fi
+}
+
+# Game canvas size for the headless display, as clientBounds wants it (w:h): the display less
+# the side panel (283 px measured at 1280 wide).
+headless_game_size() {
+	local w h
+	IFS=x read -r w h _ <<<"${MB_HEADLESS_SIZE:-1280x900x24}"
+	echo "$((w - 283)):$h"
+}
+
+# The client reopens at the size it last had, often a desktop's (2536x1382), and VNC then shows
+# only the top-left of it: fit it to the display.
+fit_headless_window() {
+	command -v xdotool >/dev/null || { echo "window: no xdotool, not resized"; return 0; }
+	local size="${MB_HEADLESS_SIZE:-1280x900x24}" w h id i
+	IFS=x read -r w h _ <<<"$size"
+	for ((i = 0; i < 20; i++)); do
+		id="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool search --name '^RuneLite( - .*)?$' 2>/dev/null | head -1)"
+		[[ -n "$id" ]] && break
+		sleep 1
+	done
+	[[ -n "$id" ]] || { echo "window: not found, not resized"; return 0; }
+	# The client applies its saved size a few seconds after the Agent Server is up: keep fitting
+	# until it holds. Only while logged out: a resize during a mouse movement leaves the target
+	# off screen and the movement never ends (it froze Tick Fisher, 2026-11-09).
+	local held=0 geometry
+	for ((i = 0; i < 30 && held < 5; i++)); do
+		geometry="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool getwindowgeometry "$id" 2>/dev/null | awk '/Geometry/ {print $2}')"
+		if [[ "$geometry" == "${w}x${h}" ]]; then
+			held=$((held + 1))
+		else
+			held=0
+			DISPLAY="$MB_HEADLESS_DISPLAY" xdotool windowmove "$id" 0 0 windowsize "$id" "$w" "$h"
+		fi
+		sleep 1
+	done
+	echo "window fitted to ${w}x${h}"
+}
+
+# Nobody listens to a headless client. Mutes its stream once it plays (the login music);
+# WirePlumber then keeps it muted on later starts.
+mute_headless() {
+	command -v pw-dump >/dev/null && command -v wpctl >/dev/null || { echo "audio: no PipeWire tools, not muted"; return 0; }
+	local id i
+	for ((i = 0; i < 20; i++)); do
+		id="$(pw-dump 2>/dev/null | jq -r --arg n "$MB_HEADLESS_AUDIO_NAME" \
+			'.[] | select(.info.props["application.name"] == $n and .info.props["media.class"] == "Stream/Output/Audio") | .id' | head -1)"
+		if [[ -n "$id" ]]; then
+			wpctl set-mute "$id" 1 && echo "audio muted"
+			return 0
+		fi
+		sleep 1
+	done
+	echo "audio: no stream yet, not muted"
+}
+
+stop() {
+	local pid i
+	if pid="$(mb_client_pid)"; then
+		kill "$pid"
+		for ((i = 0; i < 30; i++)); do
+			kill -0 "$pid" 2>/dev/null || break
+			sleep 1
+		done
+		kill -0 "$pid" 2>/dev/null && kill -9 "$pid"
+		echo "stopped"
+	else
+		echo "not running"
+	fi
+	rm -f "$MB_PIDFILE"
+	stop_display
+}
+
+status() {
+	local pid
+	if pid="$(mb_client_pid)"; then
+		echo "running (pid $pid)"
+		pid_alive "$MB_XVFB_PIDFILE" && echo "headless on $MB_HEADLESS_DISPLAY, VNC 127.0.0.1:$MB_VNC_PORT"
+		if [[ -S "$MB_SOCKET" ]]; then
+			mb_api GET /state | jq -c '{loggedIn, gameState, world, player: .player.name}' 2>/dev/null || echo "agent server not answering"
+		else
+			echo "agent socket not up yet"
+		fi
+	else
+		echo "not running"
+		return 1
+	fi
+}
+
+case "${1:-}" in
+	start) shift; start "$@" ;;
+	stop) stop ;;
+	restart) shift; stop; start "$@" ;;
+	status) status ;;
+	wait) wait_ready "${2:-180}" ;;
+	logs) tail -n "${2:-80}" "$MB_CLIENT_LOG" 2>/dev/null || tail -n "${2:-80}" "$MB_STDOUT" ;;
+	-h|--help|"") usage ;;
+	*) usage 1 ;;
+esac

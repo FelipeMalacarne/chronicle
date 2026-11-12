@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Hot-deploy a plugin's sources into the running dev client (no restart).
+#
+#   mb-deploy <plugin>            compile + load, or reload if already deployed
+#   mb-deploy --undeploy <plugin> stop and unload it
+#   mb-deploy --list              list deployments
+#
+# <plugin> is the package dir or class name: helloagent, HelloAgent, HelloAgentPlugin.
+set -euo pipefail
+source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
+
+case "${1:-}" in
+	--list) mb_api GET /scripts/deploy | jq .; exit 0 ;;
+	--undeploy)
+		{ read -r pkg _ <<<"$(mb_plugin_dir "${2:?plugin}")" && [[ -n "$pkg" ]]; } || die "unknown plugin: $2"
+		mb_api POST /scripts/deploy/undeploy "{\"name\":\"$pkg\"}" | jq .
+		exit 0 ;;
+	-h|--help|"") sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
+esac
+
+{ read -r pkg cls <<<"$(mb_plugin_dir "$1")" && [[ -n "$cls" ]]; } || die "unknown plugin: $1"
+
+jar="$MB_PLUGIN_DIR/$cls.jar"
+if [[ -f "$jar" ]]; then
+	# Sideloaded jars load only at client start; one newer than the pidfile is not loaded yet.
+	if [[ -f "$MB_PIDFILE" && "$jar" -ot "$MB_PIDFILE" ]]; then
+		die "$cls.jar was sideloaded when the dev client started; the class would clash. Remove it and restart: rm $jar && mb-client restart"
+	fi
+	echo "warning: $jar will load on the next client start and clash with this deploy; remove it before restarting" >&2
+fi
+
+# The in-client compiler has no Lombok, so ship delomboked sources.
+mb_gradle delombok
+src="$MB_DELOMBOK_SRC/$pkg"
+[[ -d "$src" ]] || die "no delomboked sources at $src"
+
+deployed_from="$(mb_api GET /scripts/deploy | jq -r --arg n "$pkg" '.deployments[]? | select(.name == $n) | .sourcePath')"
+if [[ -n "$deployed_from" && "$deployed_from" != "$src" ]]; then
+	# Reload recompiles from the original path; after the repo moves, deploy afresh.
+	mb_api POST /scripts/deploy/undeploy "{\"name\":\"$pkg\"}" >/dev/null
+	deployed_from=""
+fi
+if [[ -n "$deployed_from" ]]; then
+	out="$(mb_api POST /scripts/deploy/reload "{\"name\":\"$pkg\"}")"
+else
+	out="$(mb_api POST /scripts/deploy "{\"name\":\"$pkg\",\"sourcePath\":\"$src\"}")"
+fi
+echo "$out" | jq . 2>/dev/null || echo "$out"
+echo "$out" | jq -e '.error == null' >/dev/null 2>&1

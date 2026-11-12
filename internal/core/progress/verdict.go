@@ -3,7 +3,7 @@ package progress
 import (
 	"time"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/rules"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
 
 // FactObservation is the provenance of one fact: the player_state row (or the

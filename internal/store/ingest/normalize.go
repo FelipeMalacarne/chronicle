@@ -13,9 +13,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
-	"github.com/FelipeMalacarne/ironman-planner/internal/store/state"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/store/state"
 )
 
 // facts accumulates the snapshot_facts rows of one push; they are copied in

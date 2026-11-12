@@ -15,8 +15,8 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
-	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
-	"github.com/FelipeMalacarne/ironman-planner/internal/events"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
 )
 
 // recorder keeps the published events.

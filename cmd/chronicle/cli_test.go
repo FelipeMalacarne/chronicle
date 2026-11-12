@@ -10,8 +10,8 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/client"
-	"github.com/FelipeMalacarne/ironman-planner/internal/core/panel"
+	"github.com/FelipeMalacarne/chronicle/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 )
 
 // fakePlanner is a dev-mode API with one account and a two-step window; it

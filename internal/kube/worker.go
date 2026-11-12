@@ -20,9 +20,12 @@ const (
 	WorkerAudience       = "chronicle"
 	CacheClaim           = "microbot-game-cache"
 
-	workerHome      = "/home/worker"
-	workerDevHome   = workerHome + "/microbot-dev"
-	workerCacheDir  = workerDevHome + "/.runelite/jagexcache"
+	workerHome    = "/home/worker"
+	workerDevHome = workerHome + "/microbot-dev"
+	// The game cache volume lives outside the home: mounted inside it, the
+	// runtime would create the home's subdirectories as root (the agent links
+	// .runelite/jagexcache to it instead).
+	workerCacheDir  = "/var/cache/chronicle/jagexcache"
 	workerSecrets   = "/run/chronicle"
 	workerTokenDir  = "/var/run/secrets/chronicle"
 	workerTokenFile = workerTokenDir + "/token"
@@ -107,6 +110,7 @@ func WorkerDeployment(namespace string, s WorkerSpec) Deployment {
 							{Name: "MB_DEV_HOME", Value: workerDevHome},
 							{Name: "MB_XMX", Value: "1024m"},
 							{Name: "MB_HWID_STORE_DIR", Value: workerSecrets},
+							{Name: "WORKER_GAME_CACHE", Value: workerCacheDir},
 						},
 						Resources: ResourceRequirements{
 							Requests: map[string]string{"cpu": "500m", "memory": "1Gi"},

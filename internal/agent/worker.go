@@ -30,8 +30,14 @@ type WorkerConfig struct {
 	// spoofed-device-ids.properties and spoofed-random-dats.properties.
 	HWIDStoreDir string
 	// LockFile is the boot lock of the shared game cache (docs/11 section
-	// 7.4); empty is <Home>/.runelite/jagexcache/.chronicle-boot.lock.
+	// 7.4); empty is <GameCache or Home/.runelite/jagexcache>/.chronicle-boot.lock.
 	LockFile string
+	// GameCache is WORKER_GAME_CACHE: the shared game cache volume, mounted
+	// outside the dev home. The container runtime creates the parents of a
+	// mount point as root, so a volume mounted at <Home>/.runelite/jagexcache
+	// left <Home> and .runelite unwritable for the client's uid; instead the
+	// agent makes .runelite itself and links .runelite/jagexcache to this.
+	GameCache string
 	// ReadyWait bounds the wait for the Agent Server after mb-client start
 	// (default 2 min).
 	ReadyWait time.Duration
@@ -163,6 +169,9 @@ func (e *Executor) workerStart(ctx context.Context) (string, error) {
 	if e.status(ctx).Running {
 		return "the client is already running", nil
 	}
+	if err := e.prepareWorkerHome(); err != nil {
+		return "", err
+	}
 	unlock, err := e.bootLock(ctx)
 	if err != nil {
 		return "", err
@@ -224,11 +233,41 @@ func (e *Executor) applyWorkerSettings(ctx context.Context) {
 	}
 }
 
+// prepareWorkerHome makes the dev home's .runelite and, with a game cache
+// volume, links .runelite/jagexcache to it (WorkerConfig.GameCache).
+func (e *Executor) prepareWorkerHome() error {
+	rl := filepath.Join(e.Home, ".runelite")
+	if err := os.MkdirAll(rl, 0o755); err != nil { //nolint:gosec // the client's own home, no secrets
+		return fmt.Errorf("worker home: %w (is %s writable by this user?)", err, e.Home)
+	}
+	if e.Worker.GameCache == "" {
+		return nil
+	}
+	link := filepath.Join(rl, "jagexcache")
+	if target, err := os.Readlink(link); err == nil {
+		if target == e.Worker.GameCache {
+			return nil
+		}
+		return fmt.Errorf("worker home: %s points to %s, not the game cache %s", link, target, e.Worker.GameCache)
+	}
+	if _, err := os.Lstat(link); err == nil {
+		return nil // a real directory: the cache lives in the home (no volume)
+	}
+	if err := os.Symlink(e.Worker.GameCache, link); err != nil {
+		return fmt.Errorf("worker home: link the game cache: %w", err)
+	}
+	return nil
+}
+
 // bootLock holds flock on the game cache's boot lock (docs/11 section 7.4)
 // until the returned func runs.
 func (e *Executor) bootLock(ctx context.Context) (func(), error) {
 	file := e.Worker.LockFile
-	if file == "" {
+	switch {
+	case file != "":
+	case e.Worker.GameCache != "":
+		file = filepath.Join(e.Worker.GameCache, ".chronicle-boot.lock")
+	default:
 		file = filepath.Join(e.Home, ".runelite", "jagexcache", ".chronicle-boot.lock")
 	}
 	if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil { //nolint:gosec // the shared game cache, not a secret

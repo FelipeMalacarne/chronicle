@@ -103,6 +103,19 @@ test('running worker follows its pod and agent', () => {
 		now
 	);
 	assert.equal(failed.detail, 'bootstrap: session');
+	const linkedButFailed = workerLine(
+		row({
+			desired: 'running',
+			pod: { deployment: 'w', state: 'running', seen: '' },
+			agent: { connected: true, kind: 'managed' },
+			last_error: 'bootstrap: worker_bootstrap: mb-client start --headless: exit status 1'
+		}),
+		on,
+		[],
+		now
+	);
+	assert.equal(linkedButFailed.state, 'agent ligado · o cliente não subiu');
+	assert.equal(linkedButFailed.tone, 'warn');
 });
 
 test('an outdated worker offers the restart first', () => {

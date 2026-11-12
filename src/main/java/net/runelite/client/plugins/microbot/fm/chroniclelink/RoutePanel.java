@@ -70,6 +70,26 @@ final class RoutePanel extends PluginPanel
 		default void itemsExpanded(boolean expanded)
 		{
 		}
+
+		/** Starts the planner login (Credential Login). */
+		default void login()
+		{
+		}
+
+		/** Cancels a login waiting for the browser. */
+		default void cancelLogin()
+		{
+		}
+
+		/** Forgets the login. */
+		default void logout()
+		{
+		}
+
+		/** Opens the login page in the browser. */
+		default void open(String url)
+		{
+		}
 	}
 
 	/** Rows of the "Próximos" list. */
@@ -103,6 +123,8 @@ final class RoutePanel extends PluginPanel
 	private boolean itemsOpen;
 	private boolean sectionOpen;
 	private PanelState state = new PanelState(PanelState.Connection.NOT_CONFIGURED, null, null, null, null);
+	/** The login of Credential Login, or null in the other modes. */
+	private LoginSession.View login;
 	private boolean busy;
 	private int renderedWidth;
 
@@ -163,6 +185,14 @@ final class RoutePanel extends PluginPanel
 		render();
 	}
 
+	/** New login state (Swing thread); null outside Credential Login. */
+	void updateLogin(LoginSession.View next)
+	{
+		login = next;
+		busy = false;
+		render();
+	}
+
 	/** Refreshes the "há N s" texts (Swing thread). */
 	void tickClock()
 	{
@@ -176,7 +206,12 @@ final class RoutePanel extends PluginPanel
 		int width = contentWidth();
 		RouteWindow w = state.window;
 		content.add(header(w, width));
-		if (w == null)
+		if (w == null && needsLogin())
+		{
+			content.add(gap(8));
+			content.add(loginCard(width));
+		}
+		else if (w == null)
 		{
 			content.add(gap(8));
 			content.add(noteCard(emptyText(), width));
@@ -238,10 +273,11 @@ final class RoutePanel extends PluginPanel
 	{
 		JPanel p = column(BG);
 		String name = w == null ? "Chronicle" : PanelText.routeName(w.guide, w.title);
-		JLabel status = label(PanelText.connectionShort(state, Instant.now()), SMALL, MUTED);
+		boolean signIn = needsLogin();
+		JLabel status = label(signIn ? "sem login" : PanelText.connectionShort(state, Instant.now()), SMALL, MUTED);
 		status.setIcon(PanelIcons.dot(connectionColor()));
 		status.setIconTextGap(4);
-		status.setToolTipText(PanelText.connection(state, Instant.now()));
+		status.setToolTipText(signIn ? "Entre no planner pelo botão abaixo" : PanelText.connection(state, Instant.now()));
 		JLabel title = label(PanelText.ellipsize(name, width - status.getPreferredSize().width - 8, measure(BOLD)), BOLD, TITLE);
 		if (w != null && w.title != null)
 		{
@@ -707,6 +743,21 @@ final class RoutePanel extends PluginPanel
 		row.setOpaque(false);
 		row.setAlignmentX(LEFT_ALIGNMENT);
 		row.add(refresh);
+		if (login != null && login.kind == LoginSession.Kind.SIGNED_IN)
+		{
+			FlatButton out = new FlatButton("Sair", false, 24);
+			out.setFont(SMALL);
+			out.setToolTipText("Esquece o login deste plugin no planner");
+			out.setEnabled(!busy);
+			out.addActionListener(e ->
+			{
+				busy = true;
+				render();
+				actions.logout();
+			});
+			row.add(Box.createHorizontalStrut(4));
+			row.add(out);
+		}
 		p.add(row);
 		if (state.message != null && state.window != null)
 		{
@@ -714,6 +765,69 @@ final class RoutePanel extends PluginPanel
 			p.add(text(PanelText.connection(state, Instant.now()), SMALL, ColorScheme.PROGRESS_ERROR_COLOR, width));
 		}
 		return p;
+	}
+
+	/** Whether the empty panel should offer the login instead of a note. */
+	private boolean needsLogin()
+	{
+		return login != null && login.kind != LoginSession.Kind.SIGNED_IN && state.connection == PanelState.Connection.NOT_CONFIGURED;
+	}
+
+	/** Entrar, or the code to confirm in the browser while the login waits. */
+	private JComponent loginCard(int width)
+	{
+		JPanel p = column(CARD);
+		p.setBorder(new EmptyBorder(PAD, PAD, PAD, PAD));
+		int inner = width - 2 * PAD;
+		JPanel row = new JPanel(new GridLayout(1, 2, 4, 0));
+		row.setOpaque(false);
+		row.setAlignmentX(LEFT_ALIGNMENT);
+		if (login.kind == LoginSession.Kind.WAITING)
+		{
+			p.add(text("Abra a página e confirme este código:", BODY, TEXT, inner));
+			p.add(gap(6));
+			JLabel code = label(login.userCode, BOLD, TITLE);
+			code.setToolTipText("Código do login no planner");
+			p.add(code);
+			p.add(gap(8));
+			row.add(loginButton("Abrir página", true, "Abre a página de login no navegador", () -> actions.open(login.url), false));
+			row.add(loginButton("Cancelar", false, "Cancela este login", actions::cancelLogin, true));
+		}
+		else
+		{
+			p.add(text("Entre no planner para o plugin enviar o progresso e mostrar a rota.", BODY, TEXT, inner));
+			if (login.message != null)
+			{
+				p.add(gap(4));
+				p.add(text("Falhou: " + login.message + ".", SMALL, ColorScheme.PROGRESS_ERROR_COLOR, inner));
+			}
+			p.add(gap(8));
+			row = new JPanel(new GridLayout(1, 1, 4, 0));
+			row.setOpaque(false);
+			row.setAlignmentX(LEFT_ALIGNMENT);
+			row.add(loginButton("Entrar", true, "Login pelo navegador, com a conta do planner", actions::login, true));
+		}
+		fix(row, inner, BUTTON_HEIGHT);
+		p.add(row);
+		return p;
+	}
+
+	/** A login button; {@code waits}: disabled until the next login state arrives. */
+	private JButton loginButton(String text, boolean primary, String tooltip, Runnable run, boolean waits)
+	{
+		FlatButton b = new FlatButton(text, primary, BUTTON_HEIGHT);
+		b.setToolTipText(tooltip);
+		b.setEnabled(!busy);
+		b.addActionListener(e ->
+		{
+			if (waits)
+			{
+				busy = true;
+				render();
+			}
+			run.run();
+		});
+		return b;
 	}
 
 	private JComponent noteCard(String text, int width)

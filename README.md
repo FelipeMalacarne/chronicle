@@ -25,7 +25,7 @@ before each launch.
 
 Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
 
-## Chronicle Link (`fm/chroniclelink`, 1.8.0)
+## Chronicle Link (`fm/chroniclelink`, 1.9.0)
 
 Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
 1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
@@ -92,6 +92,25 @@ acknowledged push that moved the cursor or changed steps, after each mark, on lo
    matches none.
 4. Send bank / inventory / equipment: switch on what the planner may read.
 
-Tokenless requests only work over loopback in dev mode. For the compose stack, another host or
-`AUTH_MODE=oidc`, choose Credential `ipl_ token` and paste a token; panel marks need its
-`marks:write` scope. The token, the username and the RSN are never logged.
+Tokenless requests only work over loopback in dev mode. For the compose stack or another host in
+dev mode, choose Credential `ipl_ token` and paste a token; panel marks need its `marks:write`
+scope.
+
+**Setup against a planner with Zitadel login (`AUTH_MODE=oidc`, 1.9.0).**
+
+1. Server URL: the planner's address (e.g. `https://chronicle.saradomin.ftm.dev.br`).
+2. Credential: `Login (Chronicle panel)`.
+3. Open the Chronicle side panel and press **Entrar**. The plugin reads issuer and client id
+   from `GET /api/auth/client` and starts the Device Authorization Grant (RFC 8628) with the
+   planner's public native client; **Abrir página** opens the issuer's page with the code filled
+   in. After you confirm, the panel shows the route.
+4. Conta: leave empty unless your user has several accounts.
+
+The access token (a JWT) goes as `Authorization: Bearer` with the installation id; the planner
+acts for the signed-in user, on that user's accounts only, with the project roles as scopes:
+`ingest` (state), `items:bank`, `items:inventory`, `items:equipment` and `marks:write`. The
+refresh token stays in the RuneLite config (hidden, secret `loginRefreshToken`) and renews the
+access token two minutes before it expires; **Sair** in the panel footer forgets it. A refused
+refresh token signs the panel out; an unreachable issuer keeps the login and retries every
+30 s. The planner needs one web login of the same user first. Tokens, the username and the RSN
+are never logged.

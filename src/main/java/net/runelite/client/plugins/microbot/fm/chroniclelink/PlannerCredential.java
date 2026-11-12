@@ -13,11 +13,10 @@ import okhttp3.Request;
  * loopback and keys the protocol state by the installation id.</li>
  * <li>{@link TokenCredential}: a per-account {@code ipl_} token, accepted in every mode until the
  * device flow replaces it.</li>
- * <li>Seam for {@code AUTH_MODE=oidc} (planner item 15, not implemented): a device-flow credential
- * that discovers issuer and client id at {@code GET /api/auth/plugin}, shows the user code, keeps
- * the refresh token in the RuneLite config, renews the access token off the client thread and
- * applies {@code Authorization: Bearer <jwt>}. It only needs to implement this interface and be
- * returned by {@link #of}.</li>
+ * <li>{@link LoginCredential}: {@code AUTH_MODE=oidc} (planner item 15). The access token of the
+ * device-flow login of the side panel ({@link LoginSession}, which discovers issuer and client id
+ * at {@code GET /api/auth/client}, keeps the refresh token in the RuneLite config and renews the
+ * access token off the client thread), plus the installation id.</li>
  * </ul>
  */
 interface PlannerCredential
@@ -34,7 +33,7 @@ interface PlannerCredential
 	 */
 	String fingerprint();
 
-	/** The credential the config selects. */
+	/** The credential the config selects, for the modes without a login. */
 	static PlannerCredential of(ChronicleLinkConfig.CredentialMode mode, String token, String installationId, String account)
 	{
 		if (mode == ChronicleLinkConfig.CredentialMode.TOKEN)

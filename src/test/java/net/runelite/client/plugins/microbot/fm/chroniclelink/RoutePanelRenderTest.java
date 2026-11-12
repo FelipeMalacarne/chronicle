@@ -41,6 +41,13 @@ class RoutePanelRenderTest
 		write(out, "-expandido", stale, true, panel -> click(panel, "<html>1.1.250 ", "<html>1.1.247 ", "Clique para ler"));
 		PanelState real = new PanelState(PanelState.Connection.ONLINE, PanelScreenshotFixture.real(), now.minusSeconds(4), null, null);
 		write(out, "-real", real, false, panel -> click(panel, "<html>1.1.245 "));
+		PanelState signedOut = new PanelState(PanelState.Connection.NOT_CONFIGURED, null, null, null, null);
+		write(out, "-login", signedOut, false, panel ->
+			panel.updateLogin(new LoginSession.View(LoginSession.Kind.SIGNED_OUT, null, null, "o código expirou; entre de novo")));
+		write(out, "-login-codigo", signedOut, false, panel ->
+			panel.updateLogin(new LoginSession.View(LoginSession.Kind.WAITING, "ABCD-EFGH", "https://auth.example/device", null)));
+		write(out, "-login-sair", real, false, panel ->
+			panel.updateLogin(new LoginSession.View(LoginSession.Kind.SIGNED_IN, null, null, null)));
 	}
 
 	private static void write(String out, String suffix, PanelState state, boolean itemsOpen, Consumer<RoutePanel> after) throws Exception

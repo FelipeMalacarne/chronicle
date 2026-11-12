@@ -11,6 +11,7 @@ public interface ChronicleLinkConfig extends Config
 	// token and account survive the rename.
 	String GROUP = "fm-ironmanplanner";
 	String ITEMS_EXPANDED = "itemsExpanded";
+	String LOGIN_REFRESH_TOKEN = "loginRefreshToken";
 
 	/** How requests authenticate (ironman-planner docs/04-arquitetura.md 2.5). */
 	enum CredentialMode
@@ -18,7 +19,9 @@ public interface ChronicleLinkConfig extends Config
 		/** AUTH_MODE=dev: only the URL; the planner accepts loopback requests without a token. */
 		NONE("None (dev, URL only)"),
 		/** A per-account ipl_ token. */
-		TOKEN("ipl_ token");
+		TOKEN("ipl_ token"),
+		/** AUTH_MODE=oidc: sign in from the side panel (device flow of the planner's Zitadel). */
+		LOGIN("Login (Chronicle panel)");
 
 		private final String label;
 
@@ -48,7 +51,7 @@ public interface ChronicleLinkConfig extends Config
 	@ConfigItem(
 		keyName = "credentialMode",
 		name = "Credential",
-		description = "None: a planner in dev mode on this machine accepts the plugin with only the URL. Token: send the ipl_ token below",
+		description = "None: a planner in dev mode on this machine accepts the plugin with only the URL. Token: send the ipl_ token below. Login: sign in from the Chronicle side panel (a planner with Zitadel login)",
 		position = 1
 	)
 	default CredentialMode credentialMode()
@@ -71,7 +74,7 @@ public interface ChronicleLinkConfig extends Config
 	@ConfigItem(
 		keyName = "account",
 		name = "Conta",
-		description = "Only without a token and with several planner accounts: the account id (acc_...). Empty: the logged-in character's account, or the only one",
+		description = "Only without a token and with several planner accounts: the account id (acc_...). Empty: the logged-in character's account, or the only one (of the signed-in user, with Login)",
 		position = 3
 	)
 	default String account()
@@ -86,6 +89,18 @@ public interface ChronicleLinkConfig extends Config
 		hidden = true
 	)
 	default String installationId()
+	{
+		return "";
+	}
+
+	@ConfigItem(
+		keyName = ChronicleLinkConfig.LOGIN_REFRESH_TOKEN,
+		name = "Login refresh token",
+		description = "Kept by the panel's login (Credential Login); cleared by Sair",
+		hidden = true,
+		secret = true
+	)
+	default String loginRefreshToken()
 	{
 		return "";
 	}

@@ -33,6 +33,7 @@ import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.ui.ClientToolbar;
 import net.runelite.client.ui.NavigationButton;
 import net.runelite.client.ui.overlay.OverlayManager;
+import net.runelite.client.util.LinkBrowser;
 import okhttp3.HttpUrl;
 import okhttp3.OkHttpClient;
 
@@ -69,7 +70,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class ChronicleLinkPlugin extends Plugin
 {
-	static final String VERSION = "1.8.0";
+	static final String VERSION = "1.9.0";
 	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */
@@ -135,6 +136,9 @@ public class ChronicleLinkPlugin extends Plugin
 	/** This installation's id, generated once into the config. */
 	private volatile String installationId;
 
+	/** The login of Credential Login (planner item 15); used from the sync and panel threads. */
+	private volatile LoginSession login;
+
 	// route panel: controller only on panelExecutor, panel only on the EDT
 	private ScheduledExecutorService panelExecutor;
 	private RoutePanelController panelController;
@@ -164,6 +168,8 @@ public class ChronicleLinkPlugin extends Plugin
 		installationId = InstallationId.ensure(config.installationId(),
 			id -> configManager.setConfiguration(ChronicleLinkConfig.GROUP, InstallationId.CONFIG_KEY, id),
 			UUID::randomUUID);
+		login = new LoginSession(new DeviceLogin(okHttpClient, gson), config::loginRefreshToken,
+			token -> configManager.setConfiguration(ChronicleLinkConfig.GROUP, ChronicleLinkConfig.LOGIN_REFRESH_TOKEN, token));
 		collector = new StateCollector(client);
 		status = notConfigured();
 		trigger.clear();
@@ -231,6 +237,43 @@ public class ChronicleLinkPlugin extends Plugin
 			}
 
 			@Override
+			public void login()
+			{
+				onPanel(() ->
+				{
+					login.start(PlannerHttpClient.parseServer(config.serverUrl()), Instant.now());
+					publishLogin();
+				});
+			}
+
+			@Override
+			public void cancelLogin()
+			{
+				onPanel(() ->
+				{
+					login.cancel();
+					publishLogin();
+				});
+			}
+
+			@Override
+			public void logout()
+			{
+				onPanel(() ->
+				{
+					login.signOut();
+					publishLogin();
+					panelController.refresh(Instant.now());
+				});
+			}
+
+			@Override
+			public void open(String url)
+			{
+				LinkBrowser.browse(url);
+			}
+
+			@Override
 			public void visible(boolean visible)
 			{
 				panelVisible = visible;
@@ -260,6 +303,12 @@ public class ChronicleLinkPlugin extends Plugin
 		panelExecutor.scheduleWithFixedDelay(() ->
 		{
 			Instant now = Instant.now();
+			if (login.poll(now))
+			{
+				// confirmed, refused or expired in the browser
+				publishLogin();
+				panelController.refresh(now);
+			}
 			if (panelController.pollDue(now, panelVisible))
 			{
 				panelController.refresh(now);
@@ -277,7 +326,24 @@ public class ChronicleLinkPlugin extends Plugin
 			}
 		}, 5, 5, TimeUnit.SECONDS);
 		// a first window for the panel, even before login
-		onPanel(() -> panelController.refresh(Instant.now()));
+		onPanel(() ->
+		{
+			publishLogin();
+			panelController.refresh(Instant.now());
+		});
+	}
+
+	/** Hands the login state to the panel; null outside Credential Login. Panel thread. */
+	private void publishLogin()
+	{
+		LoginSession.View view = config.credentialMode() == ChronicleLinkConfig.CredentialMode.LOGIN ? login.view() : null;
+		RoutePanel.onSwing(() ->
+		{
+			if (routePanel != null)
+			{
+				routePanel.updateLogin(view);
+			}
+		});
 	}
 
 	/** Runs on the panel's own thread; never on the client or Swing thread. */
@@ -319,7 +385,23 @@ public class ChronicleLinkPlugin extends Plugin
 
 	private PlannerCredential credential()
 	{
+		if (config.credentialMode() == ChronicleLinkConfig.CredentialMode.LOGIN)
+		{
+			LoginSession session = login;
+			String access = session == null ? null : session.accessToken(PlannerHttpClient.parseServer(config.serverUrl()), Instant.now());
+			return new LoginCredential(access, installationId, config.account());
+		}
 		return PlannerCredential.of(config.credentialMode(), config.ingestToken(), installationId, config.account());
+	}
+
+	/** A 401 from the planner: a login renews its access token on the next request. */
+	private void onStatus(int status)
+	{
+		LoginSession session = login;
+		if (status == 401 && session != null)
+		{
+			session.dropAccess();
+		}
 	}
 
 	@Override
@@ -352,6 +434,7 @@ public class ChronicleLinkPlugin extends Plugin
 		});
 		navigationButton = null;
 		panelController = null;
+		login = null;
 		panelVisible = false;
 		overlayManager.remove(overlay);
 		engine = null;
@@ -488,9 +571,23 @@ public class ChronicleLinkPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		if (ChronicleLinkConfig.GROUP.equals(event.getGroup()))
+		if (!ChronicleLinkConfig.GROUP.equals(event.getGroup()))
 		{
-			fullRequested = true;
+			return;
+		}
+		if (ChronicleLinkConfig.LOGIN_REFRESH_TOKEN.equals(event.getKey()))
+		{
+			// a renewal rotates it; nothing to resend
+			return;
+		}
+		fullRequested = true;
+		if ("credentialMode".equals(event.getKey()) || "serverUrl".equals(event.getKey()))
+		{
+			onPanel(() ->
+			{
+				publishLogin();
+				panelController.refresh(Instant.now());
+			});
 		}
 	}
 
@@ -570,6 +667,7 @@ public class ChronicleLinkPlugin extends Plugin
 		else
 		{
 			log.debug("Chronicle Link manifest failed: HTTP {}", result.status);
+			onStatus(result.status);
 			engine.onManifestError(result.status, Instant.now());
 		}
 	}
@@ -604,6 +702,7 @@ public class ChronicleLinkPlugin extends Plugin
 			if (result.status != 200)
 			{
 				log.debug("Chronicle Link push #{} answered HTTP {}", push.clientSeq, result.status);
+				onStatus(result.status);
 			}
 			engine.onPushResult(result.status, result.body, Instant.now());
 			IngestContract.Response body = result.body;

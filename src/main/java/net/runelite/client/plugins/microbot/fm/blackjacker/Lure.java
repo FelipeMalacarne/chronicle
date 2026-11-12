@@ -1,7 +1,9 @@
 package net.runelite.client.plugins.microbot.fm.blackjacker;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.WorldPoint;
@@ -29,9 +31,14 @@ final class Lure implements Step
 	private static final long CATCH_UP_MS = 3000;
 	private static final int MAX_STALLS = 3;
 	private static final int MAX_FAILURES = 5;
+	// A target lured this often that never got in stops following short of the room each time
+	// (likely the edge of its roaming range): lure another.
+	private static final int MAX_LURES_PER_TARGET = 3;
 
 	/** NPC indexes that stalled while being led; not followed or lured again this run. */
 	private final Set<Integer> dropped = new HashSet<>();
+	/** Lures sent to each NPC index this run. */
+	private final Map<Integer, Integer> lured = new HashMap<>();
 	private long waitSince;
 	private int stalls;
 	private int failures;
@@ -106,9 +113,15 @@ final class Lure implements Step
 			Rs2Walker.walkTo(candidate.getWorldLocation(), 3);
 			return true;
 		}
+		if (lured.getOrDefault(candidate.getIndex(), 0) >= MAX_LURES_PER_TARGET)
+		{
+			drop(candidate, candidate.getWorldLocation());
+			return true;
+		}
 		if (candidate.click("Lure") && Global.sleepUntil(Rs2Dialogue::isInDialogue, 4000))
 		{
 			s.lures++;
+			lured.merge(candidate.getIndex(), 1, Integer::sum);
 			return true;
 		}
 		failures++;
@@ -237,10 +250,10 @@ final class Lure implements Step
 		}
 	}
 
-	private void drop(Rs2NpcModel follower, WorldPoint at)
+	private void drop(Rs2NpcModel npc, WorldPoint at)
 	{
-		log.info("Blackjacker: {} stuck at {} while leading, luring another", follower.getName(), at);
-		dropped.add(follower.getIndex());
+		log.info("Blackjacker: {} stuck at {} while leading, luring another", npc.getName(), at);
+		dropped.add(npc.getIndex());
 		failures++;
 		stalls = 0;
 		waitSince = 0;

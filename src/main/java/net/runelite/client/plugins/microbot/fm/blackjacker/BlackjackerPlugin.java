@@ -33,7 +33,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class BlackjackerPlugin extends Plugin
 {
-	static final String VERSION = "1.14.1";
+	static final String VERSION = "1.14.2";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 

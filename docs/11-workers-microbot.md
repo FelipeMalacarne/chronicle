@@ -1,6 +1,8 @@
 # 11 — Workers do Microbot: contas, perfis e clientes headless no saradomin
 
-**Estado: proposta consolidada (2026-11-12, segunda versão). Nada deste doc está implementado.**
+**Estado: rodada 1 implementada (2026-11-12) e falta ligar no saradomin; o que foi feito e conferido
+está na seção 14. Perfis (F5), rotinas no servidor (F6), métricas (F7) e GPU continuam como
+proposta.**
 Substitui a primeira versão do mesmo dia. A primeira versão definiu o desenho do cluster (imagens,
 RBAC, iGPU e medições), e isso continua valendo. A segunda versão parte de três respostas do dono:
 
@@ -494,3 +496,132 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
   `last_error`. Só os gerenciados; os anexados vivem no Hub.
 - `microbot_audit` ganha `account_id` e `agent_id` (texto, vazio nas linhas antigas); o
   `storemicrobot.Entry` já tem os campos.
+
+## 14. Rodada 1: o que foi feito (2026-11-12)
+
+### 14.1 Entregue
+
+**chronicle:**
+
+- `internal/vault`: AES-256-GCM, chave de `CHRONICLE_VAULT_KEY`; a aad é a conta.
+- Migração 0012:
+  - `game_sessions` e `workers`;
+  - `accounts.managed`;
+  - conta e agent em `microbot_audit`.
+- `internal/store/workers`:
+  - sessão cifrada;
+  - estado desejado;
+  - token `ipl_` do worker, revogado ao trocar e ao parar;
+  - `OtherClientSince`, a trava "alguém joga a conta em outro cliente".
+
+  Toda escrita trava antes a linha da conta.
+- `internal/agent`:
+  - o `Link` virou um Hub de vários agents, roteado pela conta (seção 13.1);
+  - o hello ganhou `account`, `kind`, `worker` e `bridge`;
+  - `chronicle agent --worker`, que recebe a sessão pelo `worker_bootstrap`, grava os arquivos do
+    HWID agent em memória (0600) e sobe o cliente com a sessão só no ambiente do processo, com o
+    `flock` do cache;
+  - no boot do worker:
+    - liga o Chronicle Link e o FPS Control;
+    - aplica `fpscontrol.limitFps=true` e `maxFps=20`, nomes conferidos no cliente 2.6.52 fixado.
+  - SIGTERM: logout e `mb-client stop` em até 75 s, dentro dos 90 s de grace do pod.
+- `internal/kube`: cliente REST mínimo (W1), o Deployment do worker e a verificação do token
+  projetado. A verificação usa TokenReview, depois lê o pod, confere o uid e lê a conta da etiqueta
+  do pod, nunca do que o agent diz.
+- `internal/workerctl`:
+  - o reconciliador: aplica os que rodam, apaga os parados e os órfãos, revoga o token;
+  - o bootstrap no `OnConnect`, que não gera token novo quando o cliente do pod já roda;
+  - `Restart`;
+  - a visão dos pods, incluindo "não cabe": com quota, o ReplicaSet nem cria o pod (`ReplicaFailure`).
+- API, sempre com `authed`, `microbotControl` e `?account=`:
+  - `/api/microbot/*?account=`;
+  - `GET /api/workers`;
+  - `POST /api/workers/start|stop|restart`;
+  - `GET|PUT|DELETE /api/accounts/session`.
+
+  Tudo vai para a auditoria, sem o conteúdo da sessão.
+- O bootstrap roda também com `WORKERS=off`, porque só precisa do banco e do link. Um worker subido à
+  mão contra um servidor de dev (loopback) recebe a sessão do mesmo jeito.
+- CLI:
+  - `chronicle accounts connect --character <nome>`: lê o personagem no `accounts.json` do launcher e,
+    das stores do HWID agent, só as linhas desse personagem;
+  - `chronicle workers list|start|stop|restart`.
+- Web:
+  - Automação › Workers;
+  - o seletor de conta no Cockpit e em Plugins, lembrado no navegador;
+  - o VNC e o screenshot pela conta.
+
+  Segue a estrutura da página 7 do canvas **sem** o painel de capacidade e sem o worker aberto à
+  direita. A divergência é por decisão do dono: "tudo funcional primeiro, a aparência depois".
+- Deploy:
+  - `serviceAccountName: chronicle`;
+  - `deploy/worker/Dockerfile` com `base.lock`;
+  - `just worker-base-bump`;
+  - o CI publica `chronicle-worker` e grava `WORKER_IMAGE` no overlay quando o `base.lock` existe.
+
+**microbot-plugins:**
+
+- `mb-client`: `MB_XMX`, `MB_HWID_STORE_DIR` e `MB_PREBUILT_PLUGINS`.
+- Chronicle Link 1.11.0: `CHRONICLE_LINK_SERVER_URL` e `CHRONICLE_LINK_TOKEN` valem no lugar da
+  config, e nada é gravado no perfil.
+- A imagem `microbot-worker-base`: `worker/image.nix`, `worker/Dockerfile` e `worker/build.sh`.
+- O `microbot-cli` fixado por `cliHash`.
+- O primeiro CI (`gradle test` e a imagem na `main`).
+
+**gielinor (`apps/chronicle`):**
+
+- As SAs `chronicle` e `chronicle-worker`.
+- O Role, mais o `auth-delegator`.
+- A ValidatingAdmissionPolicy.
+- A quota e a NetworkPolicy.
+- O PVC `microbot-game-cache`.
+- O README com a ativação.
+
+### 14.2 Conferido
+
+- Suíte Go inteira com Postgres 17, `golangci-lint` sem achados, `pnpm check`, `pnpm test` (95) e
+  `pnpm lint`; no microbot-plugins, `gradle test`.
+- **A política de admissão num kube-apiserver 1.32 real** (etcd e apiserver do `setup-envtest`, como
+  processos): 43 de 43 casos. O worker do `WorkerDeployment` passa. Ficam de fora:
+  - etiquetas faltando, réplicas a mais, `RollingUpdate`;
+  - outra SA, outra imagem;
+  - `hostPath`, segredo, outro PVC, `envFrom`;
+  - privilégios;
+  - mexer no Deployment do próprio app.
+- **De ponta a ponta, sem cluster.** O kind não sobe aqui (cgroup v1). O teste juntou:
+  - um `serve` em dev, com o cofre e o Postgres;
+  - `accounts connect` com um `accounts.json` falso;
+  - a imagem `microbot-worker-base` com o `chronicle` por cima, rodando `agent --worker` como 65532.
+
+  O que aconteceu:
+  - o agent ligou como `managed`, recebeu o bootstrap e subiu o cliente em 33 s;
+  - o Chronicle Link do pod falou com o servidor usando o token do worker;
+  - o FPS foi aplicado;
+  - o Cockpit, o screenshot e o VNC ao vivo funcionaram pela conta;
+  - nem a sessão nem o token ficaram no disco do pod;
+  - a sessão gravada com outra chave foi recusada com a mensagem na lista, e um novo `connect`
+    resolveu;
+  - o restart do container refez o bootstrap e revogou o token anterior;
+  - o SIGTERM saiu do jogo e parou o cliente.
+
+### 14.3 Não conferido e pendente
+
+- **A tela de login de verdade.** O sandbox recusa a porta 43594 da Jagex e intercepta o TLS. Falta
+  conferir no saradomin, com uma conta logada e o dono olhando.
+- **O reconciliador contra o k3s de verdade:** pods reais, o token projetado, a TokenReview, a quota e
+  a NetworkPolicy. Só a admissão foi testada num apiserver.
+- **O tour "Welcome to Microbot"** aparece a cada boot, porque a home do pod é nova. Fechar o tour
+  automaticamente fica para a F5 (perfis).
+- **`preferences.dat`** fica dentro do `jagexcache` compartilhado. São preferências do jogo e podem
+  lembrar o nome do login antigo, que não é o da Jagex Account. Se incomodar, o PVC monta só os
+  `main_file_cache.*` por `subPath`.
+- **`Hello.Bridge` fica vazio:** a ponte do Chronicle Link ainda não tem rota de versão.
+- A rota `/api/workers` não entrou no teste de contrato (`TestContract`).
+- **Para ligar no saradomin, com o dono:**
+  1. Fazer o merge do gielinor antes do chronicle: o app precisa da SA.
+  2. Pôr o `CHRONICLE_VAULT_KEY` no SOPS.
+  3. Criar as roles `microbot:control` e `microbot:agent` no Zitadel.
+  4. Publicar a `microbot-worker-base` e rodar `just worker-base-bump`.
+  5. Deixar os pacotes do GHCR públicos.
+  6. `WORKERS=on` no overlay.
+  7. `accounts connect` no zaros e o primeiro Iniciar.

@@ -52,6 +52,7 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `chronicle login` / `now` / `done` / `plan` / `state` / `mcp` | API clients (docs/04 section 2.2): server from `--url`, `CHRONICLE_URL`, `~/.config/chronicle/config.json`, default `https://chronicle.saradomin.ftm.dev.br` (`CHRONICLE_URL=http://localhost:8080` for `just dev`); dev needs no login, oidc uses the Zitadel device flow; `CHRONICLE_TOKEN` overrides the stored login. `done`/`skip`/`undo` write the owner's marks: never run them on the owner's account unasked |
 | `DATABASE_URL=... go test ./internal/httpapi -run TestContract -update` | rewrite `web/src/lib/api/contract/`: one real API answer per route the web reads, as `export const fixture = {…} satisfies <web type>`; then `pnpm check`. Without `-update` the test fails when an answer changes shape |
 | `just agent` / `chronicle agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (server resolved like the CLI, default saradomin; `MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client. Never log the client in for a test without the owner's agreement |
+| `chronicle accounts connect --character <name>` / `chronicle workers list\|start\|stop\|restart` | docs/11: store an account's game session from the Microbot launcher (only that character's lines of the HWID stores), and the workers' lifecycle over `/api/workers`. `start` and `restart` never log in, but `stop` and `restart` log the account out: never run them on the owner's account unasked |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
@@ -88,6 +89,11 @@ internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* an
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
 internal/microbot/    typed client of the Microbot Agent Server and of Chronicle's control bridge (Chronicle Link plugin; Unix sockets of the
                       harness dev home, same token); agent only
+internal/vault/       AES-256-GCM of the accounts' game sessions (CHRONICLE_VAULT_KEY), pure
+internal/kube/        minimal Kubernetes REST client (Deployments by server-side apply, pods, TokenReview), the
+                      worker Deployment of docs/11 section 13.3 and the worker pod token check
+internal/workerctl/   reconciler of the managed workers (database -> cluster) and the bootstrap of a linking
+                      worker agent (session, ipl_ token, world); serve only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
                       websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->
                       loopback x11vnc) and the plugin/script/config commands, whose params are validated
@@ -110,7 +116,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0007 integrity: met latch trigger, non-empty evidence, key shape, same-account snapshots,
                       0008 observations per source, player_state as their projection,
                       0009 guides + mark_commands: append-only log of every step_marks change,
-                      0010 microbot_audit: every Microbot control action)
+                      0010 microbot_audit: every Microbot control action, 0011 timers and position,
+                      0012 workers: game_sessions (sealed), workers (desired state), accounts.managed)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows
@@ -184,7 +191,11 @@ session only), `SESSION_SECRET` (32+ chars in oidc),
 `MICROBOT_CONTROL` (`off`; `on` enables the Microbot control module, docs/08; in oidc it needs `OIDC_PROJECT_ID`, the
 audience of the agent's machine-user token). `chronicle agent` reads `CHRONICLE_URL`, `MICROBOT_AGENT_CLIENT_ID`,
 `MICROBOT_AGENT_CLIENT_SECRET` (or `_SECRET_FILE`; oidc only), `MICROBOT_HARNESS_DIR`, `MICROBOT_HOME`, `MB_VNC_PORT` and, to override the
-harness tools it runs, `MICROBOT_CLIENT_CMD` and `MICROBOT_ACCOUNT_CMD`. `.env.example` documents each one;
+harness tools it runs, `MICROBOT_CLIENT_CMD` and `MICROBOT_ACCOUNT_CMD`, and `MICROBOT_AGENT_ACCOUNT` (the account an
+attached agent declares). Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes base64; with `MICROBOT_CONTROL=on` it turns on
+`/api/accounts/session` and `/api/workers`), `WORKERS` (`off`; `on` runs the reconciler, in a pod only), `WORKER_IMAGE`,
+`WORKER_NAMESPACE`, `WORKER_SERVER_URL`; `chronicle agent --worker` reads `WORKER_ACCOUNT`, `CHRONICLE_URL`,
+`CHRONICLE_AGENT_TOKEN_FILE` and the harness's `MB_DEV_HOME`, `MB_XMX`, `MB_HWID_STORE_DIR`. `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:
 
 - **local-first (workstation "zaros")**: `compose.yaml` Postgres (shared by the stack and `just dev`), `AUTH_MODE=dev`.

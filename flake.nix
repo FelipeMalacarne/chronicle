@@ -1,5 +1,5 @@
 {
-  description = "Ironman Planner: Go server/CLI/MCP + Svelte SPA for an OSRS ironman account";
+  description = "Chronicle (Ironman Planner): Go server/CLI/MCP + Svelte SPA for an OSRS ironman account";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -61,25 +61,24 @@
 
       packages = forAllSystems (system: pkgs:
         let
-          ironman = (buildGoModuleFor pkgs) {
-            pname = "ironman";
+          chronicle = (buildGoModuleFor pkgs) {
+            pname = "chronicle";
             inherit version;
 
-            # IMPORTANT: `cmd/ironman` embeds the SPA from web/dist via web/embed.go.
-            # The Nix build does not run pnpm, so web/dist must exist in the source
-            # tree before `nix build` (run `just web-build` first). Note that a
-            # flake built from a git checkout only sees tracked files, so for a
-            # local build use `nix build path:.` or commit the dist in a release
-            # branch; the Dockerfile is the fully reproducible path.
+            # The binary embeds the SPA from web/dist (web/embed.go). The Nix build
+            # does not run pnpm and a flake only sees tracked files, so it embeds
+            # the tracked placeholder (web/dist/.gitkeep): this package is the CLI,
+            # `chronicle mcp` and `chronicle agent` (what a workstation installs);
+            # the server with its web is the Docker image.
             src = ./.;
 
-            subPackages = [ "cmd/ironman" ];
+            subPackages = [ "cmd/chronicle" ];
 
             # How to fill vendorHash:
             #   1. keep lib.fakeHash and run `nix build`;
             #   2. the build fails with "hash mismatch ... got: sha256-....";
             #   3. paste that `got:` value here. Repeat whenever go.sum changes.
-            vendorHash = pkgs.lib.fakeHash;
+            vendorHash = "sha256-LQaRdDNVDwZEqNTcqN4TB/3gJqcgIrC3hPxPO+zd86Y=";
 
             env.CGO_ENABLED = 0;
             # Version symbol lives in internal/buildinfo (see its package doc).
@@ -94,23 +93,29 @@
             doCheck = false;
 
             meta = with pkgs.lib; {
-              description = "Ironman Planner server, CLI and MCP in one binary";
+              description = "Chronicle: server, CLI, MCP and Microbot agent in one binary";
               homepage = "https://github.com/FelipeMalacarne/chronicle";
-              mainProgram = "ironman";
+              mainProgram = "chronicle";
               platforms = platforms.unix;
             };
           };
         in
         {
-          inherit ironman;
-          default = ironman;
+          inherit chronicle;
+          default = chronicle;
         });
 
       apps = forAllSystems (system: pkgs: {
         default = {
           type = "app";
-          program = "${self.packages.${system}.default}/bin/ironman";
+          program = "${self.packages.${system}.default}/bin/chronicle";
         };
       });
+
+      # For another flake (nix-config): `inputs.chronicle.overlays.default` gives
+      # `pkgs.chronicle`, built with that flake's nixpkgs.
+      overlays.default = final: _prev: {
+        chronicle = self.packages.${final.stdenv.hostPlatform.system}.chronicle;
+      };
     };
 }

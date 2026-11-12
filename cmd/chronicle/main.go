@@ -15,7 +15,7 @@ import (
 
 func main() {
 	if err := newRoot().Execute(); err != nil {
-		fmt.Fprintln(os.Stderr, "ironman:", err)
+		fmt.Fprintln(os.Stderr, "chronicle:", err)
 		os.Exit(1)
 	}
 }

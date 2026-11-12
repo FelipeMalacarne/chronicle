@@ -110,7 +110,9 @@ Uma vez:
      `https://chronicle.saradomin.ftm.dev.br/auth/callback`, Post Logout URI
      `https://chronicle.saradomin.ftm.dev.br/`, Development Mode desligado; em Token Settings,
      **User roles inside ID Token** e **User Info inside ID Token**. O Client ID vai em `OIDC_CLIENT_ID`;
-   - aplicação **Native**, grants **Device Code** e **Refresh Token**, **Auth Token Type: JWT**. O Client
+   - aplicação **Native**, grants **Device Code** e **Refresh Token**; em Token Settings, **Auth Token
+     Type: JWT** e **User roles inside Access Token** (o servidor lê as roles do access token, não do
+     userinfo; sem isso o plugin leva 403 e a CLI fica sem `owner`). O Client
      ID vai em `OIDC_NATIVE_CLIENT_ID` (CLI, `chronicle mcp` e o plugin);
    - o id do projeto vai em `OIDC_PROJECT_ID`; o id do usuário do dono (Users, 18 dígitos) em
      `OIDC_ALLOWED_SUBJECTS`.

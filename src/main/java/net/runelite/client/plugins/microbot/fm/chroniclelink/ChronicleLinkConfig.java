@@ -40,12 +40,12 @@ public interface ChronicleLinkConfig extends Config
 	@ConfigItem(
 		keyName = "serverUrl",
 		name = "Server URL",
-		description = "Base URL of the Chronicle server (the Ironman Planner), e.g. http://127.0.0.1:8080. Nothing is sent while empty",
+		description = "Base URL of the Chronicle server. Defaults to the saradomin planner; http://127.0.0.1:8080 for a dev server on this machine. Nothing is sent while empty",
 		position = 0
 	)
 	default String serverUrl()
 	{
-		return "";
+		return "https://chronicle.saradomin.ftm.dev.br";
 	}
 
 	@ConfigItem(
@@ -56,7 +56,7 @@ public interface ChronicleLinkConfig extends Config
 	)
 	default CredentialMode credentialMode()
 	{
-		return CredentialMode.NONE;
+		return CredentialMode.LOGIN;
 	}
 
 	@ConfigItem(

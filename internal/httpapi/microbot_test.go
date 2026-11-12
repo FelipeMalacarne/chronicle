@@ -38,7 +38,7 @@ func (m *memAudit) Append(_ context.Context, e storemicrobot.Entry) (storemicrob
 	return e, nil
 }
 
-func (m *memAudit) List(_ context.Context, limit int) ([]storemicrobot.Entry, error) {
+func (m *memAudit) List(_ context.Context, limit int, _ string) ([]storemicrobot.Entry, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return append([]storemicrobot.Entry(nil), m.entries...), nil

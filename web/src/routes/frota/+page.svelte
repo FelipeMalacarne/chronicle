@@ -158,7 +158,7 @@
 		<h1 class="sr">Frota</h1>
 		<p class="mu">{fleet.accounts ? fleetSummary(all) : 'Lendo as contas…'}</p>
 	</div>
-	<a class="btn btn-p" href={resolve('/setup')}><Glyph name="plus" size={14} />Nova conta</a>
+	<a class="btn btn-p" href={resolve('/contas/nova')}><Glyph name="plus" size={14} />Nova conta</a>
 </header>
 
 {#if failure}<p class="band">{failure}</p>{/if}
@@ -292,7 +292,7 @@
 				<p class="mu empty">Nenhuma conta ainda.</p>
 			{/if}
 		{/each}
-		<a class="lane lane-new" href={resolve('/setup')}>
+		<a class="lane lane-new" href={resolve('/contas/nova')}>
 			<span class="stage new"><Glyph name="plus" size={22} /></span>
 			<span class="now"
 				><b>Nova conta</b><span class="mu"
@@ -400,6 +400,7 @@
 			700 22px/1.1 Alegreya,
 			Georgia,
 			serif;
+		font-variant-numeric: lining-nums;
 		color: var(--gold);
 		overflow: hidden;
 		text-overflow: ellipsis;

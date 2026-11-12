@@ -495,7 +495,7 @@
 {#if !account}
 	<div class="band">
 		<Glyph name="alert" /><span>Sem conta, nada é verificado nem gravado.</span>
-		<a class="btn btn-s push" href={resolve('/setup')}>Primeiro acesso</a>
+		<a class="btn btn-s push" href={resolve('/contas/nova')}>Nova conta</a>
 	</div>
 {:else if session.error || board.error}
 	<div class="band" role="alert">

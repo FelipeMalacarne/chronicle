@@ -78,7 +78,7 @@
 			href: resolve('/conta'),
 			label: 'Conta',
 			icon: 'conta' as const,
-			on: path.startsWith('/conta')
+			on: path === '/conta' || path.startsWith('/conta/')
 		},
 		// Automação só existe com o módulo do Microbot ligado no servidor (doc 08).
 		...(microbotModule.enabled
@@ -121,7 +121,7 @@
 			/* sem servidor de auth: segue como dev */
 		}
 		forgetAccount();
-		void goto(resolve('/setup'));
+		void goto(resolve('/frota'));
 	}
 </script>
 
@@ -179,7 +179,7 @@
 			<span class="who"><b>{a.rsn}</b></span>
 		</a>
 	{/each}
-	<a class="acn acn-new" href={resolve('/setup')}
+	<a class="acn acn-new" href={resolve('/contas/nova')}
 		><Glyph name="plus" size={14} /><span>Nova conta</span></a
 	>
 	<div class="grow"></div>

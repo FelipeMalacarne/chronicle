@@ -22,7 +22,7 @@ images:
   - name: chronicle
     newName: ghcr.io/felipemalacarne/ironman-planner
     # CI sets both tags to the images it just pushed, on every push to main.
-    newTag: "unpublished"
+    newTag: "4e180467abcd8b74301172d43a0542a9999c0144"
   - name: chronicle-migrate
     newName: ghcr.io/felipemalacarne/ironman-planner-migrate
-    newTag: "unpublished"
+    newTag: "4e180467abcd8b74301172d43a0542a9999c0144"

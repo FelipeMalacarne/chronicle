@@ -125,6 +125,8 @@ final class RoutePanel extends PluginPanel
 	private PanelState state = new PanelState(PanelState.Connection.NOT_CONFIGURED, null, null, null, null);
 	/** The login of Credential Login, or null in the other modes. */
 	private LoginSession.View login;
+	/** URL and token come from the environment (a managed worker), not from the config. */
+	private boolean fromEnvironment;
 	private boolean busy;
 	private int renderedWidth;
 
@@ -190,6 +192,13 @@ final class RoutePanel extends PluginPanel
 	{
 		login = next;
 		busy = false;
+		render();
+	}
+
+	/** Whether URL and token come from the environment (Swing thread). */
+	void setFromEnvironment(boolean next)
+	{
+		fromEnvironment = next;
 		render();
 	}
 
@@ -259,7 +268,7 @@ final class RoutePanel extends PluginPanel
 		switch (state.connection)
 		{
 			case NOT_CONFIGURED:
-				return "Configure a URL do planner nas opções do plugin.";
+				return fromEnvironment ? PanelText.ENVIRONMENT_URL_INVALID : "Configure a URL do planner nas opções do plugin.";
 			case CONNECTING:
 				return "Buscando a rota no planner…";
 			default:
@@ -759,6 +768,13 @@ final class RoutePanel extends PluginPanel
 			row.add(out);
 		}
 		p.add(row);
+		if (fromEnvironment)
+		{
+			p.add(gap(4));
+			JLabel source = label(PanelText.ENVIRONMENT_SOURCE, SMALL, MUTED);
+			source.setToolTipText(PanelText.ENVIRONMENT_SOURCE_TOOLTIP);
+			p.add(source);
+		}
 		if (state.message != null && state.window != null)
 		{
 			p.add(gap(4));

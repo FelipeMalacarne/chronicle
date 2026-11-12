@@ -1,12 +1,13 @@
-# microbot-plugins
+# microbot/
 
-Personal Microbot plugins plus an agent-drivable dev harness. Plugins are sideloaded jars
-built against the pinned official client; there is no client fork.
+Chronicle's Microbot plugins plus an agent-drivable dev harness (the separate `microbot-plugins`
+repository until 2026-11-12). Plugins are sideloaded jars built against the pinned official client;
+there is no client fork.
 
 ```sh
-direnv allow            # or: nix develop
+direnv allow            # at the repository root, or: nix develop (.#microbot for this part alone)
 mb-vendor               # upstream sources/docs/CLI at the pinned version
-gradle pluginJars       # build/plugins/*.jar
+gradle -p microbot pluginJars   # microbot/build/plugins/*.jar (just plugins)
 mb-client start         # isolated dev client with the Agent Server on
 mb-deploy helloagent    # hot deploy, no restart
 mb state                # microbot-cli against the dev client
@@ -24,6 +25,8 @@ client deletes non-Hub jars older than 3 days, so the launcher wrapper in nix-co
 before each launch.
 
 Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md).
+The worker image built from this directory: [docs/11](../docs/11-workers-microbot.md) and
+`deploy/worker/`.
 
 ## Chronicle Link (`fm/chroniclelink`, 1.11.0)
 
@@ -36,12 +39,12 @@ clocks of RuneLite's Time Tracking (`data.timers`: each farming tab, the bird ho
 contract, with when they are ready; the planner's recurring tasks) and, when switched on,
 bank/inventory/equipment and the character's position (`data.position`, "Send position", off by
 default; a move alone is sent only 16 tiles away or on another world or plane) (ingest contract v1,
-`ironman-planner/docs/04-arquitetura.md` 6.4), and never performs a game action. Timers and
+`docs/04-arquitetura.md` 6.4), and never performs a game action. Timers and
 position go only to a planner whose manifest offers them.
 
-**Control bridge (dev harness client only).** In the client `bin/mb-client` runs
+**Control bridge (dev harness client only).** In the client `microbot/bin/mb-client` runs
 (`-Dmicrobot.dev.harness=true`) the plugin also serves Chronicle's control bridge on
-`.runelite/agent/bridge.sock` (`ironman-planner/docs/08-controle-microbot.md`): the real menu options
+`.runelite/agent/bridge.sock` (`docs/08-controle-microbot.md`): the real menu options
 of nearby NPCs, objects (only those with an action) and worn items, the prayer book and the spellbook, and typed actions for
 them (toggle a prayer; cast a spell, on an NPC for combat spells and curses or on an item for
 alchemy and Superheat; use an inventory item on another item, an NPC or an object; Remove/Rub a worn
@@ -116,7 +119,6 @@ refresh token signs the panel out; an unreachable issuer keeps the login and ret
 are never logged.
 
 **Managed workers (1.11.0).** When `CHRONICLE_LINK_SERVER_URL` and `CHRONICLE_LINK_TOKEN` are both
-set and not blank in the client's environment (a Chronicle worker pod, planner docs/11 section
-13.2), they replace Server URL and Credential: token mode with that `ipl_` token. Nothing of them is
+set and not blank in the client's environment (a Chronicle worker pod, docs/11 section 13.2), they replace Server URL and Credential: token mode with that `ipl_` token. Nothing of them is
 written to the profile's config (not even the installation id, which token mode does not send), and
 the panel footer reads "credencial do ambiente". Without them the config decides, as before.

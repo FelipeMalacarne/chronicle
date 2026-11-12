@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Wire DTOs of {@code GET /api/plugin/route} (ironman-planner docs/04-arquitetura.md 2.5): the
+ * Wire DTOs of {@code GET /api/plugin/route} (docs/04-arquitetura.md 2.5): the
  * active route from the cursor on, as the planner computes it. Every verdict, status and label
  * comes from the server; the plugin only displays them. Unknown fields are ignored (Gson).
  */

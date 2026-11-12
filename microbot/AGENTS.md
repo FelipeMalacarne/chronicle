@@ -1,7 +1,14 @@
-# microbot-plugins
+# microbot/
 
-Personal Microbot plugins, built as sideloadable jars against the pinned official client
-(`microbot.json`). No fork: the client comes from upstream releases; only plugins live here.
+Chronicle's Microbot plugins, built as sideloadable jars against the pinned official client
+(`microbot.json`), and the dev harness that drives the client. No fork: the client comes from
+upstream releases; only plugins live here. It was the separate `microbot-plugins` repository
+until 2026-11-12 (history kept); the planner's rules are in the root `CLAUDE.md`, its design docs
+in `docs/` (06 the plugin, 08 the control, 11 the workers).
+
+Paths below are relative to `microbot/`. The root dev shell (direnv, `nix develop`) has the JDK,
+Gradle and the harness `bin/` on PATH; `nix develop .#microbot` is that part alone. Run Gradle here
+or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`).
 
 ## Layout
 - `src/main/java/net/runelite/client/plugins/microbot/fm/<pkg>/` — one self-contained package
@@ -14,10 +21,10 @@ Personal Microbot plugins, built as sideloadable jars against the pinned officia
   only, also the control bridge (`.runelite/agent/bridge.sock`) and the config-options export.
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
-  Chronicle's routine executor runs it between the main activity and the return (planner docs/08).
-- `bin/` — harness (on PATH inside `nix develop`/direnv).
-- `worker/` — the `microbot-worker-base` image (Chronicle's managed workers, planner docs/11
-  section 13.4): `image.nix` (flake output `worker-runtime-image`), `Dockerfile`, `build.sh`.
+  Chronicle's routine executor runs it between the main activity and the return (docs/08).
+- `bin/` — harness (on PATH inside the dev shell).
+- The worker image (Chronicle's managed workers, docs/11 section 13.4) is built outside this
+  directory: `nix/worker-runtime.nix`, `deploy/worker/` (see "Worker image").
 - `vendor/microbot/` — sparse upstream checkout at the pinned tag (`mb-vendor`), gitignored.
   This is the API you compile against: read it instead of guessing.
 
@@ -57,7 +64,7 @@ frame per second, which makes every action, walk and wait crawl (measured: Agent
 | `mb <cli args>` | Upstream `microbot-cli` against the dev client (`mb state`, `mb npcs --name X`, `mb screenshot save --dir D`) |
 | `mb-install [plugin…]` | Build jars into the dev home (restart to load). `--live` installs into the everyday client |
 | `mb-test <plugin>` | Test-mode run: login, start plugin, wait for `result.json`, exit code 0/1/2/3/4 |
-| `gradle pluginJars` | Build all jars to `build/plugins/` |
+| `gradle pluginJars` | Build all jars to `build/plugins/` (`just plugins` from the root) |
 | `mb-bump <version>` | Pin a new client release and re-vendor |
 
 `mb-client` reads these, all optional; unset, it behaves as on the workstation:
@@ -76,14 +83,19 @@ Iterate with `mb-deploy`; confirm with `mb-test` (or `mb-install` + `mb-client r
 A plugin cannot be hot-deployed while its jar is sideloaded in the dev home.
 
 ## Worker image
-`worker/build.sh` builds `ghcr.io/felipemalacarne/microbot-worker-base:<Microbot version>-<sha7>`
-on a machine with Nix and Docker: it loads the Nix runtime (`worker/image.nix`: JDK 21 of the dev
-shell's nixpkgs, Xvfb, x11vnc, xdotool, the pinned jars and microbot-cli, the harness in
-`/opt/microbot/bin`, user 65532, `HOME=/home/worker`), runs `gradle test pluginJars` and adds
-`build/plugins/*.jar` in `/opt/microbot/plugins` (`MB_PREBUILT_PLUGINS`). No entrypoint: the
-`chronicle-worker` image sets its own. Nix sees only files git tracks, so `git add` new files
-under `worker/` before building. CI (`.github/workflows/ci.yml`) runs the tests on every push
-and PR and publishes the image from `main`.
+`deploy/worker/build-base.sh` (`just worker-base`) builds
+`ghcr.io/felipemalacarne/chronicle-worker-base:<Microbot version>-<sha7>` on a machine with Nix
+and Docker: it loads the Nix runtime (`nix/worker-runtime.nix`: JDK 21 of the dev shell's nixpkgs,
+Xvfb, x11vnc, xdotool, the pinned jars and microbot-cli, this `bin/` in `/opt/microbot/bin`, user
+65532, `HOME=/home/worker`), runs `gradle pluginJars` and adds `build/plugins/*.jar` in
+`/opt/microbot/plugins` (`MB_PREBUILT_PLUGINS`). The sha7 is the last commit that changed an input
+of the base (this directory except `*.md`, the Nix files, the base's Dockerfile and script), so a
+change here is a new base. No entrypoint: `chronicle-worker` (`deploy/worker/Dockerfile`, the base
+plus the chronicle binary) sets its own. Nix sees only files git tracks, so `git add` new files
+before building. CI (root `.github/workflows/ci.yml`, job `nix`) runs `gradle test pluginJars` on
+every push and PR; on `main` the `docker` job builds the base when GHCR lacks its tag, then
+`chronicle-worker`, and the deploy commit points the saradomin overlay at it. Running workers
+switch only on the owner's restart.
 
 ## Verifying behavior
 - Verify game effects, not config values: query state with `mb` (inventory, npcs, widgets,

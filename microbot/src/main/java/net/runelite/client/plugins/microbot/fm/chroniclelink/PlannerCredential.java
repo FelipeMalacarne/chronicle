@@ -3,7 +3,7 @@ package net.runelite.client.plugins.microbot.fm.chroniclelink;
 import okhttp3.Request;
 
 /**
- * How the plugin authenticates to the planner (ironman-planner docs/04-arquitetura.md 2.5,
+ * How the plugin authenticates to the planner (docs/04-arquitetura.md 2.5,
  * decision 28 of docs/01). The planner stays the source of truth; a credential only decides
  * what a request carries. Implementations never expose a secret through {@code toString},
  * logs or URLs.

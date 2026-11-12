@@ -4,8 +4,10 @@ Self-hosted planner/tracker for an OSRS Ironman account. It follows two independ
 the Oziris Ironman Efficiency Guide (`oziris-main`, 576 steps) and BRUHsailer (`bruhsailer-main`, 226
 steps). One Go binary (`chronicle`) serves the API + embedded Svelte SPA, and doubles as CLI and MCP
 server; progress is auto-tracked from hiscores, Wise Old Man and a read-only Microbot (RuneLite) plugin
-that lives in the separate `microbot-plugins` repository (Chronicle Link, `fm/chroniclelink`; it was
-`fm/ironmanplanner` until 1.3).
+(Chronicle Link, `fm/chroniclelink`; it was `fm/ironmanplanner` until 1.3). The plugins, the dev harness
+that drives the Microbot client and the worker base image's inputs live in `microbot/` (the separate
+`microbot-plugins` repository until 2026-11-12, merged with its history; decision 35): read
+`microbot/AGENTS.md` before touching anything there; its rules and safety section apply.
 
 Current state and the active build sequence: `docs/04-arquitetura.md` section 9. The domain model is
 built around objectives (`docs/09-modelo-de-dominio.md`, approved 2026-11-04; decisions in sections
@@ -22,7 +24,16 @@ decisions are tracked in `docs/01-sumario-executivo.md`.
 
 Go 1.27 (`go.mod` says `go 1.27`; pure Go, `CGO_ENABLED=0`), pgx + sqlc + goose on PostgreSQL 17,
 Svelte 5 + SvelteKit (adapter-static) + Vite under `web/` (Node 22, pnpm 10), Docker distroless image,
-Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci.yml`).
+`just` as task runner. Lint is golangci-lint v2 (`.golangci.yml`). `microbot/`: Java 11 source level
+on JDK 21, Gradle, Lombok, against the pinned Microbot client (`microbot/microbot.json`).
+
+One Nix flake: `flake.nix` only wires the outputs, the code is in `nix/` (`chronicle.nix` the Go
+package, `microbot.nix` the pinned client/HWID agent/microbot-cli, `worker-runtime.nix` the worker
+base's runtime layers, `shells.nix`). Outputs: `packages.<system>.chronicle` (default; what nix-config
+installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-linux.worker-runtime-image`,
+`devShells.default` (everything, the harness `microbot/bin` on PATH; direnv) and `devShells.microbot`
+(the Java side and the harness only: CI's plugin build and `chronicle agent`), `overlays.default`.
+`nix/chronicle.nix` has the `vendorHash`: update it when `go.sum` changes (CI's `nix` job fails otherwise).
 
 ## Key commands (see `justfile`)
 
@@ -33,6 +44,9 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `just web-dev` | Vite alone (proxied to :8080) |
 | `just build` | web build + `bin/chronicle` with `-X .../internal/buildinfo.Version=$(git describe)` |
 | `just test` / `just lint` / `just fmt` | `go test ./...` + `pnpm check` + `pnpm test`; golangci-lint + gofmt + `pnpm lint` |
+| `just plugins` / `just test-microbot` | `gradle -p microbot pluginJars` (jars in `microbot/build/plugins`) / with the plugin tests (CI's `nix` job) |
+| `mb-client`, `mb-deploy`, `mb-test`, `mb`, ... | the Microbot dev harness in `microbot/bin` (on PATH in the dev shell); commands, variables and safety in `microbot/AGENTS.md`; skills `plugin-dev` and `live-test` |
+| `just worker-base` / `just worker-image` | `deploy/worker/build-base.sh`: chronicle-worker-base (Nix runtime + plugin jars), tag `<Microbot version>-<sha7 of the last commit that changed its inputs>` (`--tag` prints it); then chronicle-worker (base + this tree's binary, `deploy/worker/Dockerfile`). CI builds the base on `main` only when GHCR lacks the tag |
 | `just content-validate` | `chronicle content validate` against `content/schema/guide.schema.json` |
 | `go run ./cmd/chronicle content migrate` | regenerate `content/guides/oziris-main` from `data/guide/normalized` plus the owner's route fixes in `data/guide/route-patches.json` (docs/05 section 12) |
 | `go run ./cmd/chronicle content import-bruhsailer` | regenerate `content/guides/bruhsailer-main` from the pinned DOCX in `data/sources/bruhsailer` |
@@ -51,7 +65,7 @@ Nix flake dev shell, `just` as task runner. Lint is golangci-lint v2 (`.golangci
 | `chronicle health` | GET `/api/health` of a running server (container healthcheck; never opens the database) |
 | `chronicle login` / `now` / `done` / `plan` / `state` / `mcp` | API clients (docs/04 section 2.2): server from `--url`, `CHRONICLE_URL`, `~/.config/chronicle/config.json`, default `https://chronicle.saradomin.ftm.dev.br` (`CHRONICLE_URL=http://localhost:8080` for `just dev`); dev needs no login, oidc uses the Zitadel device flow; `CHRONICLE_TOKEN` overrides the stored login. `done`/`skip`/`undo` write the owner's marks: never run them on the owner's account unasked |
 | `DATABASE_URL=... go test ./internal/httpapi -run TestContract -update` | rewrite `web/src/lib/api/contract/`: one real API answer per route the web reads, as `export const fixture = {…} satisfies <web type>`; then `pnpm check`. Without `-update` the test fails when an answer changes shape |
-| `just agent` / `chronicle agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (server resolved like the CLI, default saradomin; `MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client. Never log the client in for a test without the owner's agreement |
+| `just agent` / `chronicle agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (server resolved like the CLI, default saradomin; `MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client (`MICROBOT_HARNESS_DIR`: this checkout by default in `just agent`; it runs `nix develop <dir>#microbot --command <dir>/microbot/bin/mb-client`). Never log the client in for a test without the owner's agreement |
 | `chronicle accounts connect --character <name>` / `chronicle workers list\|start\|stop\|restart` | docs/11: store an account's game session from the Microbot launcher (only that character's lines of the HWID stores; a character the launcher lists as "Not set" is `--index <n> --as <name in game>`, like `mb-account use --as`), and the workers' lifecycle over `/api/workers`. `start` and `restart` never log in, but `stop` and `restart` log the account out: never run them on the owner's account unasked |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
@@ -110,7 +124,8 @@ content/              guides/<id>/guide.json (generated by the importers) + anno
                       annotations schemas); reference/ (catalogs)
 .mcp.json             declares `content mcp` (server `chronicle-content`) and `chronicle mcp` (server `chronicle`,
                       the account's progress over the API of `just dev`) for Claude Code;
-.claude/skills/       annotate-guide: the extraction procedure and taxonomy the agent follows
+.claude/skills/       annotate-guide: the extraction procedure and taxonomy the agent follows; plugin-dev and
+                      live-test: build a Microbot plugin and verify it in the dev client, safely
 db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest freshness, 0003 guide ids,
                       0004 progress over objectives, 0005 snapshot facts, 0006 plugin installations,
                       0007 integrity: met latch trigger, non-empty evidence, key shape, same-account snapshots,
@@ -122,6 +137,13 @@ db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows
                       (docs/07 section 3.3); the cluster side (namespace, database, secrets) is in gielinor
+deploy/worker/        the worker images (docs/11 section 13.4): build-base.sh + base.Dockerfile
+                      (chronicle-worker-base: nix/worker-runtime.nix plus the plugin jars) and Dockerfile
+                      (chronicle-worker: that base plus the binary, `chronicle agent --worker`)
+microbot/             the Microbot side (its own AGENTS.md/CLAUDE.md): Gradle project of the plugins
+                      (src/main/java/.../microbot/fm/<pkg>: chroniclelink, catswap, devbootstrap, helloagent,
+                      ...), microbot.json (pinned release), bin/ (harness), vendor/ (gitignored upstream)
+nix/                  the flake's code (see Stack)
 data/                 original extraction: guide/ (input of `content migrate`), sources/bruhsailer (pinned DOCX)
 docs/                 numbered design docs (PT-BR); tools/ has the Python extraction scripts
 ```
@@ -232,7 +254,10 @@ attached agent declares). Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes bas
 - Contract: `web/src/lib/progress/types.ts` is still hand-written, but `svelte-check` verifies it against the
   generated fixtures in `web/src/lib/api/contract/` (never edit those; regenerate with `-update`).
 - `cd web && pnpm check && pnpm test && pnpm lint`; CI runs web, go, migrations (goose up/down/up on
-  Postgres 17) and a docker build on `main` (`.github/workflows/ci.yml`).
+  Postgres 17), manifests, nix (`nix build .#chronicle` and the plugins' `gradle test pluginJars`) and,
+  on `main`, the images and the deploy commit (`.github/workflows/ci.yml`).
+- `just test-microbot` for the plugins (JUnit under `microbot/src/test`); behavior in game is verified
+  in the dev client (`microbot/AGENTS.md`, "Verifying behavior").
 - `pnpm` may refuse to run scripts while a lockfile entry is younger than the `minimumReleaseAge` policy;
   that is the supply-chain policy, not a broken install.
 

@@ -13,7 +13,7 @@ public interface ChronicleLinkConfig extends Config
 	String ITEMS_EXPANDED = "itemsExpanded";
 	String LOGIN_REFRESH_TOKEN = "loginRefreshToken";
 
-	/** How requests authenticate (ironman-planner docs/04-arquitetura.md 2.5). */
+	/** How requests authenticate (docs/04-arquitetura.md 2.5). */
 	enum CredentialMode
 	{
 		/** AUTH_MODE=dev: only the URL; the planner accepts loopback requests without a token. */

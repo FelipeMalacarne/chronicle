@@ -11,7 +11,7 @@ import net.runelite.client.plugins.PluginDescriptor;
  * One cat swap, then it switches itself off: picks up the grown cat, sells it to a Civilian in
  * West Ardougne for death runes, buys a new kitten from Gertrude west of Varrock and lets it
  * follow. Needs Biohazard (the Ardougne wall door), Gertrude's Cat and 100 coins in the
- * inventory. Chronicle (ironman-planner docs/08, phase 4) starts it between its main activity
+ * inventory. Chronicle (docs/08, phase 4) starts it between its main activity
  * and the return; the outcome is the last entry of its ScriptResultStore results.
  */
 @PluginDescriptor(

@@ -49,7 +49,7 @@ import net.runelite.client.plugins.timetracking.SummaryState;
 import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
 
 /**
- * Chronicle's control bridge to what the Agent Server does not expose (docs/08 in ironman-planner),
+ * Chronicle's control bridge to what the Agent Server does not expose (Chronicle's docs/08),
  * started by the plugin only in the dev harness client (-Dmicrobot.dev.harness=true):
  * the real menu options of nearby NPCs and objects and of worn items, the prayer book and the
  * spellbook, the clocks of RuneLite's Time Tracking (farming tabs, bird houses, the farming

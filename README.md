@@ -1,4 +1,4 @@
-# ironman-planner
+# Chronicle
 
 Planner e tracker self-hosted para conta Ironman de OSRS. Segue duas rotas independentes e comparáveis:
 o Oziris Ironman Efficiency Guide (texto de OzirisLoL, versão interativa mantida por ironman.guide) e o
@@ -13,7 +13,8 @@ Old Man, um plugin próprio no Microbot (RuneLite) e dados estruturados do OSRS 
   - readiness do próximo trecho;
   - API por guia;
   - web `/plan` e `/compare` sobre a API real.
-- **Plugin Microbot** 1.0.0 (somente leitura) no repositório `microbot-plugins`, ainda não testado no jogo.
+- **Microbot** em `microbot/`: o plugin Chronicle Link (rastreio somente leitura, painel da rota, ponte
+  de controle no cliente de dev), outros plugins e o harness do cliente de dev (`microbot/AGENTS.md`).
 - **Modelo de domínio aprovado** (`docs/09-modelo-de-dominio.md`): o objetivo é a unidade rastreável,
   com progresso compartilhado entre rotas; a API de progresso é construída sobre ele.
 - **Estado detalhado e sequência vigente**: `docs/04-arquitetura.md`, seção 9. Decisões: `docs/01`.
@@ -48,8 +49,10 @@ Opcional: `just migrate-up` para aplicar migrations à mão, `just up` para a st
 | just | task runner (`just` lista) | `justfile` |
 | docker compose | Postgres local e stack prod-like | `compose.yaml` |
 | Dockerfile multi-stage | imagem distroless não-root | `Dockerfile`, `.dockerignore` |
-| Nix flake + direnv | dev shell reproduzível, `nix build` do binário | `flake.nix`, `.envrc` |
-| GitHub Actions | web, go, migrations, docker build | `.github/workflows/ci.yml` |
+| Nix flake + direnv | dev shells (`default` com tudo, `microbot` só o Java), `nix build` do binário, runtime da imagem dos workers | `flake.nix`, `nix/`, `.envrc` |
+| JDK 21 + Gradle | plugins do Microbot e o harness do cliente de dev | `microbot/` |
+| Docker + Nix | imagens dos workers (`chronicle-worker-base`, `chronicle-worker`) | `deploy/worker/` |
+| GitHub Actions | web, go, migrations, manifests, nix (pacote e plugins), imagens e deploy | `.github/workflows/ci.yml` |
 | air | live reload de `chronicle serve` | `.air.toml` |
 
 Detalhes, variáveis de ambiente e troubleshooting em `docs/07-ambiente-e-ferramental.md`.

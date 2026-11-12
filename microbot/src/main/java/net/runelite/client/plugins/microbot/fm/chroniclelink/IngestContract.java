@@ -7,7 +7,7 @@ import java.util.Objects;
 import net.runelite.client.plugins.timetracking.SummaryState;
 
 /**
- * Wire DTOs of the planner's ingest contract v1 (ironman-planner docs/04-arquitetura.md 6.4).
+ * Wire DTOs of the planner's ingest contract v1 (docs/04-arquitetura.md 6.4).
  * Field names follow the JSON exactly; null fields are omitted by Gson, which is how optional
  * fields and unchanged delta facets stay out of the payload. Maps are {@code Map<String, ...>}
  * so ids serialize as canonical decimal keys ({@code {"4151": 1}}).

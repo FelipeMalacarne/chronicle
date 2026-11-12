@@ -15,7 +15,7 @@ import okhttp3.Response;
 import okhttp3.ResponseBody;
 
 /**
- * The HTTP calls of the plugin's login in {@code AUTH_MODE=oidc} (ironman-planner docs/04 2.5,
+ * The HTTP calls of the plugin's login in {@code AUTH_MODE=oidc} (docs/04 2.5,
  * planner item 15): the OAuth 2.0 Device Authorization Grant (RFC 8628) against the planner's
  * issuer (Zitadel), with the public native client the planner names at
  * {@code GET /api/auth/client}, and the refresh of the access token. No state: {@link LoginSession}

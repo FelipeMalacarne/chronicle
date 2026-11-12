@@ -118,6 +118,11 @@ public class BlackjackerScript extends Script
 	private boolean start()
 	{
 		int thieving = Rs2Player.getRealSkillLevel(Skill.THIEVING);
+		if (thieving <= 0)
+		{
+			// Right after login the stats are not in yet.
+			return false;
+		}
 		boolean feudDone = Rs2Player.getQuestState(Quest.THE_FEUD) == QuestState.FINISHED;
 		BlackjackTarget target = config.target() == BlackjackTarget.AUTO ? BlackjackTarget.best(thieving, feudDone) : config.target();
 		if (thieving < target.thievingLevel)

@@ -106,7 +106,7 @@
 		try {
 			await progressApi.pin(next.step.guide_id, account, next.step.step_id);
 			void loadSummary(account);
-			void goto(resolve('/'));
+			void goto(resolve('/agora'));
 		} catch (e) {
 			failure = e instanceof Error ? e.message : String(e);
 		} finally {

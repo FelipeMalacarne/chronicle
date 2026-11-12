@@ -72,7 +72,7 @@
 	function enter(id: string) {
 		rememberAccount(id);
 		// eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da conta
-		void goto(`${resolve('/')}?account=${encodeURIComponent(id)}`);
+		void goto(`${resolve('/agora')}?account=${encodeURIComponent(id)}`);
 	}
 
 	async function create() {
@@ -130,7 +130,7 @@
 
 <svelte:head><title>Nova conta · Chronicle</title></svelte:head>
 
-<a class="crumb mu" href={resolve('/frota')}>Frota<Glyph name="chevron" size={12} />Nova conta</a>
+<a class="crumb mu" href={resolve('/')}>Frota<Glyph name="chevron" size={12} />Nova conta</a>
 <header class="ttl">
 	<h1 class="sr">Nova conta</h1>
 	<p class="mu">
@@ -266,7 +266,7 @@
 							onclick={create}
 							><Glyph name="plus" size={14} />{busy ? 'Adicionando…' : 'Adicionar à frota'}</button
 						>
-						<a class="btn btn-g" href={resolve('/frota')}>Cancelar</a>
+						<a class="btn btn-g" href={resolve('/')}>Cancelar</a>
 					</div>
 				{/if}
 			</div>
@@ -308,7 +308,7 @@
 				{#if created}
 					{#if syncNote}<p>{syncNote}</p>{/if}
 					<div class="go">
-						<a class="btn btn-p" href={resolve('/frota')}>Ir para a Frota</a>
+						<a class="btn btn-p" href={resolve('/')}>Ir para a Frota</a>
 						<button class="btn btn-g" type="button" onclick={() => enter(created!.id)}
 							>Abrir a conta</button
 						>

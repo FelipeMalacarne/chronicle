@@ -12,6 +12,9 @@ export interface WorkerLine {
 	rsn: string;
 	/** "saradomin · pod <tag>", "zaros · anexado" ou "nenhum". */
 	where: string;
+	/** As duas linhas de "Onde" na tabela: a máquina e, embaixo, como roda lá. */
+	host: string;
+	runtime?: string;
 	/** Estado em palavras, e o tom: ok (rodando), busy (subindo), warn (falhou), idle (parado). */
 	state: string;
 	tone: 'ok' | 'busy' | 'warn' | 'idle';
@@ -19,6 +22,9 @@ export interface WorkerLine {
 	detail?: string;
 	session: string;
 	sessionTone: 'ok' | 'warn';
+	/** As duas linhas de "Sessão" na tabela: quando chegou e o último login. */
+	sessionWhen?: string;
+	sessionNote?: string;
 	/** O que dá para fazer agora, na ordem dos botões. */
 	actions: WorkerActionKind[];
 	/** Por que Iniciar está fechado, quando está. */
@@ -70,6 +76,7 @@ export function workerLine(
 		account: row.account,
 		rsn: row.rsn,
 		where: 'nenhum',
+		host: 'nenhum',
 		state: 'parado',
 		tone: 'idle',
 		session: row.session
@@ -80,11 +87,23 @@ export function workerLine(
 		cockpit: !!row.agent || !!here,
 		outdated: row.outdated
 	};
+	if (row.session) {
+		line.sessionWhen = `push ${when(row.session.pushed_at, now)}`;
+		line.sessionNote = row.session.last_login_result
+			? `último login ${row.session.last_login_result}`
+			: 'ainda não usada';
+	}
 	if (row.session?.last_login_result)
 		line.session += ` · último login: ${row.session.last_login_result}`;
-	if (here) line.where = `${here.host ?? 'zaros'} · anexado`;
+	if (here) {
+		line.where = `${here.host ?? 'zaros'} · anexado`;
+		line.host = here.host ?? 'zaros';
+		line.runtime = 'anexado';
+	}
 	if (row.desired === 'running') {
 		line.where = `saradomin · pod ${imageTag(row.pod?.image ?? row.image)}`.trim();
+		line.host = 'saradomin';
+		line.runtime = `pod · ${imageTag(row.pod?.image ?? row.image)}`;
 		const pod = row.pod ? POD_STATES[row.pod.state] : undefined;
 		if (!row.pod && row.agent) {
 			// Fora do cluster (um worker subido à mão contra este servidor) ou antes da primeira
@@ -134,6 +153,11 @@ export const ACTION_LABEL: Record<WorkerActionKind, string> = {
 	stop: 'Parar',
 	restart: 'Reiniciar na versão nova'
 };
+
+/** O rótulo do botão: reiniciar só fala em versão nova quando o worker está numa antiga. */
+export function actionLabel(line: Pick<WorkerLine, 'outdated'>, action: WorkerActionKind): string {
+	return action === 'restart' && !line.outdated ? 'Reiniciar' : ACTION_LABEL[action];
+}
 
 /** Parar e reiniciar saem do jogo: pedem o segundo clique. */
 export const ACTION_CONFIRM: Record<WorkerActionKind, string> = {

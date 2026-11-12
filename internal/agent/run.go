@@ -245,12 +245,17 @@ func (e *Executor) note(state, text string) {
 	e.saveRuns()
 }
 
+// end finishes the run in one step under the lock: the final state, the
+// event, FinishedAt and the error. A run is Final() as soon as its state is,
+// and a new run may start right then, so finishing in two steps let a late
+// half write into, and cancel, the next run.
 func (e *Executor) end(state, text, errText string) {
-	e.note(state, text)
 	r := &e.runs
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	now := time.Now().UTC()
+	r.run.State = state
+	r.run.Events = append(r.run.Events, RunEvent{At: now, State: state, Text: text})
 	r.run.FinishedAt = &now
 	r.run.Error = errText
 	e.saveRuns()

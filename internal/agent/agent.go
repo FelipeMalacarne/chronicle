@@ -72,6 +72,12 @@ type Executor struct {
 	TriggerFile string
 	// WatchPoll is how often the triggers' watcher reads the bridge (default 5 s).
 	WatchPoll time.Duration
+	// Worker is the --worker mode (docs/11): set, the executor serves one
+	// managed account, takes CmdWorkerBootstrap and refuses CmdAccountUse;
+	// nil outside that mode.
+	Worker *WorkerConfig
+	// Log receives the executor's own warnings; nil discards them.
+	Log *slog.Logger
 
 	mu    sync.Mutex // one client lifecycle/login action at a time
 	runs  runner
@@ -82,6 +88,9 @@ type Executor struct {
 func (e *Executor) Execute(ctx context.Context, command string, params json.RawMessage) (any, error) {
 	if !slices.Contains(readCommands, command) && e.going() {
 		return nil, ErrRunGoing
+	}
+	if e.Worker != nil && command == CmdAccountUse {
+		return nil, errors.New("account_use: a worker serves only its own account")
 	}
 	switch command {
 	case CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel:
@@ -108,7 +117,13 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	switch command {
+	case CmdWorkerBootstrap:
+		return e.bootstrap(ctx, params)
 	case CmdClientStart:
+		if e.Worker != nil {
+			out, err := e.workerStart(ctx)
+			return ClientOutput{Output: out}, err
+		}
 		out, err := e.runClient(ctx, 5*time.Minute, "start", "--headless")
 		return ClientOutput{Output: out}, err
 	case CmdClientStop:
@@ -141,6 +156,13 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 	return nil, fmt.Errorf("command %q is not in the agent's closed list", command)
 }
 
+func (e *Executor) log() *slog.Logger {
+	if e.Log == nil {
+		return slog.New(slog.DiscardHandler)
+	}
+	return e.Log
+}
+
 func (e *Executor) status(ctx context.Context) Status {
 	st := Status{Headless: pidAlive(filepath.Join(e.Home, "run", "xvfb.pid")), VNC: pidAlive(filepath.Join(e.Home, "run", "vnc.pid"))}
 	state, err := e.Game.State(ctx)
@@ -163,18 +185,22 @@ func (e *Executor) runClient(ctx context.Context, timeout time.Duration, args ..
 	if len(e.ClientCmd) == 0 {
 		return "", errors.New("no mb-client command configured (MICROBOT_HARNESS_DIR or MICROBOT_CLIENT_CMD)")
 	}
-	return runArgv(ctx, e.ClientCmd, timeout, args...)
+	var env []string
+	if e.Worker != nil {
+		env = e.Worker.clientEnv()
+	}
+	return runArgv(ctx, e.ClientCmd, timeout, env, args...)
 }
 
 // runArgv runs a harness tool (base is its argv, e.g. nix develop ...
 // --command <dir>/bin/mb-client) with args and returns the tail of its
-// output.
-func runArgv(ctx context.Context, base []string, timeout time.Duration, args ...string) (string, error) {
+// output. env is added to this process's environment for the child only.
+func runArgv(ctx context.Context, base []string, timeout time.Duration, env []string, args ...string) (string, error) {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 	argv := append(append([]string{}, base[1:]...), args...)
 	cmd := exec.CommandContext(ctx, base[0], argv...) //nolint:gosec // the closed list fixes the argv
-	cmd.Env = os.Environ()
+	cmd.Env = append(os.Environ(), env...)
 	out, err := cmd.CombinedOutput()
 	tail := lastLines(string(out), 60)
 	if err != nil {

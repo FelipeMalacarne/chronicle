@@ -184,7 +184,11 @@ chronicle accounts connect --character EventSourced [--account acc_x] [--profile
    só as linhas dele.
 2. Sem `--account`, cria a conta (`regular`, sem rota, rsn = nome do personagem) ou reaproveita a do
    mesmo rsn do usuário.
-3. `PUT /api/accounts/{id}/session` com o bearer do login da CLI. O servidor cifra e grava, e marca
+3. `PUT /api/accounts/{id}/session` com o bearer do login da CLI.
+
+   Um personagem que o launcher guarda sem nome (`displayName` nulo, "Not set" na lista) se conecta
+   pelo número na lista, com o nome do jogo: `--index 6 --as EventSourced`, como o `mb-account use
+   --as` do harness. O servidor cifra e grava, e marca
    `managed = true`.
 4. Opcional: associa um perfil.
 

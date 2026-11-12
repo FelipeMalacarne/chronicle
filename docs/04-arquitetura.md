@@ -37,7 +37,7 @@ por formato compartilhando o mesmo pacote de domínio.
 | Banco | Postgres 17 em todos os ambientes; `pgx` + `sqlc` (queries em `db/queries`, tipos gerados em `internal/store/db`) + `goose` (`db/migrations`). |
 | Auth | `AUTH_MODE=dev` ou `oidc` (`coreos/go-oidc` + `golang.org/x/oauth2`, PKCE; sessão `alexedwards/scs` com `pgxstore`). |
 | Frontend | Svelte 5 + SvelteKit `adapter-static` + Vite em `web/`; `web/dist` embutido com `embed.FS`; o grafo é HTML (colunas e árvore), sem biblioteca de grafo. Tipos TS espelham o contrato HTTP à mão (`web/src/lib/progress/types.ts`). |
-| Plugin | Java no Microbot, repositório `microbot-plugins`; só o contrato HTTP é compartilhado. |
+| Plugin | Java no Microbot, em `microbot/` (projeto Gradle próprio, com o harness do cliente de dev); só o contrato HTTP é compartilhado com o Go. |
 | Deploy | Imagem `distroless` não-root com o binário; `docker compose`. |
 
 Custos aceitos: sem compartilhamento nativo de tipos entre servidor e browser; mais código de
@@ -704,7 +704,7 @@ Modelo: WikiSync (BSD-2). Lá, o plugin baixa `GET /runelite/manifest` a cada 20
 varbits/varps do manifest e os níveis, calcula o delta e só envia o que mudou; backoff quadrático em
 falha; o cache local só avança após `200`. Copiamos isso e estendemos. Implementação: `internal/core/ingest`
 (tipos e validação), `internal/store/ingest` (manifest, aceitação, normalização, frescor) e o plugin
-Chronicle Link (`fm/chroniclelink`, antes `fm/ironmanplanner`) no repositório `microbot-plugins` (doc 06).
+Chronicle Link (`fm/chroniclelink`, antes `fm/ironmanplanner`) em `microbot/` (doc 06).
 
 ```mermaid
 sequenceDiagram
@@ -949,6 +949,10 @@ content/              guides/<id>/{guide.json, README.md, entities.report.json, 
                       schema/, reference/ (catálogos)
 db/migrations, db/queries, sqlc.yaml
 data/                 extração original (guide/, sources/bruhsailer/, wiki/, samples/); tools/ (Python)
+microbot/             plugins do Microbot (Gradle, fm/<pacote>: Chronicle Link, Cat Swap, ...), harness em
+                      bin/ e o cliente fixado em microbot.json (doc 06)
+nix/                  pacote Go, cliente Microbot fixado, runtime da base do worker e dev shells (doc 07)
+deploy/               k8s/ (saradomin) e worker/ (imagens dos workers, doc 11)
 docs/
 ```
 
@@ -961,7 +965,8 @@ Regra de dependência: `internal/core` não importa banco nem HTTP; CLI e MCP n�
   `test`, `lint`, `content-validate`, `migrate-*`, `sqlc`, `up`/`down`/`logs`.
 - **CI (GitHub Actions)** em todo PR: web (`pnpm check`, `pnpm test`, build), Go (build, vet,
   golangci-lint, `go test -race`, `chronicle content validate`), migrations (goose up/down/up no Postgres
-  17) e build da imagem na `main`.
+  17), manifests, nix (`nix build .#chronicle` e os testes e jars dos plugins em `microbot/`) e, na
+  `main`, as imagens e o deploy (doc 07, seção 5).
 - Alterar o conteúdo = corrigir o importador ou o normalizador e regenerar (regra 9); o diff do JSON é
   legível porque a saída é determinística com chaves em ordem canônica. Objetivos extraídos mudam só via
   `chronicle content mcp` (doc 09, seção 6).
@@ -977,7 +982,7 @@ Regra de dependência: `internal/core` não importa banco nem HTTP; CLI e MCP n�
 | Ingest | contrato (sequência fora de ordem, manifest antigo ⇒ `409`, token revogado ⇒ `401`, escopo sem bank ⇒ `403`), integração no Postgres (`DATABASE_URL` definido; `just db-up`) |
 | HTTP | handlers com `httptest`, incluindo um teste ponta a ponta com o binário real |
 | Web | `view.ts` em `node --test`; `pnpm check`; conferência das telas no navegador contra o canvas |
-| Plugin | JUnit no repositório `microbot-plugins` (diff, baseline, frescor, ACK/retry, backoff); `mb-test` no jogo |
+| Plugin | JUnit em `microbot/` (`just test-microbot`, job `nix` do CI: diff, baseline, frescor, ACK/retry, backoff); `mb-test` no jogo |
 
 ## 8. Deploy: local-first no zaros, depois saradomin
 
@@ -1166,7 +1171,7 @@ Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam pa
 | 16 | Plugin 1.2.x: posição e mundo (`data.position`, opt-in) com destaque na web dos passos pendentes no lugar (desenho no canvas antes), collection log e combat achievements (decisão 24 do doc 01) | por entrega. **Combat achievements e contador do collection log feitos** (2026-11-10, só servidor e catálogo, sem versão nova do plugin): o `proof` de cada task (bit `id%32` do varp `CA_TASK_COMPLETED_<id/32>`, lido do `VarPlayerID.java` pinado) entra no manifest com os contadores `CA_TOTAL_TASKS_COMPLETED_<TIER>` e `COLLECTION_COUNT`/`_MAX` (assunto `count:*` em `varbits.json`); `ca:<id>@done` passa a ter veredito; a Conta mostra os tiers e o log (V6ContaConquistas1440, página 4b). Conferido ao vivo: com o manifest novo o plugin em uso mandou os varps e a contagem pelos bits bateu com o total do jogo (3 easy, 3 medium); log 15 de 1.734. **Posição e passos no lugar feitos** (2026-11-10): `data.position` (Chronicle Link 1.8.0, opt-in "Send position"; faceta `position`, migration 0011), o ponto do mapa da wiki de 91 dos 105 locais em `content/reference/location_maps.json` (`tools/fetch_wiki_locations.py`; regiões e instâncias ficam de fora, nunca adivinhadas), `progress.Nearby` (passos abertos da rota principal a até 64 tiles) e `GET /api/guides/{guide}/nearby`, no painel "Aqui perto" do Agora (V6AgoraPerto1440, página 1c). Falta: o log por item (precisa o plugin ler o log aberto) e conferir no jogo com o plugin 1.8 |
 | 17 | Fase 0 do doc 10 (endurecimento), em fatias: (a) restrições e locks no banco: trava do `met`, evidência não vazia, FKs de snapshot por conta, query do motor só para `implied`, ordem de locks credencial → conta → fatos, lock por conta no sync, `observed_at` limitado ao servidor (**feita** 2026-11-05: migration 0007, `TestIntegrityPostgres`, `TestSyncConcurrentRunsPostgres` e `TestPushAndSyncConcurrentPostgres`, que reproduz o deadlock 40P01 sem os locks); (b) web: undo com guia e conta, escritas serializadas, recursos por rota (**feita** 2026-11-05: `web/src/lib/progress/undo.ts` com testes, Agora e Rota; conferida no navegador trocando a rota ativa com um desfazer pendente); (c) `observations` por fonte e `player_state` como projeção da junção pura (**feita** 2026-11-05: migration 0008, que recupera do último snapshot do hiscores os fatos que o plugin tinha sobrescrito; `internal/core/facts` com testes de tabela e de independência da ordem; `TestFactsMergePostgres`); (d) log de comandos de marca, autor na evidência e tabela `guides` com FKs (**feita** 2026-11-05: migration 0009 com `guides` e `mark_commands`, que começa com uma semente das marcas existentes; `revokes` no desfazer da web e do painel; `VerifyMarks` repete o log e compara com `step_marks`, conferido no teste de ciclo de vida do progresso e no navegador); (e) `chronicle progress rebuild --check` (CI e comando; aviso no boot) (**feita** 2026-11-05 como `chronicle progress check` sobre `GET /api/progress/check`; boot avisa antes de reavaliar; o job `go` do CI ganhou Postgres 17 e os testes de integração do store, que antes eram pulados no CI, passam a rodar lá e terminam com a checagem); (f) contrato gerado com tygo e fixtures Zod (**fixtures feitas** 2026-11-05, sem Zod: `TestContractPostgres` sobe a API real sobre o conteúdo real e grava em `web/src/lib/api/contract/` uma resposta real por rota como `export const fixture = {…} satisfies <tipo da web>`; o `svelte-check` recusa campo faltando, `null` indevido, enum fora da união e campo desconhecido, e o teste Go recusa mudança de forma sem `-update`; a primeira rodada achou e corrigiu 16 divergências no `types.ts`. **Geração de tipos adiada** pelo dono em 2026-11-05, com OpenAPI como candidato no lugar do tygo, começando pelo contrato do plugin; doc 10, seção 12). **Fase 0 fechada** com isso | cada fatia com teste no Postgres; `rebuild --check` sem diferença no CI e no banco do zaros; teste de concorrência ingest + sync + marca |
 | 18 | Deploy no saradomin (doc 07, seção 3.3): imagem atrás do proxy, `AUTH_MODE=oidc` com o Zitadel, tela de login/sair (desenho no canvas antes) e o item 15. Por último, decidido pelo dono em 2026-11-08 | **feito** (2026-11-12): `https://chronicle.saradomin.ftm.dev.br` na tailnet, Argo CD seguindo `deploy/k8s/overlays/saradomin`, banco `chronicle` no CNPG com o dump do zaros restaurado, login web pelo Zitadel (o primeiro login ficou com a conta dev). O binário, a imagem e o ambiente passaram a se chamar `chronicle` e o repositório virou `FelipeMalacarne/chronicle`. Daqui em diante os dados de verdade ficam no saradomin; o Postgres do zaros é cópia de dev. Falta conferir o plugin com Credential "Login" contra o saradomin |
-| 19 | Workers do Microbot (doc 11, segunda versão): Hub por conta, contas sem rota, sessões cifradas pelo `accounts connect`, imagens `microbot-worker-base` e `chronicle-worker`, pods criados pelo Chronicle, perfis e rotinas no Postgres. Fases F0 (link remoto do zaros), F1 (Hub por conta e lista de workers), F2 (contas e sessões), F3 (imagens e um worker à mão), F4 (gerenciado: reconciliador, RBAC), F5 (perfis), F6 (rotinas no servidor), F7 (capacidade). Desenho: canvas, página 7 (V6MicrobotWorkers1440, V6MicrobotWorkersEstados1440), a completar | **rodada 1 feita** (2026-11-12, doc 11, seção 14): Hub por conta, cofre e sessões, `accounts connect`, `agent --worker`, reconciliador, `/api/workers`, aba Workers, imagens e CI, RBAC, admissão e quota no gielinor; conferido de ponta a ponta sem cluster e a admissão num apiserver real. Falta ligar no saradomin (vault key, roles, imagem base, `WORKERS=on`) e ver a tela de login lá; F5 a F7 e GPU continuam propostas |
+| 19 | Workers do Microbot (doc 11, segunda versão): Hub por conta, contas sem rota, sessões cifradas pelo `accounts connect`, imagens `chronicle-worker-base` e `chronicle-worker`, pods criados pelo Chronicle, perfis e rotinas no Postgres. Fases F0 (link remoto do zaros), F1 (Hub por conta e lista de workers), F2 (contas e sessões), F3 (imagens e um worker à mão), F4 (gerenciado: reconciliador, RBAC), F5 (perfis), F6 (rotinas no servidor), F7 (capacidade). Desenho: canvas, página 7 (V6MicrobotWorkers1440, V6MicrobotWorkersEstados1440), a completar | **rodada 1 feita** (2026-11-12, doc 11, seção 14): Hub por conta, cofre e sessões, `accounts connect`, `agent --worker`, reconciliador, `/api/workers`, aba Workers, imagens e CI, RBAC, admissão e quota no gielinor; conferido de ponta a ponta sem cluster e a admissão num apiserver real. Depois, o `microbot-plugins` entrou neste repositório em `microbot/` (decisão 35 do doc 01): um flake, um CI, e a base do worker sai do mesmo commit, sem bump (doc 07, seções 3.3 e 5). Ligado no saradomin no mesmo dia, com o primeiro worker logado e rodando script (doc 11, seção 14.4); F5 a F7 e GPU continuam propostas |
 
 Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.
 

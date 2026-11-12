@@ -95,7 +95,7 @@ plugin de tracking deste doc continua somente leitura.
 
 ## Adendo de 2026-11-09: um só plugin do Chronicle
 
-Decisão do dono: um só plugin do Chronicle no microbot-plugins. A ponte de controle do doc 08 (menus
+Decisão do dono: um só plugin do Chronicle entre os plugins do Microbot. A ponte de controle do doc 08 (menus
 de NPC, objeto e equipamento, orações, feitiços e as ações tipadas deles) e o export das opções de
 config saíram do Dev Bootstrap para o `fm/ironmanplanner` 1.3.0. Eles só sobem no cliente de dev do
 harness (`-Dmicrobot.dev.harness=true`, o do `mb-client`) e só respondem com o token do Agent
@@ -111,9 +111,20 @@ e nada do contrato de ingest nomeia o plugin, então o servidor não mudou. O `m
 `IronmanPlannerPlugin.jar` antigo ao instalar o novo, nos dois clientes. As seções abaixo descrevem a
 versão 1.0 com o nome antigo e ficam como registro.
 
+## Adendo de 2026-11-12: o plugin mora em `microbot/`
+
+O Chronicle Link, os outros plugins e o harness do cliente de dev saíram do repositório
+`microbot-plugins` para `microbot/` neste repositório, com o histórico (decisão 35 do doc 01). O
+pacote continua `net.runelite.client.plugins.microbot.fm.chroniclelink`. Os jars saem de `just plugins`
+(`gradle -p microbot pluginJars`, em `microbot/build/plugins`) e os testes de `just test-microbot`, que
+o job `nix` do CI roda. O harness (`mb-client`, `mb-deploy`, `mb-install`, `mb-test`, `mb`) fica em
+`microbot/bin`, no PATH do dev shell; as regras e a segurança estão em `microbot/AGENTS.md`. Um
+contrato que muda dos dois lados (ingest, ponte, variáveis do Chronicle Link) muda num commit só. Os
+adendos com `microbot-plugins` são de antes disso.
+
 ## Adendo de 2026-11-04: plugin implementado
 
-O plugin existe em `FelipeMalacarne/microbot-plugins` (repositório privado), pacote
+O plugin foi implementado em `FelipeMalacarne/microbot-plugins` (hoje `microbot/`), pacote
 `net.runelite.client.plugins.microbot.fm.ironmanplanner`, versão 1.0.0. O esqueleto acima virou estes
 arquivos:
 

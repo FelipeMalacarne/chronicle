@@ -33,10 +33,13 @@ e só variáveis de ambiente diferentes. Nada no código distingue os dois ambie
 | **PostgreSQL 17** | banco; no dev shell só o cliente (`psql`, `pg_dump`) | `just db-shell` |
 | **just** | task runner; `just` lista tudo | `justfile` na raiz |
 | **docker compose** | `compose.yaml` (Postgres + app; o `just dev` usa só o Postgres) | `just up/down/logs`, `just db-up/db-down` |
-| **Nix flake** | dev shell reproduzível (`nix develop` / direnv) e `packages.default` do binário | `flake.nix`, `.envrc` |
+| **JDK 21 + Gradle** | plugins do Microbot em `microbot/` (fonte Java 11, Lombok, contra o cliente fixado em `microbot/microbot.json`) | dev shell; `just plugins`, `just test-microbot` |
+| **harness do Microbot** | `mb-client`, `mb-account`, `mb-deploy`, `mb-install`, `mb-test`, `mb-bump`, `mb-vendor`, `mb`: o cliente de dev e os plugins nele | `microbot/bin`, no PATH do dev shell; regras em `microbot/AGENTS.md` |
+| **Nix flake** | dev shells reproduzíveis (`nix develop` / direnv), o pacote do binário, o cliente Microbot fixado e o runtime da base do worker (seção 3.5) | `flake.nix`, `nix/`, `.envrc` |
 
 Tudo que o `justfile` chama via `go run pkg@latest` (goose, sqlc) funciona sem Nix; o flake só evita
-instalar cada ferramenta à mão.
+instalar cada ferramenta à mão. O lado Java (`microbot/`) e o harness precisam do dev shell: ele fixa o
+jar do cliente, o HWID agent e o `microbot-cli`.
 
 ## 3. Fluxos
 
@@ -92,25 +95,27 @@ do Traefik). O Zitadel é público, então o login sai do tailnet e volta.
 mesma imagem, o servidor com `/api/health` de readiness e `/api/version` de liveness, sem disco) e o
 Service; `overlays/saradomin` com o Ingress, a config de `oidc` e a tag da imagem. O CI, a cada push na
 `main`, publica `ghcr.io/felipemalacarne/chronicle:<sha>` (pacote público, como os dos outros apps do
-saradomin; o repositório continua privado) e grava o sha no overlay (`deploy: saradomin roda <sha>`); o Argo segue o overlay na `main`, então esse
+saradomin) e grava o sha no overlay (`deploy: saradomin roda <sha>`); o Argo segue o overlay na `main`, então esse
 commit é o deploy. `secret.example.yaml` lista as chaves do Secret.
 
-**Duas imagens.** O mesmo job publica também `ghcr.io/felipemalacarne/chronicle-worker:<sha>`, a dos
-workers do Microbot (doc 11, seções 7.2 e 13.4): a `microbot-worker-base` do `microbot-plugins`,
-fixada por digest em `deploy/worker/base.lock`, mais o binário do mesmo commit
-(`deploy/worker/Dockerfile`, com `chronicle agent --worker`). No commit de deploy, o CI grava também
-`WORKER_IMAGE` no overlay. Com o `base.lock` vazio, o job publica só o servidor e deixa um aviso. A
-base muda por PR: quando o CI do microbot-plugins publica uma base nova, ele abre (ou atualiza) o PR
-`bump/microbot-worker-base` aqui com o digest no `base.lock` (segredo `CHRONICLE_BUMP_TOKEN` de lá, um
-token fine-grained só deste repositório, com Contents e Pull requests de escrita), e o merge leva a nova
-base. À mão, `just worker-base-bump <tag>` resolve o digest da tag no GHCR e o grava no `base.lock`. O Deployment do servidor roda com a SA
+**Imagens dos workers.** O mesmo job publica também `ghcr.io/felipemalacarne/chronicle-worker:<sha>`,
+a dos workers do Microbot (doc 11, seções 7.2 e 13.4): a base `chronicle-worker-base` mais o binário do
+mesmo commit (`deploy/worker/Dockerfile`, com `chronicle agent --worker`). No commit de deploy, o CI
+grava também `WORKER_IMAGE` no overlay. A base (`deploy/worker/build-base.sh`: as camadas Nix de
+`nix/worker-runtime.nix`, os jars de `gradle -p microbot pluginJars` e `deploy/worker/base.Dockerfile`)
+tem a tag `<versão do Microbot>-<sha7 do último commit que mudou uma entrada da base>`. As entradas são
+`microbot/` (fora `*.md`), `nix/microbot.nix`, `nix/worker-runtime.nix`, `flake.nix`, `flake.lock`,
+`deploy/worker/base.Dockerfile` e o próprio `build-base.sh`; `build-base.sh --tag` imprime a tag. O job
+calcula a tag e só constrói e publica a base quando o GHCR ainda não a tem, então a maioria dos
+pushes pula o Nix e o Gradle. Não existe bump da base: ela segue o commit. À mão, `just worker-base`
+constrói a base e `just worker-image` a base mais o binário da árvore. O Deployment do servidor roda com a SA
 `chronicle`, que o gielinor cria junto com o RBAC, a política de admissão, a quota, a NetworkPolicy e
 o PVC dos workers (`apps/chronicle/README.md` de lá); os workers ficam desligados (`WORKERS=off`) até
 o `CHRONICLE_VAULT_KEY` entrar no `chronicle-secrets`.
 
 **No gielinor** (`clusters/saradomin`): o namespace `chronicle`; o role `chronicle` e o `Database`
 `chronicle` do `postgres-main` (`apps/postgres`); e `apps/chronicle` com a `Application` do Argo, a
-deploy key de leitura do repositório (privado) para o Argo e o `chronicle-secrets`, cifrados com SOPS.
+deploy key de leitura do repositório para o Argo (criada quando ele era privado; hoje é público) e o `chronicle-secrets`, cifrados com SOPS.
 
 Uma vez:
 
@@ -133,7 +138,8 @@ Uma vez:
    - o id do projeto vai em `OIDC_PROJECT_ID`; o id do usuário do dono (Users, 18 dígitos) em
      `OIDC_ALLOWED_SUBJECTS`.
 2. **GHCR**: depois do primeiro push, o pacote `chronicle` em Public (Package settings → Change
-   visibility): o k3s baixa sem login.
+   visibility): o k3s baixa sem login. Para os workers, também `chronicle-worker` e
+   `chronicle-worker-base`.
 3. **Segredos** no gielinor: `chronicle-secrets` com `DATABASE_URL` (a senha gerada para o role
    `chronicle`), `SESSION_SECRET` (`openssl rand -hex 32`) e os quatro valores do passo 1.
 4. **Banco do zaros**: depois de o `Database` existir e antes de o app subir, `pg_dump --no-owner
@@ -168,8 +174,35 @@ home.packages = [ inputs.chronicle.packages.${pkgs.system}.chronicle ];
 O repositório é público (decisão 16 do doc 01), então nada pede credencial. Sem nix-config:
 `nix profile install github:FelipeMalacarne/chronicle`. O pacote
 leva o placeholder de `web/dist` (o flake só vê arquivos rastreados), então serve para CLI, MCP e
-agent; o servidor com a web continua sendo a imagem Docker. O `vendorHash` do `flake.nix` muda quando
-o `go.sum` muda: rode `nix build .#chronicle` e cole o `got:` do erro.
+agent; o servidor com a web continua sendo a imagem Docker. A fonte do pacote é só o que o build Go lê
+(um `fileset` em `nix/chronicle.nix`), então mudar `microbot/`, `docs/` ou a web não recompila o
+binário. O `vendorHash` de `nix/chronicle.nix` muda quando o `go.sum` muda: rode `nix build .#chronicle`
+e cole o `got:` do erro (o job `nix` do CI falha enquanto isso não acontece).
+
+### 3.5 O flake
+
+Um flake na raiz serve o Go e o `microbot/`. O `flake.nix` só liga as saídas; o código fica em `nix/`:
+
+| Arquivo | O que tem |
+|---|---|
+| `nix/chronicle.nix` | o pacote Go (`chronicle`), com o `vendorHash` |
+| `nix/microbot.nix` | o jar do cliente, o HWID agent e o `microbot-cli` fixados por `microbot/microbot.json` |
+| `nix/worker-runtime.nix` | as camadas Nix da `chronicle-worker-base` (JDK 21, Xvfb, x11vnc, o harness, os jars fixados) |
+| `nix/shells.nix` | os dois dev shells |
+
+Saídas:
+
+- `packages.<system>.chronicle` (o `default`): o binário que o nix-config instala (seção 3.4);
+- `packages.<system>.{microbot-client,hwid-agent,microbot-cli}`: a release fixada do Microbot;
+- `packages.x86_64-linux.worker-runtime-image`: o runtime da base do worker, que o
+  `deploy/worker/build-base.sh` completa com os jars dos plugins;
+- `devShells.<system>.default`: tudo (Go, web, clientes do Postgres, `just`, JDK 21, Gradle, jdtls e,
+  no Linux, Xvfb, x11vnc e xdotool), com o harness `microbot/bin` no PATH; é o do direnv;
+- `devShells.<system>.microbot`: só o lado Java e o harness. É o que o job `nix` do CI usa para os
+  plugins e o que o `chronicle agent` usa para rodar o `mb-client` (`nix develop
+  $MICROBOT_HARNESS_DIR#microbot`; o `just agent` aponta `MICROBOT_HARNESS_DIR` para o próprio
+  checkout);
+- `overlays.default`: `pkgs.chronicle` para outro flake.
 
 ## 4. Variáveis de ambiente
 
@@ -203,15 +236,16 @@ então o mesmo `.env` serve para dev no host (localhost) e para o compose.
 | `web` | push em `main` e PRs | `pnpm install --frozen-lockfile`, `pnpm check`, `pnpm build`, publica `web/dist` como artefato |
 | `go` | depois de `web` | baixa `web/dist`, `go build ./...`, `go vet`, golangci-lint (latest, v2), `go test -race`, `chronicle content validate` |
 | `migrations` | paralelo | Postgres 17 como service; `goose up`, `status`, `down-to 0`, `up`; `sqlc compile` |
-| `docker` | só push em `main` | `docker build` da imagem (sem push), cache GHA |
+| `nix` | paralelo | `nix build .#chronicle` (pega um `vendorHash` velho) e `nix develop .#microbot -c gradle -p microbot test pluginJars` (testes e jars dos plugins) |
+| `manifests` | paralelo | `kubectl kustomize deploy/k8s/overlays/saradomin` |
+| `docker` | só push em `main`, depois de todos | a base do worker se o GHCR não tem a tag dela; `chronicle:<sha>` e `chronicle-worker:<sha>` no GHCR; o commit de deploy no overlay (seção 3.3) |
 
 Go via `go-version-file: go.mod`; cache de módulos pelo `setup-go`, cache do pnpm pelo `setup-node`.
 
 ## 6. Troubleshooting
 
-**`nix build` falha com "hash mismatch"**: esperado na primeira vez. `vendorHash` em `flake.nix` está
-como `lib.fakeHash`; copiar o valor de `got: sha256-...` para o arquivo. Repetir sempre que `go.sum`
-mudar. Se falhar com "pattern all:dist: no matching files", `web/dist` não está na árvore que o Nix vê:
+**`nix build` falha com "hash mismatch"**: o `vendorHash` de `nix/chronicle.nix` ficou velho; copiar o
+valor de `got: sha256-...` para o arquivo. Repetir sempre que `go.sum` mudar. Se falhar com "pattern all:dist: no matching files", `web/dist` não está na árvore que o Nix vê:
 rodar `just web-build` e usar `nix build path:.` (o flake de um checkout git só enxerga arquivos
 versionados). O caminho reproduzível para imagem é o `Dockerfile`.
 

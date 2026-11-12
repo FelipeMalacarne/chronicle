@@ -99,7 +99,7 @@ Fases: **MVP** (jogável por uma pessoa, 1-2 semanas), **v1** (tracking completo
 - Fora do plano desde o doc 06: o wiki pede para não usar a API em projetos de terceiros e o plugin próprio cobre tudo que ela daria. Fica como ideia para quem não usa o Microbot; se um dia existir, produz o mesmo snapshot normalizado do F8.
 
 ### F8 Plugin próprio no Microbot (M MVP)
-- Copia o modelo do WikiSync: baixa manifest de varbits do seu servidor, envia deltas com token. Acrescenta: estado de quests (`Quest.getState`), itens no banco/inventário/equipamento (opt-in duplo), `full` no login e no logout. É o que leva o auto-tracking de ~42% para ~70% (seção 5). Implementado como leitura pura em `microbot-plugins` (doc 06); a faceta de quests entra na versão 1.1.0 (doc 09, item 7).
+- Copia o modelo do WikiSync: baixa manifest de varbits do seu servidor, envia deltas com token. Acrescenta: estado de quests (`Quest.getState`), itens no banco/inventário/equipamento (opt-in duplo), `full` no login e no logout. É o que leva o auto-tracking de ~42% para ~70% (seção 5). Implementado como leitura pura no Chronicle Link, em `microbot/` (doc 06); a faceta de quests entra na versão 1.1.0 (doc 09, item 7).
 - **Resolvido:** sideload no Microbot, sem Plugin Hub.
 
 ### F9 Planner de metas (M v1)

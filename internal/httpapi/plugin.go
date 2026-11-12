@@ -5,6 +5,7 @@ import (
 	"errors"
 	"net"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -28,29 +29,85 @@ const (
 )
 
 // pluginCredential authenticates a plugin request (ingest, manifest, panel).
-// A bearer token is used whenever the Authorization header is present, in
-// every mode. Without it, only AUTH_MODE=dev accepts the request, and only
-// when the TCP peer is loopback: RemoteAddr is the connection's address, and
-// X-Forwarded-For or any other header is never trusted for this.
+// A bearer is used whenever the Authorization header is present, in every
+// mode: an ipl_ token, or in AUTH_MODE=oidc the JWT access token of the
+// plugin's device-flow login, which acts for the installation as that user,
+// on that user's accounts, with the scopes of the user's project roles
+// (pluginScopes). Without Authorization, only AUTH_MODE=dev accepts the
+// request, and only when the TCP peer is loopback: RemoteAddr is the
+// connection's address, and X-Forwarded-For or any other header is never
+// trusted for this.
 func (s *Server) pluginCredential(w http.ResponseWriter, r *http.Request) (storeingest.Credential, bool) {
 	if strings.TrimSpace(r.Header.Get("Authorization")) != "" {
 		token, ok := bearerToken(w, r)
 		if !ok {
 			return storeingest.Credential{}, false
 		}
-		return storeingest.Credential{Token: token}, true
+		if s.opts.OIDC == nil || strings.HasPrefix(token, storeingest.TokenPrefix) {
+			return storeingest.Credential{Token: token}, true
+		}
+		installation, ok := installationHeader(w, r, "with a login")
+		if !ok {
+			return storeingest.Credential{}, false
+		}
+		uid, roles, ok := s.verifyBearer(w, r, token, "ingest")
+		if !ok {
+			return storeingest.Credential{}, false
+		}
+		scopes := pluginScopes(roles)
+		if !slices.Contains(scopes, coreingest.ScopeStateWrite) {
+			writeError(w, http.StatusForbidden, "the login lacks the project role "+RoleIngest)
+			return storeingest.Credential{}, false
+		}
+		return storeingest.Credential{
+			Installation: installation, Account: strings.TrimSpace(r.Header.Get(HeaderAccount)),
+			User: uid, Scopes: scopes,
+		}, true
 	}
 	if !s.opts.DevMode || !isLoopback(r.RemoteAddr) {
 		w.Header().Set("WWW-Authenticate", `Bearer realm="ingest"`)
 		writeError(w, http.StatusUnauthorized, "bearer ingest token required")
 		return storeingest.Credential{}, false
 	}
-	installation := strings.TrimSpace(r.Header.Get(HeaderInstallation))
-	if !coreingest.ValidInstallationID(installation) {
-		writeError(w, http.StatusBadRequest, "without a token, the "+HeaderInstallation+" header must carry the plugin's installation id (a lower-case UUID)")
+	installation, ok := installationHeader(w, r, "without a token")
+	if !ok {
 		return storeingest.Credential{}, false
 	}
 	return storeingest.Credential{Installation: installation, Account: strings.TrimSpace(r.Header.Get(HeaderAccount))}, true
+}
+
+// RoleIngest is the project role that lets a plugin login push state; the
+// item and mark scopes are project roles of the same names (docs/04
+// section 2.5).
+const RoleIngest = "ingest"
+
+// pluginScopes maps the project roles of a plugin login onto the ingest
+// scopes: ingest is state:write, and the item and mark scopes are roles of
+// the same name. Other roles are ignored.
+func pluginScopes(roles []string) []coreingest.TokenScope {
+	var scopes []coreingest.TokenScope
+	for _, role := range roles {
+		switch scope := coreingest.TokenScope(role); {
+		case role == RoleIngest:
+			scopes = append(scopes, coreingest.ScopeStateWrite)
+		case scope == coreingest.ScopeItemsBank, scope == coreingest.ScopeItemsInventory,
+			scope == coreingest.ScopeItemsEquipment, scope == coreingest.ScopeMarksWrite:
+			scopes = append(scopes, scope)
+		}
+	}
+	slices.Sort(scopes)
+	return slices.Compact(scopes)
+}
+
+// installationHeader reads the plugin's installation id, which every
+// request without an ipl_ token carries.
+func installationHeader(w http.ResponseWriter, r *http.Request, how string) (string, bool) {
+	installation := strings.TrimSpace(r.Header.Get(HeaderInstallation))
+	if !coreingest.ValidInstallationID(installation) {
+		writeError(w, http.StatusBadRequest, how+", the "+HeaderInstallation+" header must carry the plugin's installation id (a lower-case UUID)")
+		return "", false
+	}
+	return installation, true
 }
 
 // isLoopback reports whether the connection's peer is 127.0.0.0/8 or ::1.

@@ -129,11 +129,13 @@ type oidcEnv struct {
 	srv  *httptest.Server
 	opts *OIDCOptions
 	hub  *events.Hub
+	// ingest records the plugin credentials the handlers pass on.
+	ingest *fakeIngestService
 }
 
 func newOIDCEnv(t *testing.T, ident Identity, store scs.Store, policy auth.Policy) *oidcEnv {
 	t.Helper()
-	e := &oidcEnv{t: t, fake: authtest.New(t, testClientID), hub: events.NewHub([]string{"oziris-main"})}
+	e := &oidcEnv{t: t, fake: authtest.New(t, testClientID), hub: events.NewHub([]string{"oziris-main"}), ingest: newFakeIngestService()}
 	var handler http.Handler
 	e.srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { handler.ServeHTTP(w, r) }))
 	t.Cleanup(e.srv.Close)
@@ -157,7 +159,7 @@ func newOIDCEnv(t *testing.T, ident Identity, store scs.Store, policy auth.Polic
 	handler = New(Options{
 		Version: "test", Content: &content.Content{Guides: []*content.Guide{g}}, Progress: &fakeProgress{},
 		Accounts: fakeAccounts{}, Events: e.hub, EventsHeartbeat: time.Hour, OIDC: e.opts, Identity: ident,
-		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Ingest: e.ingest, Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
 	})
 	return e
 }

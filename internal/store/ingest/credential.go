@@ -13,28 +13,44 @@ import (
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
 )
 
-// Credential is how a plugin request authenticates: an ipl_ token, or (only
-// in AUTH_MODE=dev, from loopback) a tokenless installation. The transport
-// decides which one a request may use; the repository accepts the tokenless
-// form only when WithDevInstallations enabled it.
+// Credential is how a plugin request authenticates: an ipl_ token, or an
+// installation without one. An installation is either a dev one (only in
+// AUTH_MODE=dev, from loopback) or one signed in as a planner user through
+// OIDC (AUTH_MODE=oidc, the device flow; docs/04 section 2.5). The transport
+// decides which one a request may use; the repository accepts the dev form
+// only when WithDevInstallations enabled it.
 type Credential struct {
-	// Token is the plaintext ipl_ token; empty for a dev installation.
+	// Token is the plaintext ipl_ token; empty for an installation.
 	Token string
-	// Installation is the plugin's installation id (dev installations).
+	// Installation is the plugin's installation id (installations).
 	Installation string
 	// Account is the account id the plugin's "Conta" setting names; empty
 	// lets the server resolve it (coreingest.ResolveDevAccount).
 	Account string
+	// User is the planner user an OIDC installation signed in as: it acts
+	// only on that user's accounts, with Scopes from the user's project
+	// roles. Empty for a dev installation.
+	User   string
+	Scopes []coreingest.TokenScope
 }
 
-// Tokenless reports whether the credential is a dev installation.
+// Tokenless reports whether the credential is an installation (dev or OIDC).
 func (c Credential) Tokenless() bool { return c.Token == "" }
+
+// scopes of an installation: everything for a dev one, the roles' for an
+// OIDC one.
+func (c Credential) scopes() []coreingest.TokenScope {
+	if c.User == "" {
+		return append([]coreingest.TokenScope(nil), devScopes...)
+	}
+	return append([]coreingest.TokenScope(nil), c.Scopes...)
+}
 
 // Principal is the account a plugin credential acts for and what it may do.
 type Principal struct {
 	AccountID string
 	Scopes    []coreingest.TokenScope
-	// Tokenless: a dev installation (AUTH_MODE=dev, loopback).
+	// Tokenless: an installation (dev, or signed in through OIDC).
 	Tokenless bool
 }
 
@@ -74,11 +90,26 @@ type credentialRow struct {
 
 func (r *Repository) checkCredential(c Credential) error {
 	if c.Tokenless() {
-		if !r.devInstallations || !coreingest.ValidInstallationID(c.Installation) {
+		if !coreingest.ValidInstallationID(c.Installation) || (c.User == "" && !r.devInstallations) {
 			return ErrUnauthorized
 		}
 	}
 	return nil
+}
+
+// latestInstallation is the record the installation pushed through most
+// recently, among the user's accounts for an OIDC installation.
+func (r *Repository) latestInstallation(ctx context.Context, c Credential) (storedb.GetLatestPluginInstallationRow, bool, error) {
+	row, err := r.queries.GetLatestPluginInstallation(ctx, storedb.GetLatestPluginInstallationParams{
+		InstallationID: text(c.Installation), UserID: text(c.User),
+	})
+	switch {
+	case err == nil:
+		return row, true, nil
+	case errors.Is(err, pgx.ErrNoRows):
+		return row, false, nil
+	}
+	return row, false, fmt.Errorf("get plugin installation: %w", err)
 }
 
 // Principal returns the account a credential acts for.
@@ -101,18 +132,18 @@ func (r *Repository) Principal(ctx context.Context, c Credential) (Principal, er
 		return Principal{AccountID: token.AccountID, Scopes: scopes}, nil
 	}
 	bound := ""
-	latest, err := r.queries.GetLatestPluginInstallation(ctx, text(c.Installation))
-	switch {
-	case err == nil:
-		bound = latest.AccountID
-	case !errors.Is(err, pgx.ErrNoRows):
-		return Principal{}, fmt.Errorf("get plugin installation: %w", err)
-	}
-	account, err := r.resolveDevAccount(ctx, r.queries, coreingest.DevAccountHint{Explicit: c.Account, Bound: bound})
+	latest, found, err := r.latestInstallation(ctx, c)
 	if err != nil {
 		return Principal{}, err
 	}
-	return Principal{AccountID: account, Scopes: append([]coreingest.TokenScope(nil), devScopes...), Tokenless: true}, nil
+	if found {
+		bound = latest.AccountID
+	}
+	account, err := r.resolveAccount(ctx, r.queries, c.User, coreingest.DevAccountHint{Explicit: c.Account, Bound: bound})
+	if err != nil {
+		return Principal{}, err
+	}
+	return Principal{AccountID: account, Scopes: c.scopes(), Tokenless: true}, nil
 }
 
 // manifestFor builds the manifest of a credential: a token's scopes, or the
@@ -139,18 +170,18 @@ func (r *Repository) manifestFor(ctx context.Context, c Credential) (coreingest.
 	// The manifest does not depend on the account: a tokenless manifest is
 	// answered before login, when nothing names the character yet.
 	resync := true
-	latest, err := r.queries.GetLatestPluginInstallation(ctx, text(c.Installation))
-	switch {
-	case err == nil:
-		resync = int64(latest.ManifestVersion) != r.definition.Version
-	case !errors.Is(err, pgx.ErrNoRows):
-		return coreingest.Manifest{}, fmt.Errorf("get plugin installation: %w", err)
+	latest, found, err := r.latestInstallation(ctx, c)
+	if err != nil {
+		return coreingest.Manifest{}, err
 	}
-	manifest := r.definition.manifest(append([]coreingest.TokenScope(nil), devScopes...), resync)
+	if found {
+		resync = int64(latest.ManifestVersion) != r.definition.Version
+	}
+	manifest := r.definition.manifest(c.scopes(), resync)
 	return manifest, manifest.Validate()
 }
 
-// lockCredential locks the protocol row of a push: the token's, or the dev
+// lockCredential locks the protocol row of a push: the token's, or the
 // installation's record for the push's account (created on first use).
 func (r *Repository) lockCredential(ctx context.Context, q *storedb.Queries, c Credential, push coreingest.Push) (credentialRow, error) {
 	if err := r.checkCredential(c); err != nil {
@@ -170,7 +201,7 @@ func (r *Repository) lockCredential(ctx context.Context, q *storedb.Queries, c C
 		}
 		return credentialRow{ID: token.ID, AccountID: token.AccountID, Scopes: scopes, ManifestVersion: int64(token.ManifestVersion), LastSeq: token.LastSeq}, nil
 	}
-	account, err := r.resolveDevAccount(ctx, q, coreingest.DevAccountHint{Explicit: c.Account, Player: push.Username})
+	account, err := r.resolveAccount(ctx, q, c.User, coreingest.DevAccountHint{Explicit: c.Account, Player: push.Username})
 	if err != nil {
 		return credentialRow{}, err
 	}
@@ -178,13 +209,18 @@ func (r *Repository) lockCredential(ctx context.Context, q *storedb.Queries, c C
 	if err != nil {
 		return credentialRow{}, fmt.Errorf("generate installation record id: %w", err)
 	}
-	rawScopes, err := encodeScopes(devScopes)
+	scopes := c.scopes()
+	rawScopes, err := encodeScopes(scopes)
 	if err != nil {
 		return credentialRow{}, err
 	}
+	label := "dev installation"
+	if c.User != "" {
+		label = "oidc installation"
+	}
 	if err = q.EnsurePluginInstallation(ctx, storedb.EnsurePluginInstallationParams{
 		ID: id, AccountID: account, InstallationID: text(c.Installation),
-		Label: text("dev installation"), Scopes: rawScopes,
+		Label: text(label), Scopes: rawScopes,
 	}); err != nil {
 		return credentialRow{}, fmt.Errorf("record plugin installation: %w", err)
 	}
@@ -198,12 +234,21 @@ func (r *Repository) lockCredential(ctx context.Context, q *storedb.Queries, c C
 		}
 		return credentialRow{}, fmt.Errorf("lock plugin installation: %w", err)
 	}
-	return credentialRow{ID: row.ID, AccountID: row.AccountID, Scopes: append([]coreingest.TokenScope(nil), devScopes...), ManifestVersion: int64(row.ManifestVersion), LastSeq: row.LastSeq}, nil
+	return credentialRow{ID: row.ID, AccountID: row.AccountID, Scopes: scopes, ManifestVersion: int64(row.ManifestVersion), LastSeq: row.LastSeq}, nil
 }
 
-// resolveDevAccount maps the request's hint onto the active accounts.
-func (r *Repository) resolveDevAccount(ctx context.Context, q *storedb.Queries, hint coreingest.DevAccountHint) (string, error) {
-	rows, err := q.ListActiveAccounts(ctx)
+// resolveAccount maps the request's hint onto the active accounts: all of
+// them for a dev installation, the user's for an OIDC one.
+func (r *Repository) resolveAccount(ctx context.Context, q *storedb.Queries, user string, hint coreingest.DevAccountHint) (string, error) {
+	var (
+		rows []storedb.Account
+		err  error
+	)
+	if user == "" {
+		rows, err = q.ListActiveAccounts(ctx)
+	} else {
+		rows, err = q.ListUserActiveAccounts(ctx, user)
+	}
 	if err != nil {
 		return "", fmt.Errorf("list active accounts: %w", err)
 	}

@@ -18,6 +18,10 @@ import (
 	storedb "github.com/FelipeMalacarne/ironman-planner/internal/store/db"
 )
 
+// TokenPrefix starts every ipl_ plugin token, which tells it apart from the
+// JWT of a plugin signed in through OIDC.
+const TokenPrefix = "ipl_"
+
 // CreatedToken is returned once by the dev-only token bootstrap endpoint.
 type CreatedToken struct {
 	ID        string                  `json:"id"`
@@ -95,7 +99,7 @@ func (r *Repository) CreateToken(ctx context.Context, accountID, label string, s
 	if err != nil {
 		return CreatedToken{}, fmt.Errorf("%w: %v", ErrInvalidPayload, err)
 	}
-	plaintext, err := randomText("ipl_", 32)
+	plaintext, err := randomText(TokenPrefix, 32)
 	if err != nil {
 		return CreatedToken{}, fmt.Errorf("generate token: %w", err)
 	}

@@ -71,12 +71,14 @@ WHERE t.account_id = $1 AND t.installation_id = $2 AND t.token_hash IS NULL
 FOR UPDATE OF t;
 
 -- name: GetLatestPluginInstallation :one
--- The record a dev installation pushed through most recently: the account its
--- panel shows and the manifest version it last used.
+-- The record an installation pushed through most recently: the account its
+-- panel shows and the manifest version it last used. With user_id (a plugin
+-- signed in through OIDC) only that user's accounts count.
 SELECT t.*, a.user_id
 FROM plugin_ingest_tokens t
 JOIN accounts a ON a.id = t.account_id
-WHERE t.installation_id = $1 AND t.token_hash IS NULL
+WHERE t.installation_id = sqlc.arg(installation_id) AND t.token_hash IS NULL
   AND t.revoked_at IS NULL AND a.active = true
+  AND (sqlc.narg(user_id)::text IS NULL OR a.user_id = sqlc.narg(user_id))
 ORDER BY t.last_seen_at DESC NULLS LAST, t.created_at DESC
 LIMIT 1;

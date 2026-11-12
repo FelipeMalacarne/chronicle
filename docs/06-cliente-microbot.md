@@ -330,7 +330,8 @@ Contrato e rotas: doc 04, seções 2.5 e 6.4; espelho em `docs/arquitetura/types
   compose o peer é o gateway do Docker e o plugin precisa do token).
 - `TokenCredential` ("ipl_ token"): `Authorization: Bearer ipl_…`, como na 1.1.1. As marcas do painel
   pedem o escopo `marks:write` no token.
-- Device flow de `oidc` (item 15): só o ponto de extensão documentado na interface, sem implementação.
+- Device flow de `oidc` (item 15): só o ponto de extensão documentado na interface, sem implementação
+  (feito na 1.9.0: adendo de 2026-11-11).
 
 O id da instalação é um UUID aleatório gerado uma vez e guardado na config (`installationId`,
 escondida). Ele identifica a instalação, não o jogador: o servidor guarda o `client_seq` e o manifest
@@ -390,3 +391,40 @@ doc 01) e `position` (só a última, sem histórico). Um plugin 1.7 ignora as fl
 anterior não as anuncia e o 1.8 não manda os campos. Verificação: testes JUnit (`readyAt` só crescendo
 ou pronto, `full` e `delta` dos relógios, aba nova pede `full`, limiar da posição; 111 no pacote) e,
 no servidor, testes de contrato e `TestTimersAndPositionPostgres`.
+
+## Adendo de 2026-11-11: login do plugin em `oidc` (Chronicle Link 1.9.0, item 15)
+
+Implementa a auth de `oidc` da decisão 28 do doc 01 (doc 04, seção 2.5), antes do deploy no saradomin
+(item 18). O contrato de ingest não muda: muda só a credencial.
+
+**No plugin.** Nova opção de Credential, "Login (Chronicle panel)" (`LoginCredential`, `LoginSession`,
+`DeviceLogin`). Com ela, o painel lateral mostra **Entrar** enquanto não há login:
+
+1. `GET /api/auth/client` do planner dá issuer, `client_id` da aplicação nativa e scopes; o
+   `/.well-known/openid-configuration` do issuer dá os endpoints de device e token.
+2. Device Authorization Grant (RFC 8628): o painel mostra o código e **Abrir página** abre a página
+   do issuer com o código preenchido; o plugin consulta o token no intervalo pedido (`slow_down` soma
+   5 s) até a confirmação, a recusa ou o vencimento do código.
+3. O refresh token fica na config do RuneLite (`loginRefreshToken`, escondida e secreta); o access
+   token (JWT) fica só em memória e é renovado dois minutos antes de vencer, ou logo depois de um 401
+   do planner. Refresh recusado (`invalid_grant`) desfaz o login; issuer fora do ar mantém o login e
+   tenta de novo a cada 30 s. **Sair**, no rodapé do painel, apaga o refresh token.
+
+Cada pedido leva `Authorization: Bearer <jwt>`, `X-Ironman-Installation` e, se preenchida,
+`X-Ironman-Account`. A impressão da credencial não muda quando o token é renovado, então o
+`client_seq` segue.
+
+**No servidor.** Em `AUTH_MODE=oidc`, um bearer que não começa com `ipl_` nas rotas do plugin
+(manifest, ingest e painel) é verificado como o da CLI (JWKS, `iss`, `aud` com a aplicação nativa,
+`exp`, política de `sub`/role, usuário de `(issuer, sub)` já existente). Ele age pela instalação como
+esse usuário: a conta sai da "Conta", do personagem do push ou da última conta da instalação, sempre
+entre as contas ativas desse usuário (outra conta é 404), e o registro da instalação fica em
+`plugin_ingest_tokens` como o de dev (`label` `oidc installation`). As roles do projeto viram os
+`scopes`: `ingest` → `state:write`, e `items:bank`, `items:inventory`, `items:equipment` e
+`marks:write` com o mesmo nome; sem `ingest` é 403. Os tokens `ipl_` continuam aceitos em qualquer modo
+(nenhum é emitido em `oidc`, já que o bootstrap é só de dev).
+
+Verificação: `TestOIDCPluginLogin` (JWT do provedor falso nas rotas do plugin, roles → scopes, sem
+`ingest`, sem instalação, vencido, `ipl_` à parte), `TestOIDCInstallationPostgres` (só as contas do
+usuário, escopos das roles no push), `LoginSessionTest` no plugin (fluxo completo contra um issuer falso,
+renovação com rotação, `invalid_grant`, issuer fora do ar) e o painel renderizado sem cliente.

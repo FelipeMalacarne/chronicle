@@ -88,9 +88,15 @@ FROM plugin_ingest_tokens t
 JOIN accounts a ON a.id = t.account_id
 WHERE t.installation_id = $1 AND t.token_hash IS NULL
   AND t.revoked_at IS NULL AND a.active = true
+  AND ($2::text IS NULL OR a.user_id = $2)
 ORDER BY t.last_seen_at DESC NULLS LAST, t.created_at DESC
 LIMIT 1
 `
+
+type GetLatestPluginInstallationParams struct {
+	InstallationID pgtype.Text `json:"installation_id"`
+	UserID         pgtype.Text `json:"user_id"`
+}
 
 type GetLatestPluginInstallationRow struct {
 	ID              string             `json:"id"`
@@ -108,10 +114,11 @@ type GetLatestPluginInstallationRow struct {
 	UserID          string             `json:"user_id"`
 }
 
-// The record a dev installation pushed through most recently: the account its
-// panel shows and the manifest version it last used.
-func (q *Queries) GetLatestPluginInstallation(ctx context.Context, installationID pgtype.Text) (GetLatestPluginInstallationRow, error) {
-	row := q.db.QueryRow(ctx, getLatestPluginInstallation, installationID)
+// The record an installation pushed through most recently: the account its
+// panel shows and the manifest version it last used. With user_id (a plugin
+// signed in through OIDC) only that user's accounts count.
+func (q *Queries) GetLatestPluginInstallation(ctx context.Context, arg GetLatestPluginInstallationParams) (GetLatestPluginInstallationRow, error) {
+	row := q.db.QueryRow(ctx, getLatestPluginInstallation, arg.InstallationID, arg.UserID)
 	var i GetLatestPluginInstallationRow
 	err := row.Scan(
 		&i.ID,

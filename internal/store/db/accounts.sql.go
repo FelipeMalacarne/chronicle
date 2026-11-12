@@ -197,6 +197,44 @@ func (q *Queries) ListActiveAccounts(ctx context.Context) ([]Account, error) {
 	return items, nil
 }
 
+const listUserActiveAccounts = `-- name: ListUserActiveAccounts :many
+SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at FROM accounts WHERE active = true AND user_id = $1 ORDER BY created_at ASC
+`
+
+// The accounts a plugin signed in as this user may push for (AUTH_MODE=oidc).
+func (q *Queries) ListUserActiveAccounts(ctx context.Context, userID string) ([]Account, error) {
+	rows, err := q.db.Query(ctx, listUserActiveAccounts, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Account{}
+	for rows.Next() {
+		var i Account
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Rsn,
+			&i.RsnNormalized,
+			&i.Mode,
+			&i.GuideID,
+			&i.Layer,
+			&i.WomPlayerID,
+			&i.NameHistory,
+			&i.Active,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const setAccountActive = `-- name: SetAccountActive :exec
 UPDATE accounts SET active = $2, updated_at = now() WHERE id = $1
 `

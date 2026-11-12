@@ -193,3 +193,61 @@ func countRows(ctx context.Context, t *testing.T, pool *pgxpool.Pool, query stri
 	}
 	return n
 }
+
+// An installation signed in through OIDC (AUTH_MODE=oidc, docs/04 section
+// 2.5) works without WithDevInstallations, sees only its user's accounts and
+// keeps the scopes of the user's roles.
+func TestOIDCInstallationPostgres(t *testing.T) {
+	ctx := context.Background()
+	pool := testIngestPool(ctx, t)
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO users (id, subject, username) VALUES ('usr_owner', '100', 'owner'), ('usr_other', '200', 'other');
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id) VALUES
+		  ('acc_owner', 'usr_owner', 'Iron Example', 'iron_example', 'ironman', 'guide-1'),
+		  ('acc_other', 'usr_other', 'Someone Else', 'someone_else', 'ironman', 'guide-1');
+	`); err != nil {
+		t.Fatalf("insert account fixture: %v", err)
+	}
+	def := Definition{Version: 7, Varbits: []int64{}, Varps: []int64{}, Collections: []int64{}, IntervalSeconds: 10}
+	repo := New(pool, def)
+	const installation = "3f2b8c1e-9a4d-4e7b-8c2a-1d5e6f7a8b9c"
+	login := Credential{Installation: installation, User: "usr_owner", Scopes: []coreingest.TokenScope{coreingest.ScopeStateWrite}}
+
+	// Two accounts in the database, one of them the user's: no ambiguity.
+	p, err := repo.Principal(ctx, login)
+	if err != nil || p.AccountID != "acc_owner" || !p.Allows(coreingest.ScopeStateWrite) || p.Allows(coreingest.ScopeItemsBank) {
+		t.Fatalf("oidc principal = %+v, %v", p, err)
+	}
+	manifest, err := repo.ManifestFor(ctx, login)
+	if err != nil || manifest.Items.Bank || !manifest.Resync {
+		t.Fatalf("oidc manifest = %+v, %v", manifest, err)
+	}
+	// Another user's account, by the "Conta" setting or by the player, is
+	// never reached.
+	if _, err = repo.Principal(ctx, Credential{Installation: installation, User: "usr_owner", Account: "acc_other", Scopes: login.Scopes}); !errors.Is(err, ErrAccountNotFound) {
+		t.Fatalf("oidc principal on another user's account = %v", err)
+	}
+	push := repositoryFullPush(1, repositoryRestored(1, map[string]int64{"995": 10}))
+	push.Username = "Someone Else"
+	raw, _ := json.Marshal(push)
+	if _, err = repo.AcceptFor(ctx, login, "10.0.0.1", raw, push); err == nil {
+		t.Fatal("oidc push with bank items and only state:write was accepted")
+	}
+	push.Data.Items.Bank = repositoryUnavailable(push.SentAt.Add(-time.Second))
+	raw, _ = json.Marshal(push)
+	resp, err := repo.AcceptFor(ctx, login, "10.0.0.1", raw, push)
+	if err != nil || resp.AcceptedSeq != 1 {
+		t.Fatalf("oidc push = %+v, %v", resp, err)
+	}
+	var account, label string
+	if err = pool.QueryRow(ctx, `SELECT account_id, label FROM plugin_ingest_tokens WHERE installation_id = $1`, installation).Scan(&account, &label); err != nil || account != "acc_owner" || label != "oidc installation" {
+		t.Fatalf("oidc installation record = %s %s %v", account, label, err)
+	}
+	// The other user, with the same installation id, does not see it.
+	if _, err = repo.Principal(ctx, Credential{Installation: installation, User: "usr_other", Scopes: login.Scopes}); err != nil {
+		t.Fatalf("other user's principal = %v", err)
+	}
+	if latest, found, err := repo.latestInstallation(ctx, Credential{Installation: installation, User: "usr_other"}); err != nil || found {
+		t.Fatalf("other user's latest installation = %+v %v %v", latest, found, err)
+	}
+}

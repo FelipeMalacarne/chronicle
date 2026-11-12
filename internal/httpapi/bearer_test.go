@@ -18,7 +18,9 @@ import (
 
 	"github.com/FelipeMalacarne/ironman-planner/internal/auth"
 	"github.com/FelipeMalacarne/ironman-planner/internal/auth/authtest"
+	coreingest "github.com/FelipeMalacarne/ironman-planner/internal/core/ingest"
 	"github.com/FelipeMalacarne/ironman-planner/internal/store/identity"
+	storeingest "github.com/FelipeMalacarne/ironman-planner/internal/store/ingest"
 )
 
 // bearer sends one request with Authorization and no cookie.
@@ -180,5 +182,80 @@ func TestAuthClientDev(t *testing.T) {
 	_ = json.NewDecoder(resp.Body).Decode(&body)
 	if resp.StatusCode != http.StatusOK || body["auth_mode"] != "dev" || len(body) != 1 {
 		t.Fatalf("dev auth client = %d %v", resp.StatusCode, body)
+	}
+}
+
+// In oidc the plugin signs in through the same device flow: its JWT acts for
+// the installation as that user, with the scopes of the user's project roles
+// (docs/04 section 2.5). ipl_ tokens keep their own path.
+func TestOIDCPluginLogin(t *testing.T) {
+	e := newOIDCEnv(t, newMemIdentity(), memstore.New(), auth.Policy{RequiredRole: "owner"})
+	plugin := authtest.User{Subject: owner.Subject, Username: owner.Username, Roles: []string{"owner", "ingest", "items:bank", "marks:write", "other"}}
+	jwt := e.accessToken(plugin, testNativeClientID, time.Hour)
+	manifest := func(authorization, installation string) (int, map[string]any) {
+		t.Helper()
+		req, _ := http.NewRequest("GET", e.srv.URL+"/api/ingest/manifest", nil)
+		if authorization != "" {
+			req.Header.Set("Authorization", authorization)
+		}
+		if installation != "" {
+			req.Header.Set(HeaderInstallation, installation)
+		}
+		req.Header.Set(HeaderAccount, "acc-1")
+		resp, err := http.DefaultClient.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		var out map[string]any
+		_ = json.NewDecoder(resp.Body).Decode(&out)
+		return resp.StatusCode, out
+	}
+	last := func() storeingest.Credential {
+		e.ingest.mu.Lock()
+		defer e.ingest.mu.Unlock()
+		if len(e.ingest.creds) == 0 {
+			return storeingest.Credential{}
+		}
+		return e.ingest.creds[len(e.ingest.creds)-1]
+	}
+
+	if status, body := manifest("", testInstallation); status != http.StatusUnauthorized {
+		t.Fatalf("no token in oidc = %d %v", status, body)
+	}
+	if status, body := manifest("Bearer "+jwt, testInstallation); status != http.StatusForbidden {
+		t.Fatalf("plugin before any web login = %d %v", status, body)
+	}
+	if resp := e.login(e.client(), "/", owner); resp.StatusCode != http.StatusSeeOther {
+		t.Fatalf("web login = %d", resp.StatusCode)
+	}
+	if status, body := manifest("Bearer "+jwt, ""); status != http.StatusBadRequest {
+		t.Fatalf("login without the installation id = %d %v", status, body)
+	}
+	if status, body := manifest("Bearer "+jwt, testInstallation); status != http.StatusOK {
+		t.Fatalf("plugin login manifest = %d %v", status, body)
+	}
+	got := last()
+	want := []coreingest.TokenScope{coreingest.ScopeItemsBank, coreingest.ScopeMarksWrite, coreingest.ScopeStateWrite}
+	if got.Token != "" || got.User != "usr_"+owner.Subject || got.Installation != testInstallation || got.Account != "acc-1" || !slices.Equal(got.Scopes, want) {
+		t.Fatalf("plugin login credential = %+v", got)
+	}
+
+	// Without the ingest role nothing is pushed; a bad JWT is 401.
+	noIngest := e.accessToken(authtest.User{Subject: owner.Subject, Roles: []string{"owner", "items:bank"}}, testNativeClientID, time.Hour)
+	if status, body := manifest("Bearer "+noIngest, testInstallation); status != http.StatusForbidden {
+		t.Fatalf("login without the ingest role = %d %v", status, body)
+	}
+	expired := e.accessToken(plugin, testNativeClientID, -time.Minute)
+	if status, body := manifest("Bearer "+expired, testInstallation); status != http.StatusUnauthorized {
+		t.Fatalf("expired plugin login = %d %v", status, body)
+	}
+
+	// An ipl_ token is still a token, never verified as a JWT.
+	if status, body := manifest("Bearer ipl_whatever", ""); status != http.StatusUnauthorized {
+		t.Fatalf("unknown ipl_ token = %d %v", status, body)
+	}
+	if got = last(); got.Token != "ipl_whatever" || got.User != "" {
+		t.Fatalf("ipl_ credential = %+v", got)
 	}
 }

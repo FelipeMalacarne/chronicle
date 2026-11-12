@@ -127,7 +127,7 @@ A sessão web por OIDC está pronta (doc 04, seção 2.5); falta só o deploy.
    vem da migration 0001).
 7. Primeiro login: o primeiro usuário OIDC do banco recebe todas as contas do usuário dev (regra no
    doc 04, seção 2.5; o log diz `first OIDC login claimed the dev accounts`). Por isso o dono entra
-   antes de qualquer outro usuário. Os tokens `ipl_` do plugin continuam valendo até o item 15.
+   antes de qualquer outro usuário. Os tokens `ipl_` do plugin continuam aceitos, mas o plugin entra pelo próprio login (Credential "Login", Entrar no painel; doc 06, adendo de 2026-11-11), depois do primeiro login na web.
 8. Conferir: `/` sem sessão leva ao Zitadel e volta à mesma tela; `GET /api/me` mostra as contas;
    um usuário sem a role vê "Acesso negado".
 

@@ -162,49 +162,61 @@ func (s *Server) authed(h http.HandlerFunc) http.Handler {
 }
 
 // bearerAuthed authenticates by the JWT access token of the native client
-// (CLI, `ironman mcp`, later the plugin; docs/04 section 2.5): signature,
-// issuer, audience and expiry by the cached JWKS, the same policy as the
-// session, and an existing user of (issuer, sub). The session is never
-// consulted, so a bad token is 401 even with a valid cookie, and no CSRF
-// header is needed: the browser never attaches a bearer token by itself.
+// (CLI, `ironman mcp`; the plugin goes through pluginCredential; docs/04
+// section 2.5). The session is never consulted, so a bad token is 401 even
+// with a valid cookie, and no CSRF header is needed: the browser never
+// attaches a bearer token by itself.
 func (s *Server) bearerAuthed(h http.HandlerFunc, w http.ResponseWriter, r *http.Request) {
-	o := s.opts.OIDC
-	unauthorized := func(msg string) {
-		w.Header().Set("WWW-Authenticate", `Bearer realm="ironman"`)
-		writeError(w, http.StatusUnauthorized, msg)
-	}
 	scheme, raw, _ := strings.Cut(r.Header.Get("Authorization"), " ")
 	raw = strings.TrimSpace(raw)
 	if !strings.EqualFold(scheme, "Bearer") || raw == "" {
-		unauthorized("Authorization must be a Bearer token")
+		w.Header().Set("WWW-Authenticate", `Bearer realm="ironman"`)
+		writeError(w, http.StatusUnauthorized, "Authorization must be a Bearer token")
 		return
+	}
+	uid, roles, ok := s.verifyBearer(w, r, raw, "ironman")
+	if !ok {
+		return
+	}
+	ctx := context.WithValue(r.Context(), userKey{}, uid)
+	h(w, r.WithContext(context.WithValue(ctx, rolesKey{}, roles)))
+}
+
+// verifyBearer checks a JWT access token of the native client: signature,
+// issuer, audience and expiry by the cached JWKS, the same policy as the
+// session, and an existing user of (issuer, sub). It answers the refusal
+// itself and returns the user id and the token's project roles.
+func (s *Server) verifyBearer(w http.ResponseWriter, r *http.Request, raw, realm string) (string, []string, bool) {
+	o := s.opts.OIDC
+	unauthorized := func(msg string) {
+		w.Header().Set("WWW-Authenticate", `Bearer realm="`+realm+`"`)
+		writeError(w, http.StatusUnauthorized, msg)
 	}
 	id, err := o.Provider.VerifyAccessToken(r.Context(), raw)
 	if errors.Is(err, auth.ErrNoNativeClient) {
 		unauthorized("bearer login is not configured (OIDC_NATIVE_CLIENT_ID)")
-		return
+		return "", nil, false
 	}
 	if err != nil {
 		s.log.Info("auth: bearer token refused", "err", err)
 		unauthorized("invalid or expired token")
-		return
+		return "", nil, false
 	}
 	if !o.Policy.Allows(id.Subject, id.Roles) {
 		writeError(w, http.StatusForbidden, deniedMessage)
-		return
+		return "", nil, false
 	}
 	u, err := s.opts.Identity.UserBySubject(r.Context(), id.Issuer, id.Subject)
 	if errors.Is(err, identity.ErrUserNotFound) {
 		writeError(w, http.StatusForbidden, "unknown user: sign in on the web once before using a token")
-		return
+		return "", nil, false
 	}
 	if err != nil {
 		s.log.Error("auth: bearer user", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not load the user")
-		return
+		return "", nil, false
 	}
-	ctx := context.WithValue(r.Context(), userKey{}, u.ID)
-	h(w, r.WithContext(context.WithValue(ctx, rolesKey{}, id.Roles)))
+	return u.ID, id.Roles, true
 }
 
 // accountParam reads ?account=. In oidc mode the account must belong to the

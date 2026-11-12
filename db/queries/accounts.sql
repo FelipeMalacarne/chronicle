@@ -18,6 +18,10 @@ ORDER BY active DESC, created_at ASC;
 -- Used by the scheduler: every account that should be synced.
 SELECT * FROM accounts WHERE active = true ORDER BY created_at ASC;
 
+-- name: ListUserActiveAccounts :many
+-- The accounts a plugin signed in as this user may push for (AUTH_MODE=oidc).
+SELECT * FROM accounts WHERE active = true AND user_id = $1 ORDER BY created_at ASC;
+
 -- name: UpdateAccountRSN :one
 -- Name change detected: store the new name and append to name_history.
 UPDATE accounts

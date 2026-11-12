@@ -96,8 +96,8 @@ func TestMicrobotRoutesByAccount(t *testing.T) {
 	if status, _, _ = call(t, "GET", srv.URL+"/api/microbot/plugins?account=acc-b", ""); status != http.StatusOK {
 		t.Fatalf("read with the account = %d", status)
 	}
-	if status, _, raw := call(t, "GET", srv.URL+"/api/microbot/screenshot?account=acc-a", ""); status != http.StatusOK || string(raw) != "\x89PNG" {
-		t.Fatalf("screenshot = %d", status)
+	if shot, _, raw := call(t, "GET", srv.URL+"/api/microbot/screenshot?account=acc-a", ""); shot != http.StatusOK || string(raw) != "\x89PNG" {
+		t.Fatalf("screenshot = %d", shot)
 	}
 
 	// Status: the list, and the account's agent with its client (the shape of today plus fields).

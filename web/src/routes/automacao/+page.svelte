@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import {
 		microbotApi,
 		MicrobotError,
@@ -9,6 +8,8 @@
 	} from '#lib/api/microbot';
 	import { auditLine, auditWho, cards, stateRows } from '#lib/progress/automacao';
 	import Glyph from '#lib/v6/Glyph.svelte';
+	import AutomacaoTabs from '#lib/v6/AutomacaoTabs.svelte';
+	import { cockpit } from '#lib/progress/microbot.svelte';
 	import VncView, { type VncPhase } from '#lib/v6/VncView.svelte';
 	import JogoView from '#lib/v6/JogoView.svelte';
 	import SidePanel from '#lib/v6/game/SidePanel.svelte';
@@ -59,8 +60,8 @@
 	/** O VNC só existe com o x11vnc do headless e fora do celular (V6Microbot640: sem websocket). */
 	const vncReady = $derived(running && !!client?.vnc && wide);
 	const showLive = $derived(live && vncReady);
-	const vncURL = () =>
-		`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/api/microbot/vnc`;
+	// Lê a conta escolhida para o VNC reabrir quando ela muda.
+	const vncURL = () => (cockpit.account, microbotApi.vncURL());
 	function setLive(on: boolean) {
 		live = on;
 		intervene = false;
@@ -229,11 +230,14 @@
 		<p class="ey">Microbot · controle do cliente · doc 08</p>
 		<h1 class="sr">Cockpit</h1>
 	</div>
-	<div class="seg" role="tablist" aria-label="Automação">
-		<a class="on" href={resolve('/automacao')} aria-current="page">Cockpit</a>
-		<a href={resolve('/automacao/plugins')}>Plugins</a>
-		<a href="#auditoria">Auditoria</a>
-	</div>
+	<AutomacaoTabs
+		current="cockpit"
+		agents={status?.agents ?? []}
+		onaccount={() => {
+			void refresh();
+			void refreshAudit();
+		}}
+	/>
 	<div class="seg modes" role="group" aria-label="Modo">
 		<button
 			type="button"
@@ -502,27 +506,6 @@
 	}
 	.modes {
 		margin-left: auto;
-	}
-	.seg a {
-		display: inline-flex;
-		align-items: center;
-		height: 32px;
-		padding: 0 10px;
-		font:
-			500 12px Inter,
-			system-ui,
-			sans-serif;
-		color: var(--ink-muted);
-		text-decoration: none;
-		background: var(--elevated);
-	}
-	.seg a + a {
-		border-left: 1px solid var(--border);
-	}
-	.seg a.on {
-		background: var(--frame);
-		color: var(--gold);
-		box-shadow: var(--bevel-frame);
 	}
 	.seg button:disabled {
 		opacity: 0.55;

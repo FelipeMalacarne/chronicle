@@ -48,6 +48,19 @@ func (w *WorkerConfig) clientEnv() []string {
 	return append([]string(nil), w.env...)
 }
 
+// character is the display name of the last bootstrap's session ("" before
+// one): what the client logs in as.
+func (w *WorkerConfig) character() string {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for _, kv := range w.env {
+		if v, ok := strings.CutPrefix(kv, "JX_DISPLAY_NAME="); ok {
+			return v
+		}
+	}
+	return ""
+}
+
 func (w *WorkerConfig) hasSession() bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -130,8 +143,8 @@ func (e *Executor) bootstrap(ctx context.Context, raw json.RawMessage) (any, err
 	if e.status(ctx).Running {
 		return BootstrapResult{Started: true}, nil
 	}
-	if err := e.writeHWID(p.Session); err != nil {
-		return nil, err
+	if herr := e.writeHWID(p.Session); herr != nil {
+		return nil, herr
 	}
 	out, err := e.workerStart(ctx)
 	if err != nil {

@@ -92,8 +92,10 @@ func newAgentCmd() *cobra.Command {
 	return cmd
 }
 
-// workerShutdown bounds the worker's SIGTERM: logout, then mb-client stop.
-const workerShutdown = 45 * time.Second
+// workerShutdown bounds the worker's SIGTERM: logout, then mb-client stop (which waits up
+// to 30 s for the java process, then for Xvfb and x11vnc); inside the pod's 90 s
+// terminationGracePeriodSeconds (internal/kube).
+const workerShutdown = 75 * time.Second
 
 // runWorker is `chronicle agent --worker`: it links until SIGTERM, then logs
 // the character out and stops the client.

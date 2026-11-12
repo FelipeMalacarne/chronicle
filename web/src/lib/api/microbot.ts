@@ -7,6 +7,15 @@
 
 export interface AgentInfo {
 	connected: boolean;
+	/** Id da conexão no Hub (docs/11). */
+	id?: string;
+	/** Conta que o agent declara; vazia no agent sem conta. */
+	account?: string;
+	/** attached: o do zaros; managed: um pod do saradomin. */
+	kind?: 'attached' | 'managed';
+	/** Nome do pod, nos gerenciados. */
+	worker?: string;
+	bridge?: string;
 	since?: string;
 	host?: string;
 	version?: string;
@@ -52,6 +61,10 @@ export interface LoginState {
 
 export interface MicrobotStatus {
 	enabled: boolean;
+	/** A conta pedida em ?account= (vazia sem ela). */
+	account?: string;
+	/** Todos os agents que o usuário pode ver (docs/11). */
+	agents?: AgentInfo[];
 	/** AUTH_MODE=dev: o controle só responde a esta máquina. */
 	dev: boolean;
 	agent: AgentInfo;
@@ -395,11 +408,36 @@ export class MicrobotError extends Error {
 
 const BASE = '/api/microbot';
 
-async function call<T>(path: string, init?: RequestInit): Promise<T> {
+/**
+ * A conta que o Cockpit controla (docs/11: tudo é endereçado pela conta). Vazia, o servidor usa o
+ * único agent conectado, como antes dos workers.
+ */
+let currentAccount = '';
+
+export function setMicrobotAccount(account: string): void {
+	currentAccount = account;
+}
+
+export function microbotAccount(): string {
+	return currentAccount;
+}
+
+/** Acrescenta ?account= da conta escolhida a um caminho das rotas /api/microbot. */
+export function withAccount(path: string, account = currentAccount): string {
+	if (!account) return path;
+	return path + (path.includes('?') ? '&' : '?') + 'account=' + encodeURIComponent(account);
+}
+
+async function call<T>(
+	path: string,
+	init?: RequestInit,
+	base = BASE,
+	account = currentAccount
+): Promise<T> {
 	const method = (init?.method ?? 'GET').toUpperCase();
 	let res: Response;
 	try {
-		res = await fetch(BASE + path, {
+		res = await fetch(base + withAccount(path, account), {
 			...init,
 			headers: {
 				accept: 'application/json',
@@ -484,5 +522,77 @@ export const microbotApi = {
 			body: JSON.stringify(a.body ?? {})
 		}),
 	/** URL do screenshot; `t` força uma imagem nova a cada pedido. */
-	screenshotURL: (t: number) => `${BASE}/screenshot?t=${t}`
+	screenshotURL: (t: number) => withAccount(`${BASE}/screenshot?t=${t}`),
+	/** Websocket do VNC ao vivo da conta escolhida. */
+	vncURL: () =>
+		withAccount(`${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}${BASE}/vnc`)
+};
+
+/** A sessão guardada de uma conta (nunca a sessão em si). */
+export interface SessionInfo {
+	account_id: string;
+	character: string;
+	key_id: string;
+	pushed_at: string;
+	pushed_by: string;
+	last_login_at?: string;
+	last_login_result?: string;
+}
+
+/** O que a última passada do reconciliador viu do pod de uma conta. */
+export interface WorkerPod {
+	deployment: string;
+	pod?: string;
+	/** pending · blocked (quota) · pulling · starting · running · failing · terminating */
+	state: string;
+	reason?: string;
+	image?: string;
+	version?: string;
+	restarts?: number;
+	seen: string;
+}
+
+export interface WorkerRow {
+	account: string;
+	rsn: string;
+	session: SessionInfo | null;
+	desired: 'running' | 'stopped';
+	world?: number;
+	image?: string;
+	started_at?: string;
+	stopped_at?: string;
+	last_error?: string;
+	pod: WorkerPod | null;
+	agent: AgentInfo | null;
+	outdated: boolean;
+}
+
+export interface WorkersView {
+	/** WORKERS=on: o servidor sobe pods; desligado, só guarda as sessões. */
+	enabled: boolean;
+	image?: string;
+	version?: string;
+	workers: WorkerRow[];
+	attached: AgentInfo[];
+}
+
+export type WorkerAction = 'start' | 'stop' | 'restart';
+
+/** Rotas dos workers (docs/11): fora de /api/microbot, sem a conta do Cockpit. */
+export const workersApi = {
+	list: () => call<WorkersView>('/workers', undefined, '/api', ''),
+	action: (account: string, action: WorkerAction, world?: number) =>
+		call<{ ok: boolean }>(
+			`/workers/${action}?account=${encodeURIComponent(account)}`,
+			{ method: 'POST', body: JSON.stringify(world ? { world } : {}) },
+			'/api',
+			''
+		),
+	deleteSession: (account: string) =>
+		call<{ ok: boolean }>(
+			`/accounts/session?account=${encodeURIComponent(account)}`,
+			{ method: 'DELETE' },
+			'/api',
+			''
+		)
 };

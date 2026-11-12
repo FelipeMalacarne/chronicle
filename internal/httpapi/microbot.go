@@ -285,8 +285,8 @@ func (s *Server) handleMicrobotStatus(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithTimeout(r.Context(), 15*time.Second)
 		defer cancel()
 		var st agent.Status
-		if err := link.CallAgent(ctx, info.ID, agent.CmdStatus, nil, &st); err != nil {
-			out.Error = err.Error()
+		if cerr := link.CallAgent(ctx, info.ID, agent.CmdStatus, nil, &st); cerr != nil {
+			out.Error = cerr.Error()
 		} else {
 			out.Client = &st
 		}

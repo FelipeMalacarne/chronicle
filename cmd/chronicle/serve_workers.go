@@ -37,26 +37,32 @@ func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ing
 	repo := storeworkers.New(pool, key, ingest)
 	opts.Sessions = repo
 	logger.Info("workers: game sessions on", "vault_key", key.ID())
+	// The bootstrap of a linking worker agent needs only the database and the
+	// link, so it runs with WORKERS=off too: a worker image started by hand
+	// against a dev server (loopback) gets its session the same way.
+	rec := &workerctl.Reconciler{
+		Store: workerctl.RepoStore{Repo: repo}, Hub: link, Log: logger,
+		Image: cfg.WorkerImage, ServerURL: cfg.WorkerServerURL, Version: buildinfo.String(),
+	}
+	link.OnConnect = rec.OnConnect
 	if !cfg.Workers {
+		if rec.ServerURL == "" {
+			rec.ServerURL = cfg.PublicBaseURL
+		}
 		return opts, nil
 	}
 	cluster, err := kube.InCluster(cfg.WorkerNamespace)
 	if err != nil {
 		return nil, fmt.Errorf("WORKERS=on: %w", err)
 	}
-	serverURL := cfg.WorkerServerURL
-	if serverURL == "" {
-		serverURL = "http://chronicle." + cluster.Namespace + ".svc"
+	if rec.ServerURL == "" {
+		rec.ServerURL = "http://chronicle." + cluster.Namespace + ".svc"
 	}
-	rec := &workerctl.Reconciler{
-		Store: workerctl.RepoStore{Repo: repo}, Cluster: cluster, Hub: link, Log: logger,
-		Namespace: cluster.Namespace, Image: cfg.WorkerImage, ServerURL: serverURL, Version: buildinfo.String(),
-	}
-	link.OnConnect = rec.OnConnect
+	rec.Cluster, rec.Namespace = cluster, cluster.Namespace
 	opts.Control = rec
 	opts.Workers = podVerifier{cluster}
 	go rec.Run(ctx)
-	logger.Warn("workers: reconciler ON (docs/11)", "namespace", cluster.Namespace, "image", cfg.WorkerImage, "server_url", serverURL)
+	logger.Warn("workers: reconciler ON (docs/11)", "namespace", cluster.Namespace, "image", cfg.WorkerImage, "server_url", rec.ServerURL)
 	return opts, nil
 }
 

@@ -171,7 +171,7 @@ func (s *Server) handleWorkerStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	image := ""
-	if cur, err := m.Sessions.Get(r.Context(), account); err != nil || cur.DesiredState != storeworkers.StateRunning {
+	if cur, gerr := m.Sessions.Get(r.Context(), account); gerr != nil || cur.DesiredState != storeworkers.StateRunning {
 		image = m.WorkerImage // a fresh start takes the current image
 	}
 	err = m.Sessions.SetDesired(r.Context(), account, storeworkers.StateRunning, body.World, image)

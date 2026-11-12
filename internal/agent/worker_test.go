@@ -138,9 +138,9 @@ func TestBootstrapStartsTheClient(t *testing.T) {
 		"spoofed-random-dats.properties": "iron.dat=def\n",
 	} {
 		f := filepath.Join(dir, "secrets", name)
-		st, err := os.Stat(f)
-		if err != nil {
-			t.Fatal(err)
+		st, serr := os.Stat(f)
+		if serr != nil {
+			t.Fatal(serr)
 		}
 		if st.Mode().Perm() != 0o600 {
 			t.Errorf("%s mode = %v", name, st.Mode().Perm())
@@ -167,8 +167,8 @@ func TestBootstrapStartsTheClient(t *testing.T) {
 			t.Errorf("%s leaked into the agent's environment", k)
 		}
 	}
-	if _, err := os.Stat(filepath.Join(e.Home, ".runelite", "jagexcache", ".chronicle-boot.lock")); err != nil {
-		t.Errorf("boot lock: %v", err)
+	if _, lerr := os.Stat(filepath.Join(e.Home, ".runelite", "jagexcache", ".chronicle-boot.lock")); lerr != nil {
+		t.Errorf("boot lock: %v", lerr)
 	}
 	// The fixed settings, through the Agent Server.
 	game.mu.Lock()

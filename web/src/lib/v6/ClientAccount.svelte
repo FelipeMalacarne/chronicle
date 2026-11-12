@@ -64,9 +64,9 @@
 			<div class="kv">
 				<span class="k">Personagem</span><span class="val">{acc.current || '—'}</span>
 			</div>
-			{#if acc.characters.length}
+			{#if acc.characters?.length}
 				<div class="list">
-					{#each acc.characters as c, i (i)}
+					{#each acc.characters ?? [] as c, i (i)}
 						<div class="row">
 							<span class="nm" class:cur={c === acc.current}>{c}</span>
 							{#if c !== acc.current}

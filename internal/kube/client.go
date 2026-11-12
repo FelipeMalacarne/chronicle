@@ -79,7 +79,11 @@ func InCluster(namespace string) (*Client, error) {
 		}
 		namespace = strings.TrimSpace(string(b))
 	}
-	tr := http.DefaultTransport.(*http.Transport).Clone()
+	base, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		return nil, errors.New("kube: http.DefaultTransport is not an *http.Transport")
+	}
+	tr := base.Clone()
 	tr.TLSClientConfig = &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}
 	return &Client{
 		Base:      "https://" + net.JoinHostPort(host, port),
@@ -122,9 +126,9 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 		req.Header.Set("Content-Type", contentType)
 	}
 	if c.Token != nil {
-		tok, err := c.Token()
-		if err != nil {
-			return err
+		tok, terr := c.Token()
+		if terr != nil {
+			return terr
 		}
 		req.Header.Set("Authorization", "Bearer "+tok)
 	}

@@ -225,8 +225,8 @@ func TestWorkerLifecycleRoutes(t *testing.T) {
 	// The account is active on the attached agent (zaros): start refused.
 	startAgent(t, srv.URL, "", agent.Hello{Host: "zaros", Account: "acc_a"}, "z")
 	waitLinked(t, link, 1)
-	if status, body, _ := call(t, "POST", srv.URL+"/api/workers/start?account=acc_a", ""); status != http.StatusConflict || !strings.Contains(body["error"].(string), "attached agent") {
-		t.Fatalf("start while attached = %d %v", status, body)
+	if status, got, _ := call(t, "POST", srv.URL+"/api/workers/start?account=acc_a", ""); status != http.StatusConflict || !strings.Contains(got["error"].(string), "attached agent") {
+		t.Fatalf("start while attached = %d %v", status, got)
 	}
 	_, body, _ = call(t, "GET", srv.URL+"/api/workers", "")
 	if att := body["attached"].([]any); len(att) != 1 || att[0].(map[string]any)["host"] != "zaros" {

@@ -69,7 +69,7 @@ func WorkerDeployment(namespace string, s WorkerSpec) Deployment {
 	labels := map[string]string{LabelName: AppName, LabelComponent: ComponentWork, LabelAccount: s.Account}
 	one, history := int32(1), int32(1)
 	no, yes := false, true
-	uid, grace := workerUID, int64(60)
+	uid, grace := workerUID, int64(90)
 	return Deployment{
 		APIVersion: "apps/v1",
 		Kind:       "Deployment",

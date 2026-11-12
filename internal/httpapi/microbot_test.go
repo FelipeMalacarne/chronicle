@@ -409,13 +409,13 @@ func TestMicrobotAgentOIDC(t *testing.T) {
 	}
 	go func() { _ = a.Run(ctx) }()
 	deadline := time.Now().Add(5 * time.Second)
-	for !link.Info().Connected {
+	for len(link.Agents()) == 0 {
 		if time.Now().After(deadline) {
 			t.Fatal("machine-user agent never linked")
 		}
 		time.Sleep(20 * time.Millisecond)
 	}
-	if info := link.Info(); info.Identity != "machine-agent" {
+	if info, _ := link.Agent(""); info.Identity != "machine-agent" {
 		t.Fatalf("agent identity = %+v", info)
 	}
 }

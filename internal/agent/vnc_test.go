@@ -39,7 +39,7 @@ func TestVNCThroughTheLink(t *testing.T) {
 	link := linkedWith(t, &fakeGame{}, fakeVNC(t))
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	stream, err := link.OpenVNC(ctx)
+	stream, err := link.OpenVNC(ctx, "")
 	if err != nil {
 		t.Fatalf("open: %v", err)
 	}
@@ -70,7 +70,7 @@ func TestVNCWithoutX11vnc(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	var cmd *CommandError
-	if _, err := link.OpenVNC(ctx); !errors.As(err, &cmd) {
+	if _, err := link.OpenVNC(ctx, ""); !errors.As(err, &cmd) {
 		t.Fatalf("open without x11vnc = %v", err)
 	}
 }

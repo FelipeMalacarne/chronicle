@@ -133,7 +133,9 @@ type oidcEnv struct {
 	ingest *fakeIngestService
 }
 
-func newOIDCEnv(t *testing.T, ident Identity, store scs.Store, policy auth.Policy) *oidcEnv {
+// newOIDCEnv builds the env; with, when given, changes the server's options
+// before it is built.
+func newOIDCEnv(t *testing.T, ident Identity, store scs.Store, policy auth.Policy, with ...func(*Options)) *oidcEnv {
 	t.Helper()
 	e := &oidcEnv{t: t, fake: authtest.New(t, testClientID), hub: events.NewHub([]string{"oziris-main"}), ingest: newFakeIngestService()}
 	var handler http.Handler
@@ -156,11 +158,15 @@ func newOIDCEnv(t *testing.T, ident Identity, store scs.Store, policy auth.Polic
 	}
 	g := &content.Guide{ID: "oziris-main", Title: "Oziris", Sections: []*content.Section{{ID: "s", Slug: "s", Steps: []*content.Step{{ID: "1", Text: "x"}}}}}
 	g.Index()
-	handler = New(Options{
+	opts := Options{
 		Version: "test", Content: &content.Content{Guides: []*content.Guide{g}}, Progress: &fakeProgress{},
 		Accounts: fakeAccounts{}, Events: e.hub, EventsHeartbeat: time.Hour, OIDC: e.opts, Identity: ident,
 		Ingest: e.ingest, Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
-	})
+	}
+	for _, f := range with {
+		f(&opts)
+	}
+	handler = New(opts)
 	return e
 }
 

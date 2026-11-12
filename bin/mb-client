@@ -6,15 +6,29 @@
 #
 # --headless runs the game muted on its own Xvfb display (MB_HEADLESS_DISPLAY, default :99) instead
 # of a window on the desktop, and shares it over VNC on 127.0.0.1:MB_VNC_PORT (default 5999).
+#
+# Environment (all optional; unset, everything behaves as on the workstation):
+#   MB_DEV_HOME          the client's user.home (default ~/.local/share/microbot-dev)
+#   MB_XMX               java -Xmx (default 2g)
+#   MB_HWID_STORE_DIR    where the HWID agent keeps its per-account stores, spoofed-device-ids and
+#                        spoofed-random-dats .properties (default ~/.runelite, shared with the
+#                        everyday client)
+#   MB_PREBUILT_PLUGINS  directory of prebuilt plugin jars (the worker image's /opt/microbot/plugins):
+#                        start installs every jar there instead of building DevBootstrap with
+#                        gradle; it must hold DevBootstrapPlugin.jar and ChronicleLinkPlugin.jar
+#   MB_HEADLESS_DISPLAY, MB_HEADLESS_SIZE, MB_VNC_PORT, MB_START_TIMEOUT  see --headless and start
+# PipeWire muting and the xdotool window fit are skipped when their commands are missing.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-usage() { sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 MB_HEADLESS_DISPLAY="${MB_HEADLESS_DISPLAY:-:99}"
 MB_HEADLESS_AUDIO_NAME="Microbot headless"
 MB_VNC_PORT="${MB_VNC_PORT:-5999}"
 MB_XVFB_PIDFILE="$MB_RUN/xvfb.pid"
+MB_XMX="${MB_XMX:-2g}"
+MB_HWID_STORE_DIR="${MB_HWID_STORE_DIR:-$HOME/.runelite}"
 MB_VNC_PIDFILE="$MB_RUN/vnc.pid"
 
 pid_alive() { [[ -f "$1" ]] && kill -0 "$(cat "$1")" 2>/dev/null; }
@@ -79,9 +93,18 @@ wait_ready() {
 }
 
 install_bootstrap() {
-	mb_gradle jarDevBootstrapPlugin
 	mkdir -p "$MB_PLUGIN_DIR"
-	install -m644 "$MB_BUILD_PLUGINS/DevBootstrapPlugin.jar" "$MB_PLUGIN_DIR/"
+	if [[ -n "${MB_PREBUILT_PLUGINS:-}" ]]; then
+		# A worker image: no sources or gradle, the jars of `gradle pluginJars` ship with it.
+		local jar
+		for jar in DevBootstrapPlugin ChronicleLinkPlugin; do
+			[[ -f "$MB_PREBUILT_PLUGINS/$jar.jar" ]] || die "$jar.jar missing from MB_PREBUILT_PLUGINS ($MB_PREBUILT_PLUGINS)"
+		done
+		install -m644 "$MB_PREBUILT_PLUGINS"/*.jar "$MB_PLUGIN_DIR/"
+	else
+		mb_gradle jarDevBootstrapPlugin
+		install -m644 "$MB_BUILD_PLUGINS/DevBootstrapPlugin.jar" "$MB_PLUGIN_DIR/"
+	fi
 	# The client deletes non-Hub jars older than 3 days; keep ours fresh.
 	touch "$MB_PLUGIN_DIR"/*.jar 2>/dev/null || true
 }
@@ -112,7 +135,7 @@ start() {
 	fi
 	rm -f "$MB_SOCKET"
 
-	local cmd=("$(mb_java)" -Xmx2g -Dfile.encoding=UTF-8
+	local cmd=("$(mb_java)" "-Xmx$MB_XMX" -Dfile.encoding=UTF-8
 		"-Duser.home=$MB_DEV_HOME"
 		-Dmicrobot.dev.harness=true
 		-Dmicrobot.disableTelemetry=true)
@@ -123,11 +146,13 @@ start() {
 		[[ -n "${MB_TEST_WORLD:-}" ]] && cmd+=("-Dmicrobot.test.world=$MB_TEST_WORLD")
 	fi
 	# Attach the HWID agent like the launcher does. Its per-account stores stay in the real
-	# ~/.runelite so an account keeps one spoofed identity across the dev and everyday clients.
+	# ~/.runelite so an account keeps one spoofed identity across the dev and everyday clients
+	# (a worker points MB_HWID_STORE_DIR at its own secrets volume instead).
 	[[ -f "$MB_HWID_AGENT" ]] || die "HWID agent jar not found ('$MB_HWID_AGENT'); run inside nix develop"
+	mkdir -p "$MB_HWID_STORE_DIR"
 	cmd+=("-javaagent:$MB_HWID_AGENT"
-		"-Dmicrobot.hwid.store=$HOME/.runelite/spoofed-device-ids.properties"
-		"-Dmicrobot.hwid.randomdat.store=$HOME/.runelite/spoofed-random-dats.properties")
+		"-Dmicrobot.hwid.store=$MB_HWID_STORE_DIR/spoofed-device-ids.properties"
+		"-Dmicrobot.hwid.randomdat.store=$MB_HWID_STORE_DIR/spoofed-random-dats.properties")
 	cmd+=("${extra[@]}" -jar "$MB_JAR" --disable-telemetry)
 
 	local display="${DISPLAY:-}"

@@ -19,11 +19,15 @@
 		void loadSummary(account);
 		void loadMe(account);
 	});
-	// Sem conta, ou com uma conta que não existe mais, o primeiro acesso (V4Setup) escolhe ou cria.
-	const setup = $derived(page.url.pathname === '/setup');
+	// Sem conta escolhida, ou com uma que não existe mais, só a Frota e Nova conta fazem sentido:
+	// as outras telas são da conta. Nesse caso o shell fica sem a barra lateral.
+	const missing = $derived(session.error instanceof ApiError && session.error.status === 404);
+	const fleetPage = $derived(
+		page.url.pathname.startsWith('/frota') || page.url.pathname.startsWith('/contas/nova')
+	);
+	const setup = $derived(fleetPage && (!account || missing));
 	$effect(() => {
-		const missing = session.error instanceof ApiError && session.error.status === 404;
-		if (!setup && (!account || missing)) void goto(resolve('/setup'), { replaceState: true });
+		if (!fleetPage && (!account || missing)) void goto(resolve('/frota'), { replaceState: true });
 	});
 	// Tempo real: um stream por conta; os eventos refazem os recursos abertos (docs/04, 6.6).
 	$effect(() => {

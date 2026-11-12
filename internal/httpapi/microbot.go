@@ -27,7 +27,7 @@ const MicrobotAgentRole = "microbot:agent"
 // MicrobotAudit persists the control actions (internal/store/microbot).
 type MicrobotAudit interface {
 	Append(ctx context.Context, e storemicrobot.Entry) (storemicrobot.Entry, error)
-	List(ctx context.Context, limit int) ([]storemicrobot.Entry, error)
+	List(ctx context.Context, limit int, account string) ([]storemicrobot.Entry, error)
 }
 
 // MicrobotOptions turns on the Microbot control module (MICROBOT_CONTROL=on,
@@ -229,7 +229,7 @@ func (s *Server) handleMicrobotAudit(w http.ResponseWriter, r *http.Request) {
 		}
 		limit = n
 	}
-	entries, err := s.opts.Microbot.Audit.List(r.Context(), limit)
+	entries, err := s.opts.Microbot.Audit.List(r.Context(), limit, "")
 	if err != nil {
 		s.log.Error("microbot audit", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not read the audit")

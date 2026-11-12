@@ -11,18 +11,20 @@ import (
 )
 
 const appendMicrobotAudit = `-- name: AppendMicrobotAudit :one
-INSERT INTO microbot_audit (actor, origin, action, params, ok, error)
-VALUES ($1, $2, $3, $4, $5, $6)
-RETURNING id, at, actor, origin, action, params, ok, error
+INSERT INTO microbot_audit (actor, origin, action, params, ok, error, account_id, agent_id)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+RETURNING id, at, actor, origin, action, params, ok, error, account_id, agent_id
 `
 
 type AppendMicrobotAuditParams struct {
-	Actor  string          `json:"actor"`
-	Origin string          `json:"origin"`
-	Action string          `json:"action"`
-	Params json.RawMessage `json:"params"`
-	Ok     bool            `json:"ok"`
-	Error  string          `json:"error"`
+	Actor     string          `json:"actor"`
+	Origin    string          `json:"origin"`
+	Action    string          `json:"action"`
+	Params    json.RawMessage `json:"params"`
+	Ok        bool            `json:"ok"`
+	Error     string          `json:"error"`
+	AccountID string          `json:"account_id"`
+	AgentID   string          `json:"agent_id"`
 }
 
 func (q *Queries) AppendMicrobotAudit(ctx context.Context, arg AppendMicrobotAuditParams) (MicrobotAudit, error) {
@@ -33,6 +35,8 @@ func (q *Queries) AppendMicrobotAudit(ctx context.Context, arg AppendMicrobotAud
 		arg.Params,
 		arg.Ok,
 		arg.Error,
+		arg.AccountID,
+		arg.AgentID,
 	)
 	var i MicrobotAudit
 	err := row.Scan(
@@ -44,16 +48,27 @@ func (q *Queries) AppendMicrobotAudit(ctx context.Context, arg AppendMicrobotAud
 		&i.Params,
 		&i.Ok,
 		&i.Error,
+		&i.AccountID,
+		&i.AgentID,
 	)
 	return i, err
 }
 
 const listMicrobotAudit = `-- name: ListMicrobotAudit :many
-SELECT id, at, actor, origin, action, params, ok, error FROM microbot_audit ORDER BY at DESC, id DESC LIMIT $1
+SELECT id, at, actor, origin, action, params, ok, error, account_id, agent_id FROM microbot_audit
+WHERE $1::text = '' OR account_id = $1
+ORDER BY at DESC, id DESC
+LIMIT $2
 `
 
-func (q *Queries) ListMicrobotAudit(ctx context.Context, limit int32) ([]MicrobotAudit, error) {
-	rows, err := q.db.Query(ctx, listMicrobotAudit, limit)
+type ListMicrobotAuditParams struct {
+	AccountID string `json:"account_id"`
+	RowLimit  int32  `json:"row_limit"`
+}
+
+// account_id = ” lists every account.
+func (q *Queries) ListMicrobotAudit(ctx context.Context, arg ListMicrobotAuditParams) ([]MicrobotAudit, error) {
+	rows, err := q.db.Query(ctx, listMicrobotAudit, arg.AccountID, arg.RowLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -70,6 +85,8 @@ func (q *Queries) ListMicrobotAudit(ctx context.Context, limit int32) ([]Microbo
 			&i.Params,
 			&i.Ok,
 			&i.Error,
+			&i.AccountID,
+			&i.AgentID,
 		); err != nil {
 			return nil, err
 		}

@@ -80,6 +80,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 31 | Recorrentes (birdhouses, herb run, kingdom) como entidades com `ready_at` no doc 09 | resolvida (2026-11-10, o dono pediu os passos do roadmap): os relógios do Time Tracking chegam pelo ingest (`data.timers`, faceta `timer`) e o Agora mostra os Recorrentes (V6AgoraEstados1440); kingdom e o que o Time Tracking não conhece ficam para depois | docs/ui/decisoes-canvas.md, seção 5; doc 06, adendo de 2026-11-10 |
 | 32 | Modelo de execução: fatos por fonte com junção pura, comandos do dono como log, projeções reconstruíveis, tarefas tipadas, receitas por objetivo, planos e executor no plugin | E1 a E4 **resolvidas** (2026-11-05: fatos por fonte, log de comandos, rebuild no CI e aviso no boot, contrato por fixtures; a geração de tipos foi adiada, com OpenAPI como candidato no lugar do tygo); E5 a E10 **abertas** | doc 10 |
 | 33 | A rota do Oziris pode ser corrigida pelo dono: notas de update que tornam um passo impossível ou fora de ordem viram patches de import (`data/guide/route-patches.json`: remover, mover, inserir), não só anotações; primeiros: Lost Tribe depois do Goblin Diplomacy e 1.4.2 (favour) removido | resolvida (2026-11-05) | docs/05, seção 12 |
+| 34 | Workers do Microbot: além do cliente do zaros (agent anexado), workers headless no saradomin, um pod por conta criado e apagado pelo Chronicle no namespace `chronicle`; sessões das contas guardadas no banco, cifradas, e entregues ao worker só pelo link; GPU ligada com gráficos no mínimo (distância curta, sem MSAA, outros jogadores escondidos, FPS 15–20) | resolvida (2026-11-12) no desenho; protótipo no canvas (página 7) para aprovar; W1 a W6 abertas | doc 11 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais
@@ -97,7 +98,8 @@ no `saradomin` com Zitadel vem depois do marco "em uso", com a mesma imagem. Too
 
 Além do tracking somente leitura (doc 06), o dono decidiu controlar o cliente Microbot pelo planner:
 headless no zaros, VNC no navegador, plugins do Hub e rotinas agendadas. Módulo separado e desligado
-por padrão, com risco aceito conscientemente. Ver doc 08.
+por padrão, com risco aceito conscientemente. Ver doc 08. Em 2026-11-12 o dono decidiu ter também
+workers headless no saradomin, um por conta, escolhidos no painel (decisão 34, doc 11).
 
 ## Próximo passo
 

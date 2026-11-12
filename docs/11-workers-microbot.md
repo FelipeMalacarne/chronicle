@@ -4,6 +4,9 @@
 workers headless no saradomin, um pod por conta, criados pelo próprio Chronicle; sessões das contas no
 banco, cifradas, entregues ao worker pelo link do agent; tudo no namespace `chronicle`. O cliente do
 zaros continua como hoje (doc 08), agora como um dos agents. W1 a W6 (seção 10) seguem abertas.
+Protótipo da tela no canvas, página 7 ("Automação · workers": `V6MicrobotWorkers1440` e
+`V6MicrobotWorkersEstados1440`), para o dono aprovar antes do código (regra 11 do CLAUDE.md). Está na
+sequência do doc 04, seção 9, como item 19; registro no doc 01, decisão 34.
 
 ## 1. O que muda
 
@@ -52,6 +55,27 @@ Perfil gráfico do worker, escrito a cada boot:
 - Entity Hider escondendo outros jogadores e os pets deles;
 - Low Detail ligado;
 - display de 1024×768 (o custo da cópia do VirtualGL cresce com a resolução).
+
+## 2.1 Tela (canvas, página 7)
+
+- **Workers** passa a ser a primeira aba da Automação. No topo, a capacidade do saradomin:
+  - CPU e RAM pedidas no nó, separando os outros apps dos workers;
+  - fatias da iGPU e quota do namespace;
+  - quantos workers ainda cabem e o que limita.
+- Embaixo, **uma linha por conta**: onde roda (zaros anexado ou pod com a versão), estado, CPU e RAM,
+  sessão e ações. À direita, o worker aberto: CPU de 30 min, pod, imagem, recursos, perfil gráfico,
+  Chronicle Link, agent e eventos.
+- **Estados desenhados:**
+  - Iniciar: onde e o mundo, com "entrar ao subir" desligado;
+  - subindo, passo a passo;
+  - Parar, com confirmação, porque sai do jogo;
+  - conta em outro lugar: o Iniciar fica bloqueado;
+  - sessão expirada, com o comando do push;
+  - não cabe, dizendo quanto falta;
+  - versão antiga: reiniciar desloga, então só no clique;
+  - o seletor de worker no cockpit;
+  - vazio.
+- Fica de fora a versão de 640 px: gerenciar workers é coisa da tela cheia.
 
 ## 3. Componentes
 

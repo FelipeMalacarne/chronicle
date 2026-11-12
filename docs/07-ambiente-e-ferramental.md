@@ -109,7 +109,10 @@ Uma vez:
    - aplicação **Web**, método **PKCE** (sem secret): Redirect URI
      `https://chronicle.saradomin.ftm.dev.br/auth/callback`, Post Logout URI
      `https://chronicle.saradomin.ftm.dev.br/`, Development Mode desligado; em Token Settings,
-     **User roles inside ID Token** e **User Info inside ID Token**. O Client ID vai em `OIDC_CLIENT_ID`;
+     **User roles inside ID Token** e **User Info inside ID Token**. O Client ID vai em `OIDC_CLIENT_ID`
+     (não o id da aplicação, que é outro número). No Zitadel do saradomin, as roles só vieram no ID
+     token depois de ligar "User roles inside ID Token" também nas configurações do projeto: sem
+     isso o login cai em "Acesso negado" com `roles=""` no log;
    - aplicação **Native**, grants **Device Code** e **Refresh Token**; em Token Settings, **Auth Token
      Type: JWT** e **User roles inside Access Token** (o servidor lê as roles do access token, não do
      userinfo; sem isso o plugin leva 403 e a CLI fica sem `owner`). O Client

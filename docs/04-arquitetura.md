@@ -132,7 +132,7 @@ O binário se chamava `ironman` até 2026-11-11: as variáveis `IRONMAN_*` ainda
 não está definida, e o `~/.config/ironman` é movido para `~/.config/chronicle` no primeiro uso
 (`internal/appenv`). CLI e `chronicle mcp` são clientes da API (`internal/client`), então
 funcionam de qualquer máquina e o modelo de permissão é o da web. Servidor: `--url`, senão
-`CHRONICLE_URL`, senão `config.json`, senão `http://localhost:8080`; conta: `--account`, senão
+`CHRONICLE_URL`, senão `config.json`, senão `https://chronicle.saradomin.ftm.dev.br` (desde 2026-11-12; o `just dev` é `CHRONICLE_URL=http://localhost:8080`; o agent e o `progress check` seguem a mesma ordem); conta: `--account`, senão
 `CHRONICLE_ACCOUNT`, senão `config.json`, senão a única conta do usuário. A configuração fica em
 `~/.config/chronicle/` (ou `CHRONICLE_CONFIG_DIR`): `config.json` (URL e conta padrão) e
 `credentials.json` (modo 0600, o login de cada servidor: issuer, `client_id`, access e refresh

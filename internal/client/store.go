@@ -14,8 +14,10 @@ import (
 )
 
 // DefaultURL is the server a client talks to when nothing else says: the
-// planner of `just dev` on the same machine.
-const DefaultURL = "http://localhost:8080"
+// planner on saradomin (docs/07 section 3.3). `just dev` is
+// CHRONICLE_URL=http://localhost:8080 (or --url, or `chronicle login --url`,
+// which stores it in config.json).
+const DefaultURL = "https://chronicle.saradomin.ftm.dev.br"
 
 // Settings are the client's defaults, in <dir>/config.json. Flags and the
 // CHRONICLE_URL and CHRONICLE_ACCOUNT variables override them.

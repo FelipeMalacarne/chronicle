@@ -6,14 +6,13 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	"github.com/FelipeMalacarne/ironman-planner/internal/appenv"
+	"github.com/FelipeMalacarne/ironman-planner/internal/client"
 )
 
 // newProgressCmd groups the account progress commands. They talk to a running
@@ -28,55 +27,43 @@ func newProgressCmd() *cobra.Command {
 // decision E3): every projection of the account recomputed from its sources
 // by the server, read only. It exits 1 when any differs.
 func newProgressCheckCmd() *cobra.Command {
-	var baseURL, account string
+	var f clientFlags
 	var timeout time.Duration
 	cmd := &cobra.Command{
 		Use:   "check",
 		Short: "Recompute the account's projections (marks, facts, verdicts, cursors) and report differences",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, _ []string) error {
-			if strings.TrimSpace(account) == "" {
+		RunE: runClient(func(cmd *cobra.Command, _ []string) error {
+			if strings.TrimSpace(f.account) == "" {
 				return errors.New("--account is required (e.g. acc_iron_man)")
 			}
-			return progressCheck(cmd.Context(), cmd.OutOrStdout(), baseURL, account, appenv.Get("TOKEN"), timeout)
-		},
+			ctx, cancel := context.WithTimeout(cmd.Context(), timeout)
+			defer cancel()
+			c, err := f.connect(ctx)
+			if err != nil {
+				return err
+			}
+			return progressCheck(ctx, cmd.OutOrStdout(), c, f.account)
+		}),
 	}
-	def := appenv.Get("URL")
-	if def == "" {
-		def = "http://127.0.0.1:8080"
-	}
-	cmd.Flags().StringVar(&baseURL, "url", def, "server base URL (CHRONICLE_URL)")
-	cmd.Flags().StringVar(&account, "account", "", "account id")
+	f.add(cmd, false)
 	cmd.Flags().DurationVar(&timeout, "timeout", 30*time.Second, "request timeout")
 	return cmd
 }
 
-func progressCheck(ctx context.Context, out io.Writer, baseURL, account, token string, timeout time.Duration) error {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-	u := strings.TrimRight(baseURL, "/") + "/api/progress/check?account=" + url.QueryEscape(account)
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u, nil)
-	if err != nil {
-		return err
-	}
-	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
-	}
-	resp, err := http.DefaultClient.Do(req)
+// progressCheck asks the server for GET /api/progress/check of one account
+// and prints the differences; any difference is an error (exit 1).
+func progressCheck(ctx context.Context, out io.Writer, c *client.Client, account string) error {
+	raw, err := c.Get(ctx, "/api/progress/check", url.Values{"account": {account}}, false)
 	if err != nil {
 		return fmt.Errorf("progress check: %w", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-	if resp.StatusCode != http.StatusOK {
-		body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-		return fmt.Errorf("progress check: HTTP %d: %s", resp.StatusCode, strings.TrimSpace(string(body)))
 	}
 	var rep struct {
 		Account     string   `json:"account"`
 		OK          bool     `json:"ok"`
 		Differences []string `json:"differences"`
 	}
-	if err := json.NewDecoder(resp.Body).Decode(&rep); err != nil {
+	if err := json.Unmarshal(raw, &rep); err != nil {
 		return fmt.Errorf("progress check: unreadable answer: %w", err)
 	}
 	if rep.OK {

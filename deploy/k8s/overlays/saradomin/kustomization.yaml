@@ -25,9 +25,9 @@ configMapGenerator:
       - WORKERS=on
       # CI sets this to the chronicle-worker image it just pushed (empty until deploy/worker/base.lock
       # pins a microbot-worker-base).
-      - WORKER_IMAGE=
+      - WORKER_IMAGE=ghcr.io/felipemalacarne/chronicle-worker:72d1c185e92be7474de517c38c2bd2d19efdc9fc
 images:
   - name: chronicle
     newName: ghcr.io/felipemalacarne/chronicle
     # CI sets this to the image it just pushed, on every push to main.
-    newTag: "cb44b3e725e5548387454a170c4b7b6b5b922095"
+    newTag: "72d1c185e92be7474de517c38c2bd2d19efdc9fc"

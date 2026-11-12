@@ -31,6 +31,9 @@ final class Lure implements Step
 	private static final long CATCH_UP_MS = 3000;
 	private static final int MAX_STALLS = 3;
 	private static final int MAX_FAILURES = 5;
+	// After that many failures in a row the bandits around here are the wrong ones (roaming ranges
+	// that stop short of the room): hop for fresh ones, this often before the run gives up.
+	private static final int MAX_WORLD_HOPS = 3;
 	// A target lured this often that never got in stops following short of the room each time
 	// (likely the edge of its roaming range): lure another.
 	private static final int MAX_LURES_PER_TARGET = 3;
@@ -41,7 +44,9 @@ final class Lure implements Step
 	private final Map<Integer, Integer> lured = new HashMap<>();
 	private long waitSince;
 	private int stalls;
+	/** Lures in a row that did not get a target into the room. */
 	private int failures;
+	private int worldHops;
 
 	@Override
 	public boolean run(Session s)
@@ -50,6 +55,8 @@ final class Lure implements Step
 		{
 			stalls = 0;
 			waitSince = 0;
+			failures = 0;
+			worldHops = 0;
 			return false;
 		}
 		if (Rs2Dialogue.isInDialogue())
@@ -65,9 +72,27 @@ final class Lure implements Step
 			Global.sleep(400, 700);
 			return true;
 		}
-		if (failures >= MAX_FAILURES)
+		if (failures >= MAX_FAILURES && !s.attacked)
 		{
-			s.stop("Could not lure a " + s.target + " into the room after " + MAX_FAILURES + " tries");
+			if (worldHops >= MAX_WORLD_HOPS)
+			{
+				s.stop("Could not lure a " + s.target + " into the room on " + (MAX_WORLD_HOPS + 1) + " worlds");
+				return true;
+			}
+			int from = Microbot.getClient().getWorld();
+			int world = Worlds.otherMembersWorld(from);
+			if (world < 0)
+			{
+				return true;
+			}
+			log.info("Blackjacker: {} lures in a row did not get a {} in, hopping {} -> {}", failures, s.target, from, world);
+			Microbot.status = "Blackjacker: no " + s.target + " here follows into the room, hopping to world " + world;
+			worldHops++;
+			failures = 0;
+			// NPC indexes are per world.
+			dropped.clear();
+			lured.clear();
+			Worlds.hop(world);
 			return true;
 		}
 		Room room = s.room;

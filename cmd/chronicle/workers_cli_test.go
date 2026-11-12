@@ -66,3 +66,31 @@ func TestReadLauncherAccountAmbiguousNotSet(t *testing.T) {
 		t.Fatalf("by index: %+v %v", got, err)
 	}
 }
+
+func TestHWIDLines(t *testing.T) {
+	// The key of "jx/4242": sha256 in lower-case hex, as the HWID agent writes it.
+	key := hwidKey(" 4242 ")
+	if key != "6386c4f27474fac070c40ec3dae0ea9332aad566c7ff97a0e39e9a7ebca43669" {
+		t.Fatalf("key = %q", key)
+	}
+	if hwidKey("4242") != key {
+		t.Fatal("the character id is trimmed")
+	}
+	path := filepath.Join(t.TempDir(), "spoofed-device-ids.properties")
+	content := "#Microbot spoofed device ids\n#Thu Nov 12 2026\n" +
+		hwidKey("999") + "=other-device\n" +
+		key + "=our-device\n"
+	if err := os.WriteFile(path, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	got, err := hwidLines(path, key)
+	if err != nil || got != key+"=our-device" {
+		t.Fatalf("got %q %v", got, err)
+	}
+	if got, _ := hwidLines(path, hwidKey("1")); got != "" {
+		t.Fatalf("another character got %q", got)
+	}
+	if got, err := hwidLines(filepath.Join(t.TempDir(), "missing"), key); got != "" || err != nil {
+		t.Fatalf("missing file: %q %v", got, err)
+	}
+}

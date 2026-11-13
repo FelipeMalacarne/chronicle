@@ -6,6 +6,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
 
 // MarkAction is what the owner asks for in PATCH .../steps/{id}/mark.
@@ -39,6 +40,9 @@ type GuideInput struct {
 	Account    Account
 	// Registry is the catalog with the quest requirements that block steps.
 	Registry *entities.Registry
+	// State is the account's current facts; with it, BuildBoard adds each
+	// numeric objective's observed value. Nil leaves them out.
+	State *rules.PlayerState
 }
 
 // MarkChange is a mark to write; a nil Mark deletes it.

@@ -9,8 +9,8 @@
     "pending": 0,
     "submitted": 226,
     "first_submit_accepted": 206,
-    "owner_confirmed": 45,
-    "decisions_applied": 429
+    "owner_confirmed": 47,
+    "decisions_applied": 450
   },
   "sections": [
     {
@@ -44,7 +44,7 @@
       "submitted": 31,
       "first_submit_accepted": 28,
       "owner_confirmed": 12,
-      "decisions_applied": 25
+      "decisions_applied": 35
     },
     {
       "section_id": "bruh-1.4",
@@ -54,8 +54,8 @@
       "pending": 0,
       "submitted": 34,
       "first_submit_accepted": 34,
-      "owner_confirmed": 3,
-      "decisions_applied": 31
+      "owner_confirmed": 4,
+      "decisions_applied": 54
     },
     {
       "section_id": "bruh-2.1",
@@ -66,7 +66,7 @@
       "submitted": 46,
       "first_submit_accepted": 41,
       "owner_confirmed": 5,
-      "decisions_applied": 105
+      "decisions_applied": 101
     },
     {
       "section_id": "bruh-2.2",
@@ -77,7 +77,7 @@
       "submitted": 39,
       "first_submit_accepted": 36,
       "owner_confirmed": 8,
-      "decisions_applied": 86
+      "decisions_applied": 81
     },
     {
       "section_id": "bruh-2.3",
@@ -87,8 +87,8 @@
       "pending": 0,
       "submitted": 14,
       "first_submit_accepted": 14,
-      "owner_confirmed": 1,
-      "decisions_applied": 40
+      "owner_confirmed": 2,
+      "decisions_applied": 38
     },
     {
       "section_id": "bruh-3.1",
@@ -99,7 +99,7 @@
       "submitted": 16,
       "first_submit_accepted": 15,
       "owner_confirmed": 5,
-      "decisions_applied": 25
+      "decisions_applied": 24
     },
     {
       "section_id": "bruh-3.2",
@@ -118,34 +118,8 @@
     "reproduced": 0,
     "divergent": []
   },
-  "rejected": [
-    {
-      "step_id": "bruh-2.2-912a85abde7b",
-      "reasons": [
-        "order: item:2142x1 completes is already completed by step bruh-1.1-bcb19ce4fe00 (item:2142x1)"
-      ]
-    }
-  ],
-  "order_issues": [
-    {
-      "step_id": "bruh-2.3-4920bdb2b1b3",
-      "reasons": [
-        "order: item:447x1 completes is already completed by step bruh-2.1-8d2899a29d62 (item:447x1)"
-      ]
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
-      "reasons": [
-        "order: diary:morytania:easy@complete completes is already completed by step bruh-2.2-be2ac6d66b8a (diary:morytania:easy@complete)"
-      ]
-    },
-    {
-      "step_id": "bruh-3.2-088b648d6eee",
-      "reasons": [
-        "order: quest:while_guthix_sleeps@finished completes is already completed by step bruh-3.1-9f47e4966d68 (quest:while_guthix_sleeps@finished)"
-      ]
-    }
-  ],
+  "rejected": [],
+  "order_issues": [],
   "inferred": [
     {
       "step_id": "bruh-1.1-26cbe64705fd",
@@ -654,6 +628,24 @@
       "decision": "item-shorthand-to-catalog-name"
     },
     {
+      "step_id": "bruh-1.3-222177cc65b3",
+      "what": "item:1833x1 completes",
+      "quote": "desert clothes",
+      "decision": "full-set-is-each-piece"
+    },
+    {
+      "step_id": "bruh-1.3-222177cc65b3",
+      "what": "item:1835x1 completes",
+      "quote": "desert clothes",
+      "decision": "full-set-is-each-piece"
+    },
+    {
+      "step_id": "bruh-1.3-36256ee31acc",
+      "what": "item:6333x1 completes",
+      "quote": "teak logs",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
       "step_id": "bruh-1.3-66399bbbcf31",
       "what": "item:305x1 completes",
       "quote": "buy a big net",
@@ -669,6 +661,18 @@
       "step_id": "bruh-1.3-886f0784d3aa",
       "what": "quest:dragon_slayer_i@started starts",
       "quote": "start Dragon Slayer I"
+    },
+    {
+      "step_id": "bruh-1.3-886f0784d3aa",
+      "what": "item:1077x1 completes",
+      "quote": "black platelegs",
+      "decision": "optional-and-conditional-goals-are-objectives"
+    },
+    {
+      "step_id": "bruh-1.3-886f0784d3aa",
+      "what": "item:1165x1 completes",
+      "quote": "black full helm",
+      "decision": "optional-and-conditional-goals-are-objectives"
     },
     {
       "step_id": "bruh-1.3-49c2af9c4816",
@@ -708,6 +712,12 @@
       "decision": "quest-drop-pickup-completes-x1"
     },
     {
+      "step_id": "bruh-1.3-de6f39e70583",
+      "what": "item:526x23 completes",
+      "quote": "kill 20 goblins for their bones",
+      "decision": "derived-totals-are-targets"
+    },
+    {
       "step_id": "bruh-1.3-792a43e8b277",
       "what": "quest:the_giant_dwarf@started starts",
       "quote": "do The Giant Dwarf (right-click open the Stonemason’s shop at the start for the diary) to the step",
@@ -740,6 +750,12 @@
       "step_id": "bruh-1.3-ffd94c28254c",
       "what": "item adamant/bronze pickaxe = any_of [1271 1265]",
       "quote": "adamant/bronze pickaxe"
+    },
+    {
+      "step_id": "bruh-1.3-4c7daf877fc6",
+      "what": "item:321x1 completes",
+      "quote": "fish some anchovies",
+      "decision": "unnumbered-acquire-is-one"
     },
     {
       "step_id": "bruh-1.3-4c7daf877fc6",
@@ -789,15 +805,33 @@
       "decision": "do-quest-means-finish"
     },
     {
+      "step_id": "bruh-1.3-029eac528407",
+      "what": "item:3239x1 completes",
+      "quote": "hollow tree for bark",
+      "decision": "unnumbered-acquire-is-one"
+    },
+    {
       "step_id": "bruh-1.3-d5efce343ca4",
       "what": "quest:elemental_workshop_ii@finished completes",
       "quote": "do the Elemental Workshop II quest",
       "decision": "do-quest-means-finish"
     },
     {
+      "step_id": "bruh-1.3-d5efce343ca4",
+      "what": "item:3694x1 completes",
+      "quote": "spin your golden fleece",
+      "decision": "action-product-item"
+    },
+    {
       "step_id": "bruh-1.3-b1f58ecada03",
       "what": "item:8782x20 completes",
       "quote": "Make all mahogany logs into planks",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "bruh-1.3-19498ceed1c8",
+      "what": "item:7530x1 completes",
+      "quote": "make a fishcake",
       "decision": "action-product-item"
     },
     {
@@ -870,6 +904,23 @@
       "decision": "item-shorthand-to-catalog-name"
     },
     {
+      "step_id": "bruh-1.4-df580f263cb3",
+      "what": "skill:herblore>=27 completes",
+      "quote": "If you are not level 27 herblore yet",
+      "decision": "optional-and-conditional-goals-are-objectives"
+    },
+    {
+      "step_id": "bruh-1.4-9072abedf424",
+      "what": "item:5013x1 completes",
+      "quote": "for a mining helmet",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "bruh-1.4-9072abedf424",
+      "what": "item:family/scrying_orbx1 completes",
+      "quote": "Grab your scrying orb"
+    },
+    {
       "step_id": "bruh-1.4-7d1f60aae6e6",
       "what": "item:7409x1 completes",
       "quote": "make the magic secateurs",
@@ -899,10 +950,28 @@
       "decision": "should-now-have-is-checkpoint"
     },
     {
+      "step_id": "bruh-1.4-e48ffb9700ee",
+      "what": "item:787x1 completes",
+      "quote": "until you get the lumber order from the Foreman",
+      "decision": "quest-drop-pickup-completes-x1"
+    },
+    {
       "step_id": "bruh-1.4-88c3fb48ae7f",
       "what": "quest:getting_ahead@finished completes",
       "quote": "do Getting Ahead",
       "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "bruh-1.4-88c3fb48ae7f",
+      "what": "item:1359x1 completes",
+      "quote": "an iron, mithril and a rune axe",
+      "decision": "optional-and-conditional-goals-are-objectives"
+    },
+    {
+      "step_id": "bruh-1.4-88c3fb48ae7f",
+      "what": "skill:cooking>=70 completes",
+      "quote": "train to level 70 cooking",
+      "decision": "optional-and-conditional-goals-are-objectives"
     },
     {
       "step_id": "bruh-1.4-88c3fb48ae7f",
@@ -915,6 +984,18 @@
       "what": "quest:plague_city@finished completes",
       "quote": "do Plague City",
       "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "bruh-1.4-3cb1982b6327",
+      "what": "item:419x1 completes",
+      "quote": "get the touch paper",
+      "decision": "quest-drop-pickup-completes-x1"
+    },
+    {
+      "step_id": "bruh-1.4-9c23f9524b54",
+      "what": "item:1718x1 completes",
+      "quote": "bless your unblessed symbol",
+      "decision": "action-product-item"
     },
     {
       "step_id": "bruh-1.4-0a7a65caad28",
@@ -946,10 +1027,64 @@
       "quote": "taking you (well) past level 40 smithing"
     },
     {
+      "step_id": "bruh-1.4-5ac241c01adc",
+      "what": "item:2353x84 completes",
+      "quote": "make three inventories of steel bars",
+      "decision": "derived-totals-are-targets"
+    },
+    {
+      "step_id": "bruh-1.4-5ac241c01adc",
+      "what": "item:2351x28 completes",
+      "quote": "an inventory of iron bars",
+      "decision": "derived-totals-are-targets"
+    },
+    {
+      "step_id": "bruh-1.4-9e184c2c912d",
+      "what": "item:family/compost_potionx10 completes",
+      "quote": "~10 compost potions",
+      "decision": "approximate-quantity-is-target"
+    },
+    {
+      "step_id": "bruh-1.4-9e184c2c912d",
+      "what": "item:family/energy_potionx120 completes",
+      "quote": "~120 energy potions",
+      "decision": "approximate-quantity-is-target"
+    },
+    {
+      "step_id": "bruh-1.4-9e184c2c912d",
+      "what": "item:21690x1 completes",
+      "quote": "Make mushroom pies",
+      "decision": "derived-totals-are-targets"
+    },
+    {
       "step_id": "bruh-1.4-9e184c2c912d",
       "what": "item cosmic runes = item:564 x108",
       "quote": "108 cosmics",
       "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.4-b64460ef9890",
+      "what": "item:9625x1 completes",
+      "quote": "enchant the crystal saw seed",
+      "decision": "action-product-item"
+    },
+    {
+      "step_id": "bruh-1.4-1f257947c836",
+      "what": "item:864x600 completes",
+      "quote": "buy 1200 knives",
+      "decision": "derived-totals-are-targets"
+    },
+    {
+      "step_id": "bruh-1.4-1f257947c836",
+      "what": "item:863x400 completes",
+      "quote": "buy 1200 knives",
+      "decision": "derived-totals-are-targets"
+    },
+    {
+      "step_id": "bruh-1.4-1f257947c836",
+      "what": "item:865x200 completes",
+      "quote": "buy 1200 knives",
+      "decision": "derived-totals-are-targets"
     },
     {
       "step_id": "bruh-1.4-b491172fe629",
@@ -979,6 +1114,12 @@
       "what": "item Potatoes(10) = item:5438 x1",
       "quote": "1 sack of 10 potatoes",
       "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.4-5fcc565b7ed8",
+      "what": "skill:thieving>=78 completes",
+      "quote": "consider staying here for level 78",
+      "decision": "optional-and-conditional-goals-are-objectives"
     },
     {
       "step_id": "bruh-1.4-fdc177159a82",
@@ -1017,6 +1158,12 @@
       "decision": "singular-of-plural-catalog-name"
     },
     {
+      "step_id": "bruh-1.4-f29fb6065a73",
+      "what": "item:225x22 completes",
+      "quote": "22 limpwurt roots",
+      "decision": "recommended-grind-lists-are-objectives"
+    },
+    {
       "step_id": "bruh-1.4-8bbdaf04c7bd",
       "what": "skill:hunter>=42 completes",
       "quote": "You should be level 42 hunter by now",
@@ -1036,9 +1183,39 @@
     },
     {
       "step_id": "bruh-1.4-8bbdaf04c7bd",
+      "what": "item:1513x12 completes",
+      "quote": "at least 12 magic logs",
+      "decision": "optional-and-conditional-goals-are-objectives"
+    },
+    {
+      "step_id": "bruh-1.4-8bbdaf04c7bd",
       "what": "item spiked boots = item:3107",
       "quote": "spiked climbing boots",
       "decision": "item-shorthand-to-catalog-name"
+    },
+    {
+      "step_id": "bruh-1.4-47973d5db7fb",
+      "what": "item:26903x1 completes",
+      "quote": "to get the eye amulet",
+      "decision": "quest-drop-pickup-completes-x1"
+    },
+    {
+      "step_id": "bruh-1.4-47973d5db7fb",
+      "what": "item:12781x112 completes",
+      "quote": "Make 4 inventories of Paddewwa tabs",
+      "decision": "derived-totals-are-targets"
+    },
+    {
+      "step_id": "bruh-1.4-3898b8985437",
+      "what": "quest:scrambled@finished completes",
+      "quote": "start and complete Scrambled!",
+      "decision": "optional-and-conditional-goals-are-objectives"
+    },
+    {
+      "step_id": "bruh-1.4-3898b8985437",
+      "what": "skill:magic>=60 completes",
+      "quote": "aren’t 60 magic yet",
+      "decision": "optional-and-conditional-goals-are-objectives"
     },
     {
       "step_id": "bruh-1.4-3898b8985437",
@@ -1057,12 +1234,6 @@
       "what": "item:8778x15 completes",
       "quote": "15 oak logs, digsite teleport and run to the sawmill, make them into planks",
       "decision": "action-product-item"
-    },
-    {
-      "step_id": "bruh-2.1-998e961ab51a",
-      "what": "item:family/digsite_pendantx1 completes",
-      "quote": "digsite teleport",
-      "decision": "item-shorthand-to-catalog-name"
     },
     {
       "step_id": "bruh-2.1-f94d01f9d6ac",
@@ -1285,12 +1456,6 @@
       "what": "quest:contact@started starts",
       "quote": "Do Contact! up to the step you need to visit Osman",
       "decision": "do-quest-up-to-starts"
-    },
-    {
-      "step_id": "bruh-2.1-5d6413257d18",
-      "what": "item:19636x1 completes",
-      "quote": "the damaged soulbearer",
-      "decision": "item-shorthand-to-catalog-name"
     },
     {
       "step_id": "bruh-2.1-5d6413257d18",
@@ -1541,12 +1706,6 @@
       "decision": "optional-and-conditional-goals-are-objectives"
     },
     {
-      "step_id": "bruh-2.2-da08d05c2a29",
-      "what": "item:566x200 completes",
-      "quote": "go buy 200 more for teleports",
-      "decision": "optional-and-conditional-goals-are-objectives"
-    },
-    {
       "step_id": "bruh-2.2-e6dbda977d38",
       "what": "quest:the_fremennik_isles@finished completes",
       "quote": "Do The Fremennik Isles",
@@ -1660,12 +1819,6 @@
       "step_id": "bruh-2.2-31164de7dfc7",
       "what": "item:22599x100 completes",
       "quote": "100 each of Stony and Icy basalt"
-    },
-    {
-      "step_id": "bruh-2.2-06f9f2ccf951",
-      "what": "skill:cooking>=70 completes",
-      "quote": "you will need at least level 70 cooking for RFD/Awowogei",
-      "decision": "optional-and-conditional-goals-are-objectives"
     },
     {
       "step_id": "bruh-2.2-85e0148637e3",
@@ -1815,12 +1968,6 @@
       "what": "item:29289x1 completes",
       "quote": "a mixed hide cape",
       "decision": "unnumbered-acquire-is-one"
-    },
-    {
-      "step_id": "bruh-2.2-c3ccb2b3f486",
-      "what": "quest:scrambled@finished completes",
-      "quote": "If you haven’t done Scrambled! yet, do it now",
-      "decision": "conditional-checkpoint-completes"
     },
     {
       "step_id": "bruh-2.2-c3ccb2b3f486",
@@ -1995,12 +2142,6 @@
     },
     {
       "step_id": "bruh-2.3-bccf72bc6e8a",
-      "what": "diary:morytania:easy@complete completes",
-      "quote": "and easy if you haven’t yet",
-      "decision": "conditional-checkpoint-completes"
-    },
-    {
-      "step_id": "bruh-2.3-bccf72bc6e8a",
       "what": "item Potato with cheese = item:6705",
       "quote": "cheese potatoes",
       "decision": "item-shorthand-to-catalog-name"
@@ -2052,6 +2193,11 @@
       "what": "quest:song_of_the_elves@finished completes",
       "quote": "Mourning’s End Part II, Song of the Elves",
       "decision": "do-quest-means-finish"
+    },
+    {
+      "step_id": "bruh-2.3-867ab9cc404b",
+      "what": "item:family/crystal_bowx1 completes",
+      "quote": "Pick the crystal bow reward"
     },
     {
       "step_id": "bruh-2.3-867ab9cc404b",
@@ -2131,12 +2277,6 @@
       "step_id": "bruh-3.1-9f47e4966d68",
       "what": "diary:desert:hard@complete completes",
       "quote": "Slayer Helmet - Desert Hard diary"
-    },
-    {
-      "step_id": "bruh-3.1-9f47e4966d68",
-      "what": "quest:while_guthix_sleeps@finished completes",
-      "quote": "complete the quest While Guthix Sleeps",
-      "decision": "optional-and-conditional-goals-are-objectives"
     },
     {
       "step_id": "bruh-3.1-9f47e4966d68",
@@ -2571,9 +2711,8 @@
     },
     "bruh-1.3-0c8068961e4e": {
       "section_id": "bruh-1.3",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "MTA pizazz points are not trackable entities; the Bones to Peaches unlock is not in the unlock catalog (left out). The 'deposit all' is the graveyard bone chute, not a bank, so the explicit bank action replaces the derived deposit. Salmon and Bones to Peaches cast are diary tasks."
+      "submits": 3,
+      "first_submit_accepted": true
     },
     "bruh-1.3-0f6a40a78607": {
       "section_id": "bruh-1.3",
@@ -2583,9 +2722,8 @@
     },
     "bruh-1.3-103587f1e7f5": {
       "section_id": "bruh-1.3",
-      "submits": 2,
-      "first_submit_accepted": true,
-      "comment": "'At least one cut jade' left out: the same objective (item:1611x1) is the goal of bruh-2.1-0df7e3567b4f ('mine (and successfully cut) a jade'), and a latched completion here would mark that later objective already met (order issue). The text also notes you may already have jades from Tempoross. Kudos, the digsite pendant ability and the POH move to Rellekka are not in the catalogs."
+      "submits": 3,
+      "first_submit_accepted": true
     },
     "bruh-1.3-19498ceed1c8": {
       "section_id": "bruh-1.3",
@@ -2606,7 +2744,7 @@
     },
     "bruh-1.3-323a43cc70b4": {
       "section_id": "bruh-1.3",
-      "submits": 2,
+      "submits": 3,
       "first_submit_accepted": true
     },
     "bruh-1.3-36256ee31acc": {
@@ -2815,9 +2953,8 @@
     },
     "bruh-1.4-85c07ce8189e": {
       "section_id": "bruh-1.4",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Dragon Slayer I, Dwarf Cannon, Family Crest and Black Knights' Fortress only progressed. Stronghold of Security completion is not an unlock in the catalog, left out (diary/emotes). Skull sceptre optional. Helmets bought without being the step goal, left out."
+      "submits": 2,
+      "first_submit_accepted": true
     },
     "bruh-1.4-88c3fb48ae7f": {
       "section_id": "bruh-1.4",
@@ -2827,9 +2964,8 @@
     },
     "bruh-1.4-8bbdaf04c7bd": {
       "section_id": "bruh-1.4",
-      "submits": 1,
-      "first_submit_accepted": true,
-      "comment": "Desert Treasure: 'do ... from start to finish' = finished. Yew longbow from a young impling, trollweiss and 4 inventories of soft clay are means for the quests, left out. Magic logs chop is conditional. Morytania medium diary only a task. 'several impling jars', 'karambwans', 'candle (or FM cape/bruma torch)', 'many Shantay passes', 'many lockpicks' have no fixed item/count, left out. Alias to add: 'spiked climbing boots' -> Spiked boots."
+      "submits": 3,
+      "first_submit_accepted": true
     },
     "bruh-1.4-8d119be147f2": {
       "section_id": "bruh-1.4",
@@ -3027,8 +3163,9 @@
     },
     "bruh-2.1-5d6413257d18": {
       "section_id": "bruh-2.1",
-      "submits": 3,
-      "first_submit_accepted": true
+      "submits": 4,
+      "first_submit_accepted": true,
+      "comment": "Damaged soul bearer stays an item requirement only (completed earlier at 1.4)."
     },
     "bruh-2.1-5feeed266369": {
       "section_id": "bruh-2.1",
@@ -3095,9 +3232,9 @@
     },
     "bruh-2.1-998e961ab51a": {
       "section_id": "bruh-2.1",
-      "submits": 3,
+      "submits": 4,
       "first_submit_accepted": true,
-      "comment": "Five bolts of cloth left out: the route already completes bolt of cloth x5 at bruh-1.1-3f2c951740ac (order check)."
+      "comment": "Bolts of cloth x5, barcrawl card x1 and digsite pendant x1 are completed by earlier steps (route order)."
     },
     "bruh-2.1-a35ead38ca03": {
       "section_id": "bruh-2.1",
@@ -3129,9 +3266,9 @@
     },
     "bruh-2.1-c22061fa2e7d": {
       "section_id": "bruh-2.1",
-      "submits": 3,
+      "submits": 4,
       "first_submit_accepted": true,
-      "comment": "Potatoes and cabbages: only sack variants in the catalog (ambiguous), left out."
+      "comment": "Bass x1 is completed earlier at 1.3 (route order). Potatoes and cabbages: only sack variants in the catalog, left out."
     },
     "bruh-2.1-c809e3e7ea1b": {
       "section_id": "bruh-2.1",
@@ -3202,8 +3339,9 @@
     },
     "bruh-2.2-06f9f2ccf951": {
       "section_id": "bruh-2.2",
-      "submits": 2,
-      "first_submit_accepted": true
+      "submits": 3,
+      "first_submit_accepted": true,
+      "comment": "Cooking 70 already completed by bruh-1.4-88c3fb48ae7f (route order)."
     },
     "bruh-2.2-0929f544c2c3": {
       "section_id": "bruh-2.2",
@@ -3262,8 +3400,9 @@
     },
     "bruh-2.2-68fb6e6f6386": {
       "section_id": "bruh-2.2",
-      "submits": 3,
-      "first_submit_accepted": true
+      "submits": 4,
+      "first_submit_accepted": true,
+      "comment": "Lockpick x1 already completed by bruh-1.4-8bbdaf04c7bd (route order)."
     },
     "bruh-2.2-6f26d7191bf5": {
       "section_id": "bruh-2.2",
@@ -3287,11 +3426,8 @@
     },
     "bruh-2.2-912a85abde7b": {
       "section_id": "bruh-2.2",
-      "submits": 3,
-      "reasons": [
-        "order: item:2142x1 completes is already completed by step bruh-1.1-bcb19ce4fe00 (item:2142x1)"
-      ],
-      "comment": "One Small Favour only continued (started in 2.1). Killing 5 outlaws is a quest action. Pigeon cages as family (empty/full both count). The derived rebank is optional ('you may want to rebank'), left as derived."
+      "submits": 4,
+      "comment": "Cooked meat is already completed by step bruh-1.1-bcb19ce4fe00 (route order), so no objective here. Partial One Small Favour progress is not representable."
     },
     "bruh-2.2-9849f0d8fc91": {
       "section_id": "bruh-2.2",
@@ -3342,8 +3478,9 @@
     },
     "bruh-2.2-c3ccb2b3f486": {
       "section_id": "bruh-2.2",
-      "submits": 3,
-      "first_submit_accepted": true
+      "submits": 4,
+      "first_submit_accepted": true,
+      "comment": "Scrambled! already completed by bruh-1.4-3898b8985437 (route order)."
     },
     "bruh-2.2-c9ca0e75b4b5": {
       "section_id": "bruh-2.2",
@@ -3353,8 +3490,9 @@
     },
     "bruh-2.2-ce48f774436a": {
       "section_id": "bruh-2.2",
-      "submits": 3,
-      "first_submit_accepted": true
+      "submits": 4,
+      "first_submit_accepted": true,
+      "comment": "Teak logs x1 already completed by bruh-1.3-36256ee31acc and bruh-1.3-323a43cc70b4 (route order)."
     },
     "bruh-2.2-d19339e3dfb2": {
       "section_id": "bruh-2.2",
@@ -3370,9 +3508,9 @@
     },
     "bruh-2.2-da08d05c2a29": {
       "section_id": "bruh-2.2",
-      "submits": 3,
+      "submits": 4,
       "first_submit_accepted": true,
-      "comment": "Ruby x80 (digsite pendants) and Soul rune x200 are conditional (only if running low); the owner marks the step by hand if not needed."
+      "comment": "Soul rune x200 already completed by bruh-1.4-88c3fb48ae7f (route order)."
     },
     "bruh-2.2-da5e9c05eae9": {
       "section_id": "bruh-2.2",
@@ -3414,9 +3552,9 @@
     },
     "bruh-2.3-4920bdb2b1b3": {
       "section_id": "bruh-2.3",
-      "submits": 2,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "Kills (chaos dwarves, ankou, bloodveld), wilderness agility lap and chest opening are not representable. Mage Arena capes/staff are optional or unnamed."
+      "comment": "Kills (chaos dwarves, ankou, bloodveld), wilderness agility lap and chest opening are not representable. Mithril ore already completed by bruh-2.1-8d2899a29d62, so not repeated. Mage Arena capes/staff are optional or unnamed."
     },
     "bruh-2.3-4f3fbf457c63": {
       "section_id": "bruh-2.3",
@@ -3450,9 +3588,9 @@
     },
     "bruh-2.3-867ab9cc404b": {
       "section_id": "bruh-2.3",
-      "submits": 2,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "Unicorn horn dust, whiteberries, ticket/book/key, spare hammer/chisel, blood+death runes have no quantity or are advice. Alternatives for the runite bar are advice."
+      "comment": "Unicorn horn dust, whiteberries, ticket/book/key, spare hammer/chisel, blood+death runes have no quantity or are advice. Alternatives for the runite bar are advice. Crystal bow: any variant counts (owner)."
     },
     "bruh-2.3-ba0b6b802c14": {
       "section_id": "bruh-2.3",
@@ -3468,9 +3606,9 @@
     },
     "bruh-2.3-bccf72bc6e8a": {
       "section_id": "bruh-2.3",
-      "submits": 2,
+      "submits": 3,
       "first_submit_accepted": true,
-      "comment": "Fever spider kill, Trouble Brewing game and watermelon planting not representable. Morytania easy added under conditional-checkpoint-completes."
+      "comment": "Fever spider kill, Trouble Brewing game and watermelon planting not representable. Morytania easy already completed by bruh-2.2-be2ac6d66b8a, so not repeated."
     },
     "bruh-2.3-bfb1056b880c": {
       "section_id": "bruh-2.3",
@@ -3520,9 +3658,9 @@
     },
     "bruh-3.1-9f47e4966d68": {
       "section_id": "bruh-3.1",
-      "submits": 5,
+      "submits": 6,
       "first_submit_accepted": true,
-      "comment": "His Faithful Servants already completed at bruh-2.2-4b907585b095. While Guthix Sleeps, magic logs, water and law runes are optional/conditional goals (optional-and-conditional-goals-are-objectives)."
+      "comment": "His Faithful Servants already completed at bruh-2.2-4b907585b095. While Guthix Sleeps is completed at bruh-3.2-088b648d6eee (owner-confirmed), so it is not repeated here. Magic logs and water/law runes are optional/conditional goals (optional-and-conditional-goals-are-objectives)."
     },
     "bruh-3.1-a0193944b404": {
       "section_id": "bruh-3.1",

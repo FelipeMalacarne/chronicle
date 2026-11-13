@@ -65,25 +65,6 @@
           }
         },
         {
-          "key": "item:566x200",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "go buy 200 more for teleports",
-            "span": [
-              1488,
-              1517
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "optional-and-conditional-goals-are-objectives"
-          }
-        },
-        {
           "key": "item:11334x1700",
           "role": "uses",
           "evidence": {
@@ -1602,7 +1583,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1619,7 +1600,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1636,7 +1617,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -1656,7 +1637,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1675,7 +1656,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1694,7 +1675,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "item-shorthand-to-catalog-name"
           }
@@ -1715,7 +1696,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1733,7 +1714,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1751,7 +1732,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1769,7 +1750,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1787,7 +1768,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1805,7 +1786,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1823,7 +1804,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -5551,25 +5532,6 @@
             "confidence": "high",
             "skill_version": "annotate-guide@6"
           }
-        },
-        {
-          "key": "skill:cooking>=70",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "you will need at least level 70 cooking for RFD/Awowogei",
-            "span": [
-              157,
-              213
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "optional-and-conditional-goals-are-objectives"
-          }
         }
       ],
       "items": [
@@ -5652,25 +5614,6 @@
       "step_id": "bruh-2.2-ce48f774436a",
       "text_hash": "sha256:436dcd4b507b69ce40bd230cbfb64c1614fe24a563436f89836ce4dc0906218a",
       "objectives": [
-        {
-          "key": "item:6333x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "chop a teak and mahogany log",
-            "span": [
-              436,
-              464
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "items-to-obtain-are-objectives"
-          }
-        },
         {
           "key": "item:6332x1",
           "role": "completes",
@@ -6947,25 +6890,6 @@
           }
         },
         {
-          "key": "quest:scrambled@finished",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "If you haven’t done Scrambled! yet, do it now",
-            "span": [
-              1411,
-              1458
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "conditional-checkpoint-completes"
-          }
-        },
-        {
           "key": "quest:vale_totems_miniquest@finished",
           "role": "completes",
           "evidence": {
@@ -7433,25 +7357,6 @@
             "method": "llm",
             "confidence": "high",
             "skill_version": "annotate-guide@6"
-          }
-        },
-        {
-          "key": "item:1523x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "Grab a lockpick",
-            "span": [
-              1371,
-              1386
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "items-to-obtain-are-objectives"
           }
         },
         {

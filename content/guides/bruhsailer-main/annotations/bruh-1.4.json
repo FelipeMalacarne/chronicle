@@ -512,25 +512,6 @@
           }
         },
         {
-          "key": "item:any(1265x1|1267x1|1269x1|1271x1|1273x1|1275x1|12297x1)",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "a pickaxe",
-            "span": [
-              28,
-              37
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "axe-means-best-axe"
-          }
-        },
-        {
           "key": "item:5013x1",
           "role": "completes",
           "evidence": {
@@ -547,6 +528,24 @@
             "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "action-product-item"
+          }
+        },
+        {
+          "key": "item:family/scrying_orbx1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Grab your scrying orb",
+            "span": [
+              2,
+              23
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner"
           }
         }
       ],
@@ -685,23 +684,6 @@
           }
         },
         {
-          "key": "item:444x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "mine a gold ore",
-            "span": [
-              288,
-              303
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6"
-          }
-        },
-        {
           "key": "item:1741x2",
           "role": "completes",
           "evidence": {
@@ -750,25 +732,6 @@
             "method": "llm",
             "confidence": "high",
             "skill_version": "annotate-guide@6"
-          }
-        },
-        {
-          "key": "item:1929x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "fill a bucket at the pump",
-            "span": [
-              62,
-              87
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "action-product-item"
           }
         }
       ],
@@ -3470,23 +3433,6 @@
           }
         },
         {
-          "key": "item:444x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "Mine a gold ore",
-            "span": [
-              162,
-              177
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6"
-          }
-        },
-        {
           "key": "item:13445x1",
           "role": "completes",
           "evidence": {
@@ -4719,23 +4665,6 @@
             "span": [
               283,
               306
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6"
-          }
-        },
-        {
-          "key": "item:1157x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "steel full helm",
-            "span": [
-              308,
-              323
             ]
           },
           "source": {
@@ -9531,6 +9460,25 @@
       "text_hash": "sha256:96c752b97ff9d8f277cbc105e0cd5abf96d327a9a10de002a4bb7d1c11bb5da0",
       "objectives": [
         {
+          "key": "skill:hunter>=42",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "You should be level 42 hunter by now",
+            "span": [
+              2,
+              38
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "should-now-have-is-checkpoint"
+          }
+        },
+        {
           "key": "skill:hunter>=46",
           "role": "completes",
           "evidence": {
@@ -9687,25 +9635,6 @@
             "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "optional-and-conditional-goals-are-objectives"
-          }
-        },
-        {
-          "key": "item:1761x112",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "mine 4 full inventories of soft clay",
-            "span": [
-              1371,
-              1407
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "derived-totals-are-targets"
           }
         }
       ],

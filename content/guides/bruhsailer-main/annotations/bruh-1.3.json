@@ -261,23 +261,6 @@
           }
         },
         {
-          "key": "item:563x500",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "500 law runes",
-            "span": [
-              536,
-              549
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6"
-          }
-        },
-        {
           "key": "item:564x400",
           "role": "completes",
           "evidence": {
@@ -747,25 +730,6 @@
             "method": "llm",
             "confidence": "high",
             "skill_version": "annotate-guide@6"
-          }
-        },
-        {
-          "key": "item:1891x3",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "3-5 cakes",
-            "span": [
-              81,
-              90
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "derived-totals-are-targets"
           }
         },
         {
@@ -2305,25 +2269,6 @@
     {
       "step_id": "bruh-1.3-103587f1e7f5",
       "text_hash": "sha256:e82f0681e106a2b143a44fab7449ae16cfeb5a8e7eef9f1dd13a2bdb891e046f",
-      "objectives": [
-        {
-          "key": "item:1611x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "one cut jade",
-            "span": [
-              534,
-              546
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6"
-          }
-        }
-      ],
       "items": [
         {
           "name": "gp",
@@ -5669,42 +5614,6 @@
             "method": "llm",
             "confidence": "high",
             "skill_version": "annotate-guide@6"
-          }
-        },
-        {
-          "key": "item:25527x2000",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "2k stardust",
-            "span": [
-              844,
-              855
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6"
-          }
-        },
-        {
-          "key": "item:6333x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "teak logs",
-            "span": [
-              159,
-              168
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "unnumbered-acquire-is-one"
           }
         }
       ],
@@ -9354,25 +9263,6 @@
             "method": "llm",
             "confidence": "high",
             "skill_version": "annotate-guide@6"
-          }
-        },
-        {
-          "key": "skill:hunter>=42",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "level 42 hunter",
-            "span": [
-              809,
-              824
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "optional-and-conditional-goals-are-objectives"
           }
         }
       ],

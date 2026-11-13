@@ -1009,25 +1009,6 @@
           }
         },
         {
-          "key": "quest:while_guthix_sleeps@finished",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "complete the quest While Guthix Sleeps",
-            "span": [
-              1893,
-              1931
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "optional-and-conditional-goals-are-objectives"
-          }
-        },
-        {
           "key": "item:1513x100",
           "role": "completes",
           "evidence": {

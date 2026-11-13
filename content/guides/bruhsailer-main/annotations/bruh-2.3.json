@@ -296,25 +296,6 @@
           }
         },
         {
-          "key": "item:447x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "mine a mithril ore",
-            "span": [
-              232,
-              250
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "items-to-obtain-are-objectives"
-          }
-        },
-        {
           "key": "item:991x1",
           "role": "completes",
           "evidence": {
@@ -1266,25 +1247,6 @@
             "confidence": "high",
             "skill_version": "annotate-guide@6"
           }
-        },
-        {
-          "key": "diary:morytania:easy@complete",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "and easy if you haven’t yet",
-            "span": [
-              475,
-              504
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "conditional-checkpoint-completes"
-          }
         }
       ],
       "items": [
@@ -1811,6 +1773,24 @@
             "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "item:family/crystal_bowx1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Pick the crystal bow reward",
+            "span": [
+              370,
+              397
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner"
           }
         },
         {

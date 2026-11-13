@@ -28,6 +28,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
+	storerhythm "github.com/FelipeMalacarne/chronicle/internal/store/rhythm"
 	"github.com/FelipeMalacarne/chronicle/internal/store/syncrun"
 	"github.com/FelipeMalacarne/chronicle/web"
 )
@@ -85,6 +86,7 @@ func runServe(parent context.Context) error {
 	var progressService httpapi.ProgressService
 	var syncService httpapi.SyncService
 	var accountService httpapi.AccountService
+	var rhythmService httpapi.RhythmStore
 	var hiscoresDetector httpapi.ModeDetector
 	var identityRepo httpapi.Identity
 	var oidcOpts *httpapi.OIDCOptions
@@ -128,6 +130,7 @@ func runServe(parent context.Context) error {
 			hiscoresDetector, accountService = hiscoresClient, progressRepo
 			syncRepo := syncrun.New(pool, hiscoresClient, progressRepo).WithPublisher(hub)
 			syncService = syncRepo
+			rhythmService = storerhythm.New(pool, catalog)
 			if cfg.SyncHiscoresMinutes > 0 {
 				scheduler := &syncrun.Scheduler{
 					Repo: syncRepo, Interval: time.Duration(cfg.SyncHiscoresMinutes) * time.Minute,
@@ -156,6 +159,7 @@ func runServe(parent context.Context) error {
 		Progress:       progressService,
 		Sync:           syncService,
 		Accounts:       accountService,
+		Rhythm:         rhythmService,
 		Hiscores:       hiscoresDetector,
 		Catalog:        catalog,
 		Events:         hub,

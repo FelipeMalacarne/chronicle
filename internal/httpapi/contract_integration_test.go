@@ -24,8 +24,10 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
+	storeidentity "github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
+	storerhythm "github.com/FelipeMalacarne/chronicle/internal/store/rhythm"
 	"github.com/FelipeMalacarne/chronicle/internal/store/syncrun"
 	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
 	"github.com/FelipeMalacarne/chronicle/internal/workerctl"
@@ -89,6 +91,7 @@ func TestContractPostgres(t *testing.T) {
 	srv := httptest.NewServer(New(Options{
 		Version: "test", Content: cnt, DefaultGuideID: "oziris-main", Ingest: ingest, Holdings: ingest,
 		Progress: progress, Sync: syncs, Accounts: progress, Catalog: catalog, DevMode: true, Logger: quiet,
+		Identity: storeidentity.New(pool), Rhythm: storerhythm.New(pool, catalog),
 		Microbot: &MicrobotOptions{Link: link, Audit: &memAudit{}, Sessions: workers, Control: control, WorkerImage: contractWorkerImage},
 	}))
 	defer srv.Close()
@@ -180,6 +183,8 @@ func TestContractPostgres(t *testing.T) {
 		{name: "sync", method: "POST", path: "/api/sync" + acc, tsImports: []string{"SyncRun"}, tsType: "SyncRun"},
 		{name: "sync-runs", method: "GET", path: "/api/sync/runs" + acc + "&limit=5", tsImports: []string{"SyncRunsResponse"}, tsType: "SyncRunsResponse"},
 		{name: "workers", method: "GET", path: "/api/workers", tsFrom: "../microbot", tsImports: []string{"WorkersView"}, tsType: "WorkersView"},
+		{name: "account-rhythm", method: "GET", path: "/api/account/rhythm" + acc, tsImports: []string{"AccountRhythm"}, tsType: "AccountRhythm"},
+		{name: "fleet-rhythm", method: "GET", path: "/api/rhythm", tsImports: []string{"FleetRhythm"}, tsType: "FleetRhythm"},
 	}
 	for _, c := range cases {
 		var live any

@@ -67,6 +67,9 @@ type Options struct {
 	// Identity serves GET /api/me and the account ownership checks of oidc
 	// mode. nil disables /api/me.
 	Identity Identity
+	// Rhythm serves the accounts' rhythm (GET /api/account/rhythm and, with
+	// Identity, the fleet's GET /api/rhythm); nil leaves them out.
+	Rhythm RhythmStore
 	// Static is the SPA filesystem rooted at the site (index.html at its root).
 	// nil disables the SPA and / returns 404.
 	Static fs.FS
@@ -191,6 +194,7 @@ func (s *Server) routes() {
 	s.microbotRoutes()
 	s.workerRoutes()
 	s.profileRoutes()
+	s.rhythmRoutes()
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
 	})

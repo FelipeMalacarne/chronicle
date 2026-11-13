@@ -89,13 +89,14 @@ internal/core/        PURE domain (no DB/HTTP imports):
   rules/              rule engine incl. item_owned over item holdings
   planning/           next-leg readiness (ownership vs carried loadout vs bank instructions)
   progress/           objective verdicts (latched), derived step status, implied cascade, cursor
+  rhythm/             an account's rhythm from its snapshots: skill trained, XP/h, session, today, GP
   panel/              route window of the plugin panel (cursor step, next steps, labels, carry)
   annotate/           guide extraction: batches, name resolution, verification, sidecar/report writer
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
 internal/store/       repositories (identity: OIDC users, dev-account claim, ownership; ingest: tokens, pushes, holdings; progress: reevaluation, marks,
                       cursor, board, goals, content index and step id aliases at boot; state:
-                      PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; workers: sealed game sessions, workers'
+                      PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; rhythm: the series the rhythm reads; workers: sealed game sessions, workers'
                       desired state, client profiles; routines: triggers and the runs' history); internal/store/db is sqlc OUTPUT
 internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
                       client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)

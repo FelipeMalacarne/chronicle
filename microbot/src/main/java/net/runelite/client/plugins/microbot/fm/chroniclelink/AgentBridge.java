@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.ChatMessageType;
@@ -56,6 +57,7 @@ import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
  * contract), the game events the agent's triggers wait for (/bridge/events, {@link GameEvents}), and typed actions (Remove/Rub a worn item, toggle a prayer, cast a spell, Deposit-X). It listens on its own Unix socket, .runelite/agent/bridge.sock, next to the Agent
  * Server's, and every request needs the Agent Server's token (the same X-Agent-Token, loopback
  * Host and no Origin as AgentHandler checks); with no token configured it answers nothing.
+ * /bridge/version (1.12.0) answers the plugin's version, which the agent reports in its status.
  */
 @Slf4j
 final class AgentBridge
@@ -65,15 +67,21 @@ final class AgentBridge
 	private static final int MAX_LIMIT = 30;
 
 	private final Gson gson;
-	private final ConfigManager configManager;
+	/** The Agent Server's token, read on every request; null or empty answers nothing. */
+	private final Supplier<String> agentToken;
 	private final GameEvents events = new GameEvents();
 	private UdsHttpServer server;
 	private ExecutorService executor;
 
 	AgentBridge(Gson gson, ConfigManager configManager)
 	{
+		this(gson, () -> configManager.getConfiguration(AgentServerConfig.GROUP, AgentServerConfig.KEY_TOKEN));
+	}
+
+	AgentBridge(Gson gson, Supplier<String> agentToken)
+	{
 		this.gson = gson;
-		this.configManager = configManager;
+		this.agentToken = agentToken;
 	}
 
 	void start()
@@ -121,9 +129,23 @@ final class AgentBridge
 		events.onChat(type, message, Instant.now());
 	}
 
+	/** The handler of one path, or null; tests drive a route through it. */
+	AgentHandler handler(String path)
+	{
+		return handlers().stream().filter(h -> h.getPath().equals(path)).findFirst().orElse(null);
+	}
+
 	private List<Handler> handlers()
 	{
 		return Arrays.asList(
+			new Handler(gson, "/bridge/version")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					sendJson(ex, 200, version());
+				}
+			},
 			new Handler(gson, "/bridge/entities")
 			{
 				@Override
@@ -304,6 +326,12 @@ final class AgentBridge
 				}
 			}
 		);
+	}
+
+	/** The answer of /bridge/version: the plugin's version, as its descriptor has it. */
+	static Map<String, Object> version()
+	{
+		return Collections.singletonMap("version", ChronicleLinkPlugin.VERSION);
 	}
 
 	/** The {@code after} of /bridge/events: a seq, 0 when absent. */
@@ -639,7 +667,7 @@ final class AgentBridge
 		@Override
 		public void handle(HttpExchange exchange) throws IOException
 		{
-			String token = configManager.getConfiguration(AgentServerConfig.GROUP, AgentServerConfig.KEY_TOKEN);
+			String token = agentToken.get();
 			if (token == null || token.isEmpty())
 			{
 				sendOpaqueNotFound(exchange);

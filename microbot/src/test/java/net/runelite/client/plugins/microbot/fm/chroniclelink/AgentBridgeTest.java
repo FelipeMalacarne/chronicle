@@ -3,6 +3,19 @@ package net.runelite.client.plugins.microbot.fm.chroniclelink;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.google.gson.Gson;
+import com.sun.net.httpserver.Headers;
+import com.sun.net.httpserver.HttpContext;
+import com.sun.net.httpserver.HttpExchange;
+import com.sun.net.httpserver.HttpPrincipal;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.InetSocketAddress;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import net.runelite.client.plugins.microbot.agentserver.handler.AgentHandler;
@@ -53,6 +66,160 @@ class AgentBridgeTest
 		assertEquals(Rs2CombatSpells.FIRE_BOLT, AgentBridge.spellOf("FIRE_BOLT"));
 		assertEquals(Rs2Spells.HIGH_LEVEL_ALCHEMY, AgentBridge.spellOf("HIGH_LEVEL_ALCHEMY"));
 		assertThrows(AgentHandler.BadRequestException.class, () -> AgentBridge.spellOf("SUMMON_DRAGON"));
+	}
+
+	@Test
+	void versionRouteAnswersThePluginVersionBehindTheToken() throws IOException
+	{
+		AgentHandler.setTokenSupplier(() -> "agent-token");
+		try
+		{
+			AgentHandler route = new AgentBridge(new Gson(), () -> "agent-token").handler("/bridge/version");
+			FakeExchange ok = new FakeExchange("/bridge/version", "agent-token");
+			route.handle(ok);
+			assertEquals(200, ok.status);
+			assertEquals("{\"version\":\"" + ChronicleLinkPlugin.VERSION + "\"}", ok.body());
+
+			// The Agent Server's checks: a wrong token gets the opaque 404.
+			FakeExchange wrong = new FakeExchange("/bridge/version", "other");
+			route.handle(wrong);
+			assertEquals(404, wrong.status);
+
+			// Only the exact path.
+			FakeExchange longer = new FakeExchange("/bridge/version/x", "agent-token");
+			route.handle(longer);
+			assertEquals(404, longer.status);
+
+			// No token configured for the Agent Server: the bridge answers nothing.
+			FakeExchange none = new FakeExchange("/bridge/version", "agent-token");
+			new AgentBridge(new Gson(), () -> null).handler("/bridge/version").handle(none);
+			assertEquals(404, none.status);
+		}
+		finally
+		{
+			AgentHandler.setTokenSupplier(null);
+		}
+	}
+
+	/** One request to a handler, as the Agent Server's UDS server would hand it over. */
+	private static final class FakeExchange extends HttpExchange
+	{
+		private final URI uri;
+		private final Headers request = new Headers();
+		private final Headers response = new Headers();
+		private final ByteArrayOutputStream out = new ByteArrayOutputStream();
+		int status = -1;
+
+		FakeExchange(String path, String token)
+		{
+			uri = URI.create(path);
+			request.add("Host", "localhost");
+			request.add("X-Agent-Token", token);
+		}
+
+		String body()
+		{
+			return out.toString(StandardCharsets.UTF_8);
+		}
+
+		@Override
+		public Headers getRequestHeaders()
+		{
+			return request;
+		}
+
+		@Override
+		public Headers getResponseHeaders()
+		{
+			return response;
+		}
+
+		@Override
+		public URI getRequestURI()
+		{
+			return uri;
+		}
+
+		@Override
+		public String getRequestMethod()
+		{
+			return "GET";
+		}
+
+		@Override
+		public HttpContext getHttpContext()
+		{
+			return null;
+		}
+
+		@Override
+		public void close()
+		{
+		}
+
+		@Override
+		public InputStream getRequestBody()
+		{
+			return new ByteArrayInputStream(new byte[0]);
+		}
+
+		@Override
+		public OutputStream getResponseBody()
+		{
+			return out;
+		}
+
+		@Override
+		public void sendResponseHeaders(int rCode, long responseLength)
+		{
+			status = rCode;
+		}
+
+		@Override
+		public InetSocketAddress getRemoteAddress()
+		{
+			return null;
+		}
+
+		@Override
+		public int getResponseCode()
+		{
+			return status;
+		}
+
+		@Override
+		public InetSocketAddress getLocalAddress()
+		{
+			return null;
+		}
+
+		@Override
+		public String getProtocol()
+		{
+			return "HTTP/1.1";
+		}
+
+		@Override
+		public Object getAttribute(String name)
+		{
+			return null;
+		}
+
+		@Override
+		public void setAttribute(String name, Object value)
+		{
+		}
+
+		@Override
+		public void setStreams(InputStream i, OutputStream o)
+		{
+		}
+
+		@Override
+		public HttpPrincipal getPrincipal()
+		{
+			return null;
+		}
 	}
 
 	@Test

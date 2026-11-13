@@ -71,7 +71,7 @@ func newAgentCmd() *cobra.Command {
 			a := &agent.Agent{
 				URL: url, Log: log, VNCAddr: vncAddr(),
 				Token: (&client.AgentAuth{URL: url, ClientID: os.Getenv("MICROBOT_AGENT_CLIENT_ID"), ClientSecret: secret}).Token,
-				// Bridge stays empty: the Chronicle Link bridge has no version route yet.
+				// Hello.Bridge stays empty: the bridge's version is in the status (Status.Bridge).
 				Hello: agent.Hello{Host: host, Version: buildinfo.String(), Account: strings.TrimSpace(os.Getenv("MICROBOT_AGENT_ACCOUNT")), Kind: agent.KindAttached},
 				Executor: &agent.Executor{
 					Game: &microbot.Client{Home: home}, Home: home,
@@ -179,7 +179,8 @@ func workerAgent(url string, getenv func(string) string, log *slog.Logger) (*age
 	return &agent.Agent{
 		URL: url, Log: log, VNCAddr: net.JoinHostPort("127.0.0.1", port),
 		Token: tokenFromFile(tokenFile),
-		// Bridge stays empty: the Chronicle Link bridge has no version route yet.
+		// Hello.Bridge stays empty: the hello goes out before the client and its bridge come up;
+		// the bridge's version is read while the client runs (Status.Bridge).
 		Hello: agent.Hello{Host: name, Version: buildinfo.String(), Account: account, Kind: agent.KindManaged, Worker: name},
 		Executor: &agent.Executor{
 			Game: &microbot.Client{Home: home}, Home: home, Log: log,

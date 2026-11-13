@@ -88,8 +88,9 @@ type Hello struct {
 	Kind string `json:"kind,omitempty"`
 	// Worker is the pod name of a managed agent.
 	Worker string `json:"worker,omitempty"`
-	// Bridge is the Chronicle Link bridge version the agent found, "" when
-	// none answered.
+	// Bridge stays "" today: the hello goes out before the client (and the
+	// Chronicle Link bridge) come up in a worker, so the version is read
+	// while the client runs and reported in Status.Bridge instead.
 	Bridge string `json:"bridge,omitempty"`
 }
 
@@ -115,7 +116,11 @@ type Status struct {
 	// State and Login are /state and /login of the Agent Server as is.
 	State json.RawMessage `json:"state,omitempty"`
 	Login json.RawMessage `json:"login,omitempty"`
-	Error string          `json:"error,omitempty"`
+	// Bridge is the Chronicle Link version its control bridge answered
+	// (GET /bridge/version), read while the client runs; "" when no bridge
+	// answered (plugin off, or older than 1.12).
+	Bridge string `json:"bridge,omitempty"`
+	Error  string `json:"error,omitempty"`
 }
 
 // Screenshot is the answer to CmdScreenshot: the frame re-encoded as JPEG

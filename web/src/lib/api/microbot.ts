@@ -30,6 +30,8 @@ export interface ClientStatus {
 	vnc: boolean;
 	state?: GameState;
 	login?: LoginState;
+	/** Versão do Chronicle Link que a ponte respondeu com o cliente rodando; ausente sem ponte (plugin desligado ou anterior à 1.12). */
+	bridge?: string;
 	error?: string;
 }
 

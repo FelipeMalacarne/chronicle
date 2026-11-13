@@ -115,19 +115,30 @@ A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com 
 - **Item 20 (web v7, decisão 36):** as dez fatias, V1 a V10, estão no `main`
   (`docs/ui/decisoes-canvas.md`, seções 7.6 a 7.14). Faltam as telas em 640 px que o canvas ainda não
   desenhou: Visão geral, Personagem, Histórico, Atividade, Rotinas, Plugins e Mundo.
+- **Item 21 (doc 10, decisão 32):** a fase 1 está no `main`. O código da fase 2 está pronto (2026-11-13,
+  PRs #46, #47 e #48): a gravação por demonstração no Chronicle Link 1.13.0 e no ingest,
+  as tarefas propostas a partir dela com o `propose_tasks` e o `submit_tasks` do `content mcp`, e o
+  modo assistido no painel (Chronicle Link 1.14.0). A fase só termina com a gravação e a confirmação do
+  dono (abaixo).
 
 O próximo passo é do dono:
 
-1. **Conferir no jogo e no cluster:**
+1. **Terminar a fase 2 do doc 10** (doc 10, seção 13): ligar "Record demonstration" no Chronicle
+   Link 1.14, jogar um trecho do Oziris 1.1, exportar com `chronicle recording -o` e, numa sessão de
+   extração (skill `annotate-guide@6`), confirmar as tarefas que o `propose_tasks` propõe para cada
+   passo. Conferir no jogo, na mesma sessão, a gravação (a opção de diálogo pela tecla, o banco e a
+   loja) e o modo assistido do painel.
+2. **Conferir no jogo e no cluster:**
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;
    - uma rotina recorrente no zaros;
    - a capacidade da F7 depois do RBAC;
    - o reinício sozinho na versão nova depois de um deploy (decisão 37).
-2. **Desenhar no canvas** as telas em 640 px que faltam.
-3. **Decidir o que está aberto:**
+3. **Desenhar no canvas** as telas em 640 px que faltam.
+4. **Decidir o que está aberto:**
    - o gesto para soltar uma rotina presa, hoje salvá-la de novo (o "Liberar" da tela de Rotinas);
-   - quando começar as fases 1 a 5 do doc 10 (as decisões E5 a E10 foram fechadas em 2026-11-13).
+   - E11 a E13 do doc 10 (o que a gravação registra, a retenção dela no servidor e o que vai para o
+     conteúdo como evidência), hoje no modo conservador.
 
 ## Discrepâncias e ressalvas
 

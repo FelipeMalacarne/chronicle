@@ -126,9 +126,20 @@ final class PanelScreenshotFixture
 	}
 
 	/** The planner's real answer at cursor 1.1.244 (2026-11-05, read-only GET), with notes and the section. */
+	/** A window whose current step has tasks: the planner's TestAssistedModeWire writes it. */
+	static RouteWindow tasks()
+	{
+		return resource("route-tasks.json");
+	}
+
 	static RouteWindow real()
 	{
-		try (java.io.InputStream in = PanelScreenshotFixture.class.getResourceAsStream("route-oziris-1.1.244.json"))
+		return resource("route-oziris-1.1.244.json");
+	}
+
+	private static RouteWindow resource(String name)
+	{
+		try (java.io.InputStream in = PanelScreenshotFixture.class.getResourceAsStream(name))
 		{
 			return new com.google.gson.Gson().fromJson(
 				new java.io.InputStreamReader(in, java.nio.charset.StandardCharsets.UTF_8), RouteWindow.class);

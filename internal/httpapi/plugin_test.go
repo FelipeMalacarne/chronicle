@@ -31,7 +31,8 @@ func panelGuide() *content.Guide {
 		ID: "oziris-main", Title: "Oziris", Source: &content.Source{Author: "OzirisLoL", Origin: "ironman.guide"},
 		Sections: []*content.Section{{ID: "s", Slug: "s", Title: "Early game", Steps: []*content.Step{
 			{ID: "1", Text: "first"},
-			{ID: "2", Text: "second", Objectives: []content.Objective{{Key: entities.MustParseObjectiveKey("skill:agility>=10"), Role: content.RoleCompletes}}},
+			{ID: "2", Text: "second", Objectives: []content.Objective{{Key: entities.MustParseObjectiveKey("skill:agility>=10"), Role: content.RoleCompletes}},
+				Tasks: []content.Task{{Type: content.TaskManual, Note: "Do it by hand.", Until: &content.TaskUntil{State: content.UntilOwnerMark}}}},
 			{ID: "3", Text: "third"},
 		}}},
 	}
@@ -45,6 +46,13 @@ func (f *pluginProgress) ActiveGuide(_ context.Context, accountID string) (strin
 		return "", storeprogress.ErrAccountNotFound
 	}
 	return f.guide.ID, nil
+}
+
+func (f *pluginProgress) TaskFacts(_ context.Context, accountID string) (panel.Facts, error) {
+	if accountID == "missing" {
+		return panel.Facts{}, storeprogress.ErrAccountNotFound
+	}
+	return panel.Facts{Mode: "ironman"}, nil
 }
 
 func (f *pluginProgress) Board(_ context.Context, accountID, guideID string) (storeprogress.BoardView, error) {
@@ -205,6 +213,10 @@ func TestPluginRouteWindow(t *testing.T) {
 	if o := w.Steps[0].Objectives; len(o) != 1 || o[0].Label != "10 Agility" || o[0].Verdict != "unknown" {
 		t.Fatalf("objectives without a catalog = %+v", o)
 	}
+	// The assisted mode: the cursor step's tasks, with what ends them.
+	if tasks := w.Steps[0].Tasks; len(tasks) != 1 || tasks[0].Label != "Do it by hand." || tasks[0].Until != "sua marca no passo" || tasks[0].State != "unmet" || w.Steps[1].Tasks != nil {
+		t.Fatalf("tasks = %+v", w.Steps)
+	}
 	if status, _ := pluginDo(t, "GET", server.URL+"/api/plugin/route?limit=0", "", testInstallation, "", ""); status != http.StatusBadRequest {
 		t.Fatalf("limit 0 = %d", status)
 	}
@@ -292,5 +304,25 @@ func TestAccountRouteWindow(t *testing.T) {
 		if r.StatusCode != want {
 			t.Errorf("%s = %d, want %d", path, r.StatusCode, want)
 		}
+	}
+}
+
+// The panel reads the account's facts only for a cursor step with tasks.
+func TestNeedsTaskFacts(t *testing.T) {
+	g := panelGuide()
+	agility := entities.MustParseObjectiveKey("skill:agility>=10")
+	plain := &content.Content{Guides: []*content.Guide{g}}
+	withRecipe := &content.Content{Guides: []*content.Guide{g}, Recipes: map[string]*content.Recipe{agility.String(): {Objective: agility}}}
+	st, _ := g.Step("2")
+	st.Tasks = nil
+	if needsTaskFacts(plain, g, "2") || needsTaskFacts(plain, g, "1") || needsTaskFacts(plain, g, "nope") || needsTaskFacts(nil, g, "2") {
+		t.Fatal("no tasks, no facts")
+	}
+	if !needsTaskFacts(withRecipe, g, "2") {
+		t.Fatal("a recipe of an objective the step completes has tasks")
+	}
+	st.Tasks = []content.Task{{Type: content.TaskManual}}
+	if !needsTaskFacts(plain, g, "2") {
+		t.Fatal("the step's own tasks")
 	}
 }

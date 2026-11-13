@@ -43,7 +43,8 @@ import net.runelite.client.ui.components.ThinProgressBar;
 
 /**
  * The route panel in RuneLite's own look: a header with the route, its progress and the
- * cursor's section; the current step (AGORA) with its notes, objectives and Feito/Pular/
+ * cursor's section; the current step (AGORA) with its notes, objectives, the assisted mode's
+ * checklist of its tasks (1.14.0: what the planner sees done, never an action) and Feito/Pular/
  * Desfazer; the items to carry, collapsed into one summary; and the next steps, one line each
  * (click to expand). Swing only: every method runs on the Swing thread, and actions go to
  * {@link Actions}, which hands them to the panel executor.
@@ -429,9 +430,37 @@ final class RoutePanel extends PluginPanel
 		p.add(top);
 		p.add(gap(4));
 		addStepBody(p, w, s, inner, true);
+		if (!s.tasksOrEmpty().isEmpty())
+		{
+			p.add(gap(8));
+			p.add(label("Tarefas", SMALL, MUTED));
+			for (RouteWindow.Task t : s.tasksOrEmpty())
+			{
+				p.add(taskRow(t, inner));
+			}
+		}
 		p.add(gap(8));
 		p.add(buttons(s, true, inner));
 		return p;
+	}
+
+	/**
+	 * One line of the assisted mode's checklist: a check when the planner sees it done, a ring
+	 * while to do, the unknown mark otherwise; what ends it in the tooltip. Read-only: no action.
+	 */
+	private JComponent taskRow(RouteWindow.Task t, int width)
+	{
+		// a task still to do is not a failure: only done is coloured
+		JLabel state = label(PanelText.taskState(t), SMALL, "met".equals(t.state) ? PanelIcons.verdictColor(t.state) : MUTED);
+		state.setVerticalAlignment(JLabel.TOP);
+		state.setBorder(new EmptyBorder(2, 6, 0, 0));
+		int labelWidth = width - ICON_COL - state.getPreferredSize().width;
+		Icon icon = "met".equals(t.state) ? PanelIcons.of(PanelIcons.Shape.CHECK)
+			: "unmet".equals(t.state) ? PanelIcons.of(PanelIcons.Shape.RING) : PanelIcons.verdict(t.state);
+		JComponent row = iconRow(icon, text(t.label, BODY, "met".equals(t.state) ? MUTED : TEXT, labelWidth), state);
+		row.setBorder(new EmptyBorder(1, 0, 1, 0));
+		row.setToolTipText(PanelText.taskTooltip(t));
+		return row;
 	}
 
 	/** Text, location, notes, objectives and the blocked line of a step. */

@@ -443,6 +443,10 @@ export interface RouteWindowStep {
   objectives: { key: string; role: 'completes' | 'starts' | 'requires' | 'uses'; label: string;
                 verdict: Verdict; regressed?: boolean }[];
   notes?: { kind: 'tip' | 'update' | 'hcim'; text: string }[];  // notas do autor, sem metadados
+  // Modo assistido (doc 10, fase 2): só no passo do cursor, as tarefas (das receitas e do passo)
+  // com o término avaliado pelo servidor; unknown nunca é "a fazer".
+  tasks?: { type: 'travel' | 'bank' | 'buy' | 'talk' | 'interact' | 'train' | 'manual'; label: string;
+            until: string; state: Verdict; reason?: string; recipe?: boolean }[];
 }
 
 export interface RouteCarry {

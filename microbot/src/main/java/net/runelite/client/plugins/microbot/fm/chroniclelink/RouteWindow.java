@@ -92,6 +92,17 @@ final class RouteWindow
 		List<Objective> objectives;
 		/** The guide's notes of the step; absent when none (and from an older planner). */
 		List<Note> notes;
+		/**
+		 * The cursor step's typed tasks with whether the planner sees each one done: the checklist of
+		 * the assisted mode (planner docs/10 phase 2). Only on the current step; absent when it has
+		 * none and from an older planner.
+		 */
+		List<Task> tasks;
+
+		List<Task> tasksOrEmpty()
+		{
+			return tasks == null ? Collections.emptyList() : tasks;
+		}
 
 		List<Note> notesOrEmpty()
 		{
@@ -174,6 +185,22 @@ final class RouteWindow
 	{
 		String key;
 		String label;
+	}
+
+	/** One line of the assisted mode's checklist: what to do, what ends it, and the planner's view. */
+	static final class Task
+	{
+		/** travel, bank, buy, talk, interact, train or manual. */
+		String type;
+		String label;
+		/** What ends the task ({@code until}), labelled; empty when the task does not say. */
+		String until;
+		/** met, unmet or unknown: unknown is never shown as not done. */
+		String state;
+		/** Why the planner cannot tell, when unknown. */
+		String reason;
+		/** Inherited from the recipe of an objective the step completes. */
+		boolean recipe;
 	}
 
 	static final class Objective

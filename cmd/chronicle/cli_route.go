@@ -89,6 +89,21 @@ func printWindow(out io.Writer, w panel.Window) {
 			}
 			fmt.Fprintf(out, "  Objetivos: %s\n", strings.Join(parts, " · "))
 		}
+		if len(s.Tasks) > 0 {
+			// the assisted mode's checklist (docs/10 phase 2)
+			fmt.Fprintln(out, "  Tarefas:")
+			for _, tk := range s.Tasks {
+				mark := verdictMark(tk.State)
+				if tk.State == rules.Unmet {
+					mark = "○" // still to do, not a failure
+				}
+				line := "  " + mark + " " + tk.Label
+				if tk.Until != "" {
+					line += " (até: " + tk.Until + ")"
+				}
+				fmt.Fprintln(out, line)
+			}
+		}
 		if len(s.BlockedBy) > 0 {
 			labels := make([]string, len(s.BlockedBy))
 			for i, b := range s.BlockedBy {

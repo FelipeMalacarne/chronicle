@@ -49,6 +49,8 @@ class RoutePanelRenderTest
 		write(out, "-login-sair", real, false, panel ->
 			panel.updateLogin(new LoginSession.View(LoginSession.Kind.SIGNED_IN, null, null, null)));
 		write(out, "-ambiente", real, false, panel -> panel.setFromEnvironment(true));
+		PanelState tasks = new PanelState(PanelState.Connection.ONLINE, PanelScreenshotFixture.tasks(), now.minusSeconds(4), null, null);
+		write(out, "-tarefas", tasks, false, null);
 	}
 
 	private static void write(String out, String suffix, PanelState state, boolean itemsOpen, Consumer<RoutePanel> after) throws Exception

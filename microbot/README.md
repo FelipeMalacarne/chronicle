@@ -28,7 +28,7 @@ Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md)
 The worker image built from this directory: [docs/11](../docs/11-workers-microbot.md) and
 `deploy/worker/`.
 
-## Chronicle Link (`fm/chroniclelink`, 1.13.0)
+## Chronicle Link (`fm/chroniclelink`, 1.14.0)
 
 Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
 1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
@@ -93,7 +93,10 @@ route from the cursor on, in RuneLite's look:
 - the current step (AGORA): its full text, location, the guide's notes ("Atualização:" in
   orange, "Dica:"; hcim notes are hidden, the window does not say the account's mode),
   objectives as rows (icon, label, "feito" / "falta" / "sem dado"), a padlock row "Falta: …"
-  when blocked, and the buttons **Feito**, **Pular** and, after a mark, **Desfazer**;
+  when blocked, the step's tasks (1.14.0, the assisted mode of planner `docs/10` phase 2: one row
+  per typed task, its recipe's first, with "feito" / "a fazer" / "sem dado" as the planner
+  evaluates what ends it; what ends it and why it is unknown in the tooltip; read-only, nothing is
+  highlighted or done in game) and the buttons **Feito**, **Pular** and, after a mark, **Desfazer**;
 - the items to carry, collapsed into one summary ("5 faltam · 2 com você · 19 no banco") that
   still lists the missing ones; open it for all (a derived preview shows six more and "+N");
   the choice is remembered (hidden config `itemsExpanded`);

@@ -147,6 +147,39 @@ final class PanelText
 		return "sem dado";
 	}
 
+	/** A task's state in a word: done, still to do, or not known (never "to do" by default). */
+	static String taskState(RouteWindow.Task t)
+	{
+		if ("met".equals(t.state))
+		{
+			return "feito";
+		}
+		if ("unmet".equals(t.state))
+		{
+			return "a fazer";
+		}
+		return "sem dado";
+	}
+
+	/** What ends a task and why its state is unknown, for its tooltip. */
+	static String taskTooltip(RouteWindow.Task t)
+	{
+		StringBuilder b = new StringBuilder();
+		if (t.until != null && !t.until.isEmpty())
+		{
+			b.append("Termina: ").append(t.until);
+		}
+		if (t.reason != null && !t.reason.isEmpty())
+		{
+			b.append(b.length() > 0 ? " · " : "").append(t.reason);
+		}
+		if (t.recipe)
+		{
+			b.append(b.length() > 0 ? " · " : "").append("da receita do objetivo");
+		}
+		return b.length() == 0 ? null : b.toString();
+	}
+
 	/** What the server's verdict means, for a tooltip. */
 	static String verdictWord(String verdict)
 	{

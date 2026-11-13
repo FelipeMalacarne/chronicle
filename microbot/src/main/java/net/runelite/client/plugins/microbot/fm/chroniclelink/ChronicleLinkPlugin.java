@@ -78,6 +78,9 @@ import okhttp3.OkHttpClient;
  * clicked, dialogue options, shop purchases, bank changes, items used, a coarse position) are
  * recorded as typed events by {@link DemonstrationRecorder} and sent in {@code data.recording}
  * until a push carrying them is acknowledged. It only records; nothing acts in game.
+ *
+ * <p>Assisted mode (1.14.0, planner docs/10 phase 2): the panel shows the current step's typed
+ * tasks as a checklist, with what the planner sees done; still read-only.
  */
 @PluginDescriptor(
 	name = ChronicleLinkPlugin.TAG + "Chronicle Link",
@@ -92,7 +95,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class ChronicleLinkPlugin extends Plugin
 {
-	static final String VERSION = "1.13.0";
+	static final String VERSION = "1.14.0";
 	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */

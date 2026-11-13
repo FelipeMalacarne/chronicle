@@ -618,3 +618,32 @@ paginada e apagar) e as rotas (dev, oidc com CSRF no DELETE e fora dos dois).
 **Não conferido no jogo:** a escolha de diálogo pela tecla (o evento do script do ouvinte de teclas),
 as diferenças do banco e da loja com a interface real, o tile do objeto numa instância e o volume de
 eventos de uma sessão longa.
+
+## Adendo de 2026-11-13: modo assistido no painel (Chronicle Link 1.14.0, fase 2 do doc 10)
+
+O painel lateral passa a mostrar, no card AGORA, as tarefas do passo atual (doc 10, seção 7) como uma
+lista de verificação, entre os objetivos e os botões. Continua só de leitura: nada no jogo é destacado
+nem feito; é o primeiro degrau do modo assistido do doc 10, seção 10.
+
+**Contrato.** A janela de `GET /api/plugin/route` ganha, só no passo do cursor, `tasks`: uma linha por
+tarefa, na ordem de execução (as herdadas das receitas primeiro), com `type`, `label` (o que fazer, já
+em PT-BR), `until` (o que a termina, por extenso), `state` (`met`, `unmet` ou `unknown`), `reason` (por
+que o servidor não sabe) e `recipe` (veio da receita de um objetivo). O servidor avalia o término
+(doc 10, seção 10, "Como implementado"); o plugin nunca decide. Um planner anterior não manda o campo
+e o painel fica como era.
+
+```json
+"tasks": [{"type": "travel", "label": "Ir até Lumbridge Castle", "until": "na área do local", "state": "met"},
+          {"type": "talk", "label": "Falar com Hans: “Who are you?”", "until": "objetivos do passo", "state": "unmet"}]
+```
+
+**No painel.** "Tarefas", uma linha por tarefa: ✓ e "feito" em verde quando o servidor vê o término,
+○ e "a fazer" quando não, e o ícone de "não sabemos" com "sem dado" quando o servidor não sabe (por
+exemplo, sem "Send position" um `travel` fica sem dado, nunca "a fazer"). O tooltip diz o término, o
+motivo e se a tarefa veio de uma receita.
+
+**Verificação:** `TestAssistedModeTasks` e `TestAssistedModeWire` no servidor (este grava
+`route-tasks.json` nos recursos de teste do plugin), `RouteWindowTest` no plugin lendo o mesmo arquivo
+(156 testes JUnit) e o render sem tela do painel (`RoutePanelRenderTest`, variante `-tarefas`).
+**Não conferido no jogo**: a lista com as tarefas reais, que só existem depois da gravação e da
+confirmação do dono.

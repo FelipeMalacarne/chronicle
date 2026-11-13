@@ -295,8 +295,8 @@ attached agent declares). Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes bas
 (mapeamento do importador na seção 10, adendo multi-guia na seção 11) · 06 cliente Microbot (plugin,
 contrato de ingest) · 07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC,
 plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por
-agente; decisões em 9.1 e 9.3) · 10 modelo de execução (proposta: fatos por fonte, log de eventos,
-tarefas, receitas, planos; decisões E1 a E10 abertas) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
+agente; decisões em 9.1 e 9.3) · 10 modelo de execução (fatos por fonte, log de eventos,
+tarefas, receitas, planos; E1 a E10 decididas; fases 0 e 1 feitas, 2 a 5 no item 21 do doc 04) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
 `docs/ui/pergaminho.md` + `pergaminho.tokens.json` (design system).
 `docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.

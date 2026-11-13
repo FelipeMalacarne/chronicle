@@ -1,0 +1,128 @@
+{
+  "schema_version": 1,
+  "id": "t",
+  "title": "Execution fixture",
+  "default_variant": "main",
+  "variants": [
+    {
+      "id": "main",
+      "title": "Main",
+      "sections": [
+        {
+          "id": "1.1",
+          "slug": "s",
+          "title": "S",
+          "segments": [
+            {
+              "id": "seg-a",
+              "kind": "sequence",
+              "source": {
+                "method": "derived",
+                "confidence": "high",
+                "step_ids": [
+                  "a"
+                ]
+              },
+              "loadout": {
+                "status": "unknown"
+              },
+              "steps": [
+                {
+                  "id": "a",
+                  "text": "Walk to Lumbridge and talk to the Cook to start Cook's Assistant",
+                  "location": "Lumbridge",
+                  "complete_when": [
+                    {
+                      "type": "quest_state",
+                      "meta": {
+                        "origin": "questStatus",
+                        "confidence": "high"
+                      },
+                      "quest": "Cook's Assistant",
+                      "state": "IN_PROGRESS",
+                      "op": "gte"
+                    }
+                  ]
+                },
+                {
+                  "id": "e",
+                  "text": "Bring the ingredients back to the Cook and finish Cook's Assistant",
+                  "complete_when": [
+                    {
+                      "type": "quest_state",
+                      "quest": "Cook's Assistant",
+                      "state": "FINISHED"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "seg-b",
+              "kind": "bank_leg",
+              "source": {
+                "method": "derived",
+                "confidence": "high",
+                "step_ids": [
+                  "b"
+                ]
+              },
+              "bank_actions": [
+                {
+                  "type": "withdraw",
+                  "position": "start",
+                  "text": "Withdraw",
+                  "source": {
+                    "method": "derived",
+                    "confidence": "high",
+                    "step_ids": [
+                      "b"
+                    ]
+                  }
+                }
+              ],
+              "loadout": {
+                "status": "partial",
+                "inventory": [
+                  {
+                    "name": "Hammer",
+                    "item_id": 2347,
+                    "qty": 1
+                  }
+                ],
+                "source": {
+                  "method": "derived",
+                  "confidence": "high",
+                  "step_ids": [
+                    "b"
+                  ]
+                }
+              },
+              "steps": [
+                {
+                  "id": "b",
+                  "text": "Withdraw a hammer, then buy a bronze axe at Bob's Brilliant Axes"
+                },
+                {
+                  "id": "c",
+                  "text": "Chop trees until 15 Woodcutting",
+                  "complete_when": [
+                    {
+                      "type": "skill_level",
+                      "skill": "woodcutting",
+                      "level": 15
+                    }
+                  ]
+                },
+                {
+                  "id": "d",
+                  "text": "Bank everything at the bank booth"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

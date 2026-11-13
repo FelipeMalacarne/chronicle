@@ -1,0 +1,697 @@
+[
+  {
+    "name": "unknown objective",
+    "file": "quest-not_a_quest-finished.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "quest:not_a_quest@finished",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:lumbridge"
+            },
+            {
+              "type": "talk",
+              "npc": "npc:cook_lumbridge",
+              "options": [
+                "What's wrong?",
+                "Yes."
+              ],
+              "until": {
+                "objective": "quest:cooks_assistant@started"
+              }
+            },
+            {
+              "type": "interact",
+              "object": "object:wheat",
+              "action": "Pick",
+              "until": {
+                "objective": "item:1947x1"
+              }
+            },
+            {
+              "type": "manual",
+              "note": "Get an egg and a bucket of milk, and mill the grain into a pot of flour.",
+              "until": {
+                "objective": "item:1933x1"
+              }
+            },
+            {
+              "type": "talk",
+              "npc": "npc:cook_lumbridge",
+              "until": {
+                "state": "goal_met"
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "manual",
+        "confidence": "high",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "unknown entity quest:not_a_quest"
+  },
+  {
+    "name": "file not named after the key",
+    "file": "bronze-axe.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:lumbridge"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "must live in item-1351x1.json"
+  },
+  {
+    "name": "unknown requirement",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:lumbridge"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      },
+      "requires": [
+        "quest:zzz@finished"
+      ]
+    },
+    "want": "unknown entity quest:zzz"
+  },
+  {
+    "name": "requires its own objective",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:lumbridge"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      },
+      "requires": [
+        "item:1351x1"
+      ]
+    },
+    "want": "cannot require its own objective"
+  },
+  {
+    "name": "mode in two variants",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:lumbridge"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "id": "safe",
+          "modes": [
+            "hcim"
+          ],
+          "tasks": [
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "already served by variant"
+  },
+  {
+    "name": "duplicate variant id",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman"
+          ],
+          "tasks": [
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "id": "main",
+          "modes": [
+            "hcim"
+          ],
+          "tasks": [
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "duplicate variant id"
+  },
+  {
+    "name": "unknown mode",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "main"
+          ],
+          "tasks": [
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "value must be one of"
+  },
+  {
+    "name": "risk outside the closed list",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ],
+          "risks": [
+            {
+              "kind": "ban"
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "value must be one of"
+  },
+  {
+    "name": "risk on an unknown npc",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ],
+          "risks": [
+            {
+              "kind": "combat",
+              "npc": "npc:not_an_npc"
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "unknown npc npc:not_an_npc"
+  },
+  {
+    "name": "last task ends elsewhere",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            },
+            {
+              "type": "travel",
+              "location": "location:lumbridge"
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "the last task must end on the recipe's objective"
+  },
+  {
+    "name": "manual without a note",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "manual",
+              "until": {
+                "state": "goal_met"
+              }
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "manual in a recipe needs a note"
+  },
+  {
+    "name": "owner_mark in a recipe",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "manual",
+              "note": "Buy it.",
+              "until": {
+                "state": "owner_mark"
+              }
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "a recipe has no step for the owner to mark"
+  },
+  {
+    "name": "bank without items",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "bank"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "bank in a recipe needs items"
+  },
+  {
+    "name": "task with an unknown ref",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:not_a_place"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "unknown entity location:not_a_place"
+  },
+  {
+    "name": "unconfirmed inference",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:lumbridge"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium"
+      }
+    },
+    "want": "needs confirmed_by owner"
+  },
+  {
+    "name": "cites a decision",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:lumbridge"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner",
+        "decision": "some-rule"
+      }
+    },
+    "want": "/source/decision: property not allowed here"
+  },
+  {
+    "name": "task with a parameter of another type",
+    "file": "item-1351x1.json",
+    "recipe": {
+      "schema_version": 1,
+      "kind": "recipe",
+      "objective": "item:1351x1",
+      "variants": [
+        {
+          "id": "main",
+          "modes": [
+            "ironman",
+            "hcim",
+            "uim",
+            "gim"
+          ],
+          "tasks": [
+            {
+              "type": "travel",
+              "location": "location:lumbridge",
+              "npc": "npc:goblin"
+            },
+            {
+              "type": "buy",
+              "shop": "shop:bobs_brilliant_axes",
+              "item": "item:1351",
+              "qty": 1
+            }
+          ]
+        }
+      ],
+      "source": {
+        "method": "llm",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "tasks/0/npc: property not allowed here"
+  }
+]

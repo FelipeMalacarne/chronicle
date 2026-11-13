@@ -199,7 +199,17 @@ func refersTo(sa content.StepAnnotation, ref entities.Ref) bool {
 	if sa.Location != nil && sa.Location.Ref == ref {
 		return true
 	}
-	return slices.ContainsFunc(sa.Objectives, func(o content.Objective) bool { return o.Key.Ref == ref })
+	if slices.ContainsFunc(sa.Objectives, func(o content.Objective) bool { return o.Key.Ref == ref }) {
+		return true
+	}
+	for i := range sa.Tasks {
+		for _, r := range sa.Tasks[i].Refs() {
+			if *r == ref {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // renameRefs rewrites ref to next in the sidecars that use it and refreshes
@@ -225,6 +235,13 @@ func (w *Workspace) renameRefs(ref, next entities.Ref, uses []refUse) ([]string,
 				for j := range sa.Objectives {
 					if sa.Objectives[j].Key.Ref == ref {
 						sa.Objectives[j].Key.Ref = next
+					}
+				}
+				for j := range sa.Tasks {
+					for _, r := range sa.Tasks[j].Refs() {
+						if *r == ref {
+							*r = next
+						}
 					}
 				}
 			}

@@ -57,6 +57,9 @@ type StepAnnotation struct {
 	// text (a "deposit" that is not a bank). Exclusive with BankActions.
 	NoBankActions *NoBankActions     `json:"no_bank_actions,omitempty"`
 	Location      *AnnotatedLocation `json:"location,omitempty"`
+	// Tasks are the step's typed tasks (docs/10 section 7), each with the
+	// quote it came from.
+	Tasks []AnnotatedTask `json:"tasks,omitempty"`
 }
 
 // NoBankActions says the step has no bank action, against what derive read
@@ -379,6 +382,20 @@ func (g *Guide) CheckStepAnnotation(sa *StepAnnotation, decisions *DecisionsFile
 		}
 		checkSource("/location/source", sa.Location.Source)
 	}
+	if len(sa.Tasks) > 0 {
+		seg := g.segmentsByID[st.SegmentID]
+		ctx := TaskContext{Goal: stepGoal(st, sa), Loadout: len(sa.Items) > 0 || seg != nil && hasLoadoutItems(seg.Loadout)}
+		for j, t := range sa.Tasks {
+			tPtr := taskPointer(j)
+			for _, msg := range t.Check(reg, ctx) {
+				add(tPtr, "%s", msg)
+			}
+			if msg := verifyQuote(doc, t.Evidence); msg != "" {
+				add(tPtr+"/evidence", "%s", msg)
+			}
+			checkSource(tPtr+"/source", t.Source)
+		}
+	}
 	return issues, false
 }
 
@@ -420,6 +437,12 @@ func (g *Guide) composeStep(sa *StepAnnotation, skillVersion string) {
 	if sa.Location != nil {
 		ref := sa.Location.Ref
 		st.LocationRef = &ref
+	}
+	if len(sa.Tasks) > 0 {
+		st.Tasks = make([]Task, len(sa.Tasks))
+		for i, t := range sa.Tasks {
+			st.Tasks[i] = t.Task
+		}
 	}
 	seg := g.segmentsByID[st.SegmentID]
 	starts := seg != nil && len(seg.Steps) > 0 && seg.Steps[0] == st
@@ -493,23 +516,9 @@ var (
 // AnnotationSchema returns the compiled annotations schema.
 func AnnotationSchema() (*jsonschema.Schema, error) {
 	annotationSchemaOnce.Do(func() {
-		c := jsonschema.NewCompiler()
-		c.AssertFormat()
-		for url, raw := range map[string][]byte{schema.GuideSchemaURL: schema.GuideSchema, schema.AnnotationsSchemaURL: schema.AnnotationsSchema} {
-			doc, err := jsonschema.UnmarshalJSON(bytes.NewReader(raw))
-			if err != nil {
-				annotationSchemaErr = fmt.Errorf("content: embedded schema %s is not valid JSON: %w", url, err)
-				return
-			}
-			if err := c.AddResource(url, doc); err != nil {
-				annotationSchemaErr = fmt.Errorf("content: add schema resource: %w", err)
-				return
-			}
-		}
-		annotationSchemaCompiled, annotationSchemaErr = c.Compile(schema.AnnotationsSchemaURL)
-		if annotationSchemaErr != nil {
-			annotationSchemaErr = fmt.Errorf("content: compile annotations schema: %w", annotationSchemaErr)
-		}
+		annotationSchemaCompiled, annotationSchemaErr = compileSchema(schema.AnnotationsSchemaURL, map[string][]byte{
+			schema.GuideSchemaURL: schema.GuideSchema, schema.TaskSchemaURL: schema.TaskSchema, schema.AnnotationsSchemaURL: schema.AnnotationsSchema,
+		})
 	})
 	return annotationSchemaCompiled, annotationSchemaErr
 }
@@ -527,9 +536,7 @@ func ValidateAnnotationJSON(name string, data []byte) error {
 	if err := sch.Validate(doc); err != nil {
 		var ve *jsonschema.ValidationError
 		if errors.As(err, &ve) {
-			var issues Errors
-			flattenValidation(name, ve, &issues)
-			return issues.errOrNil()
+			return schemaIssues(name, ve).errOrNil()
 		}
 		return Errors{{File: name, Message: err.Error()}}
 	}

@@ -580,6 +580,23 @@ func TestReviseEntity(t *testing.T) {
 	if len(sub.Accepted) != 1 {
 		t.Fatalf("setup = %+v", sub)
 	}
+	// A task of the sidecar names the location too (the extraction of tasks
+	// comes in phase 2 of docs/10; here it is put in the sidecar by hand).
+	a := w.guides["t"].sections["1.1"]
+	stA, _ := w.guides["t"].guide.Step("a")
+	span, spanErr := content.QuoteSpan(stA, "/text", "start X marks the spot quest")
+	if spanErr != nil {
+		t.Fatal(spanErr)
+	}
+	place, veos := entities.MustParseRef("location:h_a_m_hideout"), entities.MustParseRef("npc:veos")
+	a.Steps[0].Tasks = []content.AnnotatedTask{{
+		Task:     content.Task{Type: content.TaskTalk, NPC: &veos, Location: &place, Until: &content.TaskUntil{State: content.UntilGoalMet}},
+		Evidence: content.ObjectiveEvidence{Field: "/text", Quote: "start X marks the spot quest", Span: span},
+		Source:   content.ObjectiveSource{Method: content.ProvenanceLLM, Confidence: content.ConfidenceHigh},
+	}}
+	if werr := writeJSON(filepath.Join(dir, content.GuidesSubdir, "t", content.AnnotationsSubdir, "1.1.json"), a); werr != nil {
+		t.Fatal(werr)
+	}
 	if _, err := w.ReviseEntity(EntityRevision{Kind: "location", ID: "h_a_m_hideout", NewID: "ham_hideout"}); err == nil || !strings.Contains(err.Error(), "confirmation") {
 		t.Errorf("unconfirmed revision: %v", err)
 	}
@@ -595,8 +612,8 @@ func TestReviseEntity(t *testing.T) {
 		t.Errorf("alias after rename = %+v", r)
 	}
 	data, err := os.ReadFile(filepath.Join(dir, content.GuidesSubdir, "t", content.AnnotationsSubdir, "1.1.json"))
-	if err != nil || !strings.Contains(string(data), "location:ham_hideout") || strings.Contains(string(data), "h_a_m_hideout") {
-		t.Errorf("sidecar not rewritten: %v\n%s", err, data)
+	if err != nil || strings.Count(string(data), "location:ham_hideout") != 2 || strings.Contains(string(data), "h_a_m_hideout") {
+		t.Errorf("sidecar location and task not rewritten: %v\n%s", err, data)
 	}
 	if _, err := Open(dir); err != nil {
 		t.Errorf("reopening after the rename: %v", err)

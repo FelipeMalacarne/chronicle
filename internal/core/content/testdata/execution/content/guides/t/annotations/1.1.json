@@ -1,0 +1,152 @@
+{
+  "schema_version": 1,
+  "kind": "section",
+  "guide_id": "t",
+  "section_id": "1.1",
+  "skill_version": "annotate-guide@test",
+  "steps": [
+    {
+      "step_id": "a",
+      "text_hash": "sha256:51d7a81dc14a9affce91a1e4054b08eda1cbb26227f54b2544776c381d0f42e6",
+      "tasks": [
+        {
+          "type": "travel",
+          "location": "location:lumbridge",
+          "evidence": {
+            "field": "/text",
+            "quote": "Walk to Lumbridge",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high"
+          }
+        },
+        {
+          "type": "talk",
+          "npc": "npc:cook_lumbridge",
+          "options": [
+            "What's wrong?",
+            "Yes."
+          ],
+          "until": {
+            "state": "goal_met"
+          },
+          "evidence": {
+            "field": "/text",
+            "quote": "talk to the Cook",
+            "span": [
+              22,
+              38
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "e",
+      "text_hash": "sha256:85038ba398e2b3bd6b0fbba0ebd6ec264859a5687eb758320f91de0488cb78f5"
+    },
+    {
+      "step_id": "b",
+      "text_hash": "sha256:d751568ef10608184a97b763976928416249c921f441676f97925bf91f736e53",
+      "tasks": [
+        {
+          "type": "bank",
+          "evidence": {
+            "field": "/text",
+            "quote": "Withdraw a hammer",
+            "span": [
+              0,
+              17
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high"
+          }
+        },
+        {
+          "type": "buy",
+          "shop": "shop:bobs_brilliant_axes",
+          "item": "item:1351",
+          "qty": 1,
+          "until": {
+            "objective": "item:1351x1"
+          },
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a bronze axe at Bob's Brilliant Axes",
+            "span": [
+              24,
+              64
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "confirmed_by": "owner"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "c",
+      "text_hash": "sha256:81250cc3f6d120a7121e62870edebe5aa4f7955f112ca074752cb8ffe03d973b",
+      "tasks": [
+        {
+          "type": "train",
+          "skill": "skill:woodcutting",
+          "object": "object:tree",
+          "location": "location:lumbridge",
+          "until": {
+            "objective": "skill:woodcutting>=15"
+          },
+          "evidence": {
+            "field": "/text",
+            "quote": "Chop trees until 15 Woodcutting",
+            "span": [
+              0,
+              31
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high"
+          }
+        }
+      ]
+    },
+    {
+      "step_id": "d",
+      "text_hash": "sha256:a6a3c7bf9005a122813a7e45b5896ae0a77cb089018b1dfdf6a738c510c05fb8",
+      "tasks": [
+        {
+          "type": "manual",
+          "until": {
+            "state": "owner_mark"
+          },
+          "evidence": {
+            "field": "/text",
+            "quote": "Bank everything at the bank booth",
+            "span": [
+              0,
+              33
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -32,6 +33,9 @@ type Content struct {
 	Guides []*Guide
 	// Annotations holds the sidecars read for each guide, by guide id.
 	Annotations map[string]*Annotations
+	// Recipes holds the recipes of content/recipes by objective key
+	// (docs/10 section 8).
+	Recipes map[string]*Recipe
 	// Warnings are problems that do not stop the content from loading: stale
 	// annotations, which the loader skips. `content validate` fails on them.
 	Warnings Errors
@@ -39,9 +43,11 @@ type Content struct {
 
 // Load reads <dir>/guides/*/guide.json, validates each file against the
 // schema, decodes it, builds the indexes, then reads, verifies and composes
-// the annotation sidecars of each guide (docs/09 section 4.2). All problems
-// across all files are collected and returned together as an Errors value;
-// stale annotations are skipped and reported in Content.Warnings.
+// the annotation sidecars of each guide (docs/09 section 4.2), tasks
+// included, and reads and verifies the recipes of <dir>/recipes (docs/10
+// sections 7 and 8). All problems across all files are collected and
+// returned together as an Errors value; stale annotations are skipped and
+// reported in Content.Warnings.
 func Load(dir string) (*Content, error) {
 	pattern := filepath.Join(dir, GuidesSubdir, "*", GuideFileName)
 	files, err := filepath.Glob(pattern)
@@ -53,7 +59,7 @@ func Load(dir string) (*Content, error) {
 	}
 	sort.Strings(files)
 
-	c := &Content{Dir: dir, Annotations: map[string]*Annotations{}}
+	c := &Content{Dir: dir, Annotations: map[string]*Annotations{}, Recipes: map[string]*Recipe{}}
 	var issues Errors
 	reg, regErr := entities.Default()
 	if regErr != nil {
@@ -82,10 +88,22 @@ func Load(dir string) (*Content, error) {
 		}
 		c.Guides = append(c.Guides, g)
 	}
+	recipes, recipeIssues := loadRecipes(dir, reg)
+	issues = append(issues, recipeIssues...)
+	c.Recipes = recipes
 	if err := issues.errOrNil(); err != nil {
 		return nil, err
 	}
 	return c, nil
+}
+
+// TaskCount returns how many tasks the steps of every guide carry.
+func (c *Content) TaskCount() int {
+	n := 0
+	for _, st := range c.Steps() {
+		n += len(st.Tasks)
+	}
+	return n
 }
 
 // LoadGuideFile validates and decodes a single guide.json.
@@ -303,13 +321,42 @@ func ValidateJSON(name string, data []byte) error {
 	if err := sch.Validate(doc); err != nil {
 		var ve *jsonschema.ValidationError
 		if errors.As(err, &ve) {
-			var issues Errors
-			flattenValidation(name, ve, &issues)
-			return issues.errOrNil()
+			return schemaIssues(name, ve).errOrNil()
 		}
 		return Errors{{File: name, Message: err.Error()}}
 	}
 	return nil
+}
+
+// notAllowed is the message of a property a `false` schema refuses: one
+// unevaluatedProperties does not let through (a task parameter of another
+// type) or one declared false (a recipe's decision).
+const notAllowed = "property not allowed here"
+
+// schemaIssues flattens a validation error into leaf issues. A refused
+// property inside an object that has other errors is dropped: when a task
+// fails its type's schema, none of its properties count as evaluated, and
+// listing each as refused would only hide the real error.
+func schemaIssues(file string, ve *jsonschema.ValidationError) Errors {
+	var issues Errors
+	flattenValidation(file, ve, &issues)
+	var other []string
+	for _, is := range issues {
+		if is.Message != notAllowed {
+			other = append(other, is.Pointer)
+		}
+	}
+	out := issues[:0]
+	for _, is := range issues {
+		if is.Message == notAllowed {
+			parent := is.Pointer[:strings.LastIndex(is.Pointer, "/")+1]
+			if slices.ContainsFunc(other, func(p string) bool { return strings.HasPrefix(p+"/", parent) }) {
+				continue
+			}
+		}
+		out = append(out, is)
+	}
+	return out
 }
 
 // flattenValidation turns the error tree into leaf issues. For a oneOf/anyOf
@@ -318,7 +365,11 @@ func ValidateJSON(name string, data []byte) error {
 // a bad rule to one or two lines instead of one per rule type.
 func flattenValidation(file string, e *jsonschema.ValidationError, out *Errors) {
 	if len(e.Causes) == 0 {
-		*out = append(*out, Issue{File: file, Pointer: pointer(e.InstanceLocation), Message: e.ErrorKind.LocalizedString(printer)})
+		msg := e.ErrorKind.LocalizedString(printer)
+		if _, refused := e.ErrorKind.(*kind.FalseSchema); refused {
+			msg = notAllowed
+		}
+		*out = append(*out, Issue{File: file, Pointer: pointer(e.InstanceLocation), Message: msg})
 		return
 	}
 	switch e.ErrorKind.(type) {

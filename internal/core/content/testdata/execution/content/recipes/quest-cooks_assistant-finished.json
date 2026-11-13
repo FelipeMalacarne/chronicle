@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "kind": "recipe",
+  "objective": "quest:cooks_assistant@finished",
+  "variants": [
+    {
+      "id": "main",
+      "modes": [
+        "ironman",
+        "hcim",
+        "uim",
+        "gim"
+      ],
+      "tasks": [
+        {
+          "type": "travel",
+          "location": "location:lumbridge"
+        },
+        {
+          "type": "talk",
+          "npc": "npc:cook_lumbridge",
+          "options": [
+            "What's wrong?",
+            "Yes."
+          ],
+          "until": {
+            "objective": "quest:cooks_assistant@started"
+          }
+        },
+        {
+          "type": "interact",
+          "object": "object:wheat",
+          "action": "Pick",
+          "until": {
+            "objective": "item:1947x1"
+          }
+        },
+        {
+          "type": "manual",
+          "note": "Get an egg and a bucket of milk, and mill the grain into a pot of flour.",
+          "until": {
+            "objective": "item:1933x1"
+          }
+        },
+        {
+          "type": "talk",
+          "npc": "npc:cook_lumbridge",
+          "until": {
+            "state": "goal_met"
+          }
+        }
+      ]
+    }
+  ],
+  "source": {
+    "method": "manual",
+    "confidence": "high",
+    "confirmed_by": "owner"
+  }
+}

@@ -314,6 +314,10 @@ type Step struct {
 	// its segment). Both are composed by the loader, never read from guide.json.
 	Requirements []ItemRequirement `json:"requirements,omitempty"`
 	BankActions  []BankAction      `json:"bank_actions,omitempty"`
+	// Tasks are the step's own typed tasks (docs/10 section 7), in order. Like
+	// Requirements they come only from annotations, never from guide.json;
+	// the tasks a step inherits from recipes are Content.TasksOf.
+	Tasks []Task `json:"tasks,omitempty"`
 	// TextHash is the hash of the step's source text the annotations are
 	// pinned to (set by the loader; see StepTextHash). It is never encoded:
 	// guide.json does not store it.

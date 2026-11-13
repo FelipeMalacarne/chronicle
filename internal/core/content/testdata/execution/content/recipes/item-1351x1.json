@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "kind": "recipe",
+  "objective": "item:1351x1",
+  "variants": [
+    {
+      "id": "main",
+      "modes": [
+        "ironman",
+        "hcim",
+        "uim",
+        "gim"
+      ],
+      "tasks": [
+        {
+          "type": "travel",
+          "location": "location:lumbridge"
+        },
+        {
+          "type": "buy",
+          "shop": "shop:bobs_brilliant_axes",
+          "item": "item:1351",
+          "qty": 1
+        }
+      ]
+    }
+  ],
+  "source": {
+    "method": "llm",
+    "confidence": "medium",
+    "confirmed_by": "owner"
+  }
+}

@@ -1,0 +1,156 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ironman-planner.local/schemas/task.schema.json",
+  "title": "Chronicle Task",
+  "description": "Tarefa tipada do modelo de execução (doc 10, seção 7): um tipo da lista de primitivas do executor (E5: travel, bank, buy, talk, interact, train, manual; quest depois), parâmetros só com refs do catálogo, números e ids, e uma condição de término (`until`) que é chave de objetivo ou predicado de estado avaliável pelo motor. Usada nos passos (`tasks[]` dos sidecars de anotação) e nas receitas (content/recipes). As definições de tipo não fecham as propriedades: quem usa `task` fecha com `unevaluatedProperties: false`, então uma propriedade de outro tipo (um `shop` numa `travel`) é recusada. O verificador (internal/core/content, Task.Check) confere refs existentes, a loja que vende o item, a área do local e o término avaliável.",
+  "$ref": "#/$defs/task",
+  "$defs": {
+    "task": {
+      "type": "object",
+      "required": ["type"],
+      "properties": {
+        "type": { "enum": ["travel", "bank", "buy", "talk", "interact", "train", "manual"] }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "travel" } } }, "then": { "$ref": "#/$defs/travel" } },
+        { "if": { "properties": { "type": { "const": "bank" } } }, "then": { "$ref": "#/$defs/bank" } },
+        { "if": { "properties": { "type": { "const": "buy" } } }, "then": { "$ref": "#/$defs/buy" } },
+        { "if": { "properties": { "type": { "const": "talk" } } }, "then": { "$ref": "#/$defs/talk" } },
+        { "if": { "properties": { "type": { "const": "interact" } } }, "then": { "$ref": "#/$defs/interact" } },
+        { "if": { "properties": { "type": { "const": "train" } } }, "then": { "$ref": "#/$defs/train" } },
+        { "if": { "properties": { "type": { "const": "manual" } } }, "then": { "$ref": "#/$defs/manual" } }
+      ]
+    },
+    "travel": {
+      "type": "object",
+      "description": "Ir até o local. Termina com a posição dentro da área do local (`at_location`, o padrão); o local precisa ter área em location_maps.json. `via`: o unlock ou o item de teleporte a usar.",
+      "required": ["type", "location"],
+      "properties": {
+        "type": { "const": "travel" },
+        "location": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/locationRef" },
+        "via": {
+          "type": "string",
+          "pattern": "^(?:unlock:[a-z0-9]+(?:_[a-z0-9]+)*|item:[1-9][0-9]*)$"
+        },
+        "until": { "$ref": "#/$defs/untilState" }
+      }
+    },
+    "bank": {
+      "type": "object",
+      "description": "Montar o setup no banco. Termina quando inventário e equipamento atendem ao loadout (`loadout_ready`, o padrão): os `items` da tarefa ou, num passo, o loadout do trecho (já derivado). Numa receita, `items` é obrigatório.",
+      "required": ["type"],
+      "properties": {
+        "type": { "const": "bank" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/itemRequirement" }
+        },
+        "until": { "$ref": "#/$defs/untilState" }
+      }
+    },
+    "buy": {
+      "type": "object",
+      "description": "Comprar numa loja até possuir `qty` do item. Termina em `item:<id>x<qty>` (o padrão); a loja precisa ter o item no estoque do catálogo.",
+      "required": ["type", "shop", "item", "qty"],
+      "properties": {
+        "type": { "const": "buy" },
+        "shop": { "$ref": "#/$defs/shopRef" },
+        "item": { "$ref": "#/$defs/itemRef" },
+        "qty": { "type": "integer", "minimum": 1 },
+        "until": { "$ref": "#/$defs/untilObjective" }
+      }
+    },
+    "talk": {
+      "type": "object",
+      "description": "Falar com um NPC. `options` são os textos das opções de diálogo do jogo, escolhidos por igualdade exata, nunca interpretados. Termina num objetivo (`until.objective`) ou nos objetivos que o passo, ou a receita, conclui (`goal_met`).",
+      "required": ["type", "npc", "until"],
+      "properties": {
+        "type": { "const": "talk" },
+        "npc": { "$ref": "#/$defs/npcRef" },
+        "options": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "location": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/locationRef" },
+        "until": { "$ref": "#/$defs/until" }
+      }
+    },
+    "interact": {
+      "type": "object",
+      "description": "Usar uma ação de menu de um objeto do jogo (`action`, o texto exato do menu: 'Open', 'Search'). Termina como `talk`.",
+      "required": ["type", "object", "action", "until"],
+      "properties": {
+        "type": { "const": "interact" },
+        "object": { "$ref": "#/$defs/objectRef" },
+        "action": { "type": "string", "minLength": 1 },
+        "location": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/locationRef" },
+        "until": { "$ref": "#/$defs/until" }
+      }
+    },
+    "train": {
+      "type": "object",
+      "description": "Treinar uma skill, num NPC ou num objeto (o método; feitiço fica para quando houver catálogo), num local. Termina em `skill:<skill>>=N` da mesma skill.",
+      "required": ["type", "skill", "until"],
+      "properties": {
+        "type": { "const": "train" },
+        "skill": { "type": "string", "pattern": "^skill:[a-z0-9]+(?:_[a-z0-9]+)*$" },
+        "npc": { "$ref": "#/$defs/npcRef" },
+        "object": { "$ref": "#/$defs/objectRef" },
+        "location": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/locationRef" },
+        "until": { "$ref": "#/$defs/untilObjective" }
+      },
+      "not": { "required": ["npc", "object"] }
+    },
+    "manual": {
+      "type": "object",
+      "description": "O executor para e chama o dono. Num passo, o texto é a citação da evidência; numa receita, `note` diz ao dono o que fazer (texto para pessoa, nunca interpretado). Termina com a marca do dono (`owner_mark`), `goal_met` ou um objetivo.",
+      "required": ["type", "until"],
+      "properties": {
+        "type": { "const": "manual" },
+        "note": { "type": "string", "minLength": 1 },
+        "until": { "$ref": "#/$defs/until" }
+      }
+    },
+    "until": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Término: uma chave de objetivo (avaliada pelo motor) ou um predicado de estado. `at_location`: posição dentro da área do local da tarefa; `loadout_ready`: o setup carregado atende ao loadout; `goal_met`: os objetivos `completes`/`starts` do passo, ou a chave da receita, estão `met`; `owner_mark`: a marca do dono no passo (só `manual`).",
+      "oneOf": [
+        { "required": ["objective"] },
+        { "required": ["state"] }
+      ],
+      "properties": {
+        "objective": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveKey" },
+        "state": { "enum": ["at_location", "loadout_ready", "goal_met", "owner_mark"] }
+      }
+    },
+    "untilState": {
+      "allOf": [{ "$ref": "#/$defs/until" }, { "required": ["state"] }]
+    },
+    "untilObjective": {
+      "allOf": [{ "$ref": "#/$defs/until" }, { "required": ["objective"] }]
+    },
+    "npcRef": {
+      "type": "string",
+      "description": "Ref de NPC ('npc:<slug da página da wiki>'), do catálogo content/reference/npcs.json.",
+      "pattern": "^npc:[a-z0-9]+(?:_[a-z0-9]+)*$"
+    },
+    "shopRef": {
+      "type": "string",
+      "description": "Ref de loja ('shop:<slug da página da wiki>'), do catálogo content/reference/shops.json.",
+      "pattern": "^shop:[a-z0-9]+(?:_[a-z0-9]+)*$"
+    },
+    "objectRef": {
+      "type": "string",
+      "description": "Ref de objeto do jogo ('object:<slug da página da wiki>'), do catálogo content/reference/objects.json.",
+      "pattern": "^object:[a-z0-9]+(?:_[a-z0-9]+)*$"
+    },
+    "itemRef": {
+      "type": "string",
+      "description": "Ref de item ('item:<id OSRS/RuneLite>'), do catálogo content/reference/items.json.",
+      "pattern": "^item:[1-9][0-9]*$"
+    }
+  }
+}

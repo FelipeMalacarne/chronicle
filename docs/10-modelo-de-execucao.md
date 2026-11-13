@@ -1,9 +1,11 @@
 # 10 — Modelo de execução: fatos, eventos, tarefas, receitas e planos
 
 **Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 e E5 a E10 em 2026-11-13, do
-jeito recomendado (seção 14); a fase 0 está feita (doc 04, seção 9, item 17) e a fase 1 começou em
-2026-11-13 (item 21) com as entidades `npc`, `shop` e `object` e as áreas dos locais (seção 7, "Como
-implementado").** O resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
+jeito recomendado (seção 14). As fases 0 (doc 04, seção 9, item 17) e 1 (item 21, 2026-11-13) estão
+feitas.** A fase 1 entregou as entidades `npc`, `shop` e `object`, as áreas dos locais, o schema de
+`tasks[]` e de receitas e o verificador (seções 7 e 8, "Como implementado"), sem nenhuma tarefa ou
+receita real no conteúdo: elas vêm da extração com o dono e da gravação (fase 2). O resto deste doc
+não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
 (<https://claude.ai/artifact/EZaKJZKjVAeotQG41rehEU>), seções 5 a 8.
 
@@ -179,6 +181,36 @@ coordenadas. Todos vêm da wiki, como os itens (doc 09, seção 7).
 - O que fica para depois: localização dos objetos (o infobox de scenery não tem) e os pontos exatos de
   NPCs e objetos (a wiki tem mapas por página, não lidos); entram quando o executor precisar (fase 3).
 
+**Como implementado (fase 1, tarefas e verificador, 2026-11-13).**
+
+- **Schema**: `content/schema/task.schema.json`, uma tarefa por tipo da lista de primitivas (E5:
+  `travel`, `bank`, `buy`, `talk`, `interact`, `train`, `manual`), cada tipo com os seus parâmetros
+  (tabela acima), e o término em `until`: `{"objective": <chave>}` ou `{"state": ...}`, com quatro
+  predicados de estado: `at_location` (posição na área do local), `loadout_ready` (o setup atende ao
+  loadout), `goal_met` (os objetivos `completes`/`starts` do passo, ou a chave da receita, estão `met`) e
+  `owner_mark` (a marca do dono, só `manual` num passo). `travel`, `bank` e `buy` têm término padrão
+  (`at_location`, `loadout_ready`, `item:<id>x<qty>`); os outros declaram. `options` do `talk` e `action`
+  do `interact` são o texto do próprio jogo (opção de diálogo, opção de menu), comparado por igualdade e
+  nunca interpretado; `note` do `manual` é texto para o dono. Feitiço como método de `train` fica para
+  quando houver catálogo de feitiços.
+- **No passo**: `tasks[]` só nos sidecars de anotação (`annotations.schema.json`, `annotatedTask`: a
+  tarefa mais `evidence` com citação e `source`, como os objetivos), nunca no `guide.json`. O loader
+  verifica e compõe em `Step.tasks`; `Content.TasksOf(passo, modo)` junta as tarefas herdadas das receitas
+  dos objetivos que o passo conclui com as do próprio passo.
+- **Verificador** (`content.Task.Check`, regra 4), rodado pelo loader, então pelo `content validate` e pelo
+  boot do `serve`:
+  - tipo da lista de primitivas; `quest` é recusado como "ainda não é primitiva" (E5);
+  - só os parâmetros do tipo; cada ref existe no catálogo e é do tipo certo;
+  - a loja de `buy` vende o item pelo estoque da wiki;
+  - o destino de `travel` tem área;
+  - `bank` sem itens só num passo cujo trecho tem loadout com itens;
+  - término avaliável: a chave existe no catálogo, `train` termina na própria skill, `goal_met` exige um
+    objetivo que o passo conclui, `owner_mark` só em `manual` de passo;
+  - no passo, a citação confere com o texto e uma inferência tem `confirmed_by: owner` ou decisão, como
+    nos objetivos.
+- **Ferramental**: o `revise_entity` do `content mcp` acha e renomeia os refs das tarefas dos sidecars. O
+  `submit` ainda não aceita tarefas; entra com a extração delas na fase 2.
+
 ## 8. Receitas por objetivo
 
 Uma receita diz como cumprir uma chave de objetivo, independentemente da rota:
@@ -197,6 +229,31 @@ recipe quest:the_grand_tree@finished
 - As receitas são o que torna rotas novas e customizadas baratas: o agente só extrai o que nenhuma
   receita cobre.
 - Recorrentes (decisão 31 do doc 01: birdhouses, herb run) cabem aqui como receitas com `ready_at`.
+
+**Como implementado (fase 1, 2026-11-13).** Schema `content/schema/recipe.schema.json`, formato e regras
+em `content/recipes/README.md`. Um arquivo por chave, com o nome derivado dela
+(`quest:cooks_assistant@finished` vira `quest-cooks_assistant-finished.json`): `objective`, `requires`
+(chaves além dos requisitos do catálogo), `variants` (por modo de conta: `ironman`, `hcim`, `uim` e
+`gim`; um modo em uma variante só), `risks` por variante e `source`. Riscos numa lista fechada (E9):
+`combat`, `wilderness` e `hazard` podem matar, `item_loss` não; `RecipeVariant.Unsupervised(modo)` diz
+que em HCIM uma variante com risco de morte não roda sem supervisão, e o executor (fase 3) aplica. O
+verificador (`content.CheckRecipe`) confere:
+
+- o nome do arquivo e uma receita por chave;
+- chave e requisitos conhecidos;
+- variantes e modos;
+- riscos da lista, com refs conhecidos;
+- cada tarefa por `Task.Check`: numa receita, `goal_met` é a chave dela, `bank` precisa de `items` e
+  `manual` de `note`;
+- a última tarefa de cada variante termina no objetivo da receita;
+- inferência confirmada pelo dono. Receita não cita decisão, porque não é de um guia.
+
+`content/recipes/` fica só com o README: as receitas entram pela extração e pela gravação (fase 2). O
+formato, o loader e o verificador estão provados com fixtures em `internal/core/content/testdata/execution`:
+um guia com tarefas nos passos e três receitas válidas, que juntos usam os sete tipos, e 33 casos
+inválidos em tabela (16 de tarefa de passo e 17 de receita), além da tabela do verificador em Go com 37
+casos.
+`content validate` informa quantas tarefas e receitas leu.
 
 ## 9. Planos
 
@@ -272,7 +329,7 @@ migration de cada fase.
 | `outbox` | nova | `id`, `account_id`, `topic`, `payload` |
 
 No conteúdo: `tasks[]` no schema das anotações; `content/recipes/` com schema próprio; entidades `npc`,
-`shop`, `object` e área em `location`.
+`shop`, `object` e área em `location`. Feito na fase 1 (seções 7 e 8).
 
 Contrato API ↔ web (R11): tipos de resposta exportados num pacote `internal/httpapi/apitypes`, TypeScript
 gerado pelo tygo em `web/src/lib/api/gen/`, `just gen-types` e `git diff --exit-code` no CI; fixtures JSON
@@ -310,9 +367,9 @@ fixtures viram teste de conformidade, com cada resposta real validada contra o s
 | 5 | Receitas de quest, planos customizados na UI, vários clientes no agent | por entrega |
 
 A fase 0 não dependia de nenhuma decisão de automação e já está feita. Com a seção 14 fechada
-(2026-11-13), as fases 1 a 5 entraram na sequência do doc 04, seção 9, como item 21; o dono decidiu
-começar a fase 1 em 2026-11-13. Entidades e áreas estão feitas (seção 7); faltam o schema de tarefas e
-receitas e o verificador.
+(2026-11-13), as fases 1 a 5 entraram na sequência do doc 04, seção 9, como item 21. A fase 1 foi
+começada e terminada em 2026-11-13 (seções 7 e 8): `content validate` cobre tarefas e receitas. A
+próxima é a 2, a gravação por demonstração e o modo assistido, que traz as primeiras tarefas reais.
 
 ## 14. Decisões em aberto (dono)
 

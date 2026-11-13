@@ -206,6 +206,11 @@ func (e *Executor) workerStart(ctx context.Context) (string, []string, error) {
 	}
 	out, err := e.runClient(ctx, 5*time.Minute, "start", "--headless")
 	out = maskLines(out)
+	if err != nil && strings.TrimSpace(out) != "" {
+		// The server keeps only the error (the worker's last error): carry
+		// mb-client's last line, usually its "error: ..." line.
+		err = fmt.Errorf("%w: %s", err, lastLines(out, 1))
+	}
 	if err == nil {
 		err = e.waitReady(ctx)
 	}

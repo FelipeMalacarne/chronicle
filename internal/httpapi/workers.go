@@ -205,8 +205,8 @@ func (s *Server) handleWorkerStop(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleWorkerRestart moves a running worker to the server's current image:
-// a new image rolls the Deployment; the same image deletes the pod. Either
-// way the account is logged out, so the web asks first.
+// a new image rolls the Deployment; the same image rolls it by a restart
+// annotation. Either way the account is logged out, so the web asks first.
 func (s *Server) handleWorkerRestart(w http.ResponseWriter, r *http.Request) {
 	m := s.opts.Microbot
 	account, ok := s.accountParam(w, r)

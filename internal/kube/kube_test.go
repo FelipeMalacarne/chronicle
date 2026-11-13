@@ -37,6 +37,15 @@ func TestWorkerDeployment(t *testing.T) {
 	if d.Spec.Template.Metadata.Labels[LabelAccount] != "acc_iron_man" || d.Spec.Selector.MatchLabels[LabelComponent] != ComponentWork {
 		t.Fatalf("labels: %v", d.Spec.Template.Metadata.Labels)
 	}
+	// The restart annotation is in the pod template only when asked for: a
+	// start or a new image must not carry an old one.
+	if len(d.Spec.Template.Metadata.Annotations) != 0 {
+		t.Fatalf("pod annotations without a restart: %v", d.Spec.Template.Metadata.Annotations)
+	}
+	r := WorkerDeployment("chronicle", WorkerSpec{Account: "acc_iron_man", Image: "img", RestartedAt: "2026-11-13T03:30:00Z"})
+	if r.Spec.Template.Metadata.Annotations[AnnotationRestartedAt] != "2026-11-13T03:30:00Z" {
+		t.Fatalf("restart annotation: %v", r.Spec.Template.Metadata.Annotations)
+	}
 	env := map[string]string{}
 	for _, e := range pod.Containers[0].Env {
 		env[e.Name] = e.Value

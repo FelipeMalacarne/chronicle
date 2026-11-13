@@ -25,7 +25,8 @@
 		| 'bank'
 		| 'pause'
 		| 'stop'
-		| 'more';
+		| 'more'
+		| 'rotinas';
 	let { name, size = 16 }: { name: Name; size?: number } = $props();
 </script>
 
@@ -110,5 +111,7 @@
 			fill="currentColor"
 			stroke="none"
 		/><circle cx="19" cy="12" r="1.8" fill="currentColor" stroke="none" />
+	{:else if name === 'rotinas'}
+		<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4" />
 	{/if}
 </svg>

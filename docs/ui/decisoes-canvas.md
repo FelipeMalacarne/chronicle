@@ -269,7 +269,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 |---|---|
 | "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; a web usa desde a V2 (seção 7.10) |
 | XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | **feito no servidor** (2026-11-13): `GET /api/account/rhythm?account=&since=` e, da frota com os totais, `GET /api/rhythm?since=`, derivados dos snapshots (`internal/core/rhythm`): a skill que treina (a que mais ganhou nos últimos 30 min, parada depois de 10 min sem ganho) com XP/h e o tempo até o próximo nível; a sessão (fim numa pausa de 20 min entre pushes do plugin); o dia por skill desde `since` (a meia-noite do navegador); GP = moedas e platinum tokens no banco e no inventário, com o ganho do dia. Os ganhos de item da sessão também (2026-11-13): `session.gained`, o que a conta tem a mais desde o começo da sessão, somando banco, inventário e equipamento (a forma noted junto da normal), e `session.running_out`, o que a sessão vai gastando e quando acaba nesse ritmo ("feathers acabam em 3 h"); os dois são `null` sem o banco e o inventário conhecidos nas duas pontas. O "Até a pausa" vem do Break Handler pela ponte (`/bridge/break`, PR #28, no `status` do cliente); falta a web usar |
-| Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); rotinas recorrentes pelo relógio: **feitas na API** (doc 11, seção 16.4; `GET`/`POST`/`DELETE /api/microbot/recurring`), a tela da fila ainda não foi desenhada; falta a noção de atividade principal por conta |
+| Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); rotinas recorrentes pelo relógio: **feitas na API** (doc 11, seção 16.4; `GET`/`POST`/`DELETE /api/microbot/recurring`) e **na tela** (fatia V6, seção 7.13); falta a noção de atividade principal por conta e o loadout com banco antes do run |
 | Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). A web usa tudo isso desde a V7 (seção 7.9) |
 | Plugins da frota | perfis no Postgres (doc 11, F5) |
 | Capacidade no resumo, "cabe mais N", uso por worker | **feito** (doc 11, F7, PR #25): `capacity` e `workers[].usage` em `GET /api/workers`, e `session.login_failed` para o login recusado; a web usa desde a V9 (seção 7.7). O uso do nó não existe |
@@ -288,7 +288,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada. **Feita** (2026-11-13, seção 7.11) |
 | V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada. **Feita** (2026-11-13, seção 7.12) |
 | V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
-| V6 | Rotinas e Fila | doc 11, F6 |
+| V6 | Rotinas e Fila | doc 11, F6. **Feita** (2026-11-13, seção 7.13), sem a atividade principal, os horários e o banco antes do run |
 | V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor). **Feita** (2026-11-13, seção 7.9) |
 | V8 | Plugins da frota | doc 11, F5. **Feita** (2026-11-13, seção 7.6) |
 | V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende). **Feita** (2026-11-13, seção 7.7) |
@@ -621,3 +621,62 @@ Divergências do artboard, na Visão geral:
 
 Conferido com os testes de `node --test` da lógica das telas (`personagem.ts` e `workerFacts` em
 `workers.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.
+
+### 7.13 Implementação: V6, Rotinas e Fila (2026-11-13)
+
+Artboards seguidos: `V7Rotinas1440` (página 8), em `/rotinas` e no item "Rotinas" da barra lateral (só
+com o módulo Microbot ligado, como Plugins), e o cartão Fila do `V7Conta1440`, na Visão geral. Os dados
+vêm de `GET`/`POST /api/microbot/recurring?account=` e `DELETE /api/microbot/recurring/{id}?account=`
+(doc 11, seção 16.4), dos gatilhos e do histórico de runs (`/api/microbot/triggers`,
+`/api/microbot/runs`) e do `status` do cliente (o break do Break Handler pela ponte).
+
+- **Uma rotina da frota são as cópias de cada conta.** O servidor guarda as rotinas por conta; a tela
+  junta as recorrentes pelo nome (único na conta) e os gatilhos pelo evento, e "Contas" diz em quais
+  ela vale. Marcar uma conta cria a cópia nela; desmarcar exclui a cópia daquela conta, com o segundo
+  clique. Quando as cópias diferem (relógio, intervalo, prioridade ou run), a rotina aberta mostra a da
+  primeira conta e avisa que salvar põe essa em todas. Um gatilho não se exclui pela API: a conta que
+  já tem o gatilho fica marcada e travada, e ele se desliga no interruptor.
+- **Ligar é sempre uma escolha à parte.** Uma rotina nova, ou a cópia numa conta nova, nasce desligada;
+  salvar mantém o interruptor de cada conta como estava; ligar pede o segundo clique e vale para todas
+  as contas da rotina ("ligada em 2 de 3" quando só parte está). Rodar agora também pede o segundo
+  clique, numa conta escolhida, com o cliente ligado e a conta logada.
+- **As travas aparecem.** Um run que falhou ou foi cancelado segura a rotina naquela conta até ela ser
+  salva de novo; o último run da conta, quando falhou, segura todas as rotinas dela. Cada trava vira um
+  aviso no topo da lista e na rotina aberta, com Liberar (segundo clique: liberada e ligada, ela pode
+  começar logo). Salvar, ou desligar, numa conta com trava também solta a trava e pede o segundo
+  clique. Sem o agent, a tela calcula a trava pelo que o banco guarda, com as regras do vigia.
+
+Divergências do artboard:
+
+1. **Atividade principal:** o servidor não tem atividade principal por conta (seção 7.4). No lugar da
+   seção "Atividade principal", a seção **Fila** mostra, por conta, a próxima rotina pronta ou com hora
+   e a linha do vigia: o que ele espera ("esperando: a pausa do Break Handler começa em 8 min"),
+   relógios sem leitura, agent desligado ou antigo. No "Faz", "Para a atividade principal" vira "Para"
+   os plugins marcados entre os ligados no cliente, e "Religa a atividade principal" religa os mesmos.
+2. **Pausas e horário:** as linhas "Pausas" (Break Handler) e "Dormir de madrugada" não existem no
+   servidor. As pausas são a configuração do Break Handler (tela Plugins), e não há rotina por horário:
+   só relógio, intervalo e evento. A próxima pausa aparece na Fila da Visão geral, lida da ponte.
+3. **"+ Passo" e o banco antes do run:** a rotina roda um plugin só, com o parar, voltar e religar do
+   Fazer agora. Passos tipados e o loadout com banco antes do run (o PREPARO do doc 08) não existem na
+   API e ficam de fora.
+4. **Se falhar:** "tenta de novo em 15 min e avisa em Precisa de você" não existe. O servidor segura a
+   rotina até o dono salvá-la de novo; a linha diz isso, e o aviso fica no topo da tela (Precisa de
+   você é da fatia V7).
+5. **Campos a mais:** o nome (o servidor pede, e é ele que junta as cópias), "sem leitura do relógio, a
+   cada N min" (o intervalo de reserva da recorrente pelo relógio), a prioridade (a ordem da fila do
+   vigia) e o limite do plugin. O "até 60 s" do passo 1 não aparece: a espera pelo ponto seguro é do
+   agent.
+6. **Cabeçalho da rotina aberta:** "ligada · rodou 14 vezes" vira "ligada em N contas": o servidor
+   devolve só os últimos 30 runs de cada conta, e a contagem sairia errada.
+7. **Linha da rotina:** as lâmpadas são das contas, como no artboard; abaixo de "3 contas" entra quando
+   a cópia mais urgente entra na fila ("Felipe Pesca · em 12 min", "segura"), com o porquê no `title`.
+   A lista fica em ordem fixa (as ligadas primeiro, depois o nome); a ordem da fila de cada conta está
+   na seção Fila.
+8. **Fila da Visão geral:** sem a atividade principal ("agora · Tick Fisher", "depois · retoma"), o
+   item de agora é o run em andamento ou a pausa do Break Handler; as rotinas prontas entram como "a
+   seguir", as outras pela hora, com a próxima pausa entre elas; o "~4 min" é a duração do último run
+   feito da rotina. Os gatilhos entram no fim ("no evento"), e as seguras depois. "Pôr na fila" não
+   existe: um run avulso é o Rodar agora da rotina ou o Fazer agora do Cliente.
+
+Conferido com os testes de `node --test` da lógica das telas (`rotinas.test.ts`), `pnpm check`,
+`pnpm lint` e `pnpm build`. Falta a captura a 1440 e conferir contra um agent de verdade.

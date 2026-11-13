@@ -187,6 +187,14 @@ type MicrobotAudit struct {
 	AgentID   string             `json:"agent_id"`
 }
 
+// The owner's marks on objectives, account-wide: they count as met when statuses and cursors are derived, but are not evidence (objective_progress is untouched).
+type ObjectiveMark struct {
+	AccountID    string             `json:"account_id"`
+	ObjectiveKey string             `json:"objective_key"`
+	Note         string             `json:"note"`
+	MarkedAt     pgtype.Timestamptz `json:"marked_at"`
+}
+
 // Verdict per account and objective, shared by every guide. A met verdict is latched with the evidence of the snapshot that proved it.
 type ObjectiveProgress struct {
 	AccountID          string             `json:"account_id"`

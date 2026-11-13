@@ -24,6 +24,8 @@ type ProgressService interface {
 	MarkBefore(ctx context.Context, accountID, guideID, stepID string) (storeprogress.BoardView, error)
 	RestoreMarks(ctx context.Context, accountID, guideID string, restores []storeprogress.MarkRestore) (storeprogress.BoardView, error)
 	Objectives(ctx context.Context, accountID string) ([]storeprogress.ObjectiveView, error)
+	MarkObjective(ctx context.Context, accountID, key, note string) (storeprogress.ObjectiveMarkResult, error)
+	UnmarkObjective(ctx context.Context, accountID, key string) (storeprogress.ObjectiveMarkResult, error)
 	Events(ctx context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error)
 	SetActiveGuide(ctx context.Context, accountID, guideID string) error
 	Sources(ctx context.Context, accountID string) ([]storeprogress.SourceView, error)
@@ -123,6 +125,13 @@ type batchMarkRequest struct {
 type cursorRequest struct {
 	// StepID: a step pins the cursor there; null unpins it.
 	StepID *string `json:"step_id"`
+}
+
+// objectiveMarkRequest is the body of PUT /api/objectives/mark and POST
+// /api/objectives/unmark.
+type objectiveMarkRequest struct {
+	Key  string `json:"key"`
+	Note string `json:"note,omitempty"`
 }
 
 type objectivesResponse struct {
@@ -231,6 +240,44 @@ func (s *Server) handleObjectives(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, objectivesResponse{Account: account, Objectives: objectives})
+}
+
+// handleMarkObjective is PUT /api/objectives/mark: the owner's mark on an
+// objective, satisfied for the whole account (docs/09 section 5). It is not
+// evidence; unmark takes it back.
+func (s *Server) handleMarkObjective(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	var req objectiveMarkRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	res, err := s.opts.Progress.MarkObjective(r.Context(), account, req.Key, strings.TrimSpace(req.Note))
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+// handleUnmarkObjective is POST /api/objectives/unmark.
+func (s *Server) handleUnmarkObjective(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	var req objectiveMarkRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	res, err := s.opts.Progress.UnmarkObjective(r.Context(), account, req.Key)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
 }
 
 func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
@@ -360,6 +407,8 @@ func (s *Server) writeProgressError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "step not found")
 	case errors.Is(err, coreprogress.ErrInvalidAction):
 		writeError(w, http.StatusBadRequest, "kind must be manual_done, skipped, pinned_open, confirm_implied or clear")
+	case errors.Is(err, storeprogress.ErrInvalidObjective):
+		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, storeprogress.ErrInvalidRevokes):
 		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, coreprogress.ErrNotImplied), errors.Is(err, coreprogress.ErrStepDone):

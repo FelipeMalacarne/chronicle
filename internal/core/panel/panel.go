@@ -104,6 +104,8 @@ type Objective struct {
 	Label     string        `json:"label"`
 	Verdict   rules.Verdict `json:"verdict"`
 	Regressed bool          `json:"regressed,omitempty"`
+	// OwnerMarked: the owner marked it as already done (no evidence).
+	OwnerMarked bool `json:"owner_marked,omitempty"`
 }
 
 // Carry is the readiness of the cursor's leg, flattened for the panel.
@@ -228,7 +230,7 @@ func step(st *content.Step, s progress.StepState, sectionTitle string, current b
 		out.BlockedBy = append(out.BlockedBy, Requirement{Key: key, Label: Label(key, reg)})
 	}
 	for _, o := range s.Objectives {
-		out.Objectives = append(out.Objectives, Objective{Key: o.Key, Role: o.Role, Label: Label(o.Key, reg), Verdict: o.Verdict, Regressed: o.Regressed})
+		out.Objectives = append(out.Objectives, Objective{Key: o.Key, Role: o.Role, Label: Label(o.Key, reg), Verdict: o.Verdict, Regressed: o.Regressed, OwnerMarked: o.OwnerMarked})
 	}
 	for _, n := range st.Notes {
 		if text := strings.TrimSpace(n.Text); text != "" && !metaNote(text) {

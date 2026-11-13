@@ -287,6 +287,22 @@ Table microbot_audit {
   '''
 }
 
+Table objective_marks {
+  account_id text [not null]
+  objective_key text [not null, note: 'canonical key (entities.ObjectiveKey)']
+  note text [not null, default: `''::text`]
+  marked_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, objective_key) [pk]
+  }
+
+  Note: '''
+  The owner's marks on objectives, account-wide: they count as met when statuses and cursors are derived, but are not evidence (objective_progress is untouched).
+  objective_marks_key_shape: CHECK ((objective_key ~ '^(qp>=[0-9]+|[a-z_]+:.+)$'::text))
+  '''
+}
+
 Table objective_progress {
   account_id text [not null]
   objective_key text [not null, note: 'canonical key (entities.ObjectiveKey), e.g. skill:agility>=70']
@@ -824,6 +840,7 @@ Ref ingest_container_freshness_snapshot_same_account: ingest_container_freshness
 Ref mark_commands_account_id_fkey: mark_commands.account_id > accounts.id [delete: cascade]
 Ref mark_commands_guide_id_fkey: mark_commands.guide_id > guides.id
 Ref mark_commands_revokes_id_fkey: mark_commands.revokes_id > mark_commands.id
+Ref objective_marks_account_id_fkey: objective_marks.account_id > accounts.id [delete: cascade]
 Ref objective_progress_account_id_fkey: objective_progress.account_id > accounts.id [delete: cascade]
 Ref objective_progress_evidence_same_account: objective_progress.(evidence_snapshot_id, account_id) > snapshots.(id, account_id)
 Ref objective_progress_evidence_snapshot_id_fkey: objective_progress.evidence_snapshot_id > snapshots.id
@@ -894,6 +911,7 @@ TableGroup conteudo_indexado {
 
 TableGroup progresso {
   objective_progress
+  objective_marks
   objective_progress_events
   mark_commands
   step_marks

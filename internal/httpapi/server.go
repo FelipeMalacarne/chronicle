@@ -172,6 +172,8 @@ func (s *Server) routes() {
 		account("POST /api/guides/{guide}/marks", s.handleBatchMarks)
 		account("PUT /api/guides/{guide}/cursor", s.handleCursor)
 		account("GET /api/objectives", s.handleObjectives)
+		account("PUT /api/objectives/mark", s.handleMarkObjective)
+		account("POST /api/objectives/unmark", s.handleUnmarkObjective)
 		account("GET /api/guides/{guide}/events", s.handleEvents)
 		account("GET /api/progress", s.handleProgress)
 		account("GET /api/progress/check", s.handleProgressCheck)

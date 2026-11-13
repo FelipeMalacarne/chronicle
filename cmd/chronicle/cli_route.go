@@ -86,6 +86,9 @@ func printWindow(out io.Writer, w panel.Window) {
 			parts := make([]string, len(s.Objectives))
 			for i, o := range s.Objectives {
 				parts[i] = verdictMark(o.Verdict) + " " + o.Label
+				if o.OwnerMarked {
+					parts[i] += " (marcado por você)"
+				}
 			}
 			fmt.Fprintf(out, "  Objetivos: %s\n", strings.Join(parts, " · "))
 		}

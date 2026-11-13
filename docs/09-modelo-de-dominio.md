@@ -327,6 +327,7 @@ Tabelas novas e alteradas (uma migration goose; nunca editar a 0001–0003):
 |---|---|---|
 | `objective_progress` | `(account_id, objective_key)` | veredito, `evidence_snapshot_id`, `evidence` JSON, `first_met_at`, `met_in_guide_id` (rota ativa no momento em que ficou `met`; alimenta a cascata), `regressed_at` |
 | `objective_progress_events` | id | `(account_id, objective_key, from, to, snapshot_id, at)`; fonte do F6 para objetivos |
+| `objective_marks` | `(account_id, objective_key)` | marca do dono num objetivo (“já cumprido”), da conta inteira: vale em todo guia e passo; `note`, `marked_at`. **Não é evidência**: nada vai para `objective_progress` (a trigger e os CHECKs exigem evidência para `met`) |
 | `step_marks` | `(account_id, guide_id, step_id)` | `kind ∈ {manual_done, skipped, pinned_open, implied}`, `implied_by_step_id`, `implied_at`, `note`, `marked_at` (evolui `step_progress`) |
 | `step_status_events` | id | `(account_id, guide_id, step_id, from, to, cause ∈ {engine, user, implied, migration, import}, snapshot_id, at)`; gravada para **todos** os guias quando o status derivado muda (decisão D2) |
 | `route_cursor` | `(account_id, guide_id)` | passo atual, `cause ∈ {pin, auto}`, `updated_at` |
@@ -338,9 +339,23 @@ O status automático do passo **não é armazenado**: é uma função pura em `i
 (objetivos do passo + vereditos + marcas do guia) e é calculado na leitura e na reavaliação. A ordem:
 
 1. Marca da rota (`manual_done`, `skipped`, `pinned_open`, `implied`). O motor nunca a sobrescreve.
-2. Todos os objetivos `completes`/`starts` estão `met`, com evidência ⇒ `auto_done` (evidência = a dos
-   objetivos).
+2. Todos os objetivos `completes`/`starts` estão `met`, com evidência, ou marcados pelo dono
+   (`objective_marks`) ⇒ `auto_done` (evidência = a dos objetivos; um objetivo marcado conta como
+   cumprido, sem evidência).
 3. Senão, `pending`. Um passo sem objetivo concluível é checkbox, como hoje.
+
+**Marca por objetivo (decisão do dono, 2026-11-13).** Quando o dono já fez algo e o item se foi (os objetivos
+de item novos num passo antigo faziam o passo voltar a `pending` e o cursor recuar), ele marca o
+**objetivo**, não o passo: `chronicle objective mark <chave>` (`PUT /api/objectives/mark`). A marca vale
+para a conta inteira, em todo guia e passo que usa a chave, e é uma entrada da derivação, nunca evidência:
+sobrepõe os vereditos (`Verdicts.WithOwner`) ao derivar o status dos passos, os requisitos que bloqueiam
+(um `requires` ou requisito do catálogo marcado conta como satisfeito, como um `met`) e o cursor. Não
+escreve `objective_progress`, não alimenta a cascata `implied` (que é por evidência) e uma chave `met` por
+evidência e marcada continua `met`. O quadro mostra o objetivo como `met` com `owner_marked`; os passos
+que mudam entram em `step_status_events` com causa `user`. Não entra em `mark_commands` (esse log reproduz
+`step_marks`); a linha de `objective_marks` e esses eventos são o registro. Desmarcar
+(`POST /api/objectives/unmark`) devolve o veredito guardado. Só se marca uma chave que algum passo de
+algum guia referencia.
 
 Um objetivo `met` fica travado com a evidência do snapshot que o provou, inclusive item gasto depois;
 `regressed_at` registra que o fato deixou de valer (decisão do dono, 2026-11-04; doc 04, seção 4.3).

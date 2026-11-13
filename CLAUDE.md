@@ -186,7 +186,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0019 routine_runs.task: the typed task of a task run,
                       0020 workers.running_plugins: plugins the client had on, restarted by the next bootstrap,
                       0021 workers.auto_login and was_logged_in: login again after a new pod,
-                      0022 workers.running_settings: option values of the plugins that were on)
+                      0022 workers.running_settings: option values of the plugins that were on,
+                      0023 objective_marks: the owner's marks on objectives, account-wide, not evidence)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

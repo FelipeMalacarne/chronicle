@@ -25,6 +25,8 @@ type fakeProgress struct {
 	action coreprogress.MarkAction
 	note   *string
 	step   string
+	// objective and note are the last objective mark (unmark clears note).
+	objective, objectiveNote string
 	// fleet are the account ids of the last FleetGoals.
 	fleet []string
 }
@@ -83,6 +85,25 @@ func (f *fakeProgress) RestoreMarks(_ context.Context, accountID, guideID string
 	}
 	f.step = strings.Join(ids, ",")
 	return f.board("restore", accountID, guideID)
+}
+
+func (f *fakeProgress) MarkObjective(_ context.Context, accountID, key, note string) (storeprogress.ObjectiveMarkResult, error) {
+	f.call, f.objective, f.objectiveNote = "mark_objective", key, note
+	if f.err != nil {
+		return storeprogress.ObjectiveMarkResult{}, f.err
+	}
+	if accountID != "acc-1" {
+		return storeprogress.ObjectiveMarkResult{}, storeprogress.ErrAccountNotFound
+	}
+	return storeprogress.ObjectiveMarkResult{Key: key, Marked: true, StepsChanged: 2}, nil
+}
+
+func (f *fakeProgress) UnmarkObjective(_ context.Context, accountID, key string) (storeprogress.ObjectiveMarkResult, error) {
+	f.call, f.objective, f.objectiveNote = "unmark_objective", key, ""
+	if accountID != "acc-1" {
+		return storeprogress.ObjectiveMarkResult{}, storeprogress.ErrAccountNotFound
+	}
+	return storeprogress.ObjectiveMarkResult{Key: key}, nil
 }
 
 func (f *fakeProgress) Objectives(_ context.Context, accountID string) ([]storeprogress.ObjectiveView, error) {
@@ -259,6 +280,8 @@ func TestProgressRoutesAreDevOnly(t *testing.T) {
 		{"POST", "/api/guides/oziris-main/implied/confirm?account=acc-1", ""},
 		{"PUT", "/api/guides/oziris-main/cursor?account=acc-1", `{"step_id":"1"}`},
 		{"GET", "/api/objectives?account=acc-1", ""},
+		{"PUT", "/api/objectives/mark?account=acc-1", `{"key":"item:1351x1"}`},
+		{"POST", "/api/objectives/unmark?account=acc-1", `{"key":"item:1351x1"}`},
 		{"GET", "/api/guides/oziris-main/events?account=acc-1", ""},
 		{"GET", "/api/progress?account=acc-1", ""},
 		{"PUT", "/api/account/guide?account=acc-1", `{"guide_id":"oziris-main"}`},
@@ -332,6 +355,18 @@ func TestProgressRoutes(t *testing.T) {
 		t.Fatalf("objectives = %d %v", status, body)
 	}
 
+	if status, body := do(t, "PUT", base+"/objectives/mark?account=acc-1", `{"key":"item:1351x1","note":"consumed"}`); status != http.StatusOK || fake.call != "mark_objective" || fake.objective != "item:1351x1" || fake.objectiveNote != "consumed" || body["marked"] != true || body["steps_changed"] != float64(2) {
+		t.Fatalf("mark objective = %d %v", status, body)
+	}
+	if status, body := do(t, "POST", base+"/objectives/unmark?account=acc-1", `{"key":"item:1351x1"}`); status != http.StatusOK || fake.call != "unmark_objective" || body["marked"] == true {
+		t.Fatalf("unmark objective = %d %v", status, body)
+	}
+	if status, _ := do(t, "PUT", base+"/objectives/mark?account=nobody", `{"key":"item:1351x1"}`); status != http.StatusNotFound {
+		t.Fatalf("mark objective of an unknown account = %d", status)
+	}
+	if status, _ := do(t, "PUT", base+"/objectives/mark?account=acc-1", `{"key":"item:1351x1","extra":1}`); status != http.StatusBadRequest {
+		t.Fatalf("mark objective with an unknown field = %d", status)
+	}
 	if status, body := do(t, "POST", base+"/guides/oziris-main/marks?account=acc-1", `{"before_step_id":"1"}`); status != http.StatusOK || fake.call != "before" || len(body["marked"].([]any)) != 2 {
 		t.Fatalf("mark before = %d %v", status, body)
 	}
@@ -364,6 +399,7 @@ func TestProgressRoutes(t *testing.T) {
 		{storeprogress.ErrGuideNotFound, http.StatusNotFound},
 		{coreprogress.ErrStepNotFound, http.StatusNotFound},
 		{coreprogress.ErrInvalidAction, http.StatusBadRequest},
+		{storeprogress.ErrInvalidObjective, http.StatusBadRequest},
 		{coreprogress.ErrNotImplied, http.StatusConflict},
 		{coreprogress.ErrStepDone, http.StatusConflict},
 		{io.ErrUnexpectedEOF, http.StatusInternalServerError},

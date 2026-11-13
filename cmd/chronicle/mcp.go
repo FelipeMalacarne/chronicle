@@ -45,7 +45,7 @@ independent routes (Oziris Ironman Efficiency Guide, BRUHsailer). Start with
 now: the current step of the active route, its objectives with the account's
 verdicts (met, unmet, unknown: unknown is never "not done"), what to bring
 and the next steps. Steps are done by evidence (hiscores, plugin); mark_step
-records the owner's own marks, so call it only when the owner asks. Keep the
+and mark_objective record the owner's own marks, so call them only when the owner asks. Keep the
 attribution line of the route when you show its steps.`
 
 func newAccountMCPServer(c *client.Client) *mcp.Server {
@@ -109,6 +109,28 @@ func newAccountMCPServer(c *client.Client) *mcp.Server {
 						return nil, err
 					}
 					return c.Route(ctx, 5)
+				},
+			},
+			{
+				Name:        "mark_objective",
+				Description: "Record the owner's own mark that an objective is already satisfied, for the whole account (only when the owner asks), or take it back. It is not evidence and does not change the stored verdicts; now shows marked objectives as owner_marked. The key is the objective key now shows.",
+				InputSchema: schema(`{"type":"object","additionalProperties":false,"required":["key"],"properties":{
+ "key":{"type":"string","description":"objective key as now shows it, e.g. item:1351x1"},
+ "unmark":{"type":"boolean","description":"take the mark off instead"},
+ "note":{"type":"string","description":"note on the mark"}}}`),
+				Handler: func(ctx context.Context, raw json.RawMessage) (any, error) {
+					var a struct {
+						Key    string `json:"key"`
+						Unmark bool   `json:"unmark"`
+						Note   string `json:"note"`
+					}
+					if err := mcp.Decode(raw, &a); err != nil {
+						return nil, err
+					}
+					if a.Unmark {
+						return c.UnmarkObjective(ctx, a.Key)
+					}
+					return c.MarkObjective(ctx, a.Key, a.Note)
 				},
 			},
 			{

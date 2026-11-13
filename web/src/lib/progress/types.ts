@@ -27,6 +27,8 @@ export interface BoardObjective {
 	role: Role;
 	verdict: Verdict;
 	regressed?: boolean;
+	/** Marcado pelo dono como já cumprido: o veredito é met, mas não há evidência. */
+	owner_marked?: boolean;
 	/** Ausente sem número ou quando o valor atual não é sabido (nunca vira "faltando"). */
 	observed?: ObservedValue;
 }

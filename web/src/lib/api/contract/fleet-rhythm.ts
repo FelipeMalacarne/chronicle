@@ -21,14 +21,14 @@ export const fixture = {
 				],
 				"running_out": [
 					{
-						"in_s": 1350,
+						"in_s": 1352,
 						"item": 314,
 						"left": 60,
 						"name": "Feather",
 						"used": 40
 					}
 				],
-				"started_at": "2026-11-13T04:17:57Z",
+				"started_at": "2026-11-13T12:14:10Z",
 				"xp": 314811223
 			},
 			"today": {
@@ -45,11 +45,11 @@ export const fixture = {
 				"xp": 314811223
 			},
 			"training": {
-				"last_gain_at": "2026-11-13T04:32:57.406811Z",
+				"last_gain_at": "2026-11-13T12:29:11.501499Z",
 				"level": 99,
 				"skill": "defence",
 				"xp": 200000000,
-				"xp_per_hour": 799633939
+				"xp_per_hour": 798662948
 			}
 		},
 		{
@@ -63,14 +63,36 @@ export const fixture = {
 				"xp": 0
 			},
 			"training": null
+		},
+		{
+			"account": "acc_levels",
+			"gp": {
+				"today": 0,
+				"value": 0
+			},
+			"session": null,
+			"today": {
+				"levels": 3,
+				"since": "2026-11-13T00:00:00Z",
+				"skills": [
+					{
+						"level": 76,
+						"levels": 1,
+						"skill": "fishing",
+						"xp": 124862
+					}
+				],
+				"xp": 130747
+			},
+			"training": null
 		}
 	],
 	"since": "2026-11-13T00:00:00Z",
 	"totals": {
-		"gaining": 1,
+		"gaining": 2,
 		"gp": 25000,
 		"gp_today": 0,
-		"levels_today": 458,
-		"xp_today": 314811223
+		"levels_today": 461,
+		"xp_today": 314941970
 	}
 } satisfies FleetRhythm;

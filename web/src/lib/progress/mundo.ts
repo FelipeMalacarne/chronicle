@@ -41,7 +41,7 @@ export function listJoin(parts: string[]): string {
 /**
  * Quão perto uma conta está, com a mesma medida do `closest` do servidor: o nível numa meta de
  * nível, a fração de requisitos feitos no resto. Nulo sem medida (meta de item sem requisitos,
- * nível sem leitura).
+ * nível sem leitura, ou nenhum requisito conhecido: `unknown` nunca vira 0%).
  */
 export interface Closeness {
 	/** Largura da barra, 0 a 100. */
@@ -59,8 +59,9 @@ export function closeness(g: Pick<FleetGoal, 'objective_key'>, s: FleetStanding)
 		if (s.level === undefined) return null;
 		return { pct: Math.min(100, pct(s.level, k.n)), level: s.level, target: k.n };
 	}
-	if (s.requirements.total === 0) return null;
-	return { pct: pct(s.requirements.met, s.requirements.total) };
+	const r = s.requirements;
+	if (r.total === 0 || r.unknown === r.total) return null;
+	return { pct: pct(r.met, r.total) };
 }
 
 /** A medida na coluna estreita da linha da conta: "61%" ou "76/99". */

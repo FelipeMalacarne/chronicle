@@ -108,6 +108,14 @@ test('closeness: requisitos feitos, nível numa meta de nível, nada sem medida'
 	assert.deepEqual(closeness(g, s), { pct: 60 });
 	assert.equal(closenessLabel({ pct: 60 }), '60%');
 	assert.equal(closeness(g, standing('a')), null, 'sem requisitos: sem medida');
+	assert.equal(
+		closeness(
+			g,
+			standing('a', { requirements: { met: 0, presumed: 0, unknown: 1, total: 1, quests_left: 0 } })
+		),
+		null,
+		'nenhum requisito conhecido: sem medida, nunca 0%'
+	);
 	assert.deepEqual(closeness(g, standing('a', { verdict: 'met' })), { pct: 100 });
 
 	const lvl = goal({ objective_key: 'skill:fishing>=99', kind: 'skill' });

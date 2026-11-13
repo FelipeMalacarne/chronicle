@@ -173,8 +173,9 @@ se a API vem depois):
 3. **Banco sem abas e sem "só o que a rota pede"**: o contrato não traz as abas do banco.
 4. **Diaries sem lista de tarefas**: o catálogo tem só os tiers; a área aberta mostra os quatro tiers.
 5. **Presets do guia** (Metas) não existem no conteúdo; a lista termina em "+ fixar qualquer entidade".
-6. **Chip de skill sem o nível atual** ("43 Magic · 41"): o board não devolve o fato observado junto do
-   veredito; o painel de entidade mostra o estado.
+6. **Chip de skill sem o nível atual** ("43 Magic · 41"): o board não devolvia o fato observado junto do
+   veredito; o painel de entidade mostra o estado. Desde 2026-11-13 o board devolve `observed` em cada
+   objetivo numérico (nível, unidades de item, quest points, kc); falta o chip usar.
 7. **"Nota pessoal"** na linha aberta da Rota não existe: nota só existe junto de uma marca.
 8. **"Marcar os anteriores como feitos"** (lote com desfazer) continua como ação secundária do painel
    "Fixar outro", embora o artboard não a mostre, para não perder a função.
@@ -266,7 +267,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 
 | Para | Falta |
 |---|---|
-| "240 de 1 250" no objetivo | o board devolver o valor observado junto do veredito (divergência 6 da seção 6) |
+| "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; falta a web usar |
 | XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | uma série por conta derivada dos snapshots que já existem |
 | Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); faltam as rotinas recorrentes e a noção de atividade principal por conta |
 | Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); faltam os eventos de nível; a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho) |

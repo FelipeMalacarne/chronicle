@@ -11,6 +11,7 @@ import (
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/store/state"
 )
 
 // Cursor is the stored cursor of a guide.
@@ -254,6 +255,13 @@ func getAccount(ctx context.Context, q *storedb.Queries, accountID string) (core
 }
 
 func (r *Repository) boardView(ctx context.Context, q *storedb.Queries, accountID string, in coreprogress.GuideInput, regressed map[string]bool) (BoardView, error) {
+	// The account's current facts give each numeric objective its observed
+	// value ("240 de 1 250"); the verdicts stay the stored, latched ones.
+	ps, _, err := state.Load(ctx, q, accountID, r.catalog)
+	if err != nil {
+		return BoardView{}, fmt.Errorf("load player state: %w", err)
+	}
+	in.State = &ps
 	out := BoardView{
 		Guide: in.Guide.ID, Account: accountID, Active: in.Account.ActiveGuideID == in.Guide.ID,
 		Orphans: []Orphan{}, Board: coreprogress.BuildBoard(in, regressed),

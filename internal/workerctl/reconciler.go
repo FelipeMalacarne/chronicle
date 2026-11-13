@@ -46,7 +46,6 @@ type Cluster interface {
 	DeleteDeployment(ctx context.Context, name string) error
 	ListDeployments(ctx context.Context, selector string) ([]kube.Deployment, error)
 	ListPods(ctx context.Context, selector string) ([]kube.Pod, error)
-	DeletePod(ctx context.Context, name string) error
 }
 
 // Hub is the reconciler's view of the agents' link (internal/agent).
@@ -173,7 +172,7 @@ func (r *Reconciler) Once(ctx context.Context) error {
 		if img, ok := deployed[name]; ok && img == image {
 			continue
 		}
-		if err := r.apply(ctx, w.Account, image); err != nil {
+		if err := r.apply(ctx, w.Account, image, ""); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -240,9 +239,12 @@ func (r *Reconciler) refreshPods(ctx context.Context) {
 	r.mu.Unlock()
 }
 
-// apply writes the worker Deployment of the current pod template.
-func (r *Reconciler) apply(ctx context.Context, account, image string) error {
-	d := kube.WorkerDeployment(r.Namespace, kube.WorkerSpec{Account: account, Image: image, ServerURL: r.ServerURL, Version: r.Version})
+// apply writes the worker Deployment of the current pod template; a new
+// restartedAt rolls a new pod.
+func (r *Reconciler) apply(ctx context.Context, account, image, restartedAt string) error {
+	d := kube.WorkerDeployment(r.Namespace, kube.WorkerSpec{
+		Account: account, Image: image, ServerURL: r.ServerURL, Version: r.Version, RestartedAt: restartedAt,
+	})
 	if err := r.Cluster.ApplyDeployment(ctx, d); err != nil {
 		_ = r.Store.SetError(ctx, account, err.Error())
 		return fmt.Errorf("apply %s: %w", d.Metadata.Name, err)
@@ -251,9 +253,10 @@ func (r *Reconciler) apply(ctx context.Context, account, image string) error {
 }
 
 // Restart applies the account's worker Deployment with the current pod
-// template and deletes its pods; the Deployment makes a new one, which links
-// and gets a fresh bootstrap. It logs the account out, so only the owner asks
-// for it.
+// template and a new restart annotation, like `kubectl rollout restart`: the
+// Deployment (Recreate) stops the pod and makes a new one, which links and
+// gets a fresh bootstrap. The server's Role cannot delete pods (docs/11
+// section 7). It logs the account out, so only the owner asks for it.
 func (r *Reconciler) Restart(ctx context.Context, account string) error {
 	want, err := r.Store.Desired(ctx)
 	if err != nil {
@@ -267,24 +270,13 @@ func (r *Reconciler) Restart(ctx context.Context, account string) error {
 		if image == "" {
 			image = r.Image
 		}
-		if aerr := r.apply(ctx, account, image); aerr != nil {
-			return aerr
-		}
-	}
-	pods, err := r.Cluster.ListPods(ctx, kube.WorkerSelector)
-	if err != nil {
-		return err
-	}
-	for _, p := range pods {
-		if p.Metadata.Labels[kube.LabelAccount] != account {
-			continue
-		}
-		if err := r.Cluster.DeletePod(ctx, p.Metadata.Name); err != nil {
+		if err := r.apply(ctx, account, image, time.Now().UTC().Format(time.RFC3339)); err != nil {
 			return err
 		}
+		r.Kick()
+		return nil
 	}
-	r.Kick()
-	return nil
+	return fmt.Errorf("the worker of %s is not meant to run; start it instead", account)
 }
 
 // Pods is the pod view of the last pass, by account.

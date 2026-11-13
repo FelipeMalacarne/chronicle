@@ -6,7 +6,7 @@ import type { Board } from '../../progress/types';
 export const fixture = {
 	"account": "acc_contract",
 	"active": true,
-	"command_id": "mc_6398a1466cfdc81c49ca598d",
+	"command_id": "mc_8ce4f6989c17a9bfdf579c7b",
 	"counts": {
 		"auto_done": 4,
 		"blocked": 13,
@@ -14,9 +14,9 @@ export const fixture = {
 		"implied": 0,
 		"manual_done": 69,
 		"pinned_open": 0,
-		"remaining": 490,
+		"remaining": 492,
 		"skipped": 1,
-		"total": 564
+		"total": 566
 	},
 	"coverage": {
 		"checkbox": 227,
@@ -43,9 +43,9 @@ export const fixture = {
 				"implied": 0,
 				"manual_done": 69,
 				"pinned_open": 0,
-				"remaining": 212,
+				"remaining": 215,
 				"skipped": 1,
-				"total": 286
+				"total": 289
 			},
 			"id": "1.1",
 			"title": "Early quests, wintertodt and ardy cloak 1",
@@ -76,6 +76,15 @@ export const fixture = {
 					"key": "quest:x_marks_the_spot@started",
 					"role": "starts",
 					"verdict": "met"
+				},
+				{
+					"key": "item:952x1",
+					"observed": {
+						"target": 1,
+						"value": 1
+					},
+					"role": "completes",
+					"verdict": "met"
 				}
 			],
 			"ref": "1.1.5",
@@ -94,6 +103,10 @@ export const fixture = {
 			"objectives": [
 				{
 					"key": "item:1965x1",
+					"observed": {
+						"target": 1,
+						"value": 0
+					},
 					"role": "completes",
 					"verdict": "unmet"
 				}
@@ -105,6 +118,47 @@ export const fixture = {
 			"visible": true
 		},
 		{
+			"id": "1.1.9",
+			"main": true,
+			"manual": false,
+			"mark": {
+				"kind": "manual_done"
+			},
+			"objectives": [
+				{
+					"key": "quest:rune_mysteries@started",
+					"role": "starts",
+					"verdict": "unknown"
+				}
+			],
+			"ref": "1.1.9",
+			"section_id": "1.1",
+			"status": "manual_done",
+			"title": "Talk to the duke to start Rune mysteries quest",
+			"visible": true
+		},
+		{
+			"id": "1.1.11",
+			"main": true,
+			"manual": false,
+			"objectives": [
+				{
+					"key": "skill:firemaking\u003e=15",
+					"observed": {
+						"target": 15,
+						"value": 30
+					},
+					"role": "completes",
+					"verdict": "met"
+				}
+			],
+			"ref": "1.1.11",
+			"section_id": "1.1",
+			"status": "auto_done",
+			"title": "Light the 4 logs until 15 Firemaking",
+			"visible": true
+		},
+		{
 			"id": "1.1.73",
 			"main": true,
 			"manual": true,
@@ -113,26 +167,6 @@ export const fixture = {
 			"section_id": "1.1",
 			"status": "pending",
 			"title": "Home tele, Lumby",
-			"visible": true
-		},
-		{
-			"blocked_by": [
-				"skill:woodcutting\u003e=35"
-			],
-			"id": "1.3.66",
-			"main": true,
-			"manual": false,
-			"objectives": [
-				{
-					"key": "quest:animal_magnetism@finished",
-					"role": "completes",
-					"verdict": "unknown"
-				}
-			],
-			"ref": "1.3.66",
-			"section_id": "1.3",
-			"status": "pending",
-			"title": "Do Animal magnetism",
 			"visible": true
 		}
 	],

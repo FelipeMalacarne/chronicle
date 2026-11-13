@@ -209,16 +209,6 @@ func (c *Client) ListPods(ctx context.Context, selector string) ([]Pod, error) {
 	return out.Items, err
 }
 
-// DeletePod deletes one pod (its Deployment makes a new one); a missing pod
-// is not an error.
-func (c *Client) DeletePod(ctx context.Context, name string) error {
-	err := c.do(ctx, http.MethodDelete, "/api/v1/namespaces/"+url.PathEscape(c.Namespace)+"/pods/"+url.PathEscape(name), nil, "", nil, nil)
-	if errors.Is(err, ErrNotFound) {
-		return nil
-	}
-	return err
-}
-
 // GetPod reads one pod of the namespace.
 func (c *Client) GetPod(ctx context.Context, name string) (Pod, error) {
 	var p Pod

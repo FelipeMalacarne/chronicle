@@ -67,12 +67,11 @@ func (f *fakeStore) SetError(_ context.Context, account, msg string) error {
 }
 
 type fakeCluster struct {
-	mu          sync.Mutex
-	deps        map[string]kube.Deployment
-	applied     []string
-	deleted     []string
-	deletedPods []string
-	fail        error
+	mu      sync.Mutex
+	deps    map[string]kube.Deployment
+	applied []string
+	deleted []string
+	fail    error
 }
 
 func (f *fakeCluster) ApplyDeployment(_ context.Context, d kube.Deployment) error {
@@ -114,13 +113,6 @@ func (f *fakeCluster) ListPods(context.Context, string) ([]kube.Pod, error) {
 		out = append(out, p)
 	}
 	return out, nil
-}
-
-func (f *fakeCluster) DeletePod(_ context.Context, name string) error {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	f.deletedPods = append(f.deletedPods, name)
-	return nil
 }
 
 type fakeHub struct {
@@ -286,12 +278,19 @@ func TestReconcileLeavesRunningWorkersAlone(t *testing.T) {
 	if len(cl.applied) != 0 {
 		t.Fatalf("a running worker on its image was re-applied: %v", cl.applied)
 	}
-	// Restart applies the current template and replaces the pod.
+	// Restart applies the current template with a restart annotation, which
+	// rolls a new pod (the server may not delete pods).
 	if err := r.Restart(context.Background(), "acc_a"); err != nil {
 		t.Fatal(err)
 	}
-	if len(cl.applied) != 1 || len(cl.deletedPods) != 1 {
-		t.Fatalf("restart: applied %v, deleted pods %v", cl.applied, cl.deletedPods)
+	restarted := cl.deps["worker-acc-a"].Spec.Template
+	if len(cl.applied) != 1 || restarted.Metadata.Annotations[kube.AnnotationRestartedAt] == "" ||
+		restarted.Spec.Containers[0].Resources.Requests["cpu"] == "500m" {
+		t.Fatalf("restart: applied %v, template %+v", cl.applied, restarted.Metadata)
+	}
+	// A worker that is not meant to run is not restarted.
+	if err := r.Restart(context.Background(), "acc_gone"); err == nil || len(cl.applied) != 1 {
+		t.Fatalf("restart of a stopped worker: %v, applied %v", err, cl.applied)
 	}
 	// A new image (restart to the new version) is applied by the pass.
 	store.desired[0].Image = "img:2"

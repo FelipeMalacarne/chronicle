@@ -157,7 +157,8 @@ run_events     run_id, seq, at, state, kind, detail (jsonb)
   ele vive em memória.
 
 A F6 (seção 16) implementou isto com algumas diferenças, anotadas lá: só o tipo `trigger` por
-enquanto, o run identificado pelo `uid` que o agent dá a ele, e a trilha com estado e texto.
+enquanto, o run identificado pelo `uid` que o agent dá a ele, e a trilha com estado e texto. O tipo
+`recurring` veio depois, na migração 0015 (seção 16.4); o `now` continua sendo o `run_start` do dono.
 
 ### 4.5 Workers
 
@@ -403,7 +404,7 @@ disco.
 | F3 | Imagens e um worker aplicado à mão: as duas imagens e o CI delas, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | chronicle (com `microbot/`), gielinor |
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
 | F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. **Parte 2 no servidor feita** (2026-11-13, seção 17): desvio, "Salvar no perfil", aplicar, e o perfil no cliente anexado. Falta a tela (fatia V8 da v7) |
-| F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade, e as rotinas recorrentes continuam propostas |
+| F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade. As rotinas recorrentes vieram em seguida (seção 16.4), sem tela e sem o loadout |
 | F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle, gielinor. **Servidor feito** (2026-11-13, seção 18): "cabe mais N" pela quota, CPU e RAM por worker, login recusado na sessão. Falta a tela (resumo da Frota da v7) e decidir o reinício sozinho na versão nova |
 
 Antes de cada fase com tela (F1, F2, F5, F6), o desenho entra no canvas e o dono aprova (regra 11).
@@ -857,8 +858,54 @@ no agent (doc 08, R1). Sem tela nova: a web lê as mesmas rotas e os mesmos form
 - **Num worker de verdade:** ligar o gatilho do gato, Reiniciar o pod e vê-lo voltar.
 - **O agent do zaros** só passa a usar isto com o `chronicle` atualizado lá (nix-config). Até lá ele
   segue com os arquivos, e a importação acontece na primeira conexão do binário novo.
-- **Rotinas recorrentes** (relógios, "Fazer agora" agendado) e a fila da v7 continuam propostas
-  (decisão 31 do doc 01). A tabela `routines` já tem a coluna `kind` para elas.
+- **Rotinas recorrentes:** feitas logo depois, na seção 16.4. A fila da v7 (a tela) continua
+  proposta (decisão 31 do doc 01).
+
+### 16.4 Rotinas recorrentes (2026-11-13)
+
+Entrega 4 da fase 4 do doc 08: o relógio do Time Tracking, ou um intervalo, dispara um run sozinho,
+e várias recorrentes formam uma fila por prioridade. O comportamento do vigia, as travas e o que
+ficou de fora (o loadout com banco, o break próximo) estão no Estado do doc 08.
+
+- **Migração 0015**, na mesma tabela `routines`:
+  - `kind` passa a aceitar `recurring`, e `event` fica nulo para ela;
+  - colunas novas: `name` (único na conta), `clock` (a chave do `/bridge/timers`), `interval_min`
+    (10 a 10 080) e `priority` (0 a 100);
+  - uma `CHECK` garante a forma de cada tipo: o gatilho tem evento, a recorrente tem nome e relógio,
+    intervalo ou os dois;
+  - um índice por `(routine_id, started_at)` acha o último run de cada rotina.
+- **Uma rotina recorrente**, no JSON (`agent.Recurring`):
+
+  ```
+  {"id": "rtn_…", "name": "Herb run", "enabled": true, "clock": "HERB", "intervalMin": 80,
+   "priority": 10, "run": {"className": "…", "stop": ["…"], "timeoutS": 900},
+   "updatedAt": "…", "lastRun": {"state": "done", "startedAt": "…", "finishedAt": "…"}}
+  ```
+
+  O `updatedAt` e o `lastRun` vêm do servidor e são ignorados ao salvar. O agent conta o intervalo
+  a partir do `lastRun`, e as travas comparam um run que falhou com o `updatedAt`. Um run que a
+  rotina começou leva o `routine` (o id), gravado em `routine_runs.routine_id`.
+- **No agent:**
+  - o `routines_sync` leva as recorrentes junto dos gatilhos, mas só para o agent que declara
+    `recurring_get` no hello (um agent da F6 recusaria o campo desconhecido);
+  - o servidor manda de novo a cada conexão e depois de cada `POST` ou `DELETE`;
+  - `recurring_get` (leitura) devolve o que o vigia viu na última olhada: para cada rotina, se vence,
+    o motivo (`clock_ready`, `clock_waiting`, `interval`, `held`, …) e quando vence; mais o que ele
+    espera ("um run em andamento", "esperando: em combate") e o último run que começou;
+  - o anexado guarda as recorrentes em `agent-recurring.json`; o worker, em memória.
+- **API**, sempre com `?account=` (`accountParam`), atrás de `authed` e `microbotControl`:
+  - `GET /api/microbot/recurring`: a visão do vigia. Sem agent, ou com um agent anterior a elas,
+    vem do banco, com `watchError` dizendo por quê;
+  - `POST /api/microbot/recurring`: cria (sem `id`) ou altera. Devolve `id` e `result` (a visão do
+    agent, ou a do banco). Erros: 400 inválida ou mais de 20 por conta, 404 conta ou rotina de
+    outra conta, 409 nome repetido;
+  - `DELETE /api/microbot/recurring/{id}`: apaga; os runs dela ficam no histórico, sem a rotina.
+- **Auditoria:** `recurring_set` e `recurring_delete` (origem `web`). O run que uma recorrente
+  começa e como terminou entram com o ator `recurring:<id>` (origem `agent`), como os de gatilho.
+- **Conferido:** os testes descritos no Estado do doc 08, a 0015 com `goose up/down/up` (com
+  um gatilho e uma recorrente no banco) e o DBML regenerado.
+- **Não conferido:** nada no jogo nem num worker de verdade. Também faltam a tela (desenhar no
+  canvas antes) e a imagem nova do worker no saradomin.
 
 ## 17. F5, parte 2: desvio e "Salvar no perfil" (2026-11-13)
 

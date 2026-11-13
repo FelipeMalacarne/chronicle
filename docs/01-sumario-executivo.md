@@ -107,8 +107,9 @@ workers headless no saradomin, um por conta, escolhidos no painel (decisão 34, 
 
 A sequência do doc 04, seção 9, está feita até o item 18 (deploy no saradomin, 2026-11-12). O item
 19 (workers, doc 11) teve a rodada 1, o primeiro worker no saradomin, a parte 1 da F5 (perfis do
-cliente no servidor, doc 11, seção 15) e a F6 (gatilhos e histórico no servidor, seção 16); a parte 2
-da F5 (tela, desvio), as rotinas recorrentes e a F7 seguem propostas.
+cliente no servidor, doc 11, seção 15), a F6 (gatilhos e histórico no servidor, seção 16) e as
+rotinas recorrentes pelo relógio, sem tela (seção 16.4); a parte 2 da F5 (tela, desvio), a tela da
+fila, o loadout com banco antes do run e a F7 seguem propostos.
 
 O próximo é o item 20 (web v7, Frota; decisão 36), pelas fatias V1 a V4, que só dependem da web.
 Depois vêm a parte 2 da F5 (com a fatia V8, Plugins da frota) e a F7 do item 19, cada uma com a fatia

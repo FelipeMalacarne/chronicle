@@ -49,7 +49,7 @@ func TestWorkerAgentFromTheEnvironment(t *testing.T) {
 	if e.Worker == nil || e.Worker.Account != "acc_iron" || e.Worker.HWIDStoreDir != "/run/chronicle" || e.Home != env["MB_DEV_HOME"] {
 		t.Fatalf("executor = %+v %+v", e, e.Worker)
 	}
-	if strings.Join(e.ClientCmd, " ") != "mb-client" || e.AccountCmd != nil || e.RunFile != "" || e.TriggerFile != "" {
+	if strings.Join(e.ClientCmd, " ") != "mb-client" || e.AccountCmd != nil || e.RunFile != "" || e.TriggerFile != "" || e.RecurringFile != "" {
 		t.Fatalf("executor commands and files = %v %v %q %q", e.ClientCmd, e.AccountCmd, e.RunFile, e.TriggerFile)
 	}
 	if _, err := e.Execute(context.Background(), agent.CmdAccountUse, json.RawMessage(`{"index":1}`)); err == nil {

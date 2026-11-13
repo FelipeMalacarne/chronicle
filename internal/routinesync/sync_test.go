@@ -16,13 +16,20 @@ import (
 )
 
 type memStore struct {
-	mu       sync.Mutex
-	triggers map[string][]agent.Trigger
-	imported []string
-	recorded []agent.Run
-	newRun   bool
-	finished bool
-	err      error
+	mu        sync.Mutex
+	triggers  map[string][]agent.Trigger
+	recurring map[string][]agent.Recurring
+	imported  []string
+	recorded  []agent.Run
+	newRun    bool
+	finished  bool
+	err       error
+}
+
+func (m *memStore) Recurring(_ context.Context, account string) ([]agent.Recurring, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.recurring[account], nil
 }
 
 func (m *memStore) Triggers(_ context.Context, account string) ([]agent.Trigger, error) {
@@ -158,5 +165,46 @@ func TestOnEvent(t *testing.T) {
 	newSync(store, &fakeHub{}, audit).OnEvent(in, agent.Event{})
 	if len(store.recorded) != 2 {
 		t.Fatalf("recorded %d", len(store.recorded))
+	}
+}
+
+var herb = agent.Recurring{ID: "rtn_000000000001", Name: "Herb run", Enabled: true, Clock: "HERB", Run: agent.RunParams{ClassName: "a.b.HerbrunPlugin"}}
+
+// An agent that runs recurring routines gets them with the triggers; one
+// from before them (routines_sync only) never sees the field; an attached
+// agent that imports its triggers still gets its recurring routines.
+func TestOnConnectRecurring(t *testing.T) {
+	store := &memStore{
+		triggers:  map[string][]agent.Trigger{"acc_a": {cat}},
+		recurring: map[string][]agent.Recurring{"acc_a": {herb}},
+	}
+	hub := &fakeHub{}
+	newSync(store, hub, &memAudit{}).OnConnect(info(agent.KindManaged, agent.CmdRoutinesSync, agent.CmdRecurringGet))
+	want := agent.RoutinesParams{Triggers: []agent.Trigger{cat}, Recurring: []agent.Recurring{herb}}
+	if len(hub.calls) != 1 || !reflect.DeepEqual(hub.calls[0].params, want) {
+		t.Fatalf("calls = %+v", hub.calls)
+	}
+	hub.calls = nil
+	newSync(store, hub, &memAudit{}).OnConnect(info(agent.KindManaged, agent.CmdRoutinesSync))
+	if p, ok := hub.calls[0].params.(agent.RoutinesParams); !ok || p.Recurring != nil {
+		t.Fatalf("an agent from before them got %+v", hub.calls[0].params)
+	}
+	store.triggers = map[string][]agent.Trigger{}
+	hub = &fakeHub{own: []agent.Trigger{cat}}
+	newSync(store, hub, &memAudit{}).OnConnect(info(agent.KindAttached, agent.CmdRoutinesSync, agent.CmdRecurringGet))
+	if len(hub.calls) != 2 || hub.calls[0].command != agent.CmdTriggerGet || !reflect.DeepEqual(hub.calls[1].params, want) {
+		t.Fatalf("import then sync: %+v", hub.calls)
+	}
+}
+
+// A run a recurring routine started is audited with the routine as actor.
+func TestOnEventRecurring(t *testing.T) {
+	now := time.Now().UTC()
+	run := agent.Run{ID: "run-2", UID: "0123456789abcdef", ClassName: "a.b.HerbrunPlugin", Routine: herb.ID, State: agent.RunDone, StartedAt: now, FinishedAt: &now}
+	store, audit := &memStore{newRun: true, finished: true}, &memAudit{}
+	newSync(store, &fakeHub{}, audit).OnEvent(info(agent.KindManaged, agent.CmdRoutinesSync), agent.Event{Run: &run})
+	if len(audit.entries) != 2 || audit.entries[0].Actor != "recurring:"+herb.ID || audit.entries[0].Action != agent.CmdRunStart ||
+		audit.entries[1].Action != "run_end" || !audit.entries[1].OK {
+		t.Fatalf("audit = %+v", audit.entries)
 	}
 }

@@ -72,6 +72,12 @@ type Executor struct {
 	TriggerFile string
 	// WatchPoll is how often the triggers' watcher reads the bridge (default 5 s).
 	WatchPoll time.Duration
+	// RecurringFile keeps the recurring routines the server sent
+	// (DefaultRecurringFile); empty keeps them in memory only.
+	RecurringFile string
+	// RecurringPoll is how often the recurring routines' watcher looks
+	// (default 30 s).
+	RecurringPoll time.Duration
 	// Worker is the --worker mode (docs/11): set, the executor serves one
 	// managed account, takes CmdWorkerBootstrap and refuses CmdAccountUse;
 	// nil outside that mode.
@@ -86,6 +92,9 @@ type Executor struct {
 	mu    sync.Mutex // one client lifecycle/login action at a time
 	runs  runner
 	watch watcher
+	recur recurrer
+	// now is the recurring watcher's clock (tests); nil is time.Now.
+	now func() time.Time
 }
 
 // Execute runs one command of the closed list.
@@ -101,6 +110,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.runCommand(command, params)
 	case CmdTriggerGet, CmdTriggerSet, CmdRoutinesSync:
 		return e.triggerCommand(command, params)
+	case CmdRecurringGet:
+		return e.recurringStatus(), nil
 	case CmdStatus:
 		return e.status(ctx), nil
 	case CmdScreenshot:
@@ -321,14 +332,16 @@ func (o *outbox) take() []Run {
 	return out
 }
 
-// Run connects and reconnects until ctx ends. The triggers' watcher runs
-// beside the link, so a trigger fires while the server is away.
+// Run connects and reconnects until ctx ends. The watchers of the triggers
+// and of the recurring routines run beside the link, so they fire while the
+// server is away.
 func (a *Agent) Run(ctx context.Context) error {
 	a.out.init()
 	if a.Executor.OnRun == nil {
 		a.Executor.OnRun = a.out.put
 	}
 	go a.Executor.Watch(ctx)
+	go a.Executor.WatchRecurring(ctx)
 	backoff := time.Second
 	for {
 		start := time.Now()

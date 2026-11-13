@@ -95,6 +95,10 @@ func (s *Server) microbotRoutes() {
 	control("POST /api/microbot/run/cancel", s.microbotAction(agent.CmdRunCancel, 30*time.Second))
 	control("GET /api/microbot/triggers", s.handleTriggersGet)
 	control("POST /api/microbot/triggers", s.handleTriggersSet)
+	// Recurring routines (docs/08 phase 4, delivery 4): always ?account=.
+	control("GET /api/microbot/recurring", s.handleRecurringGet)
+	control("POST /api/microbot/recurring", s.handleRecurringSave)
+	control("DELETE /api/microbot/recurring/{id}", s.handleRecurringDelete)
 	control("GET /api/microbot/client/logs", s.microbotRead(agent.CmdClientLogs, func(r *http.Request) any {
 		n, _ := strconv.Atoi(r.URL.Query().Get("lines"))
 		return agent.LogsParams{Lines: n}

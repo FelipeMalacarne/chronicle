@@ -143,7 +143,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0010 microbot_audit: every Microbot control action, 0011 timers and position,
                       0012 workers: game_sessions (sealed), workers (desired state), accounts.managed,
                       0013 client profiles: client_profiles, their plugins and settings, account_client,
-                      0014 routines: routines (triggers), routine_runs and run_events)
+                      0014 routines: routines (triggers), routine_runs and run_events,
+                      0015 recurring routines: routines.kind recurring with clock, interval and priority)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

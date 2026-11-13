@@ -16,6 +16,10 @@ type RoutineStore interface {
 	Triggers(ctx context.Context, account string) ([]agent.Trigger, error)
 	PutTrigger(ctx context.Context, account string, t agent.Trigger) ([]agent.Trigger, error)
 	Runs(ctx context.Context, account string, limit int) ([]agent.Run, error)
+	// The recurring routines (docs/08 phase 4, delivery 4).
+	Recurring(ctx context.Context, account string) ([]agent.Recurring, error)
+	PutRecurring(ctx context.Context, account string, rc agent.Recurring) (string, []agent.Recurring, error)
+	DeleteRecurring(ctx context.Context, account, id string) ([]agent.Recurring, error)
 }
 
 // runPage is how many runs the history shows (the agent kept 30).

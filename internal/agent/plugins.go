@@ -197,7 +197,8 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 		return validateRun(raw)
 	case CmdTriggerSet:
 		return validateTrigger(raw)
-	case CmdPlugins, CmdScriptsPause, CmdScriptsResume, CmdGameView, CmdTimers, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet:
+	case CmdPlugins, CmdScriptsPause, CmdScriptsResume, CmdGameView, CmdTimers, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet,
+		CmdRecurringGet:
 		return nil, nil
 	}
 	if slices.Contains(GameActions, command) {

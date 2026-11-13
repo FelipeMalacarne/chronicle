@@ -259,6 +259,8 @@ run_event        run_id, at, state, kind, detail (jsonb)    -- trilha, screensho
    um gatilho no agent (ver Estado).
 4. **Automático e preparo**: o relógio dispara herb, tree e birdhouse quando a conta tiver os
    requisitos, várias recorrentes em fila por prioridade, e loadout com banco antes do run.
+   O relógio, o intervalo e a fila por prioridade foram feitos em 2026-11-13 (ver Estado); o
+   loadout com banco ficou de fora.
 
 O ciclo do gato (resposta do dono, R3): o filhote fica com o KittenPlugin (paralela: alimentar e
 afagar até crescer); quando cresce, a troca é uma recorrente disparada pelo evento, que leva o gato
@@ -611,6 +613,60 @@ destino da viagem):
   planner: o agent manda cada run pelo link (mensagens `event`) e recebe os gatilhos da conta a cada
   conexão (`routines_sync`). Os arquivos continuam como cache do agent anexado; um agent anterior à F6
   segue só com eles.
+
+**Fase 4, entrega 4: rotinas recorrentes com relógio** (2026-11-13; modelo e API no doc 11, seção
+16.4):
+
+- **O que é:** um run (os parâmetros do `run_start`) com nome, prioridade (0 a 100) e o que o faz
+  vencer:
+  - o relógio do Time Tracking que ele segue: as chaves do `/bridge/timers` (`HERB`, `TREE`,
+    `FRUIT_TREE`, `BIRD_HOUSE`, as outras abas de farming e `FARMING_CONTRACT`);
+  - um intervalo de 10 min a 7 dias;
+  - ou os dois.
+- **Onde fica:** no Postgres (migração 0015), e vai ao agent no `routines_sync`. O agent anexado
+  guarda uma cópia em `agent-recurring.json`.
+- **Quando vence:**
+  - Relógio conhecido: quando está pronto (`COMPLETED`, ou `IN_PROGRESS` com a hora já passada).
+    Crescendo, ocupado ou vazio, não vence.
+  - Relógio desconhecido ou sem relógio: pelo intervalo desde o fim do último run dela. É
+    desconhecido quando o Time Tracking nunca viu os canteiros, está desligado ou a ponte não
+    responde. Se a rotina nunca rodou, vence já.
+- **O vigia** do agent olha a cada 30 s, e logo que chega um `routines_sync`:
+  - não começa nada enquanto um run anda;
+  - das vencidas, começa a de maior prioridade (no empate, pelo nome);
+  - só começa com o personagem num ponto seguro (o mesmo do run), o que deixa de fora um break em
+    curso (deslogado).
+  - O run leva o id da rotina, e a primeira linha da trilha diz por que começou ("rotina Herb run:
+    relógio Herb Patches pronto").
+- **Travas** contra laço e surpresa:
+  - um run que falhou ou foi cancelado segura a rotina até o dono salvá-la de novo;
+  - um run de qualquer tipo que falhou ou foi cancelado segura todas até o dono salvar alguma (ele
+    deixa o principal parado onde falhou);
+  - a rotina que o relógio disparou só volta a disparar pelo relógio depois de o vigia vê-lo não
+    pronto (um run que não replantou daria laço);
+  - um run que o servidor viu começar e nunca terminar (o pod caiu no meio) conta como falho.
+- **API:** `GET`, `POST` e `DELETE /api/microbot/recurring`, sempre com `?account=`. Salvar e apagar
+  vão para a auditoria, e o run que uma recorrente começa entra nela com o ator `recurring:<id>`.
+- **Sem tela:** a fila das recorrentes não está desenhada no canvas (regra 11). A API já devolve o
+  que a tela vai mostrar: se vence, por quê, quando, e o que o vigia espera.
+- **Fora desta entrega:**
+  - Loadout com banco antes do run (o PREPARO): pede decisões do dono sobre o que sacar, e a
+    verificação de cada plugin (se ele faz o próprio banco). Até lá, o plugin do run sai do banco
+    sozinho ou o inventário já está pronto.
+  - Requisitos da conta (Farming, Bone Voyage): o planner não confere; o dono liga a rotina quando a
+    conta tiver. O relógio não vence para canteiro que nunca foi plantado.
+  - Break próximo: o TODO em "A troca", acima.
+  - Sucesso por estado observado (o Time Tracking mostrar os canteiros plantados de novo): por ora,
+    só a trava do relógio.
+- **Verificado:**
+  - testes do agent com relógios falsos, todos com `-race`: vence, não vence, prioridade, um por
+    vez, nada durante um run, intervalo desde o fim do último, relógio desconhecido cai no
+    intervalo, travas, ponto seguro e arquivo;
+  - store e rotas no Postgres 17, incluindo um agent da F6 que não recebe o campo novo e o oidc só
+    com conta do dono;
+  - `goose up/down/up` da 0015.
+- **Nada foi testado no jogo.** Falta ligar uma recorrente no zaros, com o dono olhando, quando a
+  conta tiver os requisitos.
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

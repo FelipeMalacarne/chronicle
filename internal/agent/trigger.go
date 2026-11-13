@@ -28,15 +28,32 @@ const (
 	CmdTriggerGet = "trigger_get" // the triggers and the watcher's state
 	CmdTriggerSet = "trigger_set" // save one trigger (enable, disable, its run)
 	// CmdRoutinesSync: server → agent, on every connection (docs/11 section
-	// 4.4, F6): the account's triggers as the database holds them, which
-	// replace the agent's. The file stays as the attached agent's cache, so
-	// a trigger still fires with the server down. Never from the web.
+	// 4.4, F6) and when the owner saves a recurring routine: the account's
+	// triggers and recurring routines as the database holds them, which
+	// replace the agent's. The files stay as the attached agent's cache, so
+	// they still fire with the server down. Never from the web.
 	CmdRoutinesSync = "routines_sync"
 )
 
 // RoutinesParams are the parameters of CmdRoutinesSync.
 type RoutinesParams struct {
 	Triggers []Trigger `json:"triggers"`
+	// Recurring goes only to an agent that declares CmdRecurringGet (an
+	// agent from before them refuses the unknown field); absent is none.
+	Recurring []Recurring `json:"recurring,omitempty"`
+}
+
+// RoutinesFor is the routines_sync of an agent: the triggers and, when it
+// runs them, the recurring routines.
+func RoutinesFor(info Info, triggers []Trigger, recurring []Recurring) RoutinesParams {
+	p := RoutinesParams{Triggers: triggers}
+	if p.Triggers == nil {
+		p.Triggers = []Trigger{}
+	}
+	if info.Supports(CmdRecurringGet) {
+		p.Recurring = recurring
+	}
+	return p
 }
 
 // EventKittenGrown is "Your kitten has grown into a healthy cat that can hunt
@@ -116,7 +133,7 @@ func validateTrigger(raw json.RawMessage) (Trigger, error) {
 }
 
 // validateRoutines checks CmdRoutinesSync's params: every trigger, one per
-// event.
+// event, and every recurring routine.
 func validateRoutines(raw json.RawMessage) (RoutinesParams, error) {
 	var p RoutinesParams
 	if err := decodeParams(raw, &p); err != nil {
@@ -133,7 +150,7 @@ func validateRoutines(raw json.RawMessage) (RoutinesParams, error) {
 		}
 		seen[t.Event] = true
 	}
-	return p, nil
+	return p, validateRecurringList(p.Recurring)
 }
 
 // triggerCommand serves CmdTriggerGet, CmdTriggerSet and CmdRoutinesSync.
@@ -142,6 +159,9 @@ func (e *Executor) triggerCommand(command string, raw json.RawMessage) (any, err
 	if command == CmdRoutinesSync {
 		p, err := validateRoutines(raw)
 		if err != nil {
+			return nil, err
+		}
+		if err := e.setRecurring(p.Recurring); err != nil {
 			return nil, err
 		}
 		w.mu.Lock()
@@ -300,7 +320,7 @@ func (e *Executor) watchOnce(ctx context.Context) {
 		case i < 0 || !w.triggers[i].Enabled:
 			f.Skipped = "trigger off"
 		default:
-			if run, err := e.startRun(w.triggers[i].Run, x.Kind); err != nil {
+			if run, err := e.startRun(w.triggers[i].Run, runOrigin{trigger: x.Kind}); err != nil {
 				f.Skipped = err.Error()
 			} else {
 				f.RunID = run.ID

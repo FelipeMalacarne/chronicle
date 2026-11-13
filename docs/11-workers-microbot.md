@@ -368,8 +368,9 @@ o referencia, então o RBAC não muda) e usa o `local-path`, como o do filebrows
 | `POST /api/workers/{conta}/start` \| `stop` \| `restart` | Ciclo de vida, auditado |
 | `GET` \| `PUT /api/accounts/{id}/session` | Estado da sessão (sem o conteúdo) e conexão |
 | `GET /api/client-profiles`, `GET` \| `PUT` \| `DELETE /api/client-profiles/{nome}` | Perfis do usuário: modelo, plugins e configurações; o `PUT` troca o perfil inteiro (seção 15) |
-| `GET` \| `PUT /api/accounts/client?account=` | Perfil da conta, configurações próprias e o perfil efetivo; mundo, gráfico e desvio ficam para depois |
+| `GET` \| `PUT /api/accounts/client?account=` | Perfil da conta, configurações próprias e o perfil efetivo; mundo e gráfico ficam para depois |
 | `GET` \| `POST /api/microbot/triggers?account=`, `GET /api/microbot/runs?account=` | Gatilhos e histórico, no banco desde a F6 (seção 16); um agent anterior à F6 segue respondendo pelos arquivos dele |
+| `GET /api/accounts/client/drift?account=`, `POST …/client/drift/save`, `POST …/client/apply` | O desvio do cliente em relação ao perfil, salvar os valores do cliente (na conta ou no perfil) e aplicar o perfil ao cliente (seção 17) |
 | `/api/microbot/*?account=` | O que existe hoje, endereçado pela conta |
 
 CLI: `chronicle accounts connect`, `chronicle workers list|start|stop|restart`,
@@ -399,7 +400,7 @@ disco.
 | F2 | Contas e sessões: migração (`regular`, rota opcional, `managed`, `game_sessions`), cofre, `chronicle accounts connect`, Automação da conta na Conta | uma conta sem rota conectada pela CLI; a sessão aparece na web e nunca volta pela API | chronicle |
 | F3 | Imagens e um worker aplicado à mão: as duas imagens e o CI delas, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | chronicle (com `microbot/`), gielinor |
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
-| F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. Falta a parte 2: a tela, o desvio e o "Salvar no perfil" |
+| F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. **Parte 2 no servidor feita** (2026-11-13, seção 17): desvio, "Salvar no perfil", aplicar, e o perfil no cliente anexado. Falta a tela (fatia V8 da v7) |
 | F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade, e as rotinas recorrentes continuam propostas |
 | F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle |
 
@@ -436,7 +437,7 @@ E10). A revisão de rotas e objetivos que o dono quer fazer depois é o lugar di
 | W6 | Lista de workers antes dos gerenciados | **Resolvida** pela F1 |
 | W7 | Como aplicar a config do perfil: escrever o arquivo de perfil do RuneLite antes de o cliente subir, ou `/settings/plugin` depois | **Resolvida (2026-11-12, dono):** pelo `/settings/plugin`, com o cliente de pé e **antes** de ligar os plugins, que assim leem a config certa no start. Não depende do formato dos arquivos de perfil; um ajuste que precise valer antes de o cliente abrir volta a pedir o arquivo |
 | W8 | IP e escala de uma frota: proxy por worker, outro nó, outra casa | Adiar até haver mais de 3 contas; registrar o risco |
-| W9 | Desvio de config: salvar sozinho ou pelo botão | Pelo botão ("Salvar no perfil") |
+| W9 | Desvio de config: salvar sozinho ou pelo botão | Pelo botão ("Salvar no perfil"); a parte 2 da F5 seguiu esta recomendação (seção 17) |
 | W10 | Conta sem rota: `guide_id` nulo e modo `regular` | Sim, na migração da F2 |
 
 ## 13. Contratos da implementação (rodada 1, 2026-11-12)
@@ -854,3 +855,49 @@ no agent (doc 08, R1). Sem tela nova: a web lê as mesmas rotas e os mesmos form
   segue com os arquivos, e a importação acontece na primeira conexão do binário novo.
 - **Rotinas recorrentes** (relógios, "Fazer agora" agendado) e a fila da v7 continuam propostas
   (decisão 31 do doc 01). A tabela `routines` já tem a coluna `kind` para elas.
+
+## 17. F5, parte 2: desvio e "Salvar no perfil" (2026-11-13)
+
+Esta parte é só servidor; a tela é a fatia V8 da web v7 (Plugins da frota). Ela também não muda o
+protocolo do agent: o servidor usa os comandos que todo agent tem desde a fase 3 do doc 08
+(`config_get`, `plugins`, `config_set`, `plugin_install`, `script_start`). Por isso funciona também
+com o agent do zaros que ainda não foi atualizado.
+
+### 17.1 Entregue
+
+- **Desvio** (`GET /api/accounts/client/drift?account=`): o servidor lê do cliente o valor de cada
+  configuração do perfil efetivo e a lista de plugins, e devolve:
+  - cada configuração diferente do perfil, ou não definida no cliente;
+  - cada plugin do Hub que não está instalado ou está em outra versão que a fixada;
+  - cada plugin que devia estar ligado e não está;
+  - em `unchecked`, os plugins do próprio RuneLite que ligam no boot: o `/scripts` do Agent Server
+    lista só os do Microbot, então não dá para saber se estão ligados.
+- **"Salvar no perfil"** (`POST /api/accounts/client/drift/save?account=`, W9: pelo botão, nunca
+  sozinho): leva os valores atuais das chaves escolhidas para as configurações da conta
+  (`"to":"account"`) ou para o perfil dela (`"to":"profile"`), que outras contas podem usar. Uma
+  chave não definida no cliente é pulada e volta na resposta. Auditado como `profile_save`.
+- **Aplicar / "Descartar"** (`POST /api/accounts/client/apply?account=`): devolve ao cliente os
+  valores do perfil, na ordem do boot do worker (configurações, instalações do Hub, ligar o que
+  não está ligado). Sem chaves, aplica o perfil inteiro; com chaves, só elas. Auditado como
+  `profile_apply`.
+- **Cliente anexado (zaros):** o "Iniciar" do Cockpit aplica o perfil da conta logo que o cliente
+  sobe, se ela tiver um, e a resposta traz o que foi aplicado. Num worker, quem aplica é o agent
+  dele, no boot (seção 15).
+
+### 17.2 Conferido
+
+- Testes de tabela do desvio: configuração diferente ou não definida, grupo não lido, plugin do Hub
+  não instalado ou em outra versão, plugin parado, plugin do RuneLite não verificável. Também a
+  leitura das listas do Agent Server e os lotes do `config_get`.
+- As rotas no Postgres com um agent de verdade e um cliente falso que guarda o estado: desvio,
+  salvar na conta e no perfil (com a chave não definida pulada), aplicar o perfil inteiro (o desvio
+  zera depois), chave fora do perfil recusada, sem agent dá 503, e o "Iniciar" de um anexado
+  aplicando o perfil.
+
+### 17.3 Não conferido e pendente
+
+- **Num cliente de verdade:** mudar uma opção pelo VNC, ver o desvio, salvar e descartar.
+- **O que muda no RuneLite fora do perfil** não aparece: o desvio só olha as chaves que o perfil
+  declara. Para ver tudo, o Chronicle Link teria de exportar todos os valores que não são segredo
+  (seção 4.3), o que fica para quando a tela pedir.
+- **A tela:** a fatia V8.

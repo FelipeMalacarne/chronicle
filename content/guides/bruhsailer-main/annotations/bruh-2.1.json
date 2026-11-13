@@ -250,25 +250,6 @@
           }
         },
         {
-          "key": "item:455x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "barcrawl card",
-            "span": [
-              502,
-              515
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "items-to-obtain-are-objectives"
-          }
-        },
-        {
           "key": "item:1521x15",
           "role": "completes",
           "evidence": {
@@ -285,25 +266,6 @@
             "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "items-to-obtain-are-objectives"
-          }
-        },
-        {
-          "key": "item:family/digsite_pendantx1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "digsite teleport",
-            "span": [
-              530,
-              546
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
           }
         }
       ],
@@ -5627,25 +5589,6 @@
           }
         },
         {
-          "key": "item:19636x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "the damaged soulbearer",
-            "span": [
-              324,
-              346
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "item-shorthand-to-catalog-name"
-          }
-        },
-        {
           "key": "item:2149x1",
           "role": "completes",
           "evidence": {
@@ -8658,25 +8601,6 @@
             "span": [
               249,
               258
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "high",
-            "skill_version": "annotate-guide@6",
-            "confirmed_by": "owner",
-            "decision": "items-to-obtain-are-objectives"
-          }
-        },
-        {
-          "key": "item:365x1",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "catch a bass",
-            "span": [
-              42,
-              54
             ]
           },
           "source": {

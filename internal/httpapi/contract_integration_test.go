@@ -3,6 +3,7 @@ package httpapi
 import (
 	"bytes"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -17,6 +18,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/jackc/pgx/v5/pgxpool"
+
+	"github.com/FelipeMalacarne/chronicle/internal/agent"
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
@@ -24,6 +28,9 @@ import (
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 	"github.com/FelipeMalacarne/chronicle/internal/store/syncrun"
+	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
+	"github.com/FelipeMalacarne/chronicle/internal/vault"
+	"github.com/FelipeMalacarne/chronicle/internal/workerctl"
 )
 
 // updateContract rewrites the web's contract fixtures:
@@ -42,7 +49,8 @@ const contractDir = "../../web/src/lib/api/contract"
 // contractCase is one answer: the request, and the web type it must satisfy.
 type contractCase struct {
 	name, method, path, body string
-	tsImports                []string // names imported from web/src/lib/progress/types
+	tsFrom                   string   // the module of tsImports, relative to contractDir; "" is ../../progress/types
+	tsImports                []string // names imported from tsFrom
 	tsType                   string
 }
 
@@ -77,12 +85,19 @@ func TestContractPostgres(t *testing.T) {
 	}
 	ingest := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).WithReevaluator(progress)
 	syncs := syncrun.New(pool, contractFetcher{}, progress)
+	workers, control := contractWorkers(ctx, t, pool, ingest)
+	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
+	link := &agent.Link{Log: quiet}
 	srv := httptest.NewServer(New(Options{
 		Version: "test", Content: cnt, DefaultGuideID: "oziris-main", Ingest: ingest, Holdings: ingest,
-		Progress: progress, Sync: syncs, Accounts: progress, Catalog: catalog, DevMode: true,
-		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+		Progress: progress, Sync: syncs, Accounts: progress, Catalog: catalog, DevMode: true, Logger: quiet,
+		Microbot: &MicrobotOptions{Link: link, Audit: &memAudit{}, Sessions: workers, Control: control, WorkerImage: contractWorkerImage},
 	}))
 	defer srv.Close()
+	// The running worker's agent and the one attached on zaros, for /api/workers.
+	startAgent(t, srv.URL, "", agent.Hello{Host: "chronicle-worker-acc-worker-a-7d9f-x2k4q", Account: "acc_worker_a", Kind: agent.KindManaged, Worker: "chronicle-worker-acc-worker-a-7d9f-x2k4q", Bridge: "1.11.0"}, "W")
+	startAgent(t, srv.URL, "", agent.Hello{Host: "zaros", Account: "acc_contract"}, "Z")
+	waitLinked(t, link, 2)
 
 	// A plugin push with skills, quests and a bank, as the plugin sends it.
 	token, err := ingest.CreateToken(ctx, "acc_contract", "contract", []coreingest.TokenScope{coreingest.ScopeItemsBank, coreingest.ScopeItemsInventory, coreingest.ScopeItemsEquipment})
@@ -166,6 +181,7 @@ func TestContractPostgres(t *testing.T) {
 		{name: "world", method: "GET", path: "/api/world" + acc, tsImports: []string{"WorldResponse"}, tsType: "WorldResponse"},
 		{name: "sync", method: "POST", path: "/api/sync" + acc, tsImports: []string{"SyncRun"}, tsType: "SyncRun"},
 		{name: "sync-runs", method: "GET", path: "/api/sync/runs" + acc + "&limit=5", tsImports: []string{"SyncRunsResponse"}, tsType: "SyncRunsResponse"},
+		{name: "workers", method: "GET", path: "/api/workers", tsFrom: "../microbot", tsImports: []string{"WorkersView"}, tsType: "WorkersView"},
 	}
 	for _, c := range cases {
 		var live any
@@ -191,6 +207,53 @@ func TestContractPostgres(t *testing.T) {
 			t.Errorf("%s: the API answer changed shape; run `go test ./internal/httpapi -run TestContract -update`, then `pnpm check`:\nlive:    %s\nfixture: %s", c.name, got, want)
 		}
 	}
+}
+
+// contractWorkerImage is the server's WORKER_IMAGE in the contract test.
+const contractWorkerImage = "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc1234-def5678"
+
+// contractWorkers makes the workers the Workers tab shows, on the real
+// store: one running (session with a login, pod, agent), one stopped by an
+// error on an older image (its pod still terminating) and one whose session
+// was deleted.
+func contractWorkers(ctx context.Context, t *testing.T, pool *pgxpool.Pool, tokens storeworkers.TokenMinter) (*storeworkers.Repository, *memControl) {
+	t.Helper()
+	key, err := vault.ParseKey(base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{7}, 32)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = pool.Exec(ctx, `
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer) VALUES
+		('acc_worker_a', 'dev', 'Worker A', 'worker_a', 'ironman', 'oziris-main', 'enhanced'),
+		('acc_worker_b', 'dev', 'Worker B', 'worker_b', 'ironman', 'oziris-main', 'enhanced'),
+		('acc_worker_c', 'dev', 'Worker C', 'worker_c', 'ironman', 'oziris-main', 'enhanced');
+	`); err != nil {
+		t.Fatal(err)
+	}
+	repo := storeworkers.New(pool, key, tokens)
+	older := "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc1234-0000000"
+	for _, step := range []error{
+		repo.PutSession(ctx, "acc_worker_a", "dev", agent.GameSession{Character: "Worker A", SessionID: "sid-a", CharacterID: "1"}),
+		repo.SetDesired(ctx, "acc_worker_a", storeworkers.StateRunning, 330, contractWorkerImage),
+		repo.RecordLogin(ctx, "acc_worker_a", "ok"),
+		repo.PutSession(ctx, "acc_worker_b", "dev", agent.GameSession{Character: "Worker B", SessionID: "sid-b", CharacterID: "2"}),
+		repo.SetDesired(ctx, "acc_worker_b", storeworkers.StateRunning, 0, older),
+		repo.SetDesired(ctx, "acc_worker_b", storeworkers.StateStopped, 0, ""),
+		repo.SetError(ctx, "acc_worker_b", "the session was refused"),
+		repo.PutSession(ctx, "acc_worker_c", "dev", agent.GameSession{Character: "Worker C", SessionID: "sid-c", CharacterID: "3"}),
+		repo.SetDesired(ctx, "acc_worker_c", storeworkers.StateStopped, 0, ""),
+		repo.DeleteSession(ctx, "acc_worker_c"),
+	} {
+		if step != nil {
+			t.Fatal(step)
+		}
+	}
+	now := time.Now().UTC().Truncate(time.Second)
+	control := &memControl{pods: map[string]workerctl.PodInfo{
+		"acc_worker_a": {Deployment: "chronicle-worker-acc-worker-a", Pod: "chronicle-worker-acc-worker-a-7d9f-x2k4q", State: "running", Image: contractWorkerImage, Version: "v1.2.3", Restarts: 1, Seen: now},
+		"acc_worker_b": {Deployment: "chronicle-worker-acc-worker-b", State: "terminating", Reason: "stopped", Image: older, Seen: now},
+	}}
+	return repo, control
 }
 
 // contractFetcher answers a hiscores sample.
@@ -303,7 +366,11 @@ func contractModule(c contractCase, v any) []byte {
 	fmt.Fprintf(&b, "// A real answer of %s %s, written by\n", c.method, strings.SplitN(c.path, "?", 2)[0])
 	b.WriteString("// `DATABASE_URL=... go test ./internal/httpapi -run TestContract -update`. Do not edit:\n")
 	b.WriteString("// svelte-check verifies it against the web's type (docs/10 section 12).\n")
-	fmt.Fprintf(&b, "import type { %s } from '../../progress/types';\n\n", strings.Join(c.tsImports, ", "))
+	from := c.tsFrom
+	if from == "" {
+		from = "../../progress/types"
+	}
+	fmt.Fprintf(&b, "import type { %s } from '%s';\n\n", strings.Join(c.tsImports, ", "), from)
 	b.WriteString(contractPrefix)
 	b.Write(body)
 	fmt.Fprintf(&b, " satisfies %s;\n", c.tsType)

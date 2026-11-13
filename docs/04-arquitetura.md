@@ -1006,7 +1006,7 @@ o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis
   deploy. Passos no doc 07, seção 3.3.
 - Nada no código distingue os dois ambientes além da configuração (doc 07).
 
-## 9. Estado em 2026-11-08 e sequência vigente
+## 9. Estado em 2026-11-12 e sequência vigente
 
 Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/microbot-plugins`, commit
 `68fc1c6`):
@@ -1142,11 +1142,12 @@ com `-race`, das rotas (token do agent, auditoria, sem agent, papel em oidc, só
 módulo desligado), `node --test` do view-model, e no zaros o agent subindo e parando o cliente
 headless pelo web.
 
-Ainda não existe: deploy no saradomin, device flow do plugin,
-sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e as fases 4 e 5 do
-controle do Microbot (rotinas, serviço no zaros; doc 08). As fases 2 (VNC ao vivo pelo agent, noVNC
-na web) e 3 (plugins: Hub, scripts, configuração chave/valor) foram feitas em 2026-11-08 (doc 08,
-seção "Estado").
+Ainda não existe: sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01), o
+histórico dos runs no banco (fim da fase 4 do controle do Microbot, doc 08; a F6 do doc 11) e a fase
+5 (serviço no zaros e token via sops). As fases 2 (VNC ao vivo pelo agent, noVNC na web) e 3
+(plugins: Hub, scripts, configuração chave/valor) foram feitas em 2026-11-08, e as entregas 1 a 3 da
+fase 4 (relógios, fazer agora, gatilho do gato, ponto seguro) em 2026-11-09 e 10 (doc 08, seção
+"Estado"). O deploy no saradomin e o device flow do plugin são os itens 18 e 15 abaixo.
 
 Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam para cá. A ordem dos itens
 2 a 9 foi decidida pelo dono (doc 09, decisão D7): extração completa antes do progresso persistido.

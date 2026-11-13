@@ -628,17 +628,21 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
 
 ### 14.3 Não conferido e pendente
 
-- **A tela de login de verdade.** O sandbox recusa a porta 43594 da Jagex e intercepta o TLS. Falta
-  conferir no saradomin, com uma conta logada e o dono olhando.
-- **O reconciliador contra o k3s de verdade:** pods reais, o token projetado, a TokenReview, a quota e
-  a NetworkPolicy. Só a admissão foi testada num apiserver.
+- **A tela de login de verdade.** O sandbox recusa a porta 43594 da Jagex e intercepta o TLS.
+  Conferida no saradomin no mesmo dia (seção 14.4).
+- **O reconciliador contra o k3s de verdade:** pods reais, o token projetado e a TokenReview foram
+  conferidos no saradomin (seção 14.4). Falta ver o "não cabe" da quota e o que a NetworkPolicy recusa.
 - **O tour "Welcome to Microbot"** aparece a cada boot, porque a home do pod é nova. Fechar o tour
   automaticamente fica para a F5 (perfis).
 - **`preferences.dat`** fica dentro do `jagexcache` compartilhado. São preferências do jogo e podem
   lembrar o nome do login antigo, que não é o da Jagex Account. Se incomodar, o PVC monta só os
   `main_file_cache.*` por `subPath`.
-- **`Hello.Bridge` fica vazio:** a ponte do Chronicle Link ainda não tem rota de versão.
-- A rota `/api/workers` não entrou no teste de contrato (`TestContract`).
+- **`Hello.Bridge` fica vazio:** a ponte do Chronicle Link ainda não tem rota de versão. A web não lê
+  esse campo, e o hello sai antes de o cliente (e a ponte) subir no worker, então a versão faria
+  sentido no `status`, não no hello. Com o repositório único, o plugin e o agent do worker saem do
+  mesmo commit; só o zaros pode ficar com um Chronicle Link mais velho que o agent.
+- A rota `/api/workers` entrou no teste de contrato (`TestContractPostgres`, 2026-11-12): um worker
+  rodando, um parado por erro numa imagem velha e um sem sessão, mais um agent anexado.
 - **Para ligar no saradomin, com o dono:**
   1. Fazer o merge do gielinor antes do chronicle: o app precisa da SA.
   2. Pôr o `CHRONICLE_VAULT_KEY` no SOPS.
@@ -692,4 +696,8 @@ a RAM daria para uns 8. O pedido subiu para 700m e a quota do namespace acompanh
   Resolver na F5, com os perfis.
 - **Configuração dos plugins:** a do Blackjacker e a dos outros se perde quando o pod é recriado. É a
   F5 (perfis no Postgres).
-- **FPS:** conferir no pod se o FPS Control ficou ligado com o limite de 20.
+- **FPS:** conferido em 2026-11-12 no worker da `acc_eventsourced` com o Blackjacker ativo:
+  `fpscontrol` com `limitFps=true` e `maxFps=20` (`GET /api/microbot/config`), nenhum aviso do agent
+  ao ligar o FPS Control nem ao gravar os valores, e 405m de CPU. Que o plugin está ligado só se vê
+  assim, de forma indireta: a lista do Agent Server traz só os scripts do Microbot, e o agent recusa
+  ler o grupo `runelite`.

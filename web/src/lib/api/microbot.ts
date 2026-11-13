@@ -370,6 +370,8 @@ export interface Run {
 		| 'canceled';
 	/** O evento do jogo que disparou o run (kitten_grown); vazio quando foi o dono. */
 	trigger?: TriggerEvent;
+	/** A rotina recorrente que começou o run (rtn_...), quando foi uma. */
+	routine?: string;
 	startedAt: string;
 	finishedAt?: string;
 	from?: Pos;
@@ -495,6 +497,11 @@ export const microbotApi = {
 	/** O estado do cliente de uma conta, sem trocar a conta do Cockpit (Frota). */
 	statusOf: (account: string) => call<MicrobotStatus>('/status', undefined, BASE, account),
 	pluginsOf: (account: string) => call<PluginsView>('/plugins', undefined, BASE, account),
+	/** Os runs de uma conta, o mais novo primeiro, sem trocar a conta do Cockpit (Histórico, Atividade). */
+	runsOf: (account: string) => call<RunHistory>('/runs', undefined, BASE, account),
+	/** A auditoria de uma conta, a mais nova primeiro (Histórico). */
+	auditOf: (account: string, limit = 200) =>
+		call<{ entries: AuditEntry[] }>(`/audit?limit=${limit}`, undefined, BASE, account),
 	action: (action: MicrobotAction, body?: { world?: number }) =>
 		call<{ ok: boolean; result: unknown }>(`/${action}`, {
 			method: 'POST',

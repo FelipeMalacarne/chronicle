@@ -28,10 +28,11 @@
 		page.url.pathname === '/' || page.url.pathname.startsWith('/contas/nova')
 	);
 	const setup = $derived(fleetPage && (!account || missing));
-	// O Mundo e os Plugins são da frota (decisoes-canvas.md, 7.1): sem o cabeçalho da conta.
+	// O Mundo, a Atividade e os Plugins são da frota (decisoes-canvas.md, 7.1): sem o cabeçalho da conta.
 	const accountPage = $derived(
 		!fleetPage &&
 			!page.url.pathname.startsWith('/mundo') &&
+			!page.url.pathname.startsWith('/atividade') &&
 			!page.url.pathname.startsWith('/plugins')
 	);
 	$effect(() => {

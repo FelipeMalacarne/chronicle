@@ -260,8 +260,9 @@ attached agent declares). Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes bas
 - `go test ./...` (unit; rule engine uses table tests with fixtures under `internal/core/.../testdata`).
 - Store tests need `DATABASE_URL` (`just db-up`); each test runs in its own throwaway schema; skip when unset.
   CI's `go` job has a Postgres 17 service, so they run there; the progress ones end with `Repository.Check`.
-- Contract: `web/src/lib/progress/types.ts` is still hand-written, but `svelte-check` verifies it against the
-  generated fixtures in `web/src/lib/api/contract/` (never edit those; regenerate with `-update`).
+- Contract: `web/src/lib/progress/types.ts` (and `WorkersView` in `web/src/lib/api/microbot.ts`) are still
+  hand-written, but `svelte-check` verifies them against the generated fixtures in `web/src/lib/api/contract/`
+  (never edit those; regenerate with `-update`).
 - `cd web && pnpm check && pnpm test && pnpm lint`; CI runs web, go, migrations (goose up/down/up on
   Postgres 17), manifests, nix (`nix build .#chronicle` and the plugins' `gradle test pluginJars`) and,
   on `main`, the images and the deploy commit (`.github/workflows/ci.yml`).

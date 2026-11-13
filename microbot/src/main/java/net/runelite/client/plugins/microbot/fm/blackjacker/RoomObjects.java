@@ -19,9 +19,14 @@ final class RoomObjects
 
 	static Rs2TileObjectModel curtain(Room room)
 	{
+		return curtain(room.curtain);
+	}
+
+	static Rs2TileObjectModel curtain(WorldPoint at)
+	{
 		return Microbot.getRs2TileObjectCache().query()
 			.withIds(CURTAIN_OPEN, CURTAIN_CLOSED)
-			.where(o -> o.getWorldLocation().equals(room.curtain))
+			.where(o -> o.getWorldLocation().equals(at))
 			.first();
 	}
 
@@ -32,10 +37,26 @@ final class RoomObjects
 		return curtain == null || curtain.getId() == CURTAIN_OPEN;
 	}
 
+	/** The room's back curtain is loaded and open. */
+	static boolean backCurtainOpen(Room room)
+	{
+		if (room.backCurtain == null)
+		{
+			return false;
+		}
+		Rs2TileObjectModel curtain = curtain(room.backCurtain);
+		return curtain != null && curtain.getId() == CURTAIN_OPEN;
+	}
+
 	/** Clicks Open or Close and waits for the curtain to change. */
 	static void clickCurtain(Room room, String action)
 	{
-		Rs2TileObjectModel curtain = curtain(room);
+		clickCurtain(room.curtain, action);
+	}
+
+	static void clickCurtain(WorldPoint at, String action)
+	{
+		Rs2TileObjectModel curtain = curtain(at);
 		if (curtain == null)
 		{
 			return;
@@ -44,7 +65,7 @@ final class RoomObjects
 		if (curtain.click(action))
 		{
 			Global.sleepUntil(() -> {
-				Rs2TileObjectModel now = curtain(room);
+				Rs2TileObjectModel now = curtain(at);
 				return now != null && now.getId() != id;
 			}, 3000);
 		}

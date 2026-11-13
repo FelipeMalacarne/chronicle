@@ -63,7 +63,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 14 | Metas pré-definidas iniciais: títulos das 7 seções, Barrows gloves, Fire cape, Quest cape, Bowfa | **aberta** | doc 03, F9 |
 | 15 | Estimativas de tempo na v1 como "could" com tabela de rates à mão, ou depois do tracking confiável | **aberta** | doc 03, F14 |
 | 16 | Repositório público ou privado; público exige resolver a licença dos textos dos guias antes | resolvida (2026-11-12): **público**, por decisão do dono, assumindo o risco de redistribuir os textos dos guias (Oziris e BRUHsailer, inclusive os `.docx` em `data/sources/bruhsailer` e o histórico do git), que não declaram licença; a atribuição continua em todas as telas (regra 6) e nos README dos guias. Motivo imediato: o nix-config referencia o flake por `github:` sem credencial (doc 07, seção 3.4) | doc 05, seção 8; doc 07, seção 3.4 |
-| 17 | Nome da conta ironman para testar o sync real desde a primeira sessão | **aberta** | doc 04, seção 6.1 |
+| 17 | Nome da conta ironman para testar o sync real desde a primeira sessão | resolvida na prática (2026-11-04): o sync do hiscores roda na conta do dono desde o item 10 do doc 04 | doc 04, seção 6.1 |
 | 18 | Catálogo de itens com o jogo inteiro (toda página de item da wiki), não só o que os guias citam; por nome vale o item da página com aquele título | resolvida (2026-11-04) | doc 09, seção 7 (substitui o escopo de D8) |
 | 19 | Checagem de ordem da extração conta o XP fixo de recompensa das quests como fonte de nível | resolvida (2026-11-04) | doc 09, seções 6.8 e 7 |
 | 20 | Entradas de `unlock`/`location` corrigidas só pela tool `revise_entity`, com confirmação do dono | resolvida (2026-11-04) | doc 09, seção 6.8 |
@@ -105,8 +105,12 @@ workers headless no saradomin, um por conta, escolhidos no painel (decisão 34, 
 
 ## Próximo passo
 
-Seguir a sequência do doc 04, seção 9: o item 20 (web v7, Frota) pelas fatias V1 a V4, que só dependem
-da web, e depois as fases F5 a F7 do item 19 (doc 11), cada uma com a fatia da v7 que ela destrava.
+A sequência do doc 04, seção 9, está feita até o item 18 (deploy no saradomin, 2026-11-12). O item
+19 (workers, doc 11) teve a rodada 1 e o primeiro worker no saradomin; as fases F5 a F7 seguem
+propostas.
+
+O próximo é o item 20 (web v7, Frota; decisão 36), pelas fatias V1 a V4, que só dependem da web.
+Depois vêm as fases F5 a F7 do item 19, cada uma com a fatia da v7 que ela destrava.
 
 ## Discrepâncias e ressalvas
 

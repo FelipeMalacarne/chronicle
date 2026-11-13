@@ -1,7 +1,8 @@
 # 10 — Modelo de execução: fatos, eventos, tarefas, receitas e planos
 
-**Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 (seção 14); a fase 0 está na
-sequência do doc 04, seção 9 (item 17). E5 a E10 continuam abertas.** Nada deste doc está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
+**Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 e E5 a E10 em 2026-11-13, do
+jeito recomendado (seção 14); a fase 0 está feita (doc 04, seção 9, item 17).** Além da fase 0, nada deste
+doc está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
 (<https://claude.ai/artifact/EZaKJZKjVAeotQG41rehEU>), seções 5 a 8.
 
@@ -287,8 +288,9 @@ fixtures viram teste de conformidade, com cada resposta real validada contra o s
 | 4 | `train` por delegação; rotinas do doc 08 com `wait_until` por chave de objetivo | um treino até `skill:x>=N` sem intervenção |
 | 5 | Receitas de quest, planos customizados na UI, vários clientes no agent | por entrega |
 
-A fase 0 não depende de nenhuma decisão de automação e pode começar antes; as fases 1 em diante entram na
-sequência do doc 04, seção 9, quando o dono fechar a seção 14.
+A fase 0 não dependia de nenhuma decisão de automação e já está feita. Com a seção 14 fechada
+(2026-11-13), as fases 1 em diante entram na sequência do doc 04, seção 9, depois do item 20, quando o
+dono decidir começar.
 
 ## 14. Decisões em aberto (dono)
 
@@ -298,12 +300,12 @@ sequência do doc 04, seção 9, quando o dono fechar a seção 14.
 | E2 | `owner_commands` como log e `step_marks` como projeção | **decidida (2026-11-05): sim** |
 | E3 | `progress rebuild --check` no CI, no boot ou só sob demanda | **decidida (2026-11-05): CI e comando; no boot só aviso, sem bloquear** |
 | E4 | Contrato gerado com tygo + fixtures Zod | **decidida (2026-11-05): sim** |
-| E5 | Lista inicial de primitivas (`travel`, `bank`, `buy`, `talk`, `interact`, `train`, `manual`) | sim; `quest` depois |
-| E6 | Receitas em `content/recipes/` (git) | sim |
-| E7 | Planos customizados no banco, exportáveis para `content/routes/` | sim |
-| E8 | Gravação por demonstração no plugin (o plugin passa a registrar interações, ainda sem agir) | sim, opt-in |
-| E9 | Política de risco: em HCIM, nada com risco de morte roda sem supervisão | sim |
-| E10 | Importar diálogos e etapas de quest do Quest Helper em vez de extrair do texto | avaliar na fase 5 |
+| E5 | Lista inicial de primitivas (`travel`, `bank`, `buy`, `talk`, `interact`, `train`, `manual`) | **decidida (2026-11-13): sim; `quest` depois** |
+| E6 | Receitas em `content/recipes/` (git) | **decidida (2026-11-13): sim** |
+| E7 | Planos customizados no banco, exportáveis para `content/routes/` | **decidida (2026-11-13): sim** |
+| E8 | Gravação por demonstração no plugin (o plugin passa a registrar interações, ainda sem agir) | **decidida (2026-11-13): sim, opt-in** |
+| E9 | Política de risco: em HCIM, nada com risco de morte roda sem supervisão | **decidida (2026-11-13): sim** |
+| E10 | Importar diálogos e etapas de quest do Quest Helper em vez de extrair do texto | **decidida (2026-11-13): avaliar na fase 5** |
 
 ## 15. Impacto nos outros docs
 

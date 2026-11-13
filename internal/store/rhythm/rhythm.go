@@ -1,14 +1,16 @@
 // Package rhythm reads an account's rhythm (internal/core/rhythm; the v7's
 // slice V5) from the snapshots that already exist: the current facts, the
 // XP at the start of the day and of the session, the last hour of XP
-// points and the GP items' observations. Read-only, every query bounded in
-// time.
+// points, the GP items' observations and the session's item observations.
+// Read-only, every query bounded in time.
 package rhythm
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -59,6 +61,7 @@ func (r *Repository) Rhythm(ctx context.Context, account string, now, since time
 			return err
 		}
 		out = corerhythm.Compute(in)
+		r.name(out.Session)
 		return nil
 	})
 	return out, err
@@ -69,7 +72,7 @@ func (r *Repository) input(ctx context.Context, q *storedb.Queries, account stri
 	if err != nil {
 		return corerhythm.Input{}, fmt.Errorf("load player state: %w", err)
 	}
-	in := corerhythm.Input{Now: now, Since: since, Current: map[string]int{}, GPNow: corerhythm.GPOf(ps.Items)}
+	in := corerhythm.Input{Now: now, Since: since, Current: map[string]int{}, GPNow: corerhythm.GPOf(ps.Items), Base: r.base}
 	for skill, s := range ps.Skills {
 		in.Current[skill] = int(s.XP)
 	}
@@ -88,6 +91,9 @@ func (r *Repository) input(ctx context.Context, q *storedb.Queries, account stri
 	}
 	if in.SessionStart != nil {
 		if in.AtSession, err = xpAt(ctx, q, account, *in.SessionStart); err != nil {
+			return in, err
+		}
+		if in.Items, err = itemObservations(ctx, q, account, *in.SessionStart); err != nil {
 			return in, err
 		}
 	}
@@ -131,6 +137,57 @@ func xpAt(ctx context.Context, q *storedb.Queries, account string, at time.Time)
 		}
 	}
 	return out, nil
+}
+
+// itemObservations are the item containers' observations from the last
+// full one of each at or before at.
+func itemObservations(ctx context.Context, q *storedb.Queries, account string, at time.Time) ([]corerhythm.ItemObs, error) {
+	rows, err := q.ItemObservations(ctx, storedb.ItemObservationsParams{AccountID: account, BeforeAt: ts(at)})
+	if err != nil {
+		return nil, fmt.Errorf("item observations: %w", err)
+	}
+	out := make([]corerhythm.ItemObs, 0, len(rows))
+	for _, row := range rows {
+		var raw map[string]int64
+		if err := json.Unmarshal(row.Items, &raw); err != nil {
+			return nil, fmt.Errorf("item observations: %w", err)
+		}
+		items := make(map[int]int64, len(raw))
+		for k, v := range raw {
+			id, err := strconv.Atoi(k)
+			if err != nil {
+				continue // the ingest only stores numeric ids
+			}
+			items[id] = v
+		}
+		out = append(out, corerhythm.ItemObs{At: row.FetchedAt.Time.UTC(), Full: row.Full, Container: row.Container, Items: items})
+	}
+	return out, nil
+}
+
+// base adds a noted form up under its unnoted id.
+func (r *Repository) base(id int) int {
+	if it, ok := r.catalog.Item(id); ok {
+		return it.BaseID
+	}
+	return id
+}
+
+// name fills in the session's item names from the catalog.
+func (r *Repository) name(s *corerhythm.Session) {
+	if s == nil {
+		return
+	}
+	for i := range s.Gained {
+		if it, ok := r.catalog.Item(s.Gained[i].Item); ok {
+			s.Gained[i].Name = it.Name
+		}
+	}
+	for i := range s.RunningOut {
+		if it, ok := r.catalog.Item(s.RunningOut[i].Item); ok {
+			s.RunningOut[i].Name = it.Name
+		}
+	}
 }
 
 // readTx runs fn in one read-only snapshot of the database.

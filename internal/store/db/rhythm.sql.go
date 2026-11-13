@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -68,6 +69,68 @@ func (q *Queries) CoinObservations(ctx context.Context, arg CoinObservationsPara
 			&i.Container,
 			&i.Coins,
 			&i.Platinum,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const itemObservations = `-- name: ItemObservations :many
+WITH last_full AS (
+  SELECT c.container, max(s.fetched_at) AS at
+  FROM snapshots s JOIN snapshot_item_containers c ON c.snapshot_id = s.id
+  WHERE s.account_id = $1 AND s.kind = 'full' AND c.state <> 'unavailable'
+    AND c.container IN ('bank', 'inventory', 'equipment') AND s.fetched_at <= $2
+  GROUP BY c.container
+)
+SELECT s.fetched_at, (s.kind = 'full') AS full, c.container,
+  COALESCE((SELECT jsonb_object_agg(substr(f.key, length(c.container) + 2), (f.value->>'qty')::bigint)
+   FROM snapshot_facts f
+   WHERE f.snapshot_id = s.id AND f.facet = 'item' AND f.key LIKE c.container || ':%'), '{}'::jsonb)::jsonb AS items
+FROM snapshots s
+JOIN snapshot_item_containers c ON c.snapshot_id = s.id
+LEFT JOIN last_full lf ON lf.container = c.container
+WHERE s.account_id = $1 AND c.state <> 'unavailable' AND c.container IN ('bank', 'inventory', 'equipment')
+  AND s.fetched_at >= COALESCE(lf.at, $2)
+ORDER BY s.fetched_at, c.container
+`
+
+type ItemObservationsParams struct {
+	AccountID string             `json:"account_id"`
+	BeforeAt  pgtype.Timestamptz `json:"before_at"`
+}
+
+type ItemObservationsRow struct {
+	FetchedAt pgtype.Timestamptz `json:"fetched_at"`
+	Full      bool               `json:"full"`
+	Container string             `json:"container"`
+	Items     json.RawMessage    `json:"items"`
+}
+
+// The items in the bank, the inventory and the equipment as each snapshot
+// saw them, from the last full observation of each container at or before
+// before_at onward (or from before_at, without one): items maps each listed
+// item id to its quantity; a full observation lists the whole container, a
+// delta only what changed (0: the item left).
+func (q *Queries) ItemObservations(ctx context.Context, arg ItemObservationsParams) ([]ItemObservationsRow, error) {
+	rows, err := q.db.Query(ctx, itemObservations, arg.AccountID, arg.BeforeAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ItemObservationsRow{}
+	for rows.Next() {
+		var i ItemObservationsRow
+		if err := rows.Scan(
+			&i.FetchedAt,
+			&i.Full,
+			&i.Container,
+			&i.Items,
 		); err != nil {
 			return nil, err
 		}

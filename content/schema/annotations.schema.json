@@ -127,8 +127,57 @@
         },
         "location": {
           "$ref": "#/$defs/annotatedLocation"
+        },
+        "tasks": {
+          "type": "array",
+          "description": "Tarefas do passo (doc 10, seção 7), na ordem de execução; o loader as compõe no passo (Step.tasks). Só o que é da rota: o que uma receita cobre vem dela.",
+          "items": {
+            "$ref": "#/$defs/annotatedTask"
+          }
         }
       }
+    },
+    "annotatedTask": {
+      "$ref": "https://ironman-planner.local/schemas/task.schema.json#/$defs/task",
+      "description": "Tarefa lida do texto do passo: a tarefa tipada (task.schema.json) mais a citação de onde veio e a proveniência, como os objetivos.",
+      "required": [
+        "evidence",
+        "source"
+      ],
+      "properties": {
+        "evidence": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveEvidence"
+            },
+            {
+              "required": [
+                "field",
+                "quote",
+                "span"
+              ]
+            }
+          ]
+        },
+        "source": {
+          "allOf": [
+            {
+              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource"
+            },
+            {
+              "properties": {
+                "method": {
+                  "enum": [
+                    "llm",
+                    "manual"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      },
+      "unevaluatedProperties": false
     },
     "annotatedObjective": {
       "type": "object",

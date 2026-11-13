@@ -280,7 +280,8 @@ loader. Nunca há dois escritores para o mesmo arquivo (decisão D3, seção 9.3
 | Arquivo | Escritor | Conteúdo |
 |---|---|---|
 | `content/guides/<id>/guide.json` | `content migrate` / `content import-bruhsailer` | texto, segmentos, `complete_when`, `prerequisites`, `items`, menções; regenerável a qualquer momento |
-| `content/guides/<id>/annotations/<section>.json` | `chronicle content mcp` (a cada `submit` aceito) | por passo: `step_id`, `text_hash`, `objectives[]`, `items[]`, `bank_actions[]`, `location`; `skill_version`; schema `content/schema/annotations.schema.json` |
+| `content/guides/<id>/annotations/<section>.json` | `chronicle content mcp` (a cada `submit` aceito) | por passo: `step_id`, `text_hash`, `objectives[]`, `items[]`, `bank_actions[]`, `location`, `tasks[]` (doc 10, seção 7; o `submit` com tarefas vem na fase 2 do doc 10); `skill_version`; schema `content/schema/annotations.schema.json` |
+| `content/recipes/<chave>.json` | extração e gravação com o dono (fase 2 do doc 10) | receita de uma chave de objetivo: variantes por modo, riscos e tarefas; schema `content/schema/recipe.schema.json` (doc 10, seção 8) |
 | `content/guides/<id>/annotations/decisions.json` | `chronicle content mcp` (`record_decision`) | decisões gerais do dono |
 | `content/guides/<id>/annotations.report.json` | `chronicle content mcp` | rejeitados, ambíguos, baixa confiança, pendências |
 

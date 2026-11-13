@@ -1,0 +1,80 @@
+{
+  "schema_version": 1,
+  "kind": "recipe",
+  "objective": "skill:attack>=10",
+  "requires": [
+    "skill:hitpoints>=10"
+  ],
+  "variants": [
+    {
+      "id": "main",
+      "modes": [
+        "ironman",
+        "uim",
+        "gim"
+      ],
+      "risks": [
+        {
+          "kind": "combat",
+          "npc": "npc:goblin"
+        }
+      ],
+      "tasks": [
+        {
+          "type": "bank",
+          "items": [
+            {
+              "name": "Bronze sword",
+              "item_id": 1277,
+              "qty": 1
+            }
+          ]
+        },
+        {
+          "type": "travel",
+          "location": "location:lumbridge"
+        },
+        {
+          "type": "train",
+          "skill": "skill:attack",
+          "npc": "npc:goblin",
+          "until": {
+            "objective": "skill:attack>=10"
+          }
+        }
+      ]
+    },
+    {
+      "id": "hcim",
+      "modes": [
+        "hcim"
+      ],
+      "risks": [
+        {
+          "kind": "combat",
+          "npc": "npc:chicken",
+          "location": "location:lumbridge"
+        }
+      ],
+      "tasks": [
+        {
+          "type": "travel",
+          "location": "location:lumbridge"
+        },
+        {
+          "type": "train",
+          "skill": "skill:attack",
+          "npc": "npc:chicken",
+          "until": {
+            "objective": "skill:attack>=10"
+          }
+        }
+      ]
+    }
+  ],
+  "source": {
+    "method": "manual",
+    "confidence": "high",
+    "confirmed_by": "owner"
+  }
+}

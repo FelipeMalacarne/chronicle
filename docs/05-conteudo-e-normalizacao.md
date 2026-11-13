@@ -360,3 +360,18 @@ Patches atuais (578 passos: 576 importados, 1 removido, 3 adicionados):
 | `no-hosidius-favour` | Remove 1.4.2 (100% de favour em Hosidius): o sistema de favour de Kourend saiu em janeiro de 2024. Com ele sai o bank leg que o passo abria (31 segmentos, 24 bank legs) |
 
 As outras 12 notas de update só sugerem alternativas e continuam como notas.
+
+## 13. Adendo de 2026-11-13: tarefas e receitas (fase 1 do doc 10)
+
+Os importadores não mudam: `guide.json` continua sem tarefas, e o schema do guia não as aceita. O
+conteúdo ganhou duas coisas, ambas lidas e verificadas pelo loader e pelo `chronicle content validate`:
+
+- `tasks[]` nos sidecars de anotação de cada passo (`content/schema/task.schema.json`), compostas em
+  `Step.tasks`;
+- `content/recipes/`, com uma receita por chave de objetivo (`content/schema/recipe.schema.json`;
+  formato em `content/recipes/README.md`).
+
+Os dois nascem da extração com o dono e da gravação por demonstração (fase 2 do doc 10), então hoje não
+há nenhum. O `content validate` informa quantos leu (`ok: 0 step task(s), 0 recipe(s)`). O modelo e o
+verificador estão no doc 10, seções 7 e 8. Os catálogos novos que as tarefas usam (`npc`, `shop`,
+`object` e a área dos locais) estão no doc 09, seção 7.

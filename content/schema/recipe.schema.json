@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ironman-planner.local/schemas/recipe.schema.json",
+  "title": "Chronicle Recipe",
+  "description": "Receita de um objetivo (doc 10, seção 8): como cumprir uma chave de objetivo, independentemente da rota. Um arquivo por chave em content/recipes/<nome>.json, com o nome derivado da chave (content.RecipeFileName: cada sequência de caracteres fora de [a-z0-9_] vira '-'; 'quest:cooks_assistant@finished' → 'quest-cooks_assistant-finished.json'). Entra só pela extração verificada com o dono olhando (CLAUDE.md regra 9) ou pela gravação por demonstração (fase 2); `chronicle content validate` a verifica: chave conhecida, requisitos conhecidos, tarefas verificadas, riscos da lista fechada e a última tarefa de cada variante terminando no objetivo da receita.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "kind", "objective", "variants", "source"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "kind": { "const": "recipe" },
+    "objective": {
+      "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveKey",
+      "description": "A chave de objetivo que a receita cumpre."
+    },
+    "requires": {
+      "type": "array",
+      "uniqueItems": true,
+      "description": "Pré-condições além das do catálogo (os requisitos de uma quest já vêm de quests.json), como chaves de objetivo.",
+      "items": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveKey" }
+    },
+    "variants": {
+      "type": "array",
+      "minItems": 1,
+      "description": "Variantes por modo de conta, quando algo muda (o caminho seguro do HCIM). Um modo está em no máximo uma variante.",
+      "items": { "$ref": "#/$defs/variant" }
+    },
+    "source": {
+      "description": "Proveniência da receita: `confidence` diferente de `high` exige `confirmed_by: owner`. Receitas não são de um guia, então não citam `decision`.",
+      "allOf": [
+        { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveSource" },
+        {
+          "properties": { "method": { "enum": ["llm", "manual"] }, "decision": false }
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "variant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "modes", "tasks"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9]+(?:[-_][a-z0-9]+)*$" },
+        "modes": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/modes" },
+        "risks": {
+          "type": "array",
+          "description": "Riscos da variante (E9): em HCIM, nada com risco de morte (`combat`, `wilderness`, `hazard`) roda sem supervisão. O executor (fase 3) aplica; aqui fica o registro.",
+          "items": { "$ref": "#/$defs/risk" }
+        },
+        "tasks": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "https://ironman-planner.local/schemas/task.schema.json#/$defs/task",
+            "unevaluatedProperties": false
+          }
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "enum": ["combat", "wilderness", "hazard", "item_loss"],
+          "description": "combat: luta que pode matar; wilderness: entra na Wilderness; hazard: dano do ambiente que pode matar (queda, armadilha, veneno); item_loss: pode perder itens sem morrer."
+        },
+        "npc": { "$ref": "https://ironman-planner.local/schemas/task.schema.json#/$defs/npcRef" },
+        "location": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/locationRef" }
+      }
+    }
+  }
+}

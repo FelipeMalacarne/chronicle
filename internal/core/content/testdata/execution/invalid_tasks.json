@@ -1,0 +1,370 @@
+[
+  {
+    "name": "unknown npc",
+    "step": "a",
+    "task": {
+      "type": "talk",
+      "npc": "npc:not_an_npc",
+      "until": {
+        "state": "goal_met"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "talk to the Cook",
+        "span": [
+          22,
+          38
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "unknown entity npc:not_an_npc"
+  },
+  {
+    "name": "npc where a location goes",
+    "step": "a",
+    "task": {
+      "type": "talk",
+      "npc": "npc:cook_lumbridge",
+      "location": "location:not_a_place",
+      "until": {
+        "state": "goal_met"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "Walk to Lumbridge",
+        "span": [
+          0,
+          17
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "unknown entity location:not_a_place"
+  },
+  {
+    "name": "shop does not sell the item",
+    "step": "b",
+    "task": {
+      "type": "buy",
+      "shop": "shop:bobs_brilliant_axes",
+      "item": "item:1925",
+      "qty": 1,
+      "evidence": {
+        "field": "/text",
+        "quote": "buy a bronze axe",
+        "span": [
+          24,
+          40
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "does not sell item:1925"
+  },
+  {
+    "name": "buy until another key",
+    "step": "b",
+    "task": {
+      "type": "buy",
+      "shop": "shop:bobs_brilliant_axes",
+      "item": "item:1351",
+      "qty": 1,
+      "until": {
+        "objective": "item:1351x2"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "buy a bronze axe",
+        "span": [
+          24,
+          40
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "buy ends on item:1351x1"
+  },
+  {
+    "name": "travel to a place without area",
+    "step": "a",
+    "task": {
+      "type": "travel",
+      "location": "location:wilderness",
+      "evidence": {
+        "field": "/text",
+        "quote": "Walk to Lumbridge",
+        "span": [
+          0,
+          17
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "has no area"
+  },
+  {
+    "name": "travel ends on another state",
+    "step": "a",
+    "task": {
+      "type": "travel",
+      "location": "location:lumbridge",
+      "until": {
+        "state": "goal_met"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "Walk to Lumbridge",
+        "span": [
+          0,
+          17
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "travel ends on at_location"
+  },
+  {
+    "name": "goal_met where the step completes nothing",
+    "step": "d",
+    "task": {
+      "type": "interact",
+      "object": "object:bank_booth",
+      "action": "Bank",
+      "until": {
+        "state": "goal_met"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "bank booth",
+        "span": [
+          23,
+          33
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "the step completes no objective"
+  },
+  {
+    "name": "owner_mark on a talk",
+    "step": "a",
+    "task": {
+      "type": "talk",
+      "npc": "npc:cook_lumbridge",
+      "until": {
+        "state": "owner_mark"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "talk to the Cook",
+        "span": [
+          22,
+          38
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "talk cannot end on owner_mark"
+  },
+  {
+    "name": "train until another skill",
+    "step": "c",
+    "task": {
+      "type": "train",
+      "skill": "skill:woodcutting",
+      "until": {
+        "objective": "skill:attack>=10"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "Chop trees",
+        "span": [
+          0,
+          10
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "ends on skill:woodcutting>=N"
+  },
+  {
+    "name": "bank without items or loadout",
+    "step": "a",
+    "task": {
+      "type": "bank",
+      "evidence": {
+        "field": "/text",
+        "quote": "Walk to Lumbridge",
+        "span": [
+          0,
+          17
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "the step's segment has no loadout with items"
+  },
+  {
+    "name": "until on an unknown objective",
+    "step": "a",
+    "task": {
+      "type": "talk",
+      "npc": "npc:cook_lumbridge",
+      "until": {
+        "objective": "quest:not_a_quest@started"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "talk to the Cook",
+        "span": [
+          22,
+          38
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "unknown entity quest:not_a_quest"
+  },
+  {
+    "name": "quote not in the text",
+    "step": "a",
+    "task": {
+      "type": "travel",
+      "location": "location:lumbridge",
+      "evidence": {
+        "field": "/text",
+        "quote": "Run to Varrock",
+        "span": [
+          0,
+          14
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "is not in /text"
+  },
+  {
+    "name": "unconfirmed inference",
+    "step": "a",
+    "task": {
+      "type": "travel",
+      "location": "location:lumbridge",
+      "evidence": {
+        "field": "/text",
+        "quote": "Walk to Lumbridge",
+        "span": [
+          0,
+          17
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "medium"
+      }
+    },
+    "want": "needs confirmed_by owner"
+  },
+  {
+    "name": "parameter of another type",
+    "step": "a",
+    "task": {
+      "type": "travel",
+      "location": "location:lumbridge",
+      "shop": "shop:bobs_brilliant_axes",
+      "evidence": {
+        "field": "/text",
+        "quote": "Walk to Lumbridge",
+        "span": [
+          0,
+          17
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "tasks/0/shop: property not allowed here"
+  },
+  {
+    "name": "talk without until",
+    "step": "a",
+    "task": {
+      "type": "talk",
+      "npc": "npc:cook_lumbridge",
+      "evidence": {
+        "field": "/text",
+        "quote": "talk to the Cook",
+        "span": [
+          22,
+          38
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "missing property 'until'"
+  },
+  {
+    "name": "quest is not a primitive yet",
+    "step": "e",
+    "task": {
+      "type": "quest",
+      "until": {
+        "state": "goal_met"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "finish Cook's Assistant",
+        "span": [
+          43,
+          66
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "value must be one of 'travel'"
+  }
+]

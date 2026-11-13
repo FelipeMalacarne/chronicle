@@ -6,6 +6,7 @@
  */
 import type { ClientStatus, WorkerCapacity } from '../api/microbot.ts';
 import { roomHint, usageLine } from './capacidade.ts';
+import { cleanName } from './plugins.ts';
 import { duration } from './relogios.ts';
 import { laneRhythm, type LaneRhythm } from './ritmo.ts';
 import type {
@@ -140,7 +141,7 @@ export const isUtility = (name: string) => UTILITY.test(name);
 
 /** "Tick Fisher", "Tick Fisher +1": o primeiro script que joga e quantos mais. */
 export function scriptsLine(scripts: string[]): string {
-	const playing = scripts.filter((s) => !UTILITY.test(s));
+	const playing = scripts.map(cleanName).filter((s) => !UTILITY.test(s));
 	if (!playing.length) return '';
 	return playing.length > 1 ? `${playing[0]} +${playing.length - 1}` : playing[0];
 }

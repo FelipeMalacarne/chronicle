@@ -13,6 +13,7 @@ import type {
 } from '../api/microbot.ts';
 import { SKILL_ORDER } from './conta.ts';
 import { isUtility } from './frota.ts';
+import { cleanName } from './plugins.ts';
 
 /** EquipmentInventorySlot do RuneLite para os slots do boneco da Conta. */
 const EQUIP_SLOT: Record<string, string> = {
@@ -210,7 +211,10 @@ export function scriptRows(
 	scripts: Pick<ScriptEntry, 'name' | 'className' | 'active'>[],
 	v: GameView | null
 ): ScriptRow[] {
-	const playing = scripts.filter((s) => s.active && !isUtility(s.name));
+	// The client's names carry HTML ("<html>[<font …>M</font>] Web Walker"): clean before matching.
+	const playing = scripts
+		.map((s) => ({ ...s, name: cleanName(s.name) }))
+		.filter((s) => s.active && !isUtility(s.name));
 	const beats = v?.observe?.scripts ?? [];
 	const machines = v?.machines?.scripts ?? [];
 	return playing.map((s) => {

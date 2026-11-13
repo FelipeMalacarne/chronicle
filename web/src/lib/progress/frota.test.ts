@@ -461,3 +461,13 @@ test('the density remembered falls back to the lanes', () => {
 	assert.equal(parseDensity(null), 'raias');
 	assert.equal(parseDensity('lista'), 'raias');
 });
+
+test('scriptsLine cleans the client HTML out of the names', () => {
+	assert.equal(
+		scriptsLine([
+			'<html>[<font color=#b8f704M>M</font>] Break Handler',
+			'<html>[<font color=#b8f704M>M</font>] Tick Fisher'
+		]),
+		'Tick Fisher'
+	);
+});

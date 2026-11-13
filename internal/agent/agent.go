@@ -78,6 +78,10 @@ type Executor struct {
 	Worker *WorkerConfig
 	// Log receives the executor's own warnings; nil discards them.
 	Log *slog.Logger
+	// OnRun, when set, gets the current run at every change of it (each
+	// line of its trail), under the runner's lock: it must not block. The
+	// agent queues it for the server (TypeEvent).
+	OnRun func(Run)
 
 	mu    sync.Mutex // one client lifecycle/login action at a time
 	runs  runner
@@ -95,7 +99,7 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 	switch command {
 	case CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel:
 		return e.runCommand(command, params)
-	case CmdTriggerGet, CmdTriggerSet:
+	case CmdTriggerGet, CmdTriggerSet, CmdRoutinesSync:
 		return e.triggerCommand(command, params)
 	case CmdStatus:
 		return e.status(ctx), nil
@@ -260,11 +264,67 @@ type Agent struct {
 	// VNCAddr is the harness's x11vnc (loopback only); empty means
 	// 127.0.0.1:5999.
 	VNCAddr string
+
+	out outbox
+}
+
+// outbox holds the runs waiting for the link, the latest state of each:
+// a run that changes twice before it goes out goes once.
+type outbox struct {
+	mu      sync.Mutex
+	pending map[string]Run
+	order   []string
+	wake    chan struct{}
+}
+
+func (o *outbox) init() {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if o.wake == nil {
+		o.wake = make(chan struct{}, 1)
+		o.pending = map[string]Run{}
+	}
+}
+
+func (o *outbox) put(r Run) {
+	if r.UID == "" {
+		return
+	}
+	o.mu.Lock()
+	cur, ok := o.pending[r.UID]
+	switch {
+	case !ok:
+		o.order = append(o.order, r.UID)
+		o.pending[r.UID] = r
+	case len(r.Events) >= len(cur.Events):
+		// A run's trail only grows: the longer one is the newer state.
+		o.pending[r.UID] = r
+	}
+	o.mu.Unlock()
+	select {
+	case o.wake <- struct{}{}:
+	default:
+	}
+}
+
+func (o *outbox) take() []Run {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	out := make([]Run, 0, len(o.order))
+	for _, uid := range o.order {
+		out = append(out, o.pending[uid])
+	}
+	o.order, o.pending = nil, map[string]Run{}
+	return out
 }
 
 // Run connects and reconnects until ctx ends. The triggers' watcher runs
 // beside the link, so a trigger fires while the server is away.
 func (a *Agent) Run(ctx context.Context) error {
+	a.out.init()
+	if a.Executor.OnRun == nil {
+		a.Executor.OnRun = a.out.put
+	}
 	go a.Executor.Watch(ctx)
 	backoff := time.Second
 	for {
@@ -283,6 +343,28 @@ func (a *Agent) Run(ctx context.Context) error {
 		case <-time.After(backoff):
 		}
 		backoff = min(backoff*2, 30*time.Second)
+	}
+}
+
+// sendEvents writes the queued runs as TypeEvent frames until the session's
+// ctx ends or a write fails; what did not go out goes back to the queue for
+// the next connection.
+func (a *Agent) sendEvents(ctx context.Context, write func(Message) error) {
+	for {
+		runs := a.out.take()
+		for i := range runs {
+			if ctx.Err() != nil || write(Message{Type: TypeEvent, Event: &Event{Run: &runs[i]}}) != nil {
+				for _, r := range runs[i:] {
+					a.out.put(r)
+				}
+				return
+			}
+		}
+		select {
+		case <-ctx.Done():
+			return
+		case <-a.out.wake:
+		}
 	}
 }
 
@@ -347,6 +429,16 @@ func (a *Agent) session(ctx context.Context) error {
 		return err
 	}
 	a.Log.Info("agent: linked", "server", a.URL)
+	// The history goes out again on every connection, oldest first: what
+	// changed while the link was down reaches the server (it applies a run
+	// idempotently), then every change as it happens.
+	history := a.Executor.runHistory().Runs
+	for _, r := range slices.Backward(history) {
+		a.out.put(r)
+	}
+	sctx, stop := context.WithCancel(ctx)
+	defer stop()
+	go a.sendEvents(sctx, write)
 	for {
 		_, raw, err := conn.Read(ctx)
 		if err != nil {

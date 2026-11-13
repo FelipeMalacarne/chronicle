@@ -64,7 +64,10 @@ type RunEvent struct {
 
 // Run is a run and its trail.
 type Run struct {
-	ID        string   `json:"id"`
+	ID string `json:"id"`
+	// UID names the run for the server (docs/11 section 4.4): ID's number
+	// starts again in a new pod, a random UID does not.
+	UID       string   `json:"uid,omitempty"`
 	ClassName string   `json:"className"`
 	Stop      []string `json:"stop"`
 	// Trigger is the game event that started the run (EventKittenGrown); empty
@@ -95,7 +98,7 @@ var readCommands = []string{
 	CmdStatus, CmdScreenshot, CmdVNCOpen, CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet,
 	CmdConfigSchema, CmdGameView, CmdClientLogs, CmdAccountShow, CmdTimers, CmdRunStatus, CmdRunHistory, CmdRunCancel,
 	// Not reads, but they never touch the game: switching the trigger off during its own run is fine.
-	CmdTriggerGet, CmdTriggerSet,
+	CmdTriggerGet, CmdTriggerSet, CmdRoutinesSync,
 }
 
 // ErrRunGoing refuses an action while a run drives the character.
@@ -206,6 +209,7 @@ func (e *Executor) startRun(p RunParams, trigger string) (*Run, error) {
 	r.cancel = cancel
 	r.run = &Run{
 		ID:        "run-" + strconv.Itoa(r.seq),
+		UID:       newID(),
 		ClassName: p.ClassName,
 		Stop:      append([]string{}, p.Stop...),
 		Trigger:   trigger,

@@ -604,8 +604,10 @@ destino da viagem):
 - Verificado: testes do agent (espera diálogo, combate e Trawler na ordem e só depois para o
   principal; desiste sem tocar em nada; o arquivo vale para outro agent, ids continuam, run morto vira
   falhou, guarda só os últimos 30; tudo com `-race`) e da view; o painel no Cockpit com runs falsos.
-- Ainda não: o histórico fica na máquina do jogo, não no banco do planner (o link não tem mensagens do
-  agent para o servidor; entra com a fila de recorrentes, entrega 4).
+- Desde 2026-11-13 (doc 11, F6, seção 16) os gatilhos e o histórico vão também para o banco do
+  planner: o agent manda cada run pelo link (mensagens `event`) e recebe os gatilhos da conta a cada
+  conexão (`routines_sync`). Os arquivos continuam como cache do agent anexado; um agent anterior à F6
+  segue só com eles.
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

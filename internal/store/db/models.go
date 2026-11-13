@@ -257,6 +257,45 @@ type RouteCursor struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+// What a worker runs by itself (docs/11 section 4.4): today the triggers; the agent gets them on every connection.
+type Routine struct {
+	ID        string             `json:"id"`
+	AccountID string             `json:"account_id"`
+	Kind      string             `json:"kind"`
+	Event     string             `json:"event"`
+	Enabled   bool               `json:"enabled"`
+	Spec      json.RawMessage    `json:"spec"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type RoutineRun struct {
+	ID         string             `json:"id"`
+	AccountID  string             `json:"account_id"`
+	RoutineID  pgtype.Text        `json:"routine_id"`
+	Agent      string             `json:"agent"`
+	AgentRunID string             `json:"agent_run_id"`
+	ClassName  string             `json:"class_name"`
+	Stop       json.RawMessage    `json:"stop"`
+	Trigger    string             `json:"trigger"`
+	State      string             `json:"state"`
+	StartedAt  pgtype.Timestamptz `json:"started_at"`
+	FinishedAt pgtype.Timestamptz `json:"finished_at"`
+	FromPos    json.RawMessage    `json:"from_pos"`
+	Result     json.RawMessage    `json:"result"`
+	Error      string             `json:"error"`
+	TrailLen   int32              `json:"trail_len"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type RunEvent struct {
+	RunID string             `json:"run_id"`
+	Seq   int32              `json:"seq"`
+	At    pgtype.Timestamptz `json:"at"`
+	State string             `json:"state"`
+	Text  string             `json:"text"`
+}
+
 // HTTP sessions (scs pgxstore layout). Cleaned up by the session manager.
 type Session struct {
 	Token  string             `json:"token"`

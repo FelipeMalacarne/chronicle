@@ -36,6 +36,7 @@ GROUPS = {
     "controle_microbot": [
         "microbot_audit", "game_sessions", "workers",
         "client_profiles", "client_profile_plugins", "client_profile_settings", "account_client", "account_client_settings",
+        "routines", "routine_runs", "run_events",
     ],
 }
 

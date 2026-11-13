@@ -2,9 +2,11 @@ package agent
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -58,6 +60,12 @@ func (e *Executor) loadRuns() {
 	if json.Unmarshal(b, &runs) != nil || len(runs) == 0 {
 		return
 	}
+	for i := range runs {
+		if runs[i].UID == "" {
+			// A run from before the server kept them: named once, then saved.
+			runs[i].UID = newID()
+		}
+	}
 	for _, x := range runs {
 		if n, err := strconv.Atoi(strings.TrimPrefix(x.ID, "run-")); err == nil && n > r.seq {
 			r.seq = n
@@ -76,10 +84,17 @@ func (e *Executor) loadRuns() {
 	e.saveRuns()
 }
 
-// saveRuns writes the history; the caller holds the runner's lock.
+// saveRuns publishes the current run (OnRun) and writes the history; the
+// caller holds the runner's lock.
 func (e *Executor) saveRuns() {
 	r := &e.runs
-	if e.RunFile == "" || r.run == nil {
+	if r.run == nil {
+		return
+	}
+	if e.OnRun != nil {
+		e.OnRun(*r.snapshot())
+	}
+	if e.RunFile == "" {
 		return
 	}
 	runs := append(slices.Clone(r.past), *r.run)
@@ -132,6 +147,51 @@ func writeJSONFile(path string, v any) error {
 	}
 	if err = os.Rename(tmp, path); err != nil {
 		return fmt.Errorf("%s: %w", filepath.Base(path), err)
+	}
+	return nil
+}
+
+var (
+	reRunUID = regexp.MustCompile(`^[0-9a-f]{8,64}$`)
+	runState = []string{RunWaiting, RunStopping, RunRunning, RunReturning, RunRestarting, RunDone, RunFailed, RunCanceled}
+)
+
+// ValidateReport checks a run an agent sent by itself (TypeEvent) before the
+// server stores it: the server does not trust the link's data any more than
+// a request's.
+func ValidateReport(r Run) error {
+	switch {
+	case !reRunUID.MatchString(r.UID):
+		return errors.New("run report: uid must be 8 to 64 hex characters")
+	case r.ID == "" || len(r.ID) > 32:
+		return errors.New("run report: bad id")
+	case len(r.ClassName) > 256 || !reClassName.MatchString(r.ClassName):
+		return errors.New("run report: bad className")
+	case len(r.Stop) > 8:
+		return errors.New("run report: too many plugins stopped")
+	case r.Trigger != "" && !slices.Contains(Events, r.Trigger):
+		return errors.New("run report: unknown trigger")
+	case !slices.Contains(runState, r.State):
+		return errors.New("run report: unknown state")
+	case r.StartedAt.IsZero():
+		return errors.New("run report: no start time")
+	case len(r.Events) > 500:
+		return errors.New("run report: trail too long")
+	case len(r.Result) > 64<<10 || len(r.Error) > 2000:
+		return errors.New("run report: result or error too long")
+	}
+	for _, c := range r.Stop {
+		if len(c) > 256 || !reClassName.MatchString(c) {
+			return errors.New("run report: bad plugin stopped")
+		}
+	}
+	if len(r.Result) > 0 && !json.Valid(r.Result) {
+		return errors.New("run report: result is not JSON")
+	}
+	for _, ev := range r.Events {
+		if !slices.Contains(runState, ev.State) || len(ev.Text) > 1000 || ev.At.IsZero() {
+			return errors.New("run report: bad trail line")
+		}
 	}
 	return nil
 }

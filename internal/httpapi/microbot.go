@@ -48,6 +48,9 @@ type MicrobotOptions struct {
 	// Profiles stores the client profiles (docs/11 section 4.3); nil leaves
 	// /api/client-profiles and /api/accounts/client out.
 	Profiles ProfileStore
+	// Routines stores the triggers and the runs' history (docs/11 section
+	// 4.4); nil leaves them on the agents, as before F6.
+	Routines RoutineStore
 	// WorkerImage is WORKER_IMAGE, the image a start or restart takes.
 	WorkerImage string
 }
@@ -87,11 +90,11 @@ func (s *Server) microbotRoutes() {
 	control("GET /api/microbot/timers", s.microbotRead(agent.CmdTimers, func(*http.Request) any { return nil }))
 	// Fazer agora (docs/08 phase 4): one run, driven by the agent; start and cancel are audited.
 	control("GET /api/microbot/run", s.microbotRead(agent.CmdRunStatus, func(*http.Request) any { return nil }))
-	control("GET /api/microbot/runs", s.microbotRead(agent.CmdRunHistory, func(*http.Request) any { return nil }))
+	control("GET /api/microbot/runs", s.handleRuns)
 	control("POST /api/microbot/run", s.microbotAction(agent.CmdRunStart, 30*time.Second))
 	control("POST /api/microbot/run/cancel", s.microbotAction(agent.CmdRunCancel, 30*time.Second))
-	control("GET /api/microbot/triggers", s.microbotRead(agent.CmdTriggerGet, func(*http.Request) any { return nil }))
-	control("POST /api/microbot/triggers", s.microbotAction(agent.CmdTriggerSet, 30*time.Second))
+	control("GET /api/microbot/triggers", s.handleTriggersGet)
+	control("POST /api/microbot/triggers", s.handleTriggersSet)
 	control("GET /api/microbot/client/logs", s.microbotRead(agent.CmdClientLogs, func(r *http.Request) any {
 		n, _ := strconv.Atoi(r.URL.Query().Get("lines"))
 		return agent.LogsParams{Lines: n}

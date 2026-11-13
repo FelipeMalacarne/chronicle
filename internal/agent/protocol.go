@@ -35,7 +35,7 @@ var Commands = []string{
 	CmdClientLogs, CmdAccountShow, CmdAccountUse, CmdWorldHop, CmdConfigSchema,
 	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX, CmdItemUseOn, CmdTimers,
 	CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet, CmdTriggerSet,
-	CmdWorkerBootstrap,
+	CmdWorkerBootstrap, CmdRoutinesSync,
 }
 
 // Known reports whether name is in the closed list.
@@ -49,7 +49,18 @@ const (
 	TypeCommand = "command"
 	// TypeResult: agent → server, the answer to a command id.
 	TypeResult = "result"
+	// TypeEvent: agent → server, unasked: something the agent did by itself
+	// (docs/11 section 4.4). No answer; the server applies it idempotently,
+	// and the agent sends its history again on every connection.
+	TypeEvent = "event"
 )
+
+// Event is the payload of a TypeEvent frame.
+type Event struct {
+	// Run is a run as it stands now, with its whole trail: sent at every
+	// change of the run and, for the runs of the history, on connecting.
+	Run *Run `json:"run,omitempty"`
+}
 
 // Message is one frame of the link.
 type Message struct {
@@ -61,6 +72,7 @@ type Message struct {
 	Error   string          `json:"error,omitempty"`
 	Data    json.RawMessage `json:"data,omitempty"`
 	Hello   *Hello          `json:"hello,omitempty"`
+	Event   *Event          `json:"event,omitempty"`
 }
 
 // Hello describes the agent that connected.

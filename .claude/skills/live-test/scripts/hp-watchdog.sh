@@ -9,7 +9,8 @@ FOOD=${FOOD:-Jug of wine}; ACTION=${ACTION:-Drink}; REPORT_AT=${REPORT_AT:-18}
 last=""
 while true; do
   hp=$(mb skills --name Hitpoints 2>/dev/null | python3 -I -c 'import json,sys; print(json.load(sys.stdin)["skills"][0]["boostedLevel"])' 2>/dev/null)
-  if [[ -z "$hp" ]]; then sleep 0.5; continue; fi
+  # 0 is what the client reports while logged out (a restart, a hop), not a hit.
+  if [[ -z "$hp" || "$hp" == 0 ]]; then sleep 0.5; continue; fi
   if [[ "$hp" != "$last" ]] && (( hp <= REPORT_AT )); then echo "low hp $hp"; fi; last=$hp
   if (( hp <= LIMIT )); then
     mb scripts stop --class "$CLS" >/dev/null 2>&1

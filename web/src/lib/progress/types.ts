@@ -843,6 +843,80 @@ export interface FleetLevels {
 	events: LevelEvent[];
 }
 
+/* ------------------------------------------------------------------ Mundo da frota (V7Mundo1440, fatia V10) */
+
+/** Uma meta que uma conta fixou, como a frota a mostra. */
+export interface PinnedGoal {
+	id: string;
+	/** Vazio quando a conta não deu nome à meta: vale o `name` do objetivo. */
+	label: string;
+	priority: number;
+	status: 'active' | 'achieved' | 'abandoned';
+	created_at: string;
+	achieved_at?: string;
+}
+
+/**
+ * Os requisitos do plano da meta para uma conta: feitos, presumidos pela marca, desconhecidos e o
+ * total; o resto é sabidamente não cumprido.
+ */
+export interface RequirementCount {
+	met: number;
+	presumed: number;
+	unknown: number;
+	total: number;
+	/** Quests requisito sabidamente não feitas. */
+	quests_left: number;
+}
+
+/** Um nível (ou os quest points, skill "qp") que o plano pede e a conta sabidamente não tem. */
+export interface Shortfall {
+	key: string;
+	skill: string;
+	/** Nulo sem o fato do nível; sempre nulo nos quest points, por enquanto. */
+	level: number | null;
+	target: number;
+}
+
+/** Uma conta diante de um objetivo da frota. */
+export interface FleetStanding {
+	account: string;
+	/** Veredito guardado (travado); unknown nunca aparece como unmet. */
+	verdict: Verdict;
+	regressed?: boolean;
+	/** A meta da conta para este objetivo; ausente quando ela não o persegue. */
+	goal?: PinnedGoal;
+	requirements: RequirementCount;
+	/** Nível da conta na skill de uma meta de nível, dos fatos dela. */
+	level?: number;
+	short: Shortfall[];
+	/** Primeiro passo da rota ativa que conclui o objetivo. */
+	step?: StepPlace;
+	/** Passos da rota ativa nem feitos nem pulados até `step`, ele incluído; 0 quando ele está feito ou a conta já tem o objetivo. */
+	steps_left?: number;
+	/** O cursor da conta na rota ativa; ausente quando a rota principal acabou. */
+	cursor?: StepPlace;
+}
+
+/** Um objetivo na frota: as metas de todas as contas e as chaves pedidas em `keys=`. */
+export interface FleetGoal {
+	objective_key: string;
+	/** Contas que o perseguem (fixaram a meta), que o têm (met) e sem veredito (unknown). */
+	pinned: number;
+	met: number;
+	unknown: number;
+	/** A conta mais perto entre as que não o têm (entre as que o perseguem, se alguma persegue). */
+	closest?: string;
+	/** Todas as contas, na ordem de `accounts` da resposta. */
+	accounts: FleetStanding[];
+	name: string;
+	ref: string;
+	kind: string;
+	wiki?: string;
+	/** Onde cada rota conclui a entidade (o primeiro passo de cada uma). */
+	routes: Occurrence[];
+}
+
 /* ------------------------------------------------------------------ envelopes das respostas */
 
 export interface GoalsResponse {
@@ -859,6 +933,12 @@ export interface GoalPlanResponse {
 export interface WorldResponse {
 	account: string;
 	entities: WorldEntity[];
+}
+
+/** GET /api/fleet/goals: as contas do usuário (a ordem de /api/me) e os objetivos da frota. */
+export interface FleetGoalsResponse {
+	accounts: AccountView[];
+	goals: FleetGoal[];
 }
 
 export interface SyncRunsResponse {

@@ -375,40 +375,67 @@ type meResponse struct {
 }
 
 func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	out := meResponse{AuthMode: "dev", Roles: []string{}}
-	var err error
-	if s.opts.DevMode {
-		var found bool
-		out.User, found, err = s.opts.Identity.DevUser(ctx)
-		if err == nil && !found {
-			out.User = identity.User{ID: identity.DevSubject, Username: identity.DevSubject, Role: "owner"}
-		}
-	} else {
+	user, ok := s.requestUser(w, r)
+	if !ok {
+		return
+	}
+	out := meResponse{AuthMode: "dev", User: user, Roles: []string{}}
+	if !s.opts.DevMode {
 		out.AuthMode = "oidc"
-		out.User, err = s.opts.Identity.User(ctx, sessionUser(r))
-		if errors.Is(err, identity.ErrUserNotFound) {
-			if r.Header.Get("Authorization") == "" {
-				_ = s.opts.OIDC.Sessions.Destroy(ctx)
-			}
-			writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "login required", "status": http.StatusUnauthorized, "login": "/auth/login"})
-			return
-		}
 		if roles := requestRoles(r); roles != nil {
 			out.Roles = roles
 		}
 	}
-	if err != nil {
-		s.log.Error("auth: me", "err", err)
-		writeError(w, http.StatusInternalServerError, "could not load the user")
-		return
-	}
-	if out.Accounts, err = s.opts.Identity.Accounts(ctx, out.User.ID); err != nil {
-		s.log.Error("auth: me accounts", "err", err)
-		writeError(w, http.StatusInternalServerError, "could not load the accounts")
+	if out.Accounts, ok = s.userAccounts(w, r, user); !ok {
 		return
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+// requestUser is the user of a request behind s.authed: the dev user in dev
+// mode (a placeholder before the first account exists), else the user of the
+// session or of the bearer token. A user gone from the store ends the
+// session and answers 401. When ok is false it has answered already.
+func (s *Server) requestUser(w http.ResponseWriter, r *http.Request) (identity.User, bool) {
+	ctx := r.Context()
+	if s.opts.DevMode {
+		u, found, err := s.opts.Identity.DevUser(ctx)
+		if err != nil {
+			s.log.Error("auth: dev user", "err", err)
+			writeError(w, http.StatusInternalServerError, "could not load the user")
+			return identity.User{}, false
+		}
+		if !found {
+			u = identity.User{ID: identity.DevSubject, Username: identity.DevSubject, Role: "owner"}
+		}
+		return u, true
+	}
+	u, err := s.opts.Identity.User(ctx, sessionUser(r))
+	if errors.Is(err, identity.ErrUserNotFound) {
+		if r.Header.Get("Authorization") == "" {
+			_ = s.opts.OIDC.Sessions.Destroy(ctx)
+		}
+		writeJSON(w, http.StatusUnauthorized, map[string]any{"error": "login required", "status": http.StatusUnauthorized, "login": "/auth/login"})
+		return identity.User{}, false
+	}
+	if err != nil {
+		s.log.Error("auth: user", "err", err)
+		writeError(w, http.StatusInternalServerError, "could not load the user")
+		return identity.User{}, false
+	}
+	return u, true
+}
+
+// userAccounts lists the accounts of user (Identity.Accounts: only the ones
+// it owns, active first). When ok is false it has answered already.
+func (s *Server) userAccounts(w http.ResponseWriter, r *http.Request, user identity.User) ([]storeprogress.AccountView, bool) {
+	accounts, err := s.opts.Identity.Accounts(r.Context(), user.ID)
+	if err != nil {
+		s.log.Error("auth: user accounts", "err", err)
+		writeError(w, http.StatusInternalServerError, "could not load the accounts")
+		return nil, false
+	}
+	return accounts, true
 }
 
 // deniedMessage is the PT-BR answer when the policy refuses a user.

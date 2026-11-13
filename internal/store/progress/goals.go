@@ -160,7 +160,7 @@ func (r *Repository) GoalPlan(ctx context.Context, accountID, goalID string) (Go
 		return GoalPlanView{}, fmt.Errorf("%w: %v", ErrInvalidGoal, err)
 	}
 	err = r.inTx(ctx, func(tx pgx.Tx) error {
-		in, inErr := r.planInput(ctx, r.queries.WithTx(tx), accountID, key)
+		in, _, inErr := r.planInput(ctx, r.queries.WithTx(tx), accountID, key)
 		if inErr != nil {
 			return inErr
 		}
@@ -171,22 +171,24 @@ func (r *Repository) GoalPlan(ctx context.Context, accountID, goalID string) (Go
 }
 
 // planInput is what a goal plan or a focus graph reads about the account:
-// the facts, the stored verdicts and every guide with its marks.
-func (r *Repository) planInput(ctx context.Context, q *storedb.Queries, accountID string, focus entities.ObjectiveKey) (coreprogress.GoalPlanInput, error) {
+// the facts, the stored verdicts and every guide with its marks. It also
+// returns the keys whose met verdict regressed.
+func (r *Repository) planInput(ctx context.Context, q *storedb.Queries, accountID string, focus entities.ObjectiveKey) (coreprogress.GoalPlanInput, map[string]bool, error) {
 	ps, _, err := state.Load(ctx, q, accountID, r.catalog)
 	if err != nil {
-		return coreprogress.GoalPlanInput{}, err
+		return coreprogress.GoalPlanInput{}, nil, err
 	}
 	in := coreprogress.GoalPlanInput{Goal: focus, Registry: r.catalog, State: ps}
+	regressed := map[string]bool{}
 	for _, g := range r.content.Guides {
-		gi, _, err := r.guideInput(ctx, q, accountID, g.ID, false)
+		gi, reg, err := r.guideInput(ctx, q, accountID, g.ID, false)
 		if err != nil {
-			return coreprogress.GoalPlanInput{}, err
+			return coreprogress.GoalPlanInput{}, nil, err
 		}
-		in.Verdicts = gi.Verdicts
+		in.Verdicts, regressed = gi.Verdicts, reg
 		in.Guides = append(in.Guides, gi)
 	}
-	return in, nil
+	return in, regressed, nil
 }
 
 // Graph is the focus graph of F10 for the account: the focus, its
@@ -197,7 +199,7 @@ func (r *Repository) Graph(ctx context.Context, accountID string, focus entities
 	}
 	var out coreprogress.Graph
 	err := r.inTx(ctx, func(tx pgx.Tx) error {
-		in, err := r.planInput(ctx, r.queries.WithTx(tx), accountID, focus)
+		in, _, err := r.planInput(ctx, r.queries.WithTx(tx), accountID, focus)
 		if err != nil {
 			return err
 		}
@@ -205,4 +207,57 @@ func (r *Repository) Graph(ctx context.Context, accountID string, focus entities
 		return nil
 	})
 	return out, err
+}
+
+// FleetGoals is the Mundo da frota (V7Mundo1440, slice V10 of
+// docs/ui/decisoes-canvas.md section 7.5) over accountIDs, the caller's
+// accounts in their order: every objective one of them pinned as a goal,
+// then keys (canonical objective keys of the catalog), with each account's
+// stored verdict, its goal and a summary of its goal plan, all read in one
+// transaction.
+func (r *Repository) FleetGoals(ctx context.Context, accountIDs, keys []string) ([]coreprogress.FleetGoal, error) {
+	var in coreprogress.FleetInput
+	for _, raw := range keys {
+		k, err := entities.ParseObjectiveKey(raw)
+		if err != nil {
+			return nil, fmt.Errorf("%w: %v", ErrInvalidGoal, err)
+		}
+		if r.catalog != nil {
+			if why := r.catalog.KnownObjective(k); why != "" {
+				return nil, fmt.Errorf("%w: %s", ErrInvalidGoal, why)
+			}
+		}
+		in.Keys = append(in.Keys, k)
+	}
+	if len(accountIDs) > 0 {
+		err := r.inTx(ctx, func(tx pgx.Tx) error {
+			q := r.queries.WithTx(tx)
+			rows, err := q.ListGoalsByAccounts(ctx, accountIDs)
+			if err != nil {
+				return fmt.Errorf("list fleet goals: %w", err)
+			}
+			pins := map[string]map[string]coreprogress.PinnedGoal{}
+			for _, g := range rows {
+				if pins[g.AccountID] == nil {
+					pins[g.AccountID] = map[string]coreprogress.PinnedGoal{}
+				}
+				pins[g.AccountID][g.ObjectiveKey] = coreprogress.PinnedGoal{
+					ID: g.ID, Label: g.Label, Priority: int(g.Priority), Status: g.Status,
+					CreatedAt: g.CreatedAt.Time, AchievedAt: timePtr(g.AchievedAt),
+				}
+			}
+			for _, id := range accountIDs {
+				plan, regressed, err := r.planInput(ctx, q, id, entities.ObjectiveKey{})
+				if err != nil {
+					return err
+				}
+				in.Members = append(in.Members, coreprogress.FleetMember{Account: id, Goals: pins[id], Regressed: regressed, Plan: plan})
+			}
+			return nil
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+	return coreprogress.BuildFleetGoals(in), nil
 }

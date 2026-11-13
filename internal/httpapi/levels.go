@@ -124,7 +124,7 @@ func (s *Server) handleFleetLevels(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, msg)
 		return
 	}
-	accounts, err := s.userAccounts(r)
+	accounts, err := s.requestAccounts(r)
 	if err != nil {
 		s.log.Error("levels: accounts", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not load the accounts")
@@ -156,10 +156,10 @@ func (s *Server) handleFleetLevels(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, out)
 }
 
-// userAccounts are the accounts of the request's user, found as handleMe
+// requestAccounts are the accounts of the request's user, found as handleMe
 // finds them: the dev user's in dev mode (the dev subject before the dev
 // user exists), the session or token user's in oidc.
-func (s *Server) userAccounts(r *http.Request) ([]storeprogress.AccountView, error) {
+func (s *Server) requestAccounts(r *http.Request) ([]storeprogress.AccountView, error) {
 	ctx := r.Context()
 	userID := sessionUser(r)
 	if s.opts.DevMode {

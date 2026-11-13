@@ -165,3 +165,41 @@ func (q *Queries) ListGoalsByAccount(ctx context.Context, accountID string) ([]L
 	}
 	return items, nil
 }
+
+const listGoalsByAccounts = `-- name: ListGoalsByAccounts :many
+SELECT id, account_id, objective_key, label, priority, status, plan_cache, created_at, achieved_at FROM goals
+WHERE account_id = ANY($1::text[]) AND status <> 'abandoned'
+ORDER BY account_id, priority, created_at
+`
+
+// The goals of a fleet (the Mundo da frota): the active and achieved goals of
+// every account of account_ids, in each account's order.
+func (q *Queries) ListGoalsByAccounts(ctx context.Context, accountIds []string) ([]Goal, error) {
+	rows, err := q.db.Query(ctx, listGoalsByAccounts, accountIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Goal{}
+	for rows.Next() {
+		var i Goal
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.ObjectiveKey,
+			&i.Label,
+			&i.Priority,
+			&i.Status,
+			&i.PlanCache,
+			&i.CreatedAt,
+			&i.AchievedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

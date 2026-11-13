@@ -273,7 +273,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 | Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). Falta a web usar |
 | Plugins da frota | perfis no Postgres (doc 11, F5) |
 | Capacidade no resumo, "cabe mais N", uso por worker | doc 11, F7 |
-| Mundo da frota | metas e vereditos de várias contas numa consulta |
+| Mundo da frota | feito no servidor em 2026-11-13: `GET /api/fleet/goals` traz numa consulta as metas de todas as contas do usuário (e as chaves de `keys=`), com o veredito guardado de cada conta, a meta dela, o resumo do plano (requisitos, níveis que faltam, passos até a rota fazer) e a conta mais perto; falta a tela. O "tem 132" dos quest points espera o valor observado (primeira linha), e a meta de item (Barrows gloves) só tem requisitos quando o catálogo souber de que quest o item é recompensa |
 | Nova conta sem rota e conta só acompanhada | já previstas na decisão 34 do doc 01 (modo `regular`, rota opcional) |
 
 ### 7.5 Ordem de implementação
@@ -292,7 +292,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor) |
 | V8 | Plugins da frota | doc 11, F5. **Feita** (2026-11-13, seção 7.6) |
 | V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende) |
-| V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas |
+| V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas (feito no servidor, `GET /api/fleet/goals`) |
 
 Antes de cada fatia que mexe numa tela ainda sem desenho na v7 (Comparar, Entidades, Grafo), o desenho
 entra no canvas e o dono aprova (regra 11 do `CLAUDE.md`).

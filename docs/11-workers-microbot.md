@@ -398,7 +398,7 @@ disco.
 
 | Fase | Entrega | Pronto quando | Onde |
 |---|---|---|---|
-| F0 | Link remoto: `MICROBOT_CONTROL=on` no saradomin, machine user do Zitadel para o agent do zaros, serviço no zaros (doc 08, fase 5) | o Cockpit do saradomin controla o cliente do zaros | gielinor, nix-config |
+| F0 | Link remoto: `MICROBOT_CONTROL=on` no saradomin, machine user do Zitadel para o agent do zaros, serviço no zaros (doc 08, fase 5) | o Cockpit do saradomin controla o cliente do zaros | gielinor, nix-config. O serviço do zaros está pronto no `nix-config` (PR #1 de lá), desligado até o machine user e o segredo existirem (doc 08, fase 5) |
 | F1 | Hub por conta: hello com conta, kind, worker e a versão da ponte do Chronicle Link (o agent exige uma mínima e diz qual falta); rotas com `?account=`; mensagens `event` do agent; `microbot_audit.account_id`/`agent_id`; Automação › Workers com o zaros na lista | duas contas no mesmo servidor, cada uma com seu agent (o segundo pode ser um agent de teste no zaros) | chronicle |
 | F2 | Contas e sessões: migração (`regular`, rota opcional, `managed`, `game_sessions`), cofre, `chronicle accounts connect`, Automação da conta na Conta | uma conta sem rota conectada pela CLI; a sessão aparece na web e nunca volta pela API | chronicle |
 | F3 | Imagens e um worker aplicado à mão: as duas imagens e o CI delas, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | chronicle (com `microbot/`), gielinor |

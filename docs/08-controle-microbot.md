@@ -131,8 +131,9 @@ quem é o usuário; as camadas abaixo cobrem o resto.
    `saradomin` comprometido não consegue executar código no `zaros`.
 5. **ACL do Tailscale**: o `zaros` alcança só o `saradomin` na porta do planner; nada na tailnet
    inicia conexão para o `zaros`.
-6. **Controle local**: `systemctl --user stop ironman-agent` (ou `chronicle agent pause`) corta tudo
-   no `zaros`. O agent não inicia ações enquanto o Microbot indicar input humano (o dono jogando).
+6. **Controle local**: `systemctl --user stop chronicle-agent` (ou `chronicle agent pause`) corta o
+   controle do planner no `zaros`. O jogo continua aberto: o serviço para só o agent
+   (`KillMode=process`), e o cliente fecha pelo Cockpit ou com `mb-client stop`. O agent não inicia ações enquanto o Microbot indicar input humano (o dono jogando).
 7. **Web**: sessão exigida também no websocket do VNC, checagem de `Origin`, proteção contra CSRF
    nas rotas que alteram estado.
 8. **Segredos fora do navegador**: o token do Agent Server e o VNC nunca saem do `zaros`; o
@@ -161,7 +162,14 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 4. Rotinas: modelo, executor com lock, agendamento, histórico com screenshots.
 5. Agent remoto: serviço systemd no `nix-config`, machine user do Zitadel com o segredo via sops, `WhoIs` do Tailscale e
    ACL; junto com o deploy do planner no `saradomin`. Como o agent existe desde a fase 1, aqui muda
-   só configuração.
+   só configuração. **Serviço pronto, desligado** (2026-11-13, PR #1 do `nix-config`, com
+   `docs/chronicle-agent.md` de lá): o aspecto `chronicle-agent` roda o `chronicle agent` como
+   serviço de usuário com linger, a partir do checkout em `harnessDir`, com o cliente sempre
+   headless; o segredo do machine user vem do sops em `/run/secrets` e chega só como
+   `MICROBOT_AGENT_CLIENT_SECRET_FILE`. Para ligar, o dono cria o machine user com o papel
+   `microbot:agent`, põe o segredo em `secrets/chronicle-agent.yaml`, importa o aspecto no zaros
+   e deixa de rodar o `just agent` à mão (os passos estão no PR). O agent roda o branch que estiver
+   no checkout: apontar `harnessDir` para uma worktree só do `main` evita surpresa.
 
 ## Fase 4: rotinas com atividade principal e runs com relógio (desenho, 2026-11-09)
 

@@ -482,8 +482,42 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 		if len(data) == 0 {
 			data = json.RawMessage("{}")
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "result": data})
+		answer := map[string]any{"ok": true, "result": data}
+		if applied := s.applyOnStart(r, command, account, served); applied != nil {
+			answer["profile"] = applied
+		}
+		writeJSON(w, http.StatusOK, answer)
 	}
+}
+
+// applyOnStart applies the account's client profile after an attached
+// agent's client came up from the Cockpit (docs/11 section 4.3: with a
+// profile, the attached client gets what it declares); a worker's agent
+// applies its own on boot. Nil when there is nothing to apply.
+func (s *Server) applyOnStart(r *http.Request, command, account string, served agent.Info) *applyAnswer {
+	m := s.opts.Microbot
+	if command != agent.CmdClientStart || m.Profiles == nil || served.Kind == agent.KindManaged {
+		return nil
+	}
+	if account == "" {
+		account = served.Account
+	}
+	if account == "" {
+		return nil
+	}
+	ac, err := m.Profiles.AccountClient(r.Context(), account)
+	if err != nil || len(ac.Effective.Settings)+len(ac.Effective.Plugins) == 0 {
+		return nil
+	}
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Minute)
+	defer cancel()
+	out := s.applyProfile(ctx, served, ac.Effective)
+	var applyErr error
+	if len(out.Problems) > 0 {
+		applyErr = errors.New(out.Problems[0])
+	}
+	s.auditMicrobot(r, account, served, "profile_apply", nil, applyErr)
+	return &out
 }
 
 func (s *Server) writeMicrobotError(w http.ResponseWriter, err error) {

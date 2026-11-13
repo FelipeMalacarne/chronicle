@@ -248,6 +248,18 @@ type PluginIngestToken struct {
 	InstallationID pgtype.Text `json:"installation_id"`
 }
 
+// Demonstration recording of the plugin (docs/10 section 11): one row per recorded event, written only by the ingest.
+type RecordedEvent struct {
+	AccountID  string             `json:"account_id"`
+	Recording  string             `json:"recording"`
+	Seq        int64              `json:"seq"`
+	At         pgtype.Timestamptz `json:"at"`
+	Kind       string             `json:"kind"`
+	Event      json.RawMessage    `json:"event"`
+	SnapshotID string             `json:"snapshot_id"`
+	ReceivedAt pgtype.Timestamptz `json:"received_at"`
+}
+
 // Current step per guide; switching guides keeps the place. accounts.guide_id stays the active guide.
 type RouteCursor struct {
 	AccountID string             `json:"account_id"`

@@ -1,6 +1,10 @@
 package ingest
 
-import "time"
+import (
+	"time"
+
+	"github.com/FelipeMalacarne/chronicle/internal/core/recording"
+)
 
 // ContractVersion is the only wire-contract version understood by this package.
 const ContractVersion = 1
@@ -40,7 +44,11 @@ type Manifest struct {
 	// CollectionLog tells the client the server accepts data.collectionLog:
 	// the collection log pages the player opened in game (docs/06, adendo
 	// 2026-11-13).
-	CollectionLog   bool          `json:"collection_log"`
+	CollectionLog bool `json:"collection_log"`
+	// Recording tells the client the server accepts data.recording: the
+	// demonstration the owner records with "Record demonstration" on
+	// (docs/10 section 11, phase 2).
+	Recording       bool          `json:"recording"`
 	Items           ItemSelection `json:"items"`
 	IntervalSeconds int           `json:"interval_seconds"`
 	Resync          bool          `json:"resync"`
@@ -110,6 +118,11 @@ type PushData struct {
 	// push and in a delta; pages absent stay as they were, since the client
 	// only knows the pages opened in game.
 	CollectionLog *CollectionLogMap `json:"collectionLog,omitempty"`
+	// Recording is the demonstration the owner records (docs/10 section 11):
+	// the client's events not acknowledged yet, oldest first, in a full push
+	// and in a delta. Each (recording, seq) is stored once, so a push resent
+	// after a timeout or a 409 stores nothing twice.
+	Recording *[]recording.Event `json:"recording,omitempty"`
 }
 
 // CollectionLogMap is a JSON object page title -> page

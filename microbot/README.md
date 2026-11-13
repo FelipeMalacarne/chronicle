@@ -28,7 +28,7 @@ Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md)
 The worker image built from this directory: [docs/11](../docs/11-workers-microbot.md) and
 `deploy/worker/`.
 
-## Chronicle Link (`fm/chroniclelink`, 1.12.0)
+## Chronicle Link (`fm/chroniclelink`, 1.13.0)
 
 Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
 1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
@@ -44,6 +44,24 @@ slot with how many were obtained, read from the open interface the way the clien
 ChatCommandsPlugin reads it; never another player's log opened from a house's adventure log)
 (ingest contract v1, `docs/04-arquitetura.md` 6.4), and never performs a game action. Timers,
 position and collection log pages go only to a planner whose manifest offers them.
+
+**Demonstration recording (1.13.0, opt-in).** With "Record demonstration" on (off by default) and a
+planner whose manifest offers `recording`, the plugin records the owner's own interactions as typed
+events and sends them in `data.recording` (planner `docs/10-modelo-de-execucao.md` section 11): a
+coarse position (the first of a recording, another world, plane or map region, and where the
+character stopped after walking at least 5 tiles), menu options clicked on NPCs and objects (game id,
+option, name, the object's tile), dialogue options chosen (clicked, or by number key while the
+options are on screen), items used on an NPC, object or item and inventory item options (not Drop or
+Examine), the bank opening and what left or entered it (inventory and equipment together, so
+equipping is neither), and what entered the inventory while a shop was open (the shopkeeper last
+clicked). Never chat, other players, keys typed elsewhere or walking tile by tile. One recording per
+login (`rec-<uuid>`, `seq` from 1); the events wait in memory (up to 5000, then new ones are dropped)
+until a push carrying them is acknowledged, and only for the same character. The overlay shows
+"● Gravando" with how many events wait. The planner turns a stretch into proposed tasks for a step;
+nothing enters the route without the owner's confirmation. The owner reads the recording with
+`chronicle recording` and deletes it with `chronicle recording delete --yes`
+(`DELETE /api/account/recording`). Not checked in game yet: the number-key dialogue choice (the
+options' key listener script), the shop and bank diffs, and object tiles in instances.
 
 **Control bridge (dev harness client only).** In the client `microbot/bin/mb-client` runs
 (`-Dmicrobot.dev.harness=true`) the plugin also serves Chronicle's control bridge on

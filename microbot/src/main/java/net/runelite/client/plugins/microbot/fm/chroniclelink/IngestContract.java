@@ -45,6 +45,8 @@ final class IngestContract
 		/** The server accepts {@code data.collectionLog} (planner 2026-11-13). */
 		@SerializedName("collection_log")
 		Boolean collectionLog;
+		/** The server accepts {@code data.recording}, the demonstration (planner docs/10 phase 2). */
+		Boolean recording;
 		ItemSelection items;
 		@SerializedName("interval_seconds")
 		Integer intervalSeconds;
@@ -73,6 +75,11 @@ final class IngestContract
 		boolean collectionLogEnabled()
 		{
 			return collectionLog != null && collectionLog;
+		}
+
+		boolean recordingEnabled()
+		{
+			return recording != null && recording;
 		}
 
 		int intervalSecondsOrDefault()
@@ -147,6 +154,44 @@ final class IngestContract
 		 */
 		Map<String, CollectionLogPage> collectionLog;
 		ItemContainers items;
+		/**
+		 * The demonstration events not acknowledged yet, oldest first; only with the owner's
+		 * "Record demonstration" and the manifest's flag. The server stores each (recording, seq)
+		 * once, so resending after a timeout or a 409 is harmless.
+		 */
+		List<RecordedEvent> recording;
+	}
+
+	/**
+	 * One recorded interaction of the owner (planner docs/10 section 11): a typed event with the
+	 * game's ids, never a catalog ref. Field order is the planner's (recording.Event), so the
+	 * JSON reads the same on both sides; Gson omits the null target fields.
+	 */
+	static final class RecordedEvent
+	{
+		String recording;
+		long seq;
+		String at;
+		String kind;
+		int world;
+		int x;
+		int y;
+		int plane;
+		@SerializedName("npc_id")
+		Integer npcId;
+		@SerializedName("object_id")
+		Integer objectId;
+		@SerializedName("item_id")
+		Integer itemId;
+		@SerializedName("target_item_id")
+		Integer targetItemId;
+		@SerializedName("target_x")
+		Integer targetX;
+		@SerializedName("target_y")
+		Integer targetY;
+		Integer qty;
+		String option;
+		String name;
 	}
 
 	/** One collection log page: its tab (absent when unknown), when it was read and every slot. */

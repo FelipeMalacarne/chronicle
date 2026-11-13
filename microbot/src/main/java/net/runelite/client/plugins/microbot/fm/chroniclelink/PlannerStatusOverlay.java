@@ -40,6 +40,15 @@ class PlannerStatusOverlay extends OverlayPanel
 		panelComponent.getChildren().add(LineComponent.builder()
 			.left(status.describe(Instant.now()))
 			.build());
+		if (plugin.isRecording())
+		{
+			// the owner turned "Record demonstration" on: say so while it records
+			panelComponent.getChildren().add(LineComponent.builder()
+				.left("● Gravando")
+				.leftColor(Color.RED)
+				.right(Integer.toString(plugin.recordingPending()))
+				.build());
+		}
 		return super.render(graphics);
 	}
 

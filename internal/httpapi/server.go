@@ -73,6 +73,9 @@ type Options struct {
 	// Rhythm serves the accounts' rhythm (GET /api/account/rhythm and, with
 	// Identity, the fleet's GET /api/rhythm); nil leaves them out.
 	Rhythm RhythmStore
+	// Recording serves the owner's demonstration recording (GET and DELETE
+	// /api/account/recording, docs/10 section 11); nil leaves them out.
+	Recording RecordingStore
 	// Static is the SPA filesystem rooted at the site (index.html at its root).
 	// nil disables the SPA and / returns 404.
 	Static fs.FS
@@ -200,6 +203,7 @@ func (s *Server) routes() {
 		account("GET /api/sync/runs", s.handleSyncRuns)
 	}
 	s.levelRoutes()
+	s.recordingRoutes()
 	s.microbotRoutes()
 	s.workerRoutes()
 	s.profileRoutes()

@@ -25,6 +25,7 @@ GROUPS = {
     "identidade": ["users", "sessions", "api_tokens", "accounts", "settings"],
     "ingest_e_snapshots": [
         "plugin_ingest_tokens", "sync_runs", "snapshots", "snapshot_facts", "snapshot_item_containers",
+        "recorded_events",
     ],
     "estado_da_conta": ["observations", "player_state", "ingest_container_freshness"],
     "conteudo_indexado": ["guides", "content_versions", "content_steps", "step_id_aliases"],

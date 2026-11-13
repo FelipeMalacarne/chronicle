@@ -19,6 +19,7 @@ final class EventFilter
 	private final boolean skills;
 	private final boolean quests;
 	private final boolean collectionLog;
+	private final boolean recording;
 	private final boolean bank;
 	private final boolean inventory;
 	private final boolean equipment;
@@ -30,6 +31,7 @@ final class EventFilter
 		skills = m.skillsEnabled();
 		quests = m.questsEnabled();
 		collectionLog = m.collectionLogEnabled();
+		recording = m.recordingEnabled();
 		bank = m.allows(ContainerKind.BANK);
 		inventory = m.allows(ContainerKind.INVENTORY);
 		equipment = m.allows(ContainerKind.EQUIPMENT);
@@ -122,6 +124,22 @@ final class EventFilter
 	CaptureTrigger.Strength collectionLog()
 	{
 		return collectionLog ? CaptureTrigger.Strength.HARD : CaptureTrigger.Strength.NONE;
+	}
+
+	/** Whether the server takes the demonstration recording (the owner's toggle decides the rest). */
+	boolean recording()
+	{
+		return recording;
+	}
+
+	/**
+	 * A recorded demonstration event is soft: the events of a burst (a bank visit, a dialogue) go
+	 * out together about a second after the last one, and a steady stream waits for the periodic
+	 * capture, which carries every pending event.
+	 */
+	CaptureTrigger.Strength recorded()
+	{
+		return recording ? CaptureTrigger.Strength.SOFT : CaptureTrigger.Strength.NONE;
 	}
 
 	private static Set<Integer> ids(List<Integer> list)

@@ -542,3 +542,79 @@ ponte não responde.
 - a quantidade de um item obtido mais de uma vez;
 - o adventure log de outro jogador numa casa;
 - o `/bridge/break` com o Break Handler (e o V2) num break de verdade.
+
+## Adendo de 2026-11-13: gravação por demonstração (Chronicle Link 1.13.0, fase 2 do doc 10)
+
+Decisão E8 do doc 10: o plugin passa a registrar as interações do dono, ainda sem agir, e só com
+opt-in. É a matéria-prima das tarefas da fase 2 (doc 10, seção 11): o dono joga um trecho da rota
+com a gravação ligada, o servidor guarda os eventos e o agente da extração os transforma em tarefas
+propostas para um passo, que só entram no conteúdo com a confirmação do dono (regra 9).
+
+**No plugin.** Nova opção "Record demonstration", desligada por padrão. Com ela ligada e o manifest
+anunciando `recording`, o `DemonstrationRecorder` registra, com os ids do jogo:
+
+| Tipo | Quando | Campos |
+|---|---|---|
+| `move` | primeira amostra da gravação; outro mundo, plano ou região do mapa; e onde o personagem parou (2 ticks parado) depois de andar 5 tiles ou mais desde a última amostra | só a posição |
+| `npc` | opção de menu clicada num NPC (`MenuOptionClicked`, `NPC_*_OPTION`) | `npc_id`, `option`, `name` |
+| `object` | opção de menu clicada num objeto (`GAME_OBJECT_*_OPTION`) | `object_id`, `option`, `name`, `target_x`/`target_y` (o tile do objeto) |
+| `dialogue` | opção de diálogo escolhida: clicada (`WIDGET_CONTINUE` em `Chatmenu.OPTIONS`) ou pela tecla numérica (o script do ouvinte de teclas da interface, `ScriptPreFired`); uma escolha por tela de opções | `option` (o texto), `npc_id` do último NPC clicado |
+| `shop_buy` | item que entrou no inventário com uma loja aberta (`SHOPMAIN`), menos coins | `item_id`, `qty`, `npc_id` do lojista clicado antes |
+| `bank_open` | a interface do banco abriu (`BANKMAIN`) | `npc_id` ou `object_id` clicado antes |
+| `bank_withdraw`, `bank_deposit` | o que saiu ou entrou no banco enquanto aberto: a diferença do inventário e do equipamento somados, então equipar não conta | `item_id`, `qty` |
+| `item_use` | item do inventário usado num NPC, objeto ou outro item (`WIDGET_TARGET_ON_*`) | `item_id`, um de `npc_id`/`object_id`/`target_item_id` |
+| `item_op` | opção do próprio item no inventário (Rub, Break, Read; não Drop nem Examine) | `item_id`, `option` |
+
+Toda entrada leva `recording` (um id por login com a gravação ligada, `rec-<uuid>`), `seq` (de 1, por
+gravação), `at` e a posição do personagem (`world`, `x`, `y`, `plane`). Nunca chat, outros jogadores,
+teclas fora das opções de diálogo, magias ou o caminho tile a tile. O overlay mostra "● Gravando" e
+quantos eventos esperam o servidor.
+
+**No contrato** (v1, campo opcional com flag no manifest, como `collection_log`; spec no doc 04,
+seção 6.4):
+
+| Campo do push | Flag do manifest | Conteúdo |
+|---|---|---|
+| `data.recording` | `recording` | lista dos eventos ainda não confirmados, do mais velho ao mais novo, em `full` e em `delta` (no máximo 200 por push; o servidor aceita até 500) |
+
+```json
+"recording": [{"recording": "rec-5b1c", "seq": 3, "at": "2026-11-13T12:00:00Z", "kind": "object",
+               "world": 330, "x": 3222, "y": 3218, "plane": 0, "object_id": 10583,
+               "target_x": 3208, "target_y": 3220, "option": "Bank", "name": "Bank booth"}]
+```
+
+Regras:
+
+- O plugin guarda os eventos em memória (até 5.000; depois disso os novos são descartados e contados)
+  até um push que os levou ser confirmado. Um push que estourou o tempo ou levou 409 reenvia os mesmos
+  eventos, e o servidor guarda cada `(recording, seq)` uma vez só.
+- Os eventos só vão para a conta do personagem que os gravou: outro personagem logado descarta os
+  pendentes do anterior. Desligar a opção ou deslogar para a gravação, mas o que estava pendente ainda
+  é enviado.
+- Eventos nunca pedem `full` nem entram no cálculo do delta: cada push leva os pendentes.
+
+**No servidor.** O ingest valida os eventos (`internal/core/recording`: tipos da lista fechada, só os
+campos de cada tipo, ids não negativos, texto sem tags e com até 120 bytes, `at` limitado ao relógio
+do servidor) e os grava em `recorded_events` (migration 0017), na mesma transação do push e sempre como
+o único escritor. O `raw` do snapshot não guarda `data.recording`, então apagar a gravação a apaga de
+vez. O dono lê com `GET /api/account/recording?account=&since=&until=&limit=` e apaga com
+`DELETE /api/account/recording?account=&recording=`, as duas atrás de `authed` + `accountParam`
+(regra 10); na CLI, `chronicle recording [--since 2h] [-o arquivo]` e `chronicle recording delete --yes`.
+
+**Privacidade, decisões conservadoras** (pendentes do dono): só o que o dono faz, nada de outros
+jogadores ou chat; opt-in, desligado por padrão; a gravação fica até o dono apagar (não há expiração
+automática, por falta de decisão). Ver o doc 10, seção 14 (E11 a E13).
+
+Um plugin 1.12 ignora a flag nova; um servidor anterior não a anuncia e o 1.13 não manda o campo. A
+`manifest_version` muda, então os plugins em uso buscam o manifest de novo e mandam um `full`.
+
+**Verificação:** JUnit (`DemonstrationTest`: amostras de posição, ids e textos de cada tipo, a escolha
+de diálogo uma vez por tela, banco e loja pela diferença, a fila por personagem com confirmação e
+limite, o classificador de menu e o JSON igual ao do `TestWireShape` do servidor), 155 testes no
+pacote; no servidor, a tabela de validação de `recording`, o portão do manifest, o relógio,
+`TestRecordingPostgres` (um evento por `(recording, seq)` com reenvio, o `raw` sem a gravação, leitura
+paginada e apagar) e as rotas (dev, oidc com CSRF no DELETE e fora dos dois).
+
+**Não conferido no jogo:** a escolha de diálogo pela tecla (o evento do script do ouvinte de teclas),
+as diferenças do banco e da loja com a interface real, o tile do objeto numa instância e o volume de
+eventos de uma sessão longa.

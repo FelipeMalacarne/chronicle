@@ -401,6 +401,30 @@ Table plugin_ingest_tokens {
   '''
 }
 
+Table recorded_events {
+  account_id text [not null]
+  recording text [not null]
+  seq bigint [not null]
+  at timestamptz [not null, note: 'when the plugin recorded it, bounded by the server clock']
+  kind text [not null]
+  event jsonb [not null, note: 'the validated event as sent']
+  snapshot_id text [not null, note: 'the push that carried it first']
+  received_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, recording, seq) [pk]
+    (account_id, at, recording, seq) [name: 'recorded_events_account_time_idx']
+  }
+
+  Note: '''
+  Demonstration recording of the plugin (docs/10 section 11): one row per recorded event, written only by the ingest.
+  recorded_events_event_check: CHECK ((jsonb_typeof(event) = 'object'::text))
+  recorded_events_kind_check: CHECK ((kind = ANY (ARRAY['move'::text, 'npc'::text, 'object'::text, 'dialogue'::text, 'shop_buy'::text, 'bank_open'::text, 'bank_withdraw'::text, 'bank_deposit'::text, 'item_use'::text, 'item_op'::text])))
+  recorded_events_recording_check: CHECK ((recording ~ '^[a-z0-9][a-z0-9-]{0,63}$'::text))
+  recorded_events_seq_check: CHECK ((seq > 0))
+  '''
+}
+
 Table route_cursor {
   account_id text [not null]
   guide_id text [not null]
@@ -752,6 +776,8 @@ Ref player_state_account_id_fkey: player_state.account_id > accounts.id [delete:
 Ref player_state_snapshot_id_fkey: player_state.snapshot_id > snapshots.id
 Ref player_state_snapshot_same_account: player_state.(snapshot_id, account_id) > snapshots.(id, account_id)
 Ref plugin_ingest_tokens_account_id_fkey: plugin_ingest_tokens.account_id > accounts.id [delete: cascade]
+Ref recorded_events_account_id_fkey: recorded_events.account_id > accounts.id [delete: cascade]
+Ref recorded_events_snapshot_fk: recorded_events.(snapshot_id, account_id) > snapshots.(id, account_id) [delete: cascade]
 Ref route_cursor_account_id_fkey: route_cursor.account_id > accounts.id [delete: cascade]
 Ref route_cursor_guide_fkey: route_cursor.guide_id > guides.id
 Ref routine_runs_account_id_fkey: routine_runs.account_id > accounts.id [delete: cascade]
@@ -787,6 +813,7 @@ TableGroup ingest_e_snapshots {
   snapshots
   snapshot_facts
   snapshot_item_containers
+  recorded_events
 }
 
 TableGroup estado_da_conta {

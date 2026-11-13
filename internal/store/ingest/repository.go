@@ -101,12 +101,18 @@ func (r *Repository) AcceptFor(ctx context.Context, c Credential, remoteIP strin
 		return coreingest.Response{}, fmt.Errorf("%w: %v", ErrInvalidPayload, err)
 	}
 	// The server clock bounds the plugin's (docs/10 section 5). raw keeps
-	// what the client sent.
+	// what the client sent, except the demonstration recording, which lives
+	// only in recorded_events so that the owner's delete removes it for good.
 	push = push.ClampTimes(time.Now())
 	if len(raw) == 0 {
 		raw, err = json.Marshal(push)
 		if err != nil {
 			return coreingest.Response{}, fmt.Errorf("marshal raw push: %w", err)
+		}
+	}
+	if push.Data.Recording != nil {
+		if raw, err = withoutRecording(raw); err != nil {
+			return coreingest.Response{}, fmt.Errorf("%w: %v", ErrInvalidPayload, err)
 		}
 	}
 
@@ -162,6 +168,9 @@ func (r *Repository) AcceptFor(ctx context.Context, c Credential, remoteIP strin
 		return coreingest.Response{}, fmt.Errorf("insert raw ingest snapshot: %w", err)
 	}
 	if err := r.persistNormalized(ctx, q, token.AccountID, snapshotID, push); err != nil {
+		return coreingest.Response{}, err
+	}
+	if err := persistRecording(ctx, q, token.AccountID, snapshotID, push.Data.Recording); err != nil {
 		return coreingest.Response{}, err
 	}
 	if err := q.UpdatePluginTokenAfterPush(ctx, storedb.UpdatePluginTokenAfterPushParams{

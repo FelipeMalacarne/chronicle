@@ -14,14 +14,18 @@ import javax.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.Client;
 import net.runelite.api.GameState;
+import net.runelite.api.ScriptEvent;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
 import net.runelite.api.ScriptID;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.MenuOptionClicked;
 import net.runelite.api.events.ScriptPostFired;
+import net.runelite.api.events.ScriptPreFired;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.WidgetClosed;
 import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.callback.ClientThread;
@@ -68,6 +72,12 @@ import okhttp3.OkHttpClient;
  * player opens in game is read from the interface ({@link CollectionLogReader}; never another
  * player's log from an adventure log) and sent in {@code data.collectionLog}. The control bridge
  * also answers {@code /bridge/version} and {@code /bridge/break} (the Break Handler's state).
+ *
+ * <p>Demonstration recording (1.13.0, planner docs/10 section 11): with "Record demonstration"
+ * on and the manifest's {@code recording} flag, the owner's own interactions (NPCs and objects
+ * clicked, dialogue options, shop purchases, bank changes, items used, a coarse position) are
+ * recorded as typed events by {@link DemonstrationRecorder} and sent in {@code data.recording}
+ * until a push carrying them is acknowledged. It only records; nothing acts in game.
  */
 @PluginDescriptor(
 	name = ChronicleLinkPlugin.TAG + "Chronicle Link",
@@ -82,7 +92,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class ChronicleLinkPlugin extends Plugin
 {
-	static final String VERSION = "1.12.0";
+	static final String VERSION = "1.13.0";
 	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */
@@ -124,6 +134,11 @@ public class ChronicleLinkPlugin extends Plugin
 
 	/** Client thread only. */
 	private StateCollector collector;
+
+	/** The demonstration: fed on the client thread, drained by the sync thread (it locks). */
+	private final DemonstrationRecorder recorder = new DemonstrationRecorder();
+	/** Client thread only; null while the plugin is off. */
+	private DemonstrationSource demonstration;
 
 	private ScheduledExecutorService executor;
 
@@ -196,6 +211,7 @@ public class ChronicleLinkPlugin extends Plugin
 		login = new LoginSession(new DeviceLogin(okHttpClient, gson), config::loginRefreshToken,
 			token -> configManager.setConfiguration(ChronicleLinkConfig.GROUP, ChronicleLinkConfig.LOGIN_REFRESH_TOKEN, token));
 		collector = new StateCollector(client);
+		demonstration = new DemonstrationSource(client, recorder);
 		status = notConfigured();
 		trigger.clear();
 		eventFilter = null;
@@ -488,11 +504,67 @@ public class ChronicleLinkPlugin extends Plugin
 		logoutSnapshot = null;
 		eventFilter = null;
 		trigger.clear();
+		demonstration = null;
+		recorder.stop();
 	}
 
 	SyncStatus getStatus()
 	{
 		return status;
+	}
+
+	/** Whether the demonstration is being recorded, and how many events wait for the planner. */
+	boolean isRecording()
+	{
+		return recorder.recording();
+	}
+
+	int recordingPending()
+	{
+		return recorder.pendingCount();
+	}
+
+	/**
+	 * Matches the recorder to the owner's toggle, the manifest's flag and the login, starting or
+	 * stopping a recording; true while recording. Client thread.
+	 */
+	private boolean recordingNow()
+	{
+		DemonstrationSource d = demonstration;
+		EventFilter filter = eventFilter;
+		boolean wanted = filter != null && filter.recording() && config.recordDemonstration()
+			&& collector != null && collector.readyForEvents();
+		return d != null && d.sync(wanted);
+	}
+
+	/** A demonstration event was recorded: it goes out with the next capture. */
+	private void recorded(Instant now)
+	{
+		EventFilter filter = eventFilter;
+		if (filter != null)
+		{
+			trigger.onEvent(filter.recorded(), now);
+		}
+	}
+
+	/** Every clicked menu entry; the demonstration records the owner's own, never acting on any. */
+	@Subscribe
+	public void onMenuOptionClicked(MenuOptionClicked event)
+	{
+		if (recordingNow() && demonstration.onMenu(event, Instant.now()))
+		{
+			recorded(Instant.now());
+		}
+	}
+
+	@Subscribe
+	public void onWidgetClosed(WidgetClosed event)
+	{
+		DemonstrationSource d = demonstration;
+		if (d != null)
+		{
+			d.onWidgetClosed(event.getGroupId());
+		}
 	}
 
 	/** A plugin loaded, unloaded, installed or removed: its config options come or go. */
@@ -546,6 +618,8 @@ public class ChronicleLinkPlugin extends Plugin
 			collector.endEpoch();
 			trigger.clear();
 			logoutRequested = true;
+			// the next login is a new recording; what is pending still goes out
+			recorder.stop();
 		}
 	}
 
@@ -556,6 +630,11 @@ public class ChronicleLinkPlugin extends Plugin
 		{
 			// the post-login wait just ended: the login's full can be read now, not at the retry
 			trigger.onEvent(CaptureTrigger.Strength.HARD, Instant.now());
+		}
+		// every tick also starts or stops the recording as the toggle and the login say
+		if (recordingNow() && demonstration.onTick(Instant.now()))
+		{
+			recorded(Instant.now());
 		}
 	}
 
@@ -611,12 +690,29 @@ public class ChronicleLinkPlugin extends Plugin
 		{
 			trigger.onEvent(filter.container(event.getContainerId(), config), now);
 		}
+		if (recordingNow() && demonstration.onContainer(event.getContainerId(), now))
+		{
+			recorded(now);
+		}
 	}
 
 	/**
 	 * The collection log drew a page: read it (this character's log only) and, when the page is
 	 * new or changed and the manifest takes pages, ask for a capture.
 	 */
+	@Subscribe
+	public void onScriptPreFired(ScriptPreFired event)
+	{
+		// a number key on the dialogue options: the demonstration records the choice (scripts run
+		// all the time, so the cheap test of the source widget goes first)
+		ScriptEvent se = event.getScriptEvent();
+		if (se != null && se.getSource() != null && DemonstrationMenu.dialogueWidget(se.getSource().getId())
+			&& recordingNow() && demonstration.onScript(event, Instant.now()))
+		{
+			recorded(Instant.now());
+		}
+	}
+
 	@Subscribe
 	public void onScriptPostFired(ScriptPostFired event)
 	{
@@ -639,6 +735,11 @@ public class ChronicleLinkPlugin extends Plugin
 		if (collector != null)
 		{
 			collector.onWidgetLoaded(event.getGroupId());
+		}
+		// the bank, a shop or new dialogue options: the demonstration's context
+		if (recordingNow() && demonstration.onWidgetLoaded(event.getGroupId(), Instant.now()))
+		{
+			recorded(Instant.now());
 		}
 	}
 
@@ -782,6 +883,8 @@ public class ChronicleLinkPlugin extends Plugin
 			IngestContract.Response body = result.body;
 			if (result.status == 200 && body != null && body.ok && body.acceptedSeq == push.clientSeq)
 			{
+				// stored on the planner: the recorder drops what this push carried
+				recorder.acknowledge(push.data.recording);
 				// the panel decides from the response's route whether to refetch
 				onPanel(() -> panelController.onPushAck(body, Instant.now()));
 			}
@@ -800,7 +903,13 @@ public class ChronicleLinkPlugin extends Plugin
 		{
 			try
 			{
-				future.complete(collector.capture(manifest, config, Instant.now()));
+				PlayerSnapshot snapshot = collector.capture(manifest, config, Instant.now());
+				if (snapshot != null && manifest.recordingEnabled())
+				{
+					// the events of this character still waiting for the planner, whatever the toggle now
+					snapshot = snapshot.withRecording(recorder.pending(snapshot.username, DemonstrationRecorder.MAX_PER_PUSH));
+				}
+				future.complete(snapshot);
 			}
 			catch (RuntimeException ex)
 			{

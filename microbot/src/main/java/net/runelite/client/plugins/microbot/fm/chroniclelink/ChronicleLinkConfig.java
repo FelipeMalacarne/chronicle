@@ -12,6 +12,7 @@ public interface ChronicleLinkConfig extends Config
 	String GROUP = "fm-ironmanplanner";
 	String ITEMS_EXPANDED = "itemsExpanded";
 	String LOGIN_REFRESH_TOKEN = "loginRefreshToken";
+	String RECORD_DEMONSTRATION = "recordDemonstration";
 
 	/** How requests authenticate (docs/04-arquitetura.md 2.5). */
 	enum CredentialMode
@@ -161,10 +162,21 @@ public interface ChronicleLinkConfig extends Config
 	}
 
 	@ConfigItem(
+		keyName = RECORD_DEMONSTRATION,
+		name = "Record demonstration",
+		description = "Record your own interactions (NPCs and objects clicked, dialogue options, shop purchases, bank withdrawals and deposits, items used, a coarse position) and send them to Chronicle, which proposes the tasks of a route step from them. Never acts in game; off by default. The recording can be deleted on the planner",
+		position = 8
+	)
+	default boolean recordDemonstration()
+	{
+		return false;
+	}
+
+	@ConfigItem(
 		keyName = "showStatus",
 		name = "Show status",
 		description = "Show the sync status indicator overlay",
-		position = 7
+		position = 9
 	)
 	default boolean showStatus()
 	{

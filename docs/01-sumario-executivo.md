@@ -116,7 +116,7 @@ A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com 
   (`docs/ui/decisoes-canvas.md`, seções 7.6 a 7.14). Faltam as telas em 640 px que o canvas ainda não
   desenhou: Visão geral, Personagem, Histórico, Atividade, Rotinas, Plugins e Mundo.
 - **Item 21 (doc 10, decisão 32):** a fase 1 está no `main`. O código da fase 2 está pronto (2026-11-13,
-  PRs #46, #47 e o do modo assistido): a gravação por demonstração no Chronicle Link 1.13.0 e no ingest,
+  PRs #46, #47 e #48): a gravação por demonstração no Chronicle Link 1.13.0 e no ingest,
   as tarefas propostas a partir dela com o `propose_tasks` e o `submit_tasks` do `content mcp`, e o
   modo assistido no painel (Chronicle Link 1.14.0). A fase só termina com a gravação e a confirmação do
   dono (abaixo).

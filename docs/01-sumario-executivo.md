@@ -163,7 +163,13 @@ O próximo passo é do dono:
    - E14 e E15 do doc 10 (o `travel` com teleporte, hoje recusado; o `bank` que deposita o que não é
      do setup antes de sacar);
    - E16 a E18 do doc 10 (o `train` com o plugin já ligado, hoje recusado; as opções que o treino
-     gravou, hoje deixadas; o plugin de um `train` de passo, hoje só por receita ou plano).
+     gravou, hoje deixadas; o plugin de um `train` de passo, hoje só por receita ou plano);
+   - E19 e E20 do doc 10, que saíram da avaliação do Quest Helper (E10, apêndice A):
+     - E19: executar uma quest por delegação ao Quest Helper que o cliente do Microbot já traz, como
+       o `train`, com o término provado pelo ingest. Recomendado: sim, de 2 a 3 dias de código;
+     - E20: um exportador dos passos do Quest Helper como fonte de propostas de receita.
+       Recomendado: não agora. Importar os dados dele não compensa, porque são código Java e não
+       dados.
 
 ## Discrepâncias e ressalvas
 

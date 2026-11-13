@@ -153,7 +153,7 @@ ou predicado de estado avaliável pelo motor.
 | `talk` | `npc`, opções de diálogo? | objetivo do passo | `Rs2Npc`, diálogo |
 | `interact` | `object`, ação | objetivo do passo | `Rs2GameObject` |
 | `train` | `skill`, método (npc, spell, objeto), local | `skill:x>=N` | delega a um plugin ou primitiva própria |
-| `quest` | `quest` | `quest:x@finished` | receita própria ou dados do Quest Helper |
+| `quest` | `quest` | `quest:x@finished` | receita própria ou dados do Quest Helper; avaliado no apêndice A: delegar ao Quest Helper do Microbot |
 | `manual` | texto citado | marca do dono ou objetivo do passo | nenhuma: o executor para e chama o dono |
 
 Regras:
@@ -448,7 +448,9 @@ receita e passa pelo mesmo verificador e pela confirmação do dono. É o caminh
 receitas que falharam e para cobrir passos que o texto descreve mal.
 
 Continuam difíceis de tornar determinísticos: diálogos e etapas de quest (avaliar importar do Quest
-Helper em vez de extrair do texto) e combate real, que começa como `manual` ou delegado.
+Helper em vez de extrair do texto) e combate real, que começa como `manual` ou delegado. A avaliação
+do Quest Helper (E10, 2026-11-13) está no apêndice A. A recomendação é não importar os dados dele, e
+sim executar a quest por delegação ao Quest Helper que o cliente do Microbot já traz, como o `train`.
 
 **Como implementado (fase 2, a gravação, 2026-11-13).** Chronicle Link 1.13.0, opção "Record
 demonstration", desligada por padrão (E8). O plugin registra só o que o dono faz, com os ids do jogo,
@@ -644,7 +646,7 @@ O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com
 | E7 | Planos customizados no banco, exportáveis para `content/routes/` | **decidida (2026-11-13): sim** |
 | E8 | Gravação por demonstração no plugin (o plugin passa a registrar interações, ainda sem agir) | **decidida (2026-11-13): sim, opt-in** |
 | E9 | Política de risco: em HCIM, nada com risco de morte roda sem supervisão | **decidida (2026-11-13): sim** |
-| E10 | Importar diálogos e etapas de quest do Quest Helper em vez de extrair do texto | **decidida (2026-11-13): avaliar na fase 5** |
+| E10 | Importar diálogos e etapas de quest do Quest Helper em vez de extrair do texto | **decidida (2026-11-13): avaliar na fase 5. Avaliada (2026-11-13, apêndice A):** não importar os dados (são código Java, não dados); executar por delegação (E19) |
 | E11 | O que a gravação registra | **em aberto; implementado o conservador (fase 2):** só o que o dono faz (NPCs e objetos clicados, opções de diálogo, compras, banco, itens usados e opções de item, posição grosseira); nunca chat, outros jogadores, magias, Drop/Examine ou o caminho tile a tile |
 | E12 | Retenção da gravação no servidor | **em aberto; implementado o conservador:** fica até o dono apagar (`DELETE /api/account/recording`, `chronicle recording delete --yes`), sem expiração automática; o snapshot bruto não guarda a gravação |
 | E13 | A gravação vai para o conteúdo como evidência | **em aberto; implementado o conservador:** só os eventos que sustentam cada tarefa confirmada, sem conta, RSN ou outros dados do personagem (`submit_tasks` copia só os `seq` pedidos) |
@@ -653,6 +655,8 @@ O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com
 | E16 | `train` com o plugin já ligado | **em aberto; implementado o conservador (fase 4):** recusado ("pare-o antes"), porque o run liga e desliga o plugin e grava as opções antes de ligar; a alternativa é adotar o plugin ligado, sem gravar opções |
 | E17 | As opções que o `train` gravou no plugin | **em aberto; implementado (fase 4):** ficam como gravadas depois do treino (são do plugin, e o próximo `train` grava as dele de novo); a alternativa é guardar os valores de antes e restaurá-los |
 | E18 | De onde vem o plugin de um `train` de passo | **em aberto; implementado o conservador (fase 4):** de uma receita da chave (`content/recipes/`) ou de uma tarefa avulsa num plano; a extração do texto (`submit_tasks`) não aceita `plugin` nem `config`, porque o texto do guia não diz qual plugin usar; a alternativa é o dono confirmá-lo na sessão de extração, como uma inferência |
+| E19 | Primitiva `quest` por delegação ao Quest Helper que o cliente do Microbot traz (apêndice A, A.6) | **em aberto; nada implementado.** Recomendação: sim, como o `train` (seleciona a quest pelo Agent Server, acompanha, e o servidor prova `quest:x@finished` pelo ingest). Em HCIM, só supervisionada; "Obtain Missing Items" em `No` numa conta ironman. Começar por uma quest curta e sem luta, com o dono olhando |
+| E20 | Exportador dos passos do Quest Helper como fonte de propostas de receita (apêndice A, A.5, caminho 2) | **em aberto; nada implementado.** Recomendação: não agora. Só se a extração do texto e a gravação não bastarem para as receitas de quest |
 
 ## 15. Impacto nos outros docs
 
@@ -660,3 +664,208 @@ O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com
 - Doc 04, seção 9: a fase 0 entra como item próprio da sequência quando aprovada.
 - Doc 08: rotinas usam `wait_until` por chave de objetivo; o agent ganha o comando de tarefa.
 - Doc 09: seções 3.1 (tipos `npc`, `shop`, `object`) e 5 (tabelas) recebem adendos apontando para cá.
+
+## Apêndice A. E10: o Quest Helper como fonte de quests (avaliação, 2026-11-13)
+
+A pergunta da E10 era: importar diálogos e etapas de quest do Quest Helper em vez de extrair do texto
+dos guias? Foi respondida só por leitura. Nada do Quest Helper (código ou dados) entrou no repositório.
+
+**Fontes lidas:**
+
+- o repositório `Zoinkwiz/quest-helper` no commit `b9b93706` (2026-11-03, versão 4.18.0);
+- a cópia que o cliente do Microbot fixado (2.6.52, `microbot/microbot.json`) traz em
+  `runelite-client/.../microbot/questhelper/`, lida no `microbot/vendor` (sincronizada com o upstream
+  `5539626` de 2025-08-29, conforme `.quest-helper-sync`);
+- o `QuestHelperHandler` do Agent Server do mesmo cliente.
+
+As contagens abaixo são buscas nas fontes desse commit.
+
+### A.1 Licença
+
+- O repositório é **BSD 2-Clause**: `LICENSE`, "Copyright (c) 2020, Zoinkwiz".
+  - 676 dos 714 arquivos Java têm o cabeçalho BSD-2, com 52 titulares diferentes; os outros ficam sob
+    o `LICENSE`.
+  - Não há outra licença no repositório: os recursos são 23 PNGs da interface, e o código vindo do
+    RuneLite também é BSD-2.
+  - O Plugin Hub pede BSD-2 de todo plugin. A cópia no Microbot também é BSD-2.
+- **Dados derivados num repositório privado:** permitido. O BSD-2 deixa usar e modificar, e uma cópia
+  privada não é redistribuição. Se o repositório for publicado, ele leva o aviso BSD-2 e o crédito
+  "Quest Helper, Zoinkwiz e contribuidores", e as telas que mostrarem esses passos levam a atribuição,
+  como a regra 6 faz com os guias.
+  - O texto dos passos é dos contribuidores.
+  - Ids, coordenadas e falas de diálogo são conteúdo do jogo (Jagex), como nos guias.
+- **Código:** o BSD-2 permite redistribuir com o aviso, sem copyleft.
+- O limite real não é a licença: é o risco de banimento de automatizar, aceito pelo dono (doc 01,
+  decisão 9).
+- Esta leitura não é um parecer jurídico.
+
+### A.2 Tamanho e manutenção
+
+- **464 arquivos de helpers**, cerca de 167 mil linhas:
+  - 185 pacotes de quest com 334 arquivos;
+  - 50 arquivos de achievement diaries;
+  - 30 de miniquests;
+  - o resto em atividades, skills e diversos.
+
+  O registro (`QuestHelperQuest`) tem 276 entradas.
+- **Ativo:** 228 commits nos últimos 12 meses, cerca de 307 contribuidores.
+  - Os ids vêm das constantes `gameval` do RuneLite (`NpcID.COOK`, `ObjectID.…`, `ItemID.…`). Uma
+    renomeação no RuneLite quebra o build, e o upstream corrige; o último commit lido foi uma dessas
+    correções.
+  - A ordem das quests (inclusive a "Ironman Optimal") é regenerada da wiki por um CI noturno.
+
+### A.3 Como uma quest é codificada
+
+**É código Java, não dado.** Não há export em JSON ou YAML, nem um módulo de dados. Não achamos
+ferramenta da comunidade que exporte os passos.
+
+- **O quadro geral:**
+  - `BasicQuestHelper.loadSteps()` devolve um `Map<Integer, QuestStep>` indexado pelo valor da
+    varp ou do varbit da quest (`QuestVarPlayer`, `QuestVarbits`): em jogo, o helper lê a variável e
+    mostra o passo daquele valor.
+  - Cada valor costuma ser uma `ConditionalStep`, uma árvore de pares (condição, passo) em que a
+    primeira condição verdadeira vence.
+  - As condições olham o inventário, zonas, varbits e o que já apareceu em diálogos e no chat.
+  - Os valores das chaves são achados testando no jogo. Um comentário na Waterfall Quest diz:
+    "7 didn't occur during testing".
+- **Tipos de passo** (em todos os helpers):
+
+  | Tipo | Quantos |
+  |---|---|
+  | `ObjectStep` | 5.367 |
+  | `NpcStep` | 3.439 |
+  | `ConditionalStep` | 2.703 |
+  | `DetailedQuestStep` | 1.107 |
+  | `PuzzleWrapperStep` | 339 |
+  | `ItemStep` | 201 |
+  | `WidgetStep` | 154 |
+  | `DigStep`, `TileStep`, `EmoteStep` | poucos |
+
+  Os passos levam o id do jogo e um `WorldPoint`; há 14.151 `WorldPoint` só nas quests.
+- **Diálogo:** `addDialogStep(s)` e variantes, cerca de 2.350 chamadas nas quests. É um **conjunto
+  não ordenado** de opções a destacar quando a caixa de opções aparece, sem as falas do NPC. Exemplo
+  do Cook's Assistant:
+
+  ```java
+  finishQuest = new NpcStep(this, NpcID.COOK, new WorldPoint(3206, 3214, 0), "Give the Cook ...", egg, milk, flour);
+  finishQuest.addDialogSteps("What's wrong?", "Can I help?", "Yes.");
+  ```
+- **Ação de menu:** o `ObjectStep` não guarda a ação de menu, só o id e o texto. O bot do Microbot a
+  deduz casando o texto do passo com as ações do objeto.
+- **Requisitos tipados** (nas quests):
+
+  | Requisito | Quantos |
+  |---|---|
+  | `ItemRequirement` | 5.672 |
+  | `VarbitRequirement` | 2.372 |
+  | `ZoneRequirement` | 2.059 |
+  | `SkillRequirement` | 1.158 |
+  | `QuestRequirement` | 468 |
+
+  Há também condições que só existem como evento em jogo: `DialogRequirement`,
+  `ChatMessageRequirement`, `WidgetTextRequirement` e `ManualRequirement`.
+
+### A.4 O que casa com o nosso modelo
+
+| Quest Helper | Chronicle (seções 7 e 8) | Casa? |
+|---|---|---|
+| `NpcStep` com id e opções de diálogo | `talk(npc, options)`, com o id virando ref pelo `NPCsByGameID` (fase 1) | em parte: as opções são um conjunto e o nosso `options` é uma ordem; o término de um passo do meio é "a varp da quest andou", que o ingest não observa |
+| `ObjectStep` com id | `interact(object, action)`, com o id pelo `ObjectsByGameID` | em parte: falta a `action`, que viria do texto ou da gravação |
+| `ItemRequirement`, `ItemCollections` | `requires`, `bank(items)` e os ids aceitos | sim |
+| `SkillRequirement`, `QuestRequirement` | `skill:x>=N`, `quest:x@finished` (catálogo de quests da wiki) | sim |
+| `WorldPoint`, `ZoneRequirement` | `travel(location)` | não: um tile qualquer não é um local do catálogo, e não há "andar até o tile" |
+| `ConditionalStep`, varbits, condições de evento | nada | não: as nossas tarefas são uma lista com término por chave de objetivo ou estado, e o ingest só vê a quest como não começada, em andamento ou terminada |
+| `PuzzleStep`, passos próprios | `manual` | só como "faça à mão" |
+
+O Quest Helper descreve uma **máquina de estados** sobre a variável da quest. As nossas receitas são
+**listas lineares** de tarefas tipadas com término provado pelo ingest (princípios 5 e 7). Traduzir
+uma na outra perde os ramos, e os passos do meio ficam sem término avaliável.
+
+### A.5 Três caminhos
+
+1. **Parser estático do Java, em Go: não recomendado.**
+   - Só 106 das 185 quests usam apenas os blocos básicos num arquivo só, e só 19 são quase lineares
+     (até duas `ConditionalStep`).
+   - 52 têm vários arquivos, 48 têm classes de passo próprias, 44 têm quebra-cabeças e 46 reagem a
+     eventos (`@Subscribe`).
+   - O parser teria de resolver campos entre métodos, combinadores (`and`, `or`, `nor`,
+     `Conditions`), `.copy()`, `setText`, concatenação de texto e os nomes `gameval` na versão exata
+     do RuneLite.
+   - Ele quebraria a cada renomeação, e o resultado ainda seria a árvore, não uma receita.
+2. **Exportador em Java no build: possível, como fonte de propostas.** Uma ferramenta no projeto
+   Gradle de `microbot/` monta cada helper com um `Client` falso, como o `QuestHelperTest` do próprio
+   repositório já faz, e percorre os objetos criados.
+   - Ela emitiria JSON com: o mapa varp → passo, a árvore, os tipos, os ids numéricos, os
+     `WorldPoint`, as opções de diálogo e os requisitos tipados.
+   - Passos próprios, quebra-cabeças e condições de evento sairiam opacos.
+   - O JSON seria uma **proposta** de receita, como a gravação da fase 2, verificada e confirmada
+     pelo dono (regra 9), nunca uma receita pronta.
+   - Esforço: 3 a 5 dias para o exportador e a conversão em propostas, mais a curadoria quest a
+     quest com o dono.
+3. **Delegação em execução ao Quest Helper do Microbot: recomendado para executar.** O cliente
+   fixado já traz o Quest Helper (183 pacotes de quest) e, nele:
+   - o `QuestScript` (cerca de 1.750 linhas), um bot que segue o passo ativo do helper: anda com o
+     `Rs2Walker`, fala com NPCs, escolhe as opções destacadas, interage com objetos, cava e resolve
+     alguns quebra-cabeças;
+   - o Agent Server com `/quest-helper/list`, `/states`, `/status` (quest, se terminou, texto e classe
+     do passo ativo), `/start` (seleciona a quest e liga "Enable QuestHelper") e `/stop`.
+
+   Uma quest vira então uma tarefa de **delegação**, como o `train` da fase 4: o agent seleciona a
+   quest, acompanha o passo na trilha, e o run termina só quando o servidor prova
+   `quest:<x>@finished` pelo ingest (`wait_until`). Não é preciso copiar dados nem código para o
+   repositório, nem manter uma cópia da lógica em dia: ela vem com o cliente.
+
+### A.6 O que a primitiva `quest` precisaria (caminho 3)
+
+- **Conteúdo:**
+  - `quest` passa a ser primitiva (hoje o verificador a recusa, E5), com a ref da quest do catálogo e
+    o término padrão `quest:<x>@finished`;
+  - ela vem de uma receita da chave (`content/recipes/quest-<x>-finished.json`) com os riscos da
+    variante (E9: quase toda quest com luta tem `combat`), confirmada pelo dono, como o plugin de um
+    `train` (E18).
+- **`execspec` e plano:**
+  - o nome da quest como o Quest Helper a conhece: o nome do RuneLite, que o ingest já usa
+    (`data.quest`), conferido no `/quest-helper/list` do cliente;
+  - os requisitos do catálogo provados antes de rodar, porque o plano já insere a receita do que
+    falta (seção 9);
+  - em HCIM, só supervisionado.
+- **Agent** (`task_run` de um `quest`), em ordem:
+  1. ponto seguro e login;
+  2. o Quest Helper ativo no cliente (`/quest-helper/status`);
+  3. "Obtain Missing Items" em `No` numa conta ironman. O padrão é `Ask`, que pergunta numa janela
+     do cliente e prende um run sem ninguém olhando; com `Yes`, o bot iria ao banco e ao Grand
+     Exchange;
+  4. `/quest-helper/start`, depois o `status` na trilha (progresso, nunca prova);
+  5. `/quest-helper/stop` na prova, no timeout, na falha ou no cancelamento.
+- **Servidor:** o `POST /api/microbot/task` recusa com 409 um agent sem o recurso e uma quest que o
+  cliente não lista; a prova é a de sempre.
+- **Esforço:** 2 a 3 dias de código e testes com um Quest Helper falso, sem migration. Depois, uma
+  quest curta e sem luta no jogo, com o dono olhando (por exemplo Cook's Assistant ou Sheep Shearer,
+  com os itens no banco).
+
+### A.7 Riscos
+
+- **Banimento:** um bot de quest é mais visível que um treino.
+- **Morte:** quests com luta; a E9 vale.
+- **Conta ironman:** o bot completa itens pelo Grand Exchange, então a opção fica em `No` e os
+  itens vêm do banco, por um `bank` antes.
+- **Confiabilidade desigual:**
+  - o `QuestScript` tem casos especiais escritos à mão (Cook's Assistant, Imp Catcher, Pirate's
+    Treasure) e só alguns quebra-cabeças;
+  - quests longas devem travar no meio. O run para, e a quest volta ao dono (`manual`, seção 11).
+- **Defasagem:** a cópia do Microbot está sincronizada até 2025-08-29, e quests mais novas que isso
+  faltam. Um `mb-bump` pode mudar o comportamento, e os endpoints existem desde 2026-04.
+- **Nada disso foi testado no jogo.**
+
+### A.8 Recomendação
+
+1. **Para executar quests: o caminho 3** (E19, em aberto para o dono): a primitiva `quest` por
+   delegação, reaproveitando o `task_run` e o `wait_until` do `train`. São de 2 a 3 dias, sem
+   migration, e o término continua sendo a prova pelo ingest (princípio 7).
+2. **Para o conteúdo das receitas:** não importar.
+   - As receitas de quest continuam vindo do texto dos guias e da gravação, com o dono (regra 9).
+   - O Quest Helper serve de referência humana nessas sessões.
+   - O exportador (caminho 2, E20) fica para quando a extração e a gravação não bastarem.
+3. **O parser estático (caminho 1), não.**
+4. **Nada do Quest Helper no repositório.** A delegação usa o que o cliente já traz. Se um dia algum
+   dado derivado entrar, ele leva o aviso BSD-2 e o crédito.

@@ -682,8 +682,8 @@ adivinha um id.
     ligado no webwalker e para a caminhada que entrar nela (limites de `TaskSpec`, iguais aos do
     servidor).
 - **`bank`**:
-  - abre o banco mais perto (`Rs2Bank.openBank`, que nunca anda; sem banco por perto, falha pedindo um
-    `travel` antes);
+  - abre o banco mais perto (`Rs2Bank.openBank`, que só clica num banco ao alcance, sem o webwalker;
+    sem banco por perto, falha pedindo um `travel` antes);
   - deposita o que não é do setup;
   - saca o que falta de cada item, pelo primeiro id aceito que o banco tem, notado quando pedido;
   - veste os de equipamento (`Rs2Bank.wearItem`);

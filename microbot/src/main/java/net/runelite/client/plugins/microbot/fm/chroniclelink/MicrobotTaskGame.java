@@ -20,7 +20,7 @@ import static net.runelite.client.plugins.microbot.util.Global.sleepUntil;
  */
 final class MicrobotTaskGame implements TaskGame
 {
-	/** How near a bank or a shop keeper must be: the executor never walks to one by itself. */
+	/** How near a shop keeper must be: the executor never uses the web walker to reach one. */
 	private static final int NEAR = 15;
 	/** Arrival distance handed to the walker; the machine decides arrival by the area. */
 	private static final int WALK_DISTANCE = 2;
@@ -76,8 +76,8 @@ final class MicrobotTaskGame implements TaskGame
 	@Override
 	public boolean openBank()
 	{
-		// Rs2Bank.openBank looks for the nearest booth, chest or banker in its own search radius
-		// and never walks.
+		// Rs2Bank.openBank clicks the nearest booth, chest or banker in its own search radius (the
+		// game walks the few tiles to it); it never uses the web walker.
 		return Rs2Bank.openBank();
 	}
 

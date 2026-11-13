@@ -382,7 +382,7 @@ atribuição de cada passo aparece na tela.
   `/bridge/task/cancel`):
   - `travel` anda com o `Rs2Walker` até a área e para ao entrar nela; fora de um destino na wilderness,
     exige "Avoid wilderness" e para a caminhada que entrar nela;
-  - `bank` abre o banco mais perto sem andar, deposita o que não é do setup, saca o que falta (notado
+  - `bank` abre o banco mais perto sem o webwalker (só um banco ao alcance do clique), deposita o que não é do setup, saca o que falta (notado
     quando pedido) e veste o equipamento;
   - `buy` abre a loja pelo lojista mais perto e compra em lotes sem passar do que falta.
 

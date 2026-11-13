@@ -53,6 +53,9 @@ type ObjectiveView struct {
 	RegressedAt  *time.Time `json:"regressed_at,omitempty"`
 	SnapshotID   string     `json:"evidence_snapshot_id,omitempty"`
 	Evidence     any        `json:"evidence,omitempty"`
+	// OwnerMarked: the owner marked it as already done. The verdict then
+	// reads met even without evidence (none is shown).
+	OwnerMarked bool `json:"owner_marked,omitempty"`
 }
 
 // Board returns the derived status of every step of one guide.
@@ -219,6 +222,12 @@ func (r *Repository) guideInput(ctx context.Context, q *storedb.Queries, account
 			regressed[o.ObjectiveKey] = true
 		}
 	}
+	// The owner's objective marks read as met for the statuses, blocked
+	// requirements and cursor (never as evidence).
+	if in.OwnerMarked, err = loadObjectiveMarks(ctx, q, accountID); err != nil {
+		return in, nil, err
+	}
+	in.Verdicts = in.Verdicts.WithOwner(in.OwnerMarked)
 	marks, err := q.ListStepMarksByGuide(ctx, storedb.ListStepMarksByGuideParams{AccountID: accountID, GuideID: guideID})
 	if err != nil {
 		return in, nil, fmt.Errorf("list step marks: %w", err)
@@ -305,7 +314,11 @@ func (r *Repository) Objectives(ctx context.Context, accountID string) ([]Object
 	if err != nil {
 		return nil, fmt.Errorf("list objective progress: %w", err)
 	}
-	out := make([]ObjectiveView, 0, len(rows))
+	marked, err := loadObjectiveMarks(ctx, r.queries, accountID)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]ObjectiveView, 0, len(rows)+len(marked))
 	for _, row := range rows {
 		v := ObjectiveView{
 			Key: row.ObjectiveKey, Verdict: row.Verdict, FirstMetAt: timePtr(row.FirstMetAt),
@@ -314,7 +327,15 @@ func (r *Repository) Objectives(ctx context.Context, accountID string) ([]Object
 		if len(row.Evidence) > 0 {
 			v.Evidence = row.Evidence
 		}
+		if marked[row.ObjectiveKey] {
+			v.Verdict, v.OwnerMarked = string(rules.Met), true
+			delete(marked, row.ObjectiveKey)
+		}
 		out = append(out, v)
+	}
+	// Marked objectives with no stored verdict: met by the mark alone.
+	for _, key := range sortedKeys(marked) {
+		out = append(out, ObjectiveView{Key: key, Verdict: string(rules.Met), OwnerMarked: true})
 	}
 	return out, nil
 }

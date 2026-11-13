@@ -32,12 +32,15 @@ var (
 
 // GuideInput is the account's state in one guide.
 type GuideInput struct {
-	Guide      *content.Guide
-	Verdicts   Verdicts
-	Marks      map[string]Mark
-	LastStatus map[string]Status
-	Cursor     CursorRecord
-	Account    Account
+	Guide *content.Guide
+	// Verdicts are the stored verdicts with the owner's objective marks
+	// overlaid (Verdicts.WithOwner); OwnerMarked tells which keys they are.
+	Verdicts    Verdicts
+	OwnerMarked map[string]bool
+	Marks       map[string]Mark
+	LastStatus  map[string]Status
+	Cursor      CursorRecord
+	Account     Account
 	// Registry is the catalog with the quest requirements that block steps.
 	Registry *entities.Registry
 	// State is the account's current facts; with it, BuildBoard adds each

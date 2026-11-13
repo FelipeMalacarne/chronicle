@@ -17,7 +17,12 @@ type Input struct {
 	// Observations is the provenance of each fact in State.
 	Observations map[Fact]FactObservation
 	Objectives   map[string]ObjectiveRecord
-	Marks        map[StepRef]Mark
+	// OwnerObjectives are the objective keys the owner marked as already
+	// done (objective_marks), account-wide. They overlay the verdicts the
+	// steps and cursors read (Verdicts.WithOwner) but are not evidence: they
+	// never reach Objectives, the stored verdicts or the implied cascade.
+	OwnerObjectives map[string]bool
+	Marks           map[StepRef]Mark
 	// LastStatus is the to_status of the newest step_status_events row of
 	// each step; a step without events was Pending.
 	LastStatus map[StepRef]Status
@@ -27,6 +32,11 @@ type Input struct {
 	Goals   []string
 	Account Account
 	Now     time.Time
+	// StatusOnly re-derives the step statuses and cursors from the stored
+	// verdicts and OwnerObjectives, without evaluating objectives or running
+	// the cascade: what an owner objective mark or unmark changes. Its step
+	// events have cause user.
+	StatusOnly bool
 }
 
 // StepEvent is one step_status_events row.
@@ -77,7 +87,11 @@ func Reevaluate(in Input) Plan {
 			met[key] = rec
 		}
 	}
-	for _, key := range objectiveKeys(in.Guides, in.Registry, in.Goals) {
+	keys := objectiveKeys(in.Guides, in.Registry, in.Goals)
+	if in.StatusOnly {
+		keys = nil
+	}
+	for _, key := range keys {
 		k, err := entities.ParseObjectiveKey(key)
 		if err != nil {
 			continue
@@ -94,6 +108,11 @@ func Reevaluate(in Input) Plan {
 		}
 	}
 
+	// The owner's objective marks count as met from here on: for the step
+	// statuses, the blocked requirements and the cursor. met (the cascade's
+	// evidence) is left as it is.
+	verdicts = verdicts.WithOwner(in.OwnerObjectives)
+
 	for _, g := range in.Guides {
 		status := map[string]Status{}
 		implied := map[string]bool{}
@@ -106,7 +125,7 @@ func Reevaluate(in Input) Plan {
 			}
 			status[st.ID] = StepStatus(st, verdicts, mark)
 		}
-		if g.ID == in.Account.ActiveGuideID {
+		if g.ID == in.Account.ActiveGuideID && !in.StatusOnly {
 			for _, w := range cascade(g, status, in, met) {
 				plan.Marks = append(plan.Marks, w)
 				status[w.Ref.StepID] = Implied
@@ -128,6 +147,8 @@ func Reevaluate(in Input) Plan {
 				// A mark without a matching event (copied by a migration or
 				// moved by an alias): record it, it is not an engine change.
 				cause = CauseMigration
+			case in.StatusOnly:
+				cause = CauseUser
 			default:
 				plan.StepsChanged++
 			}

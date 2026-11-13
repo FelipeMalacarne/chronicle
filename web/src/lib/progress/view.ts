@@ -180,6 +180,8 @@ export interface Chip {
 	label: string;
 	verdict: Verdict;
 	view: VerdictView;
+	/** O dono marcou este objetivo como já feito (vale para a conta toda, sem evidência). */
+	ownerMarked: boolean;
 }
 
 /** Chips dos objetivos de um passo, com o veredito do board (ausente = não sabemos). */
@@ -209,7 +211,8 @@ export function chipsOf(
 			roleLabel: ROLE_LABEL[o.role] ?? o.role,
 			label: objectiveLabel(o.key, step.names),
 			verdict,
-			view: verdictView({ key: o.key, verdict, regressed: b?.regressed })
+			view: verdictView({ key: o.key, verdict, regressed: b?.regressed }),
+			ownerMarked: !!b?.owner_marked
 		};
 	});
 }

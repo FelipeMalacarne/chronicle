@@ -104,6 +104,14 @@ func (r *Repository) pinGoal(ctx context.Context, q *storedb.Queries, accountID,
 }
 
 func (r *Repository) objectiveMet(ctx context.Context, q *storedb.Queries, accountID, key string) (bool, error) {
+	// An objective the owner marked is met for goals too.
+	marked, err := loadObjectiveMarks(ctx, q, accountID)
+	if err != nil {
+		return false, err
+	}
+	if marked[key] {
+		return true, nil
+	}
 	rows, err := q.ListObjectiveProgress(ctx, accountID)
 	if err != nil {
 		return false, fmt.Errorf("list objective progress: %w", err)

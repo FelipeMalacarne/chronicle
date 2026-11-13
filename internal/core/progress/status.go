@@ -19,6 +19,25 @@ func (v Verdicts) Of(key string) rules.Verdict {
 	return rules.Unknown
 }
 
+// WithOwner returns a copy of v where every key the owner marked as already
+// done reads as met (docs/09 section 5, owner decision of 2026-11-13). The mark
+// is an input of the derivation, never evidence: it is not written to
+// objective_progress and the stored verdict stays what the facts proved. A
+// marked requires objective (or catalog requirement) therefore stops blocking
+// a step, like a met one; a key met by evidence and marked just stays met.
+func (v Verdicts) WithOwner(marked map[string]bool) Verdicts {
+	out := make(Verdicts, len(v)+len(marked))
+	for k, verdict := range v {
+		out[k] = verdict
+	}
+	for k, ok := range marked {
+		if ok {
+			out[k] = rules.Met
+		}
+	}
+	return out
+}
+
 // StepStatus derives the status of a step (docs/09 section 5): the mark wins;
 // otherwise AutoDone when the step has completing objectives and all of them
 // are met; otherwise Pending. A step without completing objectives is a

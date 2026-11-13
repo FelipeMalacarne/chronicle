@@ -30,7 +30,7 @@ GROUPS = {
     "estado_da_conta": ["observations", "player_state", "ingest_container_freshness"],
     "conteudo_indexado": ["guides", "content_versions", "content_steps", "step_id_aliases"],
     "progresso": [
-        "objective_progress", "objective_progress_events", "mark_commands", "step_marks", "step_status_events",
+        "objective_progress", "objective_marks", "objective_progress_events", "mark_commands", "step_marks", "step_status_events",
         "route_cursor",
     ],
     "metas_e_caches": ["goals", "wiki_cache", "graph_cache"],

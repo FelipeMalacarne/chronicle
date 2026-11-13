@@ -115,6 +115,9 @@ func (r *Repository) engineInput(ctx context.Context, q *storedb.Queries, accoun
 	if in.Objectives, err = loadObjectives(ctx, q, accountID); err != nil {
 		return in, err
 	}
+	if in.OwnerObjectives, err = loadObjectiveMarks(ctx, q, accountID); err != nil {
+		return in, err
+	}
 	if in.Marks, err = loadMarks(ctx, q, accountID); err != nil {
 		return in, err
 	}

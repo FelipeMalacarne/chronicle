@@ -14,6 +14,9 @@ type ObjectiveState struct {
 	Verdict rules.Verdict `json:"verdict"`
 	// Regressed: met with evidence earlier, not holding in the latest facts.
 	Regressed bool `json:"regressed,omitempty"`
+	// OwnerMarked: the owner marked the objective as already done; the
+	// verdict reads met, but there is no evidence behind it.
+	OwnerMarked bool `json:"owner_marked,omitempty"`
 	// Observed is the current value of a numeric objective (ObservedValue);
 	// absent without one, without a known current value, or when the board
 	// was built without the account's facts (GuideInput.State).
@@ -127,7 +130,7 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 		for _, o := range st.Objectives {
 			key := o.Key.String()
 			s.Objectives = append(s.Objectives, ObjectiveState{
-				Key: key, Role: o.Role, Verdict: in.Verdicts.Of(key), Regressed: regressed[key], Observed: observe(o),
+				Key: key, Role: o.Role, Verdict: in.Verdicts.Of(key), Regressed: regressed[key], OwnerMarked: in.OwnerMarked[key], Observed: observe(o),
 			})
 		}
 		out.Steps = append(out.Steps, s)

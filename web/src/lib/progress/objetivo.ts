@@ -21,6 +21,8 @@ export interface GoalView {
 	/** "240 / 1.250", "feito", "falta" ou "não sabemos". */
 	text: string;
 	title: string;
+	/** Marcado pelo dono: "feito" sem evidência, com a opção de desfazer. */
+	ownerMarked: boolean;
 }
 
 export interface GoalGroup {
@@ -68,7 +70,8 @@ export function goalView(chip: Chip, observed?: ObservedValue): GoalView {
 	const base = {
 		key: chip.key,
 		ref: chip.ref,
-		role: chip.role
+		role: chip.role,
+		ownerMarked: chip.ownerMarked
 	};
 	const hint = chip.view.hint ? ` · ${chip.view.hint}` : '';
 	if (chip.verdict === 'met')
@@ -78,7 +81,7 @@ export function goalView(chip: Chip, observed?: ObservedValue): GoalView {
 			cls: 'met',
 			pct: 100,
 			text: VERDICT_TEXT.met,
-			title: `${chip.roleLabel} ${chip.label} · feito${hint}`
+			title: `${chip.roleLabel} ${chip.label} · ${chip.ownerMarked ? 'marcado por você' : 'feito'}${hint}`
 		};
 	if (chip.verdict === 'unknown')
 		return {

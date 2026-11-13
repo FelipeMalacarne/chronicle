@@ -34,7 +34,9 @@
 		ondone,
 		onskip,
 		onundo,
-		onpin
+		onpin,
+		onobjmark,
+		onobjunmark
 	}: {
 		step: ContentStep;
 		board: BoardStep | undefined;
@@ -50,6 +52,8 @@
 		onskip: () => void;
 		onundo: () => void;
 		onpin: () => void;
+		onobjmark?: (key: string, label: string) => void;
+		onobjunmark?: (key: string, label: string) => void;
 	} = $props();
 
 	const chips = $derived(chipsOf(step, board));
@@ -143,7 +147,13 @@
 	<h2 class:long={headline.length > 220}>{@render text(piecesAt(headline, headlineAt))}</h2>
 
 	{#if chips.length}
-		<GoalGrid {chips} objectives={board?.objectives} />
+		<GoalGrid
+			{chips}
+			objectives={board?.objectives}
+			{busy}
+			onmark={onobjmark}
+			onunmark={onobjunmark}
+		/>
 	{:else}
 		<p class="mu none">Nada aqui dá para detectar sozinho. Marque quando terminar.</p>
 	{/if}

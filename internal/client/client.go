@@ -281,6 +281,36 @@ func (c *Client) Mark(ctx context.Context, guide, stepID string, kind coreprogre
 	return c.do(ctx, http.MethodPatch, "/api/guides/"+url.PathEscape(guide)+"/steps/"+url.PathEscape(stepID)+"/mark", q, body, nil)
 }
 
+// ObjectiveMark is what an objective mark or unmark did.
+type ObjectiveMark struct {
+	Key          string `json:"key"`
+	Marked       bool   `json:"marked"`
+	StepsChanged int    `json:"steps_changed"`
+}
+
+// MarkObjective is PUT /api/objectives/mark: the owner's mark on an objective
+// (satisfied for the whole account, not evidence).
+func (c *Client) MarkObjective(ctx context.Context, key, note string) (ObjectiveMark, error) {
+	var out ObjectiveMark
+	q, err := c.accountQuery(ctx)
+	if err != nil {
+		return out, err
+	}
+	err = c.do(ctx, http.MethodPut, "/api/objectives/mark", q, map[string]string{"key": key, "note": note}, &out)
+	return out, err
+}
+
+// UnmarkObjective is POST /api/objectives/unmark.
+func (c *Client) UnmarkObjective(ctx context.Context, key string) (ObjectiveMark, error) {
+	var out ObjectiveMark
+	q, err := c.accountQuery(ctx)
+	if err != nil {
+		return out, err
+	}
+	err = c.do(ctx, http.MethodPost, "/api/objectives/unmark", q, map[string]string{"key": key}, &out)
+	return out, err
+}
+
 // Goal is one of the account's goals.
 type Goal struct {
 	ID         string     `json:"id"`

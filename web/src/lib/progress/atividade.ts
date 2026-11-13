@@ -4,7 +4,7 @@
  * Puro, testado com node --test.
  */
 import type { Run } from '../api/microbot.ts';
-import { shortQty } from './conta.ts';
+import { compact } from './ritmo.ts';
 import { hhmm, runItem, skillName, type ResultTone } from './historico.ts';
 import type { AccountView, FleetRhythm, LevelEvent } from './types.ts';
 
@@ -97,7 +97,7 @@ export function xpRows(
 			account: a.account,
 			rsn: names[a.account] ?? a.account,
 			xp: a.today.xp,
-			label: shortQty(a.today.xp),
+			label: compact(a.today.xp),
 			pct: top ? Math.max(2, Math.round((100 * a.today.xp) / top)) : 0
 		}))
 		.sort((a, b) => b.xp - a.xp || a.rsn.localeCompare(b.rsn));

@@ -155,7 +155,7 @@
 		<section class="sum7" aria-label="Resumo do personagem">
 			{#each cells as c (c.k)}
 				<div class="kv">
-					<span class="k">{c.k}</span><span class="v"
+					<span class="k">{c.k}</span><span class="val"
 						>{c.v}{#if c.of}
 							<small>{c.of}</small>{/if}</span
 					>

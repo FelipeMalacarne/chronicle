@@ -337,7 +337,7 @@
 						{#if stats.length}
 							<div class="stats">
 								{#each stats as st (st.k)}
-									<div class="kv"><span class="k">{st.k}</span><span class="v">{st.v}</span></div>
+									<div class="kv"><span class="k">{st.k}</span><span class="val">{st.v}</span></div>
 								{/each}
 							</div>
 						{/if}
@@ -595,7 +595,8 @@
 			animation: none !important;
 		}
 	}
-	.stats .kv .v {
+	/* Not `.v`: that global class is the verdict circle. */
+	.stats .kv .val {
 		font:
 			700 18px/1.1 Alegreya,
 			Georgia,

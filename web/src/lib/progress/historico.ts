@@ -6,7 +6,7 @@
  */
 import type { AuditEntry, Run } from '../api/microbot.ts';
 import { auditLine } from './automacao.ts';
-import { shortQty } from './conta.ts';
+import { compact } from './ritmo.ts';
 import { RUN_LABEL, runFinal, runOutcome } from './fazer.ts';
 import { duration } from './relogios.ts';
 import type { LevelEvent, SkillGain } from './types.ts';
@@ -367,7 +367,7 @@ export function daySummary(items: FeedItem[], xp?: number | null): string {
 	const n = (k: FeedKind) => items.filter((i) => i.kind === k).length;
 	const problems = items.filter((i) => i.problem).length;
 	return [
-		xp ? `${shortQty(xp)} xp` : n('level') ? plural(n('level'), 'nível', 'níveis') : '',
+		xp ? `${compact(xp)} xp` : n('level') ? plural(n('level'), 'nível', 'níveis') : '',
 		n('run') ? plural(n('run'), 'execução', 'execuções') : '',
 		problems ? plural(problems, 'problema', 'problemas') : ''
 	]
@@ -448,6 +448,6 @@ export function weekGains(skills: SkillGain[]): GainRow[] {
 			name: skillName(s.skill),
 			levels: s.to_level > s.from_level ? `${s.from_level} → ${s.to_level}` : String(s.to_level),
 			up: s.to_level > s.from_level,
-			xp: `+${shortQty(s.xp)}`
+			xp: `+${compact(s.xp)}`
 		}));
 }

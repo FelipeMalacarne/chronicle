@@ -32,7 +32,7 @@ var Types = []string{TypeTravel, TypeBank, TypeBuy}
 
 // Bounds of what a task may ask.
 const (
-	MaxPolygon  = 64
+	MaxPolygon  = 256 // points: Lumbridge Swamp has 102
 	MaxAreaSide = 256 // tiles: a location's area, never a region
 	MaxBank     = 39  // 28 inventory slots and 11 equipment slots
 	MaxIDs      = 16  // candidate ids of one bank item (any_of, a family)

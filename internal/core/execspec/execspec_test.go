@@ -84,7 +84,7 @@ func TestCheck(t *testing.T) {
 		{"empty box", tr(func(v *Travel) { v.Area.MinX = v.Area.MaxX + 1 }), "empty"},
 		{"outside", tr(func(v *Travel) { v.Target = Tile{X: 3199, Y: 3236} }), "not inside"},
 		{"polygon point", tr(func(v *Travel) { v.Area.Polygon[0] = [2]int{3000, 3000} }), "outside the box"},
-		{"two points", tr(func(v *Travel) { v.Area.Polygon = v.Area.Polygon[:2] }), "3 to 64"},
+		{"two points", tr(func(v *Travel) { v.Area.Polygon = v.Area.Polygon[:2] }), "3 to 256"},
 		{"hidden wilderness", Task{Type: TypeTravel, Travel: func() *Travel { v := mageBank(); v.Wilderness = false; return v }()}, "wilderness flag"},
 		{"no items", bk(func(v *Bank) { v.Items = nil }), "1 to 39"},
 		{"no ids", bk(func(v *Bank) { v.Items[0].IDs = nil }), "1 to 16 ids"},

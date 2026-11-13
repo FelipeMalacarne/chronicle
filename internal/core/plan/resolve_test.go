@@ -1,7 +1,10 @@
 package plan
 
 import (
+	"encoding/json"
 	"errors"
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -116,6 +119,50 @@ func TestResolve(t *testing.T) {
 	}
 	if _, _, err := Resolve(input(route, content.ModeIronman, nil, nil), "step:t::zz#0"); !errors.Is(err, ErrNotATask) {
 		t.Errorf("unknown key: %v", err)
+	}
+}
+
+// TestResolveEveryMappedLocation: a travel to any location the catalog
+// maps resolves to a task the agent and the plugin accept (the area's size
+// and polygon within bounds, a target inside it, the wilderness flag).
+func TestResolveEveryMappedLocation(t *testing.T) {
+	c, reg := load(t)
+	raw, err := os.ReadFile(filepath.Join("..", "..", "..", "content", "reference", "location_maps.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var maps struct {
+		Maps []struct {
+			ID   string          `json:"id"`
+			Area json.RawMessage `json:"area"`
+		} `json:"maps"`
+	}
+	if err := json.Unmarshal(raw, &maps); err != nil {
+		t.Fatal(err)
+	}
+	ps := rules.PlayerState{Catalog: reg}
+	n := 0
+	for _, m := range maps.Maps {
+		if len(m.Area) == 0 {
+			continue
+		}
+		task := content.Task{Type: content.TaskTravel, Location: ref("location:" + m.ID)}
+		in := Input{
+			Plan: Plan{ID: "pln_test0001", Kind: KindCustom, Items: []Item{{Kind: ItemTask, Task: &task}}}, Content: c, Registry: reg,
+			Facts: panel.Facts{Mode: content.ModeIronman, State: &ps}, Now: now,
+		}
+		spec, _, err := Resolve(in, "task:0#0")
+		if err != nil {
+			t.Errorf("%s: %v", m.ID, err)
+			continue
+		}
+		if spec.Travel.Wilderness != slices.Contains(spec.Risks(), "wilderness") {
+			t.Errorf("%s: wilderness flag and risks disagree", m.ID)
+		}
+		n++
+	}
+	if n < 80 {
+		t.Fatalf("only %d mapped locations resolved", n)
 	}
 }
 

@@ -139,6 +139,34 @@ func TestRecordRunPostgres(t *testing.T) {
 	}
 }
 
+// TestTaskRunPostgres: a task run (docs/10 phase 3) keeps its task in the
+// history, and a plugin's run has none.
+func TestTaskRunPostgres(t *testing.T) {
+	ctx := context.Background()
+	repo := setup(ctx, t)
+	start := time.Now().UTC().Truncate(time.Second)
+	task := agent.Run{
+		ID: "run-1", UID: "aa11bb22cc33dd44", ClassName: agent.ChronicleLinkClass, Stop: []string{}, State: agent.RunDone,
+		StartedAt: start, FinishedAt: &start,
+		Task:   &agent.RunTask{Key: "step:oziris-main::1.1.3#0", Plan: "route:oziris-main", Type: "travel", Label: "Ir até Lumbridge"},
+		Events: []agent.RunEvent{{At: start, State: agent.RunDone, Text: "o executor terminou"}},
+	}
+	if _, _, err := repo.RecordRun(ctx, "acc_a", "zaros", task); err != nil {
+		t.Fatal(err)
+	}
+	plugin := agent.Run{ID: "run-2", UID: "aa11bb22cc33dd45", ClassName: catSwap, Stop: []string{}, State: agent.RunWaiting, StartedAt: start.Add(time.Second), Events: []agent.RunEvent{}}
+	if _, _, err := repo.RecordRun(ctx, "acc_a", "zaros", plugin); err != nil {
+		t.Fatal(err)
+	}
+	runs, err := repo.Runs(ctx, "acc_a", 10)
+	if err != nil || len(runs) != 2 {
+		t.Fatalf("runs = %+v, %v", runs, err)
+	}
+	if runs[0].Task != nil || runs[1].Task == nil || *runs[1].Task != *task.Task {
+		t.Fatalf("tasks = %+v, %+v", runs[0].Task, runs[1].Task)
+	}
+}
+
 func recurringRoutine(name, clock string, interval, priority int) agent.Recurring {
 	return agent.Recurring{
 		Name: name, Enabled: true, Clock: clock, IntervalMin: interval, Priority: priority,

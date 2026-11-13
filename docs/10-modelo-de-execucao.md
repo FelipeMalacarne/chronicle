@@ -354,6 +354,23 @@ atribuição de cada passo aparece na tela.
   `chronicle now` mostra a mesma lista. O JSON está fixado nos dois lados: o `TestAssistedModeWire`
   grava `route-tasks.json` nos recursos de teste do plugin, que o `RouteWindowTest` lê. Destacar o NPC
   ou o objeto, desenhar o caminho e agir ficam para as fases seguintes.
+  **Como implementado (fase 3, o comando de tarefa, 2026-11-13).** O servidor decide o quê e o agent
+  carrega, sem interpretar (detalhes no doc 08, "Fase 3 do doc 10"):
+
+  1. `POST /api/microbot/task?account=` pega a próxima tarefa do plano ativo (seção 9) e recusa com
+     409, sem falar com o agent: sem tarefa a fazer, tarefa diferente da que o chamador viu, tipo que
+     o executor não roda, ou HCIM com risco de morte sem `supervised` (E9).
+  2. `plan.Resolve` traduz a tarefa para o `execspec.Task` (`internal/core/execspec`): a área e um tile
+     dentro dela, os itens com os ids aceitos, os lojistas e quanto falta comprar. Uma tarefa já `met`
+     não roda.
+  3. O comando `task_run` da lista fechada valida tudo de novo, E9 incluída, e roda como um run do
+     doc 08: ponto seguro, trilha, timeout, cancelamento, histórico e auditoria. Ele inicia a máquina
+     do Chronicle Link pela ponte e acompanha as linhas dela.
+
+  O `done` do run é o plugin terminando a máquina, nunca a tarefa cumprida: `GET /api/microbot/task`
+  devolve a `proof`, a tarefa avaliada agora sobre o que o ingest provou, e `proven` só com o término
+  `met`. Sem tela na web (o botão "Executar" pede o canvas): a CLI `chronicle task` lista, executa,
+  acompanha e cancela.
 - **Vários personagens:** catálogos e receitas compartilhados; por conta ficam modo, fatos, plano ativo
   e cliente (`clients`). O agent gerencia N clientes, com um executor e um lock por cliente.
 - **Risco:** toda receita declara riscos; em HCIM, risco de morte bloqueia execução sem supervisão. O

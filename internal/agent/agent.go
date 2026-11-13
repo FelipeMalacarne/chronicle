@@ -95,6 +95,8 @@ type Executor struct {
 	recur recurrer
 	// now is the recurring watcher's clock (tests); nil is time.Now.
 	now func() time.Time
+	// taskTimeout, when set, bounds every task run (tests).
+	taskTimeout time.Duration
 }
 
 // Execute runs one command of the closed list.
@@ -108,6 +110,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 	switch command {
 	case CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel:
 		return e.runCommand(command, params)
+	case CmdTaskRun:
+		return e.taskRun(params)
 	case CmdTriggerGet, CmdTriggerSet, CmdRoutinesSync:
 		return e.triggerCommand(command, params)
 	case CmdRecurringGet:

@@ -41,6 +41,13 @@ func (m *memPlans) Active(_ context.Context, account string) (plan.Plan, error) 
 	return plan.Plan{ID: plan.RouteID("oziris-main"), Kind: plan.KindRoute, Guide: "oziris-main"}, nil
 }
 
+func (m *memPlans) Get(ctx context.Context, account, id string) (plan.Plan, error) {
+	if id != plan.RouteID("oziris-main") {
+		return plan.Plan{}, storeplans.ErrPlanNotFound
+	}
+	return m.Active(ctx, account)
+}
+
 func (m *memPlans) Create(_ context.Context, _ string, in storeplans.NewPlan) (plan.Plan, error) {
 	m.created = append(m.created, in)
 	return plan.Plan{ID: "pln_mem00001", Kind: in.Kind, Title: in.Title}, nil

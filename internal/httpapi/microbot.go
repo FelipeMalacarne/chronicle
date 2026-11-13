@@ -131,6 +131,13 @@ func (s *Server) microbotRoutes() {
 	control("POST /api/microbot/scripts/pause", s.microbotAction(agent.CmdScriptsPause, 20*time.Second))
 	control("POST /api/microbot/scripts/resume", s.microbotAction(agent.CmdScriptsResume, 20*time.Second))
 	control("POST /api/microbot/config", s.microbotAction(agent.CmdConfigSet, 20*time.Second))
+	// The plan's typed task (docs/10 phase 3): always ?account=, whose
+	// active plan gives the task; the start is audited, the status proves
+	// its termination from the ingest; cancel is POST /api/microbot/run/cancel.
+	if s.opts.Plans != nil && s.opts.Progress != nil {
+		control("POST /api/microbot/task", s.handleTaskRun)
+		control("GET /api/microbot/task", s.handleTaskStatus)
+	}
 	// Game actions (docs/08): POST /api/microbot/game/<command>.
 	for _, cmd := range agent.GameActions {
 		control("POST /api/microbot/game/"+cmd, s.microbotAction(cmd, 30*time.Second))

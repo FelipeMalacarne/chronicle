@@ -10,6 +10,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 	"github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	"github.com/FelipeMalacarne/chronicle/internal/core/progress"
@@ -415,7 +416,7 @@ func TestWilderness(t *testing.T) {
 		{2944, 3525, true},   // the corner
 		{3000, 10376, false}, // past the underground
 	} {
-		if got := InWilderness(tc.x, tc.y); got != tc.want {
+		if got := execspec.InWilderness(tc.x, tc.y); got != tc.want {
 			t.Errorf("InWilderness(%d, %d) = %v", tc.x, tc.y, got)
 		}
 	}

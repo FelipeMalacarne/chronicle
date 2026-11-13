@@ -75,7 +75,10 @@ type Run struct {
 	Trigger string `json:"trigger,omitempty"`
 	// Routine is the recurring routine that started the run (its id); empty
 	// otherwise.
-	Routine    string     `json:"routine,omitempty"`
+	Routine string `json:"routine,omitempty"`
+	// Task is the typed task of a task run (CmdTaskRun); nil for a plugin's
+	// run.
+	Task       *RunTask   `json:"task,omitempty"`
 	State      string     `json:"state"`
 	StartedAt  time.Time  `json:"startedAt"`
 	FinishedAt *time.Time `json:"finishedAt,omitempty"`
@@ -207,6 +210,14 @@ type runOrigin struct {
 
 // startRun starts a run of validated params.
 func (e *Executor) startRun(p RunParams, origin runOrigin) (*Run, error) {
+	run := Run{ClassName: p.ClassName, Stop: append([]string{}, p.Stop...), Trigger: origin.trigger, Routine: origin.routine}
+	return e.launch(run, origin.why, func(ctx context.Context) { e.drive(ctx, p) })
+}
+
+// launch starts a run: the next id, a new uid, the waiting state and the
+// first line of its trail (why, when given), then drive in its goroutine.
+// Refused while another run is going: one run per client.
+func (e *Executor) launch(run Run, why string, drive func(ctx context.Context)) (*Run, error) {
 	r := &e.runs
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -219,22 +230,20 @@ func (e *Executor) startRun(p RunParams, origin runOrigin) (*Run, error) {
 	ctx, cancel := context.WithCancel(context.Background())
 	r.cancel = cancel
 	now := time.Now().UTC()
-	r.run = &Run{
-		ID:        "run-" + strconv.Itoa(r.seq),
-		UID:       newID(),
-		ClassName: p.ClassName,
-		Stop:      append([]string{}, p.Stop...),
-		Trigger:   origin.trigger,
-		Routine:   origin.routine,
-		State:     RunWaiting,
-		StartedAt: now,
-		Events:    []RunEvent{},
+	run.ID = "run-" + strconv.Itoa(r.seq)
+	run.UID = newID()
+	run.State = RunWaiting
+	run.StartedAt = now
+	run.Events = []RunEvent{}
+	if run.Stop == nil {
+		run.Stop = []string{}
 	}
-	if origin.why != "" {
-		r.run.Events = append(r.run.Events, RunEvent{At: now, State: RunWaiting, Text: origin.why})
+	r.run = &run
+	if why != "" {
+		r.run.Events = append(r.run.Events, RunEvent{At: now, State: RunWaiting, Text: why})
 	}
 	e.saveRuns()
-	go e.drive(ctx, p)
+	go drive(ctx)
 	return r.snapshot(), nil
 }
 
@@ -253,6 +262,10 @@ func (r *runner) snapshot() *Run {
 	c := *r.run
 	c.Stop = slices.Clone(r.run.Stop)
 	c.Events = slices.Clone(r.run.Events)
+	if r.run.Task != nil {
+		t := *r.run.Task
+		c.Task = &t
+	}
 	return &c
 }
 

@@ -1,0 +1,258 @@
+{
+  "starts": [
+    {
+      "id": "5f2a9c0d11e84b7a",
+      "task": {
+        "type": "travel",
+        "travel": {
+          "location": "location:lumbridge_castle",
+          "name": "Lumbridge Castle",
+          "target": {
+            "x": 3217,
+            "y": 3219,
+            "plane": 0
+          },
+          "area": {
+            "plane": 0,
+            "minX": 3199,
+            "minY": 3201,
+            "maxX": 3231,
+            "maxY": 3237,
+            "polygon": [
+              [
+                3204,
+                3237
+              ],
+              [
+                3201,
+                3234
+              ],
+              [
+                3201,
+                3220
+              ],
+              [
+                3199,
+                3219
+              ],
+              [
+                3201,
+                3217
+              ],
+              [
+                3201,
+                3204
+              ],
+              [
+                3204,
+                3201
+              ],
+              [
+                3226,
+                3201
+              ],
+              [
+                3231,
+                3206
+              ],
+              [
+                3231,
+                3232
+              ],
+              [
+                3226,
+                3237
+              ]
+            ]
+          },
+          "wilderness": false
+        }
+      }
+    },
+    {
+      "id": "5f2a9c0d11e84b7b",
+      "task": {
+        "type": "travel",
+        "travel": {
+          "location": "location:mage_bank",
+          "name": "Mage Bank",
+          "target": {
+            "x": 3090,
+            "y": 3956,
+            "plane": 0
+          },
+          "area": {
+            "plane": 0,
+            "minX": 3087,
+            "minY": 3953,
+            "maxX": 3093,
+            "maxY": 3959
+          },
+          "wilderness": true
+        }
+      }
+    },
+    {
+      "id": "5f2a9c0d11e84b7c",
+      "task": {
+        "type": "bank",
+        "bank": {
+          "items": [
+            {
+              "name": "Hammer",
+              "ids": [
+                2347
+              ],
+              "qty": 1
+            },
+            {
+              "name": "Coins",
+              "ids": [
+                995
+              ],
+              "qty": 2500
+            },
+            {
+              "name": "Raw shrimps",
+              "ids": [
+                317
+              ],
+              "qty": 50,
+              "noted": true
+            },
+            {
+              "name": "Axe",
+              "ids": [
+                1359,
+                1357,
+                1355,
+                1353,
+                1349,
+                1351
+              ],
+              "qty": 1,
+              "equip": true
+            },
+            {
+              "name": "Prayer potion",
+              "ids": [
+                2434,
+                139,
+                141,
+                143
+              ],
+              "qty": 2,
+              "optional": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "5f2a9c0d11e84b7d",
+      "task": {
+        "type": "buy",
+        "buy": {
+          "shop": "shop:bobs_brilliant_axes",
+          "shopName": "Bob's Brilliant Axes",
+          "npcs": [
+            2812,
+            10619
+          ],
+          "item": 1351,
+          "itemName": "Bronze axe",
+          "qty": 1
+        }
+      }
+    }
+  ],
+  "wilderness": [
+    {
+      "x": 3093,
+      "y": 3957,
+      "in": true
+    },
+    {
+      "x": 3080,
+      "y": 3492,
+      "in": false
+    },
+    {
+      "x": 3080,
+      "y": 3525,
+      "in": true
+    },
+    {
+      "x": 3080,
+      "y": 3524,
+      "in": false
+    },
+    {
+      "x": 2943,
+      "y": 3600,
+      "in": false
+    },
+    {
+      "x": 3391,
+      "y": 3972,
+      "in": true
+    },
+    {
+      "x": 3392,
+      "y": 3700,
+      "in": false
+    },
+    {
+      "x": 3391,
+      "y": 3973,
+      "in": false
+    },
+    {
+      "x": 3045,
+      "y": 10340,
+      "in": true
+    },
+    {
+      "x": 3200,
+      "y": 9900,
+      "in": false
+    },
+    {
+      "x": 3461,
+      "y": 10375,
+      "in": true
+    },
+    {
+      "x": 3462,
+      "y": 10000,
+      "in": false
+    },
+    {
+      "x": 2944,
+      "y": 9918,
+      "in": true
+    },
+    {
+      "x": 3188,
+      "y": 3220,
+      "in": false
+    }
+  ],
+  "refused": [
+    {
+      "type": "talk"
+    },
+    {
+      "type": "train"
+    },
+    {
+      "type": "travel"
+    },
+    {
+      "type": "bank",
+      "bank": {
+        "items": null
+      }
+    }
+  ]
+}

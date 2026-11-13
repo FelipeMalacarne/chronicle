@@ -17,6 +17,7 @@ import (
 type PlanStore interface {
 	List(ctx context.Context, account string) (storeplans.List, error)
 	Active(ctx context.Context, account string) (plan.Plan, error)
+	Get(ctx context.Context, account, id string) (plan.Plan, error)
 	Create(ctx context.Context, account string, in storeplans.NewPlan) (plan.Plan, error)
 	Delete(ctx context.Context, account, id string) error
 	SetActive(ctx context.Context, account, id string) (plan.Plan, error)
@@ -67,6 +68,12 @@ func (s *Server) planInput(ctx context.Context, account string) (plan.Input, err
 	if err != nil {
 		return plan.Input{}, err
 	}
+	return s.planInputFor(ctx, account, p)
+}
+
+// planInputFor is planInput for one plan of the account.
+func (s *Server) planInputFor(ctx context.Context, account string, p plan.Plan) (plan.Input, error) {
+	var err error
 	boards := map[string]plan.Board{}
 	for _, guide := range storeplans.Guides(p) {
 		if _, ok := s.opts.Content.Guide(guide); !ok {

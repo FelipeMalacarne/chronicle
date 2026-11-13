@@ -220,6 +220,44 @@
         "bruh-3.2-3eced1efbd16",
         "bruh-2.1-416becab96cd"
       ]
+    },
+    {
+      "id": "items-to-obtain-are-objectives",
+      "question": "Itens que o passo manda obter (comprar, pegar, fazer, \"Grab 110 logs\", \"buy herb sack\") entram como objetivo ou só em items?",
+      "answer": "Entram como objetivo item completes (com a quantidade do texto), além de items quando forem requisito de inventário. Se o item já foi pego e consumido, o dono marca o passo à mão (a marca manual vence o motor). Itens só consumidos ou usados no passo continuam só em items; o 'uses' fica para \"guardar para depois\".",
+      "scope": "bruhsailer-main, todas as seções: itens a obter",
+      "decided_at": "2026-11-13"
+    },
+    {
+      "id": "recommended-grind-lists-are-objectives",
+      "question": "As listas de \"recomendado pegar no grind\" (ex.: Wintertodt: 50 uncut rubies, 16 magic logs) viram objetivos de item?",
+      "answer": "Sim: item completes com a quantidade do texto (o mínimo quando o texto diz \"at least\"). \"Quanto mais melhor\" sem número fica de fora. O dono marca o passo à mão se já usou tudo. Itens opcionais (\"Optionally\") não entram.",
+      "scope": "bruhsailer-main, todas as seções: listas de itens recomendados em passos de grind",
+      "decided_at": "2026-11-13",
+      "step_ids": [
+        "bruh-1.1-2a46d8b587d2"
+      ]
+    },
+    {
+      "id": "optional-and-conditional-goals-are-objectives",
+      "question": "Metas opcionais ou condicionais (\"optional but recommended: 98 agility\", \"se tiver o nível X\", Kandarin Hard, Hunter 42/49) viram objetivo?",
+      "answer": "Sim: completes com o número ou estado do texto (confidence medium, com esta decisão). Entre dois níveis alternativos (\"42 ou 49\", \"20k ou 70k sand\"), vale o menor. O dono marca o passo à mão se seguiu outro caminho. Substitui conditional-step-no-objectives e farm-for-drops-no-objectives onde o texto traz um alvo numérico explícito.",
+      "scope": "bruhsailer-main, todas as seções: metas opcionais ou condicionais com alvo explícito",
+      "decided_at": "2026-11-13"
+    },
+    {
+      "id": "derived-totals-are-targets",
+      "question": "Faixas e totais derivados do texto (\"3-5 cakes\", \"up to 106 tabs\", \"4 inventários de karambwan\", \"20 goblins\" para 20 bones) entram como quantidade?",
+      "answer": "Sim, com a conta feita (confidence medium, com esta decisão, e a conta no comment): inventário = 28 slots por inventário; kills x drop garantido = quantidade; \"up to N\" = N; faixa \"a-b\" = a (o menor). Sem número nem base de conta, fica de fora.",
+      "scope": "bruhsailer-main, todas as seções: faixas, \"up to N\" e totais derivados por conta simples",
+      "decided_at": "2026-11-13"
+    },
+    {
+      "id": "propose-missing-unlocks-and-items",
+      "question": "Unlocks e itens reais que o catálogo não tem (Bones to Peaches, Broader Fletching, Penguin suit, Fishcake, Bear ribs, premade blurb' sp) entram no catálogo?",
+      "answer": "Sim: propose_entity com confirmed_by owner para unlock e item real que falta (wiki_key da página própria), depois o passo é reenviado com o objetivo. O que não existe como entidade no jogo fica de fora.",
+      "scope": "bruhsailer-main, todas as seções: entidades ausentes do catálogo",
+      "decided_at": "2026-11-13"
     }
   ]
 }

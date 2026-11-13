@@ -3,7 +3,7 @@
   "kind": "section",
   "guide_id": "bruhsailer-main",
   "section_id": "bruh-3.2",
-  "skill_version": "annotate-guide@5",
+  "skill_version": "annotate-guide@6",
   "steps": [
     {
       "step_id": "bruh-3.2-fb4df86421f2",
@@ -23,7 +23,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "full-set-is-each-piece"
           }
@@ -42,7 +42,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "full-set-is-each-piece"
           }
@@ -61,7 +61,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "full-set-is-each-piece"
           }
@@ -80,7 +80,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "full-set-is-each-piece"
           }
@@ -99,7 +99,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -122,7 +122,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "conditional-checkpoint-completes"
           }
@@ -141,7 +141,26 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "boss:vorkath>=50",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Kill Vorkath up to 50 times",
+            "span": [
+              384,
+              411
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
           }
         },
         {
@@ -158,7 +177,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -175,7 +194,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -198,7 +217,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -217,7 +236,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -236,7 +255,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -255,7 +274,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -274,7 +293,26 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:27627x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for an ancient icon",
+            "span": [
+              335,
+              354
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
           }
         }
       ]
@@ -297,7 +335,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -314,7 +352,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -331,7 +369,26 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:444x42300",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy around 42.3k gold ores",
+            "span": [
+              277,
+              303
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "approximate-quantity-is-target"
           }
         },
         {
@@ -348,7 +405,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -365,7 +422,26 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "diary:ardougne:elite@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete the Ardougne Elite diary",
+            "span": [
+              1068,
+              1101
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
           }
         }
       ]
@@ -388,7 +464,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -405,7 +481,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -422,7 +498,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -439,7 +515,140 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:31823x50",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy 50 of the drink",
+            "span": [
+              1544,
+              1563
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
+          }
+        },
+        {
+          "key": "item:32404x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect the dragon salvaging hook schematic",
+            "span": [
+              895,
+              938
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "items-to-obtain-are-objectives"
+          }
+        },
+        {
+          "key": "item:32403x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect the eternal brazier schematic",
+            "span": [
+              4467,
+              4504
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "items-to-obtain-are-objectives"
+          }
+        },
+        {
+          "key": "item:32409x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect the dragon helm schematic",
+            "span": [
+              5608,
+              5641
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "items-to-obtain-are-objectives"
+          }
+        },
+        {
+          "key": "item:31959x16",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "16 ray barbs",
+            "span": [
+              2836,
+              2848
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "items-to-obtain-are-objectives"
+          }
+        },
+        {
+          "key": "item:31954x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 narwhal horn",
+            "span": [
+              3414,
+              3428
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "items-to-obtain-are-objectives"
+          }
+        },
+        {
+          "key": "item:31952x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "5 (or 10) swift albatross feathers",
+            "span": [
+              3064,
+              3098
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "agent-judgment-delegated"
           }
         }
       ],
@@ -448,7 +657,7 @@
         "source": {
           "method": "llm",
           "confidence": "medium",
-          "skill_version": "annotate-guide@5",
+          "skill_version": "annotate-guide@6",
           "confirmed_by": "owner"
         }
       }
@@ -478,7 +687,28 @@
     },
     {
       "step_id": "bruh-3.2-3358d877240e",
-      "text_hash": "sha256:b5e38c03560b62aff21423270e104e03f51fbbd11cf06308e032325d1231c841"
+      "text_hash": "sha256:b5e38c03560b62aff21423270e104e03f51fbbd11cf06308e032325d1231c841",
+      "objectives": [
+        {
+          "key": "item:11920x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Get a dragon pickaxe",
+            "span": [
+              2,
+              22
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "items-to-obtain-are-objectives"
+          }
+        }
+      ]
     },
     {
       "step_id": "bruh-3.2-95ee132cd3e3",
@@ -486,7 +716,47 @@
     },
     {
       "step_id": "bruh-3.2-d7707077e8fe",
-      "text_hash": "sha256:289d3df185c8862f2e750c3f152c22e90c541e4b7c10c95b39da831ba77154af"
+      "text_hash": "sha256:289d3df185c8862f2e750c3f152c22e90c541e4b7c10c95b39da831ba77154af",
+      "objectives": [
+        {
+          "key": "diary:falador:elite@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete the remaining tasks for the Falador and Kandarin Elite diaries",
+            "span": [
+              2,
+              73
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        },
+        {
+          "key": "diary:kandarin:elite@complete",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Complete the remaining tasks for the Falador and Kandarin Elite diaries",
+            "span": [
+              2,
+              73
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        }
+      ]
     },
     {
       "step_id": "bruh-3.2-3eced1efbd16",
@@ -506,20 +776,100 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "conditional-checkpoint-completes"
+          }
+        },
+        {
+          "key": "skill:crafting>=93",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for level 93 crafting",
+            "span": [
+              22,
+              43
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
           }
         }
       ]
     },
     {
       "step_id": "bruh-3.2-fde1d3314bd8",
-      "text_hash": "sha256:09a9abc0dad75689583260e16e5d4c8c3a4487dee6ed95b715440133592eb146"
+      "text_hash": "sha256:09a9abc0dad75689583260e16e5d4c8c3a4487dee6ed95b715440133592eb146",
+      "objectives": [
+        {
+          "key": "skill:runecraft>=90",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "complete level 90 or 95 runecrafting",
+            "span": [
+              523,
+              559
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        },
+        {
+          "key": "item:27279x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to obtain the thread of Elidinis",
+            "span": [
+              445,
+              477
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        }
+      ]
     },
     {
       "step_id": "bruh-3.2-b616aaa52167",
-      "text_hash": "sha256:81c6d6d0d626a819aaaca4e6219195c690d31401b4522c994306396f315a6011"
+      "text_hash": "sha256:81c6d6d0d626a819aaaca4e6219195c690d31401b4522c994306396f315a6011",
+      "objectives": [
+        {
+          "key": "item:family/pharaohs_sceptrex2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "do Pyramid Plunder for a second sceptre",
+            "span": [
+              44,
+              83
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        }
+      ]
     },
     {
       "step_id": "bruh-3.2-15c96591367f",
@@ -539,7 +889,408 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        }
+      ],
+      "items": [
+        {
+          "name": "Pharaoh's sceptre",
+          "family": "pharaohs_sceptre",
+          "qty": 1,
+          "source_text": "1 Pharaoh’s sceptre",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 Pharaoh’s sceptre",
+            "span": [
+              693,
+              714
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Astral rune",
+          "item_id": 9075,
+          "qty": 10000,
+          "source_text": "10000 astral runes",
+          "evidence": {
+            "field": "/text",
+            "quote": "10000 astral runes",
+            "span": [
+              716,
+              734
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Ancient signet",
+          "item_id": 20611,
+          "qty": 1,
+          "source_text": "Ancient signet",
+          "evidence": {
+            "field": "/text",
+            "quote": "Ancient signet",
+            "span": [
+              736,
+              750
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Lunar signet",
+          "item_id": 20613,
+          "qty": 1,
+          "source_text": "Lunar signet",
+          "evidence": {
+            "field": "/text",
+            "quote": "Lunar signet",
+            "span": [
+              752,
+              764
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Limestone brick",
+          "item_id": 3420,
+          "qty": 5,
+          "source_text": "5 limestone bricks",
+          "evidence": {
+            "field": "/text",
+            "quote": "5 limestone bricks",
+            "span": [
+              766,
+              784
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Bucket of water",
+          "item_id": 1929,
+          "qty": 5,
+          "source_text": "5 buckets of water",
+          "evidence": {
+            "field": "/text",
+            "quote": "5 buckets of water",
+            "span": [
+              786,
+              804
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Soul rune",
+          "item_id": 566,
+          "qty": 1000,
+          "source_text": "1000 soul runes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1000 soul runes",
+            "span": [
+              806,
+              821
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Body rune",
+          "item_id": 559,
+          "qty": 1000,
+          "source_text": "1000 body runes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1000 body runes",
+            "span": [
+              823,
+              838
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Stamina potion",
+          "family": "stamina_potion",
+          "qty": 10,
+          "source_text": "10 stamina potions(4)",
+          "evidence": {
+            "field": "/text",
+            "quote": "10 stamina potions(4)",
+            "span": [
+              840,
+              861
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Prayer potion",
+          "family": "prayer_potion",
+          "qty": 10,
+          "source_text": "10 prayer potions(4)",
+          "evidence": {
+            "field": "/text",
+            "quote": "10 prayer potions(4)",
+            "span": [
+              863,
+              883
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Marble block",
+          "item_id": 8786,
+          "qty": 3,
+          "source_text": "3 marble blocks",
+          "evidence": {
+            "field": "/text",
+            "quote": "3 marble blocks",
+            "span": [
+              885,
+              900
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Super restore",
+          "family": "super_restore",
+          "qty": 10,
+          "source_text": "10 super restores(4)",
+          "evidence": {
+            "field": "/text",
+            "quote": "10 super restores(4)",
+            "span": [
+              902,
+              922
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Gold leaf",
+          "item_id": 8784,
+          "qty": 9,
+          "source_text": "9 gold leaves",
+          "evidence": {
+            "field": "/text",
+            "quote": "9 gold leaves",
+            "span": [
+              924,
+              937
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Anti-venom",
+          "family": "anti_venom",
+          "qty": 10,
+          "source_text": "10 anti-venom(4)",
+          "evidence": {
+            "field": "/text",
+            "quote": "10 anti-venom(4)",
+            "span": [
+              939,
+              955
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Blood rune",
+          "item_id": 565,
+          "qty": 1000,
+          "source_text": "1000 blood runes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1000 blood runes",
+            "span": [
+              957,
+              973
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Fairy enchantment",
+          "item_id": 20609,
+          "qty": 1,
+          "source_text": "1 Fairy enchantment",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 Fairy enchantment",
+            "span": [
+              989,
+              1008
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Mahogany plank",
+          "item_id": 8782,
+          "qty": 4,
+          "source_text": "4 mahogany planks",
+          "evidence": {
+            "field": "/text",
+            "quote": "4 mahogany planks",
+            "span": [
+              1010,
+              1027
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Combat bracelet",
+          "family": "combat_bracelet",
+          "qty": 5,
+          "source_text": "5 combat bracelets(4)",
+          "evidence": {
+            "field": "/text",
+            "quote": "5 combat bracelets(4)",
+            "span": [
+              1029,
+              1050
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Skills necklace",
+          "family": "skills_necklace",
+          "qty": 5,
+          "source_text": "5 skills necklaces(4)",
+          "evidence": {
+            "field": "/text",
+            "quote": "5 skills necklaces(4)",
+            "span": [
+              1052,
+              1073
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Amulet of glory",
+          "family": "amulet_of_glory",
+          "qty": 8,
+          "source_text": "8 Amulets of glory(4)",
+          "evidence": {
+            "field": "/text",
+            "quote": "8 Amulets of glory(4)",
+            "span": [
+              1075,
+              1096
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "name": "Ring of wealth",
+          "family": "ring_of_wealth",
+          "qty": 8,
+          "source_text": "8 Rings of wealth(5)",
+          "evidence": {
+            "field": "/text",
+            "quote": "8 Rings of wealth(5)",
+            "span": [
+              1101,
+              1121
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ]

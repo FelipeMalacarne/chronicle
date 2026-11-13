@@ -1540,11 +1540,13 @@
       "properties": {
         "method": {
           "type": "string",
+          "description": "explicit: campo estruturado da fonte; derived: regra determinística; llm: proposta de agente verificada; manual: curadoria humana; recording: tarefa proposta da gravação por demonstração (doc 10, seção 11), verificada contra os eventos e confirmada pelo dono.",
           "enum": [
             "explicit",
             "derived",
             "llm",
-            "manual"
+            "manual",
+            "recording"
           ]
         },
         "confidence": {

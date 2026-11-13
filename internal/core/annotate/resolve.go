@@ -183,6 +183,9 @@ type StepProposal struct {
 	Suppress []SuppressProposal `json:"suppress,omitempty"`
 	// NoBankActions drops the bank actions derived from the step's text.
 	NoBankActions *NoBankActionsProposal `json:"no_bank_actions,omitempty"`
+	// Tasks are the step's typed tasks (docs/10 section 7). Absent keeps the
+	// tasks the step has; [] removes them.
+	Tasks *[]TaskProposal `json:"tasks,omitempty"`
 	// Comment goes to the report only: why the step has no objectives, why it
 	// diverges from a rule, what was asked.
 	Comment string `json:"comment,omitempty"`
@@ -234,7 +237,15 @@ type Source struct {
 // alternatives (AnyOf, each with its own quantity, no N: one must reach its
 // quantity alone).
 type ObjectiveProposal struct {
-	Role   string                `json:"role"`
+	Role string `json:"role"`
+	TargetProposal
+	Evidence
+	Source
+}
+
+// TargetProposal names the target of an objective key (an objective's, or a
+// task's until): see ObjectiveProposal.
+type TargetProposal struct {
 	Kind   string                `json:"kind"`
 	Name   string                `json:"name,omitempty"`
 	ID     string                `json:"id,omitempty"`
@@ -243,8 +254,6 @@ type ObjectiveProposal struct {
 	N      int                   `json:"n,omitempty"`
 	Family string                `json:"family,omitempty"`
 	AnyOf  []AlternativeProposal `json:"any_of,omitempty"`
-	Evidence
-	Source
 }
 
 // AlternativeProposal is one alternative of an item objective: N of the item
@@ -298,7 +307,7 @@ func build(reg *entities.Registry, st *content.Step, p StepProposal, skillVersio
 	fail := func(where string, err error) { errs = append(errs, where+": "+err.Error()) }
 	for i, op := range p.Objectives {
 		where := fmt.Sprintf("objectives[%d]", i)
-		key, err := objectiveKey(reg, op)
+		key, err := objectiveKey(reg, op.TargetProposal)
 		if err != nil {
 			fail(where, err)
 			continue
@@ -369,7 +378,7 @@ func build(reg *entities.Registry, st *content.Step, p StepProposal, skillVersio
 }
 
 // objectiveKey resolves the target of an objective proposal into a key.
-func objectiveKey(reg *entities.Registry, op ObjectiveProposal) (entities.ObjectiveKey, error) {
+func objectiveKey(reg *entities.Registry, op TargetProposal) (entities.ObjectiveKey, error) {
 	if op.Kind == KindQuestPoints {
 		return entities.ParseObjectiveKey(fmt.Sprintf("%s>=%d", entities.QuestPoints, op.N))
 	}
@@ -411,7 +420,7 @@ func objectiveKey(reg *entities.Registry, op ObjectiveProposal) (entities.Object
 }
 
 // itemSetKey resolves an item family or alternatives objective.
-func itemSetKey(reg *entities.Registry, op ObjectiveProposal) (entities.ObjectiveKey, error) {
+func itemSetKey(reg *entities.Registry, op TargetProposal) (entities.ObjectiveKey, error) {
 	switch {
 	case op.Kind != string(entities.KindItem):
 		return entities.ObjectiveKey{}, fmt.Errorf("family and any_of are for item objectives, not %s", op.Kind)

@@ -139,25 +139,14 @@
     },
     "annotatedTask": {
       "$ref": "https://ironman-planner.local/schemas/task.schema.json#/$defs/task",
-      "description": "Tarefa lida do texto do passo: a tarefa tipada (task.schema.json) mais a citação de onde veio e a proveniência, como os objetivos.",
+      "description": "Tarefa do passo: a tarefa tipada (task.schema.json) mais de onde veio (a citação do texto, os eventos gravados por demonstração ou os dois) e a proveniência, como os objetivos. Tarefa vinda de gravação exige confirmed_by owner.",
       "required": [
         "evidence",
         "source"
       ],
       "properties": {
         "evidence": {
-          "allOf": [
-            {
-              "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveEvidence"
-            },
-            {
-              "required": [
-                "field",
-                "quote",
-                "span"
-              ]
-            }
-          ]
+          "$ref": "#/$defs/taskEvidence"
         },
         "source": {
           "allOf": [
@@ -169,7 +158,8 @@
                 "method": {
                   "enum": [
                     "llm",
-                    "manual"
+                    "manual",
+                    "recording"
                   ]
                 }
               }
@@ -178,6 +168,186 @@
         }
       },
       "unevaluatedProperties": false
+    },
+    "taskEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Evidência de uma tarefa do passo: a citação do texto (field, quote, span, como nos objetivos), os eventos gravados por demonstração que a sustentam (recorded, doc 10 seção 11) ou os dois.",
+      "anyOf": [
+        {
+          "required": [
+            "field",
+            "quote",
+            "span"
+          ]
+        },
+        {
+          "required": [
+            "recorded"
+          ]
+        }
+      ],
+      "dependentRequired": {
+        "field": [
+          "quote",
+          "span"
+        ],
+        "quote": [
+          "field",
+          "span"
+        ],
+        "span": [
+          "field",
+          "quote"
+        ]
+      },
+      "properties": {
+        "field": {
+          "type": "string",
+          "pattern": "^(?:/(?:[^~/]|~[01])*)+$"
+        },
+        "quote": {
+          "type": "string",
+          "minLength": 1
+        },
+        "span": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "minItems": 2,
+          "maxItems": 2
+        },
+        "recorded": {
+          "$ref": "#/$defs/recordedEvidence"
+        }
+      }
+    },
+    "recordedEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recording",
+        "events"
+      ],
+      "description": "O trecho da gravação de onde a tarefa foi proposta: o id da gravação e os eventos que a sustentam, como o plugin os gravou (ids do jogo e o tile do personagem; nunca a conta).",
+      "properties": {
+        "recording": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "events": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/recordedEvent"
+          }
+        }
+      }
+    },
+    "recordedEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "recording",
+        "seq",
+        "at",
+        "kind",
+        "world",
+        "x",
+        "y",
+        "plane"
+      ],
+      "description": "Um evento da gravação (internal/core/recording, Event): os campos de alvo dependem do tipo, e o verificador confere cada um.",
+      "properties": {
+        "recording": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]{0,63}$"
+        },
+        "seq": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "kind": {
+          "enum": [
+            "move",
+            "npc",
+            "object",
+            "dialogue",
+            "shop_buy",
+            "bank_open",
+            "bank_withdraw",
+            "bank_deposit",
+            "item_use",
+            "item_op"
+          ]
+        },
+        "world": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9999
+        },
+        "x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16383
+        },
+        "y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16383
+        },
+        "plane": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 3
+        },
+        "npc_id": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "object_id": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "item_id": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "target_item_id": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "target_x": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16383
+        },
+        "target_y": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 16383
+        },
+        "qty": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "option": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        }
+      }
     },
     "annotatedObjective": {
       "type": "object",

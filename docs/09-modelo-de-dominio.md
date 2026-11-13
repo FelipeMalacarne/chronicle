@@ -263,8 +263,8 @@ Um passo do Oziris com objetivos explícitos, como o loader entrega ao motor e a
   textos têm aspas curvas ("Monk’s Friend") que um agente tende a normalizar; o `span` gravado é sempre o
   trecho exato do original.
 - `source.method` ∈ `explicit` (campo estruturado da fonte), `derived` (regra determinística), `llm`
-  (proposta de agente verificada) e `manual` (curadoria humana). As constantes de `content.Provenance`
-  ganham os dois últimos.
+  (proposta de agente verificada), `manual` (curadoria humana) e, só em tarefas, `recording` (proposta da
+  gravação por demonstração, doc 10, seção 11, sempre com `confirmed_by: owner`).
 - `source.confirmed_by: "owner"` marca o que foi decidido pelo dono durante a extração (seção 6.4); a
   pergunta e a resposta ficam no registro de decisões da anotação. `source.decision` cita a decisão geral
   de `decisions.json` aplicada, quando houver, e implica `confirmed_by: "owner"`. Toda entrada de
@@ -280,7 +280,7 @@ loader. Nunca há dois escritores para o mesmo arquivo (decisão D3, seção 9.3
 | Arquivo | Escritor | Conteúdo |
 |---|---|---|
 | `content/guides/<id>/guide.json` | `content migrate` / `content import-bruhsailer` | texto, segmentos, `complete_when`, `prerequisites`, `items`, menções; regenerável a qualquer momento |
-| `content/guides/<id>/annotations/<section>.json` | `chronicle content mcp` (a cada `submit` aceito) | por passo: `step_id`, `text_hash`, `objectives[]`, `items[]`, `bank_actions[]`, `location`, `tasks[]` (doc 10, seção 7; o `submit` com tarefas vem na fase 2 do doc 10); `skill_version`; schema `content/schema/annotations.schema.json` |
+| `content/guides/<id>/annotations/<section>.json` | `chronicle content mcp` (a cada `submit` aceito) | por passo: `step_id`, `text_hash`, `objectives[]`, `items[]`, `bank_actions[]`, `location`, `tasks[]` (doc 10, seção 7; gravadas pelo `submit` ou pelo `submit_tasks`, com citação ou eventos da gravação por demonstração, doc 10, seção 11); `skill_version`; schema `content/schema/annotations.schema.json` |
 | `content/recipes/<chave>.json` | extração e gravação com o dono (fase 2 do doc 10) | receita de uma chave de objetivo: variantes por modo, riscos e tarefas; schema `content/schema/recipe.schema.json` (doc 10, seção 8) |
 | `content/guides/<id>/annotations/decisions.json` | `chronicle content mcp` (`record_decision`) | decisões gerais do dono |
 | `content/guides/<id>/annotations.report.json` | `chronicle content mcp` | rejeitados, ambíguos, baixa confiança, pendências |
@@ -560,9 +560,11 @@ disco (um `catalogbuild -update`, uma edição); guias e sidecars são lidos na 
 | `resolve_entity(kind, name, tier?)` | resolve como o `submit` vai resolver: `resolved` com ref, `ambiguous` com candidatos (com `variant` e `page`, que distinguem itens de mesmo nome), `unresolved` com motivo; para item, diz a família quando o nome cobre uma |
 | `propose_entity(kind, name, ..., confirmed_by: owner)` | só `unlock` e `location`; grava em `content/reference` e recarrega o registry; recusa nome ou alias que já resolve |
 | `revise_entity(kind, id, new_id?, name?, wiki_key?, aliases?, note?, remove?, confirmed_by: owner)` | corrige uma entrada de `unlock` ou `location`: `new_id` renomeia e reescreve os refs nos sidecars de todos os guias; `wiki_key`, `aliases` e `note` substituem (vazio limpa); `remove` só sem uso em sidecar ou regra |
-| `submit(guide, section, skill_version, steps)` | verifica e grava; cada passo entra inteiro ou é rejeitado com todos os motivos |
+| `submit(guide, section, skill_version, steps)` | verifica e grava; cada passo entra inteiro ou é rejeitado com todos os motivos; `tasks` ausente mantém as tarefas do passo (verificadas de novo), `[]` as remove |
 | `record_decision` / `list_decisions` | `decisions.json`; mesmo id substitui (o dono mudou de ideia) |
 | `report(guide)` | o relatório, também gravado em `annotations.report.json` |
+| `propose_tasks(guide, step, recording?, recording_id?, from_seq?, to_seq?, since?, until?)` | fase 2 do doc 10: o passo como as tarefas o veem (texto, objetivos que `goal_met` espera, se `bank` tem loadout, tarefas atuais) e, com um arquivo de gravação (`chronicle recording -o`), as tarefas propostas do trecho (`internal/core/recording/propose`), cada uma já no formato do `submit_tasks`, com `confidence: medium` e sem `confirmed_by`; ids em várias páginas, lojas incertas e tiles fora de qualquer área vão em `issues`. Não grava nada |
+| `submit_tasks(guide, section, skill_version, steps)` | grava as tarefas dos passos e mantém o resto da anotação (o passo precisa de anotação atual); cada tarefa com citação, eventos da gravação (`recorded: {file, recording, seqs}`, copiados do arquivo) ou os dois; tarefa da gravação sempre com `confirmed_by: owner` |
 
 O agente manda **nomes e citações**, nunca refs nem spans. O `submit`:
 

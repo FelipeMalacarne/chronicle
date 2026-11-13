@@ -2,9 +2,9 @@
 // (phase 2, decision E8): while the owner plays a stretch of a route with
 // "Record demonstration" on, the Chronicle Link plugin records their own
 // interactions as typed events, never acting, and sends them in the ingest
-// pushes (data.recording). The events become proposed tasks for a step,
-// which enter content only after the verifier and the owner's confirmation
-// (CLAUDE.md rule 9).
+// pushes (data.recording). The events become proposed tasks for a step
+// (subpackage propose), which enter content only after the verifier and
+// the owner's confirmation (CLAUDE.md rule 9).
 //
 // It is pure: the event type, the closed list of kinds and the validation
 // shared by the ingest contract and the content verifier.

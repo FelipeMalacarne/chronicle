@@ -173,7 +173,9 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0015 recurring routines: routines.kind recurring with clock, interval and priority,
                       0016 audit origin server, 0017 recorded_events: the plugin's demonstration recording,
                       0018 plans: plans (route, goal, custom), plan_items, accounts.active_plan_id,
-                      0019 routine_runs.task: the typed task of a task run)
+                      0019 routine_runs.task: the typed task of a task run,
+                      0020 workers.running_plugins: plugins the client had on, restarted by the next bootstrap,
+                      0021 workers.auto_login and was_logged_in: login again after a new pod)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

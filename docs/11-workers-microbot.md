@@ -252,7 +252,8 @@ O servidor recusa o Iniciar quando:
 5. `mb-client start --headless` com `MB_HEADLESS_GPU=1` e `MB_CLIENT_WRAPPER="vglrun -d egl"`.
 6. Com o Agent Server de pé, o agent grava as configurações do perfil pelo `/settings/plugin`, instala
    os plugins do Hub do perfil e só então liga os `start_on_boot` (W7, seção 15).
-7. O cliente fica na tela de login. Entrar é outro clique, com o mundo (W3).
+7. O cliente fica na tela de login. Entrar é outro clique, com o mundo (W3), a não ser que a conta
+   tenha o login automático ligado (seção 15.5).
 
 ### 6.4 Uso
 
@@ -269,6 +270,8 @@ do worker alimenta o tracking da conta pela URL interna, como qualquer instalaç
   (decisão do dono, seção 7.2) o reconciliador os reinicia sozinho na versão nova, na próxima pausa:
   sem run, sem VNC aberto, e deslogado ou no break do Break Handler. Reiniciar desloga a conta, então
   fora da pausa só acontece no clique. O protocolo do link continua aditivo.
+- **Plugins ligados à mão** sobrevivem a qualquer pod novo (seção 15.4), e a conta pode entrar de
+  novo sozinha (seção 15.5, desligado por padrão).
 - **Reiniciar** (o clique, ou o automático na pausa, pelo mesmo caminho) passa o worker para a imagem
   atual e grava a anotação `chronicle.ftm.dev.br/restarted-at` no template do pod, como o
   `kubectl rollout restart`: o Deployment (Recreate) para o pod e sobe outro. O servidor não apaga
@@ -838,6 +841,50 @@ no próximo Iniciar ou Reiniciar.
   os valores) e o "Salvar no perfil" (W9). O que o `V7Plugins1440` não mostrar disso vai para o
   canvas antes (regra 11). A versão da ponte no `status` saiu antes, em 2026-11-13 (seção 14.3).
 - **Anexado (zaros):** o perfil ainda não se aplica; o zaros segue com a configuração no disco.
+
+### 15.4 Plugins ligados voltam depois de um pod novo (2026-11-13)
+
+O home do pod é novo a cada boot, então um plugin que o dono ligou pelo Cockpit sumia no deploy, no
+Reiniciar ou numa queda; só voltavam o perfil de sistema e o perfil da conta.
+
+- **Migração 0020:** `workers.running_plugins` (jsonb), os plugins que o cliente tinha ligados na
+  última leitura completa. É o estado observado, separado do perfil: o perfil continua sendo a
+  intenção declarada, e nada o reescreve sozinho (W9).
+- **Leitura:** a cada passada do reconciliador, e antes de um Reiniciar, ele chama `plugins` no agent
+  de cada worker e guarda os plugins `enabled` do Hub e os próprios (`agent.ObservedPlugins`).
+  Plugins do núcleo do cliente ficam de fora (quase todos ligam por padrão, e ligar um que já está
+  ligado é erro do Agent Server), e o caminho de controle e o Chronicle Link nunca entram.
+- **Quando não lê:** um agent que ainda não terminou o bootstrap, ou que o terminou com problemas
+  no perfil, não é lido; uma resposta incompleta ou com erro mantém o que estava guardado. Assim um
+  cliente subindo nunca encolhe a lista.
+- **Bootstrap:** o perfil efetivo vai com os plugins guardados por cima; um plugin que está nos dois
+  liga uma vez só.
+- **Limites:**
+  - desligar à mão um plugin que o perfil liga no boot não pega: o perfil manda;
+  - uma queda brusca perde o que mudou desde a última passada (até 30 s);
+  - o login é um clique do dono, salvo a opção da seção 15.5 (W3);
+  - a V8 ainda não mostra o estado guardado: "ligados fora do perfil" e "Salvar no perfil" ficam para
+    a parte 2.
+
+### 15.5 Login automático depois de um pod novo (2026-11-13)
+
+A W3 diz que o worker não entra no jogo sozinho, "no máximo uma opção por conta, desligada". Esta é
+essa opção.
+
+- **Migração 0021:** `workers.auto_login` (a opção, desligada por padrão) e `workers.was_logged_in`.
+- **`was_logged_in`:** o reconciliador marca quando lê o cliente logado, na mesma passada que lê os
+  plugins (seção 15.4), e antes de um Reiniciar. Quem desmarca é o dono: o logout do painel
+  (`/api/microbot/logout` num worker gerenciado) e o Parar. Um logout do próprio cliente, como o de um
+  break, não desmarca, então um pod que troca durante um break entra de novo.
+- **Login:** depois do bootstrap, só com `auto_login` e `was_logged_in`, o reconciliador manda
+  `login` com o mundo do worker. Antes ele confere que não há um agent anexado nem outro cliente da
+  conta com push nos últimos 5 minutos (seção 6.2); se houver, não entra e o motivo vai para o
+  `last_error`. Uma falha também vai para `last_error` e para `last_login_result`, sem nova tentativa.
+- **Ligar e desligar:** `PUT /api/workers/auto-login?account=` com `{"enabled": bool}` (auditado) e
+  `chronicle workers auto-login on|off`. A tela ainda não tem o interruptor: o canvas não o desenha
+  (regra 11), então fica para quando o design o incluir.
+- **Limite:** se o dono desloga pela tela do cliente (VNC), o servidor não sabe; o pod seguinte entra
+  de novo. Para evitar, deslogue pelo painel.
 
 ## 16. F6: rotinas no servidor (2026-11-13)
 

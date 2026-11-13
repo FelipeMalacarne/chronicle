@@ -788,10 +788,14 @@ Table workers {
   stopped_at timestamptz
   updated_at timestamptz [not null, default: `now()`]
   last_error text [not null, default: `''::text`]
+  running_plugins jsonb [not null, default: `'[]'::jsonb`, note: 'Plugins the worker client had on at the last complete read; started again by the next bootstrap, beside the client profile (docs/11 section 15.4).']
+  auto_login boolean [not null, default: `false`, note: 'Log the worker in again after a new pod, when was_logged_in (docs/11 section 15.5).']
+  was_logged_in boolean [not null, default: `false`, note: 'The client was last read logged in and the owner did not log it out since; kept by the reconciler (docs/11 section 15.5).']
 
   Note: '''
   Managed workers only (docs/11 section 4.5): what the reconciler should run per account. Attached agents live in the link hub, not here.
   workers_desired_state_check: CHECK ((desired_state = ANY (ARRAY['running'::text, 'stopped'::text])))
+  workers_running_plugins_check: CHECK ((jsonb_typeof(running_plugins) = 'array'::text))
   workers_world_check: CHECK ((world >= 0))
   '''
 }

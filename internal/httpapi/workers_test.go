@@ -125,6 +125,30 @@ func (m *memWorkers) OtherClientSince(context.Context, string, time.Time) (bool,
 	return m.busy, nil
 }
 
+func (m *memWorkers) SetAutoLogin(_ context.Context, account string, on bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	w, ok := m.workers[account]
+	if !ok {
+		return storeworkers.ErrNotFound
+	}
+	w.AutoLogin = on
+	m.workers[account] = w
+	return nil
+}
+
+func (m *memWorkers) SetLoggedIn(_ context.Context, account string, on bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	w, ok := m.workers[account]
+	if !ok {
+		return storeworkers.ErrNotFound
+	}
+	w.WasLoggedIn = on
+	m.workers[account] = w
+	return nil
+}
+
 type memControl struct {
 	mu       sync.Mutex
 	kicks    int

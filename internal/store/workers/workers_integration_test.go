@@ -453,3 +453,78 @@ func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
 	}
 	return pool
 }
+
+func TestRunningPlugins(t *testing.T) {
+	ctx := context.Background()
+	_, repo := setup(ctx, t)
+	if err := repo.PutSession(ctx, "acc_a", "u1", session); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := repo.RunningPlugins(ctx, "acc_a"); err != nil || len(got) != 0 {
+		t.Fatalf("before a worker row: %v %v", got, err)
+	}
+	if err := repo.SetRunningPlugins(ctx, "acc_a", nil); !errors.Is(err, ErrNotFound) && err != nil {
+		t.Fatalf("empty set without a worker row = %v", err)
+	}
+	if err := repo.SetDesired(ctx, "acc_a", StateRunning, 0, "img"); err != nil {
+		t.Fatal(err)
+	}
+	on := []agent.ProfilePlugin{{Source: agent.PluginHub, Name: "BlackjackPlugin", ClassName: "a.b.BlackjackPlugin", Start: true}}
+	if err := repo.SetRunningPlugins(ctx, "acc_a", on); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := repo.RunningPlugins(ctx, "acc_a"); err != nil || len(got) != 1 || got[0] != on[0] {
+		t.Fatalf("kept %+v %v", got, err)
+	}
+	// The same list again writes nothing; an invalid one is refused.
+	if err := repo.SetRunningPlugins(ctx, "acc_a", on); err != nil {
+		t.Fatal(err)
+	}
+	bad := []agent.ProfilePlugin{{Source: agent.PluginOwn, Name: "net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin", Start: true}}
+	if err := repo.SetRunningPlugins(ctx, "acc_a", bad); err == nil {
+		t.Fatal("a protected plugin was kept")
+	}
+	if err := repo.SetRunningPlugins(ctx, "acc_a", []agent.ProfilePlugin{}); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := repo.RunningPlugins(ctx, "acc_a"); len(got) != 0 {
+		t.Fatalf("after clearing: %+v", got)
+	}
+}
+
+func TestAutoLoginAndLoggedIn(t *testing.T) {
+	ctx := context.Background()
+	_, repo := setup(ctx, t)
+	if err := repo.SetAutoLogin(ctx, "acc_a", true); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("auto login without a worker row = %v", err)
+	}
+	if err := repo.PutSession(ctx, "acc_a", "u1", session); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.SetDesired(ctx, "acc_a", StateRunning, 0, "img"); err != nil {
+		t.Fatal(err)
+	}
+	if w, _ := repo.Get(ctx, "acc_a"); w.AutoLogin || w.WasLoggedIn {
+		t.Fatalf("defaults: %+v", w)
+	}
+	if err := repo.SetAutoLogin(ctx, "acc_a", true); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.SetLoggedIn(ctx, "acc_a", true); err != nil {
+		t.Fatal(err)
+	}
+	// A restart (running again) and a new image keep both; a stop clears
+	// that the client was logged in, never the option.
+	if err := repo.SetDesired(ctx, "acc_a", StateRunning, 0, "img2"); err != nil {
+		t.Fatal(err)
+	}
+	if w, _ := repo.Get(ctx, "acc_a"); !w.AutoLogin || !w.WasLoggedIn {
+		t.Fatalf("after a running update: %+v", w)
+	}
+	if err := repo.SetDesired(ctx, "acc_a", StateStopped, 0, ""); err != nil {
+		t.Fatal(err)
+	}
+	if w, _ := repo.Get(ctx, "acc_a"); !w.AutoLogin || w.WasLoggedIn {
+		t.Fatalf("after a stop: %+v", w)
+	}
+}

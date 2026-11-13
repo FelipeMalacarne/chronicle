@@ -15,6 +15,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"time"
 
@@ -103,6 +104,10 @@ type Worker struct {
 	StoppedAt     *time.Time `json:"stopped_at,omitempty"`
 	UpdatedAt     *time.Time `json:"updated_at,omitempty"`
 	LastError     string     `json:"last_error,omitempty"`
+	// AutoLogin: log the worker in again after a new pod, when it had been
+	// logged in (WasLoggedIn); docs/11 section 15.5.
+	AutoLogin   bool `json:"auto_login"`
+	WasLoggedIn bool `json:"was_logged_in"`
 	// Session is nil when the account has no session.
 	Session *SessionInfo `json:"session,omitempty"`
 }
@@ -381,6 +386,82 @@ func (r *Repository) SetError(ctx context.Context, account, msg string) error {
 	return nil
 }
 
+// SetAutoLogin turns the worker's automatic login on or off (ErrNotFound
+// without a worker row).
+func (r *Repository) SetAutoLogin(ctx context.Context, account string, on bool) error {
+	n, err := r.queries.SetWorkerAutoLogin(ctx, storedb.SetWorkerAutoLoginParams{AccountID: account, AutoLogin: on})
+	if err != nil {
+		return fmt.Errorf("set auto login: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// SetLoggedIn records whether the worker's client was last logged in
+// (docs/11 section 15.5); the reconciler sets it, the owner's logout and a
+// stop clear it.
+func (r *Repository) SetLoggedIn(ctx context.Context, account string, on bool) error {
+	n, err := r.queries.SetWorkerLoggedIn(ctx, storedb.SetWorkerLoggedInParams{AccountID: account, WasLoggedIn: on})
+	if err != nil {
+		return fmt.Errorf("set logged in: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
+// RunningPlugins returns the plugins the worker's client had on at the last
+// complete read (docs/11 section 15.4); none without a worker row.
+func (r *Repository) RunningPlugins(ctx context.Context, account string) ([]agent.ProfilePlugin, error) {
+	raw, err := r.queries.GetWorkerRunningPlugins(ctx, account)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get running plugins: %w", err)
+	}
+	var out []agent.ProfilePlugin
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return nil, fmt.Errorf("decode running plugins: %w", err)
+	}
+	return out, nil
+}
+
+// SetRunningPlugins replaces the worker's running plugins; the caller sends
+// only a complete read. A list that is already stored writes nothing.
+func (r *Repository) SetRunningPlugins(ctx context.Context, account string, plugins []agent.ProfilePlugin) error {
+	for _, p := range plugins {
+		if err := agent.ValidatePlugin(p); err != nil {
+			return err
+		}
+	}
+	if plugins == nil {
+		plugins = []agent.ProfilePlugin{}
+	}
+	have, err := r.RunningPlugins(ctx, account)
+	if err != nil {
+		return err
+	}
+	if len(have) == len(plugins) && (len(have) == 0 || reflect.DeepEqual(have, plugins)) {
+		return nil
+	}
+	raw, err := json.Marshal(plugins)
+	if err != nil {
+		return err
+	}
+	n, err := r.queries.SetWorkerRunningPlugins(ctx, storedb.SetWorkerRunningPluginsParams{AccountID: account, RunningPlugins: raw})
+	if err != nil {
+		return fmt.Errorf("set running plugins: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // OtherClientSince reports whether another plugin installation of the account
 // (not the worker's own token) pushed after since: someone is playing the
 // account on another client (docs/11 section 6.2).
@@ -492,7 +573,7 @@ func workerOf(row storedb.ListWorkersRow) Worker {
 		AccountID: row.AccountID, UserID: row.UserID, RSN: row.Rsn,
 		DesiredState: row.DesiredState, World: int(row.World), Image: row.Image, PluginTokenID: row.PluginTokenID,
 		StartedAt: timePtr(row.StartedAt), StoppedAt: timePtr(row.StoppedAt), UpdatedAt: timePtr(row.UpdatedAt),
-		LastError: row.LastError,
+		LastError: row.LastError, AutoLogin: row.AutoLogin, WasLoggedIn: row.WasLoggedIn,
 	}
 	if row.HasSession {
 		info := sessionInfo(row.AccountID, row.CharacterName, row.KeyID, row.PushedAt, row.PushedBy, row.LastLoginAt, row.LastLoginResult)

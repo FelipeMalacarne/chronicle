@@ -43,6 +43,7 @@ export const fixture = {
 				"since": "2026-11-13T01:13:10.364280606-03:00",
 				"worker": "chronicle-worker-acc-worker-a-7d9f-x2k4q"
 			},
+			"auto_login": false,
 			"desired": "running",
 			"image": "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc1234-def5678",
 			"outdated": false,
@@ -76,6 +77,7 @@ export const fixture = {
 		{
 			"account": "acc_worker_b",
 			"agent": null,
+			"auto_login": false,
 			"desired": "stopped",
 			"image": "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc1234-0000000",
 			"last_error": "the session was refused",
@@ -104,6 +106,7 @@ export const fixture = {
 		{
 			"account": "acc_worker_c",
 			"agent": null,
+			"auto_login": false,
 			"desired": "stopped",
 			"outdated": false,
 			"pod": null,

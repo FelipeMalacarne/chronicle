@@ -226,7 +226,7 @@ func connectAccount(cmd *cobra.Command, c *client.Client, flag, character string
 
 func newWorkersCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "workers", Short: "The accounts' Microbot workers (docs/11)"}
-	cmd.AddCommand(newWorkersListCmd())
+	cmd.AddCommand(newWorkersListCmd(), newWorkerAutoLoginCmd())
 	for _, action := range []struct{ name, short string }{
 		{"start", "Start the account's worker in the cluster (it stops at the login screen)"},
 		{"stop", "Stop the account's worker (logs out and deletes its pod)"},
@@ -281,6 +281,9 @@ func printWorkers(out io.Writer, ws client.Workers) {
 		if w.Outdated {
 			state += " · versão antiga (reinicia sozinho na pausa)"
 		}
+		if w.AutoLogin {
+			state += " · login automático"
+		}
 		session := "sem sessão"
 		if w.Session != nil {
 			session = "sessão de " + w.Session.Character
@@ -305,6 +308,36 @@ func printWorkers(out io.Writer, ws client.Workers) {
 	if c := ws.Capacity; c != nil {
 		fmt.Fprintf(out, "Cabe mais %d worker(s) na quota do namespace (limite: %s).\n", c.Fits, c.LimitedBy)
 	}
+}
+
+func newWorkerAutoLoginCmd() *cobra.Command {
+	var f clientFlags
+	cmd := &cobra.Command{
+		Use:   "auto-login on|off",
+		Short: "Log the worker in again after a new pod, when it was logged in (docs/11 section 15.5)",
+		Args:  cobra.ExactArgs(1),
+		RunE: runClient(func(cmd *cobra.Command, args []string) error {
+			if args[0] != "on" && args[0] != "off" {
+				return fmt.Errorf("auto-login: use on ou off, não %q", args[0])
+			}
+			ctx := cmd.Context()
+			c, err := f.connect(ctx)
+			if err != nil {
+				return err
+			}
+			account, err := c.Account(ctx)
+			if err != nil {
+				return err
+			}
+			if err := c.SetAutoLogin(ctx, account, args[0] == "on"); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s: login automático %s.\n", account, args[0])
+			return nil
+		}),
+	}
+	f.add(cmd, false)
+	return cmd
 }
 
 func newWorkerActionCmd(action, short string) *cobra.Command {

@@ -8,9 +8,11 @@ import (
 	"log/slog"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 	"unicode/utf8"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
@@ -18,12 +20,58 @@ import (
 )
 
 type fakeStore struct {
-	mu      sync.Mutex
-	desired []Desired
-	tokens  int
-	revoked []string
-	errs    map[string]string
-	profile agent.ClientProfile
+	mu       sync.Mutex
+	desired  []Desired
+	tokens   int
+	revoked  []string
+	errs     map[string]string
+	profile  agent.ClientProfile
+	running  map[string][]agent.ProfilePlugin
+	loggedIn map[string]bool
+	logins   map[string]string
+	busy     bool
+}
+
+func (f *fakeStore) SetLoggedIn(_ context.Context, account string, on bool) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.loggedIn == nil {
+		f.loggedIn = map[string]bool{}
+	}
+	f.loggedIn[account] = on
+	return nil
+}
+
+func (f *fakeStore) RecordLogin(_ context.Context, account, result string) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.logins == nil {
+		f.logins = map[string]string{}
+	}
+	f.logins[account] = result
+	return nil
+}
+
+func (f *fakeStore) OtherClientSince(context.Context, string, time.Time) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.busy, nil
+}
+
+func (f *fakeStore) RunningPlugins(_ context.Context, account string) ([]agent.ProfilePlugin, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.running[account]), nil
+}
+
+func (f *fakeStore) SetRunningPlugins(_ context.Context, account string, plugins []agent.ProfilePlugin) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.running == nil {
+		f.running = map[string][]agent.ProfilePlugin{}
+	}
+	f.running[account] = plugins
+	return nil
 }
 
 func (f *fakeStore) Profile(context.Context, string) (agent.ClientProfile, error) {
@@ -174,11 +222,15 @@ type fakeHub struct {
 	// agents are the linked agents; status, runs and down answer CmdStatus
 	// and CmdRunStatus by agent id (down fails the call); vnc is the
 	// accounts with a VNC session open.
-	agents []agent.Info
-	status map[string]agent.Status
-	runs   map[string]agent.RunStatus
-	down   map[string]bool
-	vnc    map[string]bool
+	agents   []agent.Info
+	status   map[string]agent.Status
+	runs     map[string]agent.RunStatus
+	down     map[string]bool
+	vnc      map[string]bool
+	plugins  agent.Plugins // the answer to CmdPlugins; zero fails the call
+	state    string        // the "state" of CmdStatus when status has no entry
+	loginErr error
+	world    int
 }
 
 func (h *fakeHub) Agents() []agent.Info {
@@ -203,12 +255,23 @@ func (h *fakeHub) CallAgent(_ context.Context, id string, command string, params
 	var out any
 	switch command {
 	case agent.CmdStatus:
-		out = agent.Status{Running: h.running}
+		out = agent.Status{Running: h.running, State: json.RawMessage(h.state)}
 		if st, ok := h.status[id]; ok {
 			out = st
 		}
 	case agent.CmdRunStatus:
 		out = h.runs[id]
+	case agent.CmdLogin:
+		h.world = params.(agent.LoginParams).World
+		if h.loginErr != nil {
+			return h.loginErr
+		}
+		out = map[string]bool{"ok": true}
+	case agent.CmdPlugins:
+		if h.plugins.Scripts == nil {
+			return errors.New("client not answering")
+		}
+		out = h.plugins
 	case agent.CmdWorkerBootstrap:
 		h.boot = params.(agent.BootstrapParams)
 		out = agent.BootstrapResult{Started: true, Problems: h.problems}
@@ -379,5 +442,164 @@ func TestReconcileLeavesRunningWorkersAlone(t *testing.T) {
 	}
 	if len(cl.applied) != 2 || cl.deps["worker-acc-a"].Spec.Template.Spec.Containers[0].Image != "img:2" {
 		t.Fatalf("new image not applied: %v", cl.applied)
+	}
+}
+
+const (
+	hubClass = "net.runelite.client.plugins.microbot.blackjack.BlackjackPlugin"
+	ownClass = "net.runelite.client.plugins.microbot.fm.tickfisher.TickFisherPlugin"
+)
+
+func onPlugins(classes ...string) agent.Plugins {
+	var entries []string
+	for _, c := range classes {
+		entries = append(entries, `{"className":"`+c+`","enabled":true}`)
+	}
+	return agent.Plugins{
+		Scripts:   json.RawMessage(`{"count":` + strconv.Itoa(len(entries)) + `,"scripts":[` + strings.Join(entries, ",") + `]}`),
+		Installed: json.RawMessage(`{"plugins":[{"internalName":"BlackjackPlugin","installedVersion":"1.0"}]}`),
+	}
+}
+
+// What the client has on is kept once the worker is settled, replaced by the
+// next complete read, never by a failed one, and started again by the next
+// bootstrap beside the profile (docs/11 section 15.4).
+func TestRunningPluginsSurviveANewPod(t *testing.T) {
+	profile := agent.ClientProfile{Plugins: []agent.ProfilePlugin{{Source: agent.PluginOwn, Name: ownClass}}}
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true}}, profile: profile}
+	info := agent.Info{ID: "x", Account: "acc_a", Kind: agent.KindManaged, Connected: true}
+	hub := &fakeHub{agents: []agent.Info{info}, plugins: onPlugins(hubClass, ownClass)}
+	cl := &fakeCluster{deps: map[string]kube.Deployment{}}
+	r := newRec(store, cl, hub)
+	ctx := context.Background()
+
+	// Not settled yet: the first pass reads nothing.
+	if err := r.Once(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(hub.calls, agent.CmdPlugins) {
+		t.Fatalf("an unsettled client was read: %v", hub.calls)
+	}
+	r.OnConnect(info)
+	if err := r.Once(ctx); err != nil {
+		t.Fatal(err)
+	}
+	want := []agent.ProfilePlugin{
+		{Source: agent.PluginHub, Name: "BlackjackPlugin", ClassName: hubClass, Start: true},
+		{Source: agent.PluginOwn, Name: ownClass, Start: true},
+	}
+	if !reflect.DeepEqual(store.running["acc_a"], want) {
+		t.Fatalf("kept %+v", store.running["acc_a"])
+	}
+
+	// A client that does not answer keeps what was stored.
+	hub.plugins = agent.Plugins{}
+	if err := r.Once(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if len(store.running["acc_a"]) != 2 {
+		t.Fatalf("a failed read changed the kept plugins: %+v", store.running["acc_a"])
+	}
+	// The owner turns the Hub plugin off: the next complete read follows.
+	hub.plugins = onPlugins(ownClass)
+	if err := r.Once(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if len(store.running["acc_a"]) != 1 {
+		t.Fatalf("kept %+v", store.running["acc_a"])
+	}
+	store.running["acc_a"] = want
+
+	// A new pod: its bootstrap carries the profile and the kept plugins, once each.
+	hub2 := &fakeHub{}
+	newRec(store, cl, hub2).OnConnect(agent.Info{ID: "y", Account: "acc_a", Kind: agent.KindManaged})
+	got := hub2.boot.Profile.Plugins
+	wantBoot := []agent.ProfilePlugin{want[1], want[0]}
+	if !reflect.DeepEqual(got, wantBoot) {
+		t.Fatalf("bootstrap plugins %+v", got)
+	}
+}
+
+// A client that refused part of its profile is not read back, or what it
+// failed to start would be forgotten.
+func TestRunningPluginsNotReadAfterProblems(t *testing.T) {
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true}}}
+	info := agent.Info{ID: "x", Account: "acc_a", Kind: agent.KindManaged, Connected: true}
+	hub := &fakeHub{agents: []agent.Info{info}, plugins: onPlugins(), problems: []string{"install X: refused"}}
+	r := newRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub)
+	r.OnConnect(info)
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if slices.Contains(hub.calls, agent.CmdPlugins) {
+		t.Fatalf("read a client with profile problems: %v", hub.calls)
+	}
+}
+
+// With auto_login, a worker that was logged in logs in again after its new
+// pod's bootstrap; the guards keep it from logging another client out.
+func TestAutoLoginAfterBootstrap(t *testing.T) {
+	info := agent.Info{ID: "x", Account: "acc_a", Kind: agent.KindManaged}
+	run := func(d Desired, mut func(*fakeStore, *fakeHub)) (*fakeStore, *fakeHub) {
+		store := &fakeStore{desired: []Desired{d}}
+		hub := &fakeHub{}
+		if mut != nil {
+			mut(store, hub)
+		}
+		newRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub).OnConnect(info)
+		return store, hub
+	}
+	on := Desired{Account: "acc_a", Running: true, World: 420, AutoLogin: true, WasLoggedIn: true}
+
+	store, hub := run(on, nil)
+	if !slices.Contains(hub.calls, agent.CmdLogin) || hub.world != 420 || store.logins["acc_a"] != "auto login ok" || store.errs["acc_a"] != "" {
+		t.Fatalf("login: calls %v world %d logins %v errs %v", hub.calls, hub.world, store.logins, store.errs)
+	}
+	for name, d := range map[string]Desired{
+		"off":            {Account: "acc_a", Running: true, WasLoggedIn: true},
+		"was logged out": {Account: "acc_a", Running: true, AutoLogin: true},
+		"neither":        {Account: "acc_a", Running: true},
+	} {
+		if _, h := run(d, nil); slices.Contains(h.calls, agent.CmdLogin) {
+			t.Errorf("%s: logged in", name)
+		}
+	}
+	// Someone is playing the account elsewhere: no login, and the error says why.
+	store, hub = run(on, func(s *fakeStore, _ *fakeHub) { s.busy = true })
+	if slices.Contains(hub.calls, agent.CmdLogin) || !strings.Contains(store.errs["acc_a"], "another client") {
+		t.Fatalf("busy: %v %q", hub.calls, store.errs["acc_a"])
+	}
+	// A failed login is recorded once, not retried.
+	store, hub = run(on, func(_ *fakeStore, h *fakeHub) { h.loginErr = errors.New("login refused") })
+	n := 0
+	for _, c := range hub.calls {
+		if c == agent.CmdLogin {
+			n++
+		}
+	}
+	if n != 1 || !strings.Contains(store.errs["acc_a"], "login refused") || !strings.Contains(store.logins["acc_a"], "failed") {
+		t.Fatalf("failed login: %d calls, errs %v, logins %v", n, store.errs, store.logins)
+	}
+}
+
+// A client read logged in is remembered, so the next pod can log in again.
+func TestLoggedInIsRemembered(t *testing.T) {
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true}}}
+	info := agent.Info{ID: "x", Account: "acc_a", Kind: agent.KindManaged, Connected: true}
+	hub := &fakeHub{agents: []agent.Info{info}, plugins: onPlugins(), state: `{"loggedIn":false}`}
+	r := newRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub)
+	r.OnConnect(info)
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if store.loggedIn["acc_a"] {
+		t.Fatal("a client on the login screen was remembered as logged in")
+	}
+	hub.state = `{"loggedIn":true}`
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if !store.loggedIn["acc_a"] {
+		t.Fatal("a logged in client was not remembered")
 	}
 }

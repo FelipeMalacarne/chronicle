@@ -52,6 +52,9 @@ func (e *Executor) waitSafe(ctx context.Context) error {
 	}
 	noted := ""
 	for deadline := time.Now().Add(limit); ; {
+		if e.untilMet() {
+			return errUntilMet
+		}
 		why := e.unsafe(ctx)
 		if why == "" {
 			if noted != "" {

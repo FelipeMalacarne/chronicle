@@ -127,6 +127,10 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 	case CmdRoutinesSync:
 		// Server → agent only, from the database's routines on connecting.
 		return nil, errors.New("routines_sync is never sent from the web")
+	case CmdRunUntil:
+		// Server → agent only, from the watcher that proves a run's
+		// objective on the account's facts (internal/rununtil).
+		return nil, errors.New("run_until is never sent from the web")
 	case CmdHubSearch:
 		var p HubParams
 		if err := decodeParams(raw, &p); err != nil {

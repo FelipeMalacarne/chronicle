@@ -131,7 +131,7 @@ func runServe(parent context.Context) error {
 				WithReevaluator(progressRepo).WithPublisher(hub).WithDevInstallations(cfg.IsDev())
 			ingestService, holdings, progressService = repo, repo, progressRepo
 			if cfg.MicrobotControl {
-				if microbotOpts, err = newMicrobot(ctx, cfg, pool, repo, logger); err != nil {
+				if microbotOpts, err = newMicrobot(ctx, cfg, pool, repo, microbotDeps{facts: progressRepo, catalog: catalog, events: hub}, logger); err != nil {
 					return err
 				}
 			}

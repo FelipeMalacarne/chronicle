@@ -357,8 +357,45 @@ test('newDraft: never enabled; draftProblem says what is missing', () => {
 	assert.match(draftProblem({ ...d, kind: 'interval', interval: null }) ?? '', /quanto em quanto/);
 	assert.match(draftProblem({ ...d, priority: 101 }) ?? '', /prioridade/);
 	assert.match(draftProblem({ ...d, timeout: 500 }) ?? '', /limite/);
+	// A run that waits for an objective may take up to 12 h.
+	assert.equal(draftProblem({ ...d, timeout: 500, until: 'skill:fishing>=76' }), null);
+	assert.match(draftProblem({ ...d, timeout: 721, until: 'skill:fishing>=76' }) ?? '', /720/);
 	// A trigger has no name of its own.
 	assert.equal(draftProblem({ ...d, kind: 'event', name: '' }), null);
+});
+
+test('a routine that waits for an objective keeps it through the form (the server writes the account)', () => {
+	const d = {
+		...newDraft(['acc_a']),
+		name: 'Pescar até 76',
+		kind: 'interval' as const,
+		interval: 60,
+		className: FISH,
+		timeout: 360
+	};
+	assert.equal('until' in recurringBody(d, 'acc_a').run, false);
+	const stored = recurringBody({ ...d, until: 'skill:fishing>=76' }, 'acc_a');
+	assert.deepEqual(stored.run, {
+		className: FISH,
+		timeoutS: 21600,
+		until: { objective: 'skill:fishing>=76' }
+	});
+	const rows = accountRows(
+		{
+			recurring: [
+				rc({
+					id: 'rtn_0001aaaa',
+					run: { ...stored.run, until: { objective: 'skill:fishing>=76', account: 'acc_a' } }
+				})
+			]
+		},
+		null,
+		[],
+		now
+	);
+	const back = draftOf(fleetRoutines([{ account: 'acc_a', rows }])[0]);
+	assert.equal(back.until, 'skill:fishing>=76');
+	assert.deepEqual(recurringBody(back, 'acc_a').run.until, { objective: 'skill:fishing>=76' });
 });
 
 test('recurringBody and triggerBody: what the server accepts, off unless the copy is on', () => {

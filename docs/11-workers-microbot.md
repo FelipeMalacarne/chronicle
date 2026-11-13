@@ -995,7 +995,9 @@ rotina que vence espera o break do Break Handler (doc 08, "A troca").
 
   O `updatedAt` e o `lastRun` vêm do servidor e são ignorados ao salvar. O agent conta o intervalo
   a partir do `lastRun`, e as travas comparam um run que falhou com o `updatedAt`. Um run que a
-  rotina começou leva o `routine` (o id), gravado em `routine_runs.routine_id`.
+  rotina começou leva o `routine` (o id), gravado em `routine_runs.routine_id`. Desde a fase 4 do
+  doc 10, o `run` aceita `until` (o run termina quando o servidor prova uma chave de objetivo; doc
+  08, "Fase 4 do doc 10: `wait_until`"), e só o agent que declara `run_until` recebe essas rotinas.
 - **No agent:**
   - o `routines_sync` leva as recorrentes junto dos gatilhos, mas só para o agent que declara
     `recurring_get` no hello (um agent da F6 recusaria o campo desconhecido);

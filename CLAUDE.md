@@ -140,11 +140,14 @@ internal/workerctl/   reconciler of the managed workers (database -> cluster) an
 internal/routinesync/ the routines' server side (docs/11 section 16): on every agent connection the account's
                       triggers (routines_sync), and every run an agent reports (event frames) to the database
                       and the audit; serve only
+internal/rununtil/    a run's wait_until, server side (docs/10 phase 4): follows each reported run that waits for
+                      an objective key and sends run_until once the account's facts prove it; serve only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
                       websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->
                       loopback x11vnc) and the plugin/script/config commands, whose params are validated
                       by ValidateParams on both sides; task_run (docs/10 phase 3) runs one typed task of the
-                      plan through the Chronicle Link bridge as a run; the agent also reports its runs
+                      plan through the Chronicle Link bridge as a run; a run may wait for an objective key
+                      (until, ended by the server's run_until); the agent also reports its runs
                       unasked (event frames); the server never talks to the game directly
 internal/client/      typed API client of the CLI and `chronicle mcp`: config.json and credentials.json
                       under ~/.config/chronicle, device-flow login (RFC 8628), token refresh; never

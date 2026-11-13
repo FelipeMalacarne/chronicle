@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/url"
 	"strings"
 	"sync"
@@ -26,6 +27,9 @@ type runGame struct {
 	results  []json.RawMessage
 	outcome  string // the run plugin's outcome; "" never ends it
 	requests []string
+	fight    bool              // the health bar shows: no safe point
+	levels   map[string]int    // /skills by name
+	settings map[string]string // /settings/plugin writes, "group.key" → value
 }
 
 func newRunGame(outcome string) *runGame {
@@ -35,11 +39,15 @@ func newRunGame(outcome string) *runGame {
 func (g *runGame) State(context.Context) (json.RawMessage, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
-	b, _ := json.Marshal(map[string]any{"loggedIn": true, "player": map[string]any{"position": g.pos}})
+	player := map[string]any{"position": g.pos}
+	if g.fight {
+		player["healthRatio"] = 20
+	}
+	b, _ := json.Marshal(map[string]any{"loggedIn": true, "player": player})
 	return b, nil
 }
 
-func (g *runGame) JSON(_ context.Context, method, path string, _ url.Values, body any, _ time.Duration) (json.RawMessage, error) {
+func (g *runGame) JSON(_ context.Context, method, path string, query url.Values, body any, _ time.Duration) (json.RawMessage, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 	class := ""
@@ -48,6 +56,23 @@ func (g *runGame) JSON(_ context.Context, method, path string, _ url.Values, bod
 	}
 	g.requests = append(g.requests, method+" "+path+" "+class)
 	switch method + " " + path {
+	case "GET /skills":
+		name := query.Get("name")
+		if lvl, ok := g.levels[name]; ok {
+			return json.RawMessage(fmt.Sprintf(`{"skills":[{"name":%q,"level":%d}]}`, name, lvl)), nil
+		}
+		return json.RawMessage(`{"skills":[]}`), nil
+	case "POST /settings/plugin":
+		m := body.(map[string]any)
+		if g.settings == nil {
+			g.settings = map[string]string{}
+		}
+		switch v := m["value"].(type) {
+		case string:
+			g.settings[m["group"].(string)+"."+m["key"].(string)] = v
+		case *string:
+			g.settings[m["group"].(string)+"."+m["key"].(string)] = *v
+		}
 	case "POST /scripts/stop":
 		g.active[class] = false
 	case "POST /scripts/start":

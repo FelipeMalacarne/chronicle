@@ -54,6 +54,7 @@ export const LIMITS = {
 	priorityMax: 100,
 	timeoutMin: 1,
 	timeoutMax: 120,
+	timeoutUntilMax: 12 * 60,
 	stopMax: 8
 };
 
@@ -495,6 +496,11 @@ export interface Draft {
 	back: boolean;
 	/** Limite do plugin em minutos; vazio é o padrão do agent (30 min). */
 	timeout: number | null;
+	/**
+	 * A chave de objetivo que encerra o run (wait_until), quando a rotina tem uma: a tela ainda não
+	 * a mostra nem edita (falta o canvas), só a mantém ao salvar de novo.
+	 */
+	until?: string;
 }
 
 export function newDraft(accounts: string[]): Draft {
@@ -514,12 +520,15 @@ export function newDraft(accounts: string[]): Draft {
 	};
 }
 
-function runFields(run: RunParams): Pick<Draft, 'className' | 'stop' | 'back' | 'timeout'> {
+function runFields(
+	run: RunParams
+): Pick<Draft, 'className' | 'stop' | 'back' | 'timeout' | 'until'> {
 	return {
 		className: run.className,
 		stop: [...(run.stop ?? [])],
 		back: !run.stay,
-		timeout: run.timeoutS ? Math.round(run.timeoutS / 60) : null
+		timeout: run.timeoutS ? Math.round(run.timeoutS / 60) : null,
+		...(run.until ? { until: run.until.objective } : {})
 	};
 }
 
@@ -557,6 +566,8 @@ function runOf(d: Draft): RunParams {
 	if (stop.length) run.stop = stop;
 	if (d.timeout) run.timeoutS = d.timeout * 60;
 	if (!d.back) run.stay = true;
+	// The account is the server's to write (from each account's request).
+	if (d.until) run.until = { objective: d.until };
 	return run;
 }
 
@@ -583,11 +594,13 @@ export function draftProblem(d: Draft): string | null {
 	if (!d.className) return 'Escolha o plugin que a rotina roda.';
 	if (d.stop.filter((c) => c !== d.className).length > LIMITS.stopMax)
 		return `Pare no máximo ${LIMITS.stopMax} plugins.`;
+	// A run that waits for an objective may take hours (the agent's 12 h).
+	const timeoutMax = d.until ? LIMITS.timeoutUntilMax : LIMITS.timeoutMax;
 	if (
 		d.timeout !== null &&
-		(!Number.isInteger(d.timeout) || d.timeout < LIMITS.timeoutMin || d.timeout > LIMITS.timeoutMax)
+		(!Number.isInteger(d.timeout) || d.timeout < LIMITS.timeoutMin || d.timeout > timeoutMax)
 	)
-		return `O limite vai de ${LIMITS.timeoutMin} a ${LIMITS.timeoutMax} min.`;
+		return `O limite vai de ${LIMITS.timeoutMin} a ${timeoutMax} min.`;
 	return null;
 }
 

@@ -119,6 +119,18 @@ func (s *Server) handleRecurringSave(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	if rc.Run.Until != nil {
+		// The account's agent must end the run on the objective; one that
+		// is away gets the routine only once it can (agent.RoutinesFor).
+		if err = s.untilFor(t.account, rc.Run.Until); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if t.connected && !t.served.Supports(agent.CmdRunUntil) {
+			s.writeMicrobotError(w, errAgentNoUntil)
+			return
+		}
+	}
 	id, list, err := s.opts.Microbot.Routines.PutRecurring(r.Context(), t.account, rc)
 	if id != "" {
 		rc.ID = id

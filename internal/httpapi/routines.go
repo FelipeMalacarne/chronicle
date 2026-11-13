@@ -119,6 +119,16 @@ func (s *Server) handleTriggersSet(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "not a trigger")
 		return
 	}
+	if trig.Run.Until != nil {
+		if err = s.untilFor(t.account, trig.Run.Until); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if t.connected && !t.served.Supports(agent.CmdRunUntil) {
+			s.writeMicrobotError(w, errAgentNoUntil)
+			return
+		}
+	}
 	params, _ := json.Marshal(trig)
 	ts, err := s.opts.Microbot.Routines.PutTrigger(r.Context(), t.account, trig)
 	if err != nil {

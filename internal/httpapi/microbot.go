@@ -450,6 +450,7 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 			return
 		}
 		var params json.RawMessage
+		needUntil := false
 		switch command {
 		case agent.CmdLogin:
 			var p agent.LoginParams
@@ -473,6 +474,14 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 				writeError(w, http.StatusBadRequest, err.Error())
 				return
 			}
+			// A run that waits for an objective: the server's account in it.
+			if u := runUntilOf(p); u != nil {
+				if err = s.untilFor(account, u); err != nil {
+					writeError(w, http.StatusBadRequest, err.Error())
+					return
+				}
+				needUntil = true
+			}
 			params = nil
 			if p != nil {
 				params, _ = json.Marshal(p)
@@ -483,6 +492,9 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 		var data json.RawMessage
 		link := s.opts.Microbot.Link
 		served, err := link.Route(account)
+		if err == nil && needUntil && !served.Supports(agent.CmdRunUntil) {
+			err = errAgentNoUntil
+		}
 		if err == nil {
 			err = link.CallAgent(ctx, served.ID, command, params, &data)
 		}
@@ -549,6 +561,8 @@ func (s *Server) writeMicrobotError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusServiceUnavailable, "no agent connected (run `chronicle agent` on the game machine)")
 	case errors.Is(err, agent.ErrAmbiguousAgent):
 		writeError(w, http.StatusConflict, "more than one agent connected: pass ?account= to say which")
+	case errors.Is(err, errAgentNoUntil):
+		writeError(w, http.StatusConflict, err.Error())
 	case errors.As(err, &cmd):
 		writeError(w, http.StatusBadGateway, cmd.Error())
 	case errors.Is(err, context.DeadlineExceeded):

@@ -10,9 +10,12 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
 	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
 	"github.com/FelipeMalacarne/chronicle/internal/config"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
 	"github.com/FelipeMalacarne/chronicle/internal/httpapi"
 	"github.com/FelipeMalacarne/chronicle/internal/kube"
 	"github.com/FelipeMalacarne/chronicle/internal/routinesync"
+	"github.com/FelipeMalacarne/chronicle/internal/rununtil"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storemicrobot "github.com/FelipeMalacarne/chronicle/internal/store/microbot"
 	storeroutines "github.com/FelipeMalacarne/chronicle/internal/store/routines"
@@ -21,10 +24,19 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/workerctl"
 )
 
+// microbotDeps is what the control module reads besides the database: the
+// account's facts, the catalog and the progress events, for the runs that
+// wait for an objective (internal/rununtil).
+type microbotDeps struct {
+	facts   rununtil.Facts
+	catalog *entities.Registry
+	events  *events.Hub
+}
+
 // newMicrobot builds the Microbot control module (docs/08) and, with a
 // vault key, the accounts' sessions; with WORKERS=on also the reconciler of
 // the managed workers in the cluster (docs/11), started on ctx.
-func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ingest *storeingest.Repository, logger *slog.Logger) (*httpapi.MicrobotOptions, error) {
+func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ingest *storeingest.Repository, deps microbotDeps, logger *slog.Logger) (*httpapi.MicrobotOptions, error) {
 	link := &agent.Link{Log: logger}
 	audit := storemicrobot.New(pool)
 	routines := storeroutines.New(pool)
@@ -32,9 +44,17 @@ func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ing
 	logger.Warn("microbot: control module ON (docs/08): /api/microbot routes and the agent link are enabled")
 	// The triggers and the runs' history live in the database (docs/11
 	// section 4.4): every agent that links gets its account's triggers, and
-	// every run it reports is stored.
+	// every run it reports is stored. A run that waits for an objective
+	// (wait_until, docs/10 phase 4) is followed until the account's facts
+	// prove it, and its agent told so.
 	sync := &routinesync.Sync{Store: routines, Hub: link, Audit: audit, Log: logger}
-	link.OnConnect, link.OnEvent = sync.OnConnect, sync.OnEvent
+	until := &rununtil.Watcher{Facts: deps.facts, Registry: deps.catalog, Hub: link, Events: deps.events, Audit: audit, Log: logger}
+	until.Start(ctx)
+	link.OnConnect = sync.OnConnect
+	link.OnEvent = func(info agent.Info, ev agent.Event) {
+		sync.OnEvent(info, ev)
+		until.OnEvent(info, ev)
+	}
 	if cfg.VaultKey == "" {
 		logger.Info("workers: no CHRONICLE_VAULT_KEY; game sessions and workers are off")
 		return opts, nil

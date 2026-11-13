@@ -9,6 +9,10 @@ numerados.
 Histórico: as seções 1 a 3 foram escritas para a página v4 (2026-11-04). Em 2026-11-05 o canvas foi
 consolidado numa única página, **v6**, e as páginas v0 a v5 foram removidas (seção 5). Onde a v6
 revisou uma decisão da v4, a seção 5 prevalece.
+Em 2026-11-12 o dono pediu a reestruturação
+para várias contas; ela está na página **8 · v7 · Frota** (seção 7), que prevalece sobre a v6 nas telas
+que redesenha. As páginas v6 ficam no canvas como histórico e como referência das telas que a v7 ainda
+não redesenhou.
 
 ## 1. Decisões
 
@@ -178,3 +182,123 @@ se a API vem depois):
    na UI.
 10. A Rota abre o trecho do cursor numa janela (3 passos antes, 10 depois) com "mostrar tudo", como em
     V6Rota1440; trechos sem título no conteúdo recebem o nome dos locais e das quests concluídas.
+
+## 7. Reestruturação na v7: Frota (2026-11-12)
+
+Pedido do dono, depois de uma revisão de todas as telas em uso: não é o tema nem a paleta, é
+componente, disposição, usabilidade e interatividade ("tudo genérico e low effort"). O foco do produto
+passa a ser várias contas com plugins, scripts e rotinas, com cara de RuneScape e a ideia de um idle
+game. O primeiro acesso em passos é ruim e deve virar lista e cadastro de contas. Mudança de servidor
+vira issue depois de fechar a UX. Decisão 36 do doc 01.
+
+A revisão que originou o pedido achou, nas telas da v6 implementadas: o Cockpit com cerca de 2.700 px
+e onze painéis do mesmo peso; cabeçalhos da Automação que quebram em três linhas; texto de sistema na
+tela ("doc 08", "GET /state", nome de variável, papel do Zitadel); os chips de objetivo empilhados no
+centro do Agora e o texto do passo três vezes; placa escura em todo painel, sem hierarquia; um separador
+de banco entre quase todos os passos da rota; a barra de 640 px estourando a largura; e classes
+globais curtas do `pergaminho.css` (`.bar`, `.st`, `.tabs`, `.v`, `.meta`) colidindo com as das páginas.
+
+### 7.1 Decisões
+
+1. **A casa do app é a Frota**, não o passo atual de uma conta. Cada conta é uma **raia**: o quadro
+   com a skill que ela treina, a atividade, a barra de andamento, o ritmo, o que vem depois e as ações.
+   Para dez contas ou mais há a lista **compacta**, agrupada em Precisa de você, Jogando e Paradas.
+2. **A barra lateral lista as contas.** Abrir uma conta leva à tela dela, com um cabeçalho (quadro,
+   nome, o que faz agora, onde roda, Pausar e Parar) e **cinco abas**: Visão geral, Rota, Personagem,
+   Cliente e Histórico. A conta se escolhe na Frota ou na barra; nenhuma tela tem seletor de conta.
+3. **Automação deixa de ser uma área.** Workers vira a Frota; o Cockpit vira a aba Cliente da conta;
+   Plugins e Rotinas viram telas da frota inteira.
+4. **Rota junta o Agora e as Rotas** numa aba, com Passo | Rota inteira | Comparar. Revê a decisão 5
+   da seção 5 no que toca à navegação; Comparar continua sendo uma vista da rota (decisão 29 do doc 01).
+5. **Fila** junta Relógios, Fazer agora, Sozinho e as pausas numa linha do tempo: o que a conta vai
+   fazer. **Histórico** junta Runs e Auditoria: o que ela fez. Toda conta tem uma **atividade
+   principal**; uma **rotina** é quando + o que faz + se falhar + em quais contas vale.
+6. **Precisa de você** reúne o que pede decisão do dono (sessão expirada, relógio pronto sem rotina,
+   versão antiga, falta de lugar), cada item com a ação ao lado. Vive na Frota e na tela Atividade.
+7. **Nova conta** substitui o primeiro acesso: só o nome é obrigatório no desenho; sessão do jogo,
+   lugar e rota podem ficar para depois.
+8. **Mundo passa a ser da frota**: uma meta mostra quais contas a perseguem e quão perto cada uma está.
+9. **Peças novas** (artboard `V7Fundamentos`), sobre os mesmos tokens do Pergaminho:
+   - lâmpada (no jogo, subindo, em pausa, com problema, parada), sempre junto de uma palavra;
+   - quadro com o sprite da skill e o nível;
+   - barra de andamento (nível em verde, rotina em ouro, pausa em cinza; subindo mostra as etapas);
+   - objetivo com progresso ("240 de 1 250"), no lugar do chip de uma linha; `unknown` segue pontilhado
+     e nunca vira `unmet`;
+   - cartão com título em serifa e a origem do dado à direita, no lugar do painel com placa. A placa
+     escura fica só para o resumo da Frota e para o cliente do jogo. Revê a decisão 3 da seção 5;
+   - abas para as telas de uma conta, pílulas para filtrar lista, interruptor só para o que roda sozinho.
+10. **O que sai**: placa em todo painel; texto de sistema na tela; mono de 11 px como texto corrente
+    (fica para hora, id de passo e número); o separador "banco · entre X e Y" (vira a marca de banco na
+    linha do passo); seletor de conta dentro das telas.
+
+### 7.2 Artboards da página 8
+
+| Artboard | Tela |
+|---|---|
+| `V7Frota1440`, `V7Frota640`, `V7FrotaCompacta1440` | Frota: raias, 640 px e a lista compacta para 12 contas |
+| `V7NovaConta1440` | Nova conta |
+| `V7Conta1440` | Conta › Visão geral: fazendo agora, fila, rota, hoje, worker, últimas execuções |
+| `V7Rota1440`, `V7Rota640`, `V7RotaLista1440` | Conta › Rota: passo atual (1440 e a janela ao lado do jogo) e a rota inteira |
+| `V7Personagem1440` | Conta › Personagem: resumo, skills, quests, diaries, com ela agora, conquistas, banco |
+| `V7Cliente1440`, `V7Cliente640` | Conta › Cliente: o jogo no centro; script, por perto e banco ao lado |
+| `V7Historico1440` | Conta › Histórico: execuções, níveis, ações do dono e problemas, por dia |
+| `V7Atividade1440` | Atividade: precisa de você, execuções da frota, XP do dia por conta, diário |
+| `V7Rotinas1440` | Rotinas: atividade principal por conta, rotinas e a rotina aberta |
+| `V7Plugins1440` | Plugins: o que joga, o que as rotinas usam, o que fica sempre ligado; plugin aberto |
+| `V7Mundo1440` | Mundo: metas da frota |
+| `V7Fundamentos`, `V7Estados1440` | As peças novas e os estados (vazio, sem dado, problemas) |
+
+Sem desenho na v7, valendo a v6: Comparar rotas (`V6Comparar1440`), Mundo › Entidades e Grafo
+(`V6Mundo*`, `V6Grafo*`, `V6Entidade`), sessão (`V6Sessao1440`), os menus do cliente do jogo
+(`V6MicrobotClienteEstados1440`, `V6MicrobotUsarEm1440`, `V6MicrobotMapa1440`) e a configuração de
+plugin por formulário (`V6MicrobotConfig1440`). Só Frota, Rota e Cliente têm 640 px. Os artboards
+foram conferidos renderizados no tema pergaminho; no pedra, só parte deles.
+
+A página 7 (`V6MicrobotWorkers1440`, `V6MicrobotWorkersEstados1440`) fica superada pela Frota: a lista
+de workers é a própria Frota, e os estados de iniciar, subir e parar estão na raia e em `V7Estados1440`.
+
+### 7.3 O que é mock
+
+Contas, níveis, ritmos, ganhos, plugins e rotinas dos artboards são fictícios. Os passos da rota são
+os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
+
+### 7.4 O que a v7 pede do servidor
+
+| Para | Falta |
+|---|---|
+| "240 de 1 250" no objetivo | o board devolver o valor observado junto do veredito (divergência 6 da seção 6) |
+| XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | uma série por conta derivada dos snapshots que já existem |
+| Fila e Rotinas | rotinas, gatilhos e histórico no servidor (doc 11, F6) e a noção de atividade principal por conta |
+| Histórico e Atividade | runs fora do disco do agent (doc 11, F6), eventos de nível, auditoria por conta |
+| Plugins da frota | perfis no Postgres (doc 11, F5) |
+| Capacidade no resumo, "cabe mais N", uso por worker | doc 11, F7 |
+| Mundo da frota | metas e vereditos de várias contas numa consulta |
+| Nova conta sem rota e conta só acompanhada | já previstas na decisão 34 do doc 01 (modo `regular`, rota opcional) |
+
+### 7.5 Ordem de implementação
+
+Item 20 da sequência do doc 04, seção 9. Cada fatia entra sozinha e deixa o app inteiro; nenhuma
+mostra número que o servidor não mede (sem dado, a linha some).
+
+| Fatia | Entrega | Depende de |
+|---|---|---|
+| V1 | Casca: Frota em `/` com o que a API já tem, cabeçalho da conta com as cinco abas apontando para as telas atuais, Nova conta no lugar do `/setup`, barra lateral e barra de 640 px, estados vazios | nada |
+| V2 | Conta › Rota: Passo, Rota inteira e Comparar numa aba; objetivo com progresso, passo a passo com caixas, marca de banco na linha | o valor observado no board |
+| V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada |
+| V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada |
+| V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
+| V6 | Rotinas e Fila | doc 11, F6 |
+| V7 | Histórico e Atividade | doc 11, F6, e os eventos de nível |
+| V8 | Plugins da frota | doc 11, F5 |
+| V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende) |
+| V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas |
+
+Antes de cada fatia que mexe numa tela ainda sem desenho na v7 (Comparar, Entidades, Grafo), o desenho
+entra no canvas e o dono aprova (regra 11 do `CLAUDE.md`).
+
+Estado em 2026-11-12: a V1 está em boa parte no branch `ui/v7-frota` (Frota em `/`, cabeçalho de conta,
+Nova conta, barra lateral), feita antes de o desenho fechar: tem as abas Agora, Rota, Mundo, Personagem
+e Cliente, e precisa ser alinhada às cinco abas da decisão 2. Diverge do artboard de Nova conta em dois
+pontos, pelo que o servidor aceita: a rota é obrigatória e a sessão vem depois de criar a conta. O
+branch `ui/workers-no-pergaminho` (base dele) pôs a aba Workers nas classes do Pergaminho e corrigiu a
+barra de filtros do Grafo.

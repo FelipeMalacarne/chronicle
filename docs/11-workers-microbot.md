@@ -394,6 +394,10 @@ disco.
 | F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle |
 
 Antes de cada fase com tela (F1, F2, F5, F6), o desenho entra no canvas e o dono aprova (regra 11).
+Desde 2026-11-12 as telas destas fases são as da v7 (canvas, página 8; `docs/ui/decisoes-canvas.md`,
+seção 7; decisão 36 do doc 01): a lista de workers é a Frota, os perfis da F5 aparecem em Plugins, as
+rotinas da F6 em Rotinas, na Fila e no Histórico, e a capacidade da F7 no resumo da Frota. A página 7
+fica como histórico.
 Até a F5, um pod gerenciado que reinicia perde a configuração dos plugins. Para testar, isso é
 aceitável.
 

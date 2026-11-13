@@ -226,18 +226,27 @@ attached agent declares). Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes bas
 
 ## UI design reference (read before touching `web/`)
 
-- **Screens**: the Claude Design canvas <https://claude.ai/artifact/NqmKesmqCJH1gnSowjJFbQ>, page set
-  "v6" only (one canvas page per product screen: 0 Marca e fundamentos, 1 Agora, 2 Rotas, 3 Mundo,
-  4 Conta, 5 Automação). Artboards are `project/V6<Screen><Width>.dc.html` (`1440` desktop with the
-  sidebar, `640` the window beside the game); read one with the Artifact tool (`action: read`, `path`).
-  Older pages v0 to v5 were deleted on 2026-11-05; never recreate them. Implementation goes screen by
-  screen after the owner approves the screen in the canvas, starting with Agora.
+- **Screens**: the Claude Design canvas <https://claude.ai/artifact/NqmKesmqCJH1gnSowjJFbQ>. The
+  current reference is page **"8 · v7 · Frota"** (approved 2026-11-12, doc 01 decision 36): the app is
+  for several accounts, the home is the Frota (one lane per account) and each account opens with a
+  header and five tabs (Visão geral, Rota, Personagem, Cliente, Histórico). Artboards are
+  `project/V7<Screen><Width>.dc.html`; `V7Fundamentos` is the component sheet and `V7Estados1440` the
+  empty and problem states. The v6 pages (0 Marca e fundamentos to 7 Workers, artboards
+  `project/V6<Screen><Width>.dc.html`) stay as history and remain the reference only for what v7 has
+  not redrawn: Comparar, Mundo › Entidades and Grafo, the game client menus, the plugin config form.
+  `1440` is desktop with the sidebar, `640` the window beside the game; read an artboard with the
+  Artifact tool (`action: read`, `path`). Pages v0 to v5 were deleted on 2026-11-05; never recreate
+  them. Implementation goes in the slices of `docs/ui/decisoes-canvas.md` section 7.5 (item 20 of
+  docs/04 section 9).
 - **Design system**: Pergaminho <https://claude.ai/artifact/WrVkgXPtCrRJPeUSgpHWVC>. Tokens are mirrored
   in `docs/ui/pergaminho.tokens.json` (two themes, `pergaminho` light and `pedra` dark) and the brand
   book in `docs/ui/pergaminho.md`; the artifact also has React previews of the atoms (`Plaque`,
   `SkillCell`, `InventorySlot`, `StepRow`, `ObjectiveChip`, `BankCard`). In `web/` use the tokens as CSS
   variables and the same class names (`pg-*`), no React.
-- **Decisions**: `docs/ui/decisoes-canvas.md` (section 5 is current) and doc 01 decisions 29 to 31. The
+- **Decisions**: `docs/ui/decisoes-canvas.md` (section 7 is current; section 5 still holds where v7
+  did not revise it) and doc 01 decisions 29 to 31 and 36. In v7 a card (serif title, data source on
+  the right) replaces the panel with a dark plaque, which stays only on the Frota summary and the game
+  client; an objective shows how much is missing; no screen has an account picker. The
   product is called **Chronicle** ("Ironman Planner" is the description); Comparar is a tab of Rotas;
   sidebar option A on 1440; one bevel only (panel, plaque, controls), everything inside panels flat;
   no system text in paragraphs (explanations go to `title`); real OSRS Wiki sprites for skills and items
@@ -269,7 +278,7 @@ attached agent declares). Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes bas
 contrato de ingest) · 07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC,
 plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por
 agente; decisões em 9.1 e 9.3) · 10 modelo de execução (proposta: fatos por fonte, log de eventos,
-tarefas, receitas, planos; decisões E1 a E10 abertas) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas, v6 vigente) ·
+tarefas, receitas, planos; decisões E1 a E10 abertas) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
 `docs/ui/pergaminho.md` + `pergaminho.tokens.json` (design system).
 `docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.

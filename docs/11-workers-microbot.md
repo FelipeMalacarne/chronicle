@@ -886,6 +886,23 @@ essa opção.
 - **Limite:** se o dono desloga pela tela do cliente (VNC), o servidor não sabe; o pod seguinte entra
   de novo. Para evitar, deslogue pelo painel.
 
+### 15.6 Opções dos plugins também voltam (2026-11-13)
+
+O liga/desliga da seção 15.4 não bastava: o valor de uma opção mudado no Cockpit sumia com o pod.
+
+- **Migração 0022:** `workers.running_settings` (jsonb), os valores explícitos das opções dos plugins
+  que estão ligados.
+- **Leitura:** o reconciliador lê o esquema de cada plugin ligado (`config_schema`, o export do
+  Chronicle Link) e os valores (`config_get`, em lotes de 50), a cada 2 minutos e sempre antes de um
+  reinício. Só guarda o que o cliente tem definido (uma chave não definida fica de fora), nunca uma
+  chave que parece segredo nem um grupo protegido (a mesma validação do `config_set`), e no máximo
+  300 valores. Uma leitura que falha em qualquer ponto mantém o que estava guardado.
+- **Bootstrap:** os valores guardados vão por cima do perfil, e o agent os grava antes de ligar os
+  plugins. Descartar um desvio (seção 17) devolve o valor do perfil ao cliente, e a leitura seguinte
+  guarda esse valor.
+- **Limite:** só as opções dos plugins ligados e que o perfil não manda de outro jeito. Uma opção
+  mudada fora da janela de 2 minutos e de um reinício se perde numa queda brusca.
+
 ## 16. F6: rotinas no servidor (2026-11-13)
 
 Os gatilhos e o histórico dos runs saem do disco do agent e vão para o Postgres. O executor continua

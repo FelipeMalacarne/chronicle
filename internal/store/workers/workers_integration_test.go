@@ -528,3 +528,30 @@ func TestAutoLoginAndLoggedIn(t *testing.T) {
 		t.Fatalf("after a stop: %+v", w)
 	}
 }
+
+func TestRunningSettings(t *testing.T) {
+	ctx := context.Background()
+	_, repo := setup(ctx, t)
+	if err := repo.PutSession(ctx, "acc_a", "u1", session); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.SetDesired(ctx, "acc_a", StateRunning, 0, "img"); err != nil {
+		t.Fatal(err)
+	}
+	on := []agent.ProfileSetting{{Group: "blackjack", Key: "room", Value: "THUG_TENT"}}
+	if err := repo.SetRunningSettings(ctx, "acc_a", on); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := repo.RunningSettings(ctx, "acc_a"); err != nil || len(got) != 1 || got[0] != on[0] {
+		t.Fatalf("kept %+v %v", got, err)
+	}
+	if err := repo.SetRunningSettings(ctx, "acc_a", []agent.ProfileSetting{{Group: "blackjack", Key: "password", Value: "x"}}); err == nil {
+		t.Fatal("a secret key was kept")
+	}
+	if err := repo.SetRunningSettings(ctx, "acc_a", nil); err != nil {
+		t.Fatal(err)
+	}
+	if got, _ := repo.RunningSettings(ctx, "acc_a"); len(got) != 0 {
+		t.Fatalf("after clearing: %+v", got)
+	}
+}

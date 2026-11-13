@@ -133,3 +133,10 @@ UPDATE workers SET auto_login = $2 WHERE account_id = $1;
 -- name: SetWorkerLoggedIn :execrows
 -- Like running_plugins, not a change of the worker: no updated_at.
 UPDATE workers SET was_logged_in = $2 WHERE account_id = $1;
+
+-- name: SetWorkerRunningSettings :execrows
+-- No updated_at, like running_plugins.
+UPDATE workers SET running_settings = $2 WHERE account_id = $1;
+
+-- name: GetWorkerRunningSettings :one
+SELECT running_settings FROM workers WHERE account_id = $1;

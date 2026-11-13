@@ -27,9 +27,26 @@ type fakeStore struct {
 	errs     map[string]string
 	profile  agent.ClientProfile
 	running  map[string][]agent.ProfilePlugin
+	settings map[string][]agent.ProfileSetting
 	loggedIn map[string]bool
 	logins   map[string]string
 	busy     bool
+}
+
+func (f *fakeStore) RunningSettings(_ context.Context, account string) ([]agent.ProfileSetting, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.settings[account]), nil
+}
+
+func (f *fakeStore) SetRunningSettings(_ context.Context, account string, settings []agent.ProfileSetting) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.settings == nil {
+		f.settings = map[string][]agent.ProfileSetting{}
+	}
+	f.settings[account] = settings
+	return nil
 }
 
 func (f *fakeStore) SetLoggedIn(_ context.Context, account string, on bool) error {
@@ -231,6 +248,10 @@ type fakeHub struct {
 	state    string        // the "state" of CmdStatus when status has no entry
 	loginErr error
 	world    int
+	// config is what the client has set, by "group.key"; schema the options
+	// of hubClass; configErr fails the option reads.
+	config    map[string]string
+	configErr error
 }
 
 func (h *fakeHub) Agents() []agent.Info {
@@ -261,6 +282,25 @@ func (h *fakeHub) CallAgent(_ context.Context, id string, command string, params
 		}
 	case agent.CmdRunStatus:
 		out = h.runs[id]
+	case agent.CmdConfigSchema:
+		if h.configErr != nil {
+			return h.configErr
+		}
+		if params.(agent.ScriptParams).ClassName != hubClass {
+			return errors.New("config schema: " + params.(agent.ScriptParams).ClassName + " has no config options")
+		}
+		out = agent.PluginSchema{ClassName: hubClass, Group: "blackjack", Items: []agent.SchemaItem{{Key: "room"}, {Key: "tick"}, {Key: "password"}}}
+	case agent.CmdConfigGet:
+		p := params.(agent.ConfigGetParams)
+		vals := map[string]*string{}
+		for _, k := range p.Keys {
+			var v *string
+			if c, ok := h.config[p.Group+"."+k]; ok {
+				v = &c
+			}
+			vals[k] = v
+		}
+		out = agent.ConfigValues{Group: p.Group, Values: vals}
 	case agent.CmdLogin:
 		h.world = params.(agent.LoginParams).World
 		if h.loginErr != nil {
@@ -601,5 +641,46 @@ func TestLoggedInIsRemembered(t *testing.T) {
 	}
 	if !store.loggedIn["acc_a"] {
 		t.Fatal("a logged in client was not remembered")
+	}
+}
+
+// The options of the plugins that are on are kept with them, read from the
+// plugin's schema, and written again by the next bootstrap over the profile's.
+func TestRunningSettingsSurviveANewPod(t *testing.T) {
+	profile := agent.ClientProfile{Settings: []agent.ProfileSetting{{Group: "blackjack", Key: "room", Value: "PROFILE"}}}
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true}}, profile: profile}
+	info := agent.Info{ID: "x", Account: "acc_a", Kind: agent.KindManaged, Connected: true}
+	hub := &fakeHub{
+		agents: []agent.Info{info}, plugins: onPlugins(hubClass, ownClass),
+		// "password" looks like a secret and never leaves the client.
+		config: map[string]string{"blackjack.room": "THUG_TENT", "blackjack.password": "hunter2"},
+	}
+	cl := &fakeCluster{deps: map[string]kube.Deployment{}}
+	r := newRec(store, cl, hub)
+	ctx := context.Background()
+	r.OnConnect(info)
+	if err := r.Once(ctx); err != nil {
+		t.Fatal(err)
+	}
+	want := []agent.ProfileSetting{{Group: "blackjack", Key: "room", Value: "THUG_TENT"}}
+	if !reflect.DeepEqual(store.settings["acc_a"], want) {
+		t.Fatalf("kept %+v", store.settings["acc_a"])
+	}
+
+	// A read that fails keeps what was stored (a restart forces the read).
+	hub.configErr = errors.New("schema not exported")
+	hub.config["blackjack.room"] = "OTHER"
+	if _, err := r.restart(ctx, "acc_a"); err != nil && !errors.Is(err, ErrNotRunning) {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(store.settings["acc_a"], want) {
+		t.Fatalf("a failed read changed the kept settings: %+v", store.settings["acc_a"])
+	}
+
+	// The new pod's bootstrap carries them over the profile's value.
+	hub2 := &fakeHub{}
+	newRec(store, cl, hub2).OnConnect(agent.Info{ID: "y", Account: "acc_a", Kind: agent.KindManaged})
+	if got := hub2.boot.Profile.Settings; !reflect.DeepEqual(got, want) {
+		t.Fatalf("bootstrap settings %+v", got)
 	}
 }

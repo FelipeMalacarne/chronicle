@@ -33,6 +33,9 @@ const (
 	maxSettingValue    = 2000
 )
 
+// MaxProfileSettings is the most settings the agent takes in one profile.
+const MaxProfileSettings = maxProfileSettings
+
 // ClientProfile is a client profile as the agent applies it: the plugins
 // in the order they start and the RuneLite settings.
 type ClientProfile struct {
@@ -73,6 +76,9 @@ func (p ProfilePlugin) class() string {
 	}
 	return p.Name
 }
+
+// Class is the class the Agent Server starts for the plugin.
+func (p ProfilePlugin) Class() string { return p.class() }
 
 func (p ProfilePlugin) id() string { return p.Source + ":" + p.Name }
 

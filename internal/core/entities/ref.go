@@ -21,12 +21,18 @@ const (
 	KindCombatAchievement Kind = "ca"
 	KindUnlock            Kind = "unlock"
 	KindLocation          Kind = "location"
-	KindGoal              Kind = "goal"
-	KindStep              Kind = "step"
+	// KindNPC, KindShop and KindObject are the world entities of the
+	// execution model (docs/10 section 7): who to talk to, where to buy,
+	// what to interact with. Their catalogs are derived from the wiki.
+	KindNPC    Kind = "npc"
+	KindShop   Kind = "shop"
+	KindObject Kind = "object"
+	KindGoal   Kind = "goal"
+	KindStep   Kind = "step"
 )
 
 // Kinds lists every entity kind in a stable order.
-var Kinds = []Kind{KindQuest, KindItem, KindSkill, KindDiary, KindBoss, KindCombatAchievement, KindUnlock, KindLocation, KindGoal, KindStep}
+var Kinds = []Kind{KindQuest, KindItem, KindSkill, KindDiary, KindBoss, KindCombatAchievement, KindUnlock, KindLocation, KindNPC, KindShop, KindObject, KindGoal, KindStep}
 
 // DiaryTiers are the achievement diary tiers in ascending order.
 var DiaryTiers = []string{"easy", "medium", "hard", "elite"}
@@ -46,6 +52,7 @@ var (
 //
 //	quest, skill, boss, goal  lower-case slug            quest:the_restless_ghost
 //	unlock, location          lower-case slug            unlock:fairy_rings, location:draynor_village
+//	npc, shop, object         slug of the wiki page      npc:duke_horacio, shop:bobs_brilliant_axes, object:bank_booth
 //	item                      OSRS/RuneLite item id      item:1511 (item:1512 is the noted form)
 //	diary                     <area slug>:<tier>         diary:ardougne:easy
 //	ca                        combat achievement id      ca:574
@@ -92,7 +99,7 @@ func (r Ref) IsZero() bool { return r.Kind == "" && r.ID == "" }
 func (r Ref) Validate() error {
 	ok := false
 	switch r.Kind {
-	case KindQuest, KindSkill, KindBoss, KindGoal, KindUnlock, KindLocation:
+	case KindQuest, KindSkill, KindBoss, KindGoal, KindUnlock, KindLocation, KindNPC, KindShop, KindObject:
 		ok = slugPattern.MatchString(r.ID)
 	case KindItem, KindCombatAchievement:
 		n, err := strconv.Atoi(r.ID)

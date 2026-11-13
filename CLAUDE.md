@@ -53,9 +53,10 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `just migrate-up` / `migrate-status` / `migrate-new <name>` | goose against `DATABASE_URL` |
 | `just account-create <rsn>` / `account-guide <id> <guide>` / `accounts` | dev accounts (id `acc_<rsn>`) and the active route, until the account screen exists |
 | `just dbml` | regenerate `docs/arquitetura/modelo-de-dados.dbml` from the migrated `DATABASE_URL` |
-| `go test ./internal/core/entities/catalogbuild -update` | regenerate the derived catalogs in `content/reference` (offline) |
+| `go test ./internal/core/entities/catalogbuild -update` | regenerate the derived catalogs in `content/reference` (offline): quests, items, diaries, CAs, vars, npcs, shops, objects, location maps |
 | `python3 tools/fetch_wiki_icons.py` | refresh `web/static/icons` and `web/src/lib/icons/manifest.json` from the OSRS Wiki: items, skills, quest point, and the cockpit's prayers and spells (`data/wiki/book_icons.json`, keyed by the Microbot client's enum names); cached under `~/.cache/ironman-planner/icons` |
-| `python3 tools/fetch_wiki_locations.py` | refresh `content/reference/location_maps.json`: the OSRS Wiki infobox map point of every location in `locations.json` (the Agora's "Aqui perto"); regions and instances stay unmapped; cached under `~/.cache/ironman-planner/wiki-locations` |
+| `python3 tools/fetch_wiki_locations.py` | refresh `data/wiki/location_maps.json`: the OSRS Wiki infobox `{{Map}}` of every location in `locations.json`; then `-update` above derives `content/reference/location_maps.json` (the map point, for the Agora's "Aqui perto", and the area where a `travel` task ends, docs/10 section 7); regions and instances stay unmapped; cached under `~/.cache/ironman-planner/wiki-locations` |
+| `python3 tools/extract_wiki_world.py` | refresh `data/wiki/npcs.json`, `shops.json` and `objects.json` from the OSRS Wiki's Bucket tables (NPC, monster, shop, stock and scenery infoboxes); then `-update` above derives the `npc`, `shop` and `object` catalogs (docs/10 section 7); id collisions are settled in `data/wiki/world_ids.json`; cached under `~/.cache/ironman-planner/wiki-buckets` |
 | `python3 tools/extract_wiki_items.py` | refresh `data/wiki/items.json` with every item page of the OSRS wiki (the only step that uses the network; cached under `~/.cache/ironman-planner`); then `-update` above and re-run both importers |
 | `python3 data/wiki/scripts/build_quests.py data/samples/wiki-bucket/quest_all_p1.json 'data/samples/wiki-wikitext/quest_pages/batch*.json' <guide-list> data/wiki/quests.json` | rebuild `data/wiki/quests.json` (requirements, QP, quest XP rewards) offline from the saved bucket and wikitext; `<guide-list>` is a file of quest names to cross-check (may be empty) |
 | `go run ./cmd/chronicle content mcp` | extraction MCP server on stdio (Claude Code starts it from `.mcp.json`; skill `annotate-guide`) |
@@ -83,7 +84,8 @@ cmd/chronicle/          cobra subcommands: serve, content (migrate, validate, im
 internal/core/        PURE domain (no DB/HTTP imports):
   content/            loader, schema validation, guide/variant/section/segment/step model
   content/derive/     deterministic bank-leg segments, bank actions and loadouts
-  entities/           canonical entity registry (refs, catalogs, resolver, enrichment)
+  entities/           canonical entity registry (refs, catalogs, resolver, enrichment); npc, shop and
+                      object kinds and location areas for the execution model (docs/10 section 7)
   facts/              merge of each source's last observation into the current fact (player_state)
   activity/           what an account did, from its snapshots: level-ups (one per level, from XP) and skill gains
   ingest/             plugin wire contract v1 (manifest, push, item freshness) + validation

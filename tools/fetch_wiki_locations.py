@@ -1,14 +1,16 @@
 #!/usr/bin/env python3
-"""Fetch the map point of every catalog location from the OSRS Wiki.
+"""Fetch the infobox map of every catalog location from the OSRS Wiki.
 
 Reads content/reference/locations.json (owner-confirmed locations, each with a
 wiki_key), fetches each page's wikitext through the MediaWiki API (50 titles per
-request, redirects followed) and takes the point of the infobox's
-"|map = {{Map|...}}" (x=, y=, plane= or a positional "x,y" pair; the centre of
-several points). Writes content/reference/location_maps.json, which the
-registry loads to put the "aqui perto" steps of the Agora on the map. A page
-without a map, or a map of another map id (an instance), is listed under
-"unmapped" with the reason; nothing is guessed.
+request, redirects followed) and keeps the infobox's "|map = {{Map|...}}"
+template (or the page's first {{Map}}) as it is. Writes data/wiki/location_maps.json;
+a page without a map, or a location without a page, is kept with the reason.
+Nothing is interpreted here: internal/core/entities/catalogbuild reads the
+templates and derives content/reference/location_maps.json (the map point of
+each location, which the Agora's "aqui perto" uses, and its area in tiles,
+where a travel task ends; docs/10 section 7), with
+`go test ./internal/core/entities/catalogbuild -update`.
 
 The wikitext is cached under --cache-dir, so reruns do not hit the network;
 --refresh bypasses the cache.
@@ -30,11 +32,10 @@ API = "https://oldschool.runescape.wiki/api.php"
 USER_AGENT = "ironman-planner location extract (personal, github FelipeMalacarne)"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 CATALOG = os.path.join(ROOT, "content", "reference", "locations.json")
-OUT = os.path.join(ROOT, "content", "reference", "location_maps.json")
+OUT = os.path.join(ROOT, "data", "wiki", "location_maps.json")
 
 MAP_RE = re.compile(r"\|\s*map\s*=\s*(\{\{\s*Map\s*\|.*?\}\})", re.IGNORECASE | re.DOTALL)
 ANY_MAP_RE = re.compile(r"\{\{\s*Map\s*\|.*?\}\}", re.IGNORECASE | re.DOTALL)
-PAIR_RE = re.compile(r"^\s*(\d{3,5})\s*,\s*(\d{3,5})\s*$")
 
 
 def fetch(titles, cache_dir, refresh):
@@ -71,36 +72,13 @@ def fetch(titles, cache_dir, refresh):
     return out
 
 
-def map_point(text):
-    """(x, y, plane) of the infobox map, or (None, reason)."""
-    m = MAP_RE.search(text) or ANY_MAP_RE.search(text)
-    if not m:
-        return None, "no map"
-    tpl = m.group(1) if m.lastindex else m.group(0)
-    args = [a.strip() for a in tpl.strip("{}")[3:].split("|")]
-    named = {}
-    points = []
-    for a in args:
-        if "=" in a:
-            k, v = a.split("=", 1)
-            named[k.strip().lower()] = v.strip()
-        elif PAIR_RE.match(a):
-            x, y = PAIR_RE.match(a).groups()
-            points.append((int(x), int(y)))
-    mapid = named.get("mapid", "")
-    if mapid not in ("", "0", "-1"):
-        return None, f"map id {mapid}"
-    if "x" in named and "y" in named:
-        try:
-            points.append((int(named["x"]), int(named["y"])))
-        except ValueError:
-            return None, "map x/y not numbers"
-    if not points:
-        return None, "map without a point"
-    x = round(sum(p[0] for p in points) / len(points))
-    y = round(sum(p[1] for p in points) / len(points))
-    plane = int(named.get("plane", "0") or 0)
-    return (x, y, plane), None
+def infobox_map(text):
+    """The infobox map template, else the page's first {{Map}}, else None."""
+    m = MAP_RE.search(text)
+    if m:
+        return m.group(1)
+    m = ANY_MAP_RE.search(text)
+    return m.group(0) if m else None
 
 
 def main():
@@ -115,30 +93,31 @@ def main():
     for i in range(0, len(keyed), 50):
         titles = [loc["wiki_key"] for loc in keyed[i:i + 50]]
         pages.update(fetch(titles, args.cache_dir, args.refresh))
-    maps, unmapped = [], []
+    out = []
     for loc in sorted(locations, key=lambda l: l["id"]):
-        page = pages.get(loc.get("wiki_key", ""))
+        if not loc.get("wiki_key"):
+            out.append({"id": loc["id"], "reason": "no wiki_key"})
+            continue
+        page = pages.get(loc["wiki_key"])
         if not page:
-            unmapped.append({"id": loc["id"], "reason": "no wiki page" if loc.get("wiki_key") else "no wiki_key"})
+            out.append({"id": loc["id"], "reason": "no wiki page"})
             continue
-        point, why = map_point(page["text"])
-        if point is None:
-            unmapped.append({"id": loc["id"], "reason": why})
-            continue
-        x, y, plane = point
-        maps.append({"id": loc["id"], "x": x, "y": y, "plane": plane, "page": page["title"], "revid": page["revid"]})
-    out = {
-        "catalog": "location_maps",
-        "version": "2026.11.0",
-        "source": "OSRS Wiki infobox maps of the pages in locations.json (tools/fetch_wiki_locations.py)",
-        "notes": "Generated. The point of each location's infobox map (the centre of its points), used to list the pending steps near the character. Locations without a map, or whose map is an instance, are listed under unmapped and never placed.",
-        "maps": maps,
-        "unmapped": unmapped,
+        entry = {"id": loc["id"], "page": page["title"], "revid": page["revid"]}
+        tpl = infobox_map(page["text"])
+        if tpl is None:
+            entry["reason"] = "no map"
+        else:
+            entry["map"] = tpl
+        out.append(entry)
+    doc = {
+        "source": {"wiki": API, "catalog": "content/reference/locations.json"},
+        "locations": out,
     }
     with open(OUT, "w") as f:
-        json.dump(out, f, indent=2, ensure_ascii=False)
+        json.dump(doc, f, indent=1, ensure_ascii=False)
         f.write("\n")
-    print(f"{len(maps)} mapped, {len(unmapped)} unmapped -> {os.path.relpath(OUT, ROOT)}", file=sys.stderr)
+    n = sum(1 for e in out if "map" in e)
+    print(f"{n} maps, {len(out) - n} without -> {os.path.relpath(OUT, ROOT)}", file=sys.stderr)
 
 
 if __name__ == "__main__":

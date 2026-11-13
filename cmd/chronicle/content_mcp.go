@@ -101,9 +101,9 @@ func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
 			{
 				Name: "resolve_entity",
 				Description: "Resolve a name the way submit will: resolved (ref), ambiguous (candidates: pass the chosen one as id, or use any_of/family for items) or unresolved (with reason). " +
-					"Kinds: quest, skill, diary (name = area, plus tier), boss, item, unlock, location, ca. For items, family is set when the name covers a whole family.",
+					"Kinds: quest, skill, diary (name = area, plus tier), boss, item, unlock, location, ca, npc, shop, object (the last three from the wiki catalogs; a page title such as 'Cook (Lumbridge)' picks one page). For items, family is set when the name covers a whole family.",
 				InputSchema: schema(`{"type":"object","additionalProperties":false,"required":["kind","name"],"properties":{
-					"kind":{"type":"string","enum":["quest","skill","diary","boss","item","unlock","location","ca"]},
+					"kind":{"type":"string","enum":["quest","skill","diary","boss","item","unlock","location","ca","npc","shop","object"]},
 					"name":{"type":"string"},"tier":{"type":"string","enum":["easy","medium","hard","elite"]}}}`),
 				Handler: func(_ context.Context, raw json.RawMessage) (any, error) {
 					var a struct {

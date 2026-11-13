@@ -1414,8 +1414,8 @@
     },
     "entityRef": {
       "type": "string",
-      "description": "Identidade canônica tipada de uma entidade (internal/core/entities.Ref): 'quest:<slug>', 'item:<id OSRS/RuneLite>' (o id noted é outro id), 'skill:<skill>', 'diary:<área>:<tier>', 'ca:<id da task>', 'boss:<slug>', 'unlock:<slug>', 'location:<slug>', 'goal:<slug>', 'step:[<guia>/]<id>'. Nunca é uma URL nem um nome de exibição; nomes e URLs da wiki derivam do catálogo em content/reference.",
-      "pattern": "^(?:(?:quest|skill|boss|goal|unlock|location):[a-z0-9]+(?:_[a-z0-9]+)*|item:[1-9][0-9]*|ca:(?:0|[1-9][0-9]*)|diary:[a-z0-9]+(?:_[a-z0-9]+)*:(?:easy|medium|hard|elite)|step:(?:[A-Za-z0-9][A-Za-z0-9._-]{0,63}/)?[A-Za-z0-9][A-Za-z0-9._-]{0,63})$"
+      "description": "Identidade canônica tipada de uma entidade (internal/core/entities.Ref): 'quest:<slug>', 'item:<id OSRS/RuneLite>' (o id noted é outro id), 'skill:<skill>', 'diary:<área>:<tier>', 'ca:<id da task>', 'boss:<slug>', 'unlock:<slug>', 'location:<slug>', 'npc:<slug>', 'shop:<slug>', 'object:<slug>' (slug da página da wiki; doc 10 seção 7), 'goal:<slug>', 'step:[<guia>/]<id>'. Nunca é uma URL nem um nome de exibição; nomes e URLs da wiki derivam do catálogo em content/reference.",
+      "pattern": "^(?:(?:quest|skill|boss|goal|unlock|location|npc|shop|object):[a-z0-9]+(?:_[a-z0-9]+)*|item:[1-9][0-9]*|ca:(?:0|[1-9][0-9]*)|diary:[a-z0-9]+(?:_[a-z0-9]+)*:(?:easy|medium|hard|elite)|step:(?:[A-Za-z0-9][A-Za-z0-9._-]{0,63}/)?[A-Za-z0-9][A-Za-z0-9._-]{0,63})$"
     },
     "entityMention": {
       "type": "object",

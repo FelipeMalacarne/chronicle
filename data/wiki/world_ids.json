@@ -1,0 +1,57 @@
+{
+  "notes": "Curated ids of world pages (npcs.json, objects.json) whose title does not slug to a unique id: two titles that slug alike, or a title without letters. The page titled with the plain spelling keeps the slug; the other takes the slug plus its smallest game id. Read by internal/core/entities/catalogbuild, which fails on any new collision until it is listed here.",
+  "npc_ids": [
+    {
+      "page": "'Crab'",
+      "id": "crab_16485",
+      "note": "shares the slug crab with the page Crab; the page titled with the plain spelling keeps the slug, the other takes its smallest NPC id"
+    },
+    {
+      "page": "Ghost (?)",
+      "id": "ghost_3008",
+      "note": "shares the slug ghost with the page Ghost; same rule"
+    },
+    {
+      "page": "Me?",
+      "id": "me_12235",
+      "note": "shares the slug me with the page Me; same rule"
+    },
+    {
+      "page": "The Leviathan?",
+      "id": "the_leviathan_12221",
+      "note": "shares the slug the_leviathan with the page The Leviathan; same rule"
+    },
+    {
+      "page": "Skeleton (mage)",
+      "id": "skeleton_mage_6441",
+      "note": "shares the slug skeleton_mage with the page Skeleton Mage; same rule"
+    },
+    {
+      "page": "? ? ? ?",
+      "id": "question_marks_1182",
+      "note": "the title has no letter or digit to slug; named after it and its smallest NPC id"
+    }
+  ],
+  "object_ids": [
+    {
+      "page": "Beacon.",
+      "id": "beacon_25200",
+      "note": "shares the slug beacon with the page Beacon; the page titled with the plain spelling keeps the slug, the other takes its smallest object id"
+    },
+    {
+      "page": "Blacksmiths' tools",
+      "id": "blacksmiths_tools_11876",
+      "note": "shares the slug blacksmiths_tools with the page Blacksmith's tools; same rule"
+    },
+    {
+      "page": "Pile of Buckets",
+      "id": "pile_of_buckets_33309",
+      "note": "shares the slug pile_of_buckets with the page Pile of buckets (sentence case, the wiki's convention); same rule"
+    },
+    {
+      "page": "Pile of Fish.",
+      "id": "pile_of_fish_58589",
+      "note": "shares the slug pile_of_fish with the page Pile of fish; same rule"
+    }
+  ]
+}

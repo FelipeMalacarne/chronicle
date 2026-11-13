@@ -15,7 +15,10 @@
 		| 'sync'
 		| 'book'
 		| 'automacao'
-		| 'x';
+		| 'x'
+		| 'frota'
+		| 'plus'
+		| 'eye';
 	let { name, size = 16 }: { name: Name; size?: number } = $props();
 </script>
 
@@ -68,5 +71,17 @@
 		/>
 	{:else if name === 'x'}
 		<path d="M6 6l12 12M18 6L6 18" />
+	{:else if name === 'frota'}
+		<rect x="3" y="4" width="18" height="5" rx="1" /><rect
+			x="3"
+			y="10"
+			width="18"
+			height="5"
+			rx="1"
+		/><rect x="3" y="16" width="18" height="5" rx="1" />
+	{:else if name === 'plus'}
+		<path d="M12 5v14M5 12h14" />
+	{:else if name === 'eye'}
+		<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
 	{/if}
 </svg>

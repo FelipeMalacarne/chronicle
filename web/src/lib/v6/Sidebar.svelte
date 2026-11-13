@@ -3,27 +3,32 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import Glyph from './Glyph.svelte';
-	import { microbotModule, probeMicrobot } from '#lib/progress/microbot.svelte';
+	import { probeMicrobot } from '#lib/progress/microbot.svelte';
 	import { forgetAccount } from '#lib/progress/account.svelte';
+	import { fleet, loadFleet } from '#lib/progress/fleet.svelte';
+	import { iconFor } from '#lib/progress/icons';
 	import { setTheme, theme } from '#lib/progress/theme.svelte';
 	import { ago, STALE_SOURCE_MS } from '#lib/progress/view';
 	import type { ProgressSummary } from '#lib/progress/types';
 
 	/**
-	 * Navegação da v6: sidebar A (madeira inteira, V6Agora1440 e demais artboards de 1440) e, na
-	 * janela estreita ao lado do jogo, a barra de topo de V6Agora640. As duas ficam no DOM e o CSS
-	 * mostra uma; a busca (⌘K) abre a paleta do Mundo.
+	 * Navegação: sidebar A (madeira inteira) e, na janela estreita ao lado do jogo, a barra de topo
+	 * de V6Agora640. As duas ficam no DOM e o CSS mostra uma; a busca (⌘K) abre a paleta do Mundo.
+	 * Da página 8 do canvas (V7Frota1440) vêm a Frota no topo e a lista de contas; as telas da conta
+	 * escolhida ficam logo abaixo dela até virarem as abas da conta.
 	 */
 	let {
 		summary,
 		account,
 		name,
-		sub
+		sub,
+		skills
 	}: {
 		summary: ProgressSummary | null;
 		account?: string;
 		name?: string;
 		sub?: string;
+		skills?: { skill: string; level: number; xp: number }[];
 	} = $props();
 
 	const path = $derived(page.url.pathname);
@@ -54,45 +59,21 @@
 	);
 	const sourcesTitle = $derived(sources.map((s) => `${s.label} há ${s.age}`).join(' · '));
 
-	const items = $derived([
-		{ href: resolve('/'), label: 'Agora', icon: 'agora' as const, on: path === '/' },
-		{
-			href: resolve('/rotas'),
-			label: 'Rotas',
-			icon: 'rotas' as const,
-			on: path.startsWith('/rotas') || path.startsWith('/compare'),
-			n: summary?.routes.length
-		},
-		{
-			href: resolve('/mundo'),
-			label: 'Mundo',
-			icon: 'mundo' as const,
-			on: path.startsWith('/mundo')
-		},
-		{
-			href: resolve('/conta'),
-			label: 'Conta',
-			icon: 'conta' as const,
-			on: path.startsWith('/conta')
-		},
-		// Automação só existe com o módulo do Microbot ligado no servidor (doc 08).
-		...(microbotModule.enabled
-			? [
-					{
-						href: resolve('/automacao'),
-						label: 'Automação',
-						icon: 'automacao' as const,
-						on: path.startsWith('/automacao')
-					}
-				]
-			: [])
-	]);
 	$effect(() => {
 		void probeMicrobot();
+		void loadFleet();
 	});
-	const initial = $derived((name ?? account ?? '?').replace(/^acc_/, '').charAt(0).toUpperCase());
+	const onFleet = $derived(path === '/' || path.startsWith('/contas/nova'));
+	const onWorld = $derived(path.startsWith('/mundo'));
+	// Até a lista chegar, a conta aberta aparece sozinha.
+	const all = $derived(fleet.accounts ?? (account ? [{ id: account, rsn: name ?? account }] : []));
+	const top = $derived(
+		iconFor(
+			`skill:${[...(skills ?? [])].sort((a, b) => b.level - a.level || b.xp - a.xp)[0]?.skill}`
+		)
+	);
 
-	/** Sair: em oidc encerra a sessão; em dev (sem /auth) esquece a conta e volta ao setup. */
+	/** Sair: em oidc encerra a sessão; em dev (sem /auth) esquece a conta e volta à Frota. */
 	async function signOut() {
 		try {
 			const res = await fetch('/auth/logout', {
@@ -108,7 +89,7 @@
 			/* sem servidor de auth: segue como dev */
 		}
 		forgetAccount();
-		void goto(resolve('/setup'));
+		void goto(resolve('/'));
 	}
 </script>
 
@@ -117,29 +98,52 @@
 		<a href={resolve('/')} class="sr wm"
 			><span class="logo"><Glyph name="book" size={26} /></span>Chronicle</a
 		>
-		<a
-			class="acct"
-			href={resolve('/conta')}
-			title={[name ?? account, sub].filter(Boolean).join(' · ')}
-		>
-			<span class="av" aria-hidden="true">{initial}</span>
-			<span class="who">
-				<span class="nm">{name ?? account ?? 'sem conta'}</span>
-				{#if sub}<span class="sb">{sub}</span>{/if}
-			</span>
-			<Glyph name="chevron" size={14} />
-		</a>
 	</div>
 	<a class="srch" href={resolve('/mundo')} aria-label="Buscar entidade, passo ou rota"
 		><Glyph name="search" size={14} /><span>Buscar…</span><span class="kbd">⌘K</span></a
 	>
-	{#each items as it (it.label)}
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- hrefs dos itens vêm de resolve() -->
-		<a class="nav" class:nav-on={it.on} href={it.href} aria-current={it.on ? 'page' : undefined}>
-			<Glyph name={it.icon} />{it.label}
-			{#if it.n}<span class="n">{it.n}</span>{/if}
+	<a
+		class="nav"
+		class:nav-on={onFleet}
+		href={resolve('/')}
+		aria-current={onFleet ? 'page' : undefined}
+	>
+		<Glyph name="frota" />Frota
+		{#if fleet.accounts?.length}<span class="n">{fleet.accounts.length}</span>{/if}
+	</a>
+	{#if account}
+		<a
+			class="nav"
+			class:nav-on={onWorld}
+			href={resolve('/mundo')}
+			aria-current={onWorld ? 'page' : undefined}
+		>
+			<Glyph name="mundo" />Mundo
 		</a>
+	{/if}
+	<p class="sec">Contas</p>
+	{#each all as a (a.id)}
+		{@const on = a.id === account && !onFleet && !onWorld}
+		<!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() + query da conta -->
+		<a
+			class="acn"
+			class:acn-on={on}
+			href={`${resolve('/visao')}?account=${encodeURIComponent(a.id)}`}
+			aria-current={on ? 'page' : undefined}
+			title={a.id}
+		>
+			<span class="lamp {fleet.tones[a.id] ?? 'unk'}"></span>
+			<span class="who">
+				<b>{a.rsn}</b>
+				{#if a.id === account && sub}<span>{sub}</span>{/if}
+			</span>
+			{#if a.id === account && top}<img src={top} alt="" />{/if}
+		</a>
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	{/each}
+	<a class="acn acn-new" href={resolve('/contas/nova')}
+		><Glyph name="plus" size={14} /><span>Nova conta</span></a
+	>
 	<div class="grow"></div>
 	<div class="srcs">
 		<p class="lbl">Fontes</p>
@@ -178,12 +182,22 @@
 	<a href={resolve('/')} class="sr wm wm-s"
 		><span class="logo"><Glyph name="book" size={22} /></span>Chronicle</a
 	>
-	{#each items as it (it.label)}
-		<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- hrefs dos itens vêm de resolve() -->
-		<a class="nav" class:nav-on={it.on} href={it.href} aria-current={it.on ? 'page' : undefined}
-			><Glyph name={it.icon} /><span class="nl">{it.label}</span></a
+	<a
+		class="nav"
+		class:nav-on={onFleet}
+		href={resolve('/')}
+		aria-current={onFleet ? 'page' : undefined}
+		><Glyph name="frota" /><span class="nl">Frota</span></a
+	>
+	{#if account}
+		<a
+			class="nav"
+			class:nav-on={!onFleet && !onWorld}
+			href={resolve('/visao')}
+			aria-current={!onFleet && !onWorld ? 'page' : undefined}
+			><Glyph name="conta" /><span class="nl">{name ?? account}</span></a
 		>
-	{/each}
+	{/if}
 	<span class="grow"></span>
 	{#if newest}
 		<a class="nav src" href={resolve('/conta')} title={sourcesTitle}
@@ -224,15 +238,100 @@
 	.logo {
 		display: inline-flex;
 	}
+	.brand {
+		padding-bottom: 6px;
+	}
+	.sec {
+		margin: 0;
+		padding: 14px 8px 4px;
+		font:
+			500 10px 'JetBrains Mono',
+			monospace;
+		letter-spacing: 0.08em;
+		text-transform: uppercase;
+		color: var(--on-frame-muted);
+	}
+	.acn {
+		display: grid;
+		grid-template-columns: 10px minmax(0, 1fr) auto;
+		align-items: center;
+		gap: 9px;
+		min-height: 44px;
+		padding: 4px 8px;
+		border-radius: 4px;
+		color: var(--on-frame);
+		text-decoration: none;
+		font-size: 13px;
+	}
+	.acn:hover {
+		background: var(--frame-2);
+	}
+	.acn-on {
+		background: var(--frame-2);
+		box-shadow: var(--bevel-frame);
+	}
+	.acn img {
+		width: 18px;
+		height: 18px;
+		image-rendering: pixelated;
+		object-fit: contain;
+	}
+	.acn .av {
+		width: 20px;
+		height: 20px;
+		border-radius: 50%;
+		background: var(--gold);
+		color: var(--frame);
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		font:
+			700 11px Alegreya,
+			Georgia,
+			serif;
+	}
+	.acn-new {
+		grid-template-columns: 14px minmax(0, 1fr);
+		margin-top: 4px;
+		color: var(--on-frame-muted);
+		border: 1px dashed var(--frame-2);
+	}
 	.who {
 		display: flex;
 		flex-direction: column;
 		min-width: 0;
+		line-height: 1.25;
 	}
-	.who .nm {
+	.who b {
+		font-weight: 600;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+	.who span {
+		font-size: 11px;
+		color: var(--on-frame-muted);
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+	.lamp {
+		width: 9px;
+		height: 9px;
+		border-radius: 50%;
+		box-sizing: border-box;
+		background: var(--done);
+	}
+	.lamp.up {
+		background: var(--auto);
+	}
+	.lamp.bad {
+		background: var(--not-started);
+	}
+	.lamp.off,
+	.lamp.unk {
+		background: transparent;
+		border: 1.5px solid var(--on-frame-muted);
 	}
 	.grow {
 		flex: 1;

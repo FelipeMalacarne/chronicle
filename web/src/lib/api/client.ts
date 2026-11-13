@@ -126,6 +126,8 @@ const json = (method: string, body?: unknown): RequestInit => ({
  * oidc com a sessão, só para as contas do usuário (401 leva ao login).
  */
 export const progressApi = {
+	/** As contas do usuário (em dev, todas as do servidor). */
+	me: () => request<{ accounts: AccountView[] }>('/me'),
 	guides: () => request<{ guides: GuideInfo[] }>('/guides'),
 	section: (guide: string, section: string) =>
 		request<ContentSection>(`/guides/${enc(guide)}/sections/${enc(section)}`),

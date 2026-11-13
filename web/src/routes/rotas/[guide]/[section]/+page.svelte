@@ -435,7 +435,8 @@
 					>
 				{/if}
 				<span class="grow"></span>
-				{#if route?.active && s.id === cursorId}<a class="lnk" href={resolve('/')}>Ver no Agora</a
+				{#if route?.active && s.id === cursorId}<a class="lnk" href={resolve('/agora')}
+						>Ver no Agora</a
 					>{/if}
 			</div>
 		{/if}

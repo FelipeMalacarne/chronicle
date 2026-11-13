@@ -12,6 +12,8 @@
 	import { theme } from '#lib/progress/theme.svelte';
 	import Toast from '#lib/v6/Toast.svelte';
 	import EntityPanel from '#lib/v6/EntityPanel.svelte';
+	import AccountHead from '#lib/v6/AccountHead.svelte';
+	import { chooseCockpitAccount } from '#lib/progress/microbot.svelte';
 
 	let { children } = $props();
 	const account = $derived(currentAccount());
@@ -19,11 +21,21 @@
 		void loadSummary(account);
 		void loadMe(account);
 	});
-	// Sem conta, ou com uma conta que não existe mais, o primeiro acesso (V4Setup) escolhe ou cria.
-	const setup = $derived(page.url.pathname === '/setup');
+	// Sem conta escolhida, ou com uma que não existe mais, só a Frota e Nova conta fazem sentido:
+	// as outras telas são da conta. Nesse caso o shell fica sem a barra lateral.
+	const missing = $derived(session.error instanceof ApiError && session.error.status === 404);
+	const fleetPage = $derived(
+		page.url.pathname === '/' || page.url.pathname.startsWith('/contas/nova')
+	);
+	const setup = $derived(fleetPage && (!account || missing));
+	// O Mundo é da frota (decisoes-canvas.md, 7.1): sem o cabeçalho da conta, embora leia a conta aberta.
+	const accountPage = $derived(!fleetPage && !page.url.pathname.startsWith('/mundo'));
 	$effect(() => {
-		const missing = session.error instanceof ApiError && session.error.status === 404;
-		if (!setup && (!account || missing)) void goto(resolve('/setup'), { replaceState: true });
+		if (!fleetPage && (!account || missing)) void goto(resolve('/'), { replaceState: true });
+	});
+	// O cliente que as telas de Cliente controlam é o da conta aberta (docs/11).
+	$effect.pre(() => {
+		if (account) chooseCockpitAccount(account);
 	});
 	// Tempo real: um stream por conta; os eventos refazem os recursos abertos (docs/04, 6.6).
 	$effect(() => {
@@ -58,8 +70,12 @@
 			account={session.account}
 			name={me.state?.account.rsn}
 			sub={accountSub(me.state)}
+			skills={me.state?.skills}
 		/>{/if}
 	<main id="conteudo">
+		{#if accountPage && me.state && me.state.account.id === account}
+			<AccountHead state={me.state} summary={session.summary} />
+		{/if}
 		{@render children()}
 	</main>
 	{#if !setup}<EntityPanel />{/if}

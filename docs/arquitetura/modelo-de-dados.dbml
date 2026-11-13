@@ -12,6 +12,23 @@ Project ironman_planner {
   '''
 }
 
+Table account_client {
+  account_id text [pk]
+  profile_id text
+  updated_at timestamptz [not null, default: `now()`]
+}
+
+Table account_client_settings {
+  account_id text [not null]
+  config_group text [not null]
+  config_key text [not null]
+  value text [not null]
+
+  indexes {
+    (account_id, config_group, config_key) [pk]
+  }
+}
+
 Table accounts {
   id text [pk]
   user_id text [not null]
@@ -53,6 +70,56 @@ Table api_tokens {
 
   Note: '''
   Bearer tokens for the CLI/MCP clients (not for the Microbot plugin).
+  '''
+}
+
+Table client_profile_plugins {
+  profile_id text [not null]
+  position integer [not null]
+  source text [not null]
+  name text [not null]
+  version text [not null, default: `''::text`]
+  class_name text [not null, default: `''::text`]
+  start_on_boot boolean [not null, default: `false`]
+
+  indexes {
+    (profile_id, source, name) [pk]
+    (profile_id, position) [unique]
+  }
+
+  Note: '''
+  client_profile_plugins_position_check: CHECK (("position" >= 0))
+  client_profile_plugins_source_check: CHECK ((source = ANY (ARRAY['hub'::text, 'own'::text, 'core'::text])))
+  '''
+}
+
+Table client_profile_settings {
+  profile_id text [not null]
+  config_group text [not null]
+  config_key text [not null]
+  value text [not null]
+
+  indexes {
+    (profile_id, config_group, config_key) [pk]
+  }
+}
+
+Table client_profiles {
+  id text [pk]
+  user_id text [not null]
+  name text [not null]
+  parent_id text
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, name) [unique]
+  }
+
+  Note: '''
+  Client profiles of the managed workers (docs/11 section 4.3): plugins and RuneLite settings, applied by the agent when the client comes up.
+  client_profiles_check: CHECK ((parent_id <> id))
+  client_profiles_name_check: CHECK ((name ~ '^[a-z0-9][a-z0-9_-]{0,47}$'::text))
   '''
 }
 
@@ -580,9 +647,16 @@ Table workers {
   '''
 }
 
+Ref account_client_account_id_fkey: account_client.account_id > accounts.id [delete: cascade]
+Ref account_client_profile_id_fkey: account_client.profile_id > client_profiles.id [delete: restrict]
+Ref account_client_settings_account_id_fkey: account_client_settings.account_id > accounts.id [delete: cascade]
 Ref accounts_guide_fkey: accounts.guide_id > guides.id
 Ref accounts_user_id_fkey: accounts.user_id > users.id [delete: cascade]
 Ref api_tokens_user_id_fkey: api_tokens.user_id > users.id [delete: cascade]
+Ref client_profile_plugins_profile_id_fkey: client_profile_plugins.profile_id > client_profiles.id [delete: cascade]
+Ref client_profile_settings_profile_id_fkey: client_profile_settings.profile_id > client_profiles.id [delete: cascade]
+Ref client_profiles_parent_id_fkey: client_profiles.parent_id > client_profiles.id [delete: restrict]
+Ref client_profiles_user_id_fkey: client_profiles.user_id > users.id [delete: cascade]
 Ref content_steps_content_version_id_fkey: content_steps.content_version_id > content_versions.id
 Ref content_steps_guide_fkey: content_steps.guide_id > guides.id
 Ref game_sessions_account_id_fkey: game_sessions.account_id > accounts.id [delete: cascade]
@@ -669,6 +743,11 @@ TableGroup controle_microbot {
   microbot_audit
   game_sessions
   workers
+  client_profiles
+  client_profile_plugins
+  client_profile_settings
+  account_client
+  account_client_settings
 }
 
 // Views (fora do DBML): v_current_quests, v_current_skills

@@ -52,9 +52,10 @@ HWID agent; its per-account stores are shared with the everyday client in `~/.ru
 
 Prefer `mb-client start --headless` for anything that runs unattended: the game gets its own
 Xvfb display (`:99`) shared over VNC on `127.0.0.1:5999`, GPU and 117 HD are switched off
-(no GPU there). A desktop window that is hidden or minimized throttles the client to about one
-frame per second, which makes every action, walk and wait crawl (measured: Agent Server calls
-~1000 ms windowed-hidden vs ~18 ms headless, logged in).
+(no GPU there) and Microbot's onboarding tour is skipped (`-Dmicrobot.tour=false`). A desktop
+window that is hidden or minimized throttles the client to about one frame per second, which
+makes every action, walk and wait crawl (measured: Agent Server calls ~1000 ms windowed-hidden
+vs ~18 ms headless, logged in).
 
 | Command | What it does |
 |---|---|

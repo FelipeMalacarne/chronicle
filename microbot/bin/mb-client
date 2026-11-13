@@ -5,7 +5,8 @@
 #   mb-client stop | restart | status | logs [N] | wait [timeoutSec]
 #
 # --headless runs the game muted on its own Xvfb display (MB_HEADLESS_DISPLAY, default :99) instead
-# of a window on the desktop, and shares it over VNC on 127.0.0.1:MB_VNC_PORT (default 5999).
+# of a window on the desktop, shares it over VNC on 127.0.0.1:MB_VNC_PORT (default 5999) and skips
+# Microbot's onboarding tour (-Dmicrobot.tour=false).
 #
 # Environment (all optional; unset, everything behaves as on the workstation):
 #   MB_DEV_HOME          the client's user.home (default ~/.local/share/microbot-dev)
@@ -21,7 +22,7 @@
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-usage() { sed -n '2,20p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 MB_HEADLESS_DISPLAY="${MB_HEADLESS_DISPLAY:-:99}"
 MB_HEADLESS_AUDIO_NAME="Microbot headless"
@@ -153,6 +154,11 @@ start() {
 	cmd+=("-javaagent:$MB_HWID_AGENT"
 		"-Dmicrobot.hwid.store=$MB_HWID_STORE_DIR/spoofed-device-ids.properties"
 		"-Dmicrobot.hwid.randomdat.store=$MB_HWID_STORE_DIR/spoofed-random-dats.properties")
+	if [[ -n "$headless" ]]; then
+		# Nobody follows the "Welcome to Microbot" tour on a headless display, and a worker's home
+		# is new on every boot, so it would cover the game on each start (docs/11 section 14.4).
+		cmd+=(-Dmicrobot.tour=false)
+	fi
 	cmd+=("${extra[@]}" -jar "$MB_JAR" --disable-telemetry)
 
 	local display="${DISPLAY:-}"

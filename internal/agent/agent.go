@@ -121,7 +121,10 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.bootstrap(ctx, params)
 	case CmdClientStart:
 		if e.Worker != nil {
-			out, err := e.workerStart(ctx)
+			out, problems, err := e.workerStart(ctx)
+			for _, p := range problems {
+				out += "\nprofile: " + p
+			}
 			return ClientOutput{Output: out}, err
 		}
 		out, err := e.runClient(ctx, 5*time.Minute, "start", "--headless")

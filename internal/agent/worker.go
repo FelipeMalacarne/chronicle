@@ -42,8 +42,17 @@ type WorkerConfig struct {
 	// (default 2 min).
 	ReadyWait time.Duration
 
-	mu  sync.Mutex
-	env []string // the client's environment from the last bootstrap
+	mu      sync.Mutex
+	env     []string      // the client's environment from the last bootstrap
+	profile ClientProfile // the account's profile from the last bootstrap
+}
+
+// clientProfile is the profile of the last bootstrap (empty before one, or
+// from a server that sends none).
+func (w *WorkerConfig) clientProfile() ClientProfile {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.profile
 }
 
 // clientEnv is what the client's process gets on top of the agent's own
@@ -73,15 +82,24 @@ func (w *WorkerConfig) hasSession() bool {
 	return len(w.env) > 0
 }
 
-// workerSettings are the RuneLite settings a worker applies through the
-// Agent Server once the client is up: a fixed list, never from the server.
-// The FPS limit keeps a software-rendered client inside the pod's CPU limit.
-// Checked in the pinned client 2.6.52: FpsConfig is @ConfigGroup("fpscontrol")
-// with boolean limitFps and int maxFps; FpsPlugin (workerPlugins) must be on
-// for them to apply.
-var workerSettings = []struct{ group, key, value string }{
-	{"fpscontrol", "limitFps", "true"},
-	{"fpscontrol", "maxFps", "20"},
+// systemProfile is what every worker applies under the account's profile
+// (docs/11 sections 4.3 and 7.3), a fixed list, never from the server. The
+// pod's home is new on every boot and the Chronicle Link ships disabled, so
+// nothing would track the account without starting it here. The FPS limit
+// keeps a software-rendered client inside the pod's CPU limit; checked in
+// the pinned client 2.6.52: FpsConfig is @ConfigGroup("fpscontrol") with
+// boolean limitFps and int maxFps, and FpsPlugin must be on for them to
+// apply. A profile may change the FPS settings and plugin; the Chronicle
+// Link is protected (ValidatePlugin), so no profile can stop it.
+var systemProfile = ClientProfile{
+	Plugins: []ProfilePlugin{
+		{Source: PluginOwn, Name: "net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin", Start: true},
+		{Source: PluginCore, Name: "net.runelite.client.plugins.fps.FpsPlugin", Start: true},
+	},
+	Settings: []ProfileSetting{
+		{Group: "fpscontrol", Key: "limitFps", Value: "true"},
+		{Group: "fpscontrol", Key: "maxFps", Value: "20"},
+	},
 }
 
 // validateBootstrap checks CmdWorkerBootstrap's params. Its errors never
@@ -122,6 +140,11 @@ func (e *Executor) validateBootstrap(raw json.RawMessage) (BootstrapParams, erro
 	if p.World < 0 || p.World > 999 {
 		return p, errors.New("worker_bootstrap: world out of range")
 	}
+	if p.Profile != nil {
+		if err := ValidateProfile(*p.Profile); err != nil {
+			return p, fmt.Errorf("worker_bootstrap: profile: %w", err)
+		}
+	}
 	return p, nil
 }
 
@@ -145,6 +168,10 @@ func (e *Executor) bootstrap(ctx context.Context, raw json.RawMessage) (any, err
 		"CHRONICLE_LINK_SERVER_URL=" + p.ServerURL,
 		"CHRONICLE_LINK_TOKEN=" + p.PluginToken,
 	}
+	w.profile = ClientProfile{}
+	if p.Profile != nil {
+		w.profile = *p.Profile
+	}
 	w.mu.Unlock()
 	if e.status(ctx).Running {
 		return BootstrapResult{Started: true}, nil
@@ -152,29 +179,30 @@ func (e *Executor) bootstrap(ctx context.Context, raw json.RawMessage) (any, err
 	if herr := e.writeHWID(p.Session); herr != nil {
 		return nil, herr
 	}
-	out, err := e.workerStart(ctx)
+	out, problems, err := e.workerStart(ctx)
 	if err != nil {
 		return BootstrapResult{Output: out}, err
 	}
-	return BootstrapResult{Started: true, Output: out}, nil
+	return BootstrapResult{Started: true, Output: out, Problems: problems}, nil
 }
 
 // workerStart starts the client in worker mode (under e.mu): with the
 // session's environment, holding the boot lock until the Agent Server
-// answers, then the fixed settings.
-func (e *Executor) workerStart(ctx context.Context) (string, error) {
+// answers, then applies the profile and returns what of it the client
+// refused.
+func (e *Executor) workerStart(ctx context.Context) (string, []string, error) {
 	if !e.Worker.hasSession() {
-		return "", errors.New("client_start: no game session yet (the server sends it in the bootstrap)")
+		return "", nil, errors.New("client_start: no game session yet (the server sends it in the bootstrap)")
 	}
 	if e.status(ctx).Running {
-		return "the client is already running", nil
+		return "the client is already running", nil, nil
 	}
 	if err := e.prepareWorkerHome(); err != nil {
-		return "", err
+		return "", nil, err
 	}
 	unlock, err := e.bootLock(ctx)
 	if err != nil {
-		return "", err
+		return "", nil, err
 	}
 	out, err := e.runClient(ctx, 5*time.Minute, "start", "--headless")
 	out = maskLines(out)
@@ -183,10 +211,9 @@ func (e *Executor) workerStart(ctx context.Context) (string, error) {
 	}
 	unlock()
 	if err != nil {
-		return out, err
+		return out, nil, err
 	}
-	e.applyWorkerSettings(ctx)
-	return out, nil
+	return out, e.applyProfile(ctx), nil
 }
 
 // waitReady waits for the Agent Server to answer.
@@ -209,28 +236,47 @@ func (e *Executor) waitReady(ctx context.Context) error {
 	return nil
 }
 
-// workerPlugins are started through the Agent Server once the client is up
-// (a fixed list): the pod's home is new on every boot, and the Chronicle
-// Link ships disabled by default, so nothing would track the account; the
-// FPS Control plugin makes the FPS limit apply.
-var workerPlugins = []string{
-	"net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin",
-	"net.runelite.client.plugins.fps.FpsPlugin",
-}
-
-func (e *Executor) applyWorkerSettings(ctx context.Context) {
-	for _, class := range workerPlugins {
-		if _, err := e.Game.JSON(ctx, http.MethodPost, "/scripts/start", nil, map[string]any{"className": class}, 30*time.Second); err != nil {
-			e.log().Warn("worker: could not start a plugin", "class", class, "err", err)
-		}
+// applyProfile applies the system profile and the account's on top of it,
+// through the Agent Server: the settings first, then the Hub installs, then
+// the starts, so every plugin reads its configuration when it starts (W7).
+// What the client refuses is logged and returned; the rest still applies.
+func (e *Executor) applyProfile(ctx context.Context) []string {
+	p := MergeProfiles(systemProfile, e.Worker.clientProfile())
+	var problems []string
+	fail := func(what string, err error) {
+		e.log().Warn("worker: profile", "part", what, "err", err)
+		problems = append(problems, what+": "+err.Error())
 	}
-	for _, s := range workerSettings {
-		v := s.value
+	for _, s := range p.Settings {
+		v := s.Value
 		if _, err := e.Game.JSON(ctx, http.MethodPost, "/settings/plugin", nil,
-			map[string]any{"group": s.group, "key": s.key, "value": &v}, 10*time.Second); err != nil {
-			e.log().Warn("worker: could not apply a client setting", "group", s.group, "key", s.key, "err", err)
+			map[string]any{"group": s.Group, "key": s.Key, "value": &v}, 10*time.Second); err != nil {
+			fail("setting "+s.Group+"."+s.Key, err)
 		}
 	}
+	missing := map[string]bool{}
+	for _, pl := range p.Plugins {
+		if pl.Source != PluginHub {
+			continue
+		}
+		body := map[string]any{"name": pl.Name, "timeout": 120}
+		if pl.Version != "" {
+			body["version"] = pl.Version
+		}
+		if _, err := e.Game.JSON(ctx, http.MethodPost, "/plugins/install", nil, body, 150*time.Second); err != nil {
+			fail("install "+pl.Name, err)
+			missing[pl.id()] = true
+		}
+	}
+	for _, pl := range p.Plugins {
+		if !pl.Start || missing[pl.id()] {
+			continue
+		}
+		if _, err := e.Game.JSON(ctx, http.MethodPost, "/scripts/start", nil, map[string]any{"className": pl.class()}, 30*time.Second); err != nil {
+			fail("start "+pl.class(), err)
+		}
+	}
+	return problems
 }
 
 // prepareWorkerHome makes the dev home's .runelite and, with a game cache

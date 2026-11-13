@@ -10,8 +10,10 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
 	"github.com/FelipeMalacarne/chronicle/internal/kube"
@@ -34,6 +36,8 @@ type Store interface {
 	MintPluginToken(ctx context.Context, account string) (string, error)
 	RevokePluginToken(ctx context.Context, account string) error
 	SetError(ctx context.Context, account, msg string) error
+	// Profile is the account's effective client profile (docs/11 section 4.3).
+	Profile(ctx context.Context, account string) (agent.ClientProfile, error)
 }
 
 // Cluster is the reconciler's view of the API server (internal/kube).
@@ -296,8 +300,10 @@ func (r *Reconciler) Pods() map[string]PodInfo {
 
 // OnConnect bootstraps a managed agent that just linked: unless its client
 // already runs (the link dropped, the pod did not), it gets the account's
-// session, a fresh Chronicle Link token and the world. Attached agents are
-// left alone.
+// session, a fresh Chronicle Link token, the world and the client profile.
+// The worker's last error becomes what of the profile the client refused
+// (or nothing); a relink with the client up leaves it as it was. Attached
+// agents are left alone.
 func (r *Reconciler) OnConnect(info agent.Info) {
 	r.init()
 	if info.Kind != agent.KindManaged || info.Account == "" {
@@ -305,26 +311,31 @@ func (r *Reconciler) OnConnect(info agent.Info) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	defer cancel()
-	if err := r.bootstrap(ctx, info); err != nil {
+	lastError, keep, err := r.bootstrap(ctx, info)
+	switch {
+	case err != nil:
 		r.Log.Warn("workers: bootstrap", "account", info.Account, "agent", info.ID, "err", err)
 		_ = r.Store.SetError(ctx, info.Account, "bootstrap: "+err.Error())
-		return
+	case !keep:
+		_ = r.Store.SetError(ctx, info.Account, lastError)
 	}
-	_ = r.Store.SetError(ctx, info.Account, "")
 }
 
-func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) error {
+// bootstrap returns the worker's last error after it ("" or the profile's
+// problems) and true when the client was already up, which keeps the last
+// error as it was.
+func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bool, error) {
 	var st agent.Status
 	if err := r.Hub.CallAgent(ctx, info.ID, agent.CmdStatus, nil, &st); err != nil {
-		return fmt.Errorf("status: %w", err)
+		return "", false, fmt.Errorf("status: %w", err)
 	}
 	if st.Running {
 		r.Log.Info("workers: agent relinked with its client up", "account", info.Account, "agent", info.ID)
-		return nil
+		return "", true, nil
 	}
 	want, err := r.Store.Desired(ctx)
 	if err != nil {
-		return err
+		return "", false, err
 	}
 	world, desired := 0, false
 	for _, w := range want {
@@ -333,26 +344,35 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) error {
 		}
 	}
 	if !desired {
-		return errors.New("the worker is not meant to run; the reconciler deletes it")
+		return "", false, errors.New("the worker is not meant to run; the reconciler deletes it")
 	}
 	session, err := r.Store.Session(ctx, info.Account)
 	if err != nil {
-		return fmt.Errorf("session: %w", err)
+		return "", false, fmt.Errorf("session: %w", err)
+	}
+	profile, err := r.Store.Profile(ctx, info.Account)
+	if err != nil {
+		return "", false, fmt.Errorf("client profile: %w", err)
 	}
 	token, err := r.Store.MintPluginToken(ctx, info.Account)
 	if err != nil {
-		return fmt.Errorf("plugin token: %w", err)
+		return "", false, fmt.Errorf("plugin token: %w", err)
 	}
-	params := agent.BootstrapParams{Account: info.Account, Session: session, PluginToken: token, ServerURL: r.ServerURL, World: world}
+	params := agent.BootstrapParams{
+		Account: info.Account, Session: session, PluginToken: token, ServerURL: r.ServerURL, World: world, Profile: &profile,
+	}
 	var res agent.BootstrapResult
 	if err := r.Hub.CallAgent(ctx, info.ID, agent.CmdWorkerBootstrap, params, &res); err != nil {
-		return err
+		return "", false, err
 	}
 	if !res.Started {
-		return errors.New("the client did not come up: " + truncate(res.Output, 300))
+		return "", false, errors.New("the client did not come up: " + truncate(res.Output, 300))
 	}
-	r.Log.Info("workers: bootstrapped", "account", info.Account, "agent", info.ID)
-	return nil
+	r.Log.Info("workers: bootstrapped", "account", info.Account, "agent", info.ID, "profile_problems", len(res.Problems))
+	if len(res.Problems) > 0 {
+		return head("profile: "+strings.Join(res.Problems, "; "), 500), false, nil
+	}
+	return "", false, nil
 }
 
 func truncate(s string, n int) string {
@@ -360,4 +380,15 @@ func truncate(s string, n int) string {
 		return s[len(s)-n:]
 	}
 	return s
+}
+
+// head keeps the first n bytes of s (whole runes).
+func head(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	for n > 0 && !utf8.RuneStart(s[n]) {
+		n--
+	}
+	return s[:n] + "…"
 }

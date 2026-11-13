@@ -35,7 +35,7 @@ func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ing
 		return nil, fmt.Errorf("CHRONICLE_VAULT_KEY: %w", err)
 	}
 	repo := storeworkers.New(pool, key, ingest)
-	opts.Sessions = repo
+	opts.Sessions, opts.Profiles = repo, repo
 	logger.Info("workers: game sessions on", "vault_key", key.ID())
 	// The bootstrap of a linking worker agent needs only the database and the
 	// link, so it runs with WORKERS=off too: a worker image started by hand

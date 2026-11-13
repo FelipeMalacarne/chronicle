@@ -55,6 +55,10 @@ type BootstrapParams struct {
 	// World is the world to log in to later; 0 keeps the profile's. The
 	// bootstrap never logs in (docs/11, W3).
 	World int `json:"world,omitempty"`
+	// Profile is the account's effective client profile (docs/11 section
+	// 4.3); nil (a server from before F5) applies the worker's fixed
+	// settings and plugins only.
+	Profile *ClientProfile `json:"profile,omitempty"`
 }
 
 // BootstrapResult is the answer to CmdWorkerBootstrap.
@@ -62,4 +66,7 @@ type BootstrapResult struct {
 	// Started: the client is up and the Agent Server answers (login screen).
 	Started bool   `json:"started"`
 	Output  string `json:"output,omitempty"`
+	// Problems are the parts of the profile the client refused (a setting,
+	// a Hub install, a start); the client runs without them.
+	Problems []string `json:"problems,omitempty"`
 }

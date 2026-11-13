@@ -45,6 +45,9 @@ type MicrobotOptions struct {
 	// Control runs the workers in the cluster (WORKERS=on); nil only stores
 	// sessions.
 	Control WorkerControl
+	// Profiles stores the client profiles (docs/11 section 4.3); nil leaves
+	// /api/client-profiles and /api/accounts/client out.
+	Profiles ProfileStore
 	// WorkerImage is WORKER_IMAGE, the image a start or restart takes.
 	WorkerImage string
 }

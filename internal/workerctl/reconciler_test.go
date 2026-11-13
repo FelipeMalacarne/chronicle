@@ -6,9 +6,12 @@ import (
 	"errors"
 	"io"
 	"log/slog"
+	"reflect"
 	"slices"
+	"strings"
 	"sync"
 	"testing"
+	"unicode/utf8"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
 	"github.com/FelipeMalacarne/chronicle/internal/kube"
@@ -20,6 +23,13 @@ type fakeStore struct {
 	tokens  int
 	revoked []string
 	errs    map[string]string
+	profile agent.ClientProfile
+}
+
+func (f *fakeStore) Profile(context.Context, string) (agent.ClientProfile, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.profile, nil
 }
 
 func (f *fakeStore) Desired(context.Context) ([]Desired, error) {
@@ -114,10 +124,11 @@ func (f *fakeCluster) DeletePod(_ context.Context, name string) error {
 }
 
 type fakeHub struct {
-	mu      sync.Mutex
-	running bool
-	calls   []string
-	boot    agent.BootstrapParams
+	mu       sync.Mutex
+	running  bool
+	calls    []string
+	boot     agent.BootstrapParams
+	problems []string
 }
 
 func (h *fakeHub) CallAgent(_ context.Context, _ string, command string, params, into any) error {
@@ -130,7 +141,7 @@ func (h *fakeHub) CallAgent(_ context.Context, _ string, command string, params,
 		out = agent.Status{Running: h.running}
 	case agent.CmdWorkerBootstrap:
 		h.boot = params.(agent.BootstrapParams)
-		out = agent.BootstrapResult{Started: true}
+		out = agent.BootstrapResult{Started: true, Problems: h.problems}
 	default:
 		return errors.New("unexpected " + command)
 	}
@@ -196,15 +207,44 @@ func TestReconcileRecordsApplyError(t *testing.T) {
 }
 
 func TestOnConnectBootstraps(t *testing.T) {
-	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true, World: 420}}}
+	profile := agent.ClientProfile{
+		Plugins:  []agent.ProfilePlugin{{Source: agent.PluginOwn, Name: "a.BlackjackerPlugin", Start: true}},
+		Settings: []agent.ProfileSetting{{Group: "blackjacker", Key: "room", Value: "THUG_TENT"}},
+	}
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true, World: 420}}, profile: profile}
 	hub := &fakeHub{}
 	r := newRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub)
 	r.OnConnect(agent.Info{ID: "x", Account: "acc_a", Kind: agent.KindManaged})
 	if hub.boot.Account != "acc_a" || hub.boot.PluginToken != "ipl_new" || hub.boot.World != 420 || hub.boot.ServerURL != r.ServerURL || hub.boot.Session.SessionID != "sid" {
 		t.Fatalf("bootstrap params: %+v", hub.boot)
 	}
+	if hub.boot.Profile == nil || !reflect.DeepEqual(*hub.boot.Profile, profile) {
+		t.Fatalf("bootstrap profile: %+v", hub.boot.Profile)
+	}
 	if store.tokens != 1 || store.errs["acc_a"] != "" {
 		t.Fatalf("tokens %d errs %v", store.tokens, store.errs)
+	}
+}
+
+// What of the profile the client refused becomes the worker's last error,
+// and a relink with the client up (a server deploy drops every link) keeps it.
+func TestOnConnectRecordsProfileProblems(t *testing.T) {
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true}}}
+	hub := &fakeHub{problems: []string{"install GotrPlugin: HTTP 409: refused", "setting gotr.mode: HTTP 400: bad"}}
+	r := newRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub)
+	r.OnConnect(agent.Info{ID: "x", Account: "acc_a", Kind: agent.KindManaged})
+	want := "profile: install GotrPlugin: HTTP 409: refused; setting gotr.mode: HTTP 400: bad"
+	if store.errs["acc_a"] != want {
+		t.Fatalf("last error = %q", store.errs["acc_a"])
+	}
+	hub.running = true
+	r.OnConnect(agent.Info{ID: "y", Account: "acc_a", Kind: agent.KindManaged})
+	if store.errs["acc_a"] != want {
+		t.Fatalf("a relink changed the last error to %q", store.errs["acc_a"])
+	}
+	long := strings.Repeat("é", 400)
+	if got := head("profile: "+long, 500); len(got) > 503 || !strings.HasPrefix(got, "profile: ") || !utf8.ValidString(got) {
+		t.Fatalf("head = %q", got)
 	}
 }
 

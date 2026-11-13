@@ -3,7 +3,6 @@ package httpapi
 import (
 	"bytes"
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -29,7 +28,6 @@ import (
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 	"github.com/FelipeMalacarne/chronicle/internal/store/syncrun"
 	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
-	"github.com/FelipeMalacarne/chronicle/internal/vault"
 	"github.com/FelipeMalacarne/chronicle/internal/workerctl"
 )
 
@@ -218,11 +216,7 @@ const contractWorkerImage = "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc
 // was deleted.
 func contractWorkers(ctx context.Context, t *testing.T, pool *pgxpool.Pool, tokens storeworkers.TokenMinter) (*storeworkers.Repository, *memControl) {
 	t.Helper()
-	key, err := vault.ParseKey(base64.StdEncoding.EncodeToString(bytes.Repeat([]byte{7}, 32)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err = pool.Exec(ctx, `
+	if _, err := pool.Exec(ctx, `
 		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer) VALUES
 		('acc_worker_a', 'dev', 'Worker A', 'worker_a', 'ironman', 'oziris-main', 'enhanced'),
 		('acc_worker_b', 'dev', 'Worker B', 'worker_b', 'ironman', 'oziris-main', 'enhanced'),
@@ -230,7 +224,7 @@ func contractWorkers(ctx context.Context, t *testing.T, pool *pgxpool.Pool, toke
 	`); err != nil {
 		t.Fatal(err)
 	}
-	repo := storeworkers.New(pool, key, tokens)
+	repo := storeworkers.New(pool, testVaultKey(t), tokens)
 	older := "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc1234-0000000"
 	for _, step := range []error{
 		repo.PutSession(ctx, "acc_worker_a", "dev", agent.GameSession{Character: "Worker A", SessionID: "sid-a", CharacterID: "1"}),

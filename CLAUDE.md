@@ -67,6 +67,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `DATABASE_URL=... go test ./internal/httpapi -run TestContract -update` | rewrite `web/src/lib/api/contract/`: one real API answer per route the web reads, as `export const fixture = {…} satisfies <web type>`; then `pnpm check`. Without `-update` the test fails when an answer changes shape |
 | `just agent` / `chronicle agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (server resolved like the CLI, default saradomin; `MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client (`MICROBOT_HARNESS_DIR`: this checkout by default in `just agent`; it runs `nix develop <dir>#microbot --command <dir>/microbot/bin/mb-client`). Never log the client in for a test without the owner's agreement |
 | `chronicle accounts connect --character <name>` / `chronicle workers list\|start\|stop\|restart` | docs/11: store an account's game session from the Microbot launcher (only that character's lines of the HWID stores; a character the launcher lists as "Not set" is `--index <n> --as <name in game>`, like `mb-account use --as`), and the workers' lifecycle over `/api/workers`. `start` and `restart` never log in, but `stop` and `restart` log the account out: never run them on the owner's account unasked |
+| `chronicle profiles list\|show\|put\|delete\|use\|account` | docs/11 section 15: the workers' client profiles (plugins and RuneLite settings, optionally on a model) over `/api/client-profiles` and `/api/accounts/client`; `show` prints the JSON `put -f` reads. A profile reaches a worker on its next start or restart, never a running client |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
@@ -94,7 +95,8 @@ internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
 internal/store/       repositories (identity: OIDC users, dev-account claim, ownership; ingest: tokens, pushes, holdings; progress: reevaluation, marks,
                       cursor, board, goals, content index and step id aliases at boot; state:
-                      PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler); internal/store/db is sqlc OUTPUT
+                      PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; workers: sealed game sessions, workers'
+                      desired state, client profiles); internal/store/db is sqlc OUTPUT
 internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
                       client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)
 internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* and /api/me, account routes
@@ -132,7 +134,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0008 observations per source, player_state as their projection,
                       0009 guides + mark_commands: append-only log of every step_marks change,
                       0010 microbot_audit: every Microbot control action, 0011 timers and position,
-                      0012 workers: game_sessions (sealed), workers (desired state), accounts.managed)
+                      0012 workers: game_sessions (sealed), workers (desired state), accounts.managed,
+                      0013 client profiles: client_profiles, their plugins and settings, account_client)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

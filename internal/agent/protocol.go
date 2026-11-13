@@ -73,7 +73,33 @@ type Message struct {
 	Data    json.RawMessage `json:"data,omitempty"`
 	Hello   *Hello          `json:"hello,omitempty"`
 	Event   *Event          `json:"event,omitempty"`
+	// Account names the game client of an agent that drives several
+	// (Hello.Clients): on a command, the client that runs it; on an event,
+	// the client it comes from. Empty on the link of an agent with one client.
+	Account string `json:"account,omitempty"`
 }
+
+// FeaturesHeader is the header of the server's answer to the agent's
+// websocket upgrade listing what its link understands beyond the first
+// protocol; an older server sends none, and the agent then keeps to it.
+const FeaturesHeader = "Chronicle-Link-Features"
+
+// FeatureClients: the server routes the clients of an agent that drives
+// several (Hello.Clients, Message.Account; docs/10 section 10).
+const FeatureClients = "clients"
+
+// MaxClients bounds the game clients one agent drives.
+const MaxClients = 16
+
+// ClientHello is one game client an agent declares in its hello.
+type ClientHello struct {
+	// Account is the Chronicle account the client serves.
+	Account string `json:"account"`
+}
+
+// ValidAccount reports whether id has the shape of a Chronicle account id
+// (acc_<normalized rsn>).
+func ValidAccount(id string) bool { return reAccountID.MatchString(id) }
 
 // Hello describes the agent that connected.
 type Hello struct {
@@ -92,6 +118,12 @@ type Hello struct {
 	// Chronicle Link bridge) come up in a worker, so the version is read
 	// while the client runs and reported in Status.Bridge instead.
 	Bridge string `json:"bridge,omitempty"`
+	// Clients are the game clients of an attached agent that drives several
+	// (docs/10 section 10), each with its own account, executor and lock;
+	// Account is then the first one's, for an older server, which links only
+	// that one. Sent only to a server that announces FeatureClients; empty
+	// on an agent with one client.
+	Clients []ClientHello `json:"clients,omitempty"`
 }
 
 // LoginParams are the parameters of CmdLogin: world 0 keeps the profile's.

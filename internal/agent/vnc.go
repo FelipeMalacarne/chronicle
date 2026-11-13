@@ -9,6 +9,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -26,17 +29,14 @@ import (
 // ErrVNCTimeout: the agent did not bring the session's stream in time.
 var ErrVNCTimeout = errors.New("agent: the VNC stream did not arrive")
 
-// openVNC is the agent's side of CmdVNCOpen: it returns once both ends are
-// connected and keeps splicing them in the background.
-func (a *Agent) openVNC(ctx context.Context, params json.RawMessage) error {
+// openVNC is the agent's side of CmdVNCOpen for client c: it returns once
+// both ends are connected and keeps splicing them in the background.
+func (a *Agent) openVNC(ctx context.Context, c Client, params json.RawMessage) error {
 	var p VNCParams
 	if err := json.Unmarshal(params, &p); err != nil || p.Session == "" {
 		return errors.New("vnc_open: missing session")
 	}
-	addr := a.VNCAddr
-	if addr == "" {
-		addr = "127.0.0.1:5999"
-	}
+	addr := c.vncAddr()
 	var d net.Dialer
 	dctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
@@ -56,12 +56,33 @@ func (a *Agent) openVNC(ctx context.Context, params json.RawMessage) error {
 		return fmt.Errorf("vnc_open: stream to the server: %w", err)
 	}
 	ws.SetReadLimit(-1)
-	a.Log.Info("agent: vnc session open", "session", p.Session)
+	a.Log.Info("agent: vnc session open", "session", p.Session, "account", c.Account, "vnc", addr)
 	go func() {
 		Splice(websocket.NetConn(ctx, ws, websocket.MessageBinary), vnc)
-		a.Log.Info("agent: vnc session closed", "session", p.Session)
+		a.Log.Info("agent: vnc session closed", "session", p.Session, "account", c.Account)
 	}()
 	return nil
+}
+
+// vncAddr is the client's x11vnc: the port its running x11vnc wrote in the
+// dev home (mb-client, run/vnc.port), else VNCAddr, else 127.0.0.1:5999.
+// The home is the truth for a running client: one started before the
+// agent's configuration changed keeps its port.
+func (c Client) vncAddr() string {
+	if c.Executor != nil && c.Executor.Home != "" {
+		run := filepath.Join(c.Executor.Home, "run")
+		if pidAlive(filepath.Join(run, "vnc.pid")) {
+			if b, err := os.ReadFile(filepath.Join(run, "vnc.port")); err == nil { //nolint:gosec // a fixed file of the dev home
+				if port, err := strconv.Atoi(strings.TrimSpace(string(b))); err == nil && port > 0 && port < 65536 {
+					return net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
+				}
+			}
+		}
+	}
+	if c.VNCAddr != "" {
+		return c.VNCAddr
+	}
+	return "127.0.0.1:5999"
 }
 
 // Splice copies both ways until either side ends, then closes both.
@@ -106,7 +127,7 @@ func (l *Link) OpenVNC(ctx context.Context, account string) (net.Conn, error) {
 	return l.openVNC(ctx, c)
 }
 
-// OpenVNCAgent is OpenVNC on one connection, by its Info.ID.
+// OpenVNCAgent is OpenVNC on one client, by its Info.ID.
 func (l *Link) OpenVNCAgent(ctx context.Context, agentID string) (net.Conn, error) {
 	l.mu.Lock()
 	c := l.agents[agentID]
@@ -124,7 +145,7 @@ func (l *Link) openVNC(ctx context.Context, c *agentConn) (net.Conn, error) {
 	if l.vnc == nil {
 		l.vnc = map[string]vncWait{}
 	}
-	l.vnc[session] = vncWait{stream: stream, subject: c.ident.Subject, account: c.hello.Account}
+	l.vnc[session] = vncWait{stream: stream, subject: c.ws.ident.Subject, account: c.hello.Account}
 	l.mu.Unlock()
 	defer func() {
 		l.mu.Lock()

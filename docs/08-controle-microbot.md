@@ -70,6 +70,10 @@ navegador ──Zitadel (OIDC) + papel──> chronicle serve (saradomin; ou zar
                                             └── exec ──> mb-client start|stop --headless
 ```
 
+Desde a fase 5 do doc 10, o agent do zaros pode controlar vários clientes, um por conta. Cada um tem
+o seu home de dev, o seu Xvfb (`:99`, `:100`, …) e o seu x11vnc (5999, 6000, …), na mesma conexão
+(ver "Fase 5 do doc 10" em Estado).
+
 - **Só conexão de saída**: o agent conecta no `serve`; o `zaros` não abre porta nenhuma. A mesma
   conexão multiplexa comandos, eventos (estado do cliente e dos scripts) e o fluxo do VNC. No modo
   local-first o agent conecta em `localhost`, sem mudar código.
@@ -851,6 +855,78 @@ doc: a tarefa aponta para uma classe de plugin com um preset):
     o ingest no 75 sem efeito e no 76 com o plugin desligado, o run `done` e a prova do `GET`.
 - **Nada foi testado no jogo.** Os passos do dono estão no doc 10, seção 13.
 - **Sem tela:** o botão "Treinar" (ou "Executar") na web pede o canvas antes (CLAUDE.md, regra 11).
+
+**Fase 5 do doc 10: vários clientes no agent** (2026-11-13; doc 10, seções 10 e 13):
+
+- **O que é:** um agent anexado (o do zaros) controla vários clientes do jogo, um por conta. Cada
+  cliente é uma instância do harness com o seu home de dev, o seu display do Xvfb e o seu x11vnc. O
+  agent tem um executor por cliente, e cada executor tem:
+  - o seu lock de ciclo de vida e de login;
+  - o seu run (o "Fazer agora", um gatilho, uma recorrente, um `task_run` ou um `train`);
+  - o seu ponto seguro, os seus gatilhos e o vigia deles na ponte;
+  - as suas recorrentes;
+  - os seus arquivos.
+
+  Um cliente ocupado ou com erro não segura nem derruba o outro. Os workers gerenciados não mudam: um
+  pod, um cliente.
+- **Configuração** (`chronicle agent`, `just agent`): `MICROBOT_AGENT_CLIENTS`, no lugar de
+  `MICROBOT_AGENT_ACCOUNT` e `MICROBOT_HOME`:
+
+  ```
+  MICROBOT_AGENT_CLIENTS="acc_main=~/.local/share/microbot-dev,acc_alt=~/.local/share/microbot-dev-alt"
+  ```
+
+  Pela ordem da lista, o primeiro cliente fica no display `:99` com o x11vnc em `127.0.0.1:5999`, o
+  segundo em `:100` e 6000, e assim por diante. As bases vêm de `MB_HEADLESS_DISPLAY` e
+  `MB_VNC_PORT`.
+  - **O que o agent recusa ao subir:** conta fora do formato `acc_<rsn>`, conta ou home repetidos,
+    home relativo, mais de 16 clientes, e `MICROBOT_AGENT_ACCOUNT` junto.
+  - **Arquivos:** cada cliente guarda os seus em `~/.config/chronicle/agent-runs.<conta>.json`,
+    `agent-triggers.<conta>.json` e `agent-recurring.<conta>.json`.
+  - **Harness:** o agent passa a cada `mb-client` e `mb-account` o `MB_DEV_HOME`, o
+    `MB_HEADLESS_DISPLAY` e o `MB_VNC_PORT` do cliente.
+- **No harness:** o `mb-client` já aceitava um home, um display e uma porta por variável. Agora ele
+  grava no home o display e a porta em que o Xvfb e o x11vnc subiram (`run/xvfb.display`,
+  `run/vnc.port`) e os reaproveita enquanto eles vivem, mesmo que as variáveis digam outra coisa. Ele
+  também recusa subir o x11vnc numa porta já ocupada. O agent abre a VNC de um cliente na porta que o
+  home dele diz. Assim, mudar a ordem da lista com os clientes no ar nunca mostra o jogo de um
+  personagem na VNC do outro.
+- **Protocolo:**
+  - o servidor anuncia que roteia vários clientes no cabeçalho `Chronicle-Link-Features: clients` da
+    resposta do websocket do agent;
+  - com ele, o hello do agent lista `clients` (a conta de cada um, e `account` é a do primeiro);
+  - cada comando do servidor leva `account` (o cliente que o executa), e cada evento do agent leva a
+    conta do cliente de onde veio;
+  - o servidor registra cada cliente como um agent à parte no Hub, com o seu id, então rotas,
+    auditoria, VNC, rotinas, `wait_until` e telas não mudaram;
+  - uma nova conexão do mesmo agent substitui todos os clientes da anterior.
+
+  O servidor recusa um hello com `clients` de um agent gerenciado ou de um pod, com conta inválida ou
+  repetida, com mais de 16 clientes ou com `account` diferente da do primeiro. Ele descarta o evento
+  de uma conta que o agent não declarou.
+- **Compatibilidade:**
+  - um agent de um cliente (sem `MICROBOT_AGENT_CLIENTS`, ou com um só) manda o hello de sempre, e
+    qualquer servidor o atende;
+  - um agent velho não recebe `account` nos comandos;
+  - um servidor velho não manda o cabeçalho, e o agent com vários clientes liga só o primeiro, como
+    um agent de um cliente. Os runs dos outros ficam na fila do agent, porque o servidor velho os
+    gravaria na conta do primeiro.
+- **Verificado:**
+  - testes do agent e do Hub com dois clientes falsos, com `-race`:
+    - os comandos chegam ao cliente da conta;
+    - o lock de um cliente preso num `client_start` não segura o login do outro;
+    - um run de um cliente recusa as ações só dele;
+    - um cliente com o `mb-client` quebrado e um run que falha não afetam o outro;
+    - os runs de cada um chegam ao servidor na conta certa;
+    - a VNC de cada cliente;
+    - as recusas do hello;
+    - a troca de conexão;
+    - os eventos de conta desconhecida descartados;
+    - um servidor antigo;
+  - a configuração do `chronicle agent`;
+  - as rotas reais (`/api/microbot/*?account=`) com um agent de dois clientes;
+  - o `mb-client status` lendo o display e a porta gravados num home falso.
+- **Nada rodou com dois clientes de verdade.** Os passos do dono estão no doc 10, seção 13.
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

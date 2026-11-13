@@ -347,12 +347,14 @@ sozinho na imagem nova quando está **em pausa**, que é:
 - **ninguém no VNC:** o servidor conta as sessões de VNC abertas por conta (o fluxo do agent passa
   pelo `serve`, `agent.Link.VNCOpen`). Ele não sabe se o dono só olha ou intervém (o `viewOnly` é do
   navegador, doc 08, fase 2), então qualquer VNC aberto segura o reinício;
-- **e o personagem fora do jogo ou no break:** pelo `status` do agent, o `loggedIn` do `/state` do
-  Agent Server é falso (tela de login; o cliente fechado também conta), ou o `break.active` da ponte
-  do Chronicle Link 1.12 está ligado (break do Break Handler, micro break do antiban ou do Break
-  Handler V2, logado ou não). Entre a tela de login e o jogo (`gameState` `LOGGING_IN`, `LOADING`,
-  `HOPPING`, `CONNECTION_LOST`) não é pausa. Um agent que não informa o break (ponte anterior à 1.12)
-  reinicia quando está deslogado e sem run.
+- **e o personagem fora do jogo:** pelo `status` do agent, o `loggedIn` do `/state` do Agent Server é
+  falso: tela de login, inclusive no break do Break Handler, que desloga (o `break.active` da ponte do
+  Chronicle Link 1.12 só dá o nome da pausa na auditoria). O cliente fechado também conta. Um break com
+  o personagem ainda logado (o micro break do antiban) não é pausa: o reinício deslogaria uma conta
+  que volta a jogar logo. Entre a tela de login e o jogo (`gameState` `LOGGING_IN`, `LOADING`,
+  `HOPPING`, `CONNECTION_LOST`) também não. O dono decidiu em 2026-11-13 que o break conta, sabendo
+  que o worker reiniciado nele fica na tela de login (W3) em vez de voltar ao jogo quando o break
+  acaba; isso acontece no máximo uma vez por imagem nova.
 
 Nunca reinicia: durante um run; com um VNC aberto; com o personagem no jogo fora do break; quando o
 agent não responde ou o estado não se lê (desconhecido nunca é pausa); um worker cujo estado desejado
@@ -1103,7 +1105,7 @@ nova, mas só na pausa. A regra, o que nunca reinicia e a auditoria estão na se
 **Conferido:**
 
 - Testes de tabela da pausa:
-  - deslogado, no break (logado ou não), cliente fechado;
+  - deslogado, deslogado no break, cliente fechado; o micro break logado não é pausa;
   - agent antigo sem o break;
   - run em andamento e run esperando o ponto seguro;
   - VNC aberto;
@@ -1127,10 +1129,9 @@ nova, mas só na pausa. A regra, o que nunca reinicia e a auditoria estão na se
     doc 01);
   - um VNC aberto segurando o reinício.
 - **O worker volta na tela de login** (W3): reiniciado no break, não volta ao jogo quando o break
-  acaba. O dono decide se isso basta ou se o reinício no break deve ficar só para o deslogado, ou
-  entrar de novo depois.
-- **Micro break do antiban:** conta como break (`break.active`), mas dura segundos e o personagem
-  segue logado. O reinício nesse instante desloga uma conta que voltaria a jogar logo.
+  acaba. O dono aceitou isso em 2026-11-13: acontece no máximo uma vez por imagem nova, e sem o break
+  um worker que joga direto quase nunca atualizaria sozinho. O micro break do antiban, com o
+  personagem logado, ficou de fora.
 - **Corrida curta:** entre a leitura do `run_status` e o reinício, uma rotina pode começar; o run
   seria cortado e ficaria `failed` ("o worker reiniciou no meio do run"). A janela é de milissegundos.
 - **Mais de uma réplica do `serve`:** o `VNCOpen` só vê os túneis da própria réplica. Hoje há uma.

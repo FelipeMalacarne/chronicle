@@ -29,7 +29,8 @@ func TestPaused(t *testing.T) {
 		{"logged out, no run", PauseView{Status: up(loginScreen, nil), Run: noRun}, PauseLoggedOut, true},
 		{"logged out after a finished run", PauseView{Status: up(loginScreen, waiting), Run: ended}, PauseLoggedOut, true},
 		{"logged out by the Break Handler", PauseView{Status: up(loginScreen, onBreak), Run: noRun}, PauseBreak, true},
-		{"micro break, still logged in", PauseView{Status: up(loggedIn, onBreak), Run: noRun}, PauseBreak, true},
+		// A restart would log out an account about to resume.
+		{"micro break, still logged in", PauseView{Status: up(loggedIn, onBreak), Run: noRun}, "the character is in the game", false},
 		{"client not running", PauseView{Status: &agent.Status{}, Run: noRun}, PauseClientDown, true},
 		// An old agent (no break in its status) still pauses when logged out.
 		{"old agent, logged out", PauseView{Status: up(`{"loggedIn":false}`, nil), Run: noRun}, PauseLoggedOut, true},

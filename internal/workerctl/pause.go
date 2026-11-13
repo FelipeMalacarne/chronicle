@@ -17,7 +17,7 @@ const (
 	// PauseClientDown: the client is not running (a bootstrap that has not
 	// brought it up yet, or one that failed): nobody is in the game.
 	PauseClientDown = "client_down"
-	// PauseBreak: a Break Handler break (Status.Break.Active), logged in or not.
+	// PauseBreak: logged out on a Break Handler break (Status.Break.Active).
 	PauseBreak = "break"
 )
 
@@ -35,13 +35,16 @@ type PauseView struct {
 }
 
 // Paused reports whether the worker is at a pause: nobody on its VNC, no run
-// in progress, and the character out of the game (logged out, or the client
-// down) or on a Break Handler break. When it is, the string is the pause
+// in progress, and the character out of the game (logged out, on a Break
+// Handler break or not, or the client down). A break with the character still
+// logged in (an antiban micro break) is not a pause: a restart would log out
+// an account about to resume. When it is, the string is the pause
 // (PauseLoggedOut, PauseClientDown, PauseBreak); when it is not, what holds
 // the restart back, for the log. Anything unknown is not a pause: an agent
 // that did not answer, a game state that does not read, a client between the
-// login screen and the game. An agent without the break (Chronicle Link
-// before 1.12) pauses only when logged out.
+// login screen and the game. The owner decided on 2026-11-13 that a break
+// counts too, although a restarted worker stays at the login screen (W3)
+// instead of going back into the game when the break ends.
 func Paused(v PauseView) (string, bool) {
 	switch {
 	case v.VNC:
@@ -69,9 +72,6 @@ func Paused(v PauseView) (string, bool) {
 		return "the game state does not read", false
 	}
 	if *game.LoggedIn {
-		if onBreak {
-			return PauseBreak, true
-		}
 		return "the character is in the game", false
 	}
 	switch game.GameState {

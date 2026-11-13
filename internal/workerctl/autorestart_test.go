@@ -90,7 +90,7 @@ func TestAutoRestartAtPause(t *testing.T) {
 		status: map[string]agent.Status{
 			"c-out":  game(false, &agent.BreakState{}),
 			"c-game": game(true, &agent.BreakState{}),
-			"c-brk":  game(true, &agent.BreakState{Active: true}),
+			"c-brk":  game(false, &agent.BreakState{Active: true}), // logged out by the Break Handler
 			"c-old":  game(false, nil),
 			"zaros":  game(false, nil),
 		},

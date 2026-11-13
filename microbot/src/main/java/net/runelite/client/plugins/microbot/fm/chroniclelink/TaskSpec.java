@@ -33,7 +33,7 @@ final class TaskSpec
 
 	private static final int MAX_COORD = 16_383;
 	private static final int MAX_AREA_SIDE = 256;
-	private static final int MAX_POLYGON = 64;
+	private static final int MAX_POLYGON = 256;
 	private static final int MAX_BANK = 39;
 	private static final int MAX_IDS = 16;
 	private static final int MAX_NPCS = 32;
@@ -197,7 +197,7 @@ final class TaskSpec
 		require(a.maxX - a.minX < MAX_AREA_SIDE && a.maxY - a.minY < MAX_AREA_SIDE, "travel: an area is at most 256 tiles across");
 		if (a.polygon != null)
 		{
-			require(a.polygon.length >= 3 && a.polygon.length <= MAX_POLYGON, "travel: a polygon has 3 to 64 points");
+			require(a.polygon.length >= 3 && a.polygon.length <= MAX_POLYGON, "travel: a polygon has 3 to 256 points");
 			for (int[] p : a.polygon)
 			{
 				require(p != null && p.length == 2 && p[0] >= a.minX && p[0] <= a.maxX && p[1] >= a.minY && p[1] <= a.maxY,

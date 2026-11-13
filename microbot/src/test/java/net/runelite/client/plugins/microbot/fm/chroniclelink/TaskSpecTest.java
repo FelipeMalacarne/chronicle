@@ -144,6 +144,24 @@ class TaskSpecTest
 		hidden.getAsJsonObject("travel").addProperty("wilderness", true);
 		assertThrows(IllegalArgumentException.class, () -> TaskSpec.parse(gson, hidden));
 
+		// Lumbridge Swamp's polygon has 102 points: up to 256 pass, more do not.
+		JsonObject big = start(TaskSpec.TRAVEL).getAsJsonObject("task").deepCopy();
+		JsonObject travel = big.getAsJsonObject("travel");
+		int tx = travel.getAsJsonObject("target").get("x").getAsInt();
+		int ty = travel.getAsJsonObject("target").get("y").getAsInt();
+		com.google.gson.JsonArray points = new com.google.gson.JsonArray();
+		for (int i = 0; i < 102; i++)
+		{
+			points.add(new JsonParser().parse("[" + tx + "," + ty + "]"));
+		}
+		travel.getAsJsonObject("area").add("polygon", points);
+		TaskSpec.parse(gson, big);
+		for (int i = 102; i < 257; i++)
+		{
+			points.add(new JsonParser().parse("[" + tx + "," + ty + "]"));
+		}
+		assertThrows(IllegalArgumentException.class, () -> TaskSpec.parse(gson, big));
+
 		JsonObject twice = start(TaskSpec.BUY).getAsJsonObject("task").deepCopy();
 		twice.add("bank", start(TaskSpec.BANK).getAsJsonObject("task").get("bank"));
 		assertThrows(IllegalArgumentException.class, () -> TaskSpec.parse(gson, twice));

@@ -709,6 +709,9 @@ destino da viagem):
   - que o personagem está logado e, em HCIM sem supervisão, fora da wilderness;
   - que a ponte é o Chronicle Link 1.15 ou mais novo.
 
+  Ele anota na trilha os plugins ligados, sem recusar: os plugins mantêm loops passivos o tempo todo.
+  Parar a atividade principal antes da tarefa é do dono.
+
   Então o agent manda a tarefa por `POST /bridge/task/start` e lê `GET /bridge/task` a cada 3 s,
   anotando na trilha cada linha do plugin. Termina como a máquina do plugin: `done`, `failed` ou
   `canceled`. O timeout padrão é 15 min para `travel` e 5 min para o resto (30 s a 1 h). Timeout,

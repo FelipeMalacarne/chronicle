@@ -204,7 +204,7 @@ func TestTaskRunEndsWhenTheMachineDoesAndLeavesTheProofToTheIngest(t *testing.T)
 		trail = append(trail, ev.Text)
 	}
 	joined := strings.Join(trail, " | ")
-	for _, want := range []string{"tarefa: Ir até Lumbridge", "em 3103, 3265, 0", "andando até Lumbridge", "na área de Lumbridge", "provado pelo ingest"} {
+	for _, want := range []string{"tarefa: Ir até Lumbridge", "em 3103, 3265, 0", "plugins ligados durante a tarefa: QoLPlugin", "andando até Lumbridge", "na área de Lumbridge", "provado pelo ingest"} {
 		if !strings.Contains(joined, want) {
 			t.Errorf("trail %q lacks %q", joined, want)
 		}

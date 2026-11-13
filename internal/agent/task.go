@@ -217,6 +217,11 @@ func (e *Executor) driveTask(ctx context.Context, p TaskRunParams) {
 		return
 	}
 	e.note(RunRunning, fmt.Sprintf("em %d, %d, %d; começando: %s", at.X, at.Y, at.Plane, p.Label))
+	if others := e.activeScripts(ctx); len(others) > 0 {
+		// Plugins keep passive loops all the time, so this only warns: a
+		// main activity left on would click alongside the task.
+		e.note(RunRunning, "plugins ligados durante a tarefa: "+strings.Join(others, ", ")+" (pare a atividade principal antes)")
+	}
 	if _, err = e.Bridge.JSON(ctx, http.MethodPost, "/bridge/task/start", nil, map[string]any{"id": uid, "task": p.Task}, 15*time.Second); err != nil {
 		fail(fmt.Errorf("the bridge did not start the task: %w", err))
 		return
@@ -289,6 +294,33 @@ func (e *Executor) driveTask(ctx context.Context, p TaskRunParams) {
 			return
 		}
 	}
+}
+
+// activeScripts are the simple names of the active plugins besides the
+// control path and Chronicle Link (protectedClasses), from the Agent
+// Server's /scripts; nil when it does not answer.
+func (e *Executor) activeScripts(ctx context.Context) []string {
+	raw, err := e.Game.JSON(ctx, http.MethodGet, "/scripts", nil, nil, 15*time.Second)
+	if err != nil {
+		return nil
+	}
+	var s struct {
+		Scripts []struct {
+			ClassName string `json:"className"`
+			Active    bool   `json:"active"`
+		} `json:"scripts"`
+	}
+	if json.Unmarshal(raw, &s) != nil {
+		return nil
+	}
+	var out []string
+	for _, sc := range s.Scripts {
+		if sc.Active && reClassName.MatchString(sc.ClassName) && !Protected(sc.ClassName) {
+			out = append(out, simple(sc.ClassName))
+		}
+	}
+	slices.Sort(out)
+	return out
 }
 
 // currentUID is the uid of the run being driven.

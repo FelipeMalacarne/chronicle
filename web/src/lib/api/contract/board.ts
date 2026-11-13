@@ -13,9 +13,9 @@ export const fixture = {
 		"implied": 0,
 		"manual_done": 1,
 		"pinned_open": 0,
-		"remaining": 559,
+		"remaining": 561,
 		"skipped": 0,
-		"total": 564
+		"total": 566
 	},
 	"coverage": {
 		"checkbox": 227,
@@ -39,9 +39,9 @@ export const fixture = {
 				"implied": 0,
 				"manual_done": 1,
 				"pinned_open": 0,
-				"remaining": 281,
+				"remaining": 284,
 				"skipped": 0,
-				"total": 286
+				"total": 289
 			},
 			"id": "1.1",
 			"title": "Early quests, wintertodt and ardy cloak 1",
@@ -83,12 +83,59 @@ export const fixture = {
 					"key": "quest:x_marks_the_spot@started",
 					"role": "starts",
 					"verdict": "met"
+				},
+				{
+					"key": "item:952x1",
+					"observed": {
+						"target": 1,
+						"value": 1
+					},
+					"role": "completes",
+					"verdict": "met"
 				}
 			],
 			"ref": "1.1.5",
 			"section_id": "1.1",
 			"status": "auto_done",
 			"title": "Buy a spade, start X marks the spot quest",
+			"visible": true
+		},
+		{
+			"id": "1.1.7",
+			"main": true,
+			"manual": false,
+			"objectives": [
+				{
+					"key": "item:1965x1",
+					"observed": {
+						"target": 1,
+						"value": 0
+					},
+					"role": "completes",
+					"verdict": "unmet"
+				}
+			],
+			"ref": "1.1.7",
+			"section_id": "1.1",
+			"status": "pending",
+			"title": "Pick up every item spawn in the castle, including the ones in cellar, don't forget the cabbage",
+			"visible": true
+		},
+		{
+			"id": "1.1.9",
+			"main": true,
+			"manual": false,
+			"objectives": [
+				{
+					"key": "quest:rune_mysteries@started",
+					"role": "starts",
+					"verdict": "unknown"
+				}
+			],
+			"ref": "1.1.9",
+			"section_id": "1.1",
+			"status": "pending",
+			"title": "Talk to the duke to start Rune mysteries quest",
 			"visible": true
 		},
 		{

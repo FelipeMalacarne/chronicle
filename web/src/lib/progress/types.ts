@@ -16,11 +16,19 @@ export interface Mark {
 	note?: string;
 }
 
+/** O valor atual de um objetivo com número ("240 de 1 250"): nível, unidades, quest points, kc. */
+export interface ObservedValue {
+	value: number;
+	target: number;
+}
+
 export interface BoardObjective {
 	key: string;
 	role: Role;
 	verdict: Verdict;
 	regressed?: boolean;
+	/** Ausente sem número ou quando o valor atual não é sabido (nunca vira "faltando"). */
+	observed?: ObservedValue;
 }
 
 export interface BoardStep {

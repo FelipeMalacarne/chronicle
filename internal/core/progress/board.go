@@ -14,6 +14,10 @@ type ObjectiveState struct {
 	Verdict rules.Verdict `json:"verdict"`
 	// Regressed: met with evidence earlier, not holding in the latest facts.
 	Regressed bool `json:"regressed,omitempty"`
+	// Observed is the current value of a numeric objective (ObservedValue);
+	// absent without one, without a known current value, or when the board
+	// was built without the account's facts (GuideInput.State).
+	Observed *Observed `json:"observed,omitempty"`
 }
 
 // StepState is one step of the board.
@@ -95,6 +99,19 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 		sections[out.Sections[i].ID] = &out.Sections[i]
 	}
 	objectives := map[string]bool{}
+	observed := map[string]*Observed{}
+	observe := func(o content.Objective) *Observed {
+		if in.State == nil {
+			return nil
+		}
+		key := o.Key.String()
+		v, ok := observed[key]
+		if !ok {
+			v = ObservedValue(o.Key, *in.State, in.Registry)
+			observed[key] = v
+		}
+		return v
+	}
 	for _, st := range steps {
 		s := StepState{
 			ID: st.ID, Ref: AuthorRef(st), Title: StepTitle(st.Text), SectionID: st.SectionID, Status: status[st.ID],
@@ -109,7 +126,9 @@ func BuildBoard(in GuideInput, regressed map[string]bool) Board {
 		}
 		for _, o := range st.Objectives {
 			key := o.Key.String()
-			s.Objectives = append(s.Objectives, ObjectiveState{Key: key, Role: o.Role, Verdict: in.Verdicts.Of(key), Regressed: regressed[key]})
+			s.Objectives = append(s.Objectives, ObjectiveState{
+				Key: key, Role: o.Role, Verdict: in.Verdicts.Of(key), Regressed: regressed[key], Observed: observe(o),
+			})
 		}
 		out.Steps = append(out.Steps, s)
 		if !s.Visible {

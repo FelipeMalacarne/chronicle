@@ -232,3 +232,100 @@ func TestVerifyWorkerToken(t *testing.T) {
 		}
 	}
 }
+
+func TestParseQuantity(t *testing.T) {
+	for in, want := range map[string]string{
+		"700m":       "7/10",
+		"1":          "1",
+		"2200m":      "11/5",
+		"1Gi":        "1073741824",
+		"1792Mi":     "1879048192",
+		"856788Ki":   "877350912",
+		"403585713n": "403585713/1000000000",
+		"1.5Gi":      "1610612736",
+		"1e3":        "1000",
+		"2E-3":       "1/500",
+		"1E":         "1000000000000000000",
+		"0":          "0",
+		"250u":       "1/4000",
+		"3k":         "3000",
+	} {
+		got, err := ParseQuantity(in)
+		if err != nil || got.RatString() != want {
+			t.Errorf("ParseQuantity(%q) = %v, %v; want %s", in, got, err, want)
+		}
+	}
+	for _, bad := range []string{"", "Mi", "1x", "e3", "1/2", "0x10", "1.2.3", "abc", "1e99"} {
+		if q, err := ParseQuantity(bad); err == nil {
+			t.Errorf("ParseQuantity(%q) = %v, want an error", bad, q)
+		}
+	}
+}
+
+func TestPodMetricsAndQuotas(t *testing.T) {
+	c := fakeAPI(t, func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/apis/metrics.k8s.io/v1beta1/namespaces/chronicle/pods":
+			if r.URL.Query().Get("labelSelector") != WorkerSelector {
+				http.Error(w, "bad selector", http.StatusBadRequest)
+				return
+			}
+			// The shape metrics-server answers (saradomin, 2026-11-13), plus a
+			// second container to sum.
+			_, _ = w.Write([]byte(`{"kind":"PodMetricsList","apiVersion":"metrics.k8s.io/v1beta1","metadata":{},"items":[{"metadata":{"name":"worker-acc-eventsourced-7645466747-8jrqq","namespace":"chronicle","labels":{"app.kubernetes.io/component":"worker","app.kubernetes.io/name":"chronicle","chronicle.ftm.dev.br/account":"acc_eventsourced"}},"timestamp":"2026-11-13T04:03:58Z","window":"16.911s","containers":[{"name":"worker","usage":{"cpu":"403585713n","memory":"856788Ki"}},{"name":"sidecar","usage":{"cpu":"1m","memory":"1Mi"}}]}]}`))
+		case r.Method == http.MethodGet && r.URL.Path == "/api/v1/namespaces/chronicle/resourcequotas":
+			_, _ = w.Write([]byte(`{"kind":"ResourceQuotaList","apiVersion":"v1","items":[{"metadata":{"name":"chronicle","namespace":"chronicle"},"spec":{"hard":{"count/deployments.apps":"4","requests.cpu":"2200m","requests.memory":"3328Mi"}},"status":{"hard":{"count/deployments.apps":"4","requests.cpu":"2200m","requests.memory":"3328Mi"},"used":{"count/deployments.apps":"2","requests.cpu":"720m","requests.memory":"1088Mi"}}}]}`))
+		default:
+			http.Error(w, "unexpected "+r.Method+" "+r.URL.Path, http.StatusTeapot)
+		}
+	})
+	ctx := context.Background()
+	ms, err := c.ListPodMetrics(ctx, WorkerSelector)
+	if err != nil || len(ms) != 1 || ms[0].Metadata.Labels[LabelAccount] != "acc_eventsourced" || ms[0].Timestamp != "2026-11-13T04:03:58Z" {
+		t.Fatalf("metrics: %+v %v", ms, err)
+	}
+	cpu, mem, err := ms[0].Usage()
+	if err != nil || cpu < 0.4045 || cpu > 0.4046 || mem != 877350912+1048576 {
+		t.Fatalf("usage: %v cores, %d bytes, %v", cpu, mem, err)
+	}
+	qs, err := c.ListResourceQuotas(ctx)
+	if err != nil || len(qs) != 1 || qs[0].Status.Used["requests.cpu"] != "720m" || qs[0].Status.Hard["requests.memory"] != "3328Mi" {
+		t.Fatalf("quotas: %+v %v", qs, err)
+	}
+	bad := PodMetrics{Containers: []ContainerMetrics{{Name: "x", Usage: map[string]string{"cpu": "lots"}}}}
+	if _, _, err := bad.Usage(); err == nil {
+		t.Fatal("a bad quantity was summed")
+	}
+}
+
+// Without metrics-server the metrics API is missing, and without the Role's
+// rule it is forbidden: the errors say which, and the caller leaves usage out.
+func TestPodMetricsMissing(t *testing.T) {
+	missing := fakeAPI(t, func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, `{"reason":"NotFound","message":"the server could not find the requested resource"}`, http.StatusNotFound)
+	})
+	if _, err := missing.ListPodMetrics(context.Background(), WorkerSelector); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("missing metrics API: %v", err)
+	}
+	forbidden := fakeAPI(t, func(w http.ResponseWriter, _ *http.Request) {
+		http.Error(w, `{"reason":"Forbidden","message":"pods.metrics.k8s.io is forbidden"}`, http.StatusForbidden)
+	})
+	var api *APIError
+	if _, err := forbidden.ListPodMetrics(context.Background(), WorkerSelector); !errors.As(err, &api) || api.Status != http.StatusForbidden {
+		t.Fatalf("forbidden: %v", err)
+	}
+}
+
+func TestWorkerResources(t *testing.T) {
+	d := WorkerDeployment("chronicle", WorkerSpec{Account: "acc_x", Image: "img"})
+	res := d.Spec.Template.Spec.Containers[0].Resources
+	want := WorkerResources()
+	if res.Requests["cpu"] != want.Requests["cpu"] || res.Requests["memory"] != want.Requests["memory"] || res.Limits["memory"] != want.Limits["memory"] {
+		t.Fatalf("the Deployment's resources %+v differ from WorkerResources %+v", res, want)
+	}
+	// A new map on every call: changing one Deployment changes no other.
+	res.Requests["cpu"] = "1"
+	if WorkerResources().Requests["cpu"] == "1" {
+		t.Fatal("WorkerResources shares its maps")
+	}
+}

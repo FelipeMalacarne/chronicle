@@ -107,8 +107,9 @@ internal/sources/     adapters of external sources: hiscores (fetch + pure norma
 internal/microbot/    typed client of the Microbot Agent Server and of Chronicle's control bridge (Chronicle Link plugin; Unix sockets of the
                       harness dev home, same token); agent only
 internal/vault/       AES-256-GCM of the accounts' game sessions (CHRONICLE_VAULT_KEY), pure
-internal/kube/        minimal Kubernetes REST client (Deployments by server-side apply, pods, TokenReview), the
-                      worker Deployment of docs/11 section 13.3 and the worker pod token check
+internal/kube/        minimal Kubernetes REST client (Deployments by server-side apply, pods, TokenReview, and the
+                      pods' metrics.k8s.io usage and the ResourceQuotas the capacity reads), the worker Deployment
+                      of docs/11 section 13.3 and the worker pod token check
 internal/workerctl/   reconciler of the managed workers (database -> cluster) and the bootstrap of a linking
                       worker agent (session, ipl_ token, world, client profile); serve only
 internal/routinesync/ the routines' server side (docs/11 section 16): on every agent connection the account's

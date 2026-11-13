@@ -554,7 +554,13 @@ export interface SessionInfo {
 	pushed_at: string;
 	pushed_by: string;
 	last_login_at?: string;
+	/** `ok`, ou o motivo do jogo para recusar o último login de um worker. */
 	last_login_result?: string;
+	/**
+	 * O último login com esta sessão não entrou (derivado de `last_login_result`). É o único
+	 * sinal de sessão expirada que o servidor tem; um `accounts connect` novo limpa.
+	 */
+	login_failed?: boolean;
 }
 
 /** O que a última passada do reconciliador viu do pod de uma conta. */
@@ -570,6 +576,34 @@ export interface WorkerPod {
 	seen: string;
 }
 
+/** O que o metrics.k8s.io mediu por último do pod de um worker (docs/11, F7). */
+export interface WorkerUsage {
+	/** CPU em núcleos, ao milinúcleo. */
+	cpu_cores: number;
+	/** Working set em bytes: a memória que conta para o limite do pod. */
+	memory_bytes: number;
+	/** Fim da janela da medição. */
+	measured_at: string;
+}
+
+/** Quantos workers ainda cabem na ResourceQuota do namespace ("cabe mais N"). */
+export interface WorkerCapacity {
+	/** O menor, entre as quotas e os recursos que um worker ocupa, de piso(livre / o que um worker pede). */
+	fits: number;
+	/** O recurso da quota que dá o `fits` (requests.cpu, requests.memory, count/deployments.apps…). */
+	limited_by: string;
+	/** Teto e livre dos requests de CPU e memória da quota mais apertada; ausentes sem esse teto. */
+	cpu_hard_cores?: number;
+	cpu_free_cores?: number;
+	memory_hard_bytes?: number;
+	memory_free_bytes?: number;
+	/** O que um worker a mais pede (requests do Deployment). */
+	worker_cpu_cores: number;
+	worker_memory_bytes: number;
+	/** Quando a quota foi lida. */
+	seen: string;
+}
+
 export interface WorkerRow {
 	account: string;
 	rsn: string;
@@ -581,7 +615,10 @@ export interface WorkerRow {
 	stopped_at?: string;
 	last_error?: string;
 	pod: WorkerPod | null;
+	/** Uso do pod; ausente sem pod, sem metrics-server ou com WORKERS=off. */
+	usage?: WorkerUsage;
 	agent: AgentInfo | null;
+	/** O pod roda outra imagem que a do servidor: Reiniciar leva à versão nova (e sai do jogo). */
 	outdated: boolean;
 }
 
@@ -592,6 +629,8 @@ export interface WorkersView {
 	version?: string;
 	workers: WorkerRow[];
 	attached: AgentInfo[];
+	/** Ausente com WORKERS=off, sem quota no namespace ou quando ela não pôde ser lida. */
+	capacity?: WorkerCapacity;
 }
 
 export type WorkerAction = 'start' | 'stop' | 'restart';

@@ -283,7 +283,8 @@ Valem as regras da primeira versão, com dois acréscimos:
 - **Namespace** `chronicle` para o web e os workers. O Argo não apaga os workers, porque eles não
   têm a etiqueta dele.
 - **SA `chronicle`:** um Role com create, delete, get, list, watch e patch em `deployments`, e get,
-  list e watch em `pods`. Nenhuma permissão em secrets. `system:auth-delegator` para a TokenReview.
+  list e watch em `pods`; get e list em `resourcequotas` e nos `pods` do `metrics.k8s.io` (F7,
+  seção 18). Nenhuma permissão em secrets. `system:auth-delegator` para a TokenReview.
 - **ValidatingAdmissionPolicy** para pedidos da SA `chronicle` em Deployments: etiqueta
   `component: worker`, SA `chronicle-worker`, imagem `ghcr.io/felipemalacarne/chronicle-worker`,
   **`replicas <= 1` e `strategy.type == Recreate`** (acréscimo), sem `hostPath`, sem `privileged`,
@@ -295,8 +296,9 @@ Valem as regras da primeira versão, com dois acréscimos:
   slot).
 - **NetworkPolicy:** os workers saem só para o Service do chronicle e para a internet.
 - **Segredo:** `CHRONICLE_VAULT_KEY` no `chronicle-secrets` (SOPS).
-- **CPU e RAM por worker no painel:** o agent lê o próprio cgroup e manda pelo link (acréscimo).
-  Assim o servidor não precisa de permissão no `metrics.k8s.io`.
+- **CPU e RAM por worker no painel:** o servidor lê o metrics-server (`metrics.k8s.io`, só os pods
+  do namespace) e a quota (seção 18). A primeira versão previa o agent lendo o próprio cgroup; o
+  metrics-server já roda no k3s, mede o mesmo que o `kubectl top` e não muda o agent nem o link.
 
 ### 7.1 Medições (N95, 2026-11-12)
 
@@ -364,7 +366,7 @@ o referencia, então o RBAC não muda) e usa o `local-path`, como o do filebrows
 
 | Rota | O quê |
 |---|---|
-| `GET /api/workers` | Workers das contas do usuário: lugar, estado, versão, CPU e RAM, sessão |
+| `GET /api/workers` | Workers das contas do usuário: lugar, estado, versão, CPU e RAM, sessão, e quantos ainda cabem (seção 18) |
 | `POST /api/workers/{conta}/start` \| `stop` \| `restart` | Ciclo de vida, auditado |
 | `GET` \| `PUT /api/accounts/{id}/session` | Estado da sessão (sem o conteúdo) e conexão |
 | `GET /api/client-profiles`, `GET` \| `PUT` \| `DELETE /api/client-profiles/{nome}` | Perfis do usuário: modelo, plugins e configurações; o `PUT` troca o perfil inteiro (seção 15) |
@@ -402,7 +404,7 @@ disco.
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
 | F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. **Parte 2 no servidor feita** (2026-11-13, seção 17): desvio, "Salvar no perfil", aplicar, e o perfil no cliente anexado. Falta a tela (fatia V8 da v7) |
 | F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade, e as rotinas recorrentes continuam propostas |
-| F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle |
+| F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle, gielinor. **Servidor feito** (2026-11-13, seção 18): "cabe mais N" pela quota, CPU e RAM por worker, login recusado na sessão. Falta a tela (resumo da Frota da v7) e decidir o reinício sozinho na versão nova |
 
 Antes de cada fase com tela (F1, F2, F5, F6), o desenho entra no canvas e o dono aprova (regra 11).
 Desde 2026-11-12 as telas destas fases são as da v7 (canvas, página 8; `docs/ui/decisoes-canvas.md`,
@@ -903,3 +905,73 @@ com o agent do zaros que ainda não foi atualizado.
   declara. Para ver tudo, o Chronicle Link teria de exportar todos os valores que não são segredo
   (seção 4.3), o que fica para quando a tela pedir.
 - **A tela:** a fatia V8.
+
+## 18. F7: capacidade e métricas (2026-11-13)
+
+Só o servidor, a CLI e os tipos da web. A tela (o resumo da Frota da v7: "Cabe mais 1 worker no
+saradomin", CPU e RAM, "Renovar sessão") é da fatia da Frota.
+
+### 18.1 Entregue
+
+- **`internal/kube`:** `ListPodMetrics` (`/apis/metrics.k8s.io/v1beta1/namespaces/<ns>/pods`),
+  `ListResourceQuotas`, `ParseQuantity` (os sufixos da API, exato) e `WorkerResources`: os requests e
+  limites do worker num lugar só, lidos pelo Deployment e pela conta da capacidade.
+- **Reconciliador:** a cada passada (30 s) lê as métricas dos pods worker e as quotas do namespace.
+  - **Uso:** CPU em núcleos (ao milinúcleo) e working set em bytes do pod que a visão mostra, não de
+    um pod velho que ainda termina.
+  - **Capacidade:** o menor, entre as quotas e os recursos que um worker ocupa, de piso(livre / o
+    que um worker ocupa). `requests.cpu`/`cpu` e `requests.memory`/`memory` contam os requests do
+    worker; `limits.*`, os limites; `pods`, `count/pods`, `count/deployments.apps` e
+    `count/replicasets.apps`, um. Livre é `hard − used` do status, nunca negativo. Num empate, o
+    limite é a CPU. Toda quota conta, mesmo com escopo: pode contar a menos, nunca a mais.
+  - **Desconhecida, não zero:** sem quota que limite algo de um worker, ou com o status da quota
+    ainda vazio, a capacidade fica ausente.
+  - **Falha de leitura** (sem metrics-server, 403 sem a regra do Role): a passada segue e a parte some
+    da resposta. O log avisa uma vez quando começa e uma quando volta.
+- **`GET /api/workers`:** `usage` ao lado do `pod` (`cpu_cores`, `memory_bytes`, `measured_at`) e
+  `capacity` no topo (`fits`, `limited_by`, `cpu_hard_cores`, `cpu_free_cores`,
+  `memory_hard_bytes`, `memory_free_bytes`, `worker_cpu_cores`, `worker_memory_bytes`, `seen`).
+  Tudo opcional: com `WORKERS=off` nada disso aparece.
+- **Sessão expirando:** o servidor não vê quando a sessão da Jagex expira, então não há aviso por
+  idade (a web tem o `pushed_at` para "enviada há 3 d"). O sinal é o login:
+  - `login_failed` na sessão, derivado: o último login com ela não entrou. Um `accounts connect`
+    novo ou um login que entra limpa;
+  - o `last_login_result` existia desde a 0012, mas nada o gravava. Agora o login pelo Cockpit
+    (`POST /api/microbot/login`) num worker gerenciado grava `ok`, ou o motivo do jogo quando o
+    Agent Server responde 401 depois de esperar o login (credenciais recusadas, conta que não entra
+    no mundo, login que não terminou em 60 s; `agent.LoginRefusal`);
+  - login em andamento, o cooldown de tentativas e agent fora não gravam nada: não dizem nada da
+    sessão. O anexado (zaros) usa a sessão do launcher, não a guardada, e também não grava.
+- **CLI:** `chronicle workers list` mostra o uso, o login recusado e "Cabe mais N worker(s)".
+- **Web:** só os tipos (`WorkerUsage`, `WorkerCapacity`, `usage`, `capacity`, `login_failed`) e o
+  fixture do contrato.
+- **gielinor (PR #16):** o Role `chronicle-workers` ganha get e list em `resourcequotas` e em
+  `pods.metrics.k8s.io`, só no namespace.
+
+### 18.2 Conferido
+
+- O formato real, lido com `kubectl get` no saradomin em 2026-11-13: a quota `chronicle` (2200m,
+  3328Mi e 4 Deployments; usados 720m, 1088Mi e 2) e as métricas do worker da `acc_eventsourced`
+  (0,40 núcleo, 837 MiB). Os testes do `internal/kube` usam essas respostas; com elas, cabem mais 2.
+- Testes de tabela da capacidade: sem quota, quota sem nada de worker, status vazio, acima da
+  quota, `limits` e `pods`, duas quotas.
+- O reconciliador com métricas 404, quota 403 e sem quota: a passada segue, cada aviso sai uma vez,
+  e o uso é só o do pod atual.
+- As rotas: uso e capacidade na lista, nada com `WORKERS=off`; o login gravado (401 grava, 409 não,
+  anexado não). `login_failed` no Postgres 17. O contrato `workers` regenerado e o `pnpm check`.
+
+### 18.3 Não conferido e pendente
+
+- **No cluster:** depende do merge do gielinor #16 e de um deploy. Conferir no saradomin a
+  `capacity.fits` da `/api/workers` (hoje daria 2) e o uso contra o `kubectl top pod -n chronicle`.
+- **O que uma sessão da Jagex expirada dá no login** nunca foi visto. Se não for um 401 do Agent
+  Server, o `login_failed` não acende; se for um login que só não termina, o motivo é "Login timed
+  out after 60s".
+- Logins por outros caminhos (troca de mundo, rotinas, a volta do jogo depois de uma queda) não
+  gravam o resultado.
+- **Reinício na versão nova:** o `outdated` e o Reiniciar já existem (seções 6.5 e 14.4). Reiniciar
+  sozinho quando o worker está parado (o "Reiniciar na pausa" da Frota da v7) pede decisão do dono:
+  o que conta como parado (deslogado, sem run, no break do Break Handler) e se a seção 7.2 ("só
+  troca de imagem quando o dono clica") muda. Ficou de fora.
+- **CPU e RAM do nó** (o "saradomin · CPU 3,1 / 4" do canvas) pediriam permissão de cluster em
+  `nodes`. A web pode somar o uso dos workers e mostrar o teto da quota.

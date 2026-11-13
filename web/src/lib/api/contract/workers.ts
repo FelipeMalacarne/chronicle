@@ -9,12 +9,23 @@ export const fixture = {
 			"account": "acc_contract",
 			"connected": true,
 			"host": "zaros",
-			"id": "9c106a9f5bdb2f55",
+			"id": "cbab50bcbd58c9ac",
 			"identity": "dev",
 			"kind": "attached",
-			"since": "2026-11-12T20:19:16.173765202-03:00"
+			"since": "2026-11-13T01:13:10.364281246-03:00"
 		}
 	],
+	"capacity": {
+		"cpu_free_cores": 1.48,
+		"cpu_hard_cores": 2.2,
+		"fits": 2,
+		"limited_by": "requests.cpu",
+		"memory_free_bytes": 2348810240,
+		"memory_hard_bytes": 3489660928,
+		"seen": "2026-11-13T04:13:10Z",
+		"worker_cpu_cores": 0.7,
+		"worker_memory_bytes": 1073741824
+	},
 	"enabled": true,
 	"image": "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc1234-def5678",
 	"version": "test",
@@ -26,10 +37,10 @@ export const fixture = {
 				"bridge": "1.11.0",
 				"connected": true,
 				"host": "chronicle-worker-acc-worker-a-7d9f-x2k4q",
-				"id": "25f66382f43ce27e",
+				"id": "29858af5677915d2",
 				"identity": "dev",
 				"kind": "managed",
-				"since": "2026-11-12T20:19:16.173764292-03:00",
+				"since": "2026-11-13T01:13:10.364280606-03:00",
 				"worker": "chronicle-worker-acc-worker-a-7d9f-x2k4q"
 			},
 			"desired": "running",
@@ -40,7 +51,7 @@ export const fixture = {
 				"image": "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc1234-def5678",
 				"pod": "chronicle-worker-acc-worker-a-7d9f-x2k4q",
 				"restarts": 1,
-				"seen": "2026-11-12T23:19:16Z",
+				"seen": "2026-11-13T04:13:10Z",
 				"state": "running",
 				"version": "v1.2.3"
 			},
@@ -49,12 +60,17 @@ export const fixture = {
 				"account_id": "acc_worker_a",
 				"character": "Worker A",
 				"key_id": "4bb06f8e",
-				"last_login_at": "2026-11-12T20:19:16.149828-03:00",
+				"last_login_at": "2026-11-13T01:13:10.335543-03:00",
 				"last_login_result": "ok",
-				"pushed_at": "2026-11-12T20:19:16.14683-03:00",
+				"pushed_at": "2026-11-13T01:13:10.332246-03:00",
 				"pushed_by": "dev"
 			},
-			"started_at": "2026-11-12T20:19:16.14839-03:00",
+			"started_at": "2026-11-13T01:13:10.33398-03:00",
+			"usage": {
+				"cpu_cores": 0.404,
+				"measured_at": "2026-11-13T04:12:55Z",
+				"memory_bytes": 877350912
+			},
 			"world": 330
 		},
 		{
@@ -68,7 +84,7 @@ export const fixture = {
 				"deployment": "chronicle-worker-acc-worker-b",
 				"image": "ghcr.io/felipemalacarne/chronicle-worker:2.6.52-abc1234-0000000",
 				"reason": "stopped",
-				"seen": "2026-11-12T23:19:16Z",
+				"seen": "2026-11-13T04:13:10Z",
 				"state": "terminating"
 			},
 			"rsn": "Worker B",
@@ -76,11 +92,14 @@ export const fixture = {
 				"account_id": "acc_worker_b",
 				"character": "Worker B",
 				"key_id": "4bb06f8e",
-				"pushed_at": "2026-11-12T20:19:16.150574-03:00",
+				"last_login_at": "2026-11-13T01:13:10.337567-03:00",
+				"last_login_result": "Invalid credentials",
+				"login_failed": true,
+				"pushed_at": "2026-11-13T01:13:10.336342-03:00",
 				"pushed_by": "dev"
 			},
-			"started_at": "2026-11-12T20:19:16.151676-03:00",
-			"stopped_at": "2026-11-12T20:19:16.152777-03:00"
+			"started_at": "2026-11-13T01:13:10.338328-03:00",
+			"stopped_at": "2026-11-13T01:13:10.339527-03:00"
 		},
 		{
 			"account": "acc_worker_c",
@@ -90,7 +109,7 @@ export const fixture = {
 			"pod": null,
 			"rsn": "Worker C",
 			"session": null,
-			"stopped_at": "2026-11-12T20:19:16.155536-03:00"
+			"stopped_at": "2026-11-13T01:13:10.342518-03:00"
 		}
 	]
 } satisfies WorkersView;

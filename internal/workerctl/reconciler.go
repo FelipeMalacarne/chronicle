@@ -46,6 +46,11 @@ type Cluster interface {
 	DeleteDeployment(ctx context.Context, name string) error
 	ListDeployments(ctx context.Context, selector string) ([]kube.Deployment, error)
 	ListPods(ctx context.Context, selector string) ([]kube.Pod, error)
+	// ListPodMetrics and ListResourceQuotas feed the usage and the capacity
+	// (docs/11, F7); either may fail (no metrics-server, no Role rule)
+	// without failing the pass.
+	ListPodMetrics(ctx context.Context, selector string) ([]kube.PodMetrics, error)
+	ListResourceQuotas(ctx context.Context) ([]kube.ResourceQuota, error)
 }
 
 // Hub is the reconciler's view of the agents' link (internal/agent).
@@ -73,8 +78,13 @@ type Reconciler struct {
 	kick chan struct{}
 	once sync.Once
 
-	mu   sync.Mutex
-	pods map[string]PodInfo // by account, from the last pass
+	mu       sync.Mutex
+	pods     map[string]PodInfo // by account, from the last pass
+	usage    map[string]Usage   // by account: the metrics of the pod in pods
+	capacity *Capacity          // nil: no quota, or it could not be read
+	// metricsDown and quotaDown remember a failing read, so it is logged
+	// when it starts failing and when it is back, not on every pass.
+	metricsDown, quotaDown bool
 }
 
 // PodInfo is what the last pass saw of an account's pod.
@@ -237,6 +247,60 @@ func (r *Reconciler) refreshPods(ctx context.Context) {
 	r.mu.Lock()
 	r.pods = view
 	r.mu.Unlock()
+	r.refreshUsage(ctx, view, now)
+}
+
+// refreshUsage reads the metrics of the pods in view and the namespace's
+// quotas, on every pass (two GETs; metrics-server samples every 15 s or so).
+// Neither is needed to run workers: when one cannot be read (no
+// metrics-server, no Role rule), its part is left out of the answer and the
+// pass goes on.
+func (r *Reconciler) refreshUsage(ctx context.Context, view map[string]PodInfo, now time.Time) {
+	var usage map[string]Usage
+	metrics, merr := r.Cluster.ListPodMetrics(ctx, kube.WorkerSelector)
+	if merr == nil {
+		byPod := make(map[string]kube.PodMetrics, len(metrics))
+		for _, m := range metrics {
+			byPod[m.Metadata.Name] = m
+		}
+		usage = map[string]Usage{}
+		for account, info := range view {
+			m, ok := byPod[info.Pod]
+			if info.Pod == "" || !ok {
+				continue
+			}
+			u, err := usageOf(m)
+			if err != nil {
+				r.Log.Warn("workers: pod metrics", "pod", info.Pod, "err", err)
+				continue
+			}
+			usage[account] = u
+		}
+	}
+	var capacity *Capacity
+	quotas, qerr := r.Cluster.ListResourceQuotas(ctx)
+	if qerr == nil {
+		if c, ok := capacityOf(quotas, now); ok {
+			capacity = &c
+		}
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	r.usage, r.capacity = usage, capacity
+	r.metricsDown = r.noteRead(r.metricsDown, "pod metrics (metrics.k8s.io)", merr)
+	r.quotaDown = r.noteRead(r.quotaDown, "resource quotas", qerr)
+}
+
+// noteRead logs an optional read that starts failing or works again, and
+// returns whether it is failing now.
+func (r *Reconciler) noteRead(wasDown bool, what string, err error) bool {
+	switch {
+	case err != nil && !wasDown:
+		r.Log.Warn("workers: cannot read "+what+"; left out of /api/workers until it works", "err", err)
+	case err == nil && wasDown:
+		r.Log.Info("workers: " + what + " readable again")
+	}
+	return err != nil
 }
 
 // apply writes the worker Deployment of the current pod template; a new
@@ -288,6 +352,29 @@ func (r *Reconciler) Pods() map[string]PodInfo {
 		out[k] = v
 	}
 	return out
+}
+
+// Usage is what the metrics API last measured of each account's pod; an
+// account is missing when its pod has no metrics yet or they cannot be read.
+func (r *Reconciler) Usage() map[string]Usage {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	out := make(map[string]Usage, len(r.usage))
+	for k, v := range r.usage {
+		out[k] = v
+	}
+	return out
+}
+
+// Capacity is how many more workers the namespace's quotas admit, from the
+// last pass; false without a quota or when it could not be read.
+func (r *Reconciler) Capacity() (Capacity, bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.capacity == nil {
+		return Capacity{}, false
+	}
+	return *r.capacity, true
 }
 
 // OnConnect bootstraps a managed agent that just linked: unless its client

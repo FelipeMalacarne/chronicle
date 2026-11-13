@@ -237,6 +237,7 @@ func contractWorkers(ctx context.Context, t *testing.T, pool *pgxpool.Pool, toke
 		repo.SetDesired(ctx, "acc_worker_a", storeworkers.StateRunning, 330, contractWorkerImage),
 		repo.RecordLogin(ctx, "acc_worker_a", "ok"),
 		repo.PutSession(ctx, "acc_worker_b", "dev", agent.GameSession{Character: "Worker B", SessionID: "sid-b", CharacterID: "2"}),
+		repo.RecordLogin(ctx, "acc_worker_b", "Invalid credentials"), // login_failed
 		repo.SetDesired(ctx, "acc_worker_b", storeworkers.StateRunning, 0, older),
 		repo.SetDesired(ctx, "acc_worker_b", storeworkers.StateStopped, 0, ""),
 		repo.SetError(ctx, "acc_worker_b", "the session was refused"),
@@ -249,10 +250,22 @@ func contractWorkers(ctx context.Context, t *testing.T, pool *pgxpool.Pool, toke
 		}
 	}
 	now := time.Now().UTC().Truncate(time.Second)
-	control := &memControl{pods: map[string]workerctl.PodInfo{
-		"acc_worker_a": {Deployment: "chronicle-worker-acc-worker-a", Pod: "chronicle-worker-acc-worker-a-7d9f-x2k4q", State: "running", Image: contractWorkerImage, Version: "v1.2.3", Restarts: 1, Seen: now},
-		"acc_worker_b": {Deployment: "chronicle-worker-acc-worker-b", State: "terminating", Reason: "stopped", Image: older, Seen: now},
-	}}
+	// The saradomin quota of 2026-11-13 (2200m, 3328Mi, 4 Deployments) with
+	// the app and one worker in it.
+	cpuHard, cpuFree, memHard, memFree := 2.2, 1.48, int64(3328<<20), int64(2240<<20)
+	control := &memControl{
+		pods: map[string]workerctl.PodInfo{
+			"acc_worker_a": {Deployment: "chronicle-worker-acc-worker-a", Pod: "chronicle-worker-acc-worker-a-7d9f-x2k4q", State: "running", Image: contractWorkerImage, Version: "v1.2.3", Restarts: 1, Seen: now},
+			"acc_worker_b": {Deployment: "chronicle-worker-acc-worker-b", State: "terminating", Reason: "stopped", Image: older, Seen: now},
+		},
+		usage: map[string]workerctl.Usage{
+			"acc_worker_a": {CPUCores: 0.404, MemoryBytes: 877350912, MeasuredAt: now.Add(-15 * time.Second)},
+		},
+		capacity: &workerctl.Capacity{
+			Fits: 2, LimitedBy: "requests.cpu", CPUHardCores: &cpuHard, CPUFreeCores: &cpuFree,
+			MemoryHardBytes: &memHard, MemoryFreeBytes: &memFree, WorkerCPUCores: 0.7, WorkerMemoryBytes: 1 << 30, Seen: now,
+		},
+	}
 	return repo, control
 }
 

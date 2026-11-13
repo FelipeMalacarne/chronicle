@@ -475,6 +475,9 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 			err = link.CallAgent(ctx, served.ID, command, params, &data)
 		}
 		s.auditMicrobot(r, account, served, command, params, err)
+		if command == agent.CmdLogin {
+			s.recordWorkerLogin(r, served, err)
+		}
 		if err != nil {
 			s.writeMicrobotError(w, err)
 			return

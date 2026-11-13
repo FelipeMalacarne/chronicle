@@ -74,10 +74,19 @@ type SessionInfo struct {
 	PushedAt  time.Time `json:"pushed_at"`
 	PushedBy  string    `json:"pushed_by"`
 	// LastLoginAt and LastLoginResult are the last login a worker made with
-	// this session; nil and empty until the first one.
+	// this session; nil and empty until the first one. The result is LoginOK
+	// or the game's reason for refusing it.
 	LastLoginAt     *time.Time `json:"last_login_at,omitempty"`
 	LastLoginResult string     `json:"last_login_result,omitempty"`
+	// LoginFailed is derived: the last login with this session did not get
+	// in. It is the only sign of an expired session the server has (it
+	// cannot see when the Jagex session ends); a new session (`chronicle
+	// accounts connect`) clears it, as does a login that gets in.
+	LoginFailed bool `json:"login_failed,omitempty"`
 }
+
+// LoginOK is the LastLoginResult of a login that got in.
+const LoginOK = "ok"
 
 // Worker is a managed account as the reconciler and the panel see it: the
 // worker row (zero values and a nil UpdatedAt while it was never started)
@@ -447,6 +456,7 @@ func sessionInfo(account, character, keyID string, pushedAt pgtype.Timestamptz, 
 	return SessionInfo{
 		AccountID: account, Character: character, KeyID: keyID, PushedAt: pushedAt.Time, PushedBy: pushedBy,
 		LastLoginAt: timePtr(lastLoginAt), LastLoginResult: lastLoginResult,
+		LoginFailed: lastLoginResult != "" && lastLoginResult != LoginOK,
 	}
 }
 

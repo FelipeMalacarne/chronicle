@@ -228,7 +228,10 @@ PRINCIPAL ──(recorrente vence e não há break)──▶ PARANDO ──▶ P
   no gato não roubar o mouse no meio de um teleporte.
 - **Breaks**: com o Break Handler ligado, nada começa durante um break. Falta verificar como ele
   trata um run em andamento (se espera o script ou desloga no meio); até lá, o executor não começa
-  um run quando o próximo break está a menos que o timeout do run.
+  um run quando o próximo break está a menos que o timeout do run. Desde 2026-11-13 (Chronicle Link
+  1.12.0) o break já é observável: a ponte responde `GET /bridge/break` e o `status` do agent o leva
+  em `break` (`active`, `in_s` até o próximo, `left_s` do atual; doc 06, adendo de 2026-11-13). O
+  executor ainda não usa isso para decidir.
 - **Dono no controle**: abrir o VNC em modo intervir pausa o executor; ele não retoma sozinho.
 
 ### Modelo de dados (amplia o rascunho)

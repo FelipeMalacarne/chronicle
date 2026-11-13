@@ -35,6 +35,9 @@ import net.runelite.client.plugins.microbot.agentserver.handler.AgentHandler;
 import net.runelite.client.plugins.microbot.agentserver.uds.UdsHttpServer;
 import net.runelite.client.plugins.microbot.api.npc.models.Rs2NpcModel;
 import net.runelite.client.plugins.microbot.api.tileobject.models.Rs2TileObjectModel;
+import net.runelite.client.plugins.microbot.breakhandler.BreakHandlerPlugin;
+import net.runelite.client.plugins.microbot.breakhandler.BreakHandlerScript;
+import net.runelite.client.plugins.microbot.breakhandler.breakhandlerv2.BreakHandlerV2State;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
@@ -57,7 +60,8 @@ import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
  * contract), the game events the agent's triggers wait for (/bridge/events, {@link GameEvents}), and typed actions (Remove/Rub a worn item, toggle a prayer, cast a spell, Deposit-X). It listens on its own Unix socket, .runelite/agent/bridge.sock, next to the Agent
  * Server's, and every request needs the Agent Server's token (the same X-Agent-Token, loopback
  * Host and no Origin as AgentHandler checks); with no token configured it answers nothing.
- * /bridge/version (1.12.0) answers the plugin's version, which the agent reports in its status.
+ * /bridge/version (1.12.0) answers the plugin's version and /bridge/break the Microbot Break
+ * Handler's state (read-only, from the client's static fields), both reported in the agent's status.
  */
 @Slf4j
 final class AgentBridge
@@ -144,6 +148,16 @@ final class AgentBridge
 				protected void serve(HttpExchange ex) throws IOException
 				{
 					sendJson(ex, 200, version());
+				}
+			},
+			new Handler(gson, "/bridge/break")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					sendJson(ex, 200, breakState(Microbot.isPluginEnabled(BreakHandlerPlugin.class),
+						BreakHandlerScript.isBreakActive(), BreakHandlerScript.isMicroBreakActive(),
+						BreakHandlerV2State.isBreakActive(), BreakHandlerScript.breakIn, BreakHandlerScript.breakDuration));
 				}
 			},
 			new Handler(gson, "/bridge/entities")
@@ -332,6 +346,31 @@ final class AgentBridge
 	static Map<String, Object> version()
 	{
 		return Collections.singletonMap("version", ChronicleLinkPlugin.VERSION);
+	}
+
+	/**
+	 * The answer of /bridge/break. {@code active} is what the client's own ClientAlertReporter
+	 * calls a break: the Break Handler's (any state but waiting), an antiban micro break, or Break
+	 * Handler V2's. {@code in_s} (seconds to the next break) and {@code left_s} (seconds left in
+	 * the break) come from the Break Handler's counters, -1 when unset, and only while its plugin is
+	 * on: they are static and outlive it. Unknown values are left out (Break Handler V2 keeps its
+	 * times in the plugin instance, so with it only {@code active} is known).
+	 */
+	static Map<String, Object> breakState(boolean handlerOn, boolean handlerBreak, boolean microBreak,
+		boolean v2Break, int breakIn, int breakDuration)
+	{
+		boolean active = handlerBreak || microBreak || v2Break;
+		Map<String, Object> out = new LinkedHashMap<>();
+		out.put("active", active);
+		if (handlerOn && !active && breakIn >= 0)
+		{
+			out.put("in_s", breakIn);
+		}
+		if (handlerOn && handlerBreak && breakDuration >= 0)
+		{
+			out.put("left_s", breakDuration);
+		}
+		return out;
 	}
 
 	/** The {@code after} of /bridge/events: a seq, 0 when absent. */

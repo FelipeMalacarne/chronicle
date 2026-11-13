@@ -120,7 +120,24 @@ type Status struct {
 	// (GET /bridge/version), read while the client runs; "" when no bridge
 	// answered (plugin off, or older than 1.12).
 	Bridge string `json:"bridge,omitempty"`
-	Error  string `json:"error,omitempty"`
+	// Break is the Microbot Break Handler's state the bridge answered
+	// (GET /bridge/break); nil when the bridge did not answer it.
+	Break *BreakState `json:"break,omitempty"`
+	Error string      `json:"error,omitempty"`
+}
+
+// BreakState is the client's break, as the Chronicle Link bridge reads it
+// from the Break Handler's static fields (Chronicle Link 1.12+).
+type BreakState struct {
+	// Active: a Break Handler break (any state but waiting), an antiban
+	// micro break or a Break Handler V2 break, as the client's own
+	// ClientAlertReporter counts them.
+	Active bool `json:"active"`
+	// InS is the seconds to the next Break Handler break, LeftS the seconds
+	// left in the current one; nil when unknown (no Break Handler running,
+	// its counter unset, or Break Handler V2, which keeps its times private).
+	InS   *int `json:"in_s,omitempty"`
+	LeftS *int `json:"left_s,omitempty"`
 }
 
 // Screenshot is the answer to CmdScreenshot: the frame re-encoded as JPEG

@@ -183,7 +183,9 @@ func (e *Executor) status(ctx context.Context) Status {
 	if login, err := e.Game.LoginState(ctx); err == nil {
 		st.Login = login
 	}
-	st.Bridge = e.bridgeVersion(ctx)
+	if st.Bridge = e.bridgeVersion(ctx); st.Bridge != "" {
+		st.Break = e.bridgeBreak(ctx)
+	}
 	return st
 }
 

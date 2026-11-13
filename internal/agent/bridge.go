@@ -33,3 +33,36 @@ func (e *Executor) bridgeVersion(ctx context.Context) string {
 	}
 	return strings.TrimSpace(v.Version)
 }
+
+// bridgeBreak is the client's break state from GET /bridge/break, nil when
+// no bridge answers it or the answer does not read as one.
+func (e *Executor) bridgeBreak(ctx context.Context) *BreakState {
+	if e.Bridge == nil {
+		return nil
+	}
+	raw, err := e.Bridge.JSON(ctx, http.MethodGet, "/bridge/break", nil, nil, bridgeTimeout)
+	if err != nil {
+		return nil
+	}
+	return parseBreak(raw)
+}
+
+// parseBreak reads the bridge's {"active", "in_s", "left_s"}: active is
+// required, a negative or absent time is unknown (nil).
+func parseBreak(raw []byte) *BreakState {
+	var v struct {
+		Active *bool `json:"active"`
+		InS    *int  `json:"in_s"`
+		LeftS  *int  `json:"left_s"`
+	}
+	if json.Unmarshal(raw, &v) != nil || v.Active == nil {
+		return nil
+	}
+	known := func(s *int) *int {
+		if s == nil || *s < 0 {
+			return nil
+		}
+		return s
+	}
+	return &BreakState{Active: *v.Active, InS: known(v.InS), LeftS: known(v.LeftS)}
+}

@@ -32,7 +32,20 @@ export interface ClientStatus {
 	login?: LoginState;
 	/** Versão do Chronicle Link que a ponte respondeu com o cliente rodando; ausente sem ponte (plugin desligado ou anterior à 1.12). */
 	bridge?: string;
+	/** O break do cliente pela ponte (Chronicle Link 1.12+); ausente quando a ponte não responde. */
+	break?: BreakState;
 	error?: string;
+}
+
+/**
+ * Break do Microbot como a ponte lê do Break Handler. active: break do Break Handler, micro break do
+ * antiban ou break do Break Handler V2. in_s: segundos até o próximo; left_s: segundos que faltam no
+ * atual; ausentes quando não se sabe (Break Handler desligado ou o V2, que não expõe os tempos).
+ */
+export interface BreakState {
+	active: boolean;
+	in_s?: number;
+	left_s?: number;
 }
 
 export interface GameState {

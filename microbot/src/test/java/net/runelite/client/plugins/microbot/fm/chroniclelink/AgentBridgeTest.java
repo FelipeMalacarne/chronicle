@@ -101,6 +101,39 @@ class AgentBridgeTest
 		}
 	}
 
+	@Test
+	void breakStateFollowsTheClientsOwnBreakTest()
+	{
+		// Waiting, 5 min to the next break.
+		assertEquals("{\"active\":false,\"in_s\":300}",
+			new Gson().toJson(AgentBridge.breakState(true, false, false, false, 300, -1)));
+		// On a Break Handler break: the time left, never the stale time to the next one.
+		assertEquals(Map.of("active", true, "left_s", 120), AgentBridge.breakState(true, true, false, false, 0, 120));
+		// A micro break or a Break Handler V2 break is a break, with no times known.
+		assertEquals(Map.of("active", true), AgentBridge.breakState(true, false, true, false, 300, -1));
+		assertEquals(Map.of("active", true), AgentBridge.breakState(false, false, false, true, -1, -1));
+		// Counters unset (-1), or left over from a Break Handler that is off: unknown.
+		assertEquals(Map.of("active", false), AgentBridge.breakState(true, false, false, false, -1, -1));
+		assertEquals(Map.of("active", false), AgentBridge.breakState(false, false, false, false, 300, 60));
+	}
+
+	@Test
+	void breakRouteIsBehindTheToken() throws IOException
+	{
+		AgentHandler.setTokenSupplier(() -> "agent-token");
+		try
+		{
+			AgentHandler route = new AgentBridge(new Gson(), () -> "agent-token").handler("/bridge/break");
+			FakeExchange none = new FakeExchange("/bridge/break", "other");
+			route.handle(none);
+			assertEquals(404, none.status);
+		}
+		finally
+		{
+			AgentHandler.setTokenSupplier(null);
+		}
+	}
+
 	/** One request to a handler, as the Agent Server's UDS server would hand it over. */
 	private static final class FakeExchange extends HttpExchange
 	{

@@ -2,6 +2,7 @@ package net.runelite.client.plugins.microbot.fm.chroniclelink;
 
 import com.google.gson.Gson;
 import com.google.inject.Provides;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -81,6 +82,13 @@ import okhttp3.OkHttpClient;
  *
  * <p>Assisted mode (1.14.0, planner docs/10 phase 2): the panel shows the current step's typed
  * tasks as a checklist, with what the planner sees done; still read-only.
+ *
+ * <p>Task executor (1.15.0, planner docs/10 phase 3): in the dev harness client only, the control
+ * bridge starts one typed task (travel, bank or buy) the planner's agent sends, and a local state
+ * machine ({@link TaskMachine}) executes it over Microbot's primitives on its own thread. Nothing
+ * starts it but the agent through the bridge; tracking stays as it was. When the machine ends the
+ * plugin asks for a capture, so the ingest (position and item containers) proves the task's
+ * termination soon: the machine's own "done" never does.
  */
 @PluginDescriptor(
 	name = ChronicleLinkPlugin.TAG + "Chronicle Link",
@@ -95,7 +103,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class ChronicleLinkPlugin extends Plugin
 {
-	static final String VERSION = "1.14.0";
+	static final String VERSION = "1.15.0";
 	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */
@@ -134,6 +142,8 @@ public class ChronicleLinkPlugin extends Plugin
 	/** Chronicle's control part, dev harness client only: config options and the bridge. */
 	private ConfigSchemaExporter configSchema;
 	private volatile AgentBridge bridge;
+	/** The task executor the bridge drives (dev harness client only). */
+	private TaskExecutor tasks;
 
 	/** Client thread only. */
 	private StateCollector collector;
@@ -195,7 +205,10 @@ public class ChronicleLinkPlugin extends Plugin
 			// (behind the Agent Server's token) and the config options for Chronicle's form.
 			configSchema = new ConfigSchemaExporter(Microbot.getPluginManager(), configManager, gson);
 			configSchema.export();
-			bridge = new AgentBridge(gson, configManager);
+			// The task's end asks for a capture: the planner proves the termination from it.
+			tasks = new TaskExecutor(new MicrobotTaskGame(), Clock.systemUTC(),
+				m -> trigger.onEvent(CaptureTrigger.Strength.HARD, Instant.now()));
+			bridge = new AgentBridge(gson, configManager, tasks);
 			bridge.start();
 		}
 		linkEnv = LinkEnvironment.read(System::getenv);
@@ -471,6 +484,11 @@ public class ChronicleLinkPlugin extends Plugin
 	protected void shutDown()
 	{
 		configSchema = null;
+		if (tasks != null)
+		{
+			tasks.stop();
+			tasks = null;
+		}
 		if (bridge != null)
 		{
 			bridge.stop();

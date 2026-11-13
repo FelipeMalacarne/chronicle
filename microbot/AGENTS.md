@@ -18,7 +18,9 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/devbootstrap/` — starts the Agent Server in the dev client. Dev home only, never `--live`.
 - `fm/chroniclelink/` — Chronicle Link, Chronicle's plugin (was `fm/ironmanplanner`; config group
   still `fm-ironmanplanner`): read-only tracking everywhere; in the dev harness client
-  only, also the control bridge (`.runelite/agent/bridge.sock`) and the config-options export.
+  only, also the control bridge (`.runelite/agent/bridge.sock`), the config-options export and
+  (1.15.0) the task executor: a state machine for one typed task (travel, bank, buy) that only
+  the planner's agent starts through the bridge (`TaskMachine`, tested over the `TaskGame` fake).
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).

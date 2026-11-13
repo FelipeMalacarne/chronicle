@@ -647,3 +647,70 @@ motivo e se a tarefa veio de uma receita.
 (156 testes JUnit) e o render sem tela do painel (`RoutePanelRenderTest`, variante `-tarefas`).
 **Não conferido no jogo**: a lista com as tarefas reais, que só existem depois da gravação e da
 confirmação do dono.
+
+## Adendo de 2026-11-13: executor de tarefas (Chronicle Link 1.15.0, fase 3 do doc 10)
+
+O plugin passa a **executar** uma tarefa tipada (`travel`, `bank` ou `buy`) quando o agent do planner
+pede, numa máquina de estados local sobre as primitivas do Microbot (doc 10, seção 10: "o plugin decide
+o como"). É a mesma inversão do doc 08, só no módulo de controle: o rastreamento continua igual e
+somente leitura.
+
+**Onde roda.** Só no cliente de dev do harness (`-Dmicrobot.dev.harness=true`), como a ponte de
+controle, e só pela ponte, que exige o token do Agent Server:
+
+- `POST /bridge/task/start`, com `{"id": <uid do run>, "task": <execspec.Task>}`. Recusa uma tarefa
+  inválida ou de outro tipo (400, "not executed yet" para `talk`, `train` e afins) e outra tarefa
+  enquanto uma anda (409).
+- `GET /bridge/task`: a tarefa atual ou a última (`id`, `type`, `state` em `running`, `done`, `failed`
+  ou `canceled`, `reason` e as linhas, `events` com `seq` e `text`), ou `{"state":"idle"}`.
+- `POST /bridge/task/cancel`, com `{"id"}`: para a máquina no próximo ponto de checagem e limpa a rota
+  do webwalker.
+
+Nada no plugin inicia uma tarefa sozinho: sem o agent, o executor fica parado. O executor roda numa
+thread própria (`chronicle-link-task`), nunca na do cliente.
+
+**A máquina** (`TaskMachine`, sobre a interface `TaskGame`; `MicrobotTaskGame` é a do cliente). Entre os
+passos, ela confere o cancelamento, a pausa dos scripts do Microbot e o login. Para na primeira coisa
+que não consegue fazer e diz por quê (PT-BR, na trilha do run); nunca repete um clique às cegas nem
+adivinha um id.
+
+- **`travel`**:
+  - já na área do local, termina;
+  - senão, anda com o `Rs2Walker.walkUntil` até o tile alvo e para assim que a posição entra na área;
+  - tenta três vezes e falha dizendo onde parou;
+  - se o destino não está na wilderness (e o personagem não começou nela), exige "Avoid wilderness"
+    ligado no webwalker e para a caminhada que entrar nela (limites de `TaskSpec`, iguais aos do
+    servidor).
+- **`bank`**:
+  - abre o banco mais perto (`Rs2Bank.openBank`, que só clica num banco ao alcance, sem o webwalker;
+    sem banco por perto, falha pedindo um `travel` antes);
+  - deposita o que não é do setup;
+  - saca o que falta de cada item, pelo primeiro id aceito que o banco tem, notado quando pedido;
+  - veste os de equipamento (`Rs2Bank.wearItem`);
+  - deposita o que uma troca tirou e fecha o banco.
+
+  Item obrigatório que falta no banco ou saque que não acontece encerram a tarefa; o opcional só vai
+  para a trilha.
+- **`buy`**:
+  - abre a loja pelo lojista mais perto entre os ids mandados (até 15 tiles; sem ele, falha pedindo um
+    `travel`);
+  - compra em lotes de 50, 10, 5 e 1, sem passar do que falta;
+  - para quando a loja fica sem estoque ou depois de três compras sem efeito (coins, inventário cheio);
+  - fecha a loja.
+
+**Prova.** O `done` da máquina não prova nada. Ao terminar, o plugin pede uma captura (o mesmo gatilho
+forte dos eventos do jogo), e o ingest leva logo a posição e os containers de itens. O servidor avalia o
+término: a posição na área exige **"Send position" ligado**; o banco e a compra, os containers ao vivo.
+
+**Verificação:**
+
+- 29 testes JUnit novos (185 no total):
+  - `TaskSpecTest` lê o `task-wire.json` que o servidor grava (`TestPluginWire`, em
+    `internal/core/execspec`): os corpos que o agent manda, os limites da wilderness e as tarefas que os
+    dois lados recusam;
+  - `TaskMachineTest` passa pela máquina com um jogo falso: chegar, já estar lá, três tentativas,
+    webwalker sem configuração, wilderness, cancelamento, pausa, banco completo, item faltando, saque
+    sem efeito, lotes da loja, sem estoque, compra sem efeito, sem lojista;
+  - `TaskBridgeTest` cobre as rotas da ponte: começar, ler, uma por vez, cancelar, recusar, sem token,
+    sem executor.
+- **Não conferido no jogo:** nada da máquina rodou no cliente (doc 10, seção 13, o que falta ao dono).

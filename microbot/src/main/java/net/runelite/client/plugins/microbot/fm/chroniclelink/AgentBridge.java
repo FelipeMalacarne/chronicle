@@ -62,6 +62,11 @@ import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
  * Host and no Origin as AgentHandler checks); with no token configured it answers nothing.
  * /bridge/version (1.12.0) answers the plugin's version and /bridge/break the Microbot Break
  * Handler's state (read-only, from the client's static fields), both reported in the agent's status.
+ *
+ * <p>Since 1.15.0 the bridge also starts, reads and cancels the task executor (planner docs/10 phase
+ * 3: /bridge/task/start, /bridge/task, /bridge/task/cancel), the only way a {@link TaskMachine} runs:
+ * the planner's agent sends one typed task (travel, bank or buy, with game ids and tiles), the
+ * plugin's own machine executes it over Microbot's primitives, and the agent reads its lines.
  */
 @Slf4j
 final class AgentBridge
@@ -74,18 +79,26 @@ final class AgentBridge
 	/** The Agent Server's token, read on every request; null or empty answers nothing. */
 	private final Supplier<String> agentToken;
 	private final GameEvents events = new GameEvents();
+	/** The task executor the bridge drives; null answers its routes with 404. */
+	private final TaskExecutor tasks;
 	private UdsHttpServer server;
 	private ExecutorService executor;
 
-	AgentBridge(Gson gson, ConfigManager configManager)
+	AgentBridge(Gson gson, ConfigManager configManager, TaskExecutor tasks)
 	{
-		this(gson, () -> configManager.getConfiguration(AgentServerConfig.GROUP, AgentServerConfig.KEY_TOKEN));
+		this(gson, () -> configManager.getConfiguration(AgentServerConfig.GROUP, AgentServerConfig.KEY_TOKEN), tasks);
 	}
 
 	AgentBridge(Gson gson, Supplier<String> agentToken)
 	{
+		this(gson, agentToken, null);
+	}
+
+	AgentBridge(Gson gson, Supplier<String> agentToken, TaskExecutor tasks)
+	{
 		this.gson = gson;
 		this.agentToken = agentToken;
+		this.tasks = tasks;
 	}
 
 	void start()
@@ -323,6 +336,50 @@ final class AgentBridge
 					sendJson(ex, ok ? 200 : 409, result(ok, ok ? null : "the game did not take the use (target gone or out of reach)"));
 				}
 			},
+			new Handler(gson, "/bridge/task/start")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					TaskExecutor t = executor();
+					Map<String, Object> body = post(ex);
+					String id = required(body, "id");
+					TaskSpec spec;
+					try
+					{
+						spec = TaskSpec.parse(gson, gson.toJsonTree(body.get("task")));
+						t.start(id, spec);
+					}
+					catch (TaskExecutor.BusyException | IllegalStateException e)
+					{
+						throw new ConflictException(e.getMessage());
+					}
+					catch (IllegalArgumentException e)
+					{
+						throw new BadRequestException(e.getMessage());
+					}
+					sendJson(ex, 200, result(true, null));
+				}
+			},
+			new Handler(gson, "/bridge/task")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					sendJson(ex, 200, executor().view());
+				}
+			},
+			new Handler(gson, "/bridge/task/cancel")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					TaskExecutor t = executor();
+					Map<String, Object> body = post(ex);
+					boolean canceled = t.cancel(required(body, "id"));
+					sendJson(ex, 200, result(canceled, canceled ? null : "no running task with this id"));
+				}
+			},
 			new Handler(gson, "/bridge/bank/deposit-x")
 			{
 				@Override
@@ -340,6 +397,16 @@ final class AgentBridge
 				}
 			}
 		);
+	}
+
+	/** The task executor, or a 404 when the bridge runs without one. */
+	private TaskExecutor executor()
+	{
+		if (tasks == null)
+		{
+			throw new NotFoundException("the task executor is off");
+		}
+		return tasks;
 	}
 
 	/** The answer of /bridge/version: the plugin's version, as its descriptor has it. */
@@ -677,6 +744,15 @@ final class AgentBridge
 		return m;
 	}
 
+	/** The route exists but what it drives is off: a 404 with the reason. */
+	static final class NotFoundException extends RuntimeException
+	{
+		NotFoundException(String message)
+		{
+			super(message);
+		}
+	}
+
 	/** The game state does not allow the action (item not in the inventory, NPC gone): a 409. */
 	static final class ConflictException extends RuntimeException
 	{
@@ -731,6 +807,10 @@ final class AgentBridge
 			catch (ConflictException e)
 			{
 				sendJson(exchange, 409, result(false, e.getMessage()));
+			}
+			catch (NotFoundException e)
+			{
+				sendJson(exchange, 404, result(false, e.getMessage()));
 			}
 		}
 

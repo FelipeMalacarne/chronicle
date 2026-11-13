@@ -716,7 +716,8 @@ destino da viagem):
   anotando na trilha cada linha do plugin. Termina como a máquina do plugin: `done`, `failed` ou
   `canceled`. O timeout padrão é 15 min para `travel` e 5 min para o resto (30 s a 1 h). Timeout,
   cancelamento do dono ou a ponte sem responder mandam `POST /bridge/task/cancel`. Enquanto a tarefa
-  anda, o agent recusa as outras ações, como num run.
+  anda, o agent recusa as outras ações, como num run. Uma tarefa que falha ou é cancelada segura as
+  rotinas recorrentes como qualquer run, até o dono salvar alguma: o personagem ficou onde ela parou.
 - **O `done` do run não prova nada:** é a máquina do plugin terminando. O término da tarefa é provado
   só pelo ingest: a posição dentro da área (`data.position`, com "Send position" ligado) ou os
   containers de itens, avaliados pelo servidor.

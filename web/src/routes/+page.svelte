@@ -116,7 +116,7 @@
 		fleet.tones = Object.fromEntries(all.map((l) => [l.id, l.tone]));
 	});
 
-	function open(l: Lane, to: '/agora' | '/automacao' = '/agora') {
+	function open(l: Lane, to: '/visao' | '/automacao' = '/visao') {
 		rememberAccount(l.id);
 		if (to === '/automacao') chooseCockpitAccount(l.id);
 		// eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da conta

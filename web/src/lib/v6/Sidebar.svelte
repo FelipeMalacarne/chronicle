@@ -64,6 +64,7 @@
 		void loadFleet();
 	});
 	const onFleet = $derived(path === '/' || path.startsWith('/contas/nova'));
+	const onWorld = $derived(path.startsWith('/mundo'));
 	// Até a lista chegar, a conta aberta aparece sozinha.
 	const all = $derived(fleet.accounts ?? (account ? [{ id: account, rsn: name ?? account }] : []));
 	const top = $derived(
@@ -110,14 +111,24 @@
 		<Glyph name="frota" />Frota
 		{#if fleet.accounts?.length}<span class="n">{fleet.accounts.length}</span>{/if}
 	</a>
+	{#if account}
+		<a
+			class="nav"
+			class:nav-on={onWorld}
+			href={resolve('/mundo')}
+			aria-current={onWorld ? 'page' : undefined}
+		>
+			<Glyph name="mundo" />Mundo
+		</a>
+	{/if}
 	<p class="sec">Contas</p>
 	{#each all as a (a.id)}
-		{@const on = a.id === account && !onFleet}
+		{@const on = a.id === account && !onFleet && !onWorld}
 		<!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() + query da conta -->
 		<a
 			class="acn"
 			class:acn-on={on}
-			href={`${resolve('/agora')}?account=${encodeURIComponent(a.id)}`}
+			href={`${resolve('/visao')}?account=${encodeURIComponent(a.id)}`}
 			aria-current={on ? 'page' : undefined}
 			title={a.id}
 		>
@@ -181,9 +192,9 @@
 	{#if account}
 		<a
 			class="nav"
-			class:nav-on={!onFleet}
-			href={resolve('/agora')}
-			aria-current={!onFleet ? 'page' : undefined}
+			class:nav-on={!onFleet && !onWorld}
+			href={resolve('/visao')}
+			aria-current={!onFleet && !onWorld ? 'page' : undefined}
 			><Glyph name="conta" /><span class="nl">{name ?? account}</span></a
 		>
 	{/if}

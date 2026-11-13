@@ -28,6 +28,8 @@
 		page.url.pathname === '/' || page.url.pathname.startsWith('/contas/nova')
 	);
 	const setup = $derived(fleetPage && (!account || missing));
+	// O Mundo é da frota (decisoes-canvas.md, 7.1): sem o cabeçalho da conta, embora leia a conta aberta.
+	const accountPage = $derived(!fleetPage && !page.url.pathname.startsWith('/mundo'));
 	$effect(() => {
 		if (!fleetPage && (!account || missing)) void goto(resolve('/'), { replaceState: true });
 	});
@@ -71,7 +73,7 @@
 			skills={me.state?.skills}
 		/>{/if}
 	<main id="conteudo">
-		{#if !fleetPage && me.state && me.state.account.id === account}
+		{#if accountPage && me.state && me.state.account.id === account}
 			<AccountHead state={me.state} summary={session.summary} />
 		{/if}
 		{@render children()}

@@ -72,7 +72,7 @@
 	function enter(id: string) {
 		rememberAccount(id);
 		// eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da conta
-		void goto(`${resolve('/agora')}?account=${encodeURIComponent(id)}`);
+		void goto(`${resolve('/visao')}?account=${encodeURIComponent(id)}`);
 	}
 
 	async function create() {

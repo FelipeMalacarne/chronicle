@@ -18,8 +18,8 @@
 
 	/*
 	 * O topo das telas de uma conta (página 8 do canvas, V7Conta1440): quem é, o que faz agora, as
-	 * ações e as abas. As abas levam às telas que já existiam; "Visão geral", "Rotinas" e "Histórico"
-	 * do artboard dependem de dados que o servidor ainda não tem.
+	 * ações e as abas. Fatia V1 de decisoes-canvas.md, 7.5: Rota, Personagem e Cliente levam às telas
+	 * que já existiam; Histórico entra na V7, quando o servidor guardar as execuções.
 	 */
 	let { state: st, summary }: { state: AccountState; summary: ProgressSummary | null } = $props();
 
@@ -107,14 +107,17 @@
 	}
 
 	const path = $derived(page.url.pathname);
+	const onRoute = $derived(
+		path.startsWith('/agora') || path.startsWith('/rotas') || path.startsWith('/compare')
+	);
+	const views = $derived([
+		{ href: resolve('/agora'), label: 'Passo', on: path.startsWith('/agora') },
+		{ href: resolve('/rotas'), label: 'Rota inteira', on: path.startsWith('/rotas') },
+		{ href: resolve('/compare'), label: 'Comparar', on: path.startsWith('/compare') }
+	]);
 	const tabs = $derived([
-		{ href: resolve('/agora'), label: 'Agora', on: path.startsWith('/agora') },
-		{
-			href: resolve('/rotas'),
-			label: 'Rota',
-			on: path.startsWith('/rotas') || path.startsWith('/compare')
-		},
-		{ href: resolve('/mundo'), label: 'Mundo', on: path.startsWith('/mundo') },
+		{ href: resolve('/visao'), label: 'Visão geral', on: path.startsWith('/visao') },
+		{ href: resolve('/agora'), label: 'Rota', on: onRoute },
 		{ href: resolve('/conta'), label: 'Personagem', on: path === '/conta' },
 		// O cliente só existe com o módulo do Microbot ligado no servidor (doc 08).
 		...(microbotModule.enabled
@@ -173,11 +176,18 @@
 </header>
 
 <nav class="atabs" aria-label="Telas da conta">
+	<!-- eslint-disable svelte/no-navigation-without-resolve -- hrefs das abas vêm de resolve() -->
 	{#each tabs as t (t.label)}
-		<!-- eslint-disable svelte/no-navigation-without-resolve -- hrefs das abas vêm de resolve() -->
 		<a class:on={t.on} href={t.href} aria-current={t.on ? 'page' : undefined}>{t.label}</a>
-		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	{/each}
+	{#if onRoute}
+		<span class="views" role="group" aria-label="Como ver a rota">
+			{#each views as v (v.label)}
+				<a class:here={v.on} href={v.href} aria-current={v.on ? 'page' : undefined}>{v.label}</a>
+			{/each}
+		</span>
+	{/if}
+	<!-- eslint-enable svelte/no-navigation-without-resolve -->
 </nav>
 
 <style>
@@ -375,6 +385,22 @@
 		background: var(--frame);
 		color: var(--gold);
 		box-shadow: var(--bevel-frame);
+	}
+	.views {
+		margin-left: auto;
+		display: inline-flex;
+		align-items: center;
+		gap: 2px;
+	}
+	.atabs .views a {
+		height: 30px;
+		padding: 0 10px;
+		border-radius: 4px;
+		font-size: 12px;
+	}
+	.atabs .views a.here {
+		background: var(--gold-tint);
+		color: var(--ink);
 	}
 	@media (max-width: 900px) {
 		.hero {

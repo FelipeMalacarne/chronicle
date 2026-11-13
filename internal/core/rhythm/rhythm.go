@@ -2,12 +2,14 @@
 // v7 shows in a lane, the account's overview and the fleet's summary
 // (docs/ui/decisoes-canvas.md section 7.4, slice V5): the skill being
 // trained with its XP per hour and when the next level comes, the session's
-// XP, today's XP and levels per skill, and the GP held with today's change.
+// XP and items (gained, and running out), today's XP and levels per skill,
+// and the GP held with today's change.
 // Pure: the store loads the inputs, this computes.
 package rhythm
 
 import (
 	"cmp"
+	"maps"
 	"slices"
 	"time"
 
@@ -38,6 +40,17 @@ const (
 // GPContainers are the containers GP counts.
 var GPContainers = []string{rules.ContainerBank, rules.ContainerInventory}
 
+// ItemContainers are the containers a session's items count. Bank and
+// inventory must both be known at both ends of the session; the equipment
+// counts when it is, so that equipping an item is not a loss.
+var ItemContainers = []string{rules.ContainerBank, rules.ContainerInventory, rules.ContainerEquipment}
+
+const (
+	// MaxGained and MaxRunningOut bound the session's item lists.
+	MaxGained     = 10
+	MaxRunningOut = 5
+)
+
 // Point is one observation of a skill's XP.
 type Point struct {
 	At    time.Time
@@ -54,6 +67,16 @@ type CoinObs struct {
 	Container string
 	Coins     *int64
 	Platinum  *int64
+}
+
+// ItemObs is what one snapshot saw of one container: a full observation is
+// the whole container (an absent item is 0), a delta only the items it lists
+// (0: the item left).
+type ItemObs struct {
+	At        time.Time
+	Full      bool
+	Container string
+	Items     map[int]int64
 }
 
 // Input is everything Compute needs.
@@ -77,6 +100,12 @@ type Input struct {
 	// GPNow is the GP held now (GP(holdings)); nil when the bank was never
 	// observed.
 	GPNow *int64
+	// Items are the item containers' observations from the last full one
+	// of each container at or before SessionStart, oldest first.
+	Items []ItemObs
+	// Base maps an item id to the id its quantities add up under (a noted
+	// form to its unnoted one); nil keeps each id apart.
+	Base func(id int) int
 }
 
 // Rhythm is one account's rhythm.
@@ -103,10 +132,33 @@ type Training struct {
 	LastGainAt   time.Time `json:"last_gain_at"`
 }
 
-// Session is the XP of the latest session.
+// Session is the XP and the items of the latest session.
 type Session struct {
 	StartedAt time.Time `json:"started_at"`
 	XP        int       `json:"xp"`
+	// Gained are the items held more of than when the session began (bank,
+	// inventory and equipment together, so moving one is not a gain), most
+	// first; RunningOut the ones it is using up, soonest out first. Both
+	// null when the bank or the inventory was not known at both ends.
+	Gained     []ItemCount  `json:"gained"`
+	RunningOut []ItemRunOut `json:"running_out"`
+}
+
+// ItemCount is an item and how many.
+type ItemCount struct {
+	Item int    `json:"item"`
+	Name string `json:"name,omitempty"`
+	Qty  int64  `json:"qty"`
+}
+
+// ItemRunOut is an item the session is using up: how many it used, how many
+// are left, and when they run out at the session's pace.
+type ItemRunOut struct {
+	Item int    `json:"item"`
+	Name string `json:"name,omitempty"`
+	Used int64  `json:"used"`
+	Left int64  `json:"left"`
+	InS  int    `json:"in_s"`
 }
 
 // Today is the XP and levels since Since.
@@ -141,6 +193,7 @@ func Compute(in Input) Rhythm {
 	out := Rhythm{Training: training(in), Today: today(in)}
 	if in.SessionStart != nil {
 		out.Session = &Session{StartedAt: *in.SessionStart, XP: gained(in.Current, in.AtSession)}
+		out.Session.Gained, out.Session.RunningOut = sessionItems(in)
 	}
 	if in.GPNow != nil {
 		out.GP = &GP{Value: *in.GPNow, Today: gpToday(in)}
@@ -332,4 +385,72 @@ func gpToday(in Input) *int64 {
 		return nil
 	}
 	return &delta
+}
+
+// sessionItems compares what the account held when the session began with
+// what it holds now, item by item over the containers known at both ends.
+func sessionItems(in Input) ([]ItemCount, []ItemRunOut) {
+	start := *in.SessionStart
+	base := in.Base
+	if base == nil {
+		base = func(id int) int { return id }
+	}
+	then, now := map[int]int64{}, map[int]int64{}
+	for _, c := range ItemContainers {
+		before, after, ok := containerAt(in.Items, c, start)
+		if !ok {
+			if c == rules.ContainerEquipment {
+				continue
+			}
+			return nil, nil
+		}
+		for id, q := range before {
+			then[base(id)] += q
+		}
+		for id, q := range after {
+			now[base(id)] += q
+		}
+	}
+	gained, out := []ItemCount{}, []ItemRunOut{}
+	elapsed := in.Now.Sub(start)
+	for id, q := range now {
+		if d := q - then[id]; d > 0 {
+			gained = append(gained, ItemCount{Item: id, Qty: d})
+		}
+	}
+	for id, q := range then {
+		used, left := q-now[id], now[id]
+		if used <= 0 || left <= 0 || elapsed < Idle {
+			continue
+		}
+		out = append(out, ItemRunOut{Item: id, Used: used, Left: left, InS: int(float64(left) / float64(used) * elapsed.Seconds())})
+	}
+	slices.SortFunc(gained, func(a, b ItemCount) int { return cmp.Or(cmp.Compare(b.Qty, a.Qty), cmp.Compare(a.Item, b.Item)) })
+	slices.SortFunc(out, func(a, b ItemRunOut) int { return cmp.Or(cmp.Compare(a.InS, b.InS), cmp.Compare(a.Item, b.Item)) })
+	return gained[:min(len(gained), MaxGained)], out[:min(len(out), MaxRunningOut)]
+}
+
+// containerAt is what a container held at start and holds now; ok is false
+// when no observation shows it at or before start (a container first seen
+// later would count what moved before it as gained or used).
+func containerAt(obs []ItemObs, container string, start time.Time) (then, now map[int]int64, ok bool) {
+	for _, o := range obs {
+		if o.Container != container || (now == nil && !o.Full) {
+			continue // a delta before any full image says nothing of the rest
+		}
+		if o.Full || now == nil {
+			now = map[int]int64{}
+		}
+		for id, q := range o.Items {
+			if q > 0 {
+				now[id] = q
+			} else {
+				delete(now, id)
+			}
+		}
+		if !o.At.After(start) {
+			then, ok = maps.Clone(now), true
+		}
+	}
+	return then, now, ok
 }

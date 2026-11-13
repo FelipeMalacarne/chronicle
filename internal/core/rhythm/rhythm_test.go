@@ -2,6 +2,7 @@ package rhythm
 
 import (
 	"reflect"
+	"slices"
 	"testing"
 	"time"
 
@@ -168,4 +169,122 @@ func deref(p *int64) any {
 		return nil
 	}
 	return *p
+}
+
+func TestSessionItems(t *testing.T) {
+	const (
+		sturgeon, notedSturgeon = 383, 384
+		feather, lobsterPot     = 314, 301
+		harpoon                 = 311
+	)
+	start := at(60)
+	full := func(ago int, c string, items map[int]int64) ItemObs {
+		return ItemObs{At: at(ago), Full: true, Container: c, Items: items}
+	}
+	delta := func(ago int, c string, items map[int]int64) ItemObs {
+		return ItemObs{At: at(ago), Container: c, Items: items}
+	}
+	login := []ItemObs{
+		full(60, rules.ContainerBank, map[int]int64{sturgeon: 100, feather: 50}),
+		full(60, rules.ContainerInventory, map[int]int64{feather: 1000, harpoon: 1}),
+		full(60, rules.ContainerEquipment, map[int]int64{}),
+	}
+	base := func(id int) int {
+		if id == notedSturgeon {
+			return sturgeon
+		}
+		return id
+	}
+	cases := []struct {
+		name    string
+		items   []ItemObs
+		gained  []ItemCount
+		running []ItemRunOut
+	}{
+		{
+			// Fishing an hour: 26 sturgeon in the inventory, 300 banked (one
+			// trip banked as notes), 400 feathers used, the harpoon wielded.
+			"gains add up over the containers, moves are not gains",
+			append(slices.Clone(login),
+				delta(40, rules.ContainerInventory, map[int]int64{sturgeon: 26, feather: 600}),
+				delta(30, rules.ContainerBank, map[int]int64{sturgeon: 350, notedSturgeon: 50}),
+				delta(30, rules.ContainerInventory, map[int]int64{sturgeon: 0}),
+				delta(5, rules.ContainerInventory, map[int]int64{sturgeon: 26, harpoon: 0}),
+				delta(5, rules.ContainerEquipment, map[int]int64{harpoon: 1}),
+			),
+			[]ItemCount{{Item: sturgeon, Qty: 326}},
+			// 400 of 1 050 feathers used in an hour: the 650 left last 97.5 min.
+			[]ItemRunOut{{Item: feather, Used: 400, Left: 650, InS: 5850}},
+		},
+		{
+			"a full image replaces the container",
+			append(slices.Clone(login),
+				full(10, rules.ContainerInventory, map[int]int64{lobsterPot: 1}),
+			),
+			[]ItemCount{{Item: lobsterPot, Qty: 1}},
+			// 1 000 of the 1 050 feathers left in an hour; the 50 in the bank last 3 min.
+			[]ItemRunOut{{Item: feather, Used: 1000, Left: 50, InS: 180}},
+		},
+		{
+			"a delta before the full image is ignored",
+			append([]ItemObs{delta(61, rules.ContainerInventory, map[int]int64{sturgeon: 99})}, login...),
+			[]ItemCount{}, []ItemRunOut{},
+		},
+		{
+			"the equipment counts only when known at the start",
+			[]ItemObs{
+				login[0], login[1],
+				delta(5, rules.ContainerInventory, map[int]int64{harpoon: 0}),
+				full(5, rules.ContainerEquipment, map[int]int64{harpoon: 1}),
+			},
+			[]ItemCount{}, []ItemRunOut{},
+		},
+		{
+			"without the bank at the start, nothing",
+			[]ItemObs{login[1], full(30, rules.ContainerBank, map[int]int64{sturgeon: 400})},
+			nil, nil,
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			got := Compute(Input{Now: now, Since: since, SessionStart: &start, Items: tc.items, Base: base})
+			if got.Session == nil {
+				t.Fatal("no session")
+			}
+			if !reflect.DeepEqual(got.Session.Gained, tc.gained) {
+				t.Errorf("gained = %#v, want %#v", got.Session.Gained, tc.gained)
+			}
+			if !reflect.DeepEqual(got.Session.RunningOut, tc.running) {
+				t.Errorf("running out = %#v, want %#v", got.Session.RunningOut, tc.running)
+			}
+		})
+	}
+}
+
+func TestSessionItemsBounds(t *testing.T) {
+	start := at(5)
+	var bank, inv = map[int]int64{}, map[int]int64{}
+	for id := 1; id <= 20; id++ {
+		inv[id] = int64(id)
+	}
+	in := Input{Now: now, Since: since, SessionStart: &start, Items: []ItemObs{
+		{At: start, Full: true, Container: rules.ContainerBank, Items: bank},
+		{At: start, Full: true, Container: rules.ContainerInventory, Items: inv},
+		{At: at(1), Full: true, Container: rules.ContainerInventory, Items: map[int]int64{100: 5}},
+		{At: at(1), Full: true, Container: rules.ContainerBank, Items: func() map[int]int64 {
+			out := map[int]int64{}
+			for id := 200; id < 215; id++ {
+				out[id] = int64(id)
+			}
+			return out
+		}()},
+	}}
+	got := Compute(in).Session
+	if len(got.Gained) != MaxGained || got.Gained[0].Item != 214 {
+		t.Errorf("gained = %v, want the %d largest, 214 first", got.Gained, MaxGained)
+	}
+	// Five minutes is too short to tell a pace.
+	if len(got.RunningOut) != 0 {
+		t.Errorf("running out = %v, want none before Idle", got.RunningOut)
+	}
 }

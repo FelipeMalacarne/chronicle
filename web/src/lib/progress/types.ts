@@ -813,6 +813,28 @@ export interface RhythmTraining {
 export interface RhythmSession {
 	started_at: string;
 	xp: number;
+	/**
+	 * Os itens que a conta tem a mais do que no começo da sessão (banco, inventário e equipamento
+	 * juntos), do maior para o menor; null quando o banco ou o inventário não eram conhecidos nas duas pontas.
+	 */
+	gained: RhythmItem[] | null;
+	/** Os itens que a sessão vai gastando, o que acaba primeiro antes; null como `gained`. */
+	running_out: RhythmRunOut[] | null;
+}
+
+export interface RhythmItem {
+	item: number;
+	name?: string;
+	qty: number;
+}
+
+export interface RhythmRunOut {
+	item: number;
+	name?: string;
+	used: number;
+	left: number;
+	/** Quando acabam, no ritmo da sessão. */
+	in_s: number;
 }
 
 export interface RhythmSkillDay {

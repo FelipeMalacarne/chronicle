@@ -18,6 +18,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	corerhythm "github.com/FelipeMalacarne/chronicle/internal/core/rhythm"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 )
 
@@ -63,8 +64,8 @@ func TestRhythmPostgres(t *testing.T) {
 		inv  map[string]int64
 	}{
 		{8 * time.Hour, true, xps[0], map[string]int64{}},
-		{40 * time.Minute, false, xps[1], map[string]int64{"995": 2000}},
-		{20 * time.Minute, false, xps[2], nil},
+		{40 * time.Minute, false, xps[1], map[string]int64{"995": 2000, "314": 1000}},
+		{20 * time.Minute, false, xps[2], map[string]int64{"383": 26, "314": 600}},
 		{10 * time.Minute, false, xps[3], nil},
 		{2 * time.Minute, false, xps[4], nil},
 	}
@@ -119,6 +120,17 @@ func TestRhythmPostgres(t *testing.T) {
 	}
 	if r.GP == nil || r.GP.Value != 102_000 || r.GP.Today == nil || *r.GP.Today != 2000 {
 		t.Fatalf("gp = %+v", r.GP)
+	}
+	// The session began with 1 000 feathers in the inventory; 26 fish came
+	// and 400 feathers went in its 40 minutes, so the 600 left last an hour.
+	shark, _ := catalog.Item(383)
+	feathers, _ := catalog.Item(314)
+	if g := r.Session.Gained; len(g) != 1 || g[0] != (corerhythm.ItemCount{Item: 383, Name: shark.Name, Qty: 26}) || g[0].Name == "" {
+		t.Fatalf("gained = %+v", g)
+	}
+	want := corerhythm.ItemRunOut{Item: 314, Name: feathers.Name, Used: 400, Left: 600, InS: 3600}
+	if ro := r.Session.RunningOut; len(ro) != 1 || ro[0] != want {
+		t.Fatalf("running out = %+v, want %+v", ro, want)
 	}
 
 	// Two hours later the session is over and nothing is being trained.

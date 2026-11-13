@@ -109,10 +109,11 @@ func TestContractPostgres(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	push := contractPush(manifest.ManifestVersion)
-	raw, _ := json.Marshal(push)
-	if resp, err := ingest.Accept(ctx, token.Token, "127.0.0.1", raw, push); err != nil || !resp.OK {
-		t.Fatalf("push: %+v, %v", resp, err)
+	for _, push := range []coreingest.Push{contractPush(manifest.ManifestVersion), contractSessionPush(manifest.ManifestVersion)} {
+		raw, _ := json.Marshal(push)
+		if resp, err := ingest.Accept(ctx, token.Token, "127.0.0.1", raw, push); err != nil || !resp.OK {
+			t.Fatalf("push %d: %+v, %v", push.ClientSeq, resp, err)
+		}
 	}
 
 	call := func(method, path, body string) []byte {
@@ -264,14 +265,14 @@ func (contractFetcher) Fetch(context.Context, string, string) (hiscores.Result, 
 }
 
 func contractPush(manifestVersion int64) coreingest.Push {
-	sentAt := time.Now().Add(-time.Minute).UTC().Truncate(time.Second)
+	sentAt := time.Now().Add(-15 * time.Minute).UTC().Truncate(time.Second)
 	revision := int64(1)
 	levels := coreingest.IntMap{"attack": 20, "strength": 20, "defence": 10, "magic": 25, "firemaking": 30, "woodcutting": 30}
 	xp := coreingest.IntMap{"attack": 4470, "strength": 4470, "defence": 1154, "magic": 8740, "firemaking": 13363, "woodcutting": 13363}
 	empty := coreingest.IntMap{}
 	quests := coreingest.QuestMap{"Cook's Assistant": coreingest.QuestFinished, "X Marks the Spot": coreingest.QuestInProgress}
 	bank := coreingest.QuantityMap{"952": 1, "590": 1, "1351": 1, "995": 25000}
-	inv := coreingest.QuantityMap{"590": 1}
+	inv := coreingest.QuantityMap{"590": 1, "314": 100}
 	equip := coreingest.QuantityMap{}
 	obs := func(q *coreingest.QuantityMap) *coreingest.ItemObservation {
 		return &coreingest.ItemObservation{State: coreingest.ItemLive, ObservedAt: sentAt, Revision: &revision, LiveEpoch: "login-1", Quantities: q}
@@ -283,6 +284,21 @@ func contractPush(manifestVersion int64) coreingest.Push {
 			Varbits: &empty, Varps: &empty, Levels: &levels, XP: &xp, Boosted: &empty, Quests: &quests,
 			Items: &coreingest.ItemContainers{Bank: obs(&bank), Inventory: obs(&inv), Equipment: obs(&equip)},
 		},
+	}
+}
+
+// contractSessionPush is a later push of the same session: 5 logs came and
+// 40 of the feathers went, for the session's items in the rhythm.
+func contractSessionPush(manifestVersion int64) coreingest.Push {
+	sentAt := time.Now().Add(-time.Minute).UTC().Truncate(time.Second)
+	revision := int64(2)
+	inv := coreingest.QuantityMap{"314": 60, "1511": 5}
+	return coreingest.Push{
+		ContractVersion: coreingest.ContractVersion, Username: "ironman260", Profile: "STANDARD",
+		ManifestVersion: manifestVersion, ClientSeq: 2, Kind: coreingest.PushDelta, SentAt: sentAt,
+		Data: coreingest.PushData{Items: &coreingest.ItemContainers{Inventory: &coreingest.ItemObservation{
+			State: coreingest.ItemLive, ObservedAt: sentAt, Revision: &revision, LiveEpoch: "login-1", Quantities: &inv,
+		}}},
 	}
 }
 

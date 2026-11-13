@@ -12,7 +12,23 @@ export const fixture = {
 				"value": 25000
 			},
 			"session": {
-				"started_at": "2026-11-13T03:51:27Z",
+				"gained": [
+					{
+						"item": 1511,
+						"name": "Logs",
+						"qty": 5
+					}
+				],
+				"running_out": [
+					{
+						"in_s": 1350,
+						"item": 314,
+						"left": 60,
+						"name": "Feather",
+						"used": 40
+					}
+				],
+				"started_at": "2026-11-13T04:17:57Z",
 				"xp": 314811223
 			},
 			"today": {
@@ -29,11 +45,11 @@ export const fixture = {
 				"xp": 314811223
 			},
 			"training": {
-				"last_gain_at": "2026-11-13T03:52:27.894447Z",
+				"last_gain_at": "2026-11-13T04:32:57.406811Z",
 				"level": 99,
 				"skill": "defence",
 				"xp": 200000000,
-				"xp_per_hour": 0
+				"xp_per_hour": 799633939
 			}
 		},
 		{

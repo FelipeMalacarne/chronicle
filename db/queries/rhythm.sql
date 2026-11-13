@@ -69,3 +69,27 @@ WHERE s.account_id = sqlc.arg(account_id) AND c.state <> 'unavailable' AND c.con
     SELECT 1 FROM snapshot_facts f
     WHERE f.snapshot_id = s.id AND f.facet = 'item' AND f.key IN (c.container || ':995', c.container || ':13204')))
 ORDER BY s.fetched_at, c.container;
+
+-- name: ItemObservations :many
+-- The items in the bank, the inventory and the equipment as each snapshot
+-- saw them, from the last full observation of each container at or before
+-- before_at onward (or from before_at, without one): items maps each listed
+-- item id to its quantity; a full observation lists the whole container, a
+-- delta only what changed (0: the item left).
+WITH last_full AS (
+  SELECT c.container, max(s.fetched_at) AS at
+  FROM snapshots s JOIN snapshot_item_containers c ON c.snapshot_id = s.id
+  WHERE s.account_id = sqlc.arg(account_id) AND s.kind = 'full' AND c.state <> 'unavailable'
+    AND c.container IN ('bank', 'inventory', 'equipment') AND s.fetched_at <= sqlc.arg(before_at)
+  GROUP BY c.container
+)
+SELECT s.fetched_at, (s.kind = 'full') AS full, c.container,
+  COALESCE((SELECT jsonb_object_agg(substr(f.key, length(c.container) + 2), (f.value->>'qty')::bigint)
+   FROM snapshot_facts f
+   WHERE f.snapshot_id = s.id AND f.facet = 'item' AND f.key LIKE c.container || ':%'), '{}'::jsonb)::jsonb AS items
+FROM snapshots s
+JOIN snapshot_item_containers c ON c.snapshot_id = s.id
+LEFT JOIN last_full lf ON lf.container = c.container
+WHERE s.account_id = sqlc.arg(account_id) AND c.state <> 'unavailable' AND c.container IN ('bank', 'inventory', 'equipment')
+  AND s.fetched_at >= COALESCE(lf.at, sqlc.arg(before_at))
+ORDER BY s.fetched_at, c.container;

@@ -306,3 +306,23 @@ func TestAccountRouteWindow(t *testing.T) {
 		}
 	}
 }
+
+// The panel reads the account's facts only for a cursor step with tasks.
+func TestNeedsTaskFacts(t *testing.T) {
+	g := panelGuide()
+	agility := entities.MustParseObjectiveKey("skill:agility>=10")
+	plain := &content.Content{Guides: []*content.Guide{g}}
+	withRecipe := &content.Content{Guides: []*content.Guide{g}, Recipes: map[string]*content.Recipe{agility.String(): {Objective: agility}}}
+	st, _ := g.Step("2")
+	st.Tasks = nil
+	if needsTaskFacts(plain, g, "2") || needsTaskFacts(plain, g, "1") || needsTaskFacts(plain, g, "nope") || needsTaskFacts(nil, g, "2") {
+		t.Fatal("no tasks, no facts")
+	}
+	if !needsTaskFacts(withRecipe, g, "2") {
+		t.Fatal("a recipe of an objective the step completes has tasks")
+	}
+	st.Tasks = []content.Task{{Type: content.TaskManual}}
+	if !needsTaskFacts(plain, g, "2") {
+		t.Fatal("the step's own tasks")
+	}
+}

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
@@ -269,13 +270,35 @@ func (s *Server) routeWindow(ctx context.Context, accountID string, limit int) (
 		cur = coreprogress.CursorRecord{StepID: board.Cursor.StepID, Cause: board.Cursor.Cause}
 	}
 	// The assisted mode: the cursor step's tasks, evaluated on the
-	// account's facts and position (docs/10 phase 2).
-	facts, err := s.opts.Progress.TaskFacts(ctx, accountID)
-	if err != nil {
-		return panel.Window{}, err
+	// account's facts and position (docs/10 phase 2). The facts are read
+	// only when the step has tasks.
+	var facts panel.Facts
+	if needsTaskFacts(s.opts.Content, g, cur.StepID) {
+		if facts, err = s.opts.Progress.TaskFacts(ctx, accountID); err != nil {
+			return panel.Window{}, err
+		}
 	}
 	return panel.Build(panel.Input{
 		Guide: g, Board: board.Board, Cursor: cur, Holdings: h, Registry: s.opts.Catalog, Limit: limit,
 		Content: s.opts.Content, Facts: facts, Now: time.Now(),
 	}), nil
+}
+
+// needsTaskFacts reports whether the cursor step has tasks, its own or a
+// recipe's (of an objective it completes), so the window's checklist needs
+// the account's facts.
+func needsTaskFacts(c *content.Content, g *content.Guide, cursor string) bool {
+	st, ok := g.Step(cursor)
+	if !ok || c == nil {
+		return false
+	}
+	if len(st.Tasks) > 0 {
+		return true
+	}
+	for _, o := range st.Objectives {
+		if _, has := c.Recipe(o.Key); has && o.Completing() {
+			return true
+		}
+	}
+	return false
 }

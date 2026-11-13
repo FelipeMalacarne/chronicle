@@ -182,14 +182,25 @@ func (w *Watcher) OnEvent(info agent.Info, ev agent.Event) {
 		w.log().Warn("wait_until: too many runs followed", "run", run.UID)
 		return
 	}
-	base := w.ctx
-	if base == nil {
-		base = context.Background()
-	}
-	ctx, cancel := context.WithCancel(base)
+	ctx, cancel := context.WithCancel(w.baseLocked())
 	wt := &watch{uid: run.UID, account: account, key: key, since: time.Now(), cancel: cancel}
 	w.runs[run.UID] = wt
 	go w.follow(ctx, wt)
+}
+
+// base is the context the watches live in (Start's).
+func (w *Watcher) base() context.Context {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.baseLocked()
+}
+
+// baseLocked is base under w.mu.
+func (w *Watcher) baseLocked() context.Context {
+	if w.ctx == nil {
+		return context.Background()
+	}
+	return w.ctx
 }
 
 // drop stops following a run.
@@ -257,8 +268,13 @@ func (w *Watcher) check(ctx context.Context, wt *watch) bool {
 		return false // the agent links again and reports the run again
 	}
 	p := agent.RunUntilParams{UID: wt.uid, Objective: wt.key.String(), Evidence: Evidence(ev)}
-	err = w.Hub.CallAgent(cctx, served.ID, agent.CmdRunUntil, p, nil)
-	w.audit(ctx, wt, served, p, err)
+	// The agent may end the run, and its final event drop this watch,
+	// before its answer to run_until arrives: the call outlives the watch
+	// (the server's context and its own timeout bound it).
+	callCtx, callCancel := context.WithTimeout(w.base(), 30*time.Second)
+	defer callCancel()
+	err = w.Hub.CallAgent(callCtx, served.ID, agent.CmdRunUntil, p, nil)
+	w.audit(callCtx, wt, served, p, err)
 	var refused *agent.CommandError
 	switch {
 	case err == nil:

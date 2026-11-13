@@ -290,14 +290,24 @@ func TestRunUntilPostgres(t *testing.T) {
 	if !proof {
 		t.Fatalf("trail = %+v", r.Events)
 	}
-	var sent bool
-	audit.mu.Lock()
-	for _, e := range audit.entries {
-		sent = sent || (e.Action == agent.CmdRunUntil && e.Actor == rununtil.Actor && e.Origin == "server" && e.OK && e.AccountID == "acc_until")
+	// The agent may end the run before its answer to run_until reaches the
+	// server: the audit comes with the answer.
+	sent := func() bool {
+		audit.mu.Lock()
+		defer audit.mu.Unlock()
+		for _, e := range audit.entries {
+			if e.Action == agent.CmdRunUntil && e.Actor == rununtil.Actor && e.Origin == "server" && e.OK && e.AccountID == "acc_until" {
+				return true
+			}
+		}
+		return false
 	}
-	audit.mu.Unlock()
-	if !sent {
-		t.Fatalf("audit = %+v", audit.entries)
+	for deadline = time.Now().Add(5 * time.Second); !sent(); {
+		if time.Now().After(deadline) {
+			audit.mu.Lock()
+			t.Fatalf("audit = %+v", audit.entries)
+		}
+		time.Sleep(10 * time.Millisecond)
 	}
 	for deadline = time.Now().Add(5 * time.Second); len(watcher.Watching()) != 0; {
 		if time.Now().After(deadline) {

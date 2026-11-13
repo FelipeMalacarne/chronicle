@@ -273,7 +273,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 | Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). Falta a web usar |
 | Plugins da frota | perfis no Postgres (doc 11, F5) |
 | Capacidade no resumo, "cabe mais N", uso por worker | **feito** (doc 11, F7, PR #25): `capacity` e `workers[].usage` em `GET /api/workers`, e `session.login_failed` para o login recusado; a web usa desde a V9 (seção 7.7). O uso do nó não existe |
-| Mundo da frota | feito no servidor em 2026-11-13: `GET /api/fleet/goals` traz numa consulta as metas de todas as contas do usuário (e as chaves de `keys=`), com o veredito guardado de cada conta, a meta dela, o resumo do plano (requisitos, níveis que faltam, passos até a rota fazer) e a conta mais perto; falta a tela. O "tem 132" dos quest points espera o valor observado (primeira linha), e a meta de item (Barrows gloves) só tem requisitos quando o catálogo souber de que quest o item é recompensa |
+| Mundo da frota | feito no servidor em 2026-11-13: `GET /api/fleet/goals` traz numa consulta as metas de todas as contas do usuário (e as chaves de `keys=`), com o veredito guardado de cada conta, a meta dela, o resumo do plano (requisitos, níveis que faltam, passos até a rota fazer) e a conta mais perto; a tela é a da V10 (seção 7.8). O "tem 132" dos quest points espera o valor observado (primeira linha), e a meta de item (Barrows gloves) só tem requisitos quando o catálogo souber de que quest o item é recompensa |
 | Nova conta sem rota e conta só acompanhada | já previstas na decisão 34 do doc 01 (modo `regular`, rota opcional) |
 
 ### 7.5 Ordem de implementação
@@ -292,7 +292,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor) |
 | V8 | Plugins da frota | doc 11, F5. **Feita** (2026-11-13, seção 7.6) |
 | V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende). **Feita** (2026-11-13, seção 7.7) |
-| V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas (feito no servidor, `GET /api/fleet/goals`) |
+| V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas (feito no servidor, `GET /api/fleet/goals`). **Feito o Mundo da frota** (2026-11-13, seção 7.8), com as divergências do que a API ainda não mede; as telas que faltam em 640 px esperam desenho no canvas |
 
 Antes de cada fatia que mexe numa tela ainda sem desenho na v7 (Comparar, Entidades, Grafo), o desenho
 entra no canvas e o dono aprova (regra 11 do `CLAUDE.md`).
@@ -402,3 +402,52 @@ Divergências dos artboards:
     volta às raias.
 
 Conferido com `pnpm check`, `pnpm lint`, `pnpm test` e `pnpm build`; a captura das telas fica para depois.
+
+### 7.8 Implementação: V10, Mundo da frota (2026-11-13)
+
+Artboard seguido: `V7Mundo1440` (página 8), a aba Metas do Mundo, em `/mundo/metas`; o item "Mundo" da
+barra lateral (e um ícone na barra de 640 px) abre nela. O cabeçalho é o da v7 (título, a frase abaixo,
+as abas Metas · Entidades · Grafo nessa ordem e a busca, que abre Entidades com o texto); Entidades e
+Grafo continuam as telas da v6 (sem desenho na v7, seção 7.2).
+
+Os dados vêm de uma leitura só, `GET /api/fleet/goals`: as metas que qualquer conta do usuário fixou,
+com o veredito guardado de cada conta, a meta dela, o resumo do plano e a conta mais perto. "O que
+falta" lê o plano da meta da conta (`GET /api/goals/{id}/plan`); "fixar para ela" é o `POST /api/goals`
+dessa conta; Desafixar tira a meta de cada conta que a persegue. A lógica da tela está em
+`web/src/lib/progress/mundo.ts`.
+
+Divergências do artboard:
+
+1. **Endereço:** o título do artboard no canvas aponta `/mundo`; a tela fica em `/mundo/metas` e `/mundo`
+   continua sendo Entidades, para não quebrar a busca (⌘K) nem os links `?e=` do painel de entidade.
+   A barra lateral e o antigo `/goals` levam às Metas.
+2. **Quest points:** "falta 175 QP (tem 132)" vira "falta 175 QP": o servidor ainda não tem o valor
+   observado dos quest points (`short[].level` é sempre nulo em `qp`). Pelo mesmo motivo a linha
+   "175 quest points" de "O que falta" fica sem o número à direita.
+3. **Subquests:** a contagem é a das quests requisito sabidamente não feitas, em qualquer nível do
+   plano; a linha diz "quests".
+4. **Meta de item:** Barrows gloves e as outras metas de item não têm requisitos no catálogo (falta
+   saber de que quest o item é recompensa, seção 7.4). Sem medida, a linha da conta fica sem barra e
+   sem porcentagem, a lista não diz "a mais perto", "O que falta" diz que não há requisitos conhecidos
+   e o cabeçalho não tem o "recompensa de Recipe for Disaster".
+5. **"O que falta":** o requisito feito não diz de onde veio a evidência ("hiscores", "plugin"), porque
+   o plano não traz a fonte, e "iniciada" não existe, porque o plano não sabe de quest começada. A
+   bolinha meio cheia é a de um requisito com parte dos seus requisitos feitos; o presumido pela marca
+   diz "pela marca" e o disponível diz onde a rota ativa o faz. Uma meta de nível mostra a linha do
+   próprio nível.
+6. **A conta de "O que falta"** é a mais perto entre as que perseguem a meta; o nome de outra conta que
+   a persegue, em "Na frota", troca a conta. Quem não persegue não tem plano.
+7. **"os N requisitos"** abre o plano inteiro da meta daquela conta, que é o da v6 (`V6Metas1440`, a
+   meta aberta), em `/mundo/metas/plano`: a v7 não redesenhou o plano.
+8. **Desafixar** com mais de uma conta perseguindo pede uma segunda confirmação ("Tirar das N
+   contas"), porque tira a meta de todas.
+9. **Lâmpada** da conta: o estado que a Frota calculou, como na barra lateral; antes de passar pela
+   Frota, fica neutra.
+10. **Abas:** o controle das abas do Mundo da v6, um pouco mais alto que o segmentado do artboard.
+11. **640 px:** não há artboard do Mundo a 640 px; a tela só empilha as colunas e a linha da conta
+    quebra em duas. As outras telas da v7 sem 640 px (seção 7.2) continuam pendentes.
+12. **Sem meta:** o estado vazio não está desenhado (nem em `V7Estados1440`); a lista diz que nenhuma
+    conta fixou uma meta e mantém "Fixar outra meta", e a direita fica vazia.
+
+Conferido com os testes de `node --test` da lógica da tela, o `svelte-check` contra a fixture do
+contrato de `GET /api/fleet/goals`, `pnpm lint` e `pnpm build`; a captura a 1440 fica para a revisão.

@@ -5,6 +5,7 @@ import type {
 	Board,
 	ContentSection,
 	EventsView,
+	FleetGoalsResponse,
 	Goal,
 	GoalPlanResponse,
 	GoalsResponse,
@@ -179,6 +180,11 @@ export const progressApi = {
 		request<Goal>(`/goals?account=${enc(account)}`, json('POST', { objective_key: key })),
 	goalPlan: (account: string, id: string) =>
 		request<GoalPlanResponse>(`/goals/${enc(id)}/plan?account=${enc(account)}`),
+	/** Metas da frota (V7Mundo1440): as de todas as contas do usuário, com o veredito de cada uma. */
+	fleetGoals: (keys: string[] = []) =>
+		request<FleetGoalsResponse>(
+			`/fleet/goals${keys.length ? `?keys=${keys.map(enc).join(',')}` : ''}`
+		),
 	graph: (account: string, focus: string, depth: number) =>
 		request<Graph>(`/graph?account=${enc(account)}&focus=${enc(focus)}&depth=${depth}`),
 	removeGoal: (account: string, id: string) =>

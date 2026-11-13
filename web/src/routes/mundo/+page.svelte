@@ -50,7 +50,8 @@
 		['unlock', 'Unlock']
 	];
 	let kind = $state('');
-	let query = $state('');
+	// ?q= vem da busca das Metas da frota.
+	let query = $state(page.url.searchParams.get('q') ?? '');
 	const all = $derived(world.data?.entities ?? []);
 	const byRef = $derived(new Map(all.map((e) => [e.ref, e])));
 	const searching = $derived(query.trim() !== '' || kind !== '');

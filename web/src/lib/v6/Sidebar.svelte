@@ -126,7 +126,7 @@
 		<a
 			class="nav"
 			class:nav-on={onWorld}
-			href={resolve('/mundo')}
+			href={resolve('/mundo/metas')}
 			aria-current={onWorld ? 'page' : undefined}
 		>
 			<Glyph name="mundo" />Mundo
@@ -207,6 +207,13 @@
 			href={resolve('/visao')}
 			aria-current={!onFleet && !onWorld ? 'page' : undefined}
 			><Glyph name="conta" /><span class="nl">{name ?? account}</span></a
+		>
+		<a
+			class="nav"
+			class:nav-on={onWorld}
+			href={resolve('/mundo/metas')}
+			aria-label="Mundo"
+			aria-current={onWorld ? 'page' : undefined}><Glyph name="mundo" /></a
 		>
 	{/if}
 	<span class="grow"></span>

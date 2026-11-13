@@ -1,13 +1,16 @@
 # 10 — Modelo de execução: fatos, eventos, tarefas, receitas e planos
 
 **Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 e E5 a E10 em 2026-11-13, do
-jeito recomendado (seção 14); E11 a E13 em aberto, com o conservador implementado. As fases 0 (doc 04,
-seção 9, item 17) e 1 (item 21, 2026-11-13) estão feitas; o código da fase 2 está pronto (2026-11-13) e
-falta a parte do dono: gravar um trecho do Oziris 1.1 e confirmar as tarefas propostas.** A fase 1
+jeito recomendado (seção 14); E11 a E15 em aberto, com o conservador implementado. As fases 0 (doc 04,
+seção 9, item 17) e 1 (item 21, 2026-11-13) estão feitas. O código das fases 2 e 3 está pronto
+(2026-11-13). Falta a parte do dono: na 2, gravar um trecho do Oziris 1.1 e confirmar as tarefas
+propostas; na 3, executar um trecho de logística no jogo, olhando, com o término provado pelo ingest
+(seção 13).** A fase 1
 entregou as entidades `npc`, `shop` e `object`, as áreas dos locais, o schema de `tasks[]` e de
 receitas e o verificador (seções 7 e 8, "Como implementado"). A fase 2 entregou a gravação por
 demonstração no plugin e no ingest, as tarefas propostas a partir dela e o modo assistido no painel
-(seções 10 e 11, "Como implementado"). A fase 3 começou pelos planos (seção 9, "Como implementado").
+(seções 10 e 11, "Como implementado"). A fase 3 entregou os planos (seção 9), o comando de tarefa no
+agent e o executor de `travel`, `bank` e `buy` no plugin (seção 10), todos com "Como implementado".
 Ainda não há tarefa ou receita real no conteúdo: elas entram com a gravação e a confirmação do dono. O
 resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
@@ -315,7 +318,8 @@ atribuição de cada passo aparece na tela.
   setup do trecho) e nunca para UIM, `buy` de loja com lojista de id conhecido.
 - **API** (com `authed` e `accountParam`, regra 10): `GET /api/plan/next?account=` (a próxima tarefa, com
   o crédito do guia no item de passo, regra 6), `GET` e `POST /api/plans`, `PUT /api/plans/active` e
-  `DELETE /api/plans/{id}`. Um plano novo passa por `plan.CheckItems`: o passo existe no guia, a receita
+  `DELETE /api/plans/{id}`; na CLI, `chronicle plans` (`create -f`, `use`, `delete`) e
+  `chronicle task`. Um plano novo passa por `plan.CheckItems`: o passo existe no guia, a receita
   existe e a tarefa avulsa passa pelo verificador como a de uma receita (sem `goal_met` nem `owner_mark`;
   `bank` com itens). As fixtures `plan-next` e `plans` fixam o contrato com a web, que ainda não tem tela
   de planos (os planos customizados na UI são da fase 5 e pedem o canvas antes).
@@ -371,6 +375,20 @@ atribuição de cada passo aparece na tela.
   devolve a `proof`, a tarefa avaliada agora sobre o que o ingest provou, e `proven` só com o término
   `met`. Sem tela na web (o botão "Executar" pede o canvas): a CLI `chronicle task` lista, executa,
   acompanha e cancela.
+
+  **Como implementado (fase 3, o executor no plugin, 2026-11-13).** Chronicle Link 1.15.0 (doc 06,
+  adendo de 2026-11-13 sobre o executor). A máquina de estados roda numa thread do plugin, só no cliente
+  do harness e só quando o agent pede pela ponte (`/bridge/task/start`, `/bridge/task`,
+  `/bridge/task/cancel`):
+  - `travel` anda com o `Rs2Walker` até a área e para ao entrar nela; fora de um destino na wilderness,
+    exige "Avoid wilderness" e para a caminhada que entrar nela;
+  - `bank` abre o banco mais perto sem andar, deposita o que não é do setup, saca o que falta (notado
+    quando pedido) e veste o equipamento;
+  - `buy` abre a loja pelo lojista mais perto e compra em lotes sem passar do que falta.
+
+  Ela confere cancelamento, pausa dos scripts e login entre os passos, e para na primeira coisa que não
+  consegue, com o motivo. Ao terminar, pede uma captura ao rastreamento, para o ingest provar logo o
+  término.
 - **Vários personagens:** catálogos e receitas compartilhados; por conta ficam modo, fatos, plano ativo
   e cliente (`clients`). O agent gerencia N clientes, com um executor e um lock por cliente.
 - **Risco:** toda receita declara riscos; em HCIM, risco de morte bloqueia execução sem supervisão. O
@@ -487,7 +505,7 @@ fixtures viram teste de conformidade, com cada resposta real validada contra o s
 | 0 | Restrições e locks (R1 a R4, R6, R7), `observations` e junção pura, `owner_commands`, autor na evidência, `guides`, `progress rebuild --check`; correções da web (R9, R10); contrato gerado (R11) | `rebuild --check` sem diferença no CI e no banco do zaros; teste de concorrência ingest + sync + marca no Postgres |
 | 1 | Entidades `npc`, `shop`, `object`; áreas em `location`; schema de `tasks[]` e de receitas; verificador | `content validate` cobre tarefas e receitas |
 | 2 | Gravação por demonstração e modo assistido no plugin | um trecho do Oziris 1.1 com tarefas vindas da gravação, confirmadas pelo dono |
-| 3 | Executor de `travel`, `bank`, `buy`; `plans` e `plan_items`; comando de tarefa no agent | um trecho de logística executado com término provado pelo ingest |
+| 3 | Executor de `travel`, `bank`, `buy`; `plans` e `plan_items`; comando de tarefa no agent | um trecho de logística executado com término provado pelo ingest (código pronto em 2026-11-13; falta o dono no jogo) |
 | 4 | `train` por delegação; rotinas do doc 08 com `wait_until` por chave de objetivo | um treino até `skill:x>=N` sem intervenção |
 | 5 | Receitas de quest, planos customizados na UI, vários clientes no agent | por entrega |
 
@@ -512,6 +530,31 @@ e no ingest (seção 11), as tarefas propostas da gravação com o `propose_task
 O que não foi conferido no jogo está no doc 06 (adendos da gravação e do modo assistido). A fase 3 (o
 executor de `travel`, `bank` e `buy`) parte das tarefas assim confirmadas.
 
+**Fase 3: o código está pronto (2026-11-13); falta o dono.** Feito, em três PRs empilhados:
+
+1. os planos (`plans`, `plan_items`, a próxima tarefa do plano ativo, seção 9);
+2. o comando `task_run` no agent, com `POST` e `GET /api/microbot/task` (a prova do término pelo
+   ingest) e a CLI `chronicle task` (seção 10 e doc 08);
+3. o executor no Chronicle Link 1.15.0 (seção 10 e doc 06).
+
+"Pronto quando um trecho de logística executado com término provado pelo ingest": isso só o dono faz,
+no jogo e olhando. Como ainda não há tarefa real no conteúdo, o trecho sai de um plano customizado
+(`chronicle plans create -f`) ou de tarefas confirmadas na fase 2. O dono:
+
+1. instala o Chronicle Link 1.15 no cliente de dev (`mb-install chroniclelink`), reinicia o cliente e
+   o `just agent`, liga "Send position" no plugin e confere "Avoid wilderness" no webwalker;
+2. monta um plano de logística perto de onde o personagem está e passa a segui-lo:
+   `chronicle plans create -f logistica.json` e `chronicle plans use <id>`. Por exemplo, um `travel`
+   até um local com área, um `bank` com itens que o banco tem e um `buy` numa loja ao lado;
+3. confere a próxima tarefa (`chronicle task`) e roda uma por vez, olhando pelo VNC:
+   `chronicle task run --yes --wait 10m`. O run anda e o ingest prova o término ("Término provado pelo
+   ingest"); o plano passa à próxima;
+4. confere no Cockpit a trilha dos runs e, na auditoria, o `task_run`; ao terminar, volta à rota com
+   `chronicle plans use route`.
+
+Uma falha (sem banco por perto, item faltando, loja sem estoque, o webwalker parando antes) deixa a
+tarefa onde parou, com o motivo na trilha: é o dono quem decide o que fazer.
+
 ## 14. Decisões em aberto (dono)
 
 | # | Pergunta | Recomendação |
@@ -529,6 +572,8 @@ executor de `travel`, `bank` e `buy`) parte das tarefas assim confirmadas.
 | E11 | O que a gravação registra | **em aberto; implementado o conservador (fase 2):** só o que o dono faz (NPCs e objetos clicados, opções de diálogo, compras, banco, itens usados e opções de item, posição grosseira); nunca chat, outros jogadores, magias, Drop/Examine ou o caminho tile a tile |
 | E12 | Retenção da gravação no servidor | **em aberto; implementado o conservador:** fica até o dono apagar (`DELETE /api/account/recording`, `chronicle recording delete --yes`), sem expiração automática; o snapshot bruto não guarda a gravação |
 | E13 | A gravação vai para o conteúdo como evidência | **em aberto; implementado o conservador:** só os eventos que sustentam cada tarefa confirmada, sem conta, RSN ou outros dados do personagem (`submit_tasks` copia só os `seq` pedidos) |
+| E14 | `travel` com `via` (teleporte por unlock ou item) no executor | **em aberto; implementado o conservador (fase 3):** recusado ("faça à mão"); a alternativa é deixar o webwalker escolher o caminho, com os teleportes que a configuração dele permitir |
+| E15 | O que o `bank` faz com o que não é do setup | **em aberto; implementado (fase 3):** deposita antes de sacar (nada se perde: vai para o banco, e o inventário precisa de espaço); a alternativa é só sacar e falhar sem espaço |
 
 ## 15. Impacto nos outros docs
 

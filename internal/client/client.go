@@ -156,10 +156,15 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 	if resp.StatusCode/100 != 2 {
 		var e struct {
 			Error string `json:"error"`
+			// Problems lists why a plan was refused (POST /api/plans).
+			Problems []string `json:"problems"`
 		}
 		_ = json.Unmarshal(raw, &e)
 		if e.Error == "" {
 			e.Error = strings.TrimSpace(string(raw))
+		}
+		if len(e.Problems) > 0 {
+			e.Error += ": " + strings.Join(e.Problems, "; ")
 		}
 		if resp.StatusCode == http.StatusUnauthorized && c.tokens == nil {
 			return fmt.Errorf("%w: %s", ErrLoginRequired, e.Error)

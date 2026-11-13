@@ -70,6 +70,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `chronicle accounts connect --character <name>` / `chronicle workers list\|start\|stop\|restart` | docs/11: store an account's game session from the Microbot launcher (only that character's lines of the HWID stores; a character the launcher lists as "Not set" is `--index <n> --as <name in game>`, like `mb-account use --as`), and the workers' lifecycle over `/api/workers`. `start` and `restart` never log in, but `stop` and `restart` log the account out: never run them on the owner's account unasked |
 | `chronicle profiles list\|show\|put\|delete\|use\|account` | docs/11 section 15: the workers' client profiles (plugins and RuneLite settings, optionally on a model) over `/api/client-profiles` and `/api/accounts/client`; `show` prints the JSON `put -f` reads. A profile reaches a worker on its next start or restart, never a running client |
 | `chronicle recording [--since 2h] [-o file]` / `recording delete --yes` | docs/10 section 11: the demonstration Chronicle Link recorded with "Record demonstration" on (`GET /api/account/recording`), printed or written as the JSON the content MCP's `propose_tasks` reads; `delete` drops it on the server (all, or `--recording <id>`). Never delete the owner's recording unasked |
+| `chronicle plans` / `plans create -f plan.json` / `plans use <id\|route>` / `plans delete <id> --yes` | docs/10 section 9: the account's plans over `/api/plans` (the route, goal and custom plans; the custom plans' screen is phase 5, so a plan is a JSON file of items: a (guide, step), a recipe or a task) and the one it follows |
 | `chronicle task` / `task run --yes [--supervised] [--wait 10m]` / `task status` / `task cancel` | docs/10 phase 3: the next typed task of the account's active plan (`GET /api/plan/next`), its run by the account's agent (`POST /api/microbot/task`: the closed command `task_run`, executed by Chronicle Link's executor), and the ingest's proof of its termination (`GET /api/microbot/task`). `run` acts in game on the account: never run it on the owner's account unasked |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
@@ -81,7 +82,8 @@ Run `just` alone to list everything. All tools also work without Nix (`go run pk
 cmd/chronicle/          cobra subcommands: serve, content (migrate, validate, import-bruhsailer, mcp: the
                       offline extraction server over content/ only, docs/09 section 6; there is no
                       merge step: annotations are sidecars composed by the loader); API clients:
-                      login, logout, accounts, use, now, done, skip, undo, plan, sync, state, recording, task and mcp
+                      login, logout, accounts, use, now, done, skip, undo, plan, sync, state, recording, plans,
+                      task and mcp
                       (the account's MCP server, over the API)
 internal/core/        PURE domain (no DB/HTTP imports):
   content/            loader, schema validation, guide/variant/section/segment/step model; typed tasks

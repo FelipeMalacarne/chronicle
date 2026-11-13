@@ -119,7 +119,13 @@ A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com 
   PRs #46, #47 e #48): a gravação por demonstração no Chronicle Link 1.13.0 e no ingest,
   as tarefas propostas a partir dela com o `propose_tasks` e o `submit_tasks` do `content mcp`, e o
   modo assistido no painel (Chronicle Link 1.14.0). A fase só termina com a gravação e a confirmação do
-  dono (abaixo).
+  dono (abaixo). O código da fase 3 também está pronto (2026-11-13, três PRs empilhados):
+  - os planos (`plans`, `plan_items`, a próxima tarefa do plano ativo);
+  - o comando `task_run` no agent, com a E9 e a prova do término pelo ingest (`/api/microbot/task`,
+    `chronicle task`);
+  - o executor de `travel`, `bank` e `buy` no Chronicle Link 1.15.0.
+
+  Ela também só termina no jogo, com o dono.
 
 O próximo passo é do dono:
 
@@ -128,17 +134,24 @@ O próximo passo é do dono:
    extração (skill `annotate-guide@6`), confirmar as tarefas que o `propose_tasks` propõe para cada
    passo. Conferir no jogo, na mesma sessão, a gravação (a opção de diálogo pela tecla, o banco e a
    loja) e o modo assistido do painel.
-2. **Conferir no jogo e no cluster:**
+2. **Terminar a fase 3 do doc 10** (doc 10, seção 13): instalar o Chronicle Link 1.15, ligar "Send
+   position" e conferir "Avoid wilderness" no webwalker. Montar um plano de logística curto perto do
+   personagem (`chronicle plans create -f` e `use`) e executá-lo tarefa por tarefa, olhando pelo VNC:
+   `chronicle task run --yes --wait 10m` até "Término provado pelo ingest". O botão "Executar" na web
+   pede antes o desenho no canvas.
+3. **Conferir no jogo e no cluster:**
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;
    - uma rotina recorrente no zaros;
    - a capacidade da F7 depois do RBAC;
    - o reinício sozinho na versão nova depois de um deploy (decisão 37).
-3. **Desenhar no canvas** as telas em 640 px que faltam.
-4. **Decidir o que está aberto:**
+4. **Desenhar no canvas** as telas em 640 px que faltam, e o "Executar" da tarefa do plano.
+5. **Decidir o que está aberto:**
    - o gesto para soltar uma rotina presa, hoje salvá-la de novo (o "Liberar" da tela de Rotinas);
    - E11 a E13 do doc 10 (o que a gravação registra, a retenção dela no servidor e o que vai para o
-     conteúdo como evidência), hoje no modo conservador.
+     conteúdo como evidência), hoje no modo conservador;
+   - E14 e E15 do doc 10 (o `travel` com teleporte, hoje recusado; o `bank` que deposita o que não é
+     do setup antes de sacar).
 
 ## Discrepâncias e ressalvas
 

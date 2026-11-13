@@ -704,8 +704,8 @@ O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com
      - o HWID agent guarda os aparelhos de todos os personagens nos mesmos arquivos
        (`~/.runelite/spoofed-*.properties`): na primeira vez de um personagem novo, um cliente por
        vez.
-2. **Receitas de quest:** esperam a avaliação do Quest Helper (E10) e a extração com o dono olhando
-   (CLAUDE.md, regra 9).
+2. **Receitas de quest:** esperam a decisão da E10 (o que aproveitar do Quest Helper) e a extração
+   com o dono olhando (CLAUDE.md, regra 9).
 3. **Planos customizados na UI:** pedem o desenho no canvas antes (CLAUDE.md, regra 11). A API e a CLI
    (`chronicle plans`) já existem desde a fase 3.
 

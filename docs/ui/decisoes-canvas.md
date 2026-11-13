@@ -488,7 +488,7 @@ Divergências dos artboards:
    rotina nela" não existem: a sessão vem do launcher (`chronicle accounts connect`) e o relógio pronto
    não sabe qual rotina cuidaria dele. Cada item tem "Abrir a conta"; a versão antiga tem também
    "Reiniciar agora" (com confirmação, porque sai do jogo). "Reiniciar na pausa" espera o servidor
-   saber da pausa.
+   saber da pausa (resolvido na seção 7.15: o servidor reinicia sozinho, sem botão).
 8. **Número na barra lateral:** o "3" ao lado de Atividade (quantos pedem decisão) fica de fora: a barra
    não lê os workers e os relógios de toda conta em toda tela.
 9. **Execuções da Atividade:** são as de hoje, mais as que começaram antes e ainda rodam; como o
@@ -748,3 +748,30 @@ Divergências dos artboards:
 
 Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`ritmo.test.ts` e `frota.test.ts`) e `pnpm build`;
 as capturas ficam para a revisão.
+
+### 7.15 Reinício na versão nova, na pausa (2026-11-13)
+
+Decisão do dono (doc 01, decisão 37; doc 11, seção 7.2): um worker numa versão antiga se reinicia
+sozinho na nova na próxima pausa (sem run, sem VNC aberto, deslogado ou no break do Break Handler).
+Artboards lidos: `V7Frota1440` (o pedido "roda numa versão antiga" em Precisa de você, com "Reiniciar
+sai do jogo; na pausa não perde nada." e o botão "Reiniciar na pausa"), `V7Atividade1440` (o mesmo
+pedido, com "Na próxima pausa, em 6 min, não perde nada.", "Reiniciar na pausa" e "Agora") e
+`V7Historico1440` (as linhas do worker, como "Worker parado · você parou · saiu do jogo").
+
+Divergências dos artboards:
+
+1. **Sem "Reiniciar na pausa":** o artboard pede um clique para reiniciar na pausa; o dono decidiu
+   que o servidor faz isso sozinho com todo worker desatualizado, então o botão sumiu. O pedido diz
+   "roda numa versão antiga" e embaixo "Reinicia sozinho na próxima pausa.". Na Atividade fica o
+   "Reiniciar agora" (o "Agora" do artboard), com confirmação; na Frota, o "Atualizar" da raia. O
+   título dos dois diz que o clique reinicia agora e sai do jogo, e que sem ele o worker reinicia
+   sozinho na próxima pausa (o mesmo título no cabeçalho da conta e no cartão Worker da Visão geral).
+2. **Sem "em 6 min":** o pedido não diz quando vem a pausa. O servidor não prevê a pausa (o próximo
+   break do Break Handler pode nem existir, e o deslogado não tem hora); ele só a vê quando chega.
+3. **Histórico:** o reinício automático entra como "Worker reiniciado na versão nova · sozinho, na
+   pausa · deslogado" ("no break", "cliente fechado"), na forma das outras linhas do worker; o
+   artboard não tem esta linha. A auditoria da Visão geral mostra "reiniciar o worker · versão nova,
+   na pausa", com "servidor" no lugar de "você".
+
+Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`frota.test.ts`, `historico.test.ts`,
+`automacao.test.ts`) e `pnpm build`; sem captura de tela.

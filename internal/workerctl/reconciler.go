@@ -1,12 +1,15 @@
 // Package workerctl runs the managed workers (docs/11): it makes the
-// Kubernetes Deployments match the desired state in the database, and
-// bootstraps each worker's agent when it links. It owns no state of its own:
-// the database says what should run, the cluster what does, and the hub who
-// is linked.
+// Kubernetes Deployments match the desired state in the database, bootstraps
+// each worker's agent when it links, and restarts an outdated worker on the
+// new image at a pause (docs/11 section 7.2). It owns no state of its own: the
+// database says what should run, the cluster what does, and the hub who is
+// linked; it only remembers its automatic restarts, so as not to repeat them.
 package workerctl
 
 import (
+	"cmp"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -17,6 +20,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
 	"github.com/FelipeMalacarne/chronicle/internal/kube"
+	storemicrobot "github.com/FelipeMalacarne/chronicle/internal/store/microbot"
 )
 
 // Desired is one worker row as the reconciler needs it.
@@ -38,6 +42,9 @@ type Store interface {
 	SetError(ctx context.Context, account, msg string) error
 	// Profile is the account's effective client profile (docs/11 section 4.3).
 	Profile(ctx context.Context, account string) (agent.ClientProfile, error)
+	// SetRunningImage moves a worker that is meant to run to image and
+	// reports whether it did; a stopped worker, or none, answers false.
+	SetRunningImage(ctx context.Context, account, image string) (bool, error)
 }
 
 // Cluster is the reconciler's view of the API server (internal/kube).
@@ -56,13 +63,44 @@ type Cluster interface {
 // Hub is the reconciler's view of the agents' link (internal/agent).
 type Hub interface {
 	CallAgent(ctx context.Context, agentID, command string, params, into any) error
+	// Agents lists the connected agents.
+	Agents() []agent.Info
+	// VNCOpen reports whether a browser has a live VNC session of the agent
+	// that declares account open on this server.
+	VNCOpen(account string) bool
 }
+
+// Audit appends to the Microbot audit (internal/store/microbot).
+type Audit interface {
+	Append(ctx context.Context, e storemicrobot.Entry) (storemicrobot.Entry, error)
+}
+
+// ErrNotRunning: the worker is not meant to run (stopped, or none), so there
+// is nothing to restart.
+var ErrNotRunning = errors.New("the worker is not running; start it instead")
+
+// The automatic restart on a new image is audited like the owner's Reiniciar
+// (action worker_restart), by this actor and origin, with this reason.
+const (
+	AutoRestartActor  = "reconciler"
+	AutoRestartOrigin = "server"
+	AutoRestartReason = "versão nova, na pausa"
+)
+
+// A failed automatic restart is tried again after autoBackoff, doubling up to
+// autoBackoffMax.
+const (
+	autoBackoff    = 2 * time.Minute
+	autoBackoffMax = time.Hour
+)
 
 // Reconciler keeps the cluster's workers equal to the database's.
 type Reconciler struct {
-	Store     Store
-	Cluster   Cluster
-	Hub       Hub
+	Store   Store
+	Cluster Cluster
+	Hub     Hub
+	// Audit records the automatic restarts; nil records nothing.
+	Audit     Audit
 	Log       *slog.Logger
 	Namespace string
 	// Image is the current chronicle-worker image (WORKER_IMAGE).
@@ -77,6 +115,11 @@ type Reconciler struct {
 
 	kick chan struct{}
 	once sync.Once
+	// pass serializes the reconcile pass and the restarts, so a pass that
+	// read the desired state never applies over a restart that moved it.
+	pass sync.Mutex
+	// now is the clock of the automatic restarts' backoff (time.Now).
+	now func() time.Time
 
 	mu       sync.Mutex
 	pods     map[string]PodInfo // by account, from the last pass
@@ -85,6 +128,17 @@ type Reconciler struct {
 	// metricsDown and quotaDown remember a failing read, so it is logged
 	// when it starts failing and when it is back, not on every pass.
 	metricsDown, quotaDown bool
+	// autos are the automatic restarts tried, by account.
+	autos map[string]autoRestart
+}
+
+// autoRestart is what the reconciler remembers of a worker's automatic
+// restarts: at most one per image, and a backoff after a failure.
+type autoRestart struct {
+	image    string    // the WORKER_IMAGE it was for
+	done     bool      // restarted onto image: never again for it
+	failures int       // failed attempts for image
+	next     time.Time // no attempt before
 }
 
 // PodInfo is what the last pass saw of an account's pod.
@@ -107,6 +161,9 @@ func (r *Reconciler) init() {
 		}
 		if r.Log == nil {
 			r.Log = slog.Default()
+		}
+		if r.now == nil {
+			r.now = time.Now
 		}
 	})
 }
@@ -140,16 +197,29 @@ func (r *Reconciler) Run(ctx context.Context) {
 
 // Once is one pass: apply the Deployment of every running worker, delete the
 // rest of the worker Deployments (stopped, or of an account the database no
-// longer knows), and refresh the pod view.
+// longer knows), refresh the pod view, and restart on the current image the
+// outdated workers that are paused (restartPaused).
 func (r *Reconciler) Once(ctx context.Context) error {
 	r.init()
+	want, err := r.reconcile(ctx)
+	if want != nil {
+		r.restartPaused(ctx, want)
+	}
+	return err
+}
+
+// reconcile is the pass of Once without the automatic restarts. It returns
+// the desired state it read, nil when the pass could not run.
+func (r *Reconciler) reconcile(ctx context.Context) ([]Desired, error) {
+	r.pass.Lock()
+	defer r.pass.Unlock()
 	want, err := r.Store.Desired(ctx)
 	if err != nil {
-		return fmt.Errorf("desired workers: %w", err)
+		return nil, fmt.Errorf("desired workers: %w", err)
 	}
 	have, err := r.Cluster.ListDeployments(ctx, kube.WorkerSelector)
 	if err != nil {
-		return fmt.Errorf("list worker deployments: %w", err)
+		return nil, fmt.Errorf("list worker deployments: %w", err)
 	}
 	running := map[string]bool{}
 	deployed := map[string]string{} // name -> image of the worker container
@@ -177,8 +247,8 @@ func (r *Reconciler) Once(ctx context.Context) error {
 		// new server version may build another pod template (resources,
 		// variables, mounts), and applying it would restart the pod, logging
 		// the account out in the middle of whatever it does. Template changes
-		// reach a worker only on a start or on the owner's restart (Restart,
-		// or a new image).
+		// reach a worker only on a start or on a restart (the owner's, or the
+		// automatic one at a pause, both through restart).
 		if img, ok := deployed[name]; ok && img == image {
 			continue
 		}
@@ -203,7 +273,7 @@ func (r *Reconciler) Once(ctx context.Context) error {
 		}
 	}
 	r.refreshPods(ctx)
-	return errors.Join(errs...)
+	return want, errors.Join(errs...)
 }
 
 // refreshPods reads the Deployments again (the pass changed them) and their
@@ -316,31 +386,237 @@ func (r *Reconciler) apply(ctx context.Context, account, image, restartedAt stri
 	return nil
 }
 
-// Restart applies the account's worker Deployment with the current pod
-// template and a new restart annotation, like `kubectl rollout restart`: the
-// Deployment (Recreate) stops the pod and makes a new one, which links and
-// gets a fresh bootstrap. The server's Role cannot delete pods (docs/11
-// section 7). It logs the account out, so only the owner asks for it.
+// Restart is the owner's Reiniciar: the account's running worker restarts
+// now, on the current image (restart), wherever the character is.
+// ErrNotRunning when the worker is not meant to run.
 func (r *Reconciler) Restart(ctx context.Context, account string) error {
-	want, err := r.Store.Desired(ctx)
+	r.init()
+	r.pass.Lock()
+	_, err := r.restart(ctx, account)
+	r.pass.Unlock()
 	if err != nil {
 		return err
+	}
+	r.Kick()
+	return nil
+}
+
+// restart moves the account's running worker to the current image
+// (WORKER_IMAGE; without one it keeps its own) and applies its Deployment with
+// the current pod template and a new restart annotation, like `kubectl rollout
+// restart`: the Deployment (Recreate) stops the pod, whose agent logs the
+// account out (docs/11 section 6.5), and makes a new one, which links and gets
+// a fresh bootstrap. The server's Role cannot delete pods (docs/11 section 7).
+// The owner's Reiniciar and the automatic restart at a pause both come here,
+// so they do the same. It returns the image the worker restarts on; a worker
+// that is not meant to run is never started (ErrNotRunning). Under r.pass.
+func (r *Reconciler) restart(ctx context.Context, account string) (string, error) {
+	if r.Image != "" {
+		moved, err := r.Store.SetRunningImage(ctx, account, r.Image)
+		if err != nil {
+			return "", err
+		}
+		if !moved {
+			return "", ErrNotRunning
+		}
+	}
+	want, err := r.Store.Desired(ctx)
+	if err != nil {
+		return "", err
 	}
 	for _, w := range want {
 		if w.Account != account || !w.Running {
 			continue
 		}
-		image := w.Image
+		image := cmp.Or(w.Image, r.Image)
 		if image == "" {
-			image = r.Image
+			return "", errors.New("WORKER_IMAGE is not set on the server")
 		}
-		if err := r.apply(ctx, account, image, time.Now().UTC().Format(time.RFC3339)); err != nil {
-			return err
-		}
-		r.Kick()
-		return nil
+		return image, r.apply(ctx, account, image, r.now().UTC().Format(time.RFC3339))
 	}
-	return fmt.Errorf("the worker of %s is not meant to run; start it instead", account)
+	return "", ErrNotRunning
+}
+
+// restartPaused is the automatic restart on a new image (docs/11 section 7.2,
+// the owner's decision of 2026-11-13): every running worker whose pod runs
+// another image than WORKER_IMAGE (the outdated of /api/workers) restarts on
+// it when its managed agent says it is paused (Paused): no run, nobody on its
+// VNC, logged out or on a Break Handler break. At most once per worker and
+// image; a failed restart waits autoBackoff, doubling. A worker without a
+// linked managed agent, or whose agent does not answer, waits for a later
+// pass. The attached agent (zaros) has no image and is never restarted.
+func (r *Reconciler) restartPaused(ctx context.Context, want []Desired) {
+	if r.Image == "" || r.Hub == nil {
+		return
+	}
+	pods := r.Pods()
+	agents := r.Hub.Agents()
+	now := r.now()
+	running := map[string]bool{}
+	for _, w := range want {
+		if !w.Running {
+			continue
+		}
+		running[w.Account] = true
+		pod, ok := pods[w.Account]
+		if !ok || pod.Image == "" || pod.Image == r.Image || !r.autoDue(w.Account, now) {
+			continue
+		}
+		a, ok := managedAgent(agents, w.Account)
+		if !ok {
+			r.Log.Debug("workers: outdated, no agent linked", "account", w.Account)
+			continue
+		}
+		pause, paused := Paused(r.pauseView(ctx, a))
+		if !paused {
+			r.Log.Debug("workers: outdated, not paused", "account", w.Account, "why", pause)
+			continue
+		}
+		r.autoRestart(ctx, w.Account, a, pod.Image, pause)
+	}
+	r.mu.Lock()
+	for account, st := range r.autos {
+		if !running[account] || st.image != r.Image {
+			delete(r.autos, account)
+		}
+	}
+	r.mu.Unlock()
+}
+
+// managedAgent is the managed agent linked for account, the newest when the
+// link still holds an older one.
+func managedAgent(agents []agent.Info, account string) (agent.Info, bool) {
+	var found agent.Info
+	ok := false
+	for _, a := range agents {
+		if a.Kind == agent.KindManaged && a.Account == account {
+			found, ok = a, true
+		}
+	}
+	return found, ok
+}
+
+// pauseView asks the agent for its status and its run, the run last: it is
+// what can change soonest (a routine coming due).
+func (r *Reconciler) pauseView(ctx context.Context, a agent.Info) PauseView {
+	v := PauseView{VNC: r.Hub.VNCOpen(a.Account)}
+	if v.VNC {
+		return v
+	}
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+	var st agent.Status
+	if err := r.Hub.CallAgent(ctx, a.ID, agent.CmdStatus, nil, &st); err != nil {
+		r.Log.Debug("workers: status for the restart", "account", a.Account, "agent", a.ID, "err", err)
+	} else {
+		v.Status = &st
+	}
+	if !a.Supports(agent.CmdRunStatus) {
+		v.Run = &agent.RunStatus{} // an agent without runs
+		return v
+	}
+	var run agent.RunStatus
+	if err := r.Hub.CallAgent(ctx, a.ID, agent.CmdRunStatus, nil, &run); err != nil {
+		r.Log.Debug("workers: run status for the restart", "account", a.Account, "agent", a.ID, "err", err)
+	} else {
+		v.Run = &run
+	}
+	return v
+}
+
+// autoDue reports whether an automatic restart of account may be tried now.
+func (r *Reconciler) autoDue(account string, now time.Time) bool {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	st, ok := r.autos[account]
+	if !ok || st.image != r.Image {
+		return true
+	}
+	return !st.done && !now.Before(st.next)
+}
+
+// autoRestart restarts a paused outdated worker (restart, as the owner's
+// Reiniciar does) and audits it. Under r.pass it checks again what may have
+// changed since the pause was read: the owner restarted or stopped the
+// worker, or opened its VNC.
+func (r *Reconciler) autoRestart(ctx context.Context, account string, a agent.Info, from, pause string) {
+	r.pass.Lock()
+	old, still, err := r.stillOutdated(ctx, account)
+	if err != nil || !still || r.Hub.VNCOpen(account) {
+		r.pass.Unlock()
+		if err != nil {
+			r.Log.Warn("workers: restart on the new image: read the desired state", "account", account, "err", err)
+		}
+		return
+	}
+	image, err := r.restart(ctx, account)
+	if err != nil {
+		// The worker goes back to its image: a later pass must not roll the
+		// pod onto the new one outside a pause, only the next try.
+		if _, rerr := r.Store.SetRunningImage(ctx, account, old); rerr != nil {
+			r.Log.Warn("workers: restart on the new image: keep the old image", "account", account, "err", rerr)
+		}
+	}
+	r.pass.Unlock()
+	r.mu.Lock()
+	if r.autos == nil {
+		r.autos = map[string]autoRestart{}
+	}
+	st := r.autos[account]
+	if st.image != r.Image {
+		st = autoRestart{image: r.Image}
+	}
+	if err == nil {
+		st.done = true
+	} else {
+		st.failures++
+		st.next = r.now().Add(min(autoBackoff<<(st.failures-1), autoBackoffMax))
+	}
+	r.autos[account] = st
+	r.mu.Unlock()
+	if err != nil {
+		r.Log.Warn("workers: restart on the new image failed", "account", account, "image", r.Image, "pause", pause,
+			"failures", st.failures, "next", st.next, "err", err)
+	} else {
+		r.Log.Info("workers: restarted on the new image at a pause", "account", account, "from", from, "to", image, "pause", pause)
+		r.Kick()
+	}
+	r.audit(ctx, account, a.ID, map[string]string{"reason": AutoRestartReason, "pause": pause, "from": from, "to": cmp.Or(image, r.Image)}, err)
+}
+
+// stillOutdated reports whether account's worker is still meant to run on
+// another image than the current one in the database (a Reiniciar moves
+// it), and which.
+func (r *Reconciler) stillOutdated(ctx context.Context, account string) (string, bool, error) {
+	want, err := r.Store.Desired(ctx)
+	if err != nil {
+		return "", false, err
+	}
+	for _, w := range want {
+		if w.Account == account {
+			return w.Image, w.Running && w.Image != "" && w.Image != r.Image, nil
+		}
+	}
+	return "", false, nil
+}
+
+// audit records an automatic restart in the Microbot audit like the owner's
+// Reiniciar (action worker_restart), by the reconciler.
+func (r *Reconciler) audit(ctx context.Context, account, agentID string, params map[string]string, err error) {
+	if r.Audit == nil {
+		return
+	}
+	raw, _ := json.Marshal(params)
+	e := storemicrobot.Entry{
+		Actor: AutoRestartActor, Origin: AutoRestartOrigin, Action: "worker_restart", Params: raw, OK: err == nil,
+		AccountID: account, AgentID: agentID,
+	}
+	if err != nil {
+		e.Error = err.Error()
+	}
+	if _, aerr := r.Audit.Append(context.WithoutCancel(ctx), e); aerr != nil {
+		r.Log.Warn("workers: audit", "action", e.Action, "err", aerr)
+	}
 }
 
 // Pods is the pod view of the last pass, by account.

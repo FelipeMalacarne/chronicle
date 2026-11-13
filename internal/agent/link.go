@@ -56,6 +56,9 @@ type Link struct {
 	mu     sync.Mutex
 	agents map[string]*agentConn // by connection id
 	vnc    map[string]vncWait    // browser sessions waiting for a stream, by session id
+	// vncLive counts the VNC sessions whose stream is flowing, by the
+	// account the agent declares (VNCOpen).
+	vncLive map[string]int
 }
 
 // agentConn is one agent's websocket.
@@ -415,6 +418,8 @@ func (l *Link) call(ctx context.Context, c *agentConn, command string, params, i
 type vncWait struct {
 	stream  chan net.Conn
 	subject string
+	// account is the account the asked agent declares (VNCOpen).
+	account string
 }
 
 func newID() string {

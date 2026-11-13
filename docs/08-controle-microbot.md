@@ -245,6 +245,9 @@ PRINCIPAL ──(recorrente vence e não há break)──▶ PARANDO ──▶ P
   rotina em todo intervalo entre breaks). Sem a ponte 1.12, ou com o Break Handler V2, que não diz
   quando, nada espera.
 - **Dono no controle**: abrir o VNC em modo intervir pausa o executor; ele não retoma sozinho.
+  O servidor não distingue olhar de intervir (o `viewOnly` é do navegador), mas desde 2026-11-13
+  sabe quando há um VNC aberto (`agent.Link.VNCOpen`, por conta): o reinício automático de um worker
+  na versão nova espera todos fecharem (doc 11, seção 7.2).
 
 ### Modelo de dados (amplia o rascunho)
 

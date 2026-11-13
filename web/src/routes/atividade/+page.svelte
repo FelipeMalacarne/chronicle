@@ -12,7 +12,7 @@
 	import { iconFor, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { microbotModule, probeMicrobot } from '#lib/progress/microbot.svelte';
 	import type { FleetLevels, FleetRhythm, TimerView } from '#lib/progress/types';
-	import { workerLines } from '#lib/progress/workers';
+	import { RESTART_NOW_TITLE, workerLines } from '#lib/progress/workers';
 	import type { Run } from '#lib/api/microbot';
 	import Glyph from '#lib/v6/Glyph.svelte';
 
@@ -196,7 +196,7 @@
 							class="btn btn-s"
 							class:btn-d={armed === `${n.account}:restart`}
 							disabled={!!busy}
-							title="Volta na versão nova; sai do jogo"
+							title={RESTART_NOW_TITLE}
 							onclick={() => restart(n)}
 							>{busy === `${n.account}:restart`
 								? '…'

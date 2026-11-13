@@ -278,6 +278,27 @@ func (q *Queries) SetAccountManaged(ctx context.Context, arg SetAccountManagedPa
 	return err
 }
 
+const setRunningWorkerImage = `-- name: SetRunningWorkerImage :execrows
+UPDATE workers SET image = $1, updated_at = now()
+WHERE account_id = $2 AND desired_state = 'running'
+`
+
+type SetRunningWorkerImageParams struct {
+	Image     string `json:"image"`
+	AccountID string `json:"account_id"`
+}
+
+// The image of a worker that is meant to run, for a restart on the server's
+// current one (docs/11 section 7.2); a stopped worker is left as it is, so a
+// restart never starts it again.
+func (q *Queries) SetRunningWorkerImage(ctx context.Context, arg SetRunningWorkerImageParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setRunningWorkerImage, arg.Image, arg.AccountID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const setWorkerError = `-- name: SetWorkerError :execrows
 UPDATE workers SET last_error = $2, updated_at = now() WHERE account_id = $1
 `

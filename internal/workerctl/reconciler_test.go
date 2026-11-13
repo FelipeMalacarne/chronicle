@@ -42,6 +42,29 @@ func (f *fakeStore) Session(_ context.Context, account string) (agent.GameSessio
 	return agent.GameSession{Character: "Char " + account, SessionID: "sid", CharacterID: "cid"}, nil
 }
 
+func (f *fakeStore) SetRunningImage(_ context.Context, account, image string) (bool, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for i := range f.desired {
+		if f.desired[i].Account == account && f.desired[i].Running {
+			f.desired[i].Image = image
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func (f *fakeStore) image(account string) string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, w := range f.desired {
+		if w.Account == account {
+			return w.Image
+		}
+	}
+	return ""
+}
+
 func (f *fakeStore) MintPluginToken(context.Context, string) (string, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -148,16 +171,44 @@ type fakeHub struct {
 	calls    []string
 	boot     agent.BootstrapParams
 	problems []string
+	// agents are the linked agents; status, runs and down answer CmdStatus
+	// and CmdRunStatus by agent id (down fails the call); vnc is the
+	// accounts with a VNC session open.
+	agents []agent.Info
+	status map[string]agent.Status
+	runs   map[string]agent.RunStatus
+	down   map[string]bool
+	vnc    map[string]bool
 }
 
-func (h *fakeHub) CallAgent(_ context.Context, _ string, command string, params, into any) error {
+func (h *fakeHub) Agents() []agent.Info {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return slices.Clone(h.agents)
+}
+
+func (h *fakeHub) VNCOpen(account string) bool {
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	return h.vnc[account]
+}
+
+func (h *fakeHub) CallAgent(_ context.Context, id string, command string, params, into any) error {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.calls = append(h.calls, command)
+	if h.down[id] {
+		return agent.ErrNoAgent
+	}
 	var out any
 	switch command {
 	case agent.CmdStatus:
 		out = agent.Status{Running: h.running}
+		if st, ok := h.status[id]; ok {
+			out = st
+		}
+	case agent.CmdRunStatus:
+		out = h.runs[id]
 	case agent.CmdWorkerBootstrap:
 		h.boot = params.(agent.BootstrapParams)
 		out = agent.BootstrapResult{Started: true, Problems: h.problems}
@@ -305,18 +356,20 @@ func TestReconcileLeavesRunningWorkersAlone(t *testing.T) {
 	if len(cl.applied) != 0 {
 		t.Fatalf("a running worker on its image was re-applied: %v", cl.applied)
 	}
-	// Restart applies the current template with a restart annotation, which
-	// rolls a new pod (the server may not delete pods).
+	// Restart applies the current template, on the server's image, with a
+	// restart annotation, which rolls a new pod (the server may not delete
+	// pods).
 	if err := r.Restart(context.Background(), "acc_a"); err != nil {
 		t.Fatal(err)
 	}
 	restarted := cl.deps["worker-acc-a"].Spec.Template
 	if len(cl.applied) != 1 || restarted.Metadata.Annotations[kube.AnnotationRestartedAt] == "" ||
-		restarted.Spec.Containers[0].Resources.Requests["cpu"] == "500m" {
-		t.Fatalf("restart: applied %v, template %+v", cl.applied, restarted.Metadata)
+		restarted.Spec.Containers[0].Resources.Requests["cpu"] == "500m" ||
+		restarted.Spec.Containers[0].Image != r.Image || store.image("acc_a") != r.Image {
+		t.Fatalf("restart: applied %v, template %+v", cl.applied, restarted)
 	}
 	// A worker that is not meant to run is not restarted.
-	if err := r.Restart(context.Background(), "acc_gone"); err == nil || len(cl.applied) != 1 {
+	if err := r.Restart(context.Background(), "acc_gone"); !errors.Is(err, ErrNotRunning) || len(cl.applied) != 1 {
 		t.Fatalf("restart of a stopped worker: %v, applied %v", err, cl.applied)
 	}
 	// A new image (restart to the new version) is applied by the pass.

@@ -50,7 +50,7 @@ func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ing
 	// link, so it runs with WORKERS=off too: a worker image started by hand
 	// against a dev server (loopback) gets its session the same way.
 	rec := &workerctl.Reconciler{
-		Store: workerctl.RepoStore{Repo: repo}, Hub: link, Log: logger,
+		Store: workerctl.RepoStore{Repo: repo}, Hub: link, Audit: audit, Log: logger,
 		Image: cfg.WorkerImage, ServerURL: cfg.WorkerServerURL, Version: buildinfo.String(),
 	}
 	link.OnConnect = func(info agent.Info) {

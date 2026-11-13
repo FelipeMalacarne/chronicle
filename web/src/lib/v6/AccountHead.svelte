@@ -13,7 +13,12 @@
 	import { iconFor } from '#lib/progress/icons';
 	import { microbotModule } from '#lib/progress/microbot.svelte';
 	import type { AccountState, ProgressSummary } from '#lib/progress/types';
-	import { actionLabel, workerLines, type WorkerActionKind } from '#lib/progress/workers';
+	import {
+		actionLabel,
+		RESTART_NOW_TITLE,
+		workerLines,
+		type WorkerActionKind
+	} from '#lib/progress/workers';
 	import Glyph from './Glyph.svelte';
 
 	/*
@@ -156,7 +161,7 @@
 				title={a === 'start'
 					? (l.worker?.blocked ?? 'Sobe o pod; o cliente para na tela de login')
 					: a === 'restart' && l.worker?.outdated
-						? 'Reinicia na versão nova; sai do jogo'
+						? RESTART_NOW_TITLE
 						: 'Sai do jogo'}
 				onclick={() => act(a)}
 			>

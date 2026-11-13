@@ -342,6 +342,33 @@ func (r *Repository) list(ctx context.Context, userID string) ([]Worker, error) 
 	return out, nil
 }
 
+// SetRunningImage moves the worker to image while it is meant to run (a
+// restart on the server's current image) and reports whether it did; a
+// stopped worker, or none, is left as it is and answers false, so a restart
+// that races a stop never starts the worker again.
+func (r *Repository) SetRunningImage(ctx context.Context, account, image string) (bool, error) {
+	image = strings.TrimSpace(image)
+	if image == "" {
+		return false, fmt.Errorf("%w: empty image", ErrInvalid)
+	}
+	var moved bool
+	err := r.inTx(ctx, func(q *storedb.Queries) error {
+		if _, err := lockAccount(ctx, q, account); err != nil {
+			return err
+		}
+		n, err := q.SetRunningWorkerImage(ctx, storedb.SetRunningWorkerImageParams{AccountID: account, Image: image})
+		if err != nil {
+			return fmt.Errorf("set worker image: %w", err)
+		}
+		moved = n > 0
+		return nil
+	})
+	if errors.Is(err, ErrNotFound) {
+		return false, nil
+	}
+	return moved, err
+}
+
 // SetError records the reconciler's last error for the worker ("" clears it).
 func (r *Repository) SetError(ctx context.Context, account, msg string) error {
 	n, err := r.queries.SetWorkerError(ctx, storedb.SetWorkerErrorParams{AccountID: account, LastError: msg})

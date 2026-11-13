@@ -17,7 +17,7 @@ import type {
 	TimerView
 } from './types.ts';
 import { routeLabel } from './view.ts';
-import type { WorkerLine } from './workers.ts';
+import { OUTDATED_SUB, type WorkerLine } from './workers.ts';
 
 export type LaneTone = 'ok' | 'up' | 'bad' | 'off';
 
@@ -299,7 +299,7 @@ export function needs(all: Lane[], cap?: WorkerCapacity): Need[] {
 				...base,
 				kind: 'outdated',
 				text: 'roda numa versão antiga',
-				sub: 'Reiniciar sai do jogo.',
+				sub: OUTDATED_SUB,
 				hard: false
 			});
 		for (const n of l.next)

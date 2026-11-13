@@ -281,7 +281,7 @@ Table microbot_audit {
 
   Note: '''
   Every Microbot control action (docs/08): who, when, what, result. Append-only.
-  microbot_audit_origin: CHECK ((origin = ANY (ARRAY['web'::text, 'agent'::text, 'routine'::text])))
+  microbot_audit_origin: CHECK ((origin = ANY (ARRAY['web'::text, 'agent'::text, 'routine'::text, 'server'::text])))
   '''
 }
 

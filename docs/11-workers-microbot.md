@@ -265,11 +265,14 @@ do worker alimenta o tracking da conta pela URL interna, como qualquer instalaç
 - **Parar** (web, ou `chronicle workers stop acc_x`): o agent faz logout limpo e para o cliente. O
   reconciliador apaga o Deployment, e o token `ipl_` do worker é revogado. A sessão some com a
   memória do pod; perfil e rotinas ficam no banco.
-- **Atualizar:** depois de um deploy, os workers aparecem como "versão antiga". Reiniciar desloga a
-  conta, então só acontece no clique ou com o worker deslogado. O protocolo do link continua aditivo.
-- **Reiniciar** na mesma imagem grava a anotação `chronicle.ftm.dev.br/restarted-at` no template do
-  pod, como o `kubectl rollout restart`: o Deployment (Recreate) para o pod e sobe outro. O servidor
-  não apaga pods; a SA `chronicle` só lê pods (seção 7).
+- **Atualizar:** depois de um deploy, os workers aparecem como "versão antiga". Desde 2026-11-13
+  (decisão do dono, seção 7.2) o reconciliador os reinicia sozinho na versão nova, na próxima pausa:
+  sem run, sem VNC aberto, e deslogado ou no break do Break Handler. Reiniciar desloga a conta, então
+  fora da pausa só acontece no clique. O protocolo do link continua aditivo.
+- **Reiniciar** (o clique, ou o automático na pausa, pelo mesmo caminho) passa o worker para a imagem
+  atual e grava a anotação `chronicle.ftm.dev.br/restarted-at` no template do pod, como o
+  `kubectl rollout restart`: o Deployment (Recreate) para o pod e sobe outro. O servidor não apaga
+  pods; a SA `chronicle` só lê pods (seção 7).
 - **Falhas:**
   - **pod cai:** o Deployment o recria; o agent pede o bootstrap de novo e fica na tela de login. Um
     run em andamento vira `failed` ("o worker reiniciou no meio do run");
@@ -330,9 +333,52 @@ Tudo sai deste repositório (decisão 35 do doc 01) e do mesmo CI (doc 07, seç�
   GHCR ainda não a tem.
 - `chronicle-worker:<sha>` (`deploy/worker/Dockerfile`): `FROM` essa base, mais o binário do mesmo
   commit. O job `docker` sempre a publica e grava `WORKER_IMAGE` no overlay no commit de deploy.
-- Não há bump da base (W4): ela segue o commit. Um worker que já roda só troca de imagem quando o
-  dono clica em Reiniciar (seção 6.5).
+- Não há bump da base (W4): ela segue o commit. Um worker que já roda troca de imagem quando o dono
+  clica em Reiniciar ou, sozinho, na próxima pausa (abaixo).
 - O job `nix` roda os testes e os jars dos plugins em todo push e PR.
+
+**Reinício na versão nova, na pausa** (decisão do dono, 2026-11-13; até então, um worker só trocava
+de imagem no clique do dono). Um worker gerenciado numa imagem antiga (o `outdated` de
+`GET /api/workers`: o Deployment roda outra imagem que não a `WORKER_IMAGE` do servidor) se reinicia
+sozinho na imagem nova quando está **em pausa**, que é:
+
+- **nenhum run em andamento:** o `run_status` do agent não tem run, ou o último terminou (`done`,
+  `failed`, `canceled`). Um run esperando o ponto seguro (`waiting`) conta como em andamento;
+- **ninguém no VNC:** o servidor conta as sessões de VNC abertas por conta (o fluxo do agent passa
+  pelo `serve`, `agent.Link.VNCOpen`). Ele não sabe se o dono só olha ou intervém (o `viewOnly` é do
+  navegador, doc 08, fase 2), então qualquer VNC aberto segura o reinício;
+- **e o personagem fora do jogo:** pelo `status` do agent, o `loggedIn` do `/state` do Agent Server é
+  falso: tela de login, inclusive no break do Break Handler, que desloga (o `break.active` da ponte do
+  Chronicle Link 1.12 só dá o nome da pausa na auditoria). O cliente fechado também conta. Um break com
+  o personagem ainda logado (o micro break do antiban) não é pausa: o reinício deslogaria uma conta
+  que volta a jogar logo. Entre a tela de login e o jogo (`gameState` `LOGGING_IN`, `LOADING`,
+  `HOPPING`, `CONNECTION_LOST`) também não. O dono decidiu em 2026-11-13 que o break conta, sabendo
+  que o worker reiniciado nele fica na tela de login (W3) em vez de voltar ao jogo quando o break
+  acaba; isso acontece no máximo uma vez por imagem nova.
+
+Nunca reinicia: durante um run; com um VNC aberto; com o personagem no jogo fora do break; quando o
+agent não responde ou o estado não se lê (desconhecido nunca é pausa); um worker cujo estado desejado
+é parado (a imagem só muda com `desired_state = 'running'`, na mesma transação, então um Parar ao
+mesmo tempo nunca religa o worker); o agent anexado do zaros (não tem imagem; só agents `managed` das
+contas com worker contam).
+
+Como acontece: a cada passada (30 s), depois de aplicar os Deployments, o reconciliador pergunta
+`status` e `run_status` ao agent de cada worker desatualizado e decide numa função pura
+(`workerctl.Paused`, com testes de tabela). Em pausa, o reinício vai pelo mesmo caminho do Reiniciar
+do dono (`workerctl` `restart`): grava a imagem nova no worker, aplica o Deployment com o template
+atual e a anotação de reinício. Antes de aplicar, já com a trava da passada, confere de novo que o
+worker segue desatualizado no banco (um Reiniciar do dono no meio já o moveu) e que nenhum VNC abriu.
+Cada reinício vai para a auditoria como o do dono (`worker_restart`), com o ator `reconciler`, a
+origem `server` (migração 0016) e os parâmetros `reason` ("versão nova, na pausa"), `pause`
+(`logged_out`, `break` ou `client_down`), `from` e `to` (as imagens). Sem tempestade: no máximo um
+reinício automático por worker e imagem nova; um que falha volta o worker para a imagem antiga (uma
+passada seguinte não pode trocá-la fora da pausa), fica na auditoria como falha e espera 2 min,
+dobrando até 1 h. A memória disso é do processo: um `serve` novo começa sem ela, o que só repete uma
+tentativa.
+
+Consequência a conferir com o dono: o worker reiniciado volta na tela de login, sem entrar (W3). Um
+que estava no break do Break Handler não volta ao jogo sozinho quando o break acaba, como voltaria
+sem o reinício; fica deslogado até o dono entrar (ou um plugin de login automático do perfil).
 
 ### 7.3 Perfil gráfico `minimal`
 
@@ -405,7 +451,7 @@ disco.
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
 | F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. **Parte 2 no servidor feita** (2026-11-13, seção 17): desvio, "Salvar no perfil", aplicar, e o perfil no cliente anexado. Falta a tela (fatia V8 da v7) |
 | F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade. As rotinas recorrentes vieram em seguida (seção 16.4), sem o loadout; a tela, na fatia V6 da web v7 |
-| F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle, gielinor. **Servidor feito** (2026-11-13, seção 18): "cabe mais N" pela quota, CPU e RAM por worker, login recusado na sessão. Falta a tela (resumo da Frota da v7) e decidir o reinício sozinho na versão nova |
+| F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle, gielinor. **Servidor feito** (2026-11-13, seção 18): "cabe mais N" pela quota, CPU e RAM por worker, login recusado na sessão; a tela veio na fatia V9 da web v7. **Reinício na versão nova feito** (2026-11-13, decisão do dono; seções 7.2 e 18.4): o worker desatualizado se reinicia sozinho na próxima pausa (sem run, sem VNC, deslogado ou no break), auditado como `reconciler`; falta conferir num worker de verdade |
 
 Antes de cada fase com tela (F1, F2, F5, F6), o desenho entra no canvas e o dono aprova (regra 11).
 Desde 2026-11-12 as telas destas fases são as da v7 (canvas, página 8; `docs/ui/decisoes-canvas.md`,
@@ -1017,9 +1063,75 @@ saradomin", CPU e RAM, "Renovar sessão") é da fatia da Frota.
   out after 60s".
 - Logins por outros caminhos (troca de mundo, rotinas, a volta do jogo depois de uma queda) não
   gravam o resultado.
-- **Reinício na versão nova:** o `outdated` e o Reiniciar já existem (seções 6.5 e 14.4). Reiniciar
-  sozinho quando o worker está parado (o "Reiniciar na pausa" da Frota da v7) pede decisão do dono:
-  o que conta como parado (deslogado, sem run, no break do Break Handler) e se a seção 7.2 ("só
-  troca de imagem quando o dono clica") muda. Ficou de fora.
+- **Reinício na versão nova:** estava pendente da decisão do dono; decidido e feito em 2026-11-13
+  (seções 7.2 e 18.4).
 - **CPU e RAM do nó** (o "saradomin · CPU 3,1 / 4" do canvas) pediriam permissão de cluster em
   `nodes`. A web pode somar o uso dos workers e mostrar o teto da quota.
+
+### 18.4 Reinício na versão nova, na pausa (2026-11-13)
+
+O dono decidiu, em 2026-11-13, que um worker gerenciado numa imagem antiga se reinicia sozinho na
+nova, mas só na pausa. A regra, o que nunca reinicia e a auditoria estão na seção 7.2.
+
+**Entregue:**
+
+- **`internal/workerctl`:**
+  - `Paused` (`pause.go`): a decisão pura, com testes de tabela;
+  - `restartPaused`: no fim de cada passada, para os workers desatualizados;
+  - `restart`: o caminho único do Reiniciar do dono (`Restart`, pela rota) e do automático. Grava
+    a imagem atual no worker só se ele deve rodar, depois aplica o Deployment com a anotação de
+    reinício;
+  - uma trava serializa a passada e os reinícios: uma passada que leu o estado desejado nunca
+    reaplica a imagem velha por cima de um Reiniciar.
+- **`POST /api/workers/restart`:** antes, com imagem nova, só gravava a imagem e deixava a passada
+  aplicar; com a mesma imagem, chamava o `Restart`. Agora sempre chama o `Restart`, que faz as duas
+  coisas. Um worker parado continua 409 (`workerctl.ErrNotRunning`).
+- **`agent.Link.VNCOpen`:** conta as sessões de VNC cujo fluxo passa pelo `serve`, por conta do
+  agent, do começo ao fim do pedido do agent (`ServeVNC`).
+- **Banco:**
+  - consulta `SetRunningWorkerImage`: muda a imagem só com `desired_state = 'running'`, com a trava
+    da conta;
+  - migração 0016: a origem `server` na auditoria (`microbot_audit_origin`). No Down, as linhas
+    `server` viram `routine`, e nada se apaga da auditoria.
+- **Web:**
+  - o pedido "roda numa versão antiga" da Frota e da Atividade diz "Reinicia sozinho na próxima
+    pausa.", e o Reiniciar segue para "agora" (título do botão);
+  - o Histórico mostra "Worker reiniciado na versão nova · sozinho, na pausa · deslogado";
+  - a auditoria da Visão geral mostra "reiniciar o worker · versão nova, na pausa", com "servidor"
+    como quem fez;
+  - divergências do canvas: `docs/ui/decisoes-canvas.md`, seção 7.15.
+- **CLI:** `chronicle workers list` diz "versão antiga (reinicia sozinho na pausa)".
+
+**Conferido:**
+
+- Testes de tabela da pausa:
+  - deslogado, deslogado no break, cliente fechado; o micro break logado não é pausa;
+  - agent antigo sem o break;
+  - run em andamento e run esperando o ponto seguro;
+  - VNC aberto;
+  - status ou run desconhecido, estado ilegível, entrando no jogo.
+- O reconciliador com falsos do cluster e do link:
+  - reinicia os em pausa e audita com `reconciler`, `server`, a pausa e as imagens;
+  - deixa o que está no jogo até ele deslogar;
+  - nunca: run, VNC, agent mudo, só o anexado, sem agent, parado, sem `WORKER_IMAGE`;
+  - uma vez por imagem;
+  - a falha volta a imagem antiga e espera 2 e 4 min;
+  - um Reiniciar do dono e um VNC aberto depois da leitura impedem o segundo reinício.
+- O `VNCOpen` com um túnel de verdade (agent de teste): conta enquanto o fluxo corre e zera ao fechar.
+- `SetRunningImage` e a origem `server` no Postgres 17; a migração 0016 com up, down e up.
+- `go test ./...`, `golangci-lint`, `pnpm check`, `pnpm lint`, `pnpm test` e `pnpm build`.
+
+**Não conferido e pendente:**
+
+- **Num worker de verdade no saradomin:**
+  - um deploy com imagem nova e o worker reiniciando sozinho deslogado;
+  - um break de verdade do Break Handler (o `/bridge/break` nunca foi visto numa pausa real,
+    doc 01);
+  - um VNC aberto segurando o reinício.
+- **O worker volta na tela de login** (W3): reiniciado no break, não volta ao jogo quando o break
+  acaba. O dono aceitou isso em 2026-11-13: acontece no máximo uma vez por imagem nova, e sem o break
+  um worker que joga direto quase nunca atualizaria sozinho. O micro break do antiban, com o
+  personagem logado, ficou de fora.
+- **Corrida curta:** entre a leitura do `run_status` e o reinício, uma rotina pode começar; o run
+  seria cortado e ficaria `failed` ("o worker reiniciou no meio do run"). A janela é de milissegundos.
+- **Mais de uma réplica do `serve`:** o `VNCOpen` só vê os túneis da própria réplica. Hoje há uma.

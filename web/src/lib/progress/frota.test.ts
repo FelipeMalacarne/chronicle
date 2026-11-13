@@ -276,6 +276,9 @@ test('needs: no session, old version and ready clocks', () => {
 	);
 	// No command in the paragraph: the guidance says where, the button copies the command.
 	assert.equal(n[0].sub, 'Abra o launcher no zaros e envie a sessão.');
+	// The server restarts an outdated worker by itself at its next pause (docs/11 section 7.2).
+	assert.equal(n[1].sub, 'Reinicia sozinho na próxima pausa.');
+	assert.equal(n[1].kind, 'outdated');
 	assert.equal(n[0].command, `chronicle accounts connect --character "${l.rsn}"`);
 });
 

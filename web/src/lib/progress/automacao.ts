@@ -46,7 +46,8 @@ const ACTION_LABEL: Record<string, string> = {
 	recurring_delete: 'apagar rotina',
 	profile_save: 'salvar no perfil',
 	profile_apply: 'aplicar o perfil',
-	trigger_set: 'gatilho'
+	trigger_set: 'gatilho',
+	worker_restart: 'reiniciar o worker'
 };
 
 /** Uma linha da auditoria: "login · mundo 303 · ok". */
@@ -68,13 +69,15 @@ export function auditLine(e: AuditEntry): string {
 		parts.push(
 			`${p.event === 'kitten_grown' ? 'quando o filhote crescer' : String(p.event)}: ${p.enabled ? 'ligado' : 'desligado'}`
 		);
+	// O porquê do que o servidor fez sozinho ("versão nova, na pausa").
+	if (typeof p.reason === 'string') parts.push(p.reason);
 	if (typeof p.group === 'string' && typeof p.key === 'string')
 		parts.push(`${p.group}.${p.key} = ${p.value === null ? '(padrão)' : String(p.value)}`);
 	parts.push(e.ok ? 'ok' : `falhou: ${e.error ?? ''}`.trim());
 	return parts.join(' · ');
 }
 
-/** O ator da auditoria como a tela mostra: "você" para o usuário da web. */
+/** O ator da auditoria como a tela mostra: "você" para o usuário da web, "servidor" para o reconciliador. */
 export function auditWho(e: AuditEntry): string {
-	return e.origin === 'web' ? 'você' : e.origin;
+	return e.origin === 'web' ? 'você' : e.origin === 'server' ? 'servidor' : e.origin;
 }

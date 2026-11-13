@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { rowChip, sessionLine, whoDid } from './agora.ts';
+import { rowChip, rowChips, sessionLine, whoDid } from './agora.ts';
 import type { EventsView } from './types.ts';
 import type { Chip } from './view.ts';
 
@@ -46,4 +46,16 @@ test('rowChip picks completes over starts over uses and counts the rest', () => 
 	assert.equal(r.chip?.key, 'quest:a');
 	assert.equal(r.more, 2);
 	assert.deepEqual(rowChip([]), { chip: null, more: 0 });
+});
+
+test('rowChips keeps the first n by role and counts the rest', () => {
+	const chip = (role: Chip['role'], key: string) => ({ role, key }) as Chip;
+	const all = [chip('uses', 'item:1'), chip('starts', 'quest:b'), chip('completes', 'quest:a')];
+	const r = rowChips(all, 2);
+	assert.deepEqual(
+		r.shown.map((c) => c.key),
+		['quest:a', 'quest:b']
+	);
+	assert.equal(r.more, 1);
+	assert.deepEqual(rowChips(all, 5).more, 0);
 });

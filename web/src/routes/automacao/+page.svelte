@@ -2,40 +2,36 @@
 	import {
 		microbotApi,
 		MicrobotError,
-		type AuditEntry,
+		type GameView,
 		type MicrobotAction,
-		type MicrobotStatus
+		type MicrobotStatus,
+		type ScriptEntry
 	} from '#lib/api/microbot';
-	import { auditLine, auditWho, cards, stateRows } from '#lib/progress/automacao';
 	import Glyph from '#lib/v6/Glyph.svelte';
-	import AutomacaoTabs from '#lib/v6/AutomacaoTabs.svelte';
 	import { cockpit } from '#lib/progress/microbot.svelte';
 	import VncView, { type VncPhase } from '#lib/v6/VncView.svelte';
-	import JogoView from '#lib/v6/JogoView.svelte';
 	import SidePanel from '#lib/v6/game/SidePanel.svelte';
 	import Chatbox from '#lib/v6/game/Chatbox.svelte';
+	import GameBank from '#lib/v6/game/GameBank.svelte';
 	import GameMenu from '#lib/v6/game/GameMenu.svelte';
 	import WorldMap from '#lib/v6/game/WorldMap.svelte';
 	import { cancelSelection, gameMap, gameMenu } from '#lib/v6/game/menu.svelte';
-	import { selectedLabel } from '#lib/progress/jogo';
-	import { miscIcon } from '#lib/progress/icons';
-	import ClientLog from '#lib/v6/ClientLog.svelte';
-	import ClientAccount from '#lib/v6/ClientAccount.svelte';
-	import Relogios from '#lib/v6/Relogios.svelte';
-	import FazerAgora from '#lib/v6/FazerAgora.svelte';
-	import HistoricoRuns from '#lib/v6/HistoricoRuns.svelte';
-	import type { GameView } from '#lib/api/microbot';
+	import { scriptRows, selectedLabel } from '#lib/progress/jogo';
+	import { miscIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
+	import ScriptCard from '#lib/v6/ScriptCard.svelte';
+	import NearCard from '#lib/v6/NearCard.svelte';
+	import BankCard from '#lib/v6/BankCard.svelte';
 
 	/*
-	 * Automação › Cockpit (V6Microbot1440; no estreito, o modo só dashboard do V6Microbot640), doc 08:
-	 * o estado do cliente pelo agent, a tela por screenshot a cada 5 s ou ao vivo por VNC (fase 2, só
-	 * no largo e com o cliente headless), iniciar e parar o cliente, login e logout, e a auditoria. Os
-	 * plugins (fase 3) têm a página deles; Rotinas ficam para depois das receitas.
+	 * Conta › Cliente (página 8 do canvas, V7Cliente1440 e V7Cliente640; fatia V3 de
+	 * decisoes-canvas.md, 7.5): o jogo no centro (tela por imagem a cada 5 s ou ao vivo por VNC, o
+	 * chat e o painel de itens com o menu do jogo), e ao lado o script, o que está por perto e o
+	 * banco. Relógios, Fazer agora, execuções, auditoria, log e conta do cliente foram para a Visão
+	 * geral. A 640 o jogo e Por perto ficam empilhados, sem ao vivo.
 	 */
 	let status = $state<MicrobotStatus | null>(null);
 	let off = $state(false);
 	let loadError = $state<string | null>(null);
-	let audit = $state<AuditEntry[]>([]);
 	let shotAt = $state(0);
 	let shotOk = $state(false);
 	let busy = $state<string | null>(null);
@@ -43,25 +39,53 @@
 	let armed = $state<string | null>(null);
 	let world = $state('');
 	let game = $state<GameView | null>(null);
+	let scripts = $state<ScriptEntry[]>([]);
 	let live = $state(false);
 	let intervene = $state(false);
 	let vnc = $state<{ phase: VncPhase; reason?: string }>({ phase: 'closed' });
 	let wide = $state(true);
-	/** Bumped when a run ends, so the Runs panel reads the history again. */
-	let runsVersion = $state(0);
 
 	const client = $derived(status?.client);
+	const agent = $derived(!!status?.agent.connected);
 	const running = $derived(!!client?.running);
 	const loggedIn = $derived(!!client?.state?.loggedIn);
-	const facts = $derived(cards(status));
-	const rows = $derived(stateRows(status));
-	const pos = $derived(client?.state?.player?.position);
-	const dev = $derived(status?.dev ?? true);
-	/** O VNC só existe com o x11vnc do headless e fora do celular (V6Microbot640: sem websocket). */
+	const paused = $derived(!!client?.state?.scriptsPaused);
+	const pos = $derived(game?.observe?.player?.position ?? client?.state?.player?.position);
+	const currentWorld = $derived(client?.login?.currentWorld);
+	/** O VNC só existe com o x11vnc do headless e fora do celular (V7Cliente640: sem ao vivo). */
 	const vncReady = $derived(running && !!client?.vnc && wide);
 	const showLive = $derived(live && vncReady);
+	const inGame = $derived(loggedIn && !!game);
+	const bankOpen = $derived(inGame && !!game?.bank?.open && !showLive);
+	const playing = $derived(scriptRows(scripts, game));
 	// Lê a conta escolhida para o VNC reabrir quando ela muda.
 	const vncURL = () => (cockpit.account, microbotApi.vncURL());
+
+	const tone = $derived(
+		!agent ? 'off' : loggedIn ? 'ok' : running ? 'up' : client?.error ? 'bad' : 'off'
+	);
+	const stateText = $derived(
+		!status
+			? (loadError ?? 'Lendo o cliente…')
+			: !agent
+				? 'Sem cliente'
+				: loggedIn
+					? 'No jogo'
+					: running
+						? 'Na tela de login'
+						: 'Cliente parado'
+	);
+	const stateDetail = $derived(
+		[
+			loggedIn && currentWorld ? `mundo ${currentWorld}` : '',
+			running && !loggedIn ? (client?.login?.loginError ?? '') : '',
+			paused && loggedIn ? 'scripts pausados' : '',
+			client?.error ?? ''
+		]
+			.filter(Boolean)
+			.join(' · ')
+	);
+
 	function setLive(on: boolean) {
 		live = on;
 		intervene = false;
@@ -69,7 +93,6 @@
 	function onVnc(phase: VncPhase, reason?: string) {
 		vnc = { phase, reason };
 		if (phase === 'closed') intervene = false;
-		if (phase !== 'connecting') void refreshAudit();
 	}
 	$effect(() => {
 		const mq = matchMedia('(min-width: 700px)');
@@ -92,30 +115,31 @@
 			loadError = e instanceof Error ? e.message : String(e);
 		}
 	}
-	async function refreshAudit() {
+	async function refreshScripts() {
 		try {
-			audit = (await microbotApi.audit(30)).entries;
+			scripts = (await microbotApi.plugins()).scripts.scripts;
 		} catch {
-			/* a auditoria some se o servidor cair; o estado já mostra o erro */
+			/* sem a lista, o cartão Script diz que nada joga */
 		}
 	}
-	function shoot() {
-		if (running) shotAt = Date.now();
-	}
-
 	$effect(() => {
 		void refresh();
-		void refreshAudit();
 		const st = setInterval(() => {
 			if (!document.hidden) void refresh();
 		}, 3000);
-		const au = setInterval(() => {
-			if (!document.hidden) void refreshAudit();
-		}, 30000);
-		return () => {
-			clearInterval(st);
-			clearInterval(au);
-		};
+		return () => clearInterval(st);
+	});
+	// Os plugins ligados (o que joga) a cada 10 s enquanto o cliente roda.
+	$effect(() => {
+		if (!running) {
+			scripts = [];
+			return;
+		}
+		void refreshScripts();
+		const t = setInterval(() => {
+			if (!document.hidden) void refreshScripts();
+		}, 10_000);
+		return () => clearInterval(t);
 	});
 	// O jogo (inventário, skills, por perto, diálogo...) a cada 3 s enquanto a conta está logada.
 	// Uma leitura leva alguns segundos (várias do Agent Server e da ponte): uma por vez, senão as
@@ -132,17 +156,13 @@
 			gameBusy = false;
 		}
 	}
-	// Depois de cada ação do menu, o jogo e a auditoria são relidos.
+	// Depois de cada ação do menu, o jogo é relido.
 	$effect(() => {
-		gameMenu.onDone = () => {
-			void refreshGame();
-			void refreshAudit();
-		};
+		gameMenu.onDone = () => void refreshGame();
 		return () => {
 			gameMenu.onDone = null;
 		};
 	});
-	const inGame = $derived(loggedIn && !!game);
 	$effect(() => {
 		if (!running || !loggedIn) {
 			game = null;
@@ -155,21 +175,21 @@
 		return () => clearInterval(t);
 	});
 
-	// Screenshot a cada 5 s enquanto o cliente roda, a aba está à vista e o VNC não está aberto.
+	// Imagem a cada 5 s enquanto o cliente roda, a aba está à vista e o VNC não está aberto.
 	$effect(() => {
 		if (!running || showLive) return;
-		shoot();
+		shotAt = Date.now();
 		const t = setInterval(() => {
-			if (!document.hidden) shoot();
+			if (!document.hidden) shotAt = Date.now();
 		}, 5000);
 		return () => clearInterval(t);
 	});
 
 	const LABEL: Record<MicrobotAction, string> = {
-		'client/start': 'Iniciar cliente',
-		'client/stop': 'Parar cliente',
-		login: 'Login',
-		logout: 'Logout',
+		'client/start': 'Iniciar o cliente',
+		'client/stop': 'Parar o cliente',
+		login: 'Entrar no jogo',
+		logout: 'Sair do jogo',
 		world: 'Trocar de mundo'
 	};
 	/** Ações que mexem na conta pedem um segundo clique em até 4 s. */
@@ -202,17 +222,38 @@
 		} finally {
 			busy = null;
 			await refresh();
-			await refreshAudit();
 		}
 	}
 	const label = (a: MicrobotAction) =>
-		busy === a ? `${LABEL[a]}…` : armed === a ? `Confirmar ${LABEL[a].toLowerCase()}` : LABEL[a];
-	const hhmm = (iso: string) =>
-		new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+		busy === a ? `${LABEL[a]}…` : armed === a ? `Confirmar: ${LABEL[a].toLowerCase()}` : LABEL[a];
+
+	let pausing = $state(false);
+	async function pauseAll() {
+		pausing = true;
+		try {
+			await microbotApi.plugin({ path: 'scripts/pause' });
+		} catch (e) {
+			failure = e instanceof MicrobotError ? e.message : String(e);
+		} finally {
+			pausing = false;
+			await refresh();
+		}
+	}
+	const viewHint = $derived(
+		showLive
+			? vnc.phase === 'connected'
+				? intervene
+					? 'você no controle'
+					: 'só olhando'
+				: vnc.phase === 'connecting'
+					? 'conectando…'
+					: (vnc.reason ?? 'desconectado')
+			: 'imagem a cada 5 s'
+	);
 </script>
 
 <svelte:head>
-	<title>Automação · Chronicle</title>
+	<title>Cliente · Chronicle</title>
 </svelte:head>
 
 {#snippet button(a: MicrobotAction, danger = false)}
@@ -225,327 +266,217 @@
 	>
 {/snippet}
 
-<header class="mh">
-	<AutomacaoTabs current="cockpit" />
-	<div class="seg modes" role="group" aria-label="Modo">
-		<button
-			type="button"
-			class:on={!showLive}
-			aria-pressed={!showLive}
-			onclick={() => setLive(false)}>só dashboard</button
-		>
-		<button
-			type="button"
-			class:on={showLive}
-			aria-pressed={showLive}
-			disabled={!vncReady}
-			title={vncReady
-				? 'A tela ao vivo pelo agent; mouse e teclado só depois de "Intervir"'
-				: !wide
-					? 'Sem VNC no celular: só dashboard'
-					: 'O VNC precisa do cliente headless rodando no zaros'}
-			onclick={() => setLive(true)}>VNC ao vivo</button
-		>
-	</div>
-	<span
-		class="badge badge-gold"
-		title={dev
-			? 'Em AUTH_MODE=dev o controle só responde a esta máquina'
-			: 'O papel microbot:control do Zitadel libera esta tela'}
-		>{dev ? 'dev · só desta máquina' : 'papel microbot:control'}</span
-	>
-</header>
-
 {#if off}
-	<section class="panel pad">
-		<p class="sm0">
-			O controle do Microbot está desligado neste servidor. Ligue com <code
-				>MICROBOT_CONTROL=on</code
-			>
-			no <code>serve</code> e rode <code>chronicle agent</code> na máquina do jogo.
-		</p>
-	</section>
+	<div class="empty7">
+		<h3>Sem cliente do jogo</h3>
+		<p>Este servidor só acompanha: não abre nem controla o cliente das contas.</p>
+	</div>
 {:else}
-	<div class="panel strip">
-		{#each facts as c (c.k)}
-			<div class="kv" title={c.title}>
-				<span class="k">{c.k}</span><span class="val"
-					><span class="dot" class:dot-w={c.tone === 'warn'} class:dot-off={c.tone === 'off'}
-					></span>{c.v}</span
+	<div class="strip7">
+		<span class="lamp {tone}"></span>
+		<span class="stnow"
+			><b>{stateText}</b>{#if stateDetail}<span class="mu"> · {stateDetail}</span>{/if}</span
+		>
+		<span class="sp"></span>
+		{#if running}
+			<div class="seg" role="group" aria-label="Como ver a tela">
+				<button
+					type="button"
+					class:on={!showLive}
+					aria-pressed={!showLive}
+					title="Uma imagem a cada 5 s; leve"
+					onclick={() => setLive(false)}>Imagem</button
+				>
+				<button
+					type="button"
+					class:on={showLive}
+					aria-pressed={showLive}
+					disabled={!vncReady}
+					title={vncReady
+						? 'Tela ao vivo; mouse e teclado só depois de "Intervir"'
+						: !wide
+							? 'Ao vivo só em tela larga'
+							: 'Ao vivo só com o cliente sem janela (headless)'}
+					onclick={() => setLive(true)}>Ao vivo</button
 				>
 			</div>
-		{:else}
-			<span class="su sm0" aria-busy="true">{loadError ?? 'Carregando…'}</span>
-		{/each}
-		<div class="acts">
-			{#if status?.agent.connected}
-				<button class="btn btn-s" type="button" disabled={!running} onclick={shoot}
-					>Screenshot</button
-				>
-				{#if running}
-					<label class="wl"
-						><span class="vh">Mundo</span><input
-							class="world"
-							inputmode="numeric"
-							placeholder="mundo"
-							bind:value={world}
-						/></label
-					>
-					{#if loggedIn}
-						{@render button('world')}
-						{@render button('logout')}
-					{:else}
-						{@render button('login')}
-					{/if}
-					{@render button('client/stop', true)}
-				{:else}
-					{@render button('client/start')}
-				{/if}
+			<!-- V7Cliente640: a janela ao lado do jogo não troca de mundo. -->
+			{#if wide}
+				<label class="vh" for="mundo">Mundo</label>
+				<input
+					id="mundo"
+					class="in7"
+					inputmode="numeric"
+					placeholder={currentWorld ? String(currentWorld) : 'mundo'}
+					bind:value={world}
+				/>
 			{/if}
-		</div>
+			{#if loggedIn}
+				{#if wide}{@render button('world')}{/if}
+				{@render button('logout')}
+			{:else}
+				{@render button('login')}
+			{/if}
+			{@render button('client/stop', true)}
+		{:else if agent}
+			{@render button('client/start')}
+		{/if}
 	</div>
 
 	{#if failure}
-		<div class="band" role="alert"><Glyph name="alert" /><span>{failure}</span></div>
+		<div class="band" role="alert">
+			<Glyph name="alert" /><span>{failure}</span>
+			<button class="btn btn-g btn-s" type="button" onclick={() => (failure = null)}>Fechar</button>
+		</div>
+	{/if}
+	{#if gameMenu.error}
+		<div class="band" role="alert">
+			<Glyph name="alert" /><span>{gameMenu.error}</span>
+			<button class="btn btn-g btn-s" type="button" onclick={() => (gameMenu.error = null)}
+				>Fechar</button
+			>
+		</div>
+	{/if}
+	{#if inGame && playing.length && !paused}
+		<div class="note7" role="status">
+			<Glyph name="alert" />
+			<span
+				><b>{playing[0].name} está jogando.</b>
+				<span class="wide-only">O que você clicar aqui disputa o mouse com ele.</span></span
+			>
+			<button class="btn btn-s push" type="button" disabled={pausing} onclick={pauseAll}
+				>{pausing ? 'Pausando…' : wide ? 'Pausar o script' : 'Pausar'}</button
+			>
+		</div>
 	{/if}
 
 	<div class="cols">
-		<div class="main">
-			<section class="panel">
-				<div class="plaque">
-					{inGame ? 'Jogo' : showLive ? 'Tela ao vivo · VNC' : 'Tela do jogo'}<span class="r"
-						>{showLive
-							? vnc.phase === 'connected'
-								? intervene
-									? 'você no controle'
-									: 'só olhando'
-								: vnc.phase === 'connecting'
-									? 'conectando…'
-									: (vnc.reason ?? 'desconectado')
-							: running
-								? 'screenshot a cada 5 s'
-								: 'cliente parado'}{client?.headless ? ' · headless' : ''}</span
-					>
-				</div>
-				<div class="pad">
-					<div class="client" class:game={inGame}>
-						<div class="vp">
-							<div class="shot">
-								{#if showLive}
-									<VncView url={vncURL()} viewOnly={!intervene} onphase={onVnc} />
-									{#if vnc.phase !== 'connected'}
-										<div class="ph">
-											<Glyph name="automacao" size={28} />
-											<span
-												>{vnc.phase === 'connecting'
-													? 'Abrindo o VNC pelo agent…'
-													: `VNC fechado${vnc.reason ? `: ${vnc.reason}` : ''}`}</span
-											>
-										</div>
-									{/if}
-								{:else if running && shotAt}
-									<img
-										src={microbotApi.screenshotURL(shotAt)}
-										alt="Tela do cliente do Microbot"
-										onload={() => (shotOk = true)}
-										onerror={() => (shotOk = false)}
-									/>
-									<div class="hud" class:hidden={!!gameMenu.selected}>
-										{#if client?.state?.player?.name}<span>{client.state.player.name}</span>{/if}
-										{#if client?.login?.currentWorld}<span>mundo {client.login.currentWorld}</span
-											>{/if}
-										{#if pos}<span>{pos.x}, {pos.y}, {pos.plane}</span>{/if}
-										<span>só dashboard</span>
-									</div>
-								{/if}
-								{#if !showLive && (!running || !shotOk)}
-									<div class="ph">
-										<Glyph name="automacao" size={28} />
-										<span
-											>{!status?.agent.connected
-												? 'Sem agent: rode `chronicle agent` no zaros'
-												: running
-													? 'Carregando a tela…'
-													: 'Cliente parado: “Iniciar cliente” sobe o headless no zaros'}</span
-										>
-									</div>
-								{/if}
-								{#if inGame && game}
-									{#if gameMenu.selected}
-										<!-- O texto do topo do jogo enquanto algo está selecionado. -->
-										<div class="uptext" role="status">
-											<span>{selectedLabel(gameMenu.selected)}</span>
-											<button type="button" onclick={cancelSelection}>Cancel</button>
-										</div>
-									{/if}
-									<button
-										class="orb"
-										type="button"
-										title="Mapa do mundo: clique num lugar para andar até ele"
-										aria-label="Mapa do mundo"
-										onclick={() => (gameMap.open = true)}
-										><img src={miscIcon('world_map')} alt="" /></button
-									>
-								{/if}
-							</div>
-							{#if inGame && game}<Chatbox view={game} />{/if}
-						</div>
-						{#if inGame && game}<SidePanel view={game} />{/if}
-					</div>
+		<section class="g-cl" aria-label="Cliente do jogo">
+			<div class="g-l">
+				<div class="g-vp">
 					{#if showLive}
-						<div class="under">
-							<span class="su tiny"
-								>{intervene
-									? 'Mouse e teclado vão para o jogo. Um script rodando disputa o input com você.'
-									: 'Abrir o VNC fica na auditoria.'}</span
-							>
-							<button
-								class="btn btn-s"
-								class:btn-g={!intervene}
-								type="button"
-								disabled={vnc.phase !== 'connected'}
-								onclick={() => (intervene = !intervene)}
-								>{intervene ? 'Devolver: só olhar' : 'Intervir com mouse e teclado'}</button
+						<VncView url={vncURL()} viewOnly={!intervene} onphase={onVnc} />
+						{#if vnc.phase !== 'connected'}
+							<div class="ph">
+								<Glyph name="automacao" size={22} />
+								<span
+									>{vnc.phase === 'connecting'
+										? 'Abrindo a tela ao vivo…'
+										: `Ao vivo fechado${vnc.reason ? `: ${vnc.reason}` : ''}`}</span
+								>
+							</div>
+						{/if}
+					{:else if running && shotAt}
+						<img
+							class="shot-img"
+							src={microbotApi.screenshotURL(shotAt)}
+							alt="Tela do cliente do jogo"
+							onload={() => (shotOk = true)}
+							onerror={() => (shotOk = false)}
+						/>
+					{/if}
+					{#if bankOpen && game}<GameBank view={game} />{/if}
+					{#if !showLive && (!running || !shotOk) && !bankOpen}
+						<div class="ph">
+							<Glyph name="automacao" size={22} />
+							<span
+								>{!status
+									? 'Lendo o cliente…'
+									: !agent
+										? 'Nenhum cliente ligado a esta conta. Inicie o worker no cabeçalho, ou rode o agent no zaros.'
+										: running
+											? 'Carregando a tela…'
+											: '“Iniciar o cliente” abre o jogo na tela de login.'}</span
 							>
 						</div>
 					{/if}
-				</div>
-			</section>
-
-			{#if inGame && game}
-				<JogoView view={game} />
-			{/if}
-
-			{#if status?.agent.connected}
-				<ClientLog />
-			{/if}
-
-			<section class="panel">
-				<div class="plaque">Estado · GET /state<span class="r">a cada 3 s</span></div>
-				<div class="pad grid2">
-					{#each rows as r (r.k)}
-						<div class="kv"><span class="k">{r.k}</span><span class="val mono">{r.v}</span></div>
-					{:else}
-						<span class="su sm0"
-							>{running ? 'Sem estado ainda.' : 'O cliente não está rodando.'}</span
+					{#if running && !(inGame && gameMenu.selected)}
+						<div class="hud">
+							{#if currentWorld}<span>mundo {currentWorld}</span>{/if}
+							{#if pos}<span>{pos.x}, {pos.y}{wide ? `, ${pos.plane}` : ''}</span>{/if}
+							<span>{viewHint}{client?.headless ? '' : ' · com janela'}</span>
+						</div>
+					{/if}
+					{#if inGame && game}
+						{#if gameMenu.selected}
+							<!-- O texto do topo do jogo enquanto algo está selecionado. -->
+							<div class="uptext" role="status">
+								<span>{selectedLabel(gameMenu.selected)}</span>
+								<button type="button" onclick={cancelSelection}>Cancel</button>
+							</div>
+						{/if}
+						<button
+							class="orb"
+							type="button"
+							title="Mapa do mundo: clique num lugar para andar até ele"
+							aria-label="Mapa do mundo"
+							onclick={() => (gameMap.open = true)}
+							><img src={miscIcon('world_map')} alt="" /></button
 						>
-					{/each}
+					{/if}
 				</div>
-			</section>
-		</div>
+				{#if inGame && game}<Chatbox view={game} />{/if}
+				{#if showLive}
+					<div class="under">
+						<span
+							>{intervene
+								? 'Mouse e teclado vão para o jogo. Um script rodando disputa o input com você.'
+								: 'Abrir a tela ao vivo fica registrado.'}</span
+						>
+						<button
+							class="btn btn-s"
+							class:btn-g={!intervene}
+							type="button"
+							disabled={vnc.phase !== 'connected'}
+							onclick={() => (intervene = !intervene)}
+							>{intervene ? 'Devolver: só olhar' : 'Intervir com mouse e teclado'}</button
+						>
+					</div>
+				{/if}
+			</div>
+			{#if inGame && game}<SidePanel view={game} />{/if}
+		</section>
 
-		<aside class="side-col">
-			{#if status?.agent.connected}
-				<Relogios {running} />
-				{#if running}
-					<FazerAgora
-						{loggedIn}
+		{#if running}
+			<aside class="side">
+				<div class="wide-only">
+					<ScriptCard
+						{scripts}
+						view={game}
+						{paused}
 						onchange={() => {
-							runsVersion++;
-							void refreshAudit();
-							void refreshGame();
+							void refresh();
+							void refreshScripts();
 						}}
 					/>
-				{/if}
-				<HistoricoRuns version={runsVersion} />
-			{/if}
-			<section class="panel" id="auditoria">
-				<div class="plaque">Auditoria<span class="r">quem · quando · o quê</span></div>
-				<div class="pad">
-					{#each audit as e (e.id)}
-						<div class="log" class:fail={!e.ok}>
-							<span class="t">{hhmm(e.at)}</span><span class="who">{auditWho(e)}</span><span
-								>{auditLine(e)}</span
-							>
-						</div>
-					{:else}
-						<span class="su sm0">Nenhuma ação ainda.</span>
-					{/each}
 				</div>
-			</section>
-			{#if status?.agent.connected}
-				<ClientAccount {running} onchange={refreshAudit} />
-			{/if}
-			<p class="su tiny">
-				Cliente de terceiros, fora do planner. Parar tudo: Ctrl+C no <code>chronicle agent</code> no zaros.
-				Login derruba o mesmo personagem de outro cliente.
-			</p>
-		</aside>
+				{#if inGame && game}
+					<NearCard view={game} walk={wide} />
+					<div class="wide-only"><BankCard view={game} /></div>
+				{/if}
+			</aside>
+		{/if}
 	</div>
+	<p class="foot">{ICON_ATTRIBUTION}. Cliente de terceiros, fora do planner.</p>
 {/if}
 
 <GameMenu />
-{#if gameMap.open}<WorldMap me={game?.observe?.player?.position ?? pos} />{/if}
+{#if gameMap.open}<WorldMap me={pos} />{/if}
 
 <style>
-	.mh {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 10px 16px;
+	/* Not `.st`: that global class is the step-status circle. */
+	.strip7 .stnow {
+		min-width: 0;
 	}
-	.modes {
+	.strip7 .stnow b {
+		font-weight: 600;
+	}
+	.push {
 		margin-left: auto;
 	}
 	.seg button:disabled {
 		opacity: 0.55;
 		cursor: not-allowed;
-	}
-	.kv {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-	}
-	.kv .k {
-		font:
-			500 10px 'JetBrains Mono',
-			monospace;
-		letter-spacing: 0.06em;
-		text-transform: uppercase;
-		color: var(--ink-subtle);
-	}
-	.kv .val {
-		font-size: 13px;
-		font-weight: 500;
-		font-variant-numeric: tabular-nums;
-	}
-	.kv .val.mono {
-		font-size: 12px;
-	}
-	.strip {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 10px 24px;
-		padding: 10px 16px;
-	}
-	.strip .dot {
-		display: inline-block;
-		margin-right: 6px;
-	}
-	.acts {
-		margin-left: auto;
-		display: flex;
-		gap: 8px;
-		flex-wrap: wrap;
-		align-items: center;
-	}
-	.world {
-		width: 76px;
-		height: 32px;
-		box-sizing: border-box;
-		padding: 0 8px;
-		border-radius: 4px;
-		border: 1px solid var(--border);
-		background: var(--ground);
-		color: var(--ink);
-		font:
-			400 12px 'JetBrains Mono',
-			monospace;
-	}
-	.btn-d {
-		border-color: var(--not-started);
-		color: var(--not-started);
 	}
 	.cols {
 		display: flex;
@@ -553,92 +484,33 @@
 		gap: 20px;
 		align-items: flex-start;
 	}
-	.main {
-		flex: 999 1 520px;
+	.g-cl {
+		flex: 999 1 600px;
+		min-width: 0;
+	}
+	.side {
+		flex: 1 1 280px;
+		max-width: 320px;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 18px;
 	}
-	.side-col {
-		flex: 1 1 300px;
-		max-width: 360px;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-	}
-	.pad {
-		padding: 12px;
-	}
-	.grid2 {
-		display: grid;
-		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 10px 16px;
-	}
-	.client {
-		display: flex;
-		gap: 10px;
-		align-items: stretch;
-	}
-	.vp {
-		flex: 1 1 auto;
-		min-width: 0;
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-	@media (max-width: 900px) {
-		.client.game {
-			flex-direction: column;
-		}
-	}
-	.shot {
-		position: relative;
-		aspect-ratio: 765 / 503;
-		background: var(--frame);
-		border-radius: 4px;
-		overflow: hidden;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
-	.shot img {
+	.g-vp .shot-img {
 		position: absolute;
 		inset: 0;
 		width: 100%;
 		height: 100%;
 		object-fit: contain;
 	}
-	.under {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px;
-		align-items: center;
-		justify-content: space-between;
-		padding-top: 10px;
-	}
-	.shot .ph {
+	.g-vp .ph {
 		position: relative;
 		display: flex;
 		flex-direction: column;
 		align-items: center;
 		gap: 8px;
-		color: var(--on-frame-muted);
-		font-size: 12px;
-		text-align: center;
-		padding: 0 16px;
-	}
-	.shot .hud {
-		position: absolute;
-		left: 10px;
-		top: 10px;
-		display: flex;
-		gap: 6px;
-		flex-wrap: wrap;
-	}
-	.shot .hud.hidden {
-		display: none;
+		padding: 0 24px;
+		max-width: 46ch;
 	}
 	/* O texto do topo do jogo: "Use Lobster ->" em branco sobre a tela, com sombra preta. */
 	.uptext {
@@ -689,60 +561,32 @@
 		max-height: 24px;
 		image-rendering: pixelated;
 	}
-	.shot .hud span {
-		background: rgba(0, 0, 0, 0.55);
-		color: var(--on-frame);
-		font:
-			500 11px 'JetBrains Mono',
-			monospace;
-		padding: 3px 7px;
-		border-radius: 2px;
-	}
-	.log {
+	.under {
 		display: flex;
-		gap: 10px;
-		align-items: flex-start;
-		padding: 6px 0;
-		border-bottom: 1px solid var(--hairline);
-		font-size: 12px;
-	}
-	.log .t {
-		font:
-			400 11px 'JetBrains Mono',
-			monospace;
-		color: var(--ink-subtle);
-		width: 46px;
-		flex: 0 0 auto;
-		padding-top: 1px;
-	}
-	.log .who {
-		font:
-			500 10px 'JetBrains Mono',
-			monospace;
-		letter-spacing: 0.04em;
-		text-transform: uppercase;
-		color: var(--ink-subtle);
-		width: 54px;
-		flex: 0 0 auto;
-		padding-top: 2px;
-	}
-	.log.fail span:last-child {
-		color: var(--not-started);
-	}
-	.sm0 {
-		margin: 0;
-		font-size: 13px;
-	}
-	.tiny {
+		flex-wrap: wrap;
+		gap: 8px;
+		align-items: center;
+		justify-content: space-between;
 		font-size: 11px;
-		margin: 0;
+		color: var(--on-frame-muted);
 	}
-	@media (max-width: 900px) {
-		.modes {
-			margin-left: 0;
+	.foot {
+		font-size: 11px;
+	}
+	/* V7Cliente640: a tela, o chat e o painel de itens empilhados; Por perto embaixo. */
+	@media (max-width: 700px) {
+		.g-cl {
+			flex-direction: column;
 		}
-		.side-col {
+		.g-vp {
+			aspect-ratio: auto;
+			min-height: 380px;
+		}
+		.side {
 			max-width: none;
+		}
+		.wide-only {
+			display: none;
 		}
 	}
 </style>

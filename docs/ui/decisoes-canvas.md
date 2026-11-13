@@ -267,7 +267,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 
 | Para | Falta |
 |---|---|
-| "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; falta a web usar |
+| "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; a web usa desde a V2 (seção 7.10) |
 | XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | **feito no servidor** (2026-11-13): `GET /api/account/rhythm?account=&since=` e, da frota com os totais, `GET /api/rhythm?since=`, derivados dos snapshots (`internal/core/rhythm`): a skill que treina (a que mais ganhou nos últimos 30 min, parada depois de 10 min sem ganho) com XP/h e o tempo até o próximo nível; a sessão (fim numa pausa de 20 min entre pushes do plugin); o dia por skill desde `since` (a meia-noite do navegador); GP = moedas e platinum tokens no banco e no inventário, com o ganho do dia. Os ganhos de item da sessão também (2026-11-13): `session.gained`, o que a conta tem a mais desde o começo da sessão, somando banco, inventário e equipamento (a forma noted junto da normal), e `session.running_out`, o que a sessão vai gastando e quando acaba nesse ritmo ("feathers acabam em 3 h"); os dois são `null` sem o banco e o inventário conhecidos nas duas pontas. O "Até a pausa" vem do Break Handler pela ponte (`/bridge/break`, PR #28, no `status` do cliente); falta a web usar |
 | Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); rotinas recorrentes pelo relógio: **feitas na API** (doc 11, seção 16.4; `GET`/`POST`/`DELETE /api/microbot/recurring`), a tela da fila ainda não foi desenhada; falta a noção de atividade principal por conta |
 | Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). A web usa tudo isso desde a V7 (seção 7.9) |
@@ -284,9 +284,9 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | Fatia | Entrega | Depende de |
 |---|---|---|
 | V1 | Casca: Frota em `/` com o que a API já tem, cabeçalho da conta com as cinco abas apontando para as telas atuais, Nova conta no lugar do `/setup`, barra lateral e barra de 640 px, estados vazios | nada |
-| V2 | Conta › Rota: Passo, Rota inteira e Comparar numa aba; objetivo com progresso, passo a passo com caixas, marca de banco na linha | o valor observado no board |
-| V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada |
-| V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada |
+| V2 | Conta › Rota: Passo, Rota inteira e Comparar numa aba; objetivo com progresso, passo a passo com caixas, marca de banco na linha | o valor observado no board. **Feita** (2026-11-13, seção 7.10) |
+| V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada. **Feita** (2026-11-13, seção 7.11) |
+| V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada. **Feita** (2026-11-13, seção 7.12) |
 | V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
 | V6 | Rotinas e Fila | doc 11, F6 |
 | V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor). **Feita** (2026-11-13, seção 7.9) |
@@ -499,3 +499,125 @@ Divergências dos artboards:
 
 Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (a lógica das duas telas em `historico.ts` e
 `atividade.ts`, com `node --test`) e `pnpm build`; sem captura de tela nesta fatia.
+
+### 7.10 Implementação: V2, Conta › Rota (2026-11-13)
+
+Artboards seguidos: `V7Rota1440`, `V7Rota640` e `V7RotaLista1440` (página 8), na aba Rota: o Passo em
+`/agora`, a Rota inteira em `/rotas/<guia>/<seção>` e Comparar em `/compare`, que não tem artboard na v7
+e segue `V6Comparar1440` com a barra nova em cima. A barra da rota (seletor, capítulo com o andamento,
+Passo | Rota inteira | Comparar e Sincronizar) substitui as abas antigas.
+
+Divergências do artboard:
+
+1. **GP e tempo do guia** saem das notas do BRUHsailer ("GP after step", "Total time"); a Oziris não
+   tem, e no lugar o cabeçalho diz onde o passo é.
+2. **"240 / 1.250"** só aparece quando o board traz o valor observado; sem ele, o objetivo fica com a
+   quantidade no nome e só o veredito.
+3. **O anel de ouro** vai na primeira ação que falta (`unmet`). No artboard ele está numa ação "não
+   sabemos", que nunca vira falta.
+4. **O passo a passo com caixas** só existe nos passos-parágrafo do BRUHsailer com mais de uma ação.
+5. **Ficam da v6**, sem desenho na v7: as notas do autor e os links no cartão do passo; os grupos Requer
+   e Usa; a prévia de Levar do banco (15, 30 ou até o banco) e os estados dele ("espelho restaurado",
+   "sem leitura do plugin"); a faixa de fonte do hiscores; Rota concluída; o diálogo de Fixar outro
+   passo. O passo sem objetivo segue `V7Estados1440`.
+6. **Aqui perto** só aparece com a posição do plugin (a opção "Send position" do Chronicle Link) e
+   **Relógios** some sem relógio contando.
+7. **Seletor de rotas:** o artboard só desenha o botão. O menu traz cada rota com o andamento, onde ela
+   está e Tornar ativa; o Passo mostra sempre a rota ativa.
+8. **Em seguida** fica no capítulo do passo: no último passo de um capítulo, a lista some.
+9. **Levar do banco** a 640 tem o arranjo da 1440 (o artboard põe a grade antes e o texto numa linha).
+10. **Rota inteira:** a linha abre por dentro, como na v6, em vez de levar ao Passo; a janela tem 3
+    passos antes do atual e 10 depois (o artboard, 1 e 7); "quem fez" vem das últimas 60 marcas, e as
+    mais antigas ficam sem; ficam da v6 a faixa "Você está em", a busca em outros capítulos, os
+    presumidos e as camadas Enhanced e HCIM.
+11. **Comparar** fica com a barra sem capítulo nem andamento.
+
+Conferido com os testes de `node --test` da lógica da tela (`objetivo.ts`, `rota.ts`, `agora.ts`,
+`relogios.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.
+
+### 7.11 Implementação: V3, Conta › Cliente (2026-11-13)
+
+Artboards seguidos: `V7Cliente1440` e `V7Cliente640` (página 8), na aba Cliente (`/automacao`), que só
+existe com o módulo do Microbot ligado no servidor. O Cockpit da v6 vira a aba: a faixa com o estado do
+cliente, Imagem | Ao vivo, o mundo e as ações; o aviso de script jogando com Pausar o script; o jogo no
+centro (a tela, o chat e o painel de itens com o menu do jogo, e o banco aberto no lugar da tela); ao
+lado, os cartões Script, Por perto e Banco. A 640 empilha a tela, o chat, o painel e Por perto, sem ao
+vivo e sem trocar de mundo. Os menus do jogo (Choose Option, Usar em, o mapa do mundo) seguem a v6
+(`V6MicrobotClienteEstados1440`, `V6MicrobotUsarEm1440`, `V6MicrobotMapa1440`), como diz a seção 7.2.
+
+Saem do Cliente o painel "Estado · GET /state" e a faixa de cartões Cliente, Conta e Agent (texto de
+sistema): a posição e o mundo ficam no HUD da tela.
+
+Divergências do artboard:
+
+1. **Faixa:** sem o nome do lugar ("Barbarian Outpost"), porque o servidor não traduz coordenadas em
+   lugar; o HUD diz "imagem a cada 5 s" no lugar da idade da imagem. **Iniciar o cliente** e **Parar o
+   cliente** continuam na faixa: com o agent anexado (zaros), sem worker, o cabeçalho não tem Parar.
+2. **Script:** sem o sprite da skill, porque não se sabe qual skill um plugin treina, e sem "sem erros",
+   porque o heartbeat não conta erros (quando ele falta, a linha diz "sem heartbeat"). Pausar pausa
+   todos os scripts, que é o que o Agent Server faz. **Configurar** leva aos plugins deste cliente
+   (`/automacao/plugins`), porque Rotinas (V6) ainda não existe.
+3. **Por perto:** sem o tipo "ponto": no jogo, o fishing spot é um NPC.
+4. **O que o Cockpit tinha e o artboard não põe no Cliente** vai, provisório, para a Visão geral:
+   Relógios e Fazer agora num cartão no lugar da Fila (até a V6), as últimas execuções, as ações no
+   cliente (a antiga Auditoria, até o Histórico da V7) e o log e a conta do cliente, atrás de botões no
+   cartão Worker (a conta do cliente só com o agent anexado).
+
+Conferido com os testes de `node --test` da lógica da tela (`jogo.ts`, com as linhas do cartão Script, e
+`automacao.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.
+
+### 7.12 Implementação: V4, Conta › Personagem e Visão geral (2026-11-13)
+
+Artboards seguidos: `V7Personagem1440` na aba Personagem (`/conta`) e `V7Conta1440` na Visão geral
+(`/visao`), com o que o servidor já tem. O ritmo fica para a V5, sem lugar reservado na tela.
+
+**Personagem:** o resumo (total, combat, quests com os QP, diaries, combat achievements e collection
+log; sem leitura, a célula some), Skills com a barra até o próximo nível, Quests com busca e Em
+andamento | Feitas | Faltam, Diaries com as quatro bolinhas por área, Com ela agora (equipado e
+inventário), Conquistas (os tiers de combat achievements e o collection log) e Banco com busca. Cada
+cartão diz a fonte e a idade da leitura. Saem da tela da v6 o botão Sincronizar hiscores (fica na barra
+da Rota), o cartão Fontes (as fontes ficam na barra lateral e em cada cartão), a ordem do banco e o
+boneco do equipamento.
+
+Divergências do artboard, no Personagem:
+
+1. **O que subiu hoje** (as skills em verde e a frase embaixo da grade) entra com a V5, junto do cartão
+   Hoje; a explicação da barra foi para o `title` de cada skill.
+2. **Quests:** "3 de 10 partes" não existe, porque o plugin só diz se a quest foi iniciada.
+3. **Diaries:** clicar numa área abre, no painel da entidade, o primeiro tier que falta; o artboard não
+   desenha o clique.
+4. **Banco:** sem o valor em GP ("vale cerca de 6,1M gp"), porque o servidor não tem preço de item. O
+   cartão mostra 48 itens e "ver o banco inteiro" abre o resto; com a leitura de mais de um dia, ele
+   ganha o aviso do estado "Dado velho" de `V7Estados1440`.
+5. **Com ela agora:** "ao vivo" só com uma leitura de menos de 5 min; depois diz "lido há", e o espelho
+   restaurado diz "espelho".
+6. **Conquistas:** Master e Grandmaster só ganham barra quando têm algum feito; antes, a nota diz que
+   estão sem nada, como no artboard. As páginas do collection log que o plugin já manda ficam fora, sem
+   desenho.
+7. Esta tela não tem 640 px no canvas; os cartões quebram em coluna.
+
+**Visão geral:** Fazendo agora (a tela do jogo a cada 5 s, que abre o Cliente, com o mundo e a posição;
+no título, o script que joga, o estado da state machine e as voltas), só com o cliente rodando, e ao lado
+o cartão provisório de Relógios e Fazer agora (seção 7.11) no lugar da Fila; sem cliente, esse cartão
+fica entre a Rota e o Worker. A Rota com o andamento, o passo atual e até dois objetivos. O Worker com o
+pod, a versão, o uso (CPU e memória, doc 11, F7), a sessão e o plugin, e Reiniciar, Log do cliente e
+Conta do cliente. Embaixo, as Últimas execuções.
+
+Divergências do artboard, na Visão geral:
+
+1. **Fazendo agora** fica sem a barra da skill que ela treina, XP por hora, Nesta sessão, Até a pausa e
+   Ganhou nesta sessão, e o cartão **Hoje** não aparece: entram com a V5 (o servidor já mede, seção
+   7.4). Sem cliente rodando, o cartão some; o cabeçalho já diz Parada ou Só acompanhada.
+2. **Fila:** o cartão provisório de Relógios e Fazer agora fica até as rotinas (V6), sem Pôr na fila nem
+   Editar rotinas. Pela mesma razão, a Rota não diz "feito à mão, fora da fila".
+3. **Worker:** sem FPS, que não é medido, e sem Mover para o zaros, que não existe. "De pé há" vira
+   "pedido há", porque o servidor guarda quando o worker foi pedido, não quando o pod subiu. Conta do
+   cliente só aparece com o agent anexado.
+4. **Últimas execuções:** o título diz quantas estão guardadas, no lugar de "ver o histórico completo"
+   (o Histórico é a V7), e as linhas não têm o sprite da atividade.
+5. **Ações no cliente** (a antiga Auditoria) num cartão embaixo, sem desenho na v7, até o Histórico.
+6. **Fontes:** o cartão da V1 sai, como no artboard; o botão da faixa de fonte da Rota leva ao
+   Personagem.
+
+Conferido com os testes de `node --test` da lógica das telas (`personagem.ts` e `workerFacts` em
+`workers.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.

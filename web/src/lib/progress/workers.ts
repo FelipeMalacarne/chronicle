@@ -182,3 +182,79 @@ export const ACTION_CONFIRM: Record<WorkerActionKind, string> = {
 	stop: 'Parar e sair do jogo?',
 	restart: 'Reiniciar e sair do jogo?'
 };
+
+export interface WorkerFact {
+	k: string;
+	v: string;
+	/** A tag da imagem, em mono antes do texto. */
+	mono?: string;
+	bad?: boolean;
+}
+
+const cores = (c: number) => c.toLocaleString('pt-BR', { maximumFractionDigits: 2 });
+const mib = (b: number) => Math.round(b / (1024 * 1024)).toLocaleString('pt-BR');
+
+/**
+ * O cartão Worker da Visão geral (V7Conta1440): o pod, a versão, o uso, a sessão e o plugin. Sem
+ * dado, a linha some; o FPS do artboard não é medido.
+ */
+export function workerFacts(
+	row: WorkerRow | undefined,
+	line: WorkerLine | undefined,
+	plugin: { at?: string; bridge?: string },
+	now = Date.now()
+): WorkerFact[] {
+	const out: WorkerFact[] = [];
+	if (row?.pod) {
+		const st = POD_STATES[row.pod.state];
+		const restarts = row.pod.restarts
+			? `${row.pod.restarts} ${row.pod.restarts === 1 ? 'reinício' : 'reinícios'}`
+			: 'sem reinícios';
+		out.push({
+			k: 'Pod',
+			v: [
+				st?.label ?? row.pod.state,
+				row.pod.reason ?? '',
+				row.started_at ? `pedido ${when(row.started_at, now)}` : '',
+				restarts
+			]
+				.filter(Boolean)
+				.join(' · '),
+			bad: st?.tone === 'warn'
+		});
+	} else if (line?.runtime === 'anexado') {
+		out.push({ k: 'Onde', v: `${line.host} · anexado` });
+	} else if (line) {
+		out.push({ k: 'Estado', v: line.state, bad: line.tone === 'warn' });
+	}
+	if (row?.last_error) out.push({ k: 'Erro', v: row.last_error, bad: true });
+	const tag = row?.pod || row?.desired === 'running' ? imageTag(row.pod?.image ?? row.image) : '';
+	if (tag) out.push({ k: 'Versão', mono: tag, v: row?.outdated ? 'versão antiga' : 'atual' });
+	if (row?.usage)
+		out.push({
+			k: 'Uso',
+			v: `${cores(row.usage.cpu_cores)} núcleo · ${mib(row.usage.memory_bytes)} MB`
+		});
+	if (row) {
+		const s = row.session;
+		if (!s) out.push({ k: 'Sessão', v: 'sem sessão do jogo', bad: true });
+		else {
+			const login = s.login_failed
+				? `último login recusado${s.last_login_result ? `: ${s.last_login_result}` : ''}`
+				: s.last_login_result
+					? `último login ${s.last_login_result}`
+					: 'ainda não usada';
+			out.push({
+				k: 'Sessão',
+				v: `enviada ${when(s.pushed_at, now)} · ${login}`,
+				bad: !!s.login_failed
+			});
+		}
+	}
+	if (plugin.at)
+		out.push({
+			k: 'Plugin',
+			v: `Chronicle Link${plugin.bridge ? ` ${plugin.bridge}` : ''} · envio ${when(plugin.at, now)}`
+		});
+	return out;
+}

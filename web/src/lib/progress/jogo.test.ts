@@ -20,10 +20,40 @@ import {
 	invSlots,
 	machineRows,
 	nearRows,
+	scriptRows,
 	skillCells,
 	tiles
 } from './jogo.ts';
 import type { GameView } from '../api/microbot.ts';
+
+test('scriptRows lists the plugins that play, with the machine state and the loops', () => {
+	const scripts = [
+		{ name: 'Tick Fisher', className: 'net.x.fm.tickfisher.TickFisherPlugin', active: true },
+		{ name: 'Break Handler', className: 'net.x.breakhandler.BreakHandlerPlugin', active: true },
+		{ name: 'Blackjacker', className: 'net.x.fm.bj.BlackjackerPlugin', active: false }
+	];
+	const v: GameView = {
+		observe: {
+			scripts: [{ scriptClassName: 'net.x.fm.tickfisher.TickFisherScript', loopCount: 1820 }]
+		},
+		machines: { count: 1, scripts: [{ name: 'tick', currentState: 'FISHING' }] }
+	};
+	assert.deepEqual(scriptRows(scripts, v), [
+		{
+			name: 'Tick Fisher',
+			className: 'net.x.fm.tickfisher.TickFisherPlugin',
+			detail: 'fishing · 1.820 voltas'
+		}
+	]);
+	const paused: GameView = {
+		observe: {
+			scriptsPaused: true,
+			scripts: [{ scriptClassName: 'net.x.fm.tickfisher.TickFisherScript', status: 'NO_HEARTBEAT' }]
+		}
+	};
+	assert.equal(scriptRows(scripts, paused)[0].detail, 'pausado · sem heartbeat');
+	assert.deepEqual(scriptRows([], null), []);
+});
 
 const view: GameView = {
 	observe: {

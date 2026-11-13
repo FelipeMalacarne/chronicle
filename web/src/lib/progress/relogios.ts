@@ -96,3 +96,11 @@ export function recurringRows(timers: Timer[], now: number): RecurringRow[] {
 			return { key: r.key, label: r.label, ready, when, at: r.at };
 		});
 }
+
+/**
+ * O sprite de um relógio do Time Tracking nos cartões da v7 (V7Rota1440, V7Fundamentos): a casa de
+ * pássaro para as bird houses, a skill de Farming para os canteiros.
+ */
+export function timerRef(key: string): string {
+	return key === 'BIRD_HOUSE' ? 'item:21512' : 'skill:farming';
+}

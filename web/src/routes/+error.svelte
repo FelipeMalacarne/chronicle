@@ -8,7 +8,7 @@
 	<h1 class="sr">{page.status === 404 ? 'Página não encontrada' : 'Algo deu errado'}</h1>
 	{#if page.error?.message}<p class="mu">{page.error.message}</p>{/if}
 </header>
-<a class="btn btn-s" href={resolve('/agora')}>Voltar para Agora</a>
+<a class="btn btn-s" href={resolve('/')}>Voltar para a Frota</a>
 
 <style>
 	.head {

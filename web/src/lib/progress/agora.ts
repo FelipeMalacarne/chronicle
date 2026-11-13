@@ -54,3 +54,9 @@ export function rowChip(chips: Chip[]): { chip: Chip | null; more: number } {
 	const sorted = [...chips].sort((a, b) => (RANK[a.role] ?? 9) - (RANK[b.role] ?? 9));
 	return { chip: sorted[0], more: chips.length - 1 };
 }
+
+/** Os `n` primeiros objetivos da linha da rota inteira da v7 (ícones) e quantos sobram ("+N"). */
+export function rowChips(chips: Chip[], n: number): { shown: Chip[]; more: number } {
+	const sorted = [...chips].sort((a, b) => (RANK[a.role] ?? 9) - (RANK[b.role] ?? 9));
+	return { shown: sorted.slice(0, n), more: Math.max(0, chips.length - n) };
+}

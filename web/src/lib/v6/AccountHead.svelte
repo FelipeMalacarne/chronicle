@@ -110,11 +110,7 @@
 	const onRoute = $derived(
 		path.startsWith('/agora') || path.startsWith('/rotas') || path.startsWith('/compare')
 	);
-	const views = $derived([
-		{ href: resolve('/agora'), label: 'Passo', on: path.startsWith('/agora') },
-		{ href: resolve('/rotas'), label: 'Rota inteira', on: path.startsWith('/rotas') },
-		{ href: resolve('/compare'), label: 'Comparar', on: path.startsWith('/compare') }
-	]);
+	// Passo | Rota inteira | Comparar ficam na barra da própria aba Rota (RouteBar, V7Rota1440).
 	const tabs = $derived([
 		{ href: resolve('/visao'), label: 'Visão geral', on: path.startsWith('/visao') },
 		{ href: resolve('/agora'), label: 'Rota', on: onRoute },
@@ -181,13 +177,6 @@
 	{#each tabs as t (t.label)}
 		<a class:on={t.on} href={t.href} aria-current={t.on ? 'page' : undefined}>{t.label}</a>
 	{/each}
-	{#if onRoute}
-		<span class="views" role="group" aria-label="Como ver a rota">
-			{#each views as v (v.label)}
-				<a class:here={v.on} href={v.href} aria-current={v.on ? 'page' : undefined}>{v.label}</a>
-			{/each}
-		</span>
-	{/if}
 	<!-- eslint-enable svelte/no-navigation-without-resolve -->
 </nav>
 
@@ -386,22 +375,6 @@
 		background: var(--frame);
 		color: var(--gold);
 		box-shadow: var(--bevel-frame);
-	}
-	.views {
-		margin-left: auto;
-		display: inline-flex;
-		align-items: center;
-		gap: 2px;
-	}
-	.atabs .views a {
-		height: 30px;
-		padding: 0 10px;
-		border-radius: 4px;
-		font-size: 12px;
-	}
-	.atabs .views a.here {
-		background: var(--gold-tint);
-		color: var(--ink);
 	}
 	@media (max-width: 900px) {
 		.hero {

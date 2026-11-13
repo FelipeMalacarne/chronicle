@@ -53,9 +53,10 @@
 	}
 </script>
 
-<section class="panel">
-	<div class="plaque">
-		Conta do cliente<span class="r">mb-account</span>
+<section class="card">
+	<div class="h">
+		<h2>Conta do cliente</h2>
+		<span>vale no próximo início</span>
 	</div>
 	<div class="pad stack">
 		{#if !acc}

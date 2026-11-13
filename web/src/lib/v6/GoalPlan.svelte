@@ -153,8 +153,8 @@
 					class="btn btn-p"
 					type="button"
 					disabled={busy}
-					title={`Fixa no Agora o próximo requisito disponível, na ordem da rota ativa: ${next.label} (${where(next.step)})`}
-					onclick={pinNext}>Fixar próximo disponível no Agora</button
+					title={`Fixa como passo atual da rota ativa o próximo requisito disponível, na ordem da rota: ${next.label} (${where(next.step)})`}
+					onclick={pinNext}>Fixar o próximo disponível</button
 				>
 			{/if}
 			<button class="btn btn-g" type="button" onclick={() => openEntity(goal.ref)}

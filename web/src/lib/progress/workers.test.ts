@@ -2,7 +2,7 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
 import type { WorkerRow, WorkersView } from '../api/microbot.ts';
-import { actionLabel, imageTag, workerLine, workerLines } from './workers.ts';
+import { actionLabel, imageTag, workerFacts, workerLine, workerLines } from './workers.ts';
 
 const now = Date.parse('2026-11-12T18:00:00Z');
 
@@ -230,4 +230,48 @@ test('a pod the quota blocks has no room; usage rides along', () => {
 		).noRoom,
 		false
 	);
+});
+
+test('workerFacts: pod, version, usage, session and plugin, each only when known', () => {
+	const r = row({
+		desired: 'running',
+		started_at: '2026-11-12T15:50:00Z',
+		pod: {
+			deployment: 'w',
+			state: 'running',
+			image: 'ghcr.io/x/chronicle-worker:f98dadb',
+			restarts: 0,
+			seen: ''
+		},
+		usage: { cpu_cores: 0.31, memory_bytes: 870 * 1024 * 1024, measured_at: '' },
+		session: {
+			account_id: 'acc_a',
+			character: 'Iron A',
+			key_id: 'k',
+			pushed_at: '2026-11-09T18:00:00Z',
+			pushed_by: 'u',
+			last_login_result: 'ok'
+		}
+	});
+	const line = workerLine(r, on, [], now);
+	assert.deepEqual(workerFacts(r, line, { at: '2026-11-12T17:59:48Z', bridge: '1.12' }, now), [
+		{ k: 'Pod', v: 'pod de pé · pedido há 2 h · sem reinícios', bad: false },
+		{ k: 'Versão', mono: 'f98dadb', v: 'atual' },
+		{ k: 'Uso', v: '0,31 núcleo · 870 MB' },
+		{ k: 'Sessão', v: 'enviada há 3 d · último login ok', bad: false },
+		{ k: 'Plugin', v: 'Chronicle Link 1.12 · envio agora há pouco' }
+	]);
+	const expired = row({
+		session: { ...r.session!, login_failed: true, last_login_result: 'Account locked' }
+	});
+	assert.deepEqual(workerFacts(expired, workerLine(expired, on, [], now), {}, now), [
+		{ k: 'Estado', v: 'parado', bad: false },
+		{ k: 'Sessão', v: 'enviada há 3 d · último login recusado: Account locked', bad: true }
+	]);
+	const none = row({ session: null, last_error: 'bootstrap failed' });
+	assert.deepEqual(
+		workerFacts(none, undefined, { at: '2026-11-12T17:00:00Z' }, now).map((f) => f.k),
+		['Erro', 'Sessão', 'Plugin']
+	);
+	assert.deepEqual(workerFacts(undefined, undefined, {}, now), []);
 });

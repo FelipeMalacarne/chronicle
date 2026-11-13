@@ -1,6 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { clockRows, duration, recurringRows } from './relogios.ts';
+import { clockRows, duration, recurringRows, timerRef } from './relogios.ts';
+
+test('timerRef: bird houses by their sprite, patches by Farming', () => {
+	assert.equal(timerRef('BIRD_HOUSE'), 'item:21512');
+	assert.equal(timerRef('HERB'), 'skill:farming');
+});
 
 test('duration reads like the cockpit', () => {
 	assert.equal(duration(0), '<1 min');

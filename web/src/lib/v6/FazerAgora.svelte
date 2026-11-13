@@ -19,7 +19,16 @@
 	 * 3; artboard V6MicrobotSozinho1440) salva as escolhas como gatilho: o agent faz o mesmo run quando
 	 * o filhote cresce, mesmo com o cockpit fechado.
 	 */
-	let { loggedIn, onchange }: { loggedIn: boolean; onchange?: () => void } = $props();
+	let {
+		loggedIn,
+		onchange,
+		bare = false
+	}: {
+		loggedIn: boolean;
+		onchange?: () => void;
+		/** Dentro de outro cartão (o provisório da Visão geral): sem o cartão próprio. */
+		bare?: boolean;
+	} = $props();
 
 	let rows = $state<PluginRow[]>([]);
 	let run = $state<Run | null>(null);
@@ -168,145 +177,161 @@
 	const outcome = runOutcome;
 </script>
 
-<section class="panel">
-	<div class="plaque">Fazer agora<span class="r">para, roda e volta</span></div>
-	<div class="pad stack">
-		{#if going && run}
-			<div class="now">
-				<span class="dot go" aria-hidden="true"></span>
-				<span class="nm"
-					>{nameOf(run.className)}{#if run.trigger}<span class="su tag">sozinho</span>{/if}</span
-				>
-				<span class="st">{RUN_LABEL[run.state]}</span>
-			</div>
-			<ol class="trail">
-				{#each run.events.slice(-6) as ev, i (i)}
-					<li><span class="t">{hhmm(ev.at)}</span>{ev.text}</li>
+{#snippet body()}
+	{#if going && run}
+		<div class="now">
+			<span class="dot go" aria-hidden="true"></span>
+			<span class="nm"
+				>{nameOf(run.className)}{#if run.trigger}<span class="su tag">sozinho</span>{/if}</span
+			>
+			<span class="runst">{RUN_LABEL[run.state]}</span>
+		</div>
+		<ol class="trail">
+			{#each run.events.slice(-6) as ev, i (i)}
+				<li><span class="t">{hhmm(ev.at)}</span>{ev.text}</li>
+			{/each}
+		</ol>
+		<button
+			class="btn btn-s self"
+			class:btn-d={armed === 'cancel'}
+			type="button"
+			onclick={cancel}
+			title="Para o plugin que está rodando; o principal continua parado"
+			>{armed === 'cancel' ? 'Confirmar: cancelar' : 'Cancelar'}</button
+		>
+	{:else}
+		<label class="fld">
+			<span class="k">Rodar</span>
+			<select bind:value={pick} disabled={!options.length}>
+				{#each options as o (o.className)}
+					<option value={o.className}>{o.name}</option>
+				{:else}
+					<option value="">nenhum plugin seu ou do Hub</option>
 				{/each}
-			</ol>
+			</select>
+		</label>
+		<div class="fld">
+			<span class="k">Parar durante e religar depois</span>
+			{#each stops as s (s.row.className)}
+				<label class="chk">
+					<input
+						type="checkbox"
+						checked={s.checked}
+						onchange={(e) => (unchecked[s.row.className] = !e.currentTarget.checked)}
+					/>{s.row.name}
+					{#if /kitten/i.test(s.row.className)}<span
+							class="su hint"
+							title="Fica ligado: precisa ver a mensagem do filhote novo">fica ligado</span
+						>{/if}
+				</label>
+			{:else}
+				<span class="su sm0">Nada ligado para parar.</span>
+			{/each}
+		</div>
+		<label class="chk">
+			<input type="checkbox" checked={!stay} onchange={(e) => (stay = !e.currentTarget.checked)} />
+			Voltar ao lugar depois
+		</label>
+		<button
+			class="btn btn-s self"
+			class:btn-d={armed === 'start'}
+			type="button"
+			disabled={!loggedIn || !target || busy}
+			onclick={start}
+			title={loggedIn ? 'Age na conta: anda, troca e compra' : 'Precisa da conta logada'}
+			>{armed === 'start' ? 'Confirmar: agir na conta' : 'Fazer agora'}</button
+		>
+	{/if}
+	{#if error}<p class="err">{error}</p>{/if}
+	<div class="auto">
+		<div class="arow">
+			<span class="k">Sozinho</span>
+			{#if triggers && !triggers.watching}<span
+					class="su hint"
+					title={triggers.watchError ?? 'O agent não está lendo o chat do jogo'}
+					>sem ler o chat</span
+				>{:else if auto}<span class="on">ligado</span>{/if}
+		</div>
+		{#if auto && grown}
+			<p class="sm0">
+				Quando o filhote crescer: {nameOf(grown.run.className)}{grown.run.stop?.length
+					? `, parando ${grown.run.stop.map(nameOf).join(', ')}`
+					: ''}{grown.run.stay ? '' : ', e volta ao lugar'}.
+			</p>
 			<button
 				class="btn btn-s self"
-				class:btn-d={armed === 'cancel'}
 				type="button"
-				onclick={cancel}
-				title="Para o plugin que está rodando; o principal continua parado"
-				>{armed === 'cancel' ? 'Confirmar: cancelar' : 'Cancelar'}</button
+				disabled={busy}
+				onclick={() => setAuto(false)}
+				title="O agent para de trocar o gato sozinho">Desligar</button
 			>
 		{:else}
-			<label class="fld">
-				<span class="k">Rodar</span>
-				<select bind:value={pick} disabled={!options.length}>
-					{#each options as o (o.className)}
-						<option value={o.className}>{o.name}</option>
-					{:else}
-						<option value="">nenhum plugin seu ou do Hub</option>
-					{/each}
-				</select>
-			</label>
-			<div class="fld">
-				<span class="k">Parar durante e religar depois</span>
-				{#each stops as s (s.row.className)}
-					<label class="chk">
-						<input
-							type="checkbox"
-							checked={s.checked}
-							onchange={(e) => (unchecked[s.row.className] = !e.currentTarget.checked)}
-						/>{s.row.name}
-						{#if /kitten/i.test(s.row.className)}<span
-								class="su hint"
-								title="Fica ligado: precisa ver a mensagem do filhote novo">fica ligado</span
-							>{/if}
-					</label>
-				{:else}
-					<span class="su sm0">Nada ligado para parar.</span>
-				{/each}
-			</div>
-			<label class="chk">
-				<input
-					type="checkbox"
-					checked={!stay}
-					onchange={(e) => (stay = !e.currentTarget.checked)}
-				/>
-				Voltar ao lugar depois
-			</label>
 			<button
 				class="btn btn-s self"
-				class:btn-d={armed === 'start'}
+				class:btn-d={armed === 'auto'}
 				type="button"
-				disabled={!loggedIn || !target || busy}
-				onclick={start}
-				title={loggedIn ? 'Age na conta: anda, troca e compra' : 'Precisa da conta logada'}
-				>{armed === 'start' ? 'Confirmar: agir na conta' : 'Fazer agora'}</button
+				disabled={!triggers || !isCatSwap(target) || busy || going}
+				onclick={() => setAuto(true)}
+				title={!isCatSwap(target)
+					? 'Só o Cat Swap troca o gato'
+					: 'Salva as escolhas acima: o agent faz isto sozinho quando aparecer "Your kitten has grown into a healthy cat"'}
+				>{armed === 'auto'
+					? 'Confirmar: agir sozinho'
+					: 'Quando o filhote crescer, fazer isto'}</button
 			>
 		{/if}
-		{#if error}<p class="err">{error}</p>{/if}
-		<div class="auto">
-			<div class="arow">
-				<span class="k">Sozinho</span>
-				{#if triggers && !triggers.watching}<span
-						class="su hint"
-						title={triggers.watchError ?? 'O agent não está lendo o chat do jogo'}
-						>sem ler o chat</span
-					>{:else if auto}<span class="on">ligado</span>{/if}
-			</div>
-			{#if auto && grown}
-				<p class="sm0">
-					Quando o filhote crescer: {nameOf(grown.run.className)}{grown.run.stop?.length
-						? `, parando ${grown.run.stop.map(nameOf).join(', ')}`
-						: ''}{grown.run.stay ? '' : ', e volta ao lugar'}.
-				</p>
-				<button
-					class="btn btn-s self"
-					type="button"
-					disabled={busy}
-					onclick={() => setAuto(false)}
-					title="O agent para de trocar o gato sozinho">Desligar</button
-				>
-			{:else}
-				<button
-					class="btn btn-s self"
-					class:btn-d={armed === 'auto'}
-					type="button"
-					disabled={!triggers || !isCatSwap(target) || busy || going}
-					onclick={() => setAuto(true)}
-					title={!isCatSwap(target)
-						? 'Só o Cat Swap troca o gato'
-						: 'Salva as escolhas acima: o agent faz isto sozinho quando aparecer "Your kitten has grown into a healthy cat"'}
-					>{armed === 'auto'
-						? 'Confirmar: agir sozinho'
-						: 'Quando o filhote crescer, fazer isto'}</button
-				>
-			{/if}
-			{#if fired && triggers?.last}<span class="su sm">{hhmm(triggers.last.at)} · {fired}</span
-				>{/if}
-		</div>
-		{#if run && runFinal(run)}
-			<div class="last">
-				<button class="lnk" type="button" onclick={() => (open = !open)} aria-expanded={open}>
-					<!-- One span: the button is a flex box, which drops the spaces between its items. -->
-					<span
-						>Último: {nameOf(run.className)}{run.trigger ? ' (sozinho)' : ''} ·
-						<span class={run.state}>{RUN_LABEL[run.state]}</span
-						>{#if run.finishedAt}{` às ${hhmm(run.finishedAt)}`}{/if}</span
-					>
-				</button>
-				{#if outcome(run)}<span class="su sm">{outcome(run)}</span>{/if}
-				{#if run.error}<p class="err">{run.error}</p>{/if}
-				{#if open}
-					<ol class="trail">
-						{#each run.events as ev, i (i)}
-							<li><span class="t">{hhmm(ev.at)}</span>{ev.text}</li>
-						{/each}
-					</ol>
-				{/if}
-			</div>
-		{/if}
+		{#if fired && triggers?.last}<span class="su sm">{hhmm(triggers.last.at)} · {fired}</span>{/if}
 	</div>
-</section>
+	{#if run && runFinal(run)}
+		<div class="last">
+			<button class="lnk" type="button" onclick={() => (open = !open)} aria-expanded={open}>
+				<!-- One span: the button is a flex box, which drops the spaces between its items. -->
+				<span
+					>Último: {nameOf(run.className)}{run.trigger ? ' (sozinho)' : ''} ·
+					<span class={run.state}>{RUN_LABEL[run.state]}</span
+					>{#if run.finishedAt}{` às ${hhmm(run.finishedAt)}`}{/if}</span
+				>
+			</button>
+			{#if outcome(run)}<span class="su sm">{outcome(run)}</span>{/if}
+			{#if run.error}<p class="err">{run.error}</p>{/if}
+			{#if open}
+				<ol class="trail">
+					{#each run.events as ev, i (i)}
+						<li><span class="t">{hhmm(ev.at)}</span>{ev.text}</li>
+					{/each}
+				</ol>
+			{/if}
+		</div>
+	{/if}
+{/snippet}
+
+{#if bare}
+	<div class="bare stack">
+		<p class="lbl">Fazer agora</p>
+		{@render body()}
+	</div>
+{:else}
+	<section class="card">
+		<div class="h">
+			<h2>Fazer agora</h2>
+			<span>para, roda e volta</span>
+		</div>
+		<div class="pad stack">
+			{@render body()}
+		</div>
+	</section>
+{/if}
 
 <style>
 	.pad {
 		padding: 12px;
+	}
+	.bare {
+		padding-top: 10px;
+		border-top: 1px solid var(--hairline);
+	}
+	.bare .lbl {
+		margin: 0;
 	}
 	.stack {
 		display: flex;
@@ -362,7 +387,8 @@
 		flex: 1;
 		font-weight: 600;
 	}
-	.st {
+	/* Not `.st`: that global class is the step-status circle. */
+	.runst {
 		white-space: nowrap;
 		font:
 			500 11px 'JetBrains Mono',

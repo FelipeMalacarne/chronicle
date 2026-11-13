@@ -1,6 +1,16 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { highlight, legSummary, snippet, stepMatches } from './rota.ts';
+import {
+	bankMarks,
+	gpLabel,
+	headerFacts,
+	highlight,
+	legSummary,
+	snippet,
+	stepFacts,
+	stepMatches,
+	timeLabel
+} from './rota.ts';
 import type { ContentStep } from './types.ts';
 
 const step = (location: string, quests: string[] = []) =>
@@ -65,4 +75,49 @@ test('snippet centers on the first match and marks cut ends', () => {
 	assert.ok(cut.includes('Corrupted Gauntlet'));
 	assert.equal(snippet('short\n text', 'x'), 'short text');
 	assert.ok(snippet(text, 'nowhere', 60).startsWith('a a'));
+});
+
+test('bankMarks marks the first step of each bank leg after the first one', () => {
+	const st = (id: string) => ({ id }) as ContentStep;
+	const marks = bankMarks([
+		{ kind: 'bank_leg', steps: [st('a'), st('b')], bankActions: [] },
+		{
+			kind: 'bank_leg',
+			steps: [st('c')],
+			loadout: { status: 'partial', inventory: [{ name: 'Knife' }, { name: 'Coins' }] },
+			bankActions: [{ type: 'bank', position: 'start', text: 'bank your money' }]
+		},
+		{ kind: 'sequence', steps: [st('d')], bankActions: [] },
+		{ kind: 'bank_leg', steps: [st('e')], bankActions: [] }
+	]);
+	assert.deepEqual([...marks.keys()], ['c', 'e']);
+	assert.equal(marks.get('c')?.label, 'banco · 2 itens');
+	assert.equal(
+		marks.get('c')?.title,
+		'O guia manda passar no banco antes deste passo · “bank your money” · lista parcial do que levar'
+	);
+	assert.equal(marks.get('e')?.label, 'banco');
+});
+
+test('stepFacts reads the GP after the step and the guide time of BRUHsailer', () => {
+	const notes = (...t: string[]) => ({ notes: t.map((text) => ({ kind: 'tip', text })) });
+	assert.equal(
+		stepFacts(notes('GP after step: 777349 gp', 'Items needed: knife', 'Total time: 5d0h')),
+		'777.349 gp · 5 d 0 h'
+	);
+	assert.equal(stepFacts(notes('GP after step: 1719 gp (after the bond)')), '1.719 gp');
+	assert.equal(stepFacts(notes('Something else')), '');
+	assert.equal(timeLabel('12d23h'), '12 d 23 h');
+	assert.equal(gpLabel('-500 gp'), '-500 gp');
+});
+
+test('headerFacts names the GP and the guide time, and keeps only the GP at 640', () => {
+	const notes = (...t: string[]) => ({ notes: t.map((text) => ({ kind: 'tip', text })) });
+	const both = notes('GP after step: 777349 gp', 'Total time: 5d0h');
+	assert.equal(headerFacts(both), 'GP depois 777.349 · tempo do guia 5 d 0 h');
+	assert.equal(headerFacts(both, true), 'GP depois 777.349');
+	// A step with the time but no GP never calls the time "GP".
+	assert.equal(headerFacts(notes('Total time: 5d0h')), 'tempo do guia 5 d 0 h');
+	assert.equal(headerFacts(notes('Total time: 5d0h'), true), '');
+	assert.equal(headerFacts(notes('Something else')), '');
 });

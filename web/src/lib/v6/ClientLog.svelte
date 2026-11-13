@@ -42,11 +42,10 @@
 	});
 </script>
 
-<section class="panel">
-	<div class="plaque">
-		Log do cliente<span class="r"
-			>{open ? `${file || 'client.log'} · últimas ${lines.length} linhas` : 'mb-client logs'}</span
-		>
+<section class="card">
+	<div class="h">
+		<h2>Log do cliente</h2>
+		<span title={file || undefined}>{open ? `últimas ${lines.length} linhas` : 'fechado'}</span>
 	</div>
 	<div class="pad stack">
 		<div class="acts">

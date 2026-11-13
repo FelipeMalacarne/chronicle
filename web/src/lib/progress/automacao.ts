@@ -1,86 +1,8 @@
 /**
- * Automação › Cockpit (V6Microbot1440 e V6Microbot640): o que a tela diz do cliente do Microbot a
- * partir do estado que o agent devolve. Puro, testado em node.
+ * O que o cliente do Microbot fez: a duração e a auditoria (quem, o quê), lidas na Visão geral da
+ * conta. Puro, testado em node.
  */
-import type { AuditEntry, MicrobotStatus } from '../api/microbot.ts';
-
-export type Tone = 'ok' | 'warn' | 'off';
-
-export interface Card {
-	k: string;
-	v: string;
-	tone: Tone;
-	title?: string;
-}
-
-/** Os quatro fatos da faixa do cockpit: cliente, conta, agent e input humano. */
-export function cards(s: MicrobotStatus | null): Card[] {
-	if (!s) return [];
-	const c = s.client;
-	const agent: Card = s.agent.connected
-		? {
-				k: 'Agent',
-				v: `conectado${s.agent.host ? ` · ${s.agent.host}` : ''}`,
-				tone: 'ok',
-				title:
-					[s.agent.version, s.agent.identity && `identidade ${s.agent.identity}`]
-						.filter(Boolean)
-						.join(' · ') || undefined
-			}
-		: { k: 'Agent', v: 'desconectado · rode `chronicle agent` no zaros', tone: 'off' };
-	if (!s.agent.connected || !c) {
-		return [
-			{ k: 'Cliente', v: s.error ? `sem resposta · ${s.error}` : 'sem agent', tone: 'off' },
-			{ k: 'Conta', v: '—', tone: 'off' },
-			agent
-		];
-	}
-	const mode = c.headless ? 'headless Xvfb' : 'em janela';
-	const client: Card = c.running
-		? {
-				k: 'Cliente',
-				v: `rodando · ${mode}`,
-				tone: 'ok',
-				title: c.state?.instance?.microbotVersion
-			}
-		: { k: 'Cliente', v: c.error ? `erro · ${c.error}` : 'parado', tone: c.error ? 'warn' : 'off' };
-	return [client, accountCard(s), agent];
-}
-
-function accountCard(s: MicrobotStatus): Card {
-	const st = s.client?.state;
-	const login = s.client?.login;
-	if (!s.client?.running) return { k: 'Conta', v: '—', tone: 'off' };
-	const world = login?.currentWorld ? ` · mundo ${login.currentWorld}` : '';
-	if (st?.loggedIn) {
-		return { k: 'Conta', v: `logado · ${st.player?.name ?? '?'}${world}`, tone: 'ok' };
-	}
-	if (login?.loginError) return { k: 'Conta', v: `não logado · ${login.loginError}`, tone: 'warn' };
-	return { k: 'Conta', v: `não logado${world}`, tone: 'off' };
-}
-
-/** As linhas do painel "Estado · GET /state". */
-export function stateRows(s: MicrobotStatus | null): { k: string; v: string }[] {
-	const st = s?.client?.state;
-	if (!st) return [];
-	const p = st.player;
-	const rows: { k: string; v: string }[] = [];
-	if (p?.position)
-		rows.push({ k: 'Posição', v: `${p.position.x}, ${p.position.y}, ${p.position.plane}` });
-	if (p?.combatLevel) rows.push({ k: 'Combat', v: String(p.combatLevel) });
-	const doing = [
-		p?.moving && 'andando',
-		p?.animating && 'animando',
-		p?.interacting && 'interagindo'
-	]
-		.filter(Boolean)
-		.join(' · ');
-	if (p) rows.push({ k: 'Agora', v: doing || 'parado' });
-	rows.push({ k: 'Scripts', v: st.scriptsPaused ? 'pausados' : 'livres' });
-	if (st.gameState) rows.push({ k: 'Estado do jogo', v: st.gameState });
-	if (st.instance?.uptimeMs) rows.push({ k: 'Cliente no ar', v: duration(st.instance.uptimeMs) });
-	return rows;
-}
+import type { AuditEntry } from '../api/microbot.ts';
 
 export function duration(ms: number): string {
 	const m = Math.floor(ms / 60000);

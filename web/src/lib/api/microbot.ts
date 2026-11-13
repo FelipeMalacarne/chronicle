@@ -5,6 +5,14 @@
  * null.
  */
 
+import type {
+	FleetPlugins,
+	ProfileLayer,
+	ProfilePlugin,
+	ProfileSetting,
+	StoredProfile
+} from '#lib/progress/fleetplugins';
+
 export interface AgentInfo {
 	connected: boolean;
 	/** Id da conexão no Hub (docs/11). */
@@ -595,6 +603,69 @@ export const workersApi = {
 		call<{ ok: boolean }>(
 			`/accounts/session?account=${encodeURIComponent(account)}`,
 			{ method: 'DELETE' },
+			'/api',
+			''
+		)
+};
+
+/** Onde o formulário de config lê e grava: o cliente ao vivo (padrão) ou um perfil do cliente
+ * (a tela Plugins da v7 edita o modelo da frota ou o perfil de uma conta). */
+export interface ConfigStore {
+	read: (group: string, keys: string[]) => Promise<Record<string, string | null>>;
+	write: (group: string, key: string, value: string | null) => Promise<void>;
+}
+
+/** O cliente ao vivo da conta escolhida, pelo /settings/plugin do Agent Server. */
+export const liveConfigStore: ConfigStore = {
+	read: async (group, keys) => {
+		const out: Record<string, string | null> = {};
+		for (let i = 0; i < keys.length; i += 50) {
+			Object.assign(out, (await microbotApi.config(group, keys.slice(i, i + 50))).values);
+		}
+		return out;
+	},
+	write: async (group, key, value) => {
+		await microbotApi.plugin({ path: 'config', body: { group, key, value } });
+	}
+};
+
+/** Perfil de cliente de uma conta, como `GET /api/accounts/client` responde. */
+export interface AccountClientView {
+	account_id: string;
+	profile?: string;
+	settings: ProfileSetting[];
+	effective: { plugins: ProfilePlugin[]; settings: ProfileSetting[] };
+}
+
+/** A tela Plugins da v7 (V8): a frota, os perfis e aplicar nos clientes. Fora de /api/microbot. */
+export const fleetPluginsApi = {
+	list: () => call<FleetPlugins>('/fleet/plugins', undefined, '/api', ''),
+	putProfile: (name: string, layer: ProfileLayer) =>
+		call<StoredProfile>(
+			`/client-profiles/${encodeURIComponent(name)}`,
+			{ method: 'PUT', body: JSON.stringify(layer) },
+			'/api',
+			''
+		),
+	accountClient: (account: string) =>
+		call<AccountClientView>(
+			`/accounts/client?account=${encodeURIComponent(account)}`,
+			undefined,
+			'/api',
+			''
+		),
+	setAccountClient: (account: string, profile: string, settings: ProfileSetting[]) =>
+		call<AccountClientView>(
+			`/accounts/client?account=${encodeURIComponent(account)}`,
+			{ method: 'PUT', body: JSON.stringify({ profile, settings }) },
+			'/api',
+			''
+		),
+	/** Põe o perfil no cliente da conta: tudo, ou só as chaves. */
+	apply: (account: string, keys?: { group: string; key: string }[]) =>
+		call<{ applied: number; problems: string[] }>(
+			`/accounts/client/apply?account=${encodeURIComponent(account)}`,
+			{ method: 'POST', body: JSON.stringify(keys ? { keys } : {}) },
 			'/api',
 			''
 		)

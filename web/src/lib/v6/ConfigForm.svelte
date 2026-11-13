@@ -1,7 +1,9 @@
 <script lang="ts">
 	import {
+		liveConfigStore,
 		microbotApi,
 		MicrobotError,
+		type ConfigStore,
 		type PluginSchema,
 		type SchemaItem
 	} from '#lib/api/microbot';
@@ -17,11 +19,13 @@
 	let {
 		className,
 		running,
+		store = liveConfigStore,
 		onschema,
 		onwrite
 	}: {
 		className: string;
 		running: boolean;
+		store?: ConfigStore;
 		onschema?: (ok: boolean, why?: string) => void;
 		onwrite?: () => void;
 	} = $props();
@@ -39,11 +43,7 @@
 
 	async function readValues(s: PluginSchema) {
 		const keys = s.items.filter((i) => !i.hidden).map((i) => i.key);
-		const out: Record<string, string | null> = {};
-		for (let i = 0; i < keys.length; i += 50) {
-			const chunk = await microbotApi.config(s.group, keys.slice(i, i + 50));
-			Object.assign(out, chunk.values);
-		}
+		const out = await store.read(s.group, keys);
 		values = out;
 		edits = Object.fromEntries(keys.map((k) => [k, out[k] ?? '']));
 	}
@@ -89,10 +89,7 @@
 		busy = it.key;
 		error = null;
 		try {
-			await microbotApi.plugin({
-				path: 'config',
-				body: { group: schema.group, key: it.key, value }
-			});
+			await store.write(schema.group, it.key, value);
 			await readValues(schema);
 			onwrite?.();
 		} catch (e) {

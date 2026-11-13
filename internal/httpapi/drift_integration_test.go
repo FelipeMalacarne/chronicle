@@ -48,6 +48,9 @@ func (g *clientGame) JSON(_ context.Context, method, path string, q url.Values, 
 		}
 		return json.Marshal(map[string]any{"scripts": s})
 	case "GET /plugins":
+		if name := q.Get("q"); name != "" {
+			return json.Marshal(map[string]any{"plugins": []map[string]any{{"internalName": name, "name": name + " (Hub)", "latestVersion": "9.9.9"}}})
+		}
 		var p []map[string]any
 		for n, v := range g.installed {
 			p = append(p, map[string]any{"internalName": n, "installedVersion": v, "loaded": true})

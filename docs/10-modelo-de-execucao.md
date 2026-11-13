@@ -309,6 +309,19 @@ receitas que falharam e para cobrir passos que o texto descreve mal.
 Continuam difíceis de tornar determinísticos: diálogos e etapas de quest (avaliar importar do Quest
 Helper em vez de extrair do texto) e combate real, que começa como `manual` ou delegado.
 
+**Como implementado (fase 2, a gravação, 2026-11-13).** Chronicle Link 1.13.0, opção "Record
+demonstration", desligada por padrão (E8). O plugin registra só o que o dono faz, com os ids do jogo,
+como eventos tipados (`internal/core/recording`): `move` (posição grosseira: a primeira, outro mundo,
+plano ou região, e onde parou depois de andar 5 tiles), `npc` e `object` (a opção de menu clicada),
+`dialogue` (a opção escolhida, clicada ou pela tecla), `shop_buy` (o que entrou no inventário com a
+loja aberta), `bank_open`, `bank_withdraw` e `bank_deposit` (a diferença do inventário e do equipamento
+com o banco aberto), `item_use` e `item_op`. Os eventos vão no campo novo `data.recording` do ingest
+(flag `recording` no manifest), ficam em `recorded_events` (migration 0017; o ingest é o único escritor,
+cada `(recording, seq)` uma vez só) e o dono os lê em `GET /api/account/recording` e apaga em
+`DELETE /api/account/recording` (`chronicle recording`). Contrato e detalhes no doc 06 (adendo de
+2026-11-13 sobre a gravação) e no doc 04, seção 6.4. Decisões conservadoras pendentes do dono na
+seção 14 (E11 a E13).
+
 ## 12. Modelo de dados proposto
 
 Novo, alterado e mantido em relação às migrations 0001 a 0006. Formato final de cada tabela na
@@ -385,6 +398,9 @@ próxima é a 2, a gravação por demonstração e o modo assistido, que traz as
 | E8 | Gravação por demonstração no plugin (o plugin passa a registrar interações, ainda sem agir) | **decidida (2026-11-13): sim, opt-in** |
 | E9 | Política de risco: em HCIM, nada com risco de morte roda sem supervisão | **decidida (2026-11-13): sim** |
 | E10 | Importar diálogos e etapas de quest do Quest Helper em vez de extrair do texto | **decidida (2026-11-13): avaliar na fase 5** |
+| E11 | O que a gravação registra | **em aberto; implementado o conservador (fase 2):** só o que o dono faz (NPCs e objetos clicados, opções de diálogo, compras, banco, itens usados e opções de item, posição grosseira); nunca chat, outros jogadores, magias, Drop/Examine ou o caminho tile a tile |
+| E12 | Retenção da gravação no servidor | **em aberto; implementado o conservador:** fica até o dono apagar (`DELETE /api/account/recording`, `chronicle recording delete --yes`), sem expiração automática; o snapshot bruto não guarda a gravação |
+| E13 | A gravação vai para o conteúdo como evidência | **em aberto; implementado o conservador:** só os eventos que sustentam cada tarefa confirmada, sem conta, RSN ou outros dados do personagem (fase 2, extração das tarefas) |
 
 ## 15. Impacto nos outros docs
 

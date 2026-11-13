@@ -758,7 +758,15 @@ Detalhes do contrato (tipos Go em `internal/core/ingest/contract.go`; espelho Zo
   quantos obtidos, `0` para o que falta). O plugin lê a página quando o jogador a abre no jogo. Em
   `full` e em `delta`, cada página presente substitui a guardada e as ausentes ficam. Vira a faceta
   `collection_log` com chave `page:<título>`, observada quando a página foi lida (doc 06, adendo de
-  2026-11-13).
+  2026-11-13). Desde a fase 2 do doc 10 (Chronicle Link 1.13.0, migration 0017), com o manifest
+  anunciando `recording: true` e a opção "Record demonstration" ligada no plugin: `recording`, a lista
+  dos eventos da gravação por demonstração ainda não confirmados (`{"recording", "seq", "at", "kind",
+  "world", "x", "y", "plane"}` mais os campos de alvo do tipo: `npc_id`, `object_id`, `item_id`,
+  `target_item_id`, `target_x`/`target_y`, `qty`, `option`, `name`; tipos `move`, `npc`, `object`,
+  `dialogue`, `shop_buy`, `bank_open`, `bank_withdraw`, `bank_deposit`, `item_use`, `item_op`; até 500 por
+  push). Em `full` e em `delta`; cada `(recording, seq)` é gravado uma vez só em `recorded_events`, então
+  um reenvio não duplica, e o `raw` do snapshot não guarda o campo (doc 06, adendo de 2026-11-13 sobre a
+  gravação; doc 10, seção 11).
 - **Vars genéricos**: o plugin lê **todo** varbit/varp que o manifest listar (`client.getVarbitValue`,
   `client.getVarpValue`) e manda em `varb`/`varp`, sem saber o que significam. O servidor deriva os fatos:
   a faceta `diary` dos varbits `DIARY_<ÁREA>_<TIER>_COMPLETED`, `qp>=N` do varp 101 (`QUEST_POINTS`) e,
@@ -891,6 +899,10 @@ ainda não há sessão, só são registradas com `AUTH_MODE=dev`.
   aparecem como `unknown` sem isso.
 - Tokens são hash no banco; revogação é imediata; `last_ip` e `last_seen_at` ficam visíveis.
 - Exports contêm snapshots brutos (incluindo banco, se habilitado); a UI avisa ao exportar.
+- A gravação por demonstração (doc 10, seção 11) é opt-in no plugin e só registra o que o próprio dono
+  faz (NPCs e objetos clicados, opções de diálogo, compras, banco, itens usados, posição grosseira),
+  nunca chat ou outros jogadores. Fica em `recorded_events` até o dono apagar
+  (`DELETE /api/account/recording`, `chronicle recording delete --yes`); o snapshot bruto não a guarda.
 
 ### 6.6 Tempo real (SSE)
 

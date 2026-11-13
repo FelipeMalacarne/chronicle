@@ -59,6 +59,7 @@ final class PushBuilder
 		data.timers = current.timers == null ? null : new TreeMap<>(current.timers);
 		data.position = current.position;
 		data.collectionLog = collectionLog(current.collectionLog, sentAt);
+		data.recording = current.recording;
 		data.items = new IngestContract.ItemContainers();
 		data.items.bank = observation(current.container(ContainerKind.BANK), null, sentAt);
 		data.items.inventory = observation(current.container(ContainerKind.INVENTORY), null, sentAt);
@@ -84,6 +85,9 @@ final class PushBuilder
 		data.collectionLog = current.collectionLog == null ? null
 			: collectionLog(acked.collectionLog == null ? current.collectionLog : changed(acked.collectionLog, current.collectionLog), sentAt);
 
+		// The pending demonstration events go out as they are: the recorder drops the acknowledged.
+		data.recording = current.recording;
+
 		IngestContract.ItemContainers items = new IngestContract.ItemContainers();
 		items.bank = changedObservation(acked, current, ContainerKind.BANK, sentAt);
 		items.inventory = changedObservation(acked, current, ContainerKind.INVENTORY, sentAt);
@@ -94,7 +98,7 @@ final class PushBuilder
 			|| !Objects.equals(acked.accountType, current.accountType);
 		boolean other = data.varb != null || data.varp != null || data.level != null || data.xp != null
 			|| data.boosted != null || data.quest != null || data.timers != null || data.collectionLog != null
-			|| data.items != null || headerChanged;
+			|| data.items != null || data.recording != null || headerChanged;
 		// The position rides along any push once it changed; alone it waits for a real move.
 		IngestContract.Position pos = current.position;
 		if (pos != null && pos.movedFrom(acked.position, other ? 1 : POSITION_TILES))

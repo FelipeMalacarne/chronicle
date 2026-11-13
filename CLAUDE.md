@@ -69,6 +69,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `just agent` / `chronicle agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (server resolved like the CLI, default saradomin; `MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client (`MICROBOT_HARNESS_DIR`: this checkout by default in `just agent`; it runs `nix develop <dir>#microbot --command <dir>/microbot/bin/mb-client`). Never log the client in for a test without the owner's agreement |
 | `chronicle accounts connect --character <name>` / `chronicle workers list\|start\|stop\|restart` | docs/11: store an account's game session from the Microbot launcher (only that character's lines of the HWID stores; a character the launcher lists as "Not set" is `--index <n> --as <name in game>`, like `mb-account use --as`), and the workers' lifecycle over `/api/workers`. `start` and `restart` never log in, but `stop` and `restart` log the account out: never run them on the owner's account unasked |
 | `chronicle profiles list\|show\|put\|delete\|use\|account` | docs/11 section 15: the workers' client profiles (plugins and RuneLite settings, optionally on a model) over `/api/client-profiles` and `/api/accounts/client`; `show` prints the JSON `put -f` reads. A profile reaches a worker on its next start or restart, never a running client |
+| `chronicle recording [--since 2h] [-o file]` / `recording delete --yes` | docs/10 section 11: the demonstration Chronicle Link recorded with "Record demonstration" on (`GET /api/account/recording`), printed or written as the JSON the content MCP's `propose_tasks` reads; `delete` drops it on the server (all, or `--recording <id>`). Never delete the owner's recording unasked |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
@@ -79,7 +80,7 @@ Run `just` alone to list everything. All tools also work without Nix (`go run pk
 cmd/chronicle/          cobra subcommands: serve, content (migrate, validate, import-bruhsailer, mcp: the
                       offline extraction server over content/ only, docs/09 section 6; there is no
                       merge step: annotations are sidecars composed by the loader); API clients:
-                      login, logout, accounts, use, now, done, skip, undo, plan, sync, state and mcp
+                      login, logout, accounts, use, now, done, skip, undo, plan, sync, state, recording and mcp
                       (the account's MCP server, over the API)
 internal/core/        PURE domain (no DB/HTTP imports):
   content/            loader, schema validation, guide/variant/section/segment/step model; typed tasks
@@ -90,6 +91,8 @@ internal/core/        PURE domain (no DB/HTTP imports):
   facts/              merge of each source's last observation into the current fact (player_state)
   activity/           what an account did, from its snapshots: level-ups (one per level, from XP) and skill gains
   ingest/             plugin wire contract v1 (manifest, push, item freshness) + validation
+  recording/          demonstration recording (docs/10 section 11): the typed events the plugin records
+                      (move, npc, object, dialogue, shop_buy, bank_*, item_use, item_op) and their validation
   rules/              rule engine incl. item_owned over item holdings
   planning/           next-leg readiness (ownership vs carried loadout vs bank instructions)
   progress/           objective verdicts (latched), derived step status, implied cascade, cursor
@@ -101,7 +104,9 @@ internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical gui
 internal/store/       repositories (activity: the XP observations behind the level-ups; identity: OIDC users, dev-account claim, ownership; ingest: tokens, pushes, holdings; progress: reevaluation, marks,
                       cursor, board, goals, content index and step id aliases at boot; state:
                       PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; rhythm: the series the rhythm reads; workers: sealed game sessions, workers'
-                      desired state, client profiles; routines: triggers and the runs' history); internal/store/db is sqlc OUTPUT
+                      desired state, client profiles; routines: triggers and the runs' history; recording: the
+                      owner's read and delete of the demonstration recording, which only the ingest writes);
+                      internal/store/db is sqlc OUTPUT
 internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
                       client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)
 internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* and /api/me, account routes
@@ -148,7 +153,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0012 workers: game_sessions (sealed), workers (desired state), accounts.managed,
                       0013 client profiles: client_profiles, their plugins and settings, account_client,
                       0014 routines: routines (triggers), routine_runs and run_events,
-                      0015 recurring routines: routines.kind recurring with clock, interval and priority)
+                      0015 recurring routines: routines.kind recurring with clock, interval and priority,
+                      0016 audit origin server, 0017 recorded_events: the plugin's demonstration recording)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

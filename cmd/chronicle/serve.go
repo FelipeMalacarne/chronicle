@@ -29,6 +29,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
+	storerecording "github.com/FelipeMalacarne/chronicle/internal/store/recording"
 	storerhythm "github.com/FelipeMalacarne/chronicle/internal/store/rhythm"
 	"github.com/FelipeMalacarne/chronicle/internal/store/syncrun"
 	"github.com/FelipeMalacarne/chronicle/web"
@@ -91,6 +92,7 @@ func runServe(parent context.Context) error {
 	var hiscoresDetector httpapi.ModeDetector
 	var identityRepo httpapi.Identity
 	var levelsService httpapi.LevelsStore
+	var recordingService httpapi.RecordingStore
 	var oidcOpts *httpapi.OIDCOptions
 	var microbotOpts *httpapi.MicrobotOptions
 	if !cfg.IsDev() && cfg.DatabaseURL == "" {
@@ -106,6 +108,7 @@ func runServe(parent context.Context) error {
 			db = pool
 			identityRepo = identity.New(pool)
 			levelsService = storeactivity.New(pool)
+			recordingService = storerecording.New(pool)
 			if !cfg.IsDev() {
 				if oidcOpts, err = newOIDC(ctx, cfg, pool); err != nil {
 					return err
@@ -171,6 +174,7 @@ func runServe(parent context.Context) error {
 		Microbot:       microbotOpts,
 		Identity:       identityRepo,
 		Levels:         levelsService,
+		Recording:      recordingService,
 		Static:         static,
 		Logger:         logger,
 	})

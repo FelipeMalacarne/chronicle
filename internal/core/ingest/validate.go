@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/FelipeMalacarne/chronicle/internal/core/recording"
 )
 
 type validationErrors []string
@@ -126,6 +128,13 @@ func (p Push) Validate() error {
 	}
 	if p.Data.CollectionLog != nil {
 		validateCollectionLog(&errs, *p.Data.CollectionLog, p.SentAt)
+	}
+	if rec := p.Data.Recording; rec != nil {
+		if *rec == nil {
+			errs = append(errs, "data.recording must be a JSON array (use [] when empty)")
+		} else {
+			errs = append(errs, recording.Validate("data.recording", *rec, p.SentAt)...)
+		}
 	}
 	if pos := p.Data.Position; pos != nil {
 		if pos.X < 0 || pos.X > 16383 || pos.Y < 0 || pos.Y > 16383 || pos.Plane < 0 || pos.Plane > 3 || pos.World < 0 || pos.World > 9999 {
@@ -262,6 +271,9 @@ func (p Push) ValidateAgainst(m Manifest) error {
 	}
 	if p.Data.CollectionLog != nil && !m.CollectionLog {
 		errs = append(errs, "data.collectionLog is not enabled by the manifest")
+	}
+	if p.Data.Recording != nil && !m.Recording {
+		errs = append(errs, "data.recording is not enabled by the manifest")
 	}
 	if p.Data.Items == nil {
 		return errs.err()

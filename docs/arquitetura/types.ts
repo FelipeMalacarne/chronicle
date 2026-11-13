@@ -85,6 +85,30 @@ const CollectionLogMap = z.record(
   }).strict(),
 ).refine(pages => Object.keys(pages).length <= 500, 'no máximo 500 páginas');
 
+// Gravação por demonstração (doc 10, seção 11; Chronicle Link 1.13.0): um evento tipado por interação do
+// dono, com os ids do jogo. Os campos de alvo dependem do tipo (internal/core/recording, Event.Check).
+const RecordedText = z.string().min(1).max(120).refine(s => s.trim() === s && !/[<>\p{Cc}]/u.test(s), 'sem espaços nas pontas, tags ou controle');
+const RecordedEvent = z.object({
+  recording: z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/),
+  seq: z.number().int().positive().safe(),
+  at: z.string().datetime({ offset: true }),
+  kind: z.enum(['move', 'npc', 'object', 'dialogue', 'shop_buy', 'bank_open', 'bank_withdraw', 'bank_deposit', 'item_use', 'item_op']),
+  world: z.number().int().min(0).max(9999),
+  x: z.number().int().min(0).max(16383),
+  y: z.number().int().min(0).max(16383),
+  plane: z.number().int().min(0).max(3),
+  npc_id: z.number().int().nonnegative().optional(),
+  object_id: z.number().int().nonnegative().optional(),
+  item_id: z.number().int().nonnegative().optional(),
+  target_item_id: z.number().int().nonnegative().optional(), // item_use num item
+  target_x: z.number().int().min(0).max(16383).optional(),   // o tile do objeto (object)
+  target_y: z.number().int().min(0).max(16383).optional(),
+  qty: z.number().int().positive().optional(),
+  option: RecordedText.optional(),                            // opção de menu ou texto da opção de diálogo
+  name: RecordedText.optional(),
+}).strict();
+const Recording = z.array(RecordedEvent).max(500);
+
 const IngestItemSelection = z.object({
   bank: z.boolean().default(false),
   inventory: z.boolean().default(false),
@@ -104,6 +128,7 @@ export const IngestManifest = z.object({
   timers: z.boolean().default(false),                   // aceita data.timers (2026-11-10)
   position: z.boolean().default(false),                 // aceita data.position (2026-11-10)
   collection_log: z.boolean().default(false),           // aceita data.collectionLog (2026-11-13)
+  recording: z.boolean().default(false),                // aceita data.recording (gravação, doc 10 fase 2)
   items: IngestItemSelection,
   interval_seconds: z.number().int().min(5).default(10),
   resync: z.boolean().default(false),                    // próximo push deve ser full
@@ -170,6 +195,7 @@ const IngestPayloadBase = z.object({
     timers: TimerMap.optional(),                           // só com manifest.timers
     position: Position.optional(),                         // só com manifest.position e o opt-in
     collectionLog: CollectionLogMap.optional(),            // só com manifest.collection_log
+    recording: Recording.optional(),                       // só com manifest.recording e "Record demonstration"
     collectionLogSlots: z.string().optional(),             // base64 bitset, índice = manifest.collections (nenhum plugin manda)
     collectionLogItemCount: z.number().int().nonnegative().safe().optional(),
     items: IngestItemContainers.optional(),
@@ -220,6 +246,17 @@ export const IngestPayload = IngestPayloadBase.superRefine((payload, ctx) => {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['data', 'collectionLog', title, 'observed_at'], message: 'não pode ser posterior a sent_at' });
     }
   }
+  const seen = new Set<string>();
+  (payload.data.recording ?? []).forEach((event, i) => {
+    if (Date.parse(event.at) > sentAt) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['data', 'recording', i, 'at'], message: 'não pode ser posterior a sent_at' });
+    }
+    const key = `${event.recording}#${event.seq}`;
+    if (seen.has(key)) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['data', 'recording', i, 'seq'], message: 'recording e seq repetidos' });
+    }
+    seen.add(key);
+  });
 });
 export type IngestPayload = z.infer<typeof IngestPayload>;
 

@@ -775,3 +775,5 @@ Divergências dos artboards:
 
 Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`frota.test.ts`, `historico.test.ts`,
 `automacao.test.ts`) e `pnpm build`; sem captura de tela.
+
+- Marca manual por objetivo (2026-11-13): implementada fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.

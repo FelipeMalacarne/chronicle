@@ -762,3 +762,23 @@ test('marks in UTF-8 bytes become colored pieces, with search and cited links', 
 	// No offset (TL;DR mid-bullet): no color, the rest still works.
 	assert.deepEqual(piecesOf('potato', -1, ranges), [{ t: 'potato' }]);
 });
+
+test('chips carry the owner mark of the board objective', () => {
+	const st = step('a', {
+		objectives: [
+			{ key: 'skill:agility>=10', role: 'completes' },
+			{ key: 'quest:cooks_assistant', role: 'requires' }
+		]
+	});
+	const chips = chipsOf(st, {
+		objectives: [
+			{ key: 'skill:agility>=10', role: 'completes', verdict: 'met', owner_marked: true },
+			{ key: 'quest:cooks_assistant', role: 'requires', verdict: 'met' }
+		]
+	});
+	assert.deepEqual(
+		chips.map((c) => c.ownerMarked),
+		[true, false]
+	);
+	assert.equal(chipsOf(st, undefined)[0].ownerMarked, false);
+});

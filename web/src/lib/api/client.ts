@@ -17,6 +17,7 @@ import type {
 	GuideInfo,
 	MarkAction,
 	MarkRestore,
+	ObjectiveMarkResult,
 	ProgressSummary,
 	Readiness,
 	SetupLookup,
@@ -171,6 +172,17 @@ export const progressApi = {
 		request<Board>(
 			`/guides/${enc(guide)}/marks?account=${enc(account)}`,
 			json('POST', { restore, ...(revokes ? { revokes } : {}) })
+		),
+	/** Marca de objetivo do dono (docs/09, seção 5): vale para a conta toda, em qualquer rota. */
+	markObjective: (account: string, key: string, note = '') =>
+		request<ObjectiveMarkResult>(
+			`/objectives/mark?account=${enc(account)}`,
+			json('PUT', { key, note })
+		),
+	unmarkObjective: (account: string, key: string) =>
+		request<ObjectiveMarkResult>(
+			`/objectives/unmark?account=${enc(account)}`,
+			json('POST', { key })
 		),
 	confirmImplied: (guide: string, account: string) =>
 		request<Board>(`/guides/${enc(guide)}/implied/confirm?account=${enc(account)}`, json('POST')),

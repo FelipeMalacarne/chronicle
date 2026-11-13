@@ -19,6 +19,7 @@
 	import type { Board, BoardStep, Goal, GoalPlan, MarkAction } from '#lib/progress/types';
 	import {
 		boardIn,
+		objectiveUndoAction,
 		popUndo,
 		restoreAction,
 		undoable,
@@ -241,11 +242,48 @@
 		};
 	}
 
+	/** Marca ou desmarca um objetivo (vale para a conta toda); o board novo vem de uma releitura. */
+	async function writeObjective(at: Scope, action: 'mark' | 'unmark', key: string) {
+		if (busy) return false;
+		busy = true;
+		failure = null;
+		try {
+			await (action === 'mark'
+				? progressApi.markObjective(at.account, key)
+				: progressApi.unmarkObjective(at.account, key));
+			board.reload();
+			void loadSummary(at.account);
+			return true;
+		} catch (e) {
+			failure = e instanceof Error ? e.message : String(e);
+			return false;
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function markObjective(key: string, label: string, marked: boolean) {
+		const at = scope;
+		if (!at || !(await writeObjective(at, marked ? 'mark' : 'unmark', key))) return;
+		undo = [...undo, { kind: 'objective', scope: at, key, label, marked }];
+		toast = {
+			title: marked ? 'Marcado' : 'Desmarcado',
+			text: marked ? `${label} marcado como já feito` : `${label} voltou ao que o jogo mostra`,
+			undo: true
+		};
+	}
+
 	async function undoLast() {
 		const at = scope;
 		if (!at || busy) return;
 		const { entry, rest } = popUndo(undo, at);
 		if (!entry) return;
+		if (entry.kind === 'objective') {
+			if (!(await writeObjective(at, objectiveUndoAction(entry), entry.key))) return;
+			undo = rest;
+			toast = { title: 'Desfeito', text: `${entry.label} voltou`, undo: false };
+			return;
+		}
 		const done =
 			entry.kind === 'batch'
 				? await write(at, () =>
@@ -423,6 +461,8 @@
 						onskip={() => mark('skipped')}
 						onundo={undoLast}
 						onpin={() => (pinning = true)}
+						onobjmark={(k, l) => markObjective(k, l, true)}
+						onobjunmark={(k, l) => markObjective(k, l, false)}
 					/>
 				{:else}
 					<p class="su" aria-busy="true">Carregando o passo atual…</p>

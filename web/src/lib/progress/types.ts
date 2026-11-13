@@ -1121,3 +1121,10 @@ export interface PlanNext {
 	task: PlanTask | null;
 	skipped: PlanTask[];
 }
+
+/** A resposta de marcar ou desmarcar um objetivo: quantos passos mudaram de estado. */
+export interface ObjectiveMarkResult {
+	key: string;
+	marked: boolean;
+	steps_changed: number;
+}

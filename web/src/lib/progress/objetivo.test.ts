@@ -127,3 +127,17 @@ test('nextAction is the first action still missing; actionsSummary counts them',
 	assert.equal(actionsSummary(acts), 'Passo a passo · 5 ações · 2 com o que falta');
 	assert.equal(actionsSummary([{ state: 'plain' as const }]), 'Passo a passo · 1 ação');
 });
+
+test('goalView says an owner-marked objective was marked by the owner', () => {
+	const st = step([['skill:magic>=50', 'completes']]);
+	const [marked] = chipsOf(st, {
+		objectives: [{ key: 'skill:magic>=50', role: 'completes', verdict: 'met', owner_marked: true }]
+	});
+	const [evidence] = chipsOf(st, {
+		objectives: [{ key: 'skill:magic>=50', role: 'completes', verdict: 'met' }]
+	});
+	assert.equal(goalView(marked).ownerMarked, true);
+	assert.match(goalView(marked).title, /marcado por você/);
+	assert.equal(goalView(evidence).ownerMarked, false);
+	assert.doesNotMatch(goalView(evidence).title, /marcado por você/);
+});

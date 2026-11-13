@@ -1,7 +1,14 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import type { Board } from './types.ts';
-import { boardIn, popUndo, restoreAction, undoable, type UndoEntry } from './undo.ts';
+import {
+	boardIn,
+	objectiveUndoAction,
+	popUndo,
+	restoreAction,
+	undoable,
+	type UndoEntry
+} from './undo.ts';
 
 const oziris = { account: 'acc_x', guide: 'oziris-main' };
 const bruh = { account: 'acc_x', guide: 'bruhsailer-main' };
@@ -58,4 +65,18 @@ test('restoreAction volta à marca anterior, e implied ou nenhuma viram clear', 
 		kind: 'skipped',
 		note: 'depois'
 	});
+});
+
+test('an objective mark is undone by the opposite write, in its own scope only', () => {
+	const entry: UndoEntry = {
+		kind: 'objective',
+		scope: oziris,
+		key: 'quest:cooks_assistant@completed',
+		label: 'Cooks Assistant',
+		marked: true
+	};
+	assert.equal(objectiveUndoAction(entry as { marked: boolean }), 'unmark');
+	assert.equal(objectiveUndoAction({ marked: false }), 'mark');
+	assert.equal(popUndo([entry], oziris).entry, entry);
+	assert.deepEqual(popUndo([entry], bruh), { entry: null, rest: [] });
 });

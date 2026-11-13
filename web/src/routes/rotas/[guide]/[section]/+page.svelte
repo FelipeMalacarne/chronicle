@@ -263,6 +263,25 @@
 	}
 	const mark = (id: string, kind: MarkAction) =>
 		write((at) => progressApi.mark(at.guide, id, at.account, kind));
+	/** Marca de objetivo do dono (vale para a conta toda); sem pilha de desfazer aqui: "Desfazer" no chip. */
+	async function markObjective(key: string, marked: boolean) {
+		const at = scope;
+		if (!at || busy) return;
+		busy = true;
+		failure = null;
+		try {
+			await (marked
+				? progressApi.markObjective(at.account, key)
+				: progressApi.unmarkObjective(at.account, key));
+			board.reload();
+			events.reload();
+			void loadSummary(at.account);
+		} catch (e) {
+			failure = e instanceof Error ? e.message : String(e);
+		} finally {
+			busy = false;
+		}
+	}
 	const confirmAll = () => write((at) => progressApi.confirmImplied(at.guide, at.account));
 	async function activate() {
 		if (!account) return;
@@ -342,7 +361,13 @@
 				{#if s.bank_actions?.length}<span class="meta">banco <b>dentro do passo</b></span>{/if}
 			</div>
 		{/if}
-		{#if chips.length}<GoalGrid {chips} objectives={b?.objectives} />{/if}
+		{#if chips.length}<GoalGrid
+				{chips}
+				objectives={b?.objectives}
+				{busy}
+				onmark={(k) => markObjective(k, true)}
+				onunmark={(k) => markObjective(k, false)}
+			/>{/if}
 		{#each notes as n, i (i)}
 			<p class="note" class:note-up={n.kind === 'update'}>
 				<span class="lbl">{n.label || 'Nota do autor'}</span>{n.text}

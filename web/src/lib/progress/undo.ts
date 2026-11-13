@@ -9,8 +9,12 @@ export interface Scope {
 	guide: string;
 }
 
-/** Uma entrada do desfazer: uma marca (com a que o passo tinha antes) ou um lote "marcar antes". */
+/**
+ * Uma entrada do desfazer: uma marca (com a que o passo tinha antes), um lote "marcar antes" ou a
+ * marca de um objetivo (`marked`: o que a escrita fez; desfazer faz o contrário).
+ */
 export type UndoEntry =
+	| { kind: 'objective'; scope: Scope; key: string; label: string; marked: boolean }
 	| { kind: 'mark'; scope: Scope; step: string; ref: string; prev?: Mark; command?: string }
 	| { kind: 'batch'; scope: Scope; restore: MarkRestore[]; command?: string };
 
@@ -50,4 +54,9 @@ export function undoable(stack: readonly UndoEntry[], scope: Scope | null): numb
 export function restoreAction(prev?: Mark): { kind: MarkAction; note?: string } {
 	if (!prev || prev.kind === 'implied') return { kind: 'clear' };
 	return { kind: prev.kind as MarkAction, note: prev.note };
+}
+
+/** O que desfazer uma marca de objetivo escreve: desmarcar o que foi marcado, e o inverso. */
+export function objectiveUndoAction(entry: { marked: boolean }): 'mark' | 'unmark' {
+	return entry.marked ? 'unmark' : 'mark';
 }

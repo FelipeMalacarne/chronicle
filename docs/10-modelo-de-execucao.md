@@ -208,8 +208,24 @@ coordenadas. Todos vêm da wiki, como os itens (doc 09, seção 7).
     objetivo que o passo conclui, `owner_mark` só em `manual` de passo;
   - no passo, a citação confere com o texto e uma inferência tem `confirmed_by: owner` ou decisão, como
     nos objetivos.
-- **Ferramental**: o `revise_entity` do `content mcp` acha e renomeia os refs das tarefas dos sidecars. O
-  `submit` ainda não aceita tarefas; entra com a extração delas na fase 2.
+- **Ferramental**: o `revise_entity` do `content mcp` acha e renomeia os refs das tarefas dos sidecars. Desde
+  a fase 2, o `submit` aceita tarefas e o `submit_tasks` grava só elas (seção 11, "como implementado").
+
+**Como implementado (fase 2, evidência gravada, 2026-11-13).** A evidência de uma tarefa de passo
+(`content.TaskEvidence`) é a citação do texto, os eventos gravados que a sustentam (`recorded`: o id da
+gravação e os eventos, como o plugin os gravou, sem a conta) ou os dois. A proveniência ganha o método
+`recording` (tarefa proposta da gravação). O verificador (`content.CheckRecorded`, rodado pelo loader)
+confere que os eventos são válidos, de uma gravação só, e mostram a tarefa pelos ids do catálogo:
+
+- `travel`: uma posição gravada dentro da área do local;
+- `talk`: um clique no NPC (um dos ids de jogo dele) e as opções de diálogo, na ordem;
+- `interact`: o objeto com a mesma opção de menu;
+- `buy`: a compra do item, e o lojista gravado é dono da loja;
+- `bank`: um evento de banco;
+- `train`: o clique no NPC ou no objeto.
+
+Tarefa com evidência gravada sempre exige `confirmed_by: owner`: a gravação mostra o que o dono fez, não o
+que o passo pede.
 
 ## 8. Receitas por objetivo
 
@@ -322,6 +338,30 @@ cada `(recording, seq)` uma vez só) e o dono os lê em `GET /api/account/record
 2026-11-13 sobre a gravação) e no doc 04, seção 6.4. Decisões conservadoras pendentes do dono na
 seção 14 (E11 a E13).
 
+**Como implementado (fase 2, as propostas, 2026-11-13).** `internal/core/recording/propose` (puro, testado
+por tabela) transforma um trecho gravado em tarefas propostas para um passo, na ordem em que aconteceram:
+
+| Eventos | Tarefa proposta |
+|---|---|
+| a interação acontece num tile dentro da área de um local novo | `travel(location)`; com `via` quando um `item_op` antes dela levou o personagem a 30 tiles ou mais (um teleporte) |
+| `npc` com Talk-to e as opções de diálogo que seguem | `talk(npc, options)`, `until: goal_met` quando o passo conclui algo |
+| `npc` com Trade e as compras que seguem | um `buy(shop, item, qty)` por item: a loja é a única, entre as que o lojista é dono, que vende o item |
+| `object` (que não abre o banco) | `interact(object, action)` |
+| abertura do banco (pelo NPC ou objeto antes dela), saques e depósitos | `bank(items)` com o que foi sacado e não devolvido |
+| `item_use` | `manual` com a nota "Usar X em Y" (não há tipo de tarefa para isso ainda) |
+
+Os ids de jogo viram refs pelos catálogos da fase 1 (`NPCsByGameID`, `ObjectsByGameID`, `ShopsOwnedBy`,
+`LocationsAt`). Um id em várias páginas, nenhuma loja certa ou um tile em várias áreas (ou em nenhuma)
+vão para `issues`, nunca para um palpite. Toda proposta tem `confidence: medium`, os eventos que a
+sustentam e o que o verificador diz dela (`problems`, por exemplo um `talk` sem objetivo para terminar).
+
+No `content mcp`: `propose_tasks` lê o arquivo de `chronicle recording -o` (o `content mcp` continua sem
+banco e sem rede), recorta o trecho do passo e devolve as propostas no formato do `submit_tasks`; a sessão
+de extração (skill `annotate-guide@6`) pergunta ao dono sobre cada uma (AskUserQuestion) e envia só o
+confirmado, com `confirmed_by: owner`. O `submit_tasks` copia os eventos do arquivo pelos `seq`, nunca
+do agente, e passa pelo verificador da seção 7. O `submit` também aceita `tasks` e, sem elas, mantém as
+tarefas do passo.
+
 ## 12. Modelo de dados proposto
 
 Novo, alterado e mantido em relação às migrations 0001 a 0006. Formato final de cada tabela na
@@ -400,7 +440,7 @@ próxima é a 2, a gravação por demonstração e o modo assistido, que traz as
 | E10 | Importar diálogos e etapas de quest do Quest Helper em vez de extrair do texto | **decidida (2026-11-13): avaliar na fase 5** |
 | E11 | O que a gravação registra | **em aberto; implementado o conservador (fase 2):** só o que o dono faz (NPCs e objetos clicados, opções de diálogo, compras, banco, itens usados e opções de item, posição grosseira); nunca chat, outros jogadores, magias, Drop/Examine ou o caminho tile a tile |
 | E12 | Retenção da gravação no servidor | **em aberto; implementado o conservador:** fica até o dono apagar (`DELETE /api/account/recording`, `chronicle recording delete --yes`), sem expiração automática; o snapshot bruto não guarda a gravação |
-| E13 | A gravação vai para o conteúdo como evidência | **em aberto; implementado o conservador:** só os eventos que sustentam cada tarefa confirmada, sem conta, RSN ou outros dados do personagem (fase 2, extração das tarefas) |
+| E13 | A gravação vai para o conteúdo como evidência | **em aberto; implementado o conservador:** só os eventos que sustentam cada tarefa confirmada, sem conta, RSN ou outros dados do personagem (`submit_tasks` copia só os `seq` pedidos) |
 
 ## 15. Impacto nos outros docs
 

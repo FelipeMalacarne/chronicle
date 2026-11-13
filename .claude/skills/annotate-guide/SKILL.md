@@ -1,12 +1,12 @@
 ---
 name: annotate-guide
-description: Extract objectives, item requirements, bank actions and locations from the steps of a guide (oziris-main, bruhsailer-main) into the verified annotation sidecars, through the chronicle-content MCP server, with the owner watching and answering questions. Use when asked to annotate, extract or reprocess a guide section, or to fix stale annotations.
+description: Extract objectives, item requirements, bank actions, locations and typed tasks from the steps of a guide (oziris-main, bruhsailer-main) into the verified annotation sidecars, through the chronicle-content MCP server, with the owner watching and answering questions. Tasks come from the text or from the owner's recorded demonstration (propose_tasks). Use when asked to annotate, extract or reprocess a guide section, to fix stale annotations, or to turn a recording into a step's tasks.
 ---
 
 # annotate-guide
 
-Skill version: **`annotate-guide@5`**. Pass it as `skill_version` on every `submit`. Bump the number
-here whenever the taxonomy or procedure below changes.
+Skill version: **`annotate-guide@6`**. Pass it as `skill_version` on every `submit` and
+`submit_tasks`. Bump the number here whenever the taxonomy or procedure below changes.
 
 You turn guide text into structured annotations (docs/09 section 6). The output is committed in
 `content/guides/<id>/annotations/` and decides when a step is done for the owner's account, so a wrong
@@ -194,6 +194,49 @@ To fix an entry already proposed (a wrong id, `wiki_key` or alias), ask the owne
 sidecar, an empty `wiki_key` clears it, and `remove` is refused while anything still uses it. Never edit
 the catalogs by hand.
 
+### Tasks (`tasks`, docs/10 section 7)
+
+Tasks say **how** the executor does a step, with the closed list of primitives: `travel` (`location`,
+`via` an item or unlock), `bank` (`items` to withdraw, or none to bank for the segment's loadout),
+`buy` (`shop`, `item`, `qty`), `talk` (`npc`, `options`: the dialogue options, the game's exact
+text), `interact` (`object`, `action`: the menu option, the game's exact text), `train` (`skill`,
+`npc` or `object`, `location`) and `manual` (`note` for the owner). `quest` is not a primitive yet.
+Every ref is a name you send (`{"name": ..., "id"?: ...}`); `via` also takes `kind` (`item` or
+`unlock`). Termination (`until`): `travel`, `bank` and `buy` have a default and take none; `talk` and
+`interact` end on `{"state": "goal_met"}` when the step completes something (`propose_tasks` lists
+the step's `goal`), else on `{"objective": {kind, name, state | n}}`; `train` ends on its skill's
+level; `manual` on `owner_mark`, `goal_met` or an objective. A step's tasks are only what is the
+route's: what a recipe covers comes from the recipe (`content/recipes/README.md`).
+
+Two sources, both through `submit_tasks(guide, section, skill_version, steps: [{step_id, tasks}])`, which
+replaces a step's tasks and keeps everything else of its annotation (the step must have a current
+annotation: submit its objectives first). `submit` also takes `tasks`; omitted, it keeps the step's
+tasks; `[]` removes them.
+
+1. **From the text.** Only when the text says the action with the name: "Buy a spade" in a step whose
+   shop is clear, "talk to the Cook". Quote it like an objective. `confidence: "high"` only when the
+   text names everything the task holds; a shop, an NPC or a location you deduce is `"medium"` and
+   needs the owner. Most route steps leave the place and the shop unsaid: prefer the recording.
+2. **From a recording** (the main path, phase 2 of doc 10). The owner plays the stretch with "Record
+   demonstration" on in Chronicle Link, then exports it: `chronicle recording --since 2h -o
+   /tmp/rec.json` (the API, never the database). For each step of the stretch:
+   - `propose_tasks(guide, step, recording: "/tmp/rec.json", from_seq?, to_seq?, since?, until?)`
+     narrows the events to that step's part (ask the owner where the step starts and ends when it is not
+     obvious from the events) and returns `proposals`: each with a `summary`, the names, the events in
+     one line each, the verifier's `problems` and `submit`, the task exactly as `submit_tasks` takes it
+     (names with the catalog id, `recorded: {file, recording, seqs}`, `confidence: "medium"`). It also
+     returns `issues`: ids on several catalog pages, purchases whose shop is not certain, tiles in no
+     location's area, events with no task type. Nothing in `issues` is guessed; show them to the owner.
+   - Ask the owner with AskUserQuestion, one question per step or per few proposals: show the summary
+     and the events; options "Confirmar", "Corrigir" (then ask what), "Descartar". Fix what the
+     owner says (an `until` objective, a dropped option, a different shop) in the `submit` form.
+   - Submit only what the owner confirmed, with `confirmed_by: "owner"` on each task:
+     `submit_tasks` copies the events from the file by seq and verifies that they show the task (the
+     NPC or object by its game ids, the option, the item, the shop's owner, a position in the location's
+     area). A task from a recording without `confirmed_by: "owner"` is always rejected.
+   - The sidecar keeps only the events behind each confirmed task, never the account. Keep the recording
+     file out of git.
+
 ## Asking the owner
 
 The owner watches the session and expects questions. Ask with **AskUserQuestion**, in **Portuguese
@@ -227,7 +270,11 @@ annotation says.
   `any_of` or `family`, or ask the owner.
 - `does not resolve`: check spelling with `resolve_entity`. Unlocks and locations may need
   `propose_entity`. Text that names no item stays out; mention it in `comment`.
-- `needs confirmed_by owner`: you sent an inference. Ask first.
+- `needs confirmed_by owner`: you sent an inference. Ask first. A task from a recording always needs it.
+- `no recorded ... ` / `has no event ...#N`: the events named do not show the task (another NPC id,
+  another option, a position outside the location's area) or are not in the file. Use the seqs
+  `propose_tasks` gave, or ask the owner.
+- `the step has no current annotation`: `submit_tasks` needs the step's objectives first.
 - `order: ...`: the objective contradicts the route (a quest started after it is finished, something
   completed twice, a requirement the route only meets later). Usually the role or state is wrong.
   A skill requirement counts as met when the fixed experience of the quests the route finishes before

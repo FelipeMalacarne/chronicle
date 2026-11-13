@@ -5,8 +5,10 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/recording"
 )
 
 // Task is one typed task of the execution model (docs/10 section 7): what the
@@ -335,18 +337,173 @@ func (t *Task) Refs() []*entities.Ref {
 	return out
 }
 
-// AnnotatedTask is a task read from the step text: the task, the quote it
-// came from and its provenance, like an annotated objective.
+// AnnotatedTask is a task of a step with where it came from and its
+// provenance, like an annotated objective: a quote of the step text, the
+// recorded demonstration it was proposed from (docs/10 section 11), or both.
 type AnnotatedTask struct {
 	Task
-	Evidence ObjectiveEvidence `json:"evidence"`
-	Source   ObjectiveSource   `json:"source"`
+	Evidence TaskEvidence    `json:"evidence"`
+	Source   ObjectiveSource `json:"source"`
+}
+
+// TaskEvidence is the evidence of a step task: a quote (Field, Quote and
+// Span, as an objective's), recorded events (Recorded), or both.
+type TaskEvidence struct {
+	Field    string            `json:"field,omitempty"`
+	Quote    string            `json:"quote,omitempty"`
+	Span     []int             `json:"span,omitempty"`
+	Recorded *RecordedEvidence `json:"recorded,omitempty"`
+}
+
+// RecordedEvidence is the stretch of a demonstration a task was proposed
+// from: the recording's id and the events that support the task, as the
+// plugin recorded them (game ids and the character's tile; never the
+// account). The verifier checks that they support the task (CheckRecorded).
+type RecordedEvidence struct {
+	Recording string            `json:"recording"`
+	Events    []recording.Event `json:"events"`
+}
+
+// quote is the quote part of the evidence, for verifyQuote.
+func (e TaskEvidence) quote() ObjectiveEvidence {
+	return ObjectiveEvidence{Field: e.Field, Quote: e.Quote, Span: e.Span}
+}
+
+// CheckRecorded verifies that recorded events support a task (docs/10
+// section 11): valid events of one recording, and among them what the task
+// says happened. A travel needs a position in the location's area; a talk
+// the NPC (one of its game ids) and its dialogue options, in order; an
+// interact the object with the action; a buy the item from a shop the
+// shopkeeper recorded owns; a bank a bank event; a train its npc or object.
+func CheckRecorded(t Task, ev RecordedEvidence, reg *entities.Registry) []string {
+	var msgs []string
+	add := func(format string, args ...any) { msgs = append(msgs, fmt.Sprintf(format, args...)) }
+	if !recording.ValidRecordingID(ev.Recording) {
+		add("recording %q is not a recording id", ev.Recording)
+	}
+	if len(ev.Events) == 0 {
+		add("recorded evidence needs the events that support the task")
+	}
+	for i, e := range ev.Events {
+		for _, m := range e.Check(time.Time{}) {
+			add("events/%d: %s", i, m)
+		}
+		if e.Recording != ev.Recording {
+			add("events/%d: from recording %q, not %q", i, e.Recording, ev.Recording)
+		}
+	}
+	if len(msgs) > 0 {
+		return msgs
+	}
+	has := func(match func(recording.Event) bool) bool { return slices.ContainsFunc(ev.Events, match) }
+	npcIs := func(ref *entities.Ref) func(*int) bool {
+		var ids []int
+		if ref != nil {
+			if n, ok := reg.NPC(ref.ID); ok {
+				ids = n.GameIDs
+			}
+		}
+		return func(id *int) bool { return id != nil && slices.Contains(ids, *id) }
+	}
+	objectIs := func(ref *entities.Ref) func(*int) bool {
+		var ids []int
+		if ref != nil {
+			if o, ok := reg.Object(ref.ID); ok {
+				ids = o.GameIDs
+			}
+		}
+		return func(id *int) bool { return id != nil && slices.Contains(ids, *id) }
+	}
+	switch t.Type {
+	case TaskTravel:
+		if t.Location == nil {
+			return nil
+		}
+		area, ok := reg.LocationArea(t.Location.ID)
+		if ok && !has(func(e recording.Event) bool { return area.Contains(e.X, e.Y, e.Plane) }) {
+			add("no recorded position is in the area of %s", t.Location)
+		}
+	case TaskTalk:
+		isNPC := npcIs(t.NPC)
+		if !has(func(e recording.Event) bool { return e.Kind == recording.KindNPC && isNPC(e.NPC) }) {
+			add("no recorded click on %s (one of its game ids)", t.NPC)
+		}
+		next := 0
+		for _, e := range ev.Events {
+			if next < len(t.Options) && e.Kind == recording.KindDialogue && e.Option == t.Options[next] {
+				next++
+			}
+		}
+		if next < len(t.Options) {
+			add("dialogue option %q is not recorded (in this order)", t.Options[next])
+		}
+	case TaskInteract:
+		isObject := objectIs(t.Object)
+		if !has(func(e recording.Event) bool {
+			return e.Kind == recording.KindObject && isObject(e.Object) && e.Option == t.Action
+		}) {
+			add("no recorded %q on %s (one of its game ids)", t.Action, t.Object)
+		}
+	case TaskBuy:
+		if t.Item == nil || t.Shop == nil {
+			return nil
+		}
+		item, _ := t.Item.Int()
+		owners := []string{}
+		if s, ok := reg.Shop(t.Shop.ID); ok {
+			owners = s.Owners
+		}
+		bought := false
+		for _, e := range ev.Events {
+			if e.Kind != recording.KindShopBuy || e.Item == nil || !reg.SameItem(*e.Item, item, entities.CompareIgnoreNoted) {
+				continue
+			}
+			bought = true
+			if e.NPC == nil {
+				continue
+			}
+			if !slices.ContainsFunc(reg.NPCsByGameID(*e.NPC), func(r entities.Ref) bool { return slices.Contains(owners, r.ID) }) {
+				add("the recorded shopkeeper (npc %d) does not own %s", *e.NPC, t.Shop)
+			}
+		}
+		if !bought {
+			add("no recorded purchase of %s", t.Item)
+		}
+	case TaskBank:
+		if !has(func(e recording.Event) bool {
+			return e.Kind == recording.KindBankOpen || e.Kind == recording.KindBankWithdraw || e.Kind == recording.KindBankDeposit
+		}) {
+			add("no recorded bank event")
+		}
+	case TaskTrain:
+		switch {
+		case t.NPC != nil:
+			isNPC := npcIs(t.NPC)
+			if !has(func(e recording.Event) bool { return e.Kind == recording.KindNPC && isNPC(e.NPC) }) {
+				add("no recorded click on %s", t.NPC)
+			}
+		case t.Object != nil:
+			isObject := objectIs(t.Object)
+			if !has(func(e recording.Event) bool { return e.Kind == recording.KindObject && isObject(e.Object) }) {
+				add("no recorded click on %s", t.Object)
+			}
+		}
+	}
+	return msgs
 }
 
 // stepGoal returns the keys of the objectives a step completes, after the
 // annotation sa is composed (its suppressions dropped, its objectives added).
-func stepGoal(st *Step, sa *StepAnnotation) []entities.ObjectiveKey {
-	objs := slices.DeleteFunc(slices.Clone(st.Objectives), sa.Suppresses)
+// The rule objectives are converted here too, so a guide read on its own
+// (the extraction workspace) has the same goal as a loaded one, where Load
+// already composed them (the merge keeps each key and role once).
+func stepGoal(st *Step, sa *StepAnnotation, reg *entities.Registry) []entities.ObjectiveKey {
+	objs := slices.Clone(st.Objectives)
+	if reg != nil {
+		rules, _ := RuleObjectives(st, reg)
+		objs = mergeObjectives(objs, rules)
+	}
+	objs = slices.DeleteFunc(objs, sa.Suppresses)
 	objs = mergeObjectives(objs, sa.Objectives)
 	var out []entities.ObjectiveKey
 	for _, o := range objs {
@@ -355,6 +512,17 @@ func stepGoal(st *Step, sa *StepAnnotation) []entities.ObjectiveKey {
 		}
 	}
 	return out
+}
+
+// StepTaskContext is what the tasks of a step can lean on, with the
+// annotation sa composed (nil: the step as loaded): the objectives it
+// completes, and whether it or its segment lists items to bank for.
+func (g *Guide) StepTaskContext(st *Step, sa *StepAnnotation, reg *entities.Registry) TaskContext {
+	if sa == nil {
+		sa = &StepAnnotation{}
+	}
+	seg := g.segmentsByID[st.SegmentID]
+	return TaskContext{Goal: stepGoal(st, sa, reg), Loadout: len(sa.Items) > 0 || seg != nil && hasLoadoutItems(seg.Loadout)}
 }
 
 // hasLoadoutItems reports whether a loadout lists any item.

@@ -226,3 +226,33 @@ func TestLocationAreas(t *testing.T) {
 		t.Error("an unmapped location has no area")
 	}
 }
+
+// The reverse lookups the demonstration proposals use (docs/10 section 11):
+// a game id to its pages, an npc to the shops it owns, a tile to the
+// locations whose area holds it.
+func TestWorldReverseLookups(t *testing.T) {
+	r := registry(t)
+	refs := func(rs []Ref) string {
+		s := make([]string, len(rs))
+		for i, x := range rs {
+			s[i] = x.String()
+		}
+		return strings.Join(s, ",")
+	}
+	cases := []struct{ name, got, want string }{
+		{"one page", refs(r.NPCsByGameID(815)), "npc:duke_horacio"},
+		{"several pages", refs(r.NPCsByGameID(3908)), "npc:bear_cub,npc:zanik"},
+		{"no page", refs(r.NPCsByGameID(999999)), ""},
+		{"object", refs(r.ObjectsByGameID(10583)), "object:bank_booth"},
+		{"shops of an owner", refs(r.ShopsOwnedBy("bob")), "shop:bobs_brilliant_axes"},
+		{"owns nothing", refs(r.ShopsOwnedBy("duke_horacio")), ""},
+		{"in the castle", refs(r.LocationsAt(3222, 3218, 0)), "location:lumbridge_castle"},
+		{"another plane", refs(r.LocationsAt(3222, 3218, 3)), ""},
+		{"nowhere", refs(r.LocationsAt(2000, 2000, 0)), ""},
+	}
+	for _, c := range cases {
+		if c.got != c.want {
+			t.Errorf("%s = %q, want %q", c.name, c.got, c.want)
+		}
+	}
+}

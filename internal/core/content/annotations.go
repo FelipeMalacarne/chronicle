@@ -383,15 +383,33 @@ func (g *Guide) CheckStepAnnotation(sa *StepAnnotation, decisions *DecisionsFile
 		checkSource("/location/source", sa.Location.Source)
 	}
 	if len(sa.Tasks) > 0 {
-		seg := g.segmentsByID[st.SegmentID]
-		ctx := TaskContext{Goal: stepGoal(st, sa), Loadout: len(sa.Items) > 0 || seg != nil && hasLoadoutItems(seg.Loadout)}
+		ctx := g.StepTaskContext(st, sa, reg)
 		for j, t := range sa.Tasks {
 			tPtr := taskPointer(j)
 			for _, msg := range t.Check(reg, ctx) {
 				add(tPtr, "%s", msg)
 			}
-			if msg := verifyQuote(doc, t.Evidence); msg != "" {
-				add(tPtr+"/evidence", "%s", msg)
+			ev := t.Evidence
+			if ev.Quote == "" && ev.Recorded == nil {
+				add(tPtr+"/evidence", "a task needs a quote of the step or the recorded events it came from")
+			}
+			if ev.Quote != "" || ev.Field != "" || len(ev.Span) > 0 {
+				if msg := verifyQuote(doc, ev.quote()); msg != "" {
+					add(tPtr+"/evidence", "%s", msg)
+				}
+			}
+			if ev.Recorded != nil {
+				for _, msg := range CheckRecorded(t.Task, *ev.Recorded, reg) {
+					add(tPtr+"/evidence/recorded", "%s", msg)
+				}
+				// A demonstration shows what the owner did, not what the step
+				// asks: a task from one is always the owner's call (rule 9).
+				if t.Source.ConfirmedBy != ConfirmedByOwner {
+					add(tPtr+"/source", "a task from a recording needs confirmed_by owner")
+				}
+			}
+			if t.Source.Method == ProvenanceRecording && ev.Recorded == nil {
+				add(tPtr+"/source", "method recording needs recorded evidence")
 			}
 			checkSource(tPtr+"/source", t.Source)
 		}

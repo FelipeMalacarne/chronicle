@@ -327,6 +327,10 @@ type Registry struct {
 	shops                   map[string]*ShopEntry
 	objects                 map[string]*ObjectEntry
 	npcIx, shopIx, objectIx *worldIndex
+	// npcByGame and objectByGame are the pages a game id belongs to (an id
+	// may be on several pages); shopsByOwner the shops an npc owns.
+	npcByGame, objectByGame map[int][]string
+	shopsByOwner            map[string][]string
 
 	familyBySlug map[string]string
 

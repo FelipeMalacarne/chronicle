@@ -3,8 +3,10 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -56,7 +58,9 @@ for names you are unsure of -> submit -> fix and resubmit rejected steps.
 Send names and quotes, never refs or spans: submit resolves names and locates
 quotes. Anything inferred (confidence medium) needs the owner's answer first
 (confirmed_by "owner") or a recorded decision. New unlocks and locations enter
-the catalogs only through propose_entity after the owner confirms.`
+the catalogs only through propose_entity after the owner confirms. Tasks (how a
+step is done): propose_tasks with the owner's recording file -> ask the owner
+about each proposal -> submit_tasks with confirmed_by "owner".`
 
 func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
 	srv := &mcp.Server{
@@ -159,8 +163,9 @@ func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
 				Name: "submit",
 				Description: "Verify and store annotations for steps of one section. Each step is accepted whole or rejected with every reason " +
 					"(name does not resolve or is ambiguous, quote not in the field, inference without the owner's confirmation, wrong role, route order). " +
-					"Accepted steps are written to the section sidecar; resubmitting a step replaces its annotation. Submit a step with no objectives to record that it has none. " +
-					"A rule objective the step does not have stays in force unless it is listed in suppress (with the owner's confirmation).",
+					"Accepted steps are written to the section sidecar; resubmitting a step replaces its annotation, except its tasks when tasks is omitted (they are kept and verified again). " +
+					"Submit a step with no objectives to record that it has none. " +
+					"A rule objective the step does not have stays in force unless it is listed in suppress (with the owner's confirmation). Tasks alone: submit_tasks.",
 				InputSchema: schema(submitSchema),
 				Handler: func(_ context.Context, raw json.RawMessage) (any, error) {
 					var a struct {
@@ -173,6 +178,68 @@ func newContentMCPServer(ws *annotate.Workspace) *mcp.Server {
 						return nil, err
 					}
 					return ws.Submit(a.Guide, a.Section, a.SkillVersion, a.Steps)
+				},
+			},
+			{
+				Name: "propose_tasks",
+				Description: "A step as its tasks see it (text, the objectives until goal_met waits for, whether bank has a loadout, its current tasks) and, with a recording file " +
+					"(`chronicle recording -o <file>`), the tasks the recorded demonstration suggests for it (docs/10 section 11): travel, talk, interact, buy, bank, and manual for an item used on something. " +
+					"Each proposal comes in the form submit_tasks takes (names with the catalog id, the events by seq), with confidence medium and without confirmed_by: " +
+					"ask the owner, then add confirmed_by owner. Ids on several catalog pages and tiles in no location's area are listed in issues, never guessed. Writes nothing.",
+				InputSchema: schema(`{"type":"object","additionalProperties":false,"required":["guide","step"],"properties":{
+					"guide":{"type":"string"},"step":{"type":"string","description":"step id"},
+					"recording":{"type":"string","description":"path of a recording file (chronicle recording -o); omit to see the step only"},
+					"recording_id":{"type":"string","description":"only the events of this recording (rec-...)"},
+					"from_seq":{"type":"integer","minimum":1},"to_seq":{"type":"integer","minimum":1},
+					"since":{"type":"string","description":"RFC 3339: events from this time"},"until":{"type":"string","description":"RFC 3339: events before this time"}}}`),
+				Handler: func(_ context.Context, raw json.RawMessage) (any, error) {
+					var a struct {
+						Guide       string `json:"guide"`
+						Step        string `json:"step"`
+						Recording   string `json:"recording"`
+						RecordingID string `json:"recording_id"`
+						FromSeq     int64  `json:"from_seq"`
+						ToSeq       int64  `json:"to_seq"`
+						Since       string `json:"since"`
+						Until       string `json:"until"`
+					}
+					if err := mcp.Decode(raw, &a); err != nil {
+						return nil, err
+					}
+					f := annotate.ProposeFilter{Recording: a.RecordingID, FromSeq: a.FromSeq, ToSeq: a.ToSeq}
+					for _, tf := range []struct {
+						raw string
+						to  *time.Time
+					}{{a.Since, &f.Since}, {a.Until, &f.Until}} {
+						if tf.raw == "" {
+							continue
+						}
+						t, err := time.Parse(time.RFC3339Nano, tf.raw)
+						if err != nil {
+							return nil, fmt.Errorf("since and until are RFC 3339 times: %w", err)
+						}
+						*tf.to = t
+					}
+					return ws.ProposeTasks(a.Guide, a.Step, a.Recording, f)
+				},
+			},
+			{
+				Name: "submit_tasks",
+				Description: "Verify and store the tasks of steps of one section, keeping each step's objectives, items, bank actions and location (a step needs a current annotation: submit it first). " +
+					"tasks replaces the step's tasks ([] removes them). Each task has a quote of the step, recorded events (as propose_tasks gave them) or both; " +
+					"a task from a recording always needs confirmed_by owner. Each step is accepted whole or rejected with every reason (names, quote, events that do not show the task, the verifier).",
+				InputSchema: schema(submitTasksSchema),
+				Handler: func(_ context.Context, raw json.RawMessage) (any, error) {
+					var a struct {
+						Guide        string                       `json:"guide"`
+						Section      string                       `json:"section"`
+						SkillVersion string                       `json:"skill_version"`
+						Steps        []annotate.StepTasksProposal `json:"steps"`
+					}
+					if err := mcp.Decode(raw, &a); err != nil {
+						return nil, err
+					}
+					return ws.SubmitTasks(a.Guide, a.Section, a.SkillVersion, a.Steps)
 				},
 			},
 			{
@@ -251,7 +318,7 @@ const submitSchema = `{"type":"object","additionalProperties":false,"required":[
  "field":{"type":"string","description":"JSON pointer in the step: /text (default), /location, /notes/<i>/text, /items/<i>"},
  "confidence":{"type":"string","enum":["high","medium"],"description":"high: the text says it; medium: inferred, needs confirmed_by or decision"},
  "confirmed_by":{"const":"owner"},
- "decision":{"type":"string","description":"id of a recorded decision this applies"}
+ "decision":{"type":"string","description":"id of a recorded decision this applies"},` + taskDefs + `
 },
 "properties":{
  "guide":{"type":"string"},"section":{"type":"string"},
@@ -298,6 +365,54 @@ const submitSchema = `{"type":"object","additionalProperties":false,"required":[
    "key":{"type":"string","description":"key of one of the step's rule_objectives, as next_batch lists it"},
    "role":{"type":"string","enum":["completes","starts","requires","uses"]},
    "reason":{"type":"string","minLength":1,"description":"why the step does not have it"},
-   "confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}}}
+   "confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}}},
+  "tasks":{"type":"array","description":"the step's typed tasks (docs/10 section 7); omitted keeps the current ones, [] removes them","items":{"$ref":"#/$defs/task"}}
  }}}
+}}`
+
+// taskDefs describes annotate.TaskProposal, shared by submit and
+// submit_tasks (their $defs).
+const taskDefs = `
+ "nameRef":{"type":"object","additionalProperties":false,"required":["name"],"properties":{
+  "name":{"type":"string","description":"as resolve_entity takes it; for an npc, shop or object the wiki page title picks one page"},
+  "id":{"type":"string","description":"chosen candidate (the ref or its id) when the name is ambiguous"},
+  "kind":{"type":"string","enum":["item","unlock"],"description":"via only"}}},
+ "task":{"type":"object","additionalProperties":false,"required":["type","confidence"],"properties":{
+  "type":{"type":"string","enum":["travel","bank","buy","talk","interact","train","manual"]},
+  "location":{"$ref":"#/$defs/nameRef"},"via":{"$ref":"#/$defs/nameRef"},
+  "items":{"type":"array","description":"bank: the setup to withdraw (omit to bank for the segment's loadout)","items":{"type":"object","additionalProperties":false,"required":["name"],"properties":{
+   "name":{"type":"string"},"id":{"type":"string"},"any_of":{"type":"array","items":{"type":"string"}},"family":{"type":"string"},
+   "qty":{"type":"integer","minimum":1},"noted":{"type":"boolean"},"optional":{"type":"boolean"}}}},
+  "shop":{"$ref":"#/$defs/nameRef"},"item":{"$ref":"#/$defs/nameRef"},"qty":{"type":"integer","minimum":1},
+  "npc":{"$ref":"#/$defs/nameRef"},"options":{"type":"array","items":{"type":"string","minLength":1},"description":"talk: the dialogue options, the game's exact text"},
+  "object":{"$ref":"#/$defs/nameRef"},"action":{"type":"string","description":"interact: the menu option, the game's exact text"},
+  "skill":{"$ref":"#/$defs/nameRef"},"note":{"type":"string","description":"manual: what the owner does"},
+  "until":{"type":"object","additionalProperties":false,"description":"exactly one: a state, or an objective target named like an objective's","properties":{
+   "state":{"type":"string","enum":["at_location","loadout_ready","goal_met","owner_mark"]},
+   "objective":{"type":"object","additionalProperties":false,"required":["kind"],"properties":{
+    "kind":{"type":"string","enum":["quest","skill","diary","boss","item","unlock","ca","qp"]},"name":{"type":"string"},"id":{"type":"string"},
+    "tier":{"type":"string","enum":["easy","medium","hard","elite"]},"state":{"type":"string","enum":["started","finished"]},
+    "n":{"type":"integer","minimum":1},"family":{"type":"string"},
+    "any_of":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["name","n"],"properties":{"name":{"type":"string"},"id":{"type":"string"},"n":{"type":"integer","minimum":1}}}}}}}},
+  "field":{"$ref":"#/$defs/field"},"quote":{"$ref":"#/$defs/quote"},
+  "recorded":{"type":"object","additionalProperties":false,"required":["file","recording","seqs"],"description":"the recorded events behind the task, as propose_tasks gives them","properties":{
+   "file":{"type":"string"},"recording":{"type":"string"},"seqs":{"type":"array","minItems":1,"items":{"type":"integer","minimum":1}}}},
+  "confidence":{"$ref":"#/$defs/confidence"},"confirmed_by":{"$ref":"#/$defs/confirmed_by"},"decision":{"$ref":"#/$defs/decision"}}}`
+
+// submitTasksSchema describes annotate.StepTasksProposal.
+const submitTasksSchema = `{"type":"object","additionalProperties":false,"required":["guide","section","skill_version","steps"],
+"$defs":{
+ "quote":{"type":"string","minLength":1,"description":"exact words of the step field (case, spaces and curly quotes may differ)"},
+ "field":{"type":"string","description":"JSON pointer in the step: /text (default), /location, /notes/<i>/text, /items/<i>"},
+ "confidence":{"type":"string","enum":["high","medium"],"description":"high: the text says it; medium: inferred or from a recording, needs confirmed_by or decision"},
+ "confirmed_by":{"const":"owner"},
+ "decision":{"type":"string","description":"id of a recorded decision this applies"},` + taskDefs + `
+},
+"properties":{
+ "guide":{"type":"string"},"section":{"type":"string"},
+ "skill_version":{"type":"string","description":"annotate-guide@<version> from the skill"},
+ "steps":{"type":"array","minItems":1,"items":{"type":"object","additionalProperties":false,"required":["step_id","tasks"],"properties":{
+  "step_id":{"type":"string"},
+  "comment":{"type":"string","description":"report only: what was asked, why a proposal was dropped"},
+  "tasks":{"type":"array","items":{"$ref":"#/$defs/task"}}}}}
 }}`

@@ -31,6 +31,7 @@ type AcceptedStep struct {
 	Items       []string        `json:"items,omitempty"`
 	BankActions []string        `json:"bank_actions,omitempty"`
 	Location    string          `json:"location,omitempty"`
+	Tasks       []string        `json:"tasks,omitempty"`
 }
 
 // RejectedStep is a step whose proposal was not written, with every reason.
@@ -62,6 +63,7 @@ func (w *Workspace) Submit(guideID, sectionID, skillVersion string, steps []Step
 	candidates := map[string]content.StepAnnotation{}
 	reasons := map[string][]string{}
 	var order []string
+	files := recordingFiles{}
 	for _, p := range steps {
 		if _, dup := reasons[p.StepID]; dup {
 			return nil, fmt.Errorf("step %q is submitted twice", p.StepID)
@@ -78,6 +80,17 @@ func (w *Workspace) Submit(guideID, sectionID, skillVersion string, steps []Step
 			continue
 		}
 		sa, errs := build(w.reg, st, p, skillVersion)
+		if p.Tasks != nil {
+			tasks, terrs := buildTasks(w.reg, st, *p.Tasks, skillVersion, files)
+			sa.Tasks, errs = tasks, append(errs, terrs...)
+		} else if cur := gs.annotation(st); cur != nil {
+			// Resubmitting the objectives keeps the step's tasks; they are
+			// verified again below (a changed text can break their quotes).
+			sa.Tasks = cur.Tasks
+		}
+		if len(sa.Tasks) == 0 {
+			sa.Tasks = nil
+		}
 		if len(errs) == 0 {
 			issues, _ := gs.guide.CheckStepAnnotation(&sa, gs.decisions, w.reg)
 			for _, is := range issues {
@@ -142,6 +155,9 @@ func accepted(sa content.StepAnnotation) AcceptedStep {
 	}
 	if sa.Location != nil {
 		a.Location = sa.Location.Ref.String()
+	}
+	for _, t := range sa.Tasks {
+		a.Tasks = append(a.Tasks, describeTask(t.Task))
 	}
 	return a
 }

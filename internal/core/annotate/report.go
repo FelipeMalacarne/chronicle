@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
@@ -241,5 +242,12 @@ func (gs *guideState) tally(s *SectionReport, st *content.Step, sa *content.Step
 	}
 	if l := sa.Location; l != nil {
 		count("location "+l.Ref.String(), l.Evidence, l.Source)
+	}
+	for _, t := range sa.Tasks {
+		quote := t.Evidence.Quote
+		if r := t.Evidence.Recorded; r != nil {
+			quote = strings.TrimSpace(fmt.Sprintf("%s [%s, %d recorded events]", quote, r.Recording, len(r.Events)))
+		}
+		count("task "+describeTask(t.Task), content.ObjectiveEvidence{Quote: quote}, t.Source)
 	}
 }

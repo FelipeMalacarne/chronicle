@@ -80,7 +80,7 @@ func workspace(t *testing.T) (*Workspace, string) {
 }
 
 func objective(role, kind, name, state string, n int, quote string, src Source) ObjectiveProposal {
-	return ObjectiveProposal{Role: role, Kind: kind, Name: name, State: state, N: n, Evidence: Evidence{Quote: quote}, Source: src}
+	return ObjectiveProposal{Role: role, TargetProposal: TargetProposal{Kind: kind, Name: name, State: state, N: n}, Evidence: Evidence{Quote: quote}, Source: src}
 }
 
 var hi = Source{Confidence: content.ConfidenceHigh}
@@ -91,44 +91,44 @@ func TestObjectiveKey(t *testing.T) {
 		t.Fatal(err)
 	}
 	cases := []struct {
-		p       ObjectiveProposal
+		p       TargetProposal
 		want    string
 		wantErr string
 	}{
-		{ObjectiveProposal{Kind: "quest", Name: "X Marks the Spot", State: "started"}, "quest:x_marks_the_spot@started", ""},
-		{ObjectiveProposal{Kind: "quest", Name: "Cook’s Assistant", State: "finished"}, "quest:cooks_assistant@finished", ""},
-		{ObjectiveProposal{Kind: "quest", Name: "Cook's Assistant", State: "done"}, "", "state started or finished"},
-		{ObjectiveProposal{Kind: "quest", Name: "Not A Quest", State: "finished"}, "", "does not resolve"},
-		{ObjectiveProposal{Kind: "skill", Name: "Woodcutting", N: 30}, "skill:woodcutting>=30", ""},
-		{ObjectiveProposal{Kind: "skill", Name: "Woodcutting", N: 120}, "", ""},
-		{ObjectiveProposal{Kind: "diary", Name: "Lumbridge", Tier: "easy"}, "diary:lumbridge_and_draynor:easy@complete", ""},
-		{ObjectiveProposal{Kind: "qp", N: 32}, "qp>=32", ""},
-		{ObjectiveProposal{Kind: "boss", Name: "Obor", N: 1}, "boss:obor>=1", ""},
-		{ObjectiveProposal{Kind: "item", Name: "spade", N: 1}, "item:952x1", ""},
-		{ObjectiveProposal{Kind: "item", Name: "axe", N: 1}, "", "ambiguous"},
-		{ObjectiveProposal{Kind: "item", Name: "axe", ID: "1359", N: 1}, "item:1359x1", ""},
-		{ObjectiveProposal{Kind: "item", Name: "axe", ID: "item:1359", N: 1}, "item:1359x1", ""},
-		{ObjectiveProposal{Kind: "item", Name: "spade", ID: "item:952", N: 1}, "item:952x1", ""},
-		{ObjectiveProposal{Kind: "item", Name: "axe", ID: "952", N: 1}, "", "not a candidate"},
-		{ObjectiveProposal{Kind: "item", Name: "spade", ID: "1359", N: 1}, "", "resolves to item:952"},
-		{ObjectiveProposal{Kind: "item", Name: "noted spade", N: 1}, "", "noted"},
-		{ObjectiveProposal{Kind: "item", Family: "Graceful hood", N: 1}, "item:family/graceful_hoodx1", ""},
-		{ObjectiveProposal{Kind: "item", Family: "prayer_potion", N: 4}, "item:family/prayer_potionx4", ""},
-		{ObjectiveProposal{Kind: "item", Family: "not a family", N: 1}, "", "unknown item family"},
-		{ObjectiveProposal{Kind: "item", Family: "Graceful hood"}, "", "n >= 1"},
-		{ObjectiveProposal{Kind: "item", Name: "Graceful hood", Family: "Graceful hood", N: 1}, "", "no name or id"},
-		{ObjectiveProposal{Kind: "skill", Family: "Graceful hood", N: 1}, "", "for item objectives"},
-		{ObjectiveProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "Rune axe", N: 1}, {Name: "Mithril axe", N: 2}, {Name: "Adamant axe", N: 1}}},
+		{TargetProposal{Kind: "quest", Name: "X Marks the Spot", State: "started"}, "quest:x_marks_the_spot@started", ""},
+		{TargetProposal{Kind: "quest", Name: "Cook’s Assistant", State: "finished"}, "quest:cooks_assistant@finished", ""},
+		{TargetProposal{Kind: "quest", Name: "Cook's Assistant", State: "done"}, "", "state started or finished"},
+		{TargetProposal{Kind: "quest", Name: "Not A Quest", State: "finished"}, "", "does not resolve"},
+		{TargetProposal{Kind: "skill", Name: "Woodcutting", N: 30}, "skill:woodcutting>=30", ""},
+		{TargetProposal{Kind: "skill", Name: "Woodcutting", N: 120}, "", ""},
+		{TargetProposal{Kind: "diary", Name: "Lumbridge", Tier: "easy"}, "diary:lumbridge_and_draynor:easy@complete", ""},
+		{TargetProposal{Kind: "qp", N: 32}, "qp>=32", ""},
+		{TargetProposal{Kind: "boss", Name: "Obor", N: 1}, "boss:obor>=1", ""},
+		{TargetProposal{Kind: "item", Name: "spade", N: 1}, "item:952x1", ""},
+		{TargetProposal{Kind: "item", Name: "axe", N: 1}, "", "ambiguous"},
+		{TargetProposal{Kind: "item", Name: "axe", ID: "1359", N: 1}, "item:1359x1", ""},
+		{TargetProposal{Kind: "item", Name: "axe", ID: "item:1359", N: 1}, "item:1359x1", ""},
+		{TargetProposal{Kind: "item", Name: "spade", ID: "item:952", N: 1}, "item:952x1", ""},
+		{TargetProposal{Kind: "item", Name: "axe", ID: "952", N: 1}, "", "not a candidate"},
+		{TargetProposal{Kind: "item", Name: "spade", ID: "1359", N: 1}, "", "resolves to item:952"},
+		{TargetProposal{Kind: "item", Name: "noted spade", N: 1}, "", "noted"},
+		{TargetProposal{Kind: "item", Family: "Graceful hood", N: 1}, "item:family/graceful_hoodx1", ""},
+		{TargetProposal{Kind: "item", Family: "prayer_potion", N: 4}, "item:family/prayer_potionx4", ""},
+		{TargetProposal{Kind: "item", Family: "not a family", N: 1}, "", "unknown item family"},
+		{TargetProposal{Kind: "item", Family: "Graceful hood"}, "", "n >= 1"},
+		{TargetProposal{Kind: "item", Name: "Graceful hood", Family: "Graceful hood", N: 1}, "", "no name or id"},
+		{TargetProposal{Kind: "skill", Family: "Graceful hood", N: 1}, "", "for item objectives"},
+		{TargetProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "Rune axe", N: 1}, {Name: "Mithril axe", N: 2}, {Name: "Adamant axe", N: 1}}},
 			"item:any(1355x2|1357x1|1359x1)", ""},
-		{ObjectiveProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "axe", ID: "1359", N: 1}, {Name: "Mithril axe", N: 2}}}, "item:any(1355x2|1359x1)", ""},
-		{ObjectiveProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "axe", N: 1}, {Name: "Mithril axe", N: 2}}}, "", "ambiguous"},
-		{ObjectiveProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 1}, {Name: "Mithril axe", N: 2}}}, "", "each id once"},
-		{ObjectiveProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 2}}}, "", "at least two"},
-		{ObjectiveProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 2}, {Name: "Rune axe"}}}, "", ">= 1"},
-		{ObjectiveProposal{Kind: "item", N: 1, AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 2}, {Name: "Rune axe", N: 1}}}, "", "own n"},
-		{ObjectiveProposal{Kind: "item", Family: "Graceful hood", N: 1, AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 2}, {Name: "Rune axe", N: 1}}}, "", "only one"},
-		{ObjectiveProposal{Kind: "unlock", Name: "Not an unlock"}, "", "propose_entity"},
-		{ObjectiveProposal{Kind: "planet", Name: "x"}, "", "unknown kind"},
+		{TargetProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "axe", ID: "1359", N: 1}, {Name: "Mithril axe", N: 2}}}, "item:any(1355x2|1359x1)", ""},
+		{TargetProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "axe", N: 1}, {Name: "Mithril axe", N: 2}}}, "", "ambiguous"},
+		{TargetProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 1}, {Name: "Mithril axe", N: 2}}}, "", "each id once"},
+		{TargetProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 2}}}, "", "at least two"},
+		{TargetProposal{Kind: "item", AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 2}, {Name: "Rune axe"}}}, "", ">= 1"},
+		{TargetProposal{Kind: "item", N: 1, AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 2}, {Name: "Rune axe", N: 1}}}, "", "own n"},
+		{TargetProposal{Kind: "item", Family: "Graceful hood", N: 1, AnyOf: []AlternativeProposal{{Name: "Mithril axe", N: 2}, {Name: "Rune axe", N: 1}}}, "", "only one"},
+		{TargetProposal{Kind: "unlock", Name: "Not an unlock"}, "", "propose_entity"},
+		{TargetProposal{Kind: "planet", Name: "x"}, "", "unknown kind"},
 	}
 	for _, c := range cases {
 		k, err := objectiveKey(reg, c.p)
@@ -591,7 +591,7 @@ func TestReviseEntity(t *testing.T) {
 	place, veos := entities.MustParseRef("location:h_a_m_hideout"), entities.MustParseRef("npc:veos")
 	a.Steps[0].Tasks = []content.AnnotatedTask{{
 		Task:     content.Task{Type: content.TaskTalk, NPC: &veos, Location: &place, Until: &content.TaskUntil{State: content.UntilGoalMet}},
-		Evidence: content.ObjectiveEvidence{Field: "/text", Quote: "start X marks the spot quest", Span: span},
+		Evidence: content.TaskEvidence{Field: "/text", Quote: "start X marks the spot quest", Span: span},
 		Source:   content.ObjectiveSource{Method: content.ProvenanceLLM, Confidence: content.ConfidenceHigh},
 	}}
 	if werr := writeJSON(filepath.Join(dir, content.GuidesSubdir, "t", content.AnnotationsSubdir, "1.1.json"), a); werr != nil {

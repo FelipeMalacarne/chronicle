@@ -268,9 +268,13 @@ const (
 	ProvenanceLLM = "llm"
 	// ProvenanceManual is human curation.
 	ProvenanceManual = "manual"
-	ConfidenceHigh   = "high"
-	ConfidenceMedium = "medium"
-	ConfidenceLow    = "low"
+	// ProvenanceRecording is a task proposed from the owner's recorded
+	// demonstration (docs/10 section 11), verified against the events and
+	// confirmed by the owner.
+	ProvenanceRecording = "recording"
+	ConfidenceHigh      = "high"
+	ConfidenceMedium    = "medium"
+	ConfidenceLow       = "low"
 )
 
 // Step is one actionable line of the guide.

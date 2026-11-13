@@ -366,5 +366,114 @@
       }
     },
     "want": "value must be one of 'travel'"
+  },
+  {
+    "name": "no evidence at all",
+    "step": "b",
+    "task": {
+      "type": "buy",
+      "shop": "shop:bobs_brilliant_axes",
+      "item": "item:1351",
+      "qty": 1,
+      "evidence": {},
+      "source": {
+        "method": "recording",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "evidence"
+  },
+  {
+    "name": "recorded without the owner",
+    "step": "b",
+    "task": {
+      "type": "buy",
+      "shop": "shop:bobs_brilliant_axes",
+      "item": "item:1351",
+      "qty": 1,
+      "evidence": {
+        "recorded": {
+          "recording": "rec-test",
+          "events": [
+            {"recording": "rec-test", "seq": 1, "at": "2026-11-13T12:00:00Z", "kind": "shop_buy", "world": 330, "x": 3229, "y": 3203, "plane": 0, "item_id": 1351, "qty": 1, "npc_id": 10619}
+          ]
+        }
+      },
+      "source": {
+        "method": "recording",
+        "confidence": "high"
+      }
+    },
+    "want": "a task from a recording needs confirmed_by owner"
+  },
+  {
+    "name": "method recording without recorded events",
+    "step": "b",
+    "task": {
+      "type": "buy",
+      "shop": "shop:bobs_brilliant_axes",
+      "item": "item:1351",
+      "qty": 1,
+      "evidence": {
+        "field": "/text",
+        "quote": "buy a bronze axe at Bob's Brilliant Axes",
+        "span": [
+          24,
+          64
+        ]
+      },
+      "source": {
+        "method": "recording",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "method recording needs recorded evidence"
+  },
+  {
+    "name": "recorded events that do not show the task",
+    "step": "b",
+    "task": {
+      "type": "buy",
+      "shop": "shop:bobs_brilliant_axes",
+      "item": "item:1351",
+      "qty": 1,
+      "evidence": {
+        "recorded": {
+          "recording": "rec-test",
+          "events": [
+            {"recording": "rec-test", "seq": 1, "at": "2026-11-13T12:00:00Z", "kind": "shop_buy", "world": 330, "x": 3212, "y": 3246, "plane": 0, "item_id": 1351, "qty": 1, "npc_id": 2813}
+          ]
+        }
+      },
+      "source": {
+        "method": "recording",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "does not own shop:bobs_brilliant_axes"
+  },
+  {
+    "name": "recorded event outside the schema",
+    "step": "b",
+    "task": {
+      "type": "bank",
+      "evidence": {
+        "recorded": {
+          "recording": "rec-test",
+          "events": [
+            {"recording": "rec-test", "seq": 1, "at": "2026-11-13T12:00:00Z", "kind": "teleport", "world": 330, "x": 3212, "y": 3246, "plane": 0}
+          ]
+        }
+      },
+      "source": {
+        "method": "recording",
+        "confidence": "medium",
+        "confirmed_by": "owner"
+      }
+    },
+    "want": "kind"
   }
 ]

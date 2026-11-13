@@ -124,7 +124,7 @@ func TestContentMCPExampleBatch(t *testing.T) {
 	for _, tl := range list.Tools {
 		names = append(names, tl.Name)
 	}
-	if got := strings.Join(names, ","); got != "status,next_batch,resolve_entity,propose_entity,revise_entity,submit,record_decision,list_decisions,report" {
+	if got := strings.Join(names, ","); got != "status,next_batch,resolve_entity,propose_entity,revise_entity,submit,propose_tasks,submit_tasks,record_decision,list_decisions,report" {
 		t.Errorf("tools = %s", got)
 	}
 
@@ -157,6 +157,24 @@ func TestContentMCPExampleBatch(t *testing.T) {
 	if !ok || len(res.Accepted) != 2 || len(res.Rejected) != 1 || res.Rejected[0].StepID != "1.1.4" {
 		t.Fatalf("submit = %+v", res)
 	}
+	// Tasks (docs/10 section 7): the step as its tasks see it, then a task
+	// from the text through submit_tasks, which keeps the objectives.
+	var view annotate.TaskProposals
+	if !c.tool("propose_tasks", map[string]any{"guide": "oziris-main", "step": "1.1.5"}, &view) ||
+		!view.Annotated || len(view.Goal) != 1 || view.Goal[0] != "quest:x_marks_the_spot@started" || len(view.Proposals) != 0 {
+		t.Fatalf("propose_tasks = %+v", view)
+	}
+	ok = c.tool("submit_tasks", map[string]any{
+		"guide": "oziris-main", "section": "1.1", "skill_version": "annotate-guide@3",
+		"steps": []map[string]any{{"step_id": "1.1.5", "tasks": []map[string]any{
+			{"type": "buy", "shop": map[string]any{"name": "Lumbridge General Store"}, "item": map[string]any{"name": "Spade"}, "qty": 1, "quote": "Buy a spade", "confidence": "high"},
+			{"type": "talk", "npc": map[string]any{"name": "Veos"}, "until": map[string]any{"objective": map[string]any{"kind": "quest", "name": "X Marks the Spot", "state": "started"}},
+				"quote": "start X marks the spot quest", "confidence": "medium", "confirmed_by": "owner"},
+		}}},
+	}, &res)
+	if !ok || len(res.Accepted) != 1 || len(res.Accepted[0].Tasks) != 2 {
+		t.Fatalf("submit_tasks = %+v", res)
+	}
 	if !c.tool("submit", map[string]any{"guide": "oziris-main", "section": "1.1", "skill_version": "annotate-guide@1", "steps": []map[string]any{{"step_id": "1.1.5", "bogus": 1}}}, &res) {
 		t.Log("unknown field refused, as expected")
 	} else {
@@ -181,6 +199,9 @@ func TestContentMCPExampleBatch(t *testing.T) {
 	// (same key and role) and adds the spade.
 	if got := strings.Join(keys, "|"); got != "quest:x_marks_the_spot@started starts llm|item:952x1 uses llm" {
 		t.Errorf("composed 1.1.5 = %s", got)
+	}
+	if len(st.Tasks) != 2 || st.Tasks[0].Shop.String() != "shop:lumbridge_general_store" || st.Tasks[1].Until.Objective.String() != "quest:x_marks_the_spot@started" {
+		t.Errorf("1.1.5 tasks = %+v", st.Tasks)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "guides", "oziris-main", annotate.ReportFileName)); err != nil {
 		t.Errorf("report not written: %v", err)

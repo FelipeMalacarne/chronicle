@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"slices"
+	"strings"
 )
 
 // World catalog files under content/reference: the npc, shop and object
@@ -222,6 +224,7 @@ func (r *Registry) loadWorld(fsys fs.FS, fail func(string, ...any)) {
 	r.Versions[KindNPC], r.Versions[KindShop], r.Versions[KindObject] = nc.Version, sc.Version, oc.Version
 	r.npcIx, r.shopIx, r.objectIx = newWorldIndex(KindNPC, NPCsFile), newWorldIndex(KindShop, ShopsFile), newWorldIndex(KindObject, ObjectsFile)
 	r.npcs, r.shops, r.objects = map[string]*NPCEntry{}, map[string]*ShopEntry{}, map[string]*ObjectEntry{}
+	r.npcByGame, r.objectByGame, r.shopsByOwner = map[int][]string{}, map[int][]string{}, map[string][]string{}
 	for i := range nc.NPCs {
 		n := &nc.NPCs[i]
 		if msg := r.npcIx.add(n.ID, worldEntry{n.Name, n.Aliases, n.WikiKey}); msg != "" {
@@ -232,6 +235,9 @@ func (r *Registry) loadWorld(fsys fs.FS, fail func(string, ...any)) {
 			fail("%s: npc %q has no game ids", NPCsFile, n.ID)
 		}
 		r.npcs[n.ID] = n
+		for _, g := range n.GameIDs {
+			r.npcByGame[g] = appendOnce(r.npcByGame[g], n.ID)
+		}
 	}
 	for i := range oc.Objects {
 		o := &oc.Objects[i]
@@ -243,6 +249,9 @@ func (r *Registry) loadWorld(fsys fs.FS, fail func(string, ...any)) {
 			fail("%s: object %q has no game ids", ObjectsFile, o.ID)
 		}
 		r.objects[o.ID] = o
+		for _, g := range o.GameIDs {
+			r.objectByGame[g] = appendOnce(r.objectByGame[g], o.ID)
+		}
 	}
 	for i := range sc.Shops {
 		s := &sc.Shops[i]
@@ -254,6 +263,7 @@ func (r *Registry) loadWorld(fsys fs.FS, fail func(string, ...any)) {
 			if _, ok := r.npcs[o]; !ok {
 				fail("%s: shop %q: unknown owner npc %q", ShopsFile, s.ID, o)
 			}
+			r.shopsByOwner[o] = appendOnce(r.shopsByOwner[o], s.ID)
 		}
 		for _, st := range s.Stock {
 			for _, id := range []int{st.Item, st.CurrencyID()} {
@@ -346,6 +356,47 @@ func (r *Registry) LocationsOf(ref Ref) []Ref {
 		}
 	}
 	return out
+}
+
+// NPCsByGameID returns the npc pages whose versions include the game NPC id,
+// in id order: one page is the npc; several are ambiguous (never guessed);
+// none is an id outside the catalog.
+func (r *Registry) NPCsByGameID(id int) []Ref { return refsOf(KindNPC, r.npcByGame[id]) }
+
+// ObjectsByGameID returns the object pages whose versions include the game
+// object id, like NPCsByGameID.
+func (r *Registry) ObjectsByGameID(id int) []Ref { return refsOf(KindObject, r.objectByGame[id]) }
+
+// ShopsOwnedBy returns the shops whose wiki infobox names the npc as owner.
+func (r *Registry) ShopsOwnedBy(npcID string) []Ref { return refsOf(KindShop, r.shopsByOwner[npcID]) }
+
+// LocationsAt returns the catalog locations whose area (docs/10 section 7)
+// contains the tile, in id order: an area may lie inside another ("Lumbridge
+// Castle" in "Lumbridge"), so more than one is not an error.
+func (r *Registry) LocationsAt(x, y, plane int) []Ref {
+	var ids []string
+	for id, m := range r.locationMaps {
+		if m.Area != nil && m.Area.Contains(x, y, plane) {
+			ids = append(ids, id)
+		}
+	}
+	return refsOf(KindLocation, ids)
+}
+
+func refsOf(kind Kind, ids []string) []Ref {
+	out := make([]Ref, 0, len(ids))
+	for _, id := range ids {
+		out = append(out, Ref{Kind: kind, ID: id})
+	}
+	slices.SortFunc(out, func(a, b Ref) int { return strings.Compare(a.ID, b.ID) })
+	return out
+}
+
+func appendOnce(list []string, id string) []string {
+	if slices.Contains(list, id) {
+		return list
+	}
+	return append(list, id)
 }
 
 // WorldCounts returns how many npcs, shops and objects the catalogs hold.

@@ -786,7 +786,7 @@ no próximo Iniciar ou Reiniciar.
   não aparecer.
 - **Parte 2:** a tela (fatia V8 da web v7, Plugins da frota), o desvio (o Chronicle Link exportar
   os valores) e o "Salvar no perfil" (W9). O que o `V7Plugins1440` não mostrar disso vai para o
-  canvas antes (regra 11). Junto, a versão da ponte no `status` (seção 14.3).
+  canvas antes (regra 11). A versão da ponte no `status` saiu antes, em 2026-11-13 (seção 14.3).
 - **Anexado (zaros):** o perfil ainda não se aplica; o zaros segue com a configuração no disco.
 
 ## 16. F6: rotinas no servidor (2026-11-13)

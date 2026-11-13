@@ -104,6 +104,15 @@ Os dois tipos entram em `entities.Kinds`, ganham `Validate` e `HasCatalog`, e o 
 extração só aceita refs conhecidos. Entradas novas nascem pela tool `propose_entity` com confirmação do
 dono (seção 6.2), nunca pela wiki inteira.
 
+- **Tipos do modelo de execução** (doc 10, seção 7; fase 1, 2026-11-13): `npc`, `shop` e `object`, com
+  quem falar, onde comprar e com o que interagir. Ao contrário de `unlock` e `location`, vêm da wiki
+  inteira, como os itens, porque o executor precisa de qualquer um deles e a wiki tem os dados
+  estruturados (seção 7). Id: slug do título da página da wiki (`npc:duke_horacio`,
+  `shop:bobs_brilliant_axes`, `object:bank_booth`); catálogos `npcs.json`, `shops.json` e
+  `objects.json`. Não entram no índice de páginas da wiki que os importadores usam para resolver os links
+  dos guias (`ByWikiKey`), então nenhuma menção dos guias mudou. O `location` ganhou área em coordenadas
+  (seção 7, "Áreas dos locais").
+
 ### 3.2 Objective
 
 O estado verificável de uma entidade. A identidade do objetivo é derivada do ref e do alvo, então o mesmo
@@ -639,6 +648,42 @@ Claude Code, fora do MCP; o relatório conta só as respostas registradas.
   `propose_entity`), não pela wiki inteira. `unlocks.json` e `locations.json` existem e começam vazios: o
   `location` em texto livre do Oziris (119 valores, como "Draynor" e "Draynor Village", "Various") é
   evidência para as propostas, não um catálogo.
+- **NPCs, lojas e objetos** (2026-11-13, fase 1 do doc 10). `tools/extract_wiki_world.py` lê as
+  tabelas Bucket da wiki (`infobox_npc`, `infobox_monster`, `infobox_shop`, `storeline` e
+  `infobox_scenery`, 500 linhas por chamada, com cache em `~/.cache/ironman-planner/wiki-buckets`) e grava
+  as linhas reduzidas aos campos usados em `data/wiki/npcs.json`, `shops.json` e `objects.json`. O
+  `catalogbuild` deriva os catálogos, sem rede:
+  - `npcs.json`: **5.435 NPCs**, um por página da wiki (NPC e monstro da mesma página viram uma entrada),
+    com os ids de NPC de todas as versões (`game_ids`; o id muda com a etapa de quest), os nomes das outras
+    versões como alias, as páginas que a localização do infobox cita (`location_keys`; as que são locais
+    do catálogo viram `Registry.LocationsOf`) e `monster` quando a página tem infobox de monstro. Ficam de
+    fora 237 páginas de conteúdo fora do jogo (eventos, leagues, Deadman, betas, histórico), 392 sem id e
+    29 sem nome;
+  - `shops.json`: **462 lojas**, uma por página (a mesma loja em vários lugares é uma entrada), com os
+    donos que são NPCs do catálogo e o estoque: 4.914 linhas cujo item e moeda resolvem para um item do
+    catálogo do jeito que um nome de guia resolve, com estoque base (`stock`, ou `infinite`), preço e moeda
+    (id de item; ausente é coins). As 461 linhas restantes ficam em `unresolved` com o motivo (moeda que
+    não é item, como pontos; item fora do catálogo; nome ambíguo), nunca adivinhadas;
+  - `objects.json`: **5.898 objetos**, um por página de scenery, com o nome do título sem a
+    desambiguação e os ids de objeto de todas as versões. O infobox de scenery não tem localização.
+
+  Dois títulos com o mesmo slug ("Crab" e "'Crab'") fazem o build falhar até alguém registrar o id de um
+  deles em `data/wiki/world_ids.json`: a página com a grafia simples fica com o slug e a outra ganha o slug
+  com o menor id do jogo. São 6 NPCs e 4 objetos hoje. Um id nunca é renomeado por uma página nova. A
+  resolução por nome segue a dos itens: nome, alias e o título da página ("Cook (Lumbridge)"); quando
+  várias páginas têm o nome, vale a página com aquele título ("Banker"), senão o nome é ambíguo ("Cook":
+  cinco páginas). Tamanho: 1,2 MB, 0,6 MB e 1,1 MB.
+- **Áreas dos locais** (2026-11-13, fase 1 do doc 10). `tools/fetch_wiki_locations.py` passou a guardar o
+  `{{Map}}` do infobox de cada local em `data/wiki/location_maps.json`, e o `catalogbuild` deriva
+  `content/reference/location_maps.json` (antes o script gravava os pontos direto). O ponto é o mesmo de
+  antes (o centro dos pontos do mapa, 91 dos 105 locais; os 91 pontos conferem com os antigos). A área
+  (`entities.Area`, onde a tarefa `travel` termina) segue a regra, nessa ordem: o polígono do mapa
+  (`mtype=polygon` ou `focusarea`, com a caixa que o contém; 11 locais), o retângulo (`rectX` por `rectY`
+  tiles centrado no ponto; 1), o quadrado (`r` tiles em volta do ponto; 5) e, quando o mapa só tem o
+  ponto, a caixa de 21 por 21 tiles em volta dele (`entities.AreaRadius = 10`; 74 locais). A caixa padrão
+  é pequena de propósito: chegar quer dizer chegar perto do ponto que a wiki marca, e é melhor andar a
+  mais do que parar antes. Local sem mapa (regiões, instâncias) fica sem área, e uma tarefa `travel` para
+  ele não é avaliável.
 - **Varbits de referência** (`content/reference/varbits.json`, gerado): os 48
   `DIARY_<ÁREA>_<TIER>_COMPLETED` por diary (doc 02, seção 5) e o varp 101 (quest points). Os
   varbits/varps dos unlocks ficam no próprio `unlocks.json` (`proof`). É o que o manifest do ingest passa

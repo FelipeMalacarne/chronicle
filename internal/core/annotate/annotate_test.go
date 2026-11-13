@@ -516,6 +516,30 @@ func TestRoundTrip(t *testing.T) {
 	}
 }
 
+func TestResolveWorldEntities(t *testing.T) {
+	w, _ := workspace(t)
+	cases := []struct {
+		kind, name string
+		status     entities.Status
+		ref        string
+	}{
+		{"npc", "Duke Horacio", entities.Resolved, "npc:duke_horacio"},
+		{"npc", "Cook", entities.Ambiguous, ""},
+		{"npc", "Cook (Lumbridge)", entities.Resolved, "npc:cook_lumbridge"},
+		{"shop", "Lumbridge General Store", entities.Resolved, "shop:lumbridge_general_store"},
+		{"object", "Bank booth", entities.Resolved, "object:bank_booth"},
+	}
+	for _, c := range cases {
+		r := w.ResolveEntity(c.kind, c.name, "")
+		if r.Status != c.status || r.Ref != c.ref {
+			t.Errorf("%s %q = %+v", c.kind, c.name, r)
+		}
+		if c.status == entities.Ambiguous && (len(r.Candidates) < 2 || r.Candidates[0].Name == "") {
+			t.Errorf("%s %q candidates = %+v", c.kind, c.name, r.Candidates)
+		}
+	}
+}
+
 func TestProposeEntity(t *testing.T) {
 	w, dir := workspace(t)
 	if r := w.ResolveEntity("item", "2 prayer potions", ""); r.Status != entities.Ambiguous || r.Family != "prayer_potion" {

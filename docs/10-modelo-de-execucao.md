@@ -1,8 +1,9 @@
 # 10 — Modelo de execução: fatos, eventos, tarefas, receitas e planos
 
 **Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 e E5 a E10 em 2026-11-13, do
-jeito recomendado (seção 14); a fase 0 está feita (doc 04, seção 9, item 17).** Além da fase 0, nada deste
-doc está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
+jeito recomendado (seção 14); a fase 0 está feita (doc 04, seção 9, item 17) e a fase 1 começou em
+2026-11-13 (item 21) com as entidades `npc`, `shop` e `object` e as áreas dos locais (seção 7, "Como
+implementado").** O resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
 (<https://claude.ai/artifact/EZaKJZKjVAeotQG41rehEU>), seções 5 a 8.
 
@@ -158,6 +159,26 @@ Regras:
 Tipos de entidade novos para isso: `npc`, `shop` (com estoque), `object`; e `location` ganha área em
 coordenadas. Todos vêm da wiki, como os itens (doc 09, seção 7).
 
+**Como implementado (fase 1, entidades e áreas, 2026-11-13).** Detalhes no doc 09, seções 3.1 e 7.
+
+- `npc`, `shop` e `object` são refs de slug do título da página da wiki (`npc:duke_horacio`,
+  `shop:bobs_brilliant_axes`, `object:bank_booth`), com catálogos gerados da wiki inteira pelo
+  `catalogbuild`: 5.435 NPCs (com os ids de NPC de todas as versões, que o executor procura no jogo, e as
+  páginas da localização do infobox), 462 lojas (donos e estoque: item, estoque base ou infinito, preço e
+  moeda, 4.914 linhas resolvidas e 461 guardadas como não resolvidas, com o motivo) e 5.898 objetos (com os
+  ids de objeto). Fonte: as tabelas Bucket da wiki (`tools/extract_wiki_world.py`, extrato em `data/wiki`).
+- O resolver resolve os três por nome, alias e título da página, como os itens: quando várias páginas têm
+  o nome, vale a página com aquele título ("Banker"); senão é ambíguo ("Cook", "Crossbow Shop") e os
+  candidatos vão no resultado, nunca um palpite. O `resolve_entity` do `content mcp` já aceita os três.
+- **Regra da área do local** (`entities.Area`, em `location_maps.json`): o polígono do mapa do infobox da
+  wiki, senão o retângulo ou o quadrado do mapa, senão a caixa de 21 por 21 tiles em volta do ponto do
+  mapa (`AreaRadius = 10`). A caixa padrão é pequena de propósito: `travel` termina perto do ponto que a
+  wiki marca, e é melhor andar a mais do que parar antes. Local sem mapa (região, instância) não tem
+  área, então `travel` para ele não tem término avaliável. Hoje: 11 polígonos, 1 retângulo, 5 quadrados e
+  74 caixas padrão, de 91 locais com mapa; 14 sem mapa.
+- O que fica para depois: localização dos objetos (o infobox de scenery não tem) e os pontos exatos de
+  NPCs e objetos (a wiki tem mapas por página, não lidos); entram quando o executor precisar (fase 3).
+
 ## 8. Receitas por objetivo
 
 Uma receita diz como cumprir uma chave de objetivo, independentemente da rota:
@@ -289,8 +310,9 @@ fixtures viram teste de conformidade, com cada resposta real validada contra o s
 | 5 | Receitas de quest, planos customizados na UI, vários clientes no agent | por entrega |
 
 A fase 0 não dependia de nenhuma decisão de automação e já está feita. Com a seção 14 fechada
-(2026-11-13), as fases 1 em diante entram na sequência do doc 04, seção 9, depois do item 20, quando o
-dono decidir começar.
+(2026-11-13), as fases 1 a 5 entraram na sequência do doc 04, seção 9, como item 21; o dono decidiu
+começar a fase 1 em 2026-11-13. Entidades e áreas estão feitas (seção 7); faltam o schema de tarefas e
+receitas e o verificador.
 
 ## 14. Decisões em aberto (dono)
 

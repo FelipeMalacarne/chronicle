@@ -89,6 +89,12 @@ func resolveName(reg *entities.Registry, kind, name, tier string) (entities.Reso
 		return reg.ResolveUnlock(name), false
 	case entities.KindLocation:
 		return reg.ResolveLocation(name), false
+	case entities.KindNPC:
+		return reg.ResolveNPC(name), false
+	case entities.KindShop:
+		return reg.ResolveShop(name), false
+	case entities.KindObject:
+		return reg.ResolveObject(name), false
 	case entities.KindItem:
 		p := entities.ParseItemPhrase(name)
 		res, _ := reg.ResolveItem(p.Name)

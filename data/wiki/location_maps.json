@@ -1,0 +1,632 @@
+{
+ "source": {
+  "wiki": "https://oldschool.runescape.wiki/api.php",
+  "catalog": "content/reference/locations.json"
+ },
+ "locations": [
+  {
+   "id": "al_kharid",
+   "page": "Al Kharid",
+   "revid": 15397410,
+   "map": "{{Map|name=Al Kharid|x=3290|y=3185|height=300|width=300|zoom=2}}"
+  },
+  {
+   "id": "ape_atoll",
+   "page": "Ape Atoll",
+   "revid": 15317976,
+   "map": "{{Map|name=Ape Atoll|zoom=1|x=2750|y=2750}}"
+  },
+  {
+   "id": "ardougne",
+   "page": "Ardougne",
+   "revid": 15396069,
+   "map": "{{Map|name=Ardougne|zoom=0|x=2570|y=3300}}"
+  },
+  {
+   "id": "ardougne_monastery",
+   "page": "Ardougne Monastery",
+   "revid": 15398349,
+   "map": "{{Map|name=Ardougne Monastery|zoom=2|mtype=polygon|2595,3215|2591,3211|2591,3208|2595,3204|2599,3204|2602,3207|2611,3207|2614,3204|2618,3204|2622,3208|2622,3211|2618,3215|2614,3215|2611,3212|2608,3212|2608,3215|2610,3217|2610,3218|2608,3219|2604,3219|2603,3218|2603,3217|2605,3215|2605,3212|2602,3212|2599,3215}}"
+  },
+  {
+   "id": "barbarian_assault",
+   "page": "Barbarian Assault",
+   "revid": 15372493,
+   "map": "{{Map|name=Barbarian Assault|zoom=3|x=2533|y=3571}}"
+  },
+  {
+   "id": "barbarian_outpost",
+   "page": "Barbarian Outpost",
+   "revid": 15351255,
+   "map": "{{Map|name=Barbarian Outpost|x=2549|y=3558|height=300|width=300|zoom=2}}"
+  },
+  {
+   "id": "barbarian_village",
+   "page": "Barbarian Village",
+   "revid": 15357598,
+   "map": "{{Map|name=Barbarian Village|x=3080|y=3427|height=250}}"
+  },
+  {
+   "id": "baxtorian_falls",
+   "page": "Baxtorian Falls",
+   "revid": 15204671,
+   "map": "{{Map|name=Baxtorian Falls|x=2513|y=3483|height=300|width=300|zoom=2}}"
+  },
+  {
+   "id": "braindeath_island",
+   "page": "Braindeath Island",
+   "revid": 15231735,
+   "map": "{{Map|name=Braindeath Island|x=2144|y=5120|height=510|width=300|zoom=2|mapID=4}}"
+  },
+  {
+   "id": "brimhaven",
+   "page": "Brimhaven",
+   "revid": 15361451,
+   "map": "{{Map|name=Brimhaven|zoom=1|x=2760|y=3195|height=265}}"
+  },
+  {
+   "id": "burthorpe",
+   "page": "Burthorpe",
+   "revid": 15359027,
+   "map": "{{Map|name=Burthorpe|zoom=1|x=2870|y=3544|height=170}}"
+  },
+  {
+   "id": "camelot",
+   "page": "Camelot",
+   "revid": 15390606,
+   "map": "{{Map|name=Camelot|x=2758|y=3507|height=300|width=300|zoom=2}}"
+  },
+  {
+   "id": "canifis",
+   "page": "Canifis",
+   "revid": 15397565,
+   "map": "{{Map|name=Canifis|x=3493|y=3488}}"
+  },
+  {
+   "id": "castle_wars",
+   "page": "Castle Wars",
+   "revid": 15389602,
+   "map": "{{Map|name=Castle Wars|x=2407|y=3105|zoom=1}}"
+  },
+  {
+   "id": "catherby",
+   "page": "Catherby",
+   "revid": 15377832,
+   "map": "{{Map|name=Catherby|x=2814|y=3443}}"
+  },
+  {
+   "id": "chambers_of_xeric",
+   "page": "Chambers of Xeric",
+   "revid": 15398481,
+   "map": "{{Map|name=Chambers of Xeric|1245,3557|zoom=2}}"
+  },
+  {
+   "id": "champions_guild",
+   "page": "Champions' Guild",
+   "revid": 15364426,
+   "map": "{{Map|name=Champions' Guild|x=3191|y=3357|plane=0|mapID=0}}"
+  },
+  {
+   "id": "clan_wars",
+   "page": "Clan Wars",
+   "revid": 15379109,
+   "map": "{{Map|name=Clan Wars|x=3130|y=3622|zoom=2}}"
+  },
+  {
+   "id": "crandor",
+   "page": "Crandor",
+   "revid": 15386558,
+   "map": "{{Map|name=Crandor|x=2836|y=3271|height=350|width=300|zoom=2}}"
+  },
+  {
+   "id": "desert_quarry",
+   "page": "Quarry",
+   "revid": 15393070,
+   "map": "{{Map|name=Bandit Camp Quarry|x=3172|y=2912|height=300|width=300|zoom=2}}"
+  },
+  {
+   "id": "digsite",
+   "page": "Digsite",
+   "revid": 15364110,
+   "map": "{{Map|name=Digsite|x=3354|y=3420|height=300|width=300|zoom=2}}"
+  },
+  {
+   "id": "dorgesh_kaan",
+   "page": "Dorgesh-Kaan",
+   "revid": 15263913,
+   "map": "{{Map|name=Dorgesh-Kaan|x=2723|y=5314|height=500|width=300|zoom=2|mapID=5|mtype=focusarea|2688,5376|2752,5376|2752,5248|2688,5248}}"
+  },
+  {
+   "id": "draynor_manor",
+   "page": "Draynor Manor",
+   "revid": 15363363,
+   "map": "{{Map|name=Draynor manor|zoom=1|mtype=polygon|3114,3331|3108,3331|3106,3329|3103,3329|3102,3330|3099,3330|3097,3332|3093,3332|3092,3331|3086,3331|3083,3333|3083,3337|3084,3338|3084,3340|3083,3341|3083,3347|3086,3349|3086,3353|3084,3354|3084,3359|3084,3364|3085,3365|3085,3370|3083,3372|3083,3377|3085,3379|3085,3384|3088,3387|3091,3387|3092,3388|3098,3388|3099,3387|3102,3387|3103,3386|3107,3386|3108,3385|3118,3385|3127,3376|3127,3375|3128,3374|3128,3371|3127,3370|3127,3367|3130,3364|3130,3355|3129,3354|3129,3347|3128,3346|3128,3340|3127,3339|3127,3334|3124,3331|3120,3331|3119,3330|3115,3330|3114,3331}}"
+  },
+  {
+   "id": "draynor_village",
+   "page": "Draynor Village",
+   "revid": 15393864,
+   "map": "{{Map|x=3103|y=3265|height=280}}"
+  },
+  {
+   "id": "edgeville",
+   "page": "Edgeville",
+   "revid": 15390181,
+   "map": "{{Map|name=Edgeville|x=3080|y=3492|height=150|width=300|zoom=1}}"
+  },
+  {
+   "id": "enchanted_valley",
+   "page": "Enchanted Valley",
+   "revid": 15303486,
+   "map": "{{Map|name=Enchanted Valley|3040,4512|mapID=10055}}"
+  },
+  {
+   "id": "entrana",
+   "page": "Entrana",
+   "revid": 15389346,
+   "map": "{{Map|name=Entrana|zoom=1|x=2840|y=3358}}"
+  },
+  {
+   "id": "falador",
+   "page": "Falador",
+   "revid": 15398202,
+   "map": "{{Map|name=Falador|zoom=1|x=3000|y=3360|width=300|height=350|mtype=polygon|2966,3395|2957,3395|2956,3394|2949,3394|2948,3395|2945,3395|2943,3393|2941,3393|2936,3388|2935,3320|2939,3320|2939,3313|2941,3311|2956,3311|2957,3310|2966,3310|2967,3309|2985,3309|2992,3316|2995,3316|3002,3323|3012,3323|3016,3327|3023,3327|3025,3329|3058,3329|3059,3328|3060,3328|3061,3329|3061,3330|3060,3331|3060,3363|3066,3369|3066,3385|3061,3390|3048,3390|3047,3389|3041,3389|3040,3390|3021,3390|3020,3392|3011,3392|3007,3395|3003,3395|3002,3394|2997,3394|2996,3393|2986,3393|2984,3395|2969,3395}}"
+  },
+  {
+   "id": "falador_park",
+   "page": "Falador Park",
+   "revid": 15363368,
+   "map": "{{Map|name=Falador Park|zoom=1|mtype=polygon|2981,3389|2981,3382|2983,3380|2986,3380|2990,3376|2991,3376|2994,3373|2998,3373|3002,3369|3012,3369|3014,3367|3019,3367|3020,3368|3022,3368|3025,3371|3025,3373|3027,3375|3032,3375|3032,3378|3030,3378|3030,3381|3032,3381|3032,3384|3027,3384|3022,3389|3017,3389|3015,3391|3010,3391|3009,3392|2984,3392|2981,3389}}"
+  },
+  {
+   "id": "farming_guild",
+   "page": "Farming Guild",
+   "revid": 15274002,
+   "map": "{{Map|name=Farming Guild|x=1249|y=3737}}"
+  },
+  {
+   "id": "ferox_enclave",
+   "page": "Ferox Enclave",
+   "revid": 15397011,
+   "map": "{{Map|name=Ferox Enclave|x=3137|y=3623|zoom=2}}"
+  },
+  {
+   "id": "fight_arena",
+   "page": "Fight Arena (location)",
+   "revid": 15211786,
+   "map": "{{Map|name=Fight Arena (location)|x=2592|y=3168}}"
+  },
+  {
+   "id": "fisher_realm",
+   "page": "Fisher Realm",
+   "revid": 15372723,
+   "map": "{{Map|name=Realm of the Fisher King|2656,4704|mapID=10063}}"
+  },
+  {
+   "id": "fishing_guild",
+   "page": "Fishing Guild",
+   "revid": 15385734,
+   "map": "{{Map|name=Fishing Guild|x=2609|y=3424}}"
+  },
+  {
+   "id": "fortis_colosseum",
+   "page": "Fortis Colosseum",
+   "revid": 15390022,
+   "map": "{{Map|name=Fortis Colosseum|1824,3107|zoom=2}}"
+  },
+  {
+   "id": "fossil_island",
+   "page": "Fossil Island",
+   "revid": 15369932,
+   "map": "{{Map|name=Fossil Island|x=3730|y=3807|height=350|width=300|zoom=0}}"
+  },
+  {
+   "id": "freds_farm",
+   "page": "Fred the Farmer",
+   "revid": 15394032,
+   "map": "{{Map|x=3189|y=3273|r=3|mtype=square}}"
+  },
+  {
+   "id": "giants_foundry",
+   "page": "Giants' Foundry",
+   "revid": 15392923,
+   "map": "{{Map|x=3360|y=3151|plane=0|r=4|mapID=0|mtype=pin}}"
+  },
+  {
+   "id": "goblin_village",
+   "page": "Goblin Village",
+   "revid": 15369234,
+   "map": "{{Map|name=Goblin Village|mtype=polygon|2941:3525,2975:3525,2975:3490,2941:3490}}"
+  },
+  {
+   "id": "god_wars_dungeon",
+   "page": "God Wars Dungeon",
+   "revid": 15384639,
+   "map": "{{Map|name=God Wars Dungeon|x:2892,y:5300|mapID=7|zoom=1}}"
+  },
+  {
+   "id": "great_kourend",
+   "page": "Great Kourend",
+   "revid": 15386318,
+   "map": "{{Map|name=Zeah|1630,3730|zoom=-1|height=340}}"
+  },
+  {
+   "id": "ham_hideout",
+   "page": "H.A.M. Hideout",
+   "revid": 15394468,
+   "map": "{{Map|mtype=focusarea|3137,9663|3199,9663|3199,9601|3137,9601|3137,9600|mapID=-1|zoom=2}}"
+  },
+  {
+   "id": "hazelmeres_island",
+   "reason": "no wiki page"
+  },
+  {
+   "id": "hosidius",
+   "page": "Hosidius",
+   "revid": 15369322,
+   "map": "{{Map|name=Hosidius|x=1762|y=3598|height=350|width=300|zoom=2}}"
+  },
+  {
+   "id": "ice_mountain",
+   "page": "Ice Mountain",
+   "revid": 15390013,
+   "map": "{{Map|name=Ice Mountain|x=3010|y=3486|height=400}}"
+  },
+  {
+   "id": "isafdar",
+   "page": "Isafdar",
+   "revid": 15023312,
+   "map": "{{Map|name=Isafdar|x=2244|y=3182|height=350|width=300|zoom=1}}"
+  },
+  {
+   "id": "karamja",
+   "page": "Karamja",
+   "revid": 15364631,
+   "map": "{{Map|name=Karamja|width=300|height=400|zoom=0|x=2843|y=3070}}"
+  },
+  {
+   "id": "keep_le_faye",
+   "page": "Keep Le Faye",
+   "revid": 15275380,
+   "map": "{{Map|name=Keep Le Faye|x=2769|y=3401|height=350|width=300|zoom=4}}"
+  },
+  {
+   "id": "keldagrim",
+   "page": "Keldagrim",
+   "revid": 15360711,
+   "map": "{{Map|name=Keldagrim|x=2879|y=10176|zoom=1|mapID=10}}"
+  },
+  {
+   "id": "kharidian_desert",
+   "page": "Kharidian Desert",
+   "revid": 15317996,
+   "reason": "no map"
+  },
+  {
+   "id": "khazard_battlefield",
+   "page": "Battlefield",
+   "revid": 15351869,
+   "map": "{{Map|name=Battlefield|x=2520|y=3232|height=300|width=300|zoom=2}}"
+  },
+  {
+   "id": "lighthouse",
+   "page": "Lighthouse",
+   "revid": 15375076,
+   "map": "{{Map|name=Lighthouse|x=2509|y=3641|zoom=2}}"
+  },
+  {
+   "id": "lumber_yard",
+   "page": "Lumber Yard",
+   "revid": 15267116,
+   "map": "{{Map|name=Lumber Yard|mtype=polygon|3298,3518|3293,3513|3293,3504|3296,3501|3296,3497|3300,3493|3300,3492|3306,3492|3307,3493|3314,3493|3326,3505|3326,3514|3322,3518}}"
+  },
+  {
+   "id": "lumbridge",
+   "page": "Lumbridge",
+   "revid": 15398494,
+   "map": "{{Map|name=Lumbridge|width=300|height=400|zoom=1|x=3188|y=3220}}"
+  },
+  {
+   "id": "lumbridge_castle",
+   "page": "Lumbridge Castle",
+   "revid": 15398497,
+   "map": "{{Map|mtype=polygon|3204,3237|3201,3234|3201,3220|3200,3220|3199,3219|3199,3218|3200,3217|3201,3217|3201,3204|3204,3201|3213,3201|3215,3203|3221,3203|3227,3209|3227,3213|3228,3212|3230,3212|3231,3213|3231,3216|3230,3217|3230,3221|3231,3222|3231,3225|3230,3226|3228,3226|3227,3225|3227,3229|3221,3235|3215,3235|3213,3237}}"
+  },
+  {
+   "id": "lumbridge_swamp",
+   "page": "Lumbridge Swamp",
+   "revid": 15396661,
+   "map": "{{Map|name=Lumbridge swamp|zoom=1|mtype=polygon|3255,3190|3247,3190|3247,3191|3237,3191|3237,3195|3230,3195|3230,3197|3225,3197|3223,3199|3200,3199|3199,3198|3194,3198|3194,3199|3193,3199|3193,3200|3186,3207|3160,3207|3153,3214|3148,3214|3145,3216|3133,3203|3136,3196|3136,3193|3137,3189|3137,3187|3137,3185|3138,3183|3138,3181|3140,3178|3140,3175|3138,3174|3138,3172|3141,3170|3141,3168|3142,3165|3142,3162|3142,3159|3142,3155|3140,3154|3138,3152|3138,3151|3139,3150|3140,3150|3141,3149|3138,3147|3137,3144|3138,3143|3138,3141|3144,3138|3146,3138|3149,3139|3152,3141|3154,3143|3156,3143|3159,3143|3162,3146|3164,3146|3165,3145|3167,3146|3170,3145|3173,3141|3176,3141|3178,3141|3181,3139|3185,3138|3189,3140|3191,3139|3193,3140|3195,3138|3197,3138|3199,3137|3201,3137|3204,3138|3208,3137|3211,3137|3212,3137|3214,3139|3216,3139|3218,3141|3220,3141|3224,3142|3228,3140|3232,3141|3235,3141|3239,3142|3241,3142|3242,3144|3240,3146|3240,3148|3244,3150|3246,3154|3246,3159|3248,3161|3247,3163|3247,3165|3248,3167|3247,3169|3248,3172|3248,3175|3249,3177|3249,3181|3255,3190}}"
+  },
+  {
+   "id": "lunar_isle",
+   "page": "Lunar Isle",
+   "revid": 15375264,
+   "map": "{{Map|name=Lunar Isle|x=2117|y=3903|width=300|height=300|zoom=1}}"
+  },
+  {
+   "id": "mage_arena",
+   "page": "Mage Arena",
+   "revid": 15326168,
+   "map": "{{Map|name=Mage Arena|y=3915|zoom=1|mtype=polygon|3095,3955|3082,3942|3082,3922|3092,3912|3119,3912|3129,3922|3129,3943|3117,3955}}"
+  },
+  {
+   "id": "mage_bank",
+   "page": "Mage Arena bank",
+   "revid": 15340075,
+   "map": "{{Map|name=Mage Arena bank|x=3090|y=3956|mtype=square|r=3}}"
+  },
+  {
+   "id": "mcgrubors_wood",
+   "page": "McGrubor's Wood",
+   "revid": 15290184,
+   "map": "{{Map|name=McGrubor's Wood|x=2652|y=3485|height=233|width=300|zoom=2}}"
+  },
+  {
+   "id": "miscellania",
+   "page": "Miscellania",
+   "revid": 15351046,
+   "map": "{{Map|name=Miscellania|x=2560|y=3870|height=300|width=300|zoom=1}}"
+  },
+  {
+   "id": "mortton",
+   "page": "Mort'ton",
+   "revid": 15359045,
+   "map": "{{Map|name=Mort'ton|x=3487|y=3288}}"
+  },
+  {
+   "id": "morytania",
+   "page": "Morytania",
+   "revid": 15369791,
+   "reason": "no map"
+  },
+  {
+   "id": "mos_leharmless",
+   "page": "Mos Le'Harmless",
+   "revid": 15315082,
+   "map": "{{Map|name=Mos Le'Harmless|x=3735|y=2999|height=350|width=300|zoom=0}}"
+  },
+  {
+   "id": "mudskipper_point",
+   "page": "Mudskipper Point",
+   "revid": 15364640,
+   "map": "{{Map|name=Mudskipper Point|width=300|height=200|x=2999|y=3122}}"
+  },
+  {
+   "id": "nardah",
+   "page": "Nardah",
+   "revid": 15397328,
+   "map": "{{Map|name=Nardah|x=3427|y=2911|height=350|width=300|zoom=2}}"
+  },
+  {
+   "id": "observatory",
+   "page": "Observatory",
+   "revid": 15104819,
+   "map": "{{Map|name=Observatory|x=2441|y=3162|r=8|mtype=square}}"
+  },
+  {
+   "id": "ourania_altar",
+   "page": "Ourania Altar",
+   "revid": 15366061,
+   "map": "{{Map|name=Ourania Altar|x=2452|y=3231|r=4|mtype=square}}"
+  },
+  {
+   "id": "pest_control",
+   "page": "Pest Control",
+   "revid": 15385975,
+   "map": "{{Map|name=Pest Control|x=2658|y=2625|zoom=1}}"
+  },
+  {
+   "id": "pollnivneach",
+   "page": "Pollnivneach",
+   "revid": 15325443,
+   "map": "{{Map|name=Pollnivneach|x=3358|y=2974|height=250|zoom=2}}"
+  },
+  {
+   "id": "port_khazard",
+   "page": "Port Khazard",
+   "revid": 15394798,
+   "map": "{{Map|name=Port Khazard|x=2653|y=3159|height=300|width=300|zoom=2}}"
+  },
+  {
+   "id": "port_phasmatys",
+   "page": "Port Phasmatys",
+   "revid": 15381748,
+   "map": "{{Map|name=Port Phasmatys|x=3679|y=3486|height=300|width=300|zoom=1}}"
+  },
+  {
+   "id": "port_sarim",
+   "page": "Port Sarim",
+   "revid": 15359040,
+   "map": "{{Map|name=Port Sarim|width=300|height=400|x=3029|y=3221}}"
+  },
+  {
+   "id": "prifddinas",
+   "page": "Prifddinas",
+   "revid": 15374558,
+   "map": "{{Map|name=Prifddinas (location)|x=3263|y=6083|plane=0|zoom=1|mapID=-1}}"
+  },
+  {
+   "id": "rellekka",
+   "page": "Rellekka",
+   "revid": 15387537,
+   "map": "{{Map|name=Rellekka|x=2658|y=3677|height=300|width=300|zoom=1}}"
+  },
+  {
+   "id": "rimmington",
+   "page": "Rimmington",
+   "revid": 15364082,
+   "map": "{{Map|name=Rimmington|zoom=1|mtype=polygon|2947,3263|2976,3263|2985,3251|2988,3248|2988,3247|2989,3246|2990,3246|2991,3245|2991,3238|2990,3237|2990,3234|2989,3233|2989,3232|2988,3231|2988,3230|2986,3228|2985,3228|2984,3227|2982,3214|2982,3192|2980,3193|2978,3193|2974,3190|2970,3188|2968,3188|2964,3192|2962,3192|2960,3190|2958,3190|2955,3192|2953,3192|2952,3191|2948,3194|2947,3194|2945,3195|2942,3195|2939,3197|2937,3196|2931,3202|2923,3205|2921,3209|2921,3210|2922,3211|2922,3215|2923,3216|2923,3218|2924,3219|2920,3225|2906,3225|2906,3227|2919,3227|2914,3233|2914,3236|2915,3237|2915,3240|2917,3242|2917,3244|2914,3247|2914,3253|2922,3263|2947,3263}}"
+  },
+  {
+   "id": "rogues_den",
+   "page": "Rogues' Den",
+   "revid": 15379507,
+   "map": "{{Map|name=Rogues' Den|2906,3537|zoom=3|mtype=square|r=2}}"
+  },
+  {
+   "id": "seers_village",
+   "page": "Seers' Village",
+   "revid": 15394749,
+   "map": "{{Map|name=Seers' Village|x=2710|y=3485|height=250|zoom=1}}"
+  },
+  {
+   "id": "shantay_pass",
+   "page": "Shantay Pass",
+   "revid": 15360728,
+   "map": "{{Map|name=Shantay Pass|x=3304|y=3123|height=250|width=300|zoom=2}}"
+  },
+  {
+   "id": "shilo_village",
+   "page": "Shilo Village (location)",
+   "revid": 15360727,
+   "map": "{{Map|name=Shilo Village (location)|x=2849|y=2972|height=250|zoom=1}}"
+  },
+  {
+   "id": "sophanem",
+   "page": "Sophanem",
+   "revid": 15397557,
+   "map": "{{Map|name=Sophanem|x=3297|y=2783|height=250|zoom=2}}"
+  },
+  {
+   "id": "taverley",
+   "page": "Taverley",
+   "revid": 15360699,
+   "map": "{{Map|name=Taverley|width=300|height=350|x=2910|y=3451}}"
+  },
+  {
+   "id": "taverley_dungeon",
+   "page": "Taverley Dungeon",
+   "revid": 15385689,
+   "map": "{{Map|name=Taverley Dungeon|2884,3398|caption=Entrance to Taverley Dungeon|align=right|mtype=pin|zoom=1|width=250|height=250}}"
+  },
+  {
+   "id": "tempoross_cove",
+   "page": "Tempoross Cove",
+   "revid": 15102380,
+   "map": "{{Map|name=Tempoross Cove|zoom=2|x=3035|y=2850}}"
+  },
+  {
+   "id": "theatre_of_blood",
+   "page": "Theatre of Blood",
+   "revid": 15393349,
+   "map": "{{Map|name=Theatre of Blood|x=3663|y=3219|zoom=2}}"
+  },
+  {
+   "id": "tombs_of_amascut",
+   "page": "Tombs of Amascut",
+   "revid": 15391794,
+   "map": "{{Map|x=3345|y=2725}}"
+  },
+  {
+   "id": "tower_of_life",
+   "reason": "no wiki_key"
+  },
+  {
+   "id": "tree_gnome_stronghold",
+   "page": "Tree Gnome Stronghold",
+   "revid": 15376538,
+   "map": "{{Map|name=Tree Gnome Stronghold|x=2440|y=3460|height=450|width=300|zoom=1}}"
+  },
+  {
+   "id": "trollheim",
+   "page": "Trollheim",
+   "revid": 15364775,
+   "map": "{{Map|name=Trollheim|x=2891|y=3678|height=250|zoom=2}}"
+  },
+  {
+   "id": "underground_pass",
+   "reason": "no wiki page"
+  },
+  {
+   "id": "uzer",
+   "page": "Ruins of Uzer",
+   "revid": 15387729,
+   "map": "{{Map|name=Uzer|x=3480|y=3095|height=250|zoom=2}}"
+  },
+  {
+   "id": "varlamore",
+   "page": "Varlamore",
+   "revid": 15355752,
+   "map": "{{map|x=1580|y=3120|zoom=-1}}"
+  },
+  {
+   "id": "varrock",
+   "page": "Varrock",
+   "revid": 15385112,
+   "map": "{{Map|name=Varrock|width=300|height=350|zoom=1|x=3210|y=3448}}"
+  },
+  {
+   "id": "varrock_museum",
+   "page": "Varrock Museum",
+   "revid": 15375570,
+   "map": "{{Map|name=Varrock Museum|3260,3449|height=250|zoom=2|mtype=rectangle|rectX=15|rectY=14}}"
+  },
+  {
+   "id": "varrock_sawmill",
+   "page": "Sawmill",
+   "revid": 15364777,
+   "map": "{{Map|type=maplink|mtype=pin|3302,3492}}"
+  },
+  {
+   "id": "warriors_guild",
+   "page": "Warriors' Guild",
+   "revid": 15366588,
+   "map": "{{Map|name=Warriors' Guild|mtype=polygon|2838,3556|2838,3537|2839,3537|2840,3536|2841,3536|2842,3537|2845,3537|2846,3536|2847,3536|2848,3537|2849,3537|2849,3534|2860,3534|2860,3537|2865,3537|2866,3536|2867,3536|2868,3537|2871,3537|2872,3536|2873,3536|2874,3537|2876,3537|2876,3539|2877,3540|2877,3541|2876,3542|2876,3544|2877,3545|2877,3548|2876,3549|2876,3551|2877,3552|2877,3553|2876,3554|2876,3556|2874,3556|2873,3557|2872,3557|2871,3556|2868,3556|2867,3557|2866,3557|2865,3556}}"
+  },
+  {
+   "id": "weiss",
+   "page": "Weiss",
+   "revid": 15273365,
+   "map": "{{Map|name=Weiss|x=2870|y=3940|height=250|zoom=2}}"
+  },
+  {
+   "id": "white_wolf_mountain",
+   "page": "White Wolf Mountain",
+   "revid": 15370252,
+   "map": "{{Map|name=White Wolf Mountain|zoom=1|x=2845|y=3483}}"
+  },
+  {
+   "id": "wilderness",
+   "page": "Wilderness",
+   "revid": 15387534,
+   "reason": "no map"
+  },
+  {
+   "id": "wintertodt",
+   "page": "Wintertodt",
+   "revid": 15388947,
+   "map": "{{Map|name=Wintertodt|zoom=1|x=1630|y=3981}}"
+  },
+  {
+   "id": "witchaven",
+   "page": "Witchaven",
+   "revid": 15367150,
+   "map": "{{Map|name=Witchaven|x=2720|y=3287|height=250|zoom=2}}"
+  },
+  {
+   "id": "wizards_tower",
+   "page": "Wizards' Tower",
+   "revid": 15393782,
+   "map": "{{Map|name=Wizards' Tower|zoom=3|x=3109|y=3160}}"
+  },
+  {
+   "id": "wyrmscraig",
+   "page": "Wyrmscraig",
+   "revid": 15394575,
+   "map": "{{Map|2571,2240|zoom=1}}"
+  },
+  {
+   "id": "yanille",
+   "page": "Yanille",
+   "revid": 15359059,
+   "map": "{{Map|name=Yanille|x=2577|y=3090|zoom=1}}"
+  },
+  {
+   "id": "zanaris",
+   "page": "Zanaris",
+   "revid": 15395652,
+   "map": "{{Map|name=Zanaris|zoom=1|x=2430|y=4428|mapID=28}}"
+  }
+ ]
+}

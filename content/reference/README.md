@@ -12,9 +12,13 @@ derived from these files, never stored in the guide.
 | `combat_achievements.json` | `ca` | game task id | generated from `data/samples/wiki-bucket/ca_all.json` |
 | `items.json` | `item` | OSRS cache / RuneLite item id | generated from `data/wiki/items.json` (written by `tools/extract_wiki_items.py`) + curated item aliases and ambiguous names in `data/wiki/entity_aliases.json` |
 | `skills.json` | `skill` | lower-case RuneLite `Skill` name | curated by hand |
-| `unlocks.json` | `unlock` | slug | owner-confirmed proposals during extraction (`propose_entity`); starts empty |
-| `locations.json` | `location` | slug | owner-confirmed proposals during extraction (`propose_entity`); starts empty |
+| `unlocks.json` | `unlock` | slug | owner-confirmed proposals during extraction (`propose_entity`) |
+| `locations.json` | `location` | slug | owner-confirmed proposals during extraction (`propose_entity`) |
 | `varbits.json` | (vars) | varbit/varp id | generated from `data/samples/wiki-bucket/varbit_achievement_diary_all.json` + `data/samples/runelite/VarPlayer.java`: one `DIARY_<AREA>_<TIER>_COMPLETED` varbit per diary tier and the quest points varp |
+| `npcs.json` | `npc` | slug of the wiki page title | generated from `data/wiki/npcs.json` (wiki buckets `infobox_npc` and `infobox_monster`, written by `tools/extract_wiki_world.py`) + id overrides in `data/wiki/world_ids.json` |
+| `shops.json` | `shop` | slug of the wiki page title | generated from `data/wiki/shops.json` (buckets `infobox_shop` and `storeline`); stock items resolve against `items.json` |
+| `objects.json` | `object` | slug of the wiki page title | generated from `data/wiki/objects.json` (bucket `infobox_scenery`) + id overrides in `data/wiki/world_ids.json` |
+| `location_maps.json` | (map of `location`) | location id | generated from `data/wiki/location_maps.json` (the infobox `{{Map}}` of each location page, written by `tools/fetch_wiki_locations.py`): the map point and the area of each location |
 
 `boss`, `goal` and `step` refs have no catalog: boss and goal ids are checked
 syntactically, step ids against their guide. Objective keys (`quest:x@finished`,
@@ -29,6 +33,10 @@ go test ./internal/core/entities/catalogbuild -update
 
 The same test fails in CI when a generated file is stale. Each generated file
 records the SHA-256 of its inputs in `source`.
+
+Refreshing the world catalogs and the location maps needs the network once
+(cached afterwards): `python3 tools/extract_wiki_world.py` and
+`python3 tools/fetch_wiki_locations.py`, then the `-update` test above.
 
 ## Rules
 
@@ -59,6 +67,22 @@ records the SHA-256 of its inputs in `source`.
 - Two ids with the same in-game name (Scrying orb full/empty, Ghostspeak
   amulet normal/enchanted) make the name ambiguous; the extraction picks one,
   or lists both in `any_of`.
+- **World entities are wiki pages.** An `npc`, `shop` or `object` is one wiki
+  page; `game_ids` lists the in-game ids of all its versions. A name several
+  pages carry ("Banker", "Cook") resolves to the page titled with it when
+  there is one, and is ambiguous otherwise; the page title itself ("Cook
+  (Lumbridge)") always names one page. Two titles that slug alike fail the
+  build until `data/wiki/world_ids.json` gives one of them an id; an id is
+  never renamed by a later page. These kinds are not in the wiki-key index
+  the importers resolve guide links with (`ByWikiKey`).
+- **Shop stock never guesses.** A stock line enters `stock` only when its item
+  (and currency, when not coins) resolves to one catalog item the way a guide
+  name does, or its page holds exactly one item id; the rest is kept in the
+  shop's `unresolved` with the reason.
+- **Areas.** A location's area (where a `travel` task ends; docs/10 section 7)
+  is the polygon, rectangle or square of its wiki infobox map, else the box of
+  `entities.AreaRadius` (10) tiles around the map point. A location without a
+  map has no area.
 
 The importers (`ironman content migrate`, `ironman content import-bruhsailer`)
 write the exact matches into each step's `entities` and loadout `item_id`, and

@@ -468,3 +468,68 @@ func TestWatchRecurringWakesOnSync(t *testing.T) {
 	syncRecurring(t, e, routine(herbID, "Herb run", "", 60, 0))
 	waitFor(t, func() bool { r := currentRun(e); return r != nil && r.Routine == herbID && r.Final() })
 }
+
+// breakBridge adds the bridge's /bridge/break to the clocks.
+type breakBridge struct {
+	*clockBridge
+	brk string // the /bridge/break answer; "" answers 404
+}
+
+func (b *breakBridge) JSON(ctx context.Context, method, path string, q url.Values, body any, timeout time.Duration) (json.RawMessage, error) {
+	if path == "/bridge/break" {
+		if b.brk == "" {
+			return nil, fmt.Errorf("404")
+		}
+		return json.RawMessage(b.brk), nil
+	}
+	return b.clockBridge.JSON(ctx, method, path, q, body, timeout)
+}
+
+func TestBreakNear(t *testing.T) {
+	cases := []struct {
+		name, brk string
+		timeoutS  int
+		want      string
+	}{
+		{"no break from the bridge", "", 0, ""},
+		{"a break going on", `{"active":true,"left_s":120}`, 0, "a pausa do Break Handler"},
+		{"V2 does not say when", `{"active":false}`, 0, ""},
+		{"closer than the margin", `{"active":false,"in_s":300}`, 0, "a pausa do Break Handler começa em 5 min"},
+		{"past the margin", `{"active":false,"in_s":1200}`, 0, ""},
+		{"the run's timeout counts", `{"active":false,"in_s":720}`, 600, ""},
+		{"closer than the run's timeout", `{"active":false,"in_s":480}`, 600, "a pausa do Break Handler começa em 8 min"},
+		{"a long timeout is capped", `{"active":false,"in_s":2100}`, 7200, ""},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			e := &Executor{Game: newRunGame("done"), Bridge: &breakBridge{clockBridge: newClocks(), brk: tc.brk}}
+			if got := e.breakNear(context.Background(), RunParams{ClassName: catSwap, TimeoutS: tc.timeoutS}); got != tc.want {
+				t.Errorf("breakNear = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+// A due routine waits for the Break Handler's next break when it is near,
+// and starts once the break is far again.
+func TestRecurringWaitsForANearBreak(t *testing.T) {
+	ctx := context.Background()
+	bridge := &breakBridge{clockBridge: newClocks(), brk: `{"active":false,"in_s":240}`}
+	e := &Executor{Game: newRunGame("done"), Bridge: bridge, RunPoll: time.Millisecond}
+	syncRecurring(t, e, routine(herbID, "Herb run", "HERB", 0, 0))
+	bridge.set("HERB", "COMPLETED", 0)
+
+	e.recurringOnce(ctx)
+	if st := recurring(t, e); currentRun(e) != nil || st.Waiting != "esperando: a pausa do Break Handler começa em 4 min" {
+		t.Fatalf("near break: waiting %q, run %+v", st.Waiting, currentRun(e))
+	}
+	if s := stateOf(t, e, herbID); !s.Due {
+		t.Fatalf("the routine stays due while it waits: %+v", s)
+	}
+
+	bridge.brk = `{"active":false,"in_s":3600}`
+	e.recurringOnce(ctx)
+	if r := waitRun(t, e); r.Routine != herbID {
+		t.Fatalf("run = %+v", r)
+	}
+}

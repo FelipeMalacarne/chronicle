@@ -231,7 +231,11 @@ PRINCIPAL ──(recorrente vence e não há break)──▶ PARANDO ──▶ P
   um run quando o próximo break está a menos que o timeout do run. Desde 2026-11-13 (Chronicle Link
   1.12.0) o break já é observável: a ponte responde `GET /bridge/break` e o `status` do agent o leva
   em `break` (`active`, `in_s` até o próximo, `left_s` do atual; doc 06, adendo de 2026-11-13). O
-  executor ainda não usa isso para decidir.
+  vigia das recorrentes usa isso (2026-11-13): uma rotina que vence espera, com o motivo no
+  `recurring_get`, se há um break em andamento ou se o próximo vem antes do timeout do run (15 min
+  quando o run não tem timeout próprio, nunca mais de 30 min, para um timeout longo não segurar a
+  rotina em todo intervalo entre breaks). Sem a ponte 1.12, ou com o Break Handler V2, que não diz
+  quando, nada espera.
 - **Dono no controle**: abrir o VNC em modo intervir pausa o executor; ele não retoma sozinho.
 
 ### Modelo de dados (amplia o rascunho)
@@ -655,7 +659,7 @@ destino da viagem):
     sozinho ou o inventário já está pronto.
   - Requisitos da conta (Farming, Bone Voyage): o planner não confere; o dono liga a rotina quando a
     conta tiver. O relógio não vence para canteiro que nunca foi plantado.
-  - Break próximo: o TODO em "A troca", acima.
+  - Break próximo: feito depois, em "A troca", acima (o vigia espera o break).
   - Sucesso por estado observado (o Time Tracking mostrar os canteiros plantados de novo): por ora,
     só a trava do relógio.
 - **Verificado:**

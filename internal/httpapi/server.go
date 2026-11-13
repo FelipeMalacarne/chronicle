@@ -196,6 +196,7 @@ func (s *Server) routes() {
 	s.profileRoutes()
 	s.rhythmRoutes()
 	s.driftRoutes()
+	s.fleetPluginRoutes()
 	s.mux.HandleFunc("/api/", func(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusNotFound, "no such endpoint")
 	})

@@ -3,7 +3,7 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import Glyph from './Glyph.svelte';
-	import { probeMicrobot } from '#lib/progress/microbot.svelte';
+	import { microbotModule, probeMicrobot } from '#lib/progress/microbot.svelte';
 	import { forgetAccount } from '#lib/progress/account.svelte';
 	import { fleet, loadFleet } from '#lib/progress/fleet.svelte';
 	import { iconFor } from '#lib/progress/icons';
@@ -65,6 +65,7 @@
 	});
 	const onFleet = $derived(path === '/' || path.startsWith('/contas/nova'));
 	const onWorld = $derived(path.startsWith('/mundo'));
+	const onPlugins = $derived(path.startsWith('/plugins'));
 	// Até a lista chegar, a conta aberta aparece sozinha.
 	const all = $derived(fleet.accounts ?? (account ? [{ id: account, rsn: name ?? account }] : []));
 	const top = $derived(
@@ -111,6 +112,16 @@
 		<Glyph name="frota" />Frota
 		{#if fleet.accounts?.length}<span class="n">{fleet.accounts.length}</span>{/if}
 	</a>
+	{#if microbotModule.enabled}
+		<a
+			class="nav"
+			class:nav-on={onPlugins}
+			href={resolve('/plugins')}
+			aria-current={onPlugins ? 'page' : undefined}
+		>
+			<Glyph name="automacao" />Plugins
+		</a>
+	{/if}
 	{#if account}
 		<a
 			class="nav"
@@ -123,7 +134,7 @@
 	{/if}
 	<p class="sec">Contas</p>
 	{#each all as a (a.id)}
-		{@const on = a.id === account && !onFleet && !onWorld}
+		{@const on = a.id === account && !onFleet && !onWorld && !onPlugins}
 		<!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() + query da conta -->
 		<a
 			class="acn"

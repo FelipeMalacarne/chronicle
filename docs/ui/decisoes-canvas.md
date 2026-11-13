@@ -290,7 +290,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
 | V6 | Rotinas e Fila | doc 11, F6 |
 | V7 | Histórico e Atividade | doc 11, F6, e os eventos de nível |
-| V8 | Plugins da frota | doc 11, F5 |
+| V8 | Plugins da frota | doc 11, F5. **Feita** (2026-11-13, seção 7.6) |
 | V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende) |
 | V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas |
 
@@ -304,3 +304,40 @@ artboard de Nova conta em dois pontos, pelo que o servidor aceita: a rota é obr
 depois de criar a conta. As telas de rota ainda têm as abas antigas abaixo dos atalhos novos (some na
 V2) e a barra de 640 px não tem o Mundo. O mesmo branch pôs a aba Workers nas classes do Pergaminho e
 corrigiu a barra de filtros do Grafo.
+
+### 7.6 Implementação: V8, Plugins da frota (2026-11-13)
+
+Artboard seguido: `V7Plugins1440` (página 8), em `/plugins` e no item "Plugins" da barra lateral (só com o
+módulo Microbot ligado). O modelo atrás da tela foi decidido pelo dono em 2026-11-13:
+
+- **O "Padrão da frota" é o perfil modelo `frota`; cada conta tem o seu perfil sobre ele**, e o ajuste
+  próprio da conta fica nesse perfil. Ao instalar na frota, as contas que ainda não têm perfil ganham o
+  seu, sobre o modelo.
+- **Os grupos saem do uso**, nada marcado à mão: o que um gatilho roda é "Rotinas usam", o que um perfil
+  liga no boot é "Sempre ligados", o resto é "Jogam".
+
+Os dados vêm de `GET /api/fleet/plugins`: o modelo, o perfil de cada conta e o estado ao vivo de cada
+cliente ligado (versão instalada, ligado ou não), mais a versão mais nova do Hub. As escritas usam as
+rotas de perfil e o `POST /api/accounts/client/apply` (doc 11, seções 15 e 17).
+
+Divergências do artboard:
+
+1. **Ícone:** o artboard põe o sprite de um item do jogo em cada plugin; não há essa ligação no
+   catálogo, então todos usam o mesmo glifo.
+2. **Descrição:** no lugar da descrição do plugin, a linha diz de onde ele vem ("Plugin Hub",
+   "deste repositório", "do cliente") e se está no padrão da frota. A descrição do Hub aparece na busca.
+3. **Configuração:** o formulário é o da v6 (`ConfigForm`, a partir do esquema que o próprio plugin
+   exporta), com "Gravar" por campo, e não os campos do artboard com um "Salvar" único. Ele precisa de um
+   cliente ligado, porque o esquema vem do plugin; sem cliente, a tela diz isso.
+4. **"Nas contas":** um plugin do modelo vale para todas as contas sobre ele, então a caixa fica marcada
+   e travada; desmarcar só existe para o que está no perfil de uma conta. O tempo ("42 min") não aparece:
+   o servidor não sabe há quanto tempo o plugin roda.
+5. **Lâmpadas:** verde quando roda, dourada quando está no cliente mas parado; sem cliente ligado, a
+   lâmpada fica neutra. O azul ("subindo") do artboard não tem dado.
+6. **"Atualizar nas N"** fixa a versão nova no perfil e aplica nos clientes ligados; "na próxima pausa"
+   não existe, porque não há como saber da pausa. **"Aplicar agora"** foi acrescentado, porque mudar um
+   perfil só vale no próximo início do cliente.
+7. **"Remover da frota"** tira o plugin dos perfis; o cliente o mantém até ser removido nele.
+
+Conferido com uma captura a 1440 contra um banco descartável com um modelo e duas contas (uma com
+perfil próprio), e com os testes de `node --test` da lógica da tela e o teste da rota no Postgres.

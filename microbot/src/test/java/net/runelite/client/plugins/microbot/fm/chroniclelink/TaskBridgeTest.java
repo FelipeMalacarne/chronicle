@@ -52,11 +52,15 @@ class TaskBridgeTest
 	static final class SlowGame extends TaskMachineTest.FakeGame
 	{
 		final CountDownLatch release = new CountDownLatch(1);
+		// Counted down once the machine is walking, so a test cancels a task that has already
+		// written its first events, not one that is still starting.
+		final CountDownLatch walking = new CountDownLatch(1);
 
 		SlowGame()
 		{
 			walks.add(new WorldPoint(3217, 3219, 0));
 			onWalk = () -> {
+				walking.countDown();
 				try
 				{
 					release.await(5, TimeUnit.SECONDS);
@@ -108,6 +112,7 @@ class TaskBridgeTest
 			assertEquals("5f2a9c0d11e84b7a", running.get("id").getAsString());
 			assertEquals("running", running.get("state").getAsString());
 
+			assertTrue(game.walking.await(5, TimeUnit.SECONDS), "the machine never started walking");
 			// A cancel for another id changes nothing; the right one stops the walk.
 			assertFalse(json(call(bridge, "/bridge/task/cancel", "POST", "{\"id\":\"0123456789abcdef\"}")).get("success").getAsBoolean());
 			assertTrue(json(call(bridge, "/bridge/task/cancel", "POST", "{\"id\":\"5f2a9c0d11e84b7a\"}")).get("success").getAsBoolean());

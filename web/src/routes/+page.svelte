@@ -23,19 +23,21 @@
 		type FleetInput,
 		type Lane
 	} from '#lib/progress/frota';
-	import { iconFor, ICON_ATTRIBUTION } from '#lib/progress/icons';
+	import { iconFor, itemIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { chooseCockpitAccount } from '#lib/progress/microbot.svelte';
-	import type { AccountState, ProgressSummary, TimerView } from '#lib/progress/types';
+	import { fleetSummary as rhythmSummary, todaySince } from '#lib/progress/ritmo';
+	import type { AccountState, FleetRhythm, ProgressSummary, TimerView } from '#lib/progress/types';
 	import { actionLabel, workerLines, type WorkerActionKind } from '#lib/progress/workers';
 	import FrotaCompacta from '#lib/v6/FrotaCompacta.svelte';
 	import Glyph from '#lib/v6/Glyph.svelte';
 
 	/*
 	 * Frota (página 8 do canvas, V7Frota1440 e V7FrotaCompacta1440): uma raia por conta, ou a lista
-	 * compacta. Só o que a API já tem. Ficam de fora do artboard, por faltar no servidor, o ritmo
-	 * de XP e os ganhos da sessão, a fila de rotinas (aqui "Depois" são os relógios do Time
-	 * Tracking), o diário, GP e o uso do nó no resumo (no lugar, o uso dos workers contra a quota;
-	 * docs/ui/decisoes-canvas.md, seção 7.7).
+	 * compacta. Só o que a API já tem: o ritmo (a skill que treina, XP por hora, os itens da sessão,
+	 * XP e GP de hoje no resumo) vem de GET /api/rhythm, e a pausa do status do cliente. Ficam de
+	 * fora do artboard, por faltar no servidor, a fila de rotinas (aqui "Depois" são os relógios do
+	 * Time Tracking), o diário e o uso do nó no resumo (no lugar, o uso dos workers contra a quota;
+	 * docs/ui/decisoes-canvas.md, seções 7.7 e 7.14).
 	 */
 	interface Facts {
 		state: AccountState | null;
@@ -45,6 +47,7 @@
 	let facts = $state<Record<string, Facts>>({});
 	let workers = $state<WorkersView | null>(null);
 	let clients = $state<Record<string, { client: ClientStatus | null; scripts: string[] }>>({});
+	let rhythm = $state<FleetRhythm | null>(null);
 	let now = $state(Date.now());
 	let armed = $state<string | null>(null);
 	let busy = $state<string | null>(null);
@@ -131,6 +134,19 @@
 		const t = setInterval(() => void loadWorkers(), 5000);
 		return () => clearInterval(t);
 	});
+	// O ritmo de todas as contas numa leitura, desde a meia-noite deste navegador.
+	async function loadRhythm() {
+		const r = await quiet(progressApi.fleetRhythm(todaySince(new Date())));
+		if (r || !rhythm) rhythm = r;
+	}
+	$effect(() => {
+		void loadRhythm();
+		const t = setInterval(() => {
+			if (!document.hidden) void loadRhythm();
+		}, 30_000);
+		return () => clearInterval(t);
+	});
+	const day = $derived(rhythm ? rhythmSummary(rhythm) : null);
 
 	const all = $derived.by(() => {
 		const lines = workerLines(workers, now);
@@ -141,7 +157,8 @@
 			timers: facts[a.id]?.timers ?? [],
 			worker: lines.find((l) => l.account === a.id) ?? null,
 			client: clients[a.id]?.client ?? null,
-			scripts: clients[a.id]?.scripts ?? []
+			scripts: clients[a.id]?.scripts ?? [],
+			rhythm: rhythm?.accounts.find((r) => r.account === a.id) ?? null
 		}));
 		return lanes(inputs, now);
 	});
@@ -250,6 +267,23 @@
 				{#each all as l (l.id)}<i class={l.tone}></i>{/each}
 			</div>
 		</div>
+		{#if day}
+			<div class="ri" title="Desde 00:00, pelos snapshots de cada conta">
+				<span class="rk">XP hoje</span>
+				<span class="rv">{day.xp}</span>
+				<span class="rd">{day.xpSub}</span>
+			</div>
+			{#if day.gp}
+				{@const coins = itemIcon(995)}
+				<div class="ri ri-gp" title="Moedas e platinum tokens no banco e no inventário">
+					<span class="rk">GP na frota</span>
+					<span class="rv"
+						>{#if coins}<img src={coins} alt="" />{/if}{day.gp}</span
+					>
+					{#if day.gpSub}<span class="rd">{day.gpSub}</span>{/if}
+				</div>
+			{/if}
+		{/if}
 		{#if workers && cap}
 			<div class="ri" title={cap.title}>
 				<span class="rk">Workers</span>
@@ -311,7 +345,7 @@
 				{@const face = l.face ? iconFor(`skill:${l.face.skill}`) : undefined}
 				{@const command = sessionCommand(l)}
 				<article class="lane" class:lane-off={l.tone === 'off'}>
-					<div class="stage" class:live={l.tone === 'ok'} class:dim={l.tone === 'off'}>
+					<div class="stage" class:live={l.tone === 'ok' && !l.rest} class:dim={l.tone === 'off'}>
 						{#if face}<img src={face} alt={l.face?.skill} />{:else}<span
 								class="ini"
 								aria-hidden="true">{l.rsn.charAt(0).toUpperCase()}</span
@@ -321,7 +355,7 @@
 					</div>
 					<div class="now">
 						<div class="who">
-							<span class="lamp {l.tone}"></span>
+							<span class="lamp {l.rest ? 'rest' : l.tone}"></span>
 							<h2><button type="button" class="name" onclick={() => open(l)}>{l.rsn}</button></h2>
 							<span class="m">{l.meta}</span>
 							{#if l.where}<span class="tag" title={l.whereTitle}>{l.where}</span>{/if}
@@ -329,7 +363,29 @@
 						<p class="act {l.tone}">
 							<b>{l.activity}</b>{#if l.detail}<span title={l.detail}>{l.detail}</span>{/if}
 						</p>
-						{#if l.route}
+						{#if l.rhythm?.bar}
+							{@const bar = l.rhythm.bar}
+							{@const skill = iconFor(`skill:${bar.skill}`)}
+							<div class="prog">
+								<span class="l"
+									>{#if skill}<img src={skill} alt="" />{/if}{bar.level}</span
+								>
+								<div
+									class="track"
+									class:live={l.tone === 'ok' && !l.rest}
+									class:rest={l.rest}
+									role="progressbar"
+									aria-valuenow={bar.pct}
+									aria-valuemin="0"
+									aria-valuemax="100"
+									aria-label="{bar.name} {bar.level}, {bar.pct}% do nível"
+									title="{bar.name} {bar.level}: {bar.pct}% do caminho até o {bar.level + 1}"
+								>
+									<span style="width: {bar.pct}%"></span>
+								</div>
+								<span>{bar.next ?? ''}</span>
+							</div>
+						{:else if l.route}
 							<div class="prog">
 								<span class="l">{l.route.label}</span>
 								<div
@@ -345,6 +401,18 @@
 								</div>
 								<span>{l.route.done} / {l.route.total}{l.route.ref ? ` · ${l.route.ref}` : ''}</span
 								>
+							</div>
+						{/if}
+						{#if l.rhythm && (l.rhythm.rate || l.rhythm.gained.length || l.rhythm.out)}
+							<div class="ganho">
+								{#if l.rhythm.rate}<span class="rit">{l.rhythm.rate}</span>{/if}
+								{#each [...l.rhythm.gained, ...(l.rhythm.out ? [l.rhythm.out] : [])] as g (g.item)}
+									{@const sprite = itemIcon(g.item)}
+									<span title={g.title}
+										>{#if sprite}<img src={sprite} alt={g.name} />{:else}<span>{g.name}</span
+											>{/if}{g.qty}</span
+									>
+								{/each}
 							</div>
 						{/if}
 					</div>
@@ -584,6 +652,14 @@
 		font-size: 11px;
 		color: var(--on-frame-muted);
 	}
+	.rv img {
+		width: 22px;
+		height: 22px;
+		margin-right: 8px;
+		vertical-align: -3px;
+		image-rendering: pixelated;
+		object-fit: contain;
+	}
 	.ri-next {
 		flex: 1.6 1 260px;
 	}
@@ -815,6 +891,9 @@
 	.lamp.up {
 		background: var(--auto);
 	}
+	.lamp.rest {
+		background: var(--gold);
+	}
 	.lamp.bad {
 		background: var(--not-started);
 	}
@@ -863,7 +942,16 @@
 		color: var(--ink-muted);
 	}
 	.prog .l {
+		display: inline-flex;
+		align-items: center;
+		gap: 5px;
 		color: var(--ink);
+	}
+	.prog .l img {
+		width: 14px;
+		height: 14px;
+		image-rendering: pixelated;
+		object-fit: contain;
 	}
 	.track {
 		height: 12px;
@@ -887,6 +975,37 @@
 		);
 		background-size: 28px 12px;
 		animation: flow 1.1s linear infinite;
+	}
+	.track.rest span {
+		background-color: var(--ink-subtle);
+	}
+	/* The lane's rhythm: XP per hour, then the session's items with their counts. */
+	.ganho {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 4px 12px;
+		min-height: 20px;
+		font:
+			500 11px 'JetBrains Mono',
+			monospace;
+		color: var(--ink-muted);
+	}
+	.ganho span {
+		display: inline-flex;
+		align-items: center;
+		gap: 4px;
+		white-space: nowrap;
+	}
+	.ganho img {
+		width: 18px;
+		height: 18px;
+		image-rendering: pixelated;
+		object-fit: contain;
+	}
+	.ganho .rit {
+		color: var(--ink);
+		font-weight: 600;
 	}
 	.queue {
 		display: flex;
@@ -1027,6 +1146,10 @@
 		color: var(--ink-subtle);
 	}
 	@media (max-width: 900px) {
+		/* V7Frota640: the summary keeps XP hoje, not the GP. */
+		.ri-gp {
+			display: none;
+		}
 		.lane {
 			grid-template-columns: 76px minmax(0, 1fr);
 		}

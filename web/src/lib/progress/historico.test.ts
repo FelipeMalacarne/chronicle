@@ -267,7 +267,7 @@ test('weekGains: "71 → 76 +412k", no arrow without a new level', () => {
 		]),
 		[
 			{ skill: 'fishing', name: 'Fishing', levels: '71 → 76', up: true, xp: '+412k' },
-			{ skill: 'cooking', name: 'Cooking', levels: '60', up: false, xp: '+8200' }
+			{ skill: 'cooking', name: 'Cooking', levels: '60', up: false, xp: '+8,2k' }
 		]
 	);
 });

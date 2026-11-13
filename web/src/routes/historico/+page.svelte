@@ -220,14 +220,14 @@
 				</div>
 				<div class="b">
 					<div class="stats">
-						<div><span class="k">Feitas</span><span class="v">{week.done}</span></div>
+						<div><span class="k">Feitas</span><span class="val">{week.done}</span></div>
 						<div>
-							<span class="k">Falharam</span><span class="v" class:bad={week.failed > 0}
+							<span class="k">Falharam</span><span class="val" class:bad={week.failed > 0}
 								>{week.failed}</span
 							>
 						</div>
 						{#if week.canceled}
-							<div><span class="k">Canceladas</span><span class="v">{week.canceled}</span></div>
+							<div><span class="k">Canceladas</span><span class="val">{week.canceled}</span></div>
 						{/if}
 					</div>
 					{#if week.lastFailed}
@@ -546,14 +546,15 @@
 		text-transform: uppercase;
 		color: var(--ink-subtle);
 	}
-	.stats .v {
+	/* Not `.v`: that global class is the verdict circle. */
+	.stats .val {
 		font:
 			700 18px/1.1 Alegreya,
 			Georgia,
 			serif;
 		font-variant-numeric: lining-nums;
 	}
-	.stats .v.bad {
+	.stats .val.bad {
 		color: var(--not-started);
 	}
 	.fail {

@@ -5,7 +5,7 @@
 	import { MicrobotError, microbotApi, workersApi, type WorkersView } from '#lib/api/microbot';
 	import { rememberAccount } from '#lib/progress/account.svelte';
 	import { accountPills, diary, fleetRuns, runsHeader, xpRows } from '#lib/progress/atividade';
-	import { shortQty } from '#lib/progress/conta';
+	import { compact } from '#lib/progress/ritmo';
 	import { fleet, loadFleet } from '#lib/progress/fleet.svelte';
 	import { lanes, needs, type FleetInput, type Need } from '#lib/progress/frota';
 	import { dayStart } from '#lib/progress/historico';
@@ -262,7 +262,7 @@
 		<section class="card">
 			<div class="h">
 				<h2>XP hoje</h2>
-				{#if xp.total}<span>{shortQty(xp.total)}{only ? '' : ' na frota'}</span>{/if}
+				{#if xp.total}<span>{compact(xp.total)}{only ? '' : ' na frota'}</span>{/if}
 			</div>
 			<div class="b">
 				{#each xp.rows as r (r.account)}

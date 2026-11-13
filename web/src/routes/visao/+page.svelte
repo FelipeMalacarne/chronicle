@@ -13,11 +13,13 @@
 	} from '#lib/api/microbot';
 	import { currentAccount } from '#lib/progress/account.svelte';
 	import { rowChips } from '#lib/progress/agora';
+	import { iconFor, itemIcon } from '#lib/progress/icons';
 	import { scriptRows } from '#lib/progress/jogo';
 	import { me } from '#lib/progress/me.svelte';
 	import { microbotModule } from '#lib/progress/microbot.svelte';
+	import { dayCard, nowStats, sessionItems, todaySince, trainingBar } from '#lib/progress/ritmo';
 	import { session } from '#lib/progress/session.svelte';
-	import type { TimerView } from '#lib/progress/types';
+	import type { AccountRhythm, TimerView } from '#lib/progress/types';
 	import { boardIn } from '#lib/progress/undo';
 	import { chipsOf, routeLabel } from '#lib/progress/view';
 	import { workerFacts, workerLines } from '#lib/progress/workers';
@@ -32,11 +34,11 @@
 	import ObjectiveChip from '#lib/v6/ObjectiveChip.svelte';
 
 	/*
-	 * Conta › Visão geral (página 8 do canvas, V7Conta1440; fatia V4 de decisoes-canvas.md, 7.5), com
-	 * o que o servidor já tem: Fazendo agora (a tela do jogo e o script, quando o cliente roda), um
-	 * cartão provisório de Relógios e Fazer agora no lugar da Fila (até as rotinas, V6), a rota com o
-	 * passo atual, o worker e as últimas execuções. O ritmo de "Fazendo agora" e o cartão "Hoje" entram
-	 * com a fatia V5; as ações no cliente ficam aqui até o Histórico (V7).
+	 * Conta › Visão geral (página 8 do canvas, V7Conta1440; fatias V4 e V5 de decisoes-canvas.md, 7.5),
+	 * com o que o servidor já tem: Fazendo agora (a tela do jogo e o script, quando o cliente roda, e o
+	 * ritmo: a skill que treina, XP por hora, a sessão, até a pausa e o que ganhou), a Fila com Relógios
+	 * e Fazer agora, a rota com o passo atual, Hoje (XP por skill e GP desde a meia-noite), o worker e
+	 * as últimas execuções. Sem dado, a linha some (seção 7.14).
 	 */
 	const account = $derived(currentAccount());
 	let timers = $state<TimerView[]>([]);
@@ -98,6 +100,35 @@
 	const client = $derived(status?.client ?? null);
 	const running = $derived(agent && !!client?.running);
 	const loggedIn = $derived(running && !!client?.state?.loggedIn);
+	const paused = $derived(running && !!client?.break?.active);
+
+	/* O ritmo da conta, desde a meia-noite deste navegador. */
+	let rhythm = $state<AccountRhythm | null>(null);
+	async function loadRhythm(id: string) {
+		try {
+			const r = await progressApi.rhythm(id, todaySince(new Date()));
+			if (r.account === id) rhythm = r;
+		} catch {
+			/* sem o ritmo, Fazendo agora fica com a tela e Hoje some */
+		}
+	}
+	$effect(() => {
+		const id = account;
+		rhythm = null;
+		if (!id) return;
+		void loadRhythm(id);
+		const t = setInterval(() => {
+			if (!document.hidden) void loadRhythm(id);
+		}, 30_000);
+		return () => clearInterval(t);
+	});
+	// A sessão é a de agora só enquanto a conta joga (ou ganhou XP há pouco); parada, é a última.
+	const live = $derived(loggedIn || paused || !!rhythm?.training);
+	const bar = $derived(trainingBar(rhythm));
+	const stats = $derived(nowStats(live ? rhythm : null, running ? client?.break : null));
+	const items = $derived(sessionItems(live ? rhythm : null));
+	const hasRhythm = $derived(!!bar || stats.length > 0 || items.gained.length > 0 || !!items.out);
+	const today = $derived(dayCard(rhythm));
 
 	/* Fazendo agora: o script que joga (os plugins ligados e, logada, o estado e as voltas). */
 	$effect(() => {
@@ -152,13 +183,17 @@
 	});
 	const playing = $derived(scriptRows(scripts, game));
 	const doing = $derived(
-		playing[0]
-			? [playing[0].name, playing[0].detail, playing.length > 1 ? `+${playing.length - 1}` : '']
-					.filter(Boolean)
-					.join(' · ')
-			: loggedIn
-				? 'nenhum script jogando'
-				: 'na tela de login'
+		!running
+			? 'à mão'
+			: paused
+				? 'em pausa · Break Handler'
+				: playing[0]
+					? [playing[0].name, playing[0].detail, playing.length > 1 ? `+${playing.length - 1}` : '']
+							.filter(Boolean)
+							.join(' · ')
+					: loggedIn
+						? 'nenhum script jogando'
+						: 'na tela de login'
 	);
 	const pos = $derived(game?.observe?.player?.position ?? client?.state?.player?.position);
 	const world = $derived(client?.login?.currentWorld);
@@ -242,39 +277,100 @@
 	</div>
 {/snippet}
 
-{#if running}
+{#if running || bar}
 	<div class="row1">
-		<section class="card now">
+		<section class="card now" class:wide={hasRhythm}>
 			<div class="h">
 				<h2>Fazendo agora</h2>
 				<span title={doing}>{doing}</span>
 			</div>
-			<div class="b">
-				<a href={resolve('/automacao')} class="shot" aria-label="Abrir o cliente desta conta">
-					{#if shotAt}
-						<img
-							src={microbotApi.screenshotURL(shotAt)}
-							alt="Tela do cliente do jogo"
-							onload={() => (shotOk = true)}
-							onerror={() => (shotOk = false)}
-						/>
-					{/if}
-					{#if !shotOk}
-						<span class="ph"
-							><Glyph name="automacao" size={22} /><span>tela do jogo · atualiza a cada 5 s</span
-							></span
-						>
-					{/if}
-					{#if world || pos}
-						<span class="hud"
-							>{#if world}<span>mundo {world}</span>{/if}{#if pos}<span>{pos.x}, {pos.y}</span
-								>{/if}</span
-						>
-					{/if}
-				</a>
+			<div class="b" class:split={hasRhythm}>
+				{#if running}
+					<a href={resolve('/automacao')} class="shot" aria-label="Abrir o cliente desta conta">
+						{#if shotAt}
+							<img
+								src={microbotApi.screenshotURL(shotAt)}
+								alt="Tela do cliente do jogo"
+								onload={() => (shotOk = true)}
+								onerror={() => (shotOk = false)}
+							/>
+						{/if}
+						{#if !shotOk}
+							<span class="ph"
+								><Glyph name="automacao" size={22} /><span>tela do jogo · atualiza a cada 5 s</span
+								></span
+							>
+						{/if}
+						{#if world || pos}
+							<span class="hud"
+								>{#if world}<span>mundo {world}</span>{/if}{#if pos}<span>{pos.x}, {pos.y}</span
+									>{/if}</span
+							>
+						{/if}
+					</a>
+				{/if}
+				{#if hasRhythm}
+					<div class="ritmo">
+						{#if bar}
+							{@const skill = iconFor(`skill:${bar.skill}`)}
+							<div class="prog fz">
+								<span class="l"
+									>{#if skill}<img src={skill} alt="" />{/if}{bar.name}
+									{bar.level}</span
+								>
+								<div
+									class="track"
+									class:live={!paused}
+									class:rest={paused}
+									role="progressbar"
+									aria-valuenow={bar.pct}
+									aria-valuemin="0"
+									aria-valuemax="100"
+									aria-label="{bar.name} {bar.level}, {bar.pct}% do nível"
+									title="{bar.pct}% do caminho até o {bar.level + 1}"
+								>
+									<span style="width: {bar.pct}%"></span>
+								</div>
+								<span>{bar.next ?? ''}</span>
+							</div>
+						{/if}
+						{#if stats.length}
+							<div class="stats">
+								{#each stats as st (st.k)}
+									<div class="kv"><span class="k">{st.k}</span><span class="val">{st.v}</span></div>
+								{/each}
+							</div>
+						{/if}
+						{#if items.gained.length || items.out}
+							<div>
+								<p class="lbl ganhou">
+									{items.gained.length ? 'Ganhou nesta sessão' : 'Nesta sessão'}
+								</p>
+								<div class="itens">
+									{#each items.gained as g (g.item)}
+										{@const sprite = itemIcon(g.item)}
+										<span class="slot" title={g.title}
+											><span class="bx"
+												>{#if sprite}<img class="sp" src={sprite} alt="" />{/if}</span
+											><span class="nm"><b>{g.qty}</b> {g.name}</span></span
+										>
+									{/each}
+									{#if items.out}
+										{@const sprite = itemIcon(items.out.item)}
+										<span class="slot slot-miss acaba" title={items.out.title}
+											><span class="bx"
+												>{#if sprite}<img class="sp" src={sprite} alt="" />{/if}</span
+											><span class="nm">{items.out.text}</span></span
+										>
+									{/if}
+								</div>
+							</div>
+						{/if}
+					</div>
+				{/if}
 			</div>
 		</section>
-		{@render fila()}
+		{#if running}{@render fila()}{/if}
 	</div>
 {/if}
 
@@ -314,6 +410,43 @@
 			{/if}
 		</div>
 	</section>
+
+	{#if rhythm}
+		<section class="card">
+			<div class="h">
+				<h2>Hoje</h2>
+				<span>desde 00:00</span>
+			</div>
+			<div class="b hoje">
+				{#each today.rows as d (d.skill)}
+					{@const icon = iconFor(`skill:${d.skill}`)}
+					<div class="dia">
+						{#if icon}<img src={icon} alt="" />{:else}<span></span>{/if}<span>{d.name}</span><span
+							class="u"
+							class:up={d.up}>{d.levels}</span
+						><span class="x">{d.xp}</span>
+					</div>
+				{:else}
+					<p class="mu nada">Nenhum XP visto desde 00:00.</p>
+				{/each}
+				{#if today.more}
+					<div class="dia">
+						<span></span><span class="su"
+							>mais {today.more.n} {today.more.n === 1 ? 'skill' : 'skills'}</span
+						><span></span><span class="x">{today.more.xp}</span>
+					</div>
+				{/if}
+				{#if today.gp}
+					{@const coins = itemIcon(995)}
+					<div class="dia" title="Moedas e platinum tokens no banco e no inventário">
+						{#if coins}<img src={coins} alt="" />{:else}<span></span>{/if}<span>GP</span><span
+							class="u">{today.gp.value}</span
+						><span class="x">{today.gp.today ?? ''}</span>
+					</div>
+				{/if}
+			</div>
+		</section>
+	{/if}
 
 	{#if !running}{@render fila()}{/if}
 
@@ -409,6 +542,129 @@
 	}
 	.now .shot {
 		text-decoration: none;
+	}
+	/* With the rhythm, the card takes the row and puts it beside the screen (V7Conta1440). */
+	.now.wide {
+		flex: 999 1 560px;
+		max-width: none;
+	}
+	.now .b.split {
+		flex-direction: row;
+		flex-wrap: wrap;
+		gap: 18px;
+	}
+	.split .shot {
+		flex: 1 1 340px;
+		max-width: 420px;
+		align-self: flex-start;
+	}
+	.ritmo {
+		flex: 999 1 300px;
+		min-width: 0;
+		display: flex;
+		flex-direction: column;
+		gap: 14px;
+	}
+	.prog.fz {
+		font-size: 12px;
+	}
+	.prog.fz .track {
+		height: 14px;
+	}
+	.prog.fz .track.live span {
+		background-image: linear-gradient(
+			110deg,
+			rgba(255, 255, 255, 0.16) 0 25%,
+			transparent 25% 50%,
+			rgba(255, 255, 255, 0.16) 50% 75%,
+			transparent 75%
+		);
+		background-size: 28px 14px;
+		animation: flow 1.1s linear infinite;
+	}
+	@keyframes flow {
+		from {
+			background-position: 0 0;
+		}
+		to {
+			background-position: 28px 0;
+		}
+	}
+	@media (prefers-reduced-motion: reduce) {
+		.prog.fz .track span {
+			animation: none !important;
+		}
+	}
+	/* Not `.v`: that global class is the verdict circle. */
+	.stats .kv .val {
+		font:
+			700 18px/1.1 Alegreya,
+			Georgia,
+			serif;
+	}
+	.ganhou {
+		padding-bottom: 6px;
+	}
+	.itens {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 8px;
+	}
+	.itens .slot .nm b {
+		font-weight: 600;
+		color: var(--ink);
+	}
+	.itens .acaba {
+		width: 150px;
+		align-items: flex-start;
+	}
+	.itens .acaba .nm {
+		max-width: none;
+	}
+	/* Hoje: one line per skill that gained XP, then the GP. */
+	.b.hoje {
+		gap: 0;
+	}
+	.dia {
+		display: grid;
+		grid-template-columns: 20px minmax(0, 1fr) auto auto;
+		gap: 10px;
+		align-items: center;
+		min-height: 32px;
+		border-bottom: 1px solid var(--hairline);
+		font-size: 13px;
+	}
+	.dia:last-child {
+		border-bottom: 0;
+	}
+	.dia img {
+		width: 18px;
+		height: 18px;
+		image-rendering: pixelated;
+		object-fit: contain;
+	}
+	.dia .u {
+		font-size: 12px;
+		color: var(--ink-subtle);
+	}
+	.dia .u.up {
+		font:
+			600 12px 'JetBrains Mono',
+			monospace;
+		color: var(--done);
+	}
+	.dia .x {
+		width: 64px;
+		text-align: right;
+		font:
+			400 11px 'JetBrains Mono',
+			monospace;
+		color: var(--ink-subtle);
+	}
+	.nada {
+		margin: 0;
+		padding: 6px 0;
+		font-size: 13px;
 	}
 	.fila {
 		flex: 1 1 320px;

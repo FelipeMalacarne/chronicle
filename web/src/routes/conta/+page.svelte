@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { progressApi } from '#lib/api/client';
 	import { toNext, shortQty, SKILL_ORDER } from '#lib/progress/conta';
 	import { openEntity } from '#lib/progress/entity.svelte';
 	import { iconFor, itemIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
@@ -15,8 +16,9 @@
 		summaryCells,
 		type QuestFilter
 	} from '#lib/progress/personagem';
+	import { todaySince, upToday } from '#lib/progress/ritmo';
 	import { session } from '#lib/progress/session.svelte';
-	import type { ContainerView, QuestView } from '#lib/progress/types';
+	import type { AccountRhythm, ContainerView, QuestView } from '#lib/progress/types';
 	import { ago } from '#lib/progress/view';
 	import Glyph from '#lib/v6/Glyph.svelte';
 
@@ -24,8 +26,8 @@
 	 * Conta › Personagem (página 8 do canvas, V7Personagem1440; fatia V4 de decisoes-canvas.md, 7.5):
 	 * o resumo, as skills com o caminho até o próximo nível, quests, diaries, o que ela leva agora,
 	 * as conquistas e o banco, cada cartão com a fonte e a idade da leitura. O que o plugin nunca
-	 * mandou fica "sem leitura" e nunca vira ausência (regra 8). "O que subiu hoje" entra com o ritmo
-	 * (fatia V5).
+	 * mandou fica "sem leitura" e nunca vira ausência (regra 8). Em verde, as skills que subiram hoje,
+	 * pelo ritmo (fatia V5).
 	 */
 	const account = $derived(session.account);
 	const st = $derived(me.state);
@@ -42,6 +44,29 @@
 		)
 	);
 	const skillSrc = $derived(factSource(skills, now));
+
+	/* O que subiu desde a meia-noite deste navegador (GET /api/account/rhythm). */
+	let rhythm = $state<AccountRhythm | null>(null);
+	$effect(() => {
+		const id = account;
+		rhythm = null;
+		if (!id) return;
+		const read = () =>
+			progressApi
+				.rhythm(id, todaySince(new Date()))
+				.then((r) => {
+					if (r.account === id) rhythm = r;
+				})
+				.catch(() => {
+					/* sem o ritmo, nada fica em verde */
+				});
+		void read();
+		const t = setInterval(() => {
+			if (!document.hidden) void read();
+		}, 60_000);
+		return () => clearInterval(t);
+	});
+	const ups = $derived(upToday(rhythm));
 
 	/* Quests: seis por filtro, o resto atrás do link. */
 	const SHOW = 6;
@@ -130,7 +155,7 @@
 		<section class="sum7" aria-label="Resumo do personagem">
 			{#each cells as c (c.k)}
 				<div class="kv">
-					<span class="k">{c.k}</span><span class="v"
+					<span class="k">{c.k}</span><span class="val"
 						>{c.v}{#if c.of}
 							<small>{c.of}</small>{/if}</span
 					>
@@ -154,8 +179,9 @@
 							<button
 								class="sk7"
 								class:max={s.level >= 99}
+								class:up={!!ups.levels[s.skill]}
 								type="button"
-								title={`${cap(s.skill)} ${s.level} · ${n(s.xp)} xp${s.level < 99 ? ` · a barra é o caminho até o ${s.level + 1}: ${Math.round(p * 100)}%` : ''} · ${s.source} ${ago(Date.parse(s.observed_at), now)}`}
+								title={`${cap(s.skill)} ${s.level}${ups.levels[s.skill] ? ` (+${ups.levels[s.skill]} hoje)` : ''} · ${n(s.xp)} xp${s.level < 99 ? ` · a barra é o caminho até o ${s.level + 1}: ${Math.round(p * 100)}%` : ''} · ${s.source} ${ago(Date.parse(s.observed_at), now)}`}
 								onclick={() => openEntity(`skill:${s.skill}`)}
 								>{#if icon}<img src={icon} alt="" />{/if}<span class="nm">{cap(s.skill)}</span><span
 									class="lv7">{s.level}</span
@@ -163,6 +189,9 @@
 							>
 						{/each}
 					</div>
+					{#if ups.text}
+						<p class="mu subiu">Em verde, o que subiu hoje: {ups.text}.</p>
+					{/if}
 				{:else}
 					<p class="mu">Sem leitura ainda.</p>
 				{/if}
@@ -384,6 +413,18 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+	/* What went up today (V7Personagem1440). */
+	.sk7.up {
+		border-color: var(--done);
+		background: var(--done-tint);
+	}
+	.sk7.up .lv7 {
+		color: var(--done);
+	}
+	.subiu {
+		margin: 0;
+		font-size: 12px;
 	}
 	.quests .b {
 		gap: 10px;

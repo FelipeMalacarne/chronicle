@@ -125,7 +125,7 @@
 
 <a class="crumb mu" href={resolve('/')}>Frota<Glyph name="chevron" size={12} />{st.account.rsn}</a>
 <header class="hero">
-	<div class="stage" class:live={l.tone === 'ok'}>
+	<div class="stage" class:live={l.tone === 'ok' && !l.rest}>
 		{#if face}<img src={face} alt={l.face?.skill} />{:else}<span class="ini" aria-hidden="true"
 				>{st.account.rsn.charAt(0).toUpperCase()}</span
 			>{/if}
@@ -137,7 +137,7 @@
 			<span class="mu">{meta}</span>
 		</div>
 		<div class="state {l.tone}">
-			<span class="lamp {l.tone}"></span><b>{l.activity}</b>
+			<span class="lamp {l.rest ? 'rest' : l.tone}"></span><b>{l.activity}</b>
 			{#if l.detail}<span class="mu" title={l.detail}>{l.detail}</span>{/if}
 			{#if l.where}<span class="tag" title={l.worker?.runtime}>{l.where}</span>{/if}
 		</div>
@@ -313,6 +313,9 @@
 	}
 	.lamp.up {
 		background: var(--auto);
+	}
+	.lamp.rest {
+		background: var(--gold);
 	}
 	.lamp.bad {
 		background: var(--not-started);

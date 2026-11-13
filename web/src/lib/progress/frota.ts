@@ -1,13 +1,20 @@
 /*
  * Frota (página 8 do canvas, V7Frota1440 e V7FrotaCompacta1440): uma raia por conta, com o que ela
- * faz agora, onde roda, a rota e o que vem depois; para muitas contas, a lista compacta agrupada.
- * Só o que o servidor já sabe: ritmo de XP, ganhos da sessão e a fila de rotinas do artboard ainda
- * não existem na API. Puro, testado com node --test.
+ * faz agora, onde roda, o ritmo (a skill que treina, XP por hora, o que ganhou e o que gasta) ou a
+ * rota, e o que vem depois; para muitas contas, a lista compacta agrupada. Só o que o servidor já
+ * sabe: a fila de rotinas do artboard ainda não existe na API. Puro, testado com node --test.
  */
 import type { ClientStatus, WorkerCapacity } from '../api/microbot.ts';
 import { roomHint, usageLine } from './capacidade.ts';
 import { duration } from './relogios.ts';
-import type { AccountState, AccountView, ProgressSummary, TimerView } from './types.ts';
+import { laneRhythm, type LaneRhythm } from './ritmo.ts';
+import type {
+	AccountRhythm,
+	AccountState,
+	AccountView,
+	ProgressSummary,
+	TimerView
+} from './types.ts';
 import { routeLabel } from './view.ts';
 import type { WorkerLine } from './workers.ts';
 
@@ -24,6 +31,8 @@ export interface FleetInput {
 	client: ClientStatus | null;
 	/** Os scripts ligados no cliente, pelo nome. */
 	scripts: string[];
+	/** O ritmo da conta (`GET /api/rhythm`); ausente antes da primeira leitura. */
+	rhythm?: AccountRhythm | null;
 }
 
 export interface LaneNext {
@@ -36,9 +45,13 @@ export interface Lane {
 	id: string;
 	rsn: string;
 	meta: string;
-	/** A skill mais alta: o rosto da conta enquanto não se sabe o que ela treina. */
+	/** A skill que ela treina; sem ritmo, a mais alta. */
 	face?: { skill: string; level: number };
 	tone: LaneTone;
+	/** No jogo, num break do Break Handler (a lâmpada e a barra em repouso). */
+	rest: boolean;
+	/** A barra da skill, XP por hora e os itens da sessão; null parada ou sem nada medido. */
+	rhythm: LaneRhythm | null;
 	activity: string;
 	detail?: string;
 	where: string;
@@ -145,6 +158,8 @@ export function lane(input: FleetInput, now = Date.now()): Lane {
 			.join(' · '),
 		face: top && top.level > 1 ? { skill: top.skill, level: top.level } : undefined,
 		tone: 'off',
+		rest: false,
+		rhythm: null,
 		activity: 'Parada',
 		where: worker?.runtime ? worker.host : '',
 		whereTitle:
@@ -187,6 +202,22 @@ export function lane(input: FleetInput, now = Date.now()): Lane {
 		out.tone = 'up';
 		out.activity = worker.state;
 		out.detail = worker.detail;
+	} else if (client?.running && client.break?.active) {
+		// A break of the Break Handler logs out: still playing, resting until it ends.
+		out.tone = 'ok';
+		out.rest = true;
+		out.activity = 'Em pausa';
+		const script = scriptsLine(input.scripts);
+		const left = client.break.left_s;
+		const back =
+			left !== undefined
+				? script
+					? `volta para ${script} em ${duration(left)}`
+					: `volta em ${duration(left)}`
+				: script
+					? `volta para ${script}`
+					: '';
+		out.detail = ['Break Handler', back].filter(Boolean).join(' · ');
 	} else if (game?.loggedIn || (client?.running && fresh)) {
 		out.tone = 'ok';
 		out.activity = scriptsLine(input.scripts) || 'No jogo';
@@ -212,6 +243,9 @@ export function lane(input: FleetInput, now = Date.now()): Lane {
 					? `plugin ${ago(age)}`
 					: 'nenhuma leitura do plugin ainda';
 	}
+	out.rhythm = laneRhythm(input.rhythm, out.tone === 'ok');
+	const bar = out.rhythm?.bar;
+	if (bar) out.face = { skill: bar.skill, level: bar.level };
 	return out;
 }
 

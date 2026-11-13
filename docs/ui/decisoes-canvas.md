@@ -268,7 +268,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 | Para | Falta |
 |---|---|
 | "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; a web usa desde a V2 (seção 7.10) |
-| XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | **feito no servidor** (2026-11-13): `GET /api/account/rhythm?account=&since=` e, da frota com os totais, `GET /api/rhythm?since=`, derivados dos snapshots (`internal/core/rhythm`): a skill que treina (a que mais ganhou nos últimos 30 min, parada depois de 10 min sem ganho) com XP/h e o tempo até o próximo nível; a sessão (fim numa pausa de 20 min entre pushes do plugin); o dia por skill desde `since` (a meia-noite do navegador); GP = moedas e platinum tokens no banco e no inventário, com o ganho do dia. Os ganhos de item da sessão também (2026-11-13): `session.gained`, o que a conta tem a mais desde o começo da sessão, somando banco, inventário e equipamento (a forma noted junto da normal), e `session.running_out`, o que a sessão vai gastando e quando acaba nesse ritmo ("feathers acabam em 3 h"); os dois são `null` sem o banco e o inventário conhecidos nas duas pontas. O "Até a pausa" vem do Break Handler pela ponte (`/bridge/break`, PR #28, no `status` do cliente); falta a web usar |
+| XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | **feito no servidor** (2026-11-13): `GET /api/account/rhythm?account=&since=` e, da frota com os totais, `GET /api/rhythm?since=`, derivados dos snapshots (`internal/core/rhythm`): a skill que treina (a que mais ganhou nos últimos 30 min, parada depois de 10 min sem ganho) com XP/h e o tempo até o próximo nível; a sessão (fim numa pausa de 20 min entre pushes do plugin); o dia por skill desde `since` (a meia-noite do navegador); GP = moedas e platinum tokens no banco e no inventário, com o ganho do dia. Os ganhos de item da sessão também (2026-11-13): `session.gained`, o que a conta tem a mais desde o começo da sessão, somando banco, inventário e equipamento (a forma noted junto da normal), e `session.running_out`, o que a sessão vai gastando e quando acaba nesse ritmo ("feathers acabam em 3 h"); os dois são `null` sem o banco e o inventário conhecidos nas duas pontas. O "Até a pausa" vem do Break Handler pela ponte (`/bridge/break`, PR #28, no `status` do cliente). A web usa tudo isso desde a V5 (seção 7.14) |
 | Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); rotinas recorrentes pelo relógio: **feitas na API** (doc 11, seção 16.4; `GET`/`POST`/`DELETE /api/microbot/recurring`) e **na tela** (fatia V6, seção 7.13); falta a noção de atividade principal por conta e o loadout com banco antes do run |
 | Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). A web usa tudo isso desde a V7 (seção 7.9) |
 | Plugins da frota | perfis no Postgres (doc 11, F5) |
@@ -287,7 +287,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V2 | Conta › Rota: Passo, Rota inteira e Comparar numa aba; objetivo com progresso, passo a passo com caixas, marca de banco na linha | o valor observado no board. **Feita** (2026-11-13, seção 7.10) |
 | V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada. **Feita** (2026-11-13, seção 7.11) |
 | V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada. **Feita** (2026-11-13, seção 7.12) |
-| V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
+| V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta (feita no servidor, `GET /api/account/rhythm` e `GET /api/rhythm`). **Feita** (2026-11-13, seção 7.14) |
 | V6 | Rotinas e Fila | doc 11, F6. **Feita** (2026-11-13, seção 7.13), sem a atividade principal, os horários e o banco antes do run |
 | V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor). **Feita** (2026-11-13, seção 7.9) |
 | V8 | Plugins da frota | doc 11, F5. **Feita** (2026-11-13, seção 7.6) |
@@ -680,3 +680,71 @@ Divergências do artboard:
 
 Conferido com os testes de `node --test` da lógica das telas (`rotinas.test.ts`), `pnpm check`,
 `pnpm lint` e `pnpm build`. Falta a captura a 1440 e conferir contra um agent de verdade.
+
+### 7.14 Implementação: V5, Ritmo (2026-11-13)
+
+Artboards seguidos: `V7Frota1440` (a raia e o resumo), `V7Frota640` (a raia e o resumo a 640 px),
+`V7FrotaCompacta1440` (a coluna Ritmo), `V7Conta1440` (Fazendo agora e o cartão Hoje) e, para o que
+subiu hoje, `V7Personagem1440`. Os dados vêm de `GET /api/rhythm?since=` na Frota (as contas e os
+totais numa leitura, a cada 30 s) e de `GET /api/account/rhythm?account=&since=` na Visão geral e no
+Personagem, com `since` na meia-noite do navegador; a pausa vem do `break` do status do cliente, que
+a Frota e a Visão geral já liam. A lógica fica em `web/src/lib/progress/ritmo.ts` (e a pausa da raia em
+`frota.ts`), com testes de `node --test`.
+
+**Frota, raia:** com uma skill ganhando XP, o quadro mostra essa skill e o nível, a barra é a do nível
+("76", a barra até o 77, "77 em 22 min"), e embaixo vêm o XP por hora, os três itens que a sessão mais
+rendeu (sprite e quantidade) e o que acaba primeiro, com o que a sessão já gastou dele ("−1,1k"); o
+título de cada item diz o nome, o que ganhou ou gastou, quanto sobra e quando acaba. Sem skill
+treinando, a raia segue como na V1 (a skill mais alta no quadro e a barra da rota). Num break do Break
+Handler a raia fica em pausa: lâmpada dourada, "Em pausa · Break Handler · volta para Tick Fisher em
+6 min", a barra cinza e o quadro parado; a conta conta como jogando. **Resumo:** "XP hoje" ("412k",
+"7 níveis · 3 contas") e "GP na frota" (com a moeda e "+84k hoje"), depois de No jogo. **Compacta:** a
+coluna Ritmo volta, entre Rota e Depois, com o XP por hora.
+
+**Visão geral:** Fazendo agora mostra, ao lado da tela do jogo, a barra da skill que treina ("Fishing
+76", "77 em 22 min"), XP por hora, Nesta sessão e Até a pausa (ou "Em pausa · volta em 6 min"), e
+"Ganhou nesta sessão" com os itens e, por último, o que acaba primeiro ("Feather acabam em 3 h 05", na
+caixa tracejada). O cartão Hoje, entre a Rota e o Worker, traz uma linha por skill que ganhou XP desde
+00:00 ("Fishing 74 → 76 +96,4k"; a skill que não subiu de nível mostra só o nível) e o GP com o ganho do
+dia. **Personagem:** as skills que subiram hoje ficam em verde, com a frase "Em verde, o que subiu
+hoje: Fishing +2, Farming +1." embaixo da grade.
+
+Divergências dos artboards:
+
+1. **Sem dado, a linha some.** XP por hora só com uma janela medida (mais de 2 min de pontos); "77 em
+   22 min" some no 99 e sem ritmo; os itens somem quando o banco ou o inventário não eram conhecidos nas
+   duas pontas da sessão (`gained` e `running_out` nulos, que não são "nada ganho"); o GP some sem o
+   banco visto, e o "+22k hoje" sem uma observação do começo do dia. "Até a pausa" só aparece com o
+   cliente ligado e a ponte dizendo o tempo (o Break Handler V2 não diz).
+2. **Ritmo só de quem joga.** A raia e a coluna Ritmo só mostram o ritmo com a conta jogando (no jogo,
+   em pausa ou à mão) ou com XP ganho nos últimos 10 min: numa conta parada, a sessão que o servidor
+   devolve é a última, não a de agora. Pelo mesmo motivo, na Visão geral Nesta sessão e os itens só
+   aparecem com a conta logada, em pausa ou ganhando XP. A raia parada não diz "última: Motherlode Miner
+   · +41k xp" (o artboard): o servidor não liga a sessão a um script.
+3. **Fazendo agora sem cliente:** o cartão aparece também quando a conta ganha XP num cliente que o
+   Chronicle não controla, só com o ritmo e "à mão" no título; com o cliente rodando e sem ritmo, fica
+   só a tela, como na V4.
+4. **"+65 xp" no quadro** (o XP que cai a cada ação) não aparece: o servidor mede por snapshot, não por
+   ação.
+5. **Nomes dos itens:** o nome do catálogo, como o jogo escreve ("Raw shark", "Feather"), e não o curto
+   do artboard ("sturgeon", "feathers"). O que acaba diz "Feather acabam em 3 h 05", com o minuto.
+6. **Barra da rota na raia:** o artboard não tem; a raia mostra a barra do nível quando há skill
+   treinando e a da rota nos outros casos, como desde a V1. Na compacta, a coluna continua Rota (seção
+   7.7, item 8), e o nível vai na coluna Skill.
+7. **Coluna Ritmo da compacta:** só o XP por hora; o "parada há 19 h" e o "cliente abrindo" que o
+   artboard põe nessa coluna já estão em Fazendo, e a célula fica vazia.
+8. **640 px:** como em `V7Frota640`, o resumo esconde o GP; a raia mantém os itens da sessão (o
+   artboard a 640 troca os itens pelo "depois:", que aqui fica no Depois, embaixo).
+9. **Hoje:** até seis skills, da que mais ganhou; as outras viram "mais N skills" com o XP somado. Sem XP
+   desde 00:00, o cartão diz "Nenhum XP visto desde 00:00." (o servidor só sabe do que viu). O 00:00 é
+   a meia-noite deste navegador.
+10. **Personagem:** a frase sobre a barra continua no `title` de cada skill (seção 7.12, item 1); embaixo
+    da grade fica só "Em verde, o que subiu hoje: …", e só quando algo subiu.
+11. **Cabeçalho da conta e barra lateral:** o cabeçalho mostra a pausa (lâmpada dourada, "Em pausa ·
+    Break Handler · volta em 6 min"), mas o quadro segue com a skill mais alta, e não com a que ela
+    treina, como em `V7Conta1440`: o cabeçalho não lê o ritmo, que seria mais uma leitura em toda aba da
+    conta. A barra lateral, que usa o estado calculado pela Frota, deixa a conta em pausa com a lâmpada
+    verde e sem o "pausa · volta em 6 min" do artboard.
+
+Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`ritmo.test.ts` e `frota.test.ts`) e `pnpm build`;
+as capturas ficam para a revisão.

@@ -1006,7 +1006,8 @@ button.obj {
 	text-transform: uppercase;
 	color: var(--ink-subtle);
 }
-.kv .v {
+/* The value of a key/value pair; not `.v`, the verdict circle. */
+.kv .val {
 	font-size: 13px;
 	font-weight: 500;
 	font-variant-numeric: tabular-nums;
@@ -3476,14 +3477,14 @@ button.ln {
 .sum7 .kv:first-child {
 	border-left: 0;
 }
-.sum7 .kv .v {
+.sum7 .kv .val {
 	font:
 		700 22px/1.1 Alegreya,
 		Georgia,
 		serif;
 	font-variant-numeric: lining-nums;
 }
-.sum7 .kv .v small {
+.sum7 .kv .val small {
 	font:
 		400 12px Inter,
 		system-ui,

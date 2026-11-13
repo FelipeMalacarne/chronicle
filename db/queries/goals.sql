@@ -24,3 +24,10 @@ DELETE FROM goals WHERE id = $1 AND account_id = $2;
 -- A goal is achieved when its objective becomes met (with evidence).
 UPDATE goals SET status = 'achieved', achieved_at = now()
 WHERE account_id = @account_id AND status = 'active' AND objective_key = ANY(@keys::text[]);
+
+-- name: ListGoalsByAccounts :many
+-- The goals of a fleet (the Mundo da frota): the active and achieved goals of
+-- every account of account_ids, in each account's order.
+SELECT * FROM goals
+WHERE account_id = ANY(@account_ids::text[]) AND status <> 'abandoned'
+ORDER BY account_id, priority, created_at;

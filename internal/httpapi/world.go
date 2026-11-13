@@ -247,3 +247,76 @@ func (s *Server) handleGraph(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, g)
 }
+
+// maxFleetKeys caps the keys= of GET /api/fleet/goals.
+const maxFleetKeys = 50
+
+// fleetGoalOut is one objective of the Mundo da frota with its display name
+// and where each route completes it (the first step of each, as goalOut).
+type fleetGoalOut struct {
+	coreprogress.FleetGoal
+	Name   string       `json:"name"`
+	Ref    string       `json:"ref"`
+	Kind   string       `json:"kind"`
+	Wiki   string       `json:"wiki,omitempty"`
+	Routes []occurrence `json:"routes"`
+}
+
+// fleetGoalsResponse is GET /api/fleet/goals: the user's accounts, in the
+// order of GET /api/me, and the objectives with each account's standing in
+// that order.
+type fleetGoalsResponse struct {
+	Accounts []storeprogress.AccountView `json:"accounts"`
+	Goals    []fleetGoalOut              `json:"goals"`
+}
+
+// handleFleetGoals is GET /api/fleet/goals[?keys=<objective key>,...]: the
+// Mundo da frota (V7Mundo1440, slice V10 of docs/ui/decisoes-canvas.md
+// section 7.5) in one request. Every goal one of the user's accounts pinned,
+// then the asked keys, each with every account's stored verdict, its goal
+// and a summary of its plan (internal/core/progress.BuildFleetGoals). The
+// accounts are only the ones the user owns, as /api/me lists them
+// (CLAUDE.md rule 10); keys= is repeatable and comma-separated.
+func (s *Server) handleFleetGoals(w http.ResponseWriter, r *http.Request) {
+	var keys []string
+	for _, raw := range r.URL.Query()["keys"] {
+		for k := range strings.SplitSeq(raw, ",") {
+			if k = strings.TrimSpace(k); k != "" {
+				keys = append(keys, k)
+			}
+		}
+	}
+	if len(keys) > maxFleetKeys {
+		writeError(w, http.StatusBadRequest, "at most "+strconv.Itoa(maxFleetKeys)+" keys")
+		return
+	}
+	user, ok := s.requestUser(w, r)
+	if !ok {
+		return
+	}
+	accounts, ok := s.userAccounts(w, r, user)
+	if !ok {
+		return
+	}
+	ids := make([]string, len(accounts))
+	for i, a := range accounts {
+		ids[i] = a.ID
+	}
+	goals, err := s.opts.Progress.FleetGoals(r.Context(), ids, keys)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	out := fleetGoalsResponse{Accounts: accounts, Goals: make([]fleetGoalOut, 0, len(goals))}
+	for _, g := range goals {
+		o := fleetGoalOut{FleetGoal: g, Routes: []occurrence{}}
+		if k, parseErr := entities.ParseObjectiveKey(g.Key); parseErr == nil {
+			entity := entityOf(k)
+			e := s.worldEntity(entity, nil)
+			o.Name, o.Ref, o.Kind, o.Wiki = e.Name, entity, e.Kind, e.Wiki
+			o.Routes = append(o.Routes, s.index.byEntity[entity]...)
+		}
+		out.Goals = append(out.Goals, o)
+	}
+	writeJSON(w, http.StatusOK, out)
+}

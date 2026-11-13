@@ -24,6 +24,8 @@ type fakeProgress struct {
 	action coreprogress.MarkAction
 	note   *string
 	step   string
+	// fleet are the account ids of the last FleetGoals.
+	fleet []string
 }
 
 func (f *fakeProgress) board(call, accountID, guideID string) (storeprogress.BoardView, error) {
@@ -174,6 +176,23 @@ func (f *fakeProgress) GoalPlan(ctx context.Context, accountID, goalID string) (
 		return storeprogress.GoalPlanView{}, storeprogress.ErrGoalNotFound
 	}
 	return storeprogress.GoalPlanView{Goal: goals[0], Plan: coreprogress.GoalPlan{Goal: goals[0].Key, Requirements: true, Total: 1}}, nil
+}
+
+func (f *fakeProgress) FleetGoals(_ context.Context, accountIDs, keys []string) ([]coreprogress.FleetGoal, error) {
+	f.call, f.fleet, f.step = "fleet", accountIDs, strings.Join(keys, " ")
+	if f.err != nil {
+		return nil, f.err
+	}
+	for _, k := range keys {
+		if !strings.Contains(k, "@") && !strings.Contains(k, ">=") && !strings.Contains(k, "x") {
+			return nil, storeprogress.ErrInvalidGoal
+		}
+	}
+	g := coreprogress.FleetGoal{Key: "quest:monks_friend@finished", Pinned: 1, Accounts: []coreprogress.FleetStanding{}}
+	for _, id := range accountIDs {
+		g.Accounts = append(g.Accounts, coreprogress.FleetStanding{Account: id, Verdict: "unknown", Short: []coreprogress.Shortfall{}})
+	}
+	return []coreprogress.FleetGoal{g}, nil
 }
 
 func (f *fakeProgress) Graph(_ context.Context, accountID string, focus entities.ObjectiveKey, depth int) (coreprogress.Graph, error) {

@@ -30,6 +30,7 @@ type ProgressService interface {
 	AddGoal(ctx context.Context, accountID, key, label string) (storeprogress.GoalView, error)
 	RemoveGoal(ctx context.Context, accountID, goalID string) error
 	GoalPlan(ctx context.Context, accountID, goalID string) (storeprogress.GoalPlanView, error)
+	FleetGoals(ctx context.Context, accountIDs, keys []string) ([]coreprogress.FleetGoal, error)
 	Graph(ctx context.Context, accountID string, focus entities.ObjectiveKey, depth int) (coreprogress.Graph, error)
 	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
 	Timers(ctx context.Context, accountID string) (storeprogress.TimersView, error)

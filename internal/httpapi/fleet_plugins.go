@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
-	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
 )
@@ -92,23 +91,9 @@ func (s *Server) fleetPluginRoutes() {
 	s.mux.Handle("GET /api/fleet/plugins", s.authed(s.microbotControl(s.handleFleetPlugins)))
 }
 
-// pluginFleetAccounts are the accounts of the request's user: the dev user's in
-// AUTH_MODE=dev, the session user's in oidc.
-func (s *Server) pluginFleetAccounts(r *http.Request) ([]storeprogress.AccountView, error) {
-	ctx := r.Context()
-	userID := sessionUser(r)
-	if s.opts.DevMode {
-		userID = identity.DevSubject
-		if u, found, err := s.opts.Identity.DevUser(ctx); err == nil && found {
-			userID = u.ID
-		}
-	}
-	return s.opts.Identity.Accounts(ctx, userID)
-}
-
 func (s *Server) handleFleetPlugins(w http.ResponseWriter, r *http.Request) {
 	m := s.opts.Microbot
-	accounts, err := s.pluginFleetAccounts(r)
+	accounts, err := s.requestAccounts(r)
 	if err != nil {
 		s.log.Error("fleet plugins: accounts", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not load the accounts")

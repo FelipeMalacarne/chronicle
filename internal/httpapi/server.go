@@ -176,6 +176,11 @@ func (s *Server) routes() {
 		account("GET /api/graph", s.handleGraph)
 		account("GET /api/world", s.handleWorld)
 		account("GET /api/world/entity", s.handleWorldEntity)
+		if s.opts.Identity != nil {
+			// Addressed by the user, not by an account: the session user's
+			// accounts (the dev user's in dev mode), as GET /api/me lists them.
+			account("GET /api/fleet/goals", s.handleFleetGoals)
+		}
 		account("GET /api/account/state", s.handleAccountState)
 		account("GET /api/account/timers", s.handleTimers)
 	}

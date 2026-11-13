@@ -166,6 +166,8 @@ func TestContractPostgres(t *testing.T) {
 	if err := json.Unmarshal(call("POST", "/api/goals"+acc, `{"objective_key":"skill:magic>=43"}`), &goal); err != nil {
 		t.Fatal(err)
 	}
+	// Another account of the dev user pursues a quest, for the Mundo da frota.
+	call("POST", "/api/goals?account=acc_worker_a", `{"objective_key":"quest:dragon_slayer_i@finished"}`)
 	if err := json.Unmarshal(call("GET", "/api/guides/oziris-main/board"+acc, ""), &board); err != nil {
 		t.Fatal(err)
 	}
@@ -190,6 +192,7 @@ func TestContractPostgres(t *testing.T) {
 		{name: "workers", method: "GET", path: "/api/workers", tsFrom: "../microbot", tsImports: []string{"WorkersView"}, tsType: "WorkersView"},
 		{name: "account-rhythm", method: "GET", path: "/api/account/rhythm" + acc, tsImports: []string{"AccountRhythm"}, tsType: "AccountRhythm"},
 		{name: "fleet-rhythm", method: "GET", path: "/api/rhythm", tsImports: []string{"FleetRhythm"}, tsType: "FleetRhythm"},
+		{name: "fleet-goals", method: "GET", path: "/api/fleet/goals?keys=quest:cooks_assistant@finished", tsImports: []string{"FleetGoalsResponse"}, tsType: "FleetGoalsResponse"},
 	}
 	for _, c := range cases {
 		var live any

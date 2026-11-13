@@ -14,6 +14,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
 	storemicrobot "github.com/FelipeMalacarne/chronicle/internal/store/microbot"
+	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
 )
 
 // MicrobotRole is the Zitadel project role every control route requires in
@@ -492,6 +493,13 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 		if err != nil {
 			s.writeMicrobotError(w, err)
 			return
+		}
+		// The owner's logout of a managed worker: it is not logged in again
+		// after a new pod (docs/11 section 15.5).
+		if m := s.opts.Microbot; command == agent.CmdLogout && m.Sessions != nil && served.Kind == agent.KindManaged {
+			if lerr := m.Sessions.SetLoggedIn(r.Context(), account, false); lerr != nil && !errors.Is(lerr, storeworkers.ErrNotFound) {
+				s.log.Error("workers: clear logged in", "err", lerr)
+			}
 		}
 		if len(data) == 0 {
 			data = json.RawMessage("{}")

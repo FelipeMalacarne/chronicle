@@ -2,6 +2,7 @@ package workerctl
 
 import (
 	"context"
+	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
 	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
@@ -20,7 +21,7 @@ func (s RepoStore) Desired(ctx context.Context) ([]Desired, error) {
 	}
 	out := make([]Desired, 0, len(ws))
 	for _, w := range ws {
-		out = append(out, Desired{Account: w.AccountID, Running: w.DesiredState == storeworkers.StateRunning, World: w.World, Image: w.Image})
+		out = append(out, Desired{Account: w.AccountID, Running: w.DesiredState == storeworkers.StateRunning, World: w.World, Image: w.Image, AutoLogin: w.AutoLogin, WasLoggedIn: w.WasLoggedIn})
 	}
 	return out, nil
 }
@@ -62,4 +63,38 @@ func (s RepoStore) SetRunningImage(ctx context.Context, account, image string) (
 // Profile is the account's effective client profile.
 func (s RepoStore) Profile(ctx context.Context, account string) (agent.ClientProfile, error) {
 	return s.Repo.EffectiveProfile(ctx, account)
+}
+
+// RunningPlugins are the plugins the account's client had on at the last
+// complete read.
+func (s RepoStore) RunningPlugins(ctx context.Context, account string) ([]agent.ProfilePlugin, error) {
+	return s.Repo.RunningPlugins(ctx, account)
+}
+
+// SetRunningPlugins replaces them.
+func (s RepoStore) SetRunningPlugins(ctx context.Context, account string, plugins []agent.ProfilePlugin) error {
+	err := s.Repo.SetRunningPlugins(ctx, account, plugins)
+	if err == storeworkers.ErrNotFound {
+		return nil
+	}
+	return err
+}
+
+// SetLoggedIn records that the client was read logged in.
+func (s RepoStore) SetLoggedIn(ctx context.Context, account string, on bool) error {
+	err := s.Repo.SetLoggedIn(ctx, account, on)
+	if err == storeworkers.ErrNotFound {
+		return nil
+	}
+	return err
+}
+
+// RecordLogin records the outcome of a login the reconciler made.
+func (s RepoStore) RecordLogin(ctx context.Context, account, result string) error {
+	return s.Repo.RecordLogin(ctx, account, result)
+}
+
+// OtherClientSince reports another client of the account pushing since then.
+func (s RepoStore) OtherClientSince(ctx context.Context, account string, since time.Time) (bool, error) {
+	return s.Repo.OtherClientSince(ctx, account, since)
 }

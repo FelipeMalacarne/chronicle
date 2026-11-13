@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -77,7 +78,7 @@ func (q *Queries) GetGameSessionInfo(ctx context.Context, accountID string) (Get
 }
 
 const getWorkerForUpdate = `-- name: GetWorkerForUpdate :one
-SELECT account_id, desired_state, world, image, plugin_token_id, started_at, stopped_at, updated_at, last_error FROM workers WHERE account_id = $1 FOR UPDATE
+SELECT account_id, desired_state, world, image, plugin_token_id, started_at, stopped_at, updated_at, last_error, running_plugins, auto_login, was_logged_in FROM workers WHERE account_id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetWorkerForUpdate(ctx context.Context, accountID string) (Worker, error) {
@@ -93,8 +94,22 @@ func (q *Queries) GetWorkerForUpdate(ctx context.Context, accountID string) (Wor
 		&i.StoppedAt,
 		&i.UpdatedAt,
 		&i.LastError,
+		&i.RunningPlugins,
+		&i.AutoLogin,
+		&i.WasLoggedIn,
 	)
 	return i, err
+}
+
+const getWorkerRunningPlugins = `-- name: GetWorkerRunningPlugins :one
+SELECT running_plugins FROM workers WHERE account_id = $1
+`
+
+func (q *Queries) GetWorkerRunningPlugins(ctx context.Context, accountID string) (json.RawMessage, error) {
+	row := q.db.QueryRow(ctx, getWorkerRunningPlugins, accountID)
+	var running_plugins json.RawMessage
+	err := row.Scan(&running_plugins)
+	return running_plugins, err
 }
 
 const listWorkers = `-- name: ListWorkers :many
@@ -104,6 +119,8 @@ SELECT a.id AS account_id, a.user_id, a.rsn, a.managed,
        COALESCE(w.world, 0)::integer AS world,
        COALESCE(w.image, '')::text AS image,
        COALESCE(w.plugin_token_id, '')::text AS plugin_token_id,
+       COALESCE(w.auto_login, false)::boolean AS auto_login,
+       COALESCE(w.was_logged_in, false)::boolean AS was_logged_in,
        w.started_at, w.stopped_at, w.updated_at,
        COALESCE(w.last_error, '')::text AS last_error,
        (s.account_id IS NOT NULL)::boolean AS has_session,
@@ -137,6 +154,8 @@ type ListWorkersRow struct {
 	World           int32              `json:"world"`
 	Image           string             `json:"image"`
 	PluginTokenID   string             `json:"plugin_token_id"`
+	AutoLogin       bool               `json:"auto_login"`
+	WasLoggedIn     bool               `json:"was_logged_in"`
 	StartedAt       pgtype.Timestamptz `json:"started_at"`
 	StoppedAt       pgtype.Timestamptz `json:"stopped_at"`
 	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
@@ -172,6 +191,8 @@ func (q *Queries) ListWorkers(ctx context.Context, arg ListWorkersParams) ([]Lis
 			&i.World,
 			&i.Image,
 			&i.PluginTokenID,
+			&i.AutoLogin,
+			&i.WasLoggedIn,
 			&i.StartedAt,
 			&i.StoppedAt,
 			&i.UpdatedAt,
@@ -299,6 +320,23 @@ func (q *Queries) SetRunningWorkerImage(ctx context.Context, arg SetRunningWorke
 	return result.RowsAffected(), nil
 }
 
+const setWorkerAutoLogin = `-- name: SetWorkerAutoLogin :execrows
+UPDATE workers SET auto_login = $2 WHERE account_id = $1
+`
+
+type SetWorkerAutoLoginParams struct {
+	AccountID string `json:"account_id"`
+	AutoLogin bool   `json:"auto_login"`
+}
+
+func (q *Queries) SetWorkerAutoLogin(ctx context.Context, arg SetWorkerAutoLoginParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setWorkerAutoLogin, arg.AccountID, arg.AutoLogin)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const setWorkerError = `-- name: SetWorkerError :execrows
 UPDATE workers SET last_error = $2, updated_at = now() WHERE account_id = $1
 `
@@ -310,6 +348,24 @@ type SetWorkerErrorParams struct {
 
 func (q *Queries) SetWorkerError(ctx context.Context, arg SetWorkerErrorParams) (int64, error) {
 	result, err := q.db.Exec(ctx, setWorkerError, arg.AccountID, arg.LastError)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setWorkerLoggedIn = `-- name: SetWorkerLoggedIn :execrows
+UPDATE workers SET was_logged_in = $2 WHERE account_id = $1
+`
+
+type SetWorkerLoggedInParams struct {
+	AccountID   string `json:"account_id"`
+	WasLoggedIn bool   `json:"was_logged_in"`
+}
+
+// Like running_plugins, not a change of the worker: no updated_at.
+func (q *Queries) SetWorkerLoggedIn(ctx context.Context, arg SetWorkerLoggedInParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setWorkerLoggedIn, arg.AccountID, arg.WasLoggedIn)
 	if err != nil {
 		return 0, err
 	}
@@ -328,6 +384,25 @@ type SetWorkerPluginTokenParams struct {
 func (q *Queries) SetWorkerPluginToken(ctx context.Context, arg SetWorkerPluginTokenParams) error {
 	_, err := q.db.Exec(ctx, setWorkerPluginToken, arg.AccountID, arg.PluginTokenID)
 	return err
+}
+
+const setWorkerRunningPlugins = `-- name: SetWorkerRunningPlugins :execrows
+UPDATE workers SET running_plugins = $2 WHERE account_id = $1
+`
+
+type SetWorkerRunningPluginsParams struct {
+	AccountID      string          `json:"account_id"`
+	RunningPlugins json.RawMessage `json:"running_plugins"`
+}
+
+// No updated_at: the reconciler writes this on every pass that sees a change
+// of the client's own state, not a change of the worker.
+func (q *Queries) SetWorkerRunningPlugins(ctx context.Context, arg SetWorkerRunningPluginsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setWorkerRunningPlugins, arg.AccountID, arg.RunningPlugins)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertGameSession = `-- name: UpsertGameSession :exec
@@ -384,6 +459,7 @@ SET desired_state = EXCLUDED.desired_state,
                          ELSE workers.stopped_at END,
     last_error    = CASE WHEN EXCLUDED.desired_state = 'running' AND workers.desired_state <> 'running'
                          THEN '' ELSE workers.last_error END,
+    was_logged_in = CASE WHEN EXCLUDED.desired_state = 'stopped' THEN false ELSE workers.was_logged_in END,
     updated_at    = now()
 `
 

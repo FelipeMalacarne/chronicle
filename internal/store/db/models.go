@@ -487,4 +487,10 @@ type Worker struct {
 	StoppedAt     pgtype.Timestamptz `json:"stopped_at"`
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 	LastError     string             `json:"last_error"`
+	// Plugins the worker client had on at the last complete read; started again by the next bootstrap, beside the client profile (docs/11 section 15.4).
+	RunningPlugins json.RawMessage `json:"running_plugins"`
+	// Log the worker in again after a new pod, when was_logged_in (docs/11 section 15.5).
+	AutoLogin bool `json:"auto_login"`
+	// The client was last read logged in and the owner did not log it out since; kept by the reconciler (docs/11 section 15.5).
+	WasLoggedIn bool `json:"was_logged_in"`
 }

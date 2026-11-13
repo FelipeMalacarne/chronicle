@@ -24,6 +24,8 @@ type WorkerStore interface {
 	ListForUser(ctx context.Context, userID string) ([]storeworkers.Worker, error)
 	OtherClientSince(ctx context.Context, account string, since time.Time) (bool, error)
 	RecordLogin(ctx context.Context, account, result string) error
+	SetAutoLogin(ctx context.Context, account string, on bool) error
+	SetLoggedIn(ctx context.Context, account string, on bool) error
 }
 
 // WorkerControl is the cluster side (internal/workerctl.Reconciler); nil
@@ -52,6 +54,7 @@ func (s *Server) workerRoutes() {
 	control("POST /api/workers/start", s.handleWorkerStart)
 	control("POST /api/workers/stop", s.handleWorkerStop)
 	control("POST /api/workers/restart", s.handleWorkerRestart)
+	control("PUT /api/workers/auto-login", s.handleWorkerAutoLogin)
 	control("GET /api/accounts/session", s.handleSessionGet)
 	control("PUT /api/accounts/session", s.handleSessionPut)
 	control("DELETE /api/accounts/session", s.handleSessionDelete)
@@ -67,7 +70,10 @@ type workerView struct {
 	StartedAt *time.Time                `json:"started_at,omitempty"`
 	StoppedAt *time.Time                `json:"stopped_at,omitempty"`
 	LastError string                    `json:"last_error,omitempty"`
-	Pod       *workerctl.PodInfo        `json:"pod"`
+	// AutoLogin: log in again after a new pod when the client had been
+	// logged in (docs/11 section 15.5).
+	AutoLogin bool               `json:"auto_login"`
+	Pod       *workerctl.PodInfo `json:"pod"`
 	// Usage is the pod's CPU and memory from the metrics API; absent with
 	// WORKERS=off, without a pod, or without metrics-server.
 	Usage *workerctl.Usage `json:"usage,omitempty"`
@@ -125,7 +131,7 @@ func (s *Server) handleWorkers(w http.ResponseWriter, r *http.Request) {
 	for _, wk := range list {
 		v := workerView{
 			Account: wk.AccountID, RSN: wk.RSN, Session: wk.Session, Desired: wk.DesiredState, World: wk.World,
-			Image: wk.Image, StartedAt: wk.StartedAt, StoppedAt: wk.StoppedAt, LastError: wk.LastError,
+			Image: wk.Image, StartedAt: wk.StartedAt, StoppedAt: wk.StoppedAt, LastError: wk.LastError, AutoLogin: wk.AutoLogin,
 		}
 		if p, ok := pods[wk.AccountID]; ok {
 			v.Pod = &p
@@ -150,6 +156,30 @@ func (s *Server) handleWorkers(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, out)
+}
+
+type autoLoginBody struct {
+	Enabled bool `json:"enabled"`
+}
+
+// handleWorkerAutoLogin is the account's automatic login after a new pod
+// (docs/11 section 15.5), off until the owner turns it on.
+func (s *Server) handleWorkerAutoLogin(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	var body autoLoginBody
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	err := s.opts.Microbot.Sessions.SetAutoLogin(r.Context(), account, body.Enabled)
+	s.auditWorker(r, "worker_auto_login", account, err)
+	if err != nil {
+		s.writeWorkerError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
 type workerStartBody struct {

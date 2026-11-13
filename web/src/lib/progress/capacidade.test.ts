@@ -37,6 +37,7 @@ function row(account: string, p: Partial<WorkerRow> = {}): WorkerRow {
 		desired: 'running',
 		pod: null,
 		agent: null,
+		auto_login: false,
 		outdated: false,
 		...p
 	};

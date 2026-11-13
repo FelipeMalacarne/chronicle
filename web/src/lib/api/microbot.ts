@@ -742,6 +742,8 @@ export interface WorkerRow {
 	started_at?: string;
 	stopped_at?: string;
 	last_error?: string;
+	/** Entra no jogo de novo depois de um pod novo, se estava logado (doc 11, seção 15.5). */
+	auto_login: boolean;
 	pod: WorkerPod | null;
 	/** Uso do pod; ausente sem pod, sem metrics-server ou com WORKERS=off. */
 	usage?: WorkerUsage;

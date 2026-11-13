@@ -31,6 +31,9 @@ type Desired struct {
 	// Image is the image the worker was started (or restarted) with; empty
 	// takes the reconciler's current one.
 	Image string
+	// AutoLogin and WasLoggedIn: log in again after a new pod when the
+	// client was logged in (docs/11 section 15.5).
+	AutoLogin, WasLoggedIn bool
 }
 
 // Store is the reconciler's view of the database (internal/store/workers).
@@ -45,7 +48,21 @@ type Store interface {
 	// SetRunningImage moves a worker that is meant to run to image and
 	// reports whether it did; a stopped worker, or none, answers false.
 	SetRunningImage(ctx context.Context, account, image string) (bool, error)
+	// RunningPlugins are the plugins the worker's client had on at the last
+	// complete read; SetRunningPlugins replaces them (docs/11 section 15.4).
+	RunningPlugins(ctx context.Context, account string) ([]agent.ProfilePlugin, error)
+	SetRunningPlugins(ctx context.Context, account string, plugins []agent.ProfilePlugin) error
+	// SetLoggedIn records that the client was read logged in; RecordLogin the
+	// outcome of a login the reconciler made; OtherClientSince whether
+	// another client of the account pushed since then (docs/11 section 6.2).
+	SetLoggedIn(ctx context.Context, account string, on bool) error
+	RecordLogin(ctx context.Context, account, result string) error
+	OtherClientSince(ctx context.Context, account string, since time.Time) (bool, error)
 }
+
+// otherClientWindow: a push from another installation this recent means the
+// account is being played elsewhere (docs/11 section 6.2).
+const otherClientWindow = 5 * time.Minute
 
 // Cluster is the reconciler's view of the API server (internal/kube).
 type Cluster interface {
@@ -130,6 +147,10 @@ type Reconciler struct {
 	metricsDown, quotaDown bool
 	// autos are the automatic restarts tried, by account.
 	autos map[string]autoRestart
+	// settled holds the agents (by connection id) whose client came up with
+	// everything the bootstrap meant to start: only their plugin list is read
+	// back (capture), so a client still booting never shrinks what is kept.
+	settled map[string]bool
 }
 
 // autoRestart is what the reconciler remembers of a worker's automatic
@@ -217,6 +238,8 @@ func (r *Reconciler) reconcile(ctx context.Context) ([]Desired, error) {
 	if err != nil {
 		return nil, fmt.Errorf("desired workers: %w", err)
 	}
+	// Before any Deployment changes: a pod about to be replaced is read last.
+	r.capture(ctx, want)
 	have, err := r.Cluster.ListDeployments(ctx, kube.WorkerSelector)
 	if err != nil {
 		return nil, fmt.Errorf("list worker deployments: %w", err)
@@ -432,6 +455,8 @@ func (r *Reconciler) restart(ctx context.Context, account string) (string, error
 		if image == "" {
 			return "", errors.New("WORKER_IMAGE is not set on the server")
 		}
+		// The pod about to be replaced is read last (docs/11 sections 15.4 and 15.5).
+		r.capture(ctx, []Desired{w})
 		return image, r.apply(ctx, account, image, r.now().UTC().Format(time.RFC3339))
 	}
 	return "", ErrNotRunning
@@ -686,6 +711,7 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 	}
 	if st.Running {
 		r.Log.Info("workers: agent relinked with its client up", "account", info.Account, "agent", info.ID)
+		r.settle(info.ID, true)
 		return "", true, nil
 	}
 	want, err := r.Store.Desired(ctx)
@@ -693,9 +719,11 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 		return "", false, err
 	}
 	world, desired := 0, false
+	var relogin bool
 	for _, w := range want {
 		if w.Account == info.Account {
 			world, desired = w.World, w.Running
+			relogin = w.AutoLogin && w.WasLoggedIn
 		}
 	}
 	if !desired {
@@ -708,6 +736,13 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 	profile, err := r.Store.Profile(ctx, info.Account)
 	if err != nil {
 		return "", false, fmt.Errorf("client profile: %w", err)
+	}
+	// The plugins the owner had on (docs/11 section 15.4) start after the
+	// profile's, so an entry of both starts once.
+	if on, rerr := r.Store.RunningPlugins(ctx, info.Account); rerr != nil {
+		r.Log.Warn("workers: running plugins", "account", info.Account, "err", rerr)
+	} else {
+		profile = agent.MergeProfiles(profile, agent.ClientProfile{Plugins: on})
 	}
 	token, err := r.Store.MintPluginToken(ctx, info.Account)
 	if err != nil {
@@ -724,10 +759,128 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 		return "", false, errors.New("the client did not come up: " + truncate(res.Output, 300))
 	}
 	r.Log.Info("workers: bootstrapped", "account", info.Account, "agent", info.ID, "profile_problems", len(res.Problems))
+	// A client that refused part of its profile is not read back: what it
+	// failed to start would be forgotten.
+	r.settle(info.ID, len(res.Problems) == 0)
+	var msgs []string
 	if len(res.Problems) > 0 {
-		return head("profile: "+strings.Join(res.Problems, "; "), 500), false, nil
+		msgs = append(msgs, "profile: "+strings.Join(res.Problems, "; "))
 	}
-	return "", false, nil
+	if relogin {
+		if msg := r.login(ctx, info, world); msg != "" {
+			msgs = append(msgs, msg)
+		}
+	}
+	return head(strings.Join(msgs, "; "), 500), false, nil
+}
+
+// login logs the worker in again after a new pod (docs/11 section 15.5) and
+// returns what to show as the worker's error ("" when it entered). It never
+// logs in over another client of the account, and never retries: a failure
+// waits for the owner.
+func (r *Reconciler) login(ctx context.Context, info agent.Info, world int) string {
+	for _, a := range r.Hub.Agents() {
+		if a.Account == info.Account && a.Kind != agent.KindManaged {
+			return "auto login: the account is active on the attached agent " + a.Host
+		}
+	}
+	busy, err := r.Store.OtherClientSince(ctx, info.Account, time.Now().Add(-otherClientWindow))
+	if err != nil {
+		return "auto login: " + err.Error()
+	}
+	if busy {
+		return "auto login: another client of this account pushed in the last 5 minutes; logging in would log it out"
+	}
+	lctx, cancel := context.WithTimeout(ctx, 90*time.Second)
+	defer cancel()
+	if err := r.Hub.CallAgent(lctx, info.ID, agent.CmdLogin, agent.LoginParams{World: world}, &json.RawMessage{}); err != nil {
+		_ = r.Store.RecordLogin(ctx, info.Account, head("auto login failed: "+err.Error(), 200))
+		return "auto login: " + err.Error()
+	}
+	_ = r.Store.RecordLogin(ctx, info.Account, "auto login ok")
+	r.Log.Info("workers: logged in again", "account", info.Account, "agent", info.ID, "world", world)
+	return ""
+}
+
+func (r *Reconciler) settle(agentID string, ok bool) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.settled == nil {
+		r.settled = map[string]bool{}
+	}
+	if ok {
+		r.settled[agentID] = true
+	} else {
+		delete(r.settled, agentID)
+	}
+}
+
+// capture reads the plugins each running worker's client has on and keeps
+// them (docs/11 section 15.4), so the next pod starts them again. An agent
+// that is not settled, or an answer that is not complete, keeps what was
+// stored; the read is the Agent Server's own, never a write to the client.
+func (r *Reconciler) capture(ctx context.Context, want []Desired) {
+	agents := map[string]agent.Info{}
+	live := map[string]bool{}
+	for _, a := range r.Hub.Agents() {
+		live[a.ID] = true
+		if a.Kind == agent.KindManaged && a.Account != "" {
+			agents[a.Account] = a
+		}
+	}
+	r.mu.Lock()
+	for id := range r.settled {
+		if !live[id] {
+			delete(r.settled, id)
+		}
+	}
+	r.mu.Unlock()
+	for _, w := range want {
+		a, ok := agents[w.Account]
+		if !w.Running || !ok {
+			continue
+		}
+		r.mu.Lock()
+		settled := r.settled[a.ID]
+		r.mu.Unlock()
+		if !settled {
+			continue
+		}
+		if !w.WasLoggedIn {
+			r.noteLogin(ctx, a, w.Account)
+		}
+		cctx, cancel := context.WithTimeout(ctx, 20*time.Second)
+		var p agent.Plugins
+		err := r.Hub.CallAgent(cctx, a.ID, agent.CmdPlugins, nil, &p)
+		cancel()
+		if err == nil {
+			var on []agent.ProfilePlugin
+			if on, err = agent.ObservedPlugins(p); err == nil {
+				err = r.Store.SetRunningPlugins(ctx, w.Account, on)
+			}
+		}
+		if err != nil {
+			r.Log.Debug("workers: running plugins not kept", "account", w.Account, "err", err)
+		}
+	}
+}
+
+// noteLogin keeps that the client is logged in (docs/11 section 15.5).
+func (r *Reconciler) noteLogin(ctx context.Context, a agent.Info, account string) {
+	cctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+	defer cancel()
+	var st agent.Status
+	if err := r.Hub.CallAgent(cctx, a.ID, agent.CmdStatus, nil, &st); err != nil {
+		return
+	}
+	var v struct {
+		LoggedIn bool `json:"loggedIn"`
+	}
+	if (json.Unmarshal(st.State, &v) == nil && v.LoggedIn) || (json.Unmarshal(st.Login, &v) == nil && v.LoggedIn) {
+		if err := r.Store.SetLoggedIn(ctx, account, true); err != nil {
+			r.Log.Debug("workers: logged in not kept", "account", account, "err", err)
+		}
+	}
 }
 
 func truncate(s string, n int) string {

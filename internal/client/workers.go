@@ -65,6 +65,7 @@ type Worker struct {
 	World     int          `json:"world"`
 	Image     string       `json:"image"`
 	LastError string       `json:"last_error"`
+	AutoLogin bool         `json:"auto_login"`
 	Pod       *WorkerPod   `json:"pod"`
 	Usage     *WorkerUsage `json:"usage"`
 	Agent     *WorkerAgent `json:"agent"`
@@ -103,4 +104,11 @@ func (c *Client) WorkerAction(ctx context.Context, account, action string, world
 	}
 	var out json.RawMessage
 	return c.do(ctx, http.MethodPost, "/api/workers/"+action, url.Values{"account": {account}}, body, &out)
+}
+
+// SetAutoLogin turns the account's worker's automatic login after a new pod
+// on or off (docs/11 section 15.5).
+func (c *Client) SetAutoLogin(ctx context.Context, account string, on bool) error {
+	var out json.RawMessage
+	return c.do(ctx, http.MethodPut, "/api/workers/auto-login", url.Values{"account": {account}}, map[string]bool{"enabled": on}, &out)
 }

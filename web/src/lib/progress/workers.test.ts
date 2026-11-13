@@ -20,6 +20,7 @@ function row(p: Partial<WorkerRow>): WorkerRow {
 		desired: 'stopped',
 		pod: null,
 		agent: null,
+		auto_login: false,
 		outdated: false,
 		...p
 	};

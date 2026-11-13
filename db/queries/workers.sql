@@ -62,6 +62,7 @@ SET desired_state = EXCLUDED.desired_state,
                          ELSE workers.stopped_at END,
     last_error    = CASE WHEN EXCLUDED.desired_state = 'running' AND workers.desired_state <> 'running'
                          THEN '' ELSE workers.last_error END,
+    was_logged_in = CASE WHEN EXCLUDED.desired_state = 'stopped' THEN false ELSE workers.was_logged_in END,
     updated_at    = now();
 
 -- name: SetRunningWorkerImage :execrows
@@ -87,6 +88,8 @@ SELECT a.id AS account_id, a.user_id, a.rsn, a.managed,
        COALESCE(w.world, 0)::integer AS world,
        COALESCE(w.image, '')::text AS image,
        COALESCE(w.plugin_token_id, '')::text AS plugin_token_id,
+       COALESCE(w.auto_login, false)::boolean AS auto_login,
+       COALESCE(w.was_logged_in, false)::boolean AS was_logged_in,
        w.started_at, w.stopped_at, w.updated_at,
        COALESCE(w.last_error, '')::text AS last_error,
        (s.account_id IS NOT NULL)::boolean AS has_session,
@@ -115,3 +118,18 @@ SELECT EXISTS (
     AND t.last_seen_at > sqlc.arg(since)::timestamptz
     AND t.id <> COALESCE((SELECT w.plugin_token_id FROM workers w WHERE w.account_id = sqlc.arg(account_id)), '')
 )::boolean AS seen;
+
+-- name: SetWorkerRunningPlugins :execrows
+-- No updated_at: the reconciler writes this on every pass that sees a change
+-- of the client's own state, not a change of the worker.
+UPDATE workers SET running_plugins = $2 WHERE account_id = $1;
+
+-- name: GetWorkerRunningPlugins :one
+SELECT running_plugins FROM workers WHERE account_id = $1;
+
+-- name: SetWorkerAutoLogin :execrows
+UPDATE workers SET auto_login = $2 WHERE account_id = $1;
+
+-- name: SetWorkerLoggedIn :execrows
+-- Like running_plugins, not a change of the worker: no updated_at.
+UPDATE workers SET was_logged_in = $2 WHERE account_id = $1;

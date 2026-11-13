@@ -10,19 +10,32 @@
 		type WorkersView
 	} from '#lib/api/microbot';
 	import { rememberAccount } from '#lib/progress/account.svelte';
+	import { fitsSentence, fleetCapacity, freeSlots } from '#lib/progress/capacidade';
 	import { fleet, loadFleet } from '#lib/progress/fleet.svelte';
-	import { fleetSummary, lanes, needs, type FleetInput, type Lane } from '#lib/progress/frota';
+	import {
+		compactGroups,
+		fleetSummary,
+		lanes,
+		needs,
+		parseDensity,
+		sessionCommand,
+		type Density,
+		type FleetInput,
+		type Lane
+	} from '#lib/progress/frota';
 	import { iconFor, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { chooseCockpitAccount } from '#lib/progress/microbot.svelte';
 	import type { AccountState, ProgressSummary, TimerView } from '#lib/progress/types';
 	import { actionLabel, workerLines, type WorkerActionKind } from '#lib/progress/workers';
+	import FrotaCompacta from '#lib/v6/FrotaCompacta.svelte';
 	import Glyph from '#lib/v6/Glyph.svelte';
 
 	/*
-	 * Frota (página 8 do canvas, V7Frota1440): uma raia por conta. Primeira fatia: só o que a API
-	 * já tem. Ficam de fora do artboard, por faltar no servidor, o ritmo de XP e os ganhos da
-	 * sessão, a fila de rotinas (aqui "Depois" são os relógios do Time Tracking), o diário, GP e a
-	 * capacidade do saradomin no resumo.
+	 * Frota (página 8 do canvas, V7Frota1440 e V7FrotaCompacta1440): uma raia por conta, ou a lista
+	 * compacta. Só o que a API já tem. Ficam de fora do artboard, por faltar no servidor, o ritmo
+	 * de XP e os ganhos da sessão, a fila de rotinas (aqui "Depois" são os relógios do Time
+	 * Tracking), o diário, GP e o uso do nó no resumo (no lugar, o uso dos workers contra a quota;
+	 * docs/ui/decisoes-canvas.md, seção 7.7).
 	 */
 	interface Facts {
 		state: AccountState | null;
@@ -36,6 +49,27 @@
 	let armed = $state<string | null>(null);
 	let busy = $state<string | null>(null);
 	let failure = $state<string | null>(null);
+	let copied = $state<string | null>(null);
+	let query = $state('');
+
+	// Raias ou compacta: lembrada neste navegador, e só nele.
+	const DENSITY_KEY = 'chronicle.frota.densidade';
+	let density = $state<Density>(readDensity());
+	function readDensity(): Density {
+		try {
+			return parseDensity(localStorage.getItem(DENSITY_KEY));
+		} catch {
+			return 'raias';
+		}
+	}
+	function setDensity(d: Density) {
+		density = d;
+		try {
+			localStorage.setItem(DENSITY_KEY, d);
+		} catch {
+			/* conveniência local apenas */
+		}
+	}
 
 	const quiet = <T,>(p: Promise<T>): Promise<T | null> => p.catch(() => null);
 
@@ -111,9 +145,12 @@
 		}));
 		return lanes(inputs, now);
 	});
-	const attention = $derived(needs(all));
+	const tones = $derived(Object.fromEntries(all.map((l) => [l.id, l.tone])));
+	const attention = $derived(needs(all, workers?.capacity));
+	const cap = $derived(workers ? fleetCapacity(workers, tones) : null);
+	const groups = $derived(compactGroups(all, attention, query));
 	$effect(() => {
-		fleet.tones = Object.fromEntries(all.map((l) => [l.id, l.tone]));
+		fleet.tones = tones;
 	});
 
 	function open(l: Lane, to: '/visao' | '/automacao' = '/visao') {
@@ -121,6 +158,16 @@
 		if (to === '/automacao') chooseCockpitAccount(l.id);
 		// eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da conta
 		void goto(`${resolve(to)}?account=${encodeURIComponent(l.id)}`);
+	}
+
+	async function copy(account: string, command: string) {
+		try {
+			await navigator.clipboard.writeText(command);
+			copied = account;
+			setTimeout(() => (copied = copied === account ? null : copied), 1500);
+		} catch {
+			/* sem permissão de área de transferência: o comando segue no título do botão */
+		}
 	}
 
 	async function act(l: Lane, action: WorkerActionKind) {
@@ -143,7 +190,6 @@
 	}
 
 	const playing = $derived(all.filter((l) => l.tone === 'ok').length);
-	const managed = $derived(workers?.workers.filter((w) => w.desired === 'running').length ?? 0);
 	const soonest = $derived(
 		all
 			.flatMap((l) => l.next.map((n) => ({ ...n, rsn: l.rsn })))
@@ -158,7 +204,37 @@
 		<h1 class="sr">Frota</h1>
 		<p class="mu">{fleet.accounts ? fleetSummary(all) : 'Lendo as contas…'}</p>
 	</div>
-	<a class="btn btn-p" href={resolve('/contas/nova')}><Glyph name="plus" size={14} />Nova conta</a>
+	<div class="tools">
+		{#if density === 'compacta' && all.length}
+			<label class="field">
+				<Glyph name="search" size={14} />
+				<input
+					type="text"
+					placeholder="filtrar contas"
+					aria-label="Filtrar contas"
+					bind:value={query}
+				/>
+			</label>
+		{/if}
+		{#if all.length}
+			<div class="seg" role="group" aria-label="Densidade">
+				<button
+					type="button"
+					class:on={density === 'raias'}
+					aria-pressed={density === 'raias'}
+					onclick={() => setDensity('raias')}>Raias</button
+				>
+				<button
+					type="button"
+					class:on={density === 'compacta'}
+					aria-pressed={density === 'compacta'}
+					onclick={() => setDensity('compacta')}>Compacta</button
+				>
+			</div>
+		{/if}
+		<a class="btn btn-p" href={resolve('/contas/nova')}><Glyph name="plus" size={14} />Nova conta</a
+		>
+	</div>
 </header>
 
 {#if failure}<p class="band">{failure}</p>{/if}
@@ -174,19 +250,45 @@
 				{#each all as l (l.id)}<i class={l.tone}></i>{/each}
 			</div>
 		</div>
-		{#if workers}
-			<div class="ri">
+		{#if workers && cap}
+			<div class="ri" title={cap.title}>
 				<span class="rk">Workers</span>
 				<span class="rv"
-					>{managed}
-					<small>{workers.enabled ? 'no saradomin' : 'desligados neste servidor'}</small></span
+					>{cap.used}
+					<small
+						>{!workers.enabled
+							? 'desligados neste servidor'
+							: cap.total !== undefined
+								? `de ${cap.total} no saradomin`
+								: 'no saradomin'}</small
+					></span
 				>
-				<span class="rd"
-					>{workers.attached.length
-						? `${workers.attached.length} cliente anexado`
-						: 'nenhum cliente anexado'}</span
-				>
+				{#if cap.total !== undefined && cap.slots.length}
+					<div class="pips slots" aria-hidden="true">
+						{#each cap.slots as s, i (i)}<i class={s}></i>{/each}
+					</div>
+				{/if}
+				<span class="rd">{cap.line}</span>
 			</div>
+			{#if cap.cpu || cap.ram}
+				<div class="ri" title={cap.usageTitle}>
+					<span class="rk">saradomin</span>
+					{#if cap.cpu}
+						<div class="mini">
+							<span>CPU</span><span class="t"><span style="width: {cap.cpu.pct}%"></span></span><b
+								>{cap.cpu.label}</b
+							>
+						</div>
+					{/if}
+					{#if cap.ram}
+						<div class="mini">
+							<span>RAM</span><span class="t"><span style="width: {cap.ram.pct}%"></span></span><b
+								>{cap.ram.label}</b
+							>
+						</div>
+					{/if}
+				</div>
+			{/if}
 		{/if}
 		<div class="ri ri-next">
 			<span class="rk">Próximo relógio</span>
@@ -200,124 +302,154 @@
 	</section>
 {/if}
 
-<div class="cols">
-	<section class="lanes" aria-label="Contas">
-		{#each all as l (l.id)}
-			{@const face = l.face ? iconFor(`skill:${l.face.skill}`) : undefined}
-			<article class="lane" class:lane-off={l.tone === 'off'}>
-				<div class="stage" class:live={l.tone === 'ok'} class:dim={l.tone === 'off'}>
-					{#if face}<img src={face} alt={l.face?.skill} />{:else}<span
-							class="ini"
-							aria-hidden="true">{l.rsn.charAt(0).toUpperCase()}</span
-						>{/if}
-					{#if l.face}<span class="lv" title="{l.face.skill} {l.face.level}">{l.face.level}</span
-						>{/if}
-				</div>
-				<div class="now">
-					<div class="who">
-						<span class="lamp {l.tone}"></span>
-						<h2><button type="button" class="name" onclick={() => open(l)}>{l.rsn}</button></h2>
-						<span class="m">{l.meta}</span>
-						{#if l.where}<span class="tag" title={l.worker?.runtime}>{l.where}</span>{/if}
+{#if density === 'compacta' && all.length}
+	<FrotaCompacta {groups} {armed} {busy} {copied} onopen={open} onact={act} oncopy={copy} />
+{:else}
+	<div class="cols">
+		<section class="lanes" aria-label="Contas">
+			{#each all as l (l.id)}
+				{@const face = l.face ? iconFor(`skill:${l.face.skill}`) : undefined}
+				{@const command = sessionCommand(l)}
+				<article class="lane" class:lane-off={l.tone === 'off'}>
+					<div class="stage" class:live={l.tone === 'ok'} class:dim={l.tone === 'off'}>
+						{#if face}<img src={face} alt={l.face?.skill} />{:else}<span
+								class="ini"
+								aria-hidden="true">{l.rsn.charAt(0).toUpperCase()}</span
+							>{/if}
+						{#if l.face}<span class="lv" title="{l.face.skill} {l.face.level}">{l.face.level}</span
+							>{/if}
 					</div>
-					<p class="act {l.tone}">
-						<b>{l.activity}</b>{#if l.detail}<span title={l.detail}>{l.detail}</span>{/if}
-					</p>
-					{#if l.route}
-						<div class="prog">
-							<span class="l">{l.route.label}</span>
-							<div
-								class="track"
-								class:live={l.tone === 'ok'}
-								role="progressbar"
-								aria-valuenow={l.route.pct}
-								aria-valuemin="0"
-								aria-valuemax="100"
-								aria-label="{l.route.label}: {l.route.done} de {l.route.total} passos"
-							>
-								<span style="width: {l.route.pct}%"></span>
+					<div class="now">
+						<div class="who">
+							<span class="lamp {l.tone}"></span>
+							<h2><button type="button" class="name" onclick={() => open(l)}>{l.rsn}</button></h2>
+							<span class="m">{l.meta}</span>
+							{#if l.where}<span class="tag" title={l.whereTitle}>{l.where}</span>{/if}
+						</div>
+						<p class="act {l.tone}">
+							<b>{l.activity}</b>{#if l.detail}<span title={l.detail}>{l.detail}</span>{/if}
+						</p>
+						{#if l.route}
+							<div class="prog">
+								<span class="l">{l.route.label}</span>
+								<div
+									class="track"
+									class:live={l.tone === 'ok'}
+									role="progressbar"
+									aria-valuenow={l.route.pct}
+									aria-valuemin="0"
+									aria-valuemax="100"
+									aria-label="{l.route.label}: {l.route.done} de {l.route.total} passos"
+								>
+									<span style="width: {l.route.pct}%"></span>
+								</div>
+								<span>{l.route.done} / {l.route.total}{l.route.ref ? ` · ${l.route.ref}` : ''}</span
+								>
 							</div>
-							<span>{l.route.done} / {l.route.total}{l.route.ref ? ` · ${l.route.ref}` : ''}</span>
-						</div>
-					{/if}
+						{/if}
+					</div>
+					<div class="queue">
+						<span class="k">Depois</span>
+						{#each l.next as n (n.label)}
+							<div class="q">
+								<span>{n.label}</span><span class="w" class:rdy={n.ready}>{n.when}</span>
+							</div>
+						{:else}
+							<div class="q none"><span>nenhum relógio</span></div>
+						{/each}
+					</div>
+					<div class="ctl">
+						{#if command}
+							<button
+								type="button"
+								class="btn btn-s btn-p"
+								title="Abra o launcher no zaros e envie a sessão: {command}"
+								onclick={() => copy(l.id, command)}
+								>{copied === l.id ? 'Copiado' : 'Copiar comando'}</button
+							>
+						{/if}
+						{#if l.client}
+							<button type="button" class="btn btn-s" onclick={() => open(l, '/automacao')}
+								><Glyph name="eye" size={13} />Ver jogo</button
+							>
+						{:else}
+							<button type="button" class="btn btn-s" onclick={() => open(l)}>Abrir</button>
+						{/if}
+						{#if l.worker?.actions.length}
+							<div class="rowb">
+								{#each l.worker.actions as a (a)}
+									<button
+										type="button"
+										class="btn btn-s"
+										class:btn-d={a === 'stop' || (a !== 'start' && armed === `${l.id}:${a}`)}
+										disabled={!!busy || (a === 'start' && !!l.worker.blocked)}
+										title={a === 'start'
+											? (l.worker.blocked ?? 'Sobe o pod; o cliente para na tela de login')
+											: a === 'restart' && l.worker.outdated
+												? 'Reinicia na versão nova; sai do jogo'
+												: 'Sai do jogo'}
+										onclick={() => act(l, a)}
+									>
+										{busy === `${l.id}:${a}`
+											? '…'
+											: armed === `${l.id}:${a}`
+												? 'Confirmar'
+												: a === 'restart' && l.worker.outdated
+													? 'Atualizar'
+													: actionLabel(l.worker, a)}
+									</button>
+								{/each}
+							</div>
+						{/if}
+					</div>
+				</article>
+			{:else}
+				{#if fleet.accounts}
+					<p class="mu empty">Nenhuma conta ainda.</p>
+				{/if}
+			{/each}
+			<a class="lane lane-new" href={resolve('/contas/nova')}>
+				<span class="stage new"><Glyph name="plus" size={22} /></span>
+				<span class="now"
+					><b>Nova conta</b><span class="mu"
+						>{cap?.fits !== undefined
+							? `${fitsSentence(cap.fits)}; contas só acompanhadas não ocupam lugar.`
+							: 'Entra na frota só acompanhada; a sessão do jogo vem depois.'}</span
+					></span
+				>
+				{#if cap?.fits !== undefined}<span class="tag">{freeSlots(cap.fits)}</span>{/if}
+			</a>
+		</section>
+
+		{#if attention.length}
+			<aside class="rail">
+				<div class="rh">
+					<h2>Precisa de você</h2>
+					<span>{attention.length}</span>
 				</div>
-				<div class="queue">
-					<span class="k">Depois</span>
-					{#each l.next as n (n.label)}
-						<div class="q">
-							<span>{n.label}</span><span class="w" class:rdy={n.ready}>{n.when}</span>
-						</div>
-					{:else}
-						<div class="q none"><span>nenhum relógio</span></div>
-					{/each}
-				</div>
-				<div class="ctl">
-					{#if l.client}
-						<button type="button" class="btn btn-s" onclick={() => open(l, '/automacao')}
-							><Glyph name="eye" size={13} />Ver jogo</button
-						>
-					{:else}
-						<button type="button" class="btn btn-s" onclick={() => open(l)}>Abrir</button>
-					{/if}
-					{#if l.worker?.actions.length}
-						<div class="rowb">
-							{#each l.worker.actions as a (a)}
+				{#each attention as n (n.account + n.text)}
+					<div class="need" class:soft={!n.hard}>
+						<Glyph name="alert" size={16} />
+						<p><b>{n.rsn}</b> {n.text}</p>
+						{#if n.sub}<p class="s">{n.sub}</p>{/if}
+						{#if n.command}
+							{@const command = n.command}
+							<div class="a">
 								<button
 									type="button"
 									class="btn btn-s"
-									class:btn-d={a === 'stop' || (a !== 'start' && armed === `${l.id}:${a}`)}
-									disabled={!!busy || (a === 'start' && !!l.worker.blocked)}
-									title={a === 'start'
-										? (l.worker.blocked ?? 'Sobe o pod; o cliente para na tela de login')
-										: a === 'restart' && l.worker.outdated
-											? 'Reinicia na versão nova; sai do jogo'
-											: 'Sai do jogo'}
-									onclick={() => act(l, a)}
+									title={command}
+									onclick={() => copy(n.account, command)}
+									>{copied === n.account ? 'Copiado' : 'Copiar comando'}</button
 								>
-									{busy === `${l.id}:${a}`
-										? '…'
-										: armed === `${l.id}:${a}`
-											? 'Confirmar'
-											: a === 'restart' && l.worker.outdated
-												? 'Atualizar'
-												: actionLabel(l.worker, a)}
-								</button>
-							{/each}
-						</div>
-					{/if}
-				</div>
-			</article>
-		{:else}
-			{#if fleet.accounts}
-				<p class="mu empty">Nenhuma conta ainda.</p>
-			{/if}
-		{/each}
-		<a class="lane lane-new" href={resolve('/contas/nova')}>
-			<span class="stage new"><Glyph name="plus" size={22} /></span>
-			<span class="now"
-				><b>Nova conta</b><span class="mu"
-					>Entra na frota só acompanhada; a sessão do jogo vem depois.</span
-				></span
-			>
-		</a>
-	</section>
-
-	{#if attention.length}
-		<aside class="rail">
-			<div class="rh">
-				<h2>Precisa de você</h2>
-				<span>{attention.length}</span>
-			</div>
-			{#each attention as n (n.account + n.text)}
-				<div class="need" class:soft={!n.hard}>
-					<Glyph name="alert" size={16} />
-					<p><b>{n.rsn}</b> {n.text}</p>
-					{#if n.sub}<p class="s">{n.sub}</p>{/if}
-				</div>
-			{/each}
-		</aside>
-	{/if}
-</div>
+							</div>
+						{/if}
+					</div>
+				{/each}
+			</aside>
+		{/if}
+	</div>
+{/if}
 
 <p class="foot">{ICON_ATTRIBUTION}. Cliente de terceiros, fora do planner.</p>
 
@@ -340,6 +472,41 @@
 	.ttl p {
 		margin: 0;
 		font-size: 13px;
+	}
+	.tools {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: 8px;
+	}
+	.field {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		width: 200px;
+		height: 32px;
+		padding: 0 10px;
+		border-radius: 4px;
+		border: 1px solid var(--border);
+		background: var(--ground);
+		box-shadow: var(--bevel);
+		box-sizing: border-box;
+		color: var(--ink-subtle);
+	}
+	.field input {
+		flex: 1;
+		min-width: 0;
+		border: 0;
+		outline: 0;
+		background: transparent;
+		color: var(--ink);
+		font:
+			500 12px Inter,
+			system-ui,
+			sans-serif;
+	}
+	.field:focus-within {
+		border-color: var(--gold-ink);
 	}
 	.band {
 		margin: 0;
@@ -453,6 +620,37 @@
 	.pips i.bad {
 		background: var(--not-started);
 	}
+	/* Workers: a slot taken by a stopped lane is still taken; the free ones stay empty. */
+	.pips.slots i.off {
+		background: var(--on-frame-muted);
+	}
+	.mini {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		font:
+			400 11px 'JetBrains Mono',
+			monospace;
+		color: var(--on-frame-muted);
+	}
+	.mini .t {
+		flex: 1;
+		height: 6px;
+		border-radius: 2px;
+		background: var(--frame-2);
+		overflow: hidden;
+	}
+	.mini .t span {
+		display: block;
+		height: 100%;
+		background: var(--on-frame-muted);
+	}
+	.mini b {
+		width: 74px;
+		font-weight: 500;
+		color: var(--on-frame);
+		text-align: right;
+	}
 	.cols {
 		display: flex;
 		flex-wrap: wrap;
@@ -487,7 +685,7 @@
 		background: transparent;
 		box-shadow: none;
 		border-style: dashed;
-		grid-template-columns: 76px minmax(0, 1fr);
+		grid-template-columns: 76px minmax(0, 1fr) auto;
 		padding-block: 10px;
 	}
 	.lane-new:hover {
@@ -813,6 +1011,12 @@
 		grid-column: 2;
 		font-size: 12px;
 		color: var(--ink-muted);
+	}
+	.need .a {
+		grid-column: 2;
+		display: flex;
+		gap: 6px;
+		padding-top: 4px;
 	}
 	.empty {
 		margin: 0;

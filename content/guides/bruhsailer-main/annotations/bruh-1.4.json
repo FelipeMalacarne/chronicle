@@ -3,7 +3,7 @@
   "kind": "section",
   "guide_id": "bruhsailer-main",
   "section_id": "bruh-1.4",
-  "skill_version": "annotate-guide@5",
+  "skill_version": "annotate-guide@6",
   "steps": [
     {
       "step_id": "bruh-1.4-6d47910ed022",
@@ -202,7 +202,162 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4201x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Smelt the conductor rod",
+            "span": [
+              23,
+              46
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:6748x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the demonic sigil",
+            "span": [
+              77,
+              94
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1714x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make an unstrung symbol",
+            "span": [
+              123,
+              146
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:19662x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Grab a botanical pie",
+            "span": [
+              306,
+              326
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4201x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Smelt the conductor rod",
+            "span": [
+              23,
+              46
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:6748x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the demonic sigil",
+            "span": [
+              77,
+              94
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1714x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make an unstrung symbol",
+            "span": [
+              123,
+              146
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:19662x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Grab a botanical pie",
+            "span": [
+              306,
+              326
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "skill:herblore>=27",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "If you are not level 27 herblore yet",
+            "span": [
+              172,
+              208
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
           }
         }
       ],
@@ -222,7 +377,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -240,7 +395,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -258,7 +413,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -276,7 +431,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -295,7 +450,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -313,7 +468,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -336,7 +491,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -353,7 +508,45 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:any(1265x1|1267x1|1269x1|1271x1|1273x1|1275x1|12297x1)",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a pickaxe",
+            "span": [
+              28,
+              37
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "axe-means-best-axe"
+          }
+        },
+        {
+          "key": "item:5013x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for a mining helmet",
+            "span": [
+              392,
+              411
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "action-product-item"
           }
         }
       ],
@@ -373,7 +566,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -391,7 +584,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -409,7 +602,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -427,7 +620,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -445,7 +638,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -463,7 +656,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -486,9 +679,96 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "unnumbered-acquire-is-one"
+          }
+        },
+        {
+          "key": "item:444x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "mine a gold ore",
+            "span": [
+              288,
+              303
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1741x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "turn two cowhides into soft leather",
+            "span": [
+              322,
+              357
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1743x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "one into a hard leather",
+            "span": [
+              362,
+              385
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:3369x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "killing a snail for thin snail meat",
+            "span": [
+              689,
+              724
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1929x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "fill a bucket at the pump",
+            "span": [
+              62,
+              87
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "action-product-item"
           }
         }
       ],
@@ -509,7 +789,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -527,7 +807,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -545,7 +825,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -563,7 +843,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -581,7 +861,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -599,7 +879,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -617,7 +897,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -635,7 +915,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -656,7 +936,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -674,7 +954,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -692,7 +972,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -710,7 +990,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -729,7 +1009,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -921,7 +1201,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "should-now-have-is-checkpoint"
           }
@@ -940,7 +1220,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -957,7 +1237,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -974,7 +1254,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -993,7 +1273,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1010,7 +1290,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1027,7 +1307,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1044,7 +1324,211 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4156x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a mirror shield",
+            "span": [
+              526,
+              545
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4162x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "rock hammer",
+            "span": [
+              547,
+              558
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4164x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "two facemasks",
+            "span": [
+              560,
+              573
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4166x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "earmuffs",
+            "span": [
+              575,
+              583
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4168x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "nose peg",
+            "span": [
+              585,
+              593
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4551x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "spiny helmet",
+            "span": [
+              595,
+              607
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:7051x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "unlit bug lantern",
+            "span": [
+              609,
+              626
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:7159x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "insulated boots",
+            "span": [
+              628,
+              643
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:23037x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "boots of stone",
+            "span": [
+              645,
+              659
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4161x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "bag of salt",
+            "span": [
+              661,
+              672
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:6720x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "slayer gloves",
+            "span": [
+              674,
+              687
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:19x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "grab the holy grail",
+            "span": [
+              1358,
+              1377
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -1065,7 +1549,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1083,7 +1567,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1101,7 +1585,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1119,7 +1603,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1137,7 +1621,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1155,7 +1639,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1173,7 +1657,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1191,7 +1675,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner"
           }
         },
@@ -1211,7 +1695,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -1728,9 +2212,198 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "should-now-have-is-checkpoint"
+          }
+        },
+        {
+          "key": "item:1169x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "craft a coif",
+            "span": [
+              124,
+              136
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:787x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "until you get the lumber order from the Foreman",
+            "span": [
+              628,
+              675
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "quest-drop-pickup-completes-x1"
+          }
+        },
+        {
+          "key": "item:2227x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade veg batta",
+            "span": [
+              401,
+              421
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2219x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade w’m batta",
+            "span": [
+              423,
+              445
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2221x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade t’d batta",
+            "span": [
+              447,
+              469
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2225x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade fr’t batta",
+            "span": [
+              471,
+              494
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2223x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade c+t batta",
+            "span": [
+              496,
+              516
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2233x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade worm hole",
+            "span": [
+              518,
+              538
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2231x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade ttl",
+            "span": [
+              540,
+              554
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2235x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade veg ball",
+            "span": [
+              556,
+              575
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2229x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "3x Premade choc bomb",
+            "span": [
+              577,
+              597
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -1751,7 +2424,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1769,7 +2442,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1787,7 +2460,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1805,7 +2478,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1823,7 +2496,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1841,7 +2514,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1859,7 +2532,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1877,7 +2550,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1895,7 +2568,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1913,7 +2586,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -1936,7 +2609,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1953,7 +2626,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1970,7 +2643,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -1987,7 +2660,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2004,7 +2677,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -2023,7 +2696,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2040,7 +2713,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2057,7 +2730,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2074,7 +2747,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2091,7 +2764,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2108,7 +2781,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2125,7 +2798,164 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:566x200",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy 200 soul runes",
+            "span": [
+              1201,
+              1219
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1241x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a steel spear",
+            "span": [
+              1757,
+              1774
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:333x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "fish a trout",
+            "span": [
+              1801,
+              1813
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:31472x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "five bolts of linen",
+            "span": [
+              3697,
+              3716
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1349x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "an iron, mithril and a rune axe",
+            "span": [
+              3906,
+              3937
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1355x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "an iron, mithril and a rune axe",
+            "span": [
+              3906,
+              3937
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1359x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "an iron, mithril and a rune axe",
+            "span": [
+              3906,
+              3937
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        },
+        {
+          "key": "skill:cooking>=70",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "train to level 70 cooking",
+            "span": [
+              3748,
+              3773
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        },
+        {
+          "key": "item:13571x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Mine and bank one sulphur",
+            "span": [
+              527,
+              552
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -2146,7 +2976,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2164,7 +2994,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2182,7 +3012,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2200,7 +3030,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2218,7 +3048,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2236,7 +3066,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2254,7 +3084,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2272,7 +3102,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2290,7 +3120,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2308,7 +3138,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "item-shorthand-to-catalog-name"
           }
@@ -2329,7 +3159,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2348,7 +3178,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -2507,7 +3337,41 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:28140x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "purchase the log basket from the forestry shop",
+            "span": [
+              1808,
+              1854
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:21626x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "5 sulliuscep caps",
+            "span": [
+              845,
+              862
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -2527,7 +3391,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2545,7 +3409,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -2568,7 +3432,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2585,7 +3449,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2602,7 +3466,58 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:444x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Mine a gold ore",
+            "span": [
+              162,
+              177
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:13445x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Mine a dense essence block",
+            "span": [
+              703,
+              729
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:13446x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make it a dark essence block",
+            "span": [
+              734,
+              762
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -2622,7 +3537,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2640,7 +3555,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2658,7 +3573,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2676,7 +3591,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2694,7 +3609,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2712,7 +3627,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2730,7 +3645,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2748,7 +3663,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -2766,7 +3681,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -2994,7 +3909,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -3013,7 +3928,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3030,7 +3945,213 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:5331x14",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 14 watering cans",
+            "span": [
+              616,
+              636
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:952x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "two spades from Sarah",
+            "span": [
+              650,
+              671
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:3224x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "spin a strip of cloth",
+            "span": [
+              676,
+              697
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:419x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "get the touch paper",
+            "span": [
+              1489,
+              1508
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "quest-drop-pickup-completes-x1"
+          }
+        },
+        {
+          "key": "item:950x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "one silk",
+            "span": [
+              1740,
+              1748
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1907x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a wizard’s mind bomb",
+            "span": [
+              1750,
+              1772
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:314x20",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "20 feathers",
+            "span": [
+              1793,
+              1804
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1761x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "two soft clay",
+            "span": [
+              1806,
+              1819
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:5294x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "2 harralander seeds",
+            "span": [
+              1915,
+              1934
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:5324x6",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "6 cabbage seeds",
+            "span": [
+              1936,
+              1951
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:5319x6",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "6 onion seeds",
+            "span": [
+              1953,
+              1966
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1716x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "an unblessed symbol",
+            "span": [
+              2027,
+              2046
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -3051,7 +4172,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3069,7 +4190,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3087,7 +4208,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3105,7 +4226,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3123,7 +4244,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3141,7 +4262,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3159,7 +4280,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3177,7 +4298,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3196,7 +4317,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3215,7 +4336,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3233,7 +4354,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3251,7 +4372,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3269,7 +4390,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3288,7 +4409,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3307,7 +4428,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3326,7 +4447,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3344,7 +4465,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3362,7 +4483,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3381,7 +4502,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3400,7 +4521,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3419,7 +4540,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3438,7 +4559,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3456,7 +4577,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3474,7 +4595,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3492,7 +4613,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3510,7 +4631,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3528,7 +4649,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3546,7 +4667,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -3569,7 +4690,75 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1791x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make an unfired bowl",
+            "span": [
+              61,
+              81
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1159x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a mithril full helm",
+            "span": [
+              283,
+              306
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1157x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "steel full helm",
+            "span": [
+              308,
+              323
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1139x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "two bronze med helmets",
+            "span": [
+              328,
+              350
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -3590,7 +4779,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3608,7 +4797,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3626,7 +4815,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3644,7 +4833,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3662,7 +4851,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3680,7 +4869,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3699,7 +4888,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3717,7 +4906,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3735,7 +4924,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3753,7 +4942,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3771,7 +4960,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3789,7 +4978,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3807,7 +4996,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3825,7 +5014,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3843,7 +5032,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3862,7 +5051,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3880,7 +5069,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3898,7 +5087,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3916,7 +5105,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -3924,6 +5113,61 @@
     {
       "step_id": "bruh-1.4-9c23f9524b54",
       "text_hash": "sha256:c02d6a84025fc512c49ed6e2947761ed9cc3008e583a63cc20660ef5c4fab727",
+      "objectives": [
+        {
+          "key": "item:544x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "grab a set of monk’s robes",
+            "span": [
+              34,
+              62
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:542x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "grab a set of monk’s robes",
+            "span": [
+              34,
+              62
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1718x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "bless your unblessed symbol",
+            "span": [
+              129,
+              156
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "action-product-item"
+          }
+        }
+      ],
       "items": [
         {
           "name": "ring of charos(a)",
@@ -3940,7 +5184,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3958,7 +5202,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3976,7 +5220,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -3994,7 +5238,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4012,7 +5256,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4031,7 +5275,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4049,7 +5293,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -4057,6 +5301,25 @@
     {
       "step_id": "bruh-1.4-0a7a65caad28",
       "text_hash": "sha256:fe644c069d32d35de6ac24c8d21572d6ad2f317d66a9d228fc39aedfc57bc75a",
+      "objectives": [
+        {
+          "key": "item:11260x10",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy 10 impling jars",
+            "span": [
+              155,
+              174
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        }
+      ],
       "items": [
         {
           "name": "coins",
@@ -4074,7 +5337,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4092,7 +5355,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4110,7 +5373,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4128,7 +5391,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4146,7 +5409,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4164,7 +5427,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4182,7 +5445,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4200,7 +5463,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4218,7 +5481,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4236,7 +5499,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4254,7 +5517,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4272,7 +5535,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4298,7 +5561,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "axe-means-best-axe"
           }
@@ -4318,7 +5581,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4336,7 +5599,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -4359,7 +5622,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "unnumbered-acquire-is-one"
           }
@@ -4378,7 +5641,75 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:975x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy a machete",
+            "span": [
+              424,
+              437
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2138x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "5 raw chickens",
+            "span": [
+              1584,
+              1598
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:99x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a ranarr potion (unf)",
+            "span": [
+              1627,
+              1648
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:446x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "mine two ‘perfect’ gold ores",
+            "span": [
+              1178,
+              1210
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -4399,7 +5730,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4417,7 +5748,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4435,7 +5766,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4453,7 +5784,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4479,7 +5810,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "axe-means-best-axe"
           }
@@ -4499,7 +5830,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4517,7 +5848,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4543,7 +5874,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "axe-means-best-axe"
           }
@@ -4563,7 +5894,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4581,7 +5912,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4599,7 +5930,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4618,7 +5949,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4637,7 +5968,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4655,7 +5986,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4673,7 +6004,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4691,7 +6022,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4709,7 +6040,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4727,7 +6058,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4745,7 +6076,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4764,7 +6095,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4783,7 +6114,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4801,7 +6132,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4819,7 +6150,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4837,7 +6168,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4855,7 +6186,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4873,7 +6204,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4891,7 +6222,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4909,7 +6240,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -4932,7 +6263,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner"
           }
         },
@@ -4950,7 +6281,79 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2355x50",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Smelt 50 silver ore",
+            "span": [
+              202,
+              221
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2357x108",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make 108 gold bars",
+            "span": [
+              340,
+              358
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2353x84",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "make three inventories of steel bars",
+            "span": [
+              35,
+              71
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
+          }
+        },
+        {
+          "key": "item:2351x28",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "an inventory of iron bars",
+            "span": [
+              76,
+              101
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
           }
         }
       ],
@@ -4971,7 +6374,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -4990,7 +6393,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5009,7 +6412,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5027,7 +6430,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5046,7 +6449,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5064,7 +6467,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -5087,7 +6490,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5104,7 +6507,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5121,7 +6524,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5138,7 +6541,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5155,7 +6558,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5172,7 +6575,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5189,7 +6592,98 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1694x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "2 sapphire amulets",
+            "span": [
+              565,
+              583
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1698x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "1 ruby amulet",
+            "span": [
+              619,
+              632
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:family/compost_potionx10",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "~10 compost potions",
+            "span": [
+              1075,
+              1094
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "approximate-quantity-is-target"
+          }
+        },
+        {
+          "key": "item:family/energy_potionx120",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "~120 energy potions",
+            "span": [
+              1099,
+              1118
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "approximate-quantity-is-target"
+          }
+        },
+        {
+          "key": "item:21690x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make mushroom pies",
+            "span": [
+              166,
+              184
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
           }
         }
       ],
@@ -5210,7 +6704,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5229,7 +6723,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5248,7 +6742,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5266,7 +6760,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5284,7 +6778,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5303,7 +6797,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "item-shorthand-to-catalog-name"
           }
@@ -5323,7 +6817,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5341,7 +6835,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -5364,7 +6858,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5381,7 +6875,43 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:4687x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Grab a spare bucket of sap",
+            "span": [
+              294,
+              320
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:9625x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "enchant the crystal saw seed",
+            "span": [
+              252,
+              280
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "action-product-item"
           }
         }
       ],
@@ -5402,7 +6932,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5420,7 +6950,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5438,7 +6968,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5456,7 +6986,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5474,7 +7004,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5492,7 +7022,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5510,7 +7040,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5528,7 +7058,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5546,7 +7076,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5564,7 +7094,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5582,7 +7112,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5600,7 +7130,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -5623,7 +7153,81 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:6469x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Pick a white tree fruit",
+            "span": [
+              128,
+              151
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:864x600",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy 1200 knives",
+            "span": [
+              250,
+              265
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
+          }
+        },
+        {
+          "key": "item:863x400",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy 1200 knives",
+            "span": [
+              250,
+              265
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
+          }
+        },
+        {
+          "key": "item:865x200",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "buy 1200 knives",
+            "span": [
+              250,
+              265
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
           }
         }
       ],
@@ -5644,7 +7248,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5663,7 +7267,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5682,7 +7286,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5700,7 +7304,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5719,7 +7323,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5737,7 +7341,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5755,7 +7359,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5773,7 +7377,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5791,7 +7395,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5809,7 +7413,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5827,7 +7431,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -5845,7 +7449,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -6433,7 +8037,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6450,7 +8054,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -6469,9 +8073,26 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
+          }
+        },
+        {
+          "key": "item:5933x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Collect 12 willow branches",
+            "span": [
+              2,
+              28
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -6491,7 +8112,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6510,7 +8131,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6529,7 +8150,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6548,7 +8169,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "item-shorthand-to-catalog-name"
           }
@@ -6569,7 +8190,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6587,7 +8208,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6605,7 +8226,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6624,7 +8245,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6643,7 +8264,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6662,7 +8283,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -6685,7 +8306,26 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "skill:thieving>=78",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "consider staying here for level 78",
+            "span": [
+              368,
+              402
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
           }
         }
       ],
@@ -6705,7 +8345,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6723,7 +8363,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6741,7 +8381,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6759,7 +8399,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6777,7 +8417,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -6800,7 +8440,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-up-to-starts"
           }
@@ -6819,7 +8459,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6836,7 +8476,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6853,7 +8493,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -6872,7 +8512,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6889,7 +8529,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6906,9 +8546,111 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "should-now-have-is-checkpoint"
+          }
+        },
+        {
+          "key": "item:10012x5",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "5 butterfly jars",
+            "span": [
+              795,
+              811
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:10150x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "noose wand",
+            "span": [
+              815,
+              825
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:10029x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "teasing stick",
+            "span": [
+              827,
+              840
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:10031x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a rabbit snare",
+            "span": [
+              845,
+              859
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:2398x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Collect a cave nightshade",
+            "span": [
+              931,
+              956
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:19636x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to get the Damaged soul bearer",
+            "span": [
+              144,
+              174
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
           }
         }
       ],
@@ -6929,7 +8671,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6947,7 +8689,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6965,7 +8707,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -6983,7 +8725,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7001,7 +8743,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7019,7 +8761,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7037,7 +8779,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7055,7 +8797,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7073,7 +8815,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7091,7 +8833,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7109,7 +8851,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7127,7 +8869,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7153,7 +8895,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "axe-means-best-axe"
           }
@@ -7174,7 +8916,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7192,7 +8934,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7210,7 +8952,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7228,7 +8970,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7246,7 +8988,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7265,7 +9007,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7284,7 +9026,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7302,7 +9044,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "item-shorthand-to-catalog-name"
           }
@@ -7322,7 +9064,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "singular-of-plural-catalog-name"
           }
@@ -7347,7 +9089,60 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1765x6",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "six yellow dyes",
+            "span": [
+              1999,
+              2014
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1763x7",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "seven red dyes",
+            "span": [
+              2019,
+              2033
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:225x22",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "22 limpwurt roots",
+            "span": [
+              2544,
+              2561
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "recommended-grind-lists-are-objectives"
           }
         }
       ],
@@ -7367,7 +9162,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7385,7 +9180,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7404,7 +9199,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7422,7 +9217,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7440,7 +9235,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7458,7 +9253,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7476,7 +9271,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7494,7 +9289,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -7502,6 +9297,42 @@
     {
       "step_id": "bruh-1.4-ced13b8f991a",
       "text_hash": "sha256:ab0a0a32008e5d6e8fd81f8b9fc65e3b9c8dec0b731702760856dec77a3fd264",
+      "objectives": [
+        {
+          "key": "item:9003x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "collect the security book",
+            "span": [
+              415,
+              440
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:5376x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "craft a basket",
+            "span": [
+              524,
+              538
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        }
+      ],
       "items": [
         {
           "name": "coins",
@@ -7519,7 +9350,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7538,7 +9369,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7557,7 +9388,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7576,7 +9407,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7596,7 +9427,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7616,7 +9447,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7636,7 +9467,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7654,7 +9485,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7672,7 +9503,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7690,7 +9521,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -7699,25 +9530,6 @@
       "step_id": "bruh-1.4-8bbdaf04c7bd",
       "text_hash": "sha256:96c752b97ff9d8f277cbc105e0cd5abf96d327a9a10de002a4bb7d1c11bb5da0",
       "objectives": [
-        {
-          "key": "skill:hunter>=42",
-          "role": "completes",
-          "evidence": {
-            "field": "/text",
-            "quote": "You should be level 42 hunter by now",
-            "span": [
-              2,
-              38
-            ]
-          },
-          "source": {
-            "method": "llm",
-            "confidence": "medium",
-            "skill_version": "annotate-guide@5",
-            "confirmed_by": "owner",
-            "decision": "should-now-have-is-checkpoint"
-          }
-        },
         {
           "key": "skill:hunter>=46",
           "role": "completes",
@@ -7732,7 +9544,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7749,7 +9561,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -7768,7 +9580,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7785,7 +9597,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "do-quest-means-finish"
           }
@@ -7804,7 +9616,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7821,7 +9633,79 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1523x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Grab a lockpick",
+            "span": [
+              659,
+              674
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:855x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "for a yew longbow",
+            "span": [
+              293,
+              310
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "high",
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:1513x12",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "at least 12 magic logs",
+            "span": [
+              1163,
+              1185
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        },
+        {
+          "key": "item:1761x112",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "mine 4 full inventories of soft clay",
+            "span": [
+              1371,
+              1407
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
           }
         }
       ],
@@ -7842,7 +9726,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7860,7 +9744,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7878,7 +9762,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7896,7 +9780,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7914,7 +9798,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7932,7 +9816,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7951,7 +9835,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7969,7 +9853,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -7987,7 +9871,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8005,7 +9889,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8023,7 +9907,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8041,7 +9925,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8060,7 +9944,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8079,7 +9963,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8098,7 +9982,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8117,7 +10001,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8135,7 +10019,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8154,7 +10038,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8173,7 +10057,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8192,7 +10076,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8210,7 +10094,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8228,7 +10112,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8246,7 +10130,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8264,7 +10148,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8282,7 +10166,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8300,7 +10184,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8318,7 +10202,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8336,7 +10220,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "item-shorthand-to-catalog-name"
           }
@@ -8356,7 +10240,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8374,7 +10258,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8392,7 +10276,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8410,7 +10294,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8428,7 +10312,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -8451,7 +10335,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8468,7 +10352,45 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:26903x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "to get the eye amulet",
+            "span": [
+              115,
+              136
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "quest-drop-pickup-completes-x1"
+          }
+        },
+        {
+          "key": "item:12781x112",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Make 4 inventories of Paddewwa tabs",
+            "span": [
+              2,
+              37
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "derived-totals-are-targets"
           }
         }
       ],
@@ -8489,7 +10411,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8508,7 +10430,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8527,7 +10449,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8545,7 +10467,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]
@@ -8568,7 +10490,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8585,7 +10507,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8602,7 +10524,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8619,7 +10541,45 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "quest:scrambled@finished",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "start and complete Scrambled!",
+            "span": [
+              416,
+              445
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        },
+        {
+          "key": "skill:magic>=60",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "aren’t 60 magic yet",
+            "span": [
+              651,
+              672
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
           }
         }
       ],
@@ -8639,7 +10599,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8658,7 +10618,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8676,7 +10636,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8695,7 +10655,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8714,7 +10674,7 @@
           "source": {
             "method": "llm",
             "confidence": "medium",
-            "skill_version": "annotate-guide@5",
+            "skill_version": "annotate-guide@6",
             "confirmed_by": "owner",
             "decision": "item-shorthand-to-catalog-name"
           }
@@ -8735,7 +10695,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8754,7 +10714,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8772,7 +10732,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         },
         {
@@ -8791,7 +10751,7 @@
           "source": {
             "method": "llm",
             "confidence": "high",
-            "skill_version": "annotate-guide@5"
+            "skill_version": "annotate-guide@6"
           }
         }
       ]

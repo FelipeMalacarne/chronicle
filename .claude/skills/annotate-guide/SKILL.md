@@ -99,6 +99,10 @@ Extract (positive examples from Oziris 1.1):
 - "Light the 4 logs until 15 Firemaking" → `skill` Firemaking `n: 15`, `completes`, high.
 - "Thieve men until 5 thieving" → `skill` Thieving `n: 5`, `completes`, high.
 - "Buy a steel axe" → `item` Steel axe `n: 1`, `completes`, high (getting the axe is the step's goal).
+- BRUHsailer: every item the step tells the owner to get (buy, grab, make, pick) is an `item` `completes`
+  with the text's quantity (decision `items-to-obtain-are-objectives`). Items the step only consumes or
+  uses stay in `items`. Nested bullets are part of the step: annotate them too. If the owner already
+  consumed an item, they mark the step by hand.
 
 Do not extract:
 

@@ -797,3 +797,60 @@ export interface SyncRunsResponse {
 	account: string;
 	runs: SyncRun[];
 }
+
+/** O ritmo de uma conta (fatia V5 da v7): a skill que treina e quão rápido, a sessão, o dia e o GP. */
+export interface RhythmTraining {
+	skill: string;
+	level: number;
+	xp: number;
+	/** 0 quando a janela é curta demais para medir. */
+	xp_per_hour: number;
+	/** Ausente no 99 ou sem ritmo. */
+	next_level_in_s?: number;
+	last_gain_at: string;
+}
+
+export interface RhythmSession {
+	started_at: string;
+	xp: number;
+}
+
+export interface RhythmSkillDay {
+	skill: string;
+	xp: number;
+	levels: number;
+	level: number;
+}
+
+export interface RhythmToday {
+	since: string;
+	xp: number;
+	levels: number;
+	skills: RhythmSkillDay[];
+}
+
+export interface RhythmGP {
+	value: number;
+	/** Ausente quando nenhuma observação mostra o que havia no começo do dia. */
+	today?: number;
+}
+
+export interface AccountRhythm {
+	account: string;
+	training: RhythmTraining | null;
+	session: RhythmSession | null;
+	today: RhythmToday;
+	gp: RhythmGP | null;
+}
+
+export interface FleetRhythm {
+	since: string;
+	accounts: AccountRhythm[];
+	totals: {
+		xp_today: number;
+		levels_today: number;
+		gaining: number;
+		gp?: number;
+		gp_today?: number;
+	};
+}

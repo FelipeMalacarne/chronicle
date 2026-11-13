@@ -96,7 +96,7 @@ internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical gui
 internal/store/       repositories (identity: OIDC users, dev-account claim, ownership; ingest: tokens, pushes, holdings; progress: reevaluation, marks,
                       cursor, board, goals, content index and step id aliases at boot; state:
                       PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; workers: sealed game sessions, workers'
-                      desired state, client profiles); internal/store/db is sqlc OUTPUT
+                      desired state, client profiles; routines: triggers and the runs' history); internal/store/db is sqlc OUTPUT
 internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
                       client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)
 internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* and /api/me, account routes
@@ -109,11 +109,15 @@ internal/vault/       AES-256-GCM of the accounts' game sessions (CHRONICLE_VAUL
 internal/kube/        minimal Kubernetes REST client (Deployments by server-side apply, pods, TokenReview), the
                       worker Deployment of docs/11 section 13.3 and the worker pod token check
 internal/workerctl/   reconciler of the managed workers (database -> cluster) and the bootstrap of a linking
-                      worker agent (session, ipl_ token, world); serve only
+                      worker agent (session, ipl_ token, world, client profile); serve only
+internal/routinesync/ the routines' server side (docs/11 section 16): on every agent connection the account's
+                      triggers (routines_sync), and every run an agent reports (event frames) to the database
+                      and the audit; serve only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
                       websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->
                       loopback x11vnc) and the plugin/script/config commands, whose params are validated
-                      by ValidateParams on both sides; the server never talks to the game directly
+                      by ValidateParams on both sides; the agent also reports its runs unasked (event
+                      frames); the server never talks to the game directly
 internal/client/      typed API client of the CLI and `chronicle mcp`: config.json and credentials.json
                       under ~/.config/chronicle, device-flow login (RFC 8628), token refresh; never
                       imports internal/store
@@ -135,7 +139,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0009 guides + mark_commands: append-only log of every step_marks change,
                       0010 microbot_audit: every Microbot control action, 0011 timers and position,
                       0012 workers: game_sessions (sealed), workers (desired state), accounts.managed,
-                      0013 client profiles: client_profiles, their plugins and settings, account_client)
+                      0013 client profiles: client_profiles, their plugins and settings, account_client,
+                      0014 routines: routines (triggers), routine_runs and run_events)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

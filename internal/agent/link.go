@@ -48,6 +48,10 @@ type Link struct {
 	// connection is registered (the workers' reconciler sends the bootstrap
 	// to managed agents from it).
 	OnConnect func(Info)
+	// OnEvent, when set, gets the events an agent sends by itself
+	// (TypeEvent), in the order it sent them, from one goroutine per
+	// connection; a slow OnEvent never holds up the command results.
+	OnEvent func(Info, Event)
 
 	mu     sync.Mutex
 	agents map[string]*agentConn // by connection id
@@ -74,6 +78,7 @@ func (c *agentConn) info() Info {
 	return Info{
 		Connected: true, ID: c.id, Since: c.since, Host: c.hello.Host, Version: c.hello.Version,
 		Identity: c.ident.Subject, Account: c.hello.Account, Kind: kind, Worker: c.hello.Worker, Bridge: c.hello.Bridge,
+		Commands: slices.Clone(c.hello.Commands),
 	}
 }
 
@@ -96,7 +101,13 @@ type Info struct {
 	Worker string `json:"worker,omitempty"`
 	// Bridge is the Chronicle Link bridge version the agent reported.
 	Bridge string `json:"bridge,omitempty"`
+	// Commands are the commands the agent declared in its hello: what it
+	// can do, so the server leaves a newer protocol out for an older agent.
+	Commands []string `json:"-"`
 }
+
+// Supports reports whether the agent declared command in its hello.
+func (i Info) Supports(command string) bool { return slices.Contains(i.Commands, command) }
 
 // Identity is who agentAuth authenticated on an agent's request.
 type Identity struct {
@@ -273,13 +284,27 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 		_ = conn.CloseNow()
 		l.Log.Info("agent link: disconnected", "id", ac.id, "host", h.Host, "account", h.Account)
 	}()
+	events := l.eventQueue(info)
+	defer close(events)
 	for {
 		_, raw, err := conn.Read(ctx)
 		if err != nil {
 			return
 		}
 		var m Message
-		if json.Unmarshal(raw, &m) != nil || m.Type != TypeResult {
+		if json.Unmarshal(raw, &m) != nil {
+			continue
+		}
+		if m.Type == TypeEvent && m.Event != nil {
+			select {
+			case events <- *m.Event:
+			default:
+				// Full: dropped; the agent sends its history again on reconnecting.
+				l.Log.Warn("agent link: event queue full, dropped one", "id", ac.id)
+			}
+			continue
+		}
+		if m.Type != TypeResult {
 			continue
 		}
 		l.mu.Lock()
@@ -290,6 +315,20 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 			ch <- m
 		}
 	}
+}
+
+// eventQueue starts the goroutine that hands one connection's events to
+// OnEvent in order; closing the channel ends it.
+func (l *Link) eventQueue(info Info) chan Event {
+	ch := make(chan Event, 256)
+	go func() {
+		for ev := range ch {
+			if l.OnEvent != nil {
+				l.OnEvent(info, ev)
+			}
+		}
+	}()
+	return ch
 }
 
 // Call sends one command to the agent that serves account (Route) and waits

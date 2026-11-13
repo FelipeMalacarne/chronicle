@@ -269,8 +269,8 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 |---|---|
 | "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; falta a web usar |
 | XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | uma série por conta derivada dos snapshots que já existem |
-| Fila e Rotinas | rotinas, gatilhos e histórico no servidor (doc 11, F6) e a noção de atividade principal por conta |
-| Histórico e Atividade | runs fora do disco do agent (doc 11, F6), eventos de nível, auditoria por conta |
+| Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); faltam as rotinas recorrentes e a noção de atividade principal por conta |
+| Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); faltam os eventos de nível; a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho) |
 | Plugins da frota | perfis no Postgres (doc 11, F5) |
 | Capacidade no resumo, "cabe mais N", uso por worker | doc 11, F7 |
 | Mundo da frota | metas e vereditos de várias contas numa consulta |

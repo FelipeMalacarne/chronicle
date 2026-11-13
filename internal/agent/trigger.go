@@ -27,7 +27,17 @@ import (
 const (
 	CmdTriggerGet = "trigger_get" // the triggers and the watcher's state
 	CmdTriggerSet = "trigger_set" // save one trigger (enable, disable, its run)
+	// CmdRoutinesSync: server → agent, on every connection (docs/11 section
+	// 4.4, F6): the account's triggers as the database holds them, which
+	// replace the agent's. The file stays as the attached agent's cache, so
+	// a trigger still fires with the server down. Never from the web.
+	CmdRoutinesSync = "routines_sync"
 )
+
+// RoutinesParams are the parameters of CmdRoutinesSync.
+type RoutinesParams struct {
+	Triggers []Trigger `json:"triggers"`
+}
 
 // EventKittenGrown is "Your kitten has grown into a healthy cat that can hunt
 // for itself." in the game chat.
@@ -105,9 +115,48 @@ func validateTrigger(raw json.RawMessage) (Trigger, error) {
 	return t, nil
 }
 
-// triggerCommand serves CmdTriggerGet and CmdTriggerSet.
+// validateRoutines checks CmdRoutinesSync's params: every trigger, one per
+// event.
+func validateRoutines(raw json.RawMessage) (RoutinesParams, error) {
+	var p RoutinesParams
+	if err := decodeParams(raw, &p); err != nil {
+		return p, err
+	}
+	seen := map[string]bool{}
+	for _, t := range p.Triggers {
+		b, _ := json.Marshal(t)
+		if _, err := validateTrigger(b); err != nil {
+			return p, err
+		}
+		if seen[t.Event] {
+			return p, fmt.Errorf("routines: trigger %q twice", t.Event)
+		}
+		seen[t.Event] = true
+	}
+	return p, nil
+}
+
+// triggerCommand serves CmdTriggerGet, CmdTriggerSet and CmdRoutinesSync.
 func (e *Executor) triggerCommand(command string, raw json.RawMessage) (any, error) {
 	w := &e.watch
+	if command == CmdRoutinesSync {
+		p, err := validateRoutines(raw)
+		if err != nil {
+			return nil, err
+		}
+		w.mu.Lock()
+		defer w.mu.Unlock()
+		w.loaded = true
+		next := slices.Clone(p.Triggers)
+		if next == nil {
+			next = []Trigger{}
+		}
+		if err := e.saveTriggers(next); err != nil {
+			return nil, err
+		}
+		w.triggers = next
+		return e.triggerStatus(), nil
+	}
 	if command == CmdTriggerSet {
 		t, err := validateTrigger(raw)
 		if err != nil {

@@ -156,6 +156,9 @@ run_events     run_id, seq, at, state, kind, detail (jsonb)
 - O arquivo local continua como cache do anexado, para o gatilho valer com o `serve` fora. Num pod,
   ele vive em memória.
 
+A F6 (seção 16) implementou isto com algumas diferenças, anotadas lá: só o tipo `trigger` por
+enquanto, o run identificado pelo `uid` que o agent dá a ele, e a trilha com estado e texto.
+
 ### 4.5 Workers
 
 ```
@@ -366,7 +369,7 @@ o referencia, então o RBAC não muda) e usa o `local-path`, como o do filebrows
 | `GET` \| `PUT /api/accounts/{id}/session` | Estado da sessão (sem o conteúdo) e conexão |
 | `GET /api/client-profiles`, `GET` \| `PUT` \| `DELETE /api/client-profiles/{nome}` | Perfis do usuário: modelo, plugins e configurações; o `PUT` troca o perfil inteiro (seção 15) |
 | `GET` \| `PUT /api/accounts/client?account=` | Perfil da conta, configurações próprias e o perfil efetivo; mundo, gráfico e desvio ficam para depois |
-| `GET` \| `POST /api/accounts/{id}/routines`, `GET …/runs` | Rotinas e histórico no banco |
+| `GET` \| `POST /api/microbot/triggers?account=`, `GET /api/microbot/runs?account=` | Gatilhos e histórico, no banco desde a F6 (seção 16); um agent anterior à F6 segue respondendo pelos arquivos dele |
 | `/api/microbot/*?account=` | O que existe hoje, endereçado pela conta |
 
 CLI: `chronicle accounts connect`, `chronicle workers list|start|stop|restart`,
@@ -397,7 +400,7 @@ disco.
 | F3 | Imagens e um worker aplicado à mão: as duas imagens e o CI delas, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | chronicle (com `microbot/`), gielinor |
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
 | F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. Falta a parte 2: a tela, o desvio e o "Salvar no perfil" |
-| F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle |
+| F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade, e as rotinas recorrentes continuam propostas |
 | F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle |
 
 Antes de cada fase com tela (F1, F2, F5, F6), o desenho entra no canvas e o dono aprova (regra 11).
@@ -783,3 +786,71 @@ no próximo Iniciar ou Reiniciar.
   os valores) e o "Salvar no perfil" (W9). O que o `V7Plugins1440` não mostrar disso vai para o
   canvas antes (regra 11). Junto, a versão da ponte no `status` (seção 14.3).
 - **Anexado (zaros):** o perfil ainda não se aplica; o zaros segue com a configuração no disco.
+
+## 16. F6: rotinas no servidor (2026-11-13)
+
+Os gatilhos e o histórico dos runs saem do disco do agent e vão para o Postgres. O executor continua
+no agent (doc 08, R1). Sem tela nova: a web lê as mesmas rotas e os mesmos formatos de antes.
+
+### 16.1 Entregue
+
+- **Migração 0014:**
+  - `routines`: por enquanto só o tipo `trigger`, um por evento e por conta, com o run que ele
+    dispara em `spec`;
+  - `routine_runs`: o run, identificado pelo `uid` que o agent dá a ele. O `run-N` recomeça num pod
+    novo, então não serve de chave;
+  - `run_events`: a trilha, uma linha por evento, com estado e texto.
+- **Link, do agent para o servidor:** a mensagem nova `event` leva o run inteiro, com a trilha, a
+  cada mudança.
+  - Ao conectar, o agent manda o histórico de novo. Isso cobre o tempo em que o link esteve caído.
+  - Uma fila em memória guarda o estado mais novo de cada run.
+  - O servidor aplica cada run de forma idempotente: um snapshot com trilha menor que a gravada é
+    mais velho e é ignorado, e um run nunca muda de conta.
+  - O servidor valida o run antes de gravar (`agent.ValidateReport`), como faz com um pedido da web.
+- **Link, do servidor para o agent:** o comando novo `routines_sync` manda, a cada conexão, os
+  gatilhos da conta, que substituem os do agent.
+  - É o que faz o gatilho do gato sobreviver a um restart do pod.
+  - No agent anexado, o arquivo continua como cache, para o gatilho valer com o `serve` fora.
+  - Se a conta ainda não tem gatilhos no banco, o primeiro agent anexado que conectar importa os do
+    arquivo dele, uma vez só.
+- **Compatibilidade:** um agent anterior à F6 não declara `routines_sync` no hello. O servidor não
+  manda nada a ele, e as rotas de gatilhos e runs continuam falando com ele, como antes.
+- **API:**
+  - `POST /api/microbot/triggers` grava no banco e repassa ao agent. Com o agent fora, responde 200
+    dizendo que ele recebe o gatilho quando ligar.
+  - `GET /api/microbot/triggers` vem do agent (que sabe se está vigiando) e, com ele fora, do banco.
+  - `GET /api/microbot/runs` vem do banco.
+- **Auditoria:** o que o executor faz sozinho entra no `microbot_audit`, com o ator
+  `trigger:<evento>` e a origem `agent`: o run que um gatilho começou (`run_start`) e como ele
+  terminou (`run_end`). Os runs do dono continuam auditados onde começaram.
+- **Pacotes:** `internal/store/routines` (o banco), `internal/routinesync` (a sincronização no
+  `serve`) e, no `internal/agent`, o `event`, o `routines_sync`, o `uid` do run e a fila.
+
+### 16.2 Conferido
+
+- **No agent:**
+  - o `routines_sync` troca os gatilhos e grava o arquivo, recusa uma lista inválida e nunca vem da
+    web;
+  - a fila guarda o estado mais novo de cada run;
+  - a validação do run reportado;
+  - cada mudança de um run sai com o mesmo `uid` e a trilha crescendo;
+  - um histórico antigo ganha `uid`s estáveis;
+  - de ponta a ponta pelo link, o histórico vai ao conectar e cada mudança vai na hora;
+  - tudo com `-race`.
+- **No store, Postgres 17:** gatilhos (gravar, substituir, importar só numa conta vazia) e runs
+  (repetido, final, snapshot velho ignorado, conta errada recusada, conta desconhecida, run
+  inválido, a leitura com a trilha).
+- **No `routinesync`:** o agent antigo fica de fora; o worker recebe os gatilhos; o anexado importa
+  uma vez; só os runs de gatilho são auditados.
+- **Nas rotas, no Postgres, com a sincronização ligada como no `serve`:** o gatilho gravado com o
+  agent fora chega a ele quando conecta; o histórico vem do banco; o agent antigo continua
+  respondendo pelos arquivos dele.
+- `goose up/down/up` da 0014 e `just dbml`.
+
+### 16.3 Não conferido e pendente
+
+- **Num worker de verdade:** ligar o gatilho do gato, Reiniciar o pod e vê-lo voltar.
+- **O agent do zaros** só passa a usar isto com o `chronicle` atualizado lá (nix-config). Até lá ele
+  segue com os arquivos, e a importação acontece na primeira conexão do binário novo.
+- **Rotinas recorrentes** (relógios, "Fazer agora" agendado) e a fila da v7 continuam propostas
+  (decisão 31 do doc 01). A tabela `routines` já tem a coluna `kind` para elas.

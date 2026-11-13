@@ -1,35 +1,33 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import ChipGroups from './ChipGroups.svelte';
 	import Glyph from './Glyph.svelte';
+	import GoalGrid from './GoalGrid.svelte';
+	import { actionsSummary, nextAction } from '#lib/progress/objetivo';
+	import { actionsOf, type Action, type PassoObjective } from '#lib/progress/passo';
 	import {
 		chipsOf,
 		isParagraphStep,
 		looseLinks,
 		markRanges,
-		metaOf,
 		paragraphOf,
 		piecesOf,
-		statusView,
 		stepNotes
 	} from '#lib/progress/view';
-	import { actionsOf, missingOf, type Action, type PassoObjective } from '#lib/progress/passo';
 	import type { BoardStep, ContentStep } from '#lib/progress/types';
 
 	/**
-	 * O passo atual (V6Agora1440/640 e V6AgoraBruh1440/640): os dois anteriores com quem os fez, o
-	 * título (o TL;DR do passo-parágrafo do BRUHsailer, ou a primeira frase), o que falta no passo, os
-	 * chips agrupados por papel, a nota do autor, o passo a passo do autor em ações com os objetivos
-	 * citados em cada uma, a wiki, "também na <rota>" e Feito/Pular/Desfazer.
+	 * O passo atual da v7 (V7Rota1440 e V7Rota640; sem objetivo detectável, V7Estados1440): a
+	 * referência e onde ele está, o título (o TL;DR do passo-parágrafo do BRUHsailer, ou a primeira
+	 * frase), os objetivos com quanto falta ("240 / 1.250") agrupados por papel, o passo a passo do
+	 * autor com uma caixa em cada ação que cita objetivo, as notas e links do autor, e Feito, Pular,
+	 * Desfazer, "também na <rota>" e Fixar outro passo. A 640 o passo a passo abre num botão.
 	 */
 	let {
 		step,
 		board,
-		prev,
-		prevWho,
 		where,
+		facts,
 		others,
-		rotaHref,
 		busy,
 		canUndo,
 		narrow,
@@ -40,12 +38,11 @@
 	}: {
 		step: ContentStep;
 		board: BoardStep | undefined;
-		prev: BoardStep[];
-		/** "plugin · 12 min" / "você · 9 min" para um passo anterior (dos eventos da rota). */
-		prevWho: (id: string) => string;
+		/** "2 de 31 no capítulo". */
 		where: string;
+		/** "GP depois 777.349 · tempo do guia 5 d 0 h", do BRUHsailer; vazio no Oziris. */
+		facts: string;
 		others: { guide: string; label: string }[];
-		rotaHref: string;
 		busy: boolean;
 		canUndo: boolean;
 		narrow: boolean;
@@ -58,8 +55,6 @@
 	const chips = $derived(chipsOf(step, board));
 	const paragraph = $derived(isParagraphStep(step));
 	const para = $derived(paragraphOf(step.text));
-	/* Passo-parágrafo por dentro: as ações (frases do autor) com os objetivos citados em cada uma,
-	 * e o que ainda falta no passo. A linha do TL;DR já é o título, então fica fora das ações. */
 	const passoObjs = $derived<PassoObjective[]>(
 		chips.map((c) => {
 			const ev = step.objectives?.find((o) => o.key === c.key && o.role === c.role)?.evidence;
@@ -75,23 +70,31 @@
 		})
 	);
 	const tldrLine = $derived(/^.*TL;?DR.*$/im.exec(step.text));
-	const allActions = $derived.by(() => {
+	/* As ações do autor, sem a linha do TL;DR (ela já é o título). Sem TL;DR, a primeira ação é
+	 * também o título e fica na lista, como no artboard: é nela que a caixa do que vem agora está. */
+	const actions = $derived.by(() => {
 		if (!paragraph) return [];
 		const all = actionsOf(step.text, passoObjs);
 		const t = tldrLine;
 		return t ? all.filter((a) => a.start < t.index || a.start >= t.index + t[0].length) : all;
 	});
-	const missing = $derived(paragraph ? missingOf(passoObjs) : []);
-	/* Sem TL;DR, a primeira ação é o título; sai da lista quando não cita objetivo nenhum. */
-	const headline = $derived(para.tldr ? para.head : (allActions[0]?.text ?? para.head));
-	const headlineAt = $derived(
-		para.tldr ? para.headAt : allActions[0] ? allActions[0].start : para.headAt
-	);
-	const actions = $derived(
-		!para.tldr && allActions[0]?.state === 'plain' ? allActions.slice(1) : allActions
-	);
-	const openActions = $derived(actions.filter((a) => a.state === 'open').length);
-	const ACT_GLYPH = { done: 'v-met', open: 'v-unmet', unknown: 'v-unk', plain: 'plain' } as const;
+	const headline = $derived(para.tldr ? para.head : (actions[0]?.text ?? para.head));
+	const headlineAt = $derived(para.tldr ? para.headAt : (actions[0]?.start ?? para.headAt));
+	const nx = $derived(nextAction(actions));
+	const notes = $derived(stepNotes(step));
+	const wiki = $derived((step.links ?? []).filter((l) => l.type === 'wiki'));
+	const ranges = $derived(markRanges(step.text, step.marks));
+	const cited = $derived((step.links ?? []).filter((l) => l.type !== 'wiki'));
+	const loose = $derived(looseLinks(step.text, cited));
+	const piecesAt = (text: string, at: number) => piecesOf(text, at, ranges, '', cited);
+	const actionParts = (a: Action) => {
+		let at = a.start;
+		return a.pieces.map((p) => {
+			const sub = piecesAt(p.text, at);
+			at += p.text.length;
+			return { ...p, sub };
+		});
+	};
 	const ROLE_WORD: Record<string, string> = {
 		completes: 'conclui',
 		starts: 'inicia',
@@ -103,30 +106,8 @@
 		unmet: 'falta',
 		unknown: 'não sabemos'
 	};
-	const meta = $derived(metaOf(step).filter((m) => m.label !== 'itens'));
-	const notes = $derived(stepNotes(step));
-	const wiki = $derived((step.links ?? []).filter((l) => l.type === 'wiki'));
-	/* Cores do autor (step.marks) e links que o texto cita pelo nome; os outros links, fora a wiki
-	 * (linha própria), vão numa linha "links". */
-	const ranges = $derived(markRanges(step.text, step.marks));
-	const cited = $derived((step.links ?? []).filter((l) => l.type !== 'wiki'));
-	const loose = $derived(looseLinks(step.text, cited));
-	const piecesAt = (text: string, at: number) => piecesOf(text, at, ranges, '', cited);
-	/** Os trechos de uma ação (citações de objetivo à parte), cada um com as cores e links. */
-	const actionParts = (a: Action) => {
-		let at = a.start;
-		return a.pieces.map((p) => {
-			const sub = piecesAt(p.text, at);
-			at += p.text.length;
-			return { ...p, sub };
-		});
-	};
-	const plaqueRight = $derived(
-		[where, ...meta.map((m) => `${m.label} ${m.value}`)].filter(Boolean).join(' · ')
-	);
-	// "também na <rota>": onde a outra rota conclui as mesmas entidades; as que ela não tem ficam
-	// de fora, e uma rota sem nenhuma some. Inicia e conclui da mesma quest no mesmo passo da
-	// outra rota viram um link só.
+	// "também na <rota>": onde a outra rota conclui as mesmas entidades; inicia e conclui da mesma
+	// quest no mesmo passo da outra rota viram um link só.
 	const cross = $derived.by(() => {
 		const completing = chips.filter((c) => c.role === 'completes' || c.role === 'starts');
 		return others
@@ -135,7 +116,7 @@
 				entries: completing
 					.flatMap((c) => {
 						const occ = step.also?.[c.key]?.find((o) => o.guide === g.guide);
-						return occ ? [{ id: `${c.label}|${occ.step}`, label: c.label, occ }] : [];
+						return occ ? [{ id: occ.step, ref: occ.ref, occ, label: c.label }] : [];
 					})
 					.filter((e, i, all) => all.findIndex((x) => x.id === e.id) === i)
 			}))
@@ -154,146 +135,97 @@
 				rel="noreferrer">{x.t}</a
 			>{:else if x.c}<span class="mk mk-{x.c}">{x.t}</span>{:else}{x.t}{/if}{/each}{/snippet}
 
-<article class="panel">
-	<div class="plaque">
-		<span class="st st-cur stc" aria-hidden="true"></span>Passo atual · {step.ref}
-		<span class="r" title={plaqueRight}>{plaqueRight}</span>
+<section class="now7" class:plain={!chips.length} aria-label="Passo atual">
+	<div class="hd">
+		<span class="ref">{step.ref}</span><span>passo atual{where ? ` · ${where}` : ''}</span>
+		{#if facts}<span class="facts">{facts}</span>{/if}
 	</div>
-	{#if prev.length}
-		<div class="prev">
-			{#each prev as s, i (s.id)}
-				{@const v = statusView(s.status)}
-				<a
-					class="row row-done mini"
-					class:last={i === prev.length - 1}
-					href={`${rotaHref.split('#')[0]}#passo-${s.id}`}
-					><span class="st {v.st} tiny"
-						>{#if v.done}<Glyph name="check" size={9} />{/if}</span
-					><span class="id">{s.ref}</span><span class="tx">{s.title}</span><span class="fr"
-						>{prevWho(s.id)}</span
-					></a
-				>
-			{/each}
-		</div>
+	<h2 class:long={headline.length > 220}>{@render text(piecesAt(headline, headlineAt))}</h2>
+
+	{#if chips.length}
+		<GoalGrid {chips} objectives={board?.objectives} />
+	{:else}
+		<p class="mu none">Nada aqui dá para detectar sozinho. Marque quando terminar.</p>
 	{/if}
-	<div class="body">
-		{#if paragraph}
-			<h1 class="sr para" class:long={headline.length > 220}>
-				{#if para.tldr}<span class="tl">TL;DR</span>{/if}{@render text(
-					piecesAt(headline, headlineAt)
-				)}
-			</h1>
-			{#if missing.length}
-				<p class="falta" title="O que este passo conclui ou inicia e a conta ainda não tem">
-					<span class="lbl">Falta</span>{missing.join(' · ')}
+
+	{#if actions.length > 1}
+		{#if narrow}
+			<button class="tog" type="button" aria-expanded={expanded} onclick={() => (open = !expanded)}
+				><span class="chev" class:down={expanded}><Glyph name="chevron" size={12} /></span
+				>{actionsSummary(actions)}</button
+			>
+		{/if}
+		{#if expanded}
+			<ol class="acts7" aria-label="Passo a passo">
+				{#each actions as a, i (a.start)}
+					<li
+						class="a7"
+						class:dn={a.state === 'done'}
+						class:nx={i === nx}
+						class:uk={a.state === 'unknown'}
+					>
+						{#if a.state === 'plain'}<span class="pl" aria-hidden="true"></span>{:else}<span
+								class="bx"
+								aria-hidden="true"
+								>{#if a.state === 'done'}<Glyph name="check" size={11} />{/if}</span
+							>{/if}<span
+							>{#each actionParts(a) as p, j (j)}{#if p.objective && p.objective.verdict !== 'met'}<u
+										class:uk={p.objective.verdict === 'unknown'}
+										title={`${ROLE_WORD[p.objective.role] ?? p.objective.role} ${p.objective.label} · ${VERDICT_WORD[p.objective.verdict]}`}
+										>{@render text(p.sub)}</u
+									>{:else}{@render text(p.sub)}{/if}{/each}</span
+						>
+					</li>
+				{/each}
+			</ol>
+		{/if}
+	{/if}
+
+	{#if notes.length || wiki.length || loose.length}
+		<div class="extra">
+			{#each notes as n, i (i)}
+				<p class="note" class:note-up={n.kind === 'update'}>
+					<span class="lbl">{n.label || 'Nota do autor'}</span>{n.text}
+				</p>
+			{/each}
+			{#if wiki.length || loose.length}
+				<p class="links">
+					<span class="lbl">Links</span>
+					{#each [...wiki, ...loose] as l, i (l.url + i)}<a
+							href={l.url}
+							target="_blank"
+							rel="noreferrer">{l.text?.trim() || l.url}</a
+						>{/each}
 				</p>
 			{/if}
-		{:else}
-			<h1 class="sr short">{@render text(piecesAt(step.text, 0))}</h1>
-		{/if}
-
-		{#if chips.length}
-			<ChipGroups {chips} />
-		{:else}
-			<div class="cg">
-				<span class="lbl">Conclui</span><span
-					class="obj"
-					title="Nenhum objetivo detectável neste passo: só você marca como feito."
-					><span class="v v-unk" aria-hidden="true">?</span>só você conclui</span
-				>
-			</div>
-		{/if}
-
-		{#each notes as n, i (i)}
-			<p class="note" class:note-up={n.kind === 'update'} class:mu={n.kind !== 'update'}>
-				<span class="lbl nl">{n.label || 'Nota do autor'}</span>{n.text}
-			</p>
-		{/each}
-
-		{#if paragraph && actions.length > 0}
-			<div class="steps">
-				<button
-					class="tog"
-					type="button"
-					aria-expanded={expanded}
-					onclick={() => (open = !expanded)}
-					><Glyph name="chevron" size={12} /><span class="lbl"
-						>Passo a passo · {actions.length} ações{openActions
-							? ` · ${openActions} com o que falta`
-							: ''}{step.bank_actions?.length ? ' · banco dentro do passo' : ''}</span
-					></button
-				>
-				{#if expanded}
-					<ol class="alist box">
-						{#each actions as a (a.start)}
-							<li class="act act-{a.state}">
-								<span class="v {ACT_GLYPH[a.state]}" aria-hidden="true"
-									>{#if a.state === 'done'}<Glyph
-											name="check"
-											size={9}
-										/>{:else if a.state === 'unknown'}?{/if}</span
-								><span class="tx"
-									>{#each actionParts(a) as p, i (i)}{#if p.objective}<mark
-												class="q q-{p.objective.verdict}"
-												title={`${ROLE_WORD[p.objective.role] ?? p.objective.role} ${p.objective.label} · ${VERDICT_WORD[p.objective.verdict]}`}
-												>{@render text(p.sub)}</mark
-											>{:else}{@render text(p.sub)}{/if}{/each}</span
-								>
-							</li>
-						{/each}
-					</ol>
-				{/if}
-			</div>
-		{/if}
-
-		{#if wiki.length}
-			<div class="line">
-				<span class="lbl">wiki</span>
-				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- link externo da wiki -->
-				{#each wiki as l (l.url)}<a href={l.url} target="_blank" rel="noreferrer"
-						>{l.text ?? l.url}</a
-					>{/each}
-			</div>
-		{/if}
-		{#if loose.length}
-			<div class="line">
-				<span class="lbl">links</span>
-				{#each loose as l, i (l.url + i)}<a href={l.url} target="_blank" rel="noreferrer"
-						>{l.text?.trim() || l.url}</a
-					>{/each}
-			</div>
-		{/if}
-		{#each cross as c (c.guide)}
-			<div class="line">
-				<span class="lbl">também na {c.label}</span>
-				{#each c.entries as e (e.id)}
-					<a
-						href={`${resolve('/rotas/[guide]/[section]', { guide: e.occ.guide, section: e.occ.section })}#passo-${e.occ.step}`}
-						>{e.label} · {e.occ.ref}</a
-					>
-				{/each}
-			</div>
-		{/each}
-
-		<div class="actions">
-			<button class="btn btn-p wide" type="button" disabled={busy} onclick={ondone}
-				><Glyph name="check" size={14} />Feito</button
-			>
-			<button class="btn mid" type="button" disabled={busy} onclick={onskip}>Pular</button>
-			<button class="btn btn-g" type="button" disabled={busy || !canUndo} onclick={onundo}
-				>Desfazer</button
-			>
-			<span class="grow"></span>
-			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- href montado com resolve() pela página -->
-			<a class="btn btn-g" href={rotaHref}>Abrir na rota</a>
-			<button class="btn btn-g" type="button" disabled={busy} onclick={onpin}>Fixar outro</button>
 		</div>
-		<p class="su keys">
-			<span class="kbd">J</span> feito · <span class="kbd">K</span> pular ·
-			<span class="kbd">U</span> desfazer
-		</p>
+	{/if}
+
+	<div class="do7">
+		<button class="btn btn-p" class:wide={narrow} type="button" disabled={busy} onclick={ondone}
+			><Glyph name="check" size={14} />Feito</button
+		>{#if !narrow}<span class="kbd">J</span>{/if}
+		<button class="btn" type="button" disabled={busy} onclick={onskip}>Pular</button
+		>{#if !narrow}<span class="kbd">K</span>{/if}
+		<button class="btn btn-g" type="button" disabled={busy || !canUndo} onclick={onundo}
+			>Desfazer</button
+		>{#if !narrow}<span class="kbd">U</span>
+			<span class="sp"></span>
+			{#each cross as c (c.guide)}
+				<span class="mu also7"
+					>também na {c.label}:
+					{#each c.entries as e, i (e.id)}{#if i},
+						{/if}<a
+							href={`${resolve('/rotas/[guide]/[section]', { guide: e.occ.guide, section: e.occ.section })}#passo-${e.occ.step}`}
+							title={e.label}>{e.ref}</a
+						>{/each}</span
+				>
+			{/each}
+			<button class="btn btn-g btn-s" type="button" disabled={busy} onclick={onpin}
+				>Fixar outro passo</button
+			>{/if}
 	</div>
-</article>
+</section>
 
 <style>
 	/* Cores do autor no texto (BRUHsailer), como na Rota. */
@@ -309,88 +241,45 @@
 	.mk-green {
 		color: var(--done);
 	}
-	article {
-		display: flex;
-		flex-direction: column;
+	.facts {
+		margin-left: auto;
 	}
-	.stc {
-		width: 14px;
-		height: 14px;
-		box-shadow: inset 0 0 0 2px var(--frame);
-	}
-	.plaque .r {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		min-width: 0;
-	}
-	.prev {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
-		padding: 8px 16px 0;
-		border-bottom: 1px solid var(--hairline);
-	}
-	.mini {
-		min-height: 28px;
-		padding: 0;
-		border: 0;
-	}
-	.mini.last {
-		padding-bottom: 6px;
-	}
-	.mini .tx {
-		font-size: 12px;
-	}
-	.tiny.st {
-		width: 14px;
-		height: 14px;
-	}
-	.body {
-		display: flex;
-		flex-direction: column;
-		gap: 14px;
-		padding: 16px;
-	}
-	.short {
-		font-size: 32px;
-		text-wrap: pretty;
-		max-width: 28ch;
-	}
-	.para {
-		font-size: 28px;
-		line-height: 1.2;
-		text-wrap: pretty;
-		max-width: 40ch;
-	}
-	.para.long {
+	h2.long {
 		font-size: 19px;
 		line-height: 1.35;
 		max-width: 60ch;
 	}
-	.tl {
-		display: block;
-		margin-bottom: 6px;
-		font:
-			500 11px 'JetBrains Mono',
-			monospace;
-		letter-spacing: 0.08em;
-		color: var(--ink-subtle);
+	.none {
+		margin: 0;
+		padding: 8px 18px 0;
+		font-size: 13px;
 	}
-	.cg {
+	.tog {
+		margin: 0 12px;
+		justify-content: flex-start;
+	}
+	.chev {
+		display: inline-flex;
+		transition: transform 0.15s;
+	}
+	.chev.down {
+		transform: rotate(90deg);
+	}
+	.extra {
 		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px;
+		flex-direction: column;
+		gap: 6px;
+		padding: 12px 18px 0;
 	}
-	.cg .lbl {
-		margin-right: 4px;
-	}
-	.note {
+	.note,
+	.links {
 		margin: 0;
 		font-size: 13px;
-		max-width: 70ch;
+		color: var(--ink-muted);
+		max-width: 80ch;
 	}
-	.nl {
+	.note .lbl,
+	.links .lbl {
 		margin-right: 6px;
 	}
 	.note-up {
@@ -398,118 +287,19 @@
 		border-left: 3px solid var(--stale);
 		color: var(--ink);
 	}
-	.note-up .nl {
+	.note-up .lbl {
 		color: var(--stale);
 	}
-	.steps {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
-	.box {
-		padding: 10px 14px;
-		border-radius: 4px;
-		border: 1px solid var(--hairline);
-	}
-	.falta {
-		margin: 0;
-		font-size: 14px;
-		color: var(--not-started);
-	}
-	.falta .lbl {
-		margin-right: 8px;
-		color: var(--not-started);
-	}
-	.alist {
-		list-style: none;
-		margin: 0;
-		padding: 2px 14px;
-		display: flex;
-		flex-direction: column;
-	}
-	.act {
-		display: grid;
-		grid-template-columns: 14px 1fr;
-		gap: 10px;
-		align-items: start;
-		padding: 7px 0;
-		border-bottom: 1px solid var(--hairline);
-		font-size: 14px;
-		line-height: 1.45;
-		max-width: 80ch;
-	}
-	.act:last-child {
-		border-bottom: 0;
-	}
-	.act .v {
-		margin-top: 3px;
-	}
-	.act-done .tx,
-	.act-plain .tx {
-		color: var(--ink-muted);
-	}
-	.act-open .tx {
-		color: var(--ink);
-		font-weight: 500;
-	}
-	.v.plain {
-		border: 0;
-		width: 14px;
-		height: 14px;
-		background: radial-gradient(circle, var(--ink-subtle) 2px, transparent 2.5px);
-	}
-	mark.q {
-		background: transparent;
-		color: inherit;
-		box-shadow: none;
-		text-decoration-line: underline;
-		text-decoration-thickness: 2px;
-		text-underline-offset: 3px;
-	}
-	mark.q-met {
-		text-decoration-color: var(--done);
-	}
-	mark.q-unmet {
-		text-decoration-color: var(--not-started);
-		color: var(--ink);
-	}
-	mark.q-unknown {
-		text-decoration-style: dotted;
-		text-decoration-color: var(--ink-subtle);
-	}
-	.line {
+	.links {
 		display: flex;
 		flex-wrap: wrap;
-		gap: 6px 14px;
+		gap: 4px 12px;
+		align-items: baseline;
+	}
+	.also7 {
 		font-size: 12px;
-		align-items: center;
-	}
-	.actions {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px;
-		padding-top: 2px;
 	}
 	.wide {
-		min-width: 104px;
-	}
-	.mid {
-		min-width: 88px;
-	}
-	.grow {
-		flex: 1;
-	}
-	.keys {
-		margin: -6px 0 0;
-		font-size: 11px;
-	}
-	@media (max-width: 900px) {
-		.short {
-			font-size: 28px;
-		}
-		.para {
-			font-size: 22px;
-		}
+		flex: 1 1 120px;
 	}
 </style>

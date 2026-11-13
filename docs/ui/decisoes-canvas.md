@@ -267,7 +267,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 
 | Para | Falta |
 |---|---|
-| "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; falta a web usar |
+| "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; a web usa desde a V2 (seção 7.9) |
 | XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | **feito no servidor** (2026-11-13): `GET /api/account/rhythm?account=&since=` e, da frota com os totais, `GET /api/rhythm?since=`, derivados dos snapshots (`internal/core/rhythm`): a skill que treina (a que mais ganhou nos últimos 30 min, parada depois de 10 min sem ganho) com XP/h e o tempo até o próximo nível; a sessão (fim numa pausa de 20 min entre pushes do plugin); o dia por skill desde `since` (a meia-noite do navegador); GP = moedas e platinum tokens no banco e no inventário, com o ganho do dia. Os ganhos de item da sessão também (2026-11-13): `session.gained`, o que a conta tem a mais desde o começo da sessão, somando banco, inventário e equipamento (a forma noted junto da normal), e `session.running_out`, o que a sessão vai gastando e quando acaba nesse ritmo ("feathers acabam em 3 h"); os dois são `null` sem o banco e o inventário conhecidos nas duas pontas. O "Até a pausa" vem do Break Handler pela ponte (`/bridge/break`, PR #28, no `status` do cliente); falta a web usar |
 | Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); rotinas recorrentes pelo relógio: **feitas na API** (doc 11, seção 16.4; `GET`/`POST`/`DELETE /api/microbot/recurring`), a tela da fila ainda não foi desenhada; falta a noção de atividade principal por conta |
 | Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). A web usa tudo isso desde a V7 (seção 7.9) |
@@ -284,7 +284,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | Fatia | Entrega | Depende de |
 |---|---|---|
 | V1 | Casca: Frota em `/` com o que a API já tem, cabeçalho da conta com as cinco abas apontando para as telas atuais, Nova conta no lugar do `/setup`, barra lateral e barra de 640 px, estados vazios | nada |
-| V2 | Conta › Rota: Passo, Rota inteira e Comparar numa aba; objetivo com progresso, passo a passo com caixas, marca de banco na linha | o valor observado no board |
+| V2 | Conta › Rota: Passo, Rota inteira e Comparar numa aba; objetivo com progresso, passo a passo com caixas, marca de banco na linha | o valor observado no board. **Feita** (2026-11-13, seção 7.9) |
 | V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada |
 | V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada |
 | V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
@@ -499,3 +499,38 @@ Divergências dos artboards:
 
 Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (a lógica das duas telas em `historico.ts` e
 `atividade.ts`, com `node --test`) e `pnpm build`; sem captura de tela nesta fatia.
+
+### 7.9 Implementação: V2, Conta › Rota (2026-11-13)
+
+Artboards seguidos: `V7Rota1440`, `V7Rota640` e `V7RotaLista1440` (página 8), na aba Rota: o Passo em
+`/agora`, a Rota inteira em `/rotas/<guia>/<seção>` e Comparar em `/compare`, que não tem artboard na v7
+e segue `V6Comparar1440` com a barra nova em cima. A barra da rota (seletor, capítulo com o andamento,
+Passo | Rota inteira | Comparar e Sincronizar) substitui as abas antigas.
+
+Divergências do artboard:
+
+1. **GP e tempo do guia** saem das notas do BRUHsailer ("GP after step", "Total time"); a Oziris não
+   tem, e no lugar o cabeçalho diz onde o passo é.
+2. **"240 / 1.250"** só aparece quando o board traz o valor observado; sem ele, o objetivo fica com a
+   quantidade no nome e só o veredito.
+3. **O anel de ouro** vai na primeira ação que falta (`unmet`). No artboard ele está numa ação "não
+   sabemos", que nunca vira falta.
+4. **O passo a passo com caixas** só existe nos passos-parágrafo do BRUHsailer com mais de uma ação.
+5. **Ficam da v6**, sem desenho na v7: as notas do autor e os links no cartão do passo; os grupos Requer
+   e Usa; a prévia de Levar do banco (15, 30 ou até o banco) e os estados dele ("espelho restaurado",
+   "sem leitura do plugin"); a faixa de fonte do hiscores; Rota concluída; o diálogo de Fixar outro
+   passo. O passo sem objetivo segue `V7Estados1440`.
+6. **Aqui perto** só aparece com a posição do plugin (a opção "Send position" do Chronicle Link) e
+   **Relógios** some sem relógio contando.
+7. **Seletor de rotas:** o artboard só desenha o botão. O menu traz cada rota com o andamento, onde ela
+   está e Tornar ativa; o Passo mostra sempre a rota ativa.
+8. **Em seguida** fica no capítulo do passo: no último passo de um capítulo, a lista some.
+9. **Levar do banco** a 640 tem o arranjo da 1440 (o artboard põe a grade antes e o texto numa linha).
+10. **Rota inteira:** a linha abre por dentro, como na v6, em vez de levar ao Passo; a janela tem 3
+    passos antes do atual e 10 depois (o artboard, 1 e 7); "quem fez" vem das últimas 60 marcas, e as
+    mais antigas ficam sem; ficam da v6 a faixa "Você está em", a busca em outros capítulos, os
+    presumidos e as camadas Enhanced e HCIM.
+11. **Comparar** fica com a barra sem capítulo nem andamento.
+
+Conferido com os testes de `node --test` da lógica da tela (`objetivo.ts`, `rota.ts`, `agora.ts`,
+`relogios.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.

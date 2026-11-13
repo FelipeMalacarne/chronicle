@@ -13,10 +13,10 @@
 	import type { Ahead, BankAction, SegmentReadiness } from '#lib/progress/types';
 
 	/**
-	 * "Levar do banco" (V6Agora1440/640; regras em V6Fundamentos, átomo 2): uma frase de resumo, a
-	 * grade com os que faltam primeiro e uma linha de rodapé. Com você / no banco / falta / sem id
-	 * estão na borda do slot. Sem setup do guia é a prévia pelos próximos passos, nunca "pronto"
-	 * (a explicação fica no título do link); com setup, a plaque diz "Setup do trecho". Ações de
+	 * "Levar do banco" da v7 (cartão de V7Rota1440 e V7Rota640): quanto falta, a grade com os que
+	 * faltam primeiro e uma linha com o que o guia manda e de quando é a leitura do banco. Com você /
+	 * no banco / falta / sem id estão na borda do slot. Sem setup do guia é a prévia pelos próximos
+	 * passos, agrupada pelo passo que usa, nunca "pronto" (a explicação fica no título). Ações de
 	 * banco são instrução e nunca viram passo feito; ausência só com container live (regra 8).
 	 */
 	let {
@@ -93,7 +93,7 @@
 				id: g.stepId,
 				ref: refOf(g.stepId),
 				text: g.text,
-				// "em 2 passos", depois só "em 4", "em 17" (V6Agora1440).
+				// "em 2 passos", depois só "em 4", "em 17".
 				when: i === 0 ? g.when : g.when.replace(/ passos$/, ''),
 				slots: g.slots
 			}));
@@ -125,45 +125,33 @@
 	);
 	const partial = $derived(readiness?.loadout_status === 'partial');
 
-	/** Uma linha de frescor: "banco e inventário ao vivo · 40 s". */
+	/** "banco lido há 12 s" com a lâmpada: ao vivo, espelho restaurado ou sem leitura (regra 8). */
 	const fresh = $derived.by(() => {
 		const f = readiness?.freshness ?? {};
 		const live = (['bank', 'inventory'] as const).filter((c) => f[c]?.live);
 		const name = { bank: 'banco', inventory: 'inventário' } as const;
 		if (live.length === 0) {
 			const restored = (['bank', 'inventory'] as const).some((c) => f[c]?.state === 'restored');
-			return { text: restored ? 'espelho restaurado' : 'sem leitura do plugin', cls: 'd-w' };
+			return {
+				text: restored ? 'espelho restaurado' : 'sem leitura do plugin',
+				lamp: restored ? 'rest' : 'off'
+			};
 		}
 		const at = Math.min(...live.map((c) => Date.parse(f[c]?.observed_at ?? '') || now));
-		return {
-			text: `${live.map((c) => name[c]).join(' e ')} ao vivo · ${ago(at, now).replace('há ', '')}`,
-			cls: ''
-		};
+		const who = live.map((c) => name[c]).join(' e ');
+		return { text: `${who} ${live.length > 1 ? 'lidos' : 'lido'} ${ago(at, now)}`, lamp: 'ok' };
 	});
 
-	const summary = $derived.by(() => {
-		if (view) {
-			const span = active
-				? `nos próximos ${active} passos`
-				: `até ${refOf(ahead?.until_step_id ?? '')}`;
-			return { lead: `${total} ${total === 1 ? 'item' : 'itens'}`, span };
-		}
-		return {
-			lead: `${total} ${total === 1 ? 'item' : 'itens'}`,
-			span: partial ? 'no setup · listado em parte' : 'no setup do trecho'
-		};
-	});
-	const plaqueRight = $derived(
+	const head = $derived(
 		view
 			? active
 				? `${active} passos à frente`
-				: `até ${refOf(ahead?.until_step_id ?? '')} · fim do trecho`
+				: `até ${refOf(ahead?.until_step_id ?? '')}`
 			: readiness?.first_step_id
 				? `trecho de ${refOf(readiness.first_step_id)}`
 				: ''
 	);
 	const way = $derived(view?.obtained ?? []);
-	const SEP = ' · ';
 	const HOW =
 		'Prévia derivada: o guia não lista o setup deste trecho; soma dos itens que os passos da janela pedem, sem os que um passo anterior obtém. Quantidade sem número conta 1. Nunca diz "pronto".';
 	const slotTitle = (s: AheadSlot, ref: string) =>
@@ -177,8 +165,6 @@
 			.filter(Boolean)
 			.join(' · ');
 </script>
-
-<!-- eslint-disable svelte/no-navigation-without-resolve -- os hrefs internos vêm de resolve() + âncora; os externos são da wiki -->
 
 {#snippet slot(s: AheadSlot, ref: string)}
 	{@const icon = itemIcon(s.itemId)}
@@ -199,117 +185,103 @@
 {/snippet}
 
 {#if total > 0 || bankActions.length}
-	<section class="panel">
-		<div class="plaque">
-			{view || !setup.length ? 'Levar do banco' : 'Setup do trecho'}<span class="r"
-				>{plaqueRight}</span
-			>
+	<section class="card">
+		<div class="h">
+			<h2>Levar do banco</h2>
+			<span title={head}>{head}</span>
 		</div>
-		<div class="sum">
-			<span
-				><b>{summary.lead}</b>
-				{summary.span}{#if missing.length}{SEP}<b class="red"
-						>{missing.length} {missing.length === 1 ? 'falta' : 'faltam'}</b
-					>{/if}{#if noId}{` · ${noId} sem id`}{/if}</span
-			>
-			<span class="fr push"><span class="d {fresh.cls}"></span>{fresh.text}</span>
-		</div>
-		{#if view}
-			<div class="ctl">
-				{#if options.length > 1}
-					<div class="seg" role="group" aria-label="Quantos passos olhar">
-						{#each options as o (o.n)}
-							<button
-								type="button"
-								class:on={active === o.n}
-								aria-pressed={active === o.n}
-								onclick={() => (horizon = o.n)}>{o.label}</button
-							>
-						{/each}
-					</div>
-				{/if}
-				<span class="how push" title={HOW}>prévia do guia, não setup · como é calculada</span>
-			</div>
-		{/if}
-		<div class="grid">
-			{#if missing.length}
-				<div class="grp first">
-					<div class="gh">
-						<span class="lbl red">Faltam</span><span class="w">pegue antes de sair do banco</span>
-					</div>
-					<div class="slots">
-						{#each missing as m, i (i)}{@render slot(m.s, m.ref)}{/each}
-					</div>
+		<div class="b">
+			{#if total > 0}
+				<p class="sum">
+					{#if missing.length}<b class="red">Falta {missing.length} de {total}.</b>{:else}<b
+							>{total} {total === 1 ? 'item' : 'itens'}{view ? '' : ' no setup do trecho'}.</b
+						>{/if}
+					{#if view}<span class="mu"
+							>{active ? `Nos próximos ${active} passos.` : 'Até o fim do trecho.'}</span
+						>{:else if partial}<span class="mu">O guia lista só parte do que este trecho usa.</span
+						>{/if}{#if noId}<span class="mu"> {noId} sem id.</span>{/if}
+				</p>
+			{/if}
+			{#if view}
+				<div class="ctl">
+					{#if options.length > 1}
+						<div class="seg" role="group" aria-label="Quantos passos olhar">
+							{#each options as o (o.n)}
+								<button
+									type="button"
+									class:on={active === o.n}
+									aria-pressed={active === o.n}
+									onclick={() => (horizon = o.n)}>{o.label}</button
+								>
+							{/each}
+						</div>
+					{/if}
+					<span class="how" title={HOW}>prévia do guia, não setup</span>
 				</div>
 			{/if}
-			{#each rest as g, i (g.id + i)}
-				<div class="grp" class:first={i === 0 && !missing.length}>
+			{#if view}
+				{#if missing.length}
+					<div class="take">
+						{#each missing as m, i (i)}{@render slot(m.s, m.ref)}{/each}
+					</div>
+				{/if}
+				{#each rest as g, i (g.id + i)}
 					<div class="gh">
 						<span class="id">{g.ref}</span><span class="tx" title={g.text}>{g.text}</span><span
 							class="w">{g.when}</span
 						>
 					</div>
-					<div class="slots">
+					<div class="take">
 						{#each g.slots as s, j (j)}{@render slot(s, g.ref)}{/each}
 					</div>
+				{/each}
+			{:else}
+				<!-- Setup listado pelo guia: uma grade só, os que faltam primeiro (V7Rota1440). -->
+				<div class="take">
+					{#each missing as m, i (i)}{@render slot(m.s, m.ref)}{/each}
+					{#each rest as g, i (g.id + i)}
+						{#each g.slots as s, j (j)}{@render slot(s, g.ref)}{/each}
+					{/each}
 				</div>
-			{/each}
-			{#if way.length || bankActions.length}
-				<p class="su foot">
-					{#if way.length}No caminho, sem passar no banco: {way
-							.map((o) => `${o.name} (${refOf(o.from)})`)
-							.join(', ')}.{/if}
-					{#if bankActions.length}O guia manda: {bankActions.map((a) => `“${a.text}”`).join(', ')} no
-						{firstRef}.{/if}
-				</p>
 			{/if}
+			<p class="mu foot">
+				{#if way.length}No caminho, sem passar no banco: {way
+						.map((o) => `${o.name} (${refOf(o.from)})`)
+						.join(', ')}.{/if}
+				{#if bankActions.length}O guia manda {bankActions.map((a) => `“${a.text}”`).join(', ')} no
+					{firstRef}.{/if}
+				<span class="src7"><span class="lamp {fresh.lamp}"></span>{fresh.text}</span>
+			</p>
 		</div>
 	</section>
 {/if}
 
 <style>
-	section {
-		display: flex;
-		flex-direction: column;
-	}
 	.sum {
-		display: flex;
-		flex-wrap: wrap;
-		align-items: center;
-		gap: 8px 14px;
-		padding: 12px 16px 6px;
 		font-size: 13px;
+	}
+	.sum b {
+		font-weight: 600;
+	}
+	.red {
+		color: var(--not-started);
 	}
 	.ctl {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
 		gap: 8px;
-		padding: 0 16px 10px;
-	}
-	.push {
-		margin-left: auto;
 	}
 	.how {
+		margin-left: auto;
 		font-size: 12px;
 		color: var(--gold-ink);
-		text-decoration: underline;
+		text-decoration: underline dotted;
 		text-underline-offset: 3px;
 		cursor: help;
 	}
-	.grid {
-		padding: 0 16px 12px;
-		display: flex;
-		flex-direction: column;
-	}
-	.first {
-		border-top: 0;
-		padding-top: 0;
-	}
-	.slots {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 8px 4px;
+	.gh {
+		margin-bottom: -6px;
 	}
 	button.slot {
 		border: 0;
@@ -319,9 +291,7 @@
 		cursor: default;
 	}
 	.foot {
-		margin: 8px 0 0;
 		font-size: 12px;
-		border-top: 1px solid var(--hairline);
-		padding-top: 8px;
+		line-height: 1.5;
 	}
 </style>

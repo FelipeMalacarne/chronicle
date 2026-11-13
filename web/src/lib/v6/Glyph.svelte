@@ -21,7 +21,11 @@
 		| 'eye'
 		| 'play'
 		| 'atividade'
-		| 'porta';
+		| 'porta'
+		| 'bank'
+		| 'pause'
+		| 'stop'
+		| 'more';
 	let { name, size = 16 }: { name: Name; size?: number } = $props();
 </script>
 
@@ -92,5 +96,19 @@
 		<path d="M3 12h4l3-7 4 14 3-7h4" />
 	{:else if name === 'porta'}
 		<path d="M14 4h5v16h-5M4 12h11M11 8l4 4-4 4" />
+	{:else if name === 'bank'}
+		<path d="M3 10l9-6 9 6M5 10v8M19 10v8M9 10v8M15 10v8M3 20h18" />
+	{:else if name === 'pause'}
+		<path d="M7 5h4v14H7zM13 5h4v14h-4z" fill="currentColor" stroke="none" />
+	{:else if name === 'stop'}
+		<rect x="6" y="6" width="12" height="12" rx="1" fill="currentColor" stroke="none" />
+	{:else if name === 'more'}
+		<circle cx="5" cy="12" r="1.8" fill="currentColor" stroke="none" /><circle
+			cx="12"
+			cy="12"
+			r="1.8"
+			fill="currentColor"
+			stroke="none"
+		/><circle cx="19" cy="12" r="1.8" fill="currentColor" stroke="none" />
 	{/if}
 </svg>

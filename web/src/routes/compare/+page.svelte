@@ -17,10 +17,11 @@
 	} from '#lib/progress/view';
 	import type { Board, Goal, GoalPlan, RouteSummary, WorldEntity } from '#lib/progress/types';
 	import Glyph from '#lib/v6/Glyph.svelte';
-	import RouteTabs from '#lib/v6/RouteTabs.svelte';
+	import RouteBar from '#lib/v6/RouteBar.svelte';
 
 	/*
-	 * Comparar rotas (V6Comparar1440, aba de Rotas): duas rotas lado a lado sobre o mesmo
+	 * Comparar rotas (V6Comparar1440; na v7, a vista Comparar da aba Rota da conta, com a barra de
+	 * V7Rota1440 em cima, sem desenho próprio na página 8): duas rotas lado a lado sobre o mesmo
 	 * progresso. Cada coluna é uma rota inteira com cursor e marcas próprios (regra 7); só a
 	 * evidência cruza de rota, a marca à mão não. Revê a decisão 3 da v4 (dono, 2026-11-04).
 	 */
@@ -162,7 +163,7 @@
 </svelte:head>
 
 <div class="page">
-	<RouteTabs current="compare" />
+	<RouteBar view="compare" />
 	<header class="top">
 		<div class="ttl">
 			<p class="su small">Rotas · lado a lado · o progresso é da conta</p>
@@ -269,7 +270,7 @@
 					</div>
 					<div class="acts">
 						{#if r.active}
-							<a class="btn btn-p btn-s" href={resolve('/agora')}>Abrir no Agora</a>
+							<a class="btn btn-p btn-s" href={resolve('/agora')}>Abrir o passo</a>
 						{:else}
 							<button
 								class="btn btn-p btn-s"

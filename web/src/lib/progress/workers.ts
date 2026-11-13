@@ -176,6 +176,16 @@ export function actionLabel(line: Pick<WorkerLine, 'outdated'>, action: WorkerAc
 	return action === 'restart' && !line.outdated ? 'Reiniciar' : ACTION_LABEL[action];
 }
 
+/**
+ * O título do Reiniciar de um worker na versão antiga: sem o clique, o servidor o reinicia sozinho
+ * na próxima pausa (deslogado ou no break, sem run nem VNC aberto; doc 11, seção 7.2).
+ */
+export const RESTART_NOW_TITLE =
+	'Reinicia agora na versão nova e sai do jogo; sem o clique, reinicia sozinho na próxima pausa';
+
+/** O pedido de um worker na versão antiga, na Frota e na Atividade. */
+export const OUTDATED_SUB = 'Reinicia sozinho na próxima pausa.';
+
 /** Parar e reiniciar saem do jogo: pedem o segundo clique. */
 export const ACTION_CONFIRM: Record<WorkerActionKind, string> = {
 	start: 'Iniciar: confirmar',

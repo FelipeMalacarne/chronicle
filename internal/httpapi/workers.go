@@ -72,8 +72,9 @@ type workerView struct {
 	// WORKERS=off, without a pod, or without metrics-server.
 	Usage *workerctl.Usage `json:"usage,omitempty"`
 	Agent *agent.Info      `json:"agent"`
-	// Outdated: the pod runs another image than the server's WORKER_IMAGE
-	// (restarting logs the account out, so only on the owner's click).
+	// Outdated: the pod runs another image than the server's WORKER_IMAGE.
+	// The reconciler restarts it on the new one at its next pause (docs/11
+	// section 7.2); Reiniciar does it now and logs the account out.
 	Outdated bool `json:"outdated"`
 }
 
@@ -224,9 +225,10 @@ func (s *Server) handleWorkerStop(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
-// handleWorkerRestart moves a running worker to the server's current image:
-// a new image rolls the Deployment; the same image rolls it by a restart
-// annotation. Either way the account is logged out, so the web asks first.
+// handleWorkerRestart is the owner's Reiniciar: the running worker restarts
+// now on the server's current image (workerctl's restart, the same path as
+// the automatic restart at a pause, docs/11 section 7.2). The account is
+// logged out, so the web asks first.
 func (s *Server) handleWorkerRestart(w http.ResponseWriter, r *http.Request) {
 	m := s.opts.Microbot
 	account, ok := s.accountParam(w, r)
@@ -239,15 +241,9 @@ func (s *Server) handleWorkerRestart(w http.ResponseWriter, r *http.Request) {
 	}
 	cur, err := m.Sessions.Get(r.Context(), account)
 	if err == nil && cur.DesiredState != storeworkers.StateRunning {
-		err = errors.New("the worker is not running; start it instead")
-		s.auditWorker(r, "worker_restart", account, err)
-		writeError(w, http.StatusConflict, err.Error())
-		return
+		err = workerctl.ErrNotRunning
 	}
 	if err == nil {
-		err = m.Sessions.SetDesired(r.Context(), account, storeworkers.StateRunning, cur.World, m.WorkerImage)
-	}
-	if err == nil && (m.WorkerImage == "" || cur.Image == m.WorkerImage) {
 		err = m.Control.Restart(r.Context(), account)
 	}
 	s.auditWorker(r, "worker_restart", account, err)
@@ -367,6 +363,8 @@ func (s *Server) writeWorkerError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, "the account has no game session yet (run `chronicle accounts connect` on the launcher's machine)")
 	case errors.Is(err, storeworkers.ErrWorkerRunning):
 		writeError(w, http.StatusConflict, "stop the worker first")
+	case errors.Is(err, workerctl.ErrNotRunning):
+		writeError(w, http.StatusConflict, err.Error())
 	case errors.Is(err, storeworkers.ErrInvalid):
 		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, storeworkers.ErrKeyMismatch):

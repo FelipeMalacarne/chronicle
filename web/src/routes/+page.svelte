@@ -27,7 +27,12 @@
 	import { chooseCockpitAccount } from '#lib/progress/microbot.svelte';
 	import { fleetSummary as rhythmSummary, todaySince } from '#lib/progress/ritmo';
 	import type { AccountState, FleetRhythm, ProgressSummary, TimerView } from '#lib/progress/types';
-	import { actionLabel, workerLines, type WorkerActionKind } from '#lib/progress/workers';
+	import {
+		actionLabel,
+		RESTART_NOW_TITLE,
+		workerLines,
+		type WorkerActionKind
+	} from '#lib/progress/workers';
 	import FrotaCompacta from '#lib/v6/FrotaCompacta.svelte';
 	import Glyph from '#lib/v6/Glyph.svelte';
 
@@ -454,7 +459,7 @@
 										title={a === 'start'
 											? (l.worker.blocked ?? 'Sobe o pod; o cliente para na tela de login')
 											: a === 'restart' && l.worker.outdated
-												? 'Reinicia na versão nova; sai do jogo'
+												? RESTART_NOW_TITLE
 												: 'Sai do jogo'}
 										onclick={() => act(l, a)}
 									>

@@ -83,6 +83,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 34 | Workers do Microbot: cada conta pode ter um worker, no zaros (agent anexado) ou num pod do saradomin criado e apagado pelo Chronicle (web e CLI) no namespace `chronicle`; tudo endereçado pela conta; ao conectar a conta (`chronicle accounts connect`) a sessão vai cifrada para o Postgres e a conta fica habilitada para gerenciar; perfis do cliente (plugins, configurações, gráfico, com modelos), rotinas e histórico no Postgres; qualquer conta, com ou sem rota (modo `regular`); GPU ligada com gráficos no mínimo | resolvida (2026-11-12, revista no mesmo dia com as respostas do dono) no desenho; protótipo no canvas (página 7) a completar com conectar conta, perfil e desvio; W1 a W3 e W8 a W10 abertas; W7 resolvida (2026-11-12: a config do perfil vai pelo Agent Server antes de ligar os plugins); W4 resolvida pelo repositório único (decisão 35) | doc 11 |
 | 35 | `chronicle` e o antigo `microbot-plugins` num repositório só: os plugins (Chronicle Link, Cat Swap e os bots), o harness e o projeto Gradle ficam em `microbot/`, com o histórico, e um flake na raiz serve os dois lados (doc 07). A separação tracking × bot continua entre plugins (docs 06 e 08) | revista (2026-11-12): era "repositórios separados", com o acoplamento num contrato, num aperto de mão de versões da ponte e no bump da base do worker entre os dois. Agora um repositório, porque a visibilidade dos repositórios não importa para o dono, toda sessão precisava dos dois, o contrato entre o plugin Java e o servidor Go (ingest, ponte de controle, variáveis do Chronicle Link) muda num commit só e o bump da base entre repositórios (PR e token) some. O dono arquiva o `microbot-plugins` | doc 07, seções 3 e 5; doc 11, seções 7.2 e 10 |
 | 36 | Web v7, **Frota**: o produto passa a ser para várias contas. A casa do app é a Frota (uma raia por conta, na ideia de um idle game, com os sprites do jogo); cada conta abre com cabeçalho e cinco abas (Visão geral, Rota, Personagem, Cliente, Histórico); Automação deixa de ser uma área (Workers vira a Frota, o Cockpit vira a aba Cliente, Plugins e Rotinas são da frota); Fila e Histórico juntam relógios, fazer agora, runs e auditoria; Nova conta no lugar do primeiro acesso. Tema e tokens do Pergaminho não mudam; mudam os componentes (cartão no lugar do painel com placa, objetivo com progresso, lâmpada, quadro, barra de andamento) | resolvida (2026-11-12) no desenho: 18 artboards na página 8 do canvas, aprovados pelo dono. Implementação em fatias, item 20 do doc 04; o que depende do servidor (ritmo de XP, fila de rotinas, histórico, perfis, capacidade) vira issue e segue as fases F5 a F7 do doc 11 | docs/ui/decisoes-canvas.md, seção 7 |
+| 37 | Worker numa versão antiga: o servidor o reinicia sozinho na imagem nova, mas só na **pausa**: sem run em andamento, sem VNC aberto, e com o personagem deslogado ou num break do Break Handler. Nunca durante um run, nunca com o dono olhando ou intervindo pelo VNC, nunca um worker parado nem o agent anexado do zaros; auditado como o Reiniciar do dono, pelo `reconciler`, com o motivo "versão nova, na pausa". O Reiniciar segue para "agora". Até então, só o clique do dono trocava a imagem de um worker que já roda | resolvida (2026-11-13) e feita no mesmo dia. Falta conferir num worker de verdade e o que fazer com o worker reiniciado no break, que volta na tela de login (W3) em vez de voltar ao jogo | doc 11, seções 7.2 e 18.4; docs/ui/decisoes-canvas.md, seção 7.15 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais
@@ -107,10 +108,10 @@ workers headless no saradomin, um por conta, escolhidos no painel (decisão 34, 
 
 A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com estas ressalvas:
 
-- **Item 19 (workers, doc 11):** F5, F6 e F7 estão no servidor e na web; falta a GPU. Dependem do
-  dono o RBAC de leitura da quota e das métricas (gielinor, PR #16) e o serviço do agent no zaros
-  (nix-config, PR #1, com o machine user do Zitadel e o segredo no sops). Nada da F5 à F7 foi
-  conferido num worker de verdade.
+- **Item 19 (workers, doc 11):** F5, F6 e F7 estão no servidor e na web, incluindo o reinício na
+  versão nova na pausa (decisão 37); falta a GPU. Dependem do dono o RBAC de leitura da quota e das
+  métricas (gielinor, PR #16) e o serviço do agent no zaros (nix-config, PR #1, com o machine user do
+  Zitadel e o segredo no sops). Nada da F5 à F7 foi conferido num worker de verdade.
 - **Item 20 (web v7, decisão 36):** as dez fatias, V1 a V10, estão no `main`
   (`docs/ui/decisoes-canvas.md`, seções 7.6 a 7.14). Faltam as telas em 640 px que o canvas ainda não
   desenhou: Visão geral, Personagem, Histórico, Atividade, Rotinas, Plugins e Mundo.
@@ -121,9 +122,11 @@ O próximo passo é do dono:
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;
    - uma rotina recorrente no zaros;
-   - a capacidade da F7 depois do RBAC.
+   - a capacidade da F7 depois do RBAC;
+   - o reinício sozinho na versão nova depois de um deploy (decisão 37).
 2. **Desenhar no canvas** as telas em 640 px que faltam.
 3. **Decidir o que está aberto:**
+   - o worker reiniciado no break do Break Handler, que fica na tela de login (doc 11, seção 18.4);
    - o gesto para soltar uma rotina presa, hoje salvá-la de novo (o "Liberar" da tela de Rotinas);
    - quando começar as fases 1 a 5 do doc 10 (as decisões E5 a E10 foram fechadas em 2026-11-13).
 

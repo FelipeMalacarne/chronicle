@@ -291,6 +291,26 @@ function sentence(e: AuditEntry): [string, string] {
 
 const WORKER = /^(worker|session)_/;
 
+/** A pausa em que o servidor reiniciou o worker (`params.pause` da auditoria). */
+const PAUSE_LABEL: Record<string, string> = {
+	logged_out: 'deslogado',
+	break: 'no break',
+	client_down: 'cliente fechado'
+};
+
+/**
+ * O que o servidor fez sozinho: o reinício de um worker na versão nova, na pausa (doc 11, seção 7.2),
+ * que a auditoria guarda como o Reiniciar do dono, com o ator `reconciler`. Outra ação: null.
+ */
+function serverSentence(e: AuditEntry): [string, string] | null {
+	if (e.action !== 'worker_restart') return null;
+	const pause = PAUSE_LABEL[str(e.params?.pause)];
+	return [
+		'Worker reiniciado na versão nova',
+		['sozinho, na pausa', pause].filter(Boolean).join(' · ')
+	];
+}
+
 /**
  * Uma ação da auditoria. As que repetem uma execução (o começo e o fim de um run, que já aparece
  * como execução) ficam de fora: null.
@@ -303,7 +323,7 @@ export function actionItem(e: AuditEntry): FeedItem | null {
 	let [title, sub] = sentence(e);
 	if (!mine) {
 		const line = auditLine({ ...e, ok: true }).replace(/ · ok$/, '');
-		[title, sub] = [line.charAt(0).toUpperCase() + line.slice(1), 'sozinho'];
+		[title, sub] = serverSentence(e) ?? [line.charAt(0).toUpperCase() + line.slice(1), 'sozinho'];
 	}
 	return {
 		key: `audit:${e.id}`,

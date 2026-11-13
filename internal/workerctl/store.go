@@ -53,6 +53,12 @@ func (s RepoStore) SetError(ctx context.Context, account, msg string) error {
 	return err
 }
 
+// SetRunningImage moves a running worker to image (a restart on the current
+// image); false for a stopped worker or none.
+func (s RepoStore) SetRunningImage(ctx context.Context, account, image string) (bool, error) {
+	return s.Repo.SetRunningImage(ctx, account, image)
+}
+
 // Profile is the account's effective client profile.
 func (s RepoStore) Profile(ctx context.Context, account string) (agent.ClientProfile, error) {
 	return s.Repo.EffectiveProfile(ctx, account)

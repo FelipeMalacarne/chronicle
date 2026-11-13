@@ -64,6 +64,13 @@ SET desired_state = EXCLUDED.desired_state,
                          THEN '' ELSE workers.last_error END,
     updated_at    = now();
 
+-- name: SetRunningWorkerImage :execrows
+-- The image of a worker that is meant to run, for a restart on the server's
+-- current one (docs/11 section 7.2); a stopped worker is left as it is, so a
+-- restart never starts it again.
+UPDATE workers SET image = sqlc.arg(image), updated_at = now()
+WHERE account_id = sqlc.arg(account_id) AND desired_state = 'running';
+
 -- name: SetWorkerError :execrows
 UPDATE workers SET last_error = $2, updated_at = now() WHERE account_id = $1;
 

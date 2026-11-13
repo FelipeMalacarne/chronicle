@@ -175,6 +175,27 @@ test('actionItem: sentences for the owner, runs left to the runs, failures are p
 	const routine = actionItem(audit({ origin: 'routine', action: 'logout', params: {} }))!;
 	assert.equal(routine.mine, false);
 	assert.equal(routine.sub, 'sozinho');
+
+	// O servidor reinicia o worker na versão nova, na pausa (doc 11, seção 7.2).
+	const auto = audit({
+		actor: 'reconciler',
+		origin: 'server',
+		action: 'worker_restart',
+		params: { reason: 'versão nova, na pausa', pause: 'break', from: 'img:old', to: 'img:new' }
+	});
+	const restarted = actionItem(auto)!;
+	assert.equal(restarted.mine, false);
+	assert.equal(restarted.title, 'Worker reiniciado na versão nova');
+	assert.equal(restarted.sub, 'sozinho, na pausa · no break');
+	assert.equal(restarted.glyph, 'porta');
+	const failed = actionItem({
+		...auto,
+		params: { pause: 'logged_out' },
+		ok: false,
+		error: 'denied'
+	})!;
+	assert.equal(failed.sub, 'sozinho, na pausa · deslogado · denied');
+	assert.equal(failed.problem, true);
 });
 
 test('feedItems: merged newest first, inside the window only; counts per filter', () => {

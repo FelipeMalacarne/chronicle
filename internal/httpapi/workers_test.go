@@ -268,9 +268,14 @@ func TestWorkerLifecycleRoutes(t *testing.T) {
 	if _, ok := capacity["memory_free_bytes"]; ok {
 		t.Fatalf("an unknown free memory was answered: %s", raw)
 	}
-	// Same image as the server's: restart deletes the pod.
+	// Reiniciar goes to the reconciler's restart (the same path as the
+	// automatic one at a pause), which moves the worker to the server's image
+	// and rolls the pod, whatever image it runs; audited as the owner's.
 	if status, _, _ := call(t, "POST", srv.URL+"/api/workers/restart?account=acc_a", ""); status != http.StatusOK || len(control.restarts) != 1 {
 		t.Fatalf("restart = %d %v", status, control.restarts)
+	}
+	if e := audit.last(); e.Action != "worker_restart" || !e.OK || e.Origin != "web" || e.Actor != "dev" {
+		t.Fatalf("restart audit = %+v", e)
 	}
 	if status, _, _ := call(t, "DELETE", srv.URL+"/api/accounts/session?account=acc_a", ""); status != http.StatusConflict {
 		t.Fatalf("delete session of a running worker = %d", status)
@@ -278,8 +283,11 @@ func TestWorkerLifecycleRoutes(t *testing.T) {
 	if status, _, _ := call(t, "POST", srv.URL+"/api/workers/stop?account=acc_a", ""); status != http.StatusOK || store.workers["acc_a"].DesiredState != storeworkers.StateStopped {
 		t.Fatalf("stop = %d %+v", status, store.workers["acc_a"])
 	}
-	if status, _, _ := call(t, "POST", srv.URL+"/api/workers/restart?account=acc_a", ""); status != http.StatusConflict {
-		t.Fatalf("restart of a stopped worker = %d", status)
+	if status, _, _ := call(t, "POST", srv.URL+"/api/workers/restart?account=acc_a", ""); status != http.StatusConflict || len(control.restarts) != 1 {
+		t.Fatalf("restart of a stopped worker = %d %v", status, control.restarts)
+	}
+	if e := audit.last(); e.Action != "worker_restart" || e.OK {
+		t.Fatalf("refused restart audit = %+v", e)
 	}
 
 	// The account is active on the attached agent (zaros): start refused.

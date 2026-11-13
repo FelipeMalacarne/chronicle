@@ -230,7 +230,7 @@ func newWorkersCmd() *cobra.Command {
 	for _, action := range []struct{ name, short string }{
 		{"start", "Start the account's worker in the cluster (it stops at the login screen)"},
 		{"stop", "Stop the account's worker (logs out and deletes its pod)"},
-		{"restart", "Restart the account's worker on the server's current image (logs out)"},
+		{"restart", "Restart the account's worker now on the server's current image (logs out; an outdated worker also restarts by itself at its next pause)"},
 	} {
 		cmd.AddCommand(newWorkerActionCmd(action.name, action.short))
 	}
@@ -279,7 +279,7 @@ func printWorkers(out io.Writer, ws client.Workers) {
 			state += " · agent ligado"
 		}
 		if w.Outdated {
-			state += " · versão antiga"
+			state += " · versão antiga (reinicia sozinho na pausa)"
 		}
 		session := "sem sessão"
 		if w.Session != nil {

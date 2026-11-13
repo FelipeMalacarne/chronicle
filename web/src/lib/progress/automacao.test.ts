@@ -23,4 +23,14 @@ test('audit lines', () => {
 		auditLine({ ...e, action: 'client_stop', params: {}, ok: false, error: 'no agent connected' }),
 		'parar cliente · falhou: no agent connected'
 	);
+	// O reinício na versão nova que o servidor faz sozinho, na pausa (doc 11, seção 7.2).
+	const auto = {
+		...e,
+		actor: 'reconciler',
+		origin: 'server',
+		action: 'worker_restart',
+		params: { reason: 'versão nova, na pausa', pause: 'logged_out' }
+	};
+	assert.equal(auditLine(auto), 'reiniciar o worker · versão nova, na pausa · ok');
+	assert.equal(auditWho(auto), 'servidor');
 });

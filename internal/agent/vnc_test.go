@@ -56,6 +56,19 @@ func TestVNCThroughTheLink(t *testing.T) {
 	if _, err = io.ReadFull(stream, got); err != nil || !bytes.Equal(got, payload) {
 		t.Fatalf("echo: %d bytes, err %v", len(got), err)
 	}
+	// While the stream flows the server knows a session is open; closing it
+	// ends the agent's request, and the count with it.
+	if !link.VNCOpen("") || link.VNCOpen("acc_other") {
+		t.Fatal("an open session is not counted for its agent's account")
+	}
+	_ = stream.Close()
+	deadline := time.Now().Add(5 * time.Second)
+	for link.VNCOpen("") {
+		if time.Now().After(deadline) {
+			t.Fatal("a closed session still counts as open")
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
 }
 
 func TestVNCWithoutX11vnc(t *testing.T) {

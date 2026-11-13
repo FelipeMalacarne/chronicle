@@ -124,7 +124,7 @@ func (l *Link) openVNC(ctx context.Context, c *agentConn) (net.Conn, error) {
 	if l.vnc == nil {
 		l.vnc = map[string]vncWait{}
 	}
-	l.vnc[session] = vncWait{stream: stream, subject: c.ident.Subject}
+	l.vnc[session] = vncWait{stream: stream, subject: c.ident.Subject, account: c.hello.Account}
 	l.mu.Unlock()
 	defer func() {
 		l.mu.Lock()
@@ -175,9 +175,35 @@ func (l *Link) ServeVNC(w http.ResponseWriter, r *http.Request) {
 		_ = conn.Close(websocket.StatusPolicyViolation, "session already has a stream")
 		return
 	}
+	l.vncTrack(waiting.account, 1)
+	defer l.vncTrack(waiting.account, -1)
 	select {
 	case <-st.done:
 	case <-ctx.Done():
 		_ = st.Close()
 	}
+}
+
+// vncTrack counts a VNC session of account that starts (+1) or ends (-1).
+func (l *Link) vncTrack(account string, delta int) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if l.vncLive == nil {
+		l.vncLive = map[string]int{}
+	}
+	if l.vncLive[account] += delta; l.vncLive[account] <= 0 {
+		delete(l.vncLive, account)
+	}
+}
+
+// VNCOpen reports whether a VNC session of the agent that declares account
+// is open on this server: its stream is flowing, whoever watches. The server
+// cannot tell watching from intervening (viewOnly lives in the browser), so
+// anything that must not happen under the owner's eyes (the reconciler's
+// restart on a new image, docs/11 section 7.2) waits for every session to
+// close.
+func (l *Link) VNCOpen(account string) bool {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.vncLive[account] > 0
 }

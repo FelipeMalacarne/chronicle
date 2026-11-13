@@ -173,12 +173,31 @@ func TestDesiredStateNeedsSession(t *testing.T) {
 	if err = repo.DeleteSession(ctx, "acc_b"); !errors.Is(err, ErrWorkerRunning) {
 		t.Fatalf("delete while running = %v", err)
 	}
+	// A restart on the server's image moves only the image of a running worker.
+	if moved, merr := repo.SetRunningImage(ctx, "acc_b", "img:2"); merr != nil || !moved {
+		t.Fatalf("image of a running worker: %v %v", moved, merr)
+	}
+	if w, _ = repo.Get(ctx, "acc_b"); w.Image != "img:2" || w.World != 302 || !w.StartedAt.Equal(started) || w.DesiredState != StateRunning {
+		t.Fatalf("after the image moved = %+v", w)
+	}
+	if _, merr := repo.SetRunningImage(ctx, "acc_b", " "); !errors.Is(merr, ErrInvalid) {
+		t.Fatalf("empty image = %v", merr)
+	}
 
 	if err = repo.SetDesired(ctx, "acc_b", StateStopped, 302, ""); err != nil {
 		t.Fatal(err)
 	}
-	if w, _ = repo.Get(ctx, "acc_b"); w.DesiredState != StateStopped || w.StoppedAt == nil || !w.StartedAt.Equal(started) || w.Image != "img:1" {
+	if w, _ = repo.Get(ctx, "acc_b"); w.DesiredState != StateStopped || w.StoppedAt == nil || !w.StartedAt.Equal(started) || w.Image != "img:2" {
 		t.Fatalf("stopped again = %+v", w)
+	}
+	// A stopped worker, or an account without one, is never moved (nor started).
+	for _, account := range []string{"acc_b", "acc_a", "acc_missing"} {
+		if moved, merr := repo.SetRunningImage(ctx, account, "img:3"); merr != nil || moved {
+			t.Fatalf("image of %s: %v %v", account, moved, merr)
+		}
+	}
+	if w, _ = repo.Get(ctx, "acc_b"); w.Image != "img:2" || w.DesiredState != StateStopped {
+		t.Fatalf("a stopped worker moved: %+v", w)
 	}
 	if err = repo.DeleteSession(ctx, "acc_b"); err != nil {
 		t.Fatal(err)

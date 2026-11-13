@@ -62,6 +62,24 @@ func TestAuditAccountAndAgent(t *testing.T) {
 	}
 }
 
+// The server's own actions (the reconciler's restart on a new image, docs/11
+// section 7.2) are audited as origin server; an origin outside the list is
+// refused.
+func TestAuditServerOrigin(t *testing.T) {
+	ctx := context.Background()
+	repo := New(testPool(ctx, t))
+	e := Entry{
+		Actor: "reconciler", Origin: "server", Action: "worker_restart", OK: true, AccountID: "acc_a", AgentID: "c1",
+		Params: json.RawMessage(`{"reason":"versão nova, na pausa","pause":"logged_out"}`),
+	}
+	if got, err := repo.Append(ctx, e); err != nil || got.Origin != "server" || got.Actor != "reconciler" {
+		t.Fatalf("server entry = %+v, %v", got, err)
+	}
+	if _, err := repo.Append(ctx, Entry{Actor: "x", Origin: "cluster", Action: "worker_restart", OK: true}); err == nil {
+		t.Fatal("an unknown origin was stored")
+	}
+}
+
 // testPool applies the migrations in a throwaway schema of DATABASE_URL.
 func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
 	t.Helper()

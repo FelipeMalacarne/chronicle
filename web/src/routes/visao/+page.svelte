@@ -22,7 +22,7 @@
 	import type { AccountRhythm, TimerView } from '#lib/progress/types';
 	import { boardIn } from '#lib/progress/undo';
 	import { chipsOf, routeLabel } from '#lib/progress/view';
-	import { workerFacts, workerLines } from '#lib/progress/workers';
+	import { RESTART_NOW_TITLE, workerFacts, workerLines } from '#lib/progress/workers';
 	import AuditCard from '#lib/v6/AuditCard.svelte';
 	import ClientAccount from '#lib/v6/ClientAccount.svelte';
 	import ClientLog from '#lib/v6/ClientLog.svelte';
@@ -487,7 +487,7 @@
 							class:btn-d={armed}
 							type="button"
 							disabled={busy}
-							title={line?.outdated ? 'Reinicia na versão nova; sai do jogo' : 'Sai do jogo'}
+							title={line?.outdated ? RESTART_NOW_TITLE : 'Sai do jogo'}
 							onclick={restart}
 							>{busy ? '…' : armed ? 'Reiniciar e sair do jogo?' : 'Reiniciar'}</button
 						>

@@ -9,6 +9,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
@@ -35,6 +36,9 @@ type ProgressService interface {
 	AccountState(ctx context.Context, accountID string) (storeprogress.AccountState, error)
 	Timers(ctx context.Context, accountID string) (storeprogress.TimersView, error)
 	Nearby(ctx context.Context, accountID, guideID string, limit int) (storeprogress.NearbyView, error)
+	// TaskFacts is what the panel's assisted mode evaluates the cursor
+	// step's tasks on (docs/10 phase 2).
+	TaskFacts(ctx context.Context, accountID string) (panel.Facts, error)
 	Check(ctx context.Context, accountID string) (storeprogress.CheckReport, error)
 }
 

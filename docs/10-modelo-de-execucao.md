@@ -1,11 +1,14 @@
 # 10 — Modelo de execução: fatos, eventos, tarefas, receitas e planos
 
 **Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 e E5 a E10 em 2026-11-13, do
-jeito recomendado (seção 14). As fases 0 (doc 04, seção 9, item 17) e 1 (item 21, 2026-11-13) estão
-feitas.** A fase 1 entregou as entidades `npc`, `shop` e `object`, as áreas dos locais, o schema de
-`tasks[]` e de receitas e o verificador (seções 7 e 8, "Como implementado"), sem nenhuma tarefa ou
-receita real no conteúdo: elas vêm da extração com o dono e da gravação (fase 2). O resto deste doc
-não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
+jeito recomendado (seção 14); E11 a E13 em aberto, com o conservador implementado. As fases 0 (doc 04,
+seção 9, item 17) e 1 (item 21, 2026-11-13) estão feitas; o código da fase 2 está pronto (2026-11-13) e
+falta a parte do dono: gravar um trecho do Oziris 1.1 e confirmar as tarefas propostas.** A fase 1
+entregou as entidades `npc`, `shop` e `object`, as áreas dos locais, o schema de `tasks[]` e de
+receitas e o verificador (seções 7 e 8, "Como implementado"). A fase 2 entregou a gravação por
+demonstração no plugin e no ingest, as tarefas propostas a partir dela e o modo assistido no painel
+(seções 10 e 11, "Como implementado"). Ainda não há tarefa ou receita real no conteúdo: elas entram
+com a gravação e a confirmação do dono. O resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
 (<https://claude.ai/artifact/EZaKJZKjVAeotQG41rehEU>), seções 5 a 8.
 
@@ -299,6 +302,27 @@ atribuição de cada passo aparece na tela.
   objetivo fica `met`.
 - **Modo assistido antes do automático:** a mesma tarefa primeiro só destaca o NPC ou objeto, desenha
   o caminho e avisa os itens que faltam. Valida a qualidade das tarefas sem risco.
+
+  **Como implementado (fase 2, 2026-11-13).** O primeiro degrau, ainda sem destacar nada no jogo: o
+  painel do Chronicle Link 1.14.0 mostra as tarefas do passo atual como uma lista de verificação. O
+  servidor monta a lista (`internal/core/panel`, `Window.steps[0].tasks`, só no passo do cursor) com
+  `Content.TasksOf` (as tarefas herdadas das receitas e as do passo, pelo modo da conta) e avalia o
+  término de cada uma com o que sabe:
+
+  | Término | Avaliado por |
+  |---|---|
+  | chave de objetivo | o veredito travado do passo, quando é objetivo dele; senão `progress.EvaluateObjective` sobre os fatos da conta |
+  | `at_location` | a última posição do plugin ("Send position") dentro da área do local; posição com mais de 15 minutos é `unknown` |
+  | `loadout_ready` | a prontidão do trecho (ou dos `items` da tarefa) sobre o inventário e o equipamento ao vivo |
+  | `goal_met` | os vereditos dos objetivos que o passo conclui |
+  | `owner_mark` | a marca `manual_done` do dono no passo |
+
+  O que o servidor não sabe é `unknown`, com o motivo, nunca "a fazer". Cada linha traz o rótulo
+  ("Ir até Lumbridge Castle", "Falar com Duke Horacio: …"), o término por extenso e se veio de uma
+  receita. O plugin só mostra (✓ feito, ○ a fazer, ? sem dado, com o término e o motivo no tooltip); a
+  `chronicle now` mostra a mesma lista. O JSON está fixado nos dois lados: o `TestAssistedModeWire`
+  grava `route-tasks.json` nos recursos de teste do plugin, que o `RouteWindowTest` lê. Destacar o NPC
+  ou o objeto, desenhar o caminho e agir ficam para as fases seguintes.
 - **Vários personagens:** catálogos e receitas compartilhados; por conta ficam modo, fatos, plano ativo
   e cliente (`clients`). O agent gerencia N clientes, com um executor e um lock por cliente.
 - **Risco:** toda receita declara riscos; em HCIM, risco de morte bloqueia execução sem supervisão. O
@@ -421,8 +445,24 @@ fixtures viram teste de conformidade, com cada resposta real validada contra o s
 
 A fase 0 não dependia de nenhuma decisão de automação e já está feita. Com a seção 14 fechada
 (2026-11-13), as fases 1 a 5 entraram na sequência do doc 04, seção 9, como item 21. A fase 1 foi
-começada e terminada em 2026-11-13 (seções 7 e 8): `content validate` cobre tarefas e receitas. A
-próxima é a 2, a gravação por demonstração e o modo assistido, que traz as primeiras tarefas reais.
+começada e terminada em 2026-11-13 (seções 7 e 8): `content validate` cobre tarefas e receitas.
+
+**Fase 2: o código está pronto (2026-11-13); falta o dono.** Feito: a gravação no Chronicle Link 1.13.0
+e no ingest (seção 11), as tarefas propostas da gravação com o `propose_tasks` e o `submit_tasks`
+(seções 7 e 11) e o modo assistido no painel do 1.14.0 (seção 10). Para terminar a fase, o dono:
+
+1. instala o Chronicle Link 1.14 e liga "Record demonstration" (e "Send position", para o modo
+   assistido avaliar os `travel`);
+2. joga um trecho do Oziris 1.1 (por exemplo do 1.1.1 ao 1.1.20);
+3. exporta a gravação: `chronicle recording --since 3h -o /tmp/gravacao.json`;
+4. abre uma sessão de extração (skill `annotate-guide@6`): para cada passo do trecho, o agente chama o
+   `propose_tasks` com o arquivo, mostra as propostas e as `issues`, e o dono confirma, corrige ou
+   descarta cada uma; o `submit_tasks` grava o confirmado com `confirmed_by: owner`;
+5. confere no painel do plugin a lista de tarefas dos passos que ganharam tarefas, e commita os
+   sidecars depois do `content validate`.
+
+O que não foi conferido no jogo está no doc 06 (adendos da gravação e do modo assistido). A fase 3 (o
+executor de `travel`, `bank` e `buy`) parte das tarefas assim confirmadas.
 
 ## 14. Decisões em aberto (dono)
 

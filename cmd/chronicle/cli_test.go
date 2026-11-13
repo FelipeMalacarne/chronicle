@@ -30,7 +30,10 @@ func (f *fakePlanner) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			Guide: "bruhsailer-main", Title: "BRUHsailer", Attribution: "Guia por So Iron BRUH e ParasailerOSRS",
 			Cursor: &panel.Cursor{StepID: "bruh-1.2-a"},
 			Steps: []panel.Step{
-				{ID: "bruh-1.2-a", Ref: "CH1.31", Title: "Barbarian fishing", Current: true},
+				{ID: "bruh-1.2-a", Ref: "CH1.31", Title: "Barbarian fishing", Current: true, Tasks: []panel.Task{
+					{Type: "travel", Label: "Ir até Otto's Grotto", Until: "na área do local", State: "met"},
+					{Type: "talk", Label: "Falar com Otto", Until: "objetivos do passo", State: "unmet"},
+				}},
 				{ID: "bruh-1.2-b", Ref: "CH1.32", Title: "Next"},
 			},
 		})
@@ -90,6 +93,10 @@ func TestNowShowsAttribution(t *testing.T) {
 	out, err := runCLI(t, "now", "--url", srv.URL)
 	if err != nil || !strings.Contains(out, "▶ CH1.31") || !strings.Contains(out, "CH1.32") || !strings.Contains(out, "So Iron BRUH e ParasailerOSRS") {
 		t.Fatalf("now = %q %v", out, err)
+	}
+	// The assisted mode's checklist of the current step.
+	if !strings.Contains(out, "✓ Ir até Otto's Grotto (até: na área do local)") || !strings.Contains(out, "○ Falar com Otto") {
+		t.Fatalf("now without the tasks = %q", out)
 	}
 }
 

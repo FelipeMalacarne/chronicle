@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.google.gson.Gson;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class RouteWindowTest
@@ -88,5 +89,40 @@ class RouteWindowTest
 		assertEquals(3, hcim.current().notesOrEmpty().size());
 		assertEquals(1, hcim.current().visibleNotes().size(), "hcim and empty notes are hidden");
 		assertEquals("Bring food", hcim.current().visibleNotes().get(0).text);
+	}
+
+	/**
+	 * The assisted mode's checklist, from the planner's own JSON: route-tasks.json is written by
+	 * the planner's TestAssistedModeWire (internal/core/panel), so both sides read one contract.
+	 */
+	@Test
+	void parsesTheCurrentStepsTasksFromThePlannersFixture()
+	{
+		RouteWindow w = PanelScreenshotFixture.tasks();
+		RouteWindow.Step cur = w.current();
+		List<RouteWindow.Task> tasks = cur.tasksOrEmpty();
+		assertEquals(7, tasks.size());
+		RouteWindow.Task train = tasks.get(0);
+		assertEquals("train", train.type);
+		assertTrue(train.recipe, "inherited from the recipe of the step's objective");
+		assertEquals("10 Agility", train.until);
+		RouteWindow.Task travel = tasks.get(1);
+		assertEquals("Ir até Lumbridge Castle", travel.label);
+		assertEquals("met", travel.state);
+		assertFalse(travel.recipe);
+		assertEquals("Falar com Hans: “Who are you?”", tasks.get(4).label);
+		assertEquals("unmet", tasks.get(6).state);
+		assertTrue(w.step("2").tasksOrEmpty().isEmpty(), "only the current step carries tasks");
+		assertTrue(RouteWindowFixtures.window().current().tasksOrEmpty().isEmpty(), "an older planner sends none");
+
+		assertEquals("feito", PanelText.taskState(travel));
+		assertEquals("a fazer", PanelText.taskState(tasks.get(6)));
+		RouteWindow.Task unknown = new RouteWindow.Task();
+		unknown.state = "unknown";
+		unknown.reason = "sem posição: ligue Send position";
+		unknown.until = "na área do local";
+		assertEquals("sem dado", PanelText.taskState(unknown), "unknown is never shown as to do");
+		assertEquals("Termina: na área do local · sem posição: ligue Send position", PanelText.taskTooltip(unknown));
+		assertEquals("Termina: 10 Agility · da receita do objetivo", PanelText.taskTooltip(train));
 	}
 }

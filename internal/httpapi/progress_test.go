@@ -13,6 +13,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
@@ -105,6 +106,13 @@ func (f *fakeProgress) Sources(_ context.Context, accountID string) ([]storeprog
 		return nil, storeprogress.ErrAccountNotFound
 	}
 	return []storeprogress.SourceView{{Source: "plugin", Facts: 3}}, nil
+}
+
+func (f *fakeProgress) TaskFacts(_ context.Context, accountID string) (panel.Facts, error) {
+	if accountID != "acc-1" {
+		return panel.Facts{}, storeprogress.ErrAccountNotFound
+	}
+	return panel.Facts{Mode: "ironman"}, nil
 }
 
 func (f *fakeProgress) Nearby(_ context.Context, accountID, guideID string, limit int) (storeprogress.NearbyView, error) {

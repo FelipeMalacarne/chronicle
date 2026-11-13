@@ -9,6 +9,7 @@ package panel
 import (
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
@@ -84,6 +85,10 @@ type Step struct {
 	// (GP after step, total time, items needed, skills/quests). An update
 	// note can tell the player to skip the step.
 	Notes []Note `json:"notes,omitempty"`
+	// Tasks are the cursor step's typed tasks (docs/10 section 7: the
+	// recipes' and the step's own), the checklist of the assisted mode; only
+	// on the current step, absent when it has none.
+	Tasks []Task `json:"tasks,omitempty"`
 }
 
 // Requirement is an objective key with its display label.
@@ -141,6 +146,11 @@ type Input struct {
 	// Limit is how many steps follow the cursor; out of range means
 	// DefaultLimit.
 	Limit int
+	// Content gives the cursor step's tasks with its recipes; nil leaves
+	// the checklist out. Facts and Now evaluate their termination.
+	Content *content.Content
+	Facts   Facts
+	Now     time.Time
 }
 
 // Build assembles the window.
@@ -191,6 +201,19 @@ func Build(in Input) Window {
 	}
 	if current, _ := planning.Legs(g, in.Cursor.StepID); current != nil {
 		out.Carry = carry(g, current, in.Cursor.StepID, in.Holdings, in.Registry)
+	}
+	if in.Content != nil && len(out.Steps) > 0 && out.Steps[0].Current {
+		if st, ok := g.Step(in.Cursor.StepID); ok {
+			now := in.Now
+			if now.IsZero() {
+				now = time.Now()
+			}
+			// bank tasks without items get ready for the step's own segment
+			seg, _ := g.Segment(st.SegmentID)
+			if tasks := stepTasks(in.Content, st, in.Board.Steps[start], seg, g, in.Holdings, in.Facts, in.Registry, now); len(tasks) > 0 {
+				out.Steps[0].Tasks = tasks
+			}
+		}
 	}
 	return out
 }

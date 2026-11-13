@@ -99,7 +99,8 @@ internal/core/        PURE domain (no DB/HTTP imports):
   planning/           next-leg readiness (ownership vs carried loadout vs bank instructions)
   progress/           objective verdicts (latched), derived step status, implied cascade, cursor
   rhythm/             an account's rhythm from its snapshots: skill trained, XP/h, session, today, GP
-  panel/              route window of the plugin panel (cursor step, next steps, labels, carry)
+  panel/              route window of the plugin panel (cursor step, next steps, labels, carry, and the
+                      cursor step's tasks with their termination evaluated: the assisted mode, docs/10)
   annotate/           guide extraction: batches, name resolution, verification, sidecar/report writer
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
@@ -306,7 +307,7 @@ attached agent declares). Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes bas
 contrato de ingest) · 07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC,
 plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por
 agente; decisões em 9.1 e 9.3) · 10 modelo de execução (fatos por fonte, log de eventos,
-tarefas, receitas, planos; E1 a E10 decididas; fases 0 e 1 feitas, 2 a 5 no item 21 do doc 04) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
+tarefas, receitas, planos; E1 a E10 decididas, E11 a E13 em aberto; fases 0 e 1 feitas, código da 2 feito (gravação, propostas, modo assistido; falta a gravação e a confirmação do dono), 3 a 5 no item 21 do doc 04) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
 `docs/ui/pergaminho.md` + `pergaminho.tokens.json` (design system).
 `docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.

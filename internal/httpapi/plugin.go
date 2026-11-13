@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
@@ -267,7 +268,14 @@ func (s *Server) routeWindow(ctx context.Context, accountID string, limit int) (
 	if board.Cursor != nil {
 		cur = coreprogress.CursorRecord{StepID: board.Cursor.StepID, Cause: board.Cursor.Cause}
 	}
+	// The assisted mode: the cursor step's tasks, evaluated on the
+	// account's facts and position (docs/10 phase 2).
+	facts, err := s.opts.Progress.TaskFacts(ctx, accountID)
+	if err != nil {
+		return panel.Window{}, err
+	}
 	return panel.Build(panel.Input{
 		Guide: g, Board: board.Board, Cursor: cur, Holdings: h, Registry: s.opts.Catalog, Limit: limit,
+		Content: s.opts.Content, Facts: facts, Now: time.Now(),
 	}), nil
 }

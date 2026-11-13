@@ -17,9 +17,12 @@ import net.runelite.api.GameState;
 import net.runelite.api.events.ChatMessage;
 import net.runelite.api.events.GameStateChanged;
 import net.runelite.api.events.GameTick;
+import net.runelite.api.ScriptID;
 import net.runelite.api.events.ItemContainerChanged;
+import net.runelite.api.events.ScriptPostFired;
 import net.runelite.api.events.StatChanged;
 import net.runelite.api.events.VarbitChanged;
+import net.runelite.api.events.WidgetLoaded;
 import net.runelite.api.gameval.InventoryID;
 import net.runelite.client.callback.ClientThread;
 import net.runelite.client.config.ConfigManager;
@@ -60,10 +63,15 @@ import okhttp3.OkHttpClient;
  * <p>Managed workers (1.11.0): {@code CHRONICLE_LINK_SERVER_URL} and {@code CHRONICLE_LINK_TOKEN}
  * in the environment replace the config's URL and credential ({@link LinkEnvironment}); nothing
  * of them is written to the profile, and the panel says the credential comes from there.
+ *
+ * <p>Collection log (1.12.0): when the manifest offers {@code collection_log}, each page the
+ * player opens in game is read from the interface ({@link CollectionLogReader}; never another
+ * player's log from an adventure log) and sent in {@code data.collectionLog}. The control bridge
+ * also answers {@code /bridge/version} and {@code /bridge/break} (the Break Handler's state).
  */
 @PluginDescriptor(
 	name = ChronicleLinkPlugin.TAG + "Chronicle Link",
-	description = "Syncs skills, quests, diary varbits and opted-in items to your Chronicle (Ironman Planner) server and shows its route in a side panel",
+	description = "Syncs skills, quests, diary varbits, the collection log pages you open and opted-in items to your Chronicle (Ironman Planner) server and shows its route in a side panel",
 	tags = {"chronicle", "ironman", "tracker", "planner", "guide", "panel"},
 	authors = {"FelipeMalacarne"},
 	version = ChronicleLinkPlugin.VERSION,
@@ -74,7 +82,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class ChronicleLinkPlugin extends Plugin
 {
-	static final String VERSION = "1.11.0";
+	static final String VERSION = "1.12.0";
 	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */
@@ -602,6 +610,35 @@ public class ChronicleLinkPlugin extends Plugin
 		if (filter != null && collector.readyForEvents())
 		{
 			trigger.onEvent(filter.container(event.getContainerId(), config), now);
+		}
+	}
+
+	/**
+	 * The collection log drew a page: read it (this character's log only) and, when the page is
+	 * new or changed and the manifest takes pages, ask for a capture.
+	 */
+	@Subscribe
+	public void onScriptPostFired(ScriptPostFired event)
+	{
+		if (event.getScriptId() != ScriptID.COLLECTION_DRAW_LIST || collector == null)
+		{
+			return;
+		}
+		Instant now = Instant.now();
+		EventFilter filter = eventFilter;
+		if (collector.onCollectionLogDrawn(now) && filter != null && collector.readyForEvents())
+		{
+			trigger.onEvent(filter.collectionLog(), now);
+		}
+	}
+
+	/** An adventure log can open another player's collection log: the collector tracks whose. */
+	@Subscribe
+	public void onWidgetLoaded(WidgetLoaded event)
+	{
+		if (collector != null)
+		{
+			collector.onWidgetLoaded(event.getGroupId());
 		}
 	}
 

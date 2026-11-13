@@ -51,6 +51,15 @@ DELETE FROM observations WHERE account_id = $1 AND facet = $2 AND key = $3 AND s
 -- A full push of a source replaces that source's facet; other sources stay.
 DELETE FROM observations WHERE account_id = $1 AND facet = $2 AND source = $3;
 
+-- name: DeleteObservationCollectionLogSlots :exec
+-- The collectionLogSlots bitset replaces the source's slot facts (keyed by item
+-- id); the pages the client read (keyed 'page:<title>') stay.
+DELETE FROM observations
+WHERE account_id = $1
+  AND facet = 'collection_log'
+  AND source = $2
+  AND key NOT LIKE 'page:%';
+
 -- name: DeleteObservationItemsByContainer :exec
 DELETE FROM observations
 WHERE account_id = sqlc.arg(account_id)

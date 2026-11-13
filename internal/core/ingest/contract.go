@@ -35,8 +35,12 @@ type Manifest struct {
 	// Timers tells the client the server accepts data.timers (the Time
 	// Tracking clocks, docs/06 adendo 2026-11-10); Position, data.position.
 	// The client sends position only when its owner opted in.
-	Timers          bool          `json:"timers"`
-	Position        bool          `json:"position"`
+	Timers   bool `json:"timers"`
+	Position bool `json:"position"`
+	// CollectionLog tells the client the server accepts data.collectionLog:
+	// the collection log pages the player opened in game (docs/06, adendo
+	// 2026-11-13).
+	CollectionLog   bool          `json:"collection_log"`
 	Items           ItemSelection `json:"items"`
 	IntervalSeconds int           `json:"interval_seconds"`
 	Resync          bool          `json:"resync"`
@@ -100,7 +104,42 @@ type PushData struct {
 	// Position is where the character stands, sent only with the client's
 	// opt-in; it is kept as the last observation, never as history.
 	Position *Position `json:"position,omitempty"`
+	// CollectionLog maps a collection log page, titled as the game shows it
+	// ("Barrows Chests", "All Pets"), to what the client read on it while the
+	// player had it open. Each page present replaces that page, in a full
+	// push and in a delta; pages absent stay as they were, since the client
+	// only knows the pages opened in game.
+	CollectionLog *CollectionLogMap `json:"collectionLog,omitempty"`
 }
+
+// CollectionLogMap is a JSON object page title -> page
+// (Map<String, CollectionLogPage> in Java).
+type CollectionLogMap map[string]CollectionLogPage
+
+// CollectionLogPage is one collection log page as the client read it from
+// the open interface.
+type CollectionLogPage struct {
+	// Tab is the tab that lists the page, one of CollectionLogTabs; empty
+	// when the client could not tell.
+	Tab string `json:"tab,omitempty"`
+	// ObservedAt is when the page was read, never after sent_at: a full
+	// push resends the pages read earlier in the session.
+	ObservedAt time.Time `json:"observed_at"`
+	// Items is every slot the page showed: item id -> how many were
+	// obtained, 0 for a slot not obtained yet.
+	Items QuantityMap `json:"items"`
+}
+
+// CollectionLogTabs are the tabs of the game's collection log, in its order.
+var CollectionLogTabs = []string{"BOSSES", "RAIDS", "CLUES", "MINIGAMES", "OTHER"}
+
+// Bounds of data.collectionLog: the game has a few hundred pages and no page
+// near a thousand slots.
+const (
+	MaxCollectionLogPages      = 500
+	MaxCollectionLogPageItems  = 1000
+	MaxCollectionLogPageLength = 80
+)
 
 // TimerMap is a JSON object tab -> clock (Map<String, Timer> in Java).
 type TimerMap map[string]Timer

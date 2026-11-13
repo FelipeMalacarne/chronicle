@@ -584,6 +584,8 @@ export interface AccountState {
 	/** Por tier, na ordem do jogo; vazio até o plugin mandar os varps dos CA. */
 	combat_achievements: CATierView[];
 	collection_log?: CollectionLogView;
+	/** As páginas do collection log que o plugin leu com o log aberto no jogo; vazio até abrir. */
+	collection_log_pages: CollectionLogPageView[];
 	containers: ContainerView[];
 }
 
@@ -638,12 +640,37 @@ export interface TimersView {
 	timers: TimerView[];
 }
 
-/** O collection log pelos contadores do jogo (o plugin não abre o log). */
+/** O collection log pelos contadores do jogo (varps COLLECTION_COUNT e _MAX). */
 export interface CollectionLogView {
 	obtained: number;
 	total?: number;
 	source: string;
 	observed_at: string;
+}
+
+/**
+ * Uma página do collection log como o plugin a leu da última vez, com o log aberto no jogo. Página
+ * nunca aberta não aparece: os itens dela ficam desconhecidos, nunca faltando.
+ */
+export interface CollectionLogPageView {
+	page: string;
+	/** Aba que lista a página; ausente quando o plugin não soube dizer. */
+	tab?: 'BOSSES' | 'RAIDS' | 'CLUES' | 'MINIGAMES' | 'OTHER';
+	obtained: number;
+	total: number;
+	/** Itens obtidos, com quantos. */
+	items: CollectionLogItemView[];
+	/** Espaços que a página mostrou sem o item. */
+	missing: CollectionLogItemView[];
+	source: string;
+	observed_at: string;
+}
+
+export interface CollectionLogItemView {
+	id: number;
+	name: string;
+	/** Só nos obtidos. */
+	qty?: number;
 }
 
 /* ------------------------------------------------------------------ setup (V4Setup) */

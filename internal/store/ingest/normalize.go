@@ -78,6 +78,9 @@ func (r *Repository) persistNormalized(ctx context.Context, q *storedb.Queries, 
 	if err := r.persistCollectionLog(ctx, q, &rows, accountID, snapshotID, push); err != nil {
 		return err
 	}
+	if err := persistCollectionLogPages(ctx, q, &rows, accountID, snapshotID, push); err != nil {
+		return err
+	}
 	if err := persistItems(ctx, q, &rows, accountID, snapshotID, push); err != nil {
 		return err
 	}
@@ -118,8 +121,8 @@ func touchedFacets(push coreingest.Push) []string {
 	if d.Levels != nil || d.XP != nil || d.Boosted != nil {
 		out = append(out, "skill")
 	}
-	if d.CollectionLogSlots != nil {
-		out = append(out, "collection_log")
+	if d.CollectionLogSlots != nil || d.CollectionLog != nil {
+		out = append(out, coreingest.FacetCollectionLog)
 	}
 	if d.Items != nil {
 		out = append(out, "item")
@@ -222,8 +225,9 @@ func (r *Repository) persistCollectionLog(ctx context.Context, q *storedb.Querie
 	if push.Data.CollectionLogSlots == nil {
 		return nil
 	}
-	// collectionLogSlots is always a complete bitset, including on delta pushes.
-	if err := q.DeleteObservationFacet(ctx, storedb.DeleteObservationFacetParams{AccountID: accountID, Facet: "collection_log", Source: pluginSource}); err != nil {
+	// collectionLogSlots is always a complete bitset, including on delta
+	// pushes. It replaces the slot facts only: the pages stay.
+	if err := q.DeleteObservationCollectionLogSlots(ctx, storedb.DeleteObservationCollectionLogSlotsParams{AccountID: accountID, Source: pluginSource}); err != nil {
 		return fmt.Errorf("replace collection log state: %w", err)
 	}
 	bits, err := base64.StdEncoding.DecodeString(*push.Data.CollectionLogSlots)
@@ -246,6 +250,32 @@ func (r *Repository) persistCollectionLog(ctx context.Context, q *storedb.Querie
 			return err
 		}
 		rows.add(snapshotID, "collection_log", key, raw)
+	}
+	return nil
+}
+
+// persistCollectionLogPages keeps each collection log page the client read
+// as one fact (coreingest.CollectionLogFacts), observed when the page was
+// read: a page present replaces that page, in a full push and in a delta, an
+// older read never replaces a newer one, and the pages a push does not carry
+// stay (the client knows only the pages opened in game).
+func persistCollectionLogPages(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID string, push coreingest.Push) error {
+	if push.Data.CollectionLog == nil {
+		return nil
+	}
+	for title, page := range *push.Data.CollectionLog {
+		for rawID, qty := range page.Items {
+			if _, err := parseInt32(rawID); err != nil || qty > math.MaxInt32 {
+				return fmt.Errorf("%w: collection log %q item %q is outside PostgreSQL integer range", ErrInvalidPayload, title, rawID)
+			}
+		}
+	}
+	for _, f := range coreingest.CollectionLogFacts(*push.Data.CollectionLog) {
+		raw, err := upsertFact(ctx, q, accountID, snapshotID, f.Facet, f.Key, f.Value, f.ObservedAt)
+		if err != nil {
+			return err
+		}
+		rows.add(snapshotID, f.Facet, f.Key, raw)
 	}
 	return nil
 }

@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type validationErrors []string
@@ -122,6 +123,9 @@ func (p Push) Validate() error {
 	}
 	if p.Data.Timers != nil {
 		validateTimers(&errs, *p.Data.Timers)
+	}
+	if p.Data.CollectionLog != nil {
+		validateCollectionLog(&errs, *p.Data.CollectionLog, p.SentAt)
 	}
 	if pos := p.Data.Position; pos != nil {
 		if pos.X < 0 || pos.X > 16383 || pos.Y < 0 || pos.Y > 16383 || pos.Plane < 0 || pos.Plane > 3 || pos.World < 0 || pos.World > 9999 {
@@ -256,6 +260,9 @@ func (p Push) ValidateAgainst(m Manifest) error {
 	if p.Data.Position != nil && !m.Position {
 		errs = append(errs, "data.position is not enabled by the manifest")
 	}
+	if p.Data.CollectionLog != nil && !m.CollectionLog {
+		errs = append(errs, "data.collectionLog is not enabled by the manifest")
+	}
 	if p.Data.Items == nil {
 		return errs.err()
 	}
@@ -326,6 +333,65 @@ func validateTimers(errs *validationErrors, timers TimerMap) {
 			*errs = append(*errs, fmt.Sprintf("data.timers[%q].readyAt must be positive", k))
 		case len(t.Label) > 80:
 			*errs = append(*errs, fmt.Sprintf("data.timers[%q].label is longer than 80 bytes", k))
+		}
+	}
+}
+
+// validateCollectionLog checks the pages of data.collectionLog: a trimmed
+// title, a known tab or none, when it was read, and at least one slot with a
+// canonical item id and a quantity that is not negative (0 = not obtained).
+func validateCollectionLog(errs *validationErrors, pages CollectionLogMap, sentAt time.Time) {
+	if pages == nil {
+		*errs = append(*errs, "data.collectionLog must be a JSON object (use {} when empty)")
+		return
+	}
+	if len(pages) > MaxCollectionLogPages {
+		*errs = append(*errs, fmt.Sprintf("data.collectionLog has more than %d pages", MaxCollectionLogPages))
+		return
+	}
+	titles := make([]string, 0, len(pages))
+	for title := range pages {
+		titles = append(titles, title)
+	}
+	sort.Strings(titles)
+	for _, title := range titles {
+		page := pages[title]
+		path := fmt.Sprintf("data.collectionLog[%q]", title)
+		switch {
+		case strings.TrimSpace(title) == "" || strings.TrimSpace(title) != title:
+			*errs = append(*errs, fmt.Sprintf("data.collectionLog key %q must be a non-empty trimmed page title", title))
+			continue
+		case len(title) > MaxCollectionLogPageLength:
+			*errs = append(*errs, fmt.Sprintf("data.collectionLog key %q is longer than %d bytes", title, MaxCollectionLogPageLength))
+			continue
+		}
+		if page.Tab != "" && !slices.Contains(CollectionLogTabs, page.Tab) {
+			*errs = append(*errs, fmt.Sprintf("%s.tab %q is invalid", path, page.Tab))
+		}
+		if page.ObservedAt.IsZero() {
+			*errs = append(*errs, path+".observed_at is required")
+		} else if !sentAt.IsZero() && page.ObservedAt.After(sentAt) {
+			*errs = append(*errs, path+".observed_at must not be after sent_at")
+		}
+		switch {
+		case len(page.Items) == 0:
+			*errs = append(*errs, path+".items must hold the page's slots")
+			continue
+		case len(page.Items) > MaxCollectionLogPageItems:
+			*errs = append(*errs, fmt.Sprintf("%s.items has more than %d slots", path, MaxCollectionLogPageItems))
+			continue
+		}
+		ids := make([]string, 0, len(page.Items))
+		for id := range page.Items {
+			ids = append(ids, id)
+		}
+		sort.Strings(ids)
+		for _, id := range ids {
+			if !canonicalPositiveID(id) {
+				*errs = append(*errs, fmt.Sprintf("%s.items key %q must be a positive canonical item id", path, id))
+			} else if qty := page.Items[id]; qty < 0 {
+				*errs = append(*errs, fmt.Sprintf("%s.items[%q] must not be negative", path, id))
+			}
 		}
 	}
 }

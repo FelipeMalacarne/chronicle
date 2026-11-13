@@ -42,6 +42,9 @@ final class IngestContract
 		/** The server accepts {@code data.timers} and {@code data.position} (planner 2026-11-10). */
 		Boolean timers;
 		Boolean position;
+		/** The server accepts {@code data.collectionLog} (planner 2026-11-13). */
+		@SerializedName("collection_log")
+		Boolean collectionLog;
 		ItemSelection items;
 		@SerializedName("interval_seconds")
 		Integer intervalSeconds;
@@ -65,6 +68,11 @@ final class IngestContract
 		boolean positionEnabled()
 		{
 			return position != null && position;
+		}
+
+		boolean collectionLogEnabled()
+		{
+			return collectionLog != null && collectionLog;
 		}
 
 		int intervalSecondsOrDefault()
@@ -133,7 +141,22 @@ final class IngestContract
 		Map<String, Timer> timers;
 		/** Where the character stands; only with the owner's opt-in and the manifest's flag. */
 		Position position;
+		/**
+		 * Collection log page title -> what it showed when the player opened it; only when the
+		 * manifest allows it. Each page replaces the planner's copy, in a full and in a delta.
+		 */
+		Map<String, CollectionLogPage> collectionLog;
 		ItemContainers items;
+	}
+
+	/** One collection log page: its tab (absent when unknown), when it was read and every slot. */
+	static final class CollectionLogPage
+	{
+		String tab;
+		@SerializedName("observed_at")
+		String observedAt;
+		/** Item id -> how many were obtained, 0 for a slot not obtained yet. */
+		Map<String, Long> items;
 	}
 
 	/** One Time Tracking clock: the summary and, growing or done, when it is ready (epoch seconds). */

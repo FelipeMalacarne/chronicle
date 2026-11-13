@@ -18,6 +18,7 @@ final class EventFilter
 	private final Set<Integer> varps;
 	private final boolean skills;
 	private final boolean quests;
+	private final boolean collectionLog;
 	private final boolean bank;
 	private final boolean inventory;
 	private final boolean equipment;
@@ -28,6 +29,7 @@ final class EventFilter
 		varps = ids(m.varps);
 		skills = m.skillsEnabled();
 		quests = m.questsEnabled();
+		collectionLog = m.collectionLogEnabled();
 		bank = m.allows(ContainerKind.BANK);
 		inventory = m.allows(ContainerKind.INVENTORY);
 		equipment = m.allows(ContainerKind.EQUIPMENT);
@@ -114,6 +116,12 @@ final class EventFilter
 			return CaptureTrigger.Strength.NONE;
 		}
 		return realLevelChanged ? CaptureTrigger.Strength.HARD : CaptureTrigger.Strength.SOFT;
+	}
+
+	/** A collection log page read with new slots is hard when the manifest takes the pages. */
+	CaptureTrigger.Strength collectionLog()
+	{
+		return collectionLog ? CaptureTrigger.Strength.HARD : CaptureTrigger.Strength.NONE;
 	}
 
 	private static Set<Integer> ids(List<Integer> list)

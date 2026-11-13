@@ -47,6 +47,44 @@ const QuestStateMap = z.record(
   QuestState,
 );
 
+/**
+ * Relógios do Time Tracking (doc 06, adendo de 2026-11-10): aba -> resumo e, crescendo ou pronto,
+ * readyAt em segundos. Em full substitui as abas guardadas; em delta, só as que mudaram.
+ */
+const TimerMap = z.record(
+  z.string().regex(/^[A-Z][A-Z0-9_]{0,39}$/),
+  z.object({
+    state: z.enum(['COMPLETED', 'IN_PROGRESS', 'OCCUPIED', 'EMPTY', 'UNKNOWN']),
+    readyAt: z.number().int().positive().safe().optional(),
+    label: z.string().max(80).optional(),
+  }).strict(),
+).refine(timers => Object.keys(timers).length <= 40, 'no máximo 40 relógios');
+
+/** Posição do personagem, opt-in no cliente; o servidor guarda só a última. */
+const Position = z.object({
+  world: z.number().int().min(0).max(9999),
+  x: z.number().int().min(0).max(16383),
+  y: z.number().int().min(0).max(16383),
+  plane: z.number().int().min(0).max(3),
+}).strict();
+
+/**
+ * Páginas do collection log que o jogador abriu (doc 06, adendo de 2026-11-13): título -> aba,
+ * quando foi lida e cada espaço (id -> quantos obtidos, 0 para o que falta). Em full e em delta,
+ * cada página presente substitui a guardada; as ausentes ficam.
+ */
+const CollectionLogMap = z.record(
+  z.string().max(80).refine(title => title.trim() === title && title.length > 0, 'título não vazio e sem espaços nas pontas'),
+  z.object({
+    tab: z.enum(['BOSSES', 'RAIDS', 'CLUES', 'MINIGAMES', 'OTHER']).optional(), // ausente: o plugin não soube
+    observed_at: z.string().datetime({ offset: true }),
+    items: ItemQuantityMap.refine(items => {
+      const n = Object.keys(items).length;
+      return n >= 1 && n <= 1000;
+    }, 'de 1 a 1000 espaços'),
+  }).strict(),
+).refine(pages => Object.keys(pages).length <= 500, 'no máximo 500 páginas');
+
 const IngestItemSelection = z.object({
   bank: z.boolean().default(false),
   inventory: z.boolean().default(false),
@@ -63,6 +101,9 @@ export const IngestManifest = z.object({
   collections: uniquePositiveIDs,                       // ordem dos bits do collectionLogSlots
   skills: z.boolean().default(true),
   quests: z.boolean().default(false),                   // o servidor aceita data.quest (servidor anterior: ausente)
+  timers: z.boolean().default(false),                   // aceita data.timers (2026-11-10)
+  position: z.boolean().default(false),                 // aceita data.position (2026-11-10)
+  collection_log: z.boolean().default(false),           // aceita data.collectionLog (2026-11-13)
   items: IngestItemSelection,
   interval_seconds: z.number().int().min(5).default(10),
   resync: z.boolean().default(false),                    // próximo push deve ser full
@@ -126,7 +167,10 @@ const IngestPayloadBase = z.object({
     xp: IntegerMap.optional(),
     boosted: IntegerMap.optional(),
     quest: QuestStateMap.optional(),                       // todas em full; só as que mudaram em delta
-    collectionLogSlots: z.string().optional(),             // base64 bitset, índice = manifest.collections
+    timers: TimerMap.optional(),                           // só com manifest.timers
+    position: Position.optional(),                         // só com manifest.position e o opt-in
+    collectionLog: CollectionLogMap.optional(),            // só com manifest.collection_log
+    collectionLogSlots: z.string().optional(),             // base64 bitset, índice = manifest.collections (nenhum plugin manda)
     collectionLogItemCount: z.number().int().nonnegative().safe().optional(),
     items: IngestItemContainers.optional(),
   }).strict(),
@@ -169,6 +213,11 @@ export const IngestPayload = IngestPayloadBase.superRefine((payload, ctx) => {
     const observation = payload.data.items?.[container];
     if (observation && Date.parse(observation.observed_at) > sentAt) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['data', 'items', container, 'observed_at'], message: 'não pode ser posterior a sent_at' });
+    }
+  }
+  for (const [title, page] of Object.entries(payload.data.collectionLog ?? {})) {
+    if (Date.parse(page.observed_at) > sentAt) {
+      ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['data', 'collectionLog', title, 'observed_at'], message: 'não pode ser posterior a sent_at' });
     }
   }
 });

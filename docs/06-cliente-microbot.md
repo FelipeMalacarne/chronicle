@@ -32,7 +32,7 @@ do repositório de plugins que ele já mantém.
 | Quests (NOT_STARTED, IN_PROGRESS, FINISHED) | `Quest.values()` + `quest.getState(client)` na thread do cliente, enviados na faceta `data.quest` do contrato v1 (doc 04, seção 6.4) com a chave `quest.getName()`. Feito no plugin 1.1.0 (adendo "contrato do item 7" abaixo) | todos no `full`; em `delta` só os que mudaram |
 | Diaries por tier, quest points, unlocks | genérico: todo varbit/varp que o manifest listar, em `data.varb`/`data.varp`. Hoje o manifest pede os 48 varbits `DIARY_<ÁREA>_<TIER>_COMPLETED` e o varp 101 (`QUEST_POINTS`) de `content/reference/varbits.json`, mais os `proof` de `unlocks.json` quando existirem; o servidor deriva diary, `qp` e unlock. O plugin 1.0.0 já lê o que o manifest pede | em `VarbitChanged` (1.1.1: debounce de 1 s, teto de 3 s para os vars do manifest) ou na verificação de 10 s |
 | Combat achievements | varbits/cs2 do manifest | em `VarbitChanged` |
-| Collection log | `collectionLogSlots` via enums/structs do chisel, como o WikiSync faz | login e ao abrir o log |
+| Collection log | contadores pelos varps do manifest; os itens, página por página, lidos da interface aberta em `data.collectionLog` (1.12.0, adendo de 2026-11-13). O `collectionLogSlots` planejado aqui nunca foi enviado | os contadores como qualquer var; cada página quando o jogador a abre |
 | Banco, inventário, equipamento | `ItemContainerChanged` para `live`; cache `Rs2Bank`/`Rs2Inventory` apenas como `restored` | ao fechar o banco, ao logar; opt-in separado por container |
 | Posição, mundo, membro | `client.getLocalPlayer().getWorldLocation()`, `getWorld()` | a cada N segundos, opt-in; útil para "você está em Ardougne, próximo step aqui" |
 | Quest Helper ativo | não necessário | |
@@ -439,3 +439,106 @@ Verificação: `TestOIDCPluginLogin` (JWT do provedor falso nas rotas do plugin,
 `ingest`, sem instalação, vencido, `ipl_` à parte), `TestOIDCInstallationPostgres` (só as contas do
 usuário, escopos das roles no push), `LoginSessionTest` no plugin (fluxo completo contra um issuer falso,
 renovação com rotação, `invalid_grant`, issuer fora do ar) e o painel renderizado sem cliente.
+
+## Adendo de 2026-11-13: collection log por página, versão da ponte e break (Chronicle Link 1.12.0)
+
+Item 16 do doc 04, seção 9. O jogo só diz quais itens do collection log a conta tem com o log aberto,
+página por página. Então o plugin lê cada página que o jogador abre e manda a página inteira.
+
+**De onde vêm os ids.** Nada foi adivinhado: o `ChatCommandsPlugin` do próprio cliente pinado (2.6.52)
+lê a página "All Pets" do mesmo jeito, e os valores dele (lidos do bytecode do jar) batem com o
+`InterfaceID` do vendor:
+
+- depois do script `COLLECTION_DRAW_LIST` (2731, evento `ScriptPostFired`), o primeiro filho de
+  `InterfaceID.Collection.HEADER_TEXT` (40697876) é o título da página;
+- os filhos de `InterfaceID.Collection.ITEMS_CONTENTS` (40697893) são os espaços da página, com o
+  item e a quantidade; o obtido é desenhado com opacidade 0;
+- o mesmo plugin não lê o log de outro jogador aberto pelo adventure log de uma casa. A interface é
+  o grupo 947 (`MENU_NEW`) ou 187 (`MENU`), o título "The Exploits of <nome>" fica em
+  `MenuNew.TITLE` ou `Menu.LJ_LAYER2` e é lido no tick seguinte ao carregamento. O dono vale até o
+  próximo `LOADING` ou `HOPPING`. O Chronicle Link faz igual e, por cautela, também não lê enquanto
+  o dono ainda não foi lido.
+
+**A aba** (Bosses, Raids, Clues, Minigames, Other) é a da única lista de aba visível
+(`BOSS_CONTAINER`, `RAID_CONTAINER`, `CLUE_CONTAINER`, `MINIGAME_CONTAINER`, `OTHER_CONTAINER`). Com
+nenhuma ou mais de uma visível, a aba fica vazia, nunca adivinhada.
+
+**Contrato v1, campo opcional com flag no manifest**, como `timers` (spec no doc 04, seção 6.4):
+
+| Campo do push | Flag do manifest | Conteúdo |
+|---|---|---|
+| `data.collectionLog` | `collection_log` | título da página → `{"tab", "observed_at", "items"}`. `tab` é `BOSSES`, `RAIDS`, `CLUES`, `MINIGAMES` ou `OTHER`, ausente quando não se sabe. `observed_at` é quando a página foi lida. `items` é cada espaço da página: id do item → quantos obtidos, `0` para o que falta |
+
+```json
+"collectionLog": {"Barrows Chests": {"tab": "BOSSES", "observed_at": "2026-11-13T12:00:00Z",
+                                     "items": {"4708": 1, "4710": 0, "4712": 2}}}
+```
+
+Regras:
+
+- Cada página presente substitui a guardada, tanto num `full` quanto num `delta`.
+- As páginas ausentes ficam como estão: o plugin só conhece as páginas abertas no jogo. Um `full`
+  sem o campo não apaga nada.
+- O plugin guarda as páginas lidas no login atual. O `full` leva todas; o `delta` leva as novas e as
+  que mudaram. Página reaberta sem mudança não é reenviada, e página nova não pede `full`.
+- A leitura de uma página nova ou mudada pede captura (evento duro, como um container).
+- Limites do servidor: 500 páginas, 1.000 espaços por página e título de até 80 bytes. O plugin não
+  manda a página que passa deles.
+
+**No servidor.** Cada página vira um fato da faceta `collection_log`, com chave `page:<título>` e
+valor `{"tab", "items"}`, observado quando a página foi lida. A leitura mais velha nunca substitui a
+mais nova, e o `observed_at` fica limitado ao relógio do servidor. O bitset `collectionLogSlots`, que
+nenhum plugin manda, passa a substituir só os fatos dele (chave = id do item), sem apagar as páginas.
+
+O `GET /api/account/state` ganha `collection_log_pages`: por aba e título, os itens obtidos (com
+quantos), os que faltam, os totais e a fonte com a idade. Página nunca aberta não aparece, então os
+itens dela ficam desconhecidos, nunca "faltando". Os contadores do jogo (`collection_log`) continuam
+à parte, pelos varps. A tela Conta ainda não mostra as páginas: o desenho vai para o canvas antes
+(regra 11).
+
+Um plugin 1.11 ignora a flag nova. Um servidor anterior não a anuncia, e o 1.12 não manda o campo. A
+`manifest_version` muda, então os plugins em uso buscam o manifest de novo e mandam um `full`.
+
+**Versão da ponte.** A ponte de controle ganha `GET /bridge/version` (`{"version": "1.12.0"}`, mesmo
+token e checagens das outras rotas). O agent lê a versão a cada `status` com o cliente rodando e a
+devolve em `bridge`; fica vazio sem ponte, com o plugin desligado ou numa versão anterior à 1.12. O
+`Hello.Bridge` continua vazio: o hello sai antes de o cliente subir no worker (doc 11, seção 14.3).
+
+**Break do Microbot.** A ponte ganha `GET /bridge/break` (mesmas checagens), só leitura, para o "Até a
+pausa" da web v7. Os valores vêm dos campos estáticos do cliente pinado:
+
+- `active`: o mesmo que o `ClientAlertReporter` do cliente chama de break. Vale o break do Break
+  Handler (`BreakHandlerScript.isBreakActive()`, qualquer estado fora de esperar), o micro break do
+  antiban (`isMicroBreakActive()`) ou o break do Break Handler V2
+  (`BreakHandlerV2State.isBreakActive()`).
+- `in_s`: segundos até o próximo break (`BreakHandlerScript.breakIn`), só fora de um break.
+- `left_s`: segundos que faltam no break atual (`breakDuration`), só num break do Break Handler.
+
+Os dois tempos só saem com o plugin do Break Handler ligado e sem o `-1` de "não definido": os
+campos são estáticos e o `breakIn` sobrevive ao plugin desligado. O Break Handler V2 guarda os tempos
+na instância do plugin, então com ele só `active` é conhecido. O agent lê `/bridge/break` no `status`
+(só quando a ponte respondeu a versão) e devolve `break: {active, in_s, left_s}`, ausente quando a
+ponte não responde.
+
+**Verificação:**
+
+- JUnit (`CollectionLogTest`, `AgentBridgeTest`): os ids iguais aos do `ChatCommandsPlugin`, título
+  sem tags, espaço obtido só com opacidade 0, aba só com uma lista visível, dono do adventure log,
+  páginas por login sem reenviar a mesma, `full` e `delta` das páginas, as rotas de versão e de break
+  atrás do token e o estado do break (tempos só com o Break Handler ligado e fora do `-1`). São 143
+  testes JUnit em `microbot/`, todos passando, e o `pluginJars`.
+- No servidor: testes de tabela da validação, dos fatos e do relógio, e
+  `TestCollectionLogPagesPostgres` (substituição por página, `full` sem o campo, leitura velha, o
+  bitset sem apagar páginas, id fora do int4).
+- `TestCollectionLogAccountStatePostgres`, do push até a Conta.
+- `TestStatusReadsTheBridgeVersion` e `TestParseBreak` no agent.
+
+**Não conferido no jogo:**
+
+- abrir o log e ver as páginas chegarem;
+- a aba pela lista visível;
+- o que o cabeçalho mostra durante a busca do log (Search): se mostrar outro título, o plugin grava
+  uma página com esse nome;
+- a quantidade de um item obtido mais de uma vez;
+- o adventure log de outro jogador numa casa;
+- o `/bridge/break` com o Break Handler (e o V2) num break de verdade.

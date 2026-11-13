@@ -66,6 +66,7 @@
 	const onFleet = $derived(path === '/' || path.startsWith('/contas/nova'));
 	const onWorld = $derived(path.startsWith('/mundo'));
 	const onPlugins = $derived(path.startsWith('/plugins'));
+	const onActivity = $derived(path.startsWith('/atividade'));
 	// Até a lista chegar, a conta aberta aparece sozinha.
 	const all = $derived(fleet.accounts ?? (account ? [{ id: account, rsn: name ?? account }] : []));
 	const top = $derived(
@@ -112,6 +113,14 @@
 		<Glyph name="frota" />Frota
 		{#if fleet.accounts?.length}<span class="n">{fleet.accounts.length}</span>{/if}
 	</a>
+	<a
+		class="nav"
+		class:nav-on={onActivity}
+		href={resolve('/atividade')}
+		aria-current={onActivity ? 'page' : undefined}
+	>
+		<Glyph name="atividade" />Atividade
+	</a>
 	{#if microbotModule.enabled}
 		<a
 			class="nav"
@@ -134,7 +143,7 @@
 	{/if}
 	<p class="sec">Contas</p>
 	{#each all as a (a.id)}
-		{@const on = a.id === account && !onFleet && !onWorld && !onPlugins}
+		{@const on = a.id === account && !onFleet && !onWorld && !onPlugins && !onActivity}
 		<!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() + query da conta -->
 		<a
 			class="acn"
@@ -203,9 +212,9 @@
 	{#if account}
 		<a
 			class="nav"
-			class:nav-on={!onFleet && !onWorld}
+			class:nav-on={!onFleet && !onWorld && !onActivity}
 			href={resolve('/visao')}
-			aria-current={!onFleet && !onWorld ? 'page' : undefined}
+			aria-current={!onFleet && !onWorld && !onActivity ? 'page' : undefined}
 			><Glyph name="conta" /><span class="nl">{name ?? account}</span></a
 		>
 		<a

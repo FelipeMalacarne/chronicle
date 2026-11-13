@@ -1,11 +1,15 @@
 import type {
+	AccountLevels,
 	AccountMode,
+	AccountRhythm,
 	AccountState,
 	AccountView,
 	Board,
 	ContentSection,
 	EventsView,
 	FleetGoalsResponse,
+	FleetLevels,
+	FleetRhythm,
 	Goal,
 	GoalPlanResponse,
 	GoalsResponse,
@@ -193,6 +197,10 @@ export const progressApi = {
 	accountState: (account: string) =>
 		request<AccountState>(`/account/state?account=${enc(account)}`),
 	timers: (account: string) => request<TimersView>(`/account/timers?account=${enc(account)}`),
+	/** O ritmo da conta (V5); `since` é a meia-noite do navegador (`todaySince`). */
+	rhythm: (account: string, since: string) =>
+		request<AccountRhythm>(`/account/rhythm?account=${enc(account)}&since=${enc(since)}`),
+	fleetRhythm: (since: string) => request<FleetRhythm>(`/rhythm?since=${enc(since)}`),
 	nearby: (guide: string, account: string) =>
 		request<NearbyView>(`/guides/${enc(guide)}/nearby?account=${enc(account)}`),
 	entity: (account: string, ref: string) =>
@@ -203,6 +211,14 @@ export const progressApi = {
 	setupLookup: (rsn: string) => request<SetupLookup>(`/setup/lookup?rsn=${enc(rsn)}`),
 	createAccount: (input: { rsn: string; mode: AccountMode; guide_id: string; layer: string }) =>
 		request<AccountView>('/accounts', json('POST', input)),
+	/** Os níveis da conta desde `since` (RFC 3339, até 7 dias atrás) e o avanço de cada skill. */
+	levels: (account: string, since: string, limit = 500) =>
+		request<AccountLevels>(
+			`/account/levels?account=${enc(account)}&since=${enc(since)}&limit=${limit}`
+		),
+	/** Os níveis de todas as contas do usuário desde `since`, juntos (o Diário da Atividade). */
+	fleetLevels: (since: string, limit = 500) =>
+		request<FleetLevels>(`/levels?since=${enc(since)}&limit=${limit}`),
 	setActiveGuide: (account: string, guide: string) =>
 		request<ProgressSummary>(
 			`/account/guide?account=${enc(account)}`,

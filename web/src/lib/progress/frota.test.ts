@@ -261,6 +261,7 @@ test('a refused login stops the account and asks for a new session, with the com
 		{
 			account: 'acc_a',
 			rsn: 'Iron A',
+			kind: 'session',
 			text: 'não entra: o jogo recusou o login',
 			sub: 'Abra o launcher no zaros e envie a sessão de novo.',
 			hard: true,

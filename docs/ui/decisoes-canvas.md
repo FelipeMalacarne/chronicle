@@ -270,7 +270,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 | "240 de 1 250" no objetivo | **feito no servidor** (2026-11-13): cada objetivo numérico do board traz `observed` (`{value, target}`) dos fatos atuais da conta; falta a web usar |
 | XP por hora, ganhos da sessão, "Hoje", GP da conta e da frota | **feito no servidor** (2026-11-13): `GET /api/account/rhythm?account=&since=` e, da frota com os totais, `GET /api/rhythm?since=`, derivados dos snapshots (`internal/core/rhythm`): a skill que treina (a que mais ganhou nos últimos 30 min, parada depois de 10 min sem ganho) com XP/h e o tempo até o próximo nível; a sessão (fim numa pausa de 20 min entre pushes do plugin); o dia por skill desde `since` (a meia-noite do navegador); GP = moedas e platinum tokens no banco e no inventário, com o ganho do dia. Os ganhos de item da sessão também (2026-11-13): `session.gained`, o que a conta tem a mais desde o começo da sessão, somando banco, inventário e equipamento (a forma noted junto da normal), e `session.running_out`, o que a sessão vai gastando e quando acaba nesse ritmo ("feathers acabam em 3 h"); os dois são `null` sem o banco e o inventário conhecidos nas duas pontas. O "Até a pausa" vem do Break Handler pela ponte (`/bridge/break`, PR #28, no `status` do cliente); falta a web usar |
 | Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); rotinas recorrentes pelo relógio: **feitas na API** (doc 11, seção 16.4; `GET`/`POST`/`DELETE /api/microbot/recurring`), a tela da fila ainda não foi desenhada; falta a noção de atividade principal por conta |
-| Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). Falta a web usar |
+| Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). A web usa tudo isso desde a V7 (seção 7.9) |
 | Plugins da frota | perfis no Postgres (doc 11, F5) |
 | Capacidade no resumo, "cabe mais N", uso por worker | **feito** (doc 11, F7, PR #25): `capacity` e `workers[].usage` em `GET /api/workers`, e `session.login_failed` para o login recusado; a web usa desde a V9 (seção 7.7). O uso do nó não existe |
 | Mundo da frota | feito no servidor em 2026-11-13: `GET /api/fleet/goals` traz numa consulta as metas de todas as contas do usuário (e as chaves de `keys=`), com o veredito guardado de cada conta, a meta dela, o resumo do plano (requisitos, níveis que faltam, passos até a rota fazer) e a conta mais perto; a tela é a da V10 (seção 7.8). O "tem 132" dos quest points espera o valor observado (primeira linha), e a meta de item (Barrows gloves) só tem requisitos quando o catálogo souber de que quest o item é recompensa |
@@ -289,7 +289,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada |
 | V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
 | V6 | Rotinas e Fila | doc 11, F6 |
-| V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor) |
+| V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor). **Feita** (2026-11-13, seção 7.9) |
 | V8 | Plugins da frota | doc 11, F5. **Feita** (2026-11-13, seção 7.6) |
 | V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende). **Feita** (2026-11-13, seção 7.7) |
 | V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas (feito no servidor, `GET /api/fleet/goals`). **Feito o Mundo da frota** (2026-11-13, seção 7.8), com as divergências do que a API ainda não mede; as telas que faltam em 640 px esperam desenho no canvas |
@@ -451,3 +451,51 @@ Divergências do artboard:
 
 Conferido com os testes de `node --test` da lógica da tela, o `svelte-check` contra a fixture do
 contrato de `GET /api/fleet/goals`, `pnpm lint` e `pnpm build`; a captura a 1440 fica para a revisão.
+
+### 7.9 Implementação: V7, Histórico e Atividade (2026-11-13)
+
+Artboards seguidos: `V7Historico1440` (página 8), na aba Histórico da conta (`/historico`), e
+`V7Atividade1440`, em `/atividade` e no item "Atividade" da barra lateral, logo abaixo da Frota, como no
+artboard. A Atividade é da frota: sem o cabeçalho da conta (decisão 1 da seção 7.1).
+
+Os dados: os níveis de `GET /api/account/levels` (7 dias, o avanço de cada skill no cartão Na semana) e
+de `GET /api/levels` (o Diário, desde a meia-noite do navegador); os runs de `GET /api/microbot/runs`
+(os 30 mais novos de cada conta) e as ações de `GET /api/microbot/audit` (as 200 mais novas da conta),
+os dois só com o módulo Microbot ligado; o XP de hoje do ritmo (`GET /api/account/rhythm` e
+`GET /api/rhythm`); Precisa de você é a mesma lista da Frota (worker e relógios de cada conta). O que
+um run subiu ("Fishing 74 → 75") são os níveis da conta observados entre o começo e o fim dele, e o
+sprite do run é o da skill que mais subiu; sem nível no caminho, o run fica com o glifo.
+
+Divergências dos artboards:
+
+1. **Tempo no jogo:** "3 h 13 min no jogo" no resumo do dia e "No jogo 31 h" no cartão Execuções não
+   aparecem: o servidor não mede o tempo logado. No lugar de "No jogo", o cartão mostra as canceladas,
+   quando há.
+2. **XP por dia:** só hoje tem XP no resumo (o ritmo mede desde a meia-noite); os outros dias dizem
+   quantos níveis tiveram, as execuções e os problemas.
+3. **GP na semana:** a linha "GP 1,9M +140k" do cartão Na semana fica de fora: o ritmo só sabe o ganho
+   de GP do dia.
+4. **Nome do run:** a linha diz o plugin que rodou ("Cat Swap", tirado da classe), não o nome da rotina
+   ("Farm run"), e "pela rotina" no lugar de "pelo relógio", porque o run não diz se foi o relógio ou o
+   intervalo que o disparou. O sprite de item do artboard não existe (sem ligação entre plugin e item);
+   vale o da skill que o run subiu.
+5. **Eventos do worker:** "Worker subiu no saradomin · sessão entregue · cliente na tela de login" não
+   existe; o Histórico mostra só o que a auditoria guarda: o dono iniciar, parar ou reiniciar o worker e
+   enviar ou apagar a sessão. No Diário da Atividade, pelo mesmo motivo e porque não há evento de quest,
+   só entram os níveis ("terminou Jungle Potion" e "subiu no saradomin" ficam de fora).
+6. **"Abrir a rotina":** o link do cartão Execuções fica de fora até a tela Rotinas (V6) existir.
+7. **Ações de Precisa de você:** "Renovar sessão" e "Deixar parada", "Rodar Farm run agora" e "Ligar a
+   rotina nela" não existem: a sessão vem do launcher (`chronicle accounts connect`) e o relógio pronto
+   não sabe qual rotina cuidaria dele. Cada item tem "Abrir a conta"; a versão antiga tem também
+   "Reiniciar agora" (com confirmação, porque sai do jogo). "Reiniciar na pausa" espera o servidor
+   saber da pausa.
+8. **Número na barra lateral:** o "3" ao lado de Atividade (quantos pedem decisão) fica de fora: a barra
+   não lê os workers e os relógios de toda conta em toda tela.
+9. **Execuções da Atividade:** são as de hoje, mais as que começaram antes e ainda rodam; como o
+   servidor devolve 30 runs por conta, uma conta com mais de 30 num dia mostra só as 30 mais novas. No
+   Histórico, quando os 30 runs cabem todos na janela, o cartão diz "últimas 30" em vez de "7 dias".
+10. **Filtros sem o Microbot:** sem o módulo, o Histórico fica com Tudo e Níveis, e a Atividade sem
+    Execuções; o resto da tela segue.
+
+Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (a lógica das duas telas em `historico.ts` e
+`atividade.ts`, com `node --test`) e `pnpm build`; sem captura de tela nesta fatia.

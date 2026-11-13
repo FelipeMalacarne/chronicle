@@ -54,6 +54,8 @@ export interface Lane {
 export interface Need {
 	account: string;
 	rsn: string;
+	/** De onde vem: o estado do worker, a falta de sessão, a versão antiga ou um relógio pronto. */
+	kind: 'state' | 'session' | 'outdated' | 'timer';
 	text: string;
 	sub?: string;
 	hard: boolean;
@@ -231,16 +233,24 @@ export function needs(all: Lane[], cap?: WorkerCapacity): Need[] {
 				...base,
 				text: 'não entra: o jogo recusou o login',
 				sub: 'Abra o launcher no zaros e envie a sessão de novo.',
+				kind: 'session',
 				hard: true,
 				command
 			});
 		if (l.tone === 'bad' && l.worker?.noRoom)
-			out.push({ ...base, text: 'não subiu: falta lugar', sub: roomHint(cap), hard: false });
+			out.push({
+				...base,
+				kind: 'state',
+				text: 'não subiu: falta lugar',
+				sub: roomHint(cap),
+				hard: false
+			});
 		else if (l.tone === 'bad' && l.activity !== REFUSED)
-			out.push({ ...base, text: l.activity, sub: l.detail, hard: true });
+			out.push({ ...base, kind: 'state', text: l.activity, sub: l.detail, hard: true });
 		if (l.worker && !l.worker.sessionWhen)
 			out.push({
 				...base,
+				kind: 'session',
 				text: 'não tem sessão do jogo',
 				sub: 'Abra o launcher no zaros e envie a sessão.',
 				hard: true,
@@ -249,12 +259,14 @@ export function needs(all: Lane[], cap?: WorkerCapacity): Need[] {
 		if (l.worker?.outdated)
 			out.push({
 				...base,
+				kind: 'outdated',
 				text: 'roda numa versão antiga',
 				sub: 'Reiniciar sai do jogo.',
 				hard: false
 			});
 		for (const n of l.next)
-			if (n.ready) out.push({ ...base, text: `tem ${n.label} prontos`, hard: false });
+			if (n.ready)
+				out.push({ ...base, kind: 'timer', text: `tem ${n.label} prontos`, hard: false });
 	}
 	return out.sort((a, b) => Number(b.hard) - Number(a.hard));
 }

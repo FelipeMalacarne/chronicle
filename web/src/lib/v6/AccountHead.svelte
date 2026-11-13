@@ -19,7 +19,7 @@
 	/*
 	 * O topo das telas de uma conta (página 8 do canvas, V7Conta1440): quem é, o que faz agora, as
 	 * ações e as abas. Fatia V1 de decisoes-canvas.md, 7.5: Rota, Personagem e Cliente levam às telas
-	 * que já existiam; Histórico entra na V7, quando o servidor guardar as execuções.
+	 * que já existiam; Histórico é a da V7 (V7Historico1440).
 	 */
 	let { state: st, summary }: { state: AccountState; summary: ProgressSummary | null } = $props();
 
@@ -122,7 +122,8 @@
 		// O cliente só existe com o módulo do Microbot ligado no servidor (doc 08).
 		...(microbotModule.enabled
 			? [{ href: resolve('/automacao'), label: 'Cliente', on: path.startsWith('/automacao') }]
-			: [])
+			: []),
+		{ href: resolve('/historico'), label: 'Histórico', on: path.startsWith('/historico') }
 	]);
 </script>
 

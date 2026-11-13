@@ -19,7 +19,9 @@
 		| 'frota'
 		| 'plus'
 		| 'eye'
-		| 'play';
+		| 'play'
+		| 'atividade'
+		| 'porta';
 	let { name, size = 16 }: { name: Name; size?: number } = $props();
 </script>
 
@@ -86,5 +88,9 @@
 		<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" /><circle cx="12" cy="12" r="3" />
 	{:else if name === 'play'}
 		<path d="M8 5v14l11-7z" fill="currentColor" />
+	{:else if name === 'atividade'}
+		<path d="M3 12h4l3-7 4 14 3-7h4" />
+	{:else if name === 'porta'}
+		<path d="M14 4h5v16h-5M4 12h11M11 8l4 4-4 4" />
 	{/if}
 </svg>

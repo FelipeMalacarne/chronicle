@@ -23,6 +23,7 @@ type WorkerStore interface {
 	List(ctx context.Context) ([]storeworkers.Worker, error)
 	ListForUser(ctx context.Context, userID string) ([]storeworkers.Worker, error)
 	OtherClientSince(ctx context.Context, account string, since time.Time) (bool, error)
+	RecordLogin(ctx context.Context, account, result string) error
 }
 
 // WorkerControl is the cluster side (internal/workerctl.Reconciler); nil
@@ -31,6 +32,10 @@ type WorkerControl interface {
 	Kick()
 	Pods() map[string]workerctl.PodInfo
 	Restart(ctx context.Context, account string) error
+	// Usage and Capacity come from the metrics API and the namespace's
+	// ResourceQuotas (docs/11, F7); both may be missing.
+	Usage() map[string]workerctl.Usage
+	Capacity() (workerctl.Capacity, bool)
 }
 
 // otherClientWindow: a push from another installation this recent means the
@@ -63,7 +68,10 @@ type workerView struct {
 	StoppedAt *time.Time                `json:"stopped_at,omitempty"`
 	LastError string                    `json:"last_error,omitempty"`
 	Pod       *workerctl.PodInfo        `json:"pod"`
-	Agent     *agent.Info               `json:"agent"`
+	// Usage is the pod's CPU and memory from the metrics API; absent with
+	// WORKERS=off, without a pod, or without metrics-server.
+	Usage *workerctl.Usage `json:"usage,omitempty"`
+	Agent *agent.Info      `json:"agent"`
 	// Outdated: the pod runs another image than the server's WORKER_IMAGE
 	// (restarting logs the account out, so only on the owner's click).
 	Outdated bool `json:"outdated"`
@@ -79,6 +87,9 @@ type workersAnswer struct {
 	// may see (the one on zaros).
 	Workers  []workerView `json:"workers"`
 	Attached []agent.Info `json:"attached"`
+	// Capacity is how many more workers fit in the namespace's quota;
+	// absent with WORKERS=off, without a quota or when it cannot be read.
+	Capacity *workerctl.Capacity `json:"capacity,omitempty"`
 }
 
 func (s *Server) handleWorkers(w http.ResponseWriter, r *http.Request) {
@@ -98,9 +109,15 @@ func (s *Server) handleWorkers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	out := workersAnswer{Enabled: m.Control != nil, Image: m.WorkerImage, Version: s.opts.Version, Workers: []workerView{}, Attached: []agent.Info{}}
-	var pods map[string]workerctl.PodInfo
+	var (
+		pods  map[string]workerctl.PodInfo
+		usage map[string]workerctl.Usage
+	)
 	if m.Control != nil {
-		pods = m.Control.Pods()
+		pods, usage = m.Control.Pods(), m.Control.Usage()
+		if c, ok := m.Control.Capacity(); ok {
+			out.Capacity = &c
+		}
 	}
 	agents := s.visibleAgents(r, m.Link.Agents())
 	managed := map[string]bool{}
@@ -112,6 +129,9 @@ func (s *Server) handleWorkers(w http.ResponseWriter, r *http.Request) {
 		if p, ok := pods[wk.AccountID]; ok {
 			v.Pod = &p
 			v.Outdated = m.WorkerImage != "" && p.Image != "" && p.Image != m.WorkerImage
+			if u, ok := usage[wk.AccountID]; ok {
+				v.Usage = &u
+			}
 		}
 		for i := range agents {
 			if agents[i].Account == wk.AccountID && agents[i].Kind == agent.KindManaged {
@@ -294,6 +314,31 @@ func (s *Server) handleSessionDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
+// recordWorkerLogin keeps the outcome of a login on a managed worker, which
+// logs in with the account's stored session (docs/11 section 5): LoginOK, or
+// the game's reason when the login did not get in (agent.LoginRefusal). The
+// session's login_failed flag comes from it. Other failures (no agent, a
+// login in progress, the cooldown) say nothing about the session and are not
+// recorded; an attached agent uses the launcher's session, not the stored one.
+func (s *Server) recordWorkerLogin(r *http.Request, served agent.Info, err error) {
+	m := s.opts.Microbot
+	if m.Sessions == nil || served.Kind != agent.KindManaged || served.Account == "" {
+		return
+	}
+	result := storeworkers.LoginOK
+	if err != nil {
+		reason, refused := agent.LoginRefusal(err)
+		if !refused {
+			return
+		}
+		result = reason
+	}
+	rerr := m.Sessions.RecordLogin(context.WithoutCancel(r.Context()), served.Account, result)
+	if rerr != nil && !errors.Is(rerr, storeworkers.ErrNoSession) {
+		s.log.Error("workers: record login", "account", served.Account, "err", rerr)
+	}
 }
 
 func (s *Server) workerRefused(w http.ResponseWriter, r *http.Request, action, account, msg string) {

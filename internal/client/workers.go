@@ -20,6 +20,21 @@ type SessionInfo struct {
 	PushedBy        string     `json:"pushed_by"`
 	LastLoginAt     *time.Time `json:"last_login_at"`
 	LastLoginResult string     `json:"last_login_result"`
+	// LoginFailed: the last login with this session did not get in.
+	LoginFailed bool `json:"login_failed"`
+}
+
+// WorkerUsage is a worker pod's CPU (cores) and memory (bytes) from the
+// cluster's metrics API.
+type WorkerUsage struct {
+	CPUCores    float64 `json:"cpu_cores"`
+	MemoryBytes int64   `json:"memory_bytes"`
+}
+
+// WorkerCapacity is how many more workers fit in the namespace's quota.
+type WorkerCapacity struct {
+	Fits      int    `json:"fits"`
+	LimitedBy string `json:"limited_by"`
 }
 
 // WorkerPod is the cluster's view of a worker.
@@ -51,16 +66,18 @@ type Worker struct {
 	Image     string       `json:"image"`
 	LastError string       `json:"last_error"`
 	Pod       *WorkerPod   `json:"pod"`
+	Usage     *WorkerUsage `json:"usage"`
 	Agent     *WorkerAgent `json:"agent"`
 	Outdated  bool         `json:"outdated"`
 }
 
 // Workers is GET /api/workers.
 type Workers struct {
-	Enabled  bool          `json:"enabled"`
-	Image    string        `json:"image"`
-	Workers  []Worker      `json:"workers"`
-	Attached []WorkerAgent `json:"attached"`
+	Enabled  bool            `json:"enabled"`
+	Image    string          `json:"image"`
+	Workers  []Worker        `json:"workers"`
+	Attached []WorkerAgent   `json:"attached"`
+	Capacity *WorkerCapacity `json:"capacity"`
 }
 
 // PutSession stores an account's game session (docs/11 section 5); the

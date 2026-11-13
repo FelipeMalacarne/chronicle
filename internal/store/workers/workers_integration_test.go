@@ -71,8 +71,15 @@ func TestSessionLifecycle(t *testing.T) {
 	if err = repo.RecordLogin(ctx, "acc_a", "ok"); err != nil {
 		t.Fatal(err)
 	}
-	if info, _ = repo.SessionInfo(ctx, "acc_a"); info.LastLoginAt == nil || info.LastLoginResult != "ok" {
+	if info, _ = repo.SessionInfo(ctx, "acc_a"); info.LastLoginAt == nil || info.LastLoginResult != "ok" || info.LoginFailed {
 		t.Fatalf("info after login = %+v", info)
+	}
+	// A refused login flags the session; the next session clears it (below).
+	if err = repo.RecordLogin(ctx, "acc_a", "Invalid credentials"); err != nil {
+		t.Fatal(err)
+	}
+	if info, _ = repo.SessionInfo(ctx, "acc_a"); !info.LoginFailed || info.LastLoginResult != "Invalid credentials" {
+		t.Fatalf("info after a refused login = %+v", info)
 	}
 	if err = repo.RecordLogin(ctx, "acc_b", "ok"); !errors.Is(err, ErrNoSession) {
 		t.Fatalf("login without session = %v", err)
@@ -87,7 +94,7 @@ func TestSessionLifecycle(t *testing.T) {
 	if got, _ = repo.Session(ctx, "acc_a"); got.SessionID != "jx-session-2" {
 		t.Fatalf("renewed session = %+v", got)
 	}
-	if info, _ = repo.SessionInfo(ctx, "acc_a"); info.LastLoginAt != nil || info.PushedBy != "u1b" {
+	if info, _ = repo.SessionInfo(ctx, "acc_a"); info.LastLoginAt != nil || info.PushedBy != "u1b" || info.LoginFailed {
 		t.Fatalf("info after renew = %+v", info)
 	}
 

@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/FelipeMalacarne/chronicle/internal/client"
 )
 
 func TestReadLauncherAccount(t *testing.T) {
@@ -92,5 +94,41 @@ func TestHWIDLines(t *testing.T) {
 	}
 	if got, err := hwidLines(filepath.Join(t.TempDir(), "missing"), key); got != "" || err != nil {
 		t.Fatalf("missing file: %q %v", got, err)
+	}
+}
+
+func TestPrintWorkersUsageAndCapacity(t *testing.T) {
+	var out strings.Builder
+	printWorkers(&out, client.Workers{
+		Enabled: true,
+		Workers: []client.Worker{
+			{
+				Account: "acc_a", RSN: "Worker A", Desired: "running",
+				Pod:     &client.WorkerPod{State: "running"},
+				Session: &client.SessionInfo{Character: "Worker A", LastLoginResult: "ok"},
+				Usage:   &client.WorkerUsage{CPUCores: 0.404, MemoryBytes: 877350912},
+			},
+			{
+				Account: "acc_b", RSN: "Worker B", Desired: "stopped",
+				Session: &client.SessionInfo{Character: "Worker B", LastLoginResult: "Invalid credentials", LoginFailed: true},
+			},
+		},
+		Capacity: &client.WorkerCapacity{Fits: 2, LimitedBy: "requests.cpu"},
+	})
+	got := out.String()
+	for _, want := range []string{
+		"uso 0,40 núcleo, 836 MiB",
+		"sessão de Worker B · último login falhou: Invalid credentials",
+		"Cabe mais 2 worker(s) na quota do namespace (limite: requests.cpu).",
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("missing %q in:\n%s", want, got)
+		}
+	}
+	// Without a quota (or with WORKERS=off) the capacity is unknown: no line.
+	out.Reset()
+	printWorkers(&out, client.Workers{Enabled: true})
+	if strings.Contains(out.String(), "Cabe mais") {
+		t.Fatalf("capacity without a quota:\n%s", out.String())
 	}
 }

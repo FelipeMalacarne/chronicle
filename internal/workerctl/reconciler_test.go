@@ -72,6 +72,33 @@ type fakeCluster struct {
 	applied []string
 	deleted []string
 	fail    error
+	// metrics is each pod's usage by pod name; metricsErr and quotaErr fail
+	// those reads.
+	metrics    map[string]kube.PodMetrics
+	quotas     []kube.ResourceQuota
+	metricsErr error
+	quotaErr   error
+	metricsN   int
+}
+
+func (f *fakeCluster) ListPodMetrics(context.Context, string) ([]kube.PodMetrics, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.metricsN++
+	if f.metricsErr != nil {
+		return nil, f.metricsErr
+	}
+	var out []kube.PodMetrics
+	for _, m := range f.metrics {
+		out = append(out, m)
+	}
+	return out, nil
+}
+
+func (f *fakeCluster) ListResourceQuotas(context.Context) ([]kube.ResourceQuota, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return slices.Clone(f.quotas), f.quotaErr
 }
 
 func (f *fakeCluster) ApplyDeployment(_ context.Context, d kube.Deployment) error {

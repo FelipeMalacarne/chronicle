@@ -73,6 +73,18 @@ type WorkerSpec struct {
 	RestartedAt string
 }
 
+// WorkerResources are the worker container's requests and limits: 645m was
+// measured with a script running (software rendering, FPS 20), and the
+// request is what the scheduler and the quota count. The Deployment and the
+// capacity count ("cabe mais N", internal/workerctl) both read them here.
+// Each call returns new maps.
+func WorkerResources() ResourceRequirements {
+	return ResourceRequirements{
+		Requests: map[string]string{"cpu": "700m", "memory": "1Gi"},
+		Limits:   map[string]string{"cpu": "1", "memory": "1792Mi"},
+	}
+}
+
 // AnnotationRestartedAt is the pod template annotation of WorkerSpec.RestartedAt.
 const AnnotationRestartedAt = "chronicle.ftm.dev.br/restarted-at"
 
@@ -131,12 +143,7 @@ func WorkerDeployment(namespace string, s WorkerSpec) Deployment {
 							// sidebar, and every extra pixel costs CPU in Xvfb and VNC.
 							{Name: "MB_HEADLESS_SIZE", Value: WorkerDisplay},
 						},
-						Resources: ResourceRequirements{
-							// 645m measured with a script running (software rendering, FPS 20);
-							// the request is what the scheduler and the quota count.
-							Requests: map[string]string{"cpu": "700m", "memory": "1Gi"},
-							Limits:   map[string]string{"cpu": "1", "memory": "1792Mi"},
-						},
+						Resources: WorkerResources(),
 						VolumeMounts: []VolumeMount{
 							{Name: "home", MountPath: workerHome},
 							{Name: "secrets", MountPath: workerSecrets},

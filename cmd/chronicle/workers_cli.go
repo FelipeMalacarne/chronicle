@@ -284,6 +284,12 @@ func printWorkers(out io.Writer, ws client.Workers) {
 		session := "sem sessão"
 		if w.Session != nil {
 			session = "sessão de " + w.Session.Character
+			if w.Session.LoginFailed {
+				session += " · último login falhou: " + w.Session.LastLoginResult
+			}
+		}
+		if u := w.Usage; u != nil {
+			session += fmt.Sprintf(" · uso %s núcleo, %d MiB", strings.Replace(fmt.Sprintf("%.2f", u.CPUCores), ".", ",", 1), u.MemoryBytes>>20)
 		}
 		fmt.Fprintf(out, "%-24s %-14s %-40s %s\n", w.Account, w.RSN, state, session)
 		if w.LastError != "" {
@@ -295,6 +301,9 @@ func printWorkers(out io.Writer, ws client.Workers) {
 	}
 	if len(ws.Workers) == 0 && len(ws.Attached) == 0 {
 		fmt.Fprintln(out, "Nenhum worker: conecte uma conta com `chronicle accounts connect`.")
+	}
+	if c := ws.Capacity; c != nil {
+		fmt.Fprintf(out, "Cabe mais %d worker(s) na quota do namespace (limite: %s).\n", c.Fits, c.LimitedBy)
 	}
 }
 

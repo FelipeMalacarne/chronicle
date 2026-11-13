@@ -4,6 +4,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
@@ -17,7 +18,17 @@ const (
 	// plane, region}.
 	FacetTimer    = "timer"
 	FacetPosition = "position"
+	// FacetCollectionLog: one fact per collection log page the client read,
+	// key CollectionLogPageKey(title), value {tab, items}; the
+	// collectionLogSlots bitset keeps its facts keyed by item id.
+	FacetCollectionLog = "collection_log"
 )
+
+// CollectionLogPagePrefix starts the key of a collection log page fact.
+const CollectionLogPagePrefix = "page:"
+
+// CollectionLogPageKey is the collection_log fact key of a page title.
+func CollectionLogPageKey(title string) string { return CollectionLogPagePrefix + title }
 
 // Fact is one derived player_state fact: (facet, key) and its JSON value.
 type Fact struct {
@@ -135,6 +146,37 @@ func TestHolds(t entities.VarTest, value int64) bool {
 		return value >= int64(*t.Min)
 	}
 	return false
+}
+
+// PageFact is the fact of one collection log page and when it was read: a
+// page resent in a later push keeps the time it was read.
+type PageFact struct {
+	Fact
+	ObservedAt time.Time
+}
+
+// CollectionLogFacts turns data.collectionLog into one fact per page, keyed
+// by CollectionLogPageKey and sorted by key. The value keeps every slot the
+// page showed (item id -> quantity, 0 for one not obtained) and the tab when
+// the client knew it, so a later read of the page replaces it whole.
+func CollectionLogFacts(pages CollectionLogMap) []PageFact {
+	out := make([]PageFact, 0, len(pages))
+	for title, page := range pages {
+		items := make(map[string]int64, len(page.Items))
+		for id, qty := range page.Items {
+			items[id] = qty
+		}
+		value := map[string]any{"items": items}
+		if page.Tab != "" {
+			value["tab"] = page.Tab
+		}
+		out = append(out, PageFact{
+			Fact:       Fact{Facet: FacetCollectionLog, Key: CollectionLogPageKey(title), Value: value},
+			ObservedAt: page.ObservedAt,
+		})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].Key < out[j].Key })
+	return out
 }
 
 func sortFacts(facts []Fact) {

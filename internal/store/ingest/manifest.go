@@ -91,7 +91,10 @@ func BuildDefinition(c *content.Content, reg *entities.Registry) Definition {
 		Quests      bool    `json:"quests"`
 		// The clocks and the position, offered since 2026-11-10.
 		Timers bool `json:"timers_position"`
-	}{d.Varbits, d.Varps, d.Collections, d.OnlyItemIDs, reg != nil, true})
+		// The collection log pages, offered since 2026-11-13: a client that
+		// has the old manifest refetches it and starts sending them.
+		CollectionLog bool `json:"collection_log"`
+	}{d.Varbits, d.Varps, d.Collections, d.OnlyItemIDs, reg != nil, true, true})
 	hash := sha256.Sum256(canonical)
 	d.Version = int64(binary.BigEndian.Uint32(hash[:4]) & math.MaxInt32)
 	if d.Version == 0 {
@@ -152,6 +155,7 @@ func (d Definition) manifest(scopes []coreingest.TokenScope, resync bool) corein
 		Quests:          d.Catalog != nil,
 		Timers:          true,
 		Position:        true,
+		CollectionLog:   true,
 		Items: coreingest.ItemSelection{
 			Bank:        has[coreingest.ScopeItemsBank],
 			Inventory:   has[coreingest.ScopeItemsInventory],

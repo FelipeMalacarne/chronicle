@@ -27,6 +27,8 @@ final class PlayerSnapshot
 	final Map<String, IngestContract.Timer> timers;
 	/** Where the character stands, or {@code null} without the owner's opt-in. */
 	final IngestContract.Position position;
+	/** Collection log pages read in this login by title, or {@code null} when the manifest does not take them. */
+	final Map<String, CollectionLogPage> collectionLog;
 	final Map<ContainerKind, ContainerSnapshot> containers;
 
 	PlayerSnapshot(String username, String profile, String accountType, long manifestVersion,
@@ -43,6 +45,15 @@ final class PlayerSnapshot
 		Map<String, String> quest, Map<String, IngestContract.Timer> timers, IngestContract.Position position,
 		Map<ContainerKind, ContainerSnapshot> containers)
 	{
+		this(username, profile, accountType, manifestVersion, varb, varp, level, xp, boosted, quest, timers, position, null, containers);
+	}
+
+	PlayerSnapshot(String username, String profile, String accountType, long manifestVersion,
+		Map<String, Long> varb, Map<String, Long> varp,
+		Map<String, Long> level, Map<String, Long> xp, Map<String, Long> boosted,
+		Map<String, String> quest, Map<String, IngestContract.Timer> timers, IngestContract.Position position,
+		Map<String, CollectionLogPage> collectionLog, Map<ContainerKind, ContainerSnapshot> containers)
+	{
 		this.username = Objects.requireNonNull(username);
 		this.profile = Objects.requireNonNull(profile);
 		this.accountType = accountType;
@@ -55,6 +66,7 @@ final class PlayerSnapshot
 		this.quest = quest == null ? null : Collections.unmodifiableMap(new TreeMap<>(quest));
 		this.timers = timers == null ? null : Collections.unmodifiableMap(new TreeMap<>(timers));
 		this.position = position;
+		this.collectionLog = collectionLog == null ? null : Collections.unmodifiableMap(new TreeMap<>(collectionLog));
 		EnumMap<ContainerKind, ContainerSnapshot> c = new EnumMap<>(ContainerKind.class);
 		for (ContainerKind kind : ContainerKind.values())
 		{

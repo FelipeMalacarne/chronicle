@@ -652,10 +652,12 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
 - **`preferences.dat`** fica dentro do `jagexcache` compartilhado. São preferências do jogo e podem
   lembrar o nome do login antigo, que não é o da Jagex Account. Se incomodar, o PVC monta só os
   `main_file_cache.*` por `subPath`.
-- **`Hello.Bridge` fica vazio:** a ponte do Chronicle Link ainda não tem rota de versão. A web não lê
-  esse campo, e o hello sai antes de o cliente (e a ponte) subir no worker, então a versão faria
-  sentido no `status`, não no hello. Com o repositório único, o plugin e o agent do worker saem do
-  mesmo commit; só o zaros pode ficar com um Chronicle Link mais velho que o agent.
+- **`Hello.Bridge` fica vazio:** o hello sai antes de o cliente (e a ponte) subir no worker. Resolvido
+  em 2026-11-13 pelo `status`: a ponte ganhou `GET /bridge/version` (Chronicle Link 1.12.0) e o
+  agent lê a versão a cada `status` com o cliente rodando, no campo `bridge` (vazio sem ponte ou com
+  plugin anterior; doc 06, adendo de 2026-11-13). Com o repositório único, o plugin e o agent do
+  worker saem do mesmo commit; só o zaros pode ficar com um Chronicle Link mais velho que o agent, e
+  agora isso aparece no `status`.
 - A rota `/api/workers` entrou no teste de contrato (`TestContractPostgres`, 2026-11-12): um worker
   rodando, um parado por erro numa imagem velha e um sem sessão, mais um agent anexado.
 - **Para ligar no saradomin, com o dono:**
@@ -785,7 +787,7 @@ no próximo Iniciar ou Reiniciar.
   não aparecer.
 - **Parte 2:** a tela (fatia V8 da web v7, Plugins da frota), o desvio (o Chronicle Link exportar
   os valores) e o "Salvar no perfil" (W9). O que o `V7Plugins1440` não mostrar disso vai para o
-  canvas antes (regra 11). Junto, a versão da ponte no `status` (seção 14.3).
+  canvas antes (regra 11). A versão da ponte no `status` saiu antes, em 2026-11-13 (seção 14.3).
 - **Anexado (zaros):** o perfil ainda não se aplica; o zaros segue com a configuração no disco.
 
 ## 16. F6: rotinas no servidor (2026-11-13)

@@ -28,7 +28,7 @@ Commands, rules and the verification protocol for agents: [AGENTS.md](AGENTS.md)
 The worker image built from this directory: [docs/11](../docs/11-workers-microbot.md) and
 `deploy/worker/`.
 
-## Chronicle Link (`fm/chroniclelink`, 1.11.0)
+## Chronicle Link (`fm/chroniclelink`, 1.12.0)
 
 Chronicle's plugin (the Ironman Planner webapp; called "Ironman Planner", `fm/ironmanplanner`, until
 1.3). Its config group is still `fm-ironmanplanner`, so the URL, token and account survive the
@@ -38,9 +38,12 @@ varbits/varps (diary tiers, quest points, combat achievements, the collection lo
 clocks of RuneLite's Time Tracking (`data.timers`: each farming tab, the bird houses and the farming
 contract, with when they are ready; the planner's recurring tasks) and, when switched on,
 bank/inventory/equipment and the character's position (`data.position`, "Send position", off by
-default; a move alone is sent only 16 tiles away or on another world or plane) (ingest contract v1,
-`docs/04-arquitetura.md` 6.4), and never performs a game action. Timers and
-position go only to a planner whose manifest offers them.
+default; a move alone is sent only 16 tiles away or on another world or plane) and the collection
+log pages the player opens in game (`data.collectionLog`, 1.12.0: each page's title, tab and every
+slot with how many were obtained, read from the open interface the way the client's own
+ChatCommandsPlugin reads it; never another player's log opened from a house's adventure log)
+(ingest contract v1, `docs/04-arquitetura.md` 6.4), and never performs a game action. Timers,
+position and collection log pages go only to a planner whose manifest offers them.
 
 **Control bridge (dev harness client only).** In the client `microbot/bin/mb-client` runs
 (`-Dmicrobot.dev.harness=true`) the plugin also serves Chronicle's control bridge on
@@ -53,7 +56,9 @@ farming tab, the bird houses and the farming contract, with their summary and wh
 read from the Time Tracking plugin's own trackers, so nothing when it is off), and the game events
 Chronicle's agent triggers wait for (`/bridge/events?after=<seq>`: the game's own chat messages of a
 closed list, never player chat; today only "Your kitten has grown into a healthy cat", `kitten_grown`;
-numbered from the plugin's start, with a `boot` id that changes when it starts again). The spellbook lists combat spells too, each with what it is cast on (`target`:
+numbered from the plugin's start, with a `boot` id that changes when it starts again), and the
+plugin's version and the Microbot Break Handler's state (`/bridge/version` and `/bridge/break`,
+1.12.0, read-only; the agent reports both in its status). The spellbook lists combat spells too, each with what it is cast on (`target`:
 `item`, `npc`, `none`, or `unsupported` for targets the bridge cannot reach yet, like enchanting). Every request needs the
 Agent Server's token; without it nothing answers. It also keeps `.runelite/agent/config-schema.json`
 with every loaded Microbot plugin's config options, for Chronicle's config form. In the everyday

@@ -33,6 +33,26 @@ func (q *Queries) DeleteObservation(ctx context.Context, arg DeleteObservationPa
 	return err
 }
 
+const deleteObservationCollectionLogSlots = `-- name: DeleteObservationCollectionLogSlots :exec
+DELETE FROM observations
+WHERE account_id = $1
+  AND facet = 'collection_log'
+  AND source = $2
+  AND key NOT LIKE 'page:%'
+`
+
+type DeleteObservationCollectionLogSlotsParams struct {
+	AccountID string `json:"account_id"`
+	Source    string `json:"source"`
+}
+
+// The collectionLogSlots bitset replaces the source's slot facts (keyed by item
+// id); the pages the client read (keyed 'page:<title>') stay.
+func (q *Queries) DeleteObservationCollectionLogSlots(ctx context.Context, arg DeleteObservationCollectionLogSlotsParams) error {
+	_, err := q.db.Exec(ctx, deleteObservationCollectionLogSlots, arg.AccountID, arg.Source)
+	return err
+}
+
 const deleteObservationFacet = `-- name: DeleteObservationFacet :exec
 DELETE FROM observations WHERE account_id = $1 AND facet = $2 AND source = $3
 `

@@ -2,16 +2,20 @@ package progress
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/jackc/pgx/v5"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
+	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 	"github.com/FelipeMalacarne/chronicle/internal/store/state"
 )
 
@@ -78,11 +82,36 @@ type CATierView struct {
 }
 
 // CollectionLogView is the game's collection log count (COLLECTION_COUNT and
-// COLLECTION_COUNT_MAX); the plugin never opens the log.
+// COLLECTION_COUNT_MAX), which the game keeps in varps; the items of each page
+// come only from the pages the player opened (CollectionLogPageView).
 type CollectionLogView struct {
 	Obtained int64  `json:"obtained"`
 	Total    *int64 `json:"total,omitempty"`
 	FactSource
+}
+
+// CollectionLogPageView is one collection log page as the plugin last read it
+// with the log open in game: the slots it showed, obtained or not. A page the
+// player never opened is absent, so its items stay unknown, never missing.
+type CollectionLogPageView struct {
+	Page string `json:"page"`
+	// Tab is BOSSES, RAIDS, CLUES, MINIGAMES or OTHER; empty when the plugin
+	// could not tell.
+	Tab      string `json:"tab,omitempty"`
+	Obtained int    `json:"obtained"`
+	Total    int    `json:"total"`
+	// Items are the obtained items with how many, Missing the slots the page
+	// showed as not obtained yet; both by item id.
+	Items   []CollectionLogItemView `json:"items"`
+	Missing []CollectionLogItemView `json:"missing"`
+	FactSource
+}
+
+// CollectionLogItemView is one slot of a collection log page.
+type CollectionLogItemView struct {
+	ID   int    `json:"id"`
+	Name string `json:"name"`
+	Qty  int64  `json:"qty,omitempty"`
 }
 
 // AccountState is what the account screen shows: skills and quests with
@@ -98,7 +127,10 @@ type AccountState struct {
 	// CombatAchievements is empty until the plugin sends the CA varps.
 	CombatAchievements []CATierView       `json:"combat_achievements"`
 	CollectionLog      *CollectionLogView `json:"collection_log,omitempty"`
-	Containers         []ContainerView    `json:"containers"`
+	// CollectionLogPages are the collection log pages the plugin read, by
+	// tab and title; empty until the player opens the log in game.
+	CollectionLogPages []CollectionLogPageView `json:"collection_log_pages"`
+	Containers         []ContainerView         `json:"containers"`
 }
 
 // questPointsVarp is the varp the game keeps the quest point total in.
@@ -122,6 +154,11 @@ func (r *Repository) AccountState(ctx context.Context, accountID string) (Accoun
 		Skills:  []SkillView{}, Quests: []QuestView{}, Diaries: []DiaryView{}, Containers: []ContainerView{},
 		CombatAchievements: []CATierView{},
 	}
+	pages, err := r.queries.ListPlayerStateByFacet(ctx, storedb.ListPlayerStateByFacetParams{AccountID: accountID, Facet: coreingest.FacetCollectionLog})
+	if err != nil {
+		return AccountState{}, fmt.Errorf("list collection log: %w", err)
+	}
+	out.CollectionLogPages = collectionLogPages(r.catalog, pages)
 	src := func(facet, key string) FactSource {
 		o := obs[coreprogress.Fact{Facet: facet, Key: key}]
 		return FactSource{Source: o.Source, ObservedAt: o.ObservedAt}
@@ -297,4 +334,72 @@ func collectionLog(reg *entities.Registry, varps map[int]int64, src func(facet, 
 		}
 	}
 	return out
+}
+
+// collectionLogPages reads the page facts of the collection_log facet (key
+// coreingest.CollectionLogPageKey) into the account screen's pages, ordered
+// by tab (the game's order, unknown last) and title. Slot facts keyed by item
+// id (the collectionLogSlots bitset) are not pages and are skipped, as is a
+// value that does not decode.
+func collectionLogPages(reg *entities.Registry, rows []storedb.PlayerState) []CollectionLogPageView {
+	out := []CollectionLogPageView{}
+	for _, row := range rows {
+		title, ok := strings.CutPrefix(row.Key, coreingest.CollectionLogPagePrefix)
+		if !ok {
+			continue
+		}
+		var v struct {
+			Tab   string           `json:"tab"`
+			Items map[string]int64 `json:"items"`
+		}
+		if json.Unmarshal(row.Value, &v) != nil {
+			continue
+		}
+		page := CollectionLogPageView{
+			Page: title, Tab: v.Tab, Items: []CollectionLogItemView{}, Missing: []CollectionLogItemView{},
+			FactSource: FactSource{Source: row.Source, ObservedAt: row.ObservedAt.Time},
+		}
+		for rawID, qty := range v.Items {
+			id, err := strconv.Atoi(rawID)
+			if err != nil || id <= 0 || qty < 0 {
+				continue
+			}
+			item := CollectionLogItemView{ID: id, Name: rawID}
+			if reg != nil {
+				if f, found := reg.Item(id); found {
+					item.Name = f.Name
+				}
+			}
+			page.Total++
+			if qty == 0 {
+				page.Missing = append(page.Missing, item)
+				continue
+			}
+			item.Qty = qty
+			page.Obtained++
+			page.Items = append(page.Items, item)
+		}
+		byID := func(items []CollectionLogItemView) func(i, j int) bool {
+			return func(i, j int) bool { return items[i].ID < items[j].ID }
+		}
+		sort.Slice(page.Items, byID(page.Items))
+		sort.Slice(page.Missing, byID(page.Missing))
+		out = append(out, page)
+	}
+	sort.Slice(out, func(i, j int) bool {
+		if a, b := collectionLogTabRank(out[i].Tab), collectionLogTabRank(out[j].Tab); a != b {
+			return a < b
+		}
+		return out[i].Page < out[j].Page
+	})
+	return out
+}
+
+func collectionLogTabRank(tab string) int {
+	for i, t := range coreingest.CollectionLogTabs {
+		if t == tab {
+			return i
+		}
+	}
+	return len(coreingest.CollectionLogTabs)
 }

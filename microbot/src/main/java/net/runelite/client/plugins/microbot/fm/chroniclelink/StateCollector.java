@@ -26,7 +26,8 @@ import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 /**
  * Reads player state into an immutable {@link PlayerSnapshot}. Client thread only: every
  * method is called from an event handler or from {@code runOnClientThreadOptional}. Item
- * containers come from Microbot's event-maintained caches; nothing here acts in game (no
+ * containers come from Microbot's event-maintained caches, collection log pages from the open
+ * interface ({@link CollectionLogReader}); nothing here acts in game (no
  * {@code Rs2Bank.isOpen()}, which may type the bank PIN).
  */
 final class StateCollector
@@ -43,6 +44,7 @@ final class StateCollector
 	private final ContainerTracker bank = new ContainerTracker();
 	private final ContainerTracker inventory = new ContainerTracker();
 	private final ContainerTracker equipment = new ContainerTracker();
+	private final CollectionLogTracker collectionLog = new CollectionLogTracker();
 
 	/** Opaque id of the current login; null while logged out. */
 	private String liveEpoch;
@@ -69,6 +71,7 @@ final class StateCollector
 		bank.reset();
 		inventory.reset();
 		equipment.reset();
+		collectionLog.reset();
 	}
 
 	void endEpoch()
@@ -85,6 +88,11 @@ final class StateCollector
 	/** True on the tick that ends the post-login wait: the state just became readable. */
 	boolean onGameTick()
 	{
+		if (collectionLog.adventureLogPending())
+		{
+			// the tick after the load, as ChatCommandsPlugin: the title is set by then
+			collectionLog.onAdventureLogOwner(CollectionLogReader.readAdventureLogOwner(client));
+		}
 		if (ticksLoggedIn < SETTLE_TICKS)
 		{
 			ticksLoggedIn++;
@@ -120,6 +128,39 @@ final class StateCollector
 		{
 			ticksLoggedIn = 0;
 		}
+		if (state == GameState.LOADING || state == GameState.HOPPING)
+		{
+			collectionLog.onRegionChange();
+		}
+	}
+
+	/** An interface loaded: an adventure log may show another player's collection log. */
+	void onWidgetLoaded(int groupId)
+	{
+		if (CollectionLogReader.adventureLogGroup(groupId))
+		{
+			collectionLog.onAdventureLogLoaded();
+		}
+	}
+
+	/**
+	 * The collection log drew a page ({@code ScriptID.COLLECTION_DRAW_LIST}): reads it when it is
+	 * this character's log. True when the page is new or changed, so worth a capture.
+	 */
+	boolean onCollectionLogDrawn(Instant now)
+	{
+		if (liveEpoch == null || client.getGameState() != GameState.LOGGED_IN)
+		{
+			return false;
+		}
+		Player local = client.getLocalPlayer();
+		String me = local == null ? null : local.getName();
+		if (me == null || collectionLog.othersLog(me))
+		{
+			return false;
+		}
+		CollectionLogReader.Page page = CollectionLogReader.read(client);
+		return page != null && collectionLog.record(page.title, page.tab, page.items, now);
 	}
 
 	/** A varp or varbit changed, so quest states may have too. */
@@ -154,6 +195,7 @@ final class StateCollector
 		Map<String, Long> varp = readVars(manifest.varps, client::getVarpValue);
 		Map<String, String> quest = readQuests(manifest, quests);
 		Map<String, IngestContract.Timer> timers = TimeTrackingClocks.forIngest(manifest);
+		Map<String, CollectionLogPage> pages = readCollectionLog(manifest, collectionLog);
 		IngestContract.Position position = null;
 		if (manifest.positionEnabled() && config.sendPosition() && local != null)
 		{
@@ -195,7 +237,7 @@ final class StateCollector
 
 		return new PlayerSnapshot(username, profile(RuneScapeProfileType.getCurrent(client)),
 			accountType(client.getVarbitValue(VarbitID.IRONMAN)), manifest.manifestVersion,
-			varb, varp, level, xp, boosted, quest, timers, position, containers);
+			varb, varp, level, xp, boosted, quest, timers, position, pages, containers);
 	}
 
 	private ContainerSnapshot captureBank(boolean allowed, List<Integer> only, Instant now)
@@ -231,6 +273,15 @@ final class StateCollector
 	static Map<String, String> readQuests(IngestContract.Manifest manifest, QuestTracker tracker)
 	{
 		return manifest.questsEnabled() ? tracker.read() : null;
+	}
+
+	/**
+	 * The pages read in this login, or {@code null} (not sent) unless the manifest says the
+	 * server accepts {@code data.collectionLog}.
+	 */
+	static Map<String, CollectionLogPage> readCollectionLog(IngestContract.Manifest manifest, CollectionLogTracker tracker)
+	{
+		return manifest.collectionLogEnabled() ? tracker.pages() : null;
 	}
 
 	/**

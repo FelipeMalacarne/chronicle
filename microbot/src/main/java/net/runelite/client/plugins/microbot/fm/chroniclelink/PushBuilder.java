@@ -58,6 +58,7 @@ final class PushBuilder
 		data.quest = current.quest == null ? null : new TreeMap<>(current.quest);
 		data.timers = current.timers == null ? null : new TreeMap<>(current.timers);
 		data.position = current.position;
+		data.collectionLog = collectionLog(current.collectionLog, sentAt);
 		data.items = new IngestContract.ItemContainers();
 		data.items.bank = observation(current.container(ContainerKind.BANK), null, sentAt);
 		data.items.inventory = observation(current.container(ContainerKind.INVENTORY), null, sentAt);
@@ -79,6 +80,9 @@ final class PushBuilder
 			: acked.quest == null ? new TreeMap<>(current.quest) : changed(acked.quest, current.quest);
 		data.timers = current.timers == null ? null
 			: acked.timers == null ? new TreeMap<>(current.timers) : changed(acked.timers, current.timers);
+		// Pages only come and change: a page never requires a full, a delta carries the new reads.
+		data.collectionLog = current.collectionLog == null ? null
+			: collectionLog(acked.collectionLog == null ? current.collectionLog : changed(acked.collectionLog, current.collectionLog), sentAt);
 
 		IngestContract.ItemContainers items = new IngestContract.ItemContainers();
 		items.bank = changedObservation(acked, current, ContainerKind.BANK, sentAt);
@@ -89,7 +93,8 @@ final class PushBuilder
 		boolean headerChanged = !acked.profile.equals(current.profile)
 			|| !Objects.equals(acked.accountType, current.accountType);
 		boolean other = data.varb != null || data.varp != null || data.level != null || data.xp != null
-			|| data.boosted != null || data.quest != null || data.timers != null || data.items != null || headerChanged;
+			|| data.boosted != null || data.quest != null || data.timers != null || data.collectionLog != null
+			|| data.items != null || headerChanged;
 		// The position rides along any push once it changed; alone it waits for a real move.
 		IngestContract.Position pos = current.position;
 		if (pos != null && pos.movedFrom(acked.position, other ? 1 : POSITION_TILES))
@@ -151,6 +156,21 @@ final class PushBuilder
 		obs.liveEpoch = snapshot.liveEpoch;
 		obs.quantities = patch != null ? patch : ItemQuantities.copy(snapshot.quantities);
 		return obs;
+	}
+
+	/** The pages in wire form, or {@code null} (not sent) when there are none. */
+	static Map<String, IngestContract.CollectionLogPage> collectionLog(Map<String, CollectionLogPage> pages, Instant sentAt)
+	{
+		if (pages == null || pages.isEmpty())
+		{
+			return null;
+		}
+		Map<String, IngestContract.CollectionLogPage> out = new TreeMap<>();
+		for (Map.Entry<String, CollectionLogPage> e : pages.entrySet())
+		{
+			out.put(e.getKey(), e.getValue().wire(sentAt));
+		}
+		return out;
 	}
 
 	/** Both absent, or both present with the same keys: a delta can describe the change. */

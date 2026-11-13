@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 	"time"
@@ -81,7 +82,7 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 	slices.Sort(risks)
 	params, _ := json.Marshal(agent.TaskRunParams{
 		Key: view.Key, Plan: in.Plan.ID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
-		Supervised: req.Supervised, TimeoutS: req.TimeoutS, Task: spec,
+		Supervised: req.Supervised, TimeoutS: req.TimeoutS, Account: account, Task: spec,
 	})
 	if _, err = agent.ValidateParams(agent.CmdTaskRun, params); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
@@ -94,13 +95,27 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
 	defer cancel()
+	if err == nil && spec.Train != nil {
+		// A train is delegated: the agent must end it on the server's
+		// proof, and the client must have the plugin.
+		if !served.Supports(agent.CmdRunUntil) {
+			err = errAgentNoUntil
+		} else {
+			err = s.pluginInstalled(ctx, served, spec.Train.Plugin)
+		}
+	}
 	var data json.RawMessage
 	if err == nil {
 		err = link.CallAgent(ctx, served.ID, agent.CmdTaskRun, json.RawMessage(params), &data)
 	}
 	s.auditMicrobot(r, account, served, agent.CmdTaskRun, params, err)
-	if errors.Is(err, errAgentTooOld) {
+	var missing *pluginMissingError
+	switch {
+	case errors.Is(err, errAgentTooOld):
 		writeError(w, http.StatusConflict, err.Error())
+		return
+	case errors.As(err, &missing):
+		refuse(missing.Error())
 		return
 	}
 	if err != nil {
@@ -111,6 +126,39 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 }
 
 var errAgentTooOld = errors.New("the agent predates task_run: update chronicle on the game machine")
+
+// pluginMissingError: the client of the account does not have the plugin a
+// train delegates to.
+type pluginMissingError struct{ class string }
+
+func (e *pluginMissingError) Error() string {
+	return "o plugin " + e.class + " não está instalado no cliente da conta (pelo perfil da conta, pelo modelo da frota ou pelo Hub): instale antes de treinar"
+}
+
+// pluginInstalled asks the account's agent for the client's plugins (the
+// Agent Server's /scripts, by class: its own, the Hub's it installed, the
+// sideloaded ones) and refuses a plugin the client does not have. The agent
+// checks again when the run starts.
+func (s *Server) pluginInstalled(ctx context.Context, served agent.Info, class string) error {
+	var p agent.Plugins
+	if err := s.opts.Microbot.Link.CallAgent(ctx, served.ID, agent.CmdPlugins, nil, &p); err != nil {
+		return err
+	}
+	var scripts struct {
+		Scripts []struct {
+			ClassName string `json:"className"`
+		} `json:"scripts"`
+	}
+	if err := json.Unmarshal(p.Scripts, &scripts); err != nil {
+		return fmt.Errorf("the client's plugins: %w", err)
+	}
+	for _, sc := range scripts.Scripts {
+		if sc.ClassName == class {
+			return nil
+		}
+	}
+	return &pluginMissingError{class: class}
+}
 
 // taskStatus is GET /api/microbot/task: the agent's current or last run
 // and, for a task run, its termination on the account's facts now.

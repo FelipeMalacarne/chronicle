@@ -49,8 +49,10 @@ func Resolve(in Input, key string) (execspec.Task, TaskView, error) {
 		out, err = in.resolveBank(reqs, equip)
 	case content.TaskBuy:
 		out, err = in.resolveBuy(s.t)
+	case content.TaskTrain:
+		out, err = in.resolveTrain(s.t)
 	default:
-		err = fmt.Errorf("o executor da fase 3 não roda %s", s.t.Type)
+		err = fmt.Errorf("o executor não roda %s", s.t.Type)
 	}
 	if err != nil {
 		return execspec.Task{}, v, err
@@ -189,6 +191,20 @@ func (in Input) resolveBuy(t content.Task) (execspec.Task, error) {
 	}
 	return execspec.Task{Type: execspec.TypeBuy, Buy: &execspec.Buy{
 		Shop: t.Shop.String(), ShopName: in.name(*t.Shop), NPCs: npcs, Item: id, ItemName: in.name(*t.Item), Qty: qty,
+	}}, nil
+}
+
+// resolveTrain is the delegation of a train (docs/10 phase 4): the skill,
+// the level its termination names, the plugin and its settings as the task
+// gives them, and whether the method fights.
+func (in Input) resolveTrain(t content.Task) (execspec.Task, error) {
+	u, ok := t.Ends()
+	if !ok || u.Objective == nil || t.Skill == nil || u.Objective.Ref != *t.Skill || u.Objective.Op != entities.OpAtLeast {
+		return execspec.Task{}, errors.New("o treino não termina num nível da própria skill")
+	}
+	return execspec.Task{Type: execspec.TypeTrain, Train: &execspec.Train{
+		Skill: t.Skill.String(), SkillName: in.name(*t.Skill), Level: u.Objective.N,
+		Plugin: t.Plugin, Config: slices.Clone(t.Config), Combat: TrainFights(t, in.Registry),
 	}}, nil
 }
 

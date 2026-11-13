@@ -6,7 +6,9 @@
 // catalog by the server (internal/core/plan.Resolve); nothing here is text
 // to interpret. Pure: the agent and the server share the same checks, and
 // the plugin's TaskSpec mirrors the JSON, pinned by the wire fixtures both
-// test suites read.
+// test suites read. A train (phase 4) is the agent's alone: it delegates to
+// a plugin of the client and never goes to Chronicle Link, which keeps
+// refusing it.
 package execspec
 
 import (
@@ -14,21 +16,32 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"unicode"
 
+	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
-// Types the phase 3 executor runs (decision E5: the first primitives).
+// Types the executor runs (decision E5: the first primitives). Travel,
+// bank and buy run on Chronicle Link's machine (phase 3); train is
+// delegated by the agent to a plugin of the client (phase 4) and never goes
+// to the bridge.
 const (
 	TypeTravel = "travel"
 	TypeBank   = "bank"
 	TypeBuy    = "buy"
+	TypeTrain  = "train"
 )
 
 // Types lists them.
-var Types = []string{TypeTravel, TypeBank, TypeBuy}
+var Types = []string{TypeTravel, TypeBank, TypeBuy, TypeTrain}
+
+// CombatSkills are the skills trained only by fighting: a train of one of
+// them is a combat risk whatever its method (docs/10, E9).
+var CombatSkills = []string{"attack", "strength", "defence", "hitpoints", "ranged", "slayer"}
 
 // Bounds of what a task may ask.
 const (
@@ -51,6 +64,7 @@ type Task struct {
 	Travel *Travel `json:"travel,omitempty"`
 	Bank   *Bank   `json:"bank,omitempty"`
 	Buy    *Buy    `json:"buy,omitempty"`
+	Train  *Train  `json:"train,omitempty"`
 }
 
 // Tile is a world tile.
@@ -115,7 +129,33 @@ type Buy struct {
 	Qty      int    `json:"qty"`
 }
 
-var reRef = regexp.MustCompile(`^(location|shop):[a-z0-9_.'-]{1,120}$`)
+// Train delegates a skill's training to a plugin of the client (docs/10
+// phase 4): the agent sets the plugin's settings, starts it and stops it
+// when the server proves Until from the ingest; the plugin decides how to
+// train, never when it is done.
+type Train struct {
+	// Skill is the catalog ref ("skill:fishing") and SkillName its name as
+	// the client shows it ("Fishing").
+	Skill     string `json:"skill"`
+	SkillName string `json:"skillName"`
+	// Level is the N of the termination skill:<skill>>=N.
+	Level int `json:"level"`
+	// Plugin is the plugin's fully qualified class, Config the settings it
+	// starts with.
+	Plugin string              `json:"plugin"`
+	Config []clientcfg.Setting `json:"config,omitempty"`
+	// Combat: the method fights (a monster, or a skill trained only by
+	// fighting), a death risk (E9).
+	Combat bool `json:"combat,omitempty"`
+}
+
+// Until is the train's termination, the objective key the server proves.
+func (t Train) Until() string { return t.Skill + ">=" + strconv.Itoa(t.Level) }
+
+var (
+	reRef   = regexp.MustCompile(`^(location|shop):[a-z0-9_.'-]{1,120}$`)
+	reSkill = regexp.MustCompile(`^skill:[a-z]{1,40}$`)
+)
 
 // Check verifies a task: a type the executor runs, its parameters only,
 // tiles in the world, an area of a location (not a region), a target
@@ -124,7 +164,7 @@ var reRef = regexp.MustCompile(`^(location|shop):[a-z0-9_.'-]{1,120}$`)
 // with a clear error.
 func (t Task) Check() error {
 	set := 0
-	for _, p := range []bool{t.Travel != nil, t.Bank != nil, t.Buy != nil} {
+	for _, p := range []bool{t.Travel != nil, t.Bank != nil, t.Buy != nil, t.Train != nil} {
 		if p {
 			set++
 		}
@@ -145,8 +185,13 @@ func (t Task) Check() error {
 			return errors.New("task: a buy has only buy")
 		}
 		return t.Buy.check()
-	case content.TaskTalk, content.TaskInteract, content.TaskTrain, content.TaskManual, content.TaskQuest:
-		return fmt.Errorf("task: %s is not executed yet (phase 3 runs travel, bank and buy)", t.Type)
+	case TypeTrain:
+		if set != 1 || t.Train == nil {
+			return errors.New("task: a train has only train")
+		}
+		return t.Train.check()
+	case content.TaskTalk, content.TaskInteract, content.TaskManual, content.TaskQuest:
+		return fmt.Errorf("task: %s is not executed yet (the executor runs travel, bank, buy and train)", t.Type)
 	}
 	return fmt.Errorf("task: unknown type %q", t.Type)
 }
@@ -243,6 +288,28 @@ func (b *Buy) check() error {
 	return nil
 }
 
+func (t *Train) check() error {
+	if !reSkill.MatchString(t.Skill) {
+		return errors.New("train: skill must be a skill ref")
+	}
+	if err := checkName("train: skillName", t.SkillName); err != nil {
+		return err
+	}
+	if t.Level < 1 || t.Level > entities.MaxSkillLevel {
+		return fmt.Errorf("train: level 1 to %d", entities.MaxSkillLevel)
+	}
+	if err := clientcfg.CheckClass(t.Plugin); err != nil {
+		return fmt.Errorf("train: %w", err)
+	}
+	if err := clientcfg.CheckSettings(t.Config); err != nil {
+		return fmt.Errorf("train: %w", err)
+	}
+	if slices.Contains(CombatSkills, strings.TrimPrefix(t.Skill, "skill:")) && !t.Combat {
+		return fmt.Errorf("train: %s is trained by fighting, so combat must be set", t.Skill)
+	}
+	return nil
+}
+
 // checkName refuses an empty, long or multi-line name.
 func checkName(what, s string) error {
 	if strings.TrimSpace(s) == "" {
@@ -290,10 +357,14 @@ func onSegment(x, y, x1, y1, x2, y2 int) bool {
 }
 
 // Risks returns the risk kinds of the task itself, sorted: wilderness for
-// a travel whose area touches it. The server adds the recipe's.
+// a travel whose area touches it, combat for a train that fights. The
+// server adds the recipe's (and the wilderness of a train's location).
 func (t Task) Risks() []string {
 	if t.Travel != nil && AreaInWilderness(t.Travel.Area) {
 		return []string{content.RiskWilderness}
+	}
+	if t.Train != nil && t.Train.Combat {
+		return []string{content.RiskCombat}
 	}
 	return nil
 }

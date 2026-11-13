@@ -216,6 +216,62 @@
     "want": "ends on skill:woodcutting>=N"
   },
   {
+    "name": "train config without its plugin",
+    "step": "c",
+    "task": {
+      "type": "train",
+      "skill": "skill:woodcutting",
+      "config": [
+        {
+          "group": "autowoodcutting",
+          "key": "tree",
+          "value": "TREE"
+        }
+      ],
+      "until": {
+        "objective": "skill:woodcutting>=15"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "Chop trees",
+        "span": [
+          0,
+          10
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "plugin"
+  },
+  {
+    "name": "train delegated to chronicle link",
+    "step": "c",
+    "task": {
+      "type": "train",
+      "skill": "skill:woodcutting",
+      "plugin": "net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin",
+      "until": {
+        "objective": "skill:woodcutting>=15"
+      },
+      "evidence": {
+        "field": "/text",
+        "quote": "Chop trees",
+        "span": [
+          0,
+          10
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "not controlled from the planner"
+  },
+  {
     "name": "bank without items or loadout",
     "step": "a",
     "task": {

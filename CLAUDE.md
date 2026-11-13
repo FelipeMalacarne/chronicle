@@ -71,7 +71,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `chronicle profiles list\|show\|put\|delete\|use\|account` | docs/11 section 15: the workers' client profiles (plugins and RuneLite settings, optionally on a model) over `/api/client-profiles` and `/api/accounts/client`; `show` prints the JSON `put -f` reads. A profile reaches a worker on its next start or restart, never a running client |
 | `chronicle recording [--since 2h] [-o file]` / `recording delete --yes` | docs/10 section 11: the demonstration Chronicle Link recorded with "Record demonstration" on (`GET /api/account/recording`), printed or written as the JSON the content MCP's `propose_tasks` reads; `delete` drops it on the server (all, or `--recording <id>`). Never delete the owner's recording unasked |
 | `chronicle plans` / `plans create -f plan.json` / `plans use <id\|route>` / `plans delete <id> --yes` | docs/10 section 9: the account's plans over `/api/plans` (the route, goal and custom plans; the custom plans' screen is phase 5, so a plan is a JSON file of items: a (guide, step), a recipe or a task) and the one it follows |
-| `chronicle task` / `task run --yes [--supervised] [--wait 10m]` / `task status` / `task cancel` | docs/10 phase 3: the next typed task of the account's active plan (`GET /api/plan/next`), its run by the account's agent (`POST /api/microbot/task`: the closed command `task_run`, executed by Chronicle Link's executor), and the ingest's proof of its termination (`GET /api/microbot/task`). `run` acts in game on the account: never run it on the owner's account unasked |
+| `chronicle task` / `task run --yes [--supervised] [--wait 10m]` / `task status` / `task cancel` | docs/10 phases 3 and 4: the next typed task of the account's active plan (`GET /api/plan/next`), its run by the account's agent (`POST /api/microbot/task`: the closed command `task_run`, executed by Chronicle Link's executor, or a `train` delegated to the plugin it names and stopped when the server proves the level, `run_until`), and the ingest's proof of its termination (`GET /api/microbot/task`). `run` acts in game on the account: never run it on the owner's account unasked |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
@@ -107,11 +107,16 @@ internal/core/        PURE domain (no DB/HTTP imports):
   plan/               plans (docs/10 section 9): route (the guide and its cursor, no copy), goal and custom
                       (items: a (guide, step), a recipe or a task); the next task of the active plan, skipping
                       the ones already met, recipes inserted only for proven-unmet requirements; risks (E9,
-                      the wilderness) and what the phase 3 executor runs (travel, bank, buy); Resolve turns
-                      a task into the execspec the agent carries
-  execspec/           the typed task the phase 3 executor runs (travel, bank, buy): game ids, tiles and
-                      quantities only, with its checks, the wilderness bounds and E9; shared by the server,
-                      the agent's task_run and (mirrored, pinned by task-wire.json) Chronicle Link
+                      the wilderness, a train that fights) and what the executor runs (travel, bank, buy,
+                      a train that names its plugin); Resolve turns a task into the execspec the agent carries
+  execspec/           the typed task the executor runs: travel, bank, buy (Chronicle Link's machine, phase 3)
+                      and train (delegated by the agent to a plugin, phase 4): game ids, tiles, quantities,
+                      the plugin's class and settings only, with its checks, the wilderness bounds and E9;
+                      shared by the server, the agent's task_run and (mirrored, pinned by task-wire.json)
+                      Chronicle Link, which keeps refusing train
+  clientcfg/          what the planner may name and set in the Microbot client (plugin classes, config
+                      groups, keys and values; the protected ones): the agent, profiles, execspec and the
+                      content verifier share it
   annotate/           guide extraction: batches, name resolution, verification, sidecar/report writer
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)

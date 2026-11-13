@@ -150,7 +150,7 @@ func TestValidateTaskRun(t *testing.T) {
 		want string
 	}{
 		{"talk", mod(func(p *TaskRunParams) { p.Task = execspec.Task{Type: "talk"} }), "not executed yet"},
-		{"train", mod(func(p *TaskRunParams) { p.Task = execspec.Task{Type: "train"} }), "not executed yet"},
+		{"train", mod(func(p *TaskRunParams) { p.Task = execspec.Task{Type: "train"}; p.Account = "acc_zezima" }), "only train"},
 		{"hcim in the wilderness alone", travelParams("hcim", []string{"wilderness"}, false, mageBankTravel()), "supervised"},
 		{"hcim and a recipe's combat alone", travelParams("hcim", []string{"combat"}, false, lumbridge()), "supervised"},
 		{"the wilderness undeclared", travelParams("ironman", nil, false, mageBankTravel()), "not declared"},

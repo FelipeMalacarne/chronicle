@@ -808,6 +808,50 @@ destino da viagem):
     termina `done`, com o plugin parado, quando o ingest manda 76.
 - **Nada foi testado no jogo.**
 
+**Fase 4 do doc 10: `train` por delegação** (2026-11-13; doc 10, seções 7, 10 e 13; decisão R2 deste
+doc: a tarefa aponta para uma classe de plugin com um preset):
+
+- **A tarefa:** `train` ganha `plugin` (a classe do plugin do Microbot, do Hub, de `microbot/` ou do
+  cliente) e `config` (as opções com que ele começa: `[{group, key, value}]`). As regras de classe e
+  de opção (classe protegida, grupo protegido, chave que parece segredo, valor até 2000 caracteres)
+  saíram do agent para `internal/core/clientcfg`, que o verificador do conteúdo, o `execspec` e o
+  agent usam. O `execspec.Task` ganha `train`: skill, nome, nível (o N do término), plugin, opções e
+  `combat` (o método luta: NPC monstro ou skill que só se treina lutando).
+- **No `task_run`:** a validação nos dois lados confere também a conta (obrigatória num `train`: é
+  nos fatos dela que o servidor prova o nível), o timeout (60 s a 12 h, padrão 2 h) e o risco
+  `combat` declarado (E9: HCIM só com `supervised`). Um `train` nunca vai para a máquina do Chronicle
+  Link (ela continua recusando o tipo). O agent:
+  1. espera o ponto seguro e confere o login e, em HCIM sem supervisão, que o personagem está fora
+     da wilderness;
+  2. confere que a ponte responde: o nível é provado pelo rastreamento do Chronicle Link;
+  3. confere no `/scripts` que o cliente tem o plugin e que ele está desligado (já ligado é recusado:
+     o run liga, grava as opções antes e desliga);
+  4. anota os outros plugins ligados, sem recusar (como no `task_run` da fase 3);
+  5. grava cada opção (`/settings/plugin`), liga o plugin e o acompanha como um run com
+     `wait_until` em `skill:<skill>>=N` (o `Run` leva o plugin em `className`, a tarefa em `task` e a
+     chave em `until`);
+  6. termina `done` quando o servidor prova o nível e desliga o plugin; timeout, falha do plugin,
+     cliente sem responder e o cancelamento do dono (`chronicle task cancel`) também o desligam.
+     O personagem fica onde treinou: o `train` não anda nem volta.
+- **No servidor:** o `POST /api/microbot/task` de um `train` recusa com 409, antes de tocar no jogo e
+  auditado, um agent sem `run_until` e um plugin que o cliente não lista (pergunta ao agent o
+  `plugins`); manda a conta no `task_run`. O `GET /api/microbot/task` prova o término como na fase
+  3: o nível nos fatos da conta.
+- **CLI:** `chronicle task run --yes --wait 3h` serve para o treino (o `--timeout` aceita até 43200).
+- **Verificado:**
+  - testes do conteúdo (o verificador e o schema: plugin sem pacote, Chronicle Link, grupo protegido,
+    chave de segredo, opção repetida, `config` sem `plugin`, `plugin` em outro tipo), do `execspec`, do
+    plano (o `train` executável só com plugin, `combat` num monstro e numa skill de luta, HCIM
+    supervisionado, já cumprido) e do agent com `-race` (a prova desliga o plugin e nada mais age;
+    o nível do cliente não termina nada; plugin ausente, já ligado, sem ponte e HCIM na wilderness
+    são recusados sem agir; timeout e cancelamento desligam o plugin; prova antes do ponto seguro não
+    liga nada);
+  - de ponta a ponta no Postgres 17 (`TestTrainTaskPostgres`): um plano com um `train` até
+    `skill:fishing>=76`, a recusa do plugin ausente e do agent antigo, o plugin ligado com as opções,
+    o ingest no 75 sem efeito e no 76 com o plugin desligado, o run `done` e a prova do `GET`.
+- **Nada foi testado no jogo.** Os passos do dono estão no doc 10, seção 13.
+- **Sem tela:** o botão "Treinar" (ou "Executar") na web pede o canvas antes (CLAUDE.md, regra 11).
+
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no
 jogo, então o cartão "Input humano" do artboard não existe na tela.

@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
 )
 
 // updatePluginFixture rewrites the plugin's fixture of the task wire:
@@ -52,12 +54,19 @@ func buy() *Buy {
 	return &Buy{Shop: "shop:bobs_brilliant_axes", ShopName: "Bob's Brilliant Axes", NPCs: []int{2812, 10619}, Item: 1351, ItemName: "Bronze axe", Qty: 1}
 }
 
+func fishing() *Train {
+	return &Train{Skill: "skill:fishing", SkillName: "Fishing", Level: 76, Plugin: "a.b.TickFisherPlugin",
+		Config: []clientcfg.Setting{{Group: "tickfisher", Key: "mode", Value: "BARBARIAN"}}}
+}
+
 func TestCheck(t *testing.T) {
 	for _, ok := range []Task{
 		{Type: TypeTravel, Travel: castle()},
 		{Type: TypeTravel, Travel: mageBank()},
 		{Type: TypeBank, Bank: bank()},
 		{Type: TypeBuy, Buy: buy()},
+		{Type: TypeTrain, Train: fishing()},
+		{Type: TypeTrain, Train: &Train{Skill: "skill:attack", SkillName: "Attack", Level: 40, Plugin: "a.b.Fighter", Combat: true}},
 	} {
 		if err := ok.Check(); err != nil {
 			t.Errorf("%s refused: %v", ok.Type, err)
@@ -66,13 +75,22 @@ func TestCheck(t *testing.T) {
 	tr := func(f func(*Travel)) Task { v := castle(); f(v); return Task{Type: TypeTravel, Travel: v} }
 	bk := func(f func(*Bank)) Task { v := bank(); f(v); return Task{Type: TypeBank, Bank: v} }
 	by := func(f func(*Buy)) Task { v := buy(); f(v); return Task{Type: TypeBuy, Buy: v} }
+	tn := func(f func(*Train)) Task { v := fishing(); f(v); return Task{Type: TypeTrain, Train: v} }
 	for _, tc := range []struct {
 		name string
 		task Task
 		want string
 	}{
 		{"talk", Task{Type: "talk"}, "not executed yet"},
-		{"train", Task{Type: "train"}, "not executed yet"},
+		{"train without train", Task{Type: "train"}, "only train"},
+		{"skill ref", tn(func(v *Train) { v.Skill = "fishing" }), "skill ref"},
+		{"level", tn(func(v *Train) { v.Level = 100 }), "level 1 to 99"},
+		{"bare class", tn(func(v *Train) { v.Plugin = "TickFisherPlugin" }), "fully qualified"},
+		{"chronicle link", tn(func(v *Train) { v.Plugin = "net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin" }), "not controlled"},
+		{"secret setting", tn(func(v *Train) { v.Config[0].Key = "password" }), "secret"},
+		{"protected group", tn(func(v *Train) { v.Config[0].Group = "microbot" }), "not edited"},
+		{"fighting without combat", tn(func(v *Train) { v.Skill, v.SkillName = "skill:strength", "Strength" }), "combat must be set"},
+		{"train and travel", Task{Type: TypeTrain, Train: fishing(), Travel: castle()}, "only train"},
 		{"quest", Task{Type: "quest"}, "not executed yet"},
 		{"unknown", Task{Type: "teleport"}, "unknown type"},
 		{"two params", Task{Type: TypeTravel, Travel: castle(), Buy: buy()}, "only travel"},
@@ -114,6 +132,15 @@ func TestRisks(t *testing.T) {
 	}
 	if r := (Task{Type: TypeTravel, Travel: castle()}).Risks(); len(r) != 0 {
 		t.Errorf("castle risks = %v", r)
+	}
+	if r := (Task{Type: TypeTrain, Train: fishing()}).Risks(); len(r) != 0 {
+		t.Errorf("fishing risks = %v", r)
+	}
+	if r := (Task{Type: TypeTrain, Train: &Train{Combat: true}}).Risks(); len(r) != 1 || r[0] != "combat" {
+		t.Errorf("fighting risks = %v", r)
+	}
+	if u := fishing().Until(); u != "skill:fishing>=76" {
+		t.Errorf("until = %s", u)
 	}
 	if !NeedsSupervision("hcim", []string{"wilderness"}) || NeedsSupervision("ironman", []string{"combat"}) ||
 		NeedsSupervision("hcim", []string{"item_loss"}) || !NeedsSupervision("hcim", []string{"hazard"}) {

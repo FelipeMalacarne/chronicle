@@ -61,13 +61,16 @@ func newTaskRunCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "run",
 		Short: "Execute the plan's next task in game, on the account's agent (acts in game)",
-		Long: `The account's agent runs the next task of the active plan (travel, bank or buy)
-through Chronicle Link's executor, after a safe point. It acts in game on the
-account: confirm with --yes. --key guards against the plan moving on (it
-defaults to the task the command reads first). An HCIM task with a death risk
-runs only with --supervised (docs/10, E9). The run ending "done" is the
-plugin's machine finishing; the task is done only when the ingest proves its
-termination, which --wait follows.`,
+		Long: `The account's agent runs the next task of the active plan, after a safe point:
+travel, bank or buy through Chronicle Link's executor, or a train delegated to
+the plugin the task names (it must be installed in the client), which the
+agent stops when the server proves the level from the ingest. It acts in game
+on the account: confirm with --yes. --key guards against the plan moving on
+(it defaults to the task the command reads first). An HCIM task with a death
+risk (a train that fights included) runs only with --supervised (docs/10, E9).
+The run ending "done" is the plugin's machine finishing (for a train, the
+server's proof); the task is done only when the ingest proves its
+termination, which --wait follows (a training takes hours: --wait 6h).`,
 		Args: cobra.NoArgs,
 		RunE: runClient(func(cmd *cobra.Command, _ []string) error {
 			ctx, out := cmd.Context(), cmd.OutOrStdout()
@@ -110,7 +113,7 @@ termination, which --wait follows.`,
 	cmd.Flags().StringVar(&key, "key", "", "the task's key (default: the plan's next task, read first)")
 	cmd.Flags().BoolVar(&supervised, "supervised", false, "the owner is watching (required for an HCIM task with a death risk)")
 	cmd.Flags().BoolVar(&yes, "yes", false, "confirm: the task acts in game")
-	cmd.Flags().IntVar(&timeoutS, "timeout", 0, "seconds the plugin's machine may take (30 to 3600; default 900 travel, 300 otherwise)")
+	cmd.Flags().IntVar(&timeoutS, "timeout", 0, "seconds the plugin's machine may take (30 to 3600; default 900 travel, 300 otherwise; a train 60 to 43200, default 7200)")
 	cmd.Flags().DurationVar(&wait, "wait", 0, "follow the run and then the ingest's proof for up to this long (e.g. 10m)")
 	return cmd
 }

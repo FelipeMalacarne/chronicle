@@ -6,10 +6,10 @@
 
 	/*
 	 * Frota compacta (página 8 do canvas, V7FrotaCompacta1440): uma linha por conta, agrupada em
-	 * Precisa de você, Jogando e Paradas. Sem a coluna Ritmo (entra com a V5) e com a rota no lugar
-	 * do nível, como nas raias. Uma conta cuja sessão falta ou foi recusada copia o comando que
-	 * manda uma nova; Pausar e "mais ações" ficam de fora: Parar e Reiniciar estão nas raias
-	 * (docs/ui/decisoes-canvas.md, seção 7.7).
+	 * Precisa de você, Jogando e Paradas. A rota fica no lugar do nível; o Ritmo é o XP por hora da
+	 * skill que ela treina, só enquanto joga (seção 7.14). Uma conta cuja sessão falta ou foi recusada
+	 * copia o comando que manda uma nova; Pausar e "mais ações" ficam de fora: Parar e Reiniciar estão
+	 * nas raias (docs/ui/decisoes-canvas.md, seção 7.7).
 	 */
 	let {
 		groups,
@@ -34,7 +34,8 @@
 
 <section class="dense" aria-label="Contas">
 	<div class="dr hd" aria-hidden="true">
-		<span>Conta</span><span>Skill</span><span>Fazendo</span><span>Rota</span><span>Depois</span
+		<span>Conta</span><span>Skill</span><span>Fazendo</span><span>Rota</span><span>Ritmo</span><span
+			>Depois</span
 		><span>Onde</span><span class="r">Ações</span>
 	</div>
 	{#each groups as g (g.key)}
@@ -45,7 +46,7 @@
 			{@const start = !command && l.worker?.actions.includes('start') ? l.worker : null}
 			<div class="dr">
 				<span class="n">
-					<span class="lamp {l.tone}"></span>
+					<span class="lamp {l.rest ? 'rest' : l.tone}"></span>
 					<button type="button" class="nl" onclick={() => onopen(l)}><b>{l.rsn}</b></button>
 				</span>
 				<span class="sk"
@@ -60,7 +61,7 @@
 					{#if l.route}
 						<span
 							class="track"
-							class:live={l.tone === 'ok'}
+							class:live={l.tone === 'ok' && !l.rest}
 							role="progressbar"
 							aria-valuenow={l.route.pct}
 							aria-valuemin="0"
@@ -72,6 +73,7 @@
 						>{l.route.pct}%
 					{/if}
 				</span>
+				<span class="m">{l.rhythm?.rate ?? ''}</span>
 				<span class="nx">
 					{#if l.next[0]}
 						<span class:rdy={l.next[0].ready}>{l.next[0].label} · {l.next[0].when}</span>
@@ -140,7 +142,7 @@
 	.dr {
 		display: grid;
 		grid-template-columns:
-			150px 54px minmax(0, 1.5fr) minmax(0, 0.9fr) minmax(0, 1fr)
+			150px 54px minmax(0, 1.5fr) minmax(0, 0.9fr) 100px minmax(0, 1fr)
 			84px 120px;
 		gap: 12px;
 		align-items: center;
@@ -207,6 +209,9 @@
 	}
 	.lamp.up {
 		background: var(--auto);
+	}
+	.lamp.rest {
+		background: var(--gold);
 	}
 	.lamp.bad {
 		background: var(--not-started);
@@ -293,6 +298,15 @@
 		.track span {
 			animation: none !important;
 		}
+	}
+	.m {
+		font:
+			500 11px 'JetBrains Mono',
+			monospace;
+		color: var(--ink-muted);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
 	.nx {
 		display: flex;
@@ -386,6 +400,7 @@
 		}
 		.dr.hd,
 		.p,
+		.m,
 		.nx,
 		.o {
 			display: none;

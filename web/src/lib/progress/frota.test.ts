@@ -137,6 +137,90 @@ test('a logged-in client shows its scripts and world', () => {
 	assert.equal(l.client, true);
 });
 
+test('a break of the Break Handler rests the lane: still playing, back in a while', () => {
+	const l = lane(
+		input({
+			worker: worker({ tone: 'ok', cockpit: true }),
+			client: {
+				running: true,
+				headless: true,
+				vnc: false,
+				state: { loggedIn: false },
+				break: { active: true, left_s: 360 }
+			},
+			scripts: ['Break Handler', 'Yew Chopper']
+		}),
+		now
+	);
+	assert.equal(l.tone, 'ok');
+	assert.equal(l.rest, true);
+	assert.equal(l.activity, 'Em pausa');
+	assert.equal(l.detail, 'Break Handler · volta para Yew Chopper em 6 min');
+	// The V2 handler does not say how long.
+	const v2 = lane(
+		input({
+			worker: worker({ tone: 'ok', cockpit: true }),
+			client: { running: true, headless: true, vnc: false, break: { active: true } }
+		}),
+		now
+	);
+	assert.equal(v2.detail, 'Break Handler');
+	// Not in a break: the next one does not change the lane.
+	const playing = lane(
+		input({
+			worker: worker({ tone: 'ok', cockpit: true }),
+			client: {
+				running: true,
+				headless: true,
+				vnc: false,
+				state: { loggedIn: true },
+				break: { active: false, in_s: 1800 }
+			}
+		}),
+		now
+	);
+	assert.equal(playing.rest, false);
+	assert.equal(playing.activity, 'No jogo');
+});
+
+test('the rhythm: the skill being trained is the face, shown only while playing', () => {
+	const rhythm = {
+		account: 'acc_a',
+		training: {
+			skill: 'fishing',
+			level: 76,
+			xp: 1_425_500,
+			xp_per_hour: 38_200,
+			next_level_in_s: 1320,
+			last_gain_at: '2026-11-12T17:59:00Z'
+		},
+		session: {
+			started_at: '2026-11-12T17:00:00Z',
+			xp: 26_700,
+			gained: [{ item: 383, name: 'Raw shark', qty: 412 }],
+			running_out: null
+		},
+		today: { since: '2026-11-12T03:00:00Z', xp: 96_400, levels: 2, skills: [] },
+		gp: null
+	};
+	const l = lane(input({ summary: summary(1), rhythm }), now);
+	assert.equal(l.tone, 'ok');
+	assert.deepEqual(l.face, { skill: 'fishing', level: 76 });
+	assert.equal(l.rhythm?.rate, '38,2k xp/h');
+	assert.equal(l.rhythm?.bar?.next, '77 em 22 min');
+	assert.deepEqual(
+		l.rhythm?.gained.map((g) => g.qty),
+		['412']
+	);
+	// Stopped, with only the last session: no rhythm, the highest skill is the face again.
+	const stopped = lane(input({ rhythm: { ...rhythm, training: null } }), now);
+	assert.equal(stopped.tone, 'off');
+	assert.equal(stopped.rhythm, null);
+	assert.deepEqual(stopped.face, { skill: 'firemaking', level: 99 });
+	// Before the first reading: nothing.
+	assert.equal(lane(input({ summary: summary(1) }), now).rhythm, null);
+});
+
 test('a client that is up but not in the game sits at the login screen', () => {
 	const l = lane(
 		input({

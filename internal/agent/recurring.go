@@ -399,6 +399,8 @@ func (e *Executor) recurringOnce(ctx context.Context) {
 		rc := list[best]
 		if why := e.unsafe(ctx); why != "" {
 			waiting = "esperando: " + why
+		} else if why := e.breakNear(ctx, rc.Run); why != "" {
+			waiting = "esperando: " + why
 		} else {
 			fired = &RecurringFiring{At: now, Routine: rc.ID, Name: rc.Name}
 			run, err := e.startRun(rc.Run, runOrigin{routine: rc.ID, why: firingLine(rc, states[best].Reason, look)})
@@ -572,4 +574,38 @@ func assess(rc Recurring, look recurringLook, armed bool) (st RecurringState, by
 	}
 	st.Due, st.Reason = true, ReasonInterval
 	return st, false, false
+}
+
+const (
+	// BreakMargin is how far the next Break Handler break must be for a
+	// recurring run without its own timeout to start; a run's timeout
+	// counts instead, up to BreakMarginMax, so that a long timeout does not
+	// hold the routine through every break interval.
+	BreakMargin    = 15 * time.Minute
+	BreakMarginMax = 30 * time.Minute
+)
+
+// breakNear is why a recurring run must wait for the Break Handler: a break
+// going on, or the next one closer than the run may take. A client whose
+// bridge does not serve the break (Chronicle Link before 1.12), or a Break
+// Handler that does not say when (V2, or off), never holds a run.
+func (e *Executor) breakNear(ctx context.Context, run RunParams) string {
+	b := e.bridgeBreak(ctx)
+	switch {
+	case b == nil:
+		return ""
+	case b.Active:
+		return "a pausa do Break Handler"
+	case b.InS == nil:
+		return ""
+	}
+	need := BreakMargin
+	if run.TimeoutS > 0 {
+		need = min(time.Duration(run.TimeoutS)*time.Second, BreakMarginMax)
+	}
+	in := time.Duration(*b.InS) * time.Second
+	if in >= need {
+		return ""
+	}
+	return fmt.Sprintf("a pausa do Break Handler começa em %d min", int(in.Round(time.Minute)/time.Minute))
 }

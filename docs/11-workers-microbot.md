@@ -865,7 +865,8 @@ no agent (doc 08, R1). Sem tela nova: a web lê as mesmas rotas e os mesmos form
 
 Entrega 4 da fase 4 do doc 08: o relógio do Time Tracking, ou um intervalo, dispara um run sozinho,
 e várias recorrentes formam uma fila por prioridade. O comportamento do vigia, as travas e o que
-ficou de fora (o loadout com banco, o break próximo) estão no Estado do doc 08.
+ficou de fora (o loadout com banco) estão no Estado do doc 08. O break próximo entrou logo depois: a
+rotina que vence espera o break do Break Handler (doc 08, "A troca").
 
 - **Migração 0015**, na mesma tabela `routines`:
   - `kind` passa a aceitar `recurring`, e `event` fica nulo para ela;

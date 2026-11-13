@@ -475,3 +475,25 @@ test('with the bridge, menus come from the game', () => {
 		['Withdraw-1', 'Withdraw-5', 'Withdraw-10', 'Withdraw-X', 'Withdraw-All']
 	);
 });
+
+test('scriptRows cleans the client HTML out of the names', () => {
+	const rows = scriptRows(
+		[
+			{
+				name: '<html>[<font color=#b8f704M>M</font>] Web Walker',
+				className: 'a.b.WebWalkerPlugin',
+				active: true
+			},
+			{
+				name: '<html>[<font color=#b8f704M>M</font>] Break Handler',
+				className: 'a.c.BreakHandlerPlugin',
+				active: true
+			}
+		],
+		null
+	);
+	assert.deepEqual(
+		rows.map((r) => r.name),
+		['Web Walker']
+	);
+});

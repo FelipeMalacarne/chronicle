@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"regexp"
 	"slices"
 	"strings"
 	"time"
@@ -182,10 +183,27 @@ func scriptTitles(raw json.RawMessage) map[string]string {
 	out := map[string]string{}
 	if json.Unmarshal(raw, &s) == nil {
 		for _, x := range s.Scripts {
-			out[x.ClassName] = x.Name
+			out[x.ClassName] = plainPluginName(x.Name)
 		}
 	}
 	return out
+}
+
+var (
+	htmlTag      = regexp.MustCompile(`<[^>]*>`)
+	tagPrefix    = regexp.MustCompile(`^\s*\[[^\]]{1,6}\]\s*`)
+	htmlEntities = strings.NewReplacer("&amp;", "&", "&#39;", "'", "&apos;", "'")
+)
+
+// plainPluginName is a plugin's name without the HTML the client puts in it
+// ("<html>[<font color=…>M</font>] Web Walker" is "Web Walker"), as the web's
+// cleanName does.
+func plainPluginName(raw string) string {
+	text := htmlEntities.Replace(htmlTag.ReplaceAllString(raw, ""))
+	if clean := strings.TrimSpace(tagPrefix.ReplaceAllString(text, "")); clean != "" {
+		return clean
+	}
+	return raw
 }
 
 // groupFleetPlugins lists every plugin the model, an account's profile or

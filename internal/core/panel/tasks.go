@@ -224,6 +224,9 @@ func TaskLabel(t content.Task, reg *entities.Registry) string {
 		case t.Object != nil:
 			s += " em " + name(t.Object)
 		}
+		if t.Plugin != "" {
+			s += " (plugin " + t.Plugin[strings.LastIndex(t.Plugin, ".")+1:] + ")"
+		}
 		return s
 	case content.TaskManual:
 		if note := strings.TrimSpace(t.Note); note != "" {

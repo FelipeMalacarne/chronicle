@@ -99,14 +99,57 @@ func TestResolve(t *testing.T) {
 			t.Fatalf("buy = %+v", b)
 		}
 	})
+	fisher := content.Task{Type: content.TaskTrain, Skill: ref("skill:fishing"), Location: ref("location:lumbridge"),
+		Plugin: "a.b.TickFisherPlugin", Config: []content.TaskSetting{{Group: "tickfisher", Key: "mode", Value: "SHRIMP"}},
+		Until: &content.TaskUntil{Objective: key("skill:fishing>=76")}}
+	withFishing := func(in Input, level int) Input {
+		ps := *in.Facts.State
+		ps.Skills = map[string]rules.SkillState{"fishing": {Level: level}}
+		in.Facts.State = &ps
+		return in
+	}
+	t.Run("train delegated to its plugin", func(t *testing.T) {
+		spec, v, err := Resolve(withFishing(input(custom(fisher), content.ModeHCIM, nil, nil), 70), "task:0#0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		tr := spec.Train
+		if spec.Type != execspec.TypeTrain || tr == nil || tr.Skill != "skill:fishing" || tr.SkillName != "Fishing" || tr.Level != 76 ||
+			tr.Plugin != "a.b.TickFisherPlugin" || len(tr.Config) != 1 || tr.Combat || tr.Until() != "skill:fishing>=76" {
+			t.Fatalf("train = %+v", tr)
+		}
+		if !v.Executable || len(v.Risks) != 0 || v.Supervised || v.State != rules.Unmet || !strings.Contains(v.Label, "(plugin TickFisherPlugin)") {
+			t.Fatalf("view = %+v", v)
+		}
+	})
+	t.Run("train on a monster fights: combat, HCIM supervised", func(t *testing.T) {
+		goblins := content.Task{Type: content.TaskTrain, Skill: ref("skill:magic"), NPC: ref("npc:goblin"), Plugin: "a.b.Splasher",
+			Until: &content.TaskUntil{Objective: key("skill:magic>=33")}}
+		spec, v, err := Resolve(input(custom(goblins), content.ModeHCIM, nil, nil), "task:0#0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !spec.Train.Combat || !slices.Equal(spec.Risks(), []string{"combat"}) || !slices.Equal(v.Risks, []string{"combat"}) || !v.Supervised {
+			t.Fatalf("goblins = %+v %+v", spec.Train, v)
+		}
+		strength := content.Task{Type: content.TaskTrain, Skill: ref("skill:strength"), Plugin: "a.b.Fighter",
+			Until: &content.TaskUntil{Objective: key("skill:strength>=40")}}
+		if spec, _, err = Resolve(input(custom(strength), content.ModeIronman, nil, nil), "task:0#0"); err != nil || !spec.Train.Combat {
+			t.Fatalf("strength = %+v %v", spec.Train, err)
+		}
+	})
+	noPlugin := fisher
+	noPlugin.Plugin, noPlugin.Config = "", nil
 	for _, tc := range []struct {
 		name string
 		in   Input
 		key  string
 		want string
 	}{
+		{"train met", withFishing(input(custom(fisher), content.ModeIronman, nil, nil), 76), "task:0#0", "já está cumprida"},
+		{"train without plugin", input(custom(noPlugin), content.ModeIronman, nil, nil), "task:0#0", "não diz qual plugin"},
 		{"met", input(route, content.ModeIronman, nil, at(3188, 3220)), "step:t::a#0", "já está cumprida"},
-		{"talk", input(route, content.ModeIronman, nil, nil), "step:t::a#1", "só roda travel, bank e buy"},
+		{"talk", input(route, content.ModeIronman, nil, nil), "step:t::a#1", "só roda travel, bank, buy e train"},
 		{"uim bank", input(route, content.ModeUIM, nil, nil), "step:t::b#0", "Ultimate Ironman"},
 		{"via", input(custom(content.Task{Type: content.TaskTravel, Location: ref("location:lumbridge"), Via: ref("item:8007")}), content.ModeIronman, nil, nil), "task:0#0", "via"},
 		{"buy owned", input(route, content.ModeIronman, rules.ItemHoldings{"bank": live(map[int]int64{1351: 1})}, nil), "step:t::b#1", "já está cumprida"},

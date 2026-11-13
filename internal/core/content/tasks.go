@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/recording"
 )
@@ -24,12 +25,15 @@ import (
 //	buy       Shop, Item, Qty                 until item:<id>x<qty> (the default)
 //	talk      NPC, Options?, Location?        until an objective or goal_met
 //	interact  Object, Action, Location?       until an objective or goal_met
-//	train     Skill, NPC? or Object?, Location?   until skill:<skill>>=N
+//	train     Skill, NPC? or Object?, Location?, Plugin?, Config?   until skill:<skill>>=N
 //	manual    Note?                           until owner_mark, goal_met or an objective
 //
 // Options (dialogue options) and Action (a menu option) are the game's own
 // text, matched exactly by the executor, never interpreted; Note is text for
-// the owner.
+// the owner. A train's Plugin is the Microbot plugin the executor delegates
+// it to (its class, an id of the client) and Config the settings it starts
+// with (group, key and value, set as they are, never interpreted); without
+// a plugin a train is the owner's to do.
 type Task struct {
 	Type     string            `json:"type"`
 	Location *entities.Ref     `json:"location,omitempty"`
@@ -43,9 +47,14 @@ type Task struct {
 	Object   *entities.Ref     `json:"object,omitempty"`
 	Action   string            `json:"action,omitempty"`
 	Skill    *entities.Ref     `json:"skill,omitempty"`
+	Plugin   string            `json:"plugin,omitempty"`
+	Config   []TaskSetting     `json:"config,omitempty"`
 	Note     string            `json:"note,omitempty"`
 	Until    *TaskUntil        `json:"until,omitempty"`
 }
+
+// TaskSetting is one RuneLite setting a train gives its plugin.
+type TaskSetting = clientcfg.Setting
 
 // TaskUntil is the termination of a task: exactly one of an objective key
 // (evaluated by the engine) and a state predicate.
@@ -144,7 +153,7 @@ var taskParams = map[string][]string{
 	TaskBuy:      {"shop", "item", "qty"},
 	TaskTalk:     {"npc", "options", "location"},
 	TaskInteract: {"object", "action", "location"},
-	TaskTrain:    {"skill", "npc", "object", "location"},
+	TaskTrain:    {"skill", "npc", "object", "location", "plugin", "config"},
 	TaskManual:   {"note"},
 }
 
@@ -155,6 +164,7 @@ func (t Task) params() []string {
 		"location": t.Location != nil, "via": t.Via != nil, "items": len(t.Items) > 0, "shop": t.Shop != nil,
 		"item": t.Item != nil, "qty": t.Qty != 0, "npc": t.NPC != nil, "options": len(t.Options) > 0,
 		"object": t.Object != nil, "action": t.Action != "", "skill": t.Skill != nil, "note": t.Note != "",
+		"plugin": t.Plugin != "", "config": len(t.Config) > 0,
 	} {
 		if set {
 			out = append(out, name)
@@ -256,6 +266,17 @@ func (t Task) Check(reg *entities.Registry, ctx TaskContext) []string {
 		ref("location", t.Location, false, entities.KindLocation)
 		if t.NPC != nil && t.Object != nil {
 			add("train takes an npc or an object, not both")
+		}
+		if t.Plugin != "" {
+			if err := clientcfg.CheckClass(t.Plugin); err != nil {
+				add("%v", err)
+			}
+		}
+		if len(t.Config) > 0 && t.Plugin == "" {
+			add("train: config is the settings of its plugin, so it needs plugin")
+		}
+		if err := clientcfg.CheckSettings(t.Config); err != nil {
+			add("%v", err)
 		}
 	case TaskManual:
 		if ctx.Recipe && strings.TrimSpace(t.Note) == "" {

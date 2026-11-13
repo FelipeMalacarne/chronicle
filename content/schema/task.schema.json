@@ -91,7 +91,7 @@
     },
     "train": {
       "type": "object",
-      "description": "Treinar uma skill, num NPC ou num objeto (o método; feitiço fica para quando houver catálogo), num local. Termina em `skill:<skill>>=N` da mesma skill.",
+      "description": "Treinar uma skill, num NPC ou num objeto (o método; feitiço fica para quando houver catálogo), num local. Termina em `skill:<skill>>=N` da mesma skill. `plugin`: a classe do plugin do Microbot a que o executor delega o treino (doc 10, fase 4: liga o plugin e o desliga quando o servidor prova o nível pelo ingest); sem ele, o treino fica com o dono. `config`: as opções com que o plugin começa (grupo, chave e valor do RuneLite, gravados como estão, nunca interpretados).",
       "required": ["type", "skill", "until"],
       "properties": {
         "type": { "const": "train" },
@@ -99,9 +99,30 @@
         "npc": { "$ref": "#/$defs/npcRef" },
         "object": { "$ref": "#/$defs/objectRef" },
         "location": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/locationRef" },
+        "plugin": {
+          "type": "string",
+          "maxLength": 256,
+          "pattern": "^[A-Za-z_$][A-Za-z0-9_$]*(\\.[A-Za-z_$][A-Za-z0-9_$]*)+$"
+        },
+        "config": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["group", "key", "value"],
+            "properties": {
+              "group": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{1,64}$" },
+              "key": { "type": "string", "pattern": "^[A-Za-z0-9_.-]{1,64}$" },
+              "value": { "type": "string", "maxLength": 2000 }
+            }
+          }
+        },
         "until": { "$ref": "#/$defs/untilObjective" }
       },
-      "not": { "required": ["npc", "object"] }
+      "not": { "required": ["npc", "object"] },
+      "dependentRequired": { "config": ["plugin"] }
     },
     "manual": {
       "type": "object",

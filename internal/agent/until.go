@@ -251,9 +251,18 @@ func (e *Executor) superviseUntil(ctx context.Context, className string, until R
 // scriptActive reads whether the plugin is on (the Agent Server's
 // /scripts); ok is false when the client did not answer.
 func (e *Executor) scriptActive(ctx context.Context, className string) (active, ok bool) {
+	_, active, ok = e.scriptState(ctx, className)
+	return active, ok
+}
+
+// scriptState reads whether the client has the plugin (the Agent Server's
+// /scripts lists the Microbot plugins it loaded: its own, the Hub's it
+// installed, the sideloaded ones) and whether it is on; ok is false when
+// the client did not answer.
+func (e *Executor) scriptState(ctx context.Context, className string) (present, active, ok bool) {
 	raw, err := e.Game.JSON(ctx, http.MethodGet, "/scripts", nil, nil, 15*time.Second)
 	if err != nil {
-		return false, false
+		return false, false, false
 	}
 	var s struct {
 		Scripts []struct {
@@ -262,14 +271,14 @@ func (e *Executor) scriptActive(ctx context.Context, className string) (active, 
 		} `json:"scripts"`
 	}
 	if json.Unmarshal(raw, &s) != nil {
-		return false, false
+		return false, false, false
 	}
 	for _, sc := range s.Scripts {
 		if sc.ClassName == className {
-			return sc.Active, true
+			return true, sc.Active, true
 		}
 	}
-	return false, true
+	return false, false, true
 }
 
 // noteLevel notes the skill's level the client shows when it changed since

@@ -52,8 +52,11 @@ type TaskRunParams struct {
 	// death risk runs only so).
 	Supervised bool `json:"supervised,omitempty"`
 	// TimeoutS bounds the plugin's machine (default 900 for a travel, 300
-	// otherwise; 30 to 3600).
+	// otherwise; 30 to 3600); a train's plugin (default 7200, 60 to 43200).
 	TimeoutS int `json:"timeoutS,omitempty"`
+	// Account is the account whose facts prove a train's level (the
+	// server's word, as a wait_until's); required for a train.
+	Account string `json:"account,omitempty"`
 	// Task is what the plugin executes.
 	Task execspec.Task `json:"task"`
 }
@@ -102,7 +105,19 @@ func validateTaskRun(raw json.RawMessage) (TaskRunParams, error) {
 			return p, fmt.Errorf("task: unknown or repeated risk %q", r)
 		}
 	}
-	if p.TimeoutS != 0 && (p.TimeoutS < 30 || p.TimeoutS > 3600) {
+	if p.Account != "" && !reAccountID.MatchString(p.Account) {
+		return p, errors.New("task: bad account")
+	}
+	if p.Task.Type == execspec.TypeTrain {
+		// A train waits for the server's proof of its level: hours, on
+		// the account's facts.
+		if p.Account == "" {
+			return p, errors.New("task: a train needs the account whose facts prove its level")
+		}
+		if p.TimeoutS != 0 && (p.TimeoutS < 60 || p.TimeoutS > untilMaxTimeoutS) {
+			return p, fmt.Errorf("task: a train's timeoutS between 60 and %d", untilMaxTimeoutS)
+		}
+	} else if p.TimeoutS != 0 && (p.TimeoutS < 30 || p.TimeoutS > 3600) {
 		return p, errors.New("task: timeoutS between 30 and 3600")
 	}
 	if err := p.Task.Check(); err != nil {
@@ -149,6 +164,14 @@ func (e *Executor) taskRun(raw json.RawMessage) (any, error) {
 		ClassName: ChronicleLinkClass,
 		Task:      &RunTask{Key: p.Key, Plan: p.Plan, Type: p.Task.Type, Label: p.Label, Supervised: p.Supervised},
 	}
+	drive := func(ctx context.Context) { e.driveTask(ctx, p) }
+	if tr := p.Task.Train; tr != nil {
+		// Delegated: the run is the plugin's, and ends on the server's
+		// proof of the level (wait_until).
+		run.ClassName = tr.Plugin
+		run.Until = &RunUntil{Objective: tr.Until(), Account: p.Account}
+		drive = func(ctx context.Context) { e.driveTrain(ctx, p) }
+	}
 	why := "tarefa: " + p.Label
 	if len(p.Risks) > 0 {
 		why += " (riscos: " + strings.Join(p.Risks, ", ")
@@ -157,7 +180,7 @@ func (e *Executor) taskRun(raw json.RawMessage) (any, error) {
 		}
 		why += ")"
 	}
-	r, err := e.launch(run, why, func(ctx context.Context) { e.driveTask(ctx, p) })
+	r, err := e.launch(run, why, drive)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +320,7 @@ func (e *Executor) driveTask(ctx context.Context, p TaskRunParams) {
 }
 
 // activeScripts are the simple names of the active plugins besides the
-// control path and Chronicle Link (protectedClasses), from the Agent
+// control path and Chronicle Link (clientcfg.ProtectedClasses), from the Agent
 // Server's /scripts; nil when it does not answer.
 func (e *Executor) activeScripts(ctx context.Context) []string {
 	raw, err := e.Game.JSON(ctx, http.MethodGet, "/scripts", nil, nil, 15*time.Second)

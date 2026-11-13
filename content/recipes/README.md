@@ -73,7 +73,7 @@ outside `[a-z0-9_]` becomes `-` (`content.RecipeFileName`).
 | `buy` | `shop`, `item`, `qty` | `item:<id>x<qty>`, the default |
 | `talk` | `npc`, `options?` (the game's dialogue text), `location?` | an objective key or `goal_met` |
 | `interact` | `object`, `action` (the game's menu text), `location?` | an objective key or `goal_met` |
-| `train` | `skill`, `npc?` or `object?`, `location?` | `skill:<skill>>=N` of the same skill |
+| `train` | `skill`, `npc?` or `object?`, `location?`, `plugin?` (the Microbot plugin class the executor delegates to; without it the owner trains), `config?` (`[{group, key, value}]`, its settings, set as they are) | `skill:<skill>>=N` of the same skill |
 | `manual` | `note` (required in a recipe: what to tell the owner) | an objective key or `goal_met` (`owner_mark` only in a step) |
 
 `goal_met` is the recipe's objective here (in a step, the objectives the step

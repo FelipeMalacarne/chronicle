@@ -125,7 +125,10 @@ A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com 
     `chronicle task`);
   - o executor de `travel`, `bank` e `buy` no Chronicle Link 1.15.0.
 
-  Ela também só termina no jogo, com o dono.
+  Ela também só termina no jogo, com o dono. O código da fase 4 também está pronto (2026-11-13, dois
+  PRs empilhados): o `wait_until` por chave de objetivo nos runs e nas rotinas do doc 08 (o servidor
+  prova a chave pelo ingest e manda o `run_until` ao agent) e o `train` por delegação a um plugin do
+  cliente, pelo `chronicle task run`. Ela termina com um treino no jogo, sem intervenção.
 
 O próximo passo é do dono:
 
@@ -139,19 +142,27 @@ O próximo passo é do dono:
    personagem (`chronicle plans create -f` e `use`) e executá-lo tarefa por tarefa, olhando pelo VNC:
    `chronicle task run --yes --wait 10m` até "Término provado pelo ingest". O botão "Executar" na web
    pede antes o desenho no canvas.
-3. **Conferir no jogo e no cluster:**
+3. **Terminar a fase 4 do doc 10** (doc 10, seção 13): atualizar o `chronicle` do servidor e da
+   máquina do jogo, escolher um treino curto sem combate com um plugin já instalado e desligado,
+   montar um plano com a tarefa `train` (`plugin`, `config` e `until` no nível seguinte), levar o
+   personagem até o lugar e rodar `chronicle task run --yes --wait 3h` sem mexer em nada até "Término
+   provado pelo ingest", com o plugin desligado sozinho.
+4. **Conferir no jogo e no cluster:**
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;
    - uma rotina recorrente no zaros;
    - a capacidade da F7 depois do RBAC;
    - o reinício sozinho na versão nova depois de um deploy (decisão 37).
-4. **Desenhar no canvas** as telas em 640 px que faltam, e o "Executar" da tarefa do plano.
-5. **Decidir o que está aberto:**
+5. **Desenhar no canvas** as telas em 640 px que faltam, o "Executar" da tarefa do plano (também o
+   "Treinar" de um `train`) e o `wait_until` de uma rotina na tela de Rotinas.
+6. **Decidir o que está aberto:**
    - o gesto para soltar uma rotina presa, hoje salvá-la de novo (o "Liberar" da tela de Rotinas);
    - E11 a E13 do doc 10 (o que a gravação registra, a retenção dela no servidor e o que vai para o
      conteúdo como evidência), hoje no modo conservador;
    - E14 e E15 do doc 10 (o `travel` com teleporte, hoje recusado; o `bank` que deposita o que não é
-     do setup antes de sacar).
+     do setup antes de sacar);
+   - E16 a E18 do doc 10 (o `train` com o plugin já ligado, hoje recusado; as opções que o treino
+     gravou, hoje deixadas; o plugin de um `train` de passo, hoje só por receita ou plano).
 
 ## Discrepâncias e ressalvas
 

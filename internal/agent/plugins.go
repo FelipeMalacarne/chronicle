@@ -12,6 +12,8 @@ import (
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
 )
 
 // Plugin, script and config commands (docs/08 phase 3). Each one is a fixed
@@ -88,33 +90,16 @@ type ConfigValues struct {
 }
 
 var (
-	reHubName   = regexp.MustCompile(`^[A-Za-z0-9_]{1,80}$`)
-	reVersion   = regexp.MustCompile(`^[0-9A-Za-z.+-]{1,32}$`)
-	reClassName = regexp.MustCompile(`^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)+$`)
-	reConfigID  = regexp.MustCompile(`^[A-Za-z0-9_.-]{1,64}$`)
-	// Keys that hold secrets, whatever the plugin.
-	reSecretKey = regexp.MustCompile(`(?i)(password|passwd|token|secret|credential|cookie|apikey|api_key|bankpin|^pin$)`)
+	reHubName = regexp.MustCompile(`^[A-Za-z0-9_]{1,80}$`)
+	reVersion = regexp.MustCompile(`^[0-9A-Za-z.+-]{1,32}$`)
+	// The class and config rules are clientcfg's (shared with the content
+	// verifier and the executor's spec).
+	reClassName = clientcfg.ClassName
 )
 
-// protectedClasses are never started or stopped from the web: the control
-// path itself (Agent Server, the Microbot core, the bootstrap that starts the
-// server) and Chronicle's own plugin, Chronicle Link (tracking and the control
-// bridge, docs/06), also under its old name while an old jar may linger.
-var protectedClasses = []string{
-	"net.runelite.client.plugins.microbot.MicrobotPlugin",
-	"net.runelite.client.plugins.microbot.agentserver.AgentServerPlugin",
-	"net.runelite.client.plugins.microbot.fm.devbootstrap.DevBootstrapPlugin",
-	"net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin",
-	"net.runelite.client.plugins.microbot.fm.ironmanplanner.IronmanPlannerPlugin",
-}
-
-// protectedGroups are config groups the web never reads or writes: the Agent
-// Server's (port, token), RuneLite's and Microbot's core, and the tracking
-// plugin's (its planner credential).
-var protectedGroups = []string{"agentServer", "runelite", "microbot", "fm-ironmanplanner"}
-
-// Protected reports whether a plugin class is out of the web's reach.
-func Protected(className string) bool { return slices.Contains(protectedClasses, className) }
+// Protected reports whether a plugin class is out of the web's reach
+// (clientcfg.ProtectedClasses).
+func Protected(className string) bool { return clientcfg.Protected(className) }
 
 // ValidateParams decodes and checks the parameters of a command; the server
 // calls it to refuse early and the agent calls it again before acting.
@@ -229,27 +214,9 @@ func decodeParams(raw json.RawMessage, into any) error {
 	return nil
 }
 
-func checkGroup(g string) error {
-	if !reConfigID.MatchString(g) {
-		return errors.New("config: group must be letters, digits, '.', '_' or '-'")
-	}
-	for _, p := range protectedGroups {
-		if strings.EqualFold(g, p) {
-			return fmt.Errorf("config: the %q group is not edited from the planner", g)
-		}
-	}
-	return nil
-}
+func checkGroup(g string) error { return clientcfg.CheckGroup(g) }
 
-func checkKey(k string) error {
-	if !reConfigID.MatchString(k) {
-		return errors.New("config: key must be letters, digits, '.', '_' or '-'")
-	}
-	if reSecretKey.MatchString(k) {
-		return fmt.Errorf("config: %q looks like a secret and is not read or written from the planner", k)
-	}
-	return nil
-}
+func checkKey(k string) error { return clientcfg.CheckKey(k) }
 
 // plugin runs one plugin, script or config command.
 func (e *Executor) plugin(ctx context.Context, command string, params json.RawMessage) (any, error) {

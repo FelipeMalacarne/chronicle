@@ -1,16 +1,18 @@
 # 10 — Modelo de execução: fatos, eventos, tarefas, receitas e planos
 
 **Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 e E5 a E10 em 2026-11-13, do
-jeito recomendado (seção 14); E11 a E15 em aberto, com o conservador implementado. As fases 0 (doc 04,
-seção 9, item 17) e 1 (item 21, 2026-11-13) estão feitas. O código das fases 2 e 3 está pronto
+jeito recomendado (seção 14); E11 a E18 em aberto, com o conservador implementado. As fases 0 (doc 04,
+seção 9, item 17) e 1 (item 21, 2026-11-13) estão feitas. O código das fases 2, 3 e 4 está pronto
 (2026-11-13). Falta a parte do dono: na 2, gravar um trecho do Oziris 1.1 e confirmar as tarefas
-propostas; na 3, executar um trecho de logística no jogo, olhando, com o término provado pelo ingest
-(seção 13).** A fase 1
+propostas; na 3, executar um trecho de logística no jogo, olhando, com o término provado pelo ingest;
+na 4, um treino até `skill:x>=N` no jogo sem intervenção (seção 13).** A fase 1
 entregou as entidades `npc`, `shop` e `object`, as áreas dos locais, o schema de `tasks[]` e de
 receitas e o verificador (seções 7 e 8, "Como implementado"). A fase 2 entregou a gravação por
 demonstração no plugin e no ingest, as tarefas propostas a partir dela e o modo assistido no painel
 (seções 10 e 11, "Como implementado"). A fase 3 entregou os planos (seção 9), o comando de tarefa no
-agent e o executor de `travel`, `bank` e `buy` no plugin (seção 10), todos com "Como implementado".
+agent e o executor de `travel`, `bank` e `buy` no plugin (seção 10), todos com "Como implementado". A
+fase 4 entregou o `wait_until` por chave de objetivo nos runs e nas rotinas do doc 08 e o `train` por
+delegação a um plugin (seção 10, "Como implementado (fase 4)").
 Ainda não há tarefa ou receita real no conteúdo: elas entram com a gravação e a confirmação do dono. O
 resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
@@ -389,6 +391,39 @@ atribuição de cada passo aparece na tela.
   Ela confere cancelamento, pausa dos scripts e login entre os passos, e para na primeira coisa que não
   consegue, com o motivo. Ao terminar, pede uma captura ao rastreamento, para o ingest provar logo o
   término.
+
+  **Como implementado (fase 4, 2026-11-13).** Dois PRs empilhados; detalhes no doc 08, "Fase 4 do doc
+  10".
+
+  1. **`wait_until` por chave de objetivo** (princípio 5: a chave de objetivo também é o término da
+     rotina). Um run do doc 08 (o "Fazer agora", um gatilho, uma recorrente) ganha
+     `until: {objective, account}` e termina quando o servidor prova a chave sobre os fatos da conta,
+     nunca porque o plugin ou o agent dizem. O agent reporta o run com o `until` (mensagens `event`);
+     o vigia do servidor (`internal/rununtil`) avalia a chave a cada evento de progresso da conta e a
+     cada 30 s, só com fato vivo, e manda o comando novo `run_until` (servidor → agent, auditado como
+     origem `server`); o agent para o plugin, volta e religa o principal. Prova antes de o run agir
+     termina sem agir (regra 2: idempotência); plugin que para sozinho espera a prova por 2 min e
+     falha depois.
+  2. **`train` por delegação.** A tarefa `train` ganha `plugin` (a classe do plugin do Microbot, um id
+     do cliente) e `config` (as opções com que ele começa: grupo, chave e valor, gravados como estão,
+     nunca interpretados; mesmas regras do `config_set`, em `internal/core/clientcfg`). Sem `plugin`, o
+     treino continua com o dono ("faça à mão"). O `execspec` ganha `train` (skill, nível, plugin,
+     opções e se o método luta) e o `plan.Resolve` o resolve. Riscos (E9): `combat` quando o NPC é um
+     monstro (o infobox de monstro da wiki) ou a skill só se treina lutando (attack, strength,
+     defence, hitpoints, ranged, slayer), `wilderness` quando o local toca a wilderness; HCIM com risco
+     de morte só com `supervised`. O `task_run` de um `train` não vai para a máquina do Chronicle
+     Link: o agent confere o ponto seguro, o login, a wilderness em HCIM, a ponte respondendo (é o
+     rastreamento dela que o ingest usa para provar o nível), que o cliente tem o plugin
+     (`/scripts`) e que ele está desligado; grava as opções, liga o plugin e o acompanha como um run
+     com `wait_until` em `skill:<skill>>=N`. Termina `done` só com a prova do servidor, que desliga o
+     plugin; timeout (padrão 2 h, até 12 h), falha do plugin e cancelamento do dono também o
+     desligam. O `POST /api/microbot/task` recusa com 409, antes de tocar no jogo, um plugin que o
+     cliente não lista (instalado pelo perfil da conta, pelo modelo da frota ou pelo Hub) e um agent
+     sem `run_until`.
+
+  O plugin de um `train` vem de uma receita (`content/recipes/`, por exemplo a de
+  `skill:fishing>=76`, que todo passo que conclui essa chave herda) ou de uma tarefa avulsa num plano
+  customizado; a extração do texto do guia nunca o põe (E18).
 - **Vários personagens:** catálogos e receitas compartilhados; por conta ficam modo, fatos, plano ativo
   e cliente (`clients`). O agent gerencia N clientes, com um executor e um lock por cliente.
 - **Risco:** toda receita declara riscos; em HCIM, risco de morte bloqueia execução sem supervisão. O
@@ -506,7 +541,7 @@ fixtures viram teste de conformidade, com cada resposta real validada contra o s
 | 1 | Entidades `npc`, `shop`, `object`; áreas em `location`; schema de `tasks[]` e de receitas; verificador | `content validate` cobre tarefas e receitas |
 | 2 | Gravação por demonstração e modo assistido no plugin | um trecho do Oziris 1.1 com tarefas vindas da gravação, confirmadas pelo dono |
 | 3 | Executor de `travel`, `bank`, `buy`; `plans` e `plan_items`; comando de tarefa no agent | um trecho de logística executado com término provado pelo ingest (código pronto em 2026-11-13; falta o dono no jogo) |
-| 4 | `train` por delegação; rotinas do doc 08 com `wait_until` por chave de objetivo | um treino até `skill:x>=N` sem intervenção |
+| 4 | `train` por delegação; rotinas do doc 08 com `wait_until` por chave de objetivo | um treino até `skill:x>=N` sem intervenção (código pronto em 2026-11-13; falta o dono no jogo) |
 | 5 | Receitas de quest, planos customizados na UI, vários clientes no agent | por entrega |
 
 A fase 0 não dependia de nenhuma decisão de automação e já está feita. Com a seção 14 fechada
@@ -555,6 +590,47 @@ no jogo e olhando. Como ainda não há tarefa real no conteúdo, o trecho sai de
 Uma falha (sem banco por perto, item faltando, loja sem estoque, o webwalker parando antes) deixa a
 tarefa onde parou, com o motivo na trilha: é o dono quem decide o que fazer.
 
+**Fase 4: o código está pronto (2026-11-13); falta o dono.** Feito, em dois PRs empilhados (seção 10,
+"Como implementado (fase 4)", e doc 08):
+
+1. o `wait_until` por chave de objetivo nos runs e nas rotinas, com o vigia no servidor e o comando
+   `run_until`;
+2. o `train` por delegação a um plugin, no conteúdo, no `execspec`, no plano e no `task_run`.
+
+Testado com o jogo, a ponte e o cliente falsos, e de ponta a ponta no Postgres: um plano com um
+`train` até `skill:fishing>=76`, o `POST /api/microbot/task` liga o plugin com as opções dele, o ingest
+no 75 não muda nada, o ingest no 76 faz o servidor avisar o agent, que desliga o plugin, e o `GET
+/api/microbot/task` dá `proven`. Nada rodou no jogo. "Pronto quando um treino até `skill:x>=N` sem
+intervenção" é do dono, olhando a primeira vez:
+
+1. atualiza o `chronicle` da máquina do jogo (o `just agent` do checkout) e o do servidor: os dois
+   precisam do `run_until`; o Chronicle Link continua o 1.15 (o treino não muda o plugin, só precisa
+   do rastreamento ligado);
+2. escolhe um treino curto e seguro, de preferência sem combate (por exemplo, pescar até o próximo
+   nível) e um plugin que já usa para isso, instalado no cliente (pelo perfil da conta, pelo modelo
+   da frota ou pelo Hub) e desligado; anota as opções que ele precisa (grupo e chave estão no
+   formulário de Plugins do Cockpit);
+3. monta um plano com a tarefa e passa a segui-lo:
+
+   ```
+   {"kind": "custom", "title": "Treino", "items": [{"kind": "task", "task": {
+     "type": "train", "skill": "skill:fishing", "plugin": "<classe do plugin>",
+     "config": [{"group": "<grupo>", "key": "<chave>", "value": "<valor>"}],
+     "until": {"objective": "skill:fishing>=<N>"}}}]}
+   ```
+
+   `chronicle plans create -f treino.json` e `chronicle plans use <id>`;
+4. leva o personagem até o lugar do treino (o `train` não anda até lá: um `travel` antes, no mesmo
+   plano, faz isso), confere `chronicle task` e roda `chronicle task run --yes --wait 3h`; olha pelo
+   VNC que o plugin ligou e treina;
+5. sem mexer em nada: quando o nível sobe, o plugin manda a captura, o servidor prova o nível e o
+   agent desliga o plugin; a CLI mostra "Término provado pelo ingest"; na auditoria, o `task_run` e
+   o `run_until` (ator `wait_until`, origem `server`);
+6. volta à rota com `chronicle plans use route`.
+
+O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com `until` pelo `POST
+/api/microbot/run?account=` (a web ainda não tem o campo; pede o canvas).
+
 ## 14. Decisões em aberto (dono)
 
 | # | Pergunta | Recomendação |
@@ -574,6 +650,9 @@ tarefa onde parou, com o motivo na trilha: é o dono quem decide o que fazer.
 | E13 | A gravação vai para o conteúdo como evidência | **em aberto; implementado o conservador:** só os eventos que sustentam cada tarefa confirmada, sem conta, RSN ou outros dados do personagem (`submit_tasks` copia só os `seq` pedidos) |
 | E14 | `travel` com `via` (teleporte por unlock ou item) no executor | **em aberto; implementado o conservador (fase 3):** recusado ("faça à mão"); a alternativa é deixar o webwalker escolher o caminho, com os teleportes que a configuração dele permitir |
 | E15 | O que o `bank` faz com o que não é do setup | **em aberto; implementado (fase 3):** deposita antes de sacar (nada se perde: vai para o banco, e o inventário precisa de espaço); a alternativa é só sacar e falhar sem espaço |
+| E16 | `train` com o plugin já ligado | **em aberto; implementado o conservador (fase 4):** recusado ("pare-o antes"), porque o run liga e desliga o plugin e grava as opções antes de ligar; a alternativa é adotar o plugin ligado, sem gravar opções |
+| E17 | As opções que o `train` gravou no plugin | **em aberto; implementado (fase 4):** ficam como gravadas depois do treino (são do plugin, e o próximo `train` grava as dele de novo); a alternativa é guardar os valores de antes e restaurá-los |
+| E18 | De onde vem o plugin de um `train` de passo | **em aberto; implementado o conservador (fase 4):** de uma receita da chave (`content/recipes/`) ou de uma tarefa avulsa num plano; a extração do texto (`submit_tasks`) não aceita `plugin` nem `config`, porque o texto do guia não diz qual plugin usar; a alternativa é o dono confirmá-lo na sessão de extração, como uma inferência |
 
 ## 15. Impacto nos outros docs
 

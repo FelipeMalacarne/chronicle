@@ -72,7 +72,10 @@ type Run struct {
 	Stop      []string `json:"stop"`
 	// Trigger is the game event that started the run (EventKittenGrown); empty
 	// when the owner did.
-	Trigger    string     `json:"trigger,omitempty"`
+	Trigger string `json:"trigger,omitempty"`
+	// Routine is the recurring routine that started the run (its id); empty
+	// otherwise.
+	Routine    string     `json:"routine,omitempty"`
 	State      string     `json:"state"`
 	StartedAt  time.Time  `json:"startedAt"`
 	FinishedAt *time.Time `json:"finishedAt,omitempty"`
@@ -97,6 +100,7 @@ func (r *Run) Final() bool {
 var readCommands = []string{
 	CmdStatus, CmdScreenshot, CmdVNCOpen, CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet,
 	CmdConfigSchema, CmdGameView, CmdClientLogs, CmdAccountShow, CmdTimers, CmdRunStatus, CmdRunHistory, CmdRunCancel,
+	CmdRecurringGet,
 	// Not reads, but they never touch the game: switching the trigger off during its own run is fine.
 	CmdTriggerGet, CmdTriggerSet, CmdRoutinesSync,
 }
@@ -186,16 +190,23 @@ func (e *Executor) runCommand(command string, raw json.RawMessage) (any, error) 
 	if err != nil {
 		return nil, err
 	}
-	run, err := e.startRun(p, "")
+	run, err := e.startRun(p, runOrigin{})
 	if err != nil {
 		return nil, err
 	}
 	return RunStatus{Run: run}, nil
 }
 
-// startRun starts a run of validated params; trigger names the event that
-// fired it ("" when the owner did).
-func (e *Executor) startRun(p RunParams, trigger string) (*Run, error) {
+// runOrigin is what started a run: the owner (zero value), a trigger's game
+// event or a recurring routine, with the first line of its trail.
+type runOrigin struct {
+	trigger string
+	routine string
+	why     string
+}
+
+// startRun starts a run of validated params.
+func (e *Executor) startRun(p RunParams, origin runOrigin) (*Run, error) {
 	r := &e.runs
 	r.mu.Lock()
 	defer r.mu.Unlock()
@@ -207,15 +218,20 @@ func (e *Executor) startRun(p RunParams, trigger string) (*Run, error) {
 	r.seq++
 	ctx, cancel := context.WithCancel(context.Background())
 	r.cancel = cancel
+	now := time.Now().UTC()
 	r.run = &Run{
 		ID:        "run-" + strconv.Itoa(r.seq),
 		UID:       newID(),
 		ClassName: p.ClassName,
 		Stop:      append([]string{}, p.Stop...),
-		Trigger:   trigger,
+		Trigger:   origin.trigger,
+		Routine:   origin.routine,
 		State:     RunWaiting,
-		StartedAt: time.Now().UTC(),
+		StartedAt: now,
 		Events:    []RunEvent{},
+	}
+	if origin.why != "" {
+		r.run.Events = append(r.run.Events, RunEvent{At: now, State: RunWaiting, Text: origin.why})
 	}
 	e.saveRuns()
 	go e.drive(ctx, p)

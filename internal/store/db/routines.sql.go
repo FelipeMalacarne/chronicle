@@ -12,6 +12,50 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countRecurring = `-- name: CountRecurring :one
+SELECT count(*) FROM routines WHERE account_id = $1 AND kind = 'recurring'
+`
+
+func (q *Queries) CountRecurring(ctx context.Context, accountID string) (int64, error) {
+	row := q.db.QueryRow(ctx, countRecurring, accountID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const deleteRecurring = `-- name: DeleteRecurring :execrows
+DELETE FROM routines WHERE id = $1 AND account_id = $2 AND kind = 'recurring'
+`
+
+type DeleteRecurringParams struct {
+	ID        string `json:"id"`
+	AccountID string `json:"account_id"`
+}
+
+func (q *Queries) DeleteRecurring(ctx context.Context, arg DeleteRecurringParams) (int64, error) {
+	result, err := q.db.Exec(ctx, deleteRecurring, arg.ID, arg.AccountID)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const getRecurringID = `-- name: GetRecurringID :one
+SELECT id FROM routines WHERE id = $1 AND account_id = $2 AND kind = 'recurring'
+`
+
+type GetRecurringIDParams struct {
+	ID        string `json:"id"`
+	AccountID string `json:"account_id"`
+}
+
+func (q *Queries) GetRecurringID(ctx context.Context, arg GetRecurringIDParams) (string, error) {
+	row := q.db.QueryRow(ctx, getRecurringID, arg.ID, arg.AccountID)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getRoutineRunForUpdate = `-- name: GetRoutineRunForUpdate :one
 SELECT account_id, state, trail_len FROM routine_runs WHERE id = $1 FOR UPDATE
 `
@@ -30,12 +74,12 @@ func (q *Queries) GetRoutineRunForUpdate(ctx context.Context, id string) (GetRou
 }
 
 const getTrigger = `-- name: GetTrigger :one
-SELECT id, account_id, kind, event, enabled, spec, created_at, updated_at FROM routines WHERE account_id = $1 AND kind = 'trigger' AND event = $2
+SELECT id, account_id, kind, event, enabled, spec, created_at, updated_at, name, clock, interval_min, priority FROM routines WHERE account_id = $1 AND kind = 'trigger' AND event = $2
 `
 
 type GetTriggerParams struct {
-	AccountID string `json:"account_id"`
-	Event     string `json:"event"`
+	AccountID string      `json:"account_id"`
+	Event     pgtype.Text `json:"event"`
 }
 
 func (q *Queries) GetTrigger(ctx context.Context, arg GetTriggerParams) (Routine, error) {
@@ -50,8 +94,42 @@ func (q *Queries) GetTrigger(ctx context.Context, arg GetTriggerParams) (Routine
 		&i.Spec,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+		&i.Name,
+		&i.Clock,
+		&i.IntervalMin,
+		&i.Priority,
 	)
 	return i, err
+}
+
+const insertRecurring = `-- name: InsertRecurring :exec
+INSERT INTO routines (id, account_id, kind, name, enabled, clock, interval_min, priority, spec)
+VALUES ($1, $2, 'recurring', $3, $4, $5, $6, $7, $8)
+`
+
+type InsertRecurringParams struct {
+	ID          string          `json:"id"`
+	AccountID   string          `json:"account_id"`
+	Name        pgtype.Text     `json:"name"`
+	Enabled     bool            `json:"enabled"`
+	Clock       pgtype.Text     `json:"clock"`
+	IntervalMin pgtype.Int4     `json:"interval_min"`
+	Priority    int32           `json:"priority"`
+	Spec        json.RawMessage `json:"spec"`
+}
+
+func (q *Queries) InsertRecurring(ctx context.Context, arg InsertRecurringParams) error {
+	_, err := q.db.Exec(ctx, insertRecurring,
+		arg.ID,
+		arg.AccountID,
+		arg.Name,
+		arg.Enabled,
+		arg.Clock,
+		arg.IntervalMin,
+		arg.Priority,
+		arg.Spec,
+	)
+	return err
 }
 
 const insertRunEvent = `-- name: InsertRunEvent :exec
@@ -76,6 +154,68 @@ func (q *Queries) InsertRunEvent(ctx context.Context, arg InsertRunEventParams) 
 		arg.Text,
 	)
 	return err
+}
+
+const listRecurring = `-- name: ListRecurring :many
+
+SELECT r.id, r.name, r.enabled, r.clock, r.interval_min, r.priority, r.spec, r.updated_at,
+       COALESCE(last.state, '') AS last_state, last.started_at AS last_started_at, last.finished_at AS last_finished_at
+FROM routines r
+LEFT JOIN LATERAL (
+  SELECT rr.state, rr.started_at, rr.finished_at FROM routine_runs rr
+  WHERE rr.routine_id = r.id ORDER BY rr.started_at DESC LIMIT 1
+) last ON true
+WHERE r.account_id = $1 AND r.kind = 'recurring'
+ORDER BY r.priority DESC, r.name, r.id
+`
+
+type ListRecurringRow struct {
+	ID             string             `json:"id"`
+	Name           pgtype.Text        `json:"name"`
+	Enabled        bool               `json:"enabled"`
+	Clock          pgtype.Text        `json:"clock"`
+	IntervalMin    pgtype.Int4        `json:"interval_min"`
+	Priority       int32              `json:"priority"`
+	Spec           json.RawMessage    `json:"spec"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	LastState      string             `json:"last_state"`
+	LastStartedAt  pgtype.Timestamptz `json:"last_started_at"`
+	LastFinishedAt pgtype.Timestamptz `json:"last_finished_at"`
+}
+
+// Recurring routines (migration 0015): each with its last run, from which
+// the agent counts the interval and sees a failure the owner has not
+// answered.
+func (q *Queries) ListRecurring(ctx context.Context, accountID string) ([]ListRecurringRow, error) {
+	rows, err := q.db.Query(ctx, listRecurring, accountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListRecurringRow{}
+	for rows.Next() {
+		var i ListRecurringRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Enabled,
+			&i.Clock,
+			&i.IntervalMin,
+			&i.Priority,
+			&i.Spec,
+			&i.UpdatedAt,
+			&i.LastState,
+			&i.LastStartedAt,
+			&i.LastFinishedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const listRoutineRuns = `-- name: ListRoutineRuns :many
@@ -156,7 +296,7 @@ func (q *Queries) ListRunEvents(ctx context.Context, runIds []string) ([]RunEven
 
 const listTriggers = `-- name: ListTriggers :many
 
-SELECT id, account_id, kind, event, enabled, spec, created_at, updated_at FROM routines WHERE account_id = $1 AND kind = 'trigger' ORDER BY event
+SELECT id, account_id, kind, event, enabled, spec, created_at, updated_at, name, clock, interval_min, priority FROM routines WHERE account_id = $1 AND kind = 'trigger' ORDER BY event
 `
 
 // Routines and runs on the server (docs/11 section 4.4, F6; migration 0014).
@@ -179,6 +319,10 @@ func (q *Queries) ListTriggers(ctx context.Context, accountID string) ([]Routine
 			&i.Spec,
 			&i.CreatedAt,
 			&i.UpdatedAt,
+			&i.Name,
+			&i.Clock,
+			&i.IntervalMin,
+			&i.Priority,
 		); err != nil {
 			return nil, err
 		}
@@ -188,6 +332,40 @@ func (q *Queries) ListTriggers(ctx context.Context, accountID string) ([]Routine
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateRecurring = `-- name: UpdateRecurring :execrows
+UPDATE routines
+SET name = $3, enabled = $4, clock = $5, interval_min = $6, priority = $7, spec = $8, updated_at = now()
+WHERE id = $1 AND account_id = $2 AND kind = 'recurring'
+`
+
+type UpdateRecurringParams struct {
+	ID          string          `json:"id"`
+	AccountID   string          `json:"account_id"`
+	Name        pgtype.Text     `json:"name"`
+	Enabled     bool            `json:"enabled"`
+	Clock       pgtype.Text     `json:"clock"`
+	IntervalMin pgtype.Int4     `json:"interval_min"`
+	Priority    int32           `json:"priority"`
+	Spec        json.RawMessage `json:"spec"`
+}
+
+func (q *Queries) UpdateRecurring(ctx context.Context, arg UpdateRecurringParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateRecurring,
+		arg.ID,
+		arg.AccountID,
+		arg.Name,
+		arg.Enabled,
+		arg.Clock,
+		arg.IntervalMin,
+		arg.Priority,
+		arg.Spec,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const upsertRoutineRun = `-- name: UpsertRoutineRun :execrows
@@ -262,7 +440,7 @@ SET enabled = EXCLUDED.enabled, spec = EXCLUDED.spec, updated_at = now()
 type UpsertTriggerParams struct {
 	ID        string          `json:"id"`
 	AccountID string          `json:"account_id"`
-	Event     string          `json:"event"`
+	Event     pgtype.Text     `json:"event"`
 	Enabled   bool            `json:"enabled"`
 	Spec      json.RawMessage `json:"spec"`
 }

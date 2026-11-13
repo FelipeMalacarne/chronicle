@@ -438,6 +438,7 @@ Table routine_runs {
 
   indexes {
     (account_id, started_at) [name: 'routine_runs_account_started_idx']
+    (routine_id, started_at) [name: 'routine_runs_routine_started_idx']
   }
 
   Note: '''
@@ -450,19 +451,28 @@ Table routines {
   id text [pk]
   account_id text [not null]
   kind text [not null]
-  event text [not null]
+  event text
   enabled boolean [not null, default: `false`]
   spec jsonb [not null]
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
+  name text
+  clock text
+  interval_min integer
+  priority integer [not null, default: `0`]
 
   indexes {
     (account_id, kind, event) [unique]
+    `account_id, name) WHERE (kind = 'recurring'::text` [name: 'routines_recurring_name_idx', unique]
   }
 
   Note: '''
-  What a worker runs by itself (docs/11 section 4.4): today the triggers; the agent gets them on every connection.
-  routines_kind_check: CHECK ((kind = 'trigger'::text))
+  What a worker runs by itself (docs/11 section 4.4): triggers and recurring routines; the agent gets them on every connection.
+  routines_clock_check: CHECK ((clock ~ '^[A-Z_]{1,32}$'::text))
+  routines_interval_min_check: CHECK (((interval_min >= 10) AND (interval_min <= 10080)))
+  routines_kind_check: CHECK ((((kind = 'trigger'::text) AND (event IS NOT NULL) AND (name IS NULL) AND (clock IS NULL) AND (interval_min IS NULL)) OR ((kind = 'recurring'::text) AND (event IS NULL) AND (name IS NOT NULL) AND ((clock IS NOT NULL) OR (interval_min IS NOT NULL)))))
+  routines_name_check: CHECK (((char_length(name) >= 1) AND (char_length(name) <= 80)))
+  routines_priority_check: CHECK (((priority >= 0) AND (priority <= 100)))
   '''
 }
 

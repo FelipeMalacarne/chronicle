@@ -75,10 +75,11 @@ func newAgentCmd() *cobra.Command {
 				Hello: agent.Hello{Host: host, Version: buildinfo.String(), Account: strings.TrimSpace(os.Getenv("MICROBOT_AGENT_ACCOUNT")), Kind: agent.KindAttached},
 				Executor: &agent.Executor{
 					Game: &microbot.Client{Home: home}, Home: home,
-					Bridge:      &microbot.Client{Home: home, Socket: microbot.BridgeSocket},
-					TriggerFile: agent.DefaultTriggerFile(),
-					RunFile:     agent.DefaultRunFile(),
-					ClientCmd:   harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"), AccountCmd: harnessCmd("MICROBOT_ACCOUNT_CMD", "mb-account"),
+					Bridge:        &microbot.Client{Home: home, Socket: microbot.BridgeSocket},
+					TriggerFile:   agent.DefaultTriggerFile(),
+					RecurringFile: agent.DefaultRecurringFile(),
+					RunFile:       agent.DefaultRunFile(),
+					ClientCmd:     harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"), AccountCmd: harnessCmd("MICROBOT_ACCOUNT_CMD", "mb-account"),
 				},
 			}
 			log.Info("agent: starting", "server", url, "microbot_home", home, "client_cmd", strings.Join(a.Executor.ClientCmd, " "))

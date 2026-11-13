@@ -44,3 +44,36 @@ SELECT * FROM routine_runs WHERE account_id = $1 ORDER BY started_at DESC, id LI
 
 -- name: ListRunEvents :many
 SELECT * FROM run_events WHERE run_id = ANY(sqlc.arg(run_ids)::text[]) ORDER BY run_id, seq;
+
+-- Recurring routines (migration 0015): each with its last run, from which
+-- the agent counts the interval and sees a failure the owner has not
+-- answered.
+
+-- name: ListRecurring :many
+SELECT r.id, r.name, r.enabled, r.clock, r.interval_min, r.priority, r.spec, r.updated_at,
+       COALESCE(last.state, '') AS last_state, last.started_at AS last_started_at, last.finished_at AS last_finished_at
+FROM routines r
+LEFT JOIN LATERAL (
+  SELECT rr.state, rr.started_at, rr.finished_at FROM routine_runs rr
+  WHERE rr.routine_id = r.id ORDER BY rr.started_at DESC LIMIT 1
+) last ON true
+WHERE r.account_id = $1 AND r.kind = 'recurring'
+ORDER BY r.priority DESC, r.name, r.id;
+
+-- name: CountRecurring :one
+SELECT count(*) FROM routines WHERE account_id = $1 AND kind = 'recurring';
+
+-- name: InsertRecurring :exec
+INSERT INTO routines (id, account_id, kind, name, enabled, clock, interval_min, priority, spec)
+VALUES ($1, $2, 'recurring', $3, $4, $5, $6, $7, $8);
+
+-- name: UpdateRecurring :execrows
+UPDATE routines
+SET name = $3, enabled = $4, clock = $5, interval_min = $6, priority = $7, spec = $8, updated_at = now()
+WHERE id = $1 AND account_id = $2 AND kind = 'recurring';
+
+-- name: DeleteRecurring :execrows
+DELETE FROM routines WHERE id = $1 AND account_id = $2 AND kind = 'recurring';
+
+-- name: GetRecurringID :one
+SELECT id FROM routines WHERE id = $1 AND account_id = $2 AND kind = 'recurring';

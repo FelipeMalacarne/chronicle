@@ -171,6 +171,8 @@ func ValidateReport(r Run) error {
 		return errors.New("run report: too many plugins stopped")
 	case r.Trigger != "" && !slices.Contains(Events, r.Trigger):
 		return errors.New("run report: unknown trigger")
+	case r.Routine != "" && (!reRoutineID.MatchString(r.Routine) || r.Trigger != ""):
+		return errors.New("run report: bad routine")
 	case !slices.Contains(runState, r.State):
 		return errors.New("run report: unknown state")
 	case r.StartedAt.IsZero():

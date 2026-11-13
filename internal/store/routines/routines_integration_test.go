@@ -139,6 +139,121 @@ func TestRecordRunPostgres(t *testing.T) {
 	}
 }
 
+func recurringRoutine(name, clock string, interval, priority int) agent.Recurring {
+	return agent.Recurring{
+		Name: name, Enabled: true, Clock: clock, IntervalMin: interval, Priority: priority,
+		Run: agent.RunParams{ClassName: "a.b.HerbrunPlugin", Stop: []string{fisher}, TimeoutS: 900},
+	}
+}
+
+func TestRecurringPostgres(t *testing.T) {
+	ctx := context.Background()
+	repo := setup(ctx, t)
+	if list, err := repo.Recurring(ctx, "acc_a"); err != nil || len(list) != 0 {
+		t.Fatalf("none = %+v, %v", list, err)
+	}
+	if _, _, err := repo.PutRecurring(ctx, "acc_missing", recurringRoutine("Herb run", "HERB", 0, 0)); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("missing account = %v", err)
+	}
+	if _, _, err := repo.PutRecurring(ctx, "acc_a", recurringRoutine("Nothing", "", 0, 0)); err == nil {
+		t.Fatal("a routine without clock or interval was saved")
+	}
+	herbID, _, err := repo.PutRecurring(ctx, "acc_a", recurringRoutine("Herb run", "HERB", 80, 10))
+	if err != nil || !strings.HasPrefix(herbID, "rtn_") {
+		t.Fatalf("herb = %q, %v", herbID, err)
+	}
+	treeID, list, err := repo.PutRecurring(ctx, "acc_a", recurringRoutine("Tree run", "TREE", 0, 50))
+	if err != nil || len(list) != 2 || list[0].ID != treeID || list[1].ID != herbID {
+		t.Fatalf("by priority = %+v, %v", list, err)
+	}
+	herb := list[1]
+	if herb.Name != "Herb run" || herb.Clock != "HERB" || herb.IntervalMin != 80 || herb.Run.TimeoutS != 900 ||
+		!reflect.DeepEqual(herb.Run.Stop, []string{fisher}) || herb.UpdatedAt == nil || herb.LastRun != nil {
+		t.Fatalf("stored herb = %+v", herb)
+	}
+	if _, _, err = repo.PutRecurring(ctx, "acc_a", recurringRoutine("Herb run", "", 60, 0)); !errors.Is(err, ErrNameTaken) {
+		t.Fatalf("same name = %v", err)
+	}
+	// An update by id: another account's routine is not found.
+	edit := herb
+	edit.Enabled, edit.Priority, edit.LastRun = false, 60, nil
+	if _, _, err = repo.PutRecurring(ctx, "acc_b", edit); !errors.Is(err, ErrRoutineNotFound) {
+		t.Fatalf("foreign update = %v", err)
+	}
+	time.Sleep(2 * time.Millisecond)
+	if _, list, err = repo.PutRecurring(ctx, "acc_a", edit); err != nil || list[0].ID != herbID || list[0].Enabled || !list[0].UpdatedAt.After(*herb.UpdatedAt) {
+		t.Fatalf("update = %+v, %v", list, err)
+	}
+	// Triggers and recurring routines live side by side.
+	if _, err = repo.PutTrigger(ctx, "acc_a", cat(true)); err != nil {
+		t.Fatal(err)
+	}
+	if ts, _ := repo.Triggers(ctx, "acc_a"); len(ts) != 1 {
+		t.Fatalf("triggers = %+v", ts)
+	}
+
+	// A run of the routine is its last run, and reads back with it.
+	t0 := time.Date(2026, 11, 13, 10, 0, 0, 0, time.UTC)
+	end := t0.Add(12 * time.Minute)
+	run := agent.Run{
+		ID: "run-3", UID: "00000000000000cc", ClassName: "a.b.HerbrunPlugin", Routine: herbID, State: agent.RunDone,
+		StartedAt: t0, FinishedAt: &end, Events: []agent.RunEvent{{At: t0, State: agent.RunWaiting, Text: "rotina Herb run: relógio Herb Patches pronto"}},
+	}
+	if _, _, err = repo.RecordRun(ctx, "acc_a", "zaros", run); err != nil {
+		t.Fatal(err)
+	}
+	// A run naming a routine of another account keeps none.
+	stray := run
+	stray.UID, stray.ID, stray.StartedAt = "00000000000000dd", "run-4", t0.Add(time.Hour)
+	if _, _, err = repo.RecordRun(ctx, "acc_b", "box", stray); err != nil {
+		t.Fatal(err)
+	}
+	list, _ = repo.Recurring(ctx, "acc_a")
+	if l := list[0].LastRun; l == nil || l.State != agent.RunDone || !l.StartedAt.Equal(t0) || !l.FinishedAt.Equal(end) {
+		t.Fatalf("last run = %+v", l)
+	}
+	if list[1].LastRun != nil {
+		t.Fatalf("tree's last run = %+v", list[1].LastRun)
+	}
+	if runs, _ := repo.Runs(ctx, "acc_a", 30); len(runs) != 1 || runs[0].Routine != herbID || runs[0].Trigger != "" {
+		t.Fatalf("runs = %+v", runs)
+	}
+	if runs, _ := repo.Runs(ctx, "acc_b", 30); len(runs) != 1 || runs[0].Routine != "" {
+		t.Fatalf("stray run = %+v", runs)
+	}
+
+	// Deleting keeps the run, without the routine.
+	if list, err = repo.DeleteRecurring(ctx, "acc_a", herbID); err != nil || len(list) != 1 || list[0].ID != treeID {
+		t.Fatalf("delete = %+v, %v", list, err)
+	}
+	if _, err = repo.DeleteRecurring(ctx, "acc_a", herbID); !errors.Is(err, ErrRoutineNotFound) {
+		t.Fatalf("delete again = %v", err)
+	}
+	if runs, _ := repo.Runs(ctx, "acc_a", 30); len(runs) != 1 || runs[0].Routine != "" {
+		t.Fatalf("run after the delete = %+v", runs)
+	}
+
+	// At most agent.RecurringMax per account.
+	for i := range agent.RecurringMax {
+		if _, _, err = repo.PutRecurring(ctx, "acc_b", recurringRoutine(fmt.Sprintf("Run %d", i), "", 60, 0)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if _, _, err = repo.PutRecurring(ctx, "acc_b", recurringRoutine("One more", "", 60, 0)); !errors.Is(err, ErrTooMany) {
+		t.Fatalf("too many = %v", err)
+	}
+	// The table holds the shape of each kind.
+	for _, bad := range []string{
+		`INSERT INTO routines (id, account_id, kind, enabled, spec) VALUES ('rtn_x1', 'acc_a', 'recurring', true, '{}')`,
+		`INSERT INTO routines (id, account_id, kind, name, interval_min, spec) VALUES ('rtn_x2', 'acc_a', 'trigger', 'x', 60, '{}')`,
+		`INSERT INTO routines (id, account_id, kind, name, interval_min, spec) VALUES ('rtn_x3', 'acc_a', 'recurring', 'x', 5, '{}')`,
+	} {
+		if _, err = repo.pool.Exec(ctx, bad); err == nil {
+			t.Errorf("accepted: %s", bad)
+		}
+	}
+}
+
 // sameJSON compares two JSON values (jsonb normalizes the spacing).
 func sameJSON(a, b json.RawMessage) bool {
 	var x, y any

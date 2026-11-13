@@ -1,7 +1,8 @@
 // Package routines persists what the Microbot workers run by themselves
-// (docs/11 section 4.4, phase F6; migration 0014): each account's triggers,
-// which the agent gets on every connection, and the runs' history with its
-// trail, which the agent sends as each run changes.
+// (docs/11 section 4.4, phase F6; migrations 0014 and 0015): each account's
+// triggers and recurring routines, which the agent gets on every connection,
+// and the runs' history with its trail, which the agent sends as each run
+// changes.
 package routines
 
 import (
@@ -28,6 +29,12 @@ var (
 	ErrNotFound = errors.New("routines: account not found")
 	// ErrForeignRun: the run is stored under another account.
 	ErrForeignRun = errors.New("routines: the run belongs to another account")
+	// ErrRoutineNotFound: no recurring routine with that id in the account.
+	ErrRoutineNotFound = errors.New("routines: recurring routine not found")
+	// ErrNameTaken: the account has another recurring routine of that name.
+	ErrNameTaken = errors.New("routines: another recurring routine has that name")
+	// ErrTooMany: the account has agent.RecurringMax recurring routines.
+	ErrTooMany = fmt.Errorf("routines: at most %d recurring routines per account", agent.RecurringMax)
 )
 
 // Repository reads and writes routines, routine_runs and run_events.
@@ -122,13 +129,24 @@ func (r *Repository) RecordRun(ctx context.Context, account, agentName string, r
 			return ErrForeignRun
 		}
 		var routineID pgtype.Text
-		if run.Trigger != "" {
-			t, trigErr := q.GetTrigger(ctx, storedb.GetTriggerParams{AccountID: account, Event: run.Trigger})
+		switch {
+		case run.Trigger != "":
+			t, trigErr := q.GetTrigger(ctx, storedb.GetTriggerParams{AccountID: account, Event: text(run.Trigger)})
 			switch {
 			case trigErr == nil:
-				routineID = pgtype.Text{String: t.ID, Valid: true}
+				routineID = text(t.ID)
 			case !errors.Is(trigErr, pgx.ErrNoRows):
 				return fmt.Errorf("read trigger: %w", trigErr)
+			}
+		case run.Routine != "":
+			// A recurring routine of this account; one deleted since leaves
+			// the run without it.
+			id, recErr := q.GetRecurringID(ctx, storedb.GetRecurringIDParams{ID: run.Routine, AccountID: account})
+			switch {
+			case recErr == nil:
+				routineID = text(id)
+			case !errors.Is(recErr, pgx.ErrNoRows):
+				return fmt.Errorf("read recurring routine: %w", recErr)
 			}
 		}
 		stop, _ := json.Marshal(nonNil(run.Stop))
@@ -194,6 +212,10 @@ func (r *Repository) Runs(ctx context.Context, account string, limit int) ([]age
 		if run.Events == nil {
 			run.Events = []agent.RunEvent{}
 		}
+		if row.Trigger == "" && row.RoutineID.Valid {
+			// No trigger and a routine: a recurring routine's run.
+			run.Routine = row.RoutineID.String
+		}
 		_ = json.Unmarshal(row.Stop, &run.Stop)
 		if row.FinishedAt.Valid {
 			t := row.FinishedAt.Time.UTC()
@@ -220,9 +242,9 @@ func listTriggers(ctx context.Context, q *storedb.Queries, account string) ([]ag
 	}
 	out := make([]agent.Trigger, 0, len(rows))
 	for _, row := range rows {
-		t := agent.Trigger{Event: row.Event, Enabled: row.Enabled}
+		t := agent.Trigger{Event: row.Event.String, Enabled: row.Enabled}
 		if err := json.Unmarshal(row.Spec, &t.Run); err != nil {
-			return nil, fmt.Errorf("trigger %s: %w", row.Event, err)
+			return nil, fmt.Errorf("trigger %s: %w", row.Event.String, err)
 		}
 		out = append(out, t)
 	}
@@ -235,12 +257,138 @@ func upsertTrigger(ctx context.Context, q *storedb.Queries, account string, t ag
 		return err
 	}
 	if err := q.UpsertTrigger(ctx, storedb.UpsertTriggerParams{
-		ID: newID("rtn_"), AccountID: account, Event: t.Event, Enabled: t.Enabled, Spec: spec,
+		ID: newID("rtn_"), AccountID: account, Event: text(t.Event), Enabled: t.Enabled, Spec: spec,
 	}); err != nil {
 		return fmt.Errorf("write trigger: %w", err)
 	}
 	return nil
 }
+
+// Recurring returns the account's recurring routines, the highest priority
+// first, each with its last run.
+func (r *Repository) Recurring(ctx context.Context, account string) ([]agent.Recurring, error) {
+	return listRecurring(ctx, r.queries, account)
+}
+
+// PutRecurring saves one recurring routine (agent.ValidateRecurring first):
+// a new one when rc.ID is empty, else the account's routine of that id. It
+// returns the routine's id and the account's recurring routines.
+func (r *Repository) PutRecurring(ctx context.Context, account string, rc agent.Recurring) (string, []agent.Recurring, error) {
+	rc, err := agent.ValidateRecurring(rc)
+	if err != nil {
+		return "", nil, err
+	}
+	spec, err := json.Marshal(rc.Run)
+	if err != nil {
+		return "", nil, err
+	}
+	clock := pgtype.Text{String: rc.Clock, Valid: rc.Clock != ""}
+	interval := pgtype.Int4{Int32: int32(rc.IntervalMin), Valid: rc.IntervalMin != 0} //nolint:gosec // at most a week (ValidateRecurring)
+	priority := int32(rc.Priority)                                                    //nolint:gosec // 0 to 100 (ValidateRecurring)
+	var out []agent.Recurring
+	err = r.inTx(ctx, func(q *storedb.Queries) error {
+		if lerr := lockAccount(ctx, q, account); lerr != nil {
+			return lerr
+		}
+		if rc.ID == "" {
+			n, cerr := q.CountRecurring(ctx, account)
+			if cerr != nil {
+				return fmt.Errorf("count recurring routines: %w", cerr)
+			}
+			if n >= agent.RecurringMax {
+				return ErrTooMany
+			}
+			rc.ID = newID("rtn_")
+			if ierr := q.InsertRecurring(ctx, storedb.InsertRecurringParams{
+				ID: rc.ID, AccountID: account, Name: text(rc.Name), Enabled: rc.Enabled, Clock: clock,
+				IntervalMin: interval, Priority: priority, Spec: spec,
+			}); ierr != nil {
+				return fmt.Errorf("write recurring routine: %w", nameTaken(ierr))
+			}
+		} else {
+			n, uerr := q.UpdateRecurring(ctx, storedb.UpdateRecurringParams{
+				ID: rc.ID, AccountID: account, Name: text(rc.Name), Enabled: rc.Enabled, Clock: clock,
+				IntervalMin: interval, Priority: priority, Spec: spec,
+			})
+			if uerr != nil {
+				return fmt.Errorf("write recurring routine: %w", nameTaken(uerr))
+			}
+			if n == 0 {
+				return ErrRoutineNotFound
+			}
+		}
+		var lerr error
+		out, lerr = listRecurring(ctx, q, account)
+		return lerr
+	})
+	if err != nil {
+		return "", nil, err
+	}
+	return rc.ID, out, nil
+}
+
+// DeleteRecurring removes one of the account's recurring routines (its runs
+// stay, without it) and returns the ones left.
+func (r *Repository) DeleteRecurring(ctx context.Context, account, id string) ([]agent.Recurring, error) {
+	var out []agent.Recurring
+	err := r.inTx(ctx, func(q *storedb.Queries) error {
+		if err := lockAccount(ctx, q, account); err != nil {
+			return err
+		}
+		n, err := q.DeleteRecurring(ctx, storedb.DeleteRecurringParams{ID: id, AccountID: account})
+		if err != nil {
+			return fmt.Errorf("delete recurring routine: %w", err)
+		}
+		if n == 0 {
+			return ErrRoutineNotFound
+		}
+		out, err = listRecurring(ctx, q, account)
+		return err
+	})
+	return out, err
+}
+
+func listRecurring(ctx context.Context, q *storedb.Queries, account string) ([]agent.Recurring, error) {
+	rows, err := q.ListRecurring(ctx, account)
+	if err != nil {
+		return nil, fmt.Errorf("list recurring routines: %w", err)
+	}
+	out := make([]agent.Recurring, 0, len(rows))
+	for _, row := range rows {
+		rc := agent.Recurring{
+			ID: row.ID, Name: row.Name.String, Enabled: row.Enabled, Clock: row.Clock.String,
+			IntervalMin: int(row.IntervalMin.Int32), Priority: int(row.Priority),
+		}
+		if err := json.Unmarshal(row.Spec, &rc.Run); err != nil {
+			return nil, fmt.Errorf("recurring routine %s: %w", row.ID, err)
+		}
+		if row.UpdatedAt.Valid {
+			t := row.UpdatedAt.Time.UTC()
+			rc.UpdatedAt = &t
+		}
+		if row.LastState != "" && row.LastStartedAt.Valid {
+			rc.LastRun = &agent.RecurringRun{State: row.LastState, StartedAt: row.LastStartedAt.Time.UTC()}
+			if row.LastFinishedAt.Valid {
+				t := row.LastFinishedAt.Time.UTC()
+				rc.LastRun.FinishedAt = &t
+			}
+		}
+		out = append(out, rc)
+	}
+	return out, nil
+}
+
+// nameTaken maps the unique violation of a recurring routine's name to
+// ErrNameTaken.
+func nameTaken(err error) error {
+	var pg *pgconn.PgError
+	if errors.As(err, &pg) && pg.Code == "23505" && pg.ConstraintName == "routines_recurring_name_idx" {
+		return ErrNameTaken
+	}
+	return err
+}
+
+func text(s string) pgtype.Text { return pgtype.Text{String: s, Valid: true} }
 
 func lockAccount(ctx context.Context, q *storedb.Queries, account string) error {
 	_, err := q.LockAccountForWorker(ctx, account)

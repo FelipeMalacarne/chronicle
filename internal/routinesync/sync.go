@@ -3,13 +3,15 @@
 // R1); the database is the source of the triggers and the record of the
 // runs:
 //
-//   - on every connection the agent gets the account's triggers
+//   - on every connection the agent gets the account's triggers and, when
+//     it runs them (recurring_get in its hello), its recurring routines
 //     (routines_sync), so a worker's pod, which loses its disk, keeps them;
-//     an attached agent whose account has none yet seeds them from its own
-//     file once;
+//     an attached agent whose account has no triggers yet seeds them from
+//     its own file once;
 //   - the agent sends each run as it changes (a TypeEvent), which is stored
-//     with its trail; what the executor did by itself (a run a trigger
-//     started, and how it ended) goes to the Microbot audit.
+//     with its trail; what the executor did by itself (a run a trigger or a
+//     recurring routine started, and how it ended) goes to the Microbot
+//     audit.
 //
 // An agent that does not declare routines_sync in its hello (older than F6)
 // is left alone: its triggers and history stay in its files.
@@ -31,6 +33,7 @@ import (
 // Store is the database side (internal/store/routines).
 type Store interface {
 	Triggers(ctx context.Context, account string) ([]agent.Trigger, error)
+	Recurring(ctx context.Context, account string) ([]agent.Recurring, error)
 	ImportTriggers(ctx context.Context, account string, ts []agent.Trigger) (bool, error)
 	RecordRun(ctx context.Context, account, agentName string, run agent.Run) (newRun, finished bool, err error)
 }
@@ -53,7 +56,7 @@ type Sync struct {
 	Log   *slog.Logger
 }
 
-// OnConnect sends the account's triggers to an agent that just linked.
+// OnConnect sends the account's routines to an agent that just linked.
 func (s *Sync) OnConnect(info agent.Info) {
 	if info.Account == "" || !info.Supports(agent.CmdRoutinesSync) {
 		return
@@ -66,13 +69,26 @@ func (s *Sync) OnConnect(info agent.Info) {
 		return
 	}
 	if len(ts) == 0 && info.Kind == agent.KindAttached && s.importTriggers(ctx, info) {
+		if !info.Supports(agent.CmdRecurringGet) {
+			return // the agent already holds them
+		}
+		if ts, err = s.Store.Triggers(ctx, info.Account); err != nil {
+			s.Log.Warn("routines: read triggers", "account", info.Account, "err", err)
+			return
+		}
+	}
+	var rs []agent.Recurring
+	if info.Supports(agent.CmdRecurringGet) {
+		if rs, err = s.Store.Recurring(ctx, info.Account); err != nil {
+			s.Log.Warn("routines: read recurring routines", "account", info.Account, "err", err)
+			return
+		}
+	}
+	if err := s.Hub.CallAgent(ctx, info.ID, agent.CmdRoutinesSync, agent.RoutinesFor(info, ts, rs), nil); err != nil {
+		s.Log.Warn("routines: sync", "account", info.Account, "agent", info.ID, "err", err)
 		return
 	}
-	if err := s.Hub.CallAgent(ctx, info.ID, agent.CmdRoutinesSync, agent.RoutinesParams{Triggers: ts}, nil); err != nil {
-		s.Log.Warn("routines: sync triggers", "account", info.Account, "agent", info.ID, "err", err)
-		return
-	}
-	s.Log.Info("routines: triggers sent", "account", info.Account, "agent", info.ID, "triggers", len(ts))
+	s.Log.Info("routines: sent", "account", info.Account, "agent", info.ID, "triggers", len(ts), "recurring", len(rs))
 }
 
 // importTriggers seeds an account with no triggers from an attached agent's
@@ -112,11 +128,18 @@ func (s *Sync) OnEvent(info agent.Info, ev agent.Event) {
 		s.Log.Warn("routines: record run", "account", info.Account, "agent", info.ID, "run", run.ID, "err", err)
 		return
 	}
-	if run.Trigger == "" || s.Audit == nil {
+	var actor string
+	switch {
+	case s.Audit == nil:
+		return
+	case run.Trigger != "":
+		actor = "trigger:" + run.Trigger
+	case run.Routine != "":
+		actor = "recurring:" + run.Routine
+	default:
 		// The owner's runs are audited where they started (run_start, run_cancel).
 		return
 	}
-	actor := "trigger:" + run.Trigger
 	params, _ := json.Marshal(map[string]any{"run": run.ID, "className": run.ClassName})
 	if newRun {
 		s.append(ctx, storemicrobot.Entry{Actor: actor, Origin: "agent", Action: agent.CmdRunStart, Params: params, OK: true, AccountID: info.Account, AgentID: info.ID})

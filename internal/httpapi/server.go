@@ -76,6 +76,10 @@ type Options struct {
 	// Recording serves the owner's demonstration recording (GET and DELETE
 	// /api/account/recording, docs/10 section 11); nil leaves them out.
 	Recording RecordingStore
+	// Plans stores the accounts' plans and serves the next task of the
+	// active one (GET /api/plan/next, /api/plans, docs/10 section 9); nil
+	// leaves them out.
+	Plans PlanStore
 	// Static is the SPA filesystem rooted at the site (index.html at its root).
 	// nil disables the SPA and / returns 404.
 	Static fs.FS
@@ -204,6 +208,7 @@ func (s *Server) routes() {
 	}
 	s.levelRoutes()
 	s.recordingRoutes()
+	s.planRoutes()
 	s.microbotRoutes()
 	s.workerRoutes()
 	s.profileRoutes()

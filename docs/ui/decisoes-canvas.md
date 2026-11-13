@@ -296,9 +296,10 @@ mostra número que o servidor não mede (sem dado, a linha some).
 Antes de cada fatia que mexe numa tela ainda sem desenho na v7 (Comparar, Entidades, Grafo), o desenho
 entra no canvas e o dono aprova (regra 11 do `CLAUDE.md`).
 
-Estado em 2026-11-12: a V1 está em boa parte no branch `ui/v7-frota` (Frota em `/`, cabeçalho de conta,
-Nova conta, barra lateral), feita antes de o desenho fechar: tem as abas Agora, Rota, Mundo, Personagem
-e Cliente, e precisa ser alinhada às cinco abas da decisão 2. Diverge do artboard de Nova conta em dois
-pontos, pelo que o servidor aceita: a rota é obrigatória e a sessão vem depois de criar a conta. O
-branch `ui/workers-no-pergaminho` (base dele) pôs a aba Workers nas classes do Pergaminho e corrigiu a
-barra de filtros do Grafo.
+Estado em 2026-11-12: a V1 está no branch `ui/v7-casca`, em revisão: Frota em `/`, cabeçalho de conta
+com as abas Visão geral, Rota, Personagem e Cliente (Histórico entra com a V7), uma Visão geral com
+rota, relógios, worker e fontes, Nova conta e a barra lateral com Frota, Mundo e as contas. Diverge do
+artboard de Nova conta em dois pontos, pelo que o servidor aceita: a rota é obrigatória e a sessão vem
+depois de criar a conta. As telas de rota ainda têm as abas antigas abaixo dos atalhos novos (some na
+V2) e a barra de 640 px não tem o Mundo. O mesmo branch pôs a aba Workers nas classes do Pergaminho e
+corrigiu a barra de filtros do Grafo.

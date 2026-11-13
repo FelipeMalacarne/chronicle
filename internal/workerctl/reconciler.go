@@ -13,6 +13,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -52,6 +53,10 @@ type Store interface {
 	// complete read; SetRunningPlugins replaces them (docs/11 section 15.4).
 	RunningPlugins(ctx context.Context, account string) ([]agent.ProfilePlugin, error)
 	SetRunningPlugins(ctx context.Context, account string, plugins []agent.ProfilePlugin) error
+	// RunningSettings are the option values of those plugins, as last read
+	// (docs/11 section 15.6).
+	RunningSettings(ctx context.Context, account string) ([]agent.ProfileSetting, error)
+	SetRunningSettings(ctx context.Context, account string, settings []agent.ProfileSetting) error
 	// SetLoggedIn records that the client was read logged in; RecordLogin the
 	// outcome of a login the reconciler made; OtherClientSince whether
 	// another client of the account pushed since then (docs/11 section 6.2).
@@ -151,6 +156,9 @@ type Reconciler struct {
 	// everything the bootstrap meant to start: only their plugin list is read
 	// back (capture), so a client still booting never shrinks what is kept.
 	settled map[string]bool
+	// settingsAt is when each account's option values were last read: they
+	// cost a request per option, so a pass reads them every settingsEvery.
+	settingsAt map[string]time.Time
 }
 
 // autoRestart is what the reconciler remembers of a worker's automatic
@@ -239,7 +247,7 @@ func (r *Reconciler) reconcile(ctx context.Context) ([]Desired, error) {
 		return nil, fmt.Errorf("desired workers: %w", err)
 	}
 	// Before any Deployment changes: a pod about to be replaced is read last.
-	r.capture(ctx, want)
+	r.capture(ctx, want, false)
 	have, err := r.Cluster.ListDeployments(ctx, kube.WorkerSelector)
 	if err != nil {
 		return nil, fmt.Errorf("list worker deployments: %w", err)
@@ -456,7 +464,7 @@ func (r *Reconciler) restart(ctx context.Context, account string) (string, error
 			return "", errors.New("WORKER_IMAGE is not set on the server")
 		}
 		// The pod about to be replaced is read last (docs/11 sections 15.4 and 15.5).
-		r.capture(ctx, []Desired{w})
+		r.capture(ctx, []Desired{w}, true)
 		return image, r.apply(ctx, account, image, r.now().UTC().Format(time.RFC3339))
 	}
 	return "", ErrNotRunning
@@ -744,6 +752,18 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 	} else {
 		profile = agent.MergeProfiles(profile, agent.ClientProfile{Plugins: on})
 	}
+	// Their option values (docs/11 section 15.6) go over the profile's, but
+	// never past what the agent takes in one profile.
+	if set, rerr := r.Store.RunningSettings(ctx, info.Account); rerr != nil {
+		r.Log.Warn("workers: running settings", "account", info.Account, "err", rerr)
+	} else {
+		merged := agent.MergeProfiles(profile, agent.ClientProfile{Settings: set})
+		for len(merged.Settings) > agent.MaxProfileSettings && len(set) > 0 {
+			set = set[:len(set)-1]
+			merged = agent.MergeProfiles(profile, agent.ClientProfile{Settings: set})
+		}
+		profile = merged
+	}
 	token, err := r.Store.MintPluginToken(ctx, info.Account)
 	if err != nil {
 		return "", false, fmt.Errorf("plugin token: %w", err)
@@ -819,7 +839,7 @@ func (r *Reconciler) settle(agentID string, ok bool) {
 // them (docs/11 section 15.4), so the next pod starts them again. An agent
 // that is not settled, or an answer that is not complete, keeps what was
 // stored; the read is the Agent Server's own, never a write to the client.
-func (r *Reconciler) capture(ctx context.Context, want []Desired) {
+func (r *Reconciler) capture(ctx context.Context, want []Desired, force bool) {
 	agents := map[string]agent.Info{}
 	live := map[string]bool{}
 	for _, a := range r.Hub.Agents() {
@@ -856,13 +876,98 @@ func (r *Reconciler) capture(ctx context.Context, want []Desired) {
 		if err == nil {
 			var on []agent.ProfilePlugin
 			if on, err = agent.ObservedPlugins(p); err == nil {
-				err = r.Store.SetRunningPlugins(ctx, w.Account, on)
+				if err = r.Store.SetRunningPlugins(ctx, w.Account, on); err == nil {
+					r.captureSettings(ctx, a, w.Account, on, force)
+				}
 			}
 		}
 		if err != nil {
 			r.Log.Debug("workers: running plugins not kept", "account", w.Account, "err", err)
 		}
 	}
+}
+
+// settingsEvery is how often a pass reads a worker's option values.
+const settingsEvery = 2 * time.Minute
+
+// maxObservedSettings bounds what is kept, well under what a profile takes.
+const maxObservedSettings = 300
+
+// captureSettings keeps the explicit option values of the plugins that are
+// on (docs/11 section 15.6): the plugin's options come from the Chronicle
+// Link's schema export, their values from the Agent Server. A read that
+// fails anywhere keeps what was stored.
+func (r *Reconciler) captureSettings(ctx context.Context, a agent.Info, account string, on []agent.ProfilePlugin, force bool) {
+	r.mu.Lock()
+	if r.settingsAt == nil {
+		r.settingsAt = map[string]time.Time{}
+	}
+	if !force && time.Since(r.settingsAt[account]) < settingsEvery {
+		r.mu.Unlock()
+		return
+	}
+	r.settingsAt[account] = time.Now()
+	r.mu.Unlock()
+	sctx, cancel := context.WithTimeout(ctx, 90*time.Second)
+	defer cancel()
+	set, err := r.readSettings(sctx, a, on)
+	if err == nil {
+		err = r.Store.SetRunningSettings(ctx, account, set)
+	}
+	if err != nil {
+		r.Log.Debug("workers: running settings not kept", "account", account, "err", err)
+	}
+}
+
+// readSettings reads every explicit option value of the plugins in on.
+func (r *Reconciler) readSettings(ctx context.Context, a agent.Info, on []agent.ProfilePlugin) ([]agent.ProfileSetting, error) {
+	out := []agent.ProfileSetting{}
+	for _, pl := range on {
+		var schema agent.PluginSchema
+		err := r.Hub.CallAgent(ctx, a.ID, agent.CmdConfigSchema, agent.ScriptParams{ClassName: pl.Class()}, &schema)
+		if err != nil {
+			if strings.Contains(err.Error(), "has no config options") {
+				continue
+			}
+			return nil, err
+		}
+		var keys []string
+		seen := map[string]bool{}
+		for _, it := range schema.Items {
+			// A key the agent would refuse (a secret) fails the whole batch.
+			if agent.ValidateSetting(agent.ProfileSetting{Group: schema.Group, Key: it.Key}) != nil {
+				continue
+			}
+			if !seen[it.Key] {
+				seen[it.Key] = true
+				keys = append(keys, it.Key)
+			}
+		}
+		for len(keys) > 0 {
+			n := min(len(keys), 50)
+			var v agent.ConfigValues
+			if err := r.Hub.CallAgent(ctx, a.ID, agent.CmdConfigGet, agent.ConfigGetParams{Group: schema.Group, Keys: keys[:n]}, &v); err != nil {
+				return nil, err
+			}
+			for k, val := range v.Values {
+				if val == nil {
+					continue
+				}
+				s := agent.ProfileSetting{Group: schema.Group, Key: k, Value: *val}
+				if agent.ValidateSetting(s) == nil {
+					out = append(out, s)
+				}
+			}
+			keys = keys[n:]
+		}
+	}
+	slices.SortFunc(out, func(x, y agent.ProfileSetting) int {
+		return cmp.Or(strings.Compare(x.Group, y.Group), strings.Compare(x.Key, y.Key))
+	})
+	if len(out) > maxObservedSettings {
+		out = out[:maxObservedSettings]
+	}
+	return out, nil
 }
 
 // noteLogin keeps that the client is logged in (docs/11 section 15.5).

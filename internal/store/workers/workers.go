@@ -462,6 +462,56 @@ func (r *Repository) SetRunningPlugins(ctx context.Context, account string, plug
 	return nil
 }
 
+// RunningSettings returns the option values of the plugins the worker's
+// client had on at the last complete read (docs/11 section 15.6); none
+// without a worker row.
+func (r *Repository) RunningSettings(ctx context.Context, account string) ([]agent.ProfileSetting, error) {
+	raw, err := r.queries.GetWorkerRunningSettings(ctx, account)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("get running settings: %w", err)
+	}
+	var out []agent.ProfileSetting
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return nil, fmt.Errorf("decode running settings: %w", err)
+	}
+	return out, nil
+}
+
+// SetRunningSettings replaces them; the caller sends only a complete read.
+// A list that is already stored writes nothing.
+func (r *Repository) SetRunningSettings(ctx context.Context, account string, settings []agent.ProfileSetting) error {
+	for _, s := range settings {
+		if err := agent.ValidateSetting(s); err != nil {
+			return err
+		}
+	}
+	if settings == nil {
+		settings = []agent.ProfileSetting{}
+	}
+	have, err := r.RunningSettings(ctx, account)
+	if err != nil {
+		return err
+	}
+	if len(have) == len(settings) && (len(have) == 0 || reflect.DeepEqual(have, settings)) {
+		return nil
+	}
+	raw, err := json.Marshal(settings)
+	if err != nil {
+		return err
+	}
+	n, err := r.queries.SetWorkerRunningSettings(ctx, storedb.SetWorkerRunningSettingsParams{AccountID: account, RunningSettings: raw})
+	if err != nil {
+		return fmt.Errorf("set running settings: %w", err)
+	}
+	if n == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // OtherClientSince reports whether another plugin installation of the account
 // (not the worker's own token) pushed after since: someone is playing the
 // account on another client (docs/11 section 6.2).

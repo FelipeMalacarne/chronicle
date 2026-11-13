@@ -493,4 +493,6 @@ type Worker struct {
 	AutoLogin bool `json:"auto_login"`
 	// The client was last read logged in and the owner did not log it out since; kept by the reconciler (docs/11 section 15.5).
 	WasLoggedIn bool `json:"was_logged_in"`
+	// Explicit option values of the plugins the client had on at the last complete read; written again by the next bootstrap (docs/11 section 15.6).
+	RunningSettings json.RawMessage `json:"running_settings"`
 }

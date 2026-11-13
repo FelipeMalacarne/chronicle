@@ -98,3 +98,17 @@ func (s RepoStore) RecordLogin(ctx context.Context, account, result string) erro
 func (s RepoStore) OtherClientSince(ctx context.Context, account string, since time.Time) (bool, error) {
 	return s.Repo.OtherClientSince(ctx, account, since)
 }
+
+// RunningSettings are the option values of the plugins the client had on.
+func (s RepoStore) RunningSettings(ctx context.Context, account string) ([]agent.ProfileSetting, error) {
+	return s.Repo.RunningSettings(ctx, account)
+}
+
+// SetRunningSettings replaces them.
+func (s RepoStore) SetRunningSettings(ctx context.Context, account string, settings []agent.ProfileSetting) error {
+	err := s.Repo.SetRunningSettings(ctx, account, settings)
+	if err == storeworkers.ErrNotFound {
+		return nil
+	}
+	return err
+}

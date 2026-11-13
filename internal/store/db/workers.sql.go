@@ -78,7 +78,7 @@ func (q *Queries) GetGameSessionInfo(ctx context.Context, accountID string) (Get
 }
 
 const getWorkerForUpdate = `-- name: GetWorkerForUpdate :one
-SELECT account_id, desired_state, world, image, plugin_token_id, started_at, stopped_at, updated_at, last_error, running_plugins, auto_login, was_logged_in FROM workers WHERE account_id = $1 FOR UPDATE
+SELECT account_id, desired_state, world, image, plugin_token_id, started_at, stopped_at, updated_at, last_error, running_plugins, auto_login, was_logged_in, running_settings FROM workers WHERE account_id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetWorkerForUpdate(ctx context.Context, accountID string) (Worker, error) {
@@ -97,6 +97,7 @@ func (q *Queries) GetWorkerForUpdate(ctx context.Context, accountID string) (Wor
 		&i.RunningPlugins,
 		&i.AutoLogin,
 		&i.WasLoggedIn,
+		&i.RunningSettings,
 	)
 	return i, err
 }
@@ -110,6 +111,17 @@ func (q *Queries) GetWorkerRunningPlugins(ctx context.Context, accountID string)
 	var running_plugins json.RawMessage
 	err := row.Scan(&running_plugins)
 	return running_plugins, err
+}
+
+const getWorkerRunningSettings = `-- name: GetWorkerRunningSettings :one
+SELECT running_settings FROM workers WHERE account_id = $1
+`
+
+func (q *Queries) GetWorkerRunningSettings(ctx context.Context, accountID string) (json.RawMessage, error) {
+	row := q.db.QueryRow(ctx, getWorkerRunningSettings, accountID)
+	var running_settings json.RawMessage
+	err := row.Scan(&running_settings)
+	return running_settings, err
 }
 
 const listWorkers = `-- name: ListWorkers :many
@@ -399,6 +411,24 @@ type SetWorkerRunningPluginsParams struct {
 // of the client's own state, not a change of the worker.
 func (q *Queries) SetWorkerRunningPlugins(ctx context.Context, arg SetWorkerRunningPluginsParams) (int64, error) {
 	result, err := q.db.Exec(ctx, setWorkerRunningPlugins, arg.AccountID, arg.RunningPlugins)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const setWorkerRunningSettings = `-- name: SetWorkerRunningSettings :execrows
+UPDATE workers SET running_settings = $2 WHERE account_id = $1
+`
+
+type SetWorkerRunningSettingsParams struct {
+	AccountID       string          `json:"account_id"`
+	RunningSettings json.RawMessage `json:"running_settings"`
+}
+
+// No updated_at, like running_plugins.
+func (q *Queries) SetWorkerRunningSettings(ctx context.Context, arg SetWorkerRunningSettingsParams) (int64, error) {
+	result, err := q.db.Exec(ctx, setWorkerRunningSettings, arg.AccountID, arg.RunningSettings)
 	if err != nil {
 		return 0, err
 	}

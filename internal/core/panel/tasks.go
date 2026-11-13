@@ -56,24 +56,24 @@ func stepTasks(c *content.Content, st *content.Step, s progress.StepState, seg *
 	own := len(st.Tasks)
 	out := make([]Task, 0, len(all))
 	for i, t := range all {
-		line := Task{Type: t.Type, Label: taskLabel(t, reg), Recipe: i < len(all)-own}
+		line := Task{Type: t.Type, Label: TaskLabel(t, reg), Recipe: i < len(all)-own}
 		u, ok := t.Ends()
 		if !ok {
 			line.Until, line.State, line.Reason = "", rules.Unknown, "a tarefa não diz quando termina"
 			out = append(out, line)
 			continue
 		}
-		line.Until = untilLabel(t, u, reg)
-		line.State, line.Reason = evaluateUntil(t, u, s, seg, g, h, f, reg, now)
+		line.Until = UntilLabel(t, u, reg)
+		line.State, line.Reason = EvaluateUntil(t, u, s, seg, g, h, f, reg, now)
 		out = append(out, line)
 	}
 	return out
 }
 
-// evaluateUntil says whether a termination is met, from what the server
+// EvaluateUntil says whether a termination is met, from what the server
 // knows: the board's verdicts and marks, the facts, the position and the
 // item containers.
-func evaluateUntil(t content.Task, u content.TaskUntil, s progress.StepState, seg *content.Segment, g *content.Guide, h rules.ItemHoldings, f Facts, reg *entities.Registry, now time.Time) (rules.Verdict, string) {
+func EvaluateUntil(t content.Task, u content.TaskUntil, s progress.StepState, seg *content.Segment, g *content.Guide, h rules.ItemHoldings, f Facts, reg *entities.Registry, now time.Time) (rules.Verdict, string) {
 	if u.Objective != nil {
 		key := u.Objective.String()
 		for _, o := range s.Objectives {
@@ -113,8 +113,12 @@ func evaluateUntil(t content.Task, u content.TaskUntil, s progress.StepState, se
 		if len(t.Items) > 0 {
 			target = &content.Segment{ID: "task", Loadout: &content.Loadout{Status: content.LoadoutPartial, Inventory: t.Items}}
 		}
-		if target == nil || g == nil {
+		if target == nil || (g == nil && len(t.Items) == 0) {
 			return rules.Unknown, "o trecho não tem setup"
+		}
+		if g == nil {
+			// a recipe's or a plan's own task: its items, no guide
+			g = &content.Guide{}
 		}
 		ev := planning.EvaluateSegment(g, target, h, reg)
 		switch ev.Status {
@@ -167,9 +171,9 @@ func firstReason(evs []rules.Evidence) string {
 	return "sem fatos para avaliar"
 }
 
-// taskLabel says what to do, in the panel's language (PT-BR, game terms in
+// TaskLabel says what to do, in the panel's language (PT-BR, game terms in
 // English): "Ir até Lumbridge Castle", "Falar com Duke Horacio".
-func taskLabel(t content.Task, reg *entities.Registry) string {
+func TaskLabel(t content.Task, reg *entities.Registry) string {
 	name := func(r *entities.Ref) string {
 		if r == nil {
 			return "?"
@@ -247,8 +251,8 @@ func itemText(it content.ItemRequirement, reg *entities.Registry) string {
 	return counted(n, name)
 }
 
-// untilLabel says what ends the task.
-func untilLabel(t content.Task, u content.TaskUntil, reg *entities.Registry) string {
+// UntilLabel says what ends the task.
+func UntilLabel(t content.Task, u content.TaskUntil, reg *entities.Registry) string {
 	if u.Objective != nil {
 		return Label(u.Objective.String(), reg)
 	}

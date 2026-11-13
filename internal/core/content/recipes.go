@@ -259,18 +259,43 @@ func (c *Content) Recipe(k entities.ObjectiveKey) (*Recipe, bool) {
 // mode, in the step's objective order; then the step's own tasks (docs/10
 // section 8: the step's tasks are only what is the route's).
 func (c *Content) TasksOf(st *Step, mode string) []Task {
-	var out []Task
+	sourced := c.StepTasks(st, mode)
+	out := make([]Task, len(sourced))
+	for i, t := range sourced {
+		out[i] = t.Task
+	}
+	return out
+}
+
+// StepTask is one task of a step with where it comes from: the variant of
+// the recipe of an objective the step completes, or the step itself (Recipe
+// nil).
+type StepTask struct {
+	Task    Task
+	Recipe  *Recipe
+	Variant *RecipeVariant
+}
+
+// StepTasks is TasksOf with each task's recipe and variant, whose risks the
+// executor applies (docs/10, E9).
+func (c *Content) StepTasks(st *Step, mode string) []StepTask {
+	var out []StepTask
 	for _, o := range st.Objectives {
 		if !o.Completing() {
 			continue
 		}
 		if r, ok := c.Recipe(o.Key); ok {
 			if v, ok := r.VariantFor(mode); ok {
-				out = append(out, v.Tasks...)
+				for _, t := range v.Tasks {
+					out = append(out, StepTask{Task: t, Recipe: r, Variant: v})
+				}
 			}
 		}
 	}
-	return append(out, st.Tasks...)
+	for _, t := range st.Tasks {
+		out = append(out, StepTask{Task: t})
+	}
+	return out
 }
 
 var (

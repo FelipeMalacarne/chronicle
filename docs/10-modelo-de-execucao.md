@@ -7,8 +7,9 @@ falta a parte do dono: gravar um trecho do Oziris 1.1 e confirmar as tarefas pro
 entregou as entidades `npc`, `shop` e `object`, as áreas dos locais, o schema de `tasks[]` e de
 receitas e o verificador (seções 7 e 8, "Como implementado"). A fase 2 entregou a gravação por
 demonstração no plugin e no ingest, as tarefas propostas a partir dela e o modo assistido no painel
-(seções 10 e 11, "Como implementado"). Ainda não há tarefa ou receita real no conteúdo: elas entram
-com a gravação e a confirmação do dono. O resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
+(seções 10 e 11, "Como implementado"). A fase 3 começou pelos planos (seção 9, "Como implementado").
+Ainda não há tarefa ou receita real no conteúdo: elas entram com a gravação e a confirmação do dono. O
+resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
 (<https://claude.ai/artifact/EZaKJZKjVAeotQG41rehEU>), seções 5 a 8.
 
@@ -288,6 +289,36 @@ O **plano** é a lista ordenada que a conta segue. Cada item referencia um passo
 O cursor passa a andar sobre o plano ativo da conta. Para `route`, é o cursor de hoje. A regra 7 continua
 valendo: um plano customizado referencia passos de guias diferentes sem fundir o conteúdo deles, e a
 atribuição de cada passo aparece na tela.
+
+**Como implementado (fase 3, planos, 2026-11-13).**
+
+- **Banco** (migration 0018, escrito só por `internal/store/plans`): `plans` (`kind` em `route`, `goal`,
+  `custom`; uma `route` só nomeia o guia, uma `goal` aponta para a meta da própria conta) e `plan_items`
+  (em ordem: um passo `(guide_id, step_id)`, uma receita pela chave ou uma tarefa avulsa em JSON;
+  CHECK de um ref só por item, e um gatilho recusa itens num plano `route`). `accounts.active_plan_id` é o
+  plano que a conta segue; `NULL` é a rota de `accounts.guide_id`, então o plano de rota não precisa de
+  linha: ele é o conteúdo e o cursor de hoje, sem cópia. Apagar o plano seguido (ou a meta dele) devolve a
+  conta à rota. Um passo que o guia renomeia (`step_id_aliases`) muda também nos planos.
+- **Próxima tarefa** (`internal/core/plan`, puro, com testes de tabela): no plano de rota, o passo do
+  cursor; nos outros, o primeiro item não cumprido (passo feito ou pulado, receita com o objetivo `met`,
+  tarefa avulsa com o término `met`). As tarefas de um passo são as do `Content.StepTasks` (as receitas do
+  que ele conclui, pelo modo da conta, e as dele). Cada término é avaliado como no modo assistido; a
+  primeira tarefa que não está `met` é a próxima, e as `met` antes dela vêm em `skipped` (regra 2:
+  idempotência). `unknown` nunca é pulado. O plano só insere o que sabe verificar (regra 3): para um
+  requisito do passo provado `unmet` (`blocked_by`), as tarefas da receita dele, marcadas com `for`; sem
+  receita, o item fica com o dono (`manual`). Estados: `task`, `waiting` (tarefas cumpridas, o passo
+  ainda não concluiu), `manual` (sem tarefa tipada) e `done`.
+- **Cada tarefa** tem uma chave estável (`step:<guia>::<passo>#<i>`, `recipe:<chave>#<i>`,
+  `task:<posição>#0`), os riscos (os da variante da receita, mais `wilderness` num `travel` cujo destino
+  toca a wilderness pelos limites do webwalker do Microbot), `supervised` (E9: HCIM com risco de morte) e
+  se o executor da fase 3 a roda: `travel` sem `via` e com área, `bank` com itens (os da tarefa ou o
+  setup do trecho) e nunca para UIM, `buy` de loja com lojista de id conhecido.
+- **API** (com `authed` e `accountParam`, regra 10): `GET /api/plan/next?account=` (a próxima tarefa, com
+  o crédito do guia no item de passo, regra 6), `GET` e `POST /api/plans`, `PUT /api/plans/active` e
+  `DELETE /api/plans/{id}`. Um plano novo passa por `plan.CheckItems`: o passo existe no guia, a receita
+  existe e a tarefa avulsa passa pelo verificador como a de uma receita (sem `goal_met` nem `owner_mark`;
+  `bank` com itens). As fixtures `plan-next` e `plans` fixam o contrato com a web, que ainda não tem tela
+  de planos (os planos customizados na UI são da fase 5 e pedem o canvas antes).
 
 ## 10. Executor, agent e personagens
 

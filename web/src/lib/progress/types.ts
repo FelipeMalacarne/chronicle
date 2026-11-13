@@ -1024,3 +1024,98 @@ export interface FleetRhythm {
 		gp_today?: number;
 	};
 }
+
+/**
+ * Planos (docs/10, seção 9): a lista que a conta segue e a próxima tarefa tipada dela
+ * (internal/core/plan, internal/httpapi/plans.go). Ainda sem tela: a dos planos
+ * customizados é da fase 5 e pede o canvas antes.
+ */
+export type PlanKind = 'route' | 'goal' | 'custom';
+export type PlanItemKind = 'step' | 'recipe' | 'task';
+export type TaskType = 'travel' | 'bank' | 'buy' | 'talk' | 'interact' | 'train' | 'manual';
+
+/** Uma tarefa tipada (content/schema/task.schema.json): só refs do catálogo, números e ids. */
+export interface TypedTask {
+	type: TaskType;
+	location?: string;
+	via?: string;
+	items?: ItemRequirement[];
+	shop?: string;
+	item?: string;
+	qty?: number;
+	npc?: string;
+	options?: string[];
+	object?: string;
+	action?: string;
+	skill?: string;
+	note?: string;
+	until?: { objective?: string; state?: string };
+}
+
+export interface PlanItem {
+	kind: PlanItemKind;
+	guide?: string;
+	step?: string;
+	recipe?: string;
+	task?: TypedTask;
+}
+
+export interface Plan {
+	id: string;
+	kind: PlanKind;
+	title: string;
+	guide?: string;
+	goal?: string;
+	items: PlanItem[];
+}
+
+export interface PlansResponse {
+	account: string;
+	active: string;
+	plans: Plan[];
+}
+
+export interface PlanItemView {
+	kind: PlanItemKind;
+	key: string;
+	position: number;
+	guide?: string;
+	step?: string;
+	ref?: string;
+	title?: string;
+	status?: StepStatus;
+	/** A linha de crédito do guia (CLAUDE.md regra 6), num item de passo. */
+	attribution?: string;
+	recipe?: string;
+	label?: string;
+}
+
+export interface PlanTask {
+	key: string;
+	item: string;
+	index: number;
+	type: TaskType;
+	label: string;
+	until: string;
+	/** `unknown` nunca é "a fazer" por padrão, mas só `met` é pulado. */
+	state: Verdict;
+	reason?: string;
+	recipe?: string;
+	for?: string;
+	risks: string[];
+	/** HCIM com risco de morte: só roda com o dono olhando (E9). */
+	supervised: boolean;
+	executable: boolean;
+	not_executable?: string;
+	task: TypedTask;
+}
+
+export interface PlanNext {
+	account: string;
+	plan: { id: string; kind: PlanKind; title: string; guide?: string };
+	status: 'task' | 'waiting' | 'manual' | 'done';
+	reason?: string;
+	item: PlanItemView | null;
+	task: PlanTask | null;
+	skipped: PlanTask[];
+}

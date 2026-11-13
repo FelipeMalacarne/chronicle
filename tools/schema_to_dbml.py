@@ -34,6 +34,7 @@ GROUPS = {
         "route_cursor",
     ],
     "metas_e_caches": ["goals", "wiki_cache", "graph_cache"],
+    "planos": ["plans", "plan_items"],
     "controle_microbot": [
         "microbot_audit", "game_sessions", "workers",
         "client_profiles", "client_profile_plugins", "client_profile_settings", "account_client", "account_client_settings",

@@ -27,6 +27,7 @@ import (
 	storeactivity "github.com/FelipeMalacarne/chronicle/internal/store/activity"
 	storeidentity "github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
+	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 	storerhythm "github.com/FelipeMalacarne/chronicle/internal/store/rhythm"
 	"github.com/FelipeMalacarne/chronicle/internal/store/syncrun"
@@ -94,6 +95,7 @@ func TestContractPostgres(t *testing.T) {
 		Progress: progress, Sync: syncs, Accounts: progress, Catalog: catalog, DevMode: true, Logger: quiet,
 		Identity: storeidentity.New(pool), Rhythm: storerhythm.New(pool, catalog), Levels: storeactivity.New(pool),
 		Microbot: &MicrobotOptions{Link: link, Audit: &memAudit{}, Sessions: workers, Control: control, WorkerImage: contractWorkerImage},
+		Plans:    storeplans.New(pool, cnt, catalog),
 	}))
 	defer srv.Close()
 	// The running worker's agent and the one attached on zaros, for /api/workers.
@@ -172,6 +174,20 @@ func TestContractPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	next := board.Cursor.StepID
+	// A custom plan the account follows (docs/10 section 9): the feathers
+	// it carries and the axe in its bank meet the first two tasks, so the
+	// next one is the walk to Draynor.
+	var created struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(call("POST", "/api/plans"+acc, `{"kind":"custom","title":"Logística","items":[
+		{"kind":"task","task":{"type":"bank","items":[{"name":"Feather","item_id":314,"qty":10}]}},
+		{"kind":"task","task":{"type":"buy","shop":"shop:bobs_brilliant_axes","item":"item:1351","qty":1}},
+		{"kind":"task","task":{"type":"travel","location":"location:draynor_village"}},
+		{"kind":"step","guide":"oziris-main","step":"`+next+`"}]}`), &created); err != nil {
+		t.Fatal(err)
+	}
+	call("PUT", "/api/plans/active"+acc, `{"plan":"`+created.ID+`"}`)
 
 	cases := []contractCase{
 		{name: "guides", method: "GET", path: "/api/guides", tsImports: []string{"GuideInfo"}, tsType: "{ guides: GuideInfo[] }"},
@@ -193,6 +209,8 @@ func TestContractPostgres(t *testing.T) {
 		{name: "account-rhythm", method: "GET", path: "/api/account/rhythm" + acc, tsImports: []string{"AccountRhythm"}, tsType: "AccountRhythm"},
 		{name: "fleet-rhythm", method: "GET", path: "/api/rhythm", tsImports: []string{"FleetRhythm"}, tsType: "FleetRhythm"},
 		{name: "fleet-goals", method: "GET", path: "/api/fleet/goals?keys=quest:cooks_assistant@finished", tsImports: []string{"FleetGoalsResponse"}, tsType: "FleetGoalsResponse"},
+		{name: "plan-next", method: "GET", path: "/api/plan/next" + acc, tsImports: []string{"PlanNext"}, tsType: "PlanNext"},
+		{name: "plans", method: "GET", path: "/api/plans" + acc, tsImports: []string{"PlansResponse"}, tsType: "PlansResponse"},
 	}
 	for _, c := range cases {
 		var live any

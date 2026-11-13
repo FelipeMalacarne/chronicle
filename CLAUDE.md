@@ -101,6 +101,10 @@ internal/core/        PURE domain (no DB/HTTP imports):
   rhythm/             an account's rhythm from its snapshots: skill trained, XP/h, session, today, GP
   panel/              route window of the plugin panel (cursor step, next steps, labels, carry, and the
                       cursor step's tasks with their termination evaluated: the assisted mode, docs/10)
+  plan/               plans (docs/10 section 9): route (the guide and its cursor, no copy), goal and custom
+                      (items: a (guide, step), a recipe or a task); the next task of the active plan, skipping
+                      the ones already met, recipes inserted only for proven-unmet requirements; risks (E9,
+                      the wilderness) and what the phase 3 executor runs (travel, bank, buy)
   annotate/           guide extraction: batches, name resolution, verification, sidecar/report writer
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
@@ -108,12 +112,14 @@ internal/store/       repositories (activity: the XP observations behind the lev
                       cursor, board, goals, content index and step id aliases at boot; state:
                       PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; rhythm: the series the rhythm reads; workers: sealed game sessions, workers'
                       desired state, client profiles; routines: triggers and the runs' history; recording: the
-                      owner's read and delete of the demonstration recording, which only the ingest writes);
+                      owner's read and delete of the demonstration recording, which only the ingest writes;
+                      plans: the goal and custom plans and the account's active plan);
                       internal/store/db is sqlc OUTPUT
 internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
                       client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)
 internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* and /api/me, account routes
-                      (incl. /api/world/entity for the entity panel, /api/account/state for Conta)
+                      (incl. /api/world/entity for the entity panel, /api/account/state for Conta,
+                      /api/plan/next and /api/plans for the plans)
                       (dev without session, oidc behind it), dev-only token bootstrap
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
 internal/microbot/    typed client of the Microbot Agent Server and of Chronicle's control bridge (Chronicle Link plugin; Unix sockets of the
@@ -159,7 +165,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0013 client profiles: client_profiles, their plugins and settings, account_client,
                       0014 routines: routines (triggers), routine_runs and run_events,
                       0015 recurring routines: routines.kind recurring with clock, interval and priority,
-                      0016 audit origin server, 0017 recorded_events: the plugin's demonstration recording)
+                      0016 audit origin server, 0017 recorded_events: the plugin's demonstration recording,
+                      0018 plans: plans (route, goal, custom), plan_items, accounts.active_plan_id)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

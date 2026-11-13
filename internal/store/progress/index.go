@@ -191,6 +191,10 @@ func applyAlias(ctx context.Context, q *storedb.Queries, a storedb.StepIDAlias) 
 	if err := q.MoveRouteCursors(ctx, storedb.MoveRouteCursorsParams{GuideID: a.GuideID, OldStepID: a.OldStepID, NewStepID: a.NewStepID}); err != nil {
 		return fmt.Errorf("move cursors of %s/%s: %w", a.GuideID, a.OldStepID, err)
 	}
+	// The plans' step items follow the step (docs/10 section 9).
+	if err := q.MovePlanItemSteps(ctx, storedb.MovePlanItemStepsParams{GuideID: a.GuideID, OldStepID: a.OldStepID, NewStepID: a.NewStepID}); err != nil {
+		return fmt.Errorf("move plan items of %s/%s: %w", a.GuideID, a.OldStepID, err)
+	}
 	if _, err := q.MoveStepMark(ctx, storedb.MoveStepMarkParams{GuideID: a.GuideID, OldStepID: a.OldStepID, NewStepID: a.NewStepID}); err != nil {
 		return fmt.Errorf("move marks of %s/%s: %w", a.GuideID, a.OldStepID, err)
 	}

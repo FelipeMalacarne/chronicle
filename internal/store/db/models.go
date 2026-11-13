@@ -26,6 +26,8 @@ type Account struct {
 	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
 	// The account may run a managed worker; true only while a game_sessions row exists (kept by internal/store/workers).
 	Managed bool `json:"managed"`
+	// The plan the account follows (docs/10 section 9); NULL is the route of guide_id.
+	ActivePlanID pgtype.Text `json:"active_plan_id"`
 }
 
 type AccountClient struct {
@@ -218,6 +220,29 @@ type Observation struct {
 	Value      json.RawMessage    `json:"value"`
 	SnapshotID string             `json:"snapshot_id"`
 	ObservedAt pgtype.Timestamptz `json:"observed_at"`
+}
+
+// Plans of an account (docs/10 section 9): route (the guide, one to one), goal and custom.
+type Plan struct {
+	ID        string             `json:"id"`
+	AccountID string             `json:"account_id"`
+	Kind      string             `json:"kind"`
+	Title     string             `json:"title"`
+	GuideID   pgtype.Text        `json:"guide_id"`
+	GoalID    pgtype.Text        `json:"goal_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+// Items of a goal or custom plan, in order: a step (guide_id, step_id), a recipe or a task; never the guide text.
+type PlanItem struct {
+	PlanID    string          `json:"plan_id"`
+	Position  int32           `json:"position"`
+	Kind      string          `json:"kind"`
+	GuideID   pgtype.Text     `json:"guide_id"`
+	StepID    pgtype.Text     `json:"step_id"`
+	RecipeKey pgtype.Text     `json:"recipe_key"`
+	Task      json.RawMessage `json:"task"`
 }
 
 // Projection: the merge of observations per fact (internal/core/facts.Merge). Written only by the projection.

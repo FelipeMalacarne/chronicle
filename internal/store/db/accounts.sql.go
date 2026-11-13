@@ -15,7 +15,7 @@ import (
 const createAccount = `-- name: CreateAccount :one
 INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-RETURNING id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed
+RETURNING id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed, active_plan_id
 `
 
 type CreateAccountParams struct {
@@ -55,6 +55,7 @@ func (q *Queries) CreateAccount(ctx context.Context, arg CreateAccountParams) (A
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Managed,
+		&i.ActivePlanID,
 	)
 	return i, err
 }
@@ -69,7 +70,7 @@ func (q *Queries) DeleteAccount(ctx context.Context, id string) error {
 }
 
 const getAccount = `-- name: GetAccount :one
-SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed FROM accounts WHERE id = $1
+SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed, active_plan_id FROM accounts WHERE id = $1
 `
 
 func (q *Queries) GetAccount(ctx context.Context, id string) (Account, error) {
@@ -89,12 +90,13 @@ func (q *Queries) GetAccount(ctx context.Context, id string) (Account, error) {
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Managed,
+		&i.ActivePlanID,
 	)
 	return i, err
 }
 
 const getAccountByRSN = `-- name: GetAccountByRSN :one
-SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed FROM accounts WHERE user_id = $1 AND rsn_normalized = $2
+SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed, active_plan_id FROM accounts WHERE user_id = $1 AND rsn_normalized = $2
 `
 
 type GetAccountByRSNParams struct {
@@ -119,12 +121,13 @@ func (q *Queries) GetAccountByRSN(ctx context.Context, arg GetAccountByRSNParams
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Managed,
+		&i.ActivePlanID,
 	)
 	return i, err
 }
 
 const listAccountsByUser = `-- name: ListAccountsByUser :many
-SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed FROM accounts
+SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed, active_plan_id FROM accounts
 WHERE user_id = $1
 ORDER BY active DESC, created_at ASC
 `
@@ -152,6 +155,7 @@ func (q *Queries) ListAccountsByUser(ctx context.Context, userID string) ([]Acco
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Managed,
+			&i.ActivePlanID,
 		); err != nil {
 			return nil, err
 		}
@@ -164,7 +168,7 @@ func (q *Queries) ListAccountsByUser(ctx context.Context, userID string) ([]Acco
 }
 
 const listActiveAccounts = `-- name: ListActiveAccounts :many
-SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed FROM accounts WHERE active = true ORDER BY created_at ASC
+SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed, active_plan_id FROM accounts WHERE active = true ORDER BY created_at ASC
 `
 
 // Used by the scheduler: every account that should be synced.
@@ -191,6 +195,7 @@ func (q *Queries) ListActiveAccounts(ctx context.Context) ([]Account, error) {
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Managed,
+			&i.ActivePlanID,
 		); err != nil {
 			return nil, err
 		}
@@ -203,7 +208,7 @@ func (q *Queries) ListActiveAccounts(ctx context.Context) ([]Account, error) {
 }
 
 const listUserActiveAccounts = `-- name: ListUserActiveAccounts :many
-SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed FROM accounts WHERE active = true AND user_id = $1 ORDER BY created_at ASC
+SELECT id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed, active_plan_id FROM accounts WHERE active = true AND user_id = $1 ORDER BY created_at ASC
 `
 
 // The accounts a plugin signed in as this user may push for (AUTH_MODE=oidc).
@@ -230,6 +235,7 @@ func (q *Queries) ListUserActiveAccounts(ctx context.Context, userID string) ([]
 			&i.CreatedAt,
 			&i.UpdatedAt,
 			&i.Managed,
+			&i.ActivePlanID,
 		); err != nil {
 			return nil, err
 		}
@@ -276,7 +282,7 @@ SET rsn            = $2,
     name_history   = name_history || $4::jsonb,
     updated_at     = now()
 WHERE id = $1
-RETURNING id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed
+RETURNING id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed, active_plan_id
 `
 
 type UpdateAccountRSNParams struct {
@@ -309,6 +315,7 @@ func (q *Queries) UpdateAccountRSN(ctx context.Context, arg UpdateAccountRSNPara
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Managed,
+		&i.ActivePlanID,
 	)
 	return i, err
 }
@@ -320,7 +327,7 @@ SET mode       = $2,
     layer      = $4,
     updated_at = now()
 WHERE id = $1
-RETURNING id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed
+RETURNING id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id, name_history, active, created_at, updated_at, managed, active_plan_id
 `
 
 type UpdateAccountSettingsParams struct {
@@ -352,6 +359,7 @@ func (q *Queries) UpdateAccountSettings(ctx context.Context, arg UpdateAccountSe
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.Managed,
+		&i.ActivePlanID,
 	)
 	return i, err
 }

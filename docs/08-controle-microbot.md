@@ -104,7 +104,8 @@ Tipos de step: `client_start`, `login` (mundo), `plugin_install` (nome, versão)
 (grupo, chave, valor), `plugin_start` (nome), `wait_until` (plugin parou | resultado com campo X |
 estado do jogo | timeout), `plugin_stop`, `logout`, `client_stop`. Uma falha para a execução, tira
 screenshot e registra o motivo; nada é dado como concluído sem um estado observado (mesmo princípio
-da regra 2 do CLAUDE.md).
+da regra 2 do CLAUDE.md). O `wait_until` por chave de objetivo, avaliado pelo servidor sobre o ingest,
+existe desde a fase 4 do doc 10 (ver Estado, "Fase 4 do doc 10: `wait_until`").
 
 ## Segurança
 
@@ -745,6 +746,67 @@ destino da viagem):
   - as rotas no Postgres 17: o run auditado, o `done` sem prova e a prova depois da posição no ingest;
   - a CLI contra um servidor falso.
 - **Nada foi testado no jogo:** o executor no plugin é o Chronicle Link 1.15.0 (doc 06).
+
+**Fase 4 do doc 10: `wait_until` por chave de objetivo** (2026-11-13; doc 10, seção 13):
+
+- **O que é:** um run (o "Fazer agora", um gatilho ou uma rotina recorrente) pode terminar quando uma
+  chave de objetivo da conta fica `met`, por exemplo `skill:fishing>=76`. Quem diz que ficou `met` é o
+  servidor, a partir do ingest (os fatos da conta), nunca o plugin nem o agent. O `RunParams` ganha
+  `until`:
+
+  ```
+  {"className": "…TickFisherPlugin", "stop": ["…"], "timeoutS": 21600,
+   "until": {"objective": "skill:fishing>=76", "account": "acc_…"}}
+  ```
+
+  A `account` é escrita pelo servidor, a partir do `?account=` da rota (ou da conta da rotina),
+  nunca a do pedido. Por isso o `POST /api/microbot/run` com `until` exige `?account=`.
+- **Validação nos dois lados** (`agent.ValidateParams`): chave canônica que o `ParseObjectiveKey`
+  aceita (com os limites de cada tipo, por exemplo nível de 1 a 99), conta no formato `acc_…` e
+  timeout de 60 s a 12 h (padrão 2 h com `until`; sem ele continua de 60 s a 2 h, padrão 30 min). O
+  servidor confere ainda a chave contra o catálogo (`KnownObjective`) e recusa com 409 um agent que
+  não declara `run_until` no hello.
+- **No agent:** o run com `until` corre como os outros (ponto seguro, parar o principal, ligar o
+  plugin), mas o plugin não precisa se desligar sozinho. O agent espera o comando novo `run_until`
+  (servidor → agent, nunca da web: o `ValidateParams` o recusa) com o `uid` do run e a chave. Então:
+  - para o plugin, volta ao lugar, religa o principal e termina `done` ("feito: … provado pelo
+    ingest"), com a linha "objetivo cumprido, provado pelo ingest: skill:fishing>=76 (nível 76)";
+  - se a prova chega antes de o run tocar em algo (esperando o ponto seguro), termina `done` sem
+    agir ("nada a fazer: o objetivo já estava cumprido");
+  - se o plugin se desliga sozinho antes da prova, o run espera a prova por 2 min (o ingest pode
+    estar a caminho) e falha depois disso, deixando o principal parado, como qualquer falha; um
+    `outcome: failed` nos resultados do plugin falha na hora;
+  - timeout, cancelamento do dono e o cliente sem responder param o plugin e falham o run.
+
+  Numa chave de skill, a trilha anota o nível que o cliente mostra a cada minuto, quando muda
+  ("Fishing: nível 75 no cliente"): é progresso, nunca a prova.
+- **No servidor:** `internal/rununtil`. O agent já manda cada run pelo link (mensagens `event`, doc
+  11, seção 16), agora com o `until`. O vigia segue cada run com `until` que não terminou:
+  - avalia a chave sobre os fatos da conta (`progress.EvaluateObjective`, os mesmos do `GET
+    /api/microbot/task`) quando o run aparece, a cada evento de progresso da conta (ingest, sync do
+    hiscores, marca do dono) e a cada 30 s;
+  - só conta `met` com fato vivo: um item provado só pelo espelho restaurado do banco não basta
+    (CLAUDE.md, regra 8);
+  - `met`: manda `run_until` ao agent que serve a conta, auditado com a origem `server` e o ator
+    `wait_until`;
+  - para de seguir quando o run termina, quando o agent diz que não tem mais aquele run, ou passadas
+    13 h (o agent morreu de vez). Se o agent cai, a conexão nova manda o histórico de novo e o vigia
+    retoma.
+- **Rotinas:** o `until` vai no `run` dos gatilhos e das recorrentes, no banco e no
+  `routines_sync`. Um agent que não declara `run_until` não recebe as rotinas com `until`: ele
+  recusaria a lista inteira pelo campo desconhecido. A web mantém o `until` ao salvar de novo uma
+  rotina pela tela Rotinas, mas ainda não o mostra nem edita (pede o canvas antes).
+- **Verificado:**
+  - testes do agent com o jogo falso, todos com `-race`: a prova para o plugin, volta e religa; a
+    prova antes do ponto seguro não toca em nada; o plugin que para sem prova falha depois da espera;
+    a prova depois de o plugin parar; o `outcome: failed`; o cancelamento; as recusas e a validação;
+  - testes do vigia: prova no evento seguinte da conta, já provado na hora, agent sem conta
+    declarada, runs ignorados (outra conta, sem conta, sem `until`, terminado), agent que recusa ou
+    está fora, chave fora do catálogo, espelho restaurado;
+  - as rotas: a conta escrita pelo servidor, as recusas e o agent antigo (409);
+  - de ponta a ponta no Postgres 17: um run até `skill:fishing>=76` continua com o ingest no 75 e
+    termina `done`, com o plugin parado, quando o ingest manda 76.
+- **Nada foi testado no jogo.**
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

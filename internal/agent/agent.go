@@ -97,6 +97,9 @@ type Executor struct {
 	now func() time.Time
 	// taskTimeout, when set, bounds every task run (tests).
 	taskTimeout time.Duration
+	// untilGrace, when set, replaces the wait for the server's proof after
+	// a run plugin stopped by itself (tests).
+	untilGrace time.Duration
 }
 
 // Execute runs one command of the closed list.
@@ -112,6 +115,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.runCommand(command, params)
 	case CmdTaskRun:
 		return e.taskRun(params)
+	case CmdRunUntil:
+		return e.runUntil(params)
 	case CmdTriggerGet, CmdTriggerSet, CmdRoutinesSync:
 		return e.triggerCommand(command, params)
 	case CmdRecurringGet:

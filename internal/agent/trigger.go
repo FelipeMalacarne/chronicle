@@ -44,14 +44,24 @@ type RoutinesParams struct {
 }
 
 // RoutinesFor is the routines_sync of an agent: the triggers and, when it
-// runs them, the recurring routines.
+// runs them, the recurring routines. A routine whose run waits for an
+// objective (RunParams.Until) goes only to an agent that declares
+// run_until: an older one would refuse the whole list for the unknown
+// field, and could never end that run.
 func RoutinesFor(info Info, triggers []Trigger, recurring []Recurring) RoutinesParams {
-	p := RoutinesParams{Triggers: triggers}
-	if p.Triggers == nil {
-		p.Triggers = []Trigger{}
+	until := info.Supports(CmdRunUntil)
+	p := RoutinesParams{Triggers: []Trigger{}}
+	for _, t := range triggers {
+		if t.Run.Until == nil || until {
+			p.Triggers = append(p.Triggers, t)
+		}
 	}
 	if info.Supports(CmdRecurringGet) {
-		p.Recurring = recurring
+		for _, rc := range recurring {
+			if rc.Run.Until == nil || until {
+				p.Recurring = append(p.Recurring, rc)
+			}
+		}
 	}
 	return p
 }

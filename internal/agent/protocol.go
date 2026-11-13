@@ -35,7 +35,7 @@ var Commands = []string{
 	CmdClientLogs, CmdAccountShow, CmdAccountUse, CmdWorldHop, CmdConfigSchema,
 	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX, CmdItemUseOn, CmdTimers,
 	CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet, CmdTriggerSet,
-	CmdWorkerBootstrap, CmdRoutinesSync, CmdRecurringGet, CmdTaskRun,
+	CmdWorkerBootstrap, CmdRoutinesSync, CmdRecurringGet, CmdTaskRun, CmdRunUntil,
 }
 
 // Known reports whether name is in the closed list.

@@ -49,10 +49,16 @@ type RunParams struct {
 	// Stop are the plugins to stop during the run and start again after it
 	// (the main activity); the ones left out keep running (the kitten).
 	Stop []string `json:"stop,omitempty"`
-	// TimeoutS bounds the run plugin (default 1800, 60 to 7200).
+	// TimeoutS bounds the run plugin (default 1800, 60 to 7200; with Until,
+	// default 7200 and up to 43200).
 	TimeoutS int `json:"timeoutS,omitempty"`
 	// Stay skips the walk back.
 	Stay bool `json:"stay,omitempty"`
+	// Until ends the run when the server proves an objective key of the
+	// account from the ingest (wait_until, docs/10 phase 4): the agent then
+	// stops the run plugin, which need not stop by itself. Nil ends the run
+	// when the plugin switches itself off.
+	Until *RunUntil `json:"until,omitempty"`
 }
 
 // RunEvent is one line of a run's trail.
@@ -78,7 +84,10 @@ type Run struct {
 	Routine string `json:"routine,omitempty"`
 	// Task is the typed task of a task run (CmdTaskRun); nil for a plugin's
 	// run.
-	Task       *RunTask   `json:"task,omitempty"`
+	Task *RunTask `json:"task,omitempty"`
+	// Until is the objective key the run waits for (RunParams.Until, a
+	// train task's level); nil when the plugin's end ends it.
+	Until      *RunUntil  `json:"until,omitempty"`
 	State      string     `json:"state"`
 	StartedAt  time.Time  `json:"startedAt"`
 	FinishedAt *time.Time `json:"finishedAt,omitempty"`
@@ -106,6 +115,8 @@ var readCommands = []string{
 	CmdRecurringGet,
 	// Not reads, but they never touch the game: switching the trigger off during its own run is fine.
 	CmdTriggerGet, CmdTriggerSet, CmdRoutinesSync,
+	// The server's proof that the run's objective is met: it ends the run.
+	CmdRunUntil,
 }
 
 // ErrRunGoing refuses an action while a run drives the character.
@@ -133,6 +144,10 @@ type runner struct {
 	loaded  bool
 	past    []Run
 	saveErr string
+	// met closes when the server proves the current run's objective
+	// (CmdRunUntil), with metText the trail's line; both reset per run.
+	met     chan struct{}
+	metText string
 }
 
 func validateRun(raw json.RawMessage) (RunParams, error) {
@@ -162,6 +177,15 @@ func validateRun(raw json.RawMessage) (RunParams, error) {
 		if c == p.ClassName || slices.Contains(p.Stop[:i], c) {
 			return p, errors.New("run: a plugin to stop is repeated or is the run plugin")
 		}
+	}
+	if p.Until != nil {
+		if err := p.Until.check(); err != nil {
+			return p, fmt.Errorf("run: %w", err)
+		}
+		if p.TimeoutS != 0 && (p.TimeoutS < 60 || p.TimeoutS > untilMaxTimeoutS) {
+			return p, fmt.Errorf("run: timeoutS between 60 and %d with until", untilMaxTimeoutS)
+		}
+		return p, nil
 	}
 	if p.TimeoutS != 0 && (p.TimeoutS < 60 || p.TimeoutS > 7200) {
 		return p, errors.New("run: timeoutS between 60 and 7200")
@@ -211,6 +235,10 @@ type runOrigin struct {
 // startRun starts a run of validated params.
 func (e *Executor) startRun(p RunParams, origin runOrigin) (*Run, error) {
 	run := Run{ClassName: p.ClassName, Stop: append([]string{}, p.Stop...), Trigger: origin.trigger, Routine: origin.routine}
+	if p.Until != nil {
+		u := *p.Until
+		run.Until = &u
+	}
 	return e.launch(run, origin.why, func(ctx context.Context) { e.drive(ctx, p) })
 }
 
@@ -239,6 +267,7 @@ func (e *Executor) launch(run Run, why string, drive func(ctx context.Context)) 
 		run.Stop = []string{}
 	}
 	r.run = &run
+	r.met, r.metText = make(chan struct{}), ""
 	if why != "" {
 		r.run.Events = append(r.run.Events, RunEvent{At: now, State: RunWaiting, Text: why})
 	}
@@ -265,6 +294,10 @@ func (r *runner) snapshot() *Run {
 	if r.run.Task != nil {
 		t := *r.run.Task
 		c.Task = &t
+	}
+	if r.run.Until != nil {
+		u := *r.run.Until
+		c.Until = &u
 	}
 	return &c
 }
@@ -311,8 +344,13 @@ func (e *Executor) drive(ctx context.Context, p RunParams) {
 		}
 		e.end(RunFailed, err.Error()+"; o que estava parado continua parado", err.Error())
 	}
-	// Nothing moves before the character is at a safe point.
+	// Nothing moves before the character is at a safe point; a wait_until
+	// already proven ends the run there, having touched nothing.
 	if err := e.waitSafe(ctx); err != nil {
+		if errors.Is(err, errUntilMet) {
+			e.end(RunDone, "nada a fazer: o objetivo já estava cumprido", "")
+			return
+		}
 		fail(err)
 		return
 	}
@@ -324,6 +362,10 @@ func (e *Executor) drive(ctx context.Context, p RunParams) {
 	}
 	if !st.LoggedIn || st.Player.Position == nil {
 		fail(errors.New("the character is not logged in"))
+		return
+	}
+	if p.Until != nil && e.untilMet() {
+		e.end(RunDone, "nada a fazer: o objetivo já estava cumprido", "")
 		return
 	}
 	from := *st.Player.Position
@@ -346,40 +388,49 @@ func (e *Executor) drive(ctx context.Context, p RunParams) {
 		e.note(RunStopping, "o personagem não ficou parado em 30 s; seguindo")
 	}
 
-	// RUN: start the plugin and wait for it to switch itself off.
+	// RUN: start the plugin and wait for it to switch itself off or, with a
+	// wait_until, for the server to prove the objective.
 	before, _ := e.results(ctx, p.ClassName)
 	if _, err = e.Game.JSON(ctx, http.MethodPost, "/scripts/start", nil, map[string]any{"className": p.ClassName}, 30*time.Second); err != nil {
 		fail(fmt.Errorf("starting %s: %w", p.ClassName, err))
 		return
 	}
-	e.note(RunRunning, "iniciado: "+simple(p.ClassName))
 	timeout := runDefaultTimeout
+	if p.Until != nil {
+		timeout = untilTimeout
+	}
 	if p.TimeoutS > 0 {
 		timeout = time.Duration(p.TimeoutS) * time.Second
 	}
-	if err = e.waitInactive(ctx, p.ClassName, timeout); err != nil {
-		stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		_, _ = e.Game.JSON(stopCtx, http.MethodPost, "/scripts/stop", nil, map[string]any{"className": p.ClassName}, 30*time.Second)
-		cancel()
-		fail(err)
-		return
-	}
-	after, last := e.results(ctx, p.ClassName)
-	if after > before && last != nil {
-		e.runs.mu.Lock()
-		e.runs.run.Result = last
-		e.runs.mu.Unlock()
-		var out struct {
-			Outcome string `json:"outcome"`
-			Reason  string `json:"reason"`
-		}
-		_ = json.Unmarshal(last, &out)
-		if out.Outcome == "failed" {
-			fail(fmt.Errorf("%s failed: %s", p.ClassName, out.Reason))
+	if p.Until != nil {
+		e.note(RunRunning, fmt.Sprintf("iniciado: %s, até o ingest provar %s", simple(p.ClassName), p.Until.Objective))
+		if !e.runUntilProven(ctx, p.ClassName, *p.Until, timeout, before, fail) {
 			return
 		}
+	} else {
+		e.note(RunRunning, "iniciado: "+simple(p.ClassName))
+		if err = e.waitInactive(ctx, p.ClassName, timeout); err != nil {
+			e.stopScript(p.ClassName)
+			fail(err)
+			return
+		}
+		after, last := e.results(ctx, p.ClassName)
+		if after > before && last != nil {
+			e.runs.mu.Lock()
+			e.runs.run.Result = last
+			e.runs.mu.Unlock()
+			var out struct {
+				Outcome string `json:"outcome"`
+				Reason  string `json:"reason"`
+			}
+			_ = json.Unmarshal(last, &out)
+			if out.Outcome == "failed" {
+				fail(fmt.Errorf("%s failed: %s", p.ClassName, out.Reason))
+				return
+			}
+		}
+		e.note(RunRunning, "terminou: "+simple(p.ClassName))
 	}
-	e.note(RunRunning, "terminou: "+simple(p.ClassName))
 
 	// RETORNO: walk back to the spot.
 	if !p.Stay {
@@ -397,7 +448,43 @@ func (e *Executor) drive(ctx context.Context, p RunParams) {
 		}
 		e.note(RunRestarting, "religado: "+simple(c))
 	}
+	if p.Until != nil {
+		e.end(RunDone, "feito: "+p.Until.Objective+" provado pelo ingest", "")
+		return
+	}
 	e.end(RunDone, "feito", "")
+}
+
+// runUntilProven supervises a started run plugin until the server proves
+// the objective, then stops the plugin when it still runs; false when the
+// run failed (fail was called and the plugin stopped).
+func (e *Executor) runUntilProven(ctx context.Context, className string, until RunUntil, timeout time.Duration, before int, fail func(error)) bool {
+	how, err := e.superviseUntil(ctx, className, until, timeout, before)
+	if err != nil {
+		e.stopScript(className)
+		fail(err)
+		return false
+	}
+	if how == untilProven {
+		if _, err = e.Game.JSON(ctx, http.MethodPost, "/scripts/stop", nil, map[string]any{"className": className}, 30*time.Second); err != nil {
+			fail(fmt.Errorf("stopping %s after the objective: %w", className, err))
+			return false
+		}
+		e.note(RunRunning, "parado: "+simple(className)+" (objetivo cumprido)")
+	}
+	if n, last := e.results(ctx, className); n > before && last != nil {
+		e.runs.mu.Lock()
+		e.runs.run.Result = last
+		e.runs.mu.Unlock()
+	}
+	return true
+}
+
+// stopScript stops a plugin whatever ended the run, a cancel included.
+func (e *Executor) stopScript(className string) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+	_, _ = e.Game.JSON(ctx, http.MethodPost, "/scripts/stop", nil, map[string]any{"className": className}, 30*time.Second)
 }
 
 // runPlayer is the part of the Agent Server's /state a run reads.

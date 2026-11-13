@@ -374,6 +374,8 @@ export interface Run {
 	routine?: string;
 	/** O id do run no servidor (o `id` recomeça num pod novo). */
 	uid?: string;
+	/** A chave de objetivo que encerra o run, provada pelo servidor a partir do ingest (wait_until). */
+	until?: RunUntil;
 	startedAt: string;
 	finishedAt?: string;
 	from?: Pos;
@@ -390,11 +392,21 @@ export interface RunHistory {
 	error?: string;
 }
 
+/**
+ * wait_until (doc 10, fase 4): o run termina quando o servidor prova a chave de objetivo nos fatos
+ * da conta (`skill:fishing>=76`); a conta é o servidor quem escreve.
+ */
+export interface RunUntil {
+	objective: string;
+	account?: string;
+}
+
 export interface RunParams {
 	className: string;
 	stop?: string[];
 	timeoutS?: number;
 	stay?: boolean;
+	until?: RunUntil;
 }
 
 /** Os eventos do jogo que um gatilho espera (doc 08, fase 4, entrega 3). */

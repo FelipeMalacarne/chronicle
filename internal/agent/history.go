@@ -195,6 +195,11 @@ func ValidateReport(r Run) error {
 			return fmt.Errorf("run report: %w", err)
 		}
 	}
+	if r.Until != nil {
+		if err := r.Until.check(); err != nil {
+			return fmt.Errorf("run report: %w", err)
+		}
+	}
 	for _, ev := range r.Events {
 		if !slices.Contains(runState, ev.State) || len(ev.Text) > 1000 || ev.At.IsZero() {
 			return errors.New("run report: bad trail line")

@@ -105,15 +105,28 @@ workers headless no saradomin, um por conta, escolhidos no painel (decisão 34, 
 
 ## Próximo passo
 
-A sequência do doc 04, seção 9, está feita até o item 18 (deploy no saradomin, 2026-11-12). O item
-19 (workers, doc 11) teve a rodada 1, o primeiro worker no saradomin, a parte 1 da F5 (perfis do
-cliente no servidor, doc 11, seção 15), a F6 (gatilhos e histórico no servidor, seção 16) e as
-rotinas recorrentes pelo relógio, sem tela (seção 16.4); a parte 2 da F5 (tela, desvio), a tela da
-fila, o loadout com banco antes do run e a F7 seguem propostos.
+A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com estas ressalvas:
 
-O próximo é o item 20 (web v7, Frota; decisão 36), pelas fatias V1 a V4, que só dependem da web.
-Depois vêm a parte 2 da F5 (com a fatia V8, Plugins da frota) e a F7 do item 19, cada uma com a fatia
-da v7 que ela destrava; a F6 já libera o servidor das fatias V6 e V7.
+- **Item 19 (workers, doc 11):** F5, F6 e F7 estão no servidor e na web; falta a GPU. Dependem do
+  dono o RBAC de leitura da quota e das métricas (gielinor, PR #16) e o serviço do agent no zaros
+  (nix-config, PR #1, com o machine user do Zitadel e o segredo no sops). Nada da F5 à F7 foi
+  conferido num worker de verdade.
+- **Item 20 (web v7, decisão 36):** as dez fatias, V1 a V10, estão no `main`
+  (`docs/ui/decisoes-canvas.md`, seções 7.6 a 7.14). Faltam as telas em 640 px que o canvas ainda não
+  desenhou: Visão geral, Personagem, Histórico, Atividade, Rotinas, Plugins e Mundo.
+
+O próximo passo é do dono:
+
+1. **Conferir no jogo e no cluster:**
+   - o collection log com o Chronicle Link 1.12;
+   - o `/bridge/break` numa pausa de verdade do Break Handler;
+   - uma rotina recorrente no zaros;
+   - a capacidade da F7 depois do RBAC.
+2. **Desenhar no canvas** as telas em 640 px que faltam.
+3. **Decidir o que está aberto:**
+   - E5 a E10 do doc 10;
+   - o "Reiniciar na pausa" da F7 (doc 11, seção 7.2);
+   - o gesto para soltar uma rotina presa, hoje salvá-la de novo.
 
 ## Discrepâncias e ressalvas
 

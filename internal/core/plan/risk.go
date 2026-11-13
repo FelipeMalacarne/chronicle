@@ -5,38 +5,14 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 )
 
-// The wilderness, as Microbot's web walker bounds it
-// (shortestpath/pathfinder/PathfinderConfig: WILDERNESS_ABOVE_GROUND and
-// WILDERNESS_UNDERGROUND), on any plane: a travel task whose destination
-// touches it counts as a wilderness risk (docs/10, E9), and the executor
-// stops a walk that enters it unasked. The plugin keeps the same bounds
-// (TaskSpec.inWilderness), pinned by tests on both sides.
-const (
-	WildMinX      = 2944
-	WildMaxX      = 3391
-	WildMinY      = 3525
-	WildMaxY      = 3972
-	WildUnderMinX = 2944
-	WildUnderMaxX = 3461
-	WildUnderMinY = 9918
-	WildUnderMaxY = 10375
-)
-
-// InWilderness reports whether the tile is in the wilderness.
-func InWilderness(x, y int) bool {
-	return (x >= WildMinX && x <= WildMaxX && y >= WildMinY && y <= WildMaxY) ||
-		(x >= WildUnderMinX && x <= WildUnderMaxX && y >= WildUnderMinY && y <= WildUnderMaxY)
-}
-
-// AreaInWilderness reports whether any tile of the area's box is in the
-// wilderness: the box bounds the polygon, so this errs on the side of risk.
+// AreaInWilderness reports whether any tile of a location's area is in
+// the wilderness (execspec, the web walker's bounds): the box bounds the
+// polygon, so this errs on the side of risk.
 func AreaInWilderness(a entities.Area) bool {
-	overlaps := func(minX, maxX, minY, maxY int) bool {
-		return a.MaxX >= minX && a.MinX <= maxX && a.MaxY >= minY && a.MinY <= maxY
-	}
-	return overlaps(WildMinX, WildMaxX, WildMinY, WildMaxY) || overlaps(WildUnderMinX, WildUnderMaxX, WildUnderMinY, WildUnderMaxY)
+	return execspec.BoxInWilderness(a.MinX, a.MinY, a.MaxX, a.MaxY)
 }
 
 // Risks returns the risk kinds of one task: its recipe variant's (nil for a
@@ -58,16 +34,10 @@ func Risks(t content.Task, v *content.RecipeVariant, reg *entities.Registry) []s
 	return slices.Compact(out)
 }
 
-// Deadly reports whether one of the risk kinds can kill the character
-// (combat, wilderness, hazard; item loss cannot).
-func Deadly(risks []string) bool {
-	return slices.ContainsFunc(risks, func(k string) bool { return content.Risk{Kind: k}.Deadly() })
-}
-
 // NeedsSupervision is the E9 policy (docs/10 section 14): in HCIM nothing
 // with a death risk runs without the owner watching.
 func NeedsSupervision(mode string, risks []string) bool {
-	return mode == content.ModeHCIM && Deadly(risks)
+	return execspec.NeedsSupervision(mode, risks)
 }
 
 // Executable says whether the phase 3 executor runs a task (docs/10 section

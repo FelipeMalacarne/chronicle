@@ -327,6 +327,8 @@ type RoutineRun struct {
 	Error      string             `json:"error"`
 	TrailLen   int32              `json:"trail_len"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	// The typed task of a task run (agent.RunTask: plan, key, type, label); NULL for a plugin run.
+	Task json.RawMessage `json:"task"`
 }
 
 type RunEvent struct {

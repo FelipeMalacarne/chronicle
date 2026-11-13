@@ -195,6 +195,8 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 		return p, nil
 	case CmdRunStart:
 		return validateRun(raw)
+	case CmdTaskRun:
+		return validateTaskRun(raw)
 	case CmdTriggerSet:
 		return validateTrigger(raw)
 	case CmdPlugins, CmdScriptsPause, CmdScriptsResume, CmdGameView, CmdTimers, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet,

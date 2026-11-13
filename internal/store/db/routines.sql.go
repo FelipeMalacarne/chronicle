@@ -219,7 +219,7 @@ func (q *Queries) ListRecurring(ctx context.Context, accountID string) ([]ListRe
 }
 
 const listRoutineRuns = `-- name: ListRoutineRuns :many
-SELECT id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state, started_at, finished_at, from_pos, result, error, trail_len, updated_at FROM routine_runs WHERE account_id = $1 ORDER BY started_at DESC, id LIMIT $2
+SELECT id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state, started_at, finished_at, from_pos, result, error, trail_len, updated_at, task FROM routine_runs WHERE account_id = $1 ORDER BY started_at DESC, id LIMIT $2
 `
 
 type ListRoutineRunsParams struct {
@@ -253,6 +253,7 @@ func (q *Queries) ListRoutineRuns(ctx context.Context, arg ListRoutineRunsParams
 			&i.Error,
 			&i.TrailLen,
 			&i.UpdatedAt,
+			&i.Task,
 		); err != nil {
 			return nil, err
 		}
@@ -371,8 +372,8 @@ func (q *Queries) UpdateRecurring(ctx context.Context, arg UpdateRecurringParams
 const upsertRoutineRun = `-- name: UpsertRoutineRun :execrows
 INSERT INTO routine_runs (
   id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state,
-  started_at, finished_at, from_pos, result, error, trail_len
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+  started_at, finished_at, from_pos, result, error, trail_len, task
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE
 SET agent       = EXCLUDED.agent,
     state       = EXCLUDED.state,
@@ -402,6 +403,7 @@ type UpsertRoutineRunParams struct {
 	Result     json.RawMessage    `json:"result"`
 	Error      string             `json:"error"`
 	TrailLen   int32              `json:"trail_len"`
+	Task       json.RawMessage    `json:"task"`
 }
 
 // A snapshot with fewer trail lines than the stored one is older: ignored.
@@ -423,6 +425,7 @@ func (q *Queries) UpsertRoutineRun(ctx context.Context, arg UpsertRoutineRunPara
 		arg.Result,
 		arg.Error,
 		arg.TrailLen,
+		arg.Task,
 	)
 	if err != nil {
 		return 0, err

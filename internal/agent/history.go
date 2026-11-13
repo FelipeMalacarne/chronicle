@@ -190,6 +190,11 @@ func ValidateReport(r Run) error {
 	if len(r.Result) > 0 && !json.Valid(r.Result) {
 		return errors.New("run report: result is not JSON")
 	}
+	if r.Task != nil {
+		if err := checkRunTask(*r.Task); err != nil {
+			return fmt.Errorf("run report: %w", err)
+		}
+	}
 	for _, ev := range r.Events {
 		if !slices.Contains(runState, ev.State) || len(ev.Text) > 1000 || ev.At.IsZero() {
 			return errors.New("run report: bad trail line")

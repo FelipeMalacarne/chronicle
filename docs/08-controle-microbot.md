@@ -126,7 +126,8 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 4. **Lista fechada de comandos no agent** (a camada mais importante): o agent nunca repassa
    requisições cruas ao Agent Server. Só executa comandos tipados: abrir e fechar o cliente,
    login/logout, instalar/remover plugin do Hub, iniciar/parar/pausar script, ler estado, ler e gravar
-   configuração, screenshot e a sessão de VNC. Ficam **fora**: `/scripts/deploy` (compila e executa
+   configuração, screenshot, a sessão de VNC e, desde a fase 3 do doc 10, executar uma tarefa tipada do
+   plano (`task_run`: ids e tiles já resolvidos, executados pelo Chronicle Link). Ficam **fora**: `/scripts/deploy` (compila e executa
    Java arbitrário), teclado e widgets crus, e qualquer exec além do `mb-client`. Assim, mesmo um
    `saradomin` comprometido não consegue executar código no `zaros`.
 5. **ACL do Tailscale**: o `zaros` alcança só o `saradomin` na porta do planner; nada na tailnet
@@ -683,6 +684,63 @@ destino da viagem):
   - `goose up/down/up` da 0015.
 - **Nada foi testado no jogo.** Falta ligar uma recorrente no zaros, com o dono olhando, quando a
   conta tiver os requisitos.
+
+**Fase 3 do doc 10: o comando de tarefa** (2026-11-13; doc 10, seções 9, 10 e 13):
+
+- **`task_run` na lista fechada:** executa uma tarefa tipada do plano da conta (`travel`, `bank` ou
+  `buy`; os outros tipos são recusados com "not executed yet"). O parâmetro é o
+  `execspec.Task` (`internal/core/execspec`, puro): só ids de jogo, tiles e números já resolvidos do
+  catálogo pelo servidor (`plan.Resolve`), nunca texto a interpretar:
+  - `travel`: a área do local (caixa e polígono), o tile alvo dentro dela e se ela toca a wilderness;
+  - `bank`: os itens, cada um com os ids aceitos (o exato, o `any_of` ou a família), a quantidade, se
+    vai notado ou vestido e se é opcional;
+  - `buy`: a loja, os ids de jogo dos lojistas, o item e quantos comprar agora (o que falta pela posse
+    que o servidor lê, nunca mais).
+- **Validação nos dois lados** (`agent.ValidateParams`):
+  - chave da tarefa e id do plano no formato;
+  - modo da conta da lista e riscos da lista fechada (E9), sem repetir;
+  - tiles dentro do mundo, área de local (no máximo 256 tiles de lado), alvo dentro dela, listas
+    limitadas;
+  - os riscos da própria tarefa (o `travel` para a wilderness) declarados;
+  - **E9:** em HCIM, risco de morte (combate, wilderness, perigo) só com `supervised`.
+- **O run:** o mesmo mecanismo do "Fazer agora" (um run por cliente, o ponto seguro, a trilha, o
+  cancelamento, o histórico e o envio ao servidor), com o `task` no run (migration 0019 guarda em
+  `routine_runs.task`). Depois do ponto seguro, o agent confere:
+  - que o personagem está logado e, em HCIM sem supervisão, fora da wilderness;
+  - que a ponte é o Chronicle Link 1.15 ou mais novo.
+
+  Então o agent manda a tarefa por `POST /bridge/task/start` e lê `GET /bridge/task` a cada 3 s,
+  anotando na trilha cada linha do plugin. Termina como a máquina do plugin: `done`, `failed` ou
+  `canceled`. O timeout padrão é 15 min para `travel` e 5 min para o resto (30 s a 1 h). Timeout,
+  cancelamento do dono ou a ponte sem responder mandam `POST /bridge/task/cancel`. Enquanto a tarefa
+  anda, o agent recusa as outras ações, como num run.
+- **O `done` do run não prova nada:** é a máquina do plugin terminando. O término da tarefa é provado
+  só pelo ingest: a posição dentro da área (`data.position`, com "Send position" ligado) ou os
+  containers de itens, avaliados pelo servidor.
+- **No servidor**, com `authed`, `accountParam` e `microbotControl`, sempre com `?account=`:
+  - `POST /api/microbot/task` pega a próxima tarefa do plano ativo e confere, antes de qualquer coisa
+    chegar ao agent:
+    - que existe uma tarefa a fazer e que ela é a que o chamador viu (`key`);
+    - que o executor a roda;
+    - a E9 (`supervised`).
+
+    Depois resolve a tarefa, valida os parâmetros e manda ao agent da conta (409 se o agent for
+    anterior ao comando). A tentativa vai para a auditoria com os parâmetros, deu certo ou não.
+  - `GET /api/microbot/task` devolve o run atual ou o último e, se for de tarefa, a `proof`: a tarefa
+    avaliada agora sobre os fatos da conta. `proven` só é verdadeiro quando o ingest prova o término.
+  - O cancelamento é o `POST /api/microbot/run/cancel` de sempre.
+- **CLI** (sem botão na web, que pede o canvas antes):
+  - `chronicle task` mostra a próxima tarefa;
+  - `chronicle task run --yes [--supervised] [--wait 10m]` executa, acompanha a trilha e espera a
+    prova do ingest;
+  - `chronicle task status` e `chronicle task cancel`.
+- **Verificado:**
+  - testes do agent com o jogo e a ponte falsos, com `-race`: o fim pela máquina, falha, plugin
+    antigo, ponte que recusa, some ou perde a tarefa, timeout, cancelamento, HCIM na wilderness e as
+    ações recusadas durante a tarefa;
+  - as rotas no Postgres 17: o run auditado, o `done` sem prova e a prova depois da posição no ingest;
+  - a CLI contra um servidor falso.
+- **Nada foi testado no jogo:** o executor no plugin é o Chronicle Link 1.15.0 (doc 06).
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

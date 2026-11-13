@@ -21,8 +21,8 @@ SELECT account_id, state, trail_len FROM routine_runs WHERE id = $1 FOR UPDATE;
 -- A run never moves to another account.
 INSERT INTO routine_runs (
   id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state,
-  started_at, finished_at, from_pos, result, error, trail_len
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+  started_at, finished_at, from_pos, result, error, trail_len, task
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
 ON CONFLICT (id) DO UPDATE
 SET agent       = EXCLUDED.agent,
     state       = EXCLUDED.state,

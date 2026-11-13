@@ -150,15 +150,19 @@ func (r *Repository) RecordRun(ctx context.Context, account, agentName string, r
 			}
 		}
 		stop, _ := json.Marshal(nonNil(run.Stop))
-		var from json.RawMessage
+		var from, task json.RawMessage
 		if run.From != nil {
 			from, _ = json.Marshal(run.From)
+		}
+		if run.Task != nil {
+			task, _ = json.Marshal(run.Task)
 		}
 		n, upErr := q.UpsertRoutineRun(ctx, storedb.UpsertRoutineRunParams{
 			ID: run.UID, AccountID: account, RoutineID: routineID, Agent: agentName, AgentRunID: run.ID,
 			ClassName: run.ClassName, Stop: stop, Trigger: run.Trigger, State: run.State,
 			StartedAt: timestamptz(&run.StartedAt), FinishedAt: timestamptz(run.FinishedAt),
 			FromPos: from, Result: run.Result, Error: run.Error, TrailLen: int32(len(run.Events)), //nolint:gosec // at most 500 (ValidateReport)
+			Task: task,
 		})
 		if upErr != nil {
 			return fmt.Errorf("write run: %w", accountMissing(upErr))
@@ -229,6 +233,12 @@ func (r *Repository) Runs(ctx context.Context, account string, limit int) ([]age
 		}
 		if len(row.Result) > 0 {
 			run.Result = row.Result
+		}
+		if len(row.Task) > 0 {
+			var task agent.RunTask
+			if json.Unmarshal(row.Task, &task) == nil {
+				run.Task = &task
+			}
 		}
 		out = append(out, run)
 	}

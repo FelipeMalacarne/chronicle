@@ -375,56 +375,66 @@ func segmentItems(seg *content.Segment) bool {
 // ingest must prove (POST /api/microbot/task, the run's proof). False when
 // the key names no task of the plan for the account's mode.
 func Find(in Input, key string) (TaskView, bool) {
-	item, index, ok := SplitTaskKey(key)
+	s, ok := in.locate(key)
 	if !ok {
 		return TaskView{}, false
+	}
+	item, _, _ := SplitTaskKey(key)
+	return in.view(s.t, item, s.index, s.sc), true
+}
+
+// locate finds the task a key names and its scope.
+func (in Input) locate(key string) (sourced, bool) {
+	item, index, ok := SplitTaskKey(key)
+	if !ok {
+		return sourced{}, false
 	}
 	switch {
 	case strings.HasPrefix(item, ItemStep+":"):
 		guide, step, ok := strings.Cut(strings.TrimPrefix(item, ItemStep+":"), "::")
 		if !ok {
-			return TaskView{}, false
+			return sourced{}, false
 		}
 		g, gok := in.Content.Guide(guide)
 		s, sok := in.stepState(guide, step)
 		if !gok || !sok {
-			return TaskView{}, false
+			return sourced{}, false
 		}
 		st, ok := g.Step(step)
 		if !ok {
-			return TaskView{}, false
+			return sourced{}, false
 		}
 		own := in.Content.StepTasks(st, in.Facts.Mode)
 		if index >= len(own) {
-			return TaskView{}, false
+			return sourced{}, false
 		}
 		seg, _ := g.Segment(st.SegmentID)
 		t := own[index]
-		return in.view(t.Task, item, index, scope{state: s, segment: seg, guide: g, recipe: t.Recipe, variant: t.Variant}), true
+		return sourced{t: t.Task, key: key, index: index, sc: scope{state: s, segment: seg, guide: g, recipe: t.Recipe, variant: t.Variant}}, true
 	case strings.HasPrefix(item, ItemRecipe+":"):
 		k, err := entities.ParseObjectiveKey(strings.TrimPrefix(item, ItemRecipe+":"))
 		if err != nil {
-			return TaskView{}, false
+			return sourced{}, false
 		}
 		r, ok := in.Content.Recipe(k)
 		if !ok {
-			return TaskView{}, false
+			return sourced{}, false
 		}
 		v, ok := r.VariantFor(in.Facts.Mode)
 		if !ok || index >= len(v.Tasks) {
-			return TaskView{}, false
+			return sourced{}, false
 		}
-		return in.view(v.Tasks[index], item, index, in.recipeScope(r, v, "")), true
+		return sourced{t: v.Tasks[index], key: key, index: index, sc: in.recipeScope(r, v, "")}, true
 	case strings.HasPrefix(item, ItemTask+":"):
 		pos, err := strconv.Atoi(strings.TrimPrefix(item, ItemTask+":"))
 		if err != nil || pos < 0 || pos >= len(in.Plan.Items) || index != 0 {
-			return TaskView{}, false
+			return sourced{}, false
 		}
 		it := in.Plan.Items[pos]
 		if it.Kind != ItemTask || it.Task == nil {
-			return TaskView{}, false
+			return sourced{}, false
 		}
-		return in.view(*it.Task, item, 0, scope{}), true
+		return sourced{t: *it.Task, key: key, sc: scope{}}, true
 	}
-	return TaskView{}, false
+	return sourced{}, false
 }

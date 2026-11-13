@@ -70,6 +70,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `chronicle accounts connect --character <name>` / `chronicle workers list\|start\|stop\|restart` | docs/11: store an account's game session from the Microbot launcher (only that character's lines of the HWID stores; a character the launcher lists as "Not set" is `--index <n> --as <name in game>`, like `mb-account use --as`), and the workers' lifecycle over `/api/workers`. `start` and `restart` never log in, but `stop` and `restart` log the account out: never run them on the owner's account unasked |
 | `chronicle profiles list\|show\|put\|delete\|use\|account` | docs/11 section 15: the workers' client profiles (plugins and RuneLite settings, optionally on a model) over `/api/client-profiles` and `/api/accounts/client`; `show` prints the JSON `put -f` reads. A profile reaches a worker on its next start or restart, never a running client |
 | `chronicle recording [--since 2h] [-o file]` / `recording delete --yes` | docs/10 section 11: the demonstration Chronicle Link recorded with "Record demonstration" on (`GET /api/account/recording`), printed or written as the JSON the content MCP's `propose_tasks` reads; `delete` drops it on the server (all, or `--recording <id>`). Never delete the owner's recording unasked |
+| `chronicle task` / `task run --yes [--supervised] [--wait 10m]` / `task status` / `task cancel` | docs/10 phase 3: the next typed task of the account's active plan (`GET /api/plan/next`), its run by the account's agent (`POST /api/microbot/task`: the closed command `task_run`, executed by Chronicle Link's executor), and the ingest's proof of its termination (`GET /api/microbot/task`). `run` acts in game on the account: never run it on the owner's account unasked |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
 Run `just` alone to list everything. All tools also work without Nix (`go run pkg@latest`).
@@ -80,7 +81,7 @@ Run `just` alone to list everything. All tools also work without Nix (`go run pk
 cmd/chronicle/          cobra subcommands: serve, content (migrate, validate, import-bruhsailer, mcp: the
                       offline extraction server over content/ only, docs/09 section 6; there is no
                       merge step: annotations are sidecars composed by the loader); API clients:
-                      login, logout, accounts, use, now, done, skip, undo, plan, sync, state, recording and mcp
+                      login, logout, accounts, use, now, done, skip, undo, plan, sync, state, recording, task and mcp
                       (the account's MCP server, over the API)
 internal/core/        PURE domain (no DB/HTTP imports):
   content/            loader, schema validation, guide/variant/section/segment/step model; typed tasks
@@ -104,7 +105,11 @@ internal/core/        PURE domain (no DB/HTTP imports):
   plan/               plans (docs/10 section 9): route (the guide and its cursor, no copy), goal and custom
                       (items: a (guide, step), a recipe or a task); the next task of the active plan, skipping
                       the ones already met, recipes inserted only for proven-unmet requirements; risks (E9,
-                      the wilderness) and what the phase 3 executor runs (travel, bank, buy)
+                      the wilderness) and what the phase 3 executor runs (travel, bank, buy); Resolve turns
+                      a task into the execspec the agent carries
+  execspec/           the typed task the phase 3 executor runs (travel, bank, buy): game ids, tiles and
+                      quantities only, with its checks, the wilderness bounds and E9; shared by the server,
+                      the agent's task_run and (mirrored, pinned by task-wire.json) Chronicle Link
   annotate/           guide extraction: batches, name resolution, verification, sidecar/report writer
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
@@ -119,7 +124,7 @@ internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), J
                       client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)
 internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* and /api/me, account routes
                       (incl. /api/world/entity for the entity panel, /api/account/state for Conta,
-                      /api/plan/next and /api/plans for the plans)
+                      /api/plan/next and /api/plans for the plans; /api/microbot/task runs the next one)
                       (dev without session, oidc behind it), dev-only token bootstrap
 internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
 internal/microbot/    typed client of the Microbot Agent Server and of Chronicle's control bridge (Chronicle Link plugin; Unix sockets of the
@@ -136,8 +141,9 @@ internal/routinesync/ the routines' server side (docs/11 section 16): on every a
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor and outbound
                       websocket, the server-side Link, the VNC tunnel (browser <-> server <-> agent <->
                       loopback x11vnc) and the plugin/script/config commands, whose params are validated
-                      by ValidateParams on both sides; the agent also reports its runs unasked (event
-                      frames); the server never talks to the game directly
+                      by ValidateParams on both sides; task_run (docs/10 phase 3) runs one typed task of the
+                      plan through the Chronicle Link bridge as a run; the agent also reports its runs
+                      unasked (event frames); the server never talks to the game directly
 internal/client/      typed API client of the CLI and `chronicle mcp`: config.json and credentials.json
                       under ~/.config/chronicle, device-flow login (RFC 8628), token refresh; never
                       imports internal/store
@@ -166,7 +172,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0014 routines: routines (triggers), routine_runs and run_events,
                       0015 recurring routines: routines.kind recurring with clock, interval and priority,
                       0016 audit origin server, 0017 recorded_events: the plugin's demonstration recording,
-                      0018 plans: plans (route, goal, custom), plan_items, accounts.active_plan_id)
+                      0018 plans: plans (route, goal, custom), plan_items, accounts.active_plan_id,
+                      0019 routine_runs.task: the typed task of a task run)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

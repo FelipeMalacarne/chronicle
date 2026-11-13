@@ -42,6 +42,10 @@ const ACTION_LABEL: Record<string, string> = {
 	account_use: 'trocar personagem',
 	run_start: 'fazer agora',
 	run_cancel: 'cancelar o fazer agora',
+	recurring_set: 'gravar rotina',
+	recurring_delete: 'apagar rotina',
+	profile_save: 'salvar no perfil',
+	profile_apply: 'aplicar o perfil',
 	trigger_set: 'gatilho'
 };
 

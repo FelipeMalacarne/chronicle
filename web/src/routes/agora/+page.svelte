@@ -388,7 +388,7 @@
 		<div class="band" role="alert">
 			<Glyph name={band.kind === 'failed' ? 'alert' : 'clock'} />
 			<span>{band.text}</span>
-			<a class="btn btn-g btn-s push" href={resolve('/visao')}>Fontes</a>
+			<a class="btn btn-g btn-s push" href={resolve('/conta')}>Personagem</a>
 		</div>
 	{/if}
 

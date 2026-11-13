@@ -286,7 +286,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V1 | Casca: Frota em `/` com o que a API já tem, cabeçalho da conta com as cinco abas apontando para as telas atuais, Nova conta no lugar do `/setup`, barra lateral e barra de 640 px, estados vazios | nada |
 | V2 | Conta › Rota: Passo, Rota inteira e Comparar numa aba; objetivo com progresso, passo a passo com caixas, marca de banco na linha | o valor observado no board. **Feita** (2026-11-13, seção 7.9) |
 | V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada. **Feita** (2026-11-13, seção 7.10) |
-| V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada |
+| V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada. **Feita** (2026-11-13, seção 7.11) |
 | V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
 | V6 | Rotinas e Fila | doc 11, F6 |
 | V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor). **Feita** (2026-11-13, seção 7.9) |
@@ -565,3 +565,59 @@ Divergências do artboard:
 
 Conferido com os testes de `node --test` da lógica da tela (`jogo.ts`, com as linhas do cartão Script, e
 `automacao.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.
+
+### 7.11 Implementação: V4, Conta › Personagem e Visão geral (2026-11-13)
+
+Artboards seguidos: `V7Personagem1440` na aba Personagem (`/conta`) e `V7Conta1440` na Visão geral
+(`/visao`), com o que o servidor já tem. O ritmo fica para a V5, sem lugar reservado na tela.
+
+**Personagem:** o resumo (total, combat, quests com os QP, diaries, combat achievements e collection
+log; sem leitura, a célula some), Skills com a barra até o próximo nível, Quests com busca e Em
+andamento | Feitas | Faltam, Diaries com as quatro bolinhas por área, Com ela agora (equipado e
+inventário), Conquistas (os tiers de combat achievements e o collection log) e Banco com busca. Cada
+cartão diz a fonte e a idade da leitura. Saem da tela da v6 o botão Sincronizar hiscores (fica na barra
+da Rota), o cartão Fontes (as fontes ficam na barra lateral e em cada cartão), a ordem do banco e o
+boneco do equipamento.
+
+Divergências do artboard, no Personagem:
+
+1. **O que subiu hoje** (as skills em verde e a frase embaixo da grade) entra com a V5, junto do cartão
+   Hoje; a explicação da barra foi para o `title` de cada skill.
+2. **Quests:** "3 de 10 partes" não existe, porque o plugin só diz se a quest foi iniciada.
+3. **Diaries:** clicar numa área abre, no painel da entidade, o primeiro tier que falta; o artboard não
+   desenha o clique.
+4. **Banco:** sem o valor em GP ("vale cerca de 6,1M gp"), porque o servidor não tem preço de item. O
+   cartão mostra 48 itens e "ver o banco inteiro" abre o resto; com a leitura de mais de um dia, ele
+   ganha o aviso do estado "Dado velho" de `V7Estados1440`.
+5. **Com ela agora:** "ao vivo" só com uma leitura de menos de 5 min; depois diz "lido há", e o espelho
+   restaurado diz "espelho".
+6. **Conquistas:** Master e Grandmaster só ganham barra quando têm algum feito; antes, a nota diz que
+   estão sem nada, como no artboard. As páginas do collection log que o plugin já manda ficam fora, sem
+   desenho.
+7. Esta tela não tem 640 px no canvas; os cartões quebram em coluna.
+
+**Visão geral:** Fazendo agora (a tela do jogo a cada 5 s, que abre o Cliente, com o mundo e a posição;
+no título, o script que joga, o estado da state machine e as voltas), só com o cliente rodando, e ao lado
+o cartão provisório de Relógios e Fazer agora (seção 7.10) no lugar da Fila; sem cliente, esse cartão
+fica entre a Rota e o Worker. A Rota com o andamento, o passo atual e até dois objetivos. O Worker com o
+pod, a versão, o uso (CPU e memória, doc 11, F7), a sessão e o plugin, e Reiniciar, Log do cliente e
+Conta do cliente. Embaixo, as Últimas execuções.
+
+Divergências do artboard, na Visão geral:
+
+1. **Fazendo agora** fica sem a barra da skill que ela treina, XP por hora, Nesta sessão, Até a pausa e
+   Ganhou nesta sessão, e o cartão **Hoje** não aparece: entram com a V5 (o servidor já mede, seção
+   7.4). Sem cliente rodando, o cartão some; o cabeçalho já diz Parada ou Só acompanhada.
+2. **Fila:** o cartão provisório de Relógios e Fazer agora fica até as rotinas (V6), sem Pôr na fila nem
+   Editar rotinas. Pela mesma razão, a Rota não diz "feito à mão, fora da fila".
+3. **Worker:** sem FPS, que não é medido, e sem Mover para o zaros, que não existe. "De pé há" vira
+   "pedido há", porque o servidor guarda quando o worker foi pedido, não quando o pod subiu. Conta do
+   cliente só aparece com o agent anexado.
+4. **Últimas execuções:** o título diz quantas estão guardadas, no lugar de "ver o histórico completo"
+   (o Histórico é a V7), e as linhas não têm o sprite da atividade.
+5. **Ações no cliente** (a antiga Auditoria) num cartão embaixo, sem desenho na v7, até o Histórico.
+6. **Fontes:** o cartão da V1 sai, como no artboard; o botão da faixa de fonte da Rota leva ao
+   Personagem.
+
+Conferido com os testes de `node --test` da lógica das telas (`personagem.ts` e `workerFacts` em
+`workers.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.

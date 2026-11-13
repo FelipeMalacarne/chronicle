@@ -179,3 +179,55 @@ test('the table cells: where and session in two lines, restart named by the vers
 	assert.equal(actionLabel({ outdated: true }, 'restart'), 'Reiniciar na versão nova');
 	assert.equal(actionLabel({ outdated: false }, 'stop'), 'Parar');
 });
+
+test('a refused login marks the session and keeps the game reason', () => {
+	const l = workerLine(
+		row({
+			session: {
+				account_id: 'acc_a',
+				character: 'Iron A',
+				key_id: 'abcd1234',
+				pushed_at: '2026-11-12T17:00:00Z',
+				pushed_by: 'u',
+				last_login_at: '2026-11-12T15:00:00Z',
+				last_login_result: 'Invalid credentials',
+				login_failed: true
+			}
+		}),
+		on,
+		[],
+		now
+	);
+	assert.deepEqual(l.refused, {
+		reason: 'Invalid credentials',
+		when: 'há 3 h',
+		character: 'Iron A'
+	});
+	assert.equal(l.sessionTone, 'warn');
+	assert.equal(workerLine(row({}), on, [], now).refused, undefined);
+});
+
+test('a pod the quota blocks has no room; usage rides along', () => {
+	const l = workerLine(
+		row({
+			desired: 'running',
+			pod: { deployment: 'd', state: 'blocked', reason: 'exceeded quota', seen: '' },
+			usage: { cpu_cores: 0.4, memory_bytes: 1, measured_at: '' }
+		}),
+		on,
+		[],
+		now
+	);
+	assert.equal(l.noRoom, true);
+	assert.equal(l.tone, 'warn');
+	assert.equal(l.usage?.cpu_cores, 0.4);
+	assert.equal(
+		workerLine(
+			row({ desired: 'running', pod: { deployment: 'd', state: 'pending', seen: '' } }),
+			on,
+			[],
+			now
+		).noRoom,
+		false
+	);
+});

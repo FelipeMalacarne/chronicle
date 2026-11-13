@@ -1,9 +1,11 @@
 /*
- * Frota (página 8 do canvas, V7Frota1440): uma raia por conta, com o que ela faz agora, onde roda,
- * a rota e o que vem depois. Só o que o servidor já sabe: ritmo de XP, ganhos da sessão e a fila
- * de rotinas do artboard ainda não existem na API. Puro, testado com node --test.
+ * Frota (página 8 do canvas, V7Frota1440 e V7FrotaCompacta1440): uma raia por conta, com o que ela
+ * faz agora, onde roda, a rota e o que vem depois; para muitas contas, a lista compacta agrupada.
+ * Só o que o servidor já sabe: ritmo de XP, ganhos da sessão e a fila de rotinas do artboard ainda
+ * não existem na API. Puro, testado com node --test.
  */
-import type { ClientStatus } from '../api/microbot.ts';
+import type { ClientStatus, WorkerCapacity } from '../api/microbot.ts';
+import { roomHint, usageLine } from './capacidade.ts';
 import { duration } from './relogios.ts';
 import type { AccountState, AccountView, ProgressSummary, TimerView } from './types.ts';
 import { routeLabel } from './view.ts';
@@ -40,6 +42,8 @@ export interface Lane {
 	activity: string;
 	detail?: string;
 	where: string;
+	/** O título da etiqueta de onde roda: como roda lá e o uso medido do pod. */
+	whereTitle?: string;
 	route?: { label: string; ref?: string; done: number; total: number; pct: number };
 	next: LaneNext[];
 	/** Tem um agent: dá para abrir o cliente desta conta. */
@@ -53,6 +57,28 @@ export interface Need {
 	text: string;
 	sub?: string;
 	hard: boolean;
+	/** O comando que resolve, para copiar (a sessão nova só vem pelo launcher, na CLI). */
+	command?: string;
+}
+
+/** A atividade de uma conta cujo último login o jogo recusou. */
+export const REFUSED = 'Login recusado';
+
+/** O comando que manda a sessão do jogo de novo, no computador com o launcher. */
+export function connectCommand(character: string): string {
+	return `chronicle accounts connect --character "${character}"`;
+}
+
+/**
+ * O comando que resolve a sessão de uma conta com worker, quando é ela que falta: o personagem da
+ * sessão recusada, ou o nome no jogo quando ainda não há sessão.
+ */
+export function sessionCommand(l: Lane): string | undefined {
+	const w = l.worker;
+	if (!w) return undefined;
+	if (w.refused && l.tone === 'bad') return connectCommand(w.refused.character);
+	if (!w.sessionWhen) return connectCommand(l.rsn);
+	return undefined;
 }
 
 const MODE: Record<string, string> = {
@@ -116,6 +142,8 @@ export function lane(input: FleetInput, now = Date.now()): Lane {
 		tone: 'off',
 		activity: 'Parada',
 		where: worker?.runtime ? worker.host : '',
+		whereTitle:
+			[worker?.runtime, usageLine(worker?.usage)].filter(Boolean).join(' · ') || undefined,
 		route: active
 			? {
 					label: routeLabel(active.guide, active.title),
@@ -138,6 +166,18 @@ export function lane(input: FleetInput, now = Date.now()): Lane {
 		out.tone = 'bad';
 		out.activity = worker.state;
 		out.detail = worker.detail;
+	} else if (worker?.refused && !game?.loggedIn && !fresh) {
+		// The server's only sign of an expired session: the game refused the last login with it.
+		out.tone = 'bad';
+		out.activity = REFUSED;
+		out.detail = [
+			worker.refused.when
+				? `o jogo recusou o login ${worker.refused.when}`
+				: 'o jogo recusou o último login',
+			worker.refused.reason
+		]
+			.filter(Boolean)
+			.join(' · ');
 	} else if (worker?.tone === 'busy') {
 		out.tone = 'up';
 		out.activity = worker.state;
@@ -177,18 +217,34 @@ export function lanes(inputs: FleetInput[], now = Date.now()): Lane[] {
 		.sort((a, b) => rank[a.tone] - rank[b.tone] || a.rsn.localeCompare(b.rsn));
 }
 
-/** O que pede uma decisão do dono, do mais grave ao mais leve. */
-export function needs(all: Lane[]): Need[] {
+/**
+ * O que pede uma decisão do dono, do mais grave ao mais leve. `cap` dá o número de "falta lugar"
+ * (quanto um worker pede e quanto sobra na quota).
+ */
+export function needs(all: Lane[], cap?: WorkerCapacity): Need[] {
 	const out: Need[] = [];
 	for (const l of all) {
 		const base = { account: l.id, rsn: l.rsn };
-		if (l.tone === 'bad') out.push({ ...base, text: l.activity, sub: l.detail, hard: true });
+		const command = sessionCommand(l);
+		if (l.worker?.refused && l.tone === 'bad')
+			out.push({
+				...base,
+				text: 'não entra: o jogo recusou o login',
+				sub: 'Abra o launcher no zaros e envie a sessão de novo.',
+				hard: true,
+				command
+			});
+		if (l.tone === 'bad' && l.worker?.noRoom)
+			out.push({ ...base, text: 'não subiu: falta lugar', sub: roomHint(cap), hard: false });
+		else if (l.tone === 'bad' && l.activity !== REFUSED)
+			out.push({ ...base, text: l.activity, sub: l.detail, hard: true });
 		if (l.worker && !l.worker.sessionWhen)
 			out.push({
 				...base,
 				text: 'não tem sessão do jogo',
-				sub: 'No computador com o launcher: chronicle accounts connect --character <nome>',
-				hard: true
+				sub: 'Abra o launcher no zaros e envie a sessão.',
+				hard: true,
+				command
 			});
 		if (l.worker?.outdated)
 			out.push({
@@ -210,4 +266,49 @@ export function fleetSummary(all: Lane[]): string {
 	if (n('up')) parts.push(`${n('up')} subindo`);
 	if (n('bad')) parts.push(`${n('bad')} com problema`);
 	return parts.join(' · ');
+}
+
+export type GroupKey = 'need' | 'playing' | 'stopped';
+
+export interface CompactGroup {
+	key: GroupKey;
+	label: string;
+	lanes: Lane[];
+}
+
+const GROUPS: { key: GroupKey; label: string }[] = [
+	{ key: 'need', label: 'Precisa de você' },
+	{ key: 'playing', label: 'Jogando' },
+	{ key: 'stopped', label: 'Paradas' }
+];
+
+function fold(s: string): string {
+	return s
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase()
+		.trim();
+}
+
+/**
+ * A lista compacta (V7FrotaCompacta1440): Precisa de você (com problema ou com um pedido grave),
+ * Jogando (no jogo ou subindo) e Paradas, na ordem das raias, filtradas pelo nome. Grupos vazios
+ * somem.
+ */
+export function compactGroups(all: Lane[], attention: Need[], query = ''): CompactGroup[] {
+	const urgent = new Set(attention.filter((n) => n.hard).map((n) => n.account));
+	const q = fold(query);
+	const key = (l: Lane): GroupKey =>
+		l.tone === 'bad' || urgent.has(l.id) ? 'need' : l.tone === 'off' ? 'stopped' : 'playing';
+	const shown = q ? all.filter((l) => fold(l.rsn).includes(q)) : all;
+	return GROUPS.map((g) => ({ ...g, lanes: shown.filter((l) => key(l) === g.key) })).filter(
+		(g) => g.lanes.length
+	);
+}
+
+export type Density = 'raias' | 'compacta';
+
+/** A densidade lembrada neste navegador; qualquer outro valor volta às raias. */
+export function parseDensity(saved: string | null | undefined): Density {
+	return saved === 'compacta' ? 'compacta' : 'raias';
 }

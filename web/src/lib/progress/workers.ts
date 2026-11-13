@@ -1,4 +1,4 @@
-import type { AgentInfo, WorkerRow, WorkersView } from '../api/microbot.ts';
+import type { AgentInfo, WorkerRow, WorkersView, WorkerUsage } from '../api/microbot.ts';
 
 /*
  * Automação › Workers (página 7 do canvas, docs/11): uma linha por conta, com onde roda, o estado
@@ -32,6 +32,15 @@ export interface WorkerLine {
 	/** Tem um agent para abrir o Cockpit desta conta. */
 	cockpit: boolean;
 	outdated: boolean;
+	/**
+	 * O último login com a sessão guardada não entrou: o motivo do jogo, quando e o personagem da
+	 * sessão (para o comando que manda uma nova). Um `accounts connect` novo limpa.
+	 */
+	refused?: { reason: string; when: string; character: string };
+	/** O pod não sobe porque a quota do namespace não tem lugar. */
+	noRoom?: boolean;
+	/** O que o metrics.k8s.io mediu do pod; ausente sem pod ou sem metrics-server. */
+	usage?: WorkerUsage;
 }
 
 /** A tag curta de uma imagem (o sha7 do commit). */
@@ -82,11 +91,18 @@ export function workerLine(
 		session: row.session
 			? `${row.session.character} · ${when(row.session.pushed_at, now)}`
 			: 'sem sessão',
-		sessionTone: row.session ? 'ok' : 'warn',
+		sessionTone: row.session && !row.session.login_failed ? 'ok' : 'warn',
 		actions: [],
 		cockpit: !!row.agent || !!here,
-		outdated: row.outdated
+		outdated: row.outdated,
+		usage: row.usage
 	};
+	if (row.session?.login_failed)
+		line.refused = {
+			reason: row.session.last_login_result ?? '',
+			when: when(row.session.last_login_at, now),
+			character: row.session.character
+		};
 	if (row.session) {
 		line.sessionWhen = `push ${when(row.session.pushed_at, now)}`;
 		line.sessionNote = row.session.last_login_result
@@ -117,6 +133,7 @@ export function workerLine(
 			line.state = pod.label;
 			line.tone = pod.tone;
 			line.detail = row.pod.reason;
+			line.noRoom = row.pod.state === 'blocked';
 		}
 		if (row.pod?.state === 'running') {
 			line.state = row.agent

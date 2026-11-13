@@ -272,7 +272,7 @@ os reais do BRUHsailer (CH1.33 a CH1.41), com a atribuição.
 | Fila e Rotinas | gatilhos e histórico no servidor: **feitos** (doc 11, F6, 2026-11-13; `GET`/`POST /api/microbot/triggers`, `GET /api/microbot/runs`); rotinas recorrentes pelo relógio: **feitas na API** (doc 11, seção 16.4; `GET`/`POST`/`DELETE /api/microbot/recurring`), a tela da fila ainda não foi desenhada; falta a noção de atividade principal por conta |
 | Histórico e Atividade | runs fora do disco do agent: **feito** (doc 11, F6, 2026-11-13); a auditoria por conta existe (`GET /api/microbot/audit?account=`, com o que o executor faz sozinho). Eventos de nível **feitos no servidor** (2026-11-13): `GET /api/account/levels?account=&since=&limit=` (os níveis da conta, do mais novo ao mais antigo, com o total da janela e o avanço de cada skill, "Fishing 71 → 76 +412k") e, da frota do usuário, `GET /api/levels?since=&limit=` (o Diário), derivados dos snapshots (`internal/core/activity`): o nível sai do XP, um evento por nível na primeira observação que o mostrou; XP nunca cai (um valor menor que chega depois, o hiscores atrasado, é velho); a primeira observação de uma skill não é evento; `since` até 7 dias atrás, padrão as últimas 24 h. A auditoria por conta já existe (`GET /api/microbot/audit?account=`). Falta a web usar |
 | Plugins da frota | perfis no Postgres (doc 11, F5) |
-| Capacidade no resumo, "cabe mais N", uso por worker | doc 11, F7 |
+| Capacidade no resumo, "cabe mais N", uso por worker | **feito** (doc 11, F7, PR #25): `capacity` e `workers[].usage` em `GET /api/workers`, e `session.login_failed` para o login recusado; a web usa desde a V9 (seção 7.7). O uso do nó não existe |
 | Mundo da frota | feito no servidor em 2026-11-13: `GET /api/fleet/goals` traz numa consulta as metas de todas as contas do usuário (e as chaves de `keys=`), com o veredito guardado de cada conta, a meta dela, o resumo do plano (requisitos, níveis que faltam, passos até a rota fazer) e a conta mais perto; falta a tela. O "tem 132" dos quest points espera o valor observado (primeira linha), e a meta de item (Barrows gloves) só tem requisitos quando o catálogo souber de que quest o item é recompensa |
 | Nova conta sem rota e conta só acompanhada | já previstas na decisão 34 do doc 01 (modo `regular`, rota opcional) |
 
@@ -291,7 +291,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V6 | Rotinas e Fila | doc 11, F6 |
 | V7 | Histórico e Atividade | doc 11, F6 (os eventos de nível já estão no servidor) |
 | V8 | Plugins da frota | doc 11, F5. **Feita** (2026-11-13, seção 7.6) |
-| V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende) |
+| V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende). **Feita** (2026-11-13, seção 7.7) |
 | V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas (feito no servidor, `GET /api/fleet/goals`) |
 
 Antes de cada fatia que mexe numa tela ainda sem desenho na v7 (Comparar, Entidades, Grafo), o desenho
@@ -341,3 +341,64 @@ Divergências do artboard:
 
 Conferido com uma captura a 1440 contra um banco descartável com um modelo e duas contas (uma com
 perfil próprio), e com os testes de `node --test` da lógica da tela e o teste da rota no Postgres.
+
+### 7.7 Implementação: V9, capacidade no resumo e Frota compacta (2026-11-13)
+
+Artboards seguidos: `V7Frota1440` (o resumo, a raia de Nova conta e o "Precisa de você"),
+`V7FrotaCompacta1440` (a lista compacta) e, para os pedidos de sessão e de lugar, `V7Estados1440`
+("Sessão expirada" e "Não cabe no saradomin"). Os dados vêm de `GET /api/workers` (doc 11, F7):
+`capacity` (quantos workers ainda cabem na quota e o que limita), `workers[].usage` (o que o
+metrics-server mediu de cada pod) e `workers[].session.login_failed` (o jogo recusou o último login
+com a sessão guardada). A lógica fica em `web/src/lib/progress/capacidade.ts` e `frota.ts`, com testes
+de `node --test`.
+
+Divergências dos artboards:
+
+1. **Onde fica o "3 / 4 workers":** no artboard, o bloco com o número de workers, os lugares e "cabe
+   mais 1 · zaros com 1 cliente" fica no pé da barra lateral. Aqui ele é um item do resumo da Frota
+   ("Workers 2 de 4 no saradomin", um quadrinho por lugar da quota com o tom da conta que o ocupa, os
+   livres vazios, e a mesma linha), onde a V1 já punha os workers: a barra aparece em toda tela e teria
+   de ler `/api/workers` em todas, e o pé dela tem as Fontes da conta aberta. O título diz quanto um
+   worker pede e o que limita, como no artboard. Sem a quota (WORKERS desligado ou quota ilegível), o
+   item mostra só quantos workers rodam, sem total nem lugares.
+2. **CPU e RAM:** o artboard mostra o uso do nó ("CPU 3,1 / 4", "RAM 9,1 / 15,4"). O servidor não lê os
+   nós do cluster, então as barras mostram a soma do que os pods dos workers usam (metrics.k8s.io)
+   contra o teto da quota (`requests` de CPU e memória do namespace), e o título diz que não é o uso do
+   nó. O rótulo segue "saradomin", como em `V7Frota1440` (a compacta diz "Workers"). Sem medição ou
+   sem teto, a barra some; nunca aparece um zero que o servidor não mediu.
+3. **Sessão recusada:** o servidor só sabe que o jogo recusou o login, não que a sessão expirou. A
+   raia diz "Login recusado", com quando e o motivo do jogo ("o jogo recusou o login há 3 h · Invalid
+   credentials"), e o pedido diz "não entra: o jogo recusou o login". Um login que entra depois, ou o
+   plugin mandando agora, apaga o aviso.
+4. **Sem "Renovar sessão":** o botão do artboard leva à Nova conta, mas a sessão só vem do launcher, no
+   zaros, pelo `chronicle accounts connect`. No lugar, o pedido traz a orientação do artboard ("Abra o
+   launcher no zaros e envie a sessão de novo.") e um "Copiar comando", que copia o comando com o
+   personagem da sessão, como em `V7Estados1440`; o comando fica no título do botão, não em um bloco de
+   código, e o "Esperando a sessão chegar…" não aparece (não há sinal de sessão a caminho). A raia e a
+   linha da compacta têm o mesmo botão, no lugar do "Renovar sessão" e do "Renovar". A conta com worker e
+   sem sessão ganhou o mesmo tratamento: antes o comando aparecia no parágrafo (decisão 10 da seção 7.1).
+5. **Falta lugar:** o pedido "não subiu: falta lugar" (pod `blocked` pela quota) traz o número do
+   artboard ("O worker pede 0,7 núcleo e sobram 0,3. Pare outra conta ou deixe esta na espera."), mas sem
+   "Escolher uma conta para parar" e "Esperar lugar": parar segue nas raias, e esperar é não fazer nada.
+6. **Nova conta:** a raia diz "Cabe mais N worker(s) no saradomin; contas só acompanhadas não ocupam
+   lugar." e a etiqueta "N lugar(es) livre(s)", como no artboard, só com a quota conhecida; sem ela fica
+   o texto da V1.
+7. **Uso por worker:** vai no título da etiqueta de onde a conta roda ("pod · … · CPU 0,4 · RAM 837 MiB"),
+   no lugar do nome do pod e da imagem do artboard.
+8. **Lista compacta:** a coluna Nível (barra até o próximo nível) vira Rota (o andamento da rota ativa,
+   como na raia) e a coluna Ritmo sai: XP por hora, ETA de nível, itens e GP entram com a V5, nas raias e
+   na compacta. "Depois" mostra só o primeiro relógio, sem sprite. Ações: Ver o jogo, Iniciar (com
+   confirmação) e Copiar comando; Pausar e "Mais ações" ficam de fora (não há pausa na API; Parar e
+   Reiniciar seguem nas raias). Os grupos são Precisa de você (conta com problema ou com um pedido grave,
+   como a falta de sessão), Jogando (no jogo ou subindo) e Paradas; o campo filtra pelo nome.
+9. **Sem o painel "Precisa de você" na compacta:** como no artboard, a compacta não tem a coluna da
+   direita; o artboard manda os pedidos e o diário para a tela Atividade (V7). Até lá, os pedidos leves
+   (versão antiga, relógio pronto) só aparecem nas raias.
+10. **Barra lateral:** o artboard diz que, na compacta, a barra mostra só as contas fixadas e as que
+    precisam de você. Não há como fixar conta, então a barra segue com todas.
+11. **Raias | Compacta:** o seletor aparece nas duas vistas (no artboard das raias, no lugar dele, há o
+    filtro Todas | Jogando | Paradas, que a V1 não fez) e só com alguma conta. A escolha fica neste
+    navegador (`localStorage`, chave `chronicle.frota.densidade`), e um navegador que não deixa gravar
+    volta às raias.
+
+Conferido com `pnpm check`, `pnpm lint`, `pnpm test` e `pnpm build`; a captura das telas fica para depois.

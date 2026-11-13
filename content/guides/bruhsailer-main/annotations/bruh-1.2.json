@@ -2090,6 +2090,78 @@
           }
         },
         {
+          "key": "item:1592x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "one of each mould",
+            "span": [
+              520,
+              537
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:1595x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "one of each mould",
+            "span": [
+              520,
+              537
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:11065x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "one of each mould",
+            "span": [
+              520,
+              537
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner"
+          }
+        },
+        {
+          "key": "item:1597x2",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "a second necklace mould",
+            "span": [
+              607,
+              630
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner"
+          }
+        },
+        {
           "key": "item:1733x3",
           "role": "completes",
           "evidence": {
@@ -4379,6 +4451,24 @@
             "method": "llm",
             "confidence": "high",
             "skill_version": "annotate-guide@6"
+          }
+        },
+        {
+          "key": "item:29897x1",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "the icon",
+            "span": [
+              494,
+              502
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner"
           }
         },
         {

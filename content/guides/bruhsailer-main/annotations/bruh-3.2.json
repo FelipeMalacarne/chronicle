@@ -650,6 +650,25 @@
             "confirmed_by": "owner",
             "decision": "agent-judgment-delegated"
           }
+        },
+        {
+          "key": "item:32907x100",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "chop another 100 or so ironwood logs",
+            "span": [
+              5937,
+              5973
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "approximate-quantity-is-target"
+          }
         }
       ],
       "no_bank_actions": {
@@ -790,6 +809,25 @@
             "span": [
               22,
               43
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "optional-and-conditional-goals-are-objectives"
+          }
+        },
+        {
+          "key": "item:1783x20000",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "mine 20k sand",
+            "span": [
+              7,
+              20
             ]
           },
           "source": {

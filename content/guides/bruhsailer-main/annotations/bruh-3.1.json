@@ -700,6 +700,24 @@
             "confirmed_by": "owner",
             "decision": "approximate-quantity-is-target"
           }
+        },
+        {
+          "key": "item:1783x2300",
+          "role": "completes",
+          "evidence": {
+            "field": "/text",
+            "quote": "Buy 2300 sand",
+            "span": [
+              2,
+              15
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner"
+          }
         }
       ],
       "items": [

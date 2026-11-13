@@ -49,6 +49,7 @@ func newRoot() *cobra.Command {
 		newProgressCmd(),
 		newAgentCmd(),
 		newWorkersCmd(),
+		newProfilesCmd(),
 	)
 	return root
 }

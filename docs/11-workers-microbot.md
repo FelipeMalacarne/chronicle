@@ -133,6 +133,9 @@ account_client           account_id PK, profile_id, overrides (jsonb: grupo.chav
 - **Anexado (zaros):** o perfil é opcional. Sem perfil, o zaros continua como hoje, com a config no
   disco. Com perfil, o agent aplica só o que o perfil declara.
 
+A parte 1 da F5 (seção 15) implementou isto com algumas diferenças, anotadas lá: modelo de um nível
+só, configurações da conta em linhas e não em jsonb, e mundo e gráfico para depois.
+
 ### 4.4 Rotinas e runs
 
 Os gatilhos (`agent-triggers.json`) e o histórico (`agent-runs.json`) saem do disco do agent:
@@ -240,10 +243,11 @@ O servidor recusa o Iniciar quando:
      credencial de máquina por worker;
    - o perfil efetivo (plugins, configurações, gráfico, mundo);
    - as rotinas da conta.
-4. O agent escreve na home em memória: `credentials.properties`, os arquivos de aparelho, o perfil do
-   RuneLite com as configurações (W7), e a config do Chronicle Link com a URL interna e o token.
+4. O agent escreve na home em memória: `credentials.properties`, os arquivos de aparelho, e a config
+   do Chronicle Link com a URL interna e o token.
 5. `mb-client start --headless` com `MB_HEADLESS_GPU=1` e `MB_CLIENT_WRAPPER="vglrun -d egl"`.
-6. Com o Agent Server de pé, o agent instala os plugins do Hub do perfil e liga os `start_on_boot`.
+6. Com o Agent Server de pé, o agent grava as configurações do perfil pelo `/settings/plugin`, instala
+   os plugins do Hub do perfil e só então liga os `start_on_boot` (W7, seção 15).
 7. O cliente fica na tela de login. Entrar é outro clique, com o mundo (W3).
 
 ### 6.4 Uso
@@ -357,13 +361,13 @@ o referencia, então o RBAC não muda) e usa o `local-path`, como o do filebrows
 | `GET /api/workers` | Workers das contas do usuário: lugar, estado, versão, CPU e RAM, sessão |
 | `POST /api/workers/{conta}/start` \| `stop` \| `restart` | Ciclo de vida, auditado |
 | `GET` \| `PUT /api/accounts/{id}/session` | Estado da sessão (sem o conteúdo) e conexão |
-| `GET` \| `POST` \| `PATCH /api/client-profiles…` | Perfis, plugins, configurações e modelo |
-| `GET` \| `PUT /api/accounts/{id}/client` | Perfil da conta, overrides, mundo e gráfico; desvio atual |
+| `GET /api/client-profiles`, `GET` \| `PUT` \| `DELETE /api/client-profiles/{nome}` | Perfis do usuário: modelo, plugins e configurações; o `PUT` troca o perfil inteiro (seção 15) |
+| `GET` \| `PUT /api/accounts/client?account=` | Perfil da conta, configurações próprias e o perfil efetivo; mundo, gráfico e desvio ficam para depois |
 | `GET` \| `POST /api/accounts/{id}/routines`, `GET …/runs` | Rotinas e histórico no banco |
 | `/api/microbot/*?account=` | O que existe hoje, endereçado pela conta |
 
 CLI: `chronicle accounts connect`, `chronicle workers list|start|stop|restart`,
-`chronicle profiles list|show|apply`. Nenhuma abre o banco (regra 1 do CLAUDE.md).
+`chronicle profiles list|show|put|delete|use|account`. Nenhuma abre o banco (regra 1 do CLAUDE.md).
 
 ## 9. Segurança e riscos
 
@@ -389,7 +393,7 @@ disco.
 | F2 | Contas e sessões: migração (`regular`, rota opcional, `managed`, `game_sessions`), cofre, `chronicle accounts connect`, Automação da conta na Conta | uma conta sem rota conectada pela CLI; a sessão aparece na web e nunca volta pela API | chronicle |
 | F3 | Imagens e um worker aplicado à mão: as duas imagens e o CI delas, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | chronicle (com `microbot/`), gielinor |
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
-| F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link) |
+| F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. Falta a parte 2: a tela, o desvio e o "Salvar no perfil" |
 | F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle |
 | F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle |
 
@@ -398,8 +402,8 @@ Desde 2026-11-12 as telas destas fases são as da v7 (canvas, página 8; `docs/u
 seção 7; decisão 36 do doc 01): a lista de workers é a Frota, os perfis da F5 aparecem em Plugins, as
 rotinas da F6 em Rotinas, na Fila e no Histórico, e a capacidade da F7 no resumo da Frota. A página 7
 fica como histórico.
-Até a F5, um pod gerenciado que reinicia perde a configuração dos plugins. Para testar, isso é
-aceitável.
+Desde a parte 1 da F5, a configuração dos plugins que está no perfil volta a cada boot; o que foi
+mudado direto no RuneLite pelo VNC e não entrou no perfil ainda se perde (é o desvio da parte 2).
 
 ## 11. O que fica para a revisão de rotas e objetivos
 
@@ -424,7 +428,7 @@ E10). A revisão de rotas e objetivos que o dono quer fazer depois é o lugar di
 | W4 | Bump da base manual ou automático | **Resolvida (2026-11-12):** sem bump. Com o repositório único (decisão 35 do doc 01), a base tem a tag das próprias entradas e segue o commit (seção 7.2) |
 | W5 | Cache do jogo por pod ou compartilhado | **Resolvida (2026-11-12):** PVC compartilhado (seção 7.4) |
 | W6 | Lista de workers antes dos gerenciados | **Resolvida** pela F1 |
-| W7 | Como aplicar a config do perfil: escrever o arquivo de perfil do RuneLite antes de o cliente subir, ou `/settings/plugin` depois | Arquivo antes (os plugins já leem a config certa no start); spike na F3 |
+| W7 | Como aplicar a config do perfil: escrever o arquivo de perfil do RuneLite antes de o cliente subir, ou `/settings/plugin` depois | **Resolvida (2026-11-12, dono):** pelo `/settings/plugin`, com o cliente de pé e **antes** de ligar os plugins, que assim leem a config certa no start. Não depende do formato dos arquivos de perfil; um ajuste que precise valer antes de o cliente abrir volta a pedir o arquivo |
 | W8 | IP e escala de uma frota: proxy por worker, outro nó, outra casa | Adiar até haver mais de 3 contas; registrar o risco |
 | W9 | Desvio de config: salvar sozinho ou pelo botão | Pelo botão ("Salvar no perfil") |
 | W10 | Conta sem rota: `guide_id` nulo e modo `regular` | Sim, na migração da F2 |
@@ -636,8 +640,8 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
   Conferida no saradomin no mesmo dia (seção 14.4).
 - **O reconciliador contra o k3s de verdade:** pods reais, o token projetado e a TokenReview foram
   conferidos no saradomin (seção 14.4). Falta ver o "não cabe" da quota e o que a NetworkPolicy recusa.
-- **O tour "Welcome to Microbot"** aparece a cada boot, porque a home do pod é nova. Fechar o tour
-  automaticamente fica para a F5 (perfis).
+- **O tour "Welcome to Microbot"** aparecia a cada boot, porque a home do pod é nova. Resolvido na
+  seção 15: o `mb-client --headless` passa `-Dmicrobot.tour=false`.
 - **`preferences.dat`** fica dentro do `jagexcache` compartilhado. São preferências do jogo e podem
   lembrar o nome do login antigo, que não é o da Jagex Account. Se incomodar, o PVC monta só os
   `main_file_cache.*` por `subPath`.
@@ -696,12 +700,83 @@ a RAM daria para uns 8. O pedido subiu para 700m e a quota do namespace acompanh
 
 - **Barra lateral:** a do RuneLite fica visível no worker. A web ainda não tem tudo o que ela tem;
   trazer para o Cockpit, aos poucos, o que fizer falta.
-- **Tour "Welcome to Microbot":** aparece a cada boot por cima do jogo, porque a home do pod é nova.
-  Resolver na F5, com os perfis.
-- **Configuração dos plugins:** a do Blackjacker e a dos outros se perde quando o pod é recriado. É a
-  F5 (perfis no Postgres).
+- **Tour "Welcome to Microbot":** aparecia a cada boot por cima do jogo, porque a home do pod é nova.
+  Resolvido na seção 15.
+- **Configuração dos plugins:** a do Blackjacker e a dos outros se perdia quando o pod era recriado.
+  Desde a seção 15, o que está no perfil da conta volta a cada boot.
 - **FPS:** conferido em 2026-11-12 no worker da `acc_eventsourced` com o Blackjacker ativo:
   `fpscontrol` com `limitFps=true` e `maxFps=20` (`GET /api/microbot/config`), nenhum aviso do agent
   ao ligar o FPS Control nem ao gravar os valores, e 405m de CPU. Que o plugin está ligado só se vê
   assim, de forma indireta: a lista do Agent Server traz só os scripts do Microbot, e o agent recusa
   ler o grupo `runelite`.
+
+## 15. F5, parte 1: perfis no servidor (2026-11-12)
+
+Esta parte não tem tela. A web vem na parte 2: é a fatia V8 da web v7, Plugins da frota (artboard
+`V7Plugins1440`, página 8 do canvas; `docs/ui/decisoes-canvas.md`, seção 7.5). Até lá, os perfis se
+editam pela CLI e pela API. Um perfil nunca muda um cliente que já roda: vale
+no próximo Iniciar ou Reiniciar.
+
+### 15.1 Entregue
+
+- **Migração 0013:** `client_profiles`, `client_profile_plugins`, `client_profile_settings`,
+  `account_client` e `account_client_settings`.
+- **Diferenças em relação à seção 4.3:**
+  - o modelo tem um nível só: um modelo não tem modelo, e um perfil que já é modelo não ganha um;
+  - as configurações próprias da conta são linhas (`account_client_settings`), não um jsonb, para
+    passar pelas mesmas checagens;
+  - plugin não tem a coluna `enabled`. Um plugin do perfil é instalado (os do Hub) e, com `start`,
+    ligado no boot. Um plugin do Hub que liga precisa da classe (`class_name`): o Hub instala pelo
+    nome interno, e o Agent Server liga pela classe;
+  - mundo e gráfico ficam de fora. O mundo continua em `workers.world` (o Iniciar), e o gráfico
+    espera a GPU (seção 7.3). Enquanto isso, o fixo do worker (Chronicle Link e FPS Control a 20) é
+    o perfil de sistema, por baixo de tudo. Um perfil pode mudar o FPS, nunca desligar o Chronicle
+    Link (classe protegida).
+- **Validação:** as mesmas regras do `config_set` (grupos protegidos, chaves que parecem segredo,
+  valor de até 2000 caracteres), no servidor ao gravar e no agent antes de aplicar.
+- **`internal/agent`:**
+  - `ClientProfile`, `ValidateProfile` e `MergeProfiles` (modelo, depois perfil, depois a conta);
+  - o bootstrap leva o perfil efetivo;
+  - o agent grava as configurações, instala os do Hub e liga os `start`, nessa ordem (W7);
+  - o que o cliente recusa volta em `BootstrapResult.Problems` e na saída do `client_start` do
+    Cockpit, e o resto do perfil é aplicado mesmo assim.
+- **Reconciliador:**
+  - manda o perfil efetivo no bootstrap;
+  - o que o cliente recusou vira o `last_error` do worker (`profile: …`), visível na aba Workers e
+    no `chronicle workers list`;
+  - um agent que religa com o cliente de pé (acontece em todo deploy do servidor) não mexe mais no
+    `last_error`.
+- **API:** as rotas da seção 8, atrás de `authed` e `microbotControl`. As da conta usam
+  `accountParam`. Em `AUTH_MODE=dev`, os perfis são do usuário `dev`.
+- **CLI:** `chronicle profiles list|show|put|delete|use|account`. O `show` imprime o JSON que o
+  `put -f` lê, então um perfil se edita como arquivo.
+- **Tour:** o `mb-client --headless` passa `-Dmicrobot.tour=false`. No cliente 2.6.52 fixado, o tour
+  só abre sem essa propriedade (`MicrobotTour.shouldAutoStart`). A mudança gera uma base nova do
+  worker (seção 7.2).
+
+### 15.2 Conferido
+
+- Testes de tabela da validação e da junção.
+- O boot do worker com um perfil:
+  - a ordem é configurações, instalações e só então ligar;
+  - um plugin do Hub cuja instalação falha não é ligado;
+  - os problemas voltam no resultado;
+  - o `client_start` seguinte reaplica o mesmo perfil;
+  - um perfil inválido no bootstrap é recusado antes de tocar no Agent Server.
+- O store no Postgres 17 (`TestClientProfilesPostgres`): um nível só, perfis por usuário, o perfil
+  efetivo, e a recusa de apagar um modelo ou um perfil em uso.
+- As rotas no Postgres (`TestClientProfileRoutesPostgres`) e em oidc (`TestClientProfileRoutesOIDC`):
+  401 sem sessão, perfis do usuário da sessão e 404 para conta de outro usuário.
+- A CLI contra uma API falsa e o reconciliador (perfil no bootstrap, problemas no `last_error`, o
+  religar mantém o erro).
+- `goose up/down/up` da 0013 e `just dbml`.
+
+### 15.3 Não conferido e pendente
+
+- **No jogo:** nada desta parte rodou ainda num worker de verdade. Conferir com o dono: um perfil
+  com o Blackjacker e a configuração dele, Reiniciar o worker e ver a configuração voltar e o tour
+  não aparecer.
+- **Parte 2:** a tela (fatia V8 da web v7, Plugins da frota), o desvio (o Chronicle Link exportar
+  os valores) e o "Salvar no perfil" (W9). O que o `V7Plugins1440` não mostrar disso vai para o
+  canvas antes (regra 11). Junto, a versão da ponte no `status` (seção 14.3).
+- **Anexado (zaros):** o perfil ainda não se aplica; o zaros segue com a configuração no disco.

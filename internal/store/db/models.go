@@ -28,6 +28,19 @@ type Account struct {
 	Managed bool `json:"managed"`
 }
 
+type AccountClient struct {
+	AccountID string             `json:"account_id"`
+	ProfileID pgtype.Text        `json:"profile_id"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type AccountClientSetting struct {
+	AccountID   string `json:"account_id"`
+	ConfigGroup string `json:"config_group"`
+	ConfigKey   string `json:"config_key"`
+	Value       string `json:"value"`
+}
+
 // Bearer tokens for the CLI/MCP clients (not for the Microbot plugin).
 type ApiToken struct {
 	ID         string             `json:"id"`
@@ -37,6 +50,33 @@ type ApiToken struct {
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
 	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
+}
+
+// Client profiles of the managed workers (docs/11 section 4.3): plugins and RuneLite settings, applied by the agent when the client comes up.
+type ClientProfile struct {
+	ID        string             `json:"id"`
+	UserID    string             `json:"user_id"`
+	Name      string             `json:"name"`
+	ParentID  pgtype.Text        `json:"parent_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ClientProfilePlugin struct {
+	ProfileID   string `json:"profile_id"`
+	Position    int32  `json:"position"`
+	Source      string `json:"source"`
+	Name        string `json:"name"`
+	Version     string `json:"version"`
+	ClassName   string `json:"class_name"`
+	StartOnBoot bool   `json:"start_on_boot"`
+}
+
+type ClientProfileSetting struct {
+	ProfileID   string `json:"profile_id"`
+	ConfigGroup string `json:"config_group"`
+	ConfigKey   string `json:"config_key"`
+	Value       string `json:"value"`
 }
 
 // Minimal index of the loaded steps for event joins and orphan detection; written at boot.

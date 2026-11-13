@@ -52,3 +52,8 @@ func (s RepoStore) SetError(ctx context.Context, account, msg string) error {
 	}
 	return err
 }
+
+// Profile is the account's effective client profile.
+func (s RepoStore) Profile(ctx context.Context, account string) (agent.ClientProfile, error) {
+	return s.Repo.EffectiveProfile(ctx, account)
+}

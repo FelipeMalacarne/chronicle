@@ -42,6 +42,9 @@ type Options struct {
 	Progress ProgressService
 	// Sync runs the hiscores on demand and lists the runs. nil disables it.
 	Sync SyncService
+	// Levels serves the accounts' level-ups (GET /api/account/levels and,
+	// with Identity, the user's fleet's GET /api/levels); nil leaves them out.
+	Levels LevelsStore
 	// Accounts and Hiscores serve the setup (/setup, V4Setup). nil Accounts
 	// disables it; nil Hiscores skips the mode detection.
 	Accounts AccountService
@@ -191,6 +194,7 @@ func (s *Server) routes() {
 		account("POST /api/sync", s.handleSync)
 		account("GET /api/sync/runs", s.handleSyncRuns)
 	}
+	s.levelRoutes()
 	s.microbotRoutes()
 	s.workerRoutes()
 	s.profileRoutes()

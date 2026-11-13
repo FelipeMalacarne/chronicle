@@ -802,6 +802,47 @@ export interface GoalPlan {
 	routes: StepPlace[];
 }
 
+/* ------------------------------------------------------------------ níveis (Histórico e Atividade da v7) */
+
+/**
+ * Uma skill que subiu de nível ("14:06 Felipe Pesca subiu para Fishing 76"), na primeira observação
+ * que mostrou o nível. Um por nível: dois níveis entre duas observações são dois eventos no mesmo instante.
+ */
+export interface LevelEvent {
+	account: string;
+	skill: string;
+	level: number;
+	at: string;
+}
+
+/** O avanço de uma skill na janela ("Fishing 71 → 76 +412k"). */
+export interface SkillGain {
+	skill: string;
+	from_level: number;
+	to_level: number;
+	/** XP ganho na janela. */
+	xp: number;
+}
+
+/** GET /api/account/levels: os níveis da conta desde `since` (padrão: as últimas 24 h; no máximo 7 dias). */
+export interface AccountLevels {
+	account: string;
+	since: string;
+	/** Quantos níveis a janela tem; `events` traz os `limit` mais novos. */
+	total: number;
+	/** Do mais novo para o mais antigo. */
+	events: LevelEvent[];
+	/** Só as skills que ganharam XP na janela, a que mais ganhou primeiro. */
+	skills: SkillGain[];
+}
+
+/** GET /api/levels: os níveis de todas as contas do usuário, juntos e do mais novo para o mais antigo (o Diário). */
+export interface FleetLevels {
+	since: string;
+	total: number;
+	events: LevelEvent[];
+}
+
 /* ------------------------------------------------------------------ envelopes das respostas */
 
 export interface GoalsResponse {

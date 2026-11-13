@@ -85,6 +85,7 @@ internal/core/        PURE domain (no DB/HTTP imports):
   content/derive/     deterministic bank-leg segments, bank actions and loadouts
   entities/           canonical entity registry (refs, catalogs, resolver, enrichment)
   facts/              merge of each source's last observation into the current fact (player_state)
+  activity/           what an account did, from its snapshots: level-ups (one per level, from XP) and skill gains
   ingest/             plugin wire contract v1 (manifest, push, item freshness) + validation
   rules/              rule engine incl. item_owned over item holdings
   planning/           next-leg readiness (ownership vs carried loadout vs bank instructions)
@@ -94,7 +95,7 @@ internal/core/        PURE domain (no DB/HTTP imports):
   annotate/           guide extraction: batches, name resolution, verification, sidecar/report writer
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
 internal/importer/    source importers (bruhsailer: pinned DOCX -> canonical guide)
-internal/store/       repositories (identity: OIDC users, dev-account claim, ownership; ingest: tokens, pushes, holdings; progress: reevaluation, marks,
+internal/store/       repositories (activity: the XP observations behind the level-ups; identity: OIDC users, dev-account claim, ownership; ingest: tokens, pushes, holdings; progress: reevaluation, marks,
                       cursor, board, goals, content index and step id aliases at boot; state:
                       PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; rhythm: the series the rhythm reads; workers: sealed game sessions, workers'
                       desired state, client profiles; routines: triggers and the runs' history); internal/store/db is sqlc OUTPUT

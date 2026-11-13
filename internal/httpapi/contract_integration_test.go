@@ -24,6 +24,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
+	storeactivity "github.com/FelipeMalacarne/chronicle/internal/store/activity"
 	storeidentity "github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
@@ -91,7 +92,7 @@ func TestContractPostgres(t *testing.T) {
 	srv := httptest.NewServer(New(Options{
 		Version: "test", Content: cnt, DefaultGuideID: "oziris-main", Ingest: ingest, Holdings: ingest,
 		Progress: progress, Sync: syncs, Accounts: progress, Catalog: catalog, DevMode: true, Logger: quiet,
-		Identity: storeidentity.New(pool), Rhythm: storerhythm.New(pool, catalog),
+		Identity: storeidentity.New(pool), Rhythm: storerhythm.New(pool, catalog), Levels: storeactivity.New(pool),
 		Microbot: &MicrobotOptions{Link: link, Audit: &memAudit{}, Sessions: workers, Control: control, WorkerImage: contractWorkerImage},
 	}))
 	defer srv.Close()
@@ -115,6 +116,7 @@ func TestContractPostgres(t *testing.T) {
 			t.Fatalf("push %d: %+v, %v", push.ClientSeq, resp, err)
 		}
 	}
+	contractLevels(ctx, t, pool, ingest)
 
 	call := func(method, path, body string) []byte {
 		t.Helper()
@@ -183,6 +185,8 @@ func TestContractPostgres(t *testing.T) {
 		{name: "world", method: "GET", path: "/api/world" + acc, tsImports: []string{"WorldResponse"}, tsType: "WorldResponse"},
 		{name: "sync", method: "POST", path: "/api/sync" + acc, tsImports: []string{"SyncRun"}, tsType: "SyncRun"},
 		{name: "sync-runs", method: "GET", path: "/api/sync/runs" + acc + "&limit=5", tsImports: []string{"SyncRunsResponse"}, tsType: "SyncRunsResponse"},
+		{name: "account-levels", method: "GET", path: "/api/account/levels?account=acc_levels", tsImports: []string{"AccountLevels"}, tsType: "AccountLevels"},
+		{name: "fleet-levels", method: "GET", path: "/api/levels", tsImports: []string{"FleetLevels"}, tsType: "FleetLevels"},
 		{name: "workers", method: "GET", path: "/api/workers", tsFrom: "../microbot", tsImports: []string{"WorkersView"}, tsType: "WorkersView"},
 		{name: "account-rhythm", method: "GET", path: "/api/account/rhythm" + acc, tsImports: []string{"AccountRhythm"}, tsType: "AccountRhythm"},
 		{name: "fleet-rhythm", method: "GET", path: "/api/rhythm", tsImports: []string{"FleetRhythm"}, tsType: "FleetRhythm"},
@@ -267,6 +271,59 @@ func contractWorkers(ctx context.Context, t *testing.T, pool *pgxpool.Pool, toke
 		},
 	}
 	return repo, control
+}
+
+// contractLevels makes the level-ups the Histórico and the Atividade show,
+// on an account of its own: a full plugin push 30 hours ago (the baseline)
+// and, an hour ago, a delta with Fishing 75 -> 76 and Farming 37 -> 39.
+func contractLevels(ctx context.Context, t *testing.T, pool *pgxpool.Pool, ingest *storeingest.Repository) {
+	t.Helper()
+	if _, err := pool.Exec(ctx, `INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer)
+		VALUES ('acc_levels', 'dev', 'Felipe Pesca', 'felipe_pesca', 'ironman', 'oziris-main', 'enhanced')`); err != nil {
+		t.Fatal(err)
+	}
+	token, err := ingest.CreateToken(ctx, "acc_levels", "contract", []coreingest.TokenScope{coreingest.ScopeItemsBank, coreingest.ScopeItemsInventory, coreingest.ScopeItemsEquipment})
+	if err != nil {
+		t.Fatal(err)
+	}
+	manifest, err := ingest.Manifest(ctx, token.Token)
+	if err != nil {
+		t.Fatal(err)
+	}
+	now := time.Now().UTC().Truncate(time.Second)
+	xp := entities.XPForLevel
+	for i, p := range []struct {
+		ago time.Duration
+		xp  coreingest.IntMap
+	}{
+		{30 * time.Hour, coreingest.IntMap{"fishing": int64(xp(75) + 1200), "farming": int64(xp(37) + 300)}},
+		{time.Hour, coreingest.IntMap{"fishing": int64(xp(76) + 40), "farming": int64(xp(39) + 10)}},
+	} {
+		levels := coreingest.IntMap{}
+		for skill, v := range p.xp {
+			levels[skill] = int64(entities.LevelForXP(int(v)))
+		}
+		sentAt := now.Add(-p.ago)
+		push := coreingest.Push{
+			ContractVersion: coreingest.ContractVersion, Username: "Felipe Pesca", Profile: "STANDARD",
+			ManifestVersion: manifest.ManifestVersion, ClientSeq: int64(i + 1), Kind: coreingest.PushDelta, SentAt: sentAt,
+			Data: coreingest.PushData{Levels: &levels, XP: &p.xp},
+		}
+		if i == 0 {
+			rev, empty := int64(1), coreingest.IntMap{}
+			live := func() *coreingest.ItemObservation {
+				q := coreingest.QuantityMap{}
+				return &coreingest.ItemObservation{State: coreingest.ItemLive, ObservedAt: sentAt, Revision: &rev, LiveEpoch: "login-1", Quantities: &q}
+			}
+			push.Kind = coreingest.PushFull
+			push.Data.Varbits, push.Data.Varps, push.Data.Boosted = &empty, &empty, &empty
+			push.Data.Items = &coreingest.ItemContainers{Bank: live(), Inventory: live(), Equipment: live()}
+		}
+		raw, _ := json.Marshal(push)
+		if resp, err := ingest.Accept(ctx, token.Token, "127.0.0.1", raw, push); err != nil || !resp.OK {
+			t.Fatalf("levels push %d: %+v, %v", i, resp, err)
+		}
+	}
 }
 
 // contractFetcher answers a hiscores sample.

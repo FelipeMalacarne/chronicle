@@ -25,6 +25,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/events"
 	"github.com/FelipeMalacarne/chronicle/internal/httpapi"
 	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
+	storeactivity "github.com/FelipeMalacarne/chronicle/internal/store/activity"
 	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
@@ -89,6 +90,7 @@ func runServe(parent context.Context) error {
 	var rhythmService httpapi.RhythmStore
 	var hiscoresDetector httpapi.ModeDetector
 	var identityRepo httpapi.Identity
+	var levelsService httpapi.LevelsStore
 	var oidcOpts *httpapi.OIDCOptions
 	var microbotOpts *httpapi.MicrobotOptions
 	if !cfg.IsDev() && cfg.DatabaseURL == "" {
@@ -103,6 +105,7 @@ func runServe(parent context.Context) error {
 			defer pool.Close()
 			db = pool
 			identityRepo = identity.New(pool)
+			levelsService = storeactivity.New(pool)
 			if !cfg.IsDev() {
 				if oidcOpts, err = newOIDC(ctx, cfg, pool); err != nil {
 					return err
@@ -167,6 +170,7 @@ func runServe(parent context.Context) error {
 		OIDC:           oidcOpts,
 		Microbot:       microbotOpts,
 		Identity:       identityRepo,
+		Levels:         levelsService,
 		Static:         static,
 		Logger:         logger,
 	})

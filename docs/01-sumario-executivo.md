@@ -129,7 +129,10 @@ A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com 
   Ela também só termina no jogo, com o dono. O código da fase 4 também está pronto (2026-11-13, dois
   PRs empilhados): o `wait_until` por chave de objetivo nos runs e nas rotinas do doc 08 (o servidor
   prova a chave pelo ingest e manda o `run_until` ao agent) e o `train` por delegação a um plugin do
-  cliente, pelo `chronicle task run`. Ela termina com um treino no jogo, sem intervenção.
+  cliente, pelo `chronicle task run`. Ela termina com um treino no jogo, sem intervenção. Da fase 5,
+  vários clientes no agent está pronto (2026-11-13): o agent do zaros controla um cliente por conta,
+  com `MICROBOT_AGENT_CLIENTS`, cada um com o seu executor, lock, home de dev, display e VNC. As
+  receitas de quest esperam a extração com o dono, e os planos customizados na UI esperam o canvas.
 
 O próximo passo é do dono:
 
@@ -148,15 +151,21 @@ O próximo passo é do dono:
    montar um plano com a tarefa `train` (`plugin`, `config` e `until` no nível seguinte), levar o
    personagem até o lugar e rodar `chronicle task run --yes --wait 3h` sem mexer em nada até "Término
    provado pelo ingest", com o plugin desligado sozinho.
-4. **Conferir no jogo e no cluster:**
+4. **Ligar um segundo cliente no zaros, se quiser** (doc 10, seção 13, fase 5): preparar o home de
+   dev dele (`mb-account use` e `mb-install chroniclelink` com `MB_DEV_HOME`, e o token de ingest da
+   conta no Chronicle Link), atualizar o `chronicle` do servidor e da máquina do jogo e trocar
+   `MICROBOT_AGENT_ACCOUNT` por `MICROBOT_AGENT_CLIENTS` no agent.
+5. **Conferir no jogo e no cluster:**
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;
    - uma rotina recorrente no zaros;
    - a capacidade da F7 depois do RBAC;
    - o reinício sozinho na versão nova depois de um deploy (decisão 37).
-5. **Desenhar no canvas** as telas em 640 px que faltam, o "Executar" da tarefa do plano (também o
-   "Treinar" de um `train`) e o `wait_until` de uma rotina na tela de Rotinas.
-6. **Decidir o que está aberto:**
+6. **Desenhar no canvas** as telas em 640 px que faltam, o "Executar" da tarefa do plano (também o
+   "Treinar" de um `train`), o `wait_until` de uma rotina na tela de Rotinas e a tela de planos
+   customizados (fase 5 do doc 10: montar um plano com passos de vários guias, receitas e tarefas
+   avulsas, e segui-lo).
+7. **Decidir o que está aberto:**
    - o gesto para soltar uma rotina presa, hoje salvá-la de novo (o "Liberar" da tela de Rotinas);
    - E11 a E13 do doc 10 (o que a gravação registra, a retenção dela no servidor e o que vai para o
      conteúdo como evidência), hoje no modo conservador;

@@ -78,9 +78,18 @@ vs ~18 ms headless, logged in).
 | `MB_XMX` | `2g` | java `-Xmx` |
 | `MB_HWID_STORE_DIR` | `~/.runelite` | dir of the HWID agent's `spoofed-device-ids.properties` and `spoofed-random-dats.properties` |
 | `MB_PREBUILT_PLUGINS` | unset | dir of prebuilt jars: `start` installs all of them (must include `DevBootstrapPlugin.jar` and `ChronicleLinkPlugin.jar`) instead of building DevBootstrap with gradle |
+| `MB_HEADLESS_DISPLAY` | `:99` | the Xvfb display of `--headless` |
+| `MB_VNC_PORT` | `5999` | the x11vnc port (loopback only); `start` refuses a port already taken |
 | `MICROBOT_CLI` | `vendor/microbot/microbot-cli` | the upstream CLI `mb` runs |
 
 PipeWire muting and the xdotool window fit are skipped when those tools are missing.
+
+Several dev clients run side by side, one per dev home, each with its own `MB_DEV_HOME`,
+`MB_HEADLESS_DISPLAY` and `MB_VNC_PORT`: `chronicle agent` with `MICROBOT_AGENT_CLIENTS` sets them
+(docs/10 phase 5, docs/08). A running Xvfb and x11vnc keep the display and port they started on,
+written in the home (`run/xvfb.display`, `run/vnc.port`): `start` and `status` read them back over
+the variables, and the agent opens the VNC on that port. Every harness tool takes the same
+`MB_DEV_HOME` (e.g. `MB_DEV_HOME=~/.local/share/microbot-dev-alt mb-account use 2`).
 
 Iterate with `mb-deploy`; confirm with `mb-test` (or `mb-install` + `mb-client restart`).
 A plugin cannot be hot-deployed while its jar is sideloaded in the dev home.

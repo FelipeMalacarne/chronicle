@@ -188,7 +188,7 @@ func (e *Executor) runAccount(ctx context.Context, args ...string) (string, erro
 	if len(e.AccountCmd) == 0 {
 		return "", errors.New("no mb-account command configured (MICROBOT_HARNESS_DIR or MICROBOT_ACCOUNT_CMD)")
 	}
-	return runArgv(ctx, e.AccountCmd, time.Minute, nil, args...)
+	return runArgv(ctx, e.AccountCmd, time.Minute, e.Env, args...)
 }
 
 // client runs the log, account and world commands.

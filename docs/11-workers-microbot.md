@@ -37,7 +37,7 @@ Na primeira versão, "agent", "worker" e "cliente" se misturavam. Daqui em diant
 | **Perfil do cliente** | Plugins (do Hub e nossos, com versão), configuração dos plugins (grupo, chave, valor), perfil gráfico e mundo preferido. Um perfil pode servir de modelo para várias contas | Postgres |
 | **Rotina** | Gatilhos, "fazer agora", recorrentes e o histórico de runs (doc 08, fase 4) | Postgres (hoje está em arquivos do agent) |
 | **Worker** | Um cliente do jogo rodando para uma conta, num lugar | Processo ou pod |
-| **Agent** | O `chronicle agent` que controla um worker. Um agent para um worker, com uma conta por vez | Ao lado do cliente |
+| **Agent** | O `chronicle agent` que controla um worker. Um agent para um worker, com uma conta por vez; desde a fase 5 do doc 10, o anexado pode controlar vários workers, um por conta (`MICROBOT_AGENT_CLIENTS`, seção 13.1) | Ao lado do cliente |
 | **Lugar** | `attached` (o zaros: o Chronicle controla o cliente, mas não o sobe nem o derruba) ou `managed` (um pod que o Chronicle cria e apaga) | Coluna do worker |
 
 Regra de endereçamento: **tudo é endereçado pela conta**, nunca pelo agent. As rotas
@@ -512,6 +512,12 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
 - Roteamento: o servidor escolhe o agent pela conta (`?account=`). Sem `?account=` e com um agent só,
   usa esse (compatível com a web de hoje). Um agent sem conta declarada só atende quando nenhum
   outro declara aquela conta. Um agent `managed` só pode declarar a conta do seu pod.
+- Vários clientes num agent anexado (fase 5 do doc 10, 2026-11-13; doc 08, "Fase 5 do doc 10"):
+  - `Hello.clients` lista a conta de cada cliente, e cada comando e evento leva `account`;
+  - o Hub registra cada cliente como um agent à parte, então as regras acima valem por cliente;
+  - o servidor anuncia o recurso no cabeçalho `Chronicle-Link-Features: clients` da resposta do
+    websocket, e um agent só manda `clients` a um servidor que o anuncia;
+  - um pod nunca manda `clients`.
 
 ### 13.2 Variáveis
 
@@ -523,6 +529,7 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
 | `serve` | `WORKER_NAMESPACE` | padrão: o namespace do próprio pod (arquivo da SA) |
 | `serve` | `WORKER_SERVER_URL` | padrão `http://chronicle.<namespace>.svc` (o Service do app, porta 80) |
 | attached | `MICROBOT_AGENT_ACCOUNT` | conta que o agent do zaros declara no hello (opcional) |
+| attached | `MICROBOT_AGENT_CLIENTS` | no lugar da anterior e de `MICROBOT_HOME`: vários clientes, `conta=home de dev` separados por vírgula; pela ordem, displays `:99`, `:100`, … e VNC 5999, 6000, … (fase 5 do doc 10) |
 | worker | `WORKER_ACCOUNT`, `CHRONICLE_URL`, `CHRONICLE_AGENT_TOKEN_FILE` | conta do pod, servidor, token projetado (relido a cada conexão) |
 | worker | `MB_DEV_HOME`, `MB_XMX`, `MB_HWID_STORE_DIR`, `MB_PREBUILT_PLUGINS` | opções do `mb-client` (seção 13.4) |
 | worker | `CHRONICLE_LINK_SERVER_URL`, `CHRONICLE_LINK_TOKEN` | o Chronicle Link usa estes no lugar da config quando presentes (credencial `ipl_`) |

@@ -69,17 +69,37 @@ func TestOutboxKeepsTheNewestState(t *testing.T) {
 	var o outbox
 	o.init()
 	ev := func(n int) []RunEvent { return make([]RunEvent, n) }
-	o.put(Run{UID: "aa", Events: ev(2), State: RunRunning})
-	o.put(Run{UID: "bb", Events: ev(1)})
-	o.put(Run{UID: "aa", Events: ev(1), State: RunWaiting}) // a stale one put back
-	o.put(Run{UID: "aa", Events: ev(3), State: RunDone})
-	o.put(Run{Events: ev(9)}) // no uid: nothing to key it by
-	got := o.take()
-	if len(got) != 2 || got[0].UID != "aa" || got[0].State != RunDone || got[1].UID != "bb" {
+	all := func(string) bool { return true }
+	o.put("acc_a", Run{UID: "aa", Events: ev(2), State: RunRunning})
+	o.put("acc_a", Run{UID: "bb", Events: ev(1)})
+	o.put("acc_a", Run{UID: "aa", Events: ev(1), State: RunWaiting}) // a stale one put back
+	o.put("acc_a", Run{UID: "aa", Events: ev(3), State: RunDone})
+	o.put("acc_a", Run{Events: ev(9)}) // no uid: nothing to key it by
+	got := o.take(all)
+	if len(got) != 2 || got[0].run.UID != "aa" || got[0].run.State != RunDone || got[1].run.UID != "bb" || got[0].account != "acc_a" {
 		t.Fatalf("outbox = %+v", got)
 	}
-	if len(o.take()) != 0 {
+	if len(o.take(all)) != 0 {
 		t.Fatal("take did not empty the outbox")
+	}
+}
+
+// The runs of a client the link does not serve stay queued, in order, for
+// a link that does; the same uid on two clients is two runs.
+func TestOutboxKeepsTheRunsOfClientsNotLinked(t *testing.T) {
+	var o outbox
+	o.init()
+	o.put("acc_a", Run{UID: "aa"})
+	o.put("acc_b", Run{UID: "aa", State: RunDone})
+	o.put("acc_b", Run{UID: "bb"})
+	o.put("acc_a", Run{UID: "cc"})
+	onlyA := func(account string) bool { return account == "acc_a" }
+	if got := o.take(onlyA); len(got) != 2 || got[0].run.UID != "aa" || got[1].run.UID != "cc" {
+		t.Fatalf("first link = %+v", got)
+	}
+	got := o.take(func(string) bool { return true })
+	if len(got) != 2 || got[0].account != "acc_b" || got[0].run.State != RunDone || got[1].run.UID != "bb" {
+		t.Fatalf("second link = %+v", got)
 	}
 }
 

@@ -19,10 +19,13 @@
 #                        gradle; it must hold DevBootstrapPlugin.jar and ChronicleLinkPlugin.jar
 #   MB_HEADLESS_DISPLAY, MB_HEADLESS_SIZE, MB_VNC_PORT, MB_START_TIMEOUT  see --headless and start
 # PipeWire muting and the xdotool window fit are skipped when their commands are missing.
+# Several clients run side by side, each with its own MB_DEV_HOME, MB_HEADLESS_DISPLAY and
+# MB_VNC_PORT (`chronicle agent` with MICROBOT_AGENT_CLIENTS sets them). A running instance's
+# display and port are kept in its home (run/xvfb.display, run/vnc.port) and win over the variables.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"
 
-usage() { sed -n '2,21p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
+usage() { sed -n '2,24p' "$0" | sed 's/^# \{0,1\}//'; exit "${1:-0}"; }
 
 MB_HEADLESS_DISPLAY="${MB_HEADLESS_DISPLAY:-:99}"
 MB_HEADLESS_AUDIO_NAME="Microbot headless"
@@ -31,6 +34,9 @@ MB_XVFB_PIDFILE="$MB_RUN/xvfb.pid"
 MB_XMX="${MB_XMX:-2g}"
 MB_HWID_STORE_DIR="${MB_HWID_STORE_DIR:-$HOME/.runelite}"
 MB_VNC_PIDFILE="$MB_RUN/vnc.pid"
+# The display and the port this home's Xvfb and x11vnc run on, read by `chronicle agent` too.
+MB_XVFB_DISPLAYFILE="$MB_RUN/xvfb.display"
+MB_VNC_PORTFILE="$MB_RUN/vnc.port"
 
 pid_alive() { [[ -f "$1" ]] && kill -0 "$(cat "$1")" 2>/dev/null; }
 
@@ -47,17 +53,30 @@ kill_pidfile() {
 	rm -f "$file"
 }
 
+# A running Xvfb and x11vnc of this home keep the display and port they started on, whatever
+# the variables say now: another client may have those, and the agent reads the files.
+adopt_display() {
+	if pid_alive "$MB_XVFB_PIDFILE" && [[ -s "$MB_XVFB_DISPLAYFILE" ]]; then
+		MB_HEADLESS_DISPLAY="$(cat "$MB_XVFB_DISPLAYFILE")"
+	fi
+	if pid_alive "$MB_VNC_PIDFILE" && [[ -s "$MB_VNC_PORTFILE" ]]; then
+		MB_VNC_PORT="$(cat "$MB_VNC_PORTFILE")"
+	fi
+}
+
 # Xvfb is always "visible", so the client never throttles rendering the way a hidden or
 # minimized desktop window does; x11vnc lets a browser (noVNC) watch and drive it.
 start_display() {
 	command -v Xvfb >/dev/null || die "Xvfb not found; run inside nix develop"
 	command -v x11vnc >/dev/null || die "x11vnc not found; run inside nix develop"
+	adopt_display
 	local n="${MB_HEADLESS_DISPLAY#:}" i
 	if ! pid_alive "$MB_XVFB_PIDFILE"; then
 		[[ -e "/tmp/.X11-unix/X$n" ]] && die "display $MB_HEADLESS_DISPLAY is taken by another X server; set MB_HEADLESS_DISPLAY"
 		setsid nohup Xvfb "$MB_HEADLESS_DISPLAY" -screen 0 "${MB_HEADLESS_SIZE:-1280x900x24}" -nolisten tcp \
 			>"$MB_RUN/xvfb.out" 2>&1 </dev/null &
 		echo $! >"$MB_XVFB_PIDFILE"
+		echo "$MB_HEADLESS_DISPLAY" >"$MB_XVFB_DISPLAYFILE"
 		for ((i = 0; i < 50; i++)); do
 			[[ -S "/tmp/.X11-unix/X$n" ]] && break
 			sleep 0.2
@@ -65,12 +84,17 @@ start_display() {
 		[[ -S "/tmp/.X11-unix/X$n" ]] || die "Xvfb did not come up; see $MB_RUN/xvfb.out"
 	fi
 	if ! pid_alive "$MB_VNC_PIDFILE"; then
+		# Another client's x11vnc (or anything else) on the port would show its game instead.
+		if (: <>"/dev/tcp/127.0.0.1/$MB_VNC_PORT") 2>/dev/null; then
+			die "port $MB_VNC_PORT is taken on 127.0.0.1; set MB_VNC_PORT"
+		fi
 		# Loopback only and no password: whatever exposes it (the planner) must authenticate.
 		# x11vnc refuses to run when it sees a Wayland session, even for an Xvfb display.
 		env -u WAYLAND_DISPLAY XDG_SESSION_TYPE=x11 \
 			setsid nohup x11vnc -display "$MB_HEADLESS_DISPLAY" -localhost -rfbport "$MB_VNC_PORT" \
 			-forever -shared -nopw >"$MB_RUN/vnc.out" 2>&1 </dev/null &
 		echo $! >"$MB_VNC_PIDFILE"
+		echo "$MB_VNC_PORT" >"$MB_VNC_PORTFILE"
 	fi
 	echo "headless display $MB_HEADLESS_DISPLAY, VNC on 127.0.0.1:$MB_VNC_PORT"
 }
@@ -78,6 +102,7 @@ start_display() {
 stop_display() {
 	kill_pidfile "$MB_VNC_PIDFILE"
 	kill_pidfile "$MB_XVFB_PIDFILE"
+	rm -f "$MB_VNC_PORTFILE" "$MB_XVFB_DISPLAYFILE"
 }
 
 wait_ready() {
@@ -274,6 +299,7 @@ status() {
 	local pid
 	if pid="$(mb_client_pid)"; then
 		echo "running (pid $pid)"
+		adopt_display
 		pid_alive "$MB_XVFB_PIDFILE" && echo "headless on $MB_HEADLESS_DISPLAY, VNC 127.0.0.1:$MB_VNC_PORT"
 		if [[ -S "$MB_SOCKET" ]]; then
 			mb_api GET /state | jq -c '{loggedIn, gameState, world, player: .player.name}' 2>/dev/null || echo "agent server not answering"

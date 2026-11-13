@@ -5,14 +5,18 @@ jeito recomendado (seção 14); E11 a E18 em aberto, com o conservador implement
 seção 9, item 17) e 1 (item 21, 2026-11-13) estão feitas. O código das fases 2, 3 e 4 está pronto
 (2026-11-13). Falta a parte do dono: na 2, gravar um trecho do Oziris 1.1 e confirmar as tarefas
 propostas; na 3, executar um trecho de logística no jogo, olhando, com o término provado pelo ingest;
-na 4, um treino até `skill:x>=N` no jogo sem intervenção (seção 13).** A fase 1
+na 4, um treino até `skill:x>=N` no jogo sem intervenção (seção 13). Da fase 5, vários clientes no
+agent está pronto (2026-11-13); as receitas de quest esperam a extração com o dono e os planos
+customizados na UI esperam o canvas.** A fase 1
 entregou as entidades `npc`, `shop` e `object`, as áreas dos locais, o schema de `tasks[]` e de
 receitas e o verificador (seções 7 e 8, "Como implementado"). A fase 2 entregou a gravação por
 demonstração no plugin e no ingest, as tarefas propostas a partir dela e o modo assistido no painel
 (seções 10 e 11, "Como implementado"). A fase 3 entregou os planos (seção 9), o comando de tarefa no
 agent e o executor de `travel`, `bank` e `buy` no plugin (seção 10), todos com "Como implementado". A
 fase 4 entregou o `wait_until` por chave de objetivo nos runs e nas rotinas do doc 08 e o `train` por
-delegação a um plugin (seção 10, "Como implementado (fase 4)").
+delegação a um plugin (seção 10, "Como implementado (fase 4)"). Da fase 5, o agent anexado passou a
+controlar vários clientes, cada um com a sua conta, o seu executor e o seu lock (seção 10, "Como
+implementado (fase 5)").
 Ainda não há tarefa ou receita real no conteúdo: elas entram com a gravação e a confirmação do dono. O
 resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
@@ -426,6 +430,45 @@ atribuição de cada passo aparece na tela.
   customizado; a extração do texto do guia nunca o põe (E18).
 - **Vários personagens:** catálogos e receitas compartilhados; por conta ficam modo, fatos, plano ativo
   e cliente (`clients`). O agent gerencia N clientes, com um executor e um lock por cliente.
+
+  **Como implementado (fase 5, vários clientes no agent, 2026-11-13).** Detalhes no doc 08, "Fase 5
+  do doc 10".
+
+  - **Configuração:** no agent anexado (zaros), `MICROBOT_AGENT_CLIENTS` no lugar de
+    `MICROBOT_AGENT_ACCOUNT` e `MICROBOT_HOME`. É uma lista de `conta=home de dev`, separados por
+    vírgula, ponto e vírgula ou espaço, por exemplo
+    `acc_main=~/.local/share/microbot-dev,acc_alt=~/.local/share/microbot-dev-alt`.
+  - **Cada cliente é uma instância do harness**, com:
+    - o próprio home de dev: perfis, plugins, o `credentials.properties` do `mb-account` e os
+      sockets do Agent Server e da ponte;
+    - o próprio display do Xvfb e a própria porta do x11vnc, pela ordem da lista: o primeiro em `:99`
+      e 5999, o segundo em `:100` e 6000. As bases vêm de `MB_HEADLESS_DISPLAY` e `MB_VNC_PORT`.
+
+    O agent passa `MB_DEV_HOME`, `MB_HEADLESS_DISPLAY` e `MB_VNC_PORT` a cada `mb-client` e
+    `mb-account`.
+  - **Um executor e um lock por cliente.** Cada cliente tem o seu run, o seu ponto seguro, os seus
+    gatilhos e recorrentes, o seu `task_run` e `wait_until`, e os seus arquivos
+    (`agent-runs.<conta>.json`, `agent-triggers.<conta>.json`, `agent-recurring.<conta>.json`). Um
+    cliente ocupado, rodando um run ou com erro não segura o outro.
+  - **Protocolo:**
+    - o hello ganha `clients` (a conta de cada cliente), e cada comando e cada evento levam `account`;
+    - o servidor registra cada cliente como um agent à parte no Hub, com o seu id e a sua conta;
+    - por isso o roteamento por conta, a auditoria, a VNC, as rotinas, o vigia do `wait_until` e as
+      telas continuam como estavam.
+  - **Compatibilidade:**
+    - um agent de um cliente manda o hello de sempre;
+    - o servidor anuncia que roteia vários clientes no cabeçalho `Chronicle-Link-Features: clients` da
+      resposta do websocket;
+    - um servidor antigo não anuncia nada, e o agent liga só o primeiro cliente, sem `account`; os
+      runs dos outros ficam guardados até um servidor que os conheça, para nenhum ser gravado na
+      conta errada;
+    - os workers gerenciados continuam com um cliente por pod: o servidor recusa `clients` de um pod.
+  - **Modelo de dados: sem migration.** A tabela `clients` da seção 12 não foi criada, por dois
+    motivos:
+    - o cliente vive no hello, e o servidor sabe ao vivo qual conexão serve cada conta;
+    - o perfil do Microbot já é por conta (`client_profiles` e `account_client`, doc 11, seção 15).
+
+    A tabela volta se o dono quiser lembrar onde uma conta roda enquanto o agent está fora.
 - **Risco:** toda receita declara riscos; em HCIM, risco de morte bloqueia execução sem supervisão. O
   módulo continua desligado por padrão (`MICROBOT_CONTROL=off`) e o risco de banimento segue aceito
   conscientemente (doc 01, decisão 9).
@@ -500,7 +543,7 @@ migration de cada fase.
 | `mark_commands` | nova, só adição (migration 0009) | `seq`, `id`, `account_id`, `guide_id`, `kind`, `actor`, `via`, `step_id`, `revokes_id`, `effects`, `at` |
 | `step_marks` | muda: projeção | ganha `command_id` |
 | `objective_progress` | mantém, com mais restrições | ganha `actor`, `run_id`; CHECK de evidência não vazia; trava no banco |
-| `clients` | nova | `id`, máquina, perfil do Microbot |
+| `clients` | não criada (fase 5) | `id`, máquina, perfil do Microbot; os clientes vêm do hello do agent e o perfil de `account_client` (seção 10, "Como implementado (fase 5)") |
 | `accounts` | muda | `guide_id` com FK, `client_id`, `active_plan_id` |
 | `plans`, `plan_items` | novas | `kind ∈ {route, goal, custom}`; item `step`, `recipe` ou `task` |
 | `routine_runs`, `run_events` | novas (doc 08) | execução, `seq`, `kind`, `detail` |
@@ -630,6 +673,41 @@ intervenção" é do dono, olhando a primeira vez:
 
 O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com `until` pelo `POST
 /api/microbot/run?account=` (a web ainda não tem o campo; pede o canvas).
+
+**Fase 5: em partes.** As três entregas da tabela são independentes ("por entrega"):
+
+1. **Vários clientes no agent: pronto (2026-11-13).** Detalhes na seção 10, "Como implementado (fase
+   5)", e no doc 08.
+   - Testado com dois clientes falsos, com `-race`:
+     - comandos roteados pela conta;
+     - lock e run de um cliente sem segurar o outro;
+     - um cliente falhando sem afetar o outro, e os runs de cada um chegando na conta certa;
+     - a VNC de cada cliente;
+     - um servidor antigo, que só recebe o primeiro cliente;
+     - as rotas reais da API.
+   - Nada rodou com dois clientes de verdade. Para usar, o dono:
+     1. prepara o home de dev do segundo cliente: escolhe o personagem com
+        `MB_DEV_HOME=<home> mb-account use <n>`, instala o Chronicle Link com
+        `MB_DEV_HOME=<home> mb-install chroniclelink` e, na primeira vez, configura nele o token de
+        ingest da conta, como fez no primeiro;
+     2. atualiza o `chronicle` do servidor e o da máquina do jogo (um servidor antigo liga só o
+        primeiro cliente);
+     3. troca `MICROBOT_AGENT_ACCOUNT` por `MICROBOT_AGENT_CLIENTS` no agent (no `just agent`, ou no
+        serviço do nix-config) e o reinicia;
+     4. confere na Frota e no Cockpit as duas contas com o agent do zaros, e abre cada cliente
+        headless com a sua VNC.
+
+     Com `MICROBOT_AGENT_CLIENTS`, os arquivos do agent são por conta. O histórico antigo
+     (`agent-runs.json`) fica onde está, mas o servidor já o tem, e as rotinas voltam do servidor ao
+     ligar. Cuidados:
+     - CPU e memória: cada cliente headless usa de 1 a 2 núcleos e o `-Xmx` de `MB_XMX` (2 GiB);
+     - o HWID agent guarda os aparelhos de todos os personagens nos mesmos arquivos
+       (`~/.runelite/spoofed-*.properties`): na primeira vez de um personagem novo, um cliente por
+       vez.
+2. **Receitas de quest:** esperam a decisão da E10 (o que aproveitar do Quest Helper) e a extração
+   com o dono olhando (CLAUDE.md, regra 9).
+3. **Planos customizados na UI:** pedem o desenho no canvas antes (CLAUDE.md, regra 11). A API e a CLI
+   (`chronicle plans`) já existem desde a fase 3.
 
 ## 14. Decisões em aberto (dono)
 

@@ -372,6 +372,8 @@ export interface Run {
 	trigger?: TriggerEvent;
 	/** A rotina recorrente que começou o run (rtn_...), quando foi uma. */
 	routine?: string;
+	/** O id do run no servidor (o `id` recomeça num pod novo). */
+	uid?: string;
 	startedAt: string;
 	finishedAt?: string;
 	from?: Pos;
@@ -413,6 +415,85 @@ export interface Triggers {
 	watchError?: string;
 	/** O último evento visto, disparado ou não (skipped diz por quê). */
 	last?: { at: string; event: TriggerEvent; runId?: string; skipped?: string };
+}
+
+/** Os relógios do Time Tracking que uma rotina recorrente segue (agent.Clocks). */
+export type RecurringClock =
+	| 'HERB'
+	| 'TREE'
+	| 'FRUIT_TREE'
+	| 'BIRD_HOUSE'
+	| 'ALLOTMENT'
+	| 'FLOWER'
+	| 'BUSH'
+	| 'GRAPE'
+	| 'HOPS'
+	| 'SPECIAL'
+	| 'FARMING_CONTRACT';
+
+/** O último run de uma rotina recorrente, como o banco guarda. */
+export interface RecurringRun {
+	state: Run['state'];
+	startedAt: string;
+	finishedAt?: string;
+}
+
+/**
+ * Uma rotina recorrente (doc 08, fase 4, entrega 4; doc 11, seção 16.4): um run que o agent começa
+ * sozinho quando o relógio fica pronto ou, sem leitura do relógio, um intervalo depois do fim do
+ * último run dela.
+ */
+export interface Recurring {
+	/** rtn_...; vazio ao criar. */
+	id?: string;
+	name: string;
+	/** Desligada, nunca começa sozinha. */
+	enabled: boolean;
+	clock?: RecurringClock;
+	intervalMin?: number;
+	/** Com várias prontas, a maior entra primeiro (0 a 100). */
+	priority: number;
+	run: RunParams;
+	/** Do servidor (um save ignora): quando o dono salvou e o último run dela. */
+	updatedAt?: string;
+	lastRun?: RecurringRun;
+}
+
+/** Por que uma rotina recorrente está pronta ou não (agent.Reason*). */
+export type RecurringReason =
+	| 'off'
+	| 'clock_ready'
+	| 'clock_waiting'
+	| 'clock_stale'
+	| 'first'
+	| 'interval'
+	| 'interval_waiting'
+	| 'no_clock'
+	| 'held'
+	| 'held_agent';
+
+/** Uma rotina como o vigia do agent a viu na última olhada. */
+export interface RecurringState extends Recurring {
+	due: boolean;
+	/** Vazio antes de o vigia olhar (e sempre quando a resposta vem do banco). */
+	reason?: RecurringReason;
+	nextAt?: string;
+}
+
+/**
+ * GET /api/microbot/recurring?account=: o vigia do agent como está; sem agent que as rode, as
+ * rotinas do banco com watchError dizendo por quê.
+ */
+export interface RecurringStatus {
+	recurring: RecurringState[];
+	checkedAt?: string;
+	/** Por que nada começou na última olhada embora uma estivesse pronta ("um run em andamento"). */
+	waiting?: string;
+	/** Por que os relógios não foram lidos. */
+	clockError?: string;
+	watchError?: string;
+	/** O último run que o vigia começou, ou tentou. */
+	last?: { at: string; routine: string; name: string; runId?: string; skipped?: string };
 }
 
 /** Ações de plugins, scripts e configuração (doc 08, fase 3); todas vão para a auditoria. */
@@ -526,6 +607,38 @@ export const microbotApi = {
 			method: 'POST',
 			body: JSON.stringify(t)
 		}),
+	/** Rotinas da frota (v7, V6): gatilhos, recorrentes e runs de uma conta, sem trocar a do Cockpit. */
+	triggersOf: (account: string) => call<Triggers>('/triggers', undefined, BASE, account),
+	triggerSetOf: (account: string, t: Trigger) =>
+		call<{ ok: boolean; result: Triggers }>(
+			'/triggers',
+			{ method: 'POST', body: JSON.stringify(t) },
+			BASE,
+			account
+		),
+	runStartOf: (account: string, p: RunParams) =>
+		call<{ ok: boolean; result: { run: Run } }>(
+			'/run',
+			{ method: 'POST', body: JSON.stringify(p) },
+			BASE,
+			account
+		),
+	recurringOf: (account: string) => call<RecurringStatus>('/recurring', undefined, BASE, account),
+	/** Salva uma rotina recorrente (nova sem id); salvar de novo solta a trava de um run que falhou. */
+	recurringSave: (account: string, rc: Recurring) =>
+		call<{ ok: boolean; id: string; result: RecurringStatus }>(
+			'/recurring',
+			{ method: 'POST', body: JSON.stringify(rc) },
+			BASE,
+			account
+		),
+	recurringDelete: (account: string, id: string) =>
+		call<{ ok: boolean; result: RecurringStatus }>(
+			`/recurring/${encodeURIComponent(id)}`,
+			{ method: 'DELETE' },
+			BASE,
+			account
+		),
 	/** O fim do log do cliente, com o que parece segredo mascarado pelo agent. */
 	logs: (lines = 200) => call<{ file: string; lines: string[] }>(`/client/logs?lines=${lines}`),
 	account: () => call<ClientAccount>('/account'),

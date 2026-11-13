@@ -404,7 +404,7 @@ disco.
 | F3 | Imagens e um worker aplicado à mão: as duas imagens e o CI delas, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | chronicle (com `microbot/`), gielinor |
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
 | F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. **Parte 2 no servidor feita** (2026-11-13, seção 17): desvio, "Salvar no perfil", aplicar, e o perfil no cliente anexado. Falta a tela (fatia V8 da v7) |
-| F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade. As rotinas recorrentes vieram em seguida (seção 16.4), sem tela e sem o loadout |
+| F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade. As rotinas recorrentes vieram em seguida (seção 16.4), sem o loadout; a tela, na fatia V6 da web v7 |
 | F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle, gielinor. **Servidor feito** (2026-11-13, seção 18): "cabe mais N" pela quota, CPU e RAM por worker, login recusado na sessão. Falta a tela (resumo da Frota da v7) e decidir o reinício sozinho na versão nova |
 
 Antes de cada fase com tela (F1, F2, F5, F6), o desenho entra no canvas e o dono aprova (regra 11).
@@ -858,8 +858,8 @@ no agent (doc 08, R1). Sem tela nova: a web lê as mesmas rotas e os mesmos form
 - **Num worker de verdade:** ligar o gatilho do gato, Reiniciar o pod e vê-lo voltar.
 - **O agent do zaros** só passa a usar isto com o `chronicle` atualizado lá (nix-config). Até lá ele
   segue com os arquivos, e a importação acontece na primeira conexão do binário novo.
-- **Rotinas recorrentes:** feitas logo depois, na seção 16.4. A fila da v7 (a tela) continua
-  proposta (decisão 31 do doc 01).
+- **Rotinas recorrentes:** feitas logo depois, na seção 16.4. A tela da v7 (Rotinas e a
+  Fila da Visão geral) veio na fatia V6 (`docs/ui/decisoes-canvas.md`, seção 7.13).
 
 ### 16.4 Rotinas recorrentes (2026-11-13)
 

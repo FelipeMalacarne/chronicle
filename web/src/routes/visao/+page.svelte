@@ -26,6 +26,7 @@
 	import ClientLog from '#lib/v6/ClientLog.svelte';
 	import ClocksCard from '#lib/v6/ClocksCard.svelte';
 	import FazerAgora from '#lib/v6/FazerAgora.svelte';
+	import FilaConta from '#lib/v6/FilaConta.svelte';
 	import Glyph from '#lib/v6/Glyph.svelte';
 	import HistoricoRuns from '#lib/v6/HistoricoRuns.svelte';
 	import ObjectiveChip from '#lib/v6/ObjectiveChip.svelte';
@@ -224,10 +225,11 @@
 
 <svelte:head><title>{me.state?.account.rsn ?? 'Conta'} · Chronicle</title></svelte:head>
 
-<!-- Provisório (fatia V3): Relógios e Fazer agora no lugar da Fila do artboard, que entra com as
-	rotinas (V6). Ao lado de Fazendo agora quando o cliente roda; sem ele, entre a rota e o worker. -->
+<!-- A Fila do artboard (rotinas, V6) e, abaixo dela, Relógios e Fazer agora (provisório da V3). Ao
+	lado de Fazendo agora quando o cliente roda; sem ele, entre a rota e o worker. -->
 {#snippet fila()}
 	<div class="fila">
+		{#if account}<FilaConta {account} />{/if}
 		<ClocksCard
 			{timers}
 			{now}
@@ -413,7 +415,10 @@
 		display: flex;
 		flex-direction: column;
 	}
-	.fila > :global(.card) {
+	.fila {
+		gap: 20px;
+	}
+	.fila > :global(.card:last-child) {
 		flex: 1;
 	}
 	.row2 {

@@ -659,8 +659,9 @@ destino da viagem):
   - um run que o servidor viu começar e nunca terminar (o pod caiu no meio) conta como falho.
 - **API:** `GET`, `POST` e `DELETE /api/microbot/recurring`, sempre com `?account=`. Salvar e apagar
   vão para a auditoria, e o run que uma recorrente começa entra nela com o ator `recurring:<id>`.
-- **Sem tela:** a fila das recorrentes não está desenhada no canvas (regra 11). A API já devolve o
-  que a tela vai mostrar: se vence, por quê, quando, e o que o vigia espera.
+- **Tela:** a web v7 mostra as recorrentes em Rotinas (`/rotinas`, da frota) e na Fila da Visão
+  geral, com o que a API devolve: se vence, por quê, quando, e o que o vigia espera (fatia V6,
+  `docs/ui/decisoes-canvas.md`, seção 7.13).
 - **Fora desta entrega:**
   - Loadout com banco antes do run (o PREPARO): pede decisões do dono sobre o que sacar, e a
     verificação de cada plugin (se ele faz o próprio banco). Até lá, o plugin do run sai do banco

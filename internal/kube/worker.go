@@ -67,7 +67,14 @@ type WorkerSpec struct {
 	// Version is the planner build that wrote the Deployment (an annotation:
 	// the web shows "versão antiga" when it differs from the server's).
 	Version string
+	// RestartedAt, when set, is a pod template annotation: a new value rolls
+	// a new pod, like `kubectl rollout restart` (the server may not delete
+	// pods, docs/11 section 7).
+	RestartedAt string
 }
+
+// AnnotationRestartedAt is the pod template annotation of WorkerSpec.RestartedAt.
+const AnnotationRestartedAt = "chronicle.ftm.dev.br/restarted-at"
 
 // WorkerDeployment builds the Deployment of one worker.
 func WorkerDeployment(namespace string, s WorkerSpec) Deployment {
@@ -76,6 +83,10 @@ func WorkerDeployment(namespace string, s WorkerSpec) Deployment {
 	one, history := int32(1), int32(1)
 	no, yes := false, true
 	uid, grace := workerUID, int64(90)
+	var podAnnotations map[string]string
+	if s.RestartedAt != "" {
+		podAnnotations = map[string]string{AnnotationRestartedAt: s.RestartedAt}
+	}
 	return Deployment{
 		APIVersion: "apps/v1",
 		Kind:       "Deployment",
@@ -91,7 +102,7 @@ func WorkerDeployment(namespace string, s WorkerSpec) Deployment {
 			Strategy: DeploymentStrategy{Type: "Recreate"},
 			Selector: LabelSelector{MatchLabels: labels},
 			Template: PodTemplate{
-				Metadata: ObjectMeta{Labels: labels},
+				Metadata: ObjectMeta{Labels: labels, Annotations: podAnnotations},
 				Spec: PodSpec{
 					ServiceAccountName:            WorkerServiceAccount,
 					AutomountServiceAccountToken:  &no,

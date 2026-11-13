@@ -211,8 +211,10 @@ fit_headless_window() {
 	command -v xdotool >/dev/null || { echo "window: no xdotool, not resized"; return 0; }
 	local size="${MB_HEADLESS_SIZE:-1280x900x24}" w h id i
 	IFS=x read -r w h _ <<<"$size"
+	# xdotool fails while there is no window (the Agent Server can answer before the frame
+	# shows); under `set -e` and pipefail that would end start with the client up (2026-11-13).
 	for ((i = 0; i < 20; i++)); do
-		id="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool search --name '^RuneLite( - .*)?$' 2>/dev/null | head -1)"
+		id="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool search --name '^RuneLite( - .*)?$' 2>/dev/null | head -1)" || true
 		[[ -n "$id" ]] && break
 		sleep 1
 	done
@@ -222,12 +224,12 @@ fit_headless_window() {
 	# off screen and the movement never ends (it froze Tick Fisher, 2026-11-09).
 	local held=0 geometry
 	for ((i = 0; i < 30 && held < 5; i++)); do
-		geometry="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool getwindowgeometry "$id" 2>/dev/null | awk '/Geometry/ {print $2}')"
+		geometry="$(DISPLAY="$MB_HEADLESS_DISPLAY" xdotool getwindowgeometry "$id" 2>/dev/null | awk '/Geometry/ {print $2}')" || true
 		if [[ "$geometry" == "${w}x${h}" ]]; then
 			held=$((held + 1))
 		else
 			held=0
-			DISPLAY="$MB_HEADLESS_DISPLAY" xdotool windowmove "$id" 0 0 windowsize "$id" "$w" "$h"
+			DISPLAY="$MB_HEADLESS_DISPLAY" xdotool windowmove "$id" 0 0 windowsize "$id" "$w" "$h" || true
 		fi
 		sleep 1
 	done

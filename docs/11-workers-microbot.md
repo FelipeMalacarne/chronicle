@@ -263,6 +263,9 @@ do worker alimenta o tracking da conta pela URL interna, como qualquer instalaç
   memória do pod; perfil e rotinas ficam no banco.
 - **Atualizar:** depois de um deploy, os workers aparecem como "versão antiga". Reiniciar desloga a
   conta, então só acontece no clique ou com o worker deslogado. O protocolo do link continua aditivo.
+- **Reiniciar** na mesma imagem grava a anotação `chronicle.ftm.dev.br/restarted-at` no template do
+  pod, como o `kubectl rollout restart`: o Deployment (Recreate) para o pod e sobe outro. O servidor
+  não apaga pods; a SA `chronicle` só lê pods (seção 7).
 - **Falhas:**
   - **pod cai:** o Deployment o recria; o agent pede o bootstrap de novo e fica na tela de login. Um
     run em andamento vira `failed` ("o worker reiniciou no meio do run");

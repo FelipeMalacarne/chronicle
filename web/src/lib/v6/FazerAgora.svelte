@@ -184,7 +184,7 @@
 			<span class="nm"
 				>{nameOf(run.className)}{#if run.trigger}<span class="su tag">sozinho</span>{/if}</span
 			>
-			<span class="st">{RUN_LABEL[run.state]}</span>
+			<span class="runst">{RUN_LABEL[run.state]}</span>
 		</div>
 		<ol class="trail">
 			{#each run.events.slice(-6) as ev, i (i)}
@@ -387,7 +387,8 @@
 		flex: 1;
 		font-weight: 600;
 	}
-	.st {
+	/* Not `.st`: that global class is the step-status circle. */
+	.runst {
 		white-space: nowrap;
 		font:
 			500 11px 'JetBrains Mono',

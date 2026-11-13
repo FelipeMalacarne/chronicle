@@ -274,7 +274,7 @@
 {:else}
 	<div class="strip7">
 		<span class="lamp {tone}"></span>
-		<span class="st"
+		<span class="stnow"
 			><b>{stateText}</b>{#if stateDetail}<span class="mu"> · {stateDetail}</span>{/if}</span
 		>
 		<span class="sp"></span>
@@ -464,10 +464,11 @@
 {#if gameMap.open}<WorldMap me={pos} />{/if}
 
 <style>
-	.strip7 .st {
+	/* Not `.st`: that global class is the step-status circle. */
+	.strip7 .stnow {
 		min-width: 0;
 	}
-	.strip7 .st b {
+	.strip7 .stnow b {
 		font-weight: 600;
 	}
 	.push {

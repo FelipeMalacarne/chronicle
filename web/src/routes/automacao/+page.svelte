@@ -8,6 +8,7 @@
 		type ScriptEntry
 	} from '#lib/api/microbot';
 	import Glyph from '#lib/v6/Glyph.svelte';
+	import AutomacaoTabs from '#lib/v6/AutomacaoTabs.svelte';
 	import { cockpit } from '#lib/progress/microbot.svelte';
 	import VncView, { type VncPhase } from '#lib/v6/VncView.svelte';
 	import SidePanel from '#lib/v6/game/SidePanel.svelte';
@@ -272,6 +273,8 @@
 		<p>Este servidor só acompanha: não abre nem controla o cliente das contas.</p>
 	</div>
 {:else}
+	<!-- Jogo | Plugins: a lista de plugins da conta (instalar, ligar, configurar) mora na outra aba. -->
+	<div class="cltabs"><AutomacaoTabs current="cockpit" /></div>
 	<div class="strip7">
 		<span class="lamp {tone}"></span>
 		<span class="stnow"
@@ -464,6 +467,9 @@
 {#if gameMap.open}<WorldMap me={pos} />{/if}
 
 <style>
+	.cltabs {
+		align-self: flex-start;
+	}
 	/* Not `.st`: that global class is the step-status circle. */
 	.strip7 .stnow {
 		min-width: 0;

@@ -3,23 +3,37 @@
 	import { progressApi } from '#lib/api/client';
 	import { MicrobotError, workersApi, type WorkersView } from '#lib/api/microbot';
 	import { currentAccount } from '#lib/progress/account.svelte';
-	import { nextUp } from '#lib/progress/frota';
 	import { me } from '#lib/progress/me.svelte';
 	import { session } from '#lib/progress/session.svelte';
 	import type { TimerView } from '#lib/progress/types';
 	import { ago, routeLabel, STALE_SOURCE_MS } from '#lib/progress/view';
 	import { workerLines } from '#lib/progress/workers';
+	import { microbotModule } from '#lib/progress/microbot.svelte';
+	import { microbotApi, type MicrobotStatus } from '#lib/api/microbot';
+	import AuditCard from '#lib/v6/AuditCard.svelte';
+	import ClientAccount from '#lib/v6/ClientAccount.svelte';
+	import ClientLog from '#lib/v6/ClientLog.svelte';
+	import ClocksCard from '#lib/v6/ClocksCard.svelte';
+	import FazerAgora from '#lib/v6/FazerAgora.svelte';
+	import HistoricoRuns from '#lib/v6/HistoricoRuns.svelte';
 
 	/*
 	 * Conta › Visão geral (página 8 do canvas, V7Conta1440), com o que o servidor já tem: a rota,
-	 * os relógios, o worker e as fontes. "Fazendo agora" com ritmo e ganhos, a Fila de rotinas,
-	 * "Hoje" e as últimas execuções do artboard esperam as fatias V5 a V7 (decisoes-canvas.md, 7.5).
+	 * os relógios, o worker e as fontes. Da fatia V3 (decisoes-canvas.md, 7.5), o que saiu do
+	 * Cliente: Relógios e Fazer agora num cartão provisório no lugar da Fila, as últimas execuções,
+	 * as ações no cliente (até o Histórico), e o log e a conta do cliente no cartão Worker.
+	 * "Fazendo agora" com ritmo e ganhos, a Fila de rotinas e "Hoje" esperam as fatias V5 e V6.
 	 */
 	const account = $derived(currentAccount());
 	let timers = $state<TimerView[]>([]);
 	let workers = $state<WorkersView | null>(null);
 	let workersOff = $state(false);
 	let now = $state(Date.now());
+	let client = $state<MicrobotStatus['client'] | null>(null);
+	let agent = $state(false);
+	let runsVersion = $state(0);
+	let showLog = $state(false);
+	let showAccount = $state(false);
 
 	async function load(id: string) {
 		try {
@@ -43,6 +57,27 @@
 		const t = setInterval(() => void load(id), 15_000);
 		return () => clearInterval(t);
 	});
+	/* O cliente da conta (o Cockpit já aponta para a conta aberta), para Fazer agora e o log. */
+	async function loadClient() {
+		try {
+			const s = await microbotApi.status();
+			agent = !!s?.agent.connected;
+			client = s?.client ?? null;
+		} catch {
+			agent = false;
+			client = null;
+		}
+	}
+	$effect(() => {
+		if (!account || !microbotModule.enabled) return;
+		void loadClient();
+		const t = setInterval(() => {
+			if (!document.hidden) void loadClient();
+		}, 10_000);
+		return () => clearInterval(t);
+	});
+	const running = $derived(!!client?.running);
+	const loggedIn = $derived(!!client?.state?.loggedIn);
 
 	const route = $derived(
 		session.summary?.account === account ? session.summary?.routes.find((r) => r.active) : undefined
@@ -50,7 +85,6 @@
 	const pct = $derived(
 		route?.counts.total ? Math.round((100 * route.counts.done) / route.counts.total) : 0
 	);
-	const clocks = $derived(nextUp(timers, now, 6));
 	const line = $derived(workerLines(workers, now).find((l) => l.account === account));
 	const LABEL: Record<string, string> = {
 		plugin: 'Plugin',
@@ -101,23 +135,16 @@
 		</div>
 	</section>
 
-	<section class="card">
-		<div class="h">
-			<h2>Relógios</h2>
-			<span>Time Tracking</span>
-		</div>
-		<div class="b tight">
-			{#each clocks as c (c.label)}
-				<div class="cl">
-					<span>{c.label}</span><span class="w" class:rdy={c.ready}>{c.when}</span>
-				</div>
-			{:else}
-				<p class="mu">
-					Nenhum relógio contando. Eles chegam pelo plugin, com o Time Tracking ligado no cliente.
-				</p>
-			{/each}
-		</div>
-	</section>
+	<!-- Provisório (fatia V3): no lugar da Fila do artboard, que entra com as rotinas (V6). -->
+	<ClocksCard
+		{timers}
+		{now}
+		empty="Nenhum relógio contando. Eles chegam pelo plugin, com o Time Tracking ligado no cliente."
+	>
+		{#if agent && running}
+			<FazerAgora bare {loggedIn} onchange={() => runsVersion++} />
+		{/if}
+	</ClocksCard>
 
 	<section class="card">
 		<div class="h">
@@ -141,6 +168,8 @@
 					</dd>
 				</dl>
 				{#if line.blocked}<p class="mu">{line.blocked}</p>{/if}
+			{:else if agent}
+				<p class="mu">Um agent ligado a esta conta abre o cliente dela.</p>
 			{:else if workersOff}
 				<p class="mu">Este servidor só acompanha: não guarda sessões nem sobe clientes.</p>
 			{:else}
@@ -149,6 +178,24 @@
 					launcher.
 				</p>
 				<div class="row"><a class="btn btn-s" href={resolve('/contas/nova')}>Como enviar</a></div>
+			{/if}
+			{#if agent}
+				<div class="row">
+					<button
+						class="btn btn-s btn-g"
+						type="button"
+						aria-pressed={showLog}
+						onclick={() => (showLog = !showLog)}>Log do cliente</button
+					>
+					{#if line?.runtime === 'anexado' || !line}
+						<button
+							class="btn btn-s btn-g"
+							type="button"
+							aria-pressed={showAccount}
+							onclick={() => (showAccount = !showAccount)}>Conta do cliente</button
+						>
+					{/if}
+				</div>
 			{/if}
 		</div>
 	</section>
@@ -169,6 +216,18 @@
 		</div>
 	</section>
 </div>
+
+{#if agent && (showLog || showAccount)}
+	<div class="grid">
+		{#if showLog}<ClientLog />{/if}
+		{#if showAccount}<ClientAccount {running} />{/if}
+	</div>
+{/if}
+
+{#if microbotModule.enabled}
+	<HistoricoRuns version={runsVersion} />
+	<AuditCard version={runsVersion} />
+{/if}
 
 <style>
 	.grid {
@@ -245,10 +304,6 @@
 			400 11px 'JetBrains Mono',
 			monospace;
 		color: var(--ink-subtle);
-	}
-	.w.rdy {
-		color: var(--done);
-		font-weight: 600;
 	}
 	.w.old {
 		color: var(--stale);

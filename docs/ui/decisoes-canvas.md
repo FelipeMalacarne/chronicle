@@ -285,7 +285,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 |---|---|---|
 | V1 | Casca: Frota em `/` com o que a API já tem, cabeçalho da conta com as cinco abas apontando para as telas atuais, Nova conta no lugar do `/setup`, barra lateral e barra de 640 px, estados vazios | nada |
 | V2 | Conta › Rota: Passo, Rota inteira e Comparar numa aba; objetivo com progresso, passo a passo com caixas, marca de banco na linha | o valor observado no board. **Feita** (2026-11-13, seção 7.9) |
-| V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada |
+| V3 | Conta › Cliente: o Cockpit recomposto (jogo no centro; script, por perto, banco); Relógios e Fazer agora passam para um cartão provisório na Visão geral | nada. **Feita** (2026-11-13, seção 7.10) |
 | V4 | Conta › Personagem e Visão geral com o que já existe (rota, worker, relógios) | nada |
 | V5 | Ritmo: XP por hora, ganhos, "Hoje" e GP na raia, na Visão geral e no resumo da Frota | a série por conta |
 | V6 | Rotinas e Fila | doc 11, F6 |
@@ -534,3 +534,34 @@ Divergências do artboard:
 
 Conferido com os testes de `node --test` da lógica da tela (`objetivo.ts`, `rota.ts`, `agora.ts`,
 `relogios.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.
+
+### 7.10 Implementação: V3, Conta › Cliente (2026-11-13)
+
+Artboards seguidos: `V7Cliente1440` e `V7Cliente640` (página 8), na aba Cliente (`/automacao`), que só
+existe com o módulo do Microbot ligado no servidor. O Cockpit da v6 vira a aba: a faixa com o estado do
+cliente, Imagem | Ao vivo, o mundo e as ações; o aviso de script jogando com Pausar o script; o jogo no
+centro (a tela, o chat e o painel de itens com o menu do jogo, e o banco aberto no lugar da tela); ao
+lado, os cartões Script, Por perto e Banco. A 640 empilha a tela, o chat, o painel e Por perto, sem ao
+vivo e sem trocar de mundo. Os menus do jogo (Choose Option, Usar em, o mapa do mundo) seguem a v6
+(`V6MicrobotClienteEstados1440`, `V6MicrobotUsarEm1440`, `V6MicrobotMapa1440`), como diz a seção 7.2.
+
+Saem do Cliente o painel "Estado · GET /state" e a faixa de cartões Cliente, Conta e Agent (texto de
+sistema): a posição e o mundo ficam no HUD da tela.
+
+Divergências do artboard:
+
+1. **Faixa:** sem o nome do lugar ("Barbarian Outpost"), porque o servidor não traduz coordenadas em
+   lugar; o HUD diz "imagem a cada 5 s" no lugar da idade da imagem. **Iniciar o cliente** e **Parar o
+   cliente** continuam na faixa: com o agent anexado (zaros), sem worker, o cabeçalho não tem Parar.
+2. **Script:** sem o sprite da skill, porque não se sabe qual skill um plugin treina, e sem "sem erros",
+   porque o heartbeat não conta erros (quando ele falta, a linha diz "sem heartbeat"). Pausar pausa
+   todos os scripts, que é o que o Agent Server faz. **Configurar** leva aos plugins deste cliente
+   (`/automacao/plugins`), porque Rotinas (V6) ainda não existe.
+3. **Por perto:** sem o tipo "ponto": no jogo, o fishing spot é um NPC.
+4. **O que o Cockpit tinha e o artboard não põe no Cliente** vai, provisório, para a Visão geral:
+   Relógios e Fazer agora num cartão no lugar da Fila (até a V6), as últimas execuções, as ações no
+   cliente (a antiga Auditoria, até o Histórico da V7) e o log e a conta do cliente, atrás de botões no
+   cartão Worker (a conta do cliente só com o agent anexado).
+
+Conferido com os testes de `node --test` da lógica da tela (`jogo.ts`, com as linhas do cartão Script, e
+`automacao.ts`), `pnpm check` e `pnpm build`; as capturas ficam para a revisão.

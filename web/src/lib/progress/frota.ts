@@ -122,6 +122,9 @@ export function nextUp(timers: TimerView[], now: number, limit = 2): LaneNext[] 
 /** Plugins que ficam sempre ligados e não dizem o que a conta está fazendo. */
 const UTILITY = /break handler|auto ?login|chronicle link|antiban|quest helper/i;
 
+/** Um plugin que fica sempre ligado e não joga (Break Handler, Chronicle Link, ...). */
+export const isUtility = (name: string) => UTILITY.test(name);
+
 /** "Tick Fisher", "Tick Fisher +1": o primeiro script que joga e quantos mais. */
 export function scriptsLine(scripts: string[]): string {
 	const playing = scripts.filter((s) => !UTILITY.test(s));

@@ -3,8 +3,16 @@
  * diálogo, o que está por perto, as state machines e o chat do jogo, a partir de GET
  * /api/microbot/game. Puro, testado em node.
  */
-import type { GameCommand, GameItem, GameView, Pos, SpellTarget } from '../api/microbot.ts';
+import type {
+	GameCommand,
+	GameItem,
+	GameView,
+	Pos,
+	ScriptEntry,
+	SpellTarget
+} from '../api/microbot.ts';
 import { SKILL_ORDER } from './conta.ts';
+import { isUtility } from './frota.ts';
 
 /** EquipmentInventorySlot do RuneLite para os slots do boneco da Conta. */
 const EQUIP_SLOT: Record<string, string> = {
@@ -181,6 +189,42 @@ export function machineRows(v: GameView | null): MachineRow[] {
 			.filter(Boolean)
 			.join(' · ')
 	}));
+}
+
+export interface ScriptRow {
+	name: string;
+	className: string;
+	/** "pescando · 1.820 voltas", "pausado", "sem heartbeat". */
+	detail: string;
+}
+
+/** O pacote de uma classe: plugin e script do mesmo plugin moram no mesmo pacote. */
+const pkg = (className: string) => className.slice(0, className.lastIndexOf('.'));
+
+/**
+ * O cartão Script do Cliente (V7Cliente1440): os plugins ligados que jogam (sem os utilitários,
+ * como o Break Handler), cada um com o estado da state machine e as voltas do heartbeat do script
+ * do mesmo pacote.
+ */
+export function scriptRows(
+	scripts: Pick<ScriptEntry, 'name' | 'className' | 'active'>[],
+	v: GameView | null
+): ScriptRow[] {
+	const playing = scripts.filter((s) => s.active && !isUtility(s.name));
+	const beats = v?.observe?.scripts ?? [];
+	const machines = v?.machines?.scripts ?? [];
+	return playing.map((s) => {
+		const beat = beats.find((b) => pkg(b.scriptClassName) === pkg(s.className));
+		const machine = machines.length === 1 && playing.length === 1 ? machines[0] : undefined;
+		const loops = machine?.loopCount ?? beat?.loopCount;
+		const parts = [
+			v?.observe?.scriptsPaused ? 'pausado' : '',
+			machine?.currentState ? machine.currentState.toLowerCase().replace(/_/g, ' ') : '',
+			loops ? `${loops.toLocaleString('pt-BR')} voltas` : '',
+			beat?.status === 'NO_HEARTBEAT' ? 'sem heartbeat' : ''
+		];
+		return { name: s.name, className: s.className, detail: parts.filter(Boolean).join(' · ') };
+	});
 }
 
 /** As últimas mensagens do jogo, a mais nova por último. */

@@ -492,4 +492,15 @@
 			monospace;
 		color: #ffff00;
 	}
+	/* V7Cliente640: o painel ocupa a largura embaixo do chat, com o inventário em sete colunas. */
+	@media (max-width: 700px) {
+		.gside {
+			width: auto;
+			flex: 0 0 auto;
+		}
+		.ginv {
+			min-height: 0;
+			grid-template-columns: repeat(7, 1fr);
+		}
+	}
 </style>

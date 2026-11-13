@@ -3,10 +3,10 @@
 	import { RUN_LABEL, runDuration, runFinal, runOutcome, runWhen } from '#lib/progress/fazer';
 
 	/*
-	 * Runs (doc 08, fase 4; artboard V6MicrobotRuns1440): os últimos runs do agent, o mais novo
-	 * primeiro, com a trilha de cada um. O agent guarda o histórico na máquina do jogo, então ele
-	 * vale com o cockpit fechado e depois de o agent reiniciar. Só lê; relê a cada 30 s e quando o
-	 * painel Fazer agora avisa que um run terminou (version).
+	 * Últimas execuções (V7Conta1440; antes o painel Runs do cockpit, V6MicrobotRuns1440): os
+	 * últimos runs da conta, o mais novo primeiro: quando, o quê, quem pediu e o resultado, com a
+	 * trilha ao abrir a linha. Só lê; relê a cada 30 s e quando Fazer agora avisa que um run
+	 * terminou (version).
 	 */
 	let { version = 0 }: { version?: number } = $props();
 
@@ -35,7 +35,7 @@
 
 	const runs = $derived(data ? (all ? data.runs : data.runs.slice(0, FIRST)) : []);
 	const tone = (r: Run) =>
-		!runFinal(r) ? 'going' : r.state === 'done' ? 'done' : r.state === 'canceled' ? 'off' : 'bad';
+		!runFinal(r) ? 'going' : r.state === 'done' ? 'ok' : r.state === 'canceled' ? 'off' : 'bad';
 	const hhmm = (iso: string) =>
 		new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 	const short = (className: string) =>
@@ -43,104 +43,94 @@
 			.split('.')
 			.pop()
 			?.replace(/Plugin$/, '');
-	const detail = (r: Run) => [runDuration(r), runOutcome(r)].filter(Boolean).join(' · ') || null;
+	const why = (r: Run) =>
+		[r.trigger ? 'sozinho' : 'você pediu', runOutcome(r)].filter(Boolean).join(' · ');
 </script>
 
-<section class="panel">
-	<div class="plaque">Runs<span class="r">últimos {data?.runs.length ?? ''}</span></div>
-	<div class="pad">
-		{#if error && !data}
-			<p class="err">{error}</p>
-		{:else if !data}
-			<span class="su sm0" aria-busy="true">Lendo…</span>
-		{:else}
-			{#each runs as r (r.id)}
-				<div class="run">
-					<button
-						class="row"
-						type="button"
-						aria-expanded={open === r.id}
-						onclick={() => (open = open === r.id ? null : r.id)}
-					>
-						<span class="dot {tone(r)}" aria-hidden="true"></span>
-						<span class="nm"
-							>{short(r.className)}{#if r.trigger}<span class="tag">sozinho</span>{/if}</span
-						>
-						<span class="rs {tone(r)}">{RUN_LABEL[r.state]}</span>
-						<span class="when">{runWhen(r.startedAt)}</span>
-					</button>
-					{#if detail(r)}<span class="su sm">{detail(r)}</span>{/if}
-					{#if open === r.id}
-						{#if r.error}<p class="err">{r.error}</p>{/if}
-						<ol class="trail">
-							{#each r.events as ev, i (i)}
-								<li><span class="t">{hhmm(ev.at)}</span>{ev.text}</li>
-							{/each}
-						</ol>
-					{/if}
-				</div>
-			{:else}
-				<span class="su sm0">Nenhum run ainda.</span>
-			{/each}
-			{#if data.runs.length > FIRST}
-				<button class="more" type="button" onclick={() => (all = !all)}
-					>{all ? 'Ver menos' : `Ver todos (${data.runs.length})`}</button
-				>
-			{/if}
-			{#if data.error}
-				<p class="err" title={data.error}>O agent não conseguiu gravar o histórico.</p>
-			{/if}
-		{/if}
+<section class="card">
+	<div class="h hb">
+		<h2>Últimas execuções</h2>
+		{#if data?.runs.length}<span>{data.runs.length} guardadas</span>{/if}
 	</div>
+	{#if error && !data}
+		<p class="msg err">{error}</p>
+	{:else if !data}
+		<p class="msg mu" aria-busy="true">Lendo…</p>
+	{:else}
+		{#each runs as r (r.id)}
+			<button
+				class="hist"
+				type="button"
+				aria-expanded={open === r.id}
+				onclick={() => (open = open === r.id ? null : r.id)}
+			>
+				<span class="t" title={runWhen(r.startedAt)}>{hhmm(r.startedAt)}</span>
+				<span class="dot {tone(r)}" aria-hidden="true"></span>
+				<span class="nm"><b>{short(r.className)}</b></span>
+				<span class="r">{why(r)}</span>
+				<span class="d">{runDuration(r) ?? ''}</span>
+				<span class="res {tone(r)}">{RUN_LABEL[r.state]}</span>
+			</button>
+			{#if open === r.id}
+				<div class="open">
+					{#if r.error}<p class="err">{r.error}</p>{/if}
+					<ol class="trail">
+						{#each r.events as ev, i (i)}
+							<li><span class="t">{hhmm(ev.at)}</span>{ev.text}</li>
+						{/each}
+					</ol>
+				</div>
+			{/if}
+		{:else}
+			<p class="msg mu">Nenhuma execução ainda.</p>
+		{/each}
+		{#if data.runs.length > FIRST}
+			<button class="more" type="button" onclick={() => (all = !all)}
+				>{all ? 'ver menos' : `ver as ${data.runs.length}`}</button
+			>
+		{/if}
+		{#if data.error}
+			<p class="msg err" title={data.error}>O histórico não foi gravado.</p>
+		{/if}
+	{/if}
 </section>
 
 <style>
-	.pad {
-		padding: 8px 12px 12px;
+	.hb {
+		padding-bottom: 10px;
 	}
-	.run {
-		display: flex;
-		flex-direction: column;
-		gap: 3px;
-		padding: 6px 0;
-		border-bottom: 1px solid var(--hairline);
-	}
-	.row {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		border: 0;
+	button.hist {
+		width: 100%;
+		border-left: 0;
+		border-right: 0;
+		border-bottom: 0;
 		background: none;
-		padding: 0;
-		font: inherit;
-		font-size: 12px;
 		color: var(--ink);
+		font: inherit;
+		font-size: 13px;
 		text-align: left;
 		cursor: pointer;
 	}
+	button.hist:hover {
+		background: var(--elevated);
+	}
 	.nm {
-		flex: 1;
 		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
 	}
-	.tag {
-		margin-left: 6px;
-		padding: 0 5px;
-		border: 1px solid var(--hairline);
-		border-radius: 3px;
-		font-size: 10px;
-		color: var(--ink-muted);
+	.nm b {
+		font-weight: 600;
 	}
 	.dot {
 		width: 8px;
 		height: 8px;
 		border-radius: 50%;
-		flex: none;
+		justify-self: center;
 		background: var(--ink-subtle);
 	}
-	.dot.done {
+	.dot.ok {
 		background: var(--done);
 	}
 	.dot.going {
@@ -149,30 +139,17 @@
 	.dot.bad {
 		background: var(--not-started);
 	}
-	.rs {
-		font-size: 11px;
-		color: var(--ink-muted);
-	}
-	.rs.done {
-		color: var(--done);
-		font-weight: 600;
-	}
-	.rs.bad {
-		color: var(--not-started);
-		font-weight: 600;
-	}
-	.rs.going {
+	.res.going {
 		color: var(--progress);
-		font-weight: 600;
 	}
-	.when {
-		font:
-			500 11px 'JetBrains Mono',
-			monospace;
+	.res.off {
 		color: var(--ink-subtle);
 	}
+	.open {
+		padding: 0 16px 10px 100px;
+	}
 	.trail {
-		margin: 2px 0 0 16px;
+		margin: 0;
 		padding: 0;
 		list-style: none;
 		font-size: 11px;
@@ -189,15 +166,14 @@
 		color: var(--ink-subtle);
 		margin-right: 6px;
 	}
-	.su {
-		color: var(--ink-muted);
-	}
-	.sm {
-		margin-left: 16px;
-		font-size: 11px;
+	.msg {
+		margin: 0;
+		padding: 4px 16px 14px;
+		font-size: 13px;
 	}
 	.more {
-		margin-top: 8px;
+		align-self: flex-start;
+		margin: 8px 16px 12px;
 		border: 0;
 		background: none;
 		padding: 0;
@@ -207,12 +183,12 @@
 		cursor: pointer;
 	}
 	.err {
-		margin: 4px 0 0;
-		font-size: 12px;
 		color: var(--not-started);
+		font-size: 12px;
 	}
-	.sm0 {
-		margin: 0;
-		font-size: 13px;
+	@media (max-width: 900px) {
+		.open {
+			padding-left: 16px;
+		}
 	}
 </style>

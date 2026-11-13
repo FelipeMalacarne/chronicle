@@ -56,31 +56,35 @@
 		{#each chat as c (c.seq)}
 			<div class="cln"><span class="ct">{c.at}</span>{c.text}</div>
 		{:else}
-			<div class="cln su">Sem mensagens do jogo.</div>
+			<div class="cln none">Sem mensagens do jogo.</div>
 		{/each}
 	{/if}
 </div>
 
 <style>
+	/* A caixa de chat do jogo (V7Cliente1440): pergaminho do jogo com borda escura, nos dois temas. */
 	.chat {
-		height: 128px;
+		height: 112px;
 		overflow: auto;
 		box-sizing: border-box;
 		padding: 6px 10px;
-		background: var(--surface);
-		border: 1px solid var(--border);
+		background: #c8b98e;
+		border: 2px solid #1c160d;
 		border-radius: 3px;
-		font-size: 12.5px;
-		color: var(--ink);
+		font-size: 13px;
+		color: #000;
 	}
 	.cln {
 		line-height: 1.45;
+	}
+	.cln.none {
+		color: #4a3a22;
 	}
 	.cln .ct {
 		font:
 			400 10.5px 'JetBrains Mono',
 			monospace;
-		color: var(--ink-subtle);
+		color: #4a3a22;
 		margin-right: 8px;
 	}
 	.cdlg {
@@ -108,23 +112,17 @@
 		border-radius: 2px;
 	}
 	.copt {
-		color: var(--ink);
+		color: #000;
 	}
 	.copt:hover,
 	.copt:focus-visible {
 		color: #fff;
-		background: var(--frame-2);
+		background: #52432b;
 		outline: none;
 	}
 	.ccont {
 		color: #0000ff;
 		margin-top: 4px;
-	}
-	:global([data-theme='pedra']) .ccont {
-		color: #7fa7ff;
-	}
-	:global([data-theme='pedra']) .cq {
-		color: #e86c5c;
 	}
 	.ccont:hover {
 		text-decoration: underline;

@@ -18,16 +18,20 @@ enum Room
 		new WorldPoint(3364, 3000, 0),
 		new WorldPoint(3364, 2998, 0),
 		new WorldPoint(3364, 3002, 0),
-		new WorldPoint(3364, 3003, 0)),
-	// Southern Pollnivneach, next to the Asp & Snake bar. Coordinates from the Hub Blackjack
-	// plugin; not yet walked. No ladder: a fight is ended with the unarmed knock-out.
+		new WorldPoint(3364, 3003, 0),
+		null),
+	// Southern Pollnivneach, west of the Asp & Snake bar: four by four tiles (crates, a stool and
+	// a table take the south-west and east), curtains on the north and south walls. The south one
+	// was found open with NPCs walking through the room, so it is kept closed. Mapped in game on
+	// 2026-11-12. No ladder: a fight is ended with the unarmed knock-out.
 	THUG_TENT(
-		new WorldArea(3347, 2953, 6, 4, 0),
+		new WorldArea(3348, 2953, 4, 4, 0),
 		new WorldPoint(3350, 2957, 0),
 		new WorldPoint(3350, 2956, 0),
 		new WorldPoint(3350, 2958, 0),
-		new WorldPoint(3348, 2954, 0),
-		null);
+		new WorldPoint(3351, 2953, 0),
+		null,
+		new WorldPoint(3350, 2952, 0));
 
 	final WorldArea area;
 	/** Tile the curtain wall object reports. */
@@ -39,8 +43,11 @@ enum Room
 	final WorldPoint leadGoal;
 	/** Ladder object inside the room (same x/y upstairs), or null when the room has none. */
 	final WorldPoint ladder;
+	/** Tile a second curtain reports, kept closed; null when the room has one curtain. */
+	final WorldPoint backCurtain;
 
-	Room(WorldArea area, WorldPoint curtain, WorldPoint inside, WorldPoint outside, WorldPoint leadGoal, WorldPoint ladder)
+	Room(WorldArea area, WorldPoint curtain, WorldPoint inside, WorldPoint outside, WorldPoint leadGoal, WorldPoint ladder,
+		WorldPoint backCurtain)
 	{
 		this.area = area;
 		this.curtain = curtain;
@@ -48,6 +55,7 @@ enum Room
 		this.outside = outside;
 		this.leadGoal = leadGoal;
 		this.ladder = ladder;
+		this.backCurtain = backCurtain;
 	}
 
 	boolean hasLadder()

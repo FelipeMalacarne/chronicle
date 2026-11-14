@@ -29,6 +29,7 @@ import type {
 	WorldEntityDetail,
 	WorldResponse
 } from '../progress/types';
+import type { MtaInput, MtaResult, MtaTable } from '../progress/mta';
 import { untrack } from 'svelte';
 import { sync, markOk, markFail } from './sync.svelte';
 
@@ -224,6 +225,9 @@ export const progressApi = {
 	/** O ritmo da conta (V5); `since` é a meia-noite do navegador (`todaySince`). */
 	rhythm: (account: string, since: string) =>
 		request<AccountRhythm>(`/account/rhythm?account=${enc(account)}&since=${enc(since)}`),
+	/** The Mage Training Arena shop table (GET /api/mta/rewards): stateless, the same for every account. */
+	mtaRewards: () => request<MtaTable>('/mta/rewards'),
+	mtaCalculate: (input: MtaInput) => request<MtaResult>('/mta/calculate', json('POST', input)),
 	fleetRhythm: (since: string) => request<FleetRhythm>(`/rhythm?since=${enc(since)}`),
 	nearby: (guide: string, account: string) =>
 		request<NearbyView>(`/guides/${enc(guide)}/nearby?account=${enc(account)}`),

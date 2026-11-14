@@ -12,6 +12,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
 	"github.com/FelipeMalacarne/chronicle/internal/client"
+	"github.com/FelipeMalacarne/chronicle/internal/core/mta"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	"github.com/FelipeMalacarne/chronicle/internal/mcp"
@@ -226,6 +227,34 @@ func newAccountMCPServer(c *client.Client) *mcp.Server {
 						return nil, err
 					}
 					return c.Get(ctx, "/api/guides/"+url.PathEscape(a.Guide)+"/steps/"+url.PathEscape(a.ID), nil, false)
+				},
+			},
+			{
+				Name:        "mta_calculate",
+				Description: "Mage Training Arena: the pizazz points still missing in each room and the law, nature and cosmic runes that earning the chosen rewards takes, with the order to buy them (a wand upgrade also takes the wand below it). Estimates with staves covering the elemental runes. It reads no account: pass the points and the Magic level you know. Reward ids come from mta_rewards.",
+				InputSchema: schema(`{"type":"object","additionalProperties":false,"required":["rewards"],"properties":{
+ "rewards":{"type":"array","items":{"type":"string"},"description":"reward ids to earn points for"},
+ "owned":{"type":"array","items":{"type":"string"},"description":"reward ids already owned"},
+ "points":{"type":"object","additionalProperties":false,"properties":{"telekinetic":{"type":"integer","minimum":0},"graveyard":{"type":"integer","minimum":0},"enchantment":{"type":"integer","minimum":0},"alchemist":{"type":"integer","minimum":0}},"description":"pizazz points held now (default 0)"},
+ "magic":{"type":"integer","minimum":0,"description":"Magic level: it picks the best Enchant for the Enchanting Chamber"},
+ "enchant_level":{"type":"integer","minimum":0,"maximum":6,"description":"Lvl-N Enchant to assume instead of the one Magic implies"}}}`),
+				Handler: func(ctx context.Context, raw json.RawMessage) (any, error) {
+					var in mta.Input
+					if err := mcp.Decode(raw, &in); err != nil {
+						return nil, err
+					}
+					return c.MTACalculate(ctx, in)
+				},
+			},
+			{
+				Name:        "mta_rewards",
+				Description: "Mage Training Arena's Rewards Guardian: each reward's id and what it costs in each room's pizazz points, the runes per point of each room and the Magic level of each Enchant.",
+				InputSchema: noArgs,
+				Handler: func(ctx context.Context, raw json.RawMessage) (any, error) {
+					if err := empty(raw); err != nil {
+						return nil, err
+					}
+					return c.MTAData(ctx)
 				},
 			},
 			{

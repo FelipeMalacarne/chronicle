@@ -228,6 +228,8 @@ func TaskLabel(t content.Task, reg *entities.Registry) string {
 			s += " (plugin " + t.Plugin[strings.LastIndex(t.Plugin, ".")+1:] + ")"
 		}
 		return s
+	case content.TaskQuest:
+		return "Fazer a quest " + name(t.Quest) + " (Quest Helper)"
 	case content.TaskManual:
 		if note := strings.TrimSpace(t.Note); note != "" {
 			return note

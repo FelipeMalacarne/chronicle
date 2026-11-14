@@ -78,7 +78,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 29 | Comparar rotas é uma aba de Rotas (Oziris · BRUHsailer · Comparar), não a tela principal; a lista de rotas deixa de existir | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
 | 30 | O produto se chama **Chronicle** (wordmark Alegreya 700 com o livro e a runa); "Ironman Planner" vira descrição | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
 | 31 | Recorrentes (birdhouses, herb run, kingdom) como entidades com `ready_at` no doc 09 | resolvida (2026-11-10, o dono pediu os passos do roadmap): os relógios do Time Tracking chegam pelo ingest (`data.timers`, faceta `timer`) e o Agora mostra os Recorrentes (V6AgoraEstados1440); kingdom e o que o Time Tracking não conhece ficam para depois | docs/ui/decisoes-canvas.md, seção 5; doc 06, adendo de 2026-11-10 |
-| 32 | Modelo de execução: fatos por fonte com junção pura, comandos do dono como log, projeções reconstruíveis, tarefas tipadas, receitas por objetivo, planos e executor no plugin | E1 a E4 **resolvidas** (2026-11-05: fatos por fonte, log de comandos, rebuild no CI e aviso no boot, contrato por fixtures; a geração de tipos foi adiada, com OpenAPI como candidato no lugar do tygo); E5 a E10 **resolvidas** (2026-11-13, do jeito recomendado: as primitivas iniciais com `quest` depois, receitas no git, planos no banco, gravação por demonstração opt-in, nada com risco de morte sem supervisão em HCIM, Quest Helper avaliado na fase 5); as fases 1 a 5 do doc 10 entram na sequência do doc 04 depois do item 20 | doc 10 |
+| 32 | Modelo de execução: fatos por fonte com junção pura, comandos do dono como log, projeções reconstruíveis, tarefas tipadas, receitas por objetivo, planos e executor no plugin | E1 a E4 **resolvidas** (2026-11-05: fatos por fonte, log de comandos, rebuild no CI e aviso no boot, contrato por fixtures; a geração de tipos foi adiada, com OpenAPI como candidato no lugar do tygo); E5 a E10 **resolvidas** (2026-11-13, do jeito recomendado: as primitivas iniciais com `quest` depois, receitas no git, planos no banco, gravação por demonstração opt-in, nada com risco de morte sem supervisão em HCIM, Quest Helper avaliado na fase 5); E19 e E20 **resolvidas** (2026-11-14: executar quests por delegação ao Quest Helper que o cliente do Microbot traz, com o término provado pelo ingest; não importar nada do Quest Helper); as fases 1 a 5 do doc 10 entram na sequência do doc 04 depois do item 20 | doc 10 |
 | 33 | A rota do Oziris pode ser corrigida pelo dono: notas de update que tornam um passo impossível ou fora de ordem viram patches de import (`data/guide/route-patches.json`: remover, mover, inserir), não só anotações; primeiros: Lost Tribe depois do Goblin Diplomacy e 1.4.2 (favour) removido | resolvida (2026-11-05) | docs/05, seção 12 |
 | 34 | Workers do Microbot: cada conta pode ter um worker, no zaros (agent anexado) ou num pod do saradomin criado e apagado pelo Chronicle (web e CLI) no namespace `chronicle`; tudo endereçado pela conta; ao conectar a conta (`chronicle accounts connect`) a sessão vai cifrada para o Postgres e a conta fica habilitada para gerenciar; perfis do cliente (plugins, configurações, gráfico, com modelos), rotinas e histórico no Postgres; qualquer conta, com ou sem rota (modo `regular`); GPU ligada com gráficos no mínimo | resolvida (2026-11-12, revista no mesmo dia com as respostas do dono) no desenho; protótipo no canvas (página 7) a completar com conectar conta, perfil e desvio; W1 a W3 e W8 a W10 abertas; W7 resolvida (2026-11-12: a config do perfil vai pelo Agent Server antes de ligar os plugins); W4 resolvida pelo repositório único (decisão 35) | doc 11 |
 | 35 | `chronicle` e o antigo `microbot-plugins` num repositório só: os plugins (Chronicle Link, Cat Swap e os bots), o harness e o projeto Gradle ficam em `microbot/`, com o histórico, e um flake na raiz serve os dois lados (doc 07). A separação tracking × bot continua entre plugins (docs 06 e 08) | revista (2026-11-12): era "repositórios separados", com o acoplamento num contrato, num aperto de mão de versões da ponte e no bump da base do worker entre os dois. Agora um repositório, porque a visibilidade dos repositórios não importa para o dono, toda sessão precisava dos dois, o contrato entre o plugin Java e o servidor Go (ingest, ponte de controle, variáveis do Chronicle Link) muda num commit só e o bump da base entre repositórios (PR e token) some. O dono arquiva o `microbot-plugins` | doc 07, seções 3 e 5; doc 11, seções 7.2 e 10 |
@@ -131,8 +131,11 @@ A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com 
   prova a chave pelo ingest e manda o `run_until` ao agent) e o `train` por delegação a um plugin do
   cliente, pelo `chronicle task run`. Ela termina com um treino no jogo, sem intervenção. Da fase 5,
   vários clientes no agent está pronto (2026-11-13): o agent do zaros controla um cliente por conta,
-  com `MICROBOT_AGENT_CLIENTS`, cada um com o seu executor, lock, home de dev, display e VNC. As
-  receitas de quest esperam a extração com o dono, e os planos customizados na UI esperam o canvas.
+  com `MICROBOT_AGENT_CLIENTS`, cada um com o seu executor, lock, home de dev, display e VNC. A `quest`
+  por delegação ao Quest Helper do cliente (E19, decidida em 2026-11-14) também tem o código pronto: o
+  agent grava "Obtain Missing Items" em `No`, seleciona a quest pelo Agent Server e a para quando o
+  servidor prova `quest:x@finished` pelo ingest. As receitas de quest esperam a extração com o dono,
+  e os planos customizados na UI esperam o canvas.
 
 O próximo passo é do dono:
 
@@ -151,21 +154,27 @@ O próximo passo é do dono:
    montar um plano com a tarefa `train` (`plugin`, `config` e `until` no nível seguinte), levar o
    personagem até o lugar e rodar `chronicle task run --yes --wait 3h` sem mexer em nada até "Término
    provado pelo ingest", com o plugin desligado sozinho.
-4. **Ligar um segundo cliente no zaros, se quiser** (doc 10, seção 13, fase 5): preparar o home de
+4. **Rodar a primeira quest pelo Quest Helper** (doc 10, seção 13, fase 5, item 2): atualizar o
+   `chronicle` do servidor e da máquina do jogo, deixar o plugin Quest Helper ligado e sem quest
+   selecionada no cliente de dev, escolher uma quest curta e sem luta que a conta ainda não fez (por
+   exemplo Cook's Assistant ou Sheep Shearer), com os itens no inventário, montar um plano com a tarefa
+   `quest` e rodar `chronicle task run --yes --wait 1h` olhando pelo VNC, até "Término provado pelo
+   ingest" com o Quest Helper parado sozinho.
+5. **Ligar um segundo cliente no zaros, se quiser** (doc 10, seção 13, fase 5): preparar o home de
    dev dele (`mb-account use` e `mb-install chroniclelink` com `MB_DEV_HOME`, e o token de ingest da
    conta no Chronicle Link), atualizar o `chronicle` do servidor e da máquina do jogo e trocar
    `MICROBOT_AGENT_ACCOUNT` por `MICROBOT_AGENT_CLIENTS` no agent.
-5. **Conferir no jogo e no cluster:**
+6. **Conferir no jogo e no cluster:**
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;
    - uma rotina recorrente no zaros;
    - a capacidade da F7 depois do RBAC;
    - o reinício sozinho na versão nova depois de um deploy (decisão 37).
-6. **Desenhar no canvas** as telas em 640 px que faltam, o "Executar" da tarefa do plano (também o
-   "Treinar" de um `train`), o `wait_until` de uma rotina na tela de Rotinas e a tela de planos
+7. **Desenhar no canvas** as telas em 640 px que faltam, o "Executar" da tarefa do plano (também o
+   "Treinar" de um `train` e a `quest`), o `wait_until` de uma rotina na tela de Rotinas e a tela de planos
    customizados (fase 5 do doc 10: montar um plano com passos de vários guias, receitas e tarefas
    avulsas, e segui-lo).
-7. **Decidir o que está aberto:**
+8. **Decidir o que está aberto:**
    - o gesto para soltar uma rotina presa, hoje salvá-la de novo (o "Liberar" da tela de Rotinas);
    - E11 a E13 do doc 10 (o que a gravação registra, a retenção dela no servidor e o que vai para o
      conteúdo como evidência), hoje no modo conservador;
@@ -173,12 +182,8 @@ O próximo passo é do dono:
      do setup antes de sacar);
    - E16 a E18 do doc 10 (o `train` com o plugin já ligado, hoje recusado; as opções que o treino
      gravou, hoje deixadas; o plugin de um `train` de passo, hoje só por receita ou plano);
-   - E19 e E20 do doc 10, que saíram da avaliação do Quest Helper (E10, apêndice A):
-     - E19: executar uma quest por delegação ao Quest Helper que o cliente do Microbot já traz, como
-       o `train`, com o término provado pelo ingest. Recomendado: sim, de 2 a 3 dias de código;
-     - E20: um exportador dos passos do Quest Helper como fonte de propostas de receita.
-       Recomendado: não agora. Importar os dados dele não compensa, porque são código Java e não
-       dados.
+   - E21 do doc 10 (o run de uma `quest`: hoje recusa o bot do Quest Helper já dirigindo uma quest e
+     uma quest com requisito sem prova do ingest, e religa o "Enable QuestHelper" só durante o run).
 
 ## Discrepâncias e ressalvas
 

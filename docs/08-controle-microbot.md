@@ -132,7 +132,9 @@ quem é o usuário; as camadas abaixo cobrem o resto.
    requisições cruas ao Agent Server. Só executa comandos tipados: abrir e fechar o cliente,
    login/logout, instalar/remover plugin do Hub, iniciar/parar/pausar script, ler estado, ler e gravar
    configuração, screenshot, a sessão de VNC e, desde a fase 3 do doc 10, executar uma tarefa tipada do
-   plano (`task_run`: ids e tiles já resolvidos, executados pelo Chronicle Link). Ficam **fora**: `/scripts/deploy` (compila e executa
+   plano (`task_run`: ids e tiles já resolvidos, executados pelo Chronicle Link; um `train` delegado a
+   um plugin; uma `quest` delegada ao Quest Helper do cliente, pelas quatro chamadas fixas do
+   `/quest-helper` do Agent Server). Ficam **fora**: `/scripts/deploy` (compila e executa
    Java arbitrário), teclado e widgets crus, e qualquer exec além do `mb-client`. Assim, mesmo um
    `saradomin` comprometido não consegue executar código no `zaros`.
 5. **ACL do Tailscale**: o `zaros` alcança só o `saradomin` na porta do planner; nada na tailnet
@@ -927,6 +929,89 @@ doc: a tarefa aponta para uma classe de plugin com um preset):
   - as rotas reais (`/api/microbot/*?account=`) com um agent de dois clientes;
   - o `mb-client status` lendo o display e a porta gravados num home falso.
 - **Nada rodou com dois clientes de verdade.** Os passos do dono estão no doc 10, seção 13.
+
+**Fase 5 do doc 10: `quest` por delegação** (2026-11-14; E19 e E20 decididas pelo dono no mesmo dia;
+doc 10, seções 7, 10, 13 e apêndice A):
+
+- **O que o cliente já traz:** o Microbot fixado (2.6.52) tem o Quest Helper, o bot dele
+  (`QuestScript`) e, no Agent Server, o `QuestHelperHandler`. O agent usa só quatro chamadas, com
+  corpo fixo:
+
+  | Chamada | O que devolve ou faz |
+  |---|---|
+  | `GET /quest-helper/status` | `active` (plugin ligado), `selected`, `questName`, `turnOn` ("Enable QuestHelper", ausente é ligado), `completed` (a leitura do helper, nunca prova), `stepText` e `stepClass` do passo ativo |
+  | `GET /quest-helper/list` | `quests: [{enum, displayName}]`: os nomes que o `/start` aceita |
+  | `POST /quest-helper/start` `{"name"}` | seleciona a quest (409 com o plugin desligado, 404 com a quest fora da lista) |
+  | `POST /quest-helper/stop` | larga a quest; sem quest selecionada, o bot não faz nada |
+
+  O bot dirige a quest selecionada enquanto `questhelper.TurnOn` está ligado (o padrão) e o desliga
+  sozinho quando desiste. O `/start` liga o `TurnOn` só nas opções do perfil do RuneScape, que o bot
+  não lê; por isso o agent o liga pelas opções do plugin quando estava desligado.
+- **Comando novo de leitura `quest_helper`:** o plugin ligado, a quest selecionada, se o bot a dirige
+  agora e a lista de nomes. Ele não toca no jogo e é permitido durante um run.
+- **A tarefa:** o `execspec.Task` ganha `quest`: a ref, o nome, o nome no Quest Helper e `safe`. Sem
+  `safe`, a quest tem os riscos `combat` e `hazard`, e a validação nos dois lados exige os dois
+  declarados e, em HCIM, `supervised` (E9). A conta é obrigatória, como num `train`, e o timeout vai de
+  60 s a 12 h, com padrão de 2 h.
+- **No `task_run`:** uma `quest` nunca vai para a máquina do Chronicle Link. O agent:
+  1. espera o ponto seguro e confere o login e, em HCIM sem supervisão, que o personagem está fora da
+     wilderness;
+  2. confere que a ponte responde: a quest é provada pelo rastreamento do Chronicle Link;
+  3. lê o `/quest-helper/status`: o plugin ligado e o bot sem dirigir outra quest (se estiver, recusa:
+     "pare-o antes"; E21 do doc 10);
+  4. confere a quest no `/quest-helper/list`, pelo nome exato que o servidor mandou;
+  5. anota os outros plugins ligados, sem recusar;
+  6. grava `questhelper.obtainMissingItems = NO` pelo mesmo pedido do `config_set` (as mesmas regras,
+     inclusive a opção fixa do `clientcfg`) e confere o valor na resposta; um cliente que não guarda
+     `NO` para o run antes de selecionar a quest;
+  7. `POST /quest-helper/start`; com o `TurnOn` desligado, liga-o, e desliga de novo no fim;
+  8. acompanha o `/quest-helper/status` como um run com `wait_until` em `quest:<x>@finished`. O
+     `Run` leva o `QuestHelperPlugin` em `className`, a tarefa em `task` e a chave em `until`, e cada
+     passo novo do helper vai para a trilha;
+  9. termina `done` só quando o servidor prova a quest (`run_until`), e então
+     `POST /quest-helper/stop`.
+
+  O timeout, o cancelamento do dono (`chronicle task cancel`), o cliente sem responder e uma falha
+  também param o helper. O bot parando sozinho conta como parada: `TurnOn` desligado, quest largada,
+  plugin desligado, outra quest selecionada ou o helper dizendo que terminou. O agent espera a prova
+  por 2 min e falha depois, parando o helper. O personagem fica onde a quest parou.
+- **"Obtain Missing Items" fixo em `No`:** o `clientcfg.PinnedSettings` faz o planner gravar
+  `questhelper.obtainMissingItems` só como `NO`, em qualquer caminho: `config_set`, perfil do cliente
+  (o servidor e o agent), `config` de um `train` e o próprio run. O padrão `Ask` prende o run numa
+  janela, e `Yes` mandaria o bot ao Grand Exchange. O bot só pula o Grand Exchange sozinho nas contas
+  que o `Rs2Player.isIronman()` conta (tipos 1 a 3), e Group Ironman fica de fora.
+- **No servidor:** o `POST /api/microbot/task` de uma `quest` pergunta ao agent o `quest_helper` e
+  recusa com 409, antes de tocar no jogo e auditado:
+  - agent sem `quest_helper` ou sem `run_until`;
+  - cliente sem os endpoints (um Agent Server antigo responde 404) ou sem o plugin;
+  - Quest Helper desligado ou com o bot dirigindo uma quest;
+  - quest que a lista do cliente não tem.
+
+  O nome que vai no `task_run` é o da lista do cliente que o catálogo resolve para a quest, como o
+  ingest lê os nomes de quest (`plan.QuestHelperName`); nenhum ou vários são 409. Antes disso, o
+  `plan.Resolve` recusa uma quest cujos requisitos do catálogo o ingest não prova `met`. O
+  `GET /api/microbot/task` prova o término como sempre: `quest:<x>@finished` nos fatos da conta.
+- **CLI:** `chronicle task run --yes --wait 1h` (em HCIM, `--supervised`).
+- **Verificado:**
+  - testes do conteúdo (`quest` com e sem `safe`, `safe` num passo, outra quest no `until`, evidência
+    gravada), do `execspec`, do plano (riscos, HCIM supervisionado, requisito `unmet` e sem prova,
+    quest já terminada, o nome na lista do cliente) e do `clientcfg` (a opção fixa);
+  - testes do agent com `-race`, com o Agent Server e o Quest Helper falsos nas respostas do
+    `QuestHelperHandler`:
+    - a opção gravada antes da seleção e nada mais agindo até a prova;
+    - "concluída" do helper que não termina nada;
+    - o `TurnOn` religado e desligado de novo;
+    - recusas sem agir: cliente antigo, plugin desligado, bot ocupado, quest fora da lista, sem ponte,
+      HCIM na wilderness;
+    - o cliente que não guarda `NO`;
+    - o timeout, o cancelamento e o bot parando sozinho, todos parando o helper;
+    - a prova antes do ponto seguro, que não seleciona nada;
+  - de ponta a ponta no Postgres 17 (`TestQuestTaskPostgres`): um plano com a `quest` de Sheep
+    Shearer, as recusas do cliente antigo, da quest fora da lista e do agent antigo, a opção e a
+    seleção, o ingest com a quest em andamento sem efeito e terminada com o helper parado, o run
+    `done` e a prova do `GET`.
+- **Nada foi testado no jogo.** Os passos do dono estão no doc 10, seção 13 (fase 5, item 2).
+- **Sem tela:** o "Executar" da tarefa na web pede o canvas antes (CLAUDE.md, regra 11).
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

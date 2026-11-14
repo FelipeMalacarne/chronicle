@@ -1,13 +1,15 @@
 # 10 — Modelo de execução: fatos, eventos, tarefas, receitas e planos
 
-**Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05 e E5 a E10 em 2026-11-13, do
-jeito recomendado (seção 14); E11 a E18 em aberto, com o conservador implementado. As fases 0 (doc 04,
+**Estado: proposta (2026-11-05). E1 a E4 decididas pelo dono em 2026-11-05, E5 a E10 em 2026-11-13, do
+jeito recomendado, e E19 e E20 em 2026-11-14 (seção 14); E11 a E18 e E21 em aberto, com o conservador
+implementado. As fases 0 (doc 04,
 seção 9, item 17) e 1 (item 21, 2026-11-13) estão feitas. O código das fases 2, 3 e 4 está pronto
 (2026-11-13). Falta a parte do dono: na 2, gravar um trecho do Oziris 1.1 e confirmar as tarefas
 propostas; na 3, executar um trecho de logística no jogo, olhando, com o término provado pelo ingest;
 na 4, um treino até `skill:x>=N` no jogo sem intervenção (seção 13). Da fase 5, vários clientes no
-agent está pronto (2026-11-13); as receitas de quest esperam a extração com o dono e os planos
-customizados na UI esperam o canvas.** A fase 1
+agent está pronto (2026-11-13) e o código da `quest` por delegação ao Quest Helper (E19) também
+(2026-11-14): falta o dono rodar no jogo uma quest curta, olhando; as receitas de quest esperam a
+extração com o dono e os planos customizados na UI esperam o canvas.** A fase 1
 entregou as entidades `npc`, `shop` e `object`, as áreas dos locais, o schema de `tasks[]` e de
 receitas e o verificador (seções 7 e 8, "Como implementado"). A fase 2 entregou a gravação por
 demonstração no plugin e no ingest, as tarefas propostas a partir dela e o modo assistido no painel
@@ -15,8 +17,9 @@ demonstração no plugin e no ingest, as tarefas propostas a partir dela e o mod
 agent e o executor de `travel`, `bank` e `buy` no plugin (seção 10), todos com "Como implementado". A
 fase 4 entregou o `wait_until` por chave de objetivo nos runs e nas rotinas do doc 08 e o `train` por
 delegação a um plugin (seção 10, "Como implementado (fase 4)"). Da fase 5, o agent anexado passou a
-controlar vários clientes, cada um com a sua conta, o seu executor e o seu lock (seção 10, "Como
-implementado (fase 5)").
+controlar vários clientes, cada um com a sua conta, o seu executor e o seu lock, e a tarefa `quest`
+passou a ser executada por delegação ao Quest Helper que o cliente do Microbot traz (seções 7 e 10,
+"Como implementado (fase 5)").
 Ainda não há tarefa ou receita real no conteúdo: elas entram com a gravação e a confirmação do dono. O
 resto deste doc não está implementado. Ele estende o doc 09 (o modelo de objetivos continua valendo) e o doc 08 (o controle do
 Microbot ganha um modelo de tarefa). Diagramas: página "Chronicle · mapa da arquitetura"
@@ -157,7 +160,7 @@ ou predicado de estado avaliável pelo motor.
 | `talk` | `npc`, opções de diálogo? | objetivo do passo | `Rs2Npc`, diálogo |
 | `interact` | `object`, ação | objetivo do passo | `Rs2GameObject` |
 | `train` | `skill`, método (npc, spell, objeto), local | `skill:x>=N` | delega a um plugin ou primitiva própria |
-| `quest` | `quest` | `quest:x@finished` | receita própria ou dados do Quest Helper; avaliado no apêndice A: delegar ao Quest Helper do Microbot |
+| `quest` | `quest`, `safe?` | `quest:x@finished` | delega ao Quest Helper que o cliente do Microbot traz (E19, apêndice A; "como implementado" abaixo) |
 | `manual` | texto citado | marca do dono ou objetivo do passo | nenhuma: o executor para e chama o dono |
 
 Regras:
@@ -212,7 +215,7 @@ coordenadas. Todos vêm da wiki, como os itens (doc 09, seção 7).
   dos objetivos que o passo conclui com as do próprio passo.
 - **Verificador** (`content.Task.Check`, regra 4), rodado pelo loader, então pelo `content validate` e pelo
   boot do `serve`:
-  - tipo da lista de primitivas; `quest` é recusado como "ainda não é primitiva" (E5);
+  - tipo da lista de primitivas (até a E19, `quest` era recusado como "ainda não é primitiva", E5);
   - só os parâmetros do tipo; cada ref existe no catálogo e é do tipo certo;
   - a loja de `buy` vende o item pelo estoque da wiki;
   - o destino de `travel` tem área;
@@ -239,6 +242,27 @@ confere que os eventos são válidos, de uma gravação só, e mostram a tarefa 
 
 Tarefa com evidência gravada sempre exige `confirmed_by: owner`: a gravação mostra o que o dono fez, não o
 que o passo pede.
+
+**Como implementado (E19, a primitiva `quest`, 2026-11-14).** Decidida pelo dono em 2026-11-14 (seção
+14), no caminho 3 do apêndice A: a quest inteira por delegação ao Quest Helper do cliente.
+
+- **Tipo e parâmetros:** `quest` entra na lista de primitivas (`content.TaskTypes`, `task.schema.json`),
+  com `quest` (a ref do catálogo de quests) e `safe` (opcional). O término padrão é
+  `quest:<quest>@finished`; um `until` explícito só pode dizer o mesmo.
+- **Risco (E9):** toda quest conta como risco de morte, `combat` e `hazard`, porque o bot pode lutar e
+  passar por perigos (`execspec.QuestRisks`). A exceção é `safe: true`, a palavra do dono de que a
+  quest não mata. `safe` vale só numa receita ou num plano; num passo o verificador recusa, porque o
+  texto do guia não diz isso. Os riscos da variante da receita somam-se, como em qualquer tarefa.
+- **De onde vem:**
+  - da receita da chave (`content/recipes/quest-<x>-finished.json`), que todo passo que conclui a
+    quest herda;
+  - ou de uma tarefa avulsa num plano.
+
+  Nunca vem da gravação: o verificador recusa evidência gravada, porque um trecho de cliques não mostra
+  uma quest inteira. Nem da extração: o `submit_tasks` não a propõe. Os itens da quest vêm do banco por
+  um `bank` antes dela na receita, porque o bot nunca os busca (seção 10).
+- **Nada do Quest Helper no repositório (E20):** nem código, nem dados, nem exportador. A lógica da quest
+  é a que o cliente fixado traz.
 
 ## 8. Receitas por objetivo
 
@@ -428,6 +452,56 @@ atribuição de cada passo aparece na tela.
   O plugin de um `train` vem de uma receita (`content/recipes/`, por exemplo a de
   `skill:fishing>=76`, que todo passo que conclui essa chave herda) ou de uma tarefa avulsa num plano
   customizado; a extração do texto do guia nunca o põe (E18).
+
+  **Como implementado (fase 5, `quest` por delegação, E19, 2026-11-14).** Detalhes no doc 08, "Fase 5
+  do doc 10: `quest` por delegação".
+
+  1. **O que o cliente fixado já traz** (Microbot 2.6.52): o Quest Helper, o bot dele (`QuestScript`) e,
+     no Agent Server, o `QuestHelperHandler`. O agent usa quatro chamadas:
+     - `GET /quest-helper/status`: o plugin ligado, a quest selecionada, o "Enable QuestHelper", se o
+       helper acha a quest concluída e o texto do passo ativo;
+     - `GET /quest-helper/list`: os nomes que o helper conhece, que são os que o `/start` aceita;
+     - `POST /quest-helper/start` com `{"name"}`: seleciona a quest;
+     - `POST /quest-helper/stop`: larga a quest.
+
+     O bot dirige a quest selecionada enquanto "Enable QuestHelper" (`questhelper.TurnOn`) está
+     ligado, e ele mesmo o desliga quando desiste.
+  2. **Servidor:**
+     - o `plan.Resolve` traduz a tarefa para o `execspec.Quest`: a ref, o nome e `safe`;
+     - ele recusa uma quest com requisito do catálogo que o ingest não prova `met` (quests, níveis,
+       pontos de quest, os "boostable" e os "durante a quest" também), porque o bot não os cumpre;
+     - o `POST /api/microbot/task` pergunta ao agent pelo comando novo de leitura `quest_helper`. Ele
+       recusa com 409, auditado e antes de tocar no jogo: agent sem `quest_helper` ou sem `run_until`,
+       cliente sem os endpoints ou sem o plugin, Quest Helper desligado, bot já dirigindo uma quest e
+       quest que a lista do cliente não tem;
+     - o nome que vai no `task_run` é o da lista do cliente que o catálogo resolve para a quest
+       (`plan.QuestHelperName`, do mesmo jeito que o ingest lê os nomes de quest do cliente). Se nenhum
+       ou mais de um nome casar, é 409: o servidor nunca escolhe.
+  3. **Agent** (`task_run` de uma `quest`), em ordem:
+     1. o ponto seguro e o login; em HCIM sem supervisão, fora da wilderness;
+     2. a ponte respondendo: é o rastreamento do Chronicle Link que prova a quest;
+     3. o Quest Helper ligado, sem o bot dirigindo outra quest, e a quest na lista do cliente;
+     4. "Obtain Missing Items" em `NO`, pelo mesmo pedido do `config_set` (`POST /settings/plugin`),
+        conferido na resposta do cliente;
+     5. `/quest-helper/start`;
+     6. se "Enable QuestHelper" estava desligado (o bot desistiu antes), o agent o liga e o desliga de
+        novo no fim. O `/start` só o liga nas opções do perfil do RuneScape, que o bot não lê;
+     7. acompanha o `/quest-helper/status` como um run com `wait_until` em `quest:<x>@finished`. O
+        passo ativo vai para a trilha, e "concluída" do helper não é prova.
+
+     Termina `done` só com a prova do servidor, e então chama o `/quest-helper/stop`. O timeout
+     (padrão 2 h, até 12 h), o cancelamento do dono e uma falha também param. O bot parando sozinho
+     (desligou o "Enable QuestHelper", largou a quest, plugin desligado, helper dizendo que terminou)
+     espera a prova por 2 min e depois falha, parando.
+  4. **"Obtain Missing Items":**
+     - o padrão `Ask` abre uma janela no cliente e prende um run sem ninguém olhando;
+     - `Yes` mandaria o bot buscar os itens no banco e no Grand Exchange;
+     - o bot já pula isso sozinho nas contas que o `Rs2Player.isIronman()` conta (ironman, HCIM e UIM),
+       mas não em Group Ironman.
+
+     Por isso o agent grava `NO` antes de todo run, em todo modo (os modos do Chronicle são todos
+     ironman). O `clientcfg` fixa a opção: nenhum comando do planner a grava com outro valor
+     (`config_set`, perfil do cliente, `config` de um `train`).
 - **Vários personagens:** catálogos e receitas compartilhados; por conta ficam modo, fatos, plano ativo
   e cliente (`clients`). O agent gerencia N clientes, com um executor e um lock por cliente.
 
@@ -587,7 +661,7 @@ fixtures viram teste de conformidade, com cada resposta real validada contra o s
 | 2 | Gravação por demonstração e modo assistido no plugin | um trecho do Oziris 1.1 com tarefas vindas da gravação, confirmadas pelo dono |
 | 3 | Executor de `travel`, `bank`, `buy`; `plans` e `plan_items`; comando de tarefa no agent | um trecho de logística executado com término provado pelo ingest (código pronto em 2026-11-13; falta o dono no jogo) |
 | 4 | `train` por delegação; rotinas do doc 08 com `wait_until` por chave de objetivo | um treino até `skill:x>=N` sem intervenção (código pronto em 2026-11-13; falta o dono no jogo) |
-| 5 | Receitas de quest, planos customizados na UI, vários clientes no agent | por entrega |
+| 5 | Receitas de quest e a `quest` por delegação ao Quest Helper (E19), planos customizados na UI, vários clientes no agent | por entrega |
 
 A fase 0 não dependia de nenhuma decisão de automação e já está feita. Com a seção 14 fechada
 (2026-11-13), as fases 1 a 5 entraram na sequência do doc 04, seção 9, como item 21. A fase 1 foi
@@ -676,7 +750,7 @@ intervenção" é do dono, olhando a primeira vez:
 O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com `until` pelo `POST
 /api/microbot/run?account=` (a web ainda não tem o campo; pede o canvas).
 
-**Fase 5: em partes.** As três entregas da tabela são independentes ("por entrega"):
+**Fase 5: em partes.** As entregas da tabela são independentes ("por entrega"):
 
 1. **Vários clientes no agent: pronto (2026-11-13).** Detalhes na seção 10, "Como implementado (fase
    5)", e no doc 08.
@@ -706,9 +780,53 @@ O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com
      - o HWID agent guarda os aparelhos de todos os personagens nos mesmos arquivos
        (`~/.runelite/spoofed-*.properties`): na primeira vez de um personagem novo, um cliente por
        vez.
-2. **Receitas de quest:** esperam a decisão da E10 (o que aproveitar do Quest Helper) e a extração
-   com o dono olhando (CLAUDE.md, regra 9).
-3. **Planos customizados na UI:** pedem o desenho no canvas antes (CLAUDE.md, regra 11). A API e a CLI
+2. **`quest` por delegação ao Quest Helper (E19): o código está pronto (2026-11-14); falta o dono.**
+   Detalhes nas seções 7 e 10, "Como implementado", e no doc 08.
+   - Testado com o Agent Server e o Quest Helper falsos (as respostas do `QuestHelperHandler` do
+     cliente fixado), com `-race`:
+     - a opção gravada antes da seleção;
+     - a prova que para o helper, sem mais nada agir;
+     - "concluída" do helper que não termina nada;
+     - o "Enable QuestHelper" religado e desligado de novo;
+     - as recusas sem agir;
+     - o timeout, o cancelamento e o bot parando sozinho.
+   - De ponta a ponta no Postgres (`TestQuestTaskPostgres`): um plano com a `quest` de Sheep Shearer.
+     O servidor recusa o agent antigo, o cliente sem os endpoints e a quest que o helper não lista. O
+     run grava `NO` e seleciona a quest. O ingest com a quest em andamento não muda nada; com ela
+     terminada, o servidor avisa o agent, que para o helper, e o `GET /api/microbot/task` dá `proven`.
+   - Nada rodou no jogo. "Pronto quando" é do dono, com uma quest curta e sem luta, olhando:
+     1. atualiza o `chronicle` do servidor e o da máquina do jogo (o `just agent`): os dois precisam do
+        `quest_helper`. O Chronicle Link continua o 1.15: a quest só precisa do rastreamento dele;
+     2. no cliente de dev, confere que o plugin Quest Helper (vem com o cliente) está ligado e sem
+        quest selecionada: o run recusa um bot já dirigindo uma quest. Confere também "Avoid
+        wilderness" no webwalker;
+     3. escolhe uma quest curta, sem luta, que a conta ainda não fez e cujos requisitos o ingest prova
+        (o `POST` recusa requisito sem prova). Por exemplo Cook's Assistant, que o `QuestScript` trata
+        à parte, ou Sheep Shearer. Põe os itens no inventário antes, porque o bot não os busca (ou um
+        `bank` antes, no mesmo plano);
+     4. monta um plano com a tarefa e passa a segui-lo:
+
+        ```
+        {"kind": "custom", "title": "Quest", "items": [{"kind": "task", "task": {
+          "type": "quest", "quest": "quest:cooks_assistant"}}]}
+        ```
+
+        `chronicle plans create -f quest.json` e `chronicle plans use <id>`. Com `"safe": true` (só se
+        o dono afirma que a quest não mata), a tarefa não leva risco; sem ele, em HCIM, só com
+        `--supervised`;
+     5. leva o personagem para perto do início da quest, confere `chronicle task` (riscos `combat,
+        hazard`, executável) e roda `chronicle task run --yes --wait 1h`. Pelo VNC, olha o Quest Helper
+        selecionar a quest e o bot fazê-la;
+     6. sem mexer em nada: quando a quest termina, o plugin manda a captura, o servidor prova
+        `quest:<x>@finished` e o agent para o Quest Helper. A CLI mostra "Término provado pelo
+        ingest", e a auditoria tem o `task_run` e o `run_until` (ator `wait_until`, origem `server`);
+     7. se o bot travar no meio (apêndice A.7: quests longas devem travar), o run para na falha, e a
+        quest volta ao dono, que a termina à mão; o ingest prova do mesmo jeito;
+     8. volta à rota com `chronicle plans use route`.
+3. **Receitas de quest:** as receitas reais (`content/recipes/quest-<x>-finished.json`, com o `bank`
+   dos itens, a `quest` no fim e os riscos de cada uma) entram pela extração com o dono olhando
+   (CLAUDE.md, regra 9). O Quest Helper serve só de referência humana nessas sessões (E20).
+4. **Planos customizados na UI:** pedem o desenho no canvas antes (CLAUDE.md, regra 11). A API e a CLI
    (`chronicle plans`) já existem desde a fase 3.
 
 ## 14. Decisões em aberto (dono)
@@ -733,8 +851,9 @@ O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com
 | E16 | `train` com o plugin já ligado | **em aberto; implementado o conservador (fase 4):** recusado ("pare-o antes"), porque o run liga e desliga o plugin e grava as opções antes de ligar; a alternativa é adotar o plugin ligado, sem gravar opções |
 | E17 | As opções que o `train` gravou no plugin | **em aberto; implementado (fase 4):** ficam como gravadas depois do treino (são do plugin, e o próximo `train` grava as dele de novo); a alternativa é guardar os valores de antes e restaurá-los |
 | E18 | De onde vem o plugin de um `train` de passo | **em aberto; implementado o conservador (fase 4):** de uma receita da chave (`content/recipes/`) ou de uma tarefa avulsa num plano; a extração do texto (`submit_tasks`) não aceita `plugin` nem `config`, porque o texto do guia não diz qual plugin usar; a alternativa é o dono confirmá-lo na sessão de extração, como uma inferência |
-| E19 | Primitiva `quest` por delegação ao Quest Helper que o cliente do Microbot traz (apêndice A, A.6) | **em aberto; nada implementado.** Recomendação: sim, como o `train` (seleciona a quest pelo Agent Server, acompanha, e o servidor prova `quest:x@finished` pelo ingest). Em HCIM, só supervisionada; "Obtain Missing Items" em `No` numa conta ironman. Começar por uma quest curta e sem luta, com o dono olhando |
-| E20 | Exportador dos passos do Quest Helper como fonte de propostas de receita (apêndice A, A.5, caminho 2) | **em aberto; nada implementado.** Recomendação: não agora. Só se a extração do texto e a gravação não bastarem para as receitas de quest |
+| E19 | Primitiva `quest` por delegação ao Quest Helper que o cliente do Microbot traz (apêndice A, A.6) | **decidida (2026-11-14): sim; código pronto, falta o dono no jogo.** Como o `train`: o agent seleciona a quest pelo Agent Server, acompanha, e o servidor prova `quest:x@finished` pelo ingest (seções 7, 10 e 13). Toda quest é risco de morte (em HCIM, só supervisionada) a não ser que a receita ou o plano diga `safe`; "Obtain Missing Items" sempre em `No` (todo modo do Chronicle é ironman). Começar por uma quest curta e sem luta, com o dono olhando |
+| E20 | Exportador dos passos do Quest Helper como fonte de propostas de receita (apêndice A, A.5, caminho 2) | **decidida (2026-11-14): não importar.** Nenhum exportador, nem código ou dados do Quest Helper no repositório; as receitas de quest vêm do texto dos guias e da gravação, com o dono (regra 9) |
+| E21 | O que o run de uma `quest` faz com o que encontra no cliente e nos fatos | **em aberto; implementado o conservador (E19):** recusa o bot do Quest Helper já dirigindo uma quest ("pare-o antes", como a E16) e uma quest com requisito do catálogo sem prova do ingest (não só os provados `unmet`); religa o "Enable QuestHelper" só durante o run, quando o bot o tinha desligado. As alternativas: adotar o bot ligado; deixar rodar com requisito `unknown` |
 
 ## 15. Impacto nos outros docs
 
@@ -937,13 +1056,13 @@ uma na outra perde os ramos, e os passos do meio ficam sem término avaliável.
 
 ### A.8 Recomendação
 
-1. **Para executar quests: o caminho 3** (E19, em aberto para o dono): a primitiva `quest` por
-   delegação, reaproveitando o `task_run` e o `wait_until` do `train`. São de 2 a 3 dias, sem
-   migration, e o término continua sendo a prova pelo ingest (princípio 7).
+1. **Para executar quests: o caminho 3** (E19, decidida pelo dono em 2026-11-14 e implementada no mesmo
+   dia; seções 7, 10 e 13): a primitiva `quest` por delegação, reaproveitando o `task_run` e o
+   `wait_until` do `train`. Sem migration, e o término continua sendo a prova pelo ingest (princípio 7).
 2. **Para o conteúdo das receitas:** não importar.
    - As receitas de quest continuam vindo do texto dos guias e da gravação, com o dono (regra 9).
    - O Quest Helper serve de referência humana nessas sessões.
-   - O exportador (caminho 2, E20) fica para quando a extração e a gravação não bastarem.
+   - O exportador (caminho 2, E20) não será feito: o dono decidiu em 2026-11-14 não importar.
 3. **O parser estático (caminho 1), não.**
 4. **Nada do Quest Helper no repositório.** A delegação usa o que o cliente já traz. Se um dia algum
    dado derivado entrar, ele leva o aviso BSD-2 e o crédito.

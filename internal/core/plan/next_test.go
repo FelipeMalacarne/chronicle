@@ -136,7 +136,7 @@ func TestNext(t *testing.T) {
 		{
 			name: "route: a travel already met is skipped (idempotence)",
 			plan: route, cursor: "a", pos: at(3188, 3220),
-			want: expect{status: StatusTask, item: "step:t::a", task: "step:t::a#1", typ: "talk", state: rules.Unknown, skipped: []string{"step:t::a#0"}, notExec: "só roda travel, bank, buy e train", risks: []string{}},
+			want: expect{status: StatusTask, item: "step:t::a", task: "step:t::a#1", typ: "talk", state: rules.Unknown, skipped: []string{"step:t::a#0"}, notExec: "só roda travel, bank, buy, train e quest", risks: []string{}},
 		},
 		{
 			name: "route: away from the area the travel is unmet",
@@ -181,7 +181,7 @@ func TestNext(t *testing.T) {
 		{
 			name: "route: manual waits for the owner's mark",
 			plan: route, cursor: "d",
-			want: expect{status: StatusTask, task: "step:t::d#0", typ: "manual", state: rules.Unmet, notExec: "só roda travel, bank, buy e train", risks: []string{}},
+			want: expect{status: StatusTask, task: "step:t::d#0", typ: "manual", state: rules.Unmet, notExec: "só roda travel, bank, buy, train e quest", risks: []string{}},
 		},
 		{
 			name: "route: the owner's mark meets the manual task",

@@ -74,10 +74,38 @@ outside `[a-z0-9_]` becomes `-` (`content.RecipeFileName`).
 | `talk` | `npc`, `options?` (the game's dialogue text), `location?` | an objective key or `goal_met` |
 | `interact` | `object`, `action` (the game's menu text), `location?` | an objective key or `goal_met` |
 | `train` | `skill`, `npc?` or `object?`, `location?`, `plugin?` (the Microbot plugin class the executor delegates to; without it the owner trains), `config?` (`[{group, key, value}]`, its settings, set as they are) | `skill:<skill>>=N` of the same skill |
+| `quest` | `quest` (the quest, delegated to the Quest Helper the Microbot client ships, docs/10 E19), `safe?` | `quest:<quest>@finished`, the default |
 | `manual` | `note` (required in a recipe: what to tell the owner) | an objective key or `goal_met` (`owner_mark` only in a step) |
 
 `goal_met` is the recipe's objective here (in a step, the objectives the step
-completes). `quest` tasks come later (E5).
+completes).
+
+A `quest` is the whole quest, done by the Quest Helper's bot in the client
+(docs/10, E19): the agent sets its "Obtain Missing Items" to No, so the bot
+never fetches items, and a `bank` before the quest brings them. Every quest
+is a death risk (`combat` and `hazard`; in HCIM it runs only with the owner
+watching) unless `"safe": true` says the owner confirmed it cannot kill: a
+recipe or a plan may say so, a step never. The quest's catalog requirements
+must be proven before it runs. A quest's recipe ends on it:
+
+```json
+{
+  "schema_version": 1,
+  "kind": "recipe",
+  "objective": "quest:x_marks_the_spot@finished",
+  "variants": [
+    {
+      "id": "main",
+      "modes": ["ironman", "hcim", "uim", "gim"],
+      "tasks": [
+        { "type": "bank", "items": [{ "name": "Spade", "item_id": 952, "qty": 1 }] },
+        { "type": "quest", "quest": "quest:x_marks_the_spot" }
+      ]
+    }
+  ],
+  "source": { "method": "manual", "confidence": "high", "confirmed_by": "owner" }
+}
+```
 
 ## What `chronicle content validate` checks
 

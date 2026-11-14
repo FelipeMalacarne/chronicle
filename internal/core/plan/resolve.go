@@ -9,6 +9,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
+	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
 
@@ -18,9 +19,10 @@ var ErrNotATask = errors.New("plan: the key names no task of the plan")
 // Resolve turns the task a key names into what the phase 3 executor runs
 // (docs/10 section 10: the server decides what): the destination's area
 // and a target tile inside it, the bank items as candidate game ids with
-// quantities, the shop's keepers and how many to buy now. It refuses what
-// the executor does not run, a task already met (nothing to do) and what
-// the catalog cannot resolve; it never guesses an id.
+// quantities, the shop's keepers and how many to buy now, a train's plugin,
+// a quest and its name. It refuses what the executor does not run, a task
+// already met (nothing to do), a quest whose requirements are not proven
+// and what the catalog cannot resolve; it never guesses an id.
 func Resolve(in Input, key string) (execspec.Task, TaskView, error) {
 	s, ok := in.locate(key)
 	if !ok {
@@ -51,6 +53,8 @@ func Resolve(in Input, key string) (execspec.Task, TaskView, error) {
 		out, err = in.resolveBuy(s.t)
 	case content.TaskTrain:
 		out, err = in.resolveTrain(s.t)
+	case content.TaskQuest:
+		out, err = in.resolveQuest(s.t)
 	default:
 		err = fmt.Errorf("o executor não roda %s", s.t.Type)
 	}
@@ -206,6 +210,74 @@ func (in Input) resolveTrain(t content.Task) (execspec.Task, error) {
 		Skill: t.Skill.String(), SkillName: in.name(*t.Skill), Level: u.Objective.N,
 		Plugin: t.Plugin, Config: slices.Clone(t.Config), Combat: TrainFights(t, in.Registry),
 	}}, nil
+}
+
+// resolveQuest is the delegation of a quest to the client's Quest Helper
+// (docs/10, E19): the quest, the name the helper knows it by (the
+// catalog's, which the server checks on the client's own list before the
+// run: QuestHelperName) and whether the owner confirmed it safe. A quest
+// runs only with every requirement of the catalog proven met (the quests,
+// levels and quest points before it, the boostable and the during-quest
+// ones too): the bot neither boosts nor waits, and stops at the first thing
+// it lacks; the plan inserts the recipe of a requirement a step lacks.
+func (in Input) resolveQuest(t content.Task) (execspec.Task, error) {
+	u, ok := t.Ends()
+	if !ok || u.Objective == nil || t.Quest == nil || u.Objective.Ref != *t.Quest ||
+		u.Objective.Op != entities.OpState || u.Objective.State != entities.StateFinished {
+		return execspec.Task{}, errors.New("a quest não termina na própria conclusão (quest:<quest>@finished)")
+	}
+	q, ok := in.Registry.Quest(t.Quest.ID)
+	if !ok {
+		return execspec.Task{}, errors.New("a quest não está no catálogo")
+	}
+	var unmet, unproven []string
+	for _, r := range q.Requires {
+		switch in.verdict(r.Key) {
+		case rules.Met:
+		case rules.Unmet:
+			unmet = append(unmet, panel.Label(r.Key.String(), in.Registry))
+		default:
+			unproven = append(unproven, panel.Label(r.Key.String(), in.Registry))
+		}
+	}
+	switch {
+	case len(unmet) > 0:
+		return execspec.Task{}, errors.New("faltam requisitos da quest: " + strings.Join(unmet, ", ") + " (o bot não os cumpre: faça antes)")
+	case len(unproven) > 0:
+		return execspec.Task{}, errors.New("o ingest não prova os requisitos da quest: " + strings.Join(unproven, ", "))
+	}
+	return execspec.Task{Type: execspec.TypeQuest, Quest: &execspec.Quest{
+		Quest: t.Quest.String(), Name: in.name(*t.Quest), Helper: q.Name, Safe: t.Safe,
+	}}, nil
+}
+
+// QuestHelperName is the name the client's Quest Helper lists a quest by
+// (its /quest-helper/list, what /quest-helper/start takes): among the listed
+// names the catalog resolves to the quest (as the ingest reads the client's
+// quest names), the one equal to the catalog's name, else the only one. It
+// never guesses: no name, or several, is an error.
+func QuestHelperName(listed []string, quest entities.Ref, reg *entities.Registry) (string, error) {
+	var hits []string
+	for _, n := range listed {
+		if res := reg.ResolveQuest(n); res.Status == entities.Resolved && res.Ref == quest && !slices.Contains(hits, n) {
+			hits = append(hits, n)
+		}
+	}
+	q, known := reg.Quest(quest.ID)
+	if known && slices.Contains(hits, q.Name) {
+		return q.Name, nil
+	}
+	name := quest.String()
+	if known {
+		name = q.Name
+	}
+	switch len(hits) {
+	case 1:
+		return hits[0], nil
+	case 0:
+		return "", fmt.Errorf("o Quest Helper do cliente não lista %s", name)
+	}
+	return "", fmt.Errorf("o Quest Helper do cliente lista %s com mais de um nome (%s): nenhum é escolhido", name, strings.Join(hits, ", "))
 }
 
 // name is a ref's display name, or its id.

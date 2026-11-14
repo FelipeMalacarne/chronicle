@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ironman-planner.local/schemas/task.schema.json",
   "title": "Chronicle Task",
-  "description": "Tarefa tipada do modelo de execução (doc 10, seção 7): um tipo da lista de primitivas do executor (E5: travel, bank, buy, talk, interact, train, manual; quest depois), parâmetros só com refs do catálogo, números e ids, e uma condição de término (`until`) que é chave de objetivo ou predicado de estado avaliável pelo motor. Usada nos passos (`tasks[]` dos sidecars de anotação) e nas receitas (content/recipes). As definições de tipo não fecham as propriedades: quem usa `task` fecha com `unevaluatedProperties: false`, então uma propriedade de outro tipo (um `shop` numa `travel`) é recusada. O verificador (internal/core/content, Task.Check) confere refs existentes, a loja que vende o item, a área do local e o término avaliável.",
+  "description": "Tarefa tipada do modelo de execução (doc 10, seção 7): um tipo da lista de primitivas do executor (E5: travel, bank, buy, talk, interact, train, manual; E19: quest), parâmetros só com refs do catálogo, números e ids, e uma condição de término (`until`) que é chave de objetivo ou predicado de estado avaliável pelo motor. Usada nos passos (`tasks[]` dos sidecars de anotação) e nas receitas (content/recipes). As definições de tipo não fecham as propriedades: quem usa `task` fecha com `unevaluatedProperties: false`, então uma propriedade de outro tipo (um `shop` numa `travel`) é recusada. O verificador (internal/core/content, Task.Check) confere refs existentes, a loja que vende o item, a área do local e o término avaliável.",
   "$ref": "#/$defs/task",
   "$defs": {
     "task": {
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": { "enum": ["travel", "bank", "buy", "talk", "interact", "train", "manual"] }
+        "type": { "enum": ["travel", "bank", "buy", "talk", "interact", "train", "quest", "manual"] }
       },
       "allOf": [
         { "if": { "properties": { "type": { "const": "travel" } } }, "then": { "$ref": "#/$defs/travel" } },
@@ -18,6 +18,7 @@
         { "if": { "properties": { "type": { "const": "talk" } } }, "then": { "$ref": "#/$defs/talk" } },
         { "if": { "properties": { "type": { "const": "interact" } } }, "then": { "$ref": "#/$defs/interact" } },
         { "if": { "properties": { "type": { "const": "train" } } }, "then": { "$ref": "#/$defs/train" } },
+        { "if": { "properties": { "type": { "const": "quest" } } }, "then": { "$ref": "#/$defs/quest" } },
         { "if": { "properties": { "type": { "const": "manual" } } }, "then": { "$ref": "#/$defs/manual" } }
       ]
     },
@@ -124,6 +125,17 @@
       "not": { "required": ["npc", "object"] },
       "dependentRequired": { "config": ["plugin"] }
     },
+    "quest": {
+      "type": "object",
+      "description": "Fazer uma quest inteira por delegação ao Quest Helper que o cliente do Microbot fixado traz (doc 10, E19): o agent põe \"Obtain Missing Items\" em No, seleciona a quest pelo Agent Server e o bot dela a faz; o run termina só quando o servidor prova `quest:<quest>@finished` pelo ingest (o padrão). Toda quest conta como risco de morte (combat e hazard: em HCIM, só supervisionada, E9), a não ser que `safe` diga que o dono confirmou que ela não mata; `safe` só numa receita ou num plano, nunca num passo (o texto do guia não diz isso). Os itens da quest vêm do banco por um `bank` antes: o bot nunca vai ao Grand Exchange.",
+      "required": ["type", "quest"],
+      "properties": {
+        "type": { "const": "quest" },
+        "quest": { "$ref": "#/$defs/questRef" },
+        "safe": { "type": "boolean" },
+        "until": { "$ref": "#/$defs/untilObjective" }
+      }
+    },
     "manual": {
       "type": "object",
       "description": "O executor para e chama o dono. Num passo, o texto é a citação da evidência; numa receita, `note` diz ao dono o que fazer (texto para pessoa, nunca interpretado). Termina com a marca do dono (`owner_mark`), `goal_met` ou um objetivo.",
@@ -152,6 +164,11 @@
     },
     "untilObjective": {
       "allOf": [{ "$ref": "#/$defs/until" }, { "required": ["objective"] }]
+    },
+    "questRef": {
+      "type": "string",
+      "description": "Ref de quest ('quest:<slug>'), do catálogo content/reference/quests.json.",
+      "pattern": "^quest:[a-z0-9]+(?:_[a-z0-9]+)*$"
     },
     "npcRef": {
       "type": "string",

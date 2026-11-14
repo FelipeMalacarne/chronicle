@@ -26,6 +26,7 @@ import (
 //	talk      NPC, Options?, Location?        until an objective or goal_met
 //	interact  Object, Action, Location?       until an objective or goal_met
 //	train     Skill, NPC? or Object?, Location?, Plugin?, Config?   until skill:<skill>>=N
+//	quest     Quest, Safe?                    until quest:<quest>@finished (the default)
 //	manual    Note?                           until owner_mark, goal_met or an objective
 //
 // Options (dialogue options) and Action (a menu option) are the game's own
@@ -33,7 +34,10 @@ import (
 // the owner. A train's Plugin is the Microbot plugin the executor delegates
 // it to (its class, an id of the client) and Config the settings it starts
 // with (group, key and value, set as they are, never interpreted); without
-// a plugin a train is the owner's to do.
+// a plugin a train is the owner's to do. A quest is delegated to the Quest
+// Helper the Microbot client ships (docs/10, E19); every quest counts as a
+// death risk unless Safe says the owner confirmed it cannot kill, which only
+// a recipe or a plan (the owner's word) may say, never a step's text.
 type Task struct {
 	Type     string            `json:"type"`
 	Location *entities.Ref     `json:"location,omitempty"`
@@ -50,6 +54,8 @@ type Task struct {
 	Plugin   string            `json:"plugin,omitempty"`
 	Config   []TaskSetting     `json:"config,omitempty"`
 	Note     string            `json:"note,omitempty"`
+	Quest    *entities.Ref     `json:"quest,omitempty"`
+	Safe     bool              `json:"safe,omitempty"`
 	Until    *TaskUntil        `json:"until,omitempty"`
 }
 
@@ -72,13 +78,13 @@ const (
 	TaskInteract = "interact"
 	TaskTrain    = "train"
 	TaskManual   = "manual"
-	// TaskQuest is planned (E5: quest later, with quest recipes or the
-	// Quest Helper's data, docs/10 phase 5); the verifier refuses it.
+	// TaskQuest is a whole quest, delegated to the Quest Helper of the
+	// Microbot client (E5: "quest later"; E19, docs/10 phase 5).
 	TaskQuest = "quest"
 )
 
 // TaskTypes lists the task types the executor knows, in a stable order.
-var TaskTypes = []string{TaskTravel, TaskBank, TaskBuy, TaskTalk, TaskInteract, TaskTrain, TaskManual}
+var TaskTypes = []string{TaskTravel, TaskBank, TaskBuy, TaskTalk, TaskInteract, TaskTrain, TaskQuest, TaskManual}
 
 // State predicates a task can end on.
 const (
@@ -104,7 +110,8 @@ type TaskContext struct {
 }
 
 // DefaultUntil is the termination a task type implies from its parameters
-// (travel, bank and buy); ok is false for the types that must state one.
+// (travel, bank, buy and quest); ok is false for the types that must state
+// one.
 func (t Task) DefaultUntil() (TaskUntil, bool) {
 	switch t.Type {
 	case TaskTravel:
@@ -120,6 +127,12 @@ func (t Task) DefaultUntil() (TaskUntil, bool) {
 			return TaskUntil{}, false
 		}
 		k := entities.ObjectiveKey{Ref: entities.ItemRef(id), Op: entities.OpQuantity, N: t.Qty}
+		return TaskUntil{Objective: &k}, true
+	case TaskQuest:
+		if t.Quest == nil || t.Quest.Kind != entities.KindQuest {
+			return TaskUntil{}, false
+		}
+		k := entities.ObjectiveKey{Ref: *t.Quest, Op: entities.OpState, State: entities.StateFinished}
 		return TaskUntil{Objective: &k}, true
 	}
 	return TaskUntil{}, false
@@ -154,6 +167,7 @@ var taskParams = map[string][]string{
 	TaskTalk:     {"npc", "options", "location"},
 	TaskInteract: {"object", "action", "location"},
 	TaskTrain:    {"skill", "npc", "object", "location", "plugin", "config"},
+	TaskQuest:    {"quest", "safe"},
 	TaskManual:   {"note"},
 }
 
@@ -164,7 +178,7 @@ func (t Task) params() []string {
 		"location": t.Location != nil, "via": t.Via != nil, "items": len(t.Items) > 0, "shop": t.Shop != nil,
 		"item": t.Item != nil, "qty": t.Qty != 0, "npc": t.NPC != nil, "options": len(t.Options) > 0,
 		"object": t.Object != nil, "action": t.Action != "", "skill": t.Skill != nil, "note": t.Note != "",
-		"plugin": t.Plugin != "", "config": len(t.Config) > 0,
+		"plugin": t.Plugin != "", "config": len(t.Config) > 0, "quest": t.Quest != nil, "safe": t.Safe,
 	} {
 		if set {
 			out = append(out, name)
@@ -183,10 +197,7 @@ func (t Task) Check(reg *entities.Registry, ctx TaskContext) []string {
 	var msgs []string
 	add := func(format string, args ...any) { msgs = append(msgs, fmt.Sprintf(format, args...)) }
 	allowed, known := taskParams[t.Type]
-	switch {
-	case t.Type == TaskQuest:
-		return []string{"task type quest is not an executor primitive yet (docs/10, E5: quest later)"}
-	case !known:
+	if !known {
 		return []string{fmt.Sprintf("unknown task type %q (one of %s)", t.Type, strings.Join(TaskTypes, ", "))}
 	}
 	for _, p := range t.params() {
@@ -278,6 +289,11 @@ func (t Task) Check(reg *entities.Registry, ctx TaskContext) []string {
 		if err := clientcfg.CheckSettings(t.Config); err != nil {
 			add("%v", err)
 		}
+	case TaskQuest:
+		ref("quest", t.Quest, true, entities.KindQuest)
+		if t.Safe && !ctx.Recipe {
+			add("quest: safe (no death risk) is the owner's word in a recipe or a plan, never a step's text")
+		}
 	case TaskManual:
 		if ctx.Recipe && strings.TrimSpace(t.Note) == "" {
 			add("manual in a recipe needs a note: there is no step text to show the owner")
@@ -295,7 +311,7 @@ func (t Task) checkUntil(reg *entities.Registry, ctx TaskContext) []string {
 	}
 	u, ok := t.Ends()
 	switch {
-	case !ok && (t.Type == TaskBuy || t.Type == TaskTravel || t.Type == TaskBank):
+	case !ok && (t.Type == TaskBuy || t.Type == TaskTravel || t.Type == TaskBank || t.Type == TaskQuest):
 		return nil // the missing parameters are already reported
 	case !ok:
 		return []string{fmt.Sprintf("%s needs until", t.Type)}
@@ -311,7 +327,7 @@ func (t Task) checkUntil(reg *entities.Registry, ctx TaskContext) []string {
 		}
 	}
 	states := map[string][]string{
-		TaskTravel: {UntilAtLocation}, TaskBank: {UntilLoadoutReady}, TaskBuy: nil, TaskTrain: nil,
+		TaskTravel: {UntilAtLocation}, TaskBank: {UntilLoadoutReady}, TaskBuy: nil, TaskTrain: nil, TaskQuest: nil,
 		TaskTalk: {UntilGoalMet}, TaskInteract: {UntilGoalMet}, TaskManual: {UntilGoalMet, UntilOwnerMark},
 	}[t.Type]
 	switch {
@@ -347,7 +363,7 @@ func kindList(kinds []entities.Kind) string {
 // rename it in place.
 func (t *Task) Refs() []*entities.Ref {
 	var out []*entities.Ref
-	for _, r := range []*entities.Ref{t.Location, t.Via, t.Shop, t.Item, t.NPC, t.Object, t.Skill} {
+	for _, r := range []*entities.Ref{t.Location, t.Via, t.Shop, t.Item, t.NPC, t.Object, t.Skill, t.Quest} {
 		if r != nil {
 			out = append(out, r)
 		}
@@ -396,6 +412,8 @@ func (e TaskEvidence) quote() ObjectiveEvidence {
 // the NPC (one of its game ids) and its dialogue options, in order; an
 // interact the object with the action; a buy the item from a shop the
 // shopkeeper recorded owns; a bank a bank event; a train its npc or object.
+// A quest is never proposed from a recording: a stretch of clicks does not
+// show a whole quest.
 func CheckRecorded(t Task, ev RecordedEvidence, reg *entities.Registry) []string {
 	var msgs []string
 	add := func(format string, args ...any) { msgs = append(msgs, fmt.Sprintf(format, args...)) }
@@ -496,6 +514,8 @@ func CheckRecorded(t Task, ev RecordedEvidence, reg *entities.Registry) []string
 		}) {
 			add("no recorded bank event")
 		}
+	case TaskQuest:
+		add("a quest task is not proposed from a recording: it comes from its recipe or the step's text")
 	case TaskTrain:
 		switch {
 		case t.NPC != nil:

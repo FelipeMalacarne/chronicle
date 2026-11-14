@@ -59,6 +59,10 @@ func fishing() *Train {
 		Config: []clientcfg.Setting{{Group: "tickfisher", Key: "mode", Value: "BARBARIAN"}}}
 }
 
+func cooks() *Quest {
+	return &Quest{Quest: "quest:cooks_assistant", Name: "Cook's Assistant", Helper: "Cook's Assistant"}
+}
+
 func TestCheck(t *testing.T) {
 	for _, ok := range []Task{
 		{Type: TypeTravel, Travel: castle()},
@@ -67,6 +71,7 @@ func TestCheck(t *testing.T) {
 		{Type: TypeBuy, Buy: buy()},
 		{Type: TypeTrain, Train: fishing()},
 		{Type: TypeTrain, Train: &Train{Skill: "skill:attack", SkillName: "Attack", Level: 40, Plugin: "a.b.Fighter", Combat: true}},
+		{Type: TypeQuest, Quest: cooks()},
 	} {
 		if err := ok.Check(); err != nil {
 			t.Errorf("%s refused: %v", ok.Type, err)
@@ -76,6 +81,7 @@ func TestCheck(t *testing.T) {
 	bk := func(f func(*Bank)) Task { v := bank(); f(v); return Task{Type: TypeBank, Bank: v} }
 	by := func(f func(*Buy)) Task { v := buy(); f(v); return Task{Type: TypeBuy, Buy: v} }
 	tn := func(f func(*Train)) Task { v := fishing(); f(v); return Task{Type: TypeTrain, Train: v} }
+	qs := func(f func(*Quest)) Task { v := cooks(); f(v); return Task{Type: TypeQuest, Quest: v} }
 	for _, tc := range []struct {
 		name string
 		task Task
@@ -91,7 +97,13 @@ func TestCheck(t *testing.T) {
 		{"protected group", tn(func(v *Train) { v.Config[0].Group = "microbot" }), "not edited"},
 		{"fighting without combat", tn(func(v *Train) { v.Skill, v.SkillName = "skill:strength", "Strength" }), "combat must be set"},
 		{"train and travel", Task{Type: TypeTrain, Train: fishing(), Travel: castle()}, "only train"},
-		{"quest", Task{Type: "quest"}, "not executed yet"},
+		{"quest without quest", Task{Type: "quest"}, "only quest"},
+		{"quest and train", Task{Type: TypeQuest, Quest: cooks(), Train: fishing()}, "only quest"},
+		{"quest ref", qs(func(v *Quest) { v.Quest = "skill:cooking" }), "quest ref"},
+		{"quest slug", qs(func(v *Quest) { v.Quest = "quest:Cooks Assistant" }), "quest ref"},
+		{"quest name", qs(func(v *Quest) { v.Name = "" }), "name is required"},
+		{"quest helper", qs(func(v *Quest) { v.Helper = "Cook's\nAssistant" }), "one line"},
+		{"manual", Task{Type: "manual"}, "not executed yet"},
 		{"unknown", Task{Type: "teleport"}, "unknown type"},
 		{"two params", Task{Type: TypeTravel, Travel: castle(), Buy: buy()}, "only travel"},
 		{"no params", Task{Type: TypeBank}, "only bank"},
@@ -141,6 +153,17 @@ func TestRisks(t *testing.T) {
 	}
 	if u := fishing().Until(); u != "skill:fishing>=76" {
 		t.Errorf("until = %s", u)
+	}
+	if r := (Task{Type: TypeQuest, Quest: cooks()}).Risks(); strings.Join(r, ",") != "combat,hazard" {
+		t.Errorf("quest risks = %v", r)
+	}
+	safe := cooks()
+	safe.Safe = true
+	if r := (Task{Type: TypeQuest, Quest: safe}).Risks(); len(r) != 0 {
+		t.Errorf("safe quest risks = %v", r)
+	}
+	if u := cooks().Until(); u != "quest:cooks_assistant@finished" {
+		t.Errorf("quest until = %s", u)
 	}
 	if !NeedsSupervision("hcim", []string{"wilderness"}) || NeedsSupervision("ironman", []string{"combat"}) ||
 		NeedsSupervision("hcim", []string{"item_loss"}) || !NeedsSupervision("hcim", []string{"hazard"}) {

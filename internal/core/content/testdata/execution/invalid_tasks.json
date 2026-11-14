@@ -401,12 +401,55 @@
     "want": "missing property 'until'"
   },
   {
-    "name": "quest is not a primitive yet",
+    "name": "quest without its quest",
     "step": "e",
     "task": {
       "type": "quest",
+      "evidence": {
+        "field": "/text",
+        "quote": "finish Cook's Assistant",
+        "span": [
+          43,
+          66
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "missing property 'quest'"
+  },
+  {
+    "name": "quest said safe by a step",
+    "step": "e",
+    "task": {
+      "type": "quest",
+      "quest": "quest:cooks_assistant",
+      "safe": true,
+      "evidence": {
+        "field": "/text",
+        "quote": "finish Cook's Assistant",
+        "span": [
+          43,
+          66
+        ]
+      },
+      "source": {
+        "method": "llm",
+        "confidence": "high"
+      }
+    },
+    "want": "never a step's text"
+  },
+  {
+    "name": "quest ending on another quest",
+    "step": "e",
+    "task": {
+      "type": "quest",
+      "quest": "quest:cooks_assistant",
       "until": {
-        "state": "goal_met"
+        "objective": "quest:x_marks_the_spot@finished"
       },
       "evidence": {
         "field": "/text",
@@ -421,7 +464,7 @@
         "confidence": "high"
       }
     },
-    "want": "value must be one of 'travel'"
+    "want": "quest ends on quest:cooks_assistant@finished"
   },
   {
     "name": "no evidence at all",

@@ -10,7 +10,7 @@
     "submitted": 226,
     "first_submit_accepted": 206,
     "owner_confirmed": 52,
-    "decisions_applied": 419
+    "decisions_applied": 420
   },
   "sections": [
     {
@@ -110,7 +110,7 @@
       "submitted": 13,
       "first_submit_accepted": 12,
       "owner_confirmed": 1,
-      "decisions_applied": 30
+      "decisions_applied": 31
     }
   ],
   "rule_agreement": {
@@ -2349,6 +2349,12 @@
       "what": "item:family/pharaohs_sceptrex2 completes",
       "quote": "do Pyramid Plunder for a second sceptre",
       "decision": "optional-and-conditional-goals-are-objectives"
+    },
+    {
+      "step_id": "bruh-3.2-15c96591367f",
+      "what": "item Mushroom = item:6004 x10",
+      "quote": "10 mushrooms",
+      "decision": "consumed-items-as-requirements"
     }
   ],
   "steps": {
@@ -3564,9 +3570,9 @@
     },
     "bruh-3.2-15c96591367f": {
       "section_id": "bruh-3.2",
-      "submits": 3,
+      "submits": 4,
       "first_submit_accepted": true,
-      "comment": "Mushroom (10) left out: ambiguous which mushroom. Mahogany logs for training and the ornate pool/jewellery box/etc builds are not objectives. Gilded wardrobe optional."
+      "comment": "Mushroom id 6004 = Bittercap mushroom (wiki redirect; owner confirmed). Mahogany logs for training and the ornate pool/jewellery box/etc builds are not objectives. Gilded wardrobe optional."
     },
     "bruh-3.2-3358d877240e": {
       "section_id": "bruh-3.2",

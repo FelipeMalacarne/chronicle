@@ -1218,6 +1218,27 @@
           }
         },
         {
+          "name": "Mushroom",
+          "item_id": 6004,
+          "qty": 10,
+          "source_text": "10 mushrooms",
+          "evidence": {
+            "field": "/text",
+            "quote": "10 mushrooms",
+            "span": [
+              975,
+              987
+            ]
+          },
+          "source": {
+            "method": "llm",
+            "confidence": "medium",
+            "skill_version": "annotate-guide@6",
+            "confirmed_by": "owner",
+            "decision": "consumed-items-as-requirements"
+          }
+        },
+        {
           "name": "Fairy enchantment",
           "item_id": 20609,
           "qty": 1,

@@ -6,9 +6,10 @@
 // catalog by the server (internal/core/plan.Resolve); nothing here is text
 // to interpret. Pure: the agent and the server share the same checks, and
 // the plugin's TaskSpec mirrors the JSON, pinned by the wire fixtures both
-// test suites read. A train (phase 4) is the agent's alone: it delegates to
-// a plugin of the client and never goes to Chronicle Link, which keeps
-// refusing it.
+// test suites read. A train (phase 4) and a quest (E19) are the agent's
+// alone: they delegate to a plugin of the client (a train's plugin, the
+// client's Quest Helper) and never go to Chronicle Link, which keeps refusing
+// them.
 package execspec
 
 import (
@@ -27,17 +28,23 @@ import (
 
 // Types the executor runs (decision E5: the first primitives). Travel,
 // bank and buy run on Chronicle Link's machine (phase 3); train is
-// delegated by the agent to a plugin of the client (phase 4) and never goes
-// to the bridge.
+// delegated by the agent to a plugin of the client (phase 4) and quest to
+// the client's Quest Helper (E19); neither goes to the bridge.
 const (
 	TypeTravel = "travel"
 	TypeBank   = "bank"
 	TypeBuy    = "buy"
 	TypeTrain  = "train"
+	TypeQuest  = "quest"
 )
 
 // Types lists them.
-var Types = []string{TypeTravel, TypeBank, TypeBuy, TypeTrain}
+var Types = []string{TypeTravel, TypeBank, TypeBuy, TypeTrain, TypeQuest}
+
+// QuestRisks are the risk kinds of a quest the owner did not confirm safe:
+// a quest can fight and can have hazards, so it is a death risk (E9: in
+// HCIM it runs only with the owner watching).
+var QuestRisks = []string{content.RiskCombat, content.RiskHazard}
 
 // CombatSkills are the skills trained only by fighting: a train of one of
 // them is a combat risk whatever its method (docs/10, E9).
@@ -65,6 +72,7 @@ type Task struct {
 	Bank   *Bank   `json:"bank,omitempty"`
 	Buy    *Buy    `json:"buy,omitempty"`
 	Train  *Train  `json:"train,omitempty"`
+	Quest  *Quest  `json:"quest,omitempty"`
 }
 
 // Tile is a world tile.
@@ -152,9 +160,34 @@ type Train struct {
 // Until is the train's termination, the objective key the server proves.
 func (t Train) Until() string { return t.Skill + ">=" + strconv.Itoa(t.Level) }
 
+// Quest delegates a whole quest to the Quest Helper the Microbot client
+// ships (docs/10, E19): the agent sets its "Obtain Missing Items" to No,
+// selects the quest through the Agent Server (/quest-helper/start) and lets
+// the helper's bot do it; the run ends when the server proves Until from the
+// ingest. The bot decides how; never the bot nor the agent says when it is
+// done.
+type Quest struct {
+	// Quest is the catalog ref ("quest:cooks_assistant") and Name its
+	// display name (the trail).
+	Quest string `json:"quest"`
+	Name  string `json:"name"`
+	// Helper is the quest's name as the client's Quest Helper lists it
+	// (/quest-helper/list: RuneLite's quest name, which /quest-helper/start
+	// takes). The server matches it to Quest on the client's own list
+	// before the run; the agent finds it on the list again before starting.
+	Helper string `json:"helper"`
+	// Safe: the owner confirmed (in the recipe or the plan) that the quest
+	// cannot kill; otherwise it carries QuestRisks.
+	Safe bool `json:"safe,omitempty"`
+}
+
+// Until is the quest's termination, the objective key the server proves.
+func (q Quest) Until() string { return q.Quest + "@finished" }
+
 var (
 	reRef   = regexp.MustCompile(`^(location|shop):[a-z0-9_.'-]{1,120}$`)
 	reSkill = regexp.MustCompile(`^skill:[a-z]{1,40}$`)
+	reQuest = regexp.MustCompile(`^quest:[a-z0-9]+(?:_[a-z0-9]+)*$`)
 )
 
 // Check verifies a task: a type the executor runs, its parameters only,
@@ -164,7 +197,7 @@ var (
 // with a clear error.
 func (t Task) Check() error {
 	set := 0
-	for _, p := range []bool{t.Travel != nil, t.Bank != nil, t.Buy != nil, t.Train != nil} {
+	for _, p := range []bool{t.Travel != nil, t.Bank != nil, t.Buy != nil, t.Train != nil, t.Quest != nil} {
 		if p {
 			set++
 		}
@@ -190,8 +223,13 @@ func (t Task) Check() error {
 			return errors.New("task: a train has only train")
 		}
 		return t.Train.check()
-	case content.TaskTalk, content.TaskInteract, content.TaskManual, content.TaskQuest:
-		return fmt.Errorf("task: %s is not executed yet (the executor runs travel, bank, buy and train)", t.Type)
+	case TypeQuest:
+		if set != 1 || t.Quest == nil {
+			return errors.New("task: a quest has only quest")
+		}
+		return t.Quest.check()
+	case content.TaskTalk, content.TaskInteract, content.TaskManual:
+		return fmt.Errorf("task: %s is not executed yet (the executor runs travel, bank, buy, train and quest)", t.Type)
 	}
 	return fmt.Errorf("task: unknown type %q", t.Type)
 }
@@ -310,6 +348,16 @@ func (t *Train) check() error {
 	return nil
 }
 
+func (q *Quest) check() error {
+	if len(q.Quest) > 128 || !reQuest.MatchString(q.Quest) {
+		return errors.New("quest: quest must be a quest ref")
+	}
+	if err := checkName("quest: name", q.Name); err != nil {
+		return err
+	}
+	return checkName("quest: helper", q.Helper)
+}
+
 // checkName refuses an empty, long or multi-line name.
 func checkName(what, s string) error {
 	if strings.TrimSpace(s) == "" {
@@ -357,14 +405,18 @@ func onSegment(x, y, x1, y1, x2, y2 int) bool {
 }
 
 // Risks returns the risk kinds of the task itself, sorted: wilderness for
-// a travel whose area touches it, combat for a train that fights. The
-// server adds the recipe's (and the wilderness of a train's location).
+// a travel whose area touches it, combat for a train that fights, combat
+// and hazard for a quest not confirmed safe. The server adds the recipe's
+// (and the wilderness of a train's location).
 func (t Task) Risks() []string {
 	if t.Travel != nil && AreaInWilderness(t.Travel.Area) {
 		return []string{content.RiskWilderness}
 	}
 	if t.Train != nil && t.Train.Combat {
 		return []string{content.RiskCombat}
+	}
+	if t.Quest != nil && !t.Quest.Safe {
+		return slices.Clone(QuestRisks)
 	}
 	return nil
 }

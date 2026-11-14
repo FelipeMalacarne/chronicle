@@ -28,6 +28,11 @@ func TestRules(t *testing.T) {
 		{"twice", CheckSettings([]Setting{{"t", "a", "1"}, {"T", "a", "2"}}), "twice"},
 		{"too many", CheckSettings(make([]Setting, MaxSettings+1)), "at most"},
 		{"a bad one", CheckSettings([]Setting{{"t", "token", "1"}}), "config/0"},
+		{"quest bot never fetches", CheckSettings([]Setting{{QuestHelperGroup, QuestObtainMissingItems, QuestObtainNo}}), ""},
+		{"quest bot to the GE", CheckSettings([]Setting{{QuestHelperGroup, QuestObtainMissingItems, "YES"}}), "only ever NO"},
+		{"quest bot asks", CheckSetting(Setting{"QuestHelper", QuestObtainMissingItems, "ASK"}), "Grand Exchange"},
+		{"pinned key alone", CheckPinned(QuestHelperGroup, QuestObtainMissingItems, ""), ""},
+		{"quest bot switch", CheckSetting(Setting{QuestHelperGroup, QuestTurnOn, "true"}), ""},
 	} {
 		got := ""
 		if c.err != nil {

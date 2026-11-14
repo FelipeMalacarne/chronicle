@@ -1,12 +1,14 @@
 // Package clientcfg holds what the planner may name and set in the Microbot
 // client, wherever the name comes from: a command of the agent's closed
 // list (docs/08, Segurança item 4), a client profile (docs/11 section 4.3)
-// or a train task that delegates to a plugin (docs/10 section 7). A plugin
-// is its fully qualified class; a setting is a RuneLite config group, key
-// and value. The control path and Chronicle's own plugin are never started
-// or stopped, and the groups that hold the control's secrets, and keys that
-// look like secrets, are never read or written. Pure: the agent, the server
-// and the content verifier apply the same rules.
+// or a task that delegates to a plugin (a train, or a quest to the Quest
+// Helper; docs/10 section 7). A plugin is its fully qualified class; a
+// setting is a RuneLite config group, key and value. The control path and
+// Chronicle's own plugin are never started or stopped, the groups that hold
+// the control's secrets, and keys that look like secrets, are never read or
+// written, and a pinned setting (the Quest Helper's "Obtain Missing Items")
+// is only ever written with its one value. Pure: the agent, the server and
+// the content verifier apply the same rules.
 package clientcfg
 
 import (
@@ -102,6 +104,65 @@ func CheckValue(v string) error {
 	return nil
 }
 
+// The Quest Helper the pinned Microbot client ships, with its quest bot
+// (QuestScript) and the Agent Server's /quest-helper endpoints: a quest task
+// is delegated to it (docs/10, E19). Its config group is the plugin's own
+// ("questhelper"), read by the bot through its config proxy, so the planner
+// writes it like any plugin's settings (config_set, POST /settings/plugin).
+const (
+	// QuestHelperClass is the Quest Helper plugin (the run's plugin of a
+	// quest task).
+	QuestHelperClass = "net.runelite.client.plugins.microbot.questhelper.QuestHelperPlugin"
+	// QuestHelperGroup is its config group.
+	QuestHelperGroup = "questhelper"
+	// QuestObtainMissingItems is "Obtain Missing Items": whether the quest
+	// bot fetches missing items from the bank and the Grand Exchange. Its
+	// default, ASK, opens a dialog in the client and holds a run nobody
+	// watches; YES would send the bot to the Grand Exchange, which no
+	// ironman uses (the bot skips it by itself only for the account types
+	// Rs2Player.isIronman counts: not a Group Ironman). The planner writes
+	// only QuestObtainNo (PinnedSettings).
+	QuestObtainMissingItems = "obtainMissingItems"
+	// QuestObtainNo is the value the planner writes: never fetch items.
+	QuestObtainNo = "NO"
+	// QuestTurnOn is "Enable QuestHelper", the quest bot's switch: on (its
+	// default), the bot drives the quest the helper has selected; the bot
+	// switches it off by itself when it gives up.
+	QuestTurnOn = "TurnOn"
+)
+
+// PinnedSettings are settings the planner writes with one value only,
+// whatever asks for them (config_set, a client profile, a train's settings,
+// a quest run): an ironman account never lets the quest bot use the Grand
+// Exchange. Unsetting one (back to the client's default) is left to the
+// owner's own choice in the client.
+var PinnedSettings = []Setting{{Group: QuestHelperGroup, Key: QuestObtainMissingItems, Value: QuestObtainNo}}
+
+// CheckPinned refuses a value other than the pinned one for a pinned
+// setting; an empty value (a key checked on its own, or an unset) passes.
+func CheckPinned(group, key, value string) error {
+	if value == "" {
+		return nil
+	}
+	for _, p := range PinnedSettings {
+		if strings.EqualFold(group, p.Group) && key == p.Key && value != p.Value {
+			return fmt.Errorf("config: %s.%s is only ever %s from the planner (ironman: the quest bot never uses the Grand Exchange)", p.Group, p.Key, p.Value)
+		}
+	}
+	return nil
+}
+
+// CheckSetting verifies one setting: its group, key and value, and the
+// pinned ones.
+func CheckSetting(s Setting) error {
+	for _, err := range []error{CheckGroup(s.Group), CheckKey(s.Key), CheckValue(s.Value), CheckPinned(s.Group, s.Key, s.Value)} {
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // Setting is one RuneLite config value a task gives its plugin.
 type Setting struct {
 	Group string `json:"group"`
@@ -119,10 +180,8 @@ func CheckSettings(list []Setting) error {
 		return fmt.Errorf("config: at most %d settings", MaxSettings)
 	}
 	for i, s := range list {
-		for _, err := range []error{CheckGroup(s.Group), CheckKey(s.Key), CheckValue(s.Value)} {
-			if err != nil {
-				return fmt.Errorf("config/%d: %w", i, err)
-			}
+		if err := CheckSetting(s); err != nil {
+			return fmt.Errorf("config/%d: %w", i, err)
 		}
 		for _, o := range list[:i] {
 			if strings.EqualFold(o.Group, s.Group) && o.Key == s.Key {

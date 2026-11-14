@@ -138,6 +138,44 @@ func TestResolve(t *testing.T) {
 			t.Fatalf("strength = %+v %v", spec.Train, err)
 		}
 	})
+	cooks := content.Task{Type: content.TaskQuest, Quest: ref("quest:cooks_assistant")}
+	withQuests := func(in Input, quests map[string]string, skills map[string]rules.SkillState) Input {
+		ps := *in.Facts.State
+		ps.Quests, ps.Skills = quests, skills
+		in.Facts.State = &ps
+		return in
+	}
+	t.Run("quest delegated to the Quest Helper: a death risk, HCIM supervised", func(t *testing.T) {
+		spec, v, err := Resolve(withQuests(input(custom(cooks), content.ModeHCIM, nil, nil), map[string]string{"Cook's Assistant": "IN_PROGRESS"}, nil), "task:0#0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		q := spec.Quest
+		if spec.Type != execspec.TypeQuest || q == nil || q.Quest != "quest:cooks_assistant" || q.Name != "Cook's Assistant" ||
+			q.Helper != "Cook's Assistant" || q.Safe || q.Until() != "quest:cooks_assistant@finished" {
+			t.Fatalf("quest = %+v", q)
+		}
+		if !v.Executable || !slices.Equal(v.Risks, []string{"combat", "hazard"}) || !slices.Equal(spec.Risks(), v.Risks) || !v.Supervised ||
+			v.State != rules.Unmet || v.Label != "Fazer a quest Cook's Assistant (Quest Helper)" || v.Until == "" {
+			t.Fatalf("view = %+v", v)
+		}
+	})
+	t.Run("a quest the plan says is safe", func(t *testing.T) {
+		safe := cooks
+		safe.Safe = true
+		spec, v, err := Resolve(input(custom(safe), content.ModeHCIM, nil, nil), "task:0#0")
+		if err != nil || !spec.Quest.Safe || len(spec.Risks()) != 0 || len(v.Risks) != 0 || v.Supervised {
+			t.Fatalf("safe = %+v %+v %v", spec.Quest, v, err)
+		}
+	})
+	chompy := content.Task{Type: content.TaskQuest, Quest: ref("quest:big_chompy_bird_hunting")}
+	ready := map[string]rules.SkillState{"fletching": {Level: 5}, "cooking": {Level: 30}, "ranged": {Level: 30}}
+	t.Run("a quest whose requirements are proven", func(t *testing.T) {
+		spec, _, err := Resolve(withQuests(input(custom(chompy), content.ModeIronman, nil, nil), map[string]string{}, ready), "task:0#0")
+		if err != nil || spec.Quest.Helper != "Big Chompy Bird Hunting" {
+			t.Fatalf("chompy = %+v %v", spec.Quest, err)
+		}
+	})
 	noPlugin := fisher
 	noPlugin.Plugin, noPlugin.Config = "", nil
 	for _, tc := range []struct {
@@ -148,8 +186,13 @@ func TestResolve(t *testing.T) {
 	}{
 		{"train met", withFishing(input(custom(fisher), content.ModeIronman, nil, nil), 76), "task:0#0", "já está cumprida"},
 		{"train without plugin", input(custom(noPlugin), content.ModeIronman, nil, nil), "task:0#0", "não diz qual plugin"},
+		{"quest finished", withQuests(input(custom(cooks), content.ModeIronman, nil, nil), map[string]string{"Cook's Assistant": "FINISHED"}, nil), "task:0#0", "já está cumprida"},
+		{"quest lacking a level", withQuests(input(custom(chompy), content.ModeIronman, nil, nil), map[string]string{},
+			map[string]rules.SkillState{"fletching": {Level: 5}, "cooking": {Level: 30}, "ranged": {Level: 29}}), "task:0#0", "faltam requisitos da quest: 30 Ranged"},
+		{"quest with an unproven level", withQuests(input(custom(chompy), content.ModeIronman, nil, nil), map[string]string{},
+			map[string]rules.SkillState{"fletching": {Level: 5}}), "task:0#0", "não prova os requisitos"},
 		{"met", input(route, content.ModeIronman, nil, at(3188, 3220)), "step:t::a#0", "já está cumprida"},
-		{"talk", input(route, content.ModeIronman, nil, nil), "step:t::a#1", "só roda travel, bank, buy e train"},
+		{"talk", input(route, content.ModeIronman, nil, nil), "step:t::a#1", "só roda travel, bank, buy, train e quest"},
 		{"uim bank", input(route, content.ModeUIM, nil, nil), "step:t::b#0", "Ultimate Ironman"},
 		{"via", input(custom(content.Task{Type: content.TaskTravel, Location: ref("location:lumbridge"), Via: ref("item:8007")}), content.ModeIronman, nil, nil), "task:0#0", "via"},
 		{"buy owned", input(route, content.ModeIronman, rules.ItemHoldings{"bank": live(map[int]int64{1351: 1})}, nil), "step:t::b#1", "já está cumprida"},
@@ -225,5 +268,36 @@ func TestTarget(t *testing.T) {
 	}
 	if _, ok := Target(execspec.Area{Plane: 1, MinX: 0, MinY: 0, MaxX: 2, MaxY: 2, Polygon: [][2]int{{0, 0}, {0, 0}, {0, 0}}}, execspec.Tile{}); !ok {
 		t.Error("a degenerate polygon still has its point")
+	}
+}
+
+// TestQuestHelperName: the name the client's Quest Helper lists a quest by,
+// matched through the catalog as the ingest matches the client's quest
+// names; never a guess.
+func TestQuestHelperName(t *testing.T) {
+	_, reg := load(t)
+	listed := []string{"Cook's Assistant", "Sheep Shearer", "The Restless Ghost", "Ardougne Easy", "Alfred Grimhand's Barcrawl"}
+	for _, tc := range []struct {
+		name   string
+		listed []string
+		quest  string
+		want   string
+		err    string
+	}{
+		{"the catalog's name", listed, "quest:cooks_assistant", "Cook's Assistant", ""},
+		{"with its article", listed, "quest:the_restless_ghost", "The Restless Ghost", ""},
+		{"article-less, the only one", []string{"Restless Ghost"}, "quest:the_restless_ghost", "Restless Ghost", ""},
+		{"the exact one of two", []string{"Restless Ghost", "The Restless Ghost"}, "quest:the_restless_ghost", "The Restless Ghost", ""},
+		{"not listed", listed, "quest:x_marks_the_spot", "", "não lista X Marks the Spot"},
+		{"two names, none exact", []string{"Restless Ghost", "restless ghost"}, "quest:the_restless_ghost", "", "mais de um nome"},
+		{"an empty list", nil, "quest:cooks_assistant", "", "não lista"},
+	} {
+		got, err := QuestHelperName(tc.listed, *ref(tc.quest), reg)
+		switch {
+		case tc.err != "" && (err == nil || !strings.Contains(err.Error(), tc.err)):
+			t.Errorf("%s: err = %v, want %q", tc.name, err, tc.err)
+		case tc.err == "" && (err != nil || got != tc.want):
+			t.Errorf("%s: %q %v, want %q", tc.name, got, err, tc.want)
+		}
 	}
 }

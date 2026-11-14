@@ -266,7 +266,17 @@ func TestTaskCheck(t *testing.T) {
 		{"manual in a recipe", Task{Type: TaskManual, Note: "Buy it.", Until: until(UntilGoalMet)}, recipe, ""},
 		{"manual in a recipe without note", Task{Type: TaskManual, Until: until(UntilGoalMet)}, recipe, "needs a note"},
 		{"manual owner_mark in a recipe", Task{Type: TaskManual, Note: "x", Until: until(UntilOwnerMark)}, recipe, "no step for the owner to mark"},
-		{"quest is planned", Task{Type: TaskQuest}, step, "not an executor primitive yet"},
+		{"quest", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant")}, step, ""},
+		{"quest until its finish", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant"), Until: until("quest:cooks_assistant@finished")}, bare, ""},
+		{"quest safe in a recipe", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant"), Safe: true}, recipe, ""},
+		{"quest safe in a step", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant"), Safe: true}, step, "never a step's text"},
+		{"quest needs its quest", Task{Type: TaskQuest}, step, "quest needs quest"},
+		{"quest of an unknown quest", Task{Type: TaskQuest, Quest: ref("quest:not_a_quest")}, step, "unknown entity quest:not_a_quest"},
+		{"quest of a skill", Task{Type: TaskQuest, Quest: ref("skill:magic")}, step, "is not of kind quest"},
+		{"quest until started", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant"), Until: until("quest:cooks_assistant@started")}, step, "quest ends on quest:cooks_assistant@finished"},
+		{"quest until goal_met", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant"), Until: until(UntilGoalMet)}, step, "until must be omitted"},
+		{"quest with a location", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant"), Location: ref("location:lumbridge")}, step, "quest takes no location"},
+		{"safe on a train", Task{Type: TaskTrain, Skill: ref("skill:magic"), Safe: true, Until: until("skill:magic>=13")}, recipe, "train takes no safe"},
 		{"unknown type", Task{Type: "teleport"}, step, "unknown task type"},
 		{"a parameter of another type", Task{Type: TaskTravel, Location: ref("location:lumbridge"), Shop: ref("shop:bobs_brilliant_axes")}, bare, "travel takes no shop"},
 		{"until with both", Task{Type: TaskManual, Until: &TaskUntil{State: UntilOwnerMark, Objective: &goal[0]}}, step, "exactly one of objective and state"},
@@ -282,6 +292,32 @@ func TestTaskCheck(t *testing.T) {
 		case c.want != "" && !strings.Contains(got, c.want):
 			t.Errorf("%s: got %q, want %q", c.name, got, c.want)
 		}
+	}
+}
+
+// TestQuestRecipe: a quest's recipe can end on the quest delegated to the
+// Quest Helper (E19), its bank first, and say the quest cannot kill.
+func TestQuestRecipe(t *testing.T) {
+	dir := copyFixture(t)
+	recipe := `{"schema_version":1,"kind":"recipe","objective":"quest:x_marks_the_spot@finished",
+		"variants":[{"id":"main","modes":["ironman","hcim","uim","gim"],"tasks":[
+			{"type":"bank","items":[{"name":"Spade","item_id":952,"qty":1}]},
+			{"type":"quest","quest":"quest:x_marks_the_spot","safe":true}]}],
+		"source":{"method":"manual","confidence":"high","confirmed_by":"owner"}}`
+	if err := os.WriteFile(filepath.Join(dir, RecipesSubdir, "quest-x_marks_the_spot-finished.json"), []byte(recipe), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	c, err := Load(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, ok := c.Recipe(entities.MustParseObjectiveKey("quest:x_marks_the_spot@finished"))
+	if !ok {
+		t.Fatal("not loaded")
+	}
+	q := r.Variants[0].Tasks[1]
+	if u, ok := q.Ends(); !ok || u.Objective == nil || u.Objective.String() != "quest:x_marks_the_spot@finished" || !q.Safe {
+		t.Fatalf("quest = %+v ends %v", q, u)
 	}
 }
 

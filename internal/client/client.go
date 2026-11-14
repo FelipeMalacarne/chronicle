@@ -20,6 +20,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
+	"github.com/FelipeMalacarne/chronicle/internal/core/mta"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 )
@@ -182,6 +183,20 @@ func (c *Client) do(ctx context.Context, method, path string, query url.Values, 
 		return fmt.Errorf("client: %s %s: %w", method, path, err)
 	}
 	return nil
+}
+
+// MTAData is GET /api/mta/rewards: the Mage Training Arena's reward table.
+func (c *Client) MTAData(ctx context.Context) (mta.Table, error) {
+	var t mta.Table
+	err := c.do(ctx, http.MethodGet, "/api/mta/rewards", nil, nil, &t)
+	return t, err
+}
+
+// MTACalculate is POST /api/mta/calculate: the points and runes the chosen rewards take.
+func (c *Client) MTACalculate(ctx context.Context, in mta.Input) (mta.Result, error) {
+	var r mta.Result
+	err := c.do(ctx, http.MethodPost, "/api/mta/calculate", nil, in, &r)
+	return r, err
 }
 
 // AuthClient is GET /api/auth/client.

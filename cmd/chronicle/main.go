@@ -54,6 +54,7 @@ func newRoot() *cobra.Command {
 		newAgentCmd(),
 		newWorkersCmd(),
 		newProfilesCmd(),
+		newMTACmd(),
 	)
 	return root
 }

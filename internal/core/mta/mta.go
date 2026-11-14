@@ -110,6 +110,12 @@ type Result struct {
 	EnchantLevel int `json:"enchant_level"`
 }
 
+// ErrUnknownReward: a reward id the table does not have.
+var ErrUnknownReward = errors.New("mta: unknown reward")
+
+// ErrInvalidInput: a negative point amount, Magic level or Enchant level.
+var ErrInvalidInput = errors.New("mta: points, Magic and Enchant level cannot be negative")
+
 // ErrNoEnchant: the Enchanting Chamber has points to earn but the Magic level (or the chosen
 // level) casts no Enchant.
 var ErrNoEnchant = errors.New("mta: the Enchanting Chamber needs Magic 7 or an Enchant level")
@@ -117,10 +123,14 @@ var ErrNoEnchant = errors.New("mta: the Enchanting Chamber needs Magic 7 or an E
 // Calculate prices the chosen rewards. An unknown reward id is an error; a point amount already
 // held beyond what is needed counts as zero missing, never as a credit to another room.
 func Calculate(in Input) (Result, error) {
+	if in.Points.Telekinetic < 0 || in.Points.Graveyard < 0 || in.Points.Enchantment < 0 || in.Points.Alchemist < 0 ||
+		in.Magic < 0 || in.EnchantLevel < 0 {
+		return Result{}, ErrInvalidInput
+	}
 	owned := map[string]bool{}
 	for _, id := range in.Owned {
 		if _, ok := rewards[id]; !ok {
-			return Result{}, fmt.Errorf("mta: unknown reward %q", id)
+			return Result{}, fmt.Errorf("%w %q", ErrUnknownReward, id)
 		}
 		// A wand upgrade turned in the one below it: owning one means owning the tiers under it.
 		for ; id != ""; id = rewards[id].Requires {
@@ -142,7 +152,7 @@ func Calculate(in Input) (Result, error) {
 	}
 	for _, id := range in.Rewards {
 		if _, ok := rewards[id]; !ok {
-			return Result{}, fmt.Errorf("mta: unknown reward %q", id)
+			return Result{}, fmt.Errorf("%w %q", ErrUnknownReward, id)
 		}
 		add(id)
 	}

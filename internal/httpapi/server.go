@@ -209,6 +209,7 @@ func (s *Server) routes() {
 		account("GET /api/sync/runs", s.handleSyncRuns)
 	}
 	s.levelRoutes()
+	s.mtaRoutes()
 	s.recordingRoutes()
 	s.planRoutes()
 	s.microbotRoutes()

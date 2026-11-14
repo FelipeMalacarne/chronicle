@@ -2,6 +2,7 @@ package mta
 
 import (
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -85,5 +86,20 @@ func TestEveryRequiresExists(t *testing.T) {
 				t.Errorf("%s requires unknown %s", r.ID, r.Requires)
 			}
 		}
+	}
+}
+
+func TestInvalidInput(t *testing.T) {
+	for name, in := range map[string]Input{
+		"negative points":  {Rewards: []string{"infinity_boots"}, Points: Points{Telekinetic: -1}, Magic: 99},
+		"negative magic":   {Rewards: []string{"infinity_boots"}, Magic: -1},
+		"negative enchant": {Rewards: []string{"infinity_boots"}, Magic: 99, EnchantLevel: -2},
+	} {
+		if _, err := Calculate(in); !errors.Is(err, ErrInvalidInput) {
+			t.Errorf("%s: got %v, want ErrInvalidInput", name, err)
+		}
+	}
+	if _, err := Calculate(Input{Rewards: []string{"nope"}}); !errors.Is(err, ErrUnknownReward) {
+		t.Errorf("unknown reward: got %v", err)
 	}
 }

@@ -21,6 +21,7 @@
 	import type { AccountRhythm, ContainerView, QuestView } from '#lib/progress/types';
 	import { ago } from '#lib/progress/view';
 	import Glyph from '#lib/v6/Glyph.svelte';
+	import MtaCard from '#lib/v6/MtaCard.svelte';
 
 	/*
 	 * Conta › Personagem (página 8 do canvas, V7Personagem1440; fatia V4 de decisoes-canvas.md, 7.5):
@@ -334,6 +335,8 @@
 			</div>
 		</section>
 	</div>
+
+	<MtaCard state={st} />
 
 	<section class="card">
 		<div class="h">

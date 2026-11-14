@@ -268,3 +268,34 @@ O que falta desenhar:
    resultados de passos de todas as seções e das duas rotas, entidades do Mundo e metas, com destino
    claro de cada tipo. A busca da Rota vale só para a seção aberta, e é preciso saber a seção para
    achar o passo.
+
+## 12. Mage Training Arena na Personagem (2026-11-14)
+
+O cartão **Mage Training Arena** já existe no código (`web/src/lib/v6/MtaCard.svelte`, aba Personagem,
+entre Conquistas e Banco), feito a pedido do dono antes de haver artboard: só reaproveita o cartão v7, o
+campo e as listas. Falta desenhá-lo no canvas, com o código seguindo o desenho.
+
+O que ele faz: o dono marca as recompensas da loja da MTA (Infinity, as quatro varinhas, Mage's book, rune
+pouch, Bones to Peaches) e ele diz **em que ordem comprar**, **quantos pontos de pizazz faltam em cada uma das
+4 salas** e **quantas runas Law, Nature e Cosmic isso custa**, contra o que a conta leva e guarda no banco.
+
+Dados que o cartão tem (API `GET /api/mta/rewards` e `POST /api/mta/calculate`):
+
+- as 12 recompensas, com o custo em pontos por sala e a varinha de que cada uma depende (a Master wand pede
+  a Teacher, e assim por diante); as que a conta já tem (inventário, equipamento, banco);
+- os pontos por sala (hoje **digitados à mão**: nenhuma fonte os lê ainda), com teto por sala;
+- o Magic da conta (define o Enchant mais alto e quanto o Enchanting Chamber rende por runa);
+- o resultado: ordem de compra, pontos que faltam por sala, runas necessárias e quanto falta de cada uma.
+
+O que desenhar:
+
+1. O cartão em 1440 e 640: escolha das recompensas (com o ícone do item e o "já tem"), pontos por sala,
+   resultado. Decidir se escolha e resultado ficam lado a lado ou em sequência, e como o resultado lê em
+   uma olhada: a ordem, o que falta por sala e as três runas com "tem / falta".
+2. Os estados: nada marcado; tudo marcado já está na conta; sem leitura dos containers (as runas ficam
+   "sem leitura", nunca zero); Magic sem Enchant conjurável (Magic < 7, o Enchanting Chamber não rende e a
+   conta não calcula); a tabela da wiki indisponível; pontos ainda não lidos pelo plugin.
+3. Se o cartão pede um cabeçalho de fonte (a tabela e as taxas vêm da OSRS Wiki, CC BY-NC-SA 3.0, não do
+   plugin) e como mostrar que as runas são estimativa por pontos médios.
+4. Quando os pontos passarem a vir do plugin (fm/mtaarena já os lê da janela da loja), como o campo digitado
+   e o valor lido convivem: lido com a idade da leitura, digitado como correção.

@@ -9,6 +9,7 @@ import {
 	fleetRoutines,
 	fleetRuns,
 	headline,
+	heldCause,
 	intervalText,
 	newDraft,
 	offlineHold,
@@ -17,6 +18,7 @@ import {
 	queueOrder,
 	recurringBody,
 	recurringWhen,
+	routineNotices,
 	runLine,
 	runsOfRow,
 	savePlan,
@@ -107,41 +109,102 @@ test('recurringWhen: every reason of the watcher, with the queue column and the 
 	);
 	assert.equal(recurringWhen(rc({ reason: 'clock_stale' }), now).when, 'esperando o relógio');
 	assert.equal(recurringWhen(rc({ reason: 'no_clock' }), now).when, 'sem relógio');
+	// A failed run: one retry, 15 min after the failure.
+	const retrying = recurringWhen(rc({ reason: 'retry_waiting', nextAt: at(14, 12) }), now);
+	assert.deepEqual([retrying.when, retrying.tone], ['de novo em 12 min', 'wait']);
+	assert.match(retrying.why, /tenta de novo sozinha em 12 min, uma vez só/);
+	const retry = recurringWhen(rc({ reason: 'retry', due: true, nextAt: at(13, 50) }), now);
+	assert.deepEqual([retry.when, retry.tone], ['agora', 'due']);
+	assert.match(retry.why, /Se falhar de novo, fica parada até você liberá-la/);
+	// Held: canceled, the retry failed too, or (an agent from before the retry) failed once.
 	const held = recurringWhen(rc({ reason: 'held' }), now);
 	assert.equal(held.when, 'segura');
-	assert.match(held.why, /até você salvá-la de novo/);
-	assert.match(recurringWhen(rc({ reason: 'held_agent' }), now).why, /salvar uma delas/);
+	assert.match(held.why, /falhou: fica parada até você liberá-la/);
+	const failedRun = { state: 'failed' as const, startedAt: at(12), finishedAt: at(12, 3) };
+	assert.match(
+		recurringWhen(
+			rc({ reason: 'held', lastRun: { ...failedRun, state: 'canceled' }, prevRun: failedRun }),
+			now
+		).why,
+		/Você cancelou o último run dela, e um run cancelado não tenta de novo/
+	);
+	assert.match(
+		recurringWhen(
+			rc({
+				reason: 'held',
+				lastRun: { ...failedRun, startedAt: at(12, 20), finishedAt: at(12, 25) },
+				prevRun: failedRun
+			}),
+			now
+		).why,
+		/tentou de novo 15 min depois e falhou outra vez/
+	);
+	assert.match(recurringWhen(rc({ reason: 'held_agent' }), now).why, /liberar uma delas/);
 	assert.equal(recurringWhen(rc({ reason: 'off', enabled: false }), now).tone, 'off');
 	// From the database (no watcher): nothing to say unless a hold is known.
 	assert.equal(recurringWhen(rc(), now).when, '');
-	assert.equal(recurringWhen(rc(), now, 'held').when, 'segura');
+	assert.equal(recurringWhen(rc(), now, { reason: 'held' }).when, 'segura');
+	assert.equal(
+		recurringWhen(rc(), now, { reason: 'retry_waiting', nextAt: at(14, 7) }).when,
+		'de novo em 7 min'
+	);
 	assert.equal(recurringWhen(rc({ enabled: false }), now).when, 'desligada');
 });
 
 test('offlineHold: the agent rules from what the database holds', () => {
-	// The last run failed after the last save: held until saved again.
+	// The first failure after the last save: one retry, 15 min after it.
+	const fresh = rc({ lastRun: { state: 'failed', startedAt: at(13, 50), finishedAt: at(13, 52) } });
+	assert.deepEqual(offlineHold(fresh, [fresh], [], now), {
+		reason: 'retry_waiting',
+		nextAt: at(14, 7)
+	});
+	// The 15 minutes passed: the retry is due.
 	const failed = rc({ lastRun: { state: 'failed', startedAt: at(12), finishedAt: at(12, 3) } });
-	assert.equal(offlineHold(failed, [failed], []), 'held');
-	// Saved again after the failure: free.
-	const saved = { ...failed, updatedAt: at(13) };
-	assert.equal(offlineHold(saved, [saved], []), null);
+	assert.deepEqual(offlineHold(failed, [failed], [], now), { reason: 'retry', nextAt: at(12, 18) });
+	// The retry failed too: held.
+	const twice: Recurring = {
+		...failed,
+		prevRun: { state: 'failed', startedAt: at(11, 30), finishedAt: at(11, 40) }
+	};
+	assert.deepEqual(offlineHold(twice, [twice], [], now), { reason: 'held' });
+	// A failure before the save does not count.
+	const before: Recurring = {
+		...failed,
+		prevRun: { state: 'failed', startedAt: at(8), finishedAt: at(8, 5) }
+	};
+	assert.equal(offlineHold(before, [before], [], now)?.reason, 'retry');
+	// Canceled by the owner: held, never retries.
+	const canceled = rc({ lastRun: { state: 'canceled', startedAt: at(12), finishedAt: at(12, 3) } });
+	assert.deepEqual(offlineHold(canceled, [canceled], [], now), { reason: 'held' });
+	// Saved again after the failures (Liberar): free.
+	const saved = { ...twice, updatedAt: at(13) };
+	assert.equal(offlineHold(saved, [saved], [], now), null);
 	// A run that never finished counts as failed when it started.
 	const lost = rc({ lastRun: { state: 'running', startedAt: at(12) } });
-	assert.equal(offlineHold(lost, [lost], []), 'held');
+	assert.deepEqual(offlineHold(lost, [lost], [], now), { reason: 'retry', nextAt: at(12, 15) });
 	// Switched off: never held.
-	assert.equal(offlineHold({ ...failed, enabled: false }, [failed], []), null);
+	assert.equal(offlineHold({ ...twice, enabled: false }, [twice], [], now), null);
 	// The account's last run of any kind failed after the latest save of any routine.
 	const ok = rc();
 	const other: Recurring = { ...rc({ id: 'rtn_0002bbbb' }), updatedAt: at(10) };
-	assert.equal(
-		offlineHold(ok, [ok, other], [run({ state: 'canceled', finishedAt: at(11) })]),
-		'held_agent'
+	assert.deepEqual(
+		offlineHold(ok, [ok, other], [run({ state: 'canceled', finishedAt: at(11) })], now),
+		{ reason: 'held_agent' }
 	);
 	assert.equal(
-		offlineHold(ok, [ok, other], [run({ state: 'canceled', finishedAt: at(9, 30) })]),
+		offlineHold(ok, [ok, other], [run({ state: 'canceled', finishedAt: at(9, 30) })], now),
 		null
 	);
-	assert.equal(offlineHold(ok, [ok, other], [run()]), null);
+	assert.equal(offlineHold(ok, [ok, other], [run()], now), null);
+	// The account's last run is a routine's own first failure: its retry, while the others wait.
+	const own = run({ routine: 'rtn_0001aaaa', state: 'failed', finishedAt: at(13, 52) });
+	assert.equal(offlineHold(fresh, [fresh, other], [own], now)?.reason, 'retry_waiting');
+	assert.deepEqual(offlineHold(other, [fresh, other], [own], now), { reason: 'held_agent' });
+	// A failed manual run after its first failure: no retry while that holds every routine.
+	assert.deepEqual(
+		offlineHold(failed, [failed], [run({ state: 'failed', finishedAt: at(13) })], now),
+		{ reason: 'held_agent' }
+	);
 });
 
 test('queueOrder: due by priority, then by time, events and waiting, held, off', () => {
@@ -215,18 +278,128 @@ test('accountRows: recurring routines and triggers in queue order, holds marked'
 	assert.equal('due' in (rows[0].recurring ?? {}), false);
 });
 
-test('accountRows: from the database, the hold is computed from the last run', () => {
+test('accountRows: from the database, the hold and the retry come from the last runs', () => {
+	const watchError = 'no agent connected: it gets the recurring routines when it links';
+	const failed = { state: 'failed' as const, startedAt: at(12), finishedAt: at(12, 2) };
 	const rows = accountRows(
 		{
-			recurring: [rc({ lastRun: { state: 'failed', startedAt: at(12), finishedAt: at(12, 2) } })],
-			watchError: 'no agent connected: it gets the recurring routines when it links'
+			recurring: [
+				rc({
+					lastRun: { ...failed, startedAt: at(12, 30), finishedAt: at(12, 32) },
+					prevRun: failed
+				}),
+				rc({
+					id: 'rtn_0002bbbb',
+					name: 'Farm run',
+					lastRun: { ...failed, startedAt: at(13, 50), finishedAt: at(13, 52) }
+				})
+			],
+			watchError
 		},
 		null,
 		[],
 		now
 	);
-	assert.equal(rows[0].when, 'segura');
-	assert.equal(rows[0].held, 'held');
+	assert.deepEqual(
+		rows.map((r) => [r.name, r.when, r.held, r.retryAt, r.nextAt]),
+		[
+			['Farm run', 'de novo em 7 min', undefined, at(14, 7), at(14, 7)],
+			['Bird houses', 'segura', 'held', undefined, undefined]
+		]
+	);
+});
+
+test('accountRows: the account last run is a routine first failure; the others wait for its retry', () => {
+	const own = run({ routine: 'rtn_0001aaaa', state: 'failed', finishedAt: at(13, 52) });
+	const rows = accountRows(
+		{
+			recurring: [
+				rc({ reason: 'retry_waiting', nextAt: at(14, 7) }),
+				rc({ id: 'rtn_0002bbbb', name: 'Farm run', reason: 'held_agent' })
+			]
+		},
+		null,
+		[own],
+		now
+	);
+	assert.deepEqual(
+		rows.map((r) => [r.name, r.tone, r.retryAt, r.held]),
+		[
+			['Bird houses', 'wait', at(14, 7), undefined],
+			['Farm run', 'held', undefined, 'held_agent']
+		]
+	);
+	assert.equal(
+		rows[1].why,
+		'Bird houses falhou e tenta de novo em 7 min: as rotinas da conta esperam essa tentativa, ou até você liberar uma delas.'
+	);
+	// Notices: the retry, saying the others wait for it; no notice of the account's last run.
+	const notices = routineNotices(rows, [own]);
+	assert.deepEqual(
+		notices.map((n) => [n.kind, n.row.name, n.holdsOthers, n.run?.id]),
+		[['retry', 'Bird houses', true, own.id]]
+	);
+});
+
+test('routineNotices and heldCause: canceled, failed twice, failed once, the account last run', () => {
+	const failed = { state: 'failed' as const, startedAt: at(12), finishedAt: at(12, 2) };
+	const later = { ...failed, startedAt: at(12, 20), finishedAt: at(12, 22) };
+	const rows = accountRows(
+		{
+			recurring: [
+				rc({ reason: 'held', lastRun: { ...later, state: 'canceled' }, prevRun: failed }),
+				rc({
+					id: 'rtn_0002bbbb',
+					name: 'Farm run',
+					reason: 'held',
+					lastRun: later,
+					prevRun: failed
+				}),
+				rc({ id: 'rtn_0003cccc', name: 'Herbs', reason: 'held', lastRun: later }),
+				rc({ id: 'rtn_0004dddd', name: 'Tree run', reason: 'held_agent' }),
+				rc({ id: 'rtn_0005eeee', name: 'Off', reason: 'off', enabled: false })
+			]
+		},
+		null,
+		[],
+		now
+	);
+	assert.deepEqual(
+		rows.map((r) => [r.name, heldCause(r)]),
+		[
+			['Bird houses', 'canceled'],
+			['Farm run', 'twice'],
+			['Herbs', 'failed'],
+			['Tree run', 'agent'],
+			['Off', null]
+		]
+	);
+	const manual = run({ id: 'run-9', state: 'failed', finishedAt: at(13), error: 'boom' });
+	assert.deepEqual(
+		routineNotices(rows, [manual]).map((n) => [n.kind, n.row.name, n.cause, n.run?.id]),
+		[
+			['held', 'Bird houses', 'canceled', undefined],
+			['held', 'Farm run', 'twice', undefined],
+			['held', 'Herbs', 'failed', undefined],
+			['held_agent', 'Tree run', 'agent', 'run-9']
+		]
+	);
+	// The account's last run is a held routine's: releasing it releases every one, one notice.
+	const own = run({
+		id: 'run-8',
+		routine: 'rtn_0002bbbb',
+		state: 'failed',
+		finishedAt: at(12, 22)
+	});
+	assert.deepEqual(
+		routineNotices(rows, [own]).map((n) => [n.kind, n.row.name, n.run?.id]),
+		[
+			['held', 'Bird houses', undefined],
+			['held', 'Farm run', 'run-8'],
+			['held', 'Herbs', undefined]
+		]
+	);
+	assert.deepEqual(routineNotices([], []), []);
 });
 
 test('watchText and watcherLine: the server reasons in PT-BR, then the watcher', () => {
@@ -490,6 +663,15 @@ test('savePlan: each account keeps its switch, new copies are off, unticked ones
 	assert.deepEqual(plan.removes, [{ account: 'acc_iron', id: 'rtn_0002bbbb' }]);
 	// Saving the held copy (switched on) lets it start at once.
 	assert.deepEqual(plan.releases, ['acc_pesca']);
+	// So does saving a copy that waits for its retry.
+	const waiting = accountRows(
+		{ recurring: [rc({ id: 'rtn_0001aaaa', reason: 'retry_waiting', nextAt: at(14, 7) })] },
+		null,
+		[],
+		now
+	);
+	const [wr] = fleetRoutines([{ account: 'acc_pesca', rows: waiting }]);
+	assert.deepEqual(savePlan(draftOf(wr), wr, new Set()).releases, ['acc_pesca']);
 	// An account whose last run holds every routine: any save there releases them.
 	assert.deepEqual(savePlan({ ...d, accounts: ['acc_alt'] }, fr, new Set(['acc_alt'])).releases, [
 		'acc_alt'
@@ -597,7 +779,14 @@ test('accountQueue: now, ready, by the clock with the break, events, held', () =
 					due: true
 				}),
 				rc({ id: 'rtn_0004dddd', name: 'Alt run', reason: 'held' }),
-				rc({ id: 'rtn_0005eeee', name: 'Off', reason: 'off', enabled: false })
+				rc({ id: 'rtn_0005eeee', name: 'Off', reason: 'off', enabled: false }),
+				rc({
+					id: 'rtn_0006ffff',
+					name: 'Tree run',
+					clock: 'TREE',
+					reason: 'retry_waiting',
+					nextAt: at(14, 10)
+				})
 			]
 		},
 		{
@@ -617,14 +806,15 @@ test('accountQueue: now, ready, by the clock with the break, events, held', () =
 		q.map((i) => [i.at, i.title, i.sub]),
 		[
 			['a seguir', 'Herbs', 'rotina · pelo intervalo'],
+			['14:10', 'Tree run', 'falhou: tenta de novo uma vez'],
 			['14:32', 'Bird houses', 'rotina · pelo relógio · ~4 min'],
 			['14:51', 'Pausa', 'Break Handler'],
 			['15:00', 'Farm run', 'rotina · pelo relógio'],
 			['no evento', 'Trocar o gato', 'quando o filhote crescer · Cat Swap'],
-			['segura', 'Alt run', 'falhou: espera você salvá-la de novo']
+			['segura', 'Alt run', 'falhou: espera você liberar']
 		]
 	);
-	assert.equal(q[1].routine, 'recurring:Bird houses');
+	assert.equal(q[2].routine, 'recurring:Bird houses');
 	// A run going on, and a break going on: the run is the current one.
 	const going = accountQueue(
 		rows.filter((r) => r.id === 'rtn_0001aaaa'),

@@ -11,6 +11,7 @@
 	import { dayStart } from '#lib/progress/historico';
 	import { iconFor, ICON_ATTRIBUTION } from '#lib/progress/icons';
 	import { microbotModule, probeMicrobot } from '#lib/progress/microbot.svelte';
+	import { accountRows, routineNotices, type RoutineNotice } from '#lib/progress/rotinas';
 	import type { FleetLevels, FleetRhythm, TimerView } from '#lib/progress/types';
 	import { RESTART_NOW_TITLE, workerLines } from '#lib/progress/workers';
 	import type { Run } from '#lib/api/microbot';
@@ -25,6 +26,7 @@
 	let workers = $state<WorkersView | null>(null);
 	let timers = $state<Record<string, TimerView[]>>({});
 	let runs = $state<Record<string, Run[]> | null>(null);
+	let routines = $state<Record<string, RoutineNotice[]>>({});
 	let rhythm = $state<FleetRhythm | null>(null);
 	let levels = $state<FleetLevels | null>(null);
 	let loaded = $state(false);
@@ -42,7 +44,7 @@
 	async function load(microbot: boolean) {
 		const accounts = fleet.accounts ?? [];
 		const midnight = new Date(dayStart(Date.now())).toISOString();
-		const [w, rh, lv, tm, rs] = await Promise.all([
+		const [w, rh, lv, tm, rs, rc] = await Promise.all([
 			workersApi.list().catch((e: unknown) => {
 				// 404: sem o módulo do Microbot ou sem cofre de sessões; a tela segue sem os workers.
 				if (!(e instanceof MicrobotError && e.status === 404)) failure = String(e);
@@ -61,6 +63,11 @@
 							async (a) => [a.id, (await quiet(microbotApi.runsOf(a.id)))?.runs ?? []] as const
 						)
 					)
+				: null,
+			microbot
+				? Promise.all(
+						accounts.map(async (a) => [a.id, await quiet(microbotApi.recurringOf(a.id))] as const)
+					)
 				: null
 		]);
 		workers = w;
@@ -68,6 +75,15 @@
 		levels = lv;
 		timers = Object.fromEntries(tm);
 		runs = rs ? Object.fromEntries(rs) : null;
+		// As rotinas seguras ou esperando a nova tentativa, como na Frota.
+		const at = new Date();
+		routines = Object.fromEntries(
+			(rc ?? []).map(([id, status]) => {
+				const history = runs?.[id] ?? [];
+				const rows = status ? accountRows(status, null, history, at) : [];
+				return [id, routineNotices(rows, history)];
+			})
+		);
 		now = Date.now();
 		loaded = true;
 	}
@@ -89,7 +105,7 @@
 	const accounts = $derived(fleet.accounts ?? []);
 	const names = $derived(Object.fromEntries(accounts.map((a) => [a.id, a.rsn])));
 	const pills = $derived(accountPills(accounts, only, morePills));
-	// Para "Precisa de você" bastam o worker e os relógios de cada conta (frota.ts, needs).
+	// Para "Precisa de você" bastam o worker, os relógios e as rotinas de cada conta (frota.ts, needs).
 	const attention = $derived.by(() => {
 		const lines = workerLines(workers, now);
 		const inputs: FleetInput[] = accounts.map((a) => ({
@@ -99,10 +115,17 @@
 			timers: timers[a.id] ?? [],
 			worker: lines.find((l) => l.account === a.id) ?? null,
 			client: null,
-			scripts: []
+			scripts: [],
+			routines: routines[a.id] ?? []
 		}));
-		return needs(lanes(inputs, now)).filter((n) => !only || n.account === only);
+		return needs(lanes(inputs, now), undefined, now).filter((n) => !only || n.account === only);
 	});
+
+	function openRoutine(n: Need) {
+		rememberAccount(n.account);
+		// eslint-disable-next-line svelte/no-navigation-without-resolve -- resolve() + query da rotina
+		void goto(`${resolve('/rotinas')}?rotina=${encodeURIComponent(n.routine ?? '')}`);
+	}
 	const runRows = $derived(
 		runs
 			? fleetRuns(
@@ -203,6 +226,11 @@
 								: armed === `${n.account}:restart`
 									? 'Confirmar'
 									: 'Reiniciar agora'}</button
+						>
+					{/if}
+					{#if n.routine}
+						<button type="button" class="btn btn-s" onclick={() => openRoutine(n)}
+							>Abrir a rotina</button
 						>
 					{/if}
 					<button type="button" class="btn btn-s btn-g" onclick={() => openAccount(n.account)}

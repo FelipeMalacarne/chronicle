@@ -9,6 +9,7 @@ import { roomHint, usageLine } from './capacidade.ts';
 import { cleanName } from './plugins.ts';
 import { duration } from './relogios.ts';
 import { laneRhythm, type LaneRhythm } from './ritmo.ts';
+import { fleetKey, pluginLabel, RETRY_MIN, whenText, type RoutineNotice } from './rotinas.ts';
 import type {
 	AccountRhythm,
 	AccountState,
@@ -34,6 +35,8 @@ export interface FleetInput {
 	scripts: string[];
 	/** O ritmo da conta (`GET /api/rhythm`); ausente antes da primeira leitura. */
 	rhythm?: AccountRhythm | null;
+	/** Os avisos das rotinas da conta (rotinas.ts, routineNotices); ausente sem o módulo do Microbot. */
+	routines?: RoutineNotice[];
 }
 
 export interface LaneNext {
@@ -63,18 +66,25 @@ export interface Lane {
 	/** Tem um agent: dá para abrir o cliente desta conta. */
 	client: boolean;
 	worker: WorkerLine | null;
+	/** Os avisos das rotinas da conta: seguras ou esperando a nova tentativa. */
+	routines: RoutineNotice[];
 }
 
 export interface Need {
 	account: string;
 	rsn: string;
-	/** De onde vem: o estado do worker, a falta de sessão, a versão antiga ou um relógio pronto. */
-	kind: 'state' | 'session' | 'outdated' | 'timer';
+	/**
+	 * De onde vem: o estado do worker, a falta de sessão, a versão antiga, um relógio pronto ou uma
+	 * rotina segura ou que falhou e tenta de novo.
+	 */
+	kind: 'state' | 'session' | 'outdated' | 'timer' | 'routine';
 	text: string;
 	sub?: string;
 	hard: boolean;
 	/** O comando que resolve, para copiar (a sessão nova só vem pelo launcher, na CLI). */
 	command?: string;
+	/** A rotina da frota que o aviso abre na tela Rotinas (rotinas.ts, fleetKey). */
+	routine?: string;
 }
 
 /** A atividade de uma conta cujo último login o jogo recusou. */
@@ -178,7 +188,8 @@ export function lane(input: FleetInput, now = Date.now()): Lane {
 			: undefined,
 		next: nextUp(input.timers, now),
 		client: !!worker?.cockpit,
-		worker
+		worker,
+		routines: input.routines ?? []
 	};
 	const age = pluginAge(summary, now);
 	const fresh = age !== undefined && age < PLAYING_MS;
@@ -257,11 +268,68 @@ export function lanes(inputs: FleetInput[], now = Date.now()): Lane[] {
 		.sort((a, b) => rank[a.tone] - rank[b.tone] || a.rsn.localeCompare(b.rsn));
 }
 
+/** O erro do run com ponto, para abrir a linha de baixo; vazio sem erro. */
+const errorLead = (n: RoutineNotice) => (n.run?.error ? `${n.run.error.replace(/\.$/, '')}. ` : '');
+
+/**
+ * O aviso de uma rotina no Precisa de você (decisão do dono de 2026-11-14; V7Rotinas1440: "Se
+ * falhar: tenta de novo em 15 min e avisa em Precisa de você"). A que espera a nova tentativa é
+ * leve; a segura pede o dono, menos quando foi ele quem cancelou o run.
+ */
+export function routineNeed(
+	n: RoutineNotice,
+	now: number
+): Pick<Need, 'text' | 'sub' | 'hard' | 'routine'> {
+	const routine = fleetKey(n.row);
+	const name = n.row.name;
+	if (n.kind === 'retry') {
+		const at = n.row.retryAt ? whenText(n.row.retryAt, new Date(now)) : 'logo';
+		return {
+			text: `tenta de novo ${name} ${at}`,
+			sub: `${errorLead(n) || 'O run falhou. '}Se falhar de novo, fica parada até você liberar.${n.holdsOthers ? ' As outras rotinas da conta esperam essa tentativa.' : ''}`,
+			hard: false,
+			routine
+		};
+	}
+	if (n.kind === 'held_agent') {
+		const what = n.run ? pluginLabel(n.run.className) : '';
+		return {
+			text: `parou as rotinas: o último run ${n.run?.state === 'canceled' ? 'foi cancelado' : 'falhou'}`,
+			sub: `${[what, n.run?.error?.replace(/\.$/, '')].filter(Boolean).join(': ')}${what ? '. ' : ''}Elas esperam até você liberar uma delas.`,
+			hard: true,
+			routine
+		};
+	}
+	switch (n.cause) {
+		case 'canceled':
+			return {
+				text: `parou ${name}: você cancelou o run`,
+				sub: 'Um run cancelado não tenta de novo. Fica parada até você liberar.',
+				hard: false,
+				routine
+			};
+		case 'twice':
+			return {
+				text: `parou ${name}: falhou duas vezes`,
+				sub: `${errorLead(n)}A nova tentativa, ${RETRY_MIN} min depois, falhou também. Fica parada até você liberar.`,
+				hard: true,
+				routine
+			};
+		default:
+			return {
+				text: `parou ${name}: o run falhou`,
+				sub: `${errorLead(n)}Fica parada até você liberar.`,
+				hard: true,
+				routine
+			};
+	}
+}
+
 /**
  * O que pede uma decisão do dono, do mais grave ao mais leve. `cap` dá o número de "falta lugar"
  * (quanto um worker pede e quanto sobra na quota).
  */
-export function needs(all: Lane[], cap?: WorkerCapacity): Need[] {
+export function needs(all: Lane[], cap?: WorkerCapacity, now = Date.now()): Need[] {
 	const out: Need[] = [];
 	for (const l of all) {
 		const base = { account: l.id, rsn: l.rsn };
@@ -305,6 +373,7 @@ export function needs(all: Lane[], cap?: WorkerCapacity): Need[] {
 		for (const n of l.next)
 			if (n.ready)
 				out.push({ ...base, kind: 'timer', text: `tem ${n.label} prontos`, hard: false });
+		for (const n of l.routines) out.push({ ...base, kind: 'routine', ...routineNeed(n, now) });
 	}
 	return out.sort((a, b) => Number(b.hard) - Number(a.hard));
 }

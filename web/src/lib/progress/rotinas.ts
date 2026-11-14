@@ -8,6 +8,7 @@ import type {
 	Recurring,
 	RecurringClock,
 	RecurringReason,
+	RecurringRun,
 	RecurringState,
 	RecurringStatus,
 	Run,
@@ -137,6 +138,8 @@ export interface RoutineRow {
 	/** Clock (sprite) ou evento. */
 	clock?: RecurringClock;
 	held?: 'held' | 'held_agent';
+	/** O run dela falhou: quando é a nova tentativa, a única (já pode ter passado). */
+	retryAt?: string;
 	nextAt?: string;
 	run: RunParams;
 	recurring?: Recurring;
@@ -144,49 +147,79 @@ export interface RoutineRow {
 }
 
 /**
- * Por que uma rotina está segura sem o vigia do agent, pelo que o banco tem: o último run dela
- * falhou ou foi cancelado depois de o dono salvá-la (held), ou o último run da conta falhou depois
- * do último salvamento de qualquer rotina (held_agent). As mesmas regras do agent (assess).
+ * Quantos minutos depois de um run que falhou a rotina tenta de novo, uma vez só
+ * (agent.RecurringRetryAfter; decisão do dono de 2026-11-14).
+ */
+export const RETRY_MIN = 15;
+
+/** A trava ou a nova tentativa de uma rotina sem o vigia, com a hora da tentativa. */
+export interface OfflineHold {
+	reason: 'held' | 'held_agent' | 'retry_waiting' | 'retry';
+	nextAt?: string;
+}
+
+const runEnd = (r: RecurringRun) => Date.parse(r.finishedAt ?? r.startedAt);
+/** Falhou, foi cancelado ou nunca terminou (o pod caiu: conta como falho quando começou) depois do salvamento. */
+const failedSince = (r: RecurringRun | undefined, saved: number) =>
+	!!r && (!r.finishedAt || r.state !== 'done') && runEnd(r) > saved;
+
+/**
+ * A trava de uma rotina sem o vigia do agent, pelo que o banco tem; as mesmas regras do agent
+ * (assess). Depois de o dono salvá-la, o primeiro run dela que falhou dá uma nova tentativa,
+ * RETRY_MIN depois (retry_waiting, depois retry); se essa falhar também, ou se o dono cancelou o
+ * run, ela fica segura (held). O último run da conta, quando falhou ou foi cancelado depois do
+ * último salvamento de qualquer rotina e não é dela, segura todas (held_agent), a nova tentativa
+ * também.
  */
 export function offlineHold(
 	rc: Recurring,
 	all: Recurring[],
-	runs: Run[]
-): 'held' | 'held_agent' | null {
+	runs: Run[],
+	now: Date
+): OfflineHold | null {
 	if (!rc.enabled) return null;
 	const saved = rc.updatedAt ? Date.parse(rc.updatedAt) : 0;
-	const last = rc.lastRun;
-	if (last) {
-		const end = Date.parse(last.finishedAt ?? last.startedAt);
-		if ((!last.finishedAt || last.state !== 'done') && end > saved) return 'held';
-	}
 	const latestSave = Math.max(0, ...all.map((x) => (x.updatedAt ? Date.parse(x.updatedAt) : 0)));
 	const latest = runs[0];
-	if (
-		latest &&
-		latest.finishedAt &&
+	const byAgent =
+		!!latest?.finishedAt &&
 		(latest.state === 'failed' || latest.state === 'canceled') &&
-		Date.parse(latest.finishedAt) > latestSave
-	)
-		return 'held_agent';
-	return null;
+		Date.parse(latest.finishedAt) > latestSave &&
+		latest.routine !== rc.id;
+	const last = rc.lastRun;
+	if (last && failedSince(last, saved)) {
+		if (last.state === 'canceled' || failedSince(rc.prevRun, saved)) return { reason: 'held' };
+		if (byAgent) return { reason: 'held_agent' };
+		const at = runEnd(last) + RETRY_MIN * 60_000;
+		return {
+			reason: at > now.getTime() ? 'retry_waiting' : 'retry',
+			nextAt: new Date(at).toISOString()
+		};
+	}
+	return byAgent ? { reason: 'held_agent' } : null;
 }
 
-const HELD_WHY = {
-	held: 'O último run dela falhou ou foi cancelado depois de você salvá-la: fica parada até você salvá-la de novo.',
-	held_agent:
-		'O último run da conta falhou depois do último salvamento: as rotinas esperam até você salvar uma delas.'
-};
+/** Por que uma rotina está segura (title). */
+function heldWhy(st: RecurringState, reason: 'held' | 'held_agent'): string {
+	if (reason === 'held_agent')
+		return 'O último run da conta falhou depois do último salvamento: as rotinas esperam até você liberar uma delas.';
+	if (st.lastRun?.state === 'canceled')
+		return 'Você cancelou o último run dela, e um run cancelado não tenta de novo: fica parada até você liberá-la.';
+	if (failedSince(st.prevRun, st.updatedAt ? Date.parse(st.updatedAt) : 0))
+		return `Falhou, tentou de novo ${RETRY_MIN} min depois e falhou outra vez: fica parada até você liberá-la.`;
+	return 'O último run dela falhou: fica parada até você liberá-la.';
+}
 
 /** O que a coluna da fila diz de uma recorrente, e por quê (title). */
 export function recurringWhen(
 	st: RecurringState,
 	now: Date,
-	hold: 'held' | 'held_agent' | null = null
+	hold: OfflineHold | null = null
 ): { when: string; why: string; tone: RowTone } {
 	const clock = clockLabel(st.clock);
-	const at = st.nextAt ? whenText(st.nextAt, now) : '';
-	const reason: RecurringReason | 'offline' | undefined = st.reason ?? hold ?? 'offline';
+	const next = st.reason ? st.nextAt : (hold?.nextAt ?? st.nextAt);
+	const at = next ? whenText(next, now) : '';
+	const reason: RecurringReason | 'offline' | undefined = st.reason ?? hold?.reason ?? 'offline';
 	switch (reason) {
 		case 'off':
 			return { when: 'desligada', why: 'Desligada: não começa sozinha.', tone: 'off' };
@@ -230,9 +263,21 @@ export function recurringWhen(
 				why: `O Time Tracking não conhece ${clock} e ela não tem intervalo.`,
 				tone: 'idle'
 			};
+		case 'retry_waiting':
+			return {
+				when: at ? `de novo ${at}` : 'tenta de novo',
+				why: `O último run falhou: tenta de novo sozinha ${at || 'logo'}, uma vez só (${RETRY_MIN} min depois da falha). Se falhar de novo, fica parada até você liberá-la.`,
+				tone: 'wait'
+			};
+		case 'retry':
+			return {
+				when: 'agora',
+				why: `O último run falhou há ${RETRY_MIN} min ou mais: tenta de novo no próximo ponto seguro, uma vez só. Se falhar de novo, fica parada até você liberá-la.`,
+				tone: 'due'
+			};
 		case 'held':
 		case 'held_agent':
-			return { when: 'segura', why: HELD_WHY[reason], tone: 'held' };
+			return { when: 'segura', why: heldWhy(st, reason), tone: 'held' };
 		default:
 			return {
 				when: st.enabled ? '' : 'desligada',
@@ -269,10 +314,10 @@ export function accountRows(
 ): RoutineRow[] {
 	const list = status?.recurring ?? [];
 	const out: RoutineRow[] = list.map((st) => {
-		const hold = st.reason ? null : offlineHold(st, list, runs);
+		const hold = st.reason ? null : offlineHold(st, list, runs, now);
 		const w = recurringWhen(st, now, hold);
-		const held =
-			st.reason === 'held' || st.reason === 'held_agent' ? st.reason : (hold ?? undefined);
+		const reason = st.reason ?? hold?.reason;
+		const next = st.reason ? st.nextAt : (hold?.nextAt ?? st.nextAt);
 		return {
 			key: `recurring:${st.id}`,
 			kind: 'recurring',
@@ -285,12 +330,22 @@ export function accountRows(
 			why: w.why,
 			tone: w.tone,
 			clock: st.clock,
-			held,
-			nextAt: w.tone === 'wait' ? st.nextAt : undefined,
+			held: reason === 'held' || reason === 'held_agent' ? reason : undefined,
+			retryAt: reason === 'retry_waiting' || reason === 'retry' ? next : undefined,
+			nextAt: w.tone === 'wait' ? next : undefined,
 			run: st.run,
 			recurring: stripState(st)
 		};
 	});
+	// The account's last run is a routine's first failure: the others wait for its retry.
+	const cause = out.find((r) => r.retryAt && r.id === runs[0]?.routine);
+	if (cause?.retryAt) {
+		const at = whenText(cause.retryAt, now);
+		for (const r of out) {
+			if (r.held === 'held_agent')
+				r.why = `${cause.name} falhou e tenta de novo ${at}: as rotinas da conta esperam essa tentativa, ou até você liberar uma delas.`;
+		}
+	}
 	for (const t of triggers?.triggers ?? []) {
 		const ev = eventOf(t.event);
 		const watching = triggers?.watching ?? false;
@@ -329,6 +384,7 @@ export function stripState(st: RecurringState): Recurring {
 	if (st.intervalMin) rc.intervalMin = st.intervalMin;
 	if (st.updatedAt) rc.updatedAt = st.updatedAt;
 	if (st.lastRun) rc.lastRun = st.lastRun;
+	if (st.prevRun) rc.prevRun = st.prevRun;
 	return rc;
 }
 
@@ -649,7 +705,11 @@ export function savePlan(d: Draft, fr: FleetRoutine | null, heldAgent: Set<strin
 		const enabled = row?.enabled ?? false;
 		if (d.kind === 'event') plan.puts.push({ account, trigger: triggerBody(d, enabled) });
 		else plan.puts.push({ account, recurring: recurringBody(d, account, enabled) });
-		if ((row?.held === 'held' && enabled) || (d.kind !== 'event' && heldAgent.has(account)))
+		// Saving a held copy, or one waiting for its retry, lets it start by its own rule at once.
+		if (
+			((row?.held === 'held' || row?.retryAt) && enabled) ||
+			(d.kind !== 'event' && heldAgent.has(account))
+		)
 			plan.releases.push(account);
 	}
 	if (fr?.kind === 'recurring') {
@@ -776,9 +836,11 @@ export function accountQueue(
 		});
 	}
 	const kind = (r: RoutineRow) =>
-		['rotina', r.recurring?.clock ? 'pelo relógio' : 'pelo intervalo', typical(r, runs)]
-			.filter(Boolean)
-			.join(' · ');
+		r.retryAt
+			? 'falhou: tenta de novo uma vez'
+			: ['rotina', r.recurring?.clock ? 'pelo relógio' : 'pelo intervalo', typical(r, runs)]
+					.filter(Boolean)
+					.join(' · ');
 	for (const r of rows.filter((x) => x.tone === 'due')) {
 		out.push({
 			key: r.key,
@@ -832,16 +894,79 @@ export function accountQueue(
 		});
 	}
 	for (const r of rows.filter((x) => x.tone === 'held')) {
+		const cause = heldCause(r);
 		out.push({
 			key: r.key,
 			at: 'segura',
 			title: r.name,
-			sub: 'falhou: espera você salvá-la de novo',
+			sub:
+				cause === 'canceled'
+					? 'cancelada: espera você liberar'
+					: cause === 'twice'
+						? 'falhou de novo: espera você liberar'
+						: cause === 'agent'
+							? 'o último run da conta falhou: espera você liberar'
+							: 'falhou: espera você liberar',
 			clock: r.clock,
 			glyph: 'alert',
 			cur: false,
 			routine: fleetKey(r)
 		});
 	}
+	return out;
+}
+
+/**
+ * Por que uma linha está segura: o dono cancelou o run dela (nunca tenta de novo), a nova tentativa
+ * falhou também, um run dela falhou (um agent anterior à nova tentativa) ou o último run da conta.
+ */
+export function heldCause(r: RoutineRow): 'canceled' | 'twice' | 'failed' | 'agent' | null {
+	if (r.held === 'held_agent') return 'agent';
+	if (r.held !== 'held') return null;
+	const rc = r.recurring;
+	if (rc?.lastRun?.state === 'canceled') return 'canceled';
+	return failedSince(rc?.prevRun, rc?.updatedAt ? Date.parse(rc.updatedAt) : 0)
+		? 'twice'
+		: 'failed';
+}
+
+/** Um aviso de rotina de uma conta: no topo de Rotinas e no Precisa de você da Frota. */
+export interface RoutineNotice {
+	/** held: segura; retry: falhou e tenta de novo uma vez; held_agent: o último run da conta segura todas. */
+	kind: 'held' | 'retry' | 'held_agent';
+	row: RoutineRow;
+	/** Por que está segura (heldCause). */
+	cause?: 'canceled' | 'twice' | 'failed' | 'agent';
+	/** O run que deu o aviso: o último da rotina ou, em held_agent, o último da conta. */
+	run?: Run;
+	/** retry: o último run da conta é o dela, e as outras rotinas esperam essa tentativa. */
+	holdsOthers?: boolean;
+}
+
+/**
+ * Os avisos de rotina de uma conta: cada rotina segura, cada uma que falhou e espera a nova
+ * tentativa, e o último run da conta quando ele segura as rotinas; esse último sai quando é o de
+ * uma rotina que já tem aviso (liberar ela libera todas, ou a tentativa dela solta as outras).
+ */
+export function routineNotices(rows: RoutineRow[], runs: Run[]): RoutineNotice[] {
+	const latest = runs[0];
+	const out: RoutineNotice[] = [];
+	const lastOf = (r: RoutineRow) => runs.find((x) => x.routine === r.id);
+	const waiting = rows.some((r) => r.held === 'held_agent');
+	for (const r of rows) {
+		if (r.kind !== 'recurring' || !r.enabled) continue;
+		if (r.held === 'held')
+			out.push({ kind: 'held', row: r, cause: heldCause(r) ?? undefined, run: lastOf(r) });
+		else if (r.retryAt)
+			out.push({
+				kind: 'retry',
+				row: r,
+				run: lastOf(r),
+				holdsOthers: waiting && !!latest && latest.routine === r.id
+			});
+	}
+	const agent = rows.find((r) => r.held === 'held_agent');
+	const own = !!latest?.routine && out.some((n) => n.row.id === latest.routine);
+	if (agent && !own) out.push({ kind: 'held_agent', row: agent, cause: 'agent', run: latest });
 	return out;
 }

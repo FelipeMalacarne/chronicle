@@ -443,7 +443,7 @@ export type RecurringClock =
 	| 'SPECIAL'
 	| 'FARMING_CONTRACT';
 
-/** O último run de uma rotina recorrente, como o banco guarda. */
+/** Um dos dois últimos runs de uma rotina recorrente, como o banco (ou o vigia) sabe. */
 export interface RecurringRun {
 	state: Run['state'];
 	startedAt: string;
@@ -466,9 +466,13 @@ export interface Recurring {
 	/** Com várias prontas, a maior entra primeiro (0 a 100). */
 	priority: number;
 	run: RunParams;
-	/** Do servidor (um save ignora): quando o dono salvou e o último run dela. */
+	/**
+	 * Do servidor (um save ignora): quando o dono salvou, o último run dela e o anterior (diz se a
+	 * falha já foi a nova tentativa). Na resposta do vigia, os dois últimos como o agent sabe.
+	 */
 	updatedAt?: string;
 	lastRun?: RecurringRun;
+	prevRun?: RecurringRun;
 }
 
 /** Por que uma rotina recorrente está pronta ou não (agent.Reason*). */
@@ -481,6 +485,8 @@ export type RecurringReason =
 	| 'interval'
 	| 'interval_waiting'
 	| 'no_clock'
+	| 'retry_waiting'
+	| 'retry'
 	| 'held'
 	| 'held_agent';
 

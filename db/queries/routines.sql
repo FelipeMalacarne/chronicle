@@ -47,16 +47,22 @@ SELECT * FROM run_events WHERE run_id = ANY(sqlc.arg(run_ids)::text[]) ORDER BY 
 
 -- Recurring routines (migration 0015): each with its last run, from which
 -- the agent counts the interval and sees a failure the owner has not
--- answered.
+-- answered, and the run before it, which says whether that failure was
+-- already the routine's one retry (docs/08, Estado).
 
 -- name: ListRecurring :many
 SELECT r.id, r.name, r.enabled, r.clock, r.interval_min, r.priority, r.spec, r.updated_at,
-       COALESCE(last.state, '') AS last_state, last.started_at AS last_started_at, last.finished_at AS last_finished_at
+       COALESCE(last.state, '') AS last_state, last.started_at AS last_started_at, last.finished_at AS last_finished_at,
+       COALESCE(prev.state, '') AS prev_state, prev.started_at AS prev_started_at, prev.finished_at AS prev_finished_at
 FROM routines r
 LEFT JOIN LATERAL (
   SELECT rr.state, rr.started_at, rr.finished_at FROM routine_runs rr
   WHERE rr.routine_id = r.id ORDER BY rr.started_at DESC LIMIT 1
 ) last ON true
+LEFT JOIN LATERAL (
+  SELECT rr.state, rr.started_at, rr.finished_at FROM routine_runs rr
+  WHERE rr.routine_id = r.id ORDER BY rr.started_at DESC OFFSET 1 LIMIT 1
+) prev ON true
 WHERE r.account_id = $1 AND r.kind = 'recurring'
 ORDER BY r.priority DESC, r.name, r.id;
 

@@ -86,6 +86,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 37 | Worker numa versão antiga: o servidor o reinicia sozinho na imagem nova, mas só na **pausa**: sem run em andamento, sem VNC aberto, e com o personagem deslogado ou num break do Break Handler. Nunca durante um run, nunca com o dono olhando ou intervindo pelo VNC, nunca um worker parado nem o agent anexado do zaros; auditado como o Reiniciar do dono, pelo `reconciler`, com o motivo "versão nova, na pausa". O Reiniciar segue para "agora". Até então, só o clique do dono trocava a imagem de um worker que já roda | resolvida (2026-11-13) e feita no mesmo dia. Falta conferir num worker de verdade. O dono aceitou que o worker reiniciado no break do Break Handler fica na tela de login (W3) em vez de voltar ao jogo (uma vez por imagem nova); o micro break com o personagem logado não conta | doc 11, seções 7.2 e 18.4; docs/ui/decisoes-canvas.md, seção 7.15 |
 | 38 | Marca manual por **objetivo**, da conta inteira: o dono marca um objetivo como já cumprido (`chronicle objective mark`), e ele vale em todo guia e passo. Sobrepõe os vereditos ao derivar status, bloqueios e cursor; não é evidência (não escreve `objective_progress`) e não dispara a cascata `implied` | resolvida (2026-11-13): os objetivos de item novos em passos antigos, com os itens já gastos, faziam os passos voltarem a `pending` e o cursor recuar; marcar o passo não resolvia, porque a marca é por guia | doc 09, seção 5 |
 | 39 | Marca manual por **item do trecho** (o cartão "Levar do banco"): o dono marca um item que falta como "já tenho" (`chronicle loadout mark`, botão "Já tenho" na rota), e a marca vale só naquele trecho de um guia: a mesma pá no trecho seguinte, ou no outro guia, não é marcada. Sobrepõe o veredito do item ao calcular o readiness (a contagem "Falta N de M" cai); não é evidência: não escreve inventário, banco, snapshots nem `player_state`, e o fato do plugin segue como estava | resolvida (2026-11-14): itens que o dono já tem, ou que o plugin não enxerga, apareciam como faltando e não havia como dizer o contrário; marcar o objetivo não alcança os itens do setup do trecho, que não são objetivos | doc 09, seção 5 |
+| 40 | Rotina recorrente que falha: **tenta de novo sozinha uma vez**, 15 min depois da falha, com as condições de sempre (ligada, um run por vez, ponto seguro, a pausa do Break Handler), sem esperar o relógio nem o intervalo. Se essa tentativa falhar também, a rotina fica segura até o dono liberá-la (salvá-la de novo, o "Liberar"), como antes. Um run que o dono **cancelou nunca tenta de novo**: a rotina fica segura. O último run da conta que falhou segura todas as rotinas, menos a dona dele (a primeira falha dela não bloqueia a própria tentativa, e as outras esperam essa tentativa); um run que falhou e não é de uma recorrente ("Fazer agora", gatilho, tarefa) segura todas até o dono salvar alguma, como antes. A rotina segura e a tentativa pendente, com a hora, aparecem em Precisa de você (Frota e Atividade), no aviso do topo de Rotinas e no estado da rotina | resolvida (2026-11-14), e feita no mesmo dia: o gesto para soltar uma rotina presa estava em aberto (até então, toda falha ou cancelamento segurava a rotina até o dono salvá-la de novo), e o artboard `V7Rotinas1440` já dizia "Se falhar: tenta de novo em 15 min e avisa em Precisa de você"; o Liberar continua, para a segunda falha e para o cancelamento | doc 08, Estado (travas das recorrentes); doc 11, seção 16.4; `docs/ui/decisoes-canvas.md`, seção 7.13 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais
@@ -168,15 +169,13 @@ O próximo passo é do dono:
 6. **Conferir no jogo e no cluster:**
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;
-   - uma rotina recorrente no zaros;
+   - uma rotina recorrente no zaros, com a nova tentativa depois de uma falha (decisão 40);
    - a capacidade da F7 depois do RBAC;
    - o reinício sozinho na versão nova depois de um deploy (decisão 37).
 7. **Desenhar no canvas** as telas em 640 px que faltam, o "Executar" da tarefa do plano (também o
    "Treinar" de um `train` e a `quest`), o `wait_until` de uma rotina na tela de Rotinas e a tela de planos
    customizados (fase 5 do doc 10: montar um plano com passos de vários guias, receitas e tarefas
    avulsas, e segui-lo).
-8. **Decidir o que está aberto:**
-   - o gesto para soltar uma rotina presa, hoje salvá-la de novo (o "Liberar" da tela de Rotinas);
 
 ## Discrepâncias e ressalvas
 

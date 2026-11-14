@@ -1,0 +1,208 @@
+{
+  "source": "OSRS Wiki: Template:Mage Training Arena Shop stock; Pizazz points (CC BY-NC-SA 3.0)",
+  "rooms": [
+    {
+      "id": "telekinetic",
+      "name": "Telekinetic Theatre",
+      "rune": "law",
+      "runes_per_point": {
+        "num": 63,
+        "den": 36
+      },
+      "cap": 8000
+    },
+    {
+      "id": "graveyard",
+      "name": "Creature Graveyard",
+      "rune": "nature",
+      "runes_per_point": {
+        "num": 4,
+        "den": 5
+      },
+      "cap": 8000
+    },
+    {
+      "id": "enchantment",
+      "name": "Enchanting Chamber",
+      "rune": "cosmic",
+      "runes_per_point": {
+        "num": 10,
+        "den": 11
+      },
+      "cap": 32000
+    },
+    {
+      "id": "alchemist",
+      "name": "Alchemists' Playground",
+      "rune": "nature",
+      "runes_per_point": {
+        "num": 3,
+        "den": 1
+      },
+      "cap": 16000
+    }
+  ],
+  "enchant_levels": [
+    {
+      "level": 1,
+      "magic": 7
+    },
+    {
+      "level": 2,
+      "magic": 27
+    },
+    {
+      "level": 3,
+      "magic": 49
+    },
+    {
+      "level": 4,
+      "magic": 57
+    },
+    {
+      "level": 5,
+      "magic": 68
+    },
+    {
+      "level": 6,
+      "magic": 87
+    }
+  ],
+  "rewards": [
+    {
+      "id": "infinity_hat",
+      "name": "Infinity hat",
+      "item_id": 6918,
+      "cost": {
+        "telekinetic": 350,
+        "graveyard": 350,
+        "enchantment": 3000,
+        "alchemist": 400
+      }
+    },
+    {
+      "id": "infinity_top",
+      "name": "Infinity top",
+      "item_id": 6916,
+      "cost": {
+        "telekinetic": 400,
+        "graveyard": 400,
+        "enchantment": 4000,
+        "alchemist": 450
+      }
+    },
+    {
+      "id": "infinity_bottoms",
+      "name": "Infinity bottoms",
+      "item_id": 6924,
+      "cost": {
+        "telekinetic": 450,
+        "graveyard": 450,
+        "enchantment": 5000,
+        "alchemist": 500
+      }
+    },
+    {
+      "id": "infinity_gloves",
+      "name": "Infinity gloves",
+      "item_id": 6922,
+      "cost": {
+        "telekinetic": 175,
+        "graveyard": 175,
+        "enchantment": 1500,
+        "alchemist": 225
+      }
+    },
+    {
+      "id": "infinity_boots",
+      "name": "Infinity boots",
+      "item_id": 6920,
+      "cost": {
+        "telekinetic": 120,
+        "graveyard": 120,
+        "enchantment": 1200,
+        "alchemist": 120
+      }
+    },
+    {
+      "id": "beginner_wand",
+      "name": "Beginner wand",
+      "item_id": 6908,
+      "cost": {
+        "telekinetic": 30,
+        "graveyard": 30,
+        "enchantment": 300,
+        "alchemist": 30
+      }
+    },
+    {
+      "id": "apprentice_wand",
+      "name": "Apprentice wand",
+      "item_id": 6910,
+      "cost": {
+        "telekinetic": 60,
+        "graveyard": 60,
+        "enchantment": 600,
+        "alchemist": 60
+      },
+      "requires": "beginner_wand"
+    },
+    {
+      "id": "teacher_wand",
+      "name": "Teacher wand",
+      "item_id": 6912,
+      "cost": {
+        "telekinetic": 150,
+        "graveyard": 150,
+        "enchantment": 1500,
+        "alchemist": 200
+      },
+      "requires": "apprentice_wand"
+    },
+    {
+      "id": "master_wand",
+      "name": "Master wand",
+      "item_id": 6914,
+      "cost": {
+        "telekinetic": 240,
+        "graveyard": 240,
+        "enchantment": 2400,
+        "alchemist": 240
+      },
+      "requires": "teacher_wand"
+    },
+    {
+      "id": "mages_book",
+      "name": "Mage's book",
+      "item_id": 6889,
+      "cost": {
+        "telekinetic": 500,
+        "graveyard": 500,
+        "enchantment": 6000,
+        "alchemist": 550
+      }
+    },
+    {
+      "id": "rune_pouch",
+      "name": "Rune pouch",
+      "item_id": 12791,
+      "cost": {
+        "telekinetic": 150,
+        "graveyard": 150,
+        "enchantment": 1500,
+        "alchemist": 200
+      }
+    },
+    {
+      "id": "bones_to_peaches",
+      "name": "Bones to Peaches",
+      "item_id": 6926,
+      "cost": {
+        "telekinetic": 200,
+        "graveyard": 200,
+        "enchantment": 2000,
+        "alchemist": 300
+      }
+    }
+  ]
+}

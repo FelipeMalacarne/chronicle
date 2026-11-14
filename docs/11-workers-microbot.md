@@ -997,25 +997,37 @@ rotina que vence espera o break do Break Handler (doc 08, "A troca").
   ```
   {"id": "rtn_…", "name": "Herb run", "enabled": true, "clock": "HERB", "intervalMin": 80,
    "priority": 10, "run": {"className": "…", "stop": ["…"], "timeoutS": 900},
-   "updatedAt": "…", "lastRun": {"state": "done", "startedAt": "…", "finishedAt": "…"}}
+   "updatedAt": "…", "lastRun": {"state": "failed", "startedAt": "…", "finishedAt": "…"},
+   "prevRun": {"state": "done", "startedAt": "…", "finishedAt": "…"}}
   ```
 
-  O `updatedAt` e o `lastRun` vêm do servidor e são ignorados ao salvar. O agent conta o intervalo
-  a partir do `lastRun`, e as travas comparam um run que falhou com o `updatedAt`. Um run que a
+  O `updatedAt`, o `lastRun` e o `prevRun` (o run anterior ao último) vêm do servidor e são
+  ignorados ao salvar. O agent conta o intervalo a partir do `lastRun`, e as travas comparam os
+  runs que falharam com o `updatedAt`: desde 2026-11-14 (doc 01, decisão 40), a primeira falha
+  depois do salvamento tenta de novo uma vez, 15 min depois, e o `prevRun` diz se a falha do
+  `lastRun` já foi essa tentativa (as regras estão no Estado do doc 08). O `ListRecurring` lê os dois
+  pelo mesmo índice `(routine_id, started_at)`, sem migração nova. Um run que a
   rotina começou leva o `routine` (o id), gravado em `routine_runs.routine_id`. Desde a fase 4 do
   doc 10, o `run` aceita `until` (o run termina quando o servidor prova uma chave de objetivo; doc
   08, "Fase 4 do doc 10: `wait_until`"), e só o agent que declara `run_until` recebe essas rotinas.
 - **No agent:**
   - o `routines_sync` leva as recorrentes junto dos gatilhos, mas só para o agent que declara
     `recurring_get` no hello (um agent da F6 recusaria o campo desconhecido);
+  - o `prevRun` de cada recorrente vai só para o agent que declara `recurring_retry` em
+    `features` no hello (`agent.AgentFeatures`, ao lado dos comandos; um servidor antigo ignora o
+    campo). Um agent de antes da nova tentativa recusaria o campo, e continua segurando a rotina em
+    qualquer falha;
   - o servidor manda de novo a cada conexão e depois de cada `POST` ou `DELETE`;
   - `recurring_get` (leitura) devolve o que o vigia viu na última olhada: para cada rotina, se vence,
-    o motivo (`clock_ready`, `clock_waiting`, `interval`, `held`, …) e quando vence; mais o que ele
+    o motivo (`clock_ready`, `clock_waiting`, `interval`, `retry_waiting`, `retry`, `held`,
+    `held_agent`, …) e quando vence (em `retry_waiting` e `retry`, a hora da nova tentativa), com o
+    `lastRun` e o `prevRun` como o agent os sabe (o histórico dele junto do banco); mais o que ele
     espera ("um run em andamento", "esperando: em combate") e o último run que começou;
   - o anexado guarda as recorrentes em `agent-recurring.json`; o worker, em memória.
 - **API**, sempre com `?account=` (`accountParam`), atrás de `authed` e `microbotControl`:
   - `GET /api/microbot/recurring`: a visão do vigia. Sem agent, ou com um agent anterior a elas,
-    vem do banco, com `watchError` dizendo por quê;
+    vem do banco, com `watchError` dizendo por quê, e a web calcula a trava e a nova tentativa pelo
+    `lastRun` e o `prevRun` com as regras do vigia;
   - `POST /api/microbot/recurring`: cria (sem `id`) ou altera. Devolve `id` e `result` (a visão do
     agent, ou a do banco). Erros: 400 inválida ou mais de 20 por conta, 404 conta ou rotina de
     outra conta, 409 nome repetido;
@@ -1023,7 +1035,9 @@ rotina que vence espera o break do Break Handler (doc 08, "A troca").
 - **Auditoria:** `recurring_set` e `recurring_delete` (origem `web`). O run que uma recorrente
   começa e como terminou entram com o ator `recurring:<id>` (origem `agent`), como os de gatilho.
 - **Conferido:** os testes descritos no Estado do doc 08, a 0015 com `goose up/down/up` (com
-  um gatilho e uma recorrente no banco) e o DBML regenerado.
+  um gatilho e uma recorrente no banco) e o DBML regenerado. A nova tentativa (2026-11-14): o
+  `prevRun` lido no Postgres 17, e as rotas com um agent de antes dela (declara `recurring_get`,
+  sem `recurring_retry`), que recebe a rotina com o `lastRun` e sem o `prevRun`.
 - **Não conferido:** nada no jogo nem num worker de verdade. Também faltam a tela (desenhar no
   canvas antes) e a imagem nova do worker no saradomin.
 

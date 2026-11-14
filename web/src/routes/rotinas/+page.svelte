@@ -30,9 +30,12 @@
 		newDraft,
 		pluginLabel,
 		queueHead,
+		RETRY_MIN,
+		routineNotices,
 		runLine,
 		savePlan,
 		watcherLine,
+		whenText,
 		withEnabled,
 		type Draft,
 		type FleetRoutine,
@@ -46,8 +49,9 @@
 	 * os gatilhos, por evento do jogo. A tela junta as cópias de cada conta numa rotina da frota
 	 * (pelo nome; os gatilhos pelo evento), com as contas em que ela vale; a Fila mostra o que cada
 	 * conta tem pela frente. Ligar faz o agent agir sozinho no jogo, então nada nasce ligado, salvar
-	 * nunca liga e ligar pede um segundo clique. Um run que falhou segura a rotina até ela ser salva
-	 * de novo. Divergências do artboard: decisoes-canvas.md, seção 7.8.
+	 * nunca liga e ligar pede um segundo clique. Um run que falhou tenta de novo uma vez, 15 min
+	 * depois; se essa tentativa falhar também, ou se o dono cancelou o run, a rotina fica segura até
+	 * ser liberada (salva de novo). Divergências do artboard: decisoes-canvas.md, seção 7.13.
 	 */
 	interface AccountData {
 		recurring: RecurringStatus | null;
@@ -151,23 +155,14 @@
 		new Set(groups.filter((g) => g.rows.some((r) => r.held === 'held_agent')).map((g) => g.id))
 	);
 
-	/** As rotinas seguras: um aviso por rotina, ou um por conta quando é o último run dela. */
+	/**
+	 * Os avisos: cada rotina segura, cada uma que falhou e tenta de novo, e um por conta quando o
+	 * último run dela segura todas (só quando não é o de uma rotina que já tem aviso).
+	 */
 	const holds = $derived(
-		groups.flatMap((g) => {
-			const own = g.rows.filter((r) => r.held === 'held');
-			const agent = g.rows.find((r) => r.held === 'held_agent');
-			const runs = g.d?.runs ?? [];
-			const out = own.map((r) => ({
-				account: g.id,
-				row: r,
-				run: runs.find((x) => x.routine === r.id)
-			}));
-			// Quando o último run da conta é o de uma rotina segura, liberar ela libera todas: um aviso só.
-			const latest = runs[0];
-			if (agent && !own.some((r) => r.id === latest?.routine))
-				out.push({ account: g.id, row: agent, run: latest });
-			return out;
-		})
+		groups.flatMap((g) =>
+			routineNotices(g.rows, g.d?.runs ?? []).map((n) => ({ account: g.id, ...n }))
+		)
 	);
 
 	const live = (id: string) => !!data[id]?.status?.agent.connected;
@@ -487,38 +482,64 @@
 {:else}
 	<div class="cols">
 		<div class="list">
-			{#each holds as h (`${h.account}:${h.row.key}:${h.row.held}`)}
+			{#each holds as h (`${h.account}:${h.row.key}:${h.kind}`)}
 				{@const key = `release:${h.account}:${h.row.key}`}
-				<div class="need7">
+				<div class="need7" class:wait7={h.kind === 'retry'}>
 					<Glyph name="alert" size={18} />
-					{#if h.row.held === 'held'}
+					{#if h.kind === 'retry'}
+						<p>
+							<b>{rsn(h.account)}</b>: {h.row.name} falhou e tenta de novo {h.row.retryAt
+								? whenText(h.row.retryAt, now)
+								: 'logo'}
+						</p>
+						<p class="s">
+							{#if h.run?.error}{h.run.error.replace(/\.$/, '')}.
+							{/if}Uma vez só: se falhar de novo, fica parada até você liberar.{h.holdsOthers
+								? ' As outras rotinas da conta esperam essa tentativa.'
+								: ''}
+						</p>
+					{:else if h.kind === 'held'}
 						<p>
 							<b>{rsn(h.account)}</b>: {h.row.name}
-							{h.run?.state === 'canceled' ? 'foi cancelada' : 'falhou'}
+							{h.cause === 'canceled'
+								? 'foi cancelada'
+								: h.cause === 'twice'
+									? 'falhou de novo'
+									: 'falhou'}
 						</p>
 						<p class="s">
-							{#if h.run?.error}{h.run.error}.
-							{/if}Fica parada até você salvá-la de novo.
+							{#if h.run?.error}{h.run.error.replace(/\.$/, '')}.
+							{/if}{h.cause === 'canceled'
+								? 'Um run cancelado não tenta de novo. '
+								: h.cause === 'twice'
+									? `A nova tentativa, ${RETRY_MIN} min depois, falhou também. `
+									: ''}Fica parada até você liberar.
 						</p>
 					{:else}
-						<p><b>{rsn(h.account)}</b>: o último run falhou</p>
+						<p>
+							<b>{rsn(h.account)}</b>: o último run {h.run?.state === 'canceled'
+								? 'foi cancelado'
+								: 'falhou'}
+						</p>
 						<p class="s">
 							{#if h.run}{pluginLabel(h.run.className, names)}{h.run.error
-									? `: ${h.run.error}`
+									? `: ${h.run.error.replace(/\.$/, '')}`
 									: ''}.
-							{/if}As rotinas da conta esperam até você salvar uma delas.
+							{/if}As rotinas da conta esperam até você liberar uma delas.
 						</p>
 					{/if}
 					<div class="a">
-						<button
-							class="btn btn-s"
-							class:btn-d={armed === key}
-							type="button"
-							disabled={!!busy}
-							title="Salva a rotina de novo como está; ligada, ela pode começar logo"
-							onclick={() => release(h.account, h.row)}
-							>{armed === key ? 'Confirmar: liberar' : 'Liberar'}</button
-						>
+						{#if h.kind !== 'retry'}
+							<button
+								class="btn btn-s"
+								class:btn-d={armed === key}
+								type="button"
+								disabled={!!busy}
+								title="Salva a rotina de novo como está; ligada, ela pode começar logo"
+								onclick={() => release(h.account, h.row)}
+								>{armed === key ? 'Confirmar: liberar' : 'Liberar'}</button
+							>
+						{/if}
 						<button class="btn btn-s btn-g" type="button" onclick={() => openRow(h.account, h.row)}
 							>Abrir a rotina</button
 						>
@@ -671,7 +692,7 @@
 					<span>{current ? stateText(current) : 'nasce desligada'}</span>
 				</div>
 				<div class="b">
-					{#each current?.members.filter((m) => m.row.held) ?? [] as m (m.account)}
+					{#each current?.members.filter((m) => m.row.held || m.row.retryAt) ?? [] as m (m.account)}
 						{@const key = `release:${m.account}:${m.row.key}`}
 						<div class="warn">
 							<Glyph name="alert" />
@@ -679,14 +700,16 @@
 								>{current && current.members.length > 1 ? `${rsn(m.account)}: ` : ''}{m.row
 									.why}</span
 							>
-							<button
-								class="btn btn-s"
-								class:btn-d={armed === key}
-								type="button"
-								disabled={!!busy}
-								onclick={() => release(m.account, m.row)}
-								>{armed === key ? 'Confirmar: liberar' : 'Liberar'}</button
-							>
+							{#if m.row.held}
+								<button
+									class="btn btn-s"
+									class:btn-d={armed === key}
+									type="button"
+									disabled={!!busy}
+									onclick={() => release(m.account, m.row)}
+									>{armed === key ? 'Confirmar: liberar' : 'Liberar'}</button
+								>
+							{/if}
 						</div>
 					{/each}
 					{#if current?.differs}
@@ -876,8 +899,8 @@
 							<span class="k">Se falhar</span>
 							<div class="sent">
 								<span
-									title="Um run que falhou ou foi cancelado segura a rotina naquela conta; se foi o último run da conta, as outras rotinas dela esperam também"
-									>fica parada na conta até você salvá-la de novo</span
+									title="Tenta de novo uma vez só, {RETRY_MIN} min depois da falha. Se falhar de novo, ou se você cancelou o run, ela fica parada naquela conta até você liberá-la. Enquanto ela espera, as outras rotinas da conta esperam também"
+									>tenta de novo em {RETRY_MIN} min e avisa em Precisa de você</span
 								>
 							</div>
 						</div>
@@ -1363,6 +1386,10 @@
 		display: flex;
 		gap: 6px;
 		flex-wrap: wrap;
+	}
+	/* Falhou e tenta de novo sozinha: avisa sem pedir nada. */
+	.need7.wait7 {
+		border-color: var(--border);
 	}
 	.card {
 		display: flex;

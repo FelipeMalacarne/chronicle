@@ -661,13 +661,45 @@ destino da viagem):
     curso (deslogado).
   - O run leva o id da rotina, e a primeira linha da trilha diz por que começou ("rotina Herb run:
     relógio Herb Patches pronto").
-- **Travas** contra laço e surpresa:
-  - um run que falhou ou foi cancelado segura a rotina até o dono salvá-la de novo;
-  - um run de qualquer tipo que falhou ou foi cancelado segura todas até o dono salvar alguma (ele
-    deixa o principal parado onde falhou);
+- **Travas** contra laço e surpresa (a nova tentativa é decisão do dono de 2026-11-14, doc 01,
+  decisão 40):
+  - **um run que falhou tenta de novo uma vez.** Quando o último run da rotina falhou depois de o
+    dono salvá-la, ela vence de novo 15 min depois do fim dele (`retry_waiting` até lá, `retry` ao
+    vencer, com a hora em `nextAt`). Essa tentativa não olha o relógio nem o intervalo: vale mesmo
+    com o relógio ainda pronto (a rotina que ele disparou está desarmada) ou crescendo, e o
+    intervalo não conta a partir de um run que falhou. As outras condições continuam: ligada, um
+    run por vez, o ponto seguro e a pausa do Break Handler (a E9 do doc 10 é do `task_run`, e uma
+    recorrente roda um plugin, como o `run_start`). A tentativa disparada com o relógio pronto
+    desarma a rotina como qualquer run que ele dispara. A primeira linha da trilha diz "rotina Herb
+    run: tenta de novo, 15 min depois do run que falhou";
+  - **se a nova tentativa falhar também, a rotina fica segura** (`held`) até o dono salvá-la de novo
+    (o "Liberar"). O vigia sabe que a falha já foi a tentativa pelo run anterior da rotina: se os
+    dois últimos falharam depois do salvamento, ela fica segura. Os dois vêm do histórico do agent
+    e, para um pod que perdeu o histórico, do banco (`lastRun` e `prevRun`, doc 11, seção 16.4);
+  - **um run que o dono cancelou nunca tenta de novo:** a rotina fica segura até ele salvá-la;
+  - **o último run de qualquer tipo** que falhou ou foi cancelado depois do último salvamento de
+    qualquer rotina segura todas (`held_agent`), até o dono salvar alguma: ele deixa o principal
+    parado onde terminou. A exceção é a própria rotina: o run dela nunca a segura por esta regra,
+    porque as regras dela decidem (a nova tentativa ou segura). Assim, a primeira falha de uma
+    recorrente segura as outras, mas não ela; a nova tentativa roda antes delas e, se termina bem,
+    solta as outras. Um run que falhou e não é de uma recorrente (o "Fazer agora" do dono, um
+    gatilho, uma tarefa) segura todas, a tentativa pendente também, até o dono salvar alguma. Salvar
+    outra rotina solta só essa trava: a que esperava a tentativa volta a esperá-la (ou a roda, se a
+    hora já passou);
+  - **liberar** é salvar a rotina de novo: o salvamento solta as falhas dela anteriores a ele e,
+    sendo o mais novo, também a trava do último run da conta;
   - a rotina que o relógio disparou só volta a disparar pelo relógio depois de o vigia vê-lo não
     pronto (um run que não replantou daria laço);
-  - um run que o servidor viu começar e nunca terminar (o pod caiu no meio) conta como falho.
+  - um run que o servidor viu começar e nunca terminar (o pod caiu no meio) conta como falho quando
+    começou: ele também tem a nova tentativa, e um seguido de outra falha deixa a rotina segura.
+- **Onde o dono vê:** a rotina segura e a que espera a nova tentativa, com a hora, aparecem no
+  Precisa de você da Frota e da Atividade ("tenta de novo Herb run em 12 min"; "parou Herb run:
+  falhou duas vezes"; "parou as rotinas: o último run falhou"), no aviso do topo de Rotinas (com o
+  Liberar só na segura) e no estado da rotina na lista e na Fila ("de novo em 12 min", "segura").
+  Sem o agent, a web calcula a mesma coisa pelo que o banco guarda (`rotinas.ts`, `offlineHold`).
+- **Agent antigo:** o `prevRun` só vai, no `routines_sync`, para o agent que declara a capacidade
+  `recurring_retry` no hello (`Hello.features`); um agent de antes da nova tentativa recusaria o
+  campo e continua segurando a rotina em qualquer falha.
 - **API:** `GET`, `POST` e `DELETE /api/microbot/recurring`, sempre com `?account=`. Salvar e apagar
   vão para a auditoria, e o run que uma recorrente começa entra nela com o ator `recurring:<id>`.
 - **Tela:** a web v7 mostra as recorrentes em Rotinas (`/rotinas`, da frota) e na Fila da Visão
@@ -686,6 +718,13 @@ destino da viagem):
   - testes do agent com relógios falsos, todos com `-race`: vence, não vence, prioridade, um por
     vez, nada durante um run, intervalo desde o fim do último, relógio desconhecido cai no
     intervalo, travas, ponto seguro e arquivo;
+  - desde 2026-11-14, a nova tentativa: um teste de tabela das regras (primeira falha antes e
+    depois dos 15 min, relógio pronto e desarmado ou crescendo, intervalo ignorado, a tentativa que
+    falhou, a falha anterior ao salvamento, cancelado, run sem fim, a cópia do banco com
+    microssegundos, liberar, a trava do último run da conta vinda de outra rotina, de um "Fazer
+    agora", de um gatilho, e o salvamento de outra rotina) e testes do vigia: falha, tentativa
+    15 min depois e segura depois da segunda falha; cancelado nunca tenta; a primeira falha segura
+    as outras até a tentativa terminar bem; um "Fazer agora" que falhou segura todas;
   - store e rotas no Postgres 17, incluindo um agent da F6 que não recebe o campo novo e o oidc só
     com conta do dono;
   - `goose up/down/up` da 0015.

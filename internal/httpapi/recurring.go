@@ -113,7 +113,7 @@ func (s *Server) handleRecurringSave(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// The server's own fields: never taken from a request.
-	rc.UpdatedAt, rc.LastRun = nil, nil
+	rc.UpdatedAt, rc.LastRun, rc.PrevRun = nil, nil, nil
 	rc, err := agent.ValidateRecurring(rc)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())

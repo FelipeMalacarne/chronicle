@@ -376,16 +376,25 @@ func listRecurring(ctx context.Context, q *storedb.Queries, account string) ([]a
 			t := row.UpdatedAt.Time.UTC()
 			rc.UpdatedAt = &t
 		}
-		if row.LastState != "" && row.LastStartedAt.Valid {
-			rc.LastRun = &agent.RecurringRun{State: row.LastState, StartedAt: row.LastStartedAt.Time.UTC()}
-			if row.LastFinishedAt.Valid {
-				t := row.LastFinishedAt.Time.UTC()
-				rc.LastRun.FinishedAt = &t
-			}
-		}
+		rc.LastRun = recurringRun(row.LastState, row.LastStartedAt, row.LastFinishedAt)
+		rc.PrevRun = recurringRun(row.PrevState, row.PrevStartedAt, row.PrevFinishedAt)
 		out = append(out, rc)
 	}
 	return out, nil
+}
+
+// recurringRun is one of a routine's runs as ListRecurring reads it; nil for
+// none.
+func recurringRun(state string, started, finished pgtype.Timestamptz) *agent.RecurringRun {
+	if state == "" || !started.Valid {
+		return nil
+	}
+	r := &agent.RecurringRun{State: state, StartedAt: started.Time.UTC()}
+	if finished.Valid {
+		t := finished.Time.UTC()
+		r.FinishedAt = &t
+	}
+	return r
 }
 
 // nameTaken maps the unique violation of a recurring routine's name to

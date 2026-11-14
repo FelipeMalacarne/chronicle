@@ -240,10 +240,27 @@ func TestRecurringPostgres(t *testing.T) {
 	if l := list[0].LastRun; l == nil || l.State != agent.RunDone || !l.StartedAt.Equal(t0) || !l.FinishedAt.Equal(end) {
 		t.Fatalf("last run = %+v", l)
 	}
-	if list[1].LastRun != nil {
-		t.Fatalf("tree's last run = %+v", list[1].LastRun)
+	if list[0].PrevRun != nil || list[1].LastRun != nil {
+		t.Fatalf("herb's previous run %+v, tree's last run %+v", list[0].PrevRun, list[1].LastRun)
 	}
-	if runs, _ := repo.Runs(ctx, "acc_a", 30); len(runs) != 1 || runs[0].Routine != herbID || runs[0].Trigger != "" {
+	// A newer run (one that failed) is the last; the one before it, the
+	// previous (which says whether the failure was already the retry).
+	failedRun := run
+	failedRun.UID, failedRun.ID, failedRun.State = "00000000000000ee", "run-5", agent.RunFailed
+	failedEnd := t0.Add(2*time.Hour + 5*time.Minute)
+	failedRun.StartedAt, failedRun.FinishedAt = t0.Add(2*time.Hour), &failedEnd
+	if _, _, err = repo.RecordRun(ctx, "acc_a", "zaros", failedRun); err != nil {
+		t.Fatal(err)
+	}
+	list, _ = repo.Recurring(ctx, "acc_a")
+	if l, p := list[0].LastRun, list[0].PrevRun; l == nil || l.State != agent.RunFailed || !l.StartedAt.Equal(t0.Add(2*time.Hour)) || !l.FinishedAt.Equal(failedEnd) ||
+		p == nil || p.State != agent.RunDone || !p.StartedAt.Equal(t0) || !p.FinishedAt.Equal(end) {
+		t.Fatalf("last run %+v, previous %+v", l, p)
+	}
+	if _, err = agent.ValidateRecurring(list[0]); err != nil {
+		t.Fatalf("the stored routine does not validate: %v", err)
+	}
+	if runs, _ := repo.Runs(ctx, "acc_a", 30); len(runs) != 2 || runs[0].Routine != herbID || runs[1].Routine != herbID || runs[0].Trigger != "" {
 		t.Fatalf("runs = %+v", runs)
 	}
 	if runs, _ := repo.Runs(ctx, "acc_b", 30); len(runs) != 1 || runs[0].Routine != "" {
@@ -257,7 +274,7 @@ func TestRecurringPostgres(t *testing.T) {
 	if _, err = repo.DeleteRecurring(ctx, "acc_a", herbID); !errors.Is(err, ErrRoutineNotFound) {
 		t.Fatalf("delete again = %v", err)
 	}
-	if runs, _ := repo.Runs(ctx, "acc_a", 30); len(runs) != 1 || runs[0].Routine != "" {
+	if runs, _ := repo.Runs(ctx, "acc_a", 30); len(runs) != 2 || runs[0].Routine != "" || runs[1].Routine != "" {
 		t.Fatalf("run after the delete = %+v", runs)
 	}
 

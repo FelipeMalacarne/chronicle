@@ -207,7 +207,7 @@
 				>{/if}
 		{:else if !s.ok && onhave}
 			<button
-				class="btn btn-g btn-s"
+				class="btn btn-s"
 				type="button"
 				title="Marcar como já tenho, para este trecho"
 				onclick={() => onhave(s.key, s.name)}>Já tenho</button

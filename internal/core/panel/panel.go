@@ -124,6 +124,9 @@ type Carry struct {
 
 // CarryItem is one item to bring.
 type CarryItem struct {
+	// Key is the requirement's key in its segment (planning.RequirementKey):
+	// what `chronicle loadout mark` names.
+	Key       string `json:"key"`
 	Name      string `json:"name"`
 	Qty       int64  `json:"qty"`
 	QtyStated bool   `json:"qty_stated"`
@@ -136,6 +139,8 @@ type CarryItem struct {
 	// the evaluation.
 	Owned rules.Verdict `json:"owned,omitempty"`
 	Held  int64         `json:"held,omitempty"`
+	// OwnerMarked: the owner said they already have it (the verdict reads met).
+	OwnerMarked bool `json:"owner_marked,omitempty"`
 }
 
 // Input is what Build reads.
@@ -144,7 +149,9 @@ type Input struct {
 	Board    progress.Board
 	Cursor   progress.CursorRecord
 	Holdings rules.ItemHoldings
-	Registry *entities.Registry
+	// ItemMarks are the owner's marks on the legs' items (docs/09 section 5).
+	ItemMarks planning.OwnerMarks
+	Registry  *entities.Registry
 	// Limit is how many steps follow the cursor; out of range means
 	// DefaultLimit.
 	Limit int
@@ -202,7 +209,7 @@ func Build(in Input) Window {
 		}
 	}
 	if current, _ := planning.Legs(g, in.Cursor.StepID); current != nil {
-		out.Carry = carry(g, current, in.Cursor.StepID, in.Holdings, in.Registry)
+		out.Carry = carry(g, current, in.Cursor.StepID, in.Holdings, in.Registry, in.ItemMarks.For(g.ID, current.ID))
 	}
 	if in.Content != nil && len(out.Steps) > 0 && out.Steps[0].Current {
 		if st, ok := g.Step(in.Cursor.StepID); ok {
@@ -263,8 +270,8 @@ func location(st *content.Step, reg *entities.Registry) string {
 	return strings.TrimSpace(st.Location)
 }
 
-func carry(g *content.Guide, seg *content.Segment, cursor string, h rules.ItemHoldings, reg *entities.Registry) *Carry {
-	ev := planning.EvaluateSegment(g, seg, h, reg)
+func carry(g *content.Guide, seg *content.Segment, cursor string, h rules.ItemHoldings, reg *entities.Registry, marks planning.ItemMarks) *Carry {
+	ev := planning.EvaluateSegment(g, seg, h, reg, marks)
 	out := &Carry{
 		SegmentID: ev.SegmentID, Title: ev.Title, Status: ev.Status, LoadoutStatus: ev.LoadoutStatus,
 		Items: []CarryItem{}, BankActions: []string{},
@@ -276,7 +283,7 @@ func carry(g *content.Guide, seg *content.Segment, cursor string, h rules.ItemHo
 	}
 	items := ev.Items
 	if ev.LoadoutStatus == content.LoadoutUnknown {
-		if ahead := planning.LookAhead(seg, cursor, h, reg); ahead != nil {
+		if ahead := planning.LookAhead(seg, cursor, h, reg, marks); ahead != nil {
 			out.Derived = true
 			for _, grp := range ahead.Groups {
 				for _, it := range grp.Items {
@@ -287,8 +294,8 @@ func carry(g *content.Guide, seg *content.Segment, cursor string, h rules.ItemHo
 	}
 	for _, it := range items {
 		ci := CarryItem{
-			Name: it.Name, Qty: it.Required, QtyStated: it.QtyStated, Slot: it.Slot, Optional: it.Optional,
-			Verdict: it.Verdict, Carried: it.Carried,
+			Key: it.Key, Name: it.Name, Qty: it.Required, QtyStated: it.QtyStated, Slot: it.Slot, Optional: it.Optional,
+			Verdict: it.Verdict, Carried: it.Carried, OwnerMarked: it.OwnerMarked,
 		}
 		if it.Owned != nil {
 			ci.Owned, ci.Held = it.Owned.Verdict, it.Owned.Held

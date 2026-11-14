@@ -54,7 +54,7 @@ type Obtained struct {
 // reported once, at its first use; an item that an earlier step of the
 // window obtains moves to Obtained. It returns nil when fromStepID is not in
 // seg or no step of the window lists an item.
-func LookAhead(seg *content.Segment, fromStepID string, h rules.ItemHoldings, catalog *entities.Registry) *Ahead {
+func LookAhead(seg *content.Segment, fromStepID string, h rules.ItemHoldings, catalog *entities.Registry, marks ItemMarks) *Ahead {
 	start := 0
 	if fromStepID != "" {
 		start = slices.IndexFunc(seg.Steps, func(st *content.Step) bool { return st.ID == fromStepID })
@@ -82,7 +82,7 @@ func LookAhead(seg *content.Segment, fromStepID string, h rules.ItemHoldings, ca
 	for offset, st := range window {
 		group := -1
 		for _, li := range st.Requirements {
-			key := requirementKey(li)
+			key := RequirementKey(li)
 			if at, ok := seen[key]; ok {
 				if at[0] >= 0 {
 					it := &out.Groups[at[0]].Items[at[1]]
@@ -104,7 +104,7 @@ func LookAhead(seg *content.Segment, fromStepID string, h rules.ItemHoldings, ca
 				group = len(out.Groups) - 1
 			}
 			g := &out.Groups[group]
-			g.Items = append(g.Items, AheadItem{Item: evaluateItem(li, SlotInventory, h, catalog)})
+			g.Items = append(g.Items, AheadItem{Item: evaluateItem(li, SlotInventory, h, catalog, marks)})
 			seen[key] = [2]int{group, len(g.Items) - 1}
 		}
 		// Acquisitions count for later steps only: a step that obtains and
@@ -128,9 +128,11 @@ func LookAhead(seg *content.Segment, fromStepID string, h rules.ItemHoldings, ca
 	return out
 }
 
-// requirementKey identifies a requirement across steps: the same item, in the
-// same form, is listed once.
-func requirementKey(li content.ItemRequirement) string {
+// RequirementKey identifies a requirement across steps: the same item, in the
+// same form, is listed once. It is also the key of the owner's marks (ItemMarks):
+// the resolved id, the sorted any_of ids or the family, with "/noted"; the
+// lower-cased name when nothing resolved. The slot is not part of it.
+func RequirementKey(li content.ItemRequirement) string {
 	noted := ""
 	if li.Noted {
 		noted = "/noted"

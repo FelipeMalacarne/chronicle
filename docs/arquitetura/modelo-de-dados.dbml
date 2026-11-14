@@ -237,6 +237,24 @@ Table ingest_container_freshness {
   '''
 }
 
+Table loadout_marks {
+  account_id text [not null]
+  guide_id text [not null, note: 'guide ids are content ids, not FKs']
+  segment_id text [not null, note: 'the leg (content.Segment.ID), local to the guide']
+  item_key text [not null, note: 'planning.RequirementKey: id:<n>, any:<ids>, family:<f>, name:<lower>, "/noted" suffix']
+  note text [not null, default: `''::text`]
+  marked_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, guide_id, segment_id, item_key) [pk]
+  }
+
+  Note: '''
+  The owner's marks on the items of a leg's loadout, per (guide, segment): they count as satisfied when readiness is computed, but are not evidence (holdings and player_state are untouched).
+  loadout_marks_item_key_shape: CHECK ((item_key ~ '^(id|any|family|name):.+'::text))
+  '''
+}
+
 Table mark_commands {
   seq bigint [pk, default: `nextval('mark_commands_seq_seq'::regclass)`, note: 'replay order']
   id text [not null, unique]
@@ -837,6 +855,7 @@ Ref graph_cache_content_version_id_fkey: graph_cache.content_version_id > conten
 Ref ingest_container_freshness_account_id_fkey: ingest_container_freshness.account_id > accounts.id [delete: cascade]
 Ref ingest_container_freshness_snapshot_id_fkey: ingest_container_freshness.snapshot_id > snapshots.id
 Ref ingest_container_freshness_snapshot_same_account: ingest_container_freshness.(snapshot_id, account_id) > snapshots.(id, account_id)
+Ref loadout_marks_account_id_fkey: loadout_marks.account_id > accounts.id [delete: cascade]
 Ref mark_commands_account_id_fkey: mark_commands.account_id > accounts.id [delete: cascade]
 Ref mark_commands_guide_id_fkey: mark_commands.guide_id > guides.id
 Ref mark_commands_revokes_id_fkey: mark_commands.revokes_id > mark_commands.id
@@ -912,6 +931,7 @@ TableGroup conteudo_indexado {
 TableGroup progresso {
   objective_progress
   objective_marks
+  loadout_marks
   objective_progress_events
   mark_commands
   step_marks

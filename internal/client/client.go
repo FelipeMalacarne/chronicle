@@ -311,6 +311,38 @@ func (c *Client) UnmarkObjective(ctx context.Context, key string) (ObjectiveMark
 	return out, err
 }
 
+// LoadoutMark is what a loadout mark or unmark did.
+type LoadoutMark struct {
+	Guide   string `json:"guide"`
+	Segment string `json:"segment"`
+	Item    string `json:"item"`
+	Marked  bool   `json:"marked"`
+}
+
+// MarkLoadoutItem is PUT /api/loadout/mark: the owner's mark "I already have
+// this item for this leg" (not evidence). item is the requirement key the
+// route window lists.
+func (c *Client) MarkLoadoutItem(ctx context.Context, guide, segment, item, note string) (LoadoutMark, error) {
+	var out LoadoutMark
+	q, err := c.accountQuery(ctx)
+	if err != nil {
+		return out, err
+	}
+	err = c.do(ctx, http.MethodPut, "/api/loadout/mark", q, map[string]string{"guide": guide, "segment": segment, "item": item, "note": note}, &out)
+	return out, err
+}
+
+// UnmarkLoadoutItem is POST /api/loadout/unmark.
+func (c *Client) UnmarkLoadoutItem(ctx context.Context, guide, segment, item string) (LoadoutMark, error) {
+	var out LoadoutMark
+	q, err := c.accountQuery(ctx)
+	if err != nil {
+		return out, err
+	}
+	err = c.do(ctx, http.MethodPost, "/api/loadout/unmark", q, map[string]string{"guide": guide, "segment": segment, "item": item}, &out)
+	return out, err
+}
+
 // Goal is one of the account's goals.
 type Goal struct {
 	ID         string     `json:"id"`

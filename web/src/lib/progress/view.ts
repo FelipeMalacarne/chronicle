@@ -577,6 +577,10 @@ export function ago(at: number, now: number): string {
 
 export interface BankSlot {
 	name: string;
+	/** Chave do requisito no trecho (o que a marca "já tenho" nomeia). */
+	key: string;
+	/** Marcado pelo dono como já tido neste trecho (sem evidência do plugin). */
+	ownerMarked: boolean;
 	itemId?: number;
 	qty: string;
 	cls: '' | 'slot-miss' | 'slot-unk' | 'slot-stale';
@@ -606,7 +610,7 @@ export function bankColumns(seg: SegmentReadiness): BankColumns {
 		unresolved: []
 	};
 	for (const it of seg.items) {
-		if (it.carried >= Math.max(1, it.required)) out.carried++;
+		if (it.owner_marked || it.carried >= Math.max(1, it.required)) out.carried++;
 		out.slots.push(slotOf(it));
 	}
 	for (const s of out.slots) {
@@ -624,9 +628,12 @@ function slotOf(it: ReadinessItem): BankSlot {
 	const bank = it.owned?.containers?.bank;
 	const base = {
 		name: it.name,
+		key: it.key,
+		ownerMarked: !!it.owner_marked,
 		itemId: it.matched_id ?? it.item_id ?? it.any_of?.[0],
 		qty: it.qty_stated || it.required > 1 ? qtyLabel(it.required) : ''
 	};
+	if (it.owner_marked) return { ...base, cls: '', suffix: 'marcado por você', ok: true };
 	if (it.variant === 'unresolved') return { ...base, cls: 'slot-unk', suffix: 'sem id', ok: false };
 	switch (it.verdict) {
 		case 'met':
@@ -654,6 +661,10 @@ export const AHEAD_DEFAULT = 30;
 
 export interface AheadSlot {
 	name: string;
+	/** Chave do requisito no trecho (o que a marca "já tenho" nomeia). */
+	key: string;
+	/** Marcado pelo dono como já tido neste trecho (sem evidência do plugin). */
+	ownerMarked: boolean;
 	itemId?: number;
 	/** Ref da entidade do item (abre o painel); vazio quando o catálogo não resolveu. */
 	ref: string;
@@ -717,12 +728,16 @@ function aheadSlot(it: AheadItem): AheadSlot {
 	const itemId = it.matched_id ?? it.item_id ?? it.any_of?.[0];
 	const base = {
 		name: it.name,
+		key: it.key,
+		ownerMarked: !!it.owner_marked,
 		itemId,
 		ref: it.family ? `item:family/${it.family}` : itemId !== undefined ? `item:${itemId}` : '',
 		qty: it.qty_stated || it.required > 1 ? qtyLabel(it.required) : '',
 		required: it.required,
 		tip: also
 	};
+	if (it.owner_marked)
+		return { ...base, cls: 'slot-you', state: 'marcado por você', ok: true, tip: also };
 	if (it.variant === 'unresolved')
 		return {
 			...base,

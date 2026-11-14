@@ -114,6 +114,7 @@
     "derived": false,
     "items": [
       {
+        "key": "id:2347",
         "name": "Hammer",
         "qty": 1,
         "qty_stated": true,

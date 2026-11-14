@@ -24,7 +24,9 @@
 		ahead = null,
 		bankActions,
 		firstRef,
-		refOf
+		refOf,
+		onhave,
+		onunhave
 	}: {
 		readiness: SegmentReadiness | null;
 		ahead?: Ahead | null;
@@ -32,6 +34,12 @@
 		firstRef: string;
 		/** Referência do autor de um passo (o id interno nunca aparece). */
 		refOf: (id: string) => string;
+		/**
+		 * "Já tenho" (marca do dono, só para este trecho; fora do canvas, versão mínima autorizada
+		 * pelo dono em 2026-11-14) e "Desfazer" da marca. Sem os dois, os slots não ganham controle.
+		 */
+		onhave?: (key: string, name: string) => void;
+		onunhave?: (key: string, name: string) => void;
 	} = $props();
 
 	let now = $state(Date.now());
@@ -58,11 +66,13 @@
 		const cols = bankColumns(readiness);
 		return cols.slots.map((s, i) => {
 			const it = readiness.items[i];
-			const carried = it.carried >= Math.max(1, it.required);
+			const carried = it.owner_marked || it.carried >= Math.max(1, it.required);
 			const held = it.owned?.held ?? 0;
 			const need = it.qty_stated || it.required > 1 ? String(it.required) : '';
 			return {
 				name: s.name,
+				key: s.key,
+				ownerMarked: s.ownerMarked,
 				itemId: s.itemId,
 				ref: it.family
 					? `item:family/${it.family}`
@@ -73,7 +83,7 @@
 				held: held || undefined,
 				required: it.required,
 				cls: carried ? 'slot-you' : s.cls,
-				state: carried ? 'com você' : s.suffix || 'no banco',
+				state: it.owner_marked ? 'marcado por você' : carried ? 'com você' : s.suffix || 'no banco',
 				ok: carried,
 				tip: ''
 			};
@@ -168,20 +178,42 @@
 
 {#snippet slot(s: AheadSlot, ref: string)}
 	{@const icon = itemIcon(s.itemId)}
-	<button
-		class="slot {s.cls}"
-		type="button"
-		title={slotTitle(s, ref)}
-		disabled={!s.ref}
-		onclick={() => openEntity(s.ref)}
-	>
-		<span class="bx">
-			{#if icon}<img class="sp" src={icon} alt="" />{/if}
-			{#if s.qty}<span class="q">{s.qty}</span>{/if}
-			{#if s.ok}<span class="ok"><Glyph name="check" size={11} /></span>{/if}
-		</span>
-		<span class="nm">{s.name}</span>
-	</button>
+	<span class="cell">
+		<button
+			class="slot {s.cls}"
+			type="button"
+			title={slotTitle(s, ref)}
+			disabled={!s.ref}
+			onclick={() => openEntity(s.ref)}
+		>
+			<span class="bx">
+				{#if icon}<img class="sp" src={icon} alt="" />{/if}
+				{#if s.qty}<span class="q">{s.qty}</span>{/if}
+				{#if s.ok}<span class="ok"><Glyph name="check" size={11} /></span>{/if}
+			</span>
+			<span class="nm">{s.name}</span>
+		</button>
+		{#if s.ownerMarked}
+			<span
+				class="own"
+				title="Você marcou este item como já tido, para este trecho, sem o plugin ver"
+				>marcado por você</span
+			>
+			{#if onunhave}<button
+					class="btn btn-g btn-s"
+					type="button"
+					title="Desfazer a marca deste item, para este trecho"
+					onclick={() => onunhave(s.key, s.name)}>Desfazer</button
+				>{/if}
+		{:else if !s.ok && onhave}
+			<button
+				class="btn btn-g btn-s"
+				type="button"
+				title="Marcar como já tenho, para este trecho"
+				onclick={() => onhave(s.key, s.name)}>Já tenho</button
+			>
+		{/if}
+	</span>
 {/snippet}
 
 {#if total > 0 || bankActions.length}
@@ -282,6 +314,24 @@
 	}
 	.gh {
 		margin-bottom: -6px;
+	}
+	.cell {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 4px;
+		min-width: 0;
+	}
+	.cell :global(.btn) {
+		padding-inline: 6px;
+		max-width: 100%;
+	}
+	.own {
+		font:
+			400 11px 'JetBrains Mono',
+			monospace;
+		color: var(--done);
+		text-align: center;
 	}
 	button.slot {
 		border: 0;

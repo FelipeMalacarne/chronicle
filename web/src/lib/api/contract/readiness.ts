@@ -12,6 +12,7 @@ export const fixture = {
 					{
 						"carried": 0,
 						"item_id": 1935,
+						"key": "id:1935",
 						"name": "Jug",
 						"owned": {
 							"containers": {

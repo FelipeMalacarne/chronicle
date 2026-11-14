@@ -777,3 +777,4 @@ Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`frota.test.ts`, `historic
 `automacao.test.ts`) e `pnpm build`; sem captura de tela.
 
 - Marca manual por objetivo (2026-11-13): implementada fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.
+- Marca manual por item do trecho (2026-11-14): "Já tenho" e "Desfazer" nos slots do cartão "Levar do banco" (`BankPanel`), fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.

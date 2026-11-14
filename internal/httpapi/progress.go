@@ -10,6 +10,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
+	"github.com/FelipeMalacarne/chronicle/internal/core/planning"
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
@@ -26,6 +27,9 @@ type ProgressService interface {
 	Objectives(ctx context.Context, accountID string) ([]storeprogress.ObjectiveView, error)
 	MarkObjective(ctx context.Context, accountID, key, note string) (storeprogress.ObjectiveMarkResult, error)
 	UnmarkObjective(ctx context.Context, accountID, key string) (storeprogress.ObjectiveMarkResult, error)
+	MarkLoadoutItem(ctx context.Context, accountID, guideID, segmentID, item, note string) (storeprogress.LoadoutMarkResult, error)
+	UnmarkLoadoutItem(ctx context.Context, accountID, guideID, segmentID, item string) (storeprogress.LoadoutMarkResult, error)
+	LoadoutMarks(ctx context.Context, accountID string) (planning.OwnerMarks, error)
 	Events(ctx context.Context, accountID, guideID string, limit int) (storeprogress.EventsView, error)
 	SetActiveGuide(ctx context.Context, accountID, guideID string) error
 	Sources(ctx context.Context, accountID string) ([]storeprogress.SourceView, error)
@@ -132,6 +136,16 @@ type cursorRequest struct {
 type objectiveMarkRequest struct {
 	Key  string `json:"key"`
 	Note string `json:"note,omitempty"`
+}
+
+// loadoutMarkRequest is the body of PUT /api/loadout/mark and POST
+// /api/loadout/unmark: one item (its requirement key, as the readiness lists
+// it) of one leg of one guide.
+type loadoutMarkRequest struct {
+	Guide   string `json:"guide"`
+	Segment string `json:"segment"`
+	Item    string `json:"item"`
+	Note    string `json:"note,omitempty"`
 }
 
 type objectivesResponse struct {
@@ -280,6 +294,44 @@ func (s *Server) handleUnmarkObjective(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, res)
 }
 
+// handleMarkLoadoutItem is PUT /api/loadout/mark: the owner's mark "I already
+// have this item for this leg" (docs/09 section 5). It is not evidence;
+// unmark takes it back.
+func (s *Server) handleMarkLoadoutItem(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	var req loadoutMarkRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	res, err := s.opts.Progress.MarkLoadoutItem(r.Context(), account, req.Guide, req.Segment, req.Item, strings.TrimSpace(req.Note))
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+// handleUnmarkLoadoutItem is POST /api/loadout/unmark.
+func (s *Server) handleUnmarkLoadoutItem(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	var req loadoutMarkRequest
+	if !decodeBody(w, r, &req) {
+		return
+	}
+	res, err := s.opts.Progress.UnmarkLoadoutItem(r.Context(), account, req.Guide, req.Segment, req.Item)
+	if err != nil {
+		s.writeProgressError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
 func (s *Server) handleProgress(w http.ResponseWriter, r *http.Request) {
 	account, ok := s.accountParam(w, r)
 	if !ok {
@@ -407,6 +459,8 @@ func (s *Server) writeProgressError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "step not found")
 	case errors.Is(err, coreprogress.ErrInvalidAction):
 		writeError(w, http.StatusBadRequest, "kind must be manual_done, skipped, pinned_open, confirm_implied or clear")
+	case errors.Is(err, storeprogress.ErrInvalidLoadoutItem):
+		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, storeprogress.ErrInvalidObjective):
 		writeError(w, http.StatusBadRequest, err.Error())
 	case errors.Is(err, storeprogress.ErrInvalidRevokes):

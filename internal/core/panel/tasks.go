@@ -120,7 +120,7 @@ func EvaluateUntil(t content.Task, u content.TaskUntil, s progress.StepState, se
 			// a recipe's or a plan's own task: its items, no guide
 			g = &content.Guide{}
 		}
-		ev := planning.EvaluateSegment(g, target, h, reg)
+		ev := planning.EvaluateSegment(g, target, h, reg, nil)
 		switch ev.Status {
 		case planning.Ready, planning.ListedReady:
 			return rules.Met, ""

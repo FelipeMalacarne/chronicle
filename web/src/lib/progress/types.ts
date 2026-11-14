@@ -401,6 +401,10 @@ export interface ReadinessItem {
 	carried: number;
 	owned?: Ownership;
 	reason?: string;
+	/** Chave do requisito no trecho: o que a marca do dono nomeia. */
+	key: string;
+	/** O dono marcou "já tenho" para este trecho: o veredito é met, os fatos ficam como estavam. */
+	owner_marked?: boolean;
 }
 
 export interface SegmentReadiness {
@@ -1127,4 +1131,12 @@ export interface ObjectiveMarkResult {
 	key: string;
 	marked: boolean;
 	steps_changed: number;
+}
+
+/** A resposta de marcar ou desmarcar um item do "Levar do banco" de um trecho. */
+export interface LoadoutMarkResult {
+	guide: string;
+	segment: string;
+	item: string;
+	marked: boolean;
 }

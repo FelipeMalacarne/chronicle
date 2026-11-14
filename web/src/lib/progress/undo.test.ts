@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import type { Board } from './types.ts';
 import {
 	boardIn,
+	loadoutUndoAction,
 	objectiveUndoAction,
 	popUndo,
 	restoreAction,
@@ -77,6 +78,21 @@ test('an objective mark is undone by the opposite write, in its own scope only',
 	};
 	assert.equal(objectiveUndoAction(entry as { marked: boolean }), 'unmark');
 	assert.equal(objectiveUndoAction({ marked: false }), 'mark');
+	assert.equal(popUndo([entry], oziris).entry, entry);
+	assert.deepEqual(popUndo([entry], bruh), { entry: null, rest: [] });
+});
+
+test('a loadout item mark is undone by the opposite write, in its own scope only', () => {
+	const entry: UndoEntry = {
+		kind: 'loadout',
+		scope: oziris,
+		segment: 'seg-a',
+		key: 'id:952',
+		label: 'Spade',
+		marked: true
+	};
+	assert.equal(loadoutUndoAction(entry as { marked: boolean }), 'unmark');
+	assert.equal(loadoutUndoAction({ marked: false }), 'mark');
 	assert.equal(popUndo([entry], oziris).entry, entry);
 	assert.deepEqual(popUndo([entry], bruh), { entry: null, rest: [] });
 });

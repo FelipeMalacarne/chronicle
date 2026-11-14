@@ -276,6 +276,7 @@ test('bank columns: with you, in the bank, the guide says', () => {
 		items: [
 			{
 				name: 'Hammer',
+				key: 'id:2347',
 				variant: 'exact',
 				item_id: 2347,
 				slot: 'inventory',
@@ -287,6 +288,7 @@ test('bank columns: with you, in the bank, the guide says', () => {
 			},
 			{
 				name: 'Saw',
+				key: 'id:8794',
 				variant: 'exact',
 				item_id: 8794,
 				slot: 'inventory',
@@ -298,6 +300,7 @@ test('bank columns: with you, in the bank, the guide says', () => {
 			},
 			{
 				name: 'arrow shafts',
+				key: 'name:arrow shafts',
 				variant: 'unresolved',
 				slot: 'inventory',
 				required: 1000,
@@ -308,6 +311,7 @@ test('bank columns: with you, in the bank, the guide says', () => {
 			},
 			{
 				name: 'Planks',
+				key: 'id:960',
 				variant: 'exact',
 				item_id: 960,
 				slot: 'inventory',
@@ -580,6 +584,7 @@ test('compare: cross objectives, cells, distance and reaching', () => {
 test('preview of the next steps when the guide lists no setup', () => {
 	const it = (name: string, extra: Partial<AheadItem>): AheadItem => ({
 		name,
+		key: 'id:1',
 		variant: 'exact',
 		item_id: 1,
 		slot: 'inventory',
@@ -781,4 +786,39 @@ test('chips carry the owner mark of the board objective', () => {
 		[true, false]
 	);
 	assert.equal(chipsOf(st, undefined)[0].ownerMarked, false);
+});
+
+test('an item the owner marked reads as carried and shows who said so', () => {
+	const seg: SegmentReadiness = {
+		guide_id: 'g',
+		segment_id: 's',
+		section_id: 'x',
+		kind: 'bank_leg',
+		status: 'listed_ready',
+		loadout_status: 'partial',
+		bank_actions: [],
+		freshness: {},
+		items: [
+			{
+				name: 'Spade',
+				key: 'id:952',
+				variant: 'exact',
+				item_id: 952,
+				slot: 'inventory',
+				required: 1,
+				qty_stated: false,
+				verdict: 'met',
+				carried: 0,
+				owner_marked: true,
+				owned: { verdict: 'unmet', held: 0, containers: { bank: { observed: true, qty: 0 } } }
+			}
+		]
+	};
+	const cols = bankColumns(seg);
+	assert.equal(cols.carried, 1);
+	assert.equal(cols.missing, 0);
+	assert.deepEqual(
+		cols.slots.map((s) => [s.key, s.ownerMarked, s.ok, s.suffix]),
+		[['id:952', true, true, 'marcado por você']]
+	);
 });

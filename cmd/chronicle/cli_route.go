@@ -127,7 +127,10 @@ func printWindow(out io.Writer, w panel.Window) {
 				qty = fmt.Sprintf(" x%d", it.Qty)
 			}
 			have := ""
-			if it.Verdict != rules.Unknown {
+			switch {
+			case it.OwnerMarked:
+				have = " (marcado por você)"
+			case it.Verdict != rules.Unknown:
 				have = fmt.Sprintf(" (com você: %d)", it.Carried)
 			}
 			fmt.Fprintf(out, "  %s %s%s%s\n", verdictMark(it.Verdict), it.Name, qty, have)

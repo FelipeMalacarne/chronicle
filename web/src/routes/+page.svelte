@@ -24,8 +24,13 @@
 		type Lane
 	} from '#lib/progress/frota';
 	import { iconFor, itemIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
-	import { chooseCockpitAccount } from '#lib/progress/microbot.svelte';
+	import {
+		chooseCockpitAccount,
+		microbotModule,
+		probeMicrobot
+	} from '#lib/progress/microbot.svelte';
 	import { fleetSummary as rhythmSummary, todaySince } from '#lib/progress/ritmo';
+	import { accountRows, routineNotices, type RoutineNotice } from '#lib/progress/rotinas';
 	import type { AccountState, FleetRhythm, ProgressSummary, TimerView } from '#lib/progress/types';
 	import {
 		actionLabel,
@@ -42,7 +47,8 @@
 	 * XP e GP de hoje no resumo) vem de GET /api/rhythm, e a pausa do status do cliente. Ficam de
 	 * fora do artboard, por faltar no servidor, a fila de rotinas (aqui "Depois" são os relógios do
 	 * Time Tracking), o diário e o uso do nó no resumo (no lugar, o uso dos workers contra a quota;
-	 * docs/ui/decisoes-canvas.md, seções 7.7 e 7.14).
+	 * docs/ui/decisoes-canvas.md, seções 7.7 e 7.14). As rotinas seguras e as que falharam e tentam
+	 * de novo entram em Precisa de você (seção 7.13), pela leitura do vigia de cada conta.
 	 */
 	interface Facts {
 		state: AccountState | null;
@@ -53,6 +59,8 @@
 	let workers = $state<WorkersView | null>(null);
 	let clients = $state<Record<string, { client: ClientStatus | null; scripts: string[] }>>({});
 	let rhythm = $state<FleetRhythm | null>(null);
+	/** Os avisos das rotinas de cada conta: seguras ou esperando a nova tentativa. */
+	let routines = $state<Record<string, RoutineNotice[]>>({});
 	let now = $state(Date.now());
 	let armed = $state<string | null>(null);
 	let busy = $state<string | null>(null);
@@ -153,6 +161,34 @@
 	});
 	const day = $derived(rhythm ? rhythmSummary(rhythm) : null);
 
+	// As rotinas de cada conta como o vigia do agent (ou o banco) as vê, a cada 30 s como o vigia.
+	async function loadRoutines() {
+		const at = new Date();
+		const all = await Promise.all(
+			(fleet.accounts ?? []).map(async (a) => {
+				const [recurring, history] = await Promise.all([
+					quiet(microbotApi.recurringOf(a.id)),
+					quiet(microbotApi.runsOf(a.id))
+				]);
+				const runs = history?.runs ?? [];
+				const rows = recurring ? accountRows(recurring, null, runs, at) : [];
+				return [a.id, routineNotices(rows, runs)] as const;
+			})
+		);
+		routines = Object.fromEntries(all);
+	}
+	$effect(() => {
+		void probeMicrobot();
+	});
+	$effect(() => {
+		if (!fleet.accounts || microbotModule.enabled !== true) return;
+		void loadRoutines();
+		const t = setInterval(() => {
+			if (!document.hidden) void loadRoutines();
+		}, 30_000);
+		return () => clearInterval(t);
+	});
+
 	const all = $derived.by(() => {
 		const lines = workerLines(workers, now);
 		const inputs: FleetInput[] = (fleet.accounts ?? []).map((a) => ({
@@ -163,12 +199,13 @@
 			worker: lines.find((l) => l.account === a.id) ?? null,
 			client: clients[a.id]?.client ?? null,
 			scripts: clients[a.id]?.scripts ?? [],
-			rhythm: rhythm?.accounts.find((r) => r.account === a.id) ?? null
+			rhythm: rhythm?.accounts.find((r) => r.account === a.id) ?? null,
+			routines: routines[a.id] ?? []
 		}));
 		return lanes(inputs, now);
 	});
 	const tones = $derived(Object.fromEntries(all.map((l) => [l.id, l.tone])));
-	const attention = $derived(needs(all, workers?.capacity));
+	const attention = $derived(needs(all, workers?.capacity, now));
 	const cap = $derived(workers ? fleetCapacity(workers, tones) : null);
 	const groups = $derived(compactGroups(all, attention, query));
 	$effect(() => {
@@ -515,6 +552,17 @@
 									onclick={() => copy(n.account, command)}
 									>{copied === n.account ? 'Copiado' : 'Copiar comando'}</button
 								>
+							</div>
+						{/if}
+						{#if n.routine}
+							<div class="a">
+								<!-- eslint-disable svelte/no-navigation-without-resolve -- resolve() + query da rotina -->
+								<a
+									class="btn btn-s"
+									href={`${resolve('/rotinas')}?rotina=${encodeURIComponent(n.routine)}`}
+									>Abrir a rotina</a
+								>
+								<!-- eslint-enable svelte/no-navigation-without-resolve -->
 							</div>
 						{/if}
 					</div>

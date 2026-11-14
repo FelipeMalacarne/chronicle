@@ -181,6 +181,11 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 		if p.Value != nil && (len(*p.Value) > 2000 || strings.ContainsRune(*p.Value, 0)) {
 			return nil, errors.New("config: value of at most 2000 characters")
 		}
+		if p.Value != nil {
+			if err := clientcfg.CheckPinned(p.Group, p.Key, *p.Value); err != nil {
+				return nil, err
+			}
+		}
 		return p, nil
 	case CmdRunStart:
 		return validateRun(raw)
@@ -189,7 +194,7 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 	case CmdTriggerSet:
 		return validateTrigger(raw)
 	case CmdPlugins, CmdScriptsPause, CmdScriptsResume, CmdGameView, CmdTimers, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet,
-		CmdRecurringGet:
+		CmdRecurringGet, CmdQuestHelper:
 		return nil, nil
 	}
 	if slices.Contains(GameActions, command) {

@@ -462,9 +462,10 @@ Os dados: os níveis de `GET /api/account/levels` (7 dias, o avanço de cada ski
 de `GET /api/levels` (o Diário, desde a meia-noite do navegador); os runs de `GET /api/microbot/runs`
 (os 30 mais novos de cada conta) e as ações de `GET /api/microbot/audit` (as 200 mais novas da conta),
 os dois só com o módulo Microbot ligado; o XP de hoje do ritmo (`GET /api/account/rhythm` e
-`GET /api/rhythm`); Precisa de você é a mesma lista da Frota (worker e relógios de cada conta). O que
-um run subiu ("Fishing 74 → 75") são os níveis da conta observados entre o começo e o fim dele, e o
-sprite do run é o da skill que mais subiu; sem nível no caminho, o run fica com o glifo.
+`GET /api/rhythm`); Precisa de você é a mesma lista da Frota (worker, relógios e, desde 2026-11-14,
+as rotinas de cada conta, com "Abrir a rotina"; seção 7.13). O que um run subiu ("Fishing 74 → 75")
+são os níveis da conta observados entre o começo e o fim dele, e o sprite do run é o da skill que mais
+subiu; sem nível no caminho, o run fica com o glifo.
 
 Divergências dos artboards:
 
@@ -640,11 +641,27 @@ vêm de `GET`/`POST /api/microbot/recurring?account=` e `DELETE /api/microbot/re
   salvar mantém o interruptor de cada conta como estava; ligar pede o segundo clique e vale para todas
   as contas da rotina ("ligada em 2 de 3" quando só parte está). Rodar agora também pede o segundo
   clique, numa conta escolhida, com o cliente ligado e a conta logada.
-- **As travas aparecem.** Um run que falhou ou foi cancelado segura a rotina naquela conta até ela ser
-  salva de novo; o último run da conta, quando falhou, segura todas as rotinas dela. Cada trava vira um
-  aviso no topo da lista e na rotina aberta, com Liberar (segundo clique: liberada e ligada, ela pode
-  começar logo). Salvar, ou desligar, numa conta com trava também solta a trava e pede o segundo
-  clique. Sem o agent, a tela calcula a trava pelo que o banco guarda, com as regras do vigia.
+- **As travas e a nova tentativa aparecem** (decisão do dono de 2026-11-14, doc 01, decisão 40; as
+  regras estão no Estado do doc 08). Um run que falhou tenta de novo uma vez, 15 min depois; se a
+  tentativa falhar também, ou se o dono cancelou o run, a rotina fica segura naquela conta até ser
+  liberada. O último run da conta, quando falhou e não é o de uma rotina que vai tentar de novo,
+  segura todas as rotinas dela.
+  - **No topo da lista:** um aviso por rotina segura ("Farm run falhou de novo", "foi cancelada"),
+    com Liberar (segundo clique: liberada e ligada, ela pode começar logo) e Abrir a rotina; um por
+    rotina que tenta de novo ("Farm run falhou e tenta de novo em 12 min", "Uma vez só: se falhar de
+    novo, fica parada até você liberar", e "As outras rotinas da conta esperam essa tentativa"
+    quando é o último run da conta), sem Liberar e com a borda neutra; e um por conta quando o
+    último run dela segura todas e não é o de uma rotina que já tem aviso.
+  - **Na rotina aberta:** o porquê de cada cópia segura (com Liberar) ou esperando a tentativa.
+  - **Na lista e na Fila:** "de novo em 12 min" na coluna da fila e "falhou: tenta de novo uma vez"
+    na Fila da Visão geral; a segura diz "segura", e na Fila "cancelada", "falhou de novo" ou "o
+    último run da conta falhou", com "espera você liberar".
+  - **Em Precisa de você, na Frota:** a segura e a que tenta de novo, com a hora (ver a divergência
+    4).
+
+  Salvar, ou desligar, numa conta com trava, ou numa cópia que espera a tentativa, também solta a
+  trava e pede o segundo clique. Sem o agent, a tela calcula a trava e a tentativa pelo que o banco
+  guarda (o último run e o anterior de cada rotina), com as regras do vigia.
 
 Divergências do artboard:
 
@@ -659,9 +676,15 @@ Divergências do artboard:
 3. **"+ Passo" e o banco antes do run:** a rotina roda um plugin só, com o parar, voltar e religar do
    Fazer agora. Passos tipados e o loadout com banco antes do run (o PREPARO do doc 08) não existem na
    API e ficam de fora.
-4. **Se falhar:** "tenta de novo em 15 min e avisa em Precisa de você" não existe. O servidor segura a
-   rotina até o dono salvá-la de novo; a linha diz isso, e o aviso fica no topo da tela (Precisa de
-   você é da fatia V7).
+4. **Se falhar:** igual ao artboard desde 2026-11-14 (decisão 40 do doc 01): a linha diz "tenta de
+   novo em 15 min e avisa em Precisa de você", e o `title` explica que é uma vez só, que a segunda
+   falha ou um run cancelado deixam a rotina parada até o dono liberá-la e que as outras rotinas da
+   conta esperam a tentativa. O artboard `V7Frota1440` não desenha um aviso de rotina em Precisa de
+   você; ele segue o molde dos outros (a conta em negrito, o que ela tem, a linha de baixo e um
+   botão): "tenta de novo Herb run em 12 min" (leve), "parou Herb run: falhou duas vezes" (grave),
+   "parou Herb run: você cancelou o run" (leve) e "parou as rotinas: o último run falhou" (grave), com
+   Abrir a rotina, que abre a rotina em Rotinas, onde fica o Liberar. Uma rotina segura que pede o
+   dono põe a conta em Precisa de você na lista compacta.
 5. **Campos a mais:** o nome (o servidor pede, e é ele que junta as cópias), "sem leitura do relógio, a
    cada N min" (o intervalo de reserva da recorrente pelo relógio), a prioridade (a ordem da fila do
    vigia) e o limite do plugin. O "até 60 s" do passo 1 não aparece: a espera pelo ponto seguro é do
@@ -679,7 +702,10 @@ Divergências do artboard:
    existe: um run avulso é o Rodar agora da rotina ou o Fazer agora do Cliente.
 
 Conferido com os testes de `node --test` da lógica das telas (`rotinas.test.ts`), `pnpm check`,
-`pnpm lint` e `pnpm build`. Falta a captura a 1440 e conferir contra um agent de verdade.
+`pnpm lint` e `pnpm build`. Falta a captura a 1440 e conferir contra um agent de verdade. A nova
+tentativa (2026-11-14) foi conferida do mesmo jeito, com `rotinas.test.ts` (a trava e a tentativa
+pelo banco, os avisos) e `frota.test.ts` (os avisos em Precisa de você); falta a captura da Frota e
+de Rotinas com uma rotina esperando a tentativa e outra segura.
 
 ### 7.14 Implementação: V5, Ritmo (2026-11-13)
 
@@ -777,3 +803,4 @@ Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`frota.test.ts`, `historic
 `automacao.test.ts`) e `pnpm build`; sem captura de tela.
 
 - Marca manual por objetivo (2026-11-13): implementada fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.
+- Marca manual por item do trecho (2026-11-14): "Já tenho" e "Desfazer" nos slots do cartão "Levar do banco" (`BankPanel`), fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.

@@ -11,9 +11,10 @@ export interface Scope {
 
 /**
  * Uma entrada do desfazer: uma marca (com a que o passo tinha antes), um lote "marcar antes" ou a
- * marca de um objetivo (`marked`: o que a escrita fez; desfazer faz o contrário).
+ * marca de um objetivo ou de um item do trecho (`marked`: o que a escrita fez; desfazer faz o contrário).
  */
 export type UndoEntry =
+	| { kind: 'loadout'; scope: Scope; segment: string; key: string; label: string; marked: boolean }
 	| { kind: 'objective'; scope: Scope; key: string; label: string; marked: boolean }
 	| { kind: 'mark'; scope: Scope; step: string; ref: string; prev?: Mark; command?: string }
 	| { kind: 'batch'; scope: Scope; restore: MarkRestore[]; command?: string };
@@ -58,5 +59,10 @@ export function restoreAction(prev?: Mark): { kind: MarkAction; note?: string } 
 
 /** O que desfazer uma marca de objetivo escreve: desmarcar o que foi marcado, e o inverso. */
 export function objectiveUndoAction(entry: { marked: boolean }): 'mark' | 'unmark' {
+	return entry.marked ? 'unmark' : 'mark';
+}
+
+/** O que desfazer uma marca de item do trecho escreve: o contrário do que foi escrito. */
+export function loadoutUndoAction(entry: { marked: boolean }): 'mark' | 'unmark' {
 	return entry.marked ? 'unmark' : 'mark';
 }

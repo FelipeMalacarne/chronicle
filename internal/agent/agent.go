@@ -140,6 +140,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.gameView(ctx), nil
 	case CmdTimers:
 		return e.timers(ctx)
+	case CmdQuestHelper:
+		return e.questHelper(ctx)
 	case CmdClientLogs, CmdAccountShow:
 		return e.client(ctx, command, params)
 	}
@@ -580,6 +582,7 @@ func (a *Agent) session(ctx context.Context) error {
 func (a *Agent) hello(resp *http.Response) (h Hello, linked []Client, tagged bool) {
 	h = a.Hello
 	h.Commands = Commands
+	h.Features = AgentFeatures
 	h.Clients = nil
 	all := a.clients()
 	if len(a.Clients) == 0 {

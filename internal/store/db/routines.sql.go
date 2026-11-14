@@ -159,12 +159,17 @@ func (q *Queries) InsertRunEvent(ctx context.Context, arg InsertRunEventParams) 
 const listRecurring = `-- name: ListRecurring :many
 
 SELECT r.id, r.name, r.enabled, r.clock, r.interval_min, r.priority, r.spec, r.updated_at,
-       COALESCE(last.state, '') AS last_state, last.started_at AS last_started_at, last.finished_at AS last_finished_at
+       COALESCE(last.state, '') AS last_state, last.started_at AS last_started_at, last.finished_at AS last_finished_at,
+       COALESCE(prev.state, '') AS prev_state, prev.started_at AS prev_started_at, prev.finished_at AS prev_finished_at
 FROM routines r
 LEFT JOIN LATERAL (
   SELECT rr.state, rr.started_at, rr.finished_at FROM routine_runs rr
   WHERE rr.routine_id = r.id ORDER BY rr.started_at DESC LIMIT 1
 ) last ON true
+LEFT JOIN LATERAL (
+  SELECT rr.state, rr.started_at, rr.finished_at FROM routine_runs rr
+  WHERE rr.routine_id = r.id ORDER BY rr.started_at DESC OFFSET 1 LIMIT 1
+) prev ON true
 WHERE r.account_id = $1 AND r.kind = 'recurring'
 ORDER BY r.priority DESC, r.name, r.id
 `
@@ -181,11 +186,15 @@ type ListRecurringRow struct {
 	LastState      string             `json:"last_state"`
 	LastStartedAt  pgtype.Timestamptz `json:"last_started_at"`
 	LastFinishedAt pgtype.Timestamptz `json:"last_finished_at"`
+	PrevState      string             `json:"prev_state"`
+	PrevStartedAt  pgtype.Timestamptz `json:"prev_started_at"`
+	PrevFinishedAt pgtype.Timestamptz `json:"prev_finished_at"`
 }
 
 // Recurring routines (migration 0015): each with its last run, from which
 // the agent counts the interval and sees a failure the owner has not
-// answered.
+// answered, and the run before it, which says whether that failure was
+// already the routine's one retry (docs/08, Estado).
 func (q *Queries) ListRecurring(ctx context.Context, accountID string) ([]ListRecurringRow, error) {
 	rows, err := q.db.Query(ctx, listRecurring, accountID)
 	if err != nil {
@@ -207,6 +216,9 @@ func (q *Queries) ListRecurring(ctx context.Context, accountID string) ([]ListRe
 			&i.LastState,
 			&i.LastStartedAt,
 			&i.LastFinishedAt,
+			&i.PrevState,
+			&i.PrevStartedAt,
+			&i.PrevFinishedAt,
 		); err != nil {
 			return nil, err
 		}

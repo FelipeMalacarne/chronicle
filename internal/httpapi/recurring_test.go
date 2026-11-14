@@ -3,6 +3,7 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
@@ -34,7 +35,8 @@ func TestRecurringRoutesPostgres(t *testing.T) {
 		INSERT INTO users (id, subject, username) VALUES ('dev', 'dev', 'dev');
 		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer) VALUES
 		  ('acc_farm', 'dev', 'Farm', 'farm', 'ironman', 'oziris-main', 'enhanced'),
-		  ('acc_f6', 'dev', 'Old', 'old', 'ironman', 'oziris-main', 'enhanced');
+		  ('acc_f6', 'dev', 'Old', 'old', 'ironman', 'oziris-main', 'enhanced'),
+		  ('acc_pre', 'dev', 'Pre', 'pre', 'ironman', 'oziris-main', 'enhanced');
 	`); err != nil {
 		t.Fatal(err)
 	}
@@ -154,11 +156,58 @@ func TestRecurringRoutesPostgres(t *testing.T) {
 	if status, body, _ = call(t, "GET", api+"?account=acc_f6", ""); status != http.StatusOK || len(body["recurring"].([]any)) != 1 {
 		t.Fatalf("read for an F6 agent = %d %v", status, body)
 	}
+
+	// A routine's last two runs: the database's view has both; an agent from
+	// before the retry (recurring_get, no recurring_retry) gets the routine
+	// without the previous run, which it would refuse.
+	status, body, _ = call(t, "POST", api+"?account=acc_pre", herb)
+	if status != http.StatusOK {
+		t.Fatalf("save = %d %v", status, body)
+	}
+	preID := body["id"].(string)
+	t0 := time.Now().UTC().Add(-time.Hour)
+	for i, state := range []string{agent.RunDone, agent.RunFailed} {
+		start := t0.Add(time.Duration(i) * 30 * time.Minute)
+		end := start.Add(5 * time.Minute)
+		run := agent.Run{
+			ID: fmt.Sprintf("run-%d", i+1), UID: fmt.Sprintf("00000000000000a%d", i), ClassName: "a.b.HerbrunPlugin", Routine: preID,
+			State: state, StartedAt: start, FinishedAt: &end, Events: []agent.RunEvent{{At: start, State: agent.RunWaiting, Text: "rotina Herb run"}},
+		}
+		if _, _, err := repo.RecordRun(ctx, "acc_pre", "pre", run); err != nil {
+			t.Fatal(err)
+		}
+	}
+	status, body, _ = call(t, "GET", api+"?account=acc_pre", "")
+	if rc := body["recurring"].([]any)[0].(map[string]any); status != http.StatusOK ||
+		rc["lastRun"].(map[string]any)["state"] != agent.RunFailed || rc["prevRun"].(map[string]any)["state"] != agent.RunDone {
+		t.Fatalf("the database's view = %d %v", status, body)
+	}
+	pre := syncAgent(t, srv.URL, "acc_pre", agent.Commands)
+	waitLinked(t, link, 3)
+	deadline := time.Now().Add(5 * time.Second)
+	for len(pre()) == 0 {
+		if time.Now().After(deadline) {
+			t.Fatal("the agent before the retry got no routines_sync")
+		}
+		time.Sleep(20 * time.Millisecond)
+	}
+	for _, raw := range pre() {
+		if !strings.Contains(string(raw), `"lastRun"`) || strings.Contains(string(raw), "prevRun") {
+			t.Fatalf("an agent before the retry got %s", raw)
+		}
+	}
 }
 
 // f6Agent links a bare agent with the protocol of F6 (routines_sync, no
 // recurring_get) and returns the routines_sync params it got.
 func f6Agent(t *testing.T, url, account string) func() []json.RawMessage {
+	t.Helper()
+	return syncAgent(t, url, account, slices.DeleteFunc(slices.Clone(agent.Commands), func(c string) bool { return c == agent.CmdRecurringGet }))
+}
+
+// syncAgent links an agent that declares commands and no feature, answers
+// every command with no triggers, and returns the routines_sync params it got.
+func syncAgent(t *testing.T, url, account string, commands []string) func() []json.RawMessage {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	t.Cleanup(cancel)
@@ -167,8 +216,7 @@ func f6Agent(t *testing.T, url, account string) func() []json.RawMessage {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = conn.CloseNow() })
-	commands := slices.DeleteFunc(slices.Clone(agent.Commands), func(c string) bool { return c == agent.CmdRecurringGet })
-	hello, _ := json.Marshal(agent.Message{Type: agent.TypeHello, Hello: &agent.Hello{Host: "f6", Account: account, Commands: commands}})
+	hello, _ := json.Marshal(agent.Message{Type: agent.TypeHello, Hello: &agent.Hello{Host: "box-" + account, Account: account, Commands: commands}})
 	if err := conn.Write(ctx, websocket.MessageText, hello); err != nil {
 		t.Fatal(err)
 	}

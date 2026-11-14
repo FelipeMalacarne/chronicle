@@ -78,13 +78,15 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 29 | Comparar rotas é uma aba de Rotas (Oziris · BRUHsailer · Comparar), não a tela principal; a lista de rotas deixa de existir | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
 | 30 | O produto se chama **Chronicle** (wordmark Alegreya 700 com o livro e a runa); "Ironman Planner" vira descrição | resolvida (2026-11-05) | docs/ui/decisoes-canvas.md, seção 5 |
 | 31 | Recorrentes (birdhouses, herb run, kingdom) como entidades com `ready_at` no doc 09 | resolvida (2026-11-10, o dono pediu os passos do roadmap): os relógios do Time Tracking chegam pelo ingest (`data.timers`, faceta `timer`) e o Agora mostra os Recorrentes (V6AgoraEstados1440); kingdom e o que o Time Tracking não conhece ficam para depois | docs/ui/decisoes-canvas.md, seção 5; doc 06, adendo de 2026-11-10 |
-| 32 | Modelo de execução: fatos por fonte com junção pura, comandos do dono como log, projeções reconstruíveis, tarefas tipadas, receitas por objetivo, planos e executor no plugin | E1 a E4 **resolvidas** (2026-11-05: fatos por fonte, log de comandos, rebuild no CI e aviso no boot, contrato por fixtures; a geração de tipos foi adiada, com OpenAPI como candidato no lugar do tygo); E5 a E10 **resolvidas** (2026-11-13, do jeito recomendado: as primitivas iniciais com `quest` depois, receitas no git, planos no banco, gravação por demonstração opt-in, nada com risco de morte sem supervisão em HCIM, Quest Helper avaliado na fase 5); as fases 1 a 5 do doc 10 entram na sequência do doc 04 depois do item 20 | doc 10 |
+| 32 | Modelo de execução: fatos por fonte com junção pura, comandos do dono como log, projeções reconstruíveis, tarefas tipadas, receitas por objetivo, planos e executor no plugin | E1 a E4 **resolvidas** (2026-11-05: fatos por fonte, log de comandos, rebuild no CI e aviso no boot, contrato por fixtures; a geração de tipos foi adiada, com OpenAPI como candidato no lugar do tygo); E5 a E10 **resolvidas** (2026-11-13, do jeito recomendado: as primitivas iniciais com `quest` depois, receitas no git, planos no banco, gravação por demonstração opt-in, nada com risco de morte sem supervisão em HCIM, Quest Helper avaliado na fase 5); E19 e E20 **resolvidas** (2026-11-14: executar quests por delegação ao Quest Helper que o cliente do Microbot traz, com o término provado pelo ingest; não importar nada do Quest Helper); E11 a E18 e E21 **resolvidas** (2026-11-14, o dono confirmou o que estava implementado: a gravação só das ações do dono, guardada até ele apagar, e no conteúdo só os eventos de cada tarefa confirmada; `travel` sem teleporte e `bank` que deposita antes de sacar; `train` recusado com o plugin ligado, as opções gravadas ficam, o plugin só por receita ou plano; a `quest` recusa o bot ocupado e requisitos sem prova); as fases 1 a 5 do doc 10 entram na sequência do doc 04 depois do item 20 | doc 10 |
 | 33 | A rota do Oziris pode ser corrigida pelo dono: notas de update que tornam um passo impossível ou fora de ordem viram patches de import (`data/guide/route-patches.json`: remover, mover, inserir), não só anotações; primeiros: Lost Tribe depois do Goblin Diplomacy e 1.4.2 (favour) removido | resolvida (2026-11-05) | docs/05, seção 12 |
 | 34 | Workers do Microbot: cada conta pode ter um worker, no zaros (agent anexado) ou num pod do saradomin criado e apagado pelo Chronicle (web e CLI) no namespace `chronicle`; tudo endereçado pela conta; ao conectar a conta (`chronicle accounts connect`) a sessão vai cifrada para o Postgres e a conta fica habilitada para gerenciar; perfis do cliente (plugins, configurações, gráfico, com modelos), rotinas e histórico no Postgres; qualquer conta, com ou sem rota (modo `regular`); GPU ligada com gráficos no mínimo | resolvida (2026-11-12, revista no mesmo dia com as respostas do dono) no desenho; protótipo no canvas (página 7) a completar com conectar conta, perfil e desvio; W1 a W3 e W8 a W10 abertas; W7 resolvida (2026-11-12: a config do perfil vai pelo Agent Server antes de ligar os plugins); W4 resolvida pelo repositório único (decisão 35) | doc 11 |
 | 35 | `chronicle` e o antigo `microbot-plugins` num repositório só: os plugins (Chronicle Link, Cat Swap e os bots), o harness e o projeto Gradle ficam em `microbot/`, com o histórico, e um flake na raiz serve os dois lados (doc 07). A separação tracking × bot continua entre plugins (docs 06 e 08) | revista (2026-11-12): era "repositórios separados", com o acoplamento num contrato, num aperto de mão de versões da ponte e no bump da base do worker entre os dois. Agora um repositório, porque a visibilidade dos repositórios não importa para o dono, toda sessão precisava dos dois, o contrato entre o plugin Java e o servidor Go (ingest, ponte de controle, variáveis do Chronicle Link) muda num commit só e o bump da base entre repositórios (PR e token) some. O dono arquiva o `microbot-plugins` | doc 07, seções 3 e 5; doc 11, seções 7.2 e 10 |
 | 36 | Web v7, **Frota**: o produto passa a ser para várias contas. A casa do app é a Frota (uma raia por conta, na ideia de um idle game, com os sprites do jogo); cada conta abre com cabeçalho e cinco abas (Visão geral, Rota, Personagem, Cliente, Histórico); Automação deixa de ser uma área (Workers vira a Frota, o Cockpit vira a aba Cliente, Plugins e Rotinas são da frota); Fila e Histórico juntam relógios, fazer agora, runs e auditoria; Nova conta no lugar do primeiro acesso. Tema e tokens do Pergaminho não mudam; mudam os componentes (cartão no lugar do painel com placa, objetivo com progresso, lâmpada, quadro, barra de andamento) | resolvida (2026-11-12) no desenho: 18 artboards na página 8 do canvas, aprovados pelo dono. Implementação em fatias, item 20 do doc 04; o que depende do servidor (ritmo de XP, fila de rotinas, histórico, perfis, capacidade) vira issue e segue as fases F5 a F7 do doc 11 | docs/ui/decisoes-canvas.md, seção 7 |
 | 37 | Worker numa versão antiga: o servidor o reinicia sozinho na imagem nova, mas só na **pausa**: sem run em andamento, sem VNC aberto, e com o personagem deslogado ou num break do Break Handler. Nunca durante um run, nunca com o dono olhando ou intervindo pelo VNC, nunca um worker parado nem o agent anexado do zaros; auditado como o Reiniciar do dono, pelo `reconciler`, com o motivo "versão nova, na pausa". O Reiniciar segue para "agora". Até então, só o clique do dono trocava a imagem de um worker que já roda | resolvida (2026-11-13) e feita no mesmo dia. Falta conferir num worker de verdade. O dono aceitou que o worker reiniciado no break do Break Handler fica na tela de login (W3) em vez de voltar ao jogo (uma vez por imagem nova); o micro break com o personagem logado não conta | doc 11, seções 7.2 e 18.4; docs/ui/decisoes-canvas.md, seção 7.15 |
 | 38 | Marca manual por **objetivo**, da conta inteira: o dono marca um objetivo como já cumprido (`chronicle objective mark`), e ele vale em todo guia e passo. Sobrepõe os vereditos ao derivar status, bloqueios e cursor; não é evidência (não escreve `objective_progress`) e não dispara a cascata `implied` | resolvida (2026-11-13): os objetivos de item novos em passos antigos, com os itens já gastos, faziam os passos voltarem a `pending` e o cursor recuar; marcar o passo não resolvia, porque a marca é por guia | doc 09, seção 5 |
+| 39 | Marca manual por **item do trecho** (o cartão "Levar do banco"): o dono marca um item que falta como "já tenho" (`chronicle loadout mark`, botão "Já tenho" na rota), e a marca vale só naquele trecho de um guia: a mesma pá no trecho seguinte, ou no outro guia, não é marcada. Sobrepõe o veredito do item ao calcular o readiness (a contagem "Falta N de M" cai); não é evidência: não escreve inventário, banco, snapshots nem `player_state`, e o fato do plugin segue como estava | resolvida (2026-11-14): itens que o dono já tem, ou que o plugin não enxerga, apareciam como faltando e não havia como dizer o contrário; marcar o objetivo não alcança os itens do setup do trecho, que não são objetivos | doc 09, seção 5 |
+| 40 | Rotina recorrente que falha: **tenta de novo sozinha uma vez**, 15 min depois da falha, com as condições de sempre (ligada, um run por vez, ponto seguro, a pausa do Break Handler), sem esperar o relógio nem o intervalo. Se essa tentativa falhar também, a rotina fica segura até o dono liberá-la (salvá-la de novo, o "Liberar"), como antes. Um run que o dono **cancelou nunca tenta de novo**: a rotina fica segura. O último run da conta que falhou segura todas as rotinas, menos a dona dele (a primeira falha dela não bloqueia a própria tentativa, e as outras esperam essa tentativa); um run que falhou e não é de uma recorrente ("Fazer agora", gatilho, tarefa) segura todas até o dono salvar alguma, como antes. A rotina segura e a tentativa pendente, com a hora, aparecem em Precisa de você (Frota e Atividade), no aviso do topo de Rotinas e no estado da rotina | resolvida (2026-11-14), e feita no mesmo dia: o gesto para soltar uma rotina presa estava em aberto (até então, toda falha ou cancelamento segurava a rotina até o dono salvá-la de novo), e o artboard `V7Rotinas1440` já dizia "Se falhar: tenta de novo em 15 min e avisa em Precisa de você"; o Liberar continua, para a segunda falha e para o cancelamento | doc 08, Estado (travas das recorrentes); doc 11, seção 16.4; `docs/ui/decisoes-canvas.md`, seção 7.13 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais
@@ -131,8 +133,11 @@ A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com 
   prova a chave pelo ingest e manda o `run_until` ao agent) e o `train` por delegação a um plugin do
   cliente, pelo `chronicle task run`. Ela termina com um treino no jogo, sem intervenção. Da fase 5,
   vários clientes no agent está pronto (2026-11-13): o agent do zaros controla um cliente por conta,
-  com `MICROBOT_AGENT_CLIENTS`, cada um com o seu executor, lock, home de dev, display e VNC. As
-  receitas de quest esperam a extração com o dono, e os planos customizados na UI esperam o canvas.
+  com `MICROBOT_AGENT_CLIENTS`, cada um com o seu executor, lock, home de dev, display e VNC. A `quest`
+  por delegação ao Quest Helper do cliente (E19, decidida em 2026-11-14) também tem o código pronto: o
+  agent grava "Obtain Missing Items" em `No`, seleciona a quest pelo Agent Server e a para quando o
+  servidor prova `quest:x@finished` pelo ingest. As receitas de quest esperam a extração com o dono,
+  e os planos customizados na UI esperam o canvas.
 
 O próximo passo é do dono:
 
@@ -151,34 +156,26 @@ O próximo passo é do dono:
    montar um plano com a tarefa `train` (`plugin`, `config` e `until` no nível seguinte), levar o
    personagem até o lugar e rodar `chronicle task run --yes --wait 3h` sem mexer em nada até "Término
    provado pelo ingest", com o plugin desligado sozinho.
-4. **Ligar um segundo cliente no zaros, se quiser** (doc 10, seção 13, fase 5): preparar o home de
+4. **Rodar a primeira quest pelo Quest Helper** (doc 10, seção 13, fase 5, item 2): atualizar o
+   `chronicle` do servidor e da máquina do jogo, deixar o plugin Quest Helper ligado e sem quest
+   selecionada no cliente de dev, escolher uma quest curta e sem luta que a conta ainda não fez (por
+   exemplo Cook's Assistant ou Sheep Shearer), com os itens no inventário, montar um plano com a tarefa
+   `quest` e rodar `chronicle task run --yes --wait 1h` olhando pelo VNC, até "Término provado pelo
+   ingest" com o Quest Helper parado sozinho.
+5. **Ligar um segundo cliente no zaros, se quiser** (doc 10, seção 13, fase 5): preparar o home de
    dev dele (`mb-account use` e `mb-install chroniclelink` com `MB_DEV_HOME`, e o token de ingest da
    conta no Chronicle Link), atualizar o `chronicle` do servidor e da máquina do jogo e trocar
    `MICROBOT_AGENT_ACCOUNT` por `MICROBOT_AGENT_CLIENTS` no agent.
-5. **Conferir no jogo e no cluster:**
+6. **Conferir no jogo e no cluster:**
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;
-   - uma rotina recorrente no zaros;
+   - uma rotina recorrente no zaros, com a nova tentativa depois de uma falha (decisão 40);
    - a capacidade da F7 depois do RBAC;
    - o reinício sozinho na versão nova depois de um deploy (decisão 37).
-6. **Desenhar no canvas** as telas em 640 px que faltam, o "Executar" da tarefa do plano (também o
-   "Treinar" de um `train`), o `wait_until` de uma rotina na tela de Rotinas e a tela de planos
+7. **Desenhar no canvas** as telas em 640 px que faltam, o "Executar" da tarefa do plano (também o
+   "Treinar" de um `train` e a `quest`), o `wait_until` de uma rotina na tela de Rotinas e a tela de planos
    customizados (fase 5 do doc 10: montar um plano com passos de vários guias, receitas e tarefas
    avulsas, e segui-lo).
-7. **Decidir o que está aberto:**
-   - o gesto para soltar uma rotina presa, hoje salvá-la de novo (o "Liberar" da tela de Rotinas);
-   - E11 a E13 do doc 10 (o que a gravação registra, a retenção dela no servidor e o que vai para o
-     conteúdo como evidência), hoje no modo conservador;
-   - E14 e E15 do doc 10 (o `travel` com teleporte, hoje recusado; o `bank` que deposita o que não é
-     do setup antes de sacar);
-   - E16 a E18 do doc 10 (o `train` com o plugin já ligado, hoje recusado; as opções que o treino
-     gravou, hoje deixadas; o plugin de um `train` de passo, hoje só por receita ou plano);
-   - E19 e E20 do doc 10, que saíram da avaliação do Quest Helper (E10, apêndice A):
-     - E19: executar uma quest por delegação ao Quest Helper que o cliente do Microbot já traz, como
-       o `train`, com o término provado pelo ingest. Recomendado: sim, de 2 a 3 dias de código;
-     - E20: um exportador dos passos do Quest Helper como fonte de propostas de receita.
-       Recomendado: não agora. Importar os dados dele não compensa, porque são código Java e não
-       dados.
 
 ## Discrepâncias e ressalvas
 

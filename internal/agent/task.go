@@ -14,6 +14,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 )
@@ -52,10 +53,11 @@ type TaskRunParams struct {
 	// death risk runs only so).
 	Supervised bool `json:"supervised,omitempty"`
 	// TimeoutS bounds the plugin's machine (default 900 for a travel, 300
-	// otherwise; 30 to 3600); a train's plugin (default 7200, 60 to 43200).
+	// otherwise; 30 to 3600); a train's plugin and a quest's Quest Helper
+	// (default 7200, 60 to 43200).
 	TimeoutS int `json:"timeoutS,omitempty"`
-	// Account is the account whose facts prove a train's level (the
-	// server's word, as a wait_until's); required for a train.
+	// Account is the account whose facts prove a train's level or a
+	// quest's end (the server's word, as a wait_until's); required for both.
 	Account string `json:"account,omitempty"`
 	// Task is what the plugin executes.
 	Task execspec.Task `json:"task"`
@@ -108,14 +110,14 @@ func validateTaskRun(raw json.RawMessage) (TaskRunParams, error) {
 	if p.Account != "" && !reAccountID.MatchString(p.Account) {
 		return p, errors.New("task: bad account")
 	}
-	if p.Task.Type == execspec.TypeTrain {
-		// A train waits for the server's proof of its level: hours, on
-		// the account's facts.
+	if p.Task.Type == execspec.TypeTrain || p.Task.Type == execspec.TypeQuest {
+		// A train and a quest wait for the server's proof (the level, the
+		// quest finished): hours, on the account's facts.
 		if p.Account == "" {
-			return p, errors.New("task: a train needs the account whose facts prove its level")
+			return p, fmt.Errorf("task: a %s needs the account whose facts prove its end", p.Task.Type)
 		}
 		if p.TimeoutS != 0 && (p.TimeoutS < 60 || p.TimeoutS > untilMaxTimeoutS) {
-			return p, fmt.Errorf("task: a train's timeoutS between 60 and %d", untilMaxTimeoutS)
+			return p, fmt.Errorf("task: a %s's timeoutS between 60 and %d", p.Task.Type, untilMaxTimeoutS)
 		}
 	} else if p.TimeoutS != 0 && (p.TimeoutS < 30 || p.TimeoutS > 3600) {
 		return p, errors.New("task: timeoutS between 30 and 3600")
@@ -123,8 +125,8 @@ func validateTaskRun(raw json.RawMessage) (TaskRunParams, error) {
 	if err := p.Task.Check(); err != nil {
 		return p, err
 	}
-	// The task's own risks (a travel into the wilderness) are declared,
-	// whatever the server says.
+	// The task's own risks (a travel into the wilderness, a quest not
+	// confirmed safe) are declared, whatever the server says.
 	for _, r := range p.Task.Risks() {
 		if !slices.Contains(p.Risks, r) {
 			return p, fmt.Errorf("task: the %s risk of the task is not declared", r)
@@ -171,6 +173,13 @@ func (e *Executor) taskRun(raw json.RawMessage) (any, error) {
 		run.ClassName = tr.Plugin
 		run.Until = &RunUntil{Objective: tr.Until(), Account: p.Account}
 		drive = func(ctx context.Context) { e.driveTrain(ctx, p) }
+	}
+	if q := p.Task.Quest; q != nil {
+		// Delegated to the client's Quest Helper (docs/10, E19): the run is
+		// its plugin's, and ends on the server's proof of the quest.
+		run.ClassName = clientcfg.QuestHelperClass
+		run.Until = &RunUntil{Objective: q.Until(), Account: p.Account}
+		drive = func(ctx context.Context) { e.driveQuest(ctx, p) }
 	}
 	why := "tarefa: " + p.Label
 	if len(p.Risks) > 0 {

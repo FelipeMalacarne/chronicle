@@ -132,7 +132,9 @@ quem é o usuário; as camadas abaixo cobrem o resto.
    requisições cruas ao Agent Server. Só executa comandos tipados: abrir e fechar o cliente,
    login/logout, instalar/remover plugin do Hub, iniciar/parar/pausar script, ler estado, ler e gravar
    configuração, screenshot, a sessão de VNC e, desde a fase 3 do doc 10, executar uma tarefa tipada do
-   plano (`task_run`: ids e tiles já resolvidos, executados pelo Chronicle Link). Ficam **fora**: `/scripts/deploy` (compila e executa
+   plano (`task_run`: ids e tiles já resolvidos, executados pelo Chronicle Link; um `train` delegado a
+   um plugin; uma `quest` delegada ao Quest Helper do cliente, pelas quatro chamadas fixas do
+   `/quest-helper` do Agent Server). Ficam **fora**: `/scripts/deploy` (compila e executa
    Java arbitrário), teclado e widgets crus, e qualquer exec além do `mb-client`. Assim, mesmo um
    `saradomin` comprometido não consegue executar código no `zaros`.
 5. **ACL do Tailscale**: o `zaros` alcança só o `saradomin` na porta do planner; nada na tailnet
@@ -659,13 +661,45 @@ destino da viagem):
     curso (deslogado).
   - O run leva o id da rotina, e a primeira linha da trilha diz por que começou ("rotina Herb run:
     relógio Herb Patches pronto").
-- **Travas** contra laço e surpresa:
-  - um run que falhou ou foi cancelado segura a rotina até o dono salvá-la de novo;
-  - um run de qualquer tipo que falhou ou foi cancelado segura todas até o dono salvar alguma (ele
-    deixa o principal parado onde falhou);
+- **Travas** contra laço e surpresa (a nova tentativa é decisão do dono de 2026-11-14, doc 01,
+  decisão 40):
+  - **um run que falhou tenta de novo uma vez.** Quando o último run da rotina falhou depois de o
+    dono salvá-la, ela vence de novo 15 min depois do fim dele (`retry_waiting` até lá, `retry` ao
+    vencer, com a hora em `nextAt`). Essa tentativa não olha o relógio nem o intervalo: vale mesmo
+    com o relógio ainda pronto (a rotina que ele disparou está desarmada) ou crescendo, e o
+    intervalo não conta a partir de um run que falhou. As outras condições continuam: ligada, um
+    run por vez, o ponto seguro e a pausa do Break Handler (a E9 do doc 10 é do `task_run`, e uma
+    recorrente roda um plugin, como o `run_start`). A tentativa disparada com o relógio pronto
+    desarma a rotina como qualquer run que ele dispara. A primeira linha da trilha diz "rotina Herb
+    run: tenta de novo, 15 min depois do run que falhou";
+  - **se a nova tentativa falhar também, a rotina fica segura** (`held`) até o dono salvá-la de novo
+    (o "Liberar"). O vigia sabe que a falha já foi a tentativa pelo run anterior da rotina: se os
+    dois últimos falharam depois do salvamento, ela fica segura. Os dois vêm do histórico do agent
+    e, para um pod que perdeu o histórico, do banco (`lastRun` e `prevRun`, doc 11, seção 16.4);
+  - **um run que o dono cancelou nunca tenta de novo:** a rotina fica segura até ele salvá-la;
+  - **o último run de qualquer tipo** que falhou ou foi cancelado depois do último salvamento de
+    qualquer rotina segura todas (`held_agent`), até o dono salvar alguma: ele deixa o principal
+    parado onde terminou. A exceção é a própria rotina: o run dela nunca a segura por esta regra,
+    porque as regras dela decidem (a nova tentativa ou segura). Assim, a primeira falha de uma
+    recorrente segura as outras, mas não ela; a nova tentativa roda antes delas e, se termina bem,
+    solta as outras. Um run que falhou e não é de uma recorrente (o "Fazer agora" do dono, um
+    gatilho, uma tarefa) segura todas, a tentativa pendente também, até o dono salvar alguma. Salvar
+    outra rotina solta só essa trava: a que esperava a tentativa volta a esperá-la (ou a roda, se a
+    hora já passou);
+  - **liberar** é salvar a rotina de novo: o salvamento solta as falhas dela anteriores a ele e,
+    sendo o mais novo, também a trava do último run da conta;
   - a rotina que o relógio disparou só volta a disparar pelo relógio depois de o vigia vê-lo não
     pronto (um run que não replantou daria laço);
-  - um run que o servidor viu começar e nunca terminar (o pod caiu no meio) conta como falho.
+  - um run que o servidor viu começar e nunca terminar (o pod caiu no meio) conta como falho quando
+    começou: ele também tem a nova tentativa, e um seguido de outra falha deixa a rotina segura.
+- **Onde o dono vê:** a rotina segura e a que espera a nova tentativa, com a hora, aparecem no
+  Precisa de você da Frota e da Atividade ("tenta de novo Herb run em 12 min"; "parou Herb run:
+  falhou duas vezes"; "parou as rotinas: o último run falhou"), no aviso do topo de Rotinas (com o
+  Liberar só na segura) e no estado da rotina na lista e na Fila ("de novo em 12 min", "segura").
+  Sem o agent, a web calcula a mesma coisa pelo que o banco guarda (`rotinas.ts`, `offlineHold`).
+- **Agent antigo:** o `prevRun` só vai, no `routines_sync`, para o agent que declara a capacidade
+  `recurring_retry` no hello (`Hello.features`); um agent de antes da nova tentativa recusaria o
+  campo e continua segurando a rotina em qualquer falha.
 - **API:** `GET`, `POST` e `DELETE /api/microbot/recurring`, sempre com `?account=`. Salvar e apagar
   vão para a auditoria, e o run que uma recorrente começa entra nela com o ator `recurring:<id>`.
 - **Tela:** a web v7 mostra as recorrentes em Rotinas (`/rotinas`, da frota) e na Fila da Visão
@@ -684,6 +718,13 @@ destino da viagem):
   - testes do agent com relógios falsos, todos com `-race`: vence, não vence, prioridade, um por
     vez, nada durante um run, intervalo desde o fim do último, relógio desconhecido cai no
     intervalo, travas, ponto seguro e arquivo;
+  - desde 2026-11-14, a nova tentativa: um teste de tabela das regras (primeira falha antes e
+    depois dos 15 min, relógio pronto e desarmado ou crescendo, intervalo ignorado, a tentativa que
+    falhou, a falha anterior ao salvamento, cancelado, run sem fim, a cópia do banco com
+    microssegundos, liberar, a trava do último run da conta vinda de outra rotina, de um "Fazer
+    agora", de um gatilho, e o salvamento de outra rotina) e testes do vigia: falha, tentativa
+    15 min depois e segura depois da segunda falha; cancelado nunca tenta; a primeira falha segura
+    as outras até a tentativa terminar bem; um "Fazer agora" que falhou segura todas;
   - store e rotas no Postgres 17, incluindo um agent da F6 que não recebe o campo novo e o oidc só
     com conta do dono;
   - `goose up/down/up` da 0015.
@@ -927,6 +968,89 @@ doc: a tarefa aponta para uma classe de plugin com um preset):
   - as rotas reais (`/api/microbot/*?account=`) com um agent de dois clientes;
   - o `mb-client status` lendo o display e a porta gravados num home falso.
 - **Nada rodou com dois clientes de verdade.** Os passos do dono estão no doc 10, seção 13.
+
+**Fase 5 do doc 10: `quest` por delegação** (2026-11-14; E19 e E20 decididas pelo dono no mesmo dia;
+doc 10, seções 7, 10, 13 e apêndice A):
+
+- **O que o cliente já traz:** o Microbot fixado (2.6.52) tem o Quest Helper, o bot dele
+  (`QuestScript`) e, no Agent Server, o `QuestHelperHandler`. O agent usa só quatro chamadas, com
+  corpo fixo:
+
+  | Chamada | O que devolve ou faz |
+  |---|---|
+  | `GET /quest-helper/status` | `active` (plugin ligado), `selected`, `questName`, `turnOn` ("Enable QuestHelper", ausente é ligado), `completed` (a leitura do helper, nunca prova), `stepText` e `stepClass` do passo ativo |
+  | `GET /quest-helper/list` | `quests: [{enum, displayName}]`: os nomes que o `/start` aceita |
+  | `POST /quest-helper/start` `{"name"}` | seleciona a quest (409 com o plugin desligado, 404 com a quest fora da lista) |
+  | `POST /quest-helper/stop` | larga a quest; sem quest selecionada, o bot não faz nada |
+
+  O bot dirige a quest selecionada enquanto `questhelper.TurnOn` está ligado (o padrão) e o desliga
+  sozinho quando desiste. O `/start` liga o `TurnOn` só nas opções do perfil do RuneScape, que o bot
+  não lê; por isso o agent o liga pelas opções do plugin quando estava desligado.
+- **Comando novo de leitura `quest_helper`:** o plugin ligado, a quest selecionada, se o bot a dirige
+  agora e a lista de nomes. Ele não toca no jogo e é permitido durante um run.
+- **A tarefa:** o `execspec.Task` ganha `quest`: a ref, o nome, o nome no Quest Helper e `safe`. Sem
+  `safe`, a quest tem os riscos `combat` e `hazard`, e a validação nos dois lados exige os dois
+  declarados e, em HCIM, `supervised` (E9). A conta é obrigatória, como num `train`, e o timeout vai de
+  60 s a 12 h, com padrão de 2 h.
+- **No `task_run`:** uma `quest` nunca vai para a máquina do Chronicle Link. O agent:
+  1. espera o ponto seguro e confere o login e, em HCIM sem supervisão, que o personagem está fora da
+     wilderness;
+  2. confere que a ponte responde: a quest é provada pelo rastreamento do Chronicle Link;
+  3. lê o `/quest-helper/status`: o plugin ligado e o bot sem dirigir outra quest (se estiver, recusa:
+     "pare-o antes"; E21 do doc 10);
+  4. confere a quest no `/quest-helper/list`, pelo nome exato que o servidor mandou;
+  5. anota os outros plugins ligados, sem recusar;
+  6. grava `questhelper.obtainMissingItems = NO` pelo mesmo pedido do `config_set` (as mesmas regras,
+     inclusive a opção fixa do `clientcfg`) e confere o valor na resposta; um cliente que não guarda
+     `NO` para o run antes de selecionar a quest;
+  7. `POST /quest-helper/start`; com o `TurnOn` desligado, liga-o, e desliga de novo no fim;
+  8. acompanha o `/quest-helper/status` como um run com `wait_until` em `quest:<x>@finished`. O
+     `Run` leva o `QuestHelperPlugin` em `className`, a tarefa em `task` e a chave em `until`, e cada
+     passo novo do helper vai para a trilha;
+  9. termina `done` só quando o servidor prova a quest (`run_until`), e então
+     `POST /quest-helper/stop`.
+
+  O timeout, o cancelamento do dono (`chronicle task cancel`), o cliente sem responder e uma falha
+  também param o helper. O bot parando sozinho conta como parada: `TurnOn` desligado, quest largada,
+  plugin desligado, outra quest selecionada ou o helper dizendo que terminou. O agent espera a prova
+  por 2 min e falha depois, parando o helper. O personagem fica onde a quest parou.
+- **"Obtain Missing Items" fixo em `No`:** o `clientcfg.PinnedSettings` faz o planner gravar
+  `questhelper.obtainMissingItems` só como `NO`, em qualquer caminho: `config_set`, perfil do cliente
+  (o servidor e o agent), `config` de um `train` e o próprio run. O padrão `Ask` prende o run numa
+  janela, e `Yes` mandaria o bot ao Grand Exchange. O bot só pula o Grand Exchange sozinho nas contas
+  que o `Rs2Player.isIronman()` conta (tipos 1 a 3), e Group Ironman fica de fora.
+- **No servidor:** o `POST /api/microbot/task` de uma `quest` pergunta ao agent o `quest_helper` e
+  recusa com 409, antes de tocar no jogo e auditado:
+  - agent sem `quest_helper` ou sem `run_until`;
+  - cliente sem os endpoints (um Agent Server antigo responde 404) ou sem o plugin;
+  - Quest Helper desligado ou com o bot dirigindo uma quest;
+  - quest que a lista do cliente não tem.
+
+  O nome que vai no `task_run` é o da lista do cliente que o catálogo resolve para a quest, como o
+  ingest lê os nomes de quest (`plan.QuestHelperName`); nenhum ou vários são 409. Antes disso, o
+  `plan.Resolve` recusa uma quest cujos requisitos do catálogo o ingest não prova `met`. O
+  `GET /api/microbot/task` prova o término como sempre: `quest:<x>@finished` nos fatos da conta.
+- **CLI:** `chronicle task run --yes --wait 1h` (em HCIM, `--supervised`).
+- **Verificado:**
+  - testes do conteúdo (`quest` com e sem `safe`, `safe` num passo, outra quest no `until`, evidência
+    gravada), do `execspec`, do plano (riscos, HCIM supervisionado, requisito `unmet` e sem prova,
+    quest já terminada, o nome na lista do cliente) e do `clientcfg` (a opção fixa);
+  - testes do agent com `-race`, com o Agent Server e o Quest Helper falsos nas respostas do
+    `QuestHelperHandler`:
+    - a opção gravada antes da seleção e nada mais agindo até a prova;
+    - "concluída" do helper que não termina nada;
+    - o `TurnOn` religado e desligado de novo;
+    - recusas sem agir: cliente antigo, plugin desligado, bot ocupado, quest fora da lista, sem ponte,
+      HCIM na wilderness;
+    - o cliente que não guarda `NO`;
+    - o timeout, o cancelamento e o bot parando sozinho, todos parando o helper;
+    - a prova antes do ponto seguro, que não seleciona nada;
+  - de ponta a ponta no Postgres 17 (`TestQuestTaskPostgres`): um plano com a `quest` de Sheep
+    Shearer, as recusas do cliente antigo, da quest fora da lista e do agent antigo, a opção e a
+    seleção, o ingest com a quest em andamento sem efeito e terminada com o helper parado, o run
+    `done` e a prova do `GET`.
+- **Nada foi testado no jogo.** Os passos do dono estão no doc 10, seção 13 (fase 5, item 2).
+- **Sem tela:** o "Executar" da tarefa na web pede o canvas antes (CLAUDE.md, regra 11).
 
 Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
 o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no

@@ -59,7 +59,7 @@
 							>{/if}
 					{:else if o.cls !== 'met' && onmark}
 						<button
-							class="btn btn-g btn-s"
+							class="btn btn-s"
 							type="button"
 							disabled={busy}
 							title="Marcar como já feito, para a conta toda"

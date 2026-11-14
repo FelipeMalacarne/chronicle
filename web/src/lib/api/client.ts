@@ -16,6 +16,7 @@ import type {
 	Graph,
 	GuideInfo,
 	MarkAction,
+	LoadoutMarkResult,
 	MarkRestore,
 	ObjectiveMarkResult,
 	ProgressSummary,
@@ -184,6 +185,17 @@ export const progressApi = {
 		request<ObjectiveMarkResult>(
 			`/objectives/unmark?account=${enc(account)}`,
 			json('POST', { key })
+		),
+	/** Marca do dono num item do "Levar do banco": vale só para esse trecho, não é evidência (docs/09, seção 5). */
+	markLoadoutItem: (account: string, guide: string, segment: string, item: string, note = '') =>
+		request<LoadoutMarkResult>(
+			`/loadout/mark?account=${enc(account)}`,
+			json('PUT', { guide, segment, item, note })
+		),
+	unmarkLoadoutItem: (account: string, guide: string, segment: string, item: string) =>
+		request<LoadoutMarkResult>(
+			`/loadout/unmark?account=${enc(account)}`,
+			json('POST', { guide, segment, item })
 		),
 	confirmImplied: (guide: string, account: string) =>
 		request<Board>(`/guides/${enc(guide)}/implied/confirm?account=${enc(account)}`, json('POST')),

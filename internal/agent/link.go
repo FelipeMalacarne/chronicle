@@ -97,7 +97,7 @@ func (c *agentConn) info() Info {
 	return Info{
 		Connected: true, ID: c.id, Since: c.ws.since, Host: c.hello.Host, Version: c.hello.Version,
 		Identity: c.ws.ident.Subject, Account: c.hello.Account, Kind: kind, Worker: c.hello.Worker, Bridge: c.hello.Bridge,
-		Commands: slices.Clone(c.hello.Commands),
+		Commands: slices.Clone(c.hello.Commands), Features: slices.Clone(c.hello.Features),
 	}
 }
 
@@ -124,10 +124,16 @@ type Info struct {
 	// Commands are the commands the agent declared in its hello: what it
 	// can do, so the server leaves a newer protocol out for an older agent.
 	Commands []string `json:"-"`
+	// Features are what the agent declared beyond its commands
+	// (AgentFeatures), for the same reason.
+	Features []string `json:"-"`
 }
 
 // Supports reports whether the agent declared command in its hello.
 func (i Info) Supports(command string) bool { return slices.Contains(i.Commands, command) }
+
+// Has reports whether the agent declared feature in its hello.
+func (i Info) Has(feature string) bool { return slices.Contains(i.Features, feature) }
 
 // Identity is who agentAuth authenticated on an agent's request.
 type Identity struct {

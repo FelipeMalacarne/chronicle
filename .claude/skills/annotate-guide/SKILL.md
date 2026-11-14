@@ -204,7 +204,8 @@ Tasks say **how** the executor does a step, with the closed list of primitives: 
 `via` an item or unlock), `bank` (`items` to withdraw, or none to bank for the segment's loadout),
 `buy` (`shop`, `item`, `qty`), `talk` (`npc`, `options`: the dialogue options, the game's exact
 text), `interact` (`object`, `action`: the menu option, the game's exact text), `train` (`skill`,
-`npc` or `object`, `location`) and `manual` (`note` for the owner). `quest` is not a primitive yet.
+`npc` or `object`, `location`) and `manual` (`note` for the owner). `quest` (a whole quest, delegated to the
+client's Quest Helper, docs/10 E19) is never extracted: it comes only from the quest's recipe or a plan.
 Every ref is a name you send (`{"name": ..., "id"?: ...}`); `via` also takes `kind` (`item` or
 `unlock`). Termination (`until`): `travel`, `bank` and `buy` have a default and take none; `talk` and
 `interact` end on `{"state": "goal_met"}` when the step completes something (`propose_tasks` lists

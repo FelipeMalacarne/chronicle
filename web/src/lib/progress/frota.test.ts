@@ -14,6 +14,8 @@ import {
 	sessionCommand,
 	type FleetInput
 } from './frota.ts';
+import type { Run } from '../api/microbot.ts';
+import type { RoutineRow } from './rotinas.ts';
 import type { AccountState, ProgressSummary, TimerView } from './types.ts';
 import type { WorkerLine } from './workers.ts';
 
@@ -473,4 +475,109 @@ test('scriptsLine cleans the client HTML out of the names', () => {
 		]),
 		'Tick Fisher'
 	);
+});
+
+test('routines in Precisa de você: held ones ask hard, a retry softly with when it runs', () => {
+	const row = (over: Partial<RoutineRow>): RoutineRow => ({
+		key: 'recurring:rtn_1',
+		kind: 'recurring',
+		id: 'rtn_1',
+		name: 'Herb run',
+		line: '',
+		enabled: true,
+		priority: 0,
+		when: '',
+		why: '',
+		tone: 'held',
+		run: { className: 'a.fm.herbrun.HerbRunPlugin' },
+		...over
+	});
+	const failed = (over: Partial<Run>): Run => ({
+		id: 'run-1',
+		className: 'a.fm.herbrun.HerbRunPlugin',
+		stop: [],
+		state: 'failed',
+		startedAt: new Date(now - 10 * 60_000).toISOString(),
+		finishedAt: new Date(now - 3 * 60_000).toISOString(),
+		events: [],
+		...over
+	});
+	const l = lane(
+		input({
+			routines: [
+				{
+					kind: 'retry',
+					row: row({ tone: 'wait', retryAt: new Date(now + 12 * 60_000).toISOString() }),
+					run: failed({ error: 'no seeds' }),
+					holdsOthers: true
+				},
+				{
+					kind: 'held',
+					row: row({ id: 'rtn_2', name: 'Bird run', held: 'held' }),
+					cause: 'twice',
+					run: failed({ error: 'stuck.' })
+				},
+				{
+					kind: 'held',
+					row: row({ id: 'rtn_3', name: 'Tree run', held: 'held' }),
+					cause: 'canceled'
+				},
+				{
+					kind: 'held_agent',
+					row: row({ id: 'rtn_4', name: 'Farm run', held: 'held_agent' }),
+					cause: 'agent',
+					run: failed({ className: 'a.fm.catswap.CatSwapPlugin', error: 'boom' })
+				}
+			]
+		}),
+		now
+	);
+	const base = { account: 'acc_a', rsn: 'Iron A', kind: 'routine' };
+	assert.deepEqual(needs([l], undefined, now), [
+		{
+			...base,
+			text: 'parou Bird run: falhou duas vezes',
+			sub: 'stuck. A nova tentativa, 15 min depois, falhou também. Fica parada até você liberar.',
+			hard: true,
+			routine: 'recurring:Bird run'
+		},
+		{
+			...base,
+			text: 'parou as rotinas: o último run falhou',
+			sub: 'Cat Swap: boom. Elas esperam até você liberar uma delas.',
+			hard: true,
+			routine: 'recurring:Farm run'
+		},
+		{
+			...base,
+			text: 'tenta de novo Herb run em 12 min',
+			sub: 'no seeds. Se falhar de novo, fica parada até você liberar. As outras rotinas da conta esperam essa tentativa.',
+			hard: false,
+			routine: 'recurring:Herb run'
+		},
+		{
+			...base,
+			text: 'parou Tree run: você cancelou o run',
+			sub: 'Um run cancelado não tenta de novo. Fica parada até você liberar.',
+			hard: false,
+			routine: 'recurring:Tree run'
+		}
+	]);
+	// A held routine puts the account in Precisa de você in the compact list; a retry alone does not.
+	assert.equal(compactGroups([l], needs([l], undefined, now))[0].key, 'need');
+	const soft = lane(
+		input({ routines: [{ kind: 'retry', row: row({ retryAt: undefined }) }] }),
+		now
+	);
+	assert.deepEqual(
+		needs([soft], undefined, now).map((n) => [n.text, n.sub, n.hard]),
+		[
+			[
+				'tenta de novo Herb run logo',
+				'O run falhou. Se falhar de novo, fica parada até você liberar.',
+				false
+			]
+		]
+	);
+	assert.equal(compactGroups([soft], needs([soft], undefined, now))[0].key, 'stopped');
 });

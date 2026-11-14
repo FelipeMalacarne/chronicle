@@ -158,6 +158,16 @@ type IngestContainerFreshness struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
+// The owner's marks on the items of a leg's loadout, per (guide, segment): they count as satisfied when readiness is computed, but are not evidence (holdings and player_state are untouched).
+type LoadoutMark struct {
+	AccountID string             `json:"account_id"`
+	GuideID   string             `json:"guide_id"`
+	SegmentID string             `json:"segment_id"`
+	ItemKey   string             `json:"item_key"`
+	Note      string             `json:"note"`
+	MarkedAt  pgtype.Timestamptz `json:"marked_at"`
+}
+
 // Append-only log of every step_marks change (owner, engine implied, alias moves) with its effects; step_marks is its projection.
 type MarkCommand struct {
 	Seq       int64              `json:"seq"`

@@ -14,6 +14,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
+	"github.com/FelipeMalacarne/chronicle/internal/core/planning"
 	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
@@ -27,6 +28,8 @@ type fakeProgress struct {
 	step   string
 	// objective and note are the last objective mark (unmark clears note).
 	objective, objectiveNote string
+	// loadout is the last loadout mark: guide/segment/item (unmark clears note).
+	loadout, loadoutNote string
 	// fleet are the account ids of the last FleetGoals.
 	fleet []string
 }
@@ -104,6 +107,29 @@ func (f *fakeProgress) UnmarkObjective(_ context.Context, accountID, key string)
 		return storeprogress.ObjectiveMarkResult{}, storeprogress.ErrAccountNotFound
 	}
 	return storeprogress.ObjectiveMarkResult{Key: key}, nil
+}
+
+func (f *fakeProgress) MarkLoadoutItem(_ context.Context, accountID, guideID, segmentID, item, note string) (storeprogress.LoadoutMarkResult, error) {
+	f.call, f.loadout, f.loadoutNote = "mark_loadout", guideID+"/"+segmentID+"/"+item, note
+	if f.err != nil {
+		return storeprogress.LoadoutMarkResult{}, f.err
+	}
+	if accountID != "acc-1" {
+		return storeprogress.LoadoutMarkResult{}, storeprogress.ErrAccountNotFound
+	}
+	return storeprogress.LoadoutMarkResult{Guide: guideID, Segment: segmentID, Item: item, Marked: true}, nil
+}
+
+func (f *fakeProgress) UnmarkLoadoutItem(_ context.Context, accountID, guideID, segmentID, item string) (storeprogress.LoadoutMarkResult, error) {
+	f.call, f.loadout, f.loadoutNote = "unmark_loadout", guideID+"/"+segmentID+"/"+item, ""
+	if accountID != "acc-1" {
+		return storeprogress.LoadoutMarkResult{}, storeprogress.ErrAccountNotFound
+	}
+	return storeprogress.LoadoutMarkResult{Guide: guideID, Segment: segmentID, Item: item}, nil
+}
+
+func (f *fakeProgress) LoadoutMarks(context.Context, string) (planning.OwnerMarks, error) {
+	return planning.OwnerMarks{}, nil
 }
 
 func (f *fakeProgress) Objectives(_ context.Context, accountID string) ([]storeprogress.ObjectiveView, error) {
@@ -282,6 +308,8 @@ func TestProgressRoutesAreDevOnly(t *testing.T) {
 		{"GET", "/api/objectives?account=acc-1", ""},
 		{"PUT", "/api/objectives/mark?account=acc-1", `{"key":"item:1351x1"}`},
 		{"POST", "/api/objectives/unmark?account=acc-1", `{"key":"item:1351x1"}`},
+		{"PUT", "/api/loadout/mark?account=acc-1", `{"guide":"g","segment":"s","item":"id:1"}`},
+		{"POST", "/api/loadout/unmark?account=acc-1", `{"guide":"g","segment":"s","item":"id:1"}`},
 		{"GET", "/api/guides/oziris-main/events?account=acc-1", ""},
 		{"GET", "/api/progress?account=acc-1", ""},
 		{"PUT", "/api/account/guide?account=acc-1", `{"guide_id":"oziris-main"}`},
@@ -364,6 +392,18 @@ func TestProgressRoutes(t *testing.T) {
 	if status, _ := do(t, "PUT", base+"/objectives/mark?account=nobody", `{"key":"item:1351x1"}`); status != http.StatusNotFound {
 		t.Fatalf("mark objective of an unknown account = %d", status)
 	}
+	if status, body := do(t, "PUT", base+"/loadout/mark?account=acc-1", `{"guide":"g","segment":"s","item":"id:952","note":"have it"}`); status != http.StatusOK || fake.call != "mark_loadout" || fake.loadout != "g/s/id:952" || fake.loadoutNote != "have it" || body["marked"] != true || body["item"] != "id:952" {
+		t.Fatalf("mark loadout = %d %v", status, body)
+	}
+	if status, body := do(t, "POST", base+"/loadout/unmark?account=acc-1", `{"guide":"g","segment":"s","item":"id:952"}`); status != http.StatusOK || fake.call != "unmark_loadout" || body["marked"] == true {
+		t.Fatalf("unmark loadout = %d %v", status, body)
+	}
+	if status, _ := do(t, "PUT", base+"/loadout/mark?account=nobody", `{"guide":"g","segment":"s","item":"id:952"}`); status != http.StatusNotFound {
+		t.Fatalf("mark loadout of an unknown account = %d", status)
+	}
+	if status, _ := do(t, "PUT", base+"/loadout/mark?account=acc-1", `{"guide":"g","extra":1}`); status != http.StatusBadRequest {
+		t.Fatalf("mark loadout with an unknown field = %d", status)
+	}
 	if status, _ := do(t, "PUT", base+"/objectives/mark?account=acc-1", `{"key":"item:1351x1","extra":1}`); status != http.StatusBadRequest {
 		t.Fatalf("mark objective with an unknown field = %d", status)
 	}
@@ -400,6 +440,7 @@ func TestProgressRoutes(t *testing.T) {
 		{coreprogress.ErrStepNotFound, http.StatusNotFound},
 		{coreprogress.ErrInvalidAction, http.StatusBadRequest},
 		{storeprogress.ErrInvalidObjective, http.StatusBadRequest},
+		{storeprogress.ErrInvalidLoadoutItem, http.StatusBadRequest},
 		{coreprogress.ErrNotImplied, http.StatusConflict},
 		{coreprogress.ErrStepDone, http.StatusConflict},
 		{io.ErrUnexpectedEOF, http.StatusInternalServerError},

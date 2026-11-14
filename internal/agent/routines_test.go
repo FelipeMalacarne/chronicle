@@ -221,8 +221,8 @@ func TestAgentReportsRunsToTheServer(t *testing.T) {
 	a := &Agent{URL: url, Token: StaticToken("zaros"), Log: quiet, Hello: Hello{Host: "zaros", Account: "acc_a"},
 		Executor: &Executor{Game: newRunGame("done"), RunPoll: time.Millisecond, RunFile: file}}
 	go func() { _ = a.Run(ctx) }()
-	if info := waitAgents(t, link, 1)[0]; !info.Supports(CmdRoutinesSync) {
-		t.Fatalf("hello without routines_sync: %+v", info.Commands)
+	if info := waitAgents(t, link, 1)[0]; !info.Supports(CmdRoutinesSync) || !info.Has(AgentFeatureRecurringRetry) {
+		t.Fatalf("hello without routines_sync or the retry: %+v %+v", info.Commands, info.Features)
 	}
 	waitFor(t, func() bool { mu.Lock(); defer mu.Unlock(); return runs["00000000000000aa"].State == RunDone })
 

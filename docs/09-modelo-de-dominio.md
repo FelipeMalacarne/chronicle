@@ -328,6 +328,7 @@ Tabelas novas e alteradas (uma migration goose; nunca editar a 0001–0003):
 | `objective_progress` | `(account_id, objective_key)` | veredito, `evidence_snapshot_id`, `evidence` JSON, `first_met_at`, `met_in_guide_id` (rota ativa no momento em que ficou `met`; alimenta a cascata), `regressed_at` |
 | `objective_progress_events` | id | `(account_id, objective_key, from, to, snapshot_id, at)`; fonte do F6 para objetivos |
 | `objective_marks` | `(account_id, objective_key)` | marca do dono num objetivo (“já cumprido”), da conta inteira: vale em todo guia e passo; `note`, `marked_at`. **Não é evidência**: nada vai para `objective_progress` (a trigger e os CHECKs exigem evidência para `met`) |
+| `loadout_marks` | `(account_id, guide_id, segment_id, item_key)` | marca do dono num item do setup de um trecho (“já tenho”), só daquele trecho e guia; `note`, `marked_at`. **Não é evidência**: sobrepõe o veredito do item no readiness e não escreve containers, snapshots nem `player_state` |
 | `step_marks` | `(account_id, guide_id, step_id)` | `kind ∈ {manual_done, skipped, pinned_open, implied}`, `implied_by_step_id`, `implied_at`, `note`, `marked_at` (evolui `step_progress`) |
 | `step_status_events` | id | `(account_id, guide_id, step_id, from, to, cause ∈ {engine, user, implied, migration, import}, snapshot_id, at)`; gravada para **todos** os guias quando o status derivado muda (decisão D2) |
 | `route_cursor` | `(account_id, guide_id)` | passo atual, `cause ∈ {pin, auto}`, `updated_at` |
@@ -356,6 +357,26 @@ que mudam entram em `step_status_events` com causa `user`. Não entra em `mark_c
 `step_marks`); a linha de `objective_marks` e esses eventos são o registro. Desmarcar
 (`POST /api/objectives/unmark`) devolve o veredito guardado. Só se marca uma chave que algum passo de
 algum guia referencia.
+
+**Marca por item do trecho (decisão do dono, 2026-11-14).** Os itens do cartão "Levar do banco" (o
+setup do trecho, ou os requisitos dos passos quando o guia não lista setup) não são objetivos, então a
+marca por objetivo não os alcança. O dono marca o **item** num **trecho** (`loadout_marks`, chave `(conta,
+guide_id, segment_id, item_key)`; `chronicle loadout mark <item>`, `PUT /api/loadout/mark`): "já tenho
+isto neste trecho". A `item_key` é a identidade do requisito (`planning.RequirementKey`: `id:<n>`,
+`any:<ids ordenados>`, `family:<f>` ou `name:<nome>` quando nada resolveu, com `/noted`); o slot não
+entra. A marca só vale no trecho em que foi feita: a mesma pá no trecho seguinte, ou noutro guia, não é
+marcada. Só se marca um requisito que o trecho lista.
+
+É uma entrada do cálculo do readiness, sobreposta depois dos fatos (`planning.ItemMarks`), nunca
+evidência (regras 2 e 8): nada vai para os containers de itens, snapshots, `player_state` nem
+`objective_progress`, e a atualização do plugin não a toca. O item marcado conta como satisfeito, com a
+quantidade inteira do requisito (não parcial): o veredito vira `met`, `owner_marked` aparece no item
+(readiness, prévia e janela do painel) e a contagem "Falta N de M" cai. `carried`, `owned` e `reason`
+seguem como os fatos disseram; `unknown` nunca vira `unmet`, só `met` pela marca. Se o plugin depois
+provar que o item está com o jogador, a marca é inofensiva; se provar que não está, a marca ainda vale
+até o dono desmarcar (`POST /api/loadout/unmark`), como na marca por objetivo. Não entra em
+`mark_commands`; a linha de `loadout_marks` é o registro. A tarefa `loadout_ready` de planos e receitas
+avalia o setup sem as marcas.
 
 Um objetivo `met` fica travado com a evidência do snapshot que o provou, inclusive item gasto depois;
 `regressed_at` registra que o fato deixou de valer (decisão do dono, 2026-11-04; doc 04, seção 4.3).

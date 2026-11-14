@@ -18,7 +18,9 @@ func AreaInWilderness(a entities.Area) bool {
 // Risks returns the risk kinds of one task: its recipe variant's (nil for a
 // step's or a plan's own task); for a travel, or a train at a location,
 // whose area touches the wilderness, wilderness; for a train that fights
-// (TrainFights), combat. Sorted, without repeats.
+// (TrainFights), combat; for a quest, combat and hazard unless the recipe
+// or the plan says it is safe (execspec.QuestRisks: a quest can kill).
+// Sorted, without repeats.
 func Risks(t content.Task, v *content.RecipeVariant, reg *entities.Registry) []string {
 	out := []string{}
 	if v != nil {
@@ -33,6 +35,9 @@ func Risks(t content.Task, v *content.RecipeVariant, reg *entities.Registry) []s
 	}
 	if TrainFights(t, reg) {
 		out = append(out, content.RiskCombat)
+	}
+	if t.Type == content.TaskQuest && !t.Safe {
+		out = append(out, execspec.QuestRisks...)
 	}
 	slices.Sort(out)
 	return slices.Compact(out)
@@ -64,12 +69,14 @@ func NeedsSupervision(mode string, risks []string) bool {
 
 // Executable says whether the executor runs a task (docs/10 section 13:
 // travel, bank and buy on Chronicle Link, phase 3; train delegated to a
-// plugin, phase 4), and why not: the other types, a travel with a via (the
-// executor has no teleport primitive yet: the web walker would pick its own
-// way), a destination without an area, a bank task for an Ultimate Ironman
-// (no bank) or without items to bank for, a train that names no plugin.
-// Whether the plugin is installed only the account's client knows: the
-// server asks it before the run, the agent again when it starts.
+// plugin, phase 4; quest delegated to the client's Quest Helper, E19), and
+// why not: the other types, a travel with a via (the executor has no
+// teleport primitive yet: the web walker would pick its own way), a
+// destination without an area, a bank task for an Ultimate Ironman (no
+// bank) or without items to bank for, a train that names no plugin.
+// Whether the plugin is installed, or the Quest Helper lists the quest,
+// only the account's client knows: the server asks it before the run, the
+// agent again when it starts.
 func Executable(t content.Task, bankItems bool, mode string, reg *entities.Registry) (bool, string) {
 	switch t.Type {
 	case content.TaskTrain:
@@ -78,6 +85,11 @@ func Executable(t content.Task, bankItems bool, mode string, reg *entities.Regis
 		}
 		if t.Skill == nil {
 			return false, "a tarefa não tem skill"
+		}
+		return true, ""
+	case content.TaskQuest:
+		if t.Quest == nil {
+			return false, "a tarefa não tem quest"
 		}
 		return true, ""
 	case content.TaskTravel:
@@ -105,7 +117,7 @@ func Executable(t content.Task, bankItems bool, mode string, reg *entities.Regis
 		}
 		return true, ""
 	}
-	return false, "o executor só roda travel, bank, buy e train"
+	return false, "o executor só roda travel, bank, buy, train e quest"
 }
 
 // ShopKeepers returns the game ids of the NPCs that own the shop of a buy

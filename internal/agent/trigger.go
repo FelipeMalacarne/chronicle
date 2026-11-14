@@ -47,9 +47,12 @@ type RoutinesParams struct {
 // runs them, the recurring routines. A routine whose run waits for an
 // objective (RunParams.Until) goes only to an agent that declares
 // run_until: an older one would refuse the whole list for the unknown
-// field, and could never end that run.
+// field, and could never end that run. A routine's previous run (PrevRun)
+// goes only to an agent that declares AgentFeatureRecurringRetry: an older
+// one refuses the field, and holds a routine on any failure anyway.
 func RoutinesFor(info Info, triggers []Trigger, recurring []Recurring) RoutinesParams {
 	until := info.Supports(CmdRunUntil)
+	retry := info.Has(AgentFeatureRecurringRetry)
 	p := RoutinesParams{Triggers: []Trigger{}}
 	for _, t := range triggers {
 		if t.Run.Until == nil || until {
@@ -58,6 +61,9 @@ func RoutinesFor(info Info, triggers []Trigger, recurring []Recurring) RoutinesP
 	}
 	if info.Supports(CmdRecurringGet) {
 		for _, rc := range recurring {
+			if !retry {
+				rc.PrevRun = nil
+			}
 			if rc.Run.Until == nil || until {
 				p.Recurring = append(p.Recurring, rc)
 			}

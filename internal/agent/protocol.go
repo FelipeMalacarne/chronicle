@@ -35,7 +35,7 @@ var Commands = []string{
 	CmdClientLogs, CmdAccountShow, CmdAccountUse, CmdWorldHop, CmdConfigSchema,
 	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX, CmdItemUseOn, CmdTimers,
 	CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet, CmdTriggerSet,
-	CmdWorkerBootstrap, CmdRoutinesSync, CmdRecurringGet, CmdTaskRun, CmdRunUntil,
+	CmdWorkerBootstrap, CmdRoutinesSync, CmdRecurringGet, CmdTaskRun, CmdRunUntil, CmdQuestHelper,
 }
 
 // Known reports whether name is in the closed list.
@@ -88,6 +88,15 @@ const FeaturesHeader = "Chronicle-Link-Features"
 // several (Hello.Clients, Message.Account; docs/10 section 10).
 const FeatureClients = "clients"
 
+// AgentFeatureRecurringRetry: the agent retries a recurring routine's failed
+// run once (recurring.go) and takes Recurring.PrevRun in routines_sync, which
+// an older agent refuses as an unknown field.
+const AgentFeatureRecurringRetry = "recurring_retry"
+
+// AgentFeatures is what this agent declares in its hello beyond its
+// commands: what it takes from the server that an older agent would refuse.
+var AgentFeatures = []string{AgentFeatureRecurringRetry}
+
 // MaxClients bounds the game clients one agent drives.
 const MaxClients = 16
 
@@ -106,6 +115,9 @@ type Hello struct {
 	Host     string   `json:"host"`
 	Version  string   `json:"version"`
 	Commands []string `json:"commands"`
+	// Features are what it takes beyond its commands (AgentFeatures); an
+	// older agent declares none, and the server keeps to what it refuses.
+	Features []string `json:"features,omitempty"`
 	// Account is the Chronicle account the agent serves (MICROBOT_AGENT_ACCOUNT
 	// for an attached agent, WORKER_ACCOUNT for a managed one); empty on an
 	// agent that declares none (docs/11 section 2).

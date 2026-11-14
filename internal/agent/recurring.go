@@ -31,13 +31,25 @@ import (
 // a break (logged out). Whether a break is near is not observable yet
 // (docs/08, Breaks).
 //
-// Two holds keep a loop or a surprise from repeating: after a run that
-// failed or was canceled, the routine waits for the owner to save it again
-// (its updatedAt), and every routine waits while the agent's last run of any
-// kind failed or was canceled after the last save of any routine (such a run
-// leaves the main activity stopped where it failed). A routine its clock
-// fired fires by the clock again only after the clock was seen not ready: a
-// run that did not replant would loop otherwise.
+// A failure retries once, then holds (the owner's decision of 2026-11-14,
+// docs/08, Estado), so that a loop or a surprise does not repeat:
+//   - a routine whose run failed after the owner last saved it (its
+//     updatedAt) retries by itself once, RecurringRetryAfter after the
+//     failure, whatever its clock or its interval say, and with every usual
+//     condition (one run at a time, a safe point, the Break Handler);
+//   - a run the owner canceled never retries, and a retry that failed too
+//     holds the routine: it waits until the owner saves it again ("Liberar");
+//   - every routine waits while the agent's last run of any kind failed or
+//     was canceled after the last save of any routine (such a run leaves the
+//     main activity stopped where it ended). A routine's own run never holds
+//     it this way, since its own rules decide: its first failure still
+//     retries, and the other routines wait for that retry, which frees them
+//     when it ends done. A failed run that is not a recurring routine's (the
+//     owner's "Fazer agora", a trigger, a task) holds them all, that routine
+//     too, until the owner saves any one.
+//
+// A routine its clock fired fires by the clock again only after the clock was
+// seen not ready: a run that did not replant would loop otherwise.
 const CmdRecurringGet = "recurring_get" // the recurring routines and the watcher's last look
 
 // Clocks are the Time Tracking clocks a recurring routine may follow: the
@@ -54,6 +66,9 @@ const (
 	RecurringIntervalMax = 7 * 24 * 60 // minutes
 	RecurringPriorityMax = 100
 	RecurringMax         = 20 // per account
+	// RecurringRetryAfter is how long after a routine's failed run its one
+	// retry is due.
+	RecurringRetryAfter = 15 * time.Minute
 )
 
 // Recurring is one recurring routine.
@@ -73,9 +88,13 @@ type Recurring struct {
 	Priority int       `json:"priority"`
 	Run      RunParams `json:"run"`
 	// Set by the server (a save ignores them): when the owner last saved it,
-	// and its last run as the database holds it.
+	// and its last run and the one before as the database holds them (the
+	// previous one says whether a failure was already the retry; it goes only
+	// to an agent that declares AgentFeatureRecurringRetry). In the watcher's
+	// state (RecurringState), its last two runs as the watcher knows them.
 	UpdatedAt *time.Time    `json:"updatedAt,omitempty"`
 	LastRun   *RecurringRun `json:"lastRun,omitempty"`
+	PrevRun   *RecurringRun `json:"prevRun,omitempty"`
 }
 
 // RecurringRun is the last run of a recurring routine.
@@ -95,8 +114,10 @@ const (
 	ReasonInterval        = "interval"         // due: the interval since its last run ended passed
 	ReasonIntervalWaiting = "interval_waiting" // the interval has not passed (NextAt)
 	ReasonNoClock         = "no_clock"         // its clock is not known (or unread) and it has no interval
-	ReasonHeld            = "held"             // its last run failed or was canceled after it was saved
-	ReasonHeldAgent       = "held_agent"       // the agent's last run failed or was canceled after the last save
+	ReasonRetryWaiting    = "retry_waiting"    // its last run failed after it was saved: it retries once at NextAt
+	ReasonRetry           = "retry"            // due: the one retry of its failed run (NextAt passed)
+	ReasonHeld            = "held"             // its run was canceled, or its retry failed too, after it was saved
+	ReasonHeldAgent       = "held_agent"       // the agent's last run, not its own, failed or was canceled after the last save
 )
 
 // RecurringState is a routine as the watcher saw it at its last look.
@@ -154,7 +175,7 @@ func ValidateRecurring(rc Recurring) (Recurring, error) {
 		return rc, errors.New("recurring: a clock, an interval or both")
 	case rc.Priority < 0 || rc.Priority > RecurringPriorityMax:
 		return rc, fmt.Errorf("recurring: priority between 0 and %d", RecurringPriorityMax)
-	case rc.LastRun != nil && (!slices.Contains(runState, rc.LastRun.State) || rc.LastRun.StartedAt.IsZero()):
+	case badRecurringRun(rc.LastRun) || badRecurringRun(rc.PrevRun):
 		return rc, errors.New("recurring: bad last run")
 	}
 	b, _ := json.Marshal(rc.Run)
@@ -164,6 +185,10 @@ func ValidateRecurring(rc Recurring) (Recurring, error) {
 	}
 	rc.Run = p
 	return rc, nil
+}
+
+func badRecurringRun(r *RecurringRun) bool {
+	return r != nil && (!slices.Contains(runState, r.State) || r.StartedAt.IsZero())
 }
 
 // validateRecurringList checks the recurring routines of a routines_sync:
@@ -454,6 +479,8 @@ func firingLine(rc Recurring, reason string, look recurringLook) string {
 		return fmt.Sprintf("rotina %s: relógio %s pronto", rc.Name, label)
 	case ReasonFirst:
 		return fmt.Sprintf("rotina %s: primeira vez (a cada %d min)", rc.Name, rc.IntervalMin)
+	case ReasonRetry:
+		return fmt.Sprintf("rotina %s: tenta de novo, %d min depois do run que falhou", rc.Name, int(RecurringRetryAfter/time.Minute))
 	default:
 		return fmt.Sprintf("rotina %s: %d min desde o fim do último run", rc.Name, rc.IntervalMin)
 	}
@@ -465,47 +492,95 @@ type recurringLook struct {
 	// clocks by key; nil when they were not read.
 	clocks   map[string]Timer
 	clockNow int64 // the game machine's clock when they were read, epoch seconds
-	// latest is the agent's last run of any kind; lastOf the last local run
-	// of each routine.
+	// latest is the agent's last run of any kind; lastOf the last two local
+	// runs of each routine, newest first.
 	latest *Run
-	lastOf map[string]Run
+	lastOf map[string][]Run
 	// saved is the latest save of any routine.
 	saved time.Time
 }
 
-// lastRuns returns the agent's last run and the last run of each recurring
-// routine it knows.
-func (e *Executor) lastRuns() (*Run, map[string]Run) {
+// heldByAgent reports whether the agent's last run of any kind holds every
+// routine: it failed or was canceled after the last save of any routine. A
+// routine's own run never holds it this way (its own rules decide: the one
+// retry, or held).
+func (look recurringLook) heldByAgent(rc Recurring) bool {
+	l := look.latest
+	return l != nil && l.Final() && l.State != RunDone && l.FinishedAt != nil && l.FinishedAt.After(look.saved) &&
+		l.Routine != rc.ID
+}
+
+// lastRuns returns the agent's last run and the last two runs of each
+// recurring routine it knows, newest first.
+func (e *Executor) lastRuns() (*Run, map[string][]Run) {
 	r := &e.runs
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	e.loadRuns()
-	by := map[string]Run{}
-	for _, x := range r.past {
-		if x.Routine != "" {
-			by[x.Routine] = x
+	by := map[string][]Run{}
+	add := func(x Run) {
+		if x.Routine != "" && len(by[x.Routine]) < 2 {
+			by[x.Routine] = append(by[x.Routine], x)
 		}
 	}
 	latest := r.snapshot()
-	if latest != nil && latest.Routine != "" {
-		by[latest.Routine] = *latest
+	if latest != nil {
+		add(*latest)
+	}
+	for i := len(r.past) - 1; i >= 0; i-- {
+		add(r.past[i])
 	}
 	return latest, by
 }
 
-// lastRunOf is the routine's last run: the agent's own or, when newer (a pod
-// that lost its history), the server's.
-func lastRunOf(rc Recurring, lastOf map[string]Run) *RecurringRun {
-	local, ok := lastOf[rc.ID]
-	if ok && (rc.LastRun == nil || !rc.LastRun.StartedAt.After(local.StartedAt)) {
-		return &RecurringRun{State: local.State, StartedAt: local.StartedAt, FinishedAt: local.FinishedAt}
+// routineRuns are the routine's last two runs, newest first: the agent's own
+// and the server's (LastRun and PrevRun, all that a pod that lost its history
+// knows), each run once, the agent's copy when both have it.
+func routineRuns(rc Recurring, local []Run) []RecurringRun {
+	out := make([]RecurringRun, 0, len(local)+2)
+	for _, x := range local {
+		rr := RecurringRun{State: x.State, StartedAt: x.StartedAt}
+		if x.FinishedAt != nil {
+			f := *x.FinishedAt
+			rr.FinishedAt = &f
+		}
+		out = append(out, rr)
 	}
-	return rc.LastRun
+	for _, x := range []*RecurringRun{rc.LastRun, rc.PrevRun} {
+		if x != nil && !slices.ContainsFunc(out, func(o RecurringRun) bool { return sameRun(o, *x) }) {
+			out = append(out, *x)
+		}
+	}
+	slices.SortStableFunc(out, func(a, b RecurringRun) int { return b.StartedAt.Compare(a.StartedAt) })
+	return out[:min(len(out), 2)]
+}
+
+// sameRun reports whether two copies are one run: the database keeps the
+// microseconds of the agent's nanoseconds, and no routine starts twice in a
+// millisecond.
+func sameRun(a, b RecurringRun) bool {
+	d := a.StartedAt.Sub(b.StartedAt)
+	return d > -time.Millisecond && d < time.Millisecond
+}
+
+// runEnd is when a run ended; one that never finished here (the agent's pod
+// went away in the middle) counts as failed when it started.
+func runEnd(r RecurringRun) time.Time {
+	if r.FinishedAt != nil {
+		return *r.FinishedAt
+	}
+	return r.StartedAt
+}
+
+// failedSince reports whether a run failed, was canceled or never finished
+// after the routine was saved.
+func failedSince(r RecurringRun, saved time.Time) bool {
+	return (r.FinishedAt == nil || r.State != RunDone) && runEnd(r).After(saved)
 }
 
 // assess says whether one routine is due. armed is false after its clock
 // fired it, until the clock is seen not ready; seenNotReady reports that the
-// clock was (also while the routine is held).
+// clock was (also while the routine is held or waits for its retry).
 func assess(rc Recurring, look recurringLook, armed bool) (st RecurringState, byClock, seenNotReady bool) {
 	st = RecurringState{Recurring: rc}
 	if !rc.Enabled {
@@ -524,23 +599,49 @@ func assess(rc Recurring, look recurringLook, armed bool) (st RecurringState, by
 	if rc.UpdatedAt != nil {
 		saved = *rc.UpdatedAt
 	}
-	last := lastRunOf(rc, look.lastOf)
-	var lastEnd time.Time
-	if last != nil {
-		// A run that never finished here (the agent's pod went away in the
-		// middle) counts as failed when it started.
-		lastEnd = last.StartedAt
-		if last.FinishedAt != nil {
-			lastEnd = *last.FinishedAt
-		}
-		if (last.FinishedAt == nil || last.State != RunDone) && lastEnd.After(saved) {
+	runs := routineRuns(rc, look.lastOf[rc.ID])
+	st.LastRun, st.PrevRun = nil, nil
+	if len(runs) > 0 {
+		st.LastRun = &runs[0]
+	}
+	if len(runs) > 1 {
+		st.PrevRun = &runs[1]
+	}
+	if len(runs) > 0 && failedSince(runs[0], saved) {
+		switch {
+		case runs[0].State == RunCanceled:
+			// The owner canceled it: it never retries.
 			st.Reason = ReasonHeld
 			return st, false, seenNotReady
+		case len(runs) > 1 && failedSince(runs[1], saved):
+			// The failure was its retry.
+			st.Reason = ReasonHeld
+			return st, false, seenNotReady
+		case look.heldByAgent(rc):
+			st.Reason = ReasonHeldAgent
+			return st, false, seenNotReady
 		}
+		// Its first failure since the save: one retry, whatever the clock or
+		// the interval say.
+		at := runEnd(runs[0]).Add(RecurringRetryAfter).UTC()
+		st.NextAt = &at
+		if look.now.Before(at) {
+			st.Reason = ReasonRetryWaiting
+			return st, false, seenNotReady
+		}
+		// A clock that reads ready disarms it after the retry, as after any
+		// run it fired.
+		st.Due, st.Reason = true, ReasonRetry
+		return st, ready, seenNotReady
 	}
-	if l := look.latest; l != nil && l.Final() && l.State != RunDone && l.FinishedAt != nil && l.FinishedAt.After(look.saved) {
+	if look.heldByAgent(rc) {
 		st.Reason = ReasonHeldAgent
 		return st, false, seenNotReady
+	}
+	var last *RecurringRun
+	var lastEnd time.Time
+	if len(runs) > 0 {
+		last, lastEnd = &runs[0], runEnd(runs[0])
 	}
 	switch {
 	case clock != nil && !ready:

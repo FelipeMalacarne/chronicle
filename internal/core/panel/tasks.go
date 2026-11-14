@@ -120,7 +120,7 @@ func EvaluateUntil(t content.Task, u content.TaskUntil, s progress.StepState, se
 			// a recipe's or a plan's own task: its items, no guide
 			g = &content.Guide{}
 		}
-		ev := planning.EvaluateSegment(g, target, h, reg)
+		ev := planning.EvaluateSegment(g, target, h, reg, nil)
 		switch ev.Status {
 		case planning.Ready, planning.ListedReady:
 			return rules.Met, ""
@@ -228,6 +228,8 @@ func TaskLabel(t content.Task, reg *entities.Registry) string {
 			s += " (plugin " + t.Plugin[strings.LastIndex(t.Plugin, ".")+1:] + ")"
 		}
 		return s
+	case content.TaskQuest:
+		return "Fazer a quest " + name(t.Quest) + " (Quest Helper)"
 	case content.TaskManual:
 		if note := strings.TrimSpace(t.Note); note != "" {
 			return note

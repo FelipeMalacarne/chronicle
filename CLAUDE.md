@@ -72,7 +72,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `chronicle profiles list\|show\|put\|delete\|use\|account` | docs/11 section 15: the workers' client profiles (plugins and RuneLite settings, optionally on a model) over `/api/client-profiles` and `/api/accounts/client`; `show` prints the JSON `put -f` reads. A profile reaches a worker on its next start or restart, never a running client |
 | `chronicle recording [--since 2h] [-o file]` / `recording delete --yes` | docs/10 section 11: the demonstration Chronicle Link recorded with "Record demonstration" on (`GET /api/account/recording`), printed or written as the JSON the content MCP's `propose_tasks` reads; `delete` drops it on the server (all, or `--recording <id>`). Never delete the owner's recording unasked |
 | `chronicle plans` / `plans create -f plan.json` / `plans use <id\|route>` / `plans delete <id> --yes` | docs/10 section 9: the account's plans over `/api/plans` (the route, goal and custom plans; the custom plans' screen is phase 5, so a plan is a JSON file of items: a (guide, step), a recipe or a task) and the one it follows |
-| `chronicle task` / `task run --yes [--supervised] [--wait 10m]` / `task status` / `task cancel` | docs/10 phases 3 and 4: the next typed task of the account's active plan (`GET /api/plan/next`), its run by the account's agent (`POST /api/microbot/task`: the closed command `task_run`, executed by Chronicle Link's executor, or a `train` delegated to the plugin it names and stopped when the server proves the level, `run_until`), and the ingest's proof of its termination (`GET /api/microbot/task`). `run` acts in game on the account: never run it on the owner's account unasked |
+| `chronicle task` / `task run --yes [--supervised] [--wait 10m]` / `task status` / `task cancel` | docs/10 phases 3 to 5: the next typed task of the account's active plan (`GET /api/plan/next`), its run by the account's agent (`POST /api/microbot/task`: the closed command `task_run`, executed by Chronicle Link's executor, a `train` delegated to the plugin it names and stopped when the server proves the level, `run_until`, or a `quest` delegated to the client's Quest Helper, E19, stopped when the server proves it finished), and the ingest's proof of its termination (`GET /api/microbot/task`). `run` acts in game on the account: never run it on the owner's account unasked |
 | `chronicle mta --want <ids> [--own <ids>] [--points t,g,e,a] [--magic N]` / `mta rewards` | Mage Training Arena calculator over `POST /api/mta/calculate` and `GET /api/mta/rewards` (stateless, wears the account routes' auth; `internal/core/mta`): what to buy, the pizazz points missing per room and the law/nature/cosmic runes; the account MCP has the same as `mta_calculate` and `mta_rewards`. Its screen is the Mage Training Arena card of Conta › Personagem (`web/src/lib/v6/MtaCard.svelte`), built at the owner's request before any canvas artboard exists: design it in the canvas next (rule 11) |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
 
@@ -111,15 +111,19 @@ internal/core/        PURE domain (no DB/HTTP imports):
   plan/               plans (docs/10 section 9): route (the guide and its cursor, no copy), goal and custom
                       (items: a (guide, step), a recipe or a task); the next task of the active plan, skipping
                       the ones already met, recipes inserted only for proven-unmet requirements; risks (E9,
-                      the wilderness, a train that fights) and what the executor runs (travel, bank, buy,
-                      a train that names its plugin); Resolve turns a task into the execspec the agent carries
-  execspec/           the typed task the executor runs: travel, bank, buy (Chronicle Link's machine, phase 3)
-                      and train (delegated by the agent to a plugin, phase 4): game ids, tiles, quantities,
-                      the plugin's class and settings only, with its checks, the wilderness bounds and E9;
+                      the wilderness, a train that fights, a quest not confirmed safe) and what the executor
+                      runs (travel, bank, buy, a train that names its plugin, a quest whose catalog
+                      requirements are proven); Resolve turns a task into the execspec the agent carries;
+                      QuestHelperName matches a quest to the name the client's Quest Helper lists
+  execspec/           the typed task the executor runs: travel, bank, buy (Chronicle Link's machine, phase 3),
+                      train (delegated by the agent to a plugin, phase 4) and quest (delegated to the client's
+                      Quest Helper, E19): game ids, tiles, quantities, the plugin's class and settings, the
+                      quest's ref and helper name only, with its checks, the wilderness bounds and E9;
                       shared by the server, the agent's task_run and (mirrored, pinned by task-wire.json)
-                      Chronicle Link, which keeps refusing train
+                      Chronicle Link, which keeps refusing train and quest
   clientcfg/          what the planner may name and set in the Microbot client (plugin classes, config
-                      groups, keys and values; the protected ones): the agent, profiles, execspec and the
+                      groups, keys and values; the protected ones; the pinned ones: the Quest Helper's
+                      "Obtain Missing Items" is only ever NO): the agent, profiles, execspec and the
                       content verifier share it
   annotate/           guide extraction: batches, name resolution, verification, sidecar/report writer
 internal/mcp/         minimal stdio MCP server (JSON-RPC, tools only), shared by both MCP subcommands
@@ -157,7 +161,9 @@ internal/agent/       Microbot control link (docs/08): closed command list, the 
                       Info, commands and events tagged with the account), the VNC tunnel (browser <-> server <-> agent <->
                       loopback x11vnc) and the plugin/script/config commands, whose params are validated
                       by ValidateParams on both sides; task_run (docs/10 phase 3) runs one typed task of the
-                      plan through the Chronicle Link bridge as a run; a run may wait for an objective key
+                      plan through the Chronicle Link bridge as a run, or delegates it (a train to a plugin,
+                      a quest to the client's Quest Helper through the Agent Server's /quest-helper, E19);
+                      a run may wait for an objective key
                       (until, ended by the server's run_until); the agent also reports its runs
                       unasked (event frames); the server never talks to the game directly
 internal/client/      typed API client of the CLI and `chronicle mcp`: config.json and credentials.json
@@ -193,7 +199,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0020 workers.running_plugins: plugins the client had on, restarted by the next bootstrap,
                       0021 workers.auto_login and was_logged_in: login again after a new pod,
                       0022 workers.running_settings: option values of the plugins that were on,
-                      0023 objective_marks: the owner's marks on objectives, account-wide, not evidence)
+                      0023 objective_marks: the owner's marks on objectives, account-wide, not evidence,
+                      0024 loadout_marks: the owner's marks on the items of a leg's loadout, per (guide, segment), not evidence)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows
@@ -343,7 +350,7 @@ display and VNC port in that order from `MB_HEADLESS_DISPLAY` (`:99`) and `MB_VN
 contrato de ingest) · 07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC,
 plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por
 agente; decisões em 9.1 e 9.3) · 10 modelo de execução (fatos por fonte, log de eventos,
-tarefas, receitas, planos; E1 a E10 decididas, E11 a E13 em aberto; fases 0 e 1 feitas, código da 2 feito (gravação, propostas, modo assistido; falta a gravação e a confirmação do dono), 3 a 5 no item 21 do doc 04) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
+tarefas, receitas, planos; E1 a E10, E19 e E20 decididas, E11 a E18 e E21 em aberto; fases 0 e 1 feitas, código da 2 feito (gravação, propostas, modo assistido; falta a gravação e a confirmação do dono), 3 a 5 no item 21 do doc 04) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
 `docs/ui/pergaminho.md` + `pergaminho.tokens.json` (design system).
 `docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.

@@ -401,6 +401,10 @@ export interface ReadinessItem {
 	carried: number;
 	owned?: Ownership;
 	reason?: string;
+	/** Chave do requisito no trecho: o que a marca do dono nomeia. */
+	key: string;
+	/** O dono marcou "já tenho" para este trecho: o veredito é met, os fatos ficam como estavam. */
+	owner_marked?: boolean;
 }
 
 export interface SegmentReadiness {
@@ -1034,7 +1038,8 @@ export interface FleetRhythm {
  */
 export type PlanKind = 'route' | 'goal' | 'custom';
 export type PlanItemKind = 'step' | 'recipe' | 'task';
-export type TaskType = 'travel' | 'bank' | 'buy' | 'talk' | 'interact' | 'train' | 'manual';
+export type TaskType =
+	'travel' | 'bank' | 'buy' | 'talk' | 'interact' | 'train' | 'quest' | 'manual';
 
 /** Uma tarefa tipada (content/schema/task.schema.json): só refs do catálogo, números e ids. */
 export interface TypedTask {
@@ -1051,6 +1056,10 @@ export interface TypedTask {
 	action?: string;
 	skill?: string;
 	note?: string;
+	/** Uma quest inteira, delegada ao Quest Helper do cliente (doc 10, E19). */
+	quest?: string;
+	/** O dono confirmou que a quest não mata (só numa receita ou num plano). */
+	safe?: boolean;
 	until?: { objective?: string; state?: string };
 }
 
@@ -1127,4 +1136,12 @@ export interface ObjectiveMarkResult {
 	key: string;
 	marked: boolean;
 	steps_changed: number;
+}
+
+/** A resposta de marcar ou desmarcar um item do "Levar do banco" de um trecho. */
+export interface LoadoutMarkResult {
+	guide: string;
+	segment: string;
+	item: string;
+	marked: boolean;
 }

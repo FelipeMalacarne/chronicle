@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 	"github.com/FelipeMalacarne/chronicle/internal/core/plan"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
@@ -19,7 +21,11 @@ import (
 // the plan's next task, resolved to game ids, with the account's mode and
 // the risks, and E9 applied before anything reaches the agent (which
 // applies it again). Its termination is proven only by the ingest: GET
-// /api/microbot/task evaluates it on the account's facts now.
+// /api/microbot/task evaluates it on the account's facts now. A train and a
+// quest are delegated (to a plugin of the client, to the client's Quest
+// Helper): the server asks the account's agent first whether its client can
+// (the plugin installed; the Quest Helper on, idle and listing the quest)
+// and refuses with 409, before anything reaches the game.
 
 // taskRequest is POST /api/microbot/task.
 type taskRequest struct {
@@ -80,11 +86,16 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	slices.Sort(risks)
-	params, _ := json.Marshal(agent.TaskRunParams{
-		Key: view.Key, Plan: in.Plan.ID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
-		Supervised: req.Supervised, TimeoutS: req.TimeoutS, Account: account, Task: spec,
-	})
-	if _, err = agent.ValidateParams(agent.CmdTaskRun, params); err != nil {
+	build := func() (json.RawMessage, error) {
+		params, _ := json.Marshal(agent.TaskRunParams{
+			Key: view.Key, Plan: in.Plan.ID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
+			Supervised: req.Supervised, TimeoutS: req.TimeoutS, Account: account, Task: spec,
+		})
+		_, verr := agent.ValidateParams(agent.CmdTaskRun, params)
+		return params, verr
+	}
+	params, err := build()
+	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -104,18 +115,35 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 			err = s.pluginInstalled(ctx, served, spec.Train.Plugin)
 		}
 	}
+	if err == nil && spec.Quest != nil {
+		// A quest is delegated to the client's Quest Helper (docs/10,
+		// E19): the agent must end it on the server's proof, and the
+		// helper must list it by a name the catalog resolves to the quest,
+		// which the run then selects.
+		if !served.Supports(agent.CmdRunUntil) {
+			err = errAgentNoUntil
+		} else if err = s.questHelperName(ctx, served, in.Registry, spec.Quest); err == nil {
+			params, err = build()
+		}
+	}
 	var data json.RawMessage
 	if err == nil {
 		err = link.CallAgent(ctx, served.ID, agent.CmdTaskRun, json.RawMessage(params), &data)
 	}
 	s.auditMicrobot(r, account, served, agent.CmdTaskRun, params, err)
-	var missing *pluginMissingError
+	var (
+		missing     *pluginMissingError
+		unavailable *questUnavailableError
+	)
 	switch {
 	case errors.Is(err, errAgentTooOld):
 		writeError(w, http.StatusConflict, err.Error())
 		return
 	case errors.As(err, &missing):
 		refuse(missing.Error())
+		return
+	case errors.As(err, &unavailable):
+		refuse(unavailable.Error())
 		return
 	}
 	if err != nil {
@@ -158,6 +186,48 @@ func (s *Server) pluginInstalled(ctx context.Context, served agent.Info, class s
 		}
 	}
 	return &pluginMissingError{class: class}
+}
+
+// questUnavailableError: the account's agent or client cannot run a quest
+// (an agent before E19, a client without the Quest Helper the Agent Server
+// drives, the helper off or already driving a quest, a quest it does not
+// list).
+type questUnavailableError struct{ msg string }
+
+func (e *questUnavailableError) Error() string { return e.msg }
+
+// questHelperName asks the account's agent for the client's Quest Helper
+// and names the quest as the helper lists it (plan.QuestHelperName: the
+// catalog matches the client's names as the ingest does), refusing what the
+// client cannot run. The agent checks again when the run starts.
+func (s *Server) questHelperName(ctx context.Context, served agent.Info, reg *entities.Registry, q *execspec.Quest) error {
+	if !served.Supports(agent.CmdQuestHelper) {
+		return &questUnavailableError{"o agent da conta é anterior às quests (quest_helper): atualize o chronicle da máquina do jogo"}
+	}
+	var info agent.QuestHelperInfo
+	if err := s.opts.Microbot.Link.CallAgent(ctx, served.ID, agent.CmdQuestHelper, nil, &info); err != nil {
+		var cmd *agent.CommandError
+		if errors.As(err, &cmd) {
+			return &questUnavailableError{"o cliente da conta não pode rodar a quest pelo Quest Helper: " + cmd.Message}
+		}
+		return err
+	}
+	switch {
+	case !info.Active:
+		return &questUnavailableError{"o Quest Helper está desligado no cliente da conta: ligue o plugin antes"}
+	case info.Running:
+		return &questUnavailableError{"o bot do Quest Helper já está fazendo " + info.Selected + ": pare-o antes"}
+	}
+	ref, err := entities.ParseRef(q.Quest)
+	if err != nil {
+		return err
+	}
+	name, err := plan.QuestHelperName(info.Quests, ref, reg)
+	if err != nil {
+		return &questUnavailableError{err.Error()}
+	}
+	q.Helper = name
+	return nil
 }
 
 // taskStatus is GET /api/microbot/task: the agent's current or last run

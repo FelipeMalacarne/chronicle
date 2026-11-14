@@ -140,6 +140,8 @@ func (e *Executor) Execute(ctx context.Context, command string, params json.RawM
 		return e.gameView(ctx), nil
 	case CmdTimers:
 		return e.timers(ctx)
+	case CmdQuestHelper:
+		return e.questHelper(ctx)
 	case CmdClientLogs, CmdAccountShow:
 		return e.client(ctx, command, params)
 	}

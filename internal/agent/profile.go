@@ -3,6 +3,8 @@ package agent
 import (
 	"fmt"
 	"strings"
+
+	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
 )
 
 // Client profiles (docs/11 section 4.3, phase F5): what a worker's client
@@ -117,7 +119,8 @@ func ValidatePlugin(p ProfilePlugin) error {
 }
 
 // ValidateSetting checks one setting: the same groups, keys and values
-// config_set takes.
+// config_set takes, the pinned ones included (clientcfg.PinnedSettings; an
+// empty value checks the key alone).
 func ValidateSetting(s ProfileSetting) error {
 	if err := checkGroup(s.Group); err != nil {
 		return err
@@ -128,7 +131,7 @@ func ValidateSetting(s ProfileSetting) error {
 	if len(s.Value) > maxSettingValue || strings.ContainsRune(s.Value, 0) {
 		return fmt.Errorf("config: %s.%s: value of at most %d characters", s.Group, s.Key, maxSettingValue)
 	}
-	return nil
+	return clientcfg.CheckPinned(s.Group, s.Key, s.Value)
 }
 
 // ValidateProfile checks one layer of a profile (a profile or an account's

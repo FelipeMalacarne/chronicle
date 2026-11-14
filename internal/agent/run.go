@@ -112,7 +112,7 @@ func (r *Run) Final() bool {
 var readCommands = []string{
 	CmdStatus, CmdScreenshot, CmdVNCOpen, CmdPlugins, CmdHubSearch, CmdScriptDetail, CmdConfigGet,
 	CmdConfigSchema, CmdGameView, CmdClientLogs, CmdAccountShow, CmdTimers, CmdRunStatus, CmdRunHistory, CmdRunCancel,
-	CmdRecurringGet,
+	CmdRecurringGet, CmdQuestHelper,
 	// Not reads, but they never touch the game: switching the trigger off during its own run is fine.
 	CmdTriggerGet, CmdTriggerSet, CmdRoutinesSync,
 	// The server's proof that the run's objective is met: it ends the run.
@@ -459,7 +459,8 @@ func (e *Executor) drive(ctx context.Context, p RunParams) {
 // the objective, then stops the plugin when it still runs; false when the
 // run failed (fail was called and the plugin stopped).
 func (e *Executor) runUntilProven(ctx context.Context, className string, until RunUntil, timeout time.Duration, before int, fail func(error)) bool {
-	how, err := e.superviseUntil(ctx, className, until, timeout, before)
+	key, _ := until.ObjectiveKey()
+	how, err := e.superviseUntil(ctx, e.pluginWork(className, key, before), until, timeout)
 	if err != nil {
 		e.stopScript(className)
 		fail(err)

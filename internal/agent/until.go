@@ -188,19 +188,62 @@ const (
 	untilProvenAfterStop
 )
 
-// superviseUntil watches a started run plugin until the server proves the
-// objective. It fails when the plugin stops by itself and no proof comes
-// within the grace period, when its last result says it failed, when the
-// client stops answering, on the timeout and on a cancel; the caller stops
-// the plugin when it still runs.
-// before is how many script results the plugin had before it started.
-func (e *Executor) superviseUntil(ctx context.Context, className string, until RunUntil, timeout time.Duration, before int) (untilEnd, error) {
+// untilWork is what a wait_until run supervises: a run plugin (a train, a
+// "Fazer agora" with until) or the Quest Helper's bot (a quest, E19).
+type untilWork struct {
+	// name is how the trail calls it (a plugin's simple class name).
+	name string
+	// running reads whether it still works; ok is false when the client
+	// did not answer.
+	running func(ctx context.Context) (running, ok bool)
+	// stopped, when set, is called once when it stopped by itself: an
+	// error fails the run at once (it says it failed); it may note why.
+	stopped func(ctx context.Context) error
+	// progress, when set, notes progress on the trail while it works
+	// (never the proof); polls counts the looks.
+	progress func(ctx context.Context, polls int)
+}
+
+// pluginWork is a run plugin as a wait_until run supervises it: on while
+// the Agent Server's /scripts says so, failed when its last script result
+// (one after the before it had) says so, and a skill's level on the trail.
+func (e *Executor) pluginWork(className string, key entities.ObjectiveKey, before int) untilWork {
+	level := 0
+	return untilWork{
+		name:    simple(className),
+		running: func(ctx context.Context) (bool, bool) { return e.scriptActive(ctx, className) },
+		stopped: func(ctx context.Context) error {
+			if n, last := e.results(ctx, className); n > before && last != nil {
+				var out struct {
+					Outcome string `json:"outcome"`
+					Reason  string `json:"reason"`
+				}
+				_ = json.Unmarshal(last, &out)
+				if out.Outcome == "failed" {
+					return fmt.Errorf("%s failed: %s", className, clip(out.Reason, 300))
+				}
+			}
+			return nil
+		},
+		progress: func(ctx context.Context, polls int) {
+			if key.Ref.Kind == entities.KindSkill && (polls == 1 || polls%untilLevelEvery == 0) {
+				level = e.noteLevel(ctx, key, level)
+			}
+		},
+	}
+}
+
+// superviseUntil watches started work until the server proves the
+// objective. It fails when the work stops by itself and no proof comes
+// within the grace period, when it says it failed, when the client stops
+// answering, on the timeout and on a cancel; the caller stops the work
+// when it still runs.
+func (e *Executor) superviseUntil(ctx context.Context, w untilWork, until RunUntil, timeout time.Duration) (untilEnd, error) {
 	met := e.metSignal()
-	key, _ := until.ObjectiveKey()
 	start := time.Now()
 	var stoppedAt time.Time
 	seen := false
-	misses, polls, level := 0, 0, 0
+	misses, polls := 0, 0
 	for {
 		if !e.sleepUntil(ctx, met) {
 			return 0, ctx.Err()
@@ -212,38 +255,33 @@ func (e *Executor) superviseUntil(ctx context.Context, className string, until R
 			return untilProvenAfterStop, nil
 		}
 		if stoppedAt.IsZero() {
-			active, ok := e.scriptActive(ctx, className)
+			running, ok := w.running(ctx)
 			switch {
 			case !ok:
 				if misses++; misses >= untilMisses {
 					return 0, errors.New("the client stopped answering")
 				}
-			case active:
+			case running:
 				misses, seen = 0, true
 			case seen || time.Since(start) > 5*e.poll():
 				misses = 0
 				stoppedAt = time.Now()
-				if n, last := e.results(ctx, className); n > before && last != nil {
-					var out struct {
-						Outcome string `json:"outcome"`
-						Reason  string `json:"reason"`
-					}
-					_ = json.Unmarshal(last, &out)
-					if out.Outcome == "failed" {
-						return 0, fmt.Errorf("%s failed: %s", className, clip(out.Reason, 300))
+				if w.stopped != nil {
+					if err := w.stopped(ctx); err != nil {
+						return 0, err
 					}
 				}
-				e.note(RunRunning, fmt.Sprintf("%s parou sozinho; esperando o ingest provar %s por até %s", simple(className), until.Objective, e.grace().Round(time.Second)))
+				e.note(RunRunning, fmt.Sprintf("%s parou sozinho; esperando o ingest provar %s por até %s", w.name, until.Objective, e.grace().Round(time.Second)))
 			}
 		}
 		if !stoppedAt.IsZero() && time.Since(stoppedAt) > e.grace() {
-			return 0, fmt.Errorf("%s stopped and the ingest did not prove %s within %s", simple(className), until.Objective, e.grace().Round(time.Second))
+			return 0, fmt.Errorf("%s stopped and the ingest did not prove %s within %s", w.name, until.Objective, e.grace().Round(time.Second))
 		}
 		if time.Since(start) > timeout {
-			return 0, fmt.Errorf("%s did not reach %s in %s", simple(className), until.Objective, timeout)
+			return 0, fmt.Errorf("%s did not reach %s in %s", w.name, until.Objective, timeout)
 		}
-		if polls++; key.Ref.Kind == entities.KindSkill && stoppedAt.IsZero() && (polls == 1 || polls%untilLevelEvery == 0) {
-			level = e.noteLevel(ctx, key, level)
+		if polls++; stoppedAt.IsZero() && w.progress != nil {
+			w.progress(ctx, polls)
 		}
 	}
 }

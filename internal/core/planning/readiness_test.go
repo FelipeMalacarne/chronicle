@@ -190,7 +190,7 @@ func TestEvaluateSegment(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			g, seg := guideWith("g", tc.lo)
-			got := EvaluateSegment(g, seg, tc.h, catalog)
+			got := EvaluateSegment(g, seg, tc.h, catalog, nil)
 			if got.Status != tc.want {
 				t.Fatalf("status = %s, want %s (%+v)", got.Status, tc.want, got)
 			}
@@ -220,8 +220,8 @@ func TestEvaluateSegmentGuideIsolation(t *testing.T) {
 	if got, ok := bruh.Segment("seg-a"); !ok || got != bruhSeg {
 		t.Fatal("bruhsailer segment lookup")
 	}
-	a := EvaluateSegment(oz, ozSeg, h, nil)
-	b := EvaluateSegment(bruh, bruhSeg, h, nil)
+	a := EvaluateSegment(oz, ozSeg, h, nil, nil)
+	b := EvaluateSegment(bruh, bruhSeg, h, nil, nil)
 	if a.Status != ListedReady || a.GuideID != "oziris-main" {
 		t.Fatalf("oziris = %s/%s", a.GuideID, a.Status)
 	}

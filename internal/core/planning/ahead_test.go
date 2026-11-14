@@ -25,7 +25,7 @@ func aheadLeg() *content.Segment {
 
 func TestLookAhead(t *testing.T) {
 	h := holdings(map[int]int64{hammer: 1}, map[int]int64{})
-	a := LookAhead(aheadLeg(), "2", h, nil)
+	a := LookAhead(aheadLeg(), "2", h, nil, nil)
 	if a == nil {
 		t.Fatal("LookAhead = nil")
 	}
@@ -76,22 +76,22 @@ func TestLookAhead(t *testing.T) {
 
 func TestLookAheadEdges(t *testing.T) {
 	h := holdings(nil, nil)
-	if a := LookAhead(aheadLeg(), "missing", h, nil); a != nil {
+	if a := LookAhead(aheadLeg(), "missing", h, nil, nil); a != nil {
 		t.Errorf("unknown step: %+v, want nil", a)
 	}
-	if a := LookAhead(aheadLeg(), "6", h, nil); a == nil || a.Steps != 0 || len(a.Groups) != 1 {
+	if a := LookAhead(aheadLeg(), "6", h, nil, nil); a == nil || a.Steps != 0 || len(a.Groups) != 1 {
 		t.Errorf("last step: %+v, want one group", a)
 	}
-	if a := LookAhead(aheadLeg(), "", h, nil); a == nil || a.FromStepID != "1" {
+	if a := LookAhead(aheadLeg(), "", h, nil, nil); a == nil || a.FromStepID != "1" {
 		t.Errorf("empty step: %+v, want the leg start", a)
 	}
 	// A step that obtains what it also uses still lists it.
 	seg := &content.Segment{Steps: []*content.Step{{ID: "1", Requirements: []content.ItemRequirement{item("Logs", ip(logs), nil)}, Objectives: []content.Objective{obtains("item:1511x1")}}}}
-	if a := LookAhead(seg, "1", h, nil); a == nil || len(a.Groups) != 1 || len(a.Obtained) != 0 {
+	if a := LookAhead(seg, "1", h, nil, nil); a == nil || len(a.Groups) != 1 || len(a.Obtained) != 0 {
 		t.Errorf("same-step acquisition: %+v", a)
 	}
 	empty := &content.Segment{Steps: []*content.Step{{ID: "1"}}}
-	if a := LookAhead(empty, "1", h, nil); a != nil {
+	if a := LookAhead(empty, "1", h, nil, nil); a != nil {
 		t.Errorf("no requirements: %+v, want nil", a)
 	}
 }

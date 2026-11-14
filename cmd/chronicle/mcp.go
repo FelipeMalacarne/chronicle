@@ -45,7 +45,7 @@ independent routes (Oziris Ironman Efficiency Guide, BRUHsailer). Start with
 now: the current step of the active route, its objectives with the account's
 verdicts (met, unmet, unknown: unknown is never "not done"), what to bring
 and the next steps. Steps are done by evidence (hiscores, plugin); mark_step
-and mark_objective record the owner's own marks, so call them only when the owner asks. Keep the
+mark_objective and mark_loadout_item record the owner's own marks, so call them only when the owner asks. Keep the
 attribution line of the route when you show its steps.`
 
 func newAccountMCPServer(c *client.Client) *mcp.Server {
@@ -131,6 +131,32 @@ func newAccountMCPServer(c *client.Client) *mcp.Server {
 						return c.UnmarkObjective(ctx, a.Key)
 					}
 					return c.MarkObjective(ctx, a.Key, a.Note)
+				},
+			},
+			{
+				Name:        "mark_loadout_item",
+				Description: "Record the owner's own mark that an item of the current leg's \"Levar do banco\" list is already theirs (only when the owner asks), or take it back. It counts for that leg only, is not evidence and does not change what the plugin observed; now shows marked items as owner_marked. The item is a name or key as now lists the items to carry.",
+				InputSchema: schema(`{"type":"object","additionalProperties":false,"required":["item"],"properties":{
+ "item":{"type":"string","description":"item name or key as now shows it, e.g. Spade or id:952"},
+ "unmark":{"type":"boolean","description":"take the mark off instead"},
+ "note":{"type":"string","description":"note on the mark"}}}`),
+				Handler: func(ctx context.Context, raw json.RawMessage) (any, error) {
+					var a struct {
+						Item   string `json:"item"`
+						Unmark bool   `json:"unmark"`
+						Note   string `json:"note"`
+					}
+					if err := mcp.Decode(raw, &a); err != nil {
+						return nil, err
+					}
+					guide, segment, item, _, err := resolveLoadoutItem(ctx, c, a.Item)
+					if err != nil {
+						return nil, err
+					}
+					if a.Unmark {
+						return c.UnmarkLoadoutItem(ctx, guide, segment, item)
+					}
+					return c.MarkLoadoutItem(ctx, guide, segment, item, a.Note)
 				},
 			},
 			{

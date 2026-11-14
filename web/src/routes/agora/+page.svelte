@@ -19,6 +19,7 @@
 	import type { Board, BoardStep, Goal, GoalPlan, MarkAction } from '#lib/progress/types';
 	import {
 		boardIn,
+		loadoutUndoAction,
 		objectiveUndoAction,
 		popUndo,
 		restoreAction,
@@ -273,11 +274,52 @@
 		};
 	}
 
+	/** Escreve a marca "já tenho" de um item do "Levar do banco" (só do trecho aberto) e relê o painel. */
+	async function writeLoadout(at: Scope, segment: string, action: 'mark' | 'unmark', key: string) {
+		if (busy) return false;
+		busy = true;
+		failure = null;
+		try {
+			await (action === 'mark'
+				? progressApi.markLoadoutItem(at.account, at.guide, segment, key)
+				: progressApi.unmarkLoadoutItem(at.account, at.guide, segment, key));
+			readiness.reload();
+			return true;
+		} catch (e) {
+			failure = e instanceof Error ? e.message : String(e);
+			return false;
+		} finally {
+			busy = false;
+		}
+	}
+
+	async function markLoadout(key: string, label: string, marked: boolean) {
+		const at = scope;
+		const seg = readiness.data?.current;
+		if (!at || !seg || seg.guide_id !== at.guide) return;
+		const segment = seg.segment_id;
+		if (!(await writeLoadout(at, segment, marked ? 'mark' : 'unmark', key))) return;
+		undo = [...undo, { kind: 'loadout', scope: at, segment, key, label, marked }];
+		toast = {
+			title: marked ? 'Marcado' : 'Desmarcado',
+			text: marked
+				? `${label} marcado como já tenho neste trecho`
+				: `${label} voltou ao que o plugin mostra`,
+			undo: true
+		};
+	}
+
 	async function undoLast() {
 		const at = scope;
 		if (!at || busy) return;
 		const { entry, rest } = popUndo(undo, at);
 		if (!entry) return;
+		if (entry.kind === 'loadout') {
+			if (!(await writeLoadout(at, entry.segment, loadoutUndoAction(entry), entry.key))) return;
+			undo = rest;
+			toast = { title: 'Desfeito', text: `${entry.label} voltou`, undo: false };
+			return;
+		}
 		if (entry.kind === 'objective') {
 			if (!(await writeObjective(at, objectiveUndoAction(entry), entry.key))) return;
 			undo = rest;
@@ -358,6 +400,8 @@
 			{bankActions}
 			firstRef={bankFirst}
 			{refOf}
+			onhave={(k, n) => markLoadout(k, n, true)}
+			onunhave={(k, n) => markLoadout(k, n, false)}
 		/>
 	{/if}
 {/snippet}

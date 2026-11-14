@@ -174,6 +174,8 @@ func (s *Server) routes() {
 		account("GET /api/objectives", s.handleObjectives)
 		account("PUT /api/objectives/mark", s.handleMarkObjective)
 		account("POST /api/objectives/unmark", s.handleUnmarkObjective)
+		account("PUT /api/loadout/mark", s.handleMarkLoadoutItem)
+		account("POST /api/loadout/unmark", s.handleUnmarkLoadoutItem)
 		account("GET /api/guides/{guide}/events", s.handleEvents)
 		account("GET /api/progress", s.handleProgress)
 		account("GET /api/progress/check", s.handleProgressCheck)

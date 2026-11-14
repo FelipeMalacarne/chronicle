@@ -86,6 +86,13 @@ type Item struct {
 	Carried    int64            `json:"carried"`
 	Owned      *rules.Ownership `json:"owned,omitempty"`
 	Reason     string           `json:"reason,omitempty"`
+	// Key identifies the requirement inside its segment (RequirementKey): what
+	// the owner's mark names.
+	Key string `json:"key"`
+	// OwnerMarked: the owner said they already have this item for this leg
+	// (ItemMarks). The verdict then reads met whatever the live containers
+	// say; Carried, Owned and Reason stay the facts' answer.
+	OwnerMarked bool `json:"owner_marked,omitempty"`
 }
 
 // Slots is the free-inventory-slot requirement. Free is bounded because
@@ -112,7 +119,11 @@ type Freshness struct {
 
 // EvaluateSegment computes the readiness of seg (which must belong to g)
 // against the account's item holdings.
-func EvaluateSegment(g *content.Guide, seg *content.Segment, h rules.ItemHoldings, catalog *entities.Registry) Segment {
+//
+// marks are the owner's marks on this segment's requirements (nil for none).
+// A marked requirement counts as satisfied: the owner's word, never evidence,
+// and the observed facts are left as they are (docs/09 section 5).
+func EvaluateSegment(g *content.Guide, seg *content.Segment, h rules.ItemHoldings, catalog *entities.Registry, marks ItemMarks) Segment {
 	out := Segment{
 		GuideID: g.ID, SegmentID: seg.ID, SectionID: seg.SectionID, Kind: seg.Kind, Title: seg.Title,
 		Items: []Item{}, BankActions: append([]content.BankAction{}, seg.BankActions...),
@@ -133,14 +144,14 @@ func EvaluateSegment(g *content.Guide, seg *content.Segment, h rules.ItemHolding
 
 	var verdicts []rules.Verdict
 	for _, li := range lo.Equipment {
-		it := evaluateItem(li, SlotEquipment, h, catalog)
+		it := evaluateItem(li, SlotEquipment, h, catalog, marks)
 		out.Items = append(out.Items, it)
 		if !it.Optional {
 			verdicts = append(verdicts, it.Verdict)
 		}
 	}
 	for _, li := range lo.Inventory {
-		it := evaluateItem(li, SlotInventory, h, catalog)
+		it := evaluateItem(li, SlotInventory, h, catalog, marks)
 		out.Items = append(out.Items, it)
 		if !it.Optional {
 			verdicts = append(verdicts, it.Verdict)
@@ -173,8 +184,19 @@ func EvaluateSegment(g *content.Guide, seg *content.Segment, h rules.ItemHolding
 	return out
 }
 
-func evaluateItem(li content.ItemRequirement, slot string, h rules.ItemHoldings, catalog *entities.Registry) Item {
-	it := Item{
+// evaluateItem answers the facts, then lets the owner's mark overlay the
+// verdict.
+func evaluateItem(li content.ItemRequirement, slot string, h rules.ItemHoldings, catalog *entities.Registry, marks ItemMarks) Item {
+	it := factsItem(li, slot, h, catalog)
+	if marks[it.Key] {
+		it.OwnerMarked = true
+		it.Verdict = rules.Met
+	}
+	return it
+}
+
+func factsItem(li content.ItemRequirement, slot string, h rules.ItemHoldings, catalog *entities.Registry) Item {
+	it := Item{Key: RequirementKey(li),
 		Name: li.Name, Variant: li.Variant(), ItemID: li.ItemID, AnyOf: li.AnyOf, Family: li.Family, Noted: li.Noted,
 		Slot: slot, Required: 1, QtyStated: li.Qty != nil, Optional: li.Optional, SourceText: li.SourceText, Verdict: rules.Unknown,
 	}

@@ -43,6 +43,7 @@ func newRoot() *cobra.Command {
 		markCmd("skip", "Skip a step of the active route (the current one by default)", coreprogress.ActionSkipped, "Pulado"),
 		markCmd("undo", "Clear your mark on a step of the active route", coreprogress.ActionClear, "Desfeito"),
 		newObjectiveCmd(),
+		newLoadoutCmd(),
 		newPlanCmd(),
 		newSyncCmd(),
 		newStateCmd(),

@@ -265,6 +265,10 @@ func (s *Server) routeWindow(ctx context.Context, accountID string, limit int) (
 			return panel.Window{}, errors.Join(errHoldings, err)
 		}
 	}
+	marks, err := s.opts.Progress.LoadoutMarks(ctx, accountID)
+	if err != nil {
+		return panel.Window{}, err
+	}
 	cur := coreprogress.CursorRecord{}
 	if board.Cursor != nil {
 		cur = coreprogress.CursorRecord{StepID: board.Cursor.StepID, Cause: board.Cursor.Cause}
@@ -279,7 +283,7 @@ func (s *Server) routeWindow(ctx context.Context, accountID string, limit int) (
 		}
 	}
 	return panel.Build(panel.Input{
-		Guide: g, Board: board.Board, Cursor: cur, Holdings: h, Registry: s.opts.Catalog, Limit: limit,
+		Guide: g, Board: board.Board, Cursor: cur, Holdings: h, ItemMarks: marks, Registry: s.opts.Catalog, Limit: limit,
 		Content: s.opts.Content, Facts: facts, Now: time.Now(),
 	}), nil
 }

@@ -42,14 +42,14 @@ func (s *Server) handleReadiness(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	h, ok := s.holdings(w, r)
+	h, marks, ok := s.holdings(w, r)
 	if !ok {
 		return
 	}
 	current, next := planning.Legs(g, stepID)
-	resp := readinessResponse{Guide: g.ID, Step: stepID, Current: s.evaluate(g, current, h), Next: s.evaluate(g, next, h)}
+	resp := readinessResponse{Guide: g.ID, Step: stepID, Current: s.evaluate(g, current, h, marks), Next: s.evaluate(g, next, h, marks)}
 	if resp.Current != nil && resp.Current.LoadoutStatus == content.LoadoutUnknown {
-		resp.Ahead = planning.LookAhead(current, stepID, h, s.opts.Catalog)
+		resp.Ahead = planning.LookAhead(current, stepID, h, s.opts.Catalog, marks.For(g.ID, current.ID))
 	}
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -65,35 +65,53 @@ func (s *Server) handleSegmentReadiness(w http.ResponseWriter, r *http.Request) 
 		writeError(w, http.StatusNotFound, "segment not found")
 		return
 	}
-	h, ok := s.holdings(w, r)
+	h, marks, ok := s.holdings(w, r)
 	if !ok {
 		return
 	}
-	writeJSON(w, http.StatusOK, s.evaluate(g, seg, h))
+	writeJSON(w, http.StatusOK, s.evaluate(g, seg, h, marks))
 }
 
-func (s *Server) evaluate(g *content.Guide, seg *content.Segment, h rules.ItemHoldings) *planning.Segment {
+func (s *Server) evaluate(g *content.Guide, seg *content.Segment, h rules.ItemHoldings, marks planning.OwnerMarks) *planning.Segment {
 	if seg == nil {
 		return nil
 	}
-	out := planning.EvaluateSegment(g, seg, h, s.opts.Catalog)
+	out := planning.EvaluateSegment(g, seg, h, s.opts.Catalog, marks.For(g.ID, seg.ID))
 	return &out
 }
 
-func (s *Server) holdings(w http.ResponseWriter, r *http.Request) (rules.ItemHoldings, bool) {
+// holdings loads what a readiness answer reads: the account's item holdings
+// and the owner's marks on the legs' items.
+func (s *Server) holdings(w http.ResponseWriter, r *http.Request) (rules.ItemHoldings, planning.OwnerMarks, bool) {
 	accountID, ok := s.accountParam(w, r)
 	if !ok {
-		return nil, false
+		return nil, nil, false
 	}
 	h, err := s.opts.Holdings.ItemHoldings(r.Context(), accountID)
 	switch {
 	case errors.Is(err, storeingest.ErrAccountNotFound):
 		writeError(w, http.StatusNotFound, "account not found")
-		return nil, false
+		return nil, nil, false
 	case err != nil:
 		s.log.Error("readiness: load item holdings", "err", err)
 		writeError(w, http.StatusInternalServerError, "could not load item holdings")
+		return nil, nil, false
+	}
+	marks, ok := s.loadoutMarks(r.Context(), w, accountID)
+	return h, marks, ok
+}
+
+// loadoutMarks reads the owner's marks on the legs' items; without a progress
+// store there are none.
+func (s *Server) loadoutMarks(ctx context.Context, w http.ResponseWriter, accountID string) (planning.OwnerMarks, bool) {
+	if s.opts.Progress == nil {
+		return nil, true
+	}
+	marks, err := s.opts.Progress.LoadoutMarks(ctx, accountID)
+	if err != nil {
+		s.log.Error("readiness: load loadout marks", "err", err)
+		writeError(w, http.StatusInternalServerError, "could not load loadout marks")
 		return nil, false
 	}
-	return h, true
+	return marks, true
 }

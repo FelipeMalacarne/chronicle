@@ -1,47 +1,388 @@
 [
   {
     "name": "bones to peaches from scratch, Magic 99",
-    "input": {"rewards": ["bones_to_peaches"], "owned": [], "points": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "magic": 99, "enchant_level": 0},
-    "want": {"buy": ["bones_to_peaches"], "needed": {"telekinetic": 200, "graveyard": 200, "enchantment": 2000, "alchemist": 300}, "missing": {"telekinetic": 200, "graveyard": 200, "enchantment": 2000, "alchemist": 300}, "runes": {"law": 350, "nature": 1060, "cosmic": 304}, "enchant_level": 6}
+    "input": {
+      "rewards": [
+        "bones_to_peaches"
+      ],
+      "owned": [],
+      "points": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "magic": 99,
+      "enchant_level": 0
+    },
+    "want": {
+      "buy": [
+        "bones_to_peaches"
+      ],
+      "needed": {
+        "telekinetic": 200,
+        "graveyard": 200,
+        "enchantment": 2000,
+        "alchemist": 300
+      },
+      "missing": {
+        "telekinetic": 200,
+        "graveyard": 200,
+        "enchantment": 2000,
+        "alchemist": 300
+      },
+      "runes": {
+        "law": 350,
+        "nature": 1060,
+        "cosmic": 304
+      },
+      "enchant_level": 6
+    }
   },
   {
     "name": "master wand with the beginner wand owned and some points held, Magic 70",
-    "input": {"rewards": ["master_wand"], "owned": ["beginner_wand"], "points": {"telekinetic": 100, "graveyard": 0, "enchantment": 500, "alchemist": 0}, "magic": 70, "enchant_level": 0},
-    "want": {"buy": ["apprentice_wand", "teacher_wand", "master_wand"], "needed": {"telekinetic": 450, "graveyard": 450, "enchantment": 4500, "alchemist": 500}, "missing": {"telekinetic": 350, "graveyard": 450, "enchantment": 4000, "alchemist": 500}, "runes": {"law": 613, "nature": 1860, "cosmic": 728}, "enchant_level": 5}
+    "input": {
+      "rewards": [
+        "master_wand"
+      ],
+      "owned": [
+        "beginner_wand"
+      ],
+      "points": {
+        "telekinetic": 100,
+        "graveyard": 0,
+        "enchantment": 500,
+        "alchemist": 0
+      },
+      "magic": 70,
+      "enchant_level": 0
+    },
+    "want": {
+      "buy": [
+        "apprentice_wand",
+        "teacher_wand",
+        "master_wand"
+      ],
+      "needed": {
+        "telekinetic": 450,
+        "graveyard": 450,
+        "enchantment": 4500,
+        "alchemist": 500
+      },
+      "missing": {
+        "telekinetic": 350,
+        "graveyard": 450,
+        "enchantment": 4000,
+        "alchemist": 500
+      },
+      "runes": {
+        "law": 613,
+        "nature": 1860,
+        "cosmic": 728
+      },
+      "enchant_level": 5
+    }
   },
   {
     "name": "the whole shop, Magic 87",
-    "input": {"rewards": ["infinity_hat", "infinity_top", "infinity_bottoms", "infinity_gloves", "infinity_boots", "beginner_wand", "apprentice_wand", "teacher_wand", "master_wand", "mages_book", "rune_pouch", "bones_to_peaches"], "owned": [], "points": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "magic": 87, "enchant_level": 0},
-    "want": {"buy": ["infinity_hat", "infinity_top", "infinity_bottoms", "infinity_gloves", "infinity_boots", "beginner_wand", "apprentice_wand", "teacher_wand", "master_wand", "mages_book", "rune_pouch", "bones_to_peaches"], "needed": {"telekinetic": 2825, "graveyard": 2825, "enchantment": 29000, "alchemist": 3275}, "missing": {"telekinetic": 2825, "graveyard": 2825, "enchantment": 29000, "alchemist": 3275}, "runes": {"law": 4944, "nature": 12085, "cosmic": 4394}, "enchant_level": 6}
+    "input": {
+      "rewards": [
+        "infinity_hat",
+        "infinity_top",
+        "infinity_bottoms",
+        "infinity_gloves",
+        "infinity_boots",
+        "beginner_wand",
+        "apprentice_wand",
+        "teacher_wand",
+        "master_wand",
+        "mages_book",
+        "rune_pouch",
+        "bones_to_peaches"
+      ],
+      "owned": [],
+      "points": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "magic": 87,
+      "enchant_level": 0
+    },
+    "want": {
+      "buy": [
+        "bones_to_peaches",
+        "infinity_hat",
+        "infinity_top",
+        "infinity_bottoms",
+        "infinity_gloves",
+        "infinity_boots",
+        "beginner_wand",
+        "apprentice_wand",
+        "teacher_wand",
+        "master_wand",
+        "mages_book",
+        "rune_pouch"
+      ],
+      "needed": {
+        "telekinetic": 2825,
+        "graveyard": 2825,
+        "enchantment": 29000,
+        "alchemist": 3275
+      },
+      "missing": {
+        "telekinetic": 2825,
+        "graveyard": 2825,
+        "enchantment": 29000,
+        "alchemist": 3275
+      },
+      "runes": {
+        "law": 4944,
+        "nature": 12085,
+        "cosmic": 4394
+      },
+      "enchant_level": 6
+    }
   },
   {
     "name": "points already enough: nothing to earn, no Magic needed",
-    "input": {"rewards": ["infinity_boots"], "owned": [], "points": {"telekinetic": 500, "graveyard": 500, "enchantment": 5000, "alchemist": 500}, "magic": 0, "enchant_level": 0},
-    "want": {"buy": ["infinity_boots"], "needed": {"telekinetic": 120, "graveyard": 120, "enchantment": 1200, "alchemist": 120}, "missing": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "runes": {"law": 0, "nature": 0, "cosmic": 0}, "enchant_level": 0}
+    "input": {
+      "rewards": [
+        "infinity_boots"
+      ],
+      "owned": [],
+      "points": {
+        "telekinetic": 500,
+        "graveyard": 500,
+        "enchantment": 5000,
+        "alchemist": 500
+      },
+      "magic": 0,
+      "enchant_level": 0
+    },
+    "want": {
+      "buy": [
+        "infinity_boots"
+      ],
+      "needed": {
+        "telekinetic": 120,
+        "graveyard": 120,
+        "enchantment": 1200,
+        "alchemist": 120
+      },
+      "missing": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "runes": {
+        "law": 0,
+        "nature": 0,
+        "cosmic": 0
+      },
+      "enchant_level": 0
+    }
   },
   {
     "name": "already owned: nothing to buy",
-    "input": {"rewards": ["rune_pouch"], "owned": ["rune_pouch"], "points": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "magic": 0, "enchant_level": 0},
-    "want": {"buy": [], "needed": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "missing": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "runes": {"law": 0, "nature": 0, "cosmic": 0}, "enchant_level": 0}
+    "input": {
+      "rewards": [
+        "rune_pouch"
+      ],
+      "owned": [
+        "rune_pouch"
+      ],
+      "points": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "magic": 0,
+      "enchant_level": 0
+    },
+    "want": {
+      "buy": [],
+      "needed": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "missing": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "runes": {
+        "law": 0,
+        "nature": 0,
+        "cosmic": 0
+      },
+      "enchant_level": 0
+    }
   },
   {
     "name": "teacher wand owned covers the tiers below; explicit Enchant level wins over Magic",
-    "input": {"rewards": ["master_wand"], "owned": ["teacher_wand"], "points": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "magic": 0, "enchant_level": 3},
-    "want": {"buy": ["master_wand"], "needed": {"telekinetic": 240, "graveyard": 240, "enchantment": 2400, "alchemist": 240}, "missing": {"telekinetic": 240, "graveyard": 240, "enchantment": 2400, "alchemist": 240}, "runes": {"law": 420, "nature": 912, "cosmic": 728}, "enchant_level": 3}
+    "input": {
+      "rewards": [
+        "master_wand"
+      ],
+      "owned": [
+        "teacher_wand"
+      ],
+      "points": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "magic": 0,
+      "enchant_level": 3
+    },
+    "want": {
+      "buy": [
+        "master_wand"
+      ],
+      "needed": {
+        "telekinetic": 240,
+        "graveyard": 240,
+        "enchantment": 2400,
+        "alchemist": 240
+      },
+      "missing": {
+        "telekinetic": 240,
+        "graveyard": 240,
+        "enchantment": 2400,
+        "alchemist": 240
+      },
+      "runes": {
+        "law": 420,
+        "nature": 912,
+        "cosmic": 728
+      },
+      "enchant_level": 3
+    }
   },
   {
     "name": "owning the master wand covers the teacher wand, whose item the upgrade consumed",
-    "input": {"rewards": ["teacher_wand"], "owned": ["master_wand"], "points": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "magic": 99, "enchant_level": 0},
-    "want": {"buy": [], "needed": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "missing": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "runes": {"law": 0, "nature": 0, "cosmic": 0}, "enchant_level": 0}
+    "input": {
+      "rewards": [
+        "teacher_wand"
+      ],
+      "owned": [
+        "master_wand"
+      ],
+      "points": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "magic": 99,
+      "enchant_level": 0
+    },
+    "want": {
+      "buy": [],
+      "needed": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "missing": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "runes": {
+        "law": 0,
+        "nature": 0,
+        "cosmic": 0
+      },
+      "enchant_level": 0
+    }
   },
   {
     "name": "Enchanting Chamber points to earn but no Enchant castable",
-    "input": {"rewards": ["infinity_boots"], "owned": [], "points": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "magic": 5, "enchant_level": 0},
+    "input": {
+      "rewards": [
+        "infinity_boots"
+      ],
+      "owned": [],
+      "points": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "magic": 5,
+      "enchant_level": 0
+    },
     "error": true
   },
   {
     "name": "unknown reward",
-    "input": {"rewards": ["dragon_scimitar"], "owned": [], "points": {"telekinetic": 0, "graveyard": 0, "enchantment": 0, "alchemist": 0}, "magic": 99, "enchant_level": 0},
+    "input": {
+      "rewards": [
+        "dragon_scimitar"
+      ],
+      "owned": [],
+      "points": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "magic": 99,
+      "enchant_level": 0
+    },
     "error": true
+  },
+  {
+    "name": "the peaches go first: they halve the Graveyard's trips, so the points they unlock earn faster, Magic 44",
+    "input": {
+      "rewards": [
+        "infinity_boots",
+        "bones_to_peaches"
+      ],
+      "owned": [],
+      "points": {
+        "telekinetic": 0,
+        "graveyard": 0,
+        "enchantment": 0,
+        "alchemist": 0
+      },
+      "magic": 44,
+      "enchant_level": 0
+    },
+    "want": {
+      "buy": [
+        "bones_to_peaches",
+        "infinity_boots"
+      ],
+      "needed": {
+        "telekinetic": 320,
+        "graveyard": 320,
+        "enchantment": 3200,
+        "alchemist": 420
+      },
+      "missing": {
+        "telekinetic": 320,
+        "graveyard": 320,
+        "enchantment": 3200,
+        "alchemist": 420
+      },
+      "runes": {
+        "law": 560,
+        "nature": 1516,
+        "cosmic": 1455
+      },
+      "enchant_level": 2
+    }
   }
 ]

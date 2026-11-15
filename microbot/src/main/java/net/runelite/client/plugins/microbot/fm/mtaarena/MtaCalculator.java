@@ -15,6 +15,7 @@ import java.util.Set;
  */
 final class MtaCalculator
 {
+	private static final String PEACHES = "bones_to_peaches";
 	private static final Map<String, MtaReward> BY_ID = new HashMap<>();
 
 	static
@@ -108,7 +109,7 @@ final class MtaCalculator
 		}
 	}
 
-	/** The plan: what to buy (upgrade prerequisites first), the points it takes and the runes. */
+	/** The plan: what to buy (upgrade prerequisites first, the peaches before everything), the points it takes and the runes. */
 	static final class Result
 	{
 		final List<String> buy;
@@ -165,6 +166,11 @@ final class MtaCalculator
 		{
 			known(id);
 			add(id, have, buy);
+		}
+		// The peaches halve the Graveyard's trips, so what they unlock is earned faster: buy them first.
+		if (buy.remove(PEACHES))
+		{
+			buy.add(0, PEACHES);
 		}
 		int t = 0;
 		int g = 0;

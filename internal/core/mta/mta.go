@@ -156,6 +156,10 @@ func Calculate(in Input) (Result, error) {
 		}
 		add(id)
 	}
+	// The peaches halve the Graveyard's trips, so what they unlock is earned faster: buy them first.
+	if i := slices.Index(res.Buy, peaches); i > 0 {
+		res.Buy = slices.Concat([]string{peaches}, res.Buy[:i], res.Buy[i+1:])
+	}
 	for _, id := range res.Buy {
 		c := rewards[id].Cost
 		res.Needed.Telekinetic += c.Telekinetic
@@ -182,6 +186,9 @@ func Calculate(in Input) (Result, error) {
 	}
 	return res, nil
 }
+
+// peaches is the reward that goes first in a plan.
+const peaches = "bones_to_peaches"
 
 func missing(needed, held int) int { return max(0, needed-held) }
 

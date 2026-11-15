@@ -338,10 +338,8 @@ final class MtaRooms
 		TelekineticRoom room = core.getTelekineticRoom();
 		if (room.getGuardian() == null)
 		{
-			// The maze is not read yet (the guardian spawns with the room): look at it from its viewpoint.
-			Rs2Walker.walkTo(maze.maze, 4);
-			sleepUntil(() -> room.getGuardian() != null && !TelekineticRoom.getMoves().isEmpty(), 10000);
-			if (room.getGuardian() == null)
+			// A new maze: the solver reads it as the scene loads (the guardian spawns with it).
+			if (!sleepUntil(() -> room.getGuardian() != null, 8000))
 			{
 				leave.run();
 				return false;
@@ -373,8 +371,8 @@ final class MtaRooms
 			() -> TelekineticRoom.getMoves().isEmpty() ? null : TelekineticRoom.getMoves().peek());
 		if (next == null)
 		{
-			Rs2Walker.walkTo(maze.maze, 4);
-			sleepUntil(() -> !TelekineticRoom.getMoves().isEmpty(), 10000);
+			// No path yet (the guardian has not been seen moving or the walls are still coming in).
+			sleepUntil(() -> !TelekineticRoom.getMoves().isEmpty(), 3000);
 			return true;
 		}
 		Direction side = Microbot.getClientThread().invoke(room::getPosition);
@@ -440,28 +438,30 @@ final class MtaRooms
 			int[][] flags = wv.getCollisionMaps()[wv.getPlane()].getFlags();
 			java.util.Stack<Direction> moves = TelekineticRoom.getMoves();
 			Direction after = moves.size() >= 2 ? moves.get(moves.size() - 2) : null;
+			int[] aim = MtaScene.highlight(wv.getBaseX() + here.x, wv.getBaseY() + here.y, box, side, after);
 			int[][] dist = MtaScene.steps(flags, here);
-			MtaScene.Tile tile = MtaScene.best(dist, wv.getBaseX(), wv.getBaseY(), box, side, after, badTiles);
+			MtaScene.Tile tile = MtaScene.best(dist, wv.getBaseX(), wv.getBaseY(), box, side, aim, badTiles);
 			if (tile != null && tile.equals(lastWalk) && !tile.equals(here) && !Rs2Player.isMoving())
 			{
 				// Asked for this tile last time and the game stood the player elsewhere: not standable.
 				badTiles.add(tile);
-				tile = MtaScene.best(dist, wv.getBaseX(), wv.getBaseY(), box, side, after, badTiles);
+				tile = MtaScene.best(dist, wv.getBaseX(), wv.getBaseY(), box, side, aim, badTiles);
 			}
-			return new Object[]{here, tile};
+			return new Object[]{here, tile, new MtaScene.Tile(aim[0] - wv.getBaseX(), aim[1] - wv.getBaseY())};
 		});
 		MtaScene.Tile here = (MtaScene.Tile) picked[0];
 		MtaScene.Tile tile = (MtaScene.Tile) picked[1];
 		if (tile == null)
 		{
-			Rs2Walker.walkTo(maze.maze, 4);
+			log.info("telekinetic: maze {} no reachable tile on the {} side", maze, side);
+			sleep(600, 900);
 			return;
 		}
 		if (tile.equals(lastWalk) && Rs2Player.isMoving())
 		{
 			return;
 		}
-		log.info("telekinetic: maze {} next {} from {} walk to {}", maze, side, here, tile);
+		log.info("telekinetic: maze {} next {} from {} walk to {} (highlight {})", maze, side, here, tile, picked[2]);
 		lastWalk = tile;
 		net.runelite.api.coords.LocalPoint target = net.runelite.api.coords.LocalPoint.fromScene(tile.x, tile.y,
 			Microbot.getClient().getTopLevelWorldView());

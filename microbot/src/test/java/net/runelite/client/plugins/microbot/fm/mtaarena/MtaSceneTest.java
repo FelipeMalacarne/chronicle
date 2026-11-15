@@ -1,5 +1,6 @@
 package net.runelite.client.plugins.microbot.fm.mtaarena;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -72,22 +73,34 @@ class MtaSceneTest
 	}
 
 	@Test
-	void bestIsTheNearestStandableTileOnTheSideAndLeansToTheNextSide()
+	void theHighlightIsTheSolversTile()
 	{
-		// Scene base (100, 100); box x 102..106, y 102..106 in world coordinates: scene 2..6.
+		// Box x 102..106, y 102..106: NORTH line y 106, x 103..105; EAST line x 106, y 103..105.
+		Rectangle box = new Rectangle(102, 102, 4, 4);
+		// From the west, NORTH next and EAST after: along the north line to its east end.
+		assertArrayEquals(new int[]{105, 106}, MtaScene.highlight(101, 104, box, Direction.NORTH, Direction.EAST));
+		// No move after: the north line's tile nearest the player.
+		assertArrayEquals(new int[]{103, 106}, MtaScene.highlight(101, 104, box, Direction.NORTH, null));
+	}
+
+	@Test
+	void bestIsTheHighlightWhenStandableElseTheClosestStandableTileOnTheSide()
+	{
 		Rectangle box = new Rectangle(102, 102, 4, 4);
 		int[][] f = new int[12][12];
 		MtaScene.Tile here = new MtaScene.Tile(1, 4);
-		int[][] d = MtaScene.steps(f, here);
-		// Already on WEST: the tile itself, no walk.
-		assertEquals(here, MtaScene.best(d, 100, 100, box, Direction.WEST, null, Collections.emptySet()));
-		// NORTH next, EAST after: the north line's east end, the closest to the east side.
-		MtaScene.Tile north = MtaScene.best(d, 100, 100, box, Direction.NORTH, Direction.EAST, Collections.emptySet());
-		assertEquals(6, north.y);
-		Set<MtaScene.Tile> bad = new HashSet<>();
-		bad.add(north);
-		MtaScene.Tile other = MtaScene.best(d, 100, 100, box, Direction.NORTH, Direction.EAST, bad);
-		assertFalse(north.equals(other));
+		int[] aim = {105, 106};
+		assertEquals(new MtaScene.Tile(5, 6),
+			MtaScene.best(MtaScene.steps(f, here), 100, 100, box, Direction.NORTH, aim, Collections.emptySet()));
+		// The highlight is a pillar: the next tile along the line instead, still on NORTH.
+		f[5][6] = CollisionDataFlag.BLOCK_MOVEMENT_FULL;
+		MtaScene.Tile other = MtaScene.best(MtaScene.steps(f, here), 100, 100, box, Direction.NORTH, aim, Collections.emptySet());
 		assertTrue(MtaScene.onSide(100 + other.x, 100 + other.y, Direction.NORTH, box));
+		assertEquals(1, Math.abs(100 + other.x - 105) + Math.abs(100 + other.y - 106));
+		// A tile the game would not stand the player on is skipped too.
+		Set<MtaScene.Tile> bad = new HashSet<>();
+		bad.add(other);
+		MtaScene.Tile third = MtaScene.best(MtaScene.steps(f, here), 100, 100, box, Direction.NORTH, aim, bad);
+		assertFalse(other.equals(third));
 	}
 }

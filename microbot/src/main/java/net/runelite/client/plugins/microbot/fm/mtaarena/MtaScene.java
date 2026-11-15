@@ -100,14 +100,55 @@ final class MtaScene
 	}
 
 	/**
-	 * The reachable tile on {@code side} of the maze with the fewest steps now plus the fewest from
-	 * there to the side of {@code after} (one walk serving two pulls). {@code box} is the solver's,
-	 * in world coordinates of this scene: world = base + scene.
+	 * The tile the RuneLite solver highlights (TelekineticRoom.optimal), worked out from the player's
+	 * own world position: the point of the next side's line nearest the player, moved along that line
+	 * towards the line of the move after. World coordinates of this scene.
 	 */
-	static Tile best(int[][] dist, int baseX, int baseY, Rectangle box, Direction side, Direction after, Set<Tile> bad)
+	static int[] highlight(int px, int py, Rectangle b, Direction next, Direction after)
+	{
+		int[] onNext = nearestOnLine(b, next, px, py);
+		if (after == null)
+		{
+			return onNext;
+		}
+		int[] onAfter = nearestOnLine(b, after, onNext[0], onNext[1]);
+		return nearestOnLine(b, next, onAfter[0], onAfter[1]);
+	}
+
+	/** The solver's indicator line of a side (getIndicatorLine): just outside the box, corners excluded. */
+	static int[] nearestOnLine(Rectangle b, Direction side, int x, int y)
+	{
+		int x0 = b.x + 1;
+		int x1 = (int) b.getMaxX() - 1;
+		int y0 = b.y + 1;
+		int y1 = (int) b.getMaxY() - 1;
+		switch (side)
+		{
+			case NORTH:
+				return new int[]{clamp(x, x0, x1), (int) b.getMaxY()};
+			case SOUTH:
+				return new int[]{clamp(x, x0, x1), b.y};
+			case EAST:
+				return new int[]{(int) b.getMaxX(), clamp(y, y0, y1)};
+			default:
+				return new int[]{b.x, clamp(y, y0, y1)};
+		}
+	}
+
+	private static int clamp(int v, int lo, int hi)
+	{
+		return Math.max(lo, Math.min(hi, v));
+	}
+
+	/**
+	 * Where to stand: the highlighted tile itself when the player can stand on it, else the standable,
+	 * reachable tile on {@code side} closest to it (then the fewest steps). {@code aim} is in world
+	 * coordinates of this scene: world = base + scene.
+	 */
+	static Tile best(int[][] dist, int baseX, int baseY, Rectangle box, Direction side, int[] aim, Set<Tile> bad)
 	{
 		Tile best = null;
-		int bestScore = Integer.MAX_VALUE;
+		long bestScore = Long.MAX_VALUE;
 		for (int x = 0; x < dist.length; x++)
 		{
 			for (int y = 0; y < dist[x].length; y++)
@@ -122,7 +163,7 @@ final class MtaScene
 				{
 					continue;
 				}
-				int score = dist[x][y] + (after == null ? 0 : toSide(wx, wy, after, box));
+				long score = (Math.abs(wx - aim[0]) + Math.abs(wy - aim[1])) * 1000L + dist[x][y];
 				if (score < bestScore)
 				{
 					best = new Tile(x, y);

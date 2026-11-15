@@ -34,9 +34,10 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   tested), the runes left to carry, and nothing else but the "Always keep" names. The rooms
   (`MtaRooms`) are ported from the Plugin Hub's Mage Training Arena plugin and lean on the RuneLite
   Mage Training Arena plugin's solvers (the runner turns it on); unlike the Hub's, the Telekinetic
-  Theatre picks its own standing tile (`MtaScene`, pure and tested): a breadth-first search over the
-  scene's collision flags from the player, the solver's getPosition rule for the side the next move
-  needs, and the steps to the side of the move after. All of it in scene coordinates: the Theatre is
+  Theatre walks to the tile the RuneLite solver highlights (`MtaScene`, pure and tested: its
+  optimal() worked out from the player's real position), or, when that tile cannot be stood on, to
+  the closest reachable one on the same side (a breadth-first search over the scene's collision flags
+  and the solver's getPosition rule). All of it in scene coordinates: the Theatre is
   an instance, and the template conversions put the player a tile off. It walks during the guardian's
   slide, selects the spell on arriving and clicks in the tick the guardian rests, inside one runner
   step (Script.run() must not be called every few ms: it drives the client's blocking events and

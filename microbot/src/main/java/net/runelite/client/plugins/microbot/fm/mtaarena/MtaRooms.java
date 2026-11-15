@@ -347,11 +347,13 @@ final class MtaRooms
 		TelekineticRoom room = core.getTelekineticRoom();
 		if (room.getGuardian() == null)
 		{
-			// A new maze: the solver reads it as the scene loads (the guardian spawns with it). Never leave
-			// the Theatre over it: leaving breaks the five-maze streak and its bonus.
-			if (!sleepUntil(() -> room.getGuardian() != null, 8000))
+			// A new maze: the guardian is only sent once the player is near it (the entrance is too far),
+			// so head for the maze until it shows. Never leave the Theatre over it: leaving breaks the
+			// five-maze streak and its bonus.
+			walkTowardMaze(maze);
+			if (!sleepUntil(() -> room.getGuardian() != null, 3000))
 			{
-				log.info("telekinetic: maze {} has no guardian yet, waiting", maze);
+				log.info("telekinetic: maze {} guardian not in sight yet", maze);
 			}
 			return true;
 		}
@@ -482,6 +484,55 @@ final class MtaRooms
 	}
 
 	/**
+	 * Towards the middle of the maze's walls (loaded with the scene, unlike its guardian): the reachable
+	 * tile closest to it. Before the walls are read, the maze's viewpoint.
+	 */
+	private void walkTowardMaze(MtaWorld.Maze maze)
+	{
+		if (Rs2Player.isMoving())
+		{
+			return;
+		}
+		Rectangle box = mazeBounds();
+		if (box == null || box.width == 0)
+		{
+			Rs2Walker.walkTo(maze.maze, 6);
+			return;
+		}
+		MtaScene.Tile tile = Microbot.getClientThread().invoke(() -> {
+			net.runelite.api.Client client = Microbot.getClient();
+			net.runelite.api.WorldView wv = client.getTopLevelWorldView();
+			net.runelite.api.coords.LocalPoint me = client.getLocalPlayer().getLocalLocation();
+			int[][] flags = wv.getCollisionMaps()[wv.getPlane()].getFlags();
+			int[][] dist = MtaScene.steps(flags, new MtaScene.Tile(me.getSceneX(), me.getSceneY()));
+			return MtaScene.closest(dist, wv.getBaseX(), wv.getBaseY(), (int) box.getCenterX(), (int) box.getCenterY());
+		});
+		if (tile == null)
+		{
+			Rs2Walker.walkTo(maze.maze, 6);
+			return;
+		}
+		log.info("telekinetic: maze {} no guardian in sight, walking to {}", maze, tile);
+		walkScene(tile);
+	}
+
+	/** A walk to a scene tile: a click on it when drawn on screen, else the minimap's way there. */
+	private boolean walkScene(MtaScene.Tile tile)
+	{
+		net.runelite.api.coords.LocalPoint target = net.runelite.api.coords.LocalPoint.fromScene(tile.x, tile.y,
+			Microbot.getClient().getTopLevelWorldView());
+		boolean exact = Rs2Camera.isTileOnScreen(target) && clickTile(target);
+		if (!exact)
+		{
+			WorldPoint far = Microbot.getClientThread().invoke(
+				() -> WorldPoint.fromLocalInstance(Microbot.getClient(), target));
+			Rs2Walker.walkMiniMap(far);
+		}
+		sleepUntil(Rs2Player::isMoving, 900);
+		return exact;
+	}
+
+	/**
 	 * Walks to the best tile on {@code side} ({@link MtaScene#best}), worked out and clicked in scene
 	 * coordinates. A tile asked for twice that the game stood the player beside is left out for the maze.
 	 */
@@ -523,21 +574,8 @@ final class MtaRooms
 		}
 		log.info("telekinetic: maze {} next {} from {} walk to {} (highlight {})", maze, side, here, tile, picked[2]);
 		lastWalk = tile;
-		net.runelite.api.coords.LocalPoint target = net.runelite.api.coords.LocalPoint.fromScene(tile.x, tile.y,
-			Microbot.getClient().getTopLevelWorldView());
 		// A tile drawn on screen gets a click on it; a far one goes by the minimap, the exact click after.
-		lastWalkExact = Rs2Camera.isTileOnScreen(target) && clickTile(target);
-		if (lastWalkExact)
-		{
-			log.debug("telekinetic: clicked {}", tile);
-		}
-		else
-		{
-			WorldPoint far = Microbot.getClientThread().invoke(
-				() -> WorldPoint.fromLocalInstance(Microbot.getClient(), target));
-			Rs2Walker.walkMiniMap(far);
-		}
-		sleepUntil(Rs2Player::isMoving, 900);
+		lastWalkExact = walkScene(tile);
 	}
 
 	/**

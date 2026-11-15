@@ -41,7 +41,8 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   an instance, and the template conversions put the player a tile off. Each maze starts with the
   camera's pitch at the top (not the guardian's Observe: a walk click cancels it, and with the spell
   selected the guardian offers only the cast). It never leaves the Theatre on its own between mazes
-  (leaving breaks the five-maze streak); a spell that cannot be cast sends it to the bank only after
+  (leaving breaks the five-maze streak): the next maze's guardian is only sent once the player is near
+  it, so without one it walks towards the middle of the maze's walls (loaded with the scene); a spell that cannot be cast sends it to the bank only after
   5 s (a read while the next maze loads can fail for a moment).
   Right after a grab is cast it walks to the side of the move after (the solver's plan says it before
   the guardian slides; the pull just made is skipped while it still sits on top of the plan), selects

@@ -103,4 +103,14 @@ class MtaSceneTest
 		MtaScene.Tile third = MtaScene.best(MtaScene.steps(f, here), 100, 100, box, Direction.NORTH, aim, bad);
 		assertFalse(other.equals(third));
 	}
+
+	@Test
+	void closestIsTheReachableTileNearestAPoint()
+	{
+		// Wall along column 5's east edge, rows 0..9: from (2, 2) the box centre at world (108, 102)
+		// is behind it; the closest reachable tile is against the wall, at x 5.
+		int[][] d = MtaScene.steps(walled(), new MtaScene.Tile(2, 2));
+		MtaScene.Tile t = MtaScene.closest(d, 100, 100, 108, 102);
+		assertTrue(t.x >= 5, "not across the wall's reach: " + t);
+	}
 }

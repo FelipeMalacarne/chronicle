@@ -174,6 +174,30 @@ final class MtaScene
 		return best;
 	}
 
+	/** The reachable tile closest to a world point (then the fewest steps), or null. */
+	static Tile closest(int[][] dist, int baseX, int baseY, int wx, int wy)
+	{
+		Tile best = null;
+		long bestScore = Long.MAX_VALUE;
+		for (int x = 0; x < dist.length; x++)
+		{
+			for (int y = 0; y < dist[x].length; y++)
+			{
+				if (dist[x][y] < 0)
+				{
+					continue;
+				}
+				long score = (Math.abs(baseX + x - wx) + Math.abs(baseY + y - wy)) * 1000L + dist[x][y];
+				if (score < bestScore)
+				{
+					best = new Tile(x, y);
+					bestScore = score;
+				}
+			}
+		}
+		return best;
+	}
+
 	/** TelekineticRoom.getPosition's test, for any tile. */
 	static boolean onSide(int x, int y, Direction side, Rectangle b)
 	{

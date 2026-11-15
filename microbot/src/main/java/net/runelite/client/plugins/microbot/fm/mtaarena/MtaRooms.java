@@ -242,9 +242,11 @@ final class MtaRooms
 
 	private static void depositCoins()
 	{
+		int coins = Rs2Inventory.count(MtaWorld.COINS);
 		if (Microbot.getRs2TileObjectCache().query().withName(MtaWorld.COIN_COLLECTOR).interact("Deposit"))
 		{
-			sleepUntil(() -> !Rs2Inventory.contains(MtaWorld.COINS), 8000);
+			boolean done = sleepUntil(() -> !Rs2Inventory.contains(MtaWorld.COINS), 10000);
+			log.info("alchemist: {} coins to the Coin Collector{}", coins, done ? "" : " (not taken yet)");
 		}
 	}
 

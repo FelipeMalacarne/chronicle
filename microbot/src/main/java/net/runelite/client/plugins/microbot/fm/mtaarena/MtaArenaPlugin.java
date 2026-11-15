@@ -173,7 +173,7 @@ public class MtaArenaPlugin extends Plugin
 		if (n < 0)
 		{
 			// Inside a room the main panel is not up: the room shows its own points. The Alchemists'
-			// Playground counts the coins not handed in yet, a hundred of them to the point.
+			// Playground counts its coins not handed in yet, a hundred of them to the point.
 			int[] w = MtaWorld.roomPointsWidget(room);
 			n = readWidget(client.getWidget(w[0], w[1]));
 			if (n >= 0 && room == MtaWorld.Room.ALCHEMIST)
@@ -202,7 +202,7 @@ public class MtaArenaPlugin extends Plugin
 		int n = 0;
 		for (Item item : c.getItems())
 		{
-			if (item.getId() == ItemID.COINS)
+			if (item.getId() == MtaWorld.COINS)
 			{
 				n += item.getQuantity();
 			}

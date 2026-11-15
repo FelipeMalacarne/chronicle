@@ -120,7 +120,8 @@ final class MtaWorld
 	static final WorldPoint ALCHEMY_CENTER = new WorldPoint(3364, 9636, 2);
 	/** Where the Alchemists' Playground turns coins into points, a hundred to the point. */
 	static final String COIN_COLLECTOR = "Coin Collector";
-	static final int COINS = 995;
+	/** The Playground's own coins (not the game's 995): what its alchemy gives and its collector takes. */
+	static final int COINS = 8890;
 
 	/** Creature Graveyard: the bones pile, the fruit chute, and the fruit. */
 	static final WorldPoint BONES_PILE = new WorldPoint(3352, 9637, 1);

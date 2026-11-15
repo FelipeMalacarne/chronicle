@@ -468,12 +468,11 @@ final class MtaRooms
 		lastWalk = tile;
 		net.runelite.api.coords.LocalPoint target = net.runelite.api.coords.LocalPoint.fromScene(tile.x, tile.y,
 			Microbot.getClient().getTopLevelWorldView());
-		// A scene click only on a tile drawn on screen: off screen its canvas point is (-1, -1) and the
-		// client's mouse chases it forever. Far tiles go by the minimap first, the exact click after.
-		lastWalkExact = Rs2Camera.isTileOnScreen(target);
+		// A tile drawn on screen gets a click on it; a far one goes by the minimap, the exact click after.
+		lastWalkExact = Rs2Camera.isTileOnScreen(target) && clickTile(target);
 		if (lastWalkExact)
 		{
-			Rs2Walker.walkFastLocal(target);
+			log.debug("telekinetic: clicked {}", tile);
 		}
 		else
 		{
@@ -482,6 +481,33 @@ final class MtaRooms
 			Rs2Walker.walkMiniMap(far);
 		}
 		sleepUntil(Rs2Player::isMoving, 900);
+	}
+
+	/**
+	 * "Walk here" on a scene tile, the way the walker's own scene click does it: the menu entry at the
+	 * tile's canvas point and a small box around it to click. Not Rs2Walker.walkFastLocal: it passes a
+	 * box at (1, 1), which the client takes for its fallback and sends the virtual mouse to the canvas
+	 * corner, where it never settles and holds the mouse lock (every script's clicks then wait).
+	 */
+	private static boolean clickTile(net.runelite.api.coords.LocalPoint local)
+	{
+		net.runelite.api.Point p = Microbot.getClientThread().runOnClientThreadOptional(() ->
+			net.runelite.api.Perspective.localToCanvas(Microbot.getClient(), local,
+				Microbot.getClient().getTopLevelWorldView().getPlane())).orElse(null);
+		if (p == null || p.getX() < 2 || p.getY() < 2)
+		{
+			return false;
+		}
+		net.runelite.client.plugins.microbot.util.menu.NewMenuEntry entry =
+			new net.runelite.client.plugins.microbot.util.menu.NewMenuEntry()
+				.param0(p.getX())
+				.param1(p.getY())
+				.type(net.runelite.api.MenuAction.WALK)
+				.identifier(0)
+				.itemId(0)
+				.option("Walk here");
+		Microbot.doInvoke(entry, new Rectangle(p.getX() - 2, p.getY() - 2, 4, 4));
+		return true;
 	}
 
 	/** The maze's walls' box, kept by the solver in a private field. */

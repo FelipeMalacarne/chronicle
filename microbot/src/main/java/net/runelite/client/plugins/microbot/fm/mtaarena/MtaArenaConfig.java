@@ -152,4 +152,76 @@ public interface MtaArenaConfig extends Config
 	{
 		return false;
 	}
+
+	@ConfigItem(
+		keyName = "playTelekinetic",
+		name = "Play the Telekinetic Theatre",
+		description = "The plugin plays this room; off leaves it to you",
+		section = RUN,
+		position = 1
+	)
+	default boolean playTelekinetic()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "playAlchemist",
+		name = "Play the Alchemists' Playground",
+		description = "The plugin plays this room; off leaves it to you",
+		section = RUN,
+		position = 2
+	)
+	default boolean playAlchemist()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "playGraveyard",
+		name = "Play the Creature Graveyard",
+		description = "The plugin plays this room; off leaves it to you",
+		section = RUN,
+		position = 3
+	)
+	default boolean playGraveyard()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "playEnchantment",
+		name = "Play the Enchanting Chamber",
+		description = "The plugin plays this room; off leaves it to you",
+		section = RUN,
+		position = 4
+	)
+	default boolean playEnchantment()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "prepareInventory",
+		name = "Minimal inventory per room",
+		description = "Before each room, bank everything its spell does not use (the staff and tome that save the most runes are worn)",
+		section = RUN,
+		position = 5
+	)
+	default boolean prepareInventory()
+	{
+		return true;
+	}
+
+	@ConfigItem(
+		keyName = "keepItems",
+		name = "Always keep",
+		description = "Item names never banked, separated by commas (a pet's food, say)",
+		section = RUN,
+		position = 6
+	)
+	default String keepItems()
+	{
+		return "";
+	}
 }

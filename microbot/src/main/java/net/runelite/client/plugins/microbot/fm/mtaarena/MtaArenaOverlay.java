@@ -14,6 +14,7 @@ class MtaArenaOverlay extends OverlayPanel
 {
 	private static final Color SHORT = new Color(255, 120, 120);
 	private static final Color OK = new Color(140, 230, 140);
+	private static final Color RUN = new Color(120, 200, 255);
 
 	private final MtaArenaPlugin plugin;
 	private final MtaArenaConfig config;
@@ -35,6 +36,11 @@ class MtaArenaOverlay extends OverlayPanel
 		}
 		MtaArenaPlugin.Snapshot s = plugin.snapshot();
 		panelComponent.getChildren().add(TitleComponent.builder().text("MTA Planner").build());
+		String running = plugin.runnerState();
+		if (!running.isEmpty())
+		{
+			panelComponent.getChildren().add(LineComponent.builder().left(running).leftColor(RUN).build());
+		}
 		if (s.message != null)
 		{
 			panelComponent.getChildren().add(LineComponent.builder().left(s.message).build());

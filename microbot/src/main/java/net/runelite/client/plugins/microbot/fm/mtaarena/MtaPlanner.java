@@ -1,6 +1,8 @@
 package net.runelite.client.plugins.microbot.fm.mtaarena;
 
 import java.util.Collection;
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.List;
 import net.runelite.client.plugins.microbot.fm.mtaarena.MtaCalculator.MtaException;
 import net.runelite.client.plugins.microbot.fm.mtaarena.MtaCalculator.Points;
@@ -31,7 +33,9 @@ final class MtaPlanner
 		/** Earn {@link Step#points} more points in {@link Step#room}. */
 		EARN,
 		/** The next reward needs points in the Enchanting Chamber and no Enchant is castable. */
-		BLOCKED
+		BLOCKED,
+		/** The points are missing in a room the owner plays by hand: the plugin waits for them. */
+		MANUAL
 	}
 
 	static final class Step
@@ -59,7 +63,17 @@ final class MtaPlanner
 	static Step next(Collection<String> wanted, Collection<String> owned, Points held, int magic,
 		int enchantLevel) throws MtaException
 	{
-		List<String> order = MtaCalculator.buyOrder(wanted, owned);
+		return next(wanted, owned, held, magic, enchantLevel, EnumSet.allOf(Room.class));
+	}
+
+	/**
+	 * {@code allowed} are the rooms the plugin may play: a room outside it with points missing is
+	 * left to the owner ({@link Kind#MANUAL}), after the allowed rooms with points missing.
+	 */
+	static Step next(Collection<String> wanted, Collection<String> owned, Points held, int magic,
+		int enchantLevel, Set<Room> allowed) throws MtaException
+	{
+		List<String> order = MtaCalculator.buyOrder(wanted, owned, magic);
 		if (order.isEmpty())
 		{
 			return new Step(Kind.DONE, null, null, 0);
@@ -71,11 +85,20 @@ final class MtaPlanner
 			Math.max(0, r.graveyard - held.graveyard),
 			Math.max(0, r.enchantment - held.enchantment),
 		};
+		Step manual = null;
 		for (Room room : Room.values())
 		{
 			int n = lack[room.ordinal()];
 			if (n == 0)
 			{
+				continue;
+			}
+			if (!allowed.contains(room))
+			{
+				if (manual == null)
+				{
+					manual = new Step(Kind.MANUAL, r.id, room, n);
+				}
 				continue;
 			}
 			if (room == Room.ENCHANTMENT && MtaCalculator.enchantLevelFor(magic, enchantLevel) == 0)
@@ -84,6 +107,6 @@ final class MtaPlanner
 			}
 			return new Step(Kind.EARN, r.id, room, n);
 		}
-		return new Step(Kind.BUY, r.id, null, 0);
+		return manual != null ? manual : new Step(Kind.BUY, r.id, null, 0);
 	}
 }

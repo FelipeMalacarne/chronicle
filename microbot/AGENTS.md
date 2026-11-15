@@ -24,19 +24,22 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.3): pick the Rewards Guardian's items, the overlay shows the pizazz
+- `fm/mtaarena/` — MTA Planner (v0.4): pick the Rewards Guardian's items, the overlay shows the pizazz
   points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
   and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step
-  (buy the first reward of the plan, peaches first, or earn its missing points in one room, the
-  Enchanting Chamber last) and `MtaRunner` buys at the Rewards Guardian and plays the four rooms
-  (`MtaRooms`, ported from the Plugin Hub's Mage Training Arena plugin, which leans on the RuneLite
-  Mage Training Arena plugin's solvers: the runner turns that one on), picking the staff per spell
-  (`MtaStaves`) and leaving a room as soon as the plan no longer needs its points. `MtaData.java` is generated
-  (`python3 tools/gen_mta_java.py`) from `internal/core/mta/mta.json`; `MtaCalculator` mirrors
-  `internal/core/mta`, pinned by `src/test/resources/mta-vectors.json` (a copy of the Go vectors).
-  The points come from the arena's points panel text (widget group 553), and the runner's object,
-  NPC and widget ids (`MtaWorld`) come from the Plugin Hub's Mage Training Arena plugin: none of it is
-  verified in game yet, so test with the owner watching (skill `live-test`).
+  (buy the first reward of the plan, peaches first from Magic 60, or earn its missing points in one
+  room, the Enchanting Chamber last; a room switched off in the settings, or without runes, is left to
+  the owner) and `MtaRunner` runs it. Before each room `MtaPrep` sets up at the arena's bank chest:
+  the staff and tome that cover the most of the spell's elemental runes (`MtaLoadout`, pure and
+  tested), the runes left to carry, and nothing else but the "Always keep" names. The rooms
+  (`MtaRooms`) are ported from the Plugin Hub's Mage Training Arena plugin and lean on the RuneLite
+  Mage Training Arena plugin's solvers (the runner turns it on); unlike the Hub's, the Telekinetic
+  target is worked out from the solver's moves on the player's floor (the solver builds it on plane 0
+  and only while its overlay draws) and the Alchemists' Playground hands its coins to the Coin
+  Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
+  `internal/core/mta/mta.json`; `MtaCalculator` mirrors `internal/core/mta`, pinned by
+  `src/test/resources/mta-vectors.json` (a copy of the Go vectors). Verified in game so far: the
+  overlay, the points (panel and each room's counter) and the Enchanting Chamber.
 - `bin/` — harness (on PATH inside the dev shell).
 - The worker image (Chronicle's managed workers, docs/11 section 13.4) is built outside this
   directory: `nix/worker-runtime.nix`, `deploy/worker/` (see "Worker image").

@@ -17,7 +17,6 @@ import net.runelite.client.plugins.microbot.util.camera.Rs2Camera;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Magic;
-import net.runelite.client.plugins.microbot.util.magic.Rs2Spells;
 import net.runelite.client.plugins.microbot.util.math.Rs2Random;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.tabs.Rs2Tab;
@@ -34,20 +33,20 @@ import net.runelite.client.plugins.skillcalculator.skills.MagicAction;
  * One short step of each room's routine, ported from the Plugin Hub's Mage Training Arena plugin.
  * The Alchemists' Playground, the Creature Graveyard and the Telekinetic Theatre lean on the
  * RuneLite Mage Training Arena plugin's solvers (the best item and cupboard, the bones counter, the
- * maze path), so that plugin has to be on; {@link MtaRunner} makes sure it is.
+ * maze path), so that plugin has to be on; {@link MtaRunner} makes sure it is. Which spell, staff and
+ * runes a room gets is {@link MtaPrep}'s; these only play.
  */
 final class MtaRooms
 {
-	private static final Rs2Spells[] ENCHANT_SPELLS = {
-		Rs2Spells.ENCHANT_SAPPHIRE_JEWELLERY, Rs2Spells.ENCHANT_EMERALD_JEWELLERY,
-		Rs2Spells.ENCHANT_RUBY_JEWELLERY, Rs2Spells.ENCHANT_DIAMOND_JEWELLERY,
-		Rs2Spells.ENCHANT_DRAGONSTONE_JEWELLERY, Rs2Spells.ENCHANT_ONYX_JEWELLERY,
-	};
 	private static final MagicAction[] ENCHANT = {
 		MagicAction.ENCHANT_SAPPHIRE_JEWELLERY, MagicAction.ENCHANT_EMERALD_JEWELLERY,
 		MagicAction.ENCHANT_RUBY_JEWELLERY, MagicAction.ENCHANT_DIAMOND_JEWELLERY,
 		MagicAction.ENCHANT_DRAGONSTONE_JEWELLERY, MagicAction.ENCHANT_ONYX_JEWELLERY,
 	};
+	/** Coins carried before a trip to the Coin Collector: a hundred are a point. */
+	private static final int COINS_PER_TRIP = 1000;
+	/** Walk attempts towards a Telekinetic tile before the loop asks again. */
+	private static final int MAX_WALKS = 6;
 	private static final int HEAL_BELOW_MIN = 40;
 	private static final int HEAL_BELOW_MAX = 60;
 
@@ -56,7 +55,6 @@ final class MtaRooms
 	private MTAPlugin core;
 	private int shapesToPick = 3;
 	private int nextHealBelow = Rs2Random.between(HEAL_BELOW_MIN, HEAL_BELOW_MAX);
-	private Boolean peaches;
 
 	MtaRooms(MtaArenaConfig config, BooleanSupplier running)
 	{
@@ -67,24 +65,6 @@ final class MtaRooms
 	void core(MTAPlugin core)
 	{
 		this.core = core;
-	}
-
-	// ---- can the room be played with what is carried? ------------------------------------
-
-	/** Wields the best staff and says whether the room's spell can be cast. */
-	boolean canPlay(MtaWorld.Room room)
-	{
-		switch (room)
-		{
-			case TELEKINETIC:
-				return MtaStaves.equipFor(Rs2Spells.TELEKINETIC_GRAB);
-			case ALCHEMIST:
-				return MtaStaves.equipFor(Rs2Spells.HIGH_LEVEL_ALCHEMY) || MtaStaves.equipFor(Rs2Spells.LOW_LEVEL_ALCHEMY);
-			case ENCHANTMENT:
-				return enchantLevel() > 0 && MtaStaves.equipFor(ENCHANT_SPELLS[enchantLevel() - 1]);
-			default:
-				return MtaStaves.equipFor(Rs2Spells.BONES_TO_BANANAS) || MtaStaves.equipFor(Rs2Spells.BONES_TO_PEACHES);
-		}
 	}
 
 	int enchantLevel()
@@ -109,6 +89,10 @@ final class MtaRooms
 		{
 			interactAt(MtaWorld.FRUIT_CHUTE, "Deposit");
 			Rs2Inventory.waitForInventoryChanges(5000);
+		}
+		if (room == MtaWorld.Room.ALCHEMIST && Rs2Inventory.contains(MtaWorld.COINS))
+		{
+			depositCoins();
 		}
 	}
 
@@ -184,18 +168,28 @@ final class MtaRooms
 	{
 		AlchemyRoom room = core.getAlchemyRoom();
 		AlchemyItem best = room.getBest();
-		Rs2ItemModel item = Rs2Inventory.getLast(best.getId());
-		if (item != null)
+		if (best != null && best != AlchemyItem.EMPTY && best != AlchemyItem.UNKNOWN)
 		{
-			sleep(50, 150);
-			Rs2Magic.alch(item);
-			return;
+			Rs2ItemModel item = Rs2Inventory.getLast(best.getId());
+			if (item != null)
+			{
+				sleep(50, 150);
+				Rs2Magic.alch(item);
+				return;
+			}
 		}
 		Rs2Inventory.dropAll(MtaWorld.ALCHEMY_ITEMS);
+		// Coins only become points in the Coin Collector.
+		if (Rs2Inventory.count(MtaWorld.COINS) >= COINS_PER_TRIP)
+		{
+			depositCoins();
+			return;
+		}
 		AlchemyRoomTimer timer = (AlchemyRoomTimer) Microbot.getInfoBoxManager().getInfoBoxes().stream()
 			.filter(x -> x instanceof AlchemyRoomTimer).findFirst().orElse(null);
-		if (timer == null || Integer.parseInt(timer.getText().split(":")[1]) < 2)
+		if (timer == null || secondsOf(timer.getText()) < 2)
 		{
+			// The items move between cupboards when the timer runs out: wait in the middle.
 			Rs2Walker.walkTo(MtaWorld.ALCHEMY_CENTER.getX(), MtaWorld.ALCHEMY_CENTER.getY(),
 				MtaWorld.ALCHEMY_CENTER.getPlane(), 2);
 			return;
@@ -218,14 +212,33 @@ final class MtaRooms
 		}
 	}
 
+	private static void depositCoins()
+	{
+		if (Microbot.getRs2TileObjectCache().query().withName(MtaWorld.COIN_COLLECTOR).interact("Deposit"))
+		{
+			sleepUntil(() -> !Rs2Inventory.contains(MtaWorld.COINS), 8000);
+		}
+	}
+
+	/** "m:ss" of the room's timer, in seconds; 0 when it cannot be read. */
+	private static int secondsOf(String text)
+	{
+		try
+		{
+			String[] parts = text.split(":");
+			return Integer.parseInt(parts[0].trim()) * 60 + Integer.parseInt(parts[1].trim());
+		}
+		catch (RuntimeException ex)
+		{
+			return 0;
+		}
+	}
+
 	// ---- the Creature Graveyard ----------------------------------------------------------
 
-	void graveyard()
+	/** {@code peaches}: the runner's plan casts Bones to Peaches (owned and Magic 60), else Bananas. */
+	void graveyard(boolean peaches)
 	{
-		if (peaches == null)
-		{
-			peaches = Rs2Magic.canCast(MagicAction.BONES_TO_PEACHES);
-		}
 		long boneGoal = 28L - Rs2Inventory.items().filter(x -> x.getName().equalsIgnoreCase(MtaWorld.BONES)).count();
 		if (core.getGraveyardRoom().getCounter() != null && core.getGraveyardRoom().getCounter().getCount() >= boneGoal)
 		{
@@ -292,24 +305,27 @@ final class MtaRooms
 			return true;
 		}
 		TelekineticRoom room = core.getTelekineticRoom();
-		WorldPoint target = room.getTarget();
-		if (target == null)
+		if (room.getGuardian() == null)
 		{
+			// The maze is not read yet (the guardian spawns with the room): look at it from its viewpoint.
 			Rs2Walker.walkTo(maze.maze, 4);
-			sleepUntil(() -> room.getTarget() != null, 10000);
-			target = room.getTarget();
-			if (target == null)
+			sleepUntil(() -> room.getGuardian() != null && !TelekineticRoom.getMoves().isEmpty(), 10000);
+			if (room.getGuardian() == null)
 			{
 				leave.run();
 				return false;
 			}
-			sleep(400, 600);
+			return true;
 		}
-		final WorldPoint wanted = target;
-		LocalPoint localTarget = Microbot.getClientThread().invoke(() -> LocalPoint.fromWorld(
-			Microbot.getClient().getTopLevelWorldView(), wanted));
-		WorldPoint targetConverted = Microbot.getClientThread().invoke(() -> WorldPoint.fromLocalInstance(
-			Microbot.getClient(), localTarget));
+		Spot spot = target();
+		if (spot == null)
+		{
+			Rs2Walker.walkTo(maze.maze, 4);
+			sleepUntil(() -> !TelekineticRoom.getMoves().isEmpty(), 10000);
+			return true;
+		}
+		LocalPoint localTarget = spot.local;
+		WorldPoint targetConverted = spot.world;
 		if (Rs2Camera.getZoom() < 40 || Rs2Camera.getZoom() > 60)
 		{
 			Rs2Camera.setZoom(Rs2Random.betweenInclusive(40, 60));
@@ -326,9 +342,9 @@ final class MtaRooms
 			});
 			return true;
 		}
-		while (away(targetConverted) && running.getAsBoolean()
+		for (int tries = 0; tries < MAX_WALKS && away(targetConverted) && running.getAsBoolean()
 			&& !java.util.Objects.equals(Microbot.getClientThread().invoke(
-				() -> Microbot.getClient().getLocalDestinationLocation()), localTarget))
+				() -> Microbot.getClient().getLocalDestinationLocation()), localTarget); tries++)
 		{
 			if (Rs2Camera.isTileOnScreen(localTarget))
 			{
@@ -363,6 +379,43 @@ final class MtaRooms
 			sleepUntil(() -> room.getGuardian().getId() != 6778);
 		}
 		return true;
+	}
+
+	/** A tile both as the scene has it (to click and compare) and as the walker takes it. */
+	private static final class Spot
+	{
+		final LocalPoint local;
+		final WorldPoint world;
+
+		Spot(LocalPoint local, WorldPoint world)
+		{
+			this.local = local;
+			this.world = world;
+		}
+	}
+
+	/**
+	 * Where to stand to pull the guardian its next move. The
+	 * RuneLite solver fills its own target only while its overlay draws, and builds it on plane 0
+	 * whatever the maze's floor (the Theatre has mazes on planes 1 and 2): it is worked out here from
+	 * the solver's moves and put on the player's floor.
+	 */
+	private static Spot target()
+	{
+		return Microbot.getClientThread().invoke(() -> {
+			if (TelekineticRoom.getMoves().isEmpty())
+			{
+				return null;
+			}
+			WorldPoint line = TelekineticRoom.optimal(0);
+			if (line == null)
+			{
+				return null;
+			}
+			net.runelite.api.WorldView wv = Microbot.getClient().getTopLevelWorldView();
+			LocalPoint local = LocalPoint.fromWorld(wv, line.getX(), line.getY());
+			return local == null ? null : new Spot(local, WorldPoint.fromLocalInstance(Microbot.getClient(), local));
+		});
 	}
 
 	private static boolean away(WorldPoint target)

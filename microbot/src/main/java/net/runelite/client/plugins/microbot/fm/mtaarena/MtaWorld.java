@@ -118,6 +118,9 @@ final class MtaWorld
 	/** Alchemy room: the items the cupboards hold (all but the one worth the most are dropped). */
 	static final int[] ALCHEMY_ITEMS = {6897, 6896, 6895, 6894, 6893};
 	static final WorldPoint ALCHEMY_CENTER = new WorldPoint(3364, 9636, 2);
+	/** Where the Alchemists' Playground turns coins into points, a hundred to the point. */
+	static final String COIN_COLLECTOR = "Coin Collector";
+	static final int COINS = 995;
 
 	/** Creature Graveyard: the bones pile, the fruit chute, and the fruit. */
 	static final WorldPoint BONES_PILE = new WorldPoint(3352, 9637, 1);

@@ -1,18 +1,23 @@
 package net.runelite.client.plugins.microbot.fm.mtaarena;
 
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
+import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
 import net.runelite.client.plugins.microbot.fm.mtaarena.MtaPlanner.Step;
+import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Magic;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Spellbook;
+import net.runelite.client.plugins.microbot.util.magic.Rs2Spells;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
@@ -35,6 +40,10 @@ final class MtaRunner extends Script
 	private final MtaArenaPlugin plugin;
 	private final MtaArenaConfig config;
 	private final MtaRooms rooms;
+	private final MtaPrep prep;
+	/** Rooms whose spell's runes are neither carried nor banked: the planner leaves them to the owner. */
+	private final Set<MtaPlanner.Room> blocked = ConcurrentHashMap.newKeySet();
+	private volatile String state = "";
 	private MTAPlugin core;
 	private String boughtTry = "";
 	private int tries;
@@ -45,6 +54,18 @@ final class MtaRunner extends Script
 		this.plugin = plugin;
 		this.config = config;
 		this.rooms = new MtaRooms(config, () -> isRunning() && config.automate());
+		this.prep = new MtaPrep(config);
+	}
+
+	/** What the runner is doing, for the overlay; empty while it is off. */
+	String state()
+	{
+		return config.automate() ? state : "";
+	}
+
+	Set<MtaPlanner.Room> blocked()
+	{
+		return blocked;
 	}
 
 	public boolean run()
@@ -62,14 +83,21 @@ final class MtaRunner extends Script
 		return true;
 	}
 
-	private static void status(String text)
+	private void status(String text)
 	{
+		state = text;
 		Microbot.status = "MTA: " + text;
 	}
 
 	private void loop()
 	{
-		if (!Microbot.isLoggedIn() || !super.run() || !config.automate())
+		if (!config.automate())
+		{
+			// Switching the run off and on again is how the owner says the runes are back.
+			blocked.clear();
+			return;
+		}
+		if (!Microbot.isLoggedIn() || !super.run())
 		{
 			return;
 		}
@@ -101,6 +129,12 @@ final class MtaRunner extends Script
 		}
 		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
 		boolean needsHere = at != null && step.kind == MtaPlanner.Kind.EARN && MtaWorld.Room.of(step.room) == at;
+		boolean byHand = at != null && step.kind == MtaPlanner.Kind.MANUAL && MtaWorld.Room.of(step.room) == at;
+		if (byHand)
+		{
+			status("you are playing the " + at.name().toLowerCase() + " room: " + step.points + " points to go");
+			return;
+		}
 		if (at != null && !needsHere)
 		{
 			status("done in the " + at.name().toLowerCase() + " room");
@@ -116,11 +150,15 @@ final class MtaRunner extends Script
 			case BLOCKED:
 				status("Magic is too low for the Enchanting Chamber: " + step.reward + " waits");
 				return;
+			case MANUAL:
+				status("play the " + step.room.name().toLowerCase() + " room by hand (" + step.points
+					+ " points for " + step.reward + ")");
+				return;
 			case BUY:
 				buy(step.reward);
 				return;
 			case EARN:
-				earn(MtaWorld.Room.of(step.room), step);
+				earn(MtaWorld.Room.of(step.room), step, s);
 				return;
 			default:
 				return;
@@ -237,22 +275,45 @@ final class MtaRunner extends Script
 
 	// ---- rooms ---------------------------------------------------------------------------
 
-	private void earn(MtaWorld.Room room, Step step)
+	private void earn(MtaWorld.Room room, Step step, MtaArenaPlugin.Snapshot s)
 	{
+		int magic = Microbot.getClient().getBoostedSkillLevel(Skill.MAGIC);
+		Rs2Spells spell = MtaPrep.spell(room, magic, rooms.enchantLevel(), s.owned.contains("bones_to_peaches"));
+		if (spell == null)
+		{
+			status("no Enchant castable");
+			return;
+		}
+		String where = room.name().toLowerCase();
 		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
 		if (at != room)
 		{
-			enterRoom(room);
-			return;
+			// In the lobby: the room's setup first, at the bank chest upstairs.
+			MtaPrep.Plan plan = prep.plan(room, spell);
+			switch (prep.step(plan))
+			{
+				case MISSING:
+					blocked.add(step.room);
+					status("no " + String.join(", ", plan.missing()) + " runes for the " + where
+						+ " room: it is left to you until the run is switched off and on");
+					Rs2Bank.closeBank();
+					return;
+				case WORKING:
+					status("setting up for the " + where + " room" + gear(plan));
+					return;
+				default:
+					enterRoom(room);
+					return;
+			}
 		}
-		if (!rooms.canPlay(room))
+		if (!net.runelite.client.plugins.microbot.util.magic.Rs2Magic.canCast(spell))
 		{
-			status("missing runes or a staff for the " + room.name().toLowerCase() + " room");
+			status("out of runes for the " + where + " room: back to the bank");
 			rooms.flush(room);
 			leaveRoom();
 			return;
 		}
-		status(room.name().toLowerCase() + ": " + step.points + " points to go for " + step.reward);
+		status(where + ": " + step.points + " points to go for " + step.reward);
 		switch (room)
 		{
 			case ENCHANTMENT:
@@ -262,12 +323,26 @@ final class MtaRunner extends Script
 				rooms.alchemist();
 				break;
 			case GRAVEYARD:
-				rooms.graveyard();
+				rooms.graveyard(spell == Rs2Spells.BONES_TO_PEACHES);
 				break;
 			default:
 				rooms.telekinetic(this::leaveRoom);
 				break;
 		}
+	}
+
+	private static String gear(MtaPrep.Plan plan)
+	{
+		StringBuilder b = new StringBuilder();
+		if (plan.choice.staff != null)
+		{
+			b.append(" (staff ").append(plan.choice.staff.itemId);
+		}
+		if (plan.choice.tome != null)
+		{
+			b.append(b.length() == 0 ? " (" : ", ").append("tome ").append(plan.choice.tome.itemId);
+		}
+		return b.length() == 0 ? "" : b.append(")").toString();
 	}
 
 	private void enterRoom(MtaWorld.Room room)

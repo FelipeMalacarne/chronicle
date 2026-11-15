@@ -29,12 +29,20 @@ class MtaPlannerTest
 	@Test
 	void peachesFirst_earnsTheLeastEnchantingRoomLast() throws Exception
 	{
-		// Peaches cost 200/200/2000/300; the Enchanting Chamber is last in the planner's preference.
-		Step s = next(Arrays.asList("infinity_boots", "bones_to_peaches"), NONE, new Points(0, 0, 0, 0), 44);
+		// Peaches cost 200/200/2000/300 and go first from Magic 60; the Enchanting Chamber is last in
+		// the planner's preference.
+		Step s = next(Arrays.asList("infinity_boots", "bones_to_peaches"), NONE, new Points(0, 0, 0, 0), 60);
 		assertEquals(Kind.EARN, s.kind);
 		assertEquals("bones_to_peaches", s.reward);
 		assertEquals(Room.TELEKINETIC, s.room);
 		assertEquals(200, s.points);
+	}
+
+	@Test
+	void belowMagic60ThePeachesKeepTheirPlace() throws Exception
+	{
+		Step s = next(Arrays.asList("infinity_boots", "bones_to_peaches"), NONE, new Points(0, 0, 0, 0), 44);
+		assertEquals("infinity_boots", s.reward);
 	}
 
 	@Test
@@ -78,5 +86,20 @@ class MtaPlannerTest
 		Step s = next(Arrays.asList("bones_to_peaches"), NONE, new Points(200, 200, 0, 300), 5);
 		assertEquals(Kind.BLOCKED, s.kind);
 		assertEquals(Room.ENCHANTMENT, s.room);
+	}
+
+	@Test
+	void roomsOutsideTheAllowedSetAreLeftToTheOwner() throws Exception
+	{
+		// Peaches (200/200/2000/300) with only the Enchanting Chamber allowed: earn there first,
+		// then wait for the rest by hand.
+		java.util.Set<Room> only = java.util.EnumSet.of(Room.ENCHANTMENT);
+		Step s = MtaPlanner.next(Arrays.asList("bones_to_peaches"), NONE, new Points(0, 0, 0, 0), 44, 0, only);
+		assertEquals(Kind.EARN, s.kind);
+		assertEquals(Room.ENCHANTMENT, s.room);
+		s = MtaPlanner.next(Arrays.asList("bones_to_peaches"), NONE, new Points(0, 0, 2000, 0), 44, 0, only);
+		assertEquals(Kind.MANUAL, s.kind);
+		assertEquals(Room.TELEKINETIC, s.room);
+		assertEquals(200, s.points);
 	}
 }

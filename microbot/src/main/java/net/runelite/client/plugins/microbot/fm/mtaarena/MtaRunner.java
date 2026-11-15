@@ -4,24 +4,26 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.widgets.Widget;
+import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.microbot.Microbot;
 import net.runelite.client.plugins.microbot.Script;
-import net.runelite.client.plugins.microbot.fm.mtaarena.MtaPlanner.Kind;
 import net.runelite.client.plugins.microbot.fm.mtaarena.MtaPlanner.Step;
+import net.runelite.client.plugins.microbot.util.dialogues.Rs2Dialogue;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.keyboard.Rs2Keyboard;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Magic;
+import net.runelite.client.plugins.microbot.util.magic.Rs2Spellbook;
 import net.runelite.client.plugins.microbot.util.player.Rs2Player;
 import net.runelite.client.plugins.microbot.util.walker.Rs2Walker;
 import net.runelite.client.plugins.microbot.util.widget.Rs2Widget;
-import net.runelite.client.plugins.skillcalculator.skills.MagicAction;
+import net.runelite.client.plugins.mta.MTAPlugin;
 
 /**
  * Runs the plan: asks {@link MtaPlanner} what is next, buys at the Rewards Guardian or earns the
- * missing points in a room, and asks again. Acts only while the plugin's "Run the plan" setting is on.
- * The Enchanting Chamber is automated; for the other rooms it says which one to do by hand and
- * resumes when the points change. One short step per loop: the planner reads the points again
- * each time, so a purchase or a level-up needs no special case.
+ * missing points in a room ({@link MtaRooms}), and asks again. Acts only while the plugin's "Run the
+ * plan" setting is on. One short step per loop: the planner reads the points each time, so a
+ * purchase or a level-up needs no special case, and a room is left as soon as the plan no longer
+ * needs its points.
  */
 @Slf4j
 final class MtaRunner extends Script
@@ -29,30 +31,20 @@ final class MtaRunner extends Script
 	private static final int LOOP_MS = 600;
 	/** Give up on a purchase that did not take after this many tries and say so. */
 	private static final int BUY_TRIES = 3;
-	private static final int STAFF_AIR = 1381;
-	private static final int STAFF_WATER = 1383;
-	private static final int STAFF_EARTH = 1385;
-	private static final int STAFF_FIRE = 1387;
-	private static final int COSMIC_RUNE = 564;
-
-	/** Lvl-1 to Lvl-6 Enchant, index = level - 1. */
-	private static final MagicAction[] ENCHANT = {
-		MagicAction.ENCHANT_SAPPHIRE_JEWELLERY, MagicAction.ENCHANT_EMERALD_JEWELLERY,
-		MagicAction.ENCHANT_RUBY_JEWELLERY, MagicAction.ENCHANT_DIAMOND_JEWELLERY,
-		MagicAction.ENCHANT_DRAGONSTONE_JEWELLERY, MagicAction.ENCHANT_ONYX_JEWELLERY,
-	};
 
 	private final MtaArenaPlugin plugin;
 	private final MtaArenaConfig config;
+	private final MtaRooms rooms;
+	private MTAPlugin core;
 	private String boughtTry = "";
 	private int tries;
-	/** The Enchanting Chamber: true from a full inventory until the shapes are cast and deposited. */
-	private boolean casting;
+	private boolean firstVisit;
 
 	MtaRunner(MtaArenaPlugin plugin, MtaArenaConfig config)
 	{
 		this.plugin = plugin;
 		this.config = config;
+		this.rooms = new MtaRooms(config, () -> isRunning() && config.automate());
 	}
 
 	public boolean run()
@@ -81,6 +73,20 @@ final class MtaRunner extends Script
 		{
 			return;
 		}
+		if (!coreReady())
+		{
+			return;
+		}
+		if (!Rs2Magic.isSpellbook(Rs2Spellbook.MODERN))
+		{
+			status("use the standard spellbook");
+			return;
+		}
+		if (firstVisit)
+		{
+			talkToEntranceGuardian();
+			return;
+		}
 		MtaArenaPlugin.Snapshot s = plugin.snapshot();
 		if (!s.pointsKnown)
 		{
@@ -91,6 +97,15 @@ final class MtaRunner extends Script
 		if (step == null)
 		{
 			status(s.message == null ? "nothing chosen" : s.message);
+			return;
+		}
+		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
+		boolean needsHere = at != null && step.kind == MtaPlanner.Kind.EARN && MtaWorld.Room.of(step.room) == at;
+		if (at != null && !needsHere)
+		{
+			status("done in the " + at.name().toLowerCase() + " room");
+			rooms.flush(at);
+			leaveRoom();
 			return;
 		}
 		switch (step.kind)
@@ -105,11 +120,51 @@ final class MtaRunner extends Script
 				buy(step.reward);
 				return;
 			case EARN:
-				earn(step, s);
+				earn(MtaWorld.Room.of(step.room), step);
 				return;
 			default:
 				return;
 		}
+	}
+
+	/** The RuneLite Mage Training Arena plugin has the solvers the rooms use: it must be on. */
+	private boolean coreReady()
+	{
+		if (Microbot.getPluginManager() == null)
+		{
+			return false;
+		}
+		if (core == null)
+		{
+			for (Plugin p : Microbot.getPluginManager().getPlugins())
+			{
+				if (p instanceof MTAPlugin)
+				{
+					core = (MTAPlugin) p;
+					rooms.core(core);
+				}
+			}
+			if (core == null)
+			{
+				status("the RuneLite Mage Training Arena plugin was not found");
+				return false;
+			}
+		}
+		if (!Microbot.getPluginManager().isActive(core))
+		{
+			status("turning on the RuneLite Mage Training Arena plugin");
+			try
+			{
+				Microbot.getPluginManager().setPluginEnabled(core, true);
+				Microbot.getPluginManager().startPlugin(core);
+			}
+			catch (Exception ex)
+			{
+				log.warn("could not start the MTA plugin", ex);
+			}
+			return false;
+		}
+		return true;
 	}
 
 	// ---- the Rewards Guardian ------------------------------------------------------------
@@ -132,20 +187,16 @@ final class MtaRunner extends Script
 			status("bring the " + MtaCalculator.reward(r.requires).name + " to the shop to upgrade it");
 			return;
 		}
-		if (MtaWorld.Room.at(Rs2Player.getWorldLocation()) != null)
-		{
-			leaveRoom();
-			return;
-		}
-		if (!Rs2Widget.isWidgetVisible(MtaWorld.SHOP_GROUP, MtaWorld.SHOP_ITEMS))
+		if (!near(MtaWorld.SHOP, 3) && !Rs2Walker.walkTo(MtaWorld.SHOP))
 		{
 			status("walking to the Rewards Guardian");
-			if (!near(MtaWorld.SHOP, 3) && !Rs2Walker.walkTo(MtaWorld.SHOP))
-			{
-				return;
-			}
+			return;
+		}
+		if (!Rs2Widget.isWidgetVisible(MtaWorld.SHOP_GROUP, 0))
+		{
 			Microbot.getRs2NpcCache().query().withId(MtaWorld.REWARDS_GUARDIAN).interact("Trade-with");
-			sleepUntil(() -> Rs2Widget.isWidgetVisible(MtaWorld.SHOP_GROUP, MtaWorld.SHOP_ITEMS), 5000);
+			sleepUntil(() -> Rs2Widget.isWidgetVisible(MtaWorld.SHOP_GROUP, 0), 5000);
+			sleepGaussian(600, 150);
 			return;
 		}
 		Widget list = Rs2Widget.getWidget(MtaWorld.SHOP_GROUP, MtaWorld.SHOP_ITEMS);
@@ -159,11 +210,13 @@ final class MtaRunner extends Script
 		}
 		status("buying " + r.name);
 		tries++;
-		Rs2Widget.clickWidgetFast(items[index], index);
-		sleepGaussian(600, 150);
-		Rs2Widget.clickWidget(MtaWorld.SHOP_GROUP, MtaWorld.SHOP_BUY);
-		sleepGaussian(600, 150);
-		Rs2Keyboard.keyPress(27);
+		Rs2Inventory.waitForInventoryChanges(() -> {
+			Rs2Widget.clickWidgetFast(items[index], index);
+			sleepGaussian(600, 150);
+			Rs2Widget.clickWidget(MtaWorld.SHOP_GROUP, MtaWorld.SHOP_BUY);
+			sleepGaussian(600, 150);
+			Rs2Keyboard.keyPress(27);
+		});
 	}
 
 	private static int findItem(Widget[] items, int itemId)
@@ -184,49 +237,52 @@ final class MtaRunner extends Script
 
 	// ---- rooms ---------------------------------------------------------------------------
 
-	private void earn(Step step, MtaArenaPlugin.Snapshot s)
+	private void earn(MtaWorld.Room room, Step step)
 	{
-		MtaWorld.Room room = MtaWorld.Room.of(step.room);
-		if (room != MtaWorld.Room.ENCHANTMENT)
+		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
+		if (at != room)
 		{
-			status("do the " + room.name().toLowerCase() + " room by hand (" + step.points + " points for "
-				+ step.reward + "); the plugin goes on when they are in");
+			enterRoom(room);
 			return;
 		}
-		if (!enterRoom(room))
+		if (!rooms.canPlay(room))
 		{
+			status("missing runes or a staff for the " + room.name().toLowerCase() + " room");
+			rooms.flush(room);
+			leaveRoom();
 			return;
 		}
-		enchant(s);
+		status(room.name().toLowerCase() + ": " + step.points + " points to go for " + step.reward);
+		switch (room)
+		{
+			case ENCHANTMENT:
+				rooms.enchant();
+				break;
+			case ALCHEMIST:
+				rooms.alchemist();
+				break;
+			case GRAVEYARD:
+				rooms.graveyard();
+				break;
+			default:
+				rooms.telekinetic(this::leaveRoom);
+				break;
+		}
 	}
 
-	/** True when the player is in {@code room}; otherwise takes one step towards it. */
-	private boolean enterRoom(MtaWorld.Room room)
+	private void enterRoom(MtaWorld.Room room)
 	{
-		WorldPoint here = Rs2Player.getWorldLocation();
-		MtaWorld.Room at = MtaWorld.Room.at(here);
-		if (at == room)
-		{
-			return true;
-		}
-		if (at != null)
-		{
-			leaveRoom();
-			return false;
-		}
 		status("entering the " + room.name().toLowerCase() + " room");
-		if (Rs2Widget.hasWidget(MtaWorld.FIRST_VISIT_TEXT))
-		{
-			status("talk to the Entrance Guardian first (first visit)");
-			return false;
-		}
 		if (!near(MtaWorld.LOBBY, 4) && !Rs2Walker.walkTo(MtaWorld.LOBBY))
 		{
-			return false;
+			return;
 		}
 		Microbot.getRs2TileObjectCache().query().interact(room.teleporter, "Enter");
 		Rs2Player.waitForAnimation();
-		return false;
+		if (Rs2Widget.hasWidget(MtaWorld.FIRST_VISIT_TEXT))
+		{
+			firstVisit = true;
+		}
 	}
 
 	private void leaveRoom()
@@ -236,8 +292,17 @@ final class MtaRunner extends Script
 		{
 			return;
 		}
-		status("leaving the " + at.name().toLowerCase() + " room");
-		if (!near(at.exit, 3) && !Rs2Walker.walkTo(at.exit))
+		WorldPoint exit = at.exit;
+		if (at == MtaWorld.Room.TELEKINETIC)
+		{
+			MtaWorld.Maze maze = MtaWorld.Maze.at(Rs2Player.getWorldLocation());
+			if (maze == null)
+			{
+				return;
+			}
+			exit = maze.exit;
+		}
+		if (!Rs2Walker.walkTo(exit))
 		{
 			return;
 		}
@@ -245,111 +310,30 @@ final class MtaRunner extends Script
 		Rs2Player.waitForWalking();
 	}
 
-	// ---- the Enchanting Chamber ----------------------------------------------------------
-
-	private void enchant(MtaArenaPlugin.Snapshot s)
+	/** The first visit: the Entrance Guardian has to be spoken to once. */
+	private void talkToEntranceGuardian()
 	{
-		int level = MtaCalculator.enchantLevelFor(Microbot.getClient().getRealSkillLevel(net.runelite.api.Skill.MAGIC),
-			config.enchantLevel());
-		if (level == 0)
-		{
-			status("no Enchant castable");
-			return;
-		}
-		if (!Rs2Inventory.contains(COSMIC_RUNE))
-		{
-			status("no cosmic runes in the inventory");
-			return;
-		}
-		wieldStaff(level);
-
-		MtaWorld.Shape carried = carriedShape();
-		boolean dragonstone = Rs2Inventory.contains(MtaWorld.DRAGONSTONE);
-		if (!casting && Rs2Inventory.emptySlotCount() <= 1)
-		{
-			casting = true;
-		}
-		if (casting)
-		{
-			if (carried != null || dragonstone)
-			{
-				status("enchanting (Lvl-" + level + ")");
-				int item = dragonstone ? MtaWorld.DRAGONSTONE : carried.itemId;
-				if (Rs2Magic.cast(ENCHANT[level - 1]))
-				{
-					sleepGaussian(600, 150);
-					Rs2Inventory.interact(item);
-					Rs2Inventory.waitForInventoryChanges(3000);
-				}
-				return;
-			}
-			status("depositing");
-			if (!near(MtaWorld.ENCHANT_HOLE_SPOT, 2) && !Rs2Walker.walkTo(MtaWorld.ENCHANT_HOLE_SPOT))
-			{
-				return;
-			}
-			Microbot.getRs2TileObjectCache().query().interact(MtaWorld.ENCHANT_HOLE, "Deposit");
-			Rs2Player.waitForWalking();
-			casting = false;
-			return;
-		}
-		status("collecting shapes");
-		if (Microbot.getRs2TileItemCache().query().withId(MtaWorld.DRAGONSTONE).interact("Take"))
-		{
-			Rs2Inventory.waitForInventoryChanges(5000);
-			return;
-		}
-		MtaWorld.Shape bonus = bonusShape();
-		if (bonus == null)
+		status("talking to the Entrance Guardian (first visit)");
+		if (!near(MtaWorld.ENTRANCE_GUARDIAN_SPOT, 3) && !Rs2Walker.walkTo(MtaWorld.ENTRANCE_GUARDIAN_SPOT))
 		{
 			return;
 		}
-		if (Microbot.getRs2TileObjectCache().query().interact(bonus.pedestal, "Take-from"))
+		if (!Rs2Dialogue.isInDialogue())
 		{
-			Rs2Inventory.waitForInventoryChanges(1000);
-			return;
+			Microbot.getRs2NpcCache().query().withId(MtaWorld.ENTRANCE_GUARDIAN).interact("Talk-to");
 		}
-		// No pedestal in sight: walk to one of the corners where they stand.
-		WorldPoint spot = MtaWorld.ENCHANT_SEARCH[(int) (Math.random() * MtaWorld.ENCHANT_SEARCH.length)];
-		Rs2Walker.walkTo(spot);
-		Rs2Player.waitForWalking();
-	}
-
-	private static MtaWorld.Shape bonusShape()
-	{
-		for (MtaWorld.Shape shape : MtaWorld.Shape.values())
+		else if (Rs2Dialogue.hasSelectAnOption() && Rs2Widget.hasWidget("I'm new to this place"))
 		{
-			if (Rs2Widget.isWidgetVisible(shape.widgetGroup, shape.widgetChild))
-			{
-				return shape;
-			}
+			Rs2Widget.clickWidget("I'm new to this place");
 		}
-		return null;
-	}
-
-	private static MtaWorld.Shape carriedShape()
-	{
-		for (MtaWorld.Shape shape : MtaWorld.Shape.values())
+		else if (Rs2Dialogue.hasSelectAnOption() && Rs2Widget.hasWidget("Thanks, bye!"))
 		{
-			if (Rs2Inventory.contains(shape.itemId))
-			{
-				return shape;
-			}
+			Rs2Widget.clickWidget("Thanks, bye!");
+			firstVisit = false;
 		}
-		return null;
-	}
-
-	/** The staff the Enchant level's elemental runes come from, when one is in the inventory. */
-	private static void wieldStaff(int level)
-	{
-		int[] staff = {STAFF_WATER, STAFF_AIR, STAFF_FIRE, STAFF_EARTH};
-		if (level >= 1 && level <= 4 && Rs2Inventory.contains(staff[level - 1]))
+		else
 		{
-			Rs2Inventory.wield(staff[level - 1]);
-		}
-		else if (level == 6 && Rs2Inventory.contains(STAFF_EARTH))
-		{
-			Rs2Inventory.wield(STAFF_EARTH);
+			Rs2Dialogue.clickContinue();
 		}
 	}
 

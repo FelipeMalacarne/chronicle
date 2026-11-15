@@ -44,7 +44,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class MtaArenaPlugin extends Plugin
 {
-	static final String VERSION = "0.2.0";
+	static final String VERSION = "0.3.0";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 
@@ -146,27 +146,56 @@ public class MtaArenaPlugin extends Plugin
 		configManager.setConfiguration(MtaArenaConfig.GROUP, "forget", false);
 	}
 
-	/** The arena's points panel (talk to the progress hat, or the lobby's), when it is on screen. */
+	/** The arena's points panel (talk to the progress hat, or the lobby's), or the room's own counter. */
 	private void readPoints()
 	{
-		remember(K_TELE, InterfaceID.MagictrainingMain.MAGICTRAIN_TELE_POINTS);
-		remember(K_GRAVE, InterfaceID.MagictrainingMain.MAGICTRAIN_GRAVE_POINTS);
-		remember(K_ENCH, InterfaceID.MagictrainingMain.MAGICTRAIN_ENCH_POINTS);
-		remember(K_ALCH, InterfaceID.MagictrainingMain.MAGICTRAIN_ALCH_POINTS);
+		remember(K_TELE, InterfaceID.MagictrainingMain.MAGICTRAIN_TELE_POINTS, MtaWorld.Room.TELEKINETIC);
+		remember(K_GRAVE, InterfaceID.MagictrainingMain.MAGICTRAIN_GRAVE_POINTS, MtaWorld.Room.GRAVEYARD);
+		remember(K_ENCH, InterfaceID.MagictrainingMain.MAGICTRAIN_ENCH_POINTS, MtaWorld.Room.ENCHANTMENT);
+		remember(K_ALCH, InterfaceID.MagictrainingMain.MAGICTRAIN_ALCH_POINTS, MtaWorld.Room.ALCHEMIST);
 	}
 
-	private void remember(String key, int widgetId)
+	private void remember(String key, int widgetId, MtaWorld.Room room)
 	{
-		Widget w = client.getWidget(widgetId);
-		if (w == null || w.isHidden())
+		int n = readWidget(client.getWidget(widgetId));
+		if (n < 0)
 		{
-			return;
+			// Inside a room the main panel is not up: the room shows its own points. The Alchemists'
+			// Playground counts the coins not handed in yet, a hundred of them to the point.
+			int[] w = MtaWorld.roomPointsWidget(room);
+			n = readWidget(client.getWidget(w[0], w[1]));
+			if (n >= 0 && room == MtaWorld.Room.ALCHEMIST)
+			{
+				n += coins() / 100;
+			}
 		}
-		int n = MtaText.lastNumber(w.getText());
 		if (n >= 0 && n != stored(key, -1))
 		{
 			configManager.setConfiguration(MtaArenaConfig.GROUP, key, n);
 		}
+	}
+
+	private static int readWidget(Widget w)
+	{
+		return w == null || w.isHidden() ? -1 : MtaText.lastNumber(w.getText());
+	}
+
+	private int coins()
+	{
+		ItemContainer c = client.getItemContainer(InventoryID.INVENTORY);
+		if (c == null)
+		{
+			return 0;
+		}
+		int n = 0;
+		for (Item item : c.getItems())
+		{
+			if (item.getId() == ItemID.COINS)
+			{
+				n += item.getQuantity();
+			}
+		}
+		return n;
 	}
 
 	private int stored(String key, int fallback)

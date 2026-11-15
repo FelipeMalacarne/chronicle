@@ -144,7 +144,7 @@ public interface MtaArenaConfig extends Config
 	@ConfigItem(
 		keyName = "automate",
 		name = "Run the plan",
-		description = "The plugin clicks: it plays the Enchanting Chamber and buys the rewards in the plan's order. The other rooms it asks you to do by hand. Off by default",
+		description = "The plugin clicks: it plays the four rooms and buys the rewards in the plan's order. Off by default",
 		section = RUN,
 		position = 0
 	)

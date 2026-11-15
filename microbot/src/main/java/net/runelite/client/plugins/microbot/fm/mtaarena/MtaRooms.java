@@ -208,7 +208,7 @@ final class MtaRooms
 		}
 		Rs2Inventory.dropAll(MtaWorld.ALCHEMY_ITEMS);
 		// Coins only become points in the Coin Collector.
-		if (Rs2Inventory.count(MtaWorld.COINS) >= COINS_PER_TRIP)
+		if (Rs2Inventory.itemQuantity(MtaWorld.COINS) >= COINS_PER_TRIP)
 		{
 			depositCoins();
 			return;
@@ -242,7 +242,7 @@ final class MtaRooms
 
 	private static void depositCoins()
 	{
-		int coins = Rs2Inventory.count(MtaWorld.COINS);
+		int coins = Rs2Inventory.itemQuantity(MtaWorld.COINS);
 		if (Microbot.getRs2TileObjectCache().query().withName(MtaWorld.COIN_COLLECTOR).interact("Deposit"))
 		{
 			boolean done = sleepUntil(() -> !Rs2Inventory.contains(MtaWorld.COINS), 10000);

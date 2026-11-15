@@ -27,7 +27,8 @@ import net.runelite.client.plugins.microbot.util.magic.Runes;
  * A room's setup: the staff and tome that cover its spell's elemental runes ({@link MtaLoadout}),
  * the runes left to carry, and nothing else in the inventory but what the owner keeps. Everything
  * else goes in the arena's bank chest, so the inventory has room for the shapes, bones and items
- * the rooms hand out, and no coin of the owner's walks into the Alchemists' Playground.
+ * the rooms hand out, and no coin of the owner's walks into the Alchemists' Playground. Quantities
+ * are Rs2Inventory.itemQuantity: Rs2Inventory.count counts stacks (one for a stack of runes).
  */
 final class MtaPrep
 {
@@ -63,7 +64,7 @@ final class MtaPrep
 			List<String> out = new ArrayList<>();
 			for (int id : runes.keySet())
 			{
-				if (Rs2Inventory.count(id) <= 0 && Rs2Bank.count(id) <= 0)
+				if (Rs2Inventory.itemQuantity(id) <= 0 && Rs2Bank.count(id) <= 0)
 				{
 					Runes r = Runes.byItemId(id);
 					out.add(r == null ? String.valueOf(id) : r.name().toLowerCase());
@@ -121,7 +122,7 @@ final class MtaPrep
 		Map<String, Integer> stock = new HashMap<>();
 		for (Runes r : ELEMENTS)
 		{
-			stock.put(r.name(), Rs2Inventory.count(r.getItemId()) + Rs2Bank.count(r.getItemId()));
+			stock.put(r.name(), Rs2Inventory.itemQuantity(r.getItemId()) + Rs2Bank.count(r.getItemId()));
 		}
 		MtaLoadout.Choice choice = MtaLoadout.choose(needed, ownedGear(), stock,
 			wornId(EquipmentInventorySlot.WEAPON), wornId(EquipmentInventorySlot.SHIELD));
@@ -149,7 +150,7 @@ final class MtaPrep
 		}
 		for (Map.Entry<Integer, Integer> e : plan.runes.entrySet())
 		{
-			if (Rs2Inventory.count(e.getKey()) < e.getValue())
+			if (Rs2Inventory.itemQuantity(e.getKey()) < e.getValue())
 			{
 				return false;
 			}

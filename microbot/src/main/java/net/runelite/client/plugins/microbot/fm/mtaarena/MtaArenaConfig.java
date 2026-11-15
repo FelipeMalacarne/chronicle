@@ -224,4 +224,16 @@ public interface MtaArenaConfig extends Config
 	{
 		return "";
 	}
+
+	@ConfigItem(
+		keyName = "buyRewards",
+		name = "Buy rewards",
+		description = "Buy every reward once its points are in. Off: only Bones to Peaches is bought (it changes how the Graveyard is played); the rest of the points are gathered for you to buy",
+		section = RUN,
+		position = 7
+	)
+	default boolean buyRewards()
+	{
+		return false;
+	}
 }

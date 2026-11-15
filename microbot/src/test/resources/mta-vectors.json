@@ -344,7 +344,7 @@
     "error": true
   },
   {
-    "name": "the peaches go first from Magic 60: they halve the Graveyard's trips, so the points they unlock earn faster",
+    "name": "the peaches go first: they halve the Graveyard's trips, so the points they unlock earn faster, Magic 60",
     "input": {
       "rewards": [
         "infinity_boots",
@@ -386,7 +386,7 @@
     }
   },
   {
-    "name": "below Magic 60 Bones to Peaches is not castable: the peaches keep their place, Magic 44",
+    "name": "the peaches go first below Magic 60 too: the Graveyard's points can wait for the spell, Magic 44",
     "input": {
       "rewards": [
         "infinity_boots",
@@ -404,8 +404,8 @@
     },
     "want": {
       "buy": [
-        "infinity_boots",
-        "bones_to_peaches"
+        "bones_to_peaches",
+        "infinity_boots"
       ],
       "needed": {
         "telekinetic": 320,

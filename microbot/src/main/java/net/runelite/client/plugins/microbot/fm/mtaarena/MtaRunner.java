@@ -172,6 +172,9 @@ final class MtaRunner extends Script
 			case BLOCKED:
 				status("Magic is too low for the Enchanting Chamber: " + step.reward + " waits");
 				return;
+			case READY:
+				status("every chosen reward's points are in: buy them at the Rewards Guardian");
+				return;
 			case MANUAL:
 				status("play the " + step.room.name().toLowerCase() + " room by hand (" + step.points
 					+ " points for " + step.reward + ")");
@@ -361,8 +364,7 @@ final class MtaRunner extends Script
 			leaveRoom();
 			return;
 		}
-		status(where + ": " + step.points + " points to go"
-			+ (step.ahead ? " for the rest of the plan (" + step.reward + " waits for you)" : " for " + step.reward));
+		status(where + ": " + step.points + " points to go for " + step.reward);
 		switch (room)
 		{
 			case ENCHANTMENT:

@@ -15,8 +15,8 @@ import java.util.Set;
  */
 final class MtaCalculator
 {
-	private static final String PEACHES = "bones_to_peaches";
-	/** The Magic level of Bones to Peaches (OSRS Wiki): below it the peaches speed nothing up. */
+	static final String PEACHES = "bones_to_peaches";
+	/** The Magic level of Bones to Peaches (OSRS Wiki). */
 	static final int PEACHES_MAGIC = 60;
 	private static final Map<String, MtaReward> BY_ID = new HashMap<>();
 
@@ -111,7 +111,7 @@ final class MtaCalculator
 		}
 	}
 
-	/** The plan: what to buy (upgrade prerequisites first, the peaches before everything from Magic 60), the points it takes and the runes. */
+	/** The plan: what to buy (upgrade prerequisites first, the peaches before everything), the points it takes and the runes. */
 	static final class Result
 	{
 		final List<String> buy;
@@ -153,7 +153,7 @@ final class MtaCalculator
 	static Result calculate(Collection<String> rewards, Collection<String> owned, Points held, int magic,
 		int enchantLevel) throws MtaException
 	{
-		List<String> buy = buyOrder(rewards, owned, magic);
+		List<String> buy = buyOrder(rewards, owned);
 		int t = 0;
 		int g = 0;
 		int e = 0;
@@ -211,10 +211,9 @@ final class MtaCalculator
 
 	/**
 	 * What is left to buy, in purchase order: the wands' prerequisites first, the peaches before
-	 * everything once {@code magic} casts Bones to Peaches. An owned reward covers the tiers under it.
+	 * everything. An owned reward covers the tiers under it.
 	 */
-	static List<String> buyOrder(Collection<String> rewards, Collection<String> owned, int magic)
-		throws MtaException
+	static List<String> buyOrder(Collection<String> rewards, Collection<String> owned) throws MtaException
 	{
 		Set<String> have = new HashSet<>();
 		for (String id : owned)
@@ -232,9 +231,8 @@ final class MtaCalculator
 			known(id);
 			add(id, have, buy);
 		}
-		// The peaches halve the Graveyard's trips, so what they unlock is earned faster: buy them first,
-		// once Magic casts Bones to Peaches (below it they would not speed anything up).
-		if (magic >= PEACHES_MAGIC && buy.remove(PEACHES))
+		// The peaches halve the Graveyard's trips, so what they unlock is earned faster: buy them first.
+		if (buy.remove(PEACHES))
 		{
 			buy.add(0, PEACHES);
 		}

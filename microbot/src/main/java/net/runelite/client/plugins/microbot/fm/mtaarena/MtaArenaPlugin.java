@@ -309,7 +309,7 @@ public class MtaArenaPlugin extends Plugin
 			try
 			{
 				s.step = MtaPlanner.next(chosen, owned, s.held, client.getRealSkillLevel(Skill.MAGIC),
-					config.enchantLevel(), playable());
+					config.enchantLevel(), playable(), config.buyRewards());
 			}
 			catch (MtaCalculator.MtaException ex)
 			{

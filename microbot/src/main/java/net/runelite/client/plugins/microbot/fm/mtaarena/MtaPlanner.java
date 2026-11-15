@@ -35,7 +35,9 @@ final class MtaPlanner
 		/** The next reward needs points in the Enchanting Chamber and no Enchant is castable. */
 		BLOCKED,
 		/** The points are missing in a room the owner plays by hand: the plugin waits for them. */
-		MANUAL
+		MANUAL,
+		/** Every chosen reward's points are in; they are bought by hand (or with "Buy rewards" on). */
+		READY
 	}
 
 	static final class Step
@@ -44,10 +46,7 @@ final class MtaPlanner
 		final String reward;
 		final Room room;
 		final int points;
-		/**
-		 * The points are for the rewards after {@link #reward}, which waits for a room the owner plays:
-		 * the plugin works ahead in the rooms it plays meanwhile.
-		 */
+		/** The points are for {@link #reward} after the ones before it in the plan, already covered. */
 		final boolean ahead;
 
 		Step(Kind kind, String reward, Room room, int points)
@@ -75,79 +74,97 @@ final class MtaPlanner
 	static Step next(Collection<String> wanted, Collection<String> owned, Points held, int magic,
 		int enchantLevel) throws MtaException
 	{
-		return next(wanted, owned, held, magic, enchantLevel, EnumSet.allOf(Room.class));
+		return next(wanted, owned, held, magic, enchantLevel, EnumSet.allOf(Room.class), true);
 	}
 
 	/**
-	 * {@code allowed} are the rooms the plugin may play: a room outside it with points missing is
-	 * left to the owner ({@link Kind#MANUAL}), after the allowed rooms with points missing.
+	 * {@code allowed}: the rooms the plugin may play (one outside it with points missing is left to the
+	 * owner, {@link Kind#MANUAL}). {@code buyAll}: buy every reward once its points are in; without it
+	 * only Bones to Peaches is bought (it changes how the Graveyard is played) and the rest of the points
+	 * are only gathered.
+	 *
+	 * <p>The points are gathered reward by reward in purchase order: the target is what the rewards up
+	 * to the first not yet covered cost together, so at any time as many rewards as possible are
+	 * covered, the rooms taking turns instead of one room filling up for every reward. Once Bones to
+	 * Peaches is owned, Graveyard points wait for Magic 60, when the spell halves their trips; the
+	 * Graveyard with bananas comes only when nothing else is left.
 	 */
 	static Step next(Collection<String> wanted, Collection<String> owned, Points held, int magic,
-		int enchantLevel, Set<Room> allowed) throws MtaException
+		int enchantLevel, Set<Room> allowed, boolean buyAll) throws MtaException
 	{
-		List<String> order = MtaCalculator.buyOrder(wanted, owned, magic);
+		List<String> order = MtaCalculator.buyOrder(wanted, owned);
 		if (order.isEmpty())
 		{
 			return new Step(Kind.DONE, null, null, 0);
 		}
-		MtaReward r = MtaCalculator.reward(order.get(0));
-		int[] lack = {
-			Math.max(0, r.telekinetic - held.telekinetic),
-			Math.max(0, r.alchemist - held.alchemist),
-			Math.max(0, r.graveyard - held.graveyard),
-			Math.max(0, r.enchantment - held.enchantment),
-		};
-		Step manual = null;
-		for (Room room : Room.values())
-		{
-			int n = lack[room.ordinal()];
-			if (n == 0)
-			{
-				continue;
-			}
-			if (!allowed.contains(room))
-			{
-				if (manual == null)
-				{
-					manual = new Step(Kind.MANUAL, r.id, room, n);
-				}
-				continue;
-			}
-			if (room == Room.ENCHANTMENT && MtaCalculator.enchantLevelFor(magic, enchantLevel) == 0)
-			{
-				return new Step(Kind.BLOCKED, r.id, room, n);
-			}
-			return new Step(Kind.EARN, r.id, room, n);
-		}
-		if (manual == null)
-		{
-			return new Step(Kind.BUY, r.id, null, 0);
-		}
-		// The first reward waits for the owner: meanwhile earn, in the rooms the plugin plays, what the
-		// rest of the plan needs, so the run does not stop at the first reward.
+		boolean peachesOwned = owned.contains(MtaCalculator.PEACHES);
+		boolean waitGraveyard = peachesOwned && magic < MtaCalculator.PEACHES_MAGIC;
+		int[] have = {held.telekinetic, held.alchemist, held.graveyard, held.enchantment};
 		int[] total = new int[4];
-		for (String id : order)
+		Step manual = null;
+		Step graveyardLater = null;
+		for (int k = 0; k < order.size(); k++)
 		{
-			MtaReward x = MtaCalculator.reward(id);
-			total[Room.TELEKINETIC.ordinal()] += x.telekinetic;
-			total[Room.ALCHEMIST.ordinal()] += x.alchemist;
-			total[Room.GRAVEYARD.ordinal()] += x.graveyard;
-			total[Room.ENCHANTMENT.ordinal()] += x.enchantment;
+			MtaReward r = MtaCalculator.reward(order.get(k));
+			total[Room.TELEKINETIC.ordinal()] += r.telekinetic;
+			total[Room.ALCHEMIST.ordinal()] += r.alchemist;
+			total[Room.GRAVEYARD.ordinal()] += r.graveyard;
+			total[Room.ENCHANTMENT.ordinal()] += r.enchantment;
+			if (k == 0 && (buyAll || r.id.equals(MtaCalculator.PEACHES)) && covers(have, total))
+			{
+				return new Step(Kind.BUY, r.id, null, 0);
+			}
+			for (Room room : Room.values())
+			{
+				int n = total[room.ordinal()] - have[room.ordinal()];
+				if (n <= 0)
+				{
+					continue;
+				}
+				if (!allowed.contains(room))
+				{
+					if (manual == null)
+					{
+						manual = new Step(Kind.MANUAL, r.id, room, n);
+					}
+					continue;
+				}
+				if (room == Room.GRAVEYARD && waitGraveyard)
+				{
+					if (graveyardLater == null)
+					{
+						graveyardLater = new Step(Kind.EARN, r.id, room, n, k > 0);
+					}
+					continue;
+				}
+				if (room == Room.ENCHANTMENT && MtaCalculator.enchantLevelFor(magic, enchantLevel) == 0)
+				{
+					return new Step(Kind.BLOCKED, r.id, room, n);
+				}
+				return new Step(Kind.EARN, r.id, room, n, k > 0);
+			}
 		}
-		int[] held2 = {held.telekinetic, held.alchemist, held.graveyard, held.enchantment};
-		for (Room room : Room.values())
+		if (graveyardLater != null)
 		{
-			int n = Math.max(0, total[room.ordinal()] - held2[room.ordinal()]);
-			if (n == 0 || !allowed.contains(room))
-			{
-				continue;
-			}
-			if (room == Room.ENCHANTMENT && MtaCalculator.enchantLevelFor(magic, enchantLevel) == 0)
-			{
-				continue;
-			}
-			return new Step(Kind.EARN, r.id, room, n, true);
+			// Everything else is in: the Graveyard with bananas, rather than standing still.
+			return graveyardLater;
 		}
-		return manual;
+		if (manual != null)
+		{
+			return manual;
+		}
+		return new Step(Kind.READY, order.get(0), null, 0);
+	}
+
+	private static boolean covers(int[] have, int[] cost)
+	{
+		for (int i = 0; i < have.length; i++)
+		{
+			if (have[i] < cost[i])
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 }

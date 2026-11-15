@@ -156,9 +156,8 @@ func Calculate(in Input) (Result, error) {
 		}
 		add(id)
 	}
-	// The peaches halve the Graveyard's trips, so what they unlock is earned faster: buy them first,
-	// once Magic casts Bones to Peaches (below it they would not speed anything up).
-	if i := slices.Index(res.Buy, peaches); i > 0 && in.Magic >= peachesMagic {
+	// The peaches halve the Graveyard's trips, so what they unlock is earned faster: buy them first.
+	if i := slices.Index(res.Buy, peaches); i > 0 {
 		res.Buy = slices.Concat([]string{peaches}, res.Buy[:i], res.Buy[i+1:])
 	}
 	for _, id := range res.Buy {
@@ -188,12 +187,8 @@ func Calculate(in Input) (Result, error) {
 	return res, nil
 }
 
-// peaches is the reward that goes first in a plan, from peachesMagic (the Magic level of Bones to
-// Peaches, OSRS Wiki) up.
-const (
-	peaches      = "bones_to_peaches"
-	peachesMagic = 60
-)
+// peaches is the reward that goes first in a plan.
+const peaches = "bones_to_peaches"
 
 func missing(needed, held int) int { return max(0, needed-held) }
 

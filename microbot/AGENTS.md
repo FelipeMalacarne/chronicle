@@ -26,10 +26,13 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
 - `fm/mtaarena/` — MTA Planner (v0.5): pick the Rewards Guardian's items, the overlay shows the pizazz
   points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
-  and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step
-  (buy the first reward of the plan, peaches first from Magic 60, or earn its missing points in one
-  room, the Enchanting Chamber last; a room switched off in the settings, or without runes, is left to
-  the owner) and `MtaRunner` runs it. Before each room `MtaPrep` sets up at the arena's bank chest:
+  and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step and
+  `MtaRunner` runs it. Bones to Peaches comes first and is the only reward bought by itself ("Buy
+  rewards" buys the rest); the other points are gathered reward by reward in purchase order (the
+  target is what the rewards up to the first not yet covered cost together, so the rooms take turns
+  and as many rewards as possible are covered at any time), the Enchanting Chamber last among them.
+  With the peaches owned, Graveyard points wait for Magic 60 (Bananas only once nothing else is
+  left). A room switched off in the settings, or without runes, is left to the owner. Before each room `MtaPrep` sets up at the arena's bank chest:
   the staff and tome that cover the most of the spell's elemental runes (`MtaLoadout`, pure and
   tested), the runes left to carry, and nothing else but the "Always keep" names. The rooms
   (`MtaRooms`) are ported from the Plugin Hub's Mage Training Arena plugin and lean on the RuneLite

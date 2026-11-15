@@ -53,6 +53,8 @@ final class MtaRooms
 	private static final int GUARDIAN_MOVING = 6778;
 	private static final int GUARDIAN_DONE = 6779;
 	private static final int GRAB_PROJECTILE = 143;
+	/** Pixels kept clear of the viewport's edges for a tile click. */
+	private static final int VIEW_MARGIN = 12;
 	/** Looks in a row with the camera unchanged before the Observe view counts as settled (~0.5 s). */
 	private static final int CAMERA_STILL_LOOKS = 4;
 	/** How long one runner step stays in the Telekinetic Theatre's own fast loop. */
@@ -656,17 +658,23 @@ final class MtaRooms
 	}
 
 	/**
-	 * "Walk here" on a scene tile, the way the walker's own scene click does it: the menu entry at the
-	 * tile's canvas point and a small box around it to click. Not Rs2Walker.walkFastLocal: it passes a
-	 * box at (1, 1), which the client takes for its fallback and sends the virtual mouse to the canvas
-	 * corner, where it never settles and holds the mouse lock (every script's clicks then wait).
+	 * "Walk here" on a scene tile: the menu entry at the tile's canvas point, clicked quick. Not
+	 * Rs2Walker.walkFastLocal (a box at (1, 1), the client's fallback, sends the mouse to the canvas
+	 * corner); and not the human-like mouse path, which never settles on a point the mouse cannot reach
+	 * and holds the mouse lock, every script's clicks then waiting until the client restarts.
 	 */
 	private static boolean clickTile(net.runelite.api.coords.LocalPoint local)
 	{
-		net.runelite.api.Point p = Microbot.getClientThread().runOnClientThreadOptional(() ->
-			net.runelite.api.Perspective.localToCanvas(Microbot.getClient(), local,
-				Microbot.getClient().getTopLevelWorldView().getPlane())).orElse(null);
-		if (p == null || p.getX() < 2 || p.getY() < 2)
+		net.runelite.api.Point p = Microbot.getClientThread().runOnClientThreadOptional(() -> {
+			net.runelite.api.Client c = Microbot.getClient();
+			net.runelite.api.Point at = net.runelite.api.Perspective.localToCanvas(c, local,
+				c.getTopLevelWorldView().getPlane());
+			// Only a point well inside the game's viewport: one outside it cannot be reached by the mouse.
+			Rectangle view = new Rectangle(c.getViewportXOffset() + VIEW_MARGIN, c.getViewportYOffset() + VIEW_MARGIN,
+				c.getViewportWidth() - 2 * VIEW_MARGIN, c.getViewportHeight() - 2 * VIEW_MARGIN);
+			return at != null && view.contains(at.getX(), at.getY()) ? at : null;
+		}).orElse(null);
+		if (p == null)
 		{
 			return false;
 		}
@@ -678,7 +686,9 @@ final class MtaRooms
 				.identifier(0)
 				.itemId(0)
 				.option("Walk here");
-		Microbot.doInvoke(entry, new Rectangle(p.getX() - 2, p.getY() - 2, 4, 4));
+		// The quick click: no human-like mouse path to the point, which is where the client's mouse can
+		// spin forever holding the mouse lock (seen twice in a session).
+		Microbot.doInvokeQuick(entry, new Rectangle(p.getX() - 2, p.getY() - 2, 4, 4));
 		return true;
 	}
 

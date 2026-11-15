@@ -142,7 +142,7 @@ final class MtaRunner extends Script
 			status(s.message == null ? "nothing chosen" : s.message);
 			return;
 		}
-		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
+		MtaWorld.Room at = roomNow();
 		boolean needsHere = at != null && step.kind == MtaPlanner.Kind.EARN && MtaWorld.Room.of(step.room) == at;
 		boolean byHand = at != null && step.kind == MtaPlanner.Kind.MANUAL && MtaWorld.Room.of(step.room) == at;
 		if (byHand)
@@ -316,7 +316,7 @@ final class MtaRunner extends Script
 			return;
 		}
 		String where = room.name().toLowerCase();
-		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
+		MtaWorld.Room at = roomNow();
 		if (at != room)
 		{
 			// In the lobby: the room's setup first, at the bank chest upstairs.
@@ -394,7 +394,7 @@ final class MtaRunner extends Script
 
 	private void leaveRoom()
 	{
-		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
+		MtaWorld.Room at = roomNow();
 		if (at == null)
 		{
 			return;
@@ -442,6 +442,25 @@ final class MtaRunner extends Script
 		{
 			Rs2Dialogue.clickContinue();
 		}
+	}
+
+	/**
+	 * The room the player is in. Between two mazes of the Telekinetic Theatre the player stands
+	 * outside every maze's area, so the Theatre is also recognised by its interface (the solver's inside()).
+	 */
+	private MtaWorld.Room roomNow()
+	{
+		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
+		if (at == null && core != null)
+		{
+			boolean theatre = Microbot.getClientThread().runOnClientThreadOptional(
+				() -> core.getTelekineticRoom().inside()).orElse(false);
+			if (theatre)
+			{
+				return MtaWorld.Room.TELEKINETIC;
+			}
+		}
+		return at;
 	}
 
 	private static boolean near(WorldPoint p, int distance)

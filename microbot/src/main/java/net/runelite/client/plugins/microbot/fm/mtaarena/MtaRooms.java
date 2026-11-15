@@ -67,6 +67,8 @@ final class MtaRooms
 	private final java.util.Set<MtaScene.Tile> badTiles = new java.util.HashSet<>();
 	private MtaWorld.Maze badTilesMaze;
 	private MtaScene.Tile lastWalk;
+	/** The last walk was a click on the tile itself (not the minimap's way there). */
+	private boolean lastWalkExact;
 
 	MtaRooms(MtaArenaConfig config, BooleanSupplier running)
 	{
@@ -351,6 +353,7 @@ final class MtaRooms
 			badTiles.clear();
 			badTilesMaze = maze;
 			lastWalk = null;
+			lastWalkExact = false;
 			if (Rs2Camera.getZoom() < 40 || Rs2Camera.getZoom() > 60)
 			{
 				Rs2Camera.setZoom(Rs2Random.betweenInclusive(40, 60));
@@ -441,7 +444,7 @@ final class MtaRooms
 			int[] aim = MtaScene.highlight(wv.getBaseX() + here.x, wv.getBaseY() + here.y, box, side, after);
 			int[][] dist = MtaScene.steps(flags, here);
 			MtaScene.Tile tile = MtaScene.best(dist, wv.getBaseX(), wv.getBaseY(), box, side, aim, badTiles);
-			if (tile != null && tile.equals(lastWalk) && !tile.equals(here) && !Rs2Player.isMoving())
+			if (tile != null && lastWalkExact && tile.equals(lastWalk) && !tile.equals(here) && !Rs2Player.isMoving())
 			{
 				// Asked for this tile last time and the game stood the player elsewhere: not standable.
 				badTiles.add(tile);
@@ -465,7 +468,19 @@ final class MtaRooms
 		lastWalk = tile;
 		net.runelite.api.coords.LocalPoint target = net.runelite.api.coords.LocalPoint.fromScene(tile.x, tile.y,
 			Microbot.getClient().getTopLevelWorldView());
-		Rs2Walker.walkFastLocal(target);
+		// A scene click only on a tile drawn on screen: off screen its canvas point is (-1, -1) and the
+		// client's mouse chases it forever. Far tiles go by the minimap first, the exact click after.
+		lastWalkExact = Rs2Camera.isTileOnScreen(target);
+		if (lastWalkExact)
+		{
+			Rs2Walker.walkFastLocal(target);
+		}
+		else
+		{
+			WorldPoint far = Microbot.getClientThread().invoke(
+				() -> WorldPoint.fromLocalInstance(Microbot.getClient(), target));
+			Rs2Walker.walkMiniMap(far);
+		}
 		sleepUntil(Rs2Player::isMoving, 900);
 	}
 

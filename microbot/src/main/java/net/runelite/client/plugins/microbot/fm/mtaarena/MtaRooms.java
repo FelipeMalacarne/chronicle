@@ -53,6 +53,8 @@ final class MtaRooms
 	private static final int GUARDIAN_MOVING = 6778;
 	private static final int GUARDIAN_DONE = 6779;
 	private static final int GRAB_PROJECTILE = 143;
+	/** Looks in a row with the camera unchanged before the Observe view counts as settled (~0.5 s). */
+	private static final int CAMERA_STILL_LOOKS = 4;
 	/** How long one runner step stays in the Telekinetic Theatre's own fast loop. */
 	private static final long TELEKINETIC_STEP_MS = 6000;
 	private static final int HEAL_BELOW_MIN = 40;
@@ -456,12 +458,25 @@ final class MtaRooms
 			}
 			return;
 		}
+		int[] before = cameraNow();
 		boolean ok = new Rs2NpcModel(room.getGuardian()).click("Observe");
 		log.info("telekinetic: observe {}", ok ? "clicked" : "missed");
 		if (ok)
 		{
-			sleepUntil(MtaRooms::cameraMoving, 1500);
-			sleepUntil(() -> !cameraMoving(), 4000);
+			// The view starts moving a tick or so after the click: first see it leave, then see it rest
+			// (unchanged over several looks), and only then walk or cast, or the move is cancelled.
+			boolean moved = sleepUntil(() -> !java.util.Arrays.equals(cameraNow(), before), 2500);
+			int[] last = cameraNow();
+			int still = 0;
+			long until = System.currentTimeMillis() + 6000;
+			while (moved && still < CAMERA_STILL_LOOKS && System.currentTimeMillis() < until)
+			{
+				sleep(110, 130);
+				int[] now = cameraNow();
+				still = java.util.Arrays.equals(now, last) ? still + 1 : 0;
+				last = now;
+			}
+			log.info("telekinetic: observe {}", moved ? "settled" : "did not move the camera");
 			observed = true;
 		}
 		else if (++observeTries >= 2)
@@ -471,18 +486,13 @@ final class MtaRooms
 		}
 	}
 
-	private static int[] lastCamera;
-
-	/** The camera moved since the last look (position, pitch or yaw). */
-	private static boolean cameraMoving()
+	/** Camera position, pitch and yaw. */
+	private static int[] cameraNow()
 	{
-		int[] now = Microbot.getClientThread().runOnClientThreadOptional(() -> {
+		return Microbot.getClientThread().runOnClientThreadOptional(() -> {
 			net.runelite.api.Client c = Microbot.getClient();
 			return new int[]{c.getCameraX(), c.getCameraY(), c.getCameraZ(), c.getCameraPitch(), c.getCameraYaw()};
-		}).orElse(null);
-		boolean moving = now != null && lastCamera != null && !java.util.Arrays.equals(now, lastCamera);
-		lastCamera = now;
-		return moving;
+		}).orElse(new int[0]);
 	}
 
 	/**
@@ -553,22 +563,35 @@ final class MtaRooms
 			Rs2Walker.walkTo(maze.maze, 6);
 			return;
 		}
-		MtaScene.Tile tile = Microbot.getClientThread().invoke(() -> {
+		Object[] picked = Microbot.getClientThread().invoke(() -> {
 			net.runelite.api.Client client = Microbot.getClient();
 			net.runelite.api.WorldView wv = client.getTopLevelWorldView();
 			net.runelite.api.coords.LocalPoint me = client.getLocalPlayer().getLocalLocation();
+			MtaScene.Tile here = new MtaScene.Tile(me.getSceneX(), me.getSceneY());
 			int[][] flags = wv.getCollisionMaps()[wv.getPlane()].getFlags();
-			int[][] dist = MtaScene.steps(flags, new MtaScene.Tile(me.getSceneX(), me.getSceneY()));
-			return MtaScene.closest(dist, wv.getBaseX(), wv.getBaseY(), (int) box.getCenterX(), (int) box.getCenterY());
+			int[][] dist = MtaScene.steps(flags, here);
+			MtaScene.Tile t = MtaScene.closest(dist, wv.getBaseX(), wv.getBaseY(), (int) box.getCenterX(),
+				(int) box.getCenterY());
+			return new Object[]{here, t, wv.getBaseX(), wv.getBaseY()};
 		});
-		if (tile == null)
+		MtaScene.Tile here = (MtaScene.Tile) picked[0];
+		MtaScene.Tile tile = (MtaScene.Tile) picked[1];
+		log.info("telekinetic: maze {} no guardian in sight: box {} base {},{} at {} -> {}", maze, box, picked[2],
+			picked[3], here, tile);
+		if (tile == null || tile.equals(here) || tile.equals(lastApproach))
 		{
+			// Nothing nearer the maze to click (or the last click did not move the player): the walker
+			// knows the way to the maze's viewpoint.
+			lastApproach = null;
 			Rs2Walker.walkTo(maze.maze, 6);
 			return;
 		}
-		log.info("telekinetic: maze {} no guardian in sight, walking to {}", maze, tile);
+		lastApproach = tile;
 		walkScene(tile);
 	}
+
+	/** The last tile asked for on the way to a maze without its guardian in sight. */
+	private MtaScene.Tile lastApproach;
 
 	/** A walk to a scene tile: a click on it when drawn on screen, else the minimap's way there. */
 	private boolean walkScene(MtaScene.Tile tile)

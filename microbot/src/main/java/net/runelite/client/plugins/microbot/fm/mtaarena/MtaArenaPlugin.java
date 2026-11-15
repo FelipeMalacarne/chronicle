@@ -23,6 +23,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 /**
@@ -46,7 +47,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class MtaArenaPlugin extends Plugin
 {
-	static final String VERSION = "0.4.0";
+	static final String VERSION = "0.4.1";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 
@@ -318,23 +319,29 @@ public class MtaArenaPlugin extends Plugin
 		return s;
 	}
 
-	/** Runes in the inventory and in the bank as the client last saw it. */
+	/**
+	 * Runes in the inventory and in the bank as the client last saw it: the bank's container while it
+	 * is loaded, else the Microbot client's copy (the container is gone once the bank closes).
+	 */
 	private int carried(int itemId)
 	{
+		int n = count(client.getItemContainer(InventoryID.INVENTORY), itemId);
+		ItemContainer bank = client.getItemContainer(InventoryID.BANK);
+		return n + (bank != null ? count(bank, itemId) : Rs2Bank.count(itemId));
+	}
+
+	private static int count(ItemContainer c, int itemId)
+	{
 		int n = 0;
-		for (InventoryID id : new InventoryID[]{InventoryID.INVENTORY, InventoryID.BANK})
+		if (c == null)
 		{
-			ItemContainer c = client.getItemContainer(id);
-			if (c == null)
+			return 0;
+		}
+		for (Item item : c.getItems())
+		{
+			if (item.getId() == itemId)
 			{
-				continue;
-			}
-			for (Item item : c.getItems())
-			{
-				if (item.getId() == itemId)
-				{
-					n += item.getQuantity();
-				}
+				n += item.getQuantity();
 			}
 		}
 		return n;

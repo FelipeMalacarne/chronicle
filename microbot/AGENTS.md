@@ -24,7 +24,7 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.4): pick the Rewards Guardian's items, the overlay shows the pizazz
+- `fm/mtaarena/` — MTA Planner (v0.4.1): pick the Rewards Guardian's items, the overlay shows the pizazz
   points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
   and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step
   (buy the first reward of the plan, peaches first from Magic 60, or earn its missing points in one
@@ -34,12 +34,15 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   tested), the runes left to carry, and nothing else but the "Always keep" names. The rooms
   (`MtaRooms`) are ported from the Plugin Hub's Mage Training Arena plugin and lean on the RuneLite
   Mage Training Arena plugin's solvers (the runner turns it on); unlike the Hub's, the Telekinetic
-  target is worked out from the solver's moves on the player's floor (the solver builds it on plane 0
-  and only while its overlay draws) and the Alchemists' Playground hands its coins to the Coin
-  Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
+  Theatre picks its own standing tile: reachable, on the side the solver's next move needs (by its
+  getPosition rule, read in the instance's coordinates, since the Theatre is an instance and the
+  walker works in the template's) and close to the side of the move after; it does not walk when it
+  is already on the right side. The solver's optimal() mixes the two coordinate spaces and builds on
+  plane 0, so it is not used. The Alchemists' Playground hands its coins to the Coin Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
   `internal/core/mta/mta.json`; `MtaCalculator` mirrors `internal/core/mta`, pinned by
   `src/test/resources/mta-vectors.json` (a copy of the Go vectors). Verified in game so far: the
-  overlay, the points (panel and each room's counter) and the Enchanting Chamber.
+  overlay, the points (panel and each room's counter), the room setup at the bank chest, the
+  Enchanting Chamber and the Telekinetic Theatre.
 - `bin/` — harness (on PATH inside the dev shell).
 - The worker image (Chronicle's managed workers, docs/11 section 13.4) is built outside this
   directory: `nix/worker-runtime.nix`, `deploy/worker/` (see "Worker image").

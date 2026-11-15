@@ -102,4 +102,34 @@ class MtaPlannerTest
 		assertEquals(Room.TELEKINETIC, s.room);
 		assertEquals(200, s.points);
 	}
+
+	@Test
+	void whileTheFirstRewardWaitsForTheOwnerThePluginWorksAhead()
+	{
+		// Boots (120/120/1200/120) then peaches (200/200/2000/300), Magic 44, only the Enchanting
+		// Chamber played: at 1200 the boots wait for the owner's rooms, the Chamber goes on to 3200.
+		java.util.Set<Room> only = java.util.EnumSet.of(Room.ENCHANTMENT);
+		Step s = assertDoesNotThrowNext(Arrays.asList("infinity_boots", "bones_to_peaches"), new Points(0, 0, 1200, 0), only);
+		assertEquals(Kind.EARN, s.kind);
+		assertEquals(Room.ENCHANTMENT, s.room);
+		assertEquals(2000, s.points);
+		assertEquals("infinity_boots", s.reward);
+		assertEquals(true, s.ahead);
+		// Everything the Chamber can give is in: now it is the owner's turn.
+		s = assertDoesNotThrowNext(Arrays.asList("infinity_boots", "bones_to_peaches"), new Points(0, 0, 3200, 0), only);
+		assertEquals(Kind.MANUAL, s.kind);
+		assertEquals(Room.TELEKINETIC, s.room);
+	}
+
+	private static Step assertDoesNotThrowNext(List<String> wanted, Points held, java.util.Set<Room> allowed)
+	{
+		try
+		{
+			return MtaPlanner.next(wanted, NONE, held, 44, 0, allowed);
+		}
+		catch (Exception ex)
+		{
+			throw new AssertionError(ex);
+		}
+	}
 }

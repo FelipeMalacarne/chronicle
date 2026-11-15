@@ -44,19 +44,31 @@ final class MtaPlanner
 		final String reward;
 		final Room room;
 		final int points;
+		/**
+		 * The points are for the rewards after {@link #reward}, which waits for a room the owner plays:
+		 * the plugin works ahead in the rooms it plays meanwhile.
+		 */
+		final boolean ahead;
 
 		Step(Kind kind, String reward, Room room, int points)
+		{
+			this(kind, reward, room, points, false);
+		}
+
+		Step(Kind kind, String reward, Room room, int points, boolean ahead)
 		{
 			this.kind = kind;
 			this.reward = reward;
 			this.room = room;
 			this.points = points;
+			this.ahead = ahead;
 		}
 
 		@Override
 		public String toString()
 		{
-			return kind + (reward == null ? "" : " " + reward) + (room == null ? "" : " " + room + " " + points);
+			return kind + (reward == null ? "" : " " + reward) + (room == null ? "" : " " + room + " " + points)
+				+ (ahead ? " ahead" : "");
 		}
 	}
 
@@ -107,6 +119,35 @@ final class MtaPlanner
 			}
 			return new Step(Kind.EARN, r.id, room, n);
 		}
-		return manual != null ? manual : new Step(Kind.BUY, r.id, null, 0);
+		if (manual == null)
+		{
+			return new Step(Kind.BUY, r.id, null, 0);
+		}
+		// The first reward waits for the owner: meanwhile earn, in the rooms the plugin plays, what the
+		// rest of the plan needs, so the run does not stop at the first reward.
+		int[] total = new int[4];
+		for (String id : order)
+		{
+			MtaReward x = MtaCalculator.reward(id);
+			total[Room.TELEKINETIC.ordinal()] += x.telekinetic;
+			total[Room.ALCHEMIST.ordinal()] += x.alchemist;
+			total[Room.GRAVEYARD.ordinal()] += x.graveyard;
+			total[Room.ENCHANTMENT.ordinal()] += x.enchantment;
+		}
+		int[] held2 = {held.telekinetic, held.alchemist, held.graveyard, held.enchantment};
+		for (Room room : Room.values())
+		{
+			int n = Math.max(0, total[room.ordinal()] - held2[room.ordinal()]);
+			if (n == 0 || !allowed.contains(room))
+			{
+				continue;
+			}
+			if (room == Room.ENCHANTMENT && MtaCalculator.enchantLevelFor(magic, enchantLevel) == 0)
+			{
+				continue;
+			}
+			return new Step(Kind.EARN, r.id, room, n, true);
+		}
+		return manual;
 	}
 }

@@ -313,7 +313,8 @@ final class MtaRunner extends Script
 			leaveRoom();
 			return;
 		}
-		status(where + ": " + step.points + " points to go for " + step.reward);
+		status(where + ": " + step.points + " points to go"
+			+ (step.ahead ? " for the rest of the plan (" + step.reward + " waits for you)" : " for " + step.reward));
 		switch (room)
 		{
 			case ENCHANTMENT:

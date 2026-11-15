@@ -57,6 +57,9 @@ final class MtaRunner extends Script
 	private MtaWorld.Room lastRoom;
 	private long lastRoomAt;
 	private static final long THEATRE_GRACE_MS = 8000;
+	/** Since when the room's spell cannot be cast, and how long before going to the bank over it. */
+	private long cannotCastSince;
+	private static final long CANNOT_CAST_MS = 5000;
 
 
 	MtaRunner(MtaArenaPlugin plugin, MtaArenaConfig config)
@@ -341,8 +344,18 @@ final class MtaRunner extends Script
 					return;
 			}
 		}
-		if (!net.runelite.client.plugins.microbot.util.magic.Rs2Magic.canCast(spell))
+		if (net.runelite.client.plugins.microbot.util.magic.Rs2Magic.canCast(spell))
 		{
+			cannotCastSince = 0;
+		}
+		else if (cannotCastSince == 0)
+		{
+			cannotCastSince = System.currentTimeMillis();
+		}
+		// Out of runes only when it lasts: a read while the next maze loads can say so for a moment.
+		if (cannotCastSince != 0 && System.currentTimeMillis() - cannotCastSince > CANNOT_CAST_MS)
+		{
+			cannotCastSince = 0;
 			status("out of runes for the " + where + " room: back to the bank");
 			rooms.flush(room);
 			leaveRoom();

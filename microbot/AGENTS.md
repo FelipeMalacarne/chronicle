@@ -39,7 +39,10 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   the closest reachable one on the same side (a breadth-first search over the scene's collision flags
   and the solver's getPosition rule). All of it in scene coordinates: the Theatre is
   an instance, and the template conversions put the player a tile off. Each maze starts with the
-  guardian's Observe (an overhead view centred on the maze, which stays while walking and casting).
+  camera's pitch at the top (not the guardian's Observe: a walk click cancels it, and with the spell
+  selected the guardian offers only the cast). It never leaves the Theatre on its own between mazes
+  (leaving breaks the five-maze streak); a spell that cannot be cast sends it to the bank only after
+  5 s (a read while the next maze loads can fail for a moment).
   Right after a grab is cast it walks to the side of the move after (the solver's plan says it before
   the guardian slides; the pull just made is skipped while it still sits on top of the plan), selects
   the spell on the way and clicks in the tick the guardian rests, inside one runner step (Script.run() must not be called every few ms: it drives the client's blocking events and

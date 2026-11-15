@@ -73,8 +73,7 @@ final class MtaRooms
 	 */
 	private Direction inFlight;
 	private long inFlightUntil;
-	/** Observe was clicked on this maze's guardian. */
-	private boolean observed;
+
 	/** The last walk was a click on the tile itself (not the minimap's way there). */
 	private boolean lastWalkExact;
 
@@ -348,11 +347,11 @@ final class MtaRooms
 		TelekineticRoom room = core.getTelekineticRoom();
 		if (room.getGuardian() == null)
 		{
-			// A new maze: the solver reads it as the scene loads (the guardian spawns with it).
+			// A new maze: the solver reads it as the scene loads (the guardian spawns with it). Never leave
+			// the Theatre over it: leaving breaks the five-maze streak and its bonus.
 			if (!sleepUntil(() -> room.getGuardian() != null, 8000))
 			{
-				leave.run();
-				return false;
+				log.info("telekinetic: maze {} has no guardian yet, waiting", maze);
 			}
 			return true;
 		}
@@ -367,10 +366,8 @@ final class MtaRooms
 			{
 				Rs2Camera.setZoom(Rs2Random.betweenInclusive(40, 60));
 			}
-			// Look from above and keep it there for the whole maze: the guardian's Observe centres an
-			// overhead view on the maze (the player's own camera follows the player, and at the start the
-			// maze is mostly off screen); the pitch is the fallback when Observe is not offered.
-			observed = false;
+			// Look from above for the whole maze. Not the guardian's Observe: a walk click cancels it, and
+			// with the spell selected the guardian offers only the cast.
 			Rs2Camera.adjustPitch(1.0f);
 		}
 		if (new Rs2NpcModel(room.getGuardian()).getWorldLocation().equals(room.getFinishLocation()))
@@ -383,13 +380,6 @@ final class MtaRooms
 				return p != null && maze.area.distanceTo(p) != 0;
 			});
 			return true;
-		}
-		if (!observed && room.getGuardian().getId() != GUARDIAN_MOVING)
-		{
-			observed = true;
-			boolean ok = new Rs2NpcModel(room.getGuardian()).click("Observe");
-			log.info("telekinetic: maze {} observe: {}", maze, ok);
-			sleep(600, 900);
 		}
 		Direction next = planned(room, 0);
 		if (next == null)

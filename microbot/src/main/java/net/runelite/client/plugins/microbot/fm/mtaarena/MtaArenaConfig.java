@@ -19,6 +19,13 @@ public interface MtaArenaConfig extends Config
 	String REWARDS = "rewards";
 
 	@ConfigSection(
+		name = "Run",
+		description = "Let the plugin play the rooms and buy",
+		position = 2
+	)
+	String RUN = "run";
+
+	@ConfigSection(
 		name = "Calculator",
 		description = "How the runes are counted",
 		position = 1
@@ -130,6 +137,18 @@ public interface MtaArenaConfig extends Config
 		position = 2
 	)
 	default boolean forget()
+	{
+		return false;
+	}
+
+	@ConfigItem(
+		keyName = "automate",
+		name = "Run the plan",
+		description = "The plugin clicks: it plays the Enchanting Chamber and buys the rewards in the plan's order. The other rooms it asks you to do by hand. Off by default",
+		section = RUN,
+		position = 0
+	)
+	default boolean automate()
 	{
 		return false;
 	}

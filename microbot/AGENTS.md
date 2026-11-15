@@ -24,12 +24,17 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.1, observe-only: it never clicks): pick the Rewards Guardian's
-  items, the overlay shows the pizazz points still missing per room and the law/nature/cosmic runes
-  that takes, against the runes carried and banked. `MtaData.java` is generated
+- `fm/mtaarena/` — MTA Planner (v0.2): pick the Rewards Guardian's items, the overlay shows the pizazz
+  points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
+  and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step
+  (buy the first reward of the plan, peaches first, or earn its missing points in one room, the
+  Enchanting Chamber last) and `MtaRunner` buys at the Rewards Guardian and plays the Enchanting
+  Chamber; the other rooms it asks for by hand. `MtaData.java` is generated
   (`python3 tools/gen_mta_java.py`) from `internal/core/mta/mta.json`; `MtaCalculator` mirrors
   `internal/core/mta`, pinned by `src/test/resources/mta-vectors.json` (a copy of the Go vectors).
-  The points come from the arena's points panel text (widget group 553): not yet verified in game.
+  The points come from the arena's points panel text (widget group 553), and the runner's object,
+  NPC and widget ids (`MtaWorld`) come from the Plugin Hub's Mage Training Arena plugin: none of it is
+  verified in game yet, so test with the owner watching (skill `live-test`).
 - `bin/` — harness (on PATH inside the dev shell).
 - The worker image (Chronicle's managed workers, docs/11 section 13.4) is built outside this
   directory: `nix/worker-runtime.nix`, `deploy/worker/` (see "Worker image").

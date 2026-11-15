@@ -44,7 +44,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class MtaArenaPlugin extends Plugin
 {
-	static final String VERSION = "0.1.0";
+	static final String VERSION = "0.2.0";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 
@@ -62,6 +62,8 @@ public class MtaArenaPlugin extends Plugin
 		boolean pointsKnown;
 		MtaCalculator.Points held = new MtaCalculator.Points(0, 0, 0, 0);
 		MtaCalculator.Result result;
+		/** What to do next for the chosen rewards, or null when there is no plan. */
+		MtaPlanner.Step step;
 		/** Why there is no result (nothing chosen, no Enchant castable), or null. */
 		String message;
 		int law;
@@ -85,6 +87,7 @@ public class MtaArenaPlugin extends Plugin
 	private MtaArenaOverlay overlay;
 
 	private volatile Snapshot snapshot = new Snapshot();
+	private MtaRunner runner;
 	private int ticks;
 
 	@Provides
@@ -103,12 +106,19 @@ public class MtaArenaPlugin extends Plugin
 	{
 		log.info("MTA Planner {} starting", VERSION);
 		overlayManager.add(overlay);
+		runner = new MtaRunner(this, config);
+		runner.run();
 	}
 
 	@Override
 	protected void shutDown()
 	{
 		overlayManager.remove(overlay);
+		if (runner != null)
+		{
+			runner.shutdown();
+			runner = null;
+		}
 	}
 
 	@Subscribe
@@ -251,6 +261,18 @@ public class MtaArenaPlugin extends Plugin
 		catch (MtaCalculator.MtaException ex)
 		{
 			s.message = ex.getMessage();
+		}
+		if (s.pointsKnown)
+		{
+			try
+			{
+				s.step = MtaPlanner.next(chosen, owned, s.held, client.getRealSkillLevel(Skill.MAGIC),
+					config.enchantLevel());
+			}
+			catch (MtaCalculator.MtaException ex)
+			{
+				s.message = ex.getMessage();
+			}
 		}
 		return s;
 	}

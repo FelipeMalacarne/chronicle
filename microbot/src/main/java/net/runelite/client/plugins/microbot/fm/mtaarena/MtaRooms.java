@@ -67,6 +67,14 @@ final class MtaRooms
 	private final java.util.Set<MtaScene.Tile> badTiles = new java.util.HashSet<>();
 	private MtaWorld.Maze badTilesMaze;
 	private MtaScene.Tile lastWalk;
+	/**
+	 * The pull just cast and until when it counts as made: between the cast and the guardian starting
+	 * to slide (the projectile's flight) the solver's plan still shows that move on top.
+	 */
+	private Direction inFlight;
+	private long inFlightUntil;
+	/** Observe was clicked on this maze's guardian. */
+	private boolean observed;
 	/** The last walk was a click on the tile itself (not the minimap's way there). */
 	private boolean lastWalkExact;
 
@@ -354,10 +362,16 @@ final class MtaRooms
 			badTilesMaze = maze;
 			lastWalk = null;
 			lastWalkExact = false;
+			inFlight = null;
 			if (Rs2Camera.getZoom() < 40 || Rs2Camera.getZoom() > 60)
 			{
 				Rs2Camera.setZoom(Rs2Random.betweenInclusive(40, 60));
 			}
+			// Look from above and keep it there for the whole maze: the guardian's Observe centres an
+			// overhead view on the maze (the player's own camera follows the player, and at the start the
+			// maze is mostly off screen); the pitch is the fallback when Observe is not offered.
+			observed = false;
+			Rs2Camera.adjustPitch(1.0f);
 		}
 		if (new Rs2NpcModel(room.getGuardian()).getWorldLocation().equals(room.getFinishLocation()))
 		{
@@ -370,8 +384,14 @@ final class MtaRooms
 			});
 			return true;
 		}
-		Direction next = Microbot.getClientThread().invoke(
-			() -> TelekineticRoom.getMoves().isEmpty() ? null : TelekineticRoom.getMoves().peek());
+		if (!observed && room.getGuardian().getId() != GUARDIAN_MOVING)
+		{
+			observed = true;
+			boolean ok = new Rs2NpcModel(room.getGuardian()).click("Observe");
+			log.info("telekinetic: maze {} observe: {}", maze, ok);
+			sleep(600, 900);
+		}
+		Direction next = planned(room, 0);
 		if (next == null)
 		{
 			// No path yet (the guardian has not been seen moving or the walls are still coming in).
@@ -381,26 +401,75 @@ final class MtaRooms
 		Direction side = Microbot.getClientThread().invoke(room::getPosition);
 		if (side != next)
 		{
-			walkToSide(maze, next);
+			walkToSide(maze, next, planned(room, 1));
+			selectGrab();
 			return true;
 		}
-		// On the right side: select the spell now, so the pull is a single click when the guardian rests.
-		if (!spellSelected())
-		{
-			log.info("telekinetic: on {} side, selecting the grab", side);
-			Rs2Magic.cast(MagicAction.TELEKINETIC_GRAB);
-			sleepUntil(MtaRooms::spellSelected, 1200);
-			return true;
-		}
+		// On the right side: the spell selected, the pull is a single click when the guardian rests.
+		selectGrab();
 		if (!sleepUntil(() -> resting(room), 4000))
 		{
 			log.info("telekinetic: guardian not resting after 4s (id {})", room.getGuardian() == null ? null : room.getGuardian().getId());
 			return true;
 		}
-		log.info("telekinetic: pull ({})", next);
+		// Read the plan again after the wait: a direction read before it may already be spent, and pulling
+		// on it again is a wasted cast on the same tile. The same once the guardian reached the finish.
+		Direction now = planned(room, 0);
+		if (now != next || Microbot.getClientThread().invoke(room::getPosition) != now
+			|| new Rs2NpcModel(room.getGuardian()).getWorldLocation().equals(room.getFinishLocation()))
+		{
+			return true;
+		}
+		Direction after = planned(room, 1);
+		Direction afterThat = planned(room, 2);
+		log.info("telekinetic: pull ({}), then {}", next, after);
 		new Rs2NpcModel(room.getGuardian()).click();
-		sleepUntil(() -> room.getGuardian() == null || !resting(room), 2400);
+		// Once the grab is cast (its projectile out, or the guardian already sliding) the walk does not
+		// cancel it: head for the side of the move after right away, as the plan already says.
+		if (sleepUntil(() -> room.getGuardian() == null || !resting(room), 2400))
+		{
+			inFlight = next;
+			inFlightUntil = System.currentTimeMillis() + 3000;
+			if (after != null)
+			{
+				walkToSide(maze, after, afterThat);
+				selectGrab();
+			}
+		}
 		return true;
+	}
+
+	/**
+	 * The plan's move {@code i} steps ahead (0: the next pull), or null. A pull just cast still sits on
+	 * top of the solver's plan for a tick or two: it is skipped.
+	 */
+	private Direction planned(TelekineticRoom room, int i)
+	{
+		return Microbot.getClientThread().invoke(() -> {
+			java.util.Stack<Direction> moves = TelekineticRoom.getMoves();
+			int skip = 0;
+			// The same move twice in a row cannot happen (the guardian slides until a wall), so the pull
+			// just made on top is the solver not having rebuilt its plan yet (it does a tick after the
+			// slide starts).
+			if (inFlight != null && System.currentTimeMillis() < inFlightUntil && !moves.isEmpty()
+				&& moves.peek() == inFlight)
+			{
+				skip = 1;
+			}
+			int k = i + skip;
+			return moves.size() > k ? moves.get(moves.size() - 1 - k) : null;
+		});
+	}
+
+	/** Telekinetic Grab selected, so pulling is one click on the guardian. */
+	private static void selectGrab()
+	{
+		if (spellSelected())
+		{
+			return;
+		}
+		Rs2Magic.cast(MagicAction.TELEKINETIC_GRAB);
+		sleepUntil(MtaRooms::spellSelected, 1200);
 	}
 
 	private static boolean spellSelected()
@@ -426,7 +495,7 @@ final class MtaRooms
 	 * Walks to the best tile on {@code side} ({@link MtaScene#best}), worked out and clicked in scene
 	 * coordinates. A tile asked for twice that the game stood the player beside is left out for the maze.
 	 */
-	private void walkToSide(MtaWorld.Maze maze, Direction side)
+	private void walkToSide(MtaWorld.Maze maze, Direction side, Direction after)
 	{
 		Rectangle box = mazeBounds();
 		if (box == null)
@@ -439,8 +508,6 @@ final class MtaRooms
 			net.runelite.api.coords.LocalPoint me = client.getLocalPlayer().getLocalLocation();
 			MtaScene.Tile here = new MtaScene.Tile(me.getSceneX(), me.getSceneY());
 			int[][] flags = wv.getCollisionMaps()[wv.getPlane()].getFlags();
-			java.util.Stack<Direction> moves = TelekineticRoom.getMoves();
-			Direction after = moves.size() >= 2 ? moves.get(moves.size() - 2) : null;
 			int[] aim = MtaScene.highlight(wv.getBaseX() + here.x, wv.getBaseY() + here.y, box, side, after);
 			int[][] dist = MtaScene.steps(flags, here);
 			MtaScene.Tile tile = MtaScene.best(dist, wv.getBaseX(), wv.getBaseY(), box, side, aim, badTiles);

@@ -53,6 +53,10 @@ final class MtaRunner extends Script
 	private String boughtTry = "";
 	private int tries;
 	private boolean firstVisit;
+	/** The last room seen and when: the Telekinetic Theatre between two mazes shows none. */
+	private MtaWorld.Room lastRoom;
+	private long lastRoomAt;
+	private static final long THEATRE_GRACE_MS = 8000;
 
 
 	MtaRunner(MtaArenaPlugin plugin, MtaArenaConfig config)
@@ -449,6 +453,24 @@ final class MtaRunner extends Script
 	 * outside every maze's area, so the Theatre is also recognised by its interface (the solver's inside()).
 	 */
 	private MtaWorld.Room roomNow()
+	{
+		MtaWorld.Room at = roomSeen();
+		long now = System.currentTimeMillis();
+		if (at != null)
+		{
+			lastRoom = at;
+			lastRoomAt = now;
+			return at;
+		}
+		// Loading the next maze, the Theatre's interface is gone for a moment: still in the Theatre.
+		if (lastRoom == MtaWorld.Room.TELEKINETIC && now - lastRoomAt < THEATRE_GRACE_MS)
+		{
+			return MtaWorld.Room.TELEKINETIC;
+		}
+		return null;
+	}
+
+	private MtaWorld.Room roomSeen()
 	{
 		MtaWorld.Room at = MtaWorld.Room.at(Rs2Player.getWorldLocation());
 		if (at == null && core != null)

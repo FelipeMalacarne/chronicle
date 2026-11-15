@@ -38,11 +38,15 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   optimal() worked out from the player's real position), or, when that tile cannot be stood on, to
   the closest reachable one on the same side (a breadth-first search over the scene's collision flags
   and the solver's getPosition rule). All of it in scene coordinates: the Theatre is
-  an instance, and the template conversions put the player a tile off. It walks during the guardian's
-  slide, selects the spell on arriving and clicks in the tick the guardian rests, inside one runner
-  step (Script.run() must not be called every few ms: it drives the client's blocking events and
+  an instance, and the template conversions put the player a tile off. Each maze starts with the
+  guardian's Observe (an overhead view centred on the maze, which stays while walking and casting).
+  Right after a grab is cast it walks to the side of the move after (the solver's plan says it before
+  the guardian slides; the pull just made is skipped while it still sits on top of the plan), selects
+  the spell on the way and clicks in the tick the guardian rests, inside one runner step (Script.run() must not be called every few ms: it drives the client's blocking events and
   holds every script). The solver's own optimal() mixes coordinate spaces and builds on plane 0, so
-  it is not used. The Alchemists' Playground hands its coins to the Coin Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
+  it is not used. Clicks on a scene tile build their own "Walk here" (Rs2Walker.walkFastLocal clicks
+  a (1, 1) box, which the client takes for its fallback: the virtual mouse never settles there and
+  holds the mouse lock for every script, until the client restarts). The Alchemists' Playground hands its coins to the Coin Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
   `internal/core/mta/mta.json`; `MtaCalculator` mirrors `internal/core/mta`, pinned by
   `src/test/resources/mta-vectors.json` (a copy of the Go vectors). Verified in game so far: the
   overlay, the points (panel and each room's counter), the room setup at the bank chest, the

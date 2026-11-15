@@ -53,8 +53,8 @@ final class MtaRooms
 	private static final int GUARDIAN_MOVING = 6778;
 	private static final int GUARDIAN_DONE = 6779;
 	private static final int GRAB_PROJECTILE = 143;
-	/** How far from the player a standing tile is looked for. */
-	private static final int REACH = 20;
+	/** How long one runner step stays in the Telekinetic Theatre's own fast loop. */
+	private static final long TELEKINETIC_STEP_MS = 6000;
 	private static final int HEAL_BELOW_MIN = 40;
 	private static final int HEAL_BELOW_MAX = 60;
 
@@ -63,6 +63,10 @@ final class MtaRooms
 	private MTAPlugin core;
 	private int shapesToPick = 3;
 	private int nextHealBelow = Rs2Random.between(HEAL_BELOW_MIN, HEAL_BELOW_MAX);
+	/** Telekinetic tiles the game would not stand the player on, in this maze; and the last walk. */
+	private final java.util.Set<MtaScene.Tile> badTiles = new java.util.HashSet<>();
+	private MtaWorld.Maze badTilesMaze;
+	private MtaScene.Tile lastWalk;
 
 	MtaRooms(MtaArenaConfig config, BooleanSupplier running)
 	{
@@ -304,13 +308,32 @@ final class MtaRooms
 
 	// ---- the Telekinetic Theatre ---------------------------------------------------------
 
-	/** Returns false when the maze could not be read and the room was left to reset. */
+	/**
+	 * One step of the Telekinetic Theatre, polled fast by the runner. Off the side the next pull needs,
+	 * walk there (also while the guardian still slides: the solver plans from where it stops); on it,
+	 * have the spell selected and click the guardian in the tick it comes to rest. Returns false when
+	 * the maze could not be read and the room was left to reset.
+	 */
 	boolean telekinetic(Runnable leave)
+	{
+		// Several reactions per runner step, so a pull lands in the tick the guardian rests without
+		// the runner looping fast (see MtaRunner.LOOP_MS).
+		long until = System.currentTimeMillis() + TELEKINETIC_STEP_MS;
+		boolean ok = true;
+		while (ok && running.getAsBoolean() && System.currentTimeMillis() < until
+			&& !net.runelite.client.plugins.microbot.util.input.InputArbiter.isHuman())
+		{
+			ok = telekineticOnce(leave);
+		}
+		return ok;
+	}
+
+	private boolean telekineticOnce(Runnable leave)
 	{
 		MtaWorld.Maze maze = MtaWorld.Maze.at(Rs2Player.getWorldLocation());
 		if (maze == null)
 		{
-			return true;
+			return false;
 		}
 		TelekineticRoom room = core.getTelekineticRoom();
 		if (room.getGuardian() == null)
@@ -325,14 +348,20 @@ final class MtaRooms
 			}
 			return true;
 		}
-		if (Rs2Camera.getZoom() < 40 || Rs2Camera.getZoom() > 60)
+		if (maze != badTilesMaze)
 		{
-			Rs2Camera.setZoom(Rs2Random.betweenInclusive(40, 60));
+			badTiles.clear();
+			badTilesMaze = maze;
+			lastWalk = null;
+			if (Rs2Camera.getZoom() < 40 || Rs2Camera.getZoom() > 60)
+			{
+				Rs2Camera.setZoom(Rs2Random.betweenInclusive(40, 60));
+			}
 		}
 		if (new Rs2NpcModel(room.getGuardian()).getWorldLocation().equals(room.getFinishLocation()))
 		{
 			sleepUntil(() -> room.getGuardian() != null && room.getGuardian().getId() == GUARDIAN_DONE);
-			sleep(200, 400);
+			sleep(150, 300);
 			new Rs2NpcModel(room.getGuardian()).click("New-maze");
 			sleepUntil(() -> {
 				WorldPoint p = Rs2Player.getWorldLocation();
@@ -344,7 +373,6 @@ final class MtaRooms
 			() -> TelekineticRoom.getMoves().isEmpty() ? null : TelekineticRoom.getMoves().peek());
 		if (next == null)
 		{
-			// No path read yet: look at the maze from its viewpoint.
 			Rs2Walker.walkTo(maze.maze, 4);
 			sleepUntil(() -> !TelekineticRoom.getMoves().isEmpty(), 10000);
 			return true;
@@ -352,137 +380,93 @@ final class MtaRooms
 		Direction side = Microbot.getClientThread().invoke(room::getPosition);
 		if (side != next)
 		{
-			// Off the side the next pull needs: walk there, even while the guardian still slides (the
-			// solver already plans from where it stops).
-			if (Rs2Player.isMoving())
-			{
-				return true;
-			}
-			WorldPoint tile = standingTile(next);
-			log.info("telekinetic: maze {} next {} side {} at {} -> walk to {}", maze, next, side,
-				Rs2Player.getWorldLocation(), tile);
-			if (tile == null)
-			{
-				Rs2Walker.walkTo(maze.maze, 4);
-				return true;
-			}
-			Rs2Walker.walkFastCanvas(tile);
-			sleepUntil(Rs2Player::isMoving, 1200);
-			sleepUntil(() -> !Rs2Player.isMoving(), 6000);
+			walkToSide(maze, next);
 			return true;
 		}
-		// On the right side: pull as soon as the guardian rests and no grab is in flight.
-		boolean grabInFlight = Microbot.getClientThread().runOnClientThreadOptional(
-			() -> java.util.stream.StreamSupport.stream(Microbot.getClient().getProjectiles().spliterator(), false)
-				.anyMatch(x -> x.getId() == GRAB_PROJECTILE)).orElse(false);
-		if (Rs2Player.isAnimating() || grabInFlight || room.getGuardian().getId() == GUARDIAN_MOVING)
+		// On the right side: select the spell now, so the pull is a single click when the guardian rests.
+		if (!spellSelected())
 		{
+			log.info("telekinetic: on {} side, selecting the grab", side);
+			Rs2Magic.cast(MagicAction.TELEKINETIC_GRAB);
+			sleepUntil(MtaRooms::spellSelected, 1200);
 			return true;
 		}
-		Rs2Magic.cast(MagicAction.TELEKINETIC_GRAB);
-		sleepGaussian(600, 150);
-		if (Rs2Random.dicePercentage(50.0))
+		if (!sleepUntil(() -> resting(room), 4000))
 		{
-			Rs2Camera.turnTo((Actor) room.getGuardian());
+			log.info("telekinetic: guardian not resting after 4s (id {})", room.getGuardian() == null ? null : room.getGuardian().getId());
+			return true;
 		}
+		log.info("telekinetic: pull ({})", next);
 		new Rs2NpcModel(room.getGuardian()).click();
-		sleepUntil(() -> room.getGuardian() == null || room.getGuardian().getId() == GUARDIAN_MOVING, 4000);
+		sleepUntil(() -> room.getGuardian() == null || !resting(room), 2400);
 		return true;
 	}
 
-	/**
-	 * A reachable tile on {@code side} of the maze, by the solver's own rule
-	 * (TelekineticRoom.getPosition): the fewest steps away plus the fewest from there to the side
-	 * of the move after, so one walk serves two pulls. The Theatre is an instance: the solver's box
-	 * is in the instance's coordinates and the walker's tiles in the template's, so each tile is
-	 * tested in both. (The solver's own suggestion, optimal(), mixes the two and is not used.)
-	 */
-	private static WorldPoint standingTile(Direction side)
+	private static boolean spellSelected()
 	{
-		Rectangle b = mazeBounds();
-		WorldPoint here = Rs2Player.getWorldLocation();
-		if (b == null || here == null)
+		return Microbot.getClientThread().runOnClientThreadOptional(() -> Microbot.getClient().isWidgetSelected())
+			.orElse(false);
+	}
+
+	/** The guardian stands still and no grab is in flight: it can be pulled. */
+	private static boolean resting(TelekineticRoom room)
+	{
+		return Microbot.getClientThread().runOnClientThreadOptional(() -> {
+			if (room.getGuardian() == null || room.getGuardian().getId() == GUARDIAN_MOVING)
+			{
+				return false;
+			}
+			return java.util.stream.StreamSupport.stream(Microbot.getClient().getProjectiles().spliterator(), false)
+				.noneMatch(x -> x.getId() == GRAB_PROJECTILE);
+		}).orElse(false);
+	}
+
+	/**
+	 * Walks to the best tile on {@code side} ({@link MtaScene#best}), worked out and clicked in scene
+	 * coordinates. A tile asked for twice that the game stood the player beside is left out for the maze.
+	 */
+	private void walkToSide(MtaWorld.Maze maze, Direction side)
+	{
+		Rectangle box = mazeBounds();
+		if (box == null)
 		{
-			return null;
+			return;
 		}
-		Map<WorldPoint, Integer> reach = Rs2Tile.getReachableTilesFromTile(here, REACH);
-		return Microbot.getClientThread().invoke(() -> {
+		Object[] picked = Microbot.getClientThread().invoke(() -> {
+			net.runelite.api.Client client = Microbot.getClient();
+			net.runelite.api.WorldView wv = client.getTopLevelWorldView();
+			net.runelite.api.coords.LocalPoint me = client.getLocalPlayer().getLocalLocation();
+			MtaScene.Tile here = new MtaScene.Tile(me.getSceneX(), me.getSceneY());
+			int[][] flags = wv.getCollisionMaps()[wv.getPlane()].getFlags();
 			java.util.Stack<Direction> moves = TelekineticRoom.getMoves();
 			Direction after = moves.size() >= 2 ? moves.get(moves.size() - 2) : null;
-			net.runelite.api.WorldView wv = Microbot.getClient().getTopLevelWorldView();
-			WorldPoint best = null;
-			int bestScore = Integer.MAX_VALUE;
-			for (Map.Entry<WorldPoint, Integer> e : reach.entrySet())
+			int[][] dist = MtaScene.steps(flags, here);
+			MtaScene.Tile tile = MtaScene.best(dist, wv.getBaseX(), wv.getBaseY(), box, side, after, badTiles);
+			if (tile != null && tile.equals(lastWalk) && !tile.equals(here) && !Rs2Player.isMoving())
 			{
-				WorldPoint p = e.getKey();
-				if (p.getPlane() != here.getPlane())
-				{
-					continue;
-				}
-				for (WorldPoint raw : WorldPoint.toLocalInstance(wv, p))
-				{
-					if (!onSide(raw, side, b))
-					{
-						continue;
-					}
-					int score = e.getValue() + (after == null ? 0 : toSide(raw, after, b));
-					if (score < bestScore)
-					{
-						best = p;
-						bestScore = score;
-					}
-				}
+				// Asked for this tile last time and the game stood the player elsewhere: not standable.
+				badTiles.add(tile);
+				tile = MtaScene.best(dist, wv.getBaseX(), wv.getBaseY(), box, side, after, badTiles);
 			}
-			return best;
+			return new Object[]{here, tile};
 		});
-	}
-
-	/** Steps (ignoring walls) from {@code p} to the nearest tile on {@code side} of the box. */
-	static int toSide(WorldPoint p, Direction side, Rectangle b)
-	{
-		int x = p.getX();
-		int y = p.getY();
-		int x0 = b.x;
-		int x1 = (int) b.getMaxX();
-		int y0 = b.y;
-		int y1 = (int) b.getMaxY();
-		int alongX = x <= x0 ? x0 + 1 - x : x >= x1 ? x - (x1 - 1) : 0;
-		int alongY = y <= y0 ? y0 + 1 - y : y >= y1 ? y - (y1 - 1) : 0;
-		switch (side)
+		MtaScene.Tile here = (MtaScene.Tile) picked[0];
+		MtaScene.Tile tile = (MtaScene.Tile) picked[1];
+		if (tile == null)
 		{
-			case NORTH:
-				return Math.max(0, y1 - y) + alongX;
-			case SOUTH:
-				return Math.max(0, y - y0) + alongX;
-			case EAST:
-				return Math.max(0, x1 - x) + alongY;
-			case WEST:
-				return Math.max(0, x - x0) + alongY;
-			default:
-				return 0;
+			Rs2Walker.walkTo(maze.maze, 4);
+			return;
 		}
-	}
-
-	/** TelekineticRoom.getPosition's test, for any tile. */
-	static boolean onSide(WorldPoint p, Direction side, Rectangle b)
-	{
-		double x = p.getX();
-		double y = p.getY();
-		boolean alongX = x > b.getX() && x < b.getMaxX();
-		boolean alongY = y > b.getY() && y < b.getMaxY();
-		switch (side)
+		if (tile.equals(lastWalk) && Rs2Player.isMoving())
 		{
-			case NORTH:
-				return y >= b.getMaxY() && alongX;
-			case SOUTH:
-				return y <= b.getY() && alongX;
-			case EAST:
-				return x >= b.getMaxX() && alongY;
-			case WEST:
-				return x <= b.getX() && alongY;
-			default:
-				return false;
+			return;
 		}
+		log.info("telekinetic: maze {} next {} from {} walk to {}", maze, side, here, tile);
+		lastWalk = tile;
+		net.runelite.api.coords.LocalPoint target = net.runelite.api.coords.LocalPoint.fromScene(tile.x, tile.y,
+			Microbot.getClient().getTopLevelWorldView());
+		Rs2Walker.walkFastLocal(target);
+		sleepUntil(Rs2Player::isMoving, 900);
 	}
 
 	/** The maze's walls' box, kept by the solver in a private field. */

@@ -24,7 +24,7 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.4.1): pick the Rewards Guardian's items, the overlay shows the pizazz
+- `fm/mtaarena/` — MTA Planner (v0.5): pick the Rewards Guardian's items, the overlay shows the pizazz
   points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
   and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step
   (buy the first reward of the plan, peaches first from Magic 60, or earn its missing points in one
@@ -34,11 +34,14 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   tested), the runes left to carry, and nothing else but the "Always keep" names. The rooms
   (`MtaRooms`) are ported from the Plugin Hub's Mage Training Arena plugin and lean on the RuneLite
   Mage Training Arena plugin's solvers (the runner turns it on); unlike the Hub's, the Telekinetic
-  Theatre picks its own standing tile: reachable, on the side the solver's next move needs (by its
-  getPosition rule, read in the instance's coordinates, since the Theatre is an instance and the
-  walker works in the template's) and close to the side of the move after; it does not walk when it
-  is already on the right side. The solver's optimal() mixes the two coordinate spaces and builds on
-  plane 0, so it is not used. The Alchemists' Playground hands its coins to the Coin Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
+  Theatre picks its own standing tile (`MtaScene`, pure and tested): a breadth-first search over the
+  scene's collision flags from the player, the solver's getPosition rule for the side the next move
+  needs, and the steps to the side of the move after. All of it in scene coordinates: the Theatre is
+  an instance, and the template conversions put the player a tile off. It walks during the guardian's
+  slide, selects the spell on arriving and clicks in the tick the guardian rests, inside one runner
+  step (Script.run() must not be called every few ms: it drives the client's blocking events and
+  holds every script). The solver's own optimal() mixes coordinate spaces and builds on plane 0, so
+  it is not used. The Alchemists' Playground hands its coins to the Coin Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
   `internal/core/mta/mta.json`; `MtaCalculator` mirrors `internal/core/mta`, pinned by
   `src/test/resources/mta-vectors.json` (a copy of the Go vectors). Verified in game so far: the
   overlay, the points (panel and each room's counter), the room setup at the bank chest, the

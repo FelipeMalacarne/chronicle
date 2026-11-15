@@ -33,6 +33,11 @@ import net.runelite.client.plugins.mta.MTAPlugin;
 @Slf4j
 final class MtaRunner extends Script
 {
+	/**
+	 * One step per loop. Script.run() is called once per loop and must not be called much faster: it
+	 * writes settings and drives the client's blocking events, which then hold every script. The
+	 * Telekinetic Theatre keeps its tick precision inside its own step ({@link MtaRooms#telekinetic}).
+	 */
 	private static final int LOOP_MS = 600;
 	/** Give up on a purchase that did not take after this many tries and say so. */
 	private static final int BUY_TRIES = 3;
@@ -48,6 +53,7 @@ final class MtaRunner extends Script
 	private String boughtTry = "";
 	private int tries;
 	private boolean firstVisit;
+
 
 	MtaRunner(MtaArenaPlugin plugin, MtaArenaConfig config)
 	{
@@ -85,6 +91,10 @@ final class MtaRunner extends Script
 
 	private void status(String text)
 	{
+		if (!text.equals(state))
+		{
+			log.info("MTA: {}", text);
+		}
 		state = text;
 		Microbot.status = "MTA: " + text;
 	}
@@ -97,8 +107,13 @@ final class MtaRunner extends Script
 			blocked.clear();
 			return;
 		}
-		if (!Microbot.isLoggedIn() || !super.run())
+		if (!Microbot.isLoggedIn())
 		{
+			return;
+		}
+		if (!super.run())
+		{
+			idleReason();
 			return;
 		}
 		if (!coreReady())
@@ -163,6 +178,22 @@ final class MtaRunner extends Script
 			default:
 				return;
 		}
+	}
+
+	private long idleLoggedAt;
+
+	/** Why Script.run() holds the loop (the owner's input, a pause, a blocking event), at most every 5 s. */
+	private void idleReason()
+	{
+		long now = System.currentTimeMillis();
+		if (now - idleLoggedAt < 5000)
+		{
+			return;
+		}
+		idleLoggedAt = now;
+		String why = net.runelite.client.plugins.microbot.util.input.InputArbiter.isHuman() ? "your mouse or keys in the client"
+			: Microbot.pauseAllScripts.get() ? "scripts paused" : "a blocking event";
+		status("waiting: " + why);
 	}
 
 	/** The RuneLite Mage Training Arena plugin has the solvers the rooms use: it must be on. */

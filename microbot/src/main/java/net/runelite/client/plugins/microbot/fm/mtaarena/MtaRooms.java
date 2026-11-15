@@ -73,6 +73,9 @@ final class MtaRooms
 	 */
 	private Direction inFlight;
 	private long inFlightUntil;
+	/** This maze's overhead view is set (the guardian's Observe, or the camera pitch after two misses). */
+	private boolean observed;
+	private int observeTries;
 
 	/** The last walk was a click on the tile itself (not the minimap's way there). */
 	private boolean lastWalkExact;
@@ -368,9 +371,8 @@ final class MtaRooms
 			{
 				Rs2Camera.setZoom(Rs2Random.betweenInclusive(40, 60));
 			}
-			// Look from above for the whole maze. Not the guardian's Observe: a walk click cancels it, and
-			// with the spell selected the guardian offers only the cast.
-			Rs2Camera.adjustPitch(1.0f);
+			observed = false;
+			observeTries = 0;
 		}
 		if (new Rs2NpcModel(room.getGuardian()).getWorldLocation().equals(room.getFinishLocation()))
 		{
@@ -382,6 +384,10 @@ final class MtaRooms
 				return p != null && maze.area.distanceTo(p) != 0;
 			});
 			return true;
+		}
+		if (!observed)
+		{
+			observe(room);
 		}
 		Direction next = planned(room, 0);
 		if (next == null)
@@ -399,7 +405,9 @@ final class MtaRooms
 		}
 		// On the right side: the spell selected, the pull is a single click when the guardian rests.
 		selectGrab();
-		if (!sleepUntil(() -> resting(room), 4000))
+		// Standing still too: a pull cast while walking past the side can land with the player in a
+		// corner ("The statue won't move - don't stand at the corners"), a law rune for nothing.
+		if (!sleepUntil(() -> resting(room) && !Rs2Player.isMoving(), 4000))
 		{
 			log.info("telekinetic: guardian not resting after 4s (id {})", room.getGuardian() == null ? null : room.getGuardian().getId());
 			return true;
@@ -429,6 +437,52 @@ final class MtaRooms
 			}
 		}
 		return true;
+	}
+
+	/**
+	 * The guardian's Observe: an overhead view centred on the maze, kept while walking and casting once
+	 * the camera has got there (a click during its move cancels it, so nothing else happens until it
+	 * rests). Offered only with no spell selected and the guardian at rest; after two misses the camera's
+	 * own pitch stands in.
+	 */
+	private void observe(TelekineticRoom room)
+	{
+		if (room.getGuardian() == null || room.getGuardian().getId() == GUARDIAN_MOVING || spellSelected())
+		{
+			if (++observeTries > 20)
+			{
+				observed = true;
+				Rs2Camera.adjustPitch(1.0f);
+			}
+			return;
+		}
+		boolean ok = new Rs2NpcModel(room.getGuardian()).click("Observe");
+		log.info("telekinetic: observe {}", ok ? "clicked" : "missed");
+		if (ok)
+		{
+			sleepUntil(MtaRooms::cameraMoving, 1500);
+			sleepUntil(() -> !cameraMoving(), 4000);
+			observed = true;
+		}
+		else if (++observeTries >= 2)
+		{
+			observed = true;
+			Rs2Camera.adjustPitch(1.0f);
+		}
+	}
+
+	private static int[] lastCamera;
+
+	/** The camera moved since the last look (position, pitch or yaw). */
+	private static boolean cameraMoving()
+	{
+		int[] now = Microbot.getClientThread().runOnClientThreadOptional(() -> {
+			net.runelite.api.Client c = Microbot.getClient();
+			return new int[]{c.getCameraX(), c.getCameraY(), c.getCameraZ(), c.getCameraPitch(), c.getCameraYaw()};
+		}).orElse(null);
+		boolean moving = now != null && lastCamera != null && !java.util.Arrays.equals(now, lastCamera);
+		lastCamera = now;
+		return moving;
 	}
 
 	/**

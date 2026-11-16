@@ -1,14 +1,20 @@
 <script lang="ts">
 	import {
+		driftApi,
+		fleetPluginsApi,
 		microbotApi,
 		MicrobotError,
+		type ClientDrift,
 		type GameView,
 		type MicrobotAction,
 		type MicrobotStatus,
-		type ScriptEntry
+		type PluginsView,
+		type RecurringState,
+		type Trigger
 	} from '#lib/api/microbot';
+	import type { ProfilePlugin } from '#lib/progress/fleetplugins';
+	import { clientCard } from '#lib/progress/clientplugins';
 	import Glyph from '#lib/v6/Glyph.svelte';
-	import AutomacaoTabs from '#lib/v6/AutomacaoTabs.svelte';
 	import { cockpit } from '#lib/progress/microbot.svelte';
 	import VncView, { type VncPhase } from '#lib/v6/VncView.svelte';
 	import SidePanel from '#lib/v6/game/SidePanel.svelte';
@@ -19,16 +25,21 @@
 	import { cancelSelection, gameMap, gameMenu } from '#lib/v6/game/menu.svelte';
 	import { scriptRows, selectedLabel } from '#lib/progress/jogo';
 	import { miscIcon, ICON_ATTRIBUTION } from '#lib/progress/icons';
-	import ScriptCard from '#lib/v6/ScriptCard.svelte';
+	import PluginsCard from '#lib/v6/PluginsCard.svelte';
+	import PluginDrawer from '#lib/v6/PluginDrawer.svelte';
 	import NearCard from '#lib/v6/NearCard.svelte';
 	import BankCard from '#lib/v6/BankCard.svelte';
 
 	/*
 	 * Conta › Cliente (página 8 do canvas, V7Cliente1440 e V7Cliente640; fatia V3 de
 	 * decisoes-canvas.md, 7.5): o jogo no centro (tela por imagem a cada 5 s ou ao vivo por VNC, o
-	 * chat e o painel de itens com o menu do jogo), e ao lado o script, o que está por perto e o
+	 * chat e o painel de itens com o menu do jogo), e ao lado os plugins, o que está por perto e o
 	 * banco. Relógios, Fazer agora, execuções, auditoria, log e conta do cliente foram para a Visão
-	 * geral. A 640 o jogo e Por perto ficam empilhados, sem ao vivo.
+	 * geral. A 640 o jogo e Por perto ficam empilhados, sem ao vivo, e Plugins vem embaixo.
+	 *
+	 * Os plugins moram aqui desde a rodada 4 do canvas (V7ClientePlugins1440 e V7ClienteGaveta1440,
+	 * seção 13 do brief): o cartão Plugins liga, para e abre a configuração numa gaveta sobre a
+	 * coluna da direita, sem sair do jogo; a manutenção (Hub, versões, remover) fica em /plugins.
 	 */
 	let status = $state<MicrobotStatus | null>(null);
 	let off = $state(false);
@@ -40,7 +51,16 @@
 	let armed = $state<string | null>(null);
 	let world = $state('');
 	let game = $state<GameView | null>(null);
-	let scripts = $state<ScriptEntry[]>([]);
+	let plugins = $state<PluginsView | null>(null);
+	let drift = $state<ClientDrift | null>(null);
+	let triggers = $state<Trigger[]>([]);
+	let recurring = $state<RecurringState[]>([]);
+	let profilePlugins = $state<ProfilePlugin[]>([]);
+	let hasProfile = $state(false);
+	/** O grupo de config de cada plugin (do esquema), lido uma vez por classe. */
+	let groups = $state<Record<string, string>>({});
+	let startedAt = $state<Record<string, number>>({});
+	let openPlugin = $state<string | null>(null);
 	let live = $state(false);
 	let intervene = $state(false);
 	let vnc = $state<{ phase: VncPhase; reason?: string }>({ phase: 'closed' });
@@ -58,9 +78,42 @@
 	const showLive = $derived(live && vncReady);
 	const inGame = $derived(loggedIn && !!game);
 	const bankOpen = $derived(inGame && !!game?.bank?.open && !showLive);
+	const scripts = $derived(plugins?.scripts.scripts ?? []);
 	const playing = $derived(scriptRows(scripts, game));
 	// Lê a conta escolhida para o VNC reabrir quando ela muda.
 	const vncURL = () => (cockpit.account, microbotApi.vncURL());
+	const account = $derived(cockpit.account || status?.agent.account || '');
+	const clientState = $derived(
+		!agent ? 'none' : !running ? 'stopped' : loggedIn ? 'game' : 'login'
+	);
+	const card = $derived(
+		plugins
+			? clientCard({
+					view: plugins,
+					game,
+					paused,
+					profile: profilePlugins,
+					triggers,
+					recurring,
+					drift,
+					groups,
+					startedAt
+				})
+			: null
+	);
+	const cardRows = $derived(
+		card ? [...card.plays, ...card.routines, ...card.always, ...card.client] : []
+	);
+	const openRow = $derived(cardRows.find((r) => r.className === openPlugin) ?? null);
+	const drawerGroups = $derived(
+		card
+			? [
+					{ label: 'Jogam', items: card.plays },
+					{ label: 'Rotinas usam', items: card.routines },
+					{ label: 'Sempre ligados', items: card.always }
+				]
+			: []
+	);
 
 	const tone = $derived(
 		!agent ? 'off' : loggedIn ? 'ok' : running ? 'up' : client?.error ? 'bad' : 'off'
@@ -118,10 +171,47 @@
 	}
 	async function refreshScripts() {
 		try {
-			scripts = (await microbotApi.plugins()).scripts.scripts;
+			plugins = await microbotApi.plugins();
 		} catch {
-			/* sem a lista, o cartão Script diz que nada joga */
+			/* sem a lista, o cartão Plugins espera a próxima leitura */
 		}
+	}
+	async function refreshDrift() {
+		if (!account || !running) {
+			drift = null;
+			return;
+		}
+		try {
+			drift = await driftApi.get(account);
+		} catch {
+			drift = null;
+		}
+	}
+	/** Os grupos do cartão saem do uso: o que uma rotina roda e o que o perfil liga no boot. */
+	async function refreshUse() {
+		try {
+			triggers = (await microbotApi.triggers()).triggers;
+		} catch {
+			triggers = [];
+		}
+		try {
+			recurring = (await microbotApi.recurringOf(account)).recurring;
+		} catch {
+			recurring = [];
+		}
+		if (!account) return;
+		try {
+			const ac = await fleetPluginsApi.accountClient(account);
+			profilePlugins = ac.effective.plugins;
+			hasProfile = !!ac.profile;
+		} catch {
+			profilePlugins = [];
+		}
+	}
+	function refreshPlugins() {
+		void refresh();
+		void refreshScripts();
+		void refreshDrift();
 	}
 	$effect(() => {
 		void refresh();
@@ -130,10 +220,11 @@
 		}, 3000);
 		return () => clearInterval(st);
 	});
-	// Os plugins ligados (o que joga) a cada 10 s enquanto o cliente roda.
+	// Os plugins do cliente a cada 10 s enquanto ele roda; o desvio do perfil a cada 30 s; as
+	// rotinas e o perfil (os grupos do cartão) a cada minuto.
 	$effect(() => {
 		if (!running) {
-			scripts = [];
+			plugins = null;
 			return;
 		}
 		void refreshScripts();
@@ -141,6 +232,62 @@
 			if (!document.hidden) void refreshScripts();
 		}, 10_000);
 		return () => clearInterval(t);
+	});
+	$effect(() => {
+		void account;
+		if (!running) {
+			drift = null;
+			return;
+		}
+		void refreshDrift();
+		const t = setInterval(() => {
+			if (!document.hidden) void refreshDrift();
+		}, 30_000);
+		return () => clearInterval(t);
+	});
+	$effect(() => {
+		void account;
+		if (!agent) return;
+		void refreshUse();
+		const t = setInterval(() => {
+			if (!document.hidden) void refreshUse();
+		}, 60_000);
+		return () => clearInterval(t);
+	});
+	// O grupo de config de cada plugin do cartão, para saber que desvio é dele.
+	$effect(() => {
+		if (!card) return;
+		for (const r of [...card.plays, ...card.routines, ...card.always]) {
+			if (r.protected || r.className in groups) continue;
+			groups[r.className] = '';
+			microbotApi
+				.configSchema(r.className)
+				.then((s) => (groups[r.className] = s.group))
+				.catch(() => {});
+		}
+	});
+	// Desde quando o primeiro que joga roda (o status do Agent Server), a cada minuto.
+	const first = $derived(card?.plays.find((r) => r.active)?.className ?? '');
+	$effect(() => {
+		const cls = first;
+		if (!cls) return;
+		const read = async () => {
+			try {
+				const at = (await microbotApi.scriptDetail(cls)).status?.startedAt;
+				startedAt = at ? { [cls]: Date.parse(at) } : {};
+			} catch {
+				startedAt = {};
+			}
+		};
+		void read();
+		const t = setInterval(() => {
+			if (!document.hidden) void read();
+		}, 60_000);
+		return () => clearInterval(t);
+	});
+	// A gaveta fecha quando o cliente para ou o plugin some.
+	$effect(() => {
+		if (openPlugin && (!running || (plugins && !openRow))) openPlugin = null;
 	});
 	// O jogo (inventário, skills, por perto, diálogo...) a cada 3 s enquanto a conta está logada.
 	// Uma leitura leva alguns segundos (várias do Agent Server e da ponte): uma por vez, senão as
@@ -228,18 +375,6 @@
 	const label = (a: MicrobotAction) =>
 		busy === a ? `${LABEL[a]}…` : armed === a ? `Confirmar: ${LABEL[a].toLowerCase()}` : LABEL[a];
 
-	let pausing = $state(false);
-	async function pauseAll() {
-		pausing = true;
-		try {
-			await microbotApi.plugin({ path: 'scripts/pause' });
-		} catch (e) {
-			failure = e instanceof MicrobotError ? e.message : String(e);
-		} finally {
-			pausing = false;
-			await refresh();
-		}
-	}
 	const viewHint = $derived(
 		showLive
 			? vnc.phase === 'connected'
@@ -273,8 +408,6 @@
 		<p>Este servidor só acompanha: não abre nem controla o cliente das contas.</p>
 	</div>
 {:else}
-	<!-- Jogo | Plugins: a lista de plugins da conta (instalar, ligar, configurar) mora na outra aba. -->
-	<div class="cltabs"><AutomacaoTabs current="cockpit" /></div>
 	<div class="strip7">
 		<span class="lamp {tone}"></span>
 		<span class="stnow"
@@ -346,9 +479,6 @@
 			<span
 				><b>{playing[0].name} está jogando.</b>
 				<span class="wide-only">O que você clicar aqui disputa o mouse com ele.</span></span
-			>
-			<button class="btn btn-s push" type="button" disabled={pausing} onclick={pauseAll}
-				>{pausing ? 'Pausando…' : wide ? 'Pausar o script' : 'Pausar'}</button
 			>
 		</div>
 	{/if}
@@ -440,36 +570,54 @@
 			{#if inGame && game}<SidePanel view={game} />{/if}
 		</section>
 
-		{#if running}
-			<aside class="side">
-				<div class="wide-only">
-					<ScriptCard
-						{scripts}
-						view={game}
-						{paused}
-						onchange={() => {
-							void refresh();
-							void refreshScripts();
-						}}
-					/>
-				</div>
+		{#if status}
+			<aside class="rcol">
+				{#if wide}{@render pluginsCard()}{/if}
 				{#if inGame && game}
 					<NearCard view={game} walk={wide} />
 					<div class="wide-only"><BankCard view={game} /></div>
 				{/if}
+				{#if !wide}{@render pluginsCard()}{/if}
 			</aside>
+		{/if}
+		{#if openRow}
+			<PluginDrawer
+				row={openRow}
+				rows={drawerGroups}
+				{account}
+				{hasProfile}
+				drift={openRow.drift}
+				{inGame}
+				{wide}
+				accountName={[stateText, currentWorld ? `mundo ${currentWorld}` : '']
+					.filter(Boolean)
+					.join(' · ')}
+				onclose={() => (openPlugin = null)}
+				onswitch={(c) => (openPlugin = c)}
+				onchange={refreshPlugins}
+			/>
 		{/if}
 	</div>
 	<p class="foot">{ICON_ATTRIBUTION}. Cliente de terceiros, fora do planner.</p>
 {/if}
 
+{#snippet pluginsCard()}
+	<PluginsCard
+		{card}
+		client={clientState}
+		{paused}
+		open={openPlugin}
+		onopen={(c) => (openPlugin = openPlugin === c ? null : c)}
+		onchange={refreshPlugins}
+		onstart={() => act('client/start')}
+		onlogin={() => act('login')}
+	/>
+{/snippet}
+
 <GameMenu />
 {#if gameMap.open}<WorldMap me={pos} />{/if}
 
 <style>
-	.cltabs {
-		align-self: flex-start;
-	}
 	/* Not `.st`: that global class is the step-status circle. */
 	.strip7 .stnow {
 		min-width: 0;
@@ -477,14 +625,13 @@
 	.strip7 .stnow b {
 		font-weight: 600;
 	}
-	.push {
-		margin-left: auto;
-	}
 	.seg button:disabled {
 		opacity: 0.55;
 		cursor: not-allowed;
 	}
+	/* position: relative: a gaveta de configuração se posiciona sobre a coluna da direita. */
 	.cols {
+		position: relative;
 		display: flex;
 		flex-wrap: wrap;
 		gap: 20px;
@@ -494,9 +641,8 @@
 		flex: 999 1 600px;
 		min-width: 0;
 	}
-	.side {
-		flex: 1 1 280px;
-		max-width: 320px;
+	.rcol {
+		flex: 0 0 320px;
 		min-width: 0;
 		display: flex;
 		flex-direction: column;
@@ -588,8 +734,8 @@
 			aspect-ratio: auto;
 			min-height: 380px;
 		}
-		.side {
-			max-width: none;
+		.rcol {
+			flex: 1 1 100%;
 		}
 		.wide-only {
 			display: none;

@@ -293,6 +293,7 @@ mostra número que o servidor não mede (sem dado, a linha some).
 | V8 | Plugins da frota | doc 11, F5. **Feita** (2026-11-13, seção 7.6) |
 | V9 | Capacidade no resumo e Frota compacta | doc 11, F7 (a compacta não depende). **Feita** (2026-11-13, seção 7.7) |
 | V10 | Mundo da frota e as telas que faltam em 640 px | metas de várias contas (feito no servidor, `GET /api/fleet/goals`). **Feito o Mundo da frota** (2026-11-13, seção 7.8), com as divergências do que a API ainda não mede; as telas que faltam em 640 px esperam desenho no canvas |
+| V11 | Plugins dentro da aba Cliente: cartão Plugins, gaveta de configuração, a manutenção em /plugins (rodada 4 do canvas, seção 13 do brief) | nada. **Feita** (2026-11-16, seção 7.16) |
 
 Antes de cada fatia que mexe numa tela ainda sem desenho na v7 (Comparar, Entidades, Grafo), o desenho
 entra no canvas e o dono aprova (regra 11 do `CLAUDE.md`).
@@ -801,6 +802,54 @@ Divergências dos artboards:
 
 Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`frota.test.ts`, `historico.test.ts`,
 `automacao.test.ts`) e `pnpm build`; sem captura de tela.
+
+### 7.16 Implementação: V11, plugins dentro da aba Cliente (2026-11-16)
+
+Artboards seguidos (página 8, rodada 4, aprovada pelo dono em 2026-11-16): `V7ClientePlugins1440`,
+`V7ClienteGaveta1440`, `V7ClientePluginsEstados1440`, `V7ClienteGavetaEstados1440`,
+`V7ClientePlugins640`, `V7ClienteGaveta640` e `V7PluginsManutencao1440`. Os pontos em aberto da seção
+13 do brief foram decididos pelo dono antes do desenho: em 640 o cartão vai abaixo de Por perto e a
+configuração abre em tela cheia; o desvio fora da gaveta é selo na linha e contagem no título; o
+Salvar único vale também em `/plugins`.
+
+- **Aba Cliente** (`/automacao`): o cartão Plugins (`PluginsCard.svelte`) substitui o Script; a
+  sub-aba Plugins saiu (`/automacao/plugins` redireciona para `/plugins`) e o aviso "está jogando"
+  perdeu o botão de pausar, que agora é o "Pausar todos" do cartão. A coluna da direita tem 320 px
+  fixos. Os grupos saem do uso, como em `/plugins`, lidos do cliente: o que um gatilho ou uma rotina
+  recorrente roda, o que o perfil efetivo da conta liga no boot (mais os protegidos e os utilitários,
+  como o Chronicle Link), o resto. A lógica é `web/src/lib/progress/clientplugins.ts`, testada em node.
+- **Gaveta** (`PluginDrawer.svelte`): grava no cliente que roda, na hora; o aviso de desvio usa
+  `GET /api/accounts/client/drift` (só as opções do grupo de config do plugin, pelo esquema que o
+  Chronicle Link exporta), "Salvar no perfil" (`drift/save`, para o perfil da conta ou, sem perfil,
+  para a conta) e "Descartar" (`client/apply` com as chaves). Fechar e trocar de plugin com mudanças
+  perguntam antes; Esc fecha primeiro o menu do jogo e o mapa. Sem esquema, chave/valor com o mesmo
+  Salvar único.
+- **Formulário** (`ConfigForm.svelte`): um Salvar só, com a contagem de mudanças e Descartar; a opção
+  com aviso pede "Confirmar" antes de poder salvar; o perfil grava tudo numa escrita (`writeMany`).
+- **`/plugins`**: a busca no Hub filtra a lista e mostra o Hub embaixo; uma conta aberta em "Nas
+  contas" mostra a state machine e o último resultado, "Parar nesta conta" e "Remover do cliente";
+  "Remover da frota" foi para junto de "Aplicar agora".
+
+Divergências dos artboards:
+
+1. **Hora da rotina:** "rotina às 14:32" vem do `nextAt` que o vigia do agent devolve em
+   `GET /api/microbot/recurring`; gatilho não tem hora e a linha diz o evento ("rotina quando o
+   filhote crescer"). A issue #80, aberta antes de achar o campo, foi fechada.
+2. **State machine:** o snapshot (`/debug/snapshot`) traz o estado atual, o tempo nele e as voltas,
+   não a lista de estados; `/plugins` mostra só o atual, sem os já passados do artboard.
+3. **Estado na linha:** o nome do estado vem em minúsculas ("fishing"), como no cartão Script, e não
+   em mono maiúsculo; "jogou até 13:30" e "pausa às 15:10" ficaram de fora (o servidor não sabe).
+4. **"Padrão":** a gaveta não tem o link "padrão" por opção (o desenho não tem); `/plugins` o mantém,
+   porque é como uma conta deixa de ter ajuste próprio numa opção.
+5. **Selects nativos** no lugar do `pick7`, como o formulário já usava.
+6. **"Plugin do perfil sem instalar"** e **"do RuneLite sem conferir"** aparecem juntos no rodapé do
+   cartão, em mono; o artboard só mostra o segundo.
+7. **Cliente na tela de login:** o "Entrar no jogo" do cartão repete o da faixa, como no artboard.
+
+Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`clientplugins.test.ts`) e capturas a 1440 e
+640 contra uma API de mentira (os fixtures do contrato mais um cliente inventado): o cartão, a gaveta
+aberta, a pergunta ao fechar com mudanças e `/plugins` com uma conta aberta. Sem o cliente de verdade:
+falta conferir no saradomin.
 
 - Marca manual por objetivo (2026-11-13): implementada fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.
 - Marca manual por item do trecho (2026-11-14): "Já tenho" e "Desfazer" nos slots do cartão "Levar do banco" (`BankPanel`), fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.

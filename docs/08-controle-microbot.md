@@ -394,7 +394,8 @@ aparelho do HWID agent (`~/.runelite/spoofed-*.properties`); quem move isso é o
   `runelite`, `microbot` e `fm-ironmanplanner` (credencial do planner); chaves que parecem segredo
   (token, senha, cookie, PIN); nomes fora do formato (só o `internalName` do Hub, classe Java
   qualificada, grupo e chave `[A-Za-z0-9_.-]`).
-- Web: Automação › Plugins (`/automacao/plugins`, V6MicrobotPlugins1440). A lista junta o `/scripts`
+- Web (histórico; desde 2026-11-16 ligar, parar e configurar ficam no cartão Plugins da aba Cliente e a
+  manutenção em `/plugins`, `docs/ui/decisoes-canvas.md` seção 7.16): Automação › Plugins (`/automacao/plugins`, V6MicrobotPlugins1440). A lista junta o `/scripts`
   com o Hub pelo nome simples da classe (é o `internalName`), em três grupos: do Hub, seus (pacote `fm`,
   sideload) e do cliente (escondidos por padrão). O detalhe tem iniciar e parar (segundo clique),
   pausar e retomar todos, atualizar e remover (Hub), status, saúde e último resultado, os JSONs da state

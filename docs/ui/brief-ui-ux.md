@@ -369,3 +369,7 @@ O que desenhar:
    manutenção que sai da sub-aba (Hub, remover, state machine e resultados de um plugin numa conta).
 6. Se o **Salvar** único da gaveta vale também para a configuração de `/plugins`, que hoje grava campo a
    campo no código (divergência 3 da seção 7.6 de `decisoes-canvas.md`).
+
+Estado (2026-11-16): desenhado na rodada 4 da página 8 (sete artboards `V7ClientePlugins*`, `V7ClienteGaveta*`
+e `V7PluginsManutencao1440`; nota `v7-plugins-cliente`), com os itens 3, 4 e 6 decididos pelo dono, e
+implementado (seção 7.16 de `decisoes-canvas.md`).

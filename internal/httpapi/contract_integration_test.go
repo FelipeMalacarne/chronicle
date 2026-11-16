@@ -188,6 +188,10 @@ func TestContractPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	call("PUT", "/api/plans/active"+acc, `{"plan":"`+created.ID+`"}`)
+	// The rhythm's "today" starts at the viewer's midnight. Twelve hours back
+	// keeps acc_levels' gain of an hour ago in it, and its 30-hour-old baseline
+	// out, at any hour; midnight UTC lost the gain between 00:00 and 01:00 UTC.
+	since := time.Now().Add(-12 * time.Hour).UTC().Format(time.RFC3339)
 
 	cases := []contractCase{
 		{name: "guides", method: "GET", path: "/api/guides", tsImports: []string{"GuideInfo"}, tsType: "{ guides: GuideInfo[] }"},
@@ -206,8 +210,8 @@ func TestContractPostgres(t *testing.T) {
 		{name: "account-levels", method: "GET", path: "/api/account/levels?account=acc_levels", tsImports: []string{"AccountLevels"}, tsType: "AccountLevels"},
 		{name: "fleet-levels", method: "GET", path: "/api/levels", tsImports: []string{"FleetLevels"}, tsType: "FleetLevels"},
 		{name: "workers", method: "GET", path: "/api/workers", tsFrom: "../microbot", tsImports: []string{"WorkersView"}, tsType: "WorkersView"},
-		{name: "account-rhythm", method: "GET", path: "/api/account/rhythm" + acc, tsImports: []string{"AccountRhythm"}, tsType: "AccountRhythm"},
-		{name: "fleet-rhythm", method: "GET", path: "/api/rhythm", tsImports: []string{"FleetRhythm"}, tsType: "FleetRhythm"},
+		{name: "account-rhythm", method: "GET", path: "/api/account/rhythm" + acc + "&since=" + since, tsImports: []string{"AccountRhythm"}, tsType: "AccountRhythm"},
+		{name: "fleet-rhythm", method: "GET", path: "/api/rhythm?since=" + since, tsImports: []string{"FleetRhythm"}, tsType: "FleetRhythm"},
 		{name: "fleet-goals", method: "GET", path: "/api/fleet/goals?keys=quest:cooks_assistant@finished", tsImports: []string{"FleetGoalsResponse"}, tsType: "FleetGoalsResponse"},
 		{name: "plan-next", method: "GET", path: "/api/plan/next" + acc, tsImports: []string{"PlanNext"}, tsType: "PlanNext"},
 		{name: "plans", method: "GET", path: "/api/plans" + acc, tsImports: []string{"PlansResponse"}, tsType: "PlansResponse"},

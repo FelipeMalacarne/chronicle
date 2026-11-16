@@ -23,6 +23,8 @@ export interface GoalView {
 	title: string;
 	/** Marcado pelo dono: "feito" sem evidência, com a opção de desfazer. */
 	ownerMarked: boolean;
+	/** Objetivo de item: no passo atual, a marca do dono é "Já tenho" no lugar de "Já fiz". */
+	item: boolean;
 }
 
 export interface GoalGroup {
@@ -71,7 +73,8 @@ export function goalView(chip: Chip, observed?: ObservedValue): GoalView {
 		key: chip.key,
 		ref: chip.ref,
 		role: chip.role,
-		ownerMarked: chip.ownerMarked
+		ownerMarked: chip.ownerMarked,
+		item: chip.kind === 'item'
 	};
 	const hint = chip.view.hint ? ` · ${chip.view.hint}` : '';
 	if (chip.verdict === 'met')

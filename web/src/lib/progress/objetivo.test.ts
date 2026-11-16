@@ -56,6 +56,7 @@ test('goalView shows how much is missing when the board knows the number', () =>
 	assert.equal(g.text, '240 / 1.250');
 	assert.equal(g.pct, 19);
 	assert.equal(g.cls, '');
+	assert.equal(g.item, true);
 });
 
 test('goalView never fills the bar of what is missing, even past the target', () => {
@@ -85,6 +86,7 @@ test('goalView without a number: "falta" with the full label', () => {
 	});
 	const g = goalView(quest);
 	assert.deepEqual([g.name, g.text, g.pct, g.cls], ['A Ruff Situation', 'falta', 0, '']);
+	assert.equal(g.item, false);
 });
 
 test('goalGroups orders the roles and matches each observed value to its role and key', () => {

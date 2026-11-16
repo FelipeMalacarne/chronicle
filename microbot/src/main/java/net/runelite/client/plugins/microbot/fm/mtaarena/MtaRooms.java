@@ -421,7 +421,7 @@ final class MtaRooms
 		// corner ("The statue won't move - don't stand at the corners"), a law rune for nothing.
 		if (!sleepUntil(() -> resting(room) && !Rs2Player.isMoving(), 4000))
 		{
-			log.info("telekinetic: guardian not resting after 4s (id {})", room.getGuardian() == null ? null : room.getGuardian().getId());
+			log.debug("telekinetic: guardian not resting after 4s (id {})", room.getGuardian() == null ? null : room.getGuardian().getId());
 			return true;
 		}
 		// Read the plan again after the wait: a direction read before it may already be spent, and pulling
@@ -434,7 +434,7 @@ final class MtaRooms
 		}
 		Direction after = planned(room, 1);
 		Direction afterThat = planned(room, 2);
-		log.info("telekinetic: pull ({}), then {}", next, after);
+		log.debug("telekinetic: pull ({}), then {}", next, after);
 		new Rs2NpcModel(room.getGuardian()).click();
 		// Once the grab is cast (its projectile out, or the guardian already sliding) the walk does not
 		// cancel it: head for the side of the move after right away, as the plan already says.
@@ -586,7 +586,7 @@ final class MtaRooms
 		});
 		MtaScene.Tile here = (MtaScene.Tile) picked[0];
 		MtaScene.Tile tile = (MtaScene.Tile) picked[1];
-		log.info("telekinetic: maze {} no guardian in sight: box {} base {},{} at {} -> {}", maze, box, picked[2],
+		log.debug("telekinetic: maze {} no guardian in sight: box {} base {},{} at {} -> {}", maze, box, picked[2],
 			picked[3], here, tile);
 		if (tile == null || tile.equals(here) || tile.equals(lastApproach))
 		{
@@ -659,7 +659,7 @@ final class MtaRooms
 		{
 			return;
 		}
-		log.info("telekinetic: maze {} next {} from {} walk to {} (highlight {})", maze, side, here, tile, picked[2]);
+		log.debug("telekinetic: maze {} next {} from {} walk to {} (highlight {})", maze, side, here, tile, picked[2]);
 		lastWalk = tile;
 		// A tile drawn on screen gets a click on it; a far one goes by the minimap, the exact click after.
 		lastWalkExact = walkScene(tile);

@@ -24,7 +24,7 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.5): pick the Rewards Guardian's items, the overlay shows the pizazz
+- `fm/mtaarena/` — MTA Planner (v0.6): pick the Rewards Guardian's items, the overlay shows the pizazz
   points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
   and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step and
   `MtaRunner` runs it. Bones to Peaches comes first and is the only reward bought by itself ("Buy
@@ -55,9 +55,13 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   a (1, 1) box, which the client takes for its fallback: the virtual mouse never settles there and
   holds the mouse lock for every script, until the client restarts). The Alchemists' Playground hands its coins to the Coin Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
   `internal/core/mta/mta.json`; `MtaCalculator` mirrors `internal/core/mta`, pinned by
-  `src/test/resources/mta-vectors.json` (a copy of the Go vectors). Verified in game so far: the
-  overlay, the points (panel and each room's counter), the room setup at the bank chest, the
-  Enchanting Chamber and the Telekinetic Theatre.
+  `src/test/resources/mta-vectors.json` (a copy of the Go vectors). Verified in game (2026-11-15, Magic
+  44 to 62): the overlay and the points (panel, each room's counter, the Playground's coins), the
+  setup at the bank chest, the Enchanting Chamber (Lvl-2 to 4), the Telekinetic Theatre (streaks of
+  five), the Alchemists' Playground (high alchemy, Coin Collector), the Creature Graveyard with
+  bananas and with peaches, and buying Bones to Peaches. Not yet: Lvl-5 and 6 Enchant, buying the
+  other rewards ("Buy rewards", the wands' upgrades). Scripts in `Rs2Inventory`: `count(id)` counts
+  stacks, `itemQuantity(id)` the amount; the Playground's coins are item 8890, not 995.
 - `bin/` — harness (on PATH inside the dev shell).
 - The worker image (Chronicle's managed workers, docs/11 section 13.4) is built outside this
   directory: `nix/worker-runtime.nix`, `deploy/worker/` (see "Worker image").

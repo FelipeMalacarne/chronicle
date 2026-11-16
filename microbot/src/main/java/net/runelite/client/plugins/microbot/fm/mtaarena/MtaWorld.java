@@ -63,8 +63,8 @@ final class MtaWorld
 
 	/** In front of the lobby's teleporters. */
 	static final WorldPoint LOBBY = new WorldPoint(3363, 3318, 0);
-	/** In front of the Rewards Guardian. */
-	static final WorldPoint SHOP = new WorldPoint(3365, 3318, 0);
+	/** In front of the Rewards Guardian, upstairs beside the bank chest. */
+	static final WorldPoint SHOP = new WorldPoint(3365, 3318, 1);
 	static final int REWARDS_GUARDIAN = 5984;
 	/** The Rewards Guardian's shop: the interface group, its item list and its buy button. */
 	static final int SHOP_GROUP = 197;

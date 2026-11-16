@@ -55,6 +55,23 @@ class MtaArenaOverlay extends OverlayPanel
 			panelComponent.getChildren().add(LineComponent.builder()
 				.left("Points not read: talk to your progress hat").leftColor(SHORT).build());
 		}
+		if (s.left > 0)
+		{
+			panelComponent.getChildren().add(LineComponent.builder()
+				.left("Covered").right(s.covered + " of " + s.left).rightColor(s.covered > 0 ? OK : Color.WHITE).build());
+			if (s.next != null)
+			{
+				panelComponent.getChildren().add(LineComponent.builder().left("Next").right(s.next).build());
+				MtaCalculator.Points m = s.nextMissing;
+				panelComponent.getChildren().add(LineComponent.builder().left("  needs T/G/E/A")
+					.right(m.telekinetic + "/" + m.graveyard + "/" + m.enchantment + "/" + m.alchemist).build());
+			}
+		}
+		if (s.rate > 0)
+		{
+			panelComponent.getChildren().add(LineComponent.builder()
+				.left(s.rateRoom).right(String.format("%.1f pts/min", s.rate)).build());
+		}
 		MtaCalculator.Result r = s.result;
 		if (r.buy.isEmpty())
 		{

@@ -143,4 +143,24 @@ class MtaPlannerTest
 		assertEquals(Room.TELEKINETIC, s.room);
 		assertEquals(200, s.points);
 	}
+
+	@Test
+	void theRoomThePlayerIsInIsKeptForTheNextRewards() throws Exception
+	{
+		// Boots (120/120/1200/120), beginner wand (30/30/300/30), apprentice wand (60/60/600/60).
+		// Points(telekinetic, graveyard, enchantment, alchemist).
+		List<String> wanted = Arrays.asList("infinity_boots", "apprentice_wand");
+		List<String> peaches = Arrays.asList("bones_to_peaches");
+		Points bootsTele = new Points(120, 0, 0, 0);
+		// Without a current room: the boots' alchemist points come next.
+		assertEquals(Room.ALCHEMIST, MtaPlanner.next(wanted, peaches, bootsTele, 60, 0, ALL, false, null).room);
+		// In the Telekinetic Theatre: stay for the wands' telekinetic points first.
+		Step s = MtaPlanner.next(wanted, peaches, bootsTele, 60, 0, ALL, false, Room.TELEKINETIC);
+		assertEquals(Room.TELEKINETIC, s.room);
+		assertEquals(30, s.points);
+		assertEquals("beginner_wand", s.reward);
+		// Its share of the lookahead done: on to the room in turn.
+		s = MtaPlanner.next(wanted, peaches, new Points(210, 0, 0, 0), 60, 0, ALL, false, Room.TELEKINETIC);
+		assertEquals(Room.ALCHEMIST, s.room);
+	}
 }

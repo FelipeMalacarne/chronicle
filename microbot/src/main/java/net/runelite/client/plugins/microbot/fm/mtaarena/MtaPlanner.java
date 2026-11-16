@@ -92,6 +92,17 @@ final class MtaPlanner
 	static Step next(Collection<String> wanted, Collection<String> owned, Points held, int magic,
 		int enchantLevel, Set<Room> allowed, boolean buyAll) throws MtaException
 	{
+		return next(wanted, owned, held, magic, enchantLevel, allowed, buyAll, null);
+	}
+
+	/**
+	 * As above; {@code current} is the room the player is in (or null). It is kept while it still has
+	 * points to gather for the next {@link #LOOKAHEAD} rewards after the one in turn, so the runner does
+	 * not walk to another room and the bank chest each time a single reward's share is in.
+	 */
+	static Step next(Collection<String> wanted, Collection<String> owned, Points held, int magic,
+		int enchantLevel, Set<Room> allowed, boolean buyAll, Room current) throws MtaException
+	{
 		List<String> order = MtaCalculator.buyOrder(wanted, owned);
 		if (order.isEmpty())
 		{
@@ -100,6 +111,20 @@ final class MtaPlanner
 		boolean peachesOwned = owned.contains(MtaCalculator.PEACHES);
 		boolean waitGraveyard = peachesOwned && magic < MtaCalculator.PEACHES_MAGIC;
 		int[] have = {held.telekinetic, held.alchemist, held.graveyard, held.enchantment};
+		int[][] cumulative = new int[order.size()][4];
+		int[] running = new int[4];
+		for (int k = 0; k < order.size(); k++)
+		{
+			MtaReward x = MtaCalculator.reward(order.get(k));
+			running[Room.TELEKINETIC.ordinal()] += x.telekinetic;
+			running[Room.ALCHEMIST.ordinal()] += x.alchemist;
+			running[Room.GRAVEYARD.ordinal()] += x.graveyard;
+			running[Room.ENCHANTMENT.ordinal()] += x.enchantment;
+			cumulative[k] = running.clone();
+		}
+		boolean enchantable = MtaCalculator.enchantLevelFor(magic, enchantLevel) > 0;
+		boolean stayable = current != null && allowed.contains(current)
+			&& !(current == Room.GRAVEYARD && waitGraveyard) && !(current == Room.ENCHANTMENT && !enchantable);
 		int[] total = new int[4];
 		Step manual = null;
 		Step graveyardLater = null;
@@ -137,9 +162,20 @@ final class MtaPlanner
 					}
 					continue;
 				}
-				if (room == Room.ENCHANTMENT && MtaCalculator.enchantLevelFor(magic, enchantLevel) == 0)
+				if (room == Room.ENCHANTMENT && !enchantable)
 				{
 					return new Step(Kind.BLOCKED, r.id, room, n);
+				}
+				if (stayable && current != room)
+				{
+					for (int j = k; j < Math.min(order.size(), k + 1 + LOOKAHEAD); j++)
+					{
+						int m = cumulative[j][current.ordinal()] - have[current.ordinal()];
+						if (m > 0)
+						{
+							return new Step(Kind.EARN, order.get(j), current, m, j > 0);
+						}
+					}
 				}
 				return new Step(Kind.EARN, r.id, room, n, k > 0);
 			}
@@ -155,6 +191,9 @@ final class MtaPlanner
 		}
 		return new Step(Kind.READY, order.get(0), null, 0);
 	}
+
+	/** Rewards past the one in turn the room the player is in keeps gathering for. */
+	static final int LOOKAHEAD = 2;
 
 	private static boolean covers(int[] have, int[] cost)
 	{

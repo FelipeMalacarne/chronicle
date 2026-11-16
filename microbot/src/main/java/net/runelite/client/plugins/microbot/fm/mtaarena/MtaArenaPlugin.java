@@ -47,7 +47,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class MtaArenaPlugin extends Plugin
 {
-	static final String VERSION = "0.6.0";
+	static final String VERSION = "0.7.0";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 
@@ -69,6 +69,15 @@ public class MtaArenaPlugin extends Plugin
 		MtaPlanner.Step step;
 		/** The rewards the account has. */
 		Set<String> owned = new HashSet<>();
+		/** Of the rewards left, how many the points held already cover (in purchase order), and the next. */
+		int covered;
+		int left;
+		String next;
+		/** The next reward's points still missing, per room (telekinetic, graveyard, enchantment, alchemist). */
+		MtaCalculator.Points nextMissing;
+		/** Points per minute in the room the runner plays, over the last minutes; 0 when unknown. */
+		double rate;
+		String rateRoom;
 		/** Why there is no result (nothing chosen, no Enchant castable), or null. */
 		String message;
 		int law;
@@ -304,12 +313,14 @@ public class MtaArenaPlugin extends Plugin
 		{
 			s.message = ex.getMessage();
 		}
+		coverage(s, chosen, owned);
+		rate(s);
 		if (s.pointsKnown)
 		{
 			try
 			{
 				s.step = MtaPlanner.next(chosen, owned, s.held, client.getRealSkillLevel(Skill.MAGIC),
-					config.enchantLevel(), playable(), config.buyRewards());
+					config.enchantLevel(), playable(), config.buyRewards(), currentRoom());
 			}
 			catch (MtaCalculator.MtaException ex)
 			{
@@ -345,6 +356,83 @@ public class MtaArenaPlugin extends Plugin
 			}
 		}
 		return n;
+	}
+
+	/** How many rewards the points cover, in purchase order, and what the next one still needs. */
+	private static void coverage(Snapshot s, List<String> chosen, Set<String> owned)
+	{
+		List<String> order;
+		try
+		{
+			order = MtaCalculator.buyOrder(chosen, owned);
+		}
+		catch (MtaCalculator.MtaException ex)
+		{
+			return;
+		}
+		s.left = order.size();
+		int t = 0;
+		int g = 0;
+		int e = 0;
+		int a = 0;
+		for (String id : order)
+		{
+			MtaReward r = MtaCalculator.reward(id);
+			t += r.telekinetic;
+			g += r.graveyard;
+			e += r.enchantment;
+			a += r.alchemist;
+			MtaCalculator.Points h = s.held;
+			if (h.telekinetic >= t && h.graveyard >= g && h.enchantment >= e && h.alchemist >= a)
+			{
+				s.covered++;
+				continue;
+			}
+			s.next = r.name;
+			s.nextMissing = new MtaCalculator.Points(Math.max(0, t - h.telekinetic), Math.max(0, g - h.graveyard),
+				Math.max(0, e - h.enchantment), Math.max(0, a - h.alchemist));
+			return;
+		}
+	}
+
+	private static final long RATE_WINDOW_MS = 5 * 60_000;
+	/** (time, room, that room's points) while the runner plays a room. */
+	private final java.util.ArrayDeque<Object[]> samples = new java.util.ArrayDeque<>();
+
+	/** Points per minute in the room being played, over {@link #RATE_WINDOW_MS}. */
+	private void rate(Snapshot s)
+	{
+		MtaPlanner.Room room = currentRoom();
+		long now = System.currentTimeMillis();
+		if (room == null)
+		{
+			samples.clear();
+			return;
+		}
+		int points = room == MtaPlanner.Room.TELEKINETIC ? s.held.telekinetic
+			: room == MtaPlanner.Room.ALCHEMIST ? s.held.alchemist
+			: room == MtaPlanner.Room.GRAVEYARD ? s.held.graveyard : s.held.enchantment;
+		if (!samples.isEmpty() && samples.peekLast()[1] != room)
+		{
+			samples.clear();
+		}
+		samples.addLast(new Object[]{now, room, points});
+		while (now - (long) samples.peekFirst()[0] > RATE_WINDOW_MS)
+		{
+			samples.removeFirst();
+		}
+		long span = now - (long) samples.peekFirst()[0];
+		if (span >= 60_000)
+		{
+			s.rate = Math.max(0, points - (int) samples.peekFirst()[2]) * 60_000.0 / span;
+			s.rateRoom = room.name().toLowerCase();
+		}
+	}
+
+	private MtaPlanner.Room currentRoom()
+	{
+		MtaRunner r = runner;
+		return r == null ? null : r.inRoom();
 	}
 
 	/** The rooms the owner lets the plugin play. */

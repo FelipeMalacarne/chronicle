@@ -41,6 +41,9 @@ final class MtaRunner extends Script
 	private static final int LOOP_MS = 600;
 	/** Give up on a purchase that did not take after this many tries and say so. */
 	private static final int BUY_TRIES = 3;
+	/** No shop click for this long after a purchase, so the plugin reads the new state first. */
+	private static final long SHOP_QUIET_MS = 15000;
+	private long shopQuietUntil;
 
 	private final MtaArenaPlugin plugin;
 	private final MtaArenaConfig config;
@@ -49,6 +52,7 @@ final class MtaRunner extends Script
 	/** Rooms whose spell's runes are neither carried nor banked: the planner leaves them to the owner. */
 	private final Set<MtaPlanner.Room> blocked = ConcurrentHashMap.newKeySet();
 	private volatile String state = "";
+	private volatile MtaWorld.Room inRoom;
 	private MTAPlugin core;
 	private String boughtTry = "";
 	private int tries;
@@ -59,6 +63,13 @@ final class MtaRunner extends Script
 	private static final long THEATRE_GRACE_MS = 8000;
 	/** Since when the room's spell cannot be cast, and how long before going to the bank over it. */
 	private long cannotCastSince;
+	/** The progress watch: the room, its points and since when they have not moved. */
+	private MtaWorld.Room watchRoom;
+	private int watchPoints;
+	private long watchSince;
+	private int stuckCount;
+	private static final long STUCK_MS = 4 * 60_000;
+	private static final int STUCK_TRIES = 3;
 	private static final long CANNOT_CAST_MS = 5000;
 
 
@@ -79,6 +90,13 @@ final class MtaRunner extends Script
 	Set<MtaPlanner.Room> blocked()
 	{
 		return blocked;
+	}
+
+	/** The room the player was in at the last loop, for the planner to keep it; null in the lobby. */
+	MtaPlanner.Room inRoom()
+	{
+		MtaWorld.Room r = inRoom;
+		return r == null ? null : MtaPlanner.Room.valueOf(r.name());
 	}
 
 	public boolean run()
@@ -150,6 +168,7 @@ final class MtaRunner extends Script
 			return;
 		}
 		MtaWorld.Room at = roomNow();
+		inRoom = at;
 		boolean needsHere = at != null && step.kind == MtaPlanner.Kind.EARN && MtaWorld.Room.of(step.room) == at;
 		boolean byHand = at != null && step.kind == MtaPlanner.Kind.MANUAL && MtaWorld.Room.of(step.room) == at;
 		if (byHand)
@@ -263,7 +282,7 @@ final class MtaRunner extends Script
 		}
 		if (r.requires != null && !Rs2Inventory.contains(MtaCalculator.reward(r.requires).itemId))
 		{
-			status("bring the " + MtaCalculator.reward(r.requires).name + " to the shop to upgrade it");
+			fetchForUpgrade(MtaCalculator.reward(r.requires));
 			return;
 		}
 		if (!near(MtaWorld.SHOP, 3) && !Rs2Walker.walkTo(MtaWorld.SHOP))
@@ -287,15 +306,64 @@ final class MtaRunner extends Script
 			tries = BUY_TRIES;
 			return;
 		}
+		if (System.currentTimeMillis() < shopQuietUntil)
+		{
+			// Right after a purchase the shop's list has changed under the old indexes: no click until
+			// the plugin has read the new state again.
+			Rs2Keyboard.keyPress(27);
+			return;
+		}
 		status("buying " + r.name);
 		tries++;
-		Rs2Inventory.waitForInventoryChanges(() -> {
-			Rs2Widget.clickWidgetFast(items[index], index);
-			sleepGaussian(600, 150);
-			Rs2Widget.clickWidget(MtaWorld.SHOP_GROUP, MtaWorld.SHOP_BUY);
-			sleepGaussian(600, 150);
-			Rs2Keyboard.keyPress(27);
-		});
+		// Once, never through Rs2Inventory.waitForInventoryChanges(action): it repeats the action until
+		// the inventory changes, and Bones to Peaches puts nothing in it, so the clicks would go on into
+		// whatever moves into the list's slot after the purchase.
+		Rs2Widget.clickWidgetFast(items[index], index);
+		sleepGaussian(600, 150);
+		Rs2Widget.clickWidget(MtaWorld.SHOP_GROUP, MtaWorld.SHOP_BUY);
+		boolean got = sleepUntil(() -> owns(r), 5000);
+		shopQuietUntil = System.currentTimeMillis() + SHOP_QUIET_MS;
+		sleepGaussian(600, 150);
+		Rs2Keyboard.keyPress(27);
+		log.info("MTA: bought {}: {}", r.name, got ? "confirmed" : "not confirmed yet");
+	}
+
+	/**
+	 * A wand upgrade turns in the wand below it, which has to be in the inventory: the room setups
+	 * bank it, so it comes back from the arena's bank chest.
+	 */
+	private void fetchForUpgrade(MtaReward previous)
+	{
+		if (net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment.isWearing(previous.itemId))
+		{
+			status("unequip the " + previous.name + " to upgrade it");
+			return;
+		}
+		if (!Rs2Bank.isOpen())
+		{
+			status("fetching the " + previous.name + " from the bank for its upgrade");
+			Rs2Bank.walkToBankAndUseBank(net.runelite.client.plugins.microbot.util.bank.enums.BankLocation.MAGE_TRAINING_ARENA);
+			return;
+		}
+		if (Rs2Bank.count(previous.itemId) <= 0)
+		{
+			status("the " + previous.name + " is neither carried nor banked: bring it to upgrade it");
+			Rs2Bank.closeBank();
+			return;
+		}
+		Rs2Bank.withdrawOne(previous.itemId);
+		sleepUntil(() -> Rs2Inventory.contains(previous.itemId), 3000);
+		Rs2Bank.closeBank();
+	}
+
+	/** The reward is the account's: the spell's unlock for Bones to Peaches, the item otherwise. */
+	private static boolean owns(MtaReward r)
+	{
+		if (MtaCalculator.PEACHES.equals(r.id))
+		{
+			return Microbot.getVarbitValue(net.runelite.api.gameval.VarbitID.MAGICTRAINING_BONESPEACHES) > 0;
+		}
+		return Rs2Inventory.contains(r.itemId);
 	}
 
 	private static int findItem(Widget[] items, int itemId)
@@ -364,6 +432,12 @@ final class MtaRunner extends Script
 			leaveRoom();
 			return;
 		}
+		if (stuck(room, s.held))
+		{
+			rooms.flush(room);
+			leaveRoom();
+			return;
+		}
 		status(where + ": " + step.points + " points to go for " + step.reward);
 		switch (room)
 		{
@@ -380,6 +454,45 @@ final class MtaRunner extends Script
 				rooms.telekinetic(this::leaveRoom);
 				break;
 		}
+	}
+
+	/**
+	 * The room's points have not moved for {@link #STUCK_MS} while the runner plays it: leave and come
+	 * back, rather than stand still. After {@link #STUCK_TRIES} such restarts in a row the room is left
+	 * to the owner.
+	 */
+	private boolean stuck(MtaWorld.Room room, MtaCalculator.Points held)
+	{
+		int points = room == MtaWorld.Room.TELEKINETIC ? held.telekinetic
+			: room == MtaWorld.Room.ALCHEMIST ? held.alchemist
+			: room == MtaWorld.Room.GRAVEYARD ? held.graveyard : held.enchantment;
+		long now = System.currentTimeMillis();
+		if (room != watchRoom || points != watchPoints)
+		{
+			if (room == watchRoom && points > watchPoints)
+			{
+				stuckCount = 0;
+			}
+			watchRoom = room;
+			watchPoints = points;
+			watchSince = now;
+			return false;
+		}
+		if (now - watchSince < STUCK_MS)
+		{
+			return false;
+		}
+		watchSince = now;
+		String where = room.name().toLowerCase();
+		if (++stuckCount >= STUCK_TRIES)
+		{
+			blocked.add(MtaPlanner.Room.valueOf(room.name()));
+			status("no points in the " + where + " room after " + STUCK_TRIES + " restarts: it is left to you until the run is switched off and on");
+			stuckCount = 0;
+			return true;
+		}
+		status("no points in the " + where + " room for " + STUCK_MS / 60000 + " min: leaving to start it again");
+		return true;
 	}
 
 	private static String gear(MtaPrep.Plan plan)

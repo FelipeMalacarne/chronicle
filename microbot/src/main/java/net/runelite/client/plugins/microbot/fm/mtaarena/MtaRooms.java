@@ -666,10 +666,10 @@ final class MtaRooms
 	}
 
 	/**
-	 * "Walk here" on a scene tile: the menu entry at the tile's canvas point, clicked quick. Not
-	 * Rs2Walker.walkFastLocal (a box at (1, 1), the client's fallback, sends the mouse to the canvas
-	 * corner); and not the human-like mouse path, which never settles on a point the mouse cannot reach
-	 * and holds the mouse lock, every script's clicks then waiting until the client restarts.
+	 * "Walk here" on a scene tile: the menu entry at the tile's canvas point, only when that point is well
+	 * inside the viewport. Not Rs2Walker.walkFastLocal: its box at (1, 1) is the client's fallback and
+	 * sends the mouse to the canvas corner, where the human-like path never settles and holds the mouse
+	 * lock, every script's clicks then waiting until the client restarts.
 	 */
 	private static boolean clickTile(net.runelite.api.coords.LocalPoint local)
 	{
@@ -694,9 +694,9 @@ final class MtaRooms
 				.identifier(0)
 				.itemId(0)
 				.option("Walk here");
-		// The quick click: no human-like mouse path to the point, which is where the client's mouse can
-		// spin forever holding the mouse lock (seen twice in a session).
-		Microbot.doInvokeQuick(entry, new Rectangle(p.getX() - 2, p.getY() - 2, 4, 4));
+		// The client's human-like mouse path: fine on a point well inside the viewport (the check above),
+		// where it settles; on one outside it, it never does and holds the mouse lock for every script.
+		Microbot.doInvoke(entry, new Rectangle(p.getX() - 2, p.getY() - 2, 4, 4));
 		return true;
 	}
 

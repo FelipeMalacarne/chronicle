@@ -18,6 +18,7 @@ type WorkerStore interface {
 	PutSession(ctx context.Context, account, pushedBy string, s agent.GameSession) error
 	SessionInfo(ctx context.Context, account string) (storeworkers.SessionInfo, error)
 	DeleteSession(ctx context.Context, account string) error
+	SetBankPin(ctx context.Context, account, pin string) error
 	SetDesired(ctx context.Context, account, state string, world int, image string) error
 	Get(ctx context.Context, account string) (storeworkers.Worker, error)
 	List(ctx context.Context) ([]storeworkers.Worker, error)
@@ -58,6 +59,8 @@ func (s *Server) workerRoutes() {
 	control("GET /api/accounts/session", s.handleSessionGet)
 	control("PUT /api/accounts/session", s.handleSessionPut)
 	control("DELETE /api/accounts/session", s.handleSessionDelete)
+	control("PUT /api/accounts/session/bank-pin", s.handleBankPinPut)
+	control("DELETE /api/accounts/session/bank-pin", s.handleBankPinDelete)
 }
 
 type workerView struct {
@@ -340,6 +343,54 @@ func (s *Server) handleSessionDelete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
+// handleBankPinPut stores the character's bank PIN inside the account's
+// sealed session (`chronicle accounts bank-pin`), for its worker to write into
+// the client's profile. Like the session, it is write-only.
+func (s *Server) handleBankPinPut(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	var body struct {
+		Pin string `json:"pin"`
+	}
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	if body.Pin == "" {
+		writeError(w, http.StatusBadRequest, "pin is required (DELETE clears it)")
+		return
+	}
+	s.setBankPin(w, r, account, body.Pin)
+}
+
+func (s *Server) handleBankPinDelete(w http.ResponseWriter, r *http.Request) {
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	s.setBankPin(w, r, account, "")
+}
+
+func (s *Server) setBankPin(w http.ResponseWriter, r *http.Request, account, pin string) {
+	action := "session_bank_pin_put"
+	if pin == "" {
+		action = "session_bank_pin_delete"
+	}
+	err := s.opts.Microbot.Sessions.SetBankPin(r.Context(), account, pin)
+	s.auditWorker(r, action, account, err)
+	if err != nil {
+		s.writeWorkerError(w, err)
+		return
+	}
+	info, err := s.opts.Microbot.Sessions.SessionInfo(r.Context(), account)
+	if err != nil {
+		s.writeWorkerError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, info)
 }
 
 // recordWorkerLogin keeps the outcome of a login on a managed worker, which

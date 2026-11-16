@@ -27,6 +27,11 @@ SET character_name    = EXCLUDED.character_name,
 -- The sealed session, for Session only (never for the API).
 SELECT * FROM game_sessions WHERE account_id = $1;
 
+-- name: UpdateGameSessionSecret :execrows
+-- A change inside the sealed session (its bank PIN) keeps the session's
+-- push and its last login: the launcher's session itself did not change.
+UPDATE game_sessions SET key_id = $2, nonce = $3, ciphertext = $4 WHERE account_id = $1;
+
 -- name: GetGameSessionInfo :one
 -- Everything but the secret.
 SELECT account_id, character_name, key_id, pushed_at, pushed_by, last_login_at, last_login_result

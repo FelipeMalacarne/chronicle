@@ -23,7 +23,10 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   the planner's agent starts through the bridge (`TaskMachine`, tested over the `TaskGame` fake).
   Since 1.16.0 it also sends `data.minigame` (`MinigameCounters`): the Mage Training Arena's
   pizazz points, read from the same widgets the MTA Planner reads (the packages stay apart), and
-  whether Bones to Peaches is unlocked.
+  whether Bones to Peaches is unlocked. Since 1.17.0 the bridge's `/bridge/bank-pin` writes a managed
+  worker's bank PIN into the active Microbot profile (`ConfigManager.setBankPin`, encrypted like the
+  profile panel does): the client types the PIN only from there, and a pod's profile is new on every
+  boot (Chronicle's docs/11 section 19).
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).

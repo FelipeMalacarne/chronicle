@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,7 @@ import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.client.RuneLite;
 import net.runelite.client.config.ConfigManager;
+import net.runelite.client.config.ConfigProfile;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginManager;
 import net.runelite.client.plugins.microbot.Microbot;
@@ -49,6 +51,7 @@ import net.runelite.client.plugins.microbot.util.magic.Rs2Spells;
 import net.runelite.client.plugins.microbot.util.magic.Spell;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2Prayer;
 import net.runelite.client.plugins.microbot.util.prayer.Rs2PrayerEnum;
+import net.runelite.client.plugins.microbot.util.security.Encryption;
 import net.runelite.client.plugins.timetracking.SummaryState;
 import net.runelite.client.plugins.timetracking.TimeTrackingPlugin;
 
@@ -81,6 +84,8 @@ final class AgentBridge
 	private final GameEvents events = new GameEvents();
 	/** The task executor the bridge drives; null answers its routes with 404. */
 	private final TaskExecutor tasks;
+	/** Writes a bank PIN into the client's active Microbot profile ({@link #writeBankPin}). */
+	private Consumer<String> bankPin = AgentBridge::writeBankPin;
 	private UdsHttpServer server;
 	private ExecutorService executor;
 
@@ -380,6 +385,22 @@ final class AgentBridge
 					sendJson(ex, 200, result(canceled, canceled ? null : "no running task with this id"));
 				}
 			},
+			new Handler(gson, "/bridge/bank-pin")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					// A managed worker's (Chronicle's docs/11): the pod's profile is new on every boot,
+					// and the client types the PIN only from its active profile (Rs2Bank.handleBankPin).
+					String pin = required(post(ex), "pin");
+					if (!validBankPin(pin))
+					{
+						throw new BadRequestException("pin must be four digits");
+					}
+					bankPin.accept(pin);
+					sendJson(ex, 200, result(true, null));
+				}
+			},
 			new Handler(gson, "/bridge/bank/deposit-x")
 			{
 				@Override
@@ -397,6 +418,41 @@ final class AgentBridge
 				}
 			}
 		);
+	}
+
+	/** For tests: what writes the bank PIN instead of the client's profile. */
+	AgentBridge withBankPinWriter(Consumer<String> writer)
+	{
+		this.bankPin = writer;
+		return this;
+	}
+
+	static boolean validBankPin(String pin)
+	{
+		return pin != null && pin.matches("\\d{4}");
+	}
+
+	/**
+	 * The PIN into the active Microbot profile, encrypted the way its profile panel stores it.
+	 * Never logged.
+	 */
+	static void writeBankPin(String pin)
+	{
+		ConfigManager cm = Microbot.getConfigManager();
+		ConfigProfile profile = cm == null ? null : cm.getProfile();
+		if (profile == null)
+		{
+			throw new ConflictException("no active profile");
+		}
+		try
+		{
+			cm.setBankPin(profile, Encryption.encrypt(pin));
+		}
+		catch (Exception e)
+		{
+			throw new ConflictException("the profile did not take the PIN");
+		}
+		log.info("Chronicle Link: bank PIN written to the active profile");
 	}
 
 	/** The task executor, or a 404 when the bridge runs without one. */

@@ -101,6 +101,7 @@ game_sessions   account_id PK → accounts, character_name, ciphertext, nonce, k
 - O conteúdo cifrado é um JSON com as três variáveis `JX_*` e os arquivos de aparelho:
   `spoofed-device-ids.properties` e `spoofed-random-dats.properties`, **só as entradas daquele
   personagem**, para a identidade do aparelho continuar a mesma entre o zaros e o pod.
+  Desde 2026-11-16 leva também, opcional, o bank PIN do personagem (seção 19).
 - O servidor cifra com `CHRONICLE_VAULT_KEY` (AES-256-GCM, `key_id` para rotacionar). A API nunca
   devolve a sessão; a sessão só sai pelo link, para o agent daquela conta.
 - O painel mostra o personagem, a data da conexão e o resultado do último login.
@@ -252,7 +253,9 @@ O servidor recusa o Iniciar quando:
 5. `mb-client start --headless` com `MB_HEADLESS_GPU=1` e `MB_CLIENT_WRAPPER="vglrun -d egl"`.
 6. Com o Agent Server de pé, o agent grava as configurações do perfil pelo `/settings/plugin`, instala
    os plugins do Hub do perfil e só então liga os `start_on_boot` (W7, seção 15).
-7. O cliente fica na tela de login. Entrar é outro clique, com o mundo (W3), a não ser que a conta
+7. Com o bank PIN na sessão, o agent o grava no perfil ativo do Microbot pela ponte do Chronicle
+   Link (seção 19).
+8. O cliente fica na tela de login. Entrar é outro clique, com o mundo (W3), a não ser que a conta
    tenha o login automático ligado (seção 15.5).
 
 ### 6.4 Uso
@@ -419,13 +422,14 @@ o referencia, então o RBAC não muda) e usa o `local-path`, como o do filebrows
 | `GET /api/workers` | Workers das contas do usuário: lugar, estado, versão, CPU e RAM, sessão, e quantos ainda cabem (seção 18) |
 | `POST /api/workers/{conta}/start` \| `stop` \| `restart` | Ciclo de vida, auditado |
 | `GET` \| `PUT /api/accounts/{id}/session` | Estado da sessão (sem o conteúdo) e conexão |
+| `PUT` \| `DELETE /api/accounts/session/bank-pin?account=` | O bank PIN do personagem, dentro da sessão cifrada (seção 19); nunca devolvido |
 | `GET /api/client-profiles`, `GET` \| `PUT` \| `DELETE /api/client-profiles/{nome}` | Perfis do usuário: modelo, plugins e configurações; o `PUT` troca o perfil inteiro (seção 15) |
 | `GET` \| `PUT /api/accounts/client?account=` | Perfil da conta, configurações próprias e o perfil efetivo; mundo e gráfico ficam para depois |
 | `GET` \| `POST /api/microbot/triggers?account=`, `GET /api/microbot/runs?account=` | Gatilhos e histórico, no banco desde a F6 (seção 16); um agent anterior à F6 segue respondendo pelos arquivos dele |
 | `GET /api/accounts/client/drift?account=`, `POST …/client/drift/save`, `POST …/client/apply` | O desvio do cliente em relação ao perfil, salvar os valores do cliente (na conta ou no perfil) e aplicar o perfil ao cliente (seção 17) |
 | `/api/microbot/*?account=` | O que existe hoje, endereçado pela conta |
 
-CLI: `chronicle accounts connect`, `chronicle workers list|start|stop|restart`,
+CLI: `chronicle accounts connect`, `chronicle accounts bank-pin`, `chronicle workers list|start|stop|restart`,
 `chronicle profiles list|show|put|delete|use|account`. Nenhuma abre o banco (regra 1 do CLAUDE.md).
 
 ## 9. Segurança e riscos
@@ -1222,3 +1226,41 @@ nova, mas só na pausa. A regra, o que nunca reinicia e a auditoria estão na se
 - **Corrida curta:** entre a leitura do `run_status` e o reinício, uma rotina pode começar; o run
   seria cortado e ficaria `failed` ("o worker reiniciou no meio do run"). A janela é de milissegundos.
 - **Mais de uma réplica do `serve`:** o `VNCOpen` só vê os túneis da própria réplica. Hoje há uma.
+
+## 19. Bank PIN dos workers (2026-11-16)
+
+**O problema.** Os workers no saradomin não abriam o banco: o jogo pedia o bank PIN e ninguém o
+digitava. O Microbot só digita o PIN a partir do **perfil ativo** do cliente
+(`Rs2Bank.handleBankPin` lê `ConfigProfile.getBankPin()`, cifrado pelo `Encryption` do próprio
+Microbot). No zaros o dono o guardou no painel de perfis do cliente de dev. No pod, a home é um
+`emptyDir`: o perfil nasce vazio a cada pod novo. Isso inclui os reinícios sozinhos por imagem nova
+(seção 18), e o deploy de 2026-11-16 trouxe imagens novas. Um PIN digitado pelo VNC durava só até o
+próximo pod.
+
+**A solução** segue o caminho da sessão:
+
+- **Guardar.** O PIN vai dentro do JSON cifrado de `game_sessions` (`bank_pin`, quatro dígitos), com
+  a mesma chave e o mesmo AAD. Não há coluna nem migração nova.
+  - `PUT /api/accounts/session/bank-pin?account=` grava e `DELETE` apaga. Trocar o PIN mantém o
+    push e o último login da sessão (consulta `UpdateGameSessionSecret`).
+  - Um `accounts connect` novo, que não traz PIN, mantém o que estava guardado.
+  - A API nunca devolve o PIN: o `GET /api/accounts/session` diz só `has_bank_pin`, e a lista dos
+    workers nem isso (ela não abre a sessão).
+- **CLI.** `chronicle accounts bank-pin [--account]` lê o PIN do stdin; num terminal, pede sem eco.
+  `--clear` apaga. O PIN nunca vai como argumento, para não ficar no histórico do shell.
+- **Entregar.** O `worker_bootstrap` já leva a sessão; o agent valida o PIN (quatro dígitos, e o erro
+  nunca o repete) e o guarda só na memória.
+- **Gravar no cliente.** Depois de aplicar o perfil, que liga o Chronicle Link, o agent espera a ponte
+  (até 1 min) e chama `POST /bridge/bank-pin`. O Chronicle Link 1.17.0 faz
+  `ConfigManager.setBankPin(perfil ativo, Encryption.encrypt(pin))`, como o painel de perfis.
+  - Num reconnect com o cliente rodando, o agent grava de novo, porque o PIN pode ter mudado.
+  - Uma falha vira um problema do bootstrap (como uma configuração recusada) e o cliente segue sem o
+    PIN. Nem o log nem o problema levam o valor.
+
+**Para usar:** `chronicle accounts bank-pin --account <id>`, depois Reiniciar o worker. O worker
+precisa de uma imagem com o Chronicle Link 1.17 e de um servidor com esta mudança.
+
+**Conferido:** testes do agent (`TestBootstrapWritesTheBankPin`, sem PIN, PIN inválido, ponte que não
+responde), das rotas (`TestBankPinRoutes`), do Postgres (`TestBankPin`: selado, mantido por um
+connect novo, apagado, último login mantido) e do Chronicle Link (`BankPinBridgeTest`).
+**Não conferido:** num worker de verdade, o PIN digitado pelo `Rs2Bank` ao abrir o banco.

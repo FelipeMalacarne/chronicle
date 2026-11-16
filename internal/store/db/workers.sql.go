@@ -435,6 +435,32 @@ func (q *Queries) SetWorkerRunningSettings(ctx context.Context, arg SetWorkerRun
 	return result.RowsAffected(), nil
 }
 
+const updateGameSessionSecret = `-- name: UpdateGameSessionSecret :execrows
+UPDATE game_sessions SET key_id = $2, nonce = $3, ciphertext = $4 WHERE account_id = $1
+`
+
+type UpdateGameSessionSecretParams struct {
+	AccountID  string `json:"account_id"`
+	KeyID      string `json:"key_id"`
+	Nonce      []byte `json:"nonce"`
+	Ciphertext []byte `json:"ciphertext"`
+}
+
+// A change inside the sealed session (its bank PIN) keeps the session's
+// push and its last login: the launcher's session itself did not change.
+func (q *Queries) UpdateGameSessionSecret(ctx context.Context, arg UpdateGameSessionSecretParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateGameSessionSecret,
+		arg.AccountID,
+		arg.KeyID,
+		arg.Nonce,
+		arg.Ciphertext,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
 const upsertGameSession = `-- name: UpsertGameSession :exec
 INSERT INTO game_sessions (account_id, character_name, key_id, nonce, ciphertext, pushed_by)
 VALUES ($1, $2, $3, $4, $5, $6)

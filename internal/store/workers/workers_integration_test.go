@@ -555,3 +555,65 @@ func TestRunningSettings(t *testing.T) {
 		t.Fatalf("after clearing: %+v", got)
 	}
 }
+
+// The bank PIN lives inside the sealed session: set and cleared apart, kept
+// by a new push of the launcher's session, never in the clear.
+func TestBankPin(t *testing.T) {
+	ctx := context.Background()
+	pool, repo := setup(ctx, t)
+	if err := repo.SetBankPin(ctx, "acc_a", "0420"); !errors.Is(err, ErrNoSession) {
+		t.Fatalf("pin without session = %v", err)
+	}
+	if err := repo.PutSession(ctx, "acc_a", "u1", session); err != nil {
+		t.Fatal(err)
+	}
+	if err := repo.RecordLogin(ctx, "acc_a", LoginOK); err != nil {
+		t.Fatal(err)
+	}
+	for _, bad := range []string{"42", "04a0", "12345"} {
+		if err := repo.SetBankPin(ctx, "acc_a", bad); !errors.Is(err, ErrInvalid) {
+			t.Fatalf("pin %q = %v", bad, err)
+		}
+	}
+	if err := repo.SetBankPin(ctx, "acc_a", "0420"); err != nil {
+		t.Fatal(err)
+	}
+	info, err := repo.SessionInfo(ctx, "acc_a")
+	if err != nil || !info.HasBankPin || info.LastLoginResult != LoginOK {
+		t.Fatalf("info after the pin = %+v, %v (the pin keeps the last login)", info, err)
+	}
+	if s, sErr := repo.Session(ctx, "acc_a"); sErr != nil || s.BankPin != "0420" || s.SessionID != session.SessionID {
+		t.Fatalf("session = %+v, %v", s, sErr)
+	}
+	var ciphertext []byte
+	if err = pool.QueryRow(ctx, `SELECT ciphertext FROM game_sessions WHERE account_id = 'acc_a'`).Scan(&ciphertext); err != nil {
+		t.Fatal(err)
+	}
+	if bytes.Contains(ciphertext, []byte("0420")) {
+		t.Fatal("bank pin stored in the clear")
+	}
+
+	// A new session from the launcher keeps the PIN; one that carries a PIN
+	// replaces it.
+	fresh := session
+	fresh.SessionID = "jx-new-session"
+	if err = repo.PutSession(ctx, "acc_a", "u1", fresh); err != nil {
+		t.Fatal(err)
+	}
+	if s, _ := repo.Session(ctx, "acc_a"); s.BankPin != "0420" || s.SessionID != "jx-new-session" {
+		t.Fatalf("after a new session = %+v", s)
+	}
+	fresh.BankPin = "1357"
+	if err = repo.PutSession(ctx, "acc_a", "u1", fresh); err != nil {
+		t.Fatal(err)
+	}
+	if s, _ := repo.Session(ctx, "acc_a"); s.BankPin != "1357" {
+		t.Fatalf("pin pushed with the session = %q", s.BankPin)
+	}
+	if err = repo.SetBankPin(ctx, "acc_a", ""); err != nil {
+		t.Fatal(err)
+	}
+	if info, _ = repo.SessionInfo(ctx, "acc_a"); info.HasBankPin {
+		t.Fatal("pin not cleared")
+	}
+}

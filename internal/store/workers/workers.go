@@ -84,6 +84,11 @@ type SessionInfo struct {
 	// cannot see when the Jagex session ends); a new session (`chronicle
 	// accounts connect`) clears it, as does a login that gets in.
 	LoginFailed bool `json:"login_failed,omitempty"`
+	// HasBankPin says the sealed session carries the character's bank PIN
+	// (SetBankPin), which the worker writes into its client's profile. Only
+	// SessionInfo reads it (it opens the session); the workers' list leaves
+	// it out.
+	HasBankPin bool `json:"has_bank_pin,omitempty"`
 }
 
 // LoginOK is the LastLoginResult of a login that got in.
@@ -158,6 +163,10 @@ func aad(account string) []byte { return []byte("game_session:" + account) }
 
 // PutSession seals s and stores it as the account's session (replacing the
 // previous one and its last login), and marks the account managed.
+//
+// A session without a bank PIN keeps the one already stored: `chronicle
+// accounts connect` pushes the launcher's session again whenever it changes,
+// and the PIN is set apart (SetBankPin).
 func (r *Repository) PutSession(ctx context.Context, account, pushedBy string, s agent.GameSession) error {
 	s.Character = strings.TrimSpace(s.Character)
 	if s.Character == "" || strings.TrimSpace(s.SessionID) == "" || strings.TrimSpace(s.CharacterID) == "" {
@@ -165,6 +174,16 @@ func (r *Repository) PutSession(ctx context.Context, account, pushedBy string, s
 	}
 	if strings.TrimSpace(pushedBy) == "" {
 		return fmt.Errorf("%w: pushed_by is empty", ErrInvalid)
+	}
+	if s.BankPin != "" && !agent.ValidBankPin(s.BankPin) {
+		return fmt.Errorf("%w: the bank PIN must be four digits", ErrInvalid)
+	}
+	if s.BankPin == "" {
+		// A session sealed with an older key cannot be opened: its PIN is lost
+		// with it, as the session would be.
+		if prev, err := r.Session(ctx, account); err == nil {
+			s.BankPin = prev.BankPin
+		}
 	}
 	plaintext, err := json.Marshal(s)
 	if err != nil {
@@ -201,7 +220,55 @@ func (r *Repository) SessionInfo(ctx context.Context, account string) (SessionIn
 	if err != nil {
 		return SessionInfo{}, fmt.Errorf("read session info: %w", err)
 	}
-	return sessionInfo(row.AccountID, row.CharacterName, row.KeyID, row.PushedAt, row.PushedBy, row.LastLoginAt, row.LastLoginResult), nil
+	info := sessionInfo(row.AccountID, row.CharacterName, row.KeyID, row.PushedAt, row.PushedBy, row.LastLoginAt, row.LastLoginResult)
+	if s, err := r.Session(ctx, account); err == nil {
+		info.HasBankPin = s.BankPin != ""
+	}
+	return info, nil
+}
+
+// SetBankPin stores the character's bank PIN inside the account's sealed
+// session ("" clears it), keeping the session's push and last login. The
+// worker takes it on its next bootstrap: a start, or the agent's reconnect.
+func (r *Repository) SetBankPin(ctx context.Context, account, pin string) error {
+	if pin != "" && !agent.ValidBankPin(pin) {
+		return fmt.Errorf("%w: the bank PIN must be four digits", ErrInvalid)
+	}
+	return r.inTx(ctx, func(q *storedb.Queries) error {
+		if _, err := lockAccount(ctx, q, account); err != nil {
+			return err
+		}
+		row, err := q.GetGameSession(ctx, account)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return ErrNoSession
+		}
+		if err != nil {
+			return fmt.Errorf("read session: %w", err)
+		}
+		s, err := r.open(account, row)
+		if err != nil {
+			return err
+		}
+		s.BankPin = pin
+		plaintext, err := json.Marshal(s)
+		if err != nil {
+			return fmt.Errorf("encode session: %w", err)
+		}
+		nonce, ciphertext, err := r.key.Seal(plaintext, aad(account))
+		if err != nil {
+			return err
+		}
+		n, err := q.UpdateGameSessionSecret(ctx, storedb.UpdateGameSessionSecretParams{
+			AccountID: account, KeyID: r.key.ID(), Nonce: nonce, Ciphertext: ciphertext,
+		})
+		if err != nil {
+			return fmt.Errorf("store session: %w", err)
+		}
+		if n == 0 {
+			return ErrNoSession
+		}
+		return nil
+	})
 }
 
 // Session returns the account's session, opened. Only the worker bootstrap
@@ -214,6 +281,11 @@ func (r *Repository) Session(ctx context.Context, account string) (agent.GameSes
 	if err != nil {
 		return agent.GameSession{}, fmt.Errorf("read session: %w", err)
 	}
+	return r.open(account, row)
+}
+
+// open opens a sealed session row.
+func (r *Repository) open(account string, row storedb.GameSession) (agent.GameSession, error) {
 	if row.KeyID != r.key.ID() {
 		return agent.GameSession{}, fmt.Errorf("%w: sealed with key %s, the current key is %q", ErrKeyMismatch, row.KeyID, r.key.ID())
 	}

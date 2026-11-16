@@ -22,6 +22,8 @@ type SessionInfo struct {
 	LastLoginResult string     `json:"last_login_result"`
 	// LoginFailed: the last login with this session did not get in.
 	LoginFailed bool `json:"login_failed"`
+	// HasBankPin: the session carries the character's bank PIN.
+	HasBankPin bool `json:"has_bank_pin"`
 }
 
 // WorkerUsage is a worker pod's CPU (cores) and memory (bytes) from the
@@ -86,6 +88,19 @@ type Workers struct {
 func (c *Client) PutSession(ctx context.Context, account string, s agent.GameSession) (SessionInfo, error) {
 	var out SessionInfo
 	err := c.do(ctx, http.MethodPut, "/api/accounts/session", url.Values{"account": {account}}, s, &out)
+	return out, err
+}
+
+// SetBankPin stores the character's bank PIN inside the account's sealed
+// session (PUT /api/accounts/session/bank-pin); an empty pin clears it.
+func (c *Client) SetBankPin(ctx context.Context, account, pin string) (SessionInfo, error) {
+	var out SessionInfo
+	q := url.Values{"account": {account}}
+	if pin == "" {
+		err := c.do(ctx, http.MethodDelete, "/api/accounts/session/bank-pin", q, nil, &out)
+		return out, err
+	}
+	err := c.do(ctx, http.MethodPut, "/api/accounts/session/bank-pin", q, map[string]string{"pin": pin}, &out)
 	return out, err
 }
 

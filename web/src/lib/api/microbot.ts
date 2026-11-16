@@ -707,6 +707,8 @@ export interface SessionInfo {
 	 * sinal de sessão expirada que o servidor tem; um `accounts connect` novo limpa.
 	 */
 	login_failed?: boolean;
+	/** A sessão leva o bank PIN do personagem (só no GET da sessão, nunca o PIN). */
+	has_bank_pin?: boolean;
 }
 
 /** O que a última passada do reconciliador viu do pod de uma conta. */

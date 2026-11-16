@@ -40,6 +40,25 @@ type GameSession struct {
 	// the same spoofed device identity on zaros and in the pod.
 	DeviceIDs  string `json:"device_ids,omitempty"`
 	RandomDats string `json:"random_dats,omitempty"`
+	// BankPin is the character's four-digit bank PIN, or empty. The client
+	// types it from its active Microbot profile only (Rs2Bank.handleBankPin),
+	// and the pod's profile is new on every boot, so the worker writes it
+	// there through the Chronicle Link bridge once the client is up. It is
+	// set apart from the launcher's session (`chronicle accounts bank-pin`).
+	BankPin string `json:"bank_pin,omitempty"`
+}
+
+// ValidBankPin reports whether pin is a bank PIN the game takes: four digits.
+func ValidBankPin(pin string) bool {
+	if len(pin) != 4 {
+		return false
+	}
+	for _, c := range pin {
+		if c < '0' || c > '9' {
+			return false
+		}
+	}
+	return true
 }
 
 // BootstrapParams are the parameters of CmdWorkerBootstrap.

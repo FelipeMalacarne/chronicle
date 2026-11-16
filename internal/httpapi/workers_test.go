@@ -67,7 +67,22 @@ func (m *memWorkers) SessionInfo(_ context.Context, account string) (storeworker
 	if !ok {
 		return storeworkers.SessionInfo{}, storeworkers.ErrNoSession
 	}
-	return storeworkers.SessionInfo{AccountID: account, Character: s.Character, PushedAt: time.Now(), PushedBy: "dev"}, nil
+	return storeworkers.SessionInfo{AccountID: account, Character: s.Character, PushedAt: time.Now(), PushedBy: "dev", HasBankPin: s.BankPin != ""}, nil
+}
+
+func (m *memWorkers) SetBankPin(_ context.Context, account, pin string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if pin != "" && !agent.ValidBankPin(pin) {
+		return storeworkers.ErrInvalid
+	}
+	s, ok := m.sessions[account]
+	if !ok {
+		return storeworkers.ErrNoSession
+	}
+	s.BankPin = pin
+	m.sessions[account] = s
+	return nil
 }
 
 func (m *memWorkers) DeleteSession(_ context.Context, account string) error {
@@ -231,6 +246,33 @@ func TestSessionRoutes(t *testing.T) {
 	}
 	if status, body, _ := call(t, "GET", srv.URL+"/api/workers", ""); status != http.StatusOK || body["enabled"] != false || body["capacity"] != nil {
 		t.Fatalf("list with workers off = %d %v", status, body)
+	}
+}
+
+func TestBankPinRoutes(t *testing.T) {
+	srv, store, audit, _ := workersServer(t, nil)
+	if status, _, _ := call(t, "PUT", srv.URL+"/api/accounts/session/bank-pin?account=acc_a", `{"pin":"0420"}`); status != http.StatusConflict {
+		t.Fatalf("no session = %d", status)
+	}
+	call(t, "PUT", srv.URL+"/api/accounts/session?account=acc_a", sessionBody)
+	for _, bad := range []string{`{"pin":"42"}`, `{"pin":"04a0"}`, `{}`} {
+		if status, _, _ := call(t, "PUT", srv.URL+"/api/accounts/session/bank-pin?account=acc_a", bad); status != http.StatusBadRequest {
+			t.Fatalf("pin %s = %d", bad, status)
+		}
+	}
+	status, body, raw := call(t, "PUT", srv.URL+"/api/accounts/session/bank-pin?account=acc_a", `{"pin":"0420"}`)
+	if status != http.StatusOK || body["has_bank_pin"] != true || strings.Contains(string(raw), "0420") {
+		t.Fatalf("put pin = %d %s", status, raw)
+	}
+	if store.sessions["acc_a"].BankPin != "0420" {
+		t.Fatal("pin not stored")
+	}
+	if e := audit.last(); e.Action != "session_bank_pin_put" || strings.Contains(string(e.Params), "0420") {
+		t.Fatalf("audit = %+v", e)
+	}
+	status, body, _ = call(t, "DELETE", srv.URL+"/api/accounts/session/bank-pin?account=acc_a", "")
+	if status != http.StatusOK || body["has_bank_pin"] != nil || store.sessions["acc_a"].BankPin != "" {
+		t.Fatalf("delete pin = %d %v", status, body)
 	}
 }
 

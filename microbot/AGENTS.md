@@ -27,7 +27,7 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.7): pick the Rewards Guardian's items, the overlay shows the pizazz
+- `fm/mtaarena/` — MTA Planner (v0.7.1): pick the Rewards Guardian's items, the overlay shows the pizazz
   points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
   and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step and
   `MtaRunner` runs it. Bones to Peaches comes first and is the only reward bought by itself ("Buy
@@ -36,7 +36,10 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   and as many rewards as possible are covered at any time), the Enchanting Chamber last among them.
   With the peaches owned, Graveyard points wait for Magic 60 (Bananas only once nothing else is
   left). A room switched off in the settings, or without runes, is left to the owner. The room the player is
-  in is kept while it has points to gather for the next two rewards (fewer walks and bank trips); a
+  in is kept for the next two rewards only while what they still need from it is a batch of about
+  ten minutes there (Theatre 30 points, Playground 50, Graveyard 60, Chamber 600): fewer walks and
+  bank trips, never hours in a room the reward in turn no longer needs (0.7.0 kept the Theatre for
+  375 points while the wand in turn waited on 60 Playground points); a
   room whose points do not move for 4 minutes is left and started again (three times, then left to
   the owner). A purchase is one click sequence then a check (Rs2Inventory.waitForInventoryChanges
   with an action repeats it until the inventory changes, which Bones to Peaches never does); a wand upgrade fetches
@@ -51,8 +54,9 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   the closest reachable one on the same side (a breadth-first search over the scene's collision flags
   and the solver's getPosition rule). All of it in scene coordinates: the Theatre is
   an instance, and the template conversions put the player a tile off. Each maze starts with the
-  camera's pitch at the top (not the guardian's Observe: a walk click cancels it, and with the spell
-  selected the guardian offers only the cast). It never leaves the Theatre on its own between mazes
+  guardian's Observe, clicked from the side of the first pull with the player standing still and no
+  spell selected (from afar the click walks the player first, and a walk cancels the camera's move);
+  after two misses the camera's pitch at the top stands in. It never leaves the Theatre on its own between mazes
   (leaving breaks the five-maze streak): the next maze's guardian is only sent once the player is near
   it, so without one it walks towards the middle of the maze's walls (loaded with the scene); a spell that cannot be cast sends it to the bank only after
   5 s (a read while the next maze loads can fail for a moment).

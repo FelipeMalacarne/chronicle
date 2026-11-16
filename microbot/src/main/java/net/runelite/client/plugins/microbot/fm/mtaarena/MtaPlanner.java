@@ -21,7 +21,17 @@ final class MtaPlanner
 	/** The rooms, in the order the planner prefers them: the Enchanting Chamber last, so Magic grows first. */
 	enum Room
 	{
-		TELEKINETIC, ALCHEMIST, GRAVEYARD, ENCHANTMENT
+		// The batch: about ten minutes of the room at the rates seen in game (2026-11-15: the Theatre
+		// ~3 points a minute, the Playground ~5, the Graveyard with peaches ~6, the Chamber ~60).
+		TELEKINETIC(30), ALCHEMIST(50), GRAVEYARD(60), ENCHANTMENT(600);
+
+		/** The most points the player stays on for in this room past what the reward in turn needs. */
+		final int batch;
+
+		Room(int batch)
+		{
+			this.batch = batch;
+		}
 	}
 
 	enum Kind
@@ -96,9 +106,10 @@ final class MtaPlanner
 	}
 
 	/**
-	 * As above; {@code current} is the room the player is in (or null). It is kept while it still has
-	 * points to gather for the next {@link #LOOKAHEAD} rewards after the one in turn, so the runner does
-	 * not walk to another room and the bank chest each time a single reward's share is in.
+	 * As above; {@code current} is the room the player is in (or null). It is kept for the next
+	 * {@link #LOOKAHEAD} rewards after the one in turn while what they still need from it is a small
+	 * batch ({@link Room#batch}), so the runner does not walk to another room and the bank chest for a
+	 * handful of points, and never stays for hours in a room the reward in turn no longer needs.
 	 */
 	static Step next(Collection<String> wanted, Collection<String> owned, Points held, int magic,
 		int enchantLevel, Set<Room> allowed, boolean buyAll, Room current) throws MtaException
@@ -171,6 +182,10 @@ final class MtaPlanner
 					for (int j = k; j < Math.min(order.size(), k + 1 + LOOKAHEAD); j++)
 					{
 						int m = cumulative[j][current.ordinal()] - have[current.ordinal()];
+						if (m > current.batch)
+						{
+							break;
+						}
 						if (m > 0)
 						{
 							return new Step(Kind.EARN, order.get(j), current, m, j > 0);

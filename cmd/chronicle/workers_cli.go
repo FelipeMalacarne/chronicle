@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -203,6 +204,82 @@ func newAccountsConnectCmd() *cobra.Command {
 	cmd.Flags().StringVar(&accountsFile, "accounts-file", "", "launcher accounts (default ~/.microbot/accounts.json)")
 	cmd.Flags().StringVar(&runeliteDir, "runelite-dir", "", "where the HWID agent keeps its stores (default ~/.runelite)")
 	return cmd
+}
+
+func newAccountsBankPinCmd() *cobra.Command {
+	var f clientFlags
+	var remove bool
+	cmd := &cobra.Command{
+		Use:   "bank-pin",
+		Short: "Store the character's bank PIN with its game session, for its worker to type it (docs/11)",
+		Long: "Reads the four-digit bank PIN from stdin (typed without echo in a terminal) and stores it inside " +
+			"the account's encrypted game session; the worker writes it into its client's Microbot profile on its " +
+			"next start or reconnect. --clear removes it. Never pass the PIN as an argument (shell history).",
+		Args: cobra.NoArgs,
+		RunE: runClient(func(cmd *cobra.Command, _ []string) error {
+			ctx, out := cmd.Context(), cmd.OutOrStdout()
+			pin := ""
+			if !remove {
+				var err error
+				if pin, err = readPin(cmd); err != nil {
+					return err
+				}
+				if !agent.ValidBankPin(pin) {
+					return errors.New("o bank PIN tem quatro dígitos")
+				}
+			}
+			c, err := f.connect(ctx)
+			if err != nil {
+				return err
+			}
+			account := f.account
+			if account == "" {
+				if account, err = c.Account(ctx); err != nil {
+					return err
+				}
+			}
+			info, err := c.SetBankPin(ctx, account, pin)
+			if err != nil {
+				return err
+			}
+			if !info.HasBankPin {
+				fmt.Fprintf(out, "Bank PIN de %s apagado.\n", account)
+				return nil
+			}
+			fmt.Fprintf(out, "Bank PIN de %s guardado com a sessão. O worker o põe no perfil do cliente no próximo start ou restart.\n", account)
+			return nil
+		}),
+	}
+	f.add(cmd, false)
+	cmd.Flags().BoolVar(&remove, "clear", false, "remove the stored bank PIN")
+	return cmd
+}
+
+// readPin reads one line from stdin; in a terminal it asks for it and turns
+// the echo off while it is typed (stty, best effort).
+func readPin(cmd *cobra.Command) (string, error) {
+	in := cmd.InOrStdin()
+	if f, ok := in.(*os.File); ok {
+		if st, err := f.Stat(); err == nil && st.Mode()&os.ModeCharDevice != 0 {
+			fmt.Fprint(cmd.ErrOrStderr(), "Bank PIN: ")
+			stty := func(arg string) error {
+				c := exec.Command("stty", arg) //nolint:gosec // fixed argv
+				c.Stdin = f
+				return c.Run()
+			}
+			if stty("-echo") == nil {
+				defer func() {
+					_ = stty("echo")
+					fmt.Fprintln(cmd.ErrOrStderr())
+				}()
+			}
+		}
+	}
+	line, err := bufio.NewReader(in).ReadString('\n')
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", err
+	}
+	return strings.TrimSpace(line), nil
 }
 
 // connectAccount picks the Chronicle account: --account, or the user's

@@ -212,7 +212,7 @@ class TaskBridgeTest
 		return new JsonParser().parse(ex.body()).getAsJsonObject();
 	}
 
-	private static Exchange call(AgentBridge bridge, String path, String method, String body)
+	static Exchange call(AgentBridge bridge, String path, String method, String body)
 	{
 		Exchange ex = new Exchange(path, method, body, TOKEN);
 		handle(bridge, ex);

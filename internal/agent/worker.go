@@ -13,6 +13,8 @@ import (
 	"sync"
 	"syscall"
 	"time"
+
+	"github.com/FelipeMalacarne/chronicle/internal/microbot"
 )
 
 // The --worker mode of the executor (docs/11 sections 6.3 and 13): the agent
@@ -42,9 +44,28 @@ type WorkerConfig struct {
 	// (default 2 min).
 	ReadyWait time.Duration
 
+	// BridgeWait bounds the wait for the Chronicle Link bridge before the
+	// bank PIN is written (default 1 min).
+	BridgeWait time.Duration
+
 	mu      sync.Mutex
 	env     []string      // the client's environment from the last bootstrap
 	profile ClientProfile // the account's profile from the last bootstrap
+	bankPin string        // the session's bank PIN from the last bootstrap
+}
+
+// pin is the bank PIN of the last bootstrap ("" without one).
+func (w *WorkerConfig) pin() string {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.bankPin
+}
+
+func (w *WorkerConfig) bridgeWait() time.Duration {
+	if w.BridgeWait <= 0 {
+		return time.Minute
+	}
+	return w.BridgeWait
 }
 
 // clientProfile is the profile of the last bootstrap (empty before one, or
@@ -129,6 +150,9 @@ func (e *Executor) validateBootstrap(raw json.RawMessage) (BootstrapParams, erro
 			}
 		}
 	}
+	if p.Session.BankPin != "" && !ValidBankPin(p.Session.BankPin) {
+		return p, errors.New("worker_bootstrap: session.bank_pin must be four digits")
+	}
 	if !strings.HasPrefix(p.PluginToken, "ipl_") || len(p.PluginToken) < 8 || len(p.PluginToken) > 512 ||
 		strings.ContainsAny(p.PluginToken, " \t\r\n\x00") {
 		return p, errors.New("worker_bootstrap: plugin_token must be an ipl_ token")
@@ -172,9 +196,15 @@ func (e *Executor) bootstrap(ctx context.Context, raw json.RawMessage) (any, err
 	if p.Profile != nil {
 		w.profile = *p.Profile
 	}
+	w.bankPin = p.Session.BankPin
 	w.mu.Unlock()
 	if e.status(ctx).Running {
-		return BootstrapResult{Started: true}, nil
+		// A reconnect: the client kept its profile, but the PIN may be new.
+		var problems []string
+		if perr := e.setBankPin(ctx); perr != nil {
+			problems = append(problems, perr.Error())
+		}
+		return BootstrapResult{Started: true, Problems: problems}, nil
 	}
 	if herr := e.writeHWID(p.Session); herr != nil {
 		return nil, herr
@@ -218,7 +248,49 @@ func (e *Executor) workerStart(ctx context.Context) (string, []string, error) {
 	if err != nil {
 		return out, nil, err
 	}
-	return out, e.applyProfile(ctx), nil
+	problems := e.applyProfile(ctx)
+	if err := e.setBankPin(ctx); err != nil {
+		e.log().Warn("worker: bank pin", "err", err)
+		problems = append(problems, err.Error())
+	}
+	return out, problems, nil
+}
+
+// setBankPin writes the session's bank PIN into the client's active Microbot
+// profile through the Chronicle Link bridge, which the system profile has
+// just started (it opens its socket a moment later). Nothing to do without a
+// PIN. Its errors never carry the PIN.
+func (e *Executor) setBankPin(ctx context.Context) error {
+	pin := e.Worker.pin()
+	if pin == "" {
+		return nil
+	}
+	if e.Bridge == nil {
+		return errors.New("bank pin: no Chronicle Link bridge")
+	}
+	deadline := time.Now().Add(e.Worker.bridgeWait())
+	for {
+		_, err := e.Bridge.JSON(ctx, http.MethodGet, "/bridge/version", nil, nil, bridgeTimeout)
+		if err == nil {
+			break
+		}
+		if time.Now().After(deadline) {
+			return errors.New("bank pin: the Chronicle Link bridge did not answer")
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Second):
+		}
+	}
+	if _, err := e.Bridge.JSON(ctx, http.MethodPost, "/bridge/bank-pin", nil, map[string]any{"pin": pin}, bridgeTimeout); err != nil {
+		var api *microbot.APIError
+		if errors.As(err, &api) {
+			return fmt.Errorf("bank pin: the bridge answered %d", api.Status)
+		}
+		return errors.New("bank pin: the bridge did not take it")
+	}
+	return nil
 }
 
 // waitReady waits for the Agent Server to answer.

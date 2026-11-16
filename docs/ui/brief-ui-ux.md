@@ -299,3 +299,73 @@ O que desenhar:
    plugin) e como mostrar que as runas são estimativa por pontos médios.
 4. Quando os pontos passarem a vir do plugin (fm/mtaarena já os lê da janela da loja), como o campo digitado
    e o valor lido convivem: lido com a idade da leitura, digitado como correção.
+
+## 13. Plugins dentro da aba Cliente (2026-11-16)
+
+Queixa do dono, usando a tela: ligar, desligar e configurar um plugin pede trocar de aba, "fica bem ruim de
+usar assim". O artboard de referência é `V7Cliente1440` (página 8): o cartão **Script** ao lado do jogo
+mostra só o que está rodando e o **Configurar** leva à sub-aba Plugins (`/automacao/plugins`, ainda a
+`V6MicrobotPlugins1440`). Problemas vistos no código:
+
+- Jogo e Plugins são duas páginas. Ir aos plugins tira o jogo da tela: o ao vivo (VNC) fecha e reconecta
+  na volta, e a configuração é feita sem ver o efeito no jogo.
+- Para ligar outro plugin é preciso sair do jogo; o cartão Script não liga nada.
+- A configuração grava campo a campo ("Gravar" por opção) e, sem as opções que o plugin exporta, cai no
+  chave/valor cru.
+- O mesmo plugin tem duas configurações e nenhuma tela diz qual vale: a sub-aba grava no cliente que
+  roda; `/plugins` grava no perfil da conta, que vale no próximo boot. O servidor já calcula a diferença
+  (doc 11, seção 17.1), mas nenhuma tela a mostra.
+
+Decisões do dono (2026-11-16):
+
+1. **Desenhar no canvas primeiro**, e a implementação segue o artboard.
+2. **O cartão Script vira um cartão Plugins**, que liga, para e configura sem sair do jogo.
+3. **A configuração abre numa gaveta lateral**, sobre a coluna Script, Por perto e Banco; a tela do
+   jogo, o chat e o painel de itens continuam à vista.
+4. **Gravar vale no cliente que roda, na hora.** Quando o cliente fica diferente do perfil da conta,
+   aparece o desvio com **"Salvar no perfil"** e **"Descartar"** (só pelo botão, nunca sozinho, W9). O
+   perfil é o da conta, sobre o modelo `frota` (decisão de 2026-11-13, seção 7.6 de
+   `decisoes-canvas.md`).
+5. **A sub-aba Plugins sai da aba Cliente.** O seletor Jogo | Plugins some; o que é manutenção (buscar e
+   instalar do Hub, atualizar, remover, snapshot da state machine e resultados) fica em `/plugins`
+   (`V7Plugins1440`).
+
+Dados que a tela tem:
+
+- os plugins do cliente (`GET /api/microbot/plugins`): nome, classe, ligado ou não, origem (Plugin Hub,
+  deste repositório, do cliente) e a versão nova do Hub, quando há; os do próprio cliente ficam
+  escondidos por padrão;
+- os grupos pelo uso, como em `/plugins`: **Jogam**, **Rotinas usam** (algum gatilho ou rotina roda),
+  **Sempre ligados** (o perfil liga no boot: Break Handler, Chronicle Link); nada é marcado à mão;
+- de quem joga: o estado da state machine, as voltas, "sem heartbeat" e, para o primeiro, desde quando
+  roda; não se sabe qual skill um plugin treina nem quantos erros teve;
+- as opções de um plugin vêm do esquema que o Chronicle Link exporta (seções, tipo de campo, padrão, opção
+  com aviso que pede um segundo clique); sem o esquema, só chave/valor; chaves de segredo (token, senha,
+  PIN) nunca aparecem; alguns plugins são protegidos e ficam fora do controle pela web;
+- o desvio (`GET /api/accounts/client/drift`): cada opção diferente do perfil ou não definida no cliente,
+  cada plugin do Hub não instalado ou em versão diferente da fixada, cada plugin que devia estar ligado e
+  não está, e os plugins do RuneLite que não dá para conferir;
+- ações: ligar (age no jogo com a conta logada: segundo clique), parar (segundo clique), pausar e retomar
+  todos (o Agent Server pausa todos os loops, não um só), salvar no perfil, descartar (devolve o valor do
+  perfil ao cliente).
+
+O que desenhar:
+
+1. **O cartão Plugins em 1440**, no lugar do Script: os grupos, a linha de cada plugin (lâmpada, nome,
+   estado, ligar e parar, abrir a configuração), Sempre ligados recolhido, como ligar um plugin instalado
+   que não está na lista visível (busca), Pausar todos. Estados: nada jogando; scripts pausados; sem
+   heartbeat; ligando (segundo clique); plugin protegido; cliente na tela de login; cliente parado e sem
+   cliente.
+2. **A gaveta de configuração em 1440**: cabeçalho (nome, versão, origem, estado), o formulário por seções
+   com um **Salvar** só, a contagem de mudanças e Descartar; o aviso de desvio com Salvar no perfil e
+   Descartar; a opção com aviso (segundo clique); o plugin sem esquema (chave/valor); o que acontece ao
+   fechar com mudanças não salvas e ao trocar de plugin com a gaveta aberta; como ela convive com o menu
+   do jogo, o mapa do mundo e o banco aberto.
+3. **O desvio fora da gaveta**: como o cartão mostra que um plugin tem opções fora do perfil, que devia
+   estar ligado e não está, ou que está numa versão diferente da fixada, sem abrir a gaveta.
+4. **640 px** (`V7Cliente640`): hoje o cartão Script some nessa largura. Decidir se o cartão Plugins
+   aparece abaixo de Por perto e se a configuração abre em tela cheia ou fica só para 1440.
+5. **A faixa sem o seletor Jogo | Plugins**, e o que `V7Plugins1440` precisa ganhar para receber a
+   manutenção que sai da sub-aba (Hub, remover, state machine e resultados de um plugin numa conta).
+6. Se o **Salvar** único da gaveta vale também para a configuração de `/plugins`, que hoje grava campo a
+   campo no código (divergência 3 da seção 7.6 de `decisoes-canvas.md`).

@@ -85,11 +85,29 @@ export function carriedRunes(st: AccountState): MtaRunes | null {
 	return out;
 }
 
-/** The rewards the account holds (inventory, equipment or bank), by item id. */
+/** The rewards the account holds (inventory, equipment or bank), by item id; Bones to Peaches is an unlock, read by the plugin. */
 export function ownedRewards(table: MtaTable, st: AccountState): string[] {
 	const have = new Set<number>();
 	for (const c of containers(st)) for (const i of c.items) have.add(i.id);
-	return table.rewards.filter((r) => have.has(r.item_id)).map((r) => r.id);
+	const unlocked = (st.minigame ?? []).some((m) => m.key === 'mta.bones_to_peaches' && m.value > 0);
+	return table.rewards
+		.filter((r) => have.has(r.item_id) || (r.id === 'bones_to_peaches' && unlocked))
+		.map((r) => r.id);
+}
+
+/** The pizazz points Chronicle Link read in the arena (mta.<room>), and when; null until it read every room. */
+export function readPoints(st: AccountState): { points: MtaPoints; observedAt: number } | null {
+	const points: Partial<MtaPoints> = {};
+	let observedAt = 0;
+	for (const m of st.minigame ?? []) {
+		const room = ROOM_IDS.find((r) => m.key === `mta.${r}`);
+		if (!room) continue;
+		points[room] = m.value;
+		observedAt = Math.max(observedAt, Date.parse(m.observed_at) || 0);
+	}
+	return ROOM_IDS.every((r) => points[r] !== undefined)
+		? { points: points as MtaPoints, observedAt }
+		: null;
 }
 
 /** A points field: whole numbers only, 0 up to the room's cap; anything else is 0. */

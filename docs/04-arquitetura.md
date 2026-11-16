@@ -323,7 +323,7 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /api/world?account=` | feita (dev, oidc) | entidades que as rotas tocam, com veredito por objetivo e onde cada rota as faz (Mundo) |
 | `GET /api/fleet/goals?keys=` | feita (dev, oidc) | Mundo da frota (V7Mundo1440, fatia V10): as contas do usuário (as de `/api/me`, nunca as de outro) e, por objetivo (toda meta fixada por uma delas, depois as chaves de `keys=`, até 50), o veredito guardado de cada conta (unknown nunca vira unmet), a meta dela, o resumo do plano (requisitos feitos, presumidos e desconhecidos, níveis abaixo do alvo, primeiro passo da rota ativa e quantos faltam até ele, cursor) e a conta mais perto entre as que perseguem; montagem pura em `coreprogress.BuildFleetGoals` |
 | `GET /api/world/entity?account=&ref=` | feita (dev, oidc) | uma entidade para o painel de entidade da v6: a mesma visão do `/api/world`, os requisitos diretos do catálogo (com o veredito da conta) e as quests que ela destrava |
-| `GET /api/account/state?account=` | feita (dev, oidc) | a Conta (V6Conta1440): conta, total e quest points, skills, quests e diaries com fonte e idade de cada fato, containers com frescor e itens; faceta nunca lida fica vazia |
+| `GET /api/account/state?account=` | feita (dev, oidc) | a Conta (V6Conta1440): conta, total e quest points, skills, quests e diaries com fonte e idade de cada fato, containers com frescor e itens, contadores de minigame (`minigame`, os pontos da Mage Training Arena); faceta nunca lida fica vazia |
 | `GET /api/account/recording?account=&since=&until=&limit=`, `DELETE /api/account/recording?account=&recording=` | feita (dev, oidc) | a gravação por demonstração do plugin (doc 10, seção 11): os eventos de `since` (padrão: 24 h atrás) a `until`, na ordem, até `limit` (1 a 5.000, padrão 1.000; `truncated` diz que há mais); o `DELETE` apaga a gravação a pedido do dono (toda, ou uma `recording`). O ingest é o único escritor |
 | `GET /api/microbot/agent` | feita (`MICROBOT_CONTROL=on`) | websocket do `chronicle agent`, nunca sessão (doc 08): em dev sem token e só do loopback; em oidc o access token JWT de um machine user do Zitadel, com audiência `OIDC_PROJECT_ID` e o papel `microbot:agent` |
 | `GET /api/microbot/agent/vnc?session=` | feita (`MICROBOT_CONTROL=on`) | websocket de saída do agent com os bytes RFB de uma sessão de VNC; mesma autenticação do link (doc 08, fase 2) |
@@ -510,7 +510,7 @@ erDiagram
   quests e diaries).
 - **`player_state`**: uma linha por fato `(facet, key)` com `value` JSON, fonte e `observed_at`. Facetas:
   `skill`, `activity`, `quest`, `diary_task`, `combat_achievement`, `collection_log`, `varbit`, `varp`,
-  `item`, `timer` e `position` (migration 0011) e `diary` (tier completa, chave `area:tier`, valor `{"complete":bool}`, derivada dos varbits
+  `item`, `timer` e `position` (migration 0011), `minigame` (migration 0025) e `diary` (tier completa, chave `area:tier`, valor `{"complete":bool}`, derivada dos varbits
   de referência; migration 0005). A chave de `quest` é o nome canônico da wiki do catálogo. Desde a migration 0008, `player_state` é uma projeção:
   cada fonte grava a própria última observação em **`observations`** `(facet, key, source)`, e
   `internal/core/facts.Merge` junta as fontes (o maior valor para o que só cresce: XP e nível, quest,
@@ -767,7 +767,15 @@ Detalhes do contrato (tipos Go em `internal/core/ingest/contract.go`; espelho Zo
   `dialogue`, `shop_buy`, `bank_open`, `bank_withdraw`, `bank_deposit`, `item_use`, `item_op`; até 500 por
   push). Em `full` e em `delta`; cada `(recording, seq)` é gravado uma vez só em `recorded_events`, então
   um reenvio não duplica, e o `raw` do snapshot não guarda o campo (doc 06, adendo de 2026-11-13 sobre a
-  gravação; doc 10, seção 11).
+  gravação; doc 10, seção 11). Desde 2026-11-16 (Chronicle Link 1.16.0, migration 0025), com o manifest
+  anunciando `minigame: true`: `minigame`, mapa `<minigame>.<contador>` em minúsculas → inteiro de 0 a
+  1.000.000, o valor que o plugin leu na interface do minigame (até 64 chaves). Hoje são os pontos de
+  pizazz da Mage Training Arena (`mta.telekinetic`, `mta.alchemist`, `mta.enchantment`,
+  `mta.graveyard`, lidos no painel do saguão ou no contador da sala; as moedas da Alchemists'
+  Playground ainda não entregues não contam) e `mta.bones_to_peaches` (1 com o feitiço liberado, pelo
+  varbit 1505). Como o `collectionLog`: em `full` e em `delta`, cada chave presente substitui a guardada
+  e as ausentes ficam, porque o plugin só conhece um contador depois de vê-lo na tela nesse login.
+  Vira a faceta `minigame`, valor `{"value"}` (doc 06, adendo de 2026-11-16).
 - **Vars genéricos**: o plugin lê **todo** varbit/varp que o manifest listar (`client.getVarbitValue`,
   `client.getVarpValue`) e manda em `varb`/`varp`, sem saber o que significam. O servidor deriva os fatos:
   a faceta `diary` dos varbits `DIARY_<ÁREA>_<TIER>_COMPLETED`, `qp>=N` do varp 101 (`QUEST_POINTS`) e,

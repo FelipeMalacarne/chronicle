@@ -45,6 +45,7 @@ final class StateCollector
 	private final ContainerTracker inventory = new ContainerTracker();
 	private final ContainerTracker equipment = new ContainerTracker();
 	private final CollectionLogTracker collectionLog = new CollectionLogTracker();
+	private final MinigameCounters minigame = new MinigameCounters();
 
 	/** Opaque id of the current login; null while logged out. */
 	private String liveEpoch;
@@ -72,6 +73,7 @@ final class StateCollector
 		inventory.reset();
 		equipment.reset();
 		collectionLog.reset();
+		minigame.reset();
 	}
 
 	void endEpoch()
@@ -235,9 +237,11 @@ final class StateCollector
 			? equipment.live(liveEpoch, totals(Rs2Equipment.all(), only), now)
 			: ContainerSnapshot.unavailable(now));
 
+		minigame.read(client);
 		return new PlayerSnapshot(username, profile(RuneScapeProfileType.getCurrent(client)),
 			accountType(client.getVarbitValue(VarbitID.IRONMAN)), manifest.manifestVersion,
-			varb, varp, level, xp, boosted, quest, timers, position, pages, containers);
+			varb, varp, level, xp, boosted, quest, timers, position, pages, containers)
+			.withMinigame(minigame.forIngest(manifest));
 	}
 
 	private ContainerSnapshot captureBank(boolean allowed, List<Integer> only, Instant now)

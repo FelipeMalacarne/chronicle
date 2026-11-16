@@ -68,6 +68,9 @@ func (r *Repository) persistNormalized(ctx context.Context, q *storedb.Queries, 
 	if err := persistTimers(ctx, q, &rows, accountID, snapshotID, push); err != nil {
 		return err
 	}
+	if err := persistMinigame(ctx, q, &rows, accountID, snapshotID, push); err != nil {
+		return err
+	}
 	if p := push.Data.Position; p != nil {
 		// The last position only: no snapshot_facts row, it is not history.
 		v := map[string]int{"world": p.World, "x": p.X, "y": p.Y, "plane": p.Plane, "region": p.Region()}
@@ -117,6 +120,9 @@ func touchedFacets(push coreingest.Push) []string {
 	}
 	if d.Position != nil {
 		out = append(out, coreingest.FacetPosition)
+	}
+	if d.Minigame != nil {
+		out = append(out, coreingest.FacetMinigame)
 	}
 	if d.Levels != nil || d.XP != nil || d.Boosted != nil {
 		out = append(out, "skill")
@@ -179,6 +185,23 @@ func persistTimers(ctx context.Context, q *storedb.Queries, rows *facts, account
 			return err
 		}
 		rows.add(snapshotID, coreingest.FacetTimer, key, raw)
+	}
+	return nil
+}
+
+// persistMinigame keeps each data.minigame value as a fact. Never replaced as
+// a whole, not even by a full push: the client knows a counter only once the
+// minigame's interface has been on screen, so a key absent says nothing.
+func persistMinigame(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID string, push coreingest.Push) error {
+	if push.Data.Minigame == nil {
+		return nil
+	}
+	for key, value := range *push.Data.Minigame {
+		raw, err := upsertFact(ctx, q, accountID, snapshotID, coreingest.FacetMinigame, key, map[string]int64{"value": value}, push.SentAt)
+		if err != nil {
+			return err
+		}
+		rows.add(snapshotID, coreingest.FacetMinigame, key, raw)
 	}
 	return nil
 }

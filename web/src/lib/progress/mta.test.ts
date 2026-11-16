@@ -5,6 +5,7 @@ import {
 	magicLevel,
 	ownedRewards,
 	parsePoints,
+	readPoints,
 	runeRows,
 	type MtaTable
 } from './mta.ts';
@@ -16,7 +17,8 @@ const table = {
 	enchant_levels: [],
 	rewards: [
 		{ id: 'beginner_wand', name: 'Beginner wand', item_id: 6908, cost: z() },
-		{ id: 'rune_pouch', name: 'Rune pouch', item_id: 12791, cost: z() }
+		{ id: 'rune_pouch', name: 'Rune pouch', item_id: 12791, cost: z() },
+		{ id: 'bones_to_peaches', name: 'Bones to Peaches', item_id: 6926, cost: z() }
 	]
 } as unknown as MtaTable;
 function z() {
@@ -78,4 +80,37 @@ test('runeRows: short is never negative and unknown stays null', () => {
 		runeRows(res, null).map((r) => r.short),
 		[null, null, null]
 	);
+});
+
+const counter = (key: string, value: number, observed_at = '2026-11-16T03:00:00Z') => ({
+	key,
+	value,
+	source: 'plugin',
+	observed_at
+});
+
+test('ownedRewards counts Bones to Peaches only from the unlock the plugin read', () => {
+	const st = (minigame: unknown[]) =>
+		({ containers: [], skills: [], minigame }) as unknown as AccountState;
+	assert.deepEqual(ownedRewards(table, st([])), []);
+	assert.deepEqual(ownedRewards(table, st([counter('mta.bones_to_peaches', 0)])), []);
+	assert.deepEqual(ownedRewards(table, st([counter('mta.bones_to_peaches', 1)])), [
+		'bones_to_peaches'
+	]);
+});
+
+test('readPoints needs every room and takes the newest reading', () => {
+	const st = (minigame: unknown[]) => ({ minigame }) as unknown as AccountState;
+	assert.equal(readPoints(st([counter('mta.telekinetic', 204)])), null);
+	const all = [
+		counter('mta.telekinetic', 204, '2026-11-16T02:00:00Z'),
+		counter('mta.graveyard', 170),
+		counter('mta.enchantment', 1342),
+		counter('mta.alchemist', 140),
+		counter('mta.bones_to_peaches', 1)
+	];
+	assert.deepEqual(readPoints(st(all)), {
+		points: { telekinetic: 204, graveyard: 170, enchantment: 1342, alchemist: 140 },
+		observedAt: Date.parse('2026-11-16T03:00:00Z')
+	});
 });

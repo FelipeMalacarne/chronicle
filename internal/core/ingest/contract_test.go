@@ -612,3 +612,52 @@ func TestTimersAndPositionNeedManifest(t *testing.T) {
 		t.Fatalf("Lumbridge region = %d", r)
 	}
 }
+
+func TestMinigameValidation(t *testing.T) {
+	cases := []struct {
+		name    string
+		values  *IntMap
+		wantErr string
+	}{
+		{"pizazz points", &IntMap{"mta.telekinetic": 204, "mta.graveyard": 0, "mta.enchantment": 1342, "mta.alchemist": 140}, ""},
+		{"empty", &IntMap{}, ""},
+		{"null", func() *IntMap { var m IntMap; return &m }(), "data.minigame must be a JSON object"},
+		{"no counter", &IntMap{"mta": 1}, "<minigame>.<counter> in lower case"},
+		{"upper case", &IntMap{"MTA.telekinetic": 1}, "<minigame>.<counter> in lower case"},
+		{"negative", &IntMap{"mta.alchemist": -1}, "must be between 0"},
+		{"too large", &IntMap{"mta.alchemist": MaxMinigameValue + 1}, "must be between 0"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			push := fullPush()
+			push.Data.Minigame = tc.values
+			err := push.Validate()
+			if tc.wantErr == "" && err != nil {
+				t.Fatalf("Validate() = %v", err)
+			}
+			if tc.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tc.wantErr)) {
+				t.Fatalf("Validate() = %v, want %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestMinigameNeedsManifest(t *testing.T) {
+	manifest := Manifest{
+		ContractVersion: ContractVersion, ManifestVersion: 7, TokenScopes: []TokenScope{ScopeStateWrite},
+		Varbits: []int64{}, Varps: []int64{}, Collections: []int64{}, IntervalSeconds: 10,
+	}
+	push := fullPush()
+	push.Data.Minigame = &IntMap{"mta.telekinetic": 204}
+	if err := push.ValidateAgainst(manifest); err == nil || !strings.Contains(err.Error(), "data.minigame is not enabled") {
+		t.Fatalf("ValidateAgainst() = %v, want the gate", err)
+	}
+	manifest.Minigame = true
+	if err := push.ValidateAgainst(manifest); err != nil {
+		t.Fatalf("ValidateAgainst() with the flag = %v", err)
+	}
+	encoded, _ := json.Marshal(push.Data)
+	if !strings.Contains(string(encoded), `"minigame":{"mta.telekinetic":204}`) {
+		t.Fatalf("wire shape: %s", encoded)
+	}
+}

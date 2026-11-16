@@ -126,6 +126,9 @@ func (p Push) Validate() error {
 	if p.Data.Timers != nil {
 		validateTimers(&errs, *p.Data.Timers)
 	}
+	if p.Data.Minigame != nil {
+		validateMinigame(&errs, *p.Data.Minigame)
+	}
 	if p.Data.CollectionLog != nil {
 		validateCollectionLog(&errs, *p.Data.CollectionLog, p.SentAt)
 	}
@@ -266,6 +269,9 @@ func (p Push) ValidateAgainst(m Manifest) error {
 	if p.Data.Timers != nil && !m.Timers {
 		errs = append(errs, "data.timers is not enabled by the manifest")
 	}
+	if p.Data.Minigame != nil && !m.Minigame {
+		errs = append(errs, "data.minigame is not enabled by the manifest")
+	}
 	if p.Data.Position != nil && !m.Position {
 		errs = append(errs, "data.position is not enabled by the manifest")
 	}
@@ -345,6 +351,34 @@ func validateTimers(errs *validationErrors, timers TimerMap) {
 			*errs = append(*errs, fmt.Sprintf("data.timers[%q].readyAt must be positive", k))
 		case len(t.Label) > 80:
 			*errs = append(*errs, fmt.Sprintf("data.timers[%q].label is longer than 80 bytes", k))
+		}
+	}
+}
+
+// minigameKey is "<minigame>.<counter>" in lower case: mta.telekinetic.
+var minigameKey = regexp.MustCompile(`^[a-z][a-z0-9_]{0,23}\.[a-z][a-z0-9_]{0,31}$`)
+
+func validateMinigame(errs *validationErrors, values IntMap) {
+	if values == nil {
+		*errs = append(*errs, "data.minigame must be a JSON object (use {} when empty)")
+		return
+	}
+	if len(values) > MaxMinigame {
+		*errs = append(*errs, fmt.Sprintf("data.minigame has more than %d values", MaxMinigame))
+		return
+	}
+	keys := make([]string, 0, len(values))
+	for k := range values {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, k := range keys {
+		v := values[k]
+		switch {
+		case !minigameKey.MatchString(k):
+			*errs = append(*errs, fmt.Sprintf("data.minigame key %q must be <minigame>.<counter> in lower case", k))
+		case v < 0 || v > MaxMinigameValue:
+			*errs = append(*errs, fmt.Sprintf("data.minigame[%q] must be between 0 and %d", k, MaxMinigameValue))
 		}
 	}
 }

@@ -8,6 +8,7 @@
 		NO_ENCHANT,
 		ownedRewards,
 		parsePoints,
+		readPoints,
 		ROOM_IDS,
 		RUNE_LABEL,
 		runeRows,
@@ -16,12 +17,14 @@
 		type RoomId
 	} from '#lib/progress/mta';
 	import type { AccountState } from '#lib/progress/types';
+	import { ago } from '#lib/progress/view';
 
 	/*
 	 * Mage Training Arena card of Conta › Personagem. Not drawn in the canvas yet (the owner asked
 	 * for it ahead of the artboard): it reuses the v7 card, field and plaque-less list patterns.
-	 * The arithmetic is the server's (POST /api/mta/calculate); the pizazz points are typed because
-	 * no source reads them yet (the fm/mtaarena plugin does, nothing pushes them to Chronicle).
+	 * The arithmetic is the server's (POST /api/mta/calculate). The pizazz points come from Chronicle
+	 * Link, which reads them in the arena (the minigame facet, mta.<room>); until it has read every
+	 * room they are typed, and a typed value stays editable over a reading.
 	 */
 	let { state: st }: { state: AccountState } = $props();
 
@@ -62,6 +65,11 @@
 			.mtaRewards()
 			.then((t) => (table = t))
 			.catch((e) => (failure = e instanceof Error ? e.message : String(e)));
+	});
+
+	const read = $derived(readPoints(st));
+	$effect(() => {
+		if (read) for (const r of ROOM_IDS) points[r] = String(read.points[r]);
 	});
 
 	const owned = $derived(table ? ownedRewards(table, st) : []);
@@ -156,8 +164,10 @@
 						</label>
 					{/each}
 					<p class="mu small">
-						{magic === undefined ? 'Magic sem leitura.' : `Magic ${magic}`} · digitados à mão: nenhuma
-						fonte lê os pontos ainda.
+						{magic === undefined ? 'Magic sem leitura.' : `Magic ${magic}`} ·
+						{read
+							? `lidos no jogo ${ago(read.observedAt, Date.now())}`
+							: 'digitados à mão até o Chronicle Link ler a arena'}
 					</p>
 				</div>
 			</div>

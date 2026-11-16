@@ -59,6 +59,7 @@ final class PushBuilder
 		data.timers = current.timers == null ? null : new TreeMap<>(current.timers);
 		data.position = current.position;
 		data.collectionLog = collectionLog(current.collectionLog, sentAt);
+		data.minigame = current.minigame == null || current.minigame.isEmpty() ? null : new TreeMap<>(current.minigame);
 		data.recording = current.recording;
 		data.items = new IngestContract.ItemContainers();
 		data.items.bank = observation(current.container(ContainerKind.BANK), null, sentAt);
@@ -85,6 +86,11 @@ final class PushBuilder
 		data.collectionLog = current.collectionLog == null ? null
 			: collectionLog(acked.collectionLog == null ? current.collectionLog : changed(acked.collectionLog, current.collectionLog), sentAt);
 
+		// Counters, like pages, only come and change: a new one never requires a full.
+		data.minigame = current.minigame == null ? null
+			: acked.minigame == null ? (current.minigame.isEmpty() ? null : new TreeMap<>(current.minigame))
+			: changed(acked.minigame, current.minigame);
+
 		// The pending demonstration events go out as they are: the recorder drops the acknowledged.
 		data.recording = current.recording;
 
@@ -98,7 +104,7 @@ final class PushBuilder
 			|| !Objects.equals(acked.accountType, current.accountType);
 		boolean other = data.varb != null || data.varp != null || data.level != null || data.xp != null
 			|| data.boosted != null || data.quest != null || data.timers != null || data.collectionLog != null
-			|| data.items != null || data.recording != null || headerChanged;
+			|| data.minigame != null || data.items != null || data.recording != null || headerChanged;
 		// The position rides along any push once it changed; alone it waits for a real move.
 		IngestContract.Position pos = current.position;
 		if (pos != null && pos.movedFrom(acked.position, other ? 1 : POSITION_TILES))

@@ -21,6 +21,9 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   only, also the control bridge (`.runelite/agent/bridge.sock`), the config-options export and
   (1.15.0) the task executor: a state machine for one typed task (travel, bank, buy) that only
   the planner's agent starts through the bridge (`TaskMachine`, tested over the `TaskGame` fake).
+  Since 1.16.0 it also sends `data.minigame` (`MinigameCounters`): the Mage Training Arena's
+  pizazz points, read from the same widgets the MTA Planner reads (the packages stay apart), and
+  whether Bones to Peaches is unlocked.
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).

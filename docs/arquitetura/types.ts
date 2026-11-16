@@ -60,6 +60,16 @@ const TimerMap = z.record(
   }).strict(),
 ).refine(timers => Object.keys(timers).length <= 40, 'no máximo 40 relógios');
 
+/**
+ * Contadores de minigame (doc 06, adendo de 2026-11-16): "<minigame>.<contador>" -> o valor lido na
+ * interface (os pontos de pizazz da Mage Training Arena). Cada chave presente substitui a guardada, em
+ * full e em delta; as ausentes ficam.
+ */
+const MinigameMap = z.record(
+  z.string().regex(/^[a-z][a-z0-9_]{0,23}\.[a-z][a-z0-9_]{0,31}$/),
+  z.number().int().min(0).max(1_000_000),
+).refine(m => Object.keys(m).length <= 64, 'no máximo 64 contadores');
+
 /** Posição do personagem, opt-in no cliente; o servidor guarda só a última. */
 const Position = z.object({
   world: z.number().int().min(0).max(9999),
@@ -129,6 +139,7 @@ export const IngestManifest = z.object({
   position: z.boolean().default(false),                 // aceita data.position (2026-11-10)
   collection_log: z.boolean().default(false),           // aceita data.collectionLog (2026-11-13)
   recording: z.boolean().default(false),                // aceita data.recording (gravação, doc 10 fase 2)
+  minigame: z.boolean().default(false),                 // aceita data.minigame (2026-11-16)
   items: IngestItemSelection,
   interval_seconds: z.number().int().min(5).default(10),
   resync: z.boolean().default(false),                    // próximo push deve ser full
@@ -196,6 +207,7 @@ const IngestPayloadBase = z.object({
     position: Position.optional(),                         // só com manifest.position e o opt-in
     collectionLog: CollectionLogMap.optional(),            // só com manifest.collection_log
     recording: Recording.optional(),                       // só com manifest.recording e "Record demonstration"
+    minigame: MinigameMap.optional(),                      // só com manifest.minigame
     collectionLogSlots: z.string().optional(),             // base64 bitset, índice = manifest.collections (nenhum plugin manda)
     collectionLogItemCount: z.number().int().nonnegative().safe().optional(),
     items: IngestItemContainers.optional(),

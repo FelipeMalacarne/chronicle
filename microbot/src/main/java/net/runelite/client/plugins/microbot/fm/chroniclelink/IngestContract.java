@@ -47,6 +47,8 @@ final class IngestContract
 		Boolean collectionLog;
 		/** The server accepts {@code data.recording}, the demonstration (planner docs/10 phase 2). */
 		Boolean recording;
+		/** The server accepts {@code data.minigame} (planner 2026-11-16). */
+		Boolean minigame;
 		ItemSelection items;
 		@SerializedName("interval_seconds")
 		Integer intervalSeconds;
@@ -80,6 +82,11 @@ final class IngestContract
 		boolean recordingEnabled()
 		{
 			return recording != null && recording;
+		}
+
+		boolean minigameEnabled()
+		{
+			return minigame != null && minigame;
 		}
 
 		int intervalSecondsOrDefault()
@@ -153,6 +160,12 @@ final class IngestContract
 		 * manifest allows it. Each page replaces the planner's copy, in a full and in a delta.
 		 */
 		Map<String, CollectionLogPage> collectionLog;
+		/**
+		 * "&lt;minigame&gt;.&lt;counter&gt;" -> the value last read in its interface ({@link MinigameCounters});
+		 * only when the manifest allows it. Like the collection log, each key replaces the planner's
+		 * value and a key absent stays.
+		 */
+		Map<String, Long> minigame;
 		ItemContainers items;
 		/**
 		 * The demonstration events not acknowledged yet, oldest first; only with the owner's

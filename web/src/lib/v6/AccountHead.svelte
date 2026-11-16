@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
+	import { progressApi } from '#lib/api/client';
 	import {
 		MicrobotError,
 		microbotApi,
@@ -12,7 +13,8 @@
 	import { lane, type Lane } from '#lib/progress/frota';
 	import { iconFor } from '#lib/progress/icons';
 	import { microbotModule } from '#lib/progress/microbot.svelte';
-	import type { AccountState, ProgressSummary } from '#lib/progress/types';
+	import { todaySince } from '#lib/progress/ritmo';
+	import type { AccountRhythm, AccountState, ProgressSummary } from '#lib/progress/types';
 	import {
 		actionLabel,
 		RESTART_NOW_TITLE,
@@ -68,6 +70,29 @@
 		return () => clearInterval(t);
 	});
 
+	/*
+	 * O ritmo da conta: o rosto do topo é a skill que ela treina agora, como na raia da Frota; sem
+	 * ele, lane() cai na skill mais alta.
+	 */
+	let rhythm = $state<AccountRhythm | null>(null);
+	async function loadRhythm(account: string) {
+		try {
+			const r = await progressApi.rhythm(account, todaySince(new Date()));
+			if (r.account === account) rhythm = r;
+		} catch {
+			/* sem o ritmo, o rosto fica com a skill mais alta */
+		}
+	}
+	$effect(() => {
+		const account = id;
+		rhythm = null;
+		void loadRhythm(account);
+		const t = setInterval(() => {
+			if (!document.hidden) void loadRhythm(account);
+		}, 30_000);
+		return () => clearInterval(t);
+	});
+
 	const l: Lane = $derived(
 		lane(
 			{
@@ -77,7 +102,8 @@
 				timers: [],
 				worker: workerLines(workers, now).find((w) => w.account === id) ?? null,
 				client,
-				scripts
+				scripts,
+				rhythm: rhythm?.account === id ? rhythm : null
 			},
 			now
 		)

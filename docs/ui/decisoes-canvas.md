@@ -804,3 +804,4 @@ Conferido com `pnpm check`, `pnpm lint`, `pnpm test` (`frota.test.ts`, `historic
 
 - Marca manual por objetivo (2026-11-13): implementada fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.
 - Marca manual por item do trecho (2026-11-14): "Já tenho" e "Desfazer" nos slots do cartão "Levar do banco" (`BankPanel`), fora do canvas, versão mínima autorizada pelo dono; o desenho ainda precisa passar pelo agente de design.
+- Sem "Já tenho" no "Levar do banco" (2026-11-15, decisão do dono): o cartão diz o que tirar do banco e não marca; uma marca feita pela CLI ou pelo MCP ainda aparece no slot ("marcado por você") com "Desfazer". O "Já tenho" passou para os objetivos de item do passo atual (`GoalGrid` com `current`, só no `CurrentStep`): é a marca por objetivo, com esse rótulo; os outros objetivos, e os do passo aberto na rota, seguem com "Já fiz".

@@ -34,7 +34,8 @@ sobrepõe o veredito na hora de derivar o status. Desmarcar restaura o veredito 
 
 Feita com autorização do dono em 2026-11-13, em `web/src/lib/v6/GoalGrid.svelte`:
 
-- Objetivo **não cumprido** (`unmet` ou `unknown`): botão secundário "Já fiz" ao lado do cartão.
+- Objetivo **não cumprido** (`unmet` ou `unknown`): botão secundário "Já fiz" ao lado do cartão; no passo
+  atual, um objetivo de item diz "Já tenho" (decisão do dono, 2026-11-15).
 - Objetivo **marcado**: mostra `feito`, o selo "marcado por você" e o botão "Desfazer".
 - Objetivo **cumprido por evidência**: sem controle.
 - Toast "Marcado · Knife marcado como já feito" com `desfazer` (tecla `U`), na pilha de desfazer dos passos.

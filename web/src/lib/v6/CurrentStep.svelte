@@ -151,6 +151,7 @@
 			{chips}
 			objectives={board?.objectives}
 			{busy}
+			current
 			onmark={onobjmark}
 			onunmark={onobjunmark}
 		/>

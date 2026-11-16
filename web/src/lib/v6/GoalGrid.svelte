@@ -10,22 +10,26 @@
 	 * um grupo por papel, o rótulo abrindo a linha, e cada objetivo com o quanto falta ("240 /
 	 * 1.250") quando o board sabe o número. Abre o painel da entidade por cima da tela. Com
 	 * `onmark`/`onunmark`, o objetivo que falta ganha "Já fiz" e o marcado pelo dono, "Desfazer"
-	 * (marca de objetivo, docs/09 seção 5; fora do canvas, versão mínima).
+	 * (marca de objetivo, docs/09 seção 5; fora do canvas, versão mínima). Com `current` (o passo
+	 * atual), o de item ganha "Já tenho" (decisão do dono, 2026-11-15).
 	 */
 	let {
 		chips,
 		objectives,
 		busy = false,
+		current = false,
 		onmark,
 		onunmark
 	}: {
 		chips: Chip[];
 		objectives: Pick<BoardObjective, 'key' | 'role' | 'observed'>[] | undefined;
 		busy?: boolean;
+		current?: boolean;
 		onmark?: (key: string, label: string) => void;
 		onunmark?: (key: string, label: string) => void;
 	} = $props();
 	const groups = $derived(goalGroups(chips, objectives));
+	const have = (o: { item: boolean }) => current && o.item;
 </script>
 
 <div class="goals">
@@ -47,8 +51,11 @@
 						><span class="pg7"><i><span style="width: {o.pct}%"></span></i>{o.text}</span></button
 					>
 					{#if o.ownerMarked}
-						<span class="own7" title="Você marcou este objetivo como já feito, sem evidência"
-							>marcado por você</span
+						<span
+							class="own7"
+							title={have(o)
+								? 'Você marcou que já tem este item, sem evidência'
+								: 'Você marcou este objetivo como já feito, sem evidência'}>marcado por você</span
 						>
 						{#if onunmark}<button
 								class="btn btn-g btn-s"
@@ -62,8 +69,10 @@
 							class="btn btn-s"
 							type="button"
 							disabled={busy}
-							title="Marcar como já feito, para a conta toda"
-							onclick={() => onmark(o.key, o.name)}>Já fiz</button
+							title={have(o)
+								? 'Marcar como já tenho, para a conta toda'
+								: 'Marcar como já feito, para a conta toda'}
+							onclick={() => onmark(o.key, o.name)}>{have(o) ? 'Já tenho' : 'Já fiz'}</button
 						>
 					{/if}
 				</div>

@@ -365,7 +365,10 @@ guide_id, segment_id, item_key)`; `chronicle loadout mark <item>`, `PUT /api/loa
 isto neste trecho". A `item_key` é a identidade do requisito (`planning.RequirementKey`: `id:<n>`,
 `any:<ids ordenados>`, `family:<f>` ou `name:<nome>` quando nada resolveu, com `/noted`); o slot não
 entra. A marca só vale no trecho em que foi feita: a mesma pá no trecho seguinte, ou noutro guia, não é
-marcada. Só se marca um requisito que o trecho lista.
+marcada. Só se marca um requisito que o trecho lista. A tela não marca (decisão do dono, 2026-11-15): o
+cartão "Levar do banco" diz o que tirar do banco; ele mostra a marca e a desfaz, e marca-se pela CLI ou
+pelo MCP (`mark_loadout_item`). Na tela, "Já tenho" é a marca por objetivo de um objetivo de item do
+passo atual.
 
 É uma entrada do cálculo do readiness, sobreposta depois dos fatos (`planning.ItemMarks`), nunca
 evidência (regras 2 e 8): nada vai para os containers de itens, snapshots, `player_state` nem

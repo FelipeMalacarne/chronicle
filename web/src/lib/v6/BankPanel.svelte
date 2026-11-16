@@ -25,7 +25,6 @@
 		bankActions,
 		firstRef,
 		refOf,
-		onhave,
 		onunhave
 	}: {
 		readiness: SegmentReadiness | null;
@@ -35,10 +34,10 @@
 		/** Referência do autor de um passo (o id interno nunca aparece). */
 		refOf: (id: string) => string;
 		/**
-		 * "Já tenho" (marca do dono, só para este trecho; fora do canvas, versão mínima autorizada
-		 * pelo dono em 2026-11-14) e "Desfazer" da marca. Sem os dois, os slots não ganham controle.
+		 * "Desfazer" de uma marca "já tenho" do dono (só deste trecho; feita pela CLI ou pelo MCP).
+		 * O cartão não marca: diz o que tirar do banco, e o "Já tenho" ficou nos objetivos do passo
+		 * atual (decisão do dono, 2026-11-15).
 		 */
-		onhave?: (key: string, name: string) => void;
 		onunhave?: (key: string, name: string) => void;
 	} = $props();
 
@@ -205,13 +204,6 @@
 					title="Desfazer a marca deste item, para este trecho"
 					onclick={() => onunhave(s.key, s.name)}>Desfazer</button
 				>{/if}
-		{:else if !s.ok && onhave}
-			<button
-				class="btn btn-s"
-				type="button"
-				title="Marcar como já tenho, para este trecho"
-				onclick={() => onhave(s.key, s.name)}>Já tenho</button
-			>
 		{/if}
 	</span>
 {/snippet}

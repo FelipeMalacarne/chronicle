@@ -269,7 +269,9 @@
 		undo = [...undo, { kind: 'objective', scope: at, key, label, marked }];
 		toast = {
 			title: marked ? 'Marcado' : 'Desmarcado',
-			text: marked ? `${label} marcado como já feito` : `${label} voltou ao que o jogo mostra`,
+			text: marked
+				? `${label} marcado como ${key.startsWith('item:') ? 'já tenho' : 'já feito'}`
+				: `${label} voltou ao que o jogo mostra`,
 			undo: true
 		};
 	}
@@ -293,20 +295,15 @@
 		}
 	}
 
-	async function markLoadout(key: string, label: string, marked: boolean) {
+	/** Desfaz uma marca "já tenho" do "Levar do banco"; o cartão não marca (só a CLI e o MCP). */
+	async function unmarkLoadout(key: string, label: string) {
 		const at = scope;
 		const seg = readiness.data?.current;
 		if (!at || !seg || seg.guide_id !== at.guide) return;
 		const segment = seg.segment_id;
-		if (!(await writeLoadout(at, segment, marked ? 'mark' : 'unmark', key))) return;
-		undo = [...undo, { kind: 'loadout', scope: at, segment, key, label, marked }];
-		toast = {
-			title: marked ? 'Marcado' : 'Desmarcado',
-			text: marked
-				? `${label} marcado como já tenho neste trecho`
-				: `${label} voltou ao que o plugin mostra`,
-			undo: true
-		};
+		if (!(await writeLoadout(at, segment, 'unmark', key))) return;
+		undo = [...undo, { kind: 'loadout', scope: at, segment, key, label, marked: false }];
+		toast = { title: 'Desmarcado', text: `${label} voltou ao que o plugin mostra`, undo: true };
 	}
 
 	async function undoLast() {
@@ -400,8 +397,7 @@
 			{bankActions}
 			firstRef={bankFirst}
 			{refOf}
-			onhave={(k, n) => markLoadout(k, n, true)}
-			onunhave={(k, n) => markLoadout(k, n, false)}
+			onunhave={unmarkLoadout}
 		/>
 	{/if}
 {/snippet}

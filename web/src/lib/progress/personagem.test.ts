@@ -50,6 +50,7 @@ const state: AccountState = {
 	combat_achievements: [],
 	collection_log: { obtained: 21, total: 1734, ...src },
 	collection_log_pages: [],
+	minigame: [],
 	containers: []
 };
 

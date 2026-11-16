@@ -45,6 +45,10 @@ type Manifest struct {
 	// the collection log pages the player opened in game (docs/06, adendo
 	// 2026-11-13).
 	CollectionLog bool `json:"collection_log"`
+	// Minigame tells the client the server accepts data.minigame: points a
+	// minigame shows only in its interface, such as the Mage Training Arena's
+	// pizazz points (docs/06, adendo 2026-11-16).
+	Minigame bool `json:"minigame"`
 	// Recording tells the client the server accepts data.recording: the
 	// demonstration the owner records with "Record demonstration" on
 	// (docs/10 section 11, phase 2).
@@ -118,6 +122,12 @@ type PushData struct {
 	// push and in a delta; pages absent stay as they were, since the client
 	// only knows the pages opened in game.
 	CollectionLog *CollectionLogMap `json:"collectionLog,omitempty"`
+	// Minigame maps "<minigame>.<counter>" (mta.telekinetic, mta.graveyard,
+	// mta.enchantment, mta.alchemist) to the value the client last read in the
+	// minigame's interface. Like collectionLog, each key present replaces its
+	// value, in a full push and in a delta, and keys absent stay as they were:
+	// the client knows a value only once its interface has been on screen.
+	Minigame *IntMap `json:"minigame,omitempty"`
 	// Recording is the demonstration the owner records (docs/10 section 11):
 	// the client's events not acknowledged yet, oldest first, in a full push
 	// and in a delta. Each (recording, seq) is stored once, so a push resent
@@ -170,6 +180,13 @@ var TimerStates = []string{"COMPLETED", "IN_PROGRESS", "OCCUPIED", "EMPTY", "UNK
 
 // MaxTimers bounds data.timers.
 const MaxTimers = 40
+
+// MaxMinigame bounds data.minigame; MaxMinigameValue bounds each value (the
+// Mage Training Arena caps a room at 32,000 points).
+const (
+	MaxMinigame      = 64
+	MaxMinigameValue = 1_000_000
+)
 
 // Position is a tile and the world the character is on.
 type Position struct {

@@ -22,6 +22,9 @@ const (
 	// key CollectionLogPageKey(title), value {tab, items}; the
 	// collectionLogSlots bitset keeps its facts keyed by item id.
 	FacetCollectionLog = "collection_log"
+	// FacetMinigame: one fact per data.minigame key ("mta.telekinetic"),
+	// value {value}.
+	FacetMinigame = "minigame"
 )
 
 // CollectionLogPagePrefix starts the key of a collection log page fact.

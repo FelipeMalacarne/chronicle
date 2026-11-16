@@ -592,7 +592,15 @@ export interface AccountState {
 	collection_log?: CollectionLogView;
 	/** As páginas do collection log que o plugin leu com o log aberto no jogo; vazio até abrir. */
 	collection_log_pages: CollectionLogPageView[];
+	/** Contadores que o plugin leu na interface de um minigame ("mta.telekinetic"); vazio até lá. */
+	minigame: MinigameView[];
 	containers: ContainerView[];
+}
+
+/** Um contador de minigame: os pontos de pizazz da Mage Training Arena por sala, por exemplo. */
+export interface MinigameView extends FactSource {
+	key: string;
+	value: number;
 }
 
 /** Um tier de combat achievements: feitos pelos bits dos varps, e o total que o próprio jogo guarda. */

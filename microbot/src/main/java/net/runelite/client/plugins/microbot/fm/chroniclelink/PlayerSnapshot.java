@@ -31,6 +31,8 @@ final class PlayerSnapshot
 	final IngestContract.Position position;
 	/** Collection log pages read in this login by title, or {@code null} when the manifest does not take them. */
 	final Map<String, CollectionLogPage> collectionLog;
+	/** Minigame counters read in this login ({@link MinigameCounters}), or {@code null} when not collected. */
+	final Map<String, Long> minigame;
 	final Map<ContainerKind, ContainerSnapshot> containers;
 	/**
 	 * The demonstration events not acknowledged yet ({@link DemonstrationRecorder}), oldest first,
@@ -63,15 +65,15 @@ final class PlayerSnapshot
 		Map<String, CollectionLogPage> collectionLog, Map<ContainerKind, ContainerSnapshot> containers)
 	{
 		this(username, profile, accountType, manifestVersion, varb, varp, level, xp, boosted, quest, timers, position,
-			collectionLog, containers, null);
+			collectionLog, null, containers, null);
 	}
 
 	private PlayerSnapshot(String username, String profile, String accountType, long manifestVersion,
 		Map<String, Long> varb, Map<String, Long> varp,
 		Map<String, Long> level, Map<String, Long> xp, Map<String, Long> boosted,
 		Map<String, String> quest, Map<String, IngestContract.Timer> timers, IngestContract.Position position,
-		Map<String, CollectionLogPage> collectionLog, Map<ContainerKind, ContainerSnapshot> containers,
-		List<IngestContract.RecordedEvent> recording)
+		Map<String, CollectionLogPage> collectionLog, Map<String, Long> minigame,
+		Map<ContainerKind, ContainerSnapshot> containers, List<IngestContract.RecordedEvent> recording)
 	{
 		this.recording = recording == null || recording.isEmpty() ? null
 			: Collections.unmodifiableList(new ArrayList<>(recording));
@@ -88,6 +90,7 @@ final class PlayerSnapshot
 		this.timers = timers == null ? null : Collections.unmodifiableMap(new TreeMap<>(timers));
 		this.position = position;
 		this.collectionLog = collectionLog == null ? null : Collections.unmodifiableMap(new TreeMap<>(collectionLog));
+		this.minigame = minigame == null ? null : frozen(minigame);
 		EnumMap<ContainerKind, ContainerSnapshot> c = new EnumMap<>(ContainerKind.class);
 		for (ContainerKind kind : ContainerKind.values())
 		{
@@ -105,7 +108,14 @@ final class PlayerSnapshot
 	PlayerSnapshot withRecording(List<IngestContract.RecordedEvent> events)
 	{
 		return new PlayerSnapshot(username, profile, accountType, manifestVersion, varb, varp, level, xp, boosted,
-			quest, timers, position, collectionLog, containers, events);
+			quest, timers, position, collectionLog, minigame, containers, events);
+	}
+
+	/** This snapshot carrying the given minigame counters (null: not collected). */
+	PlayerSnapshot withMinigame(Map<String, Long> counters)
+	{
+		return new PlayerSnapshot(username, profile, accountType, manifestVersion, varb, varp, level, xp, boosted,
+			quest, timers, position, collectionLog, counters, containers, recording);
 	}
 
 	private static Map<String, Long> frozen(Map<String, Long> values)

@@ -215,6 +215,7 @@ func TestContractPostgres(t *testing.T) {
 		{name: "fleet-goals", method: "GET", path: "/api/fleet/goals?keys=quest:cooks_assistant@finished", tsImports: []string{"FleetGoalsResponse"}, tsType: "FleetGoalsResponse"},
 		{name: "plan-next", method: "GET", path: "/api/plan/next" + acc, tsImports: []string{"PlanNext"}, tsType: "PlanNext"},
 		{name: "plans", method: "GET", path: "/api/plans" + acc, tsImports: []string{"PlansResponse"}, tsType: "PlansResponse"},
+		{name: "account-state", method: "GET", path: "/api/account/state" + acc, tsImports: []string{"AccountState"}, tsType: "AccountState"},
 	}
 	for _, c := range cases {
 		var live any
@@ -365,6 +366,7 @@ func contractPush(manifestVersion int64) coreingest.Push {
 	levels := coreingest.IntMap{"attack": 20, "strength": 20, "defence": 10, "magic": 25, "firemaking": 30, "woodcutting": 30}
 	xp := coreingest.IntMap{"attack": 4470, "strength": 4470, "defence": 1154, "magic": 8740, "firemaking": 13363, "woodcutting": 13363}
 	empty := coreingest.IntMap{}
+	minigame := coreingest.IntMap{"mta.telekinetic": 204, "mta.graveyard": 170, "mta.enchantment": 1342, "mta.alchemist": 140, "mta.bones_to_peaches": 1}
 	quests := coreingest.QuestMap{"Cook's Assistant": coreingest.QuestFinished, "X Marks the Spot": coreingest.QuestInProgress}
 	bank := coreingest.QuantityMap{"952": 1, "590": 1, "1351": 1, "995": 25000}
 	inv := coreingest.QuantityMap{"590": 1, "314": 100}
@@ -376,7 +378,7 @@ func contractPush(manifestVersion int64) coreingest.Push {
 		ContractVersion: coreingest.ContractVersion, Username: "ironman260", Profile: "STANDARD",
 		ManifestVersion: manifestVersion, ClientSeq: 1, Kind: coreingest.PushFull, SentAt: sentAt,
 		Data: coreingest.PushData{
-			Varbits: &empty, Varps: &empty, Levels: &levels, XP: &xp, Boosted: &empty, Quests: &quests,
+			Varbits: &empty, Varps: &empty, Levels: &levels, XP: &xp, Boosted: &empty, Quests: &quests, Minigame: &minigame,
 			Items: &coreingest.ItemContainers{Bank: obs(&bank), Inventory: obs(&inv), Equipment: obs(&equip)},
 		},
 	}

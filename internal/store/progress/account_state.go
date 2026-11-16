@@ -130,7 +130,17 @@ type AccountState struct {
 	// CollectionLogPages are the collection log pages the plugin read, by
 	// tab and title; empty until the player opens the log in game.
 	CollectionLogPages []CollectionLogPageView `json:"collection_log_pages"`
-	Containers         []ContainerView         `json:"containers"`
+	// Minigame are the counters the plugin read in a minigame's interface
+	// (the Mage Training Arena's pizazz points), by key; empty until then.
+	Minigame   []MinigameView  `json:"minigame"`
+	Containers []ContainerView `json:"containers"`
+}
+
+// MinigameView is one minigame counter: "mta.telekinetic" and its value.
+type MinigameView struct {
+	Key   string `json:"key"`
+	Value int64  `json:"value"`
+	FactSource
 }
 
 // questPointsVarp is the varp the game keeps the quest point total in.
@@ -159,6 +169,11 @@ func (r *Repository) AccountState(ctx context.Context, accountID string) (Accoun
 		return AccountState{}, fmt.Errorf("list collection log: %w", err)
 	}
 	out.CollectionLogPages = collectionLogPages(r.catalog, pages)
+	counters, err := r.queries.ListPlayerStateByFacet(ctx, storedb.ListPlayerStateByFacetParams{AccountID: accountID, Facet: coreingest.FacetMinigame})
+	if err != nil {
+		return AccountState{}, fmt.Errorf("list minigame counters: %w", err)
+	}
+	out.Minigame = minigameCounters(counters)
 	src := func(facet, key string) FactSource {
 		o := obs[coreprogress.Fact{Facet: facet, Key: key}]
 		return FactSource{Source: o.Source, ObservedAt: o.ObservedAt}
@@ -341,6 +356,21 @@ func collectionLog(reg *entities.Registry, varps map[int]int64, src func(facet, 
 // by tab (the game's order, unknown last) and title. Slot facts keyed by item
 // id (the collectionLogSlots bitset) are not pages and are skipped, as is a
 // value that does not decode.
+// minigameCounters reads the minigame facts, already ordered by key.
+func minigameCounters(rows []storedb.PlayerState) []MinigameView {
+	out := []MinigameView{}
+	for _, row := range rows {
+		var v struct {
+			Value int64 `json:"value"`
+		}
+		if json.Unmarshal(row.Value, &v) != nil {
+			continue
+		}
+		out = append(out, MinigameView{Key: row.Key, Value: v.Value, FactSource: FactSource{Source: row.Source, ObservedAt: row.ObservedAt.Time}})
+	}
+	return out
+}
+
 func collectionLogPages(reg *entities.Registry, rows []storedb.PlayerState) []CollectionLogPageView {
 	out := []CollectionLogPageView{}
 	for _, row := range rows {

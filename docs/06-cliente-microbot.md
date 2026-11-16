@@ -714,3 +714,30 @@ término: a posição na área exige **"Send position" ligado**; o banco e a com
   - `TaskBridgeTest` cobre as rotas da ponte: começar, ler, uma por vez, cancelar, recusar, sem token,
     sem executor.
 - **Não conferido no jogo:** nada da máquina rodou no cliente (doc 10, seção 13, o que falta ao dono).
+
+## Adendo de 2026-11-16: contadores de minigame (Chronicle Link 1.16.0)
+
+Os pontos de pizazz da Mage Training Arena só existem na interface do jogo (nenhum varp os guarda;
+os varps 628 e 629 foram conferidos), então só um plugin os conhece. O MTA Planner (`fm/mtaarena`) já
+os lia; agora o Chronicle Link lê os mesmos widgets sozinho (os pacotes não importam um do outro) e
+os manda ao planner. Contrato v1, campo opcional com flag no manifest, como os anteriores (spec no
+doc 04, seção 6.4):
+
+| Campo do push | Flag do manifest | Conteúdo |
+|---|---|---|
+| `data.minigame` | `minigame` | `<minigame>.<contador>` → inteiro: `mta.telekinetic`, `mta.alchemist`, `mta.enchantment` e `mta.graveyard` (o painel do saguão, ou o contador da sala por dentro; as moedas da Alchemists' Playground ainda não entregues não são pontos) e `mta.bones_to_peaches` (1 com o feitiço liberado, varbit 1505, legível em qualquer lugar) |
+
+Um contador vale o que o plugin viu por último nesse login e não vai antes de ser visto. Por isso,
+como no `collectionLog`, cada chave presente substitui a guardada, em `full` e em `delta`, e as
+ausentes ficam: um `full` depois de um login novo não apaga os pontos que o planner já tinha. Uma
+chave nova vai num `delta`, sem pedir `full`.
+
+O servidor grava a faceta `minigame` (migration 0025), valor `{"value"}`, e a devolve em
+`GET /api/account/state` (`minigame`: chave, valor, fonte e idade). O card da Mage Training Arena na
+Conta › Personagem preenche os pontos com ela quando há leitura das quatro salas, e conta o Bones to
+Peaches como recompensa já tida. Um plugin 1.15 ignora a flag nova; um servidor anterior não a anuncia
+e o 1.16 não manda o campo.
+
+Verificação: testes JUnit (`MinigameTest`: o número do widget, a flag, o `full` e o `delta`; 177 no
+pacote) e, no servidor, `TestMinigameValidation`, `TestMinigameNeedsManifest`, `TestMinigamePostgres`
+e o fixture de contrato `account-state`. Falta conferir no jogo com o 1.16 instalado.

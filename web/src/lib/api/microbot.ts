@@ -809,6 +809,8 @@ export const workersApi = {
 export interface ConfigStore {
 	read: (group: string, keys: string[]) => Promise<Record<string, string | null>>;
 	write: (group: string, key: string, value: string | null) => Promise<void>;
+	/** Grava várias de uma vez (o Salvar único); sem ela, uma por uma com `write`. */
+	writeMany?: (group: string, entries: { key: string; value: string | null }[]) => Promise<void>;
 }
 
 /** O cliente ao vivo da conta escolhida, pelo /settings/plugin do Agent Server. */
@@ -864,5 +866,74 @@ export const fleetPluginsApi = {
 			{ method: 'POST', body: JSON.stringify(keys ? { keys } : {}) },
 			'/api',
 			''
+		)
+};
+
+/** Uma opção do cliente que não é a do perfil da conta (docs/11, 4.3); `client` null: sem valor lá. */
+export interface SettingDrift {
+	group: string;
+	key: string;
+	profile: string;
+	client: string | null;
+}
+
+/** Um plugin que o cliente não roda como o perfil pede. */
+export interface PluginDrift {
+	source: string;
+	name: string;
+	class_name?: string;
+	problem: 'not_installed' | 'version' | 'not_started';
+	/** A versão que o cliente tem (problem "version"). */
+	version?: string;
+}
+
+/** GET /api/accounts/client/drift: o cliente contra o perfil efetivo da conta. */
+export interface ClientDrift {
+	account: string;
+	profile?: string;
+	checked_at: string;
+	settings: SettingDrift[];
+	plugins: PluginDrift[];
+	/** Plugins do RuneLite que o Agent Server não lista: não dá para conferir. */
+	unchecked: string[];
+}
+
+/** O desvio do cliente de uma conta, e o que fazer com ele (W9: só pelo botão). */
+export const driftApi = {
+	get: (account: string) =>
+		call<ClientDrift>(
+			`/accounts/client/drift?account=${encodeURIComponent(account)}`,
+			undefined,
+			'/api',
+			''
+		),
+	/** "Salvar no perfil": guarda os valores do cliente no perfil da conta ("profile") ou nela ("account"). */
+	save: (account: string, to: 'profile' | 'account', keys: { group: string; key: string }[]) =>
+		call<{ skipped: { group: string; key: string }[] }>(
+			`/accounts/client/drift/save?account=${encodeURIComponent(account)}`,
+			{ method: 'POST', body: JSON.stringify({ to, keys }) },
+			'/api',
+			''
+		),
+	/** "Descartar": devolve ao cliente os valores do perfil. */
+	discard: (account: string, keys: { group: string; key: string }[]) =>
+		fleetPluginsApi.apply(account, keys)
+};
+
+/** Detalhe e ações de um plugin no cliente de uma conta, sem trocar a conta escolhida (/plugins). */
+export const accountPluginApi = {
+	detail: (account: string, className: string) =>
+		call<ScriptDetail>(
+			`/scripts/detail?className=${encodeURIComponent(className)}`,
+			undefined,
+			BASE,
+			account
+		),
+	act: (account: string, a: PluginAction) =>
+		call<{ ok: boolean; result: unknown }>(
+			`/${a.path}`,
+			{ method: 'POST', body: JSON.stringify(a.body ?? {}) },
+			BASE,
+			account
 		)
 };

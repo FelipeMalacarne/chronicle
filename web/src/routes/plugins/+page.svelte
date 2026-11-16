@@ -1,12 +1,15 @@
 <script lang="ts">
 	import {
+		accountPluginApi,
 		fleetPluginsApi,
 		microbotApi,
 		MicrobotError,
 		setMicrobotAccount,
 		type ConfigStore,
-		type HubPlugin
+		type HubPlugin,
+		type ScriptDetail
 	} from '#lib/api/microbot';
+	import { lastResult, snapshotMachines } from '#lib/progress/clientplugins';
 	import {
 		accountProfileName,
 		FLEET_MODEL,
@@ -36,6 +39,11 @@
 	 * `frota`; cada conta tem o seu perfil sobre ele, com o ajuste próprio (decisão do dono de
 	 * 2026-11-13). Os grupos saem do uso. Mudar um perfil vale no próximo boot do cliente; "Aplicar
 	 * agora" põe o perfil nos clientes ligados.
+	 *
+	 * Desde a rodada 4 do canvas (V7PluginsManutencao1440) recebe a manutenção que saiu da aba
+	 * Cliente: a busca no Hub filtra a lista e mostra o Hub embaixo; uma conta aberta em "Nas contas"
+	 * mostra a state machine e o último resultado do plugin nela, com Parar e Remover do cliente; a
+	 * configuração tem um Salvar só, como a gaveta da aba Cliente.
 	 */
 	let data = $state<FleetPlugins | null>(null);
 	let error = $state<string | null>(null);
@@ -46,6 +54,10 @@
 	let group = $state<string | null>(null);
 	let query = $state('');
 	let found = $state<HubPlugin[] | null>(null);
+	let openAccount = $state<string | null>(null);
+	let accDetail = $state<ScriptDetail | null>(null);
+	let armed = $state<string | null>(null);
+	let disarm: ReturnType<typeof setTimeout> | undefined;
 
 	async function load() {
 		try {
@@ -63,8 +75,15 @@
 	});
 
 	const plugin = $derived(data?.plugins.find((p) => pluginId(p) === selected) ?? null);
+	/** Com uma busca no Hub aberta, a lista mostra só os da frota com o nome. */
+	const filter = $derived(found ? query.trim().toLowerCase() : '');
 	const byGroup = $derived(
-		GROUPS.map((g) => ({ ...g, items: (data?.plugins ?? []).filter((p) => p.group === g.key) }))
+		GROUPS.map((g) => ({
+			...g,
+			items: (data?.plugins ?? []).filter(
+				(p) => p.group === g.key && (!filter || pluginTitle(p).toLowerCase().includes(filter))
+			)
+		}))
 	);
 	/** Uma conta com o cliente ligado responde pelo esquema de config e pelo Hub. */
 	const live = $derived(data?.accounts.find((a) => a.connected) ?? null);
@@ -90,6 +109,51 @@
 			gone = true;
 		};
 	});
+
+	// A conta aberta em "Nas contas": a state machine e o último resultado do plugin nela.
+	$effect(() => {
+		const a = openAccount;
+		const cls = plugin ? pluginClass(plugin) : '';
+		accDetail = null;
+		if (!a || !cls || !accountOf(a)?.connected) return;
+		let gone = false;
+		const read = () =>
+			accountPluginApi
+				.detail(a, cls)
+				.then((d) => {
+					if (!gone) accDetail = d;
+				})
+				.catch(() => {});
+		void read();
+		const t = setInterval(() => {
+			if (!document.hidden) void read();
+		}, 10_000);
+		return () => {
+			gone = true;
+			clearInterval(t);
+		};
+	});
+
+	/** Parar e remover do cliente de uma conta pedem um segundo clique em até 4 s. */
+	function armedRun(key: string, label: string, fn: () => Promise<string | void>) {
+		if (armed !== key) {
+			armed = key;
+			clearTimeout(disarm);
+			disarm = setTimeout(() => (armed = null), 4000);
+			return;
+		}
+		armed = null;
+		void run(label, fn);
+	}
+	const stopOn = (p: FleetPlugin, a: string) =>
+		armedRun(`stop:${a}`, `stop:${a}`, async () => {
+			await accountPluginApi.act(a, { path: 'scripts/stop', body: { className: pluginClass(p) } });
+		});
+	const removeFromClient = (p: FleetPlugin, a: string) =>
+		armedRun(`rm:${a}`, `rm:${a}`, async () => {
+			await accountPluginApi.act(a, { path: 'plugins/remove', body: { name: p.name } });
+			return `Fora do cliente de ${rsn(a)}; o perfil continua pedindo enquanto a conta estiver marcada.`;
+		});
 
 	function modelLayer(): ProfileLayer {
 		const m = data?.model;
@@ -255,6 +319,21 @@
 					await fleetPluginsApi.putProfile(name, withSetting(layer, g, key, value));
 				}
 				await load();
+			},
+			// O Salvar único: todas as mudanças numa gravação do perfil.
+			writeMany: async (g, entries) => {
+				const fold = (layer: ProfileLayer) =>
+					entries.reduce((l, e) => withSetting(l, g, e.key, e.value), layer);
+				if (t === FLEET_MODEL) {
+					await ensureModel();
+					await fleetPluginsApi.putProfile(FLEET_MODEL, fold(modelLayer()));
+				} else {
+					const a = accountOf(t);
+					if (!a) return;
+					const { name, layer } = await ensureAccountProfile(a);
+					await fleetPluginsApi.putProfile(name, fold(layer));
+				}
+				await load();
 			}
 		};
 	});
@@ -298,34 +377,17 @@
 {#if error}<p class="err">{error}</p>{/if}
 {#if note}<p class="note">{note}</p>{/if}
 
-{#if found}
-	<section class="card hub">
-		<div class="h">
-			<h2>No Plugin Hub</h2>
-			<span>{found.length} {found.length === 1 ? 'plugin' : 'plugins'}</span>
-		</div>
-		<div class="b">
-			{#each found as h (h.internalName)}
-				<div class="hrow">
-					<span class="x"><b>{h.name}</b><span>{h.description}</span></span>
-					<span class="ver">{h.latestVersion}</span>
-					<button
-						class="btn btn-s"
-						type="button"
-						disabled={!!busy || !h.installable}
-						onclick={() => install(h)}>Instalar na frota</button
-					>
-				</div>
-			{:else}
-				<p class="mu">Nada com esse nome.</p>
-			{/each}
-		</div>
-	</section>
-{/if}
-
 {#if data}
 	<div class="cols">
 		<div class="list">
+			{#if found && filter}
+				<p class="mu sm">
+					Na frota, {byGroup.reduce((n, g) => n + g.items.length, 0)} com “{query.trim()}”.
+					<button class="lnk" type="button" onclick={() => ((found = null), (query = ''))}
+						>limpar a busca</button
+					>
+				</p>
+			{/if}
 			{#each byGroup as g (g.key)}
 				{#if g.items.length}
 					<section>
@@ -371,6 +433,37 @@
 			{:else}
 				<p class="mu">Nenhum plugin ainda. Busque no Plugin Hub para instalar na frota.</p>
 			{/each}
+			{#if found}
+				<section>
+					<div class="grp7">
+						<h2>No Plugin Hub</h2>
+						<span
+							>{found.length}
+							{found.length === 1 ? 'plugin' : 'plugins'} com “{query.trim()}”</span
+						>
+					</div>
+					{#each found as h (h.internalName)}
+						{@const inFleet = data.plugins.some(
+							(p) => p.source === 'hub' && p.name === h.internalName
+						)}
+						<div class="pl7 hub">
+							<span class="ico"><Glyph name="plus" /></span>
+							<span class="x"><b>{h.name}</b><span>{h.description}</span></span>
+							<span class="r"
+								>{h.latestVersion}{#if inFleet}<span class="badge badge-done">na frota</span
+									>{:else}<button
+										class="btn btn-s"
+										type="button"
+										disabled={!!busy || !h.installable}
+										onclick={() => install(h)}>Instalar na frota</button
+									>{/if}</span
+							>
+						</div>
+					{:else}
+						<p class="mu">Nada no Hub com esse nome.</p>
+					{/each}
+				</section>
+			{/if}
 			{#if !data.plugins.length}
 				<p class="mu">
 					Nenhum plugin nos perfis nem nos clientes ligados. Busque no Plugin Hub para instalar na
@@ -392,7 +485,8 @@
 						<p class="lbl">Nas contas</p>
 						{#each data.accounts as a (a.account)}
 							{@const s = plugin.accounts.find((x) => x.account === a.account)}
-							<div class="inst">
+							{@const isOpen = openAccount === a.account}
+							<div class="inst" class:on={isOpen}>
 								<input
 									type="checkbox"
 									checked={s?.in_profile ?? false}
@@ -401,7 +495,17 @@
 									aria-label="{plugin.in_model ? 'Vem do padrão da frota' : 'No perfil'}: {a.rsn}"
 									onchange={(e) => toggle(plugin, a, e.currentTarget.checked)}
 								/>
-								<span><span class="lamp {s ? lamp(s) : ''}"></span>{a.rsn}</span>
+								<button
+									class="who"
+									type="button"
+									aria-expanded={isOpen}
+									disabled={!a.connected}
+									title={a.connected
+										? 'A state machine e o último resultado nesta conta'
+										: 'Cliente desligado'}
+									onclick={() => (openAccount = isOpen ? null : a.account)}
+									><span class="lamp {s ? lamp(s) : ''}"></span>{a.rsn}</button
+								>
 								<span class="ver"
 									>{s?.installed ??
 										(s?.active !== undefined
@@ -415,6 +519,60 @@
 										>{/if}</span
 								>
 							</div>
+							{#if isOpen}
+								{@const machines = snapshotMachines(accDetail?.machines)}
+								{@const result = lastResult(accDetail?.results)}
+								<div class="mt">
+									{#if !accDetail}
+										<p class="mu sm" aria-busy="true">Lendo o plugin em {a.rsn}…</p>
+									{:else}
+										<p class="lbl">State machine</p>
+										{#each machines as m (m.name)}
+											<div class="sm sm-on">
+												{m.state}<span>{m.detail}</span>
+											</div>
+										{:else}
+											<p class="mu sm">Sem state machine registrada.</p>
+										{/each}
+										<p class="lbl">Último resultado</p>
+										{#if result.length}
+											<div class="kvg">
+												{#each result as r (r.k)}<span class="k">{r.k}</span><span class="mono"
+														>{r.v}</span
+													>{/each}
+											</div>
+										{:else}
+											<p class="mu sm">Nenhum ainda.</p>
+										{/if}
+									{/if}
+									<div class="row">
+										{#if s?.active}
+											<button
+												class="btn btn-s"
+												class:btn-d={armed === `stop:${a.account}`}
+												type="button"
+												disabled={!!busy}
+												onclick={() => stopOn(plugin, a.account)}
+												><Glyph name="stop" size={12} />{armed === `stop:${a.account}`
+													? 'Confirmar: parar'
+													: 'Parar nesta conta'}</button
+											>
+										{/if}
+										{#if plugin.source === 'hub' && s?.installed !== undefined}
+											<button
+												class="btn btn-s btn-g rm"
+												type="button"
+												disabled={!!busy}
+												title="Tira o plugin do cliente desta conta; o perfil continua pedindo enquanto a conta estiver marcada"
+												onclick={() => removeFromClient(plugin, a.account)}
+												>{armed === `rm:${a.account}`
+													? 'Confirmar: remover'
+													: 'Remover do cliente'}</button
+											>
+										{/if}
+									</div>
+								</div>
+							{/if}
 						{/each}
 						<div class="acts">
 							{#if up}
@@ -433,6 +591,13 @@
 								disabled={!!busy}
 								onclick={() => run('apply', () => applyTo(present(plugin).map((s) => s.account)))}
 								>Aplicar agora</button
+							>
+							<button
+								class="btn btn-s btn-g push"
+								type="button"
+								disabled={!!busy}
+								title="Tira o plugin dos perfis; cada cliente o mantém até ser removido nele"
+								onclick={() => remove(plugin)}>Remover da frota</button
 							>
 						</div>
 					</div>
@@ -463,15 +628,9 @@
 							</p>
 						{:else}
 							{#key `${selected}|${tab}`}
-								<ConfigForm className={pluginClass(plugin)} running={true} {store} />
+								<ConfigForm className={pluginClass(plugin)} running={true} {store} layout="grid" />
 							{/key}
 						{/if}
-					</div>
-
-					<div class="acts">
-						<button class="btn btn-g" type="button" disabled={!!busy} onclick={() => remove(plugin)}
-							>Remover da frota</button
-						>
 					</div>
 				</div>
 			</aside>
@@ -739,13 +898,105 @@
 		flex-wrap: wrap;
 		padding-bottom: 10px;
 	}
-	.hub .hrow {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) auto auto;
-		gap: 12px;
+	.pl7.hub {
+		cursor: default;
+	}
+	.pl7.hub .r {
+		flex-direction: row;
 		align-items: center;
-		min-height: 44px;
+		gap: 10px;
+	}
+	.inst.on {
+		background: var(--gold-tint);
+		box-shadow: inset 3px 0 0 var(--gold-ink);
+		padding-left: 8px;
+		border-bottom-color: transparent;
+	}
+	.who {
+		display: inline-flex;
+		align-items: center;
+		gap: 8px;
+		min-height: 32px;
+		padding: 0;
+		border: 0;
+		background: transparent;
+		color: var(--ink);
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+	}
+	.who:disabled {
+		cursor: default;
+	}
+	.who:not(:disabled):hover {
+		text-decoration: underline;
+	}
+	/* A conta aberta (V7PluginsManutencao1440): state machine, resultado, parar e remover. */
+	.mt {
+		display: flex;
+		flex-direction: column;
+		gap: 8px;
+		padding: 12px 12px 14px 38px;
 		border-bottom: 1px solid var(--hairline);
+		background: var(--ground);
+		border-radius: 0 0 4px 4px;
+	}
+	.mt .lbl {
+		margin: 0;
+	}
+	.mt .sm {
+		display: flex;
+		align-items: center;
+		gap: 10px;
+		min-height: 32px;
+		padding: 0 10px;
+		border-radius: 4px;
+		font:
+			400 12px 'JetBrains Mono',
+			monospace;
+		color: var(--ink-muted);
+	}
+	.mt .sm-on {
+		background: var(--gold-tint);
+		box-shadow: inset 0 0 0 1px var(--gold-ink);
+		color: var(--ink);
+	}
+	.mt .sm span {
+		margin-left: auto;
+		color: var(--ink-subtle);
+	}
+	.mt .row {
+		display: flex;
+		gap: 8px;
+		flex-wrap: wrap;
+		align-items: center;
+		padding-top: 4px;
+	}
+	.mt .rm {
+		color: var(--not-started);
+	}
+	.btn-d {
+		border-color: var(--not-started);
+		color: var(--not-started);
+	}
+	.push {
+		margin-left: auto;
+	}
+	.sm {
+		margin: 0;
+		font-size: 12px;
+	}
+	.mono {
+		font-family: 'JetBrains Mono', monospace;
+	}
+	.lnk {
+		border: 0;
+		background: none;
+		padding: 0;
+		color: var(--gold-ink);
+		font: inherit;
+		text-decoration: underline;
+		cursor: pointer;
 	}
 	.err,
 	.note {

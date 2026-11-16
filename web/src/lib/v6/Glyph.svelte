@@ -26,7 +26,9 @@
 		| 'pause'
 		| 'stop'
 		| 'more'
-		| 'rotinas';
+		| 'rotinas'
+		| 'config'
+		| 'lock';
 	let { name, size = 16 }: { name: Name; size?: number } = $props();
 </script>
 
@@ -113,5 +115,13 @@
 		/><circle cx="19" cy="12" r="1.8" fill="currentColor" stroke="none" />
 	{:else if name === 'rotinas'}
 		<path d="M4 12a8 8 0 0 1 13.7-5.7L20 8M20 4v4h-4M20 12a8 8 0 0 1-13.7 5.7L4 16M4 20v-4h4" />
+	{:else if name === 'config'}
+		<path d="M4 6h9M19 6h1M4 12h3M13 12h7M4 18h11M21 18h-1" /><circle
+			cx="16"
+			cy="6"
+			r="2.2"
+		/><circle cx="10" cy="12" r="2.2" /><circle cx="18" cy="18" r="2.2" />
+	{:else if name === 'lock'}
+		<rect x="5" y="11" width="14" height="9" rx="1" /><path d="M8 11V8a4 4 0 0 1 8 0v3" />
 	{/if}
 </svg>

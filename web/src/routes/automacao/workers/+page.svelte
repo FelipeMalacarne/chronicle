@@ -2,7 +2,6 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { MicrobotError, workersApi, type WorkersView } from '#lib/api/microbot';
-	import AutomacaoTabs from '#lib/v6/AutomacaoTabs.svelte';
 	import { chooseCockpitAccount } from '#lib/progress/microbot.svelte';
 	import {
 		ACTION_CONFIRM,
@@ -91,7 +90,6 @@
 			<p class="ey">Microbot · workers</p>
 			<h1 class="sr">Workers</h1>
 		</div>
-		<AutomacaoTabs current="workers" />
 	</header>
 
 	{#if off}

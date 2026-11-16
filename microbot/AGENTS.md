@@ -24,12 +24,44 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.1, observe-only: it never clicks): pick the Rewards Guardian's
-  items, the overlay shows the pizazz points still missing per room and the law/nature/cosmic runes
-  that takes, against the runes carried and banked. `MtaData.java` is generated
-  (`python3 tools/gen_mta_java.py`) from `internal/core/mta/mta.json`; `MtaCalculator` mirrors
-  `internal/core/mta`, pinned by `src/test/resources/mta-vectors.json` (a copy of the Go vectors).
-  The points come from the arena's points panel text (widget group 553): not yet verified in game.
+- `fm/mtaarena/` — MTA Planner (v0.6): pick the Rewards Guardian's items, the overlay shows the pizazz
+  points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
+  and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step and
+  `MtaRunner` runs it. Bones to Peaches comes first and is the only reward bought by itself ("Buy
+  rewards" buys the rest); the other points are gathered reward by reward in purchase order (the
+  target is what the rewards up to the first not yet covered cost together, so the rooms take turns
+  and as many rewards as possible are covered at any time), the Enchanting Chamber last among them.
+  With the peaches owned, Graveyard points wait for Magic 60 (Bananas only once nothing else is
+  left). A room switched off in the settings, or without runes, is left to the owner. Before each room `MtaPrep` sets up at the arena's bank chest:
+  the staff and tome that cover the most of the spell's elemental runes (`MtaLoadout`, pure and
+  tested), the runes left to carry, and nothing else but the "Always keep" names. The rooms
+  (`MtaRooms`) are ported from the Plugin Hub's Mage Training Arena plugin and lean on the RuneLite
+  Mage Training Arena plugin's solvers (the runner turns it on); unlike the Hub's, the Telekinetic
+  Theatre walks to the tile the RuneLite solver highlights (`MtaScene`, pure and tested: its
+  optimal() worked out from the player's real position), or, when that tile cannot be stood on, to
+  the closest reachable one on the same side (a breadth-first search over the scene's collision flags
+  and the solver's getPosition rule). All of it in scene coordinates: the Theatre is
+  an instance, and the template conversions put the player a tile off. Each maze starts with the
+  camera's pitch at the top (not the guardian's Observe: a walk click cancels it, and with the spell
+  selected the guardian offers only the cast). It never leaves the Theatre on its own between mazes
+  (leaving breaks the five-maze streak): the next maze's guardian is only sent once the player is near
+  it, so without one it walks towards the middle of the maze's walls (loaded with the scene); a spell that cannot be cast sends it to the bank only after
+  5 s (a read while the next maze loads can fail for a moment).
+  Right after a grab is cast it walks to the side of the move after (the solver's plan says it before
+  the guardian slides; the pull just made is skipped while it still sits on top of the plan), selects
+  the spell on the way and clicks in the tick the guardian rests, inside one runner step (Script.run() must not be called every few ms: it drives the client's blocking events and
+  holds every script). The solver's own optimal() mixes coordinate spaces and builds on plane 0, so
+  it is not used. Clicks on a scene tile build their own "Walk here" (Rs2Walker.walkFastLocal clicks
+  a (1, 1) box, which the client takes for its fallback: the virtual mouse never settles there and
+  holds the mouse lock for every script, until the client restarts). The Alchemists' Playground hands its coins to the Coin Collector. `MtaData.java` is generated (`python3 tools/gen_mta_java.py`) from
+  `internal/core/mta/mta.json`; `MtaCalculator` mirrors `internal/core/mta`, pinned by
+  `src/test/resources/mta-vectors.json` (a copy of the Go vectors). Verified in game (2026-11-15, Magic
+  44 to 62): the overlay and the points (panel, each room's counter, the Playground's coins), the
+  setup at the bank chest, the Enchanting Chamber (Lvl-2 to 4), the Telekinetic Theatre (streaks of
+  five), the Alchemists' Playground (high alchemy, Coin Collector), the Creature Graveyard with
+  bananas and with peaches, and buying Bones to Peaches. Not yet: Lvl-5 and 6 Enchant, buying the
+  other rewards ("Buy rewards", the wands' upgrades). Scripts in `Rs2Inventory`: `count(id)` counts
+  stacks, `itemQuantity(id)` the amount; the Playground's coins are item 8890, not 995.
 - `bin/` — harness (on PATH inside the dev shell).
 - The worker image (Chronicle's managed workers, docs/11 section 13.4) is built outside this
   directory: `nix/worker-runtime.nix`, `deploy/worker/` (see "Worker image").

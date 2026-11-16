@@ -3,6 +3,8 @@ package net.runelite.client.plugins.microbot.fm.mtaarena;
 import com.google.inject.Provides;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.EnumSet;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
@@ -21,6 +23,7 @@ import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 /**
@@ -44,7 +47,7 @@ import net.runelite.client.ui.overlay.OverlayManager;
 @Slf4j
 public class MtaArenaPlugin extends Plugin
 {
-	static final String VERSION = "0.1.0";
+	static final String VERSION = "0.6.0";
 	/** Name prefix of our own plugins in the plugin list. */
 	static final String TAG = "<html>[<b><font color=#FF8C00>F</font><font color=#1E90FF>M</font></b>] ";
 
@@ -62,6 +65,10 @@ public class MtaArenaPlugin extends Plugin
 		boolean pointsKnown;
 		MtaCalculator.Points held = new MtaCalculator.Points(0, 0, 0, 0);
 		MtaCalculator.Result result;
+		/** What to do next for the chosen rewards, or null when there is no plan. */
+		MtaPlanner.Step step;
+		/** The rewards the account has. */
+		Set<String> owned = new HashSet<>();
 		/** Why there is no result (nothing chosen, no Enchant castable), or null. */
 		String message;
 		int law;
@@ -85,6 +92,7 @@ public class MtaArenaPlugin extends Plugin
 	private MtaArenaOverlay overlay;
 
 	private volatile Snapshot snapshot = new Snapshot();
+	private volatile MtaRunner runner;
 	private int ticks;
 
 	@Provides
@@ -98,17 +106,31 @@ public class MtaArenaPlugin extends Plugin
 		return snapshot;
 	}
 
+	/** What the runner is doing now; empty while it is off. */
+	String runnerState()
+	{
+		MtaRunner r = runner;
+		return r == null ? "" : r.state();
+	}
+
 	@Override
 	protected void startUp()
 	{
 		log.info("MTA Planner {} starting", VERSION);
 		overlayManager.add(overlay);
+		runner = new MtaRunner(this, config);
+		runner.run();
 	}
 
 	@Override
 	protected void shutDown()
 	{
 		overlayManager.remove(overlay);
+		if (runner != null)
+		{
+			runner.shutdown();
+			runner = null;
+		}
 	}
 
 	@Subscribe
@@ -136,27 +158,56 @@ public class MtaArenaPlugin extends Plugin
 		configManager.setConfiguration(MtaArenaConfig.GROUP, "forget", false);
 	}
 
-	/** The arena's points panel (talk to the progress hat, or the lobby's), when it is on screen. */
+	/** The arena's points panel (talk to the progress hat, or the lobby's), or the room's own counter. */
 	private void readPoints()
 	{
-		remember(K_TELE, InterfaceID.MagictrainingMain.MAGICTRAIN_TELE_POINTS);
-		remember(K_GRAVE, InterfaceID.MagictrainingMain.MAGICTRAIN_GRAVE_POINTS);
-		remember(K_ENCH, InterfaceID.MagictrainingMain.MAGICTRAIN_ENCH_POINTS);
-		remember(K_ALCH, InterfaceID.MagictrainingMain.MAGICTRAIN_ALCH_POINTS);
+		remember(K_TELE, InterfaceID.MagictrainingMain.MAGICTRAIN_TELE_POINTS, MtaWorld.Room.TELEKINETIC);
+		remember(K_GRAVE, InterfaceID.MagictrainingMain.MAGICTRAIN_GRAVE_POINTS, MtaWorld.Room.GRAVEYARD);
+		remember(K_ENCH, InterfaceID.MagictrainingMain.MAGICTRAIN_ENCH_POINTS, MtaWorld.Room.ENCHANTMENT);
+		remember(K_ALCH, InterfaceID.MagictrainingMain.MAGICTRAIN_ALCH_POINTS, MtaWorld.Room.ALCHEMIST);
 	}
 
-	private void remember(String key, int widgetId)
+	private void remember(String key, int widgetId, MtaWorld.Room room)
 	{
-		Widget w = client.getWidget(widgetId);
-		if (w == null || w.isHidden())
+		int n = readWidget(client.getWidget(widgetId));
+		if (n < 0)
 		{
-			return;
+			// Inside a room the main panel is not up: the room shows its own points. The Alchemists'
+			// Playground counts its coins not handed in yet, a hundred of them to the point.
+			int[] w = MtaWorld.roomPointsWidget(room);
+			n = readWidget(client.getWidget(w[0], w[1]));
+			if (n >= 0 && room == MtaWorld.Room.ALCHEMIST)
+			{
+				n += coins() / 100;
+			}
 		}
-		int n = MtaText.lastNumber(w.getText());
 		if (n >= 0 && n != stored(key, -1))
 		{
 			configManager.setConfiguration(MtaArenaConfig.GROUP, key, n);
 		}
+	}
+
+	private static int readWidget(Widget w)
+	{
+		return w == null || w.isHidden() ? -1 : MtaText.lastNumber(w.getText());
+	}
+
+	private int coins()
+	{
+		ItemContainer c = client.getItemContainer(InventoryID.INVENTORY);
+		if (c == null)
+		{
+			return 0;
+		}
+		int n = 0;
+		for (Item item : c.getItems())
+		{
+			if (item.getId() == MtaWorld.COINS)
+			{
+				n += item.getQuantity();
+			}
+		}
+		return n;
 	}
 
 	private int stored(String key, int fallback)
@@ -228,6 +279,7 @@ public class MtaArenaPlugin extends Plugin
 	private Snapshot build(Set<String> owned)
 	{
 		Snapshot s = new Snapshot();
+		s.owned = owned;
 		int t = stored(K_TELE, -1);
 		int g = stored(K_GRAVE, -1);
 		int e = stored(K_ENCH, -1);
@@ -252,29 +304,75 @@ public class MtaArenaPlugin extends Plugin
 		{
 			s.message = ex.getMessage();
 		}
+		if (s.pointsKnown)
+		{
+			try
+			{
+				s.step = MtaPlanner.next(chosen, owned, s.held, client.getRealSkillLevel(Skill.MAGIC),
+					config.enchantLevel(), playable(), config.buyRewards());
+			}
+			catch (MtaCalculator.MtaException ex)
+			{
+				s.message = ex.getMessage();
+			}
+		}
 		return s;
 	}
 
-	/** Runes in the inventory and in the bank as the client last saw it. */
+	/**
+	 * Runes in the inventory and in the bank as the client last saw it: the bank's container while it
+	 * is loaded, else the Microbot client's copy (the container is gone once the bank closes).
+	 */
 	private int carried(int itemId)
 	{
+		int n = count(client.getItemContainer(InventoryID.INVENTORY), itemId);
+		ItemContainer bank = client.getItemContainer(InventoryID.BANK);
+		return n + (bank != null ? count(bank, itemId) : Rs2Bank.count(itemId));
+	}
+
+	private static int count(ItemContainer c, int itemId)
+	{
 		int n = 0;
-		for (InventoryID id : new InventoryID[]{InventoryID.INVENTORY, InventoryID.BANK})
+		if (c == null)
 		{
-			ItemContainer c = client.getItemContainer(id);
-			if (c == null)
+			return 0;
+		}
+		for (Item item : c.getItems())
+		{
+			if (item.getId() == itemId)
 			{
-				continue;
-			}
-			for (Item item : c.getItems())
-			{
-				if (item.getId() == itemId)
-				{
-					n += item.getQuantity();
-				}
+				n += item.getQuantity();
 			}
 		}
 		return n;
+	}
+
+	/** The rooms the owner lets the plugin play. */
+	private Set<MtaPlanner.Room> playable()
+	{
+		Set<MtaPlanner.Room> rooms = EnumSet.noneOf(MtaPlanner.Room.class);
+		if (config.playTelekinetic())
+		{
+			rooms.add(MtaPlanner.Room.TELEKINETIC);
+		}
+		if (config.playAlchemist())
+		{
+			rooms.add(MtaPlanner.Room.ALCHEMIST);
+		}
+		if (config.playGraveyard())
+		{
+			rooms.add(MtaPlanner.Room.GRAVEYARD);
+		}
+		if (config.playEnchantment())
+		{
+			rooms.add(MtaPlanner.Room.ENCHANTMENT);
+		}
+		MtaRunner r = runner;
+		if (r != null)
+		{
+			rooms.removeAll(r.blocked());
+		}
+		return rooms;
 	}
 
 	private List<String> chosen()

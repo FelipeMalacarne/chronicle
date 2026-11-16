@@ -36,7 +36,7 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   in is kept while it has points to gather for the next two rewards (fewer walks and bank trips); a
   room whose points do not move for 4 minutes is left and started again (three times, then left to
   the owner). A purchase is one click sequence then a check (Rs2Inventory.waitForInventoryChanges
-  with an action repeats it: it bought 11 mud runes after Bones to Peaches); a wand upgrade fetches
+  with an action repeats it until the inventory changes, which Bones to Peaches never does); a wand upgrade fetches
   the wand below from the bank chest. The overlay shows the rewards covered, the next one's missing
   points and the points per minute in the room being played. Before each room `MtaPrep` sets up at the arena's bank chest:
   the staff and tome that cover the most of the spell's elemental runes (`MtaLoadout`, pure and

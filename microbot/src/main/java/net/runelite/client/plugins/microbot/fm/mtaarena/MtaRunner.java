@@ -316,8 +316,8 @@ final class MtaRunner extends Script
 		status("buying " + r.name);
 		tries++;
 		// Once, never through Rs2Inventory.waitForInventoryChanges(action): it repeats the action until
-		// the inventory changes, and Bones to Peaches puts nothing in it, so the clicks went on buying
-		// whatever had moved into the list's slot (11 mud runes, 2026-11-15).
+		// the inventory changes, and Bones to Peaches puts nothing in it, so the clicks would go on into
+		// whatever moves into the list's slot after the purchase.
 		Rs2Widget.clickWidgetFast(items[index], index);
 		sleepGaussian(600, 150);
 		Rs2Widget.clickWidget(MtaWorld.SHOP_GROUP, MtaWorld.SHOP_BUY);

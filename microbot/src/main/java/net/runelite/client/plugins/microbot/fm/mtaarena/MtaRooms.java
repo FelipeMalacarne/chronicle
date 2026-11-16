@@ -397,10 +397,6 @@ final class MtaRooms
 			});
 			return true;
 		}
-		if (!observed)
-		{
-			observe(room);
-		}
 		Direction next = planned(room, 0);
 		if (next == null)
 		{
@@ -412,7 +408,20 @@ final class MtaRooms
 		if (side != next)
 		{
 			walkToSide(maze, next, planned(room, 1));
-			selectGrab();
+			if (observed)
+			{
+				selectGrab();
+			}
+			return true;
+		}
+		if (!observed)
+		{
+			// The Observe from the side of the first pull, standing still: clicked from afar the player
+			// walks first, and that walk ends the camera's move (or reads as one to the settle check).
+			if (sleepUntil(() -> !Rs2Player.isMoving() && resting(room), 3000))
+			{
+				observe(room);
+			}
 			return true;
 		}
 		// On the right side: the spell selected, the pull is a single click when the guardian rests.
@@ -459,6 +468,13 @@ final class MtaRooms
 	 */
 	private void observe(TelekineticRoom room)
 	{
+		if (spellSelected())
+		{
+			// The guardian offers only the cast while a spell is selected: drop the selection (client
+			// side only, as a right-click Cancel would).
+			Microbot.getClientThread().invoke(() -> Microbot.getClient().setWidgetSelected(false));
+			sleepUntil(() -> !spellSelected(), 600);
+		}
 		if (room.getGuardian() == null || room.getGuardian().getId() == GUARDIAN_MOVING || spellSelected())
 		{
 			if (++observeTries > 20)
@@ -475,7 +491,16 @@ final class MtaRooms
 		{
 			// The view starts moving a tick or so after the click: first see it leave, then see it rest
 			// (unchanged over several looks), and only then walk or cast, or the move is cancelled.
-			boolean moved = sleepUntil(() -> !java.util.Arrays.equals(cameraNow(), before), 2500);
+			// If the click walked the player anyway (out of the guardian's reach), the camera follows the
+			// walk: wait for the player to stand, then for the Observe's own move.
+			int[] base = before;
+			if (sleepUntil(Rs2Player::isMoving, 700))
+			{
+				sleepUntil(() -> !Rs2Player.isMoving(), 8000);
+				base = cameraNow();
+			}
+			int[] from = base;
+			boolean moved = sleepUntil(() -> !java.util.Arrays.equals(cameraNow(), from), 2500);
 			int[] last = cameraNow();
 			int still = 0;
 			long until = System.currentTimeMillis() + 6000;
@@ -483,7 +508,7 @@ final class MtaRooms
 			{
 				sleep(110, 130);
 				int[] now = cameraNow();
-				still = java.util.Arrays.equals(now, last) ? still + 1 : 0;
+				still = java.util.Arrays.equals(now, last) && !Rs2Player.isMoving() ? still + 1 : 0;
 				last = now;
 			}
 			log.info("telekinetic: observe {}", moved ? "settled" : "did not move the camera");

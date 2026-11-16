@@ -163,4 +163,24 @@ class MtaPlannerTest
 		s = MtaPlanner.next(wanted, peaches, new Points(210, 0, 0, 0), 60, 0, ALL, false, Room.TELEKINETIC);
 		assertEquals(Room.ALCHEMIST, s.room);
 	}
+
+	@Test
+	void theRoomThePlayerIsInIsKeptOnlyForASmallBatch() throws Exception
+	{
+		// The account on 2026-11-16: peaches owned, boots and the beginner wand covered; the apprentice
+		// wand still needs 60 Alchemist and 58 Graveyard points. In the Theatre, the teacher and master
+		// wands' 375 telekinetic points are hours there: go to the Playground.
+		List<String> wanted = Arrays.asList("infinity_boots", "beginner_wand", "apprentice_wand", "teacher_wand",
+			"master_wand", "rune_pouch");
+		List<String> peaches = Arrays.asList("bones_to_peaches");
+		Points held = new Points(225, 152, 2428, 150);
+		Step s = MtaPlanner.next(wanted, peaches, held, 62, 0, ALL, false, Room.TELEKINETIC);
+		assertEquals(Room.ALCHEMIST, s.room);
+		assertEquals("apprentice_wand", s.reward);
+		assertEquals(60, s.points);
+		// Twenty points short of the teacher wand's share there: a batch, kept.
+		s = MtaPlanner.next(wanted, peaches, new Points(340, 152, 2428, 150), 62, 0, ALL, false, Room.TELEKINETIC);
+		assertEquals(Room.TELEKINETIC, s.room);
+		assertEquals(20, s.points);
+	}
 }

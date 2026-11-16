@@ -59,8 +59,13 @@ final class MtaRooms
 	private static final int CAMERA_STILL_LOOKS = 4;
 	/** How long one runner step stays in the Telekinetic Theatre's own fast loop. */
 	private static final long TELEKINETIC_STEP_MS = 6000;
-	private static final int HEAL_BELOW_MIN = 40;
-	private static final int HEAL_BELOW_MAX = 60;
+	/**
+	 * The Graveyard's falling bones hit about 10 hitpoints a minute: fruit is eaten below 60 to 75% of
+	 * them, back up to ~90%, so a low-level account keeps a margin between two batches of fruit.
+	 */
+	private static final int HEAL_BELOW_MIN = 60;
+	private static final int HEAL_BELOW_MAX = 75;
+	private static final int HEAL_UP_TO = 90;
 
 	private final MtaArenaConfig config;
 	private final BooleanSupplier running;
@@ -289,8 +294,9 @@ final class MtaRooms
 			if (hp * 100 / maxHp < nextHealBelow)
 			{
 				int fruit = peaches ? MtaWorld.PEACHES : MtaWorld.BANANAS;
-				int most = (maxHp - hp) / (peaches ? 8 : 2);
-				int eat = Rs2Random.between(Math.min(2, most), Math.min(6, most));
+				int heals = peaches ? 8 : 2;
+				int eat = Math.max(1, (maxHp * HEAL_UP_TO / 100 - hp + heals - 1) / heals);
+				eat = Math.min(eat, Rs2Inventory.count(fruit));
 				nextHealBelow = Rs2Random.between(HEAL_BELOW_MIN, HEAL_BELOW_MAX);
 				for (int i = 0; i < eat; i++)
 				{

@@ -66,3 +66,12 @@ Measured in the dev client on client 2.6.52 while building `fm/blackjacker`. Re-
   (`Rs2Combat.setAutoRetaliate(false)`, varp `OPTION_NODEF` = 1 means off).
 - Coin pouches stack, so "inventory full" only blocks a pickpocket when there is no pouch in
   the bag.
+- **Far objects show a stale state.** The client gets object changes only for the 8x8 zones
+  near the player: from the quarry rocks a Kharidian cactus three zones away showed its regrowth,
+  two four zones away (27 tiles) still showed "Dry" minutes after they regrew, and turned healthy
+  the moment the player walked up (`fm/tickminer`, `Water`). Do not decide a trip from a far
+  object's state; track when it was used, and look again up close.
+- **A selected item stays selected after another "Use" on it.** Sending `WIDGET_TARGET` on the
+  selected item (what `Rs2Inventory.deselect` does) left the knife selected, so the next object
+  click went out as `WIDGET_TARGET_ON_GAME_OBJECT` ("Nothing interesting happens"). The
+  selection is client-side only: `client.setWidgetSelected(false)` on the client thread drops it.

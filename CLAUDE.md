@@ -204,6 +204,7 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0023 objective_marks: the owner's marks on objectives, account-wide, not evidence,
                       0024 loadout_marks: the owner's marks on the items of a leg's loadout, per (guide, segment), not evidence,
                       0025 minigame facet: counters read in a minigame's interface, the MTA's pizazz points,
+                      0026 accounts.mode regular: an account that is not ironman,
                       0027 accounts.guide_id nullable: an account without a route follows its active plan;
                       the routes that read its own route answer 409 "account has no route")
 db/queries/           sqlc queries; sqlc.yaml at the root

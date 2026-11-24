@@ -689,7 +689,7 @@ export interface CollectionLogItemView {
 
 /* ------------------------------------------------------------------ setup (V4Setup) */
 
-export type AccountMode = 'ironman' | 'hcim' | 'uim' | 'gim';
+export type AccountMode = 'ironman' | 'hcim' | 'uim' | 'gim' | 'regular';
 
 export interface AccountView {
 	id: string;

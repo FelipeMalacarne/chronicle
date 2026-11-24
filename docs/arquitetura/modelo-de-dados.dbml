@@ -52,7 +52,7 @@ Table accounts {
   Note: '''
   OSRS accounts tracked by a user. One user may track several accounts.
   accounts_layer_check: CHECK ((layer = ANY (ARRAY['classic'::text, 'enhanced'::text])))
-  accounts_mode_check: CHECK ((mode = ANY (ARRAY['ironman'::text, 'hcim'::text, 'uim'::text, 'gim'::text])))
+  accounts_mode_check: CHECK ((mode = ANY (ARRAY['ironman'::text, 'hcim'::text, 'uim'::text, 'gim'::text, 'regular'::text])))
   '''
 }
 

@@ -25,12 +25,13 @@ const AdapterVersion = 1
 const maxBody = 512 << 10
 
 // endpoints maps accounts.mode to the hiscores table. A group ironman has no
-// individual table of its own and every account is on the normal one.
+// individual table of its own and a regular account is only on the normal one.
 var endpoints = map[string]string{
 	"ironman": "hiscore_oldschool_ironman",
 	"hcim":    "hiscore_oldschool_hardcore_ironman",
 	"uim":     "hiscore_oldschool_ultimate",
 	"gim":     "hiscore_oldschool",
+	"regular": "hiscore_oldschool",
 	"":        "hiscore_oldschool",
 }
 

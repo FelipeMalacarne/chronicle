@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	"github.com/jackc/pgx/v5"
 
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
@@ -85,8 +87,8 @@ func (r *Repository) CreateAccount(ctx context.Context, userID string, in Accoun
 	switch {
 	case !rsnPattern.MatchString(in.RSN):
 		return AccountView{}, false, fmt.Errorf("%w: name must be 1 to 12 letters, digits, spaces, - or _", ErrInvalidAccount)
-	case in.Mode != "ironman" && in.Mode != "hcim" && in.Mode != "uim" && in.Mode != "gim":
-		return AccountView{}, false, fmt.Errorf("%w: mode must be ironman, hcim, uim or gim", ErrInvalidAccount)
+	case !slices.Contains(content.Modes, in.Mode):
+		return AccountView{}, false, fmt.Errorf("%w: mode must be %s", ErrInvalidAccount, strings.Join(content.Modes, ", "))
 	case in.Layer != "classic" && in.Layer != "enhanced":
 		return AccountView{}, false, fmt.Errorf("%w: layer must be classic or enhanced", ErrInvalidAccount)
 	}

@@ -169,6 +169,11 @@ func TestRisks(t *testing.T) {
 		NeedsSupervision("hcim", []string{"item_loss"}) || !NeedsSupervision("hcim", []string{"hazard"}) {
 		t.Error("E9: HCIM and a death risk, only")
 	}
+	for _, mode := range []string{"regular", "uim", "gim"} {
+		if NeedsSupervision(mode, []string{"combat", "wilderness", "hazard"}) {
+			t.Errorf("E9 is HCIM only, %s supervised", mode)
+		}
+	}
 	if !KnownRisk("combat") || KnownRisk("pking") {
 		t.Error("closed risk list")
 	}

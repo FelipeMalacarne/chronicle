@@ -122,6 +122,21 @@ func TestResolve(t *testing.T) {
 			t.Fatalf("view = %+v", v)
 		}
 	})
+	t.Run("train on a regular account runs unsupervised even when it fights", func(t *testing.T) {
+		goblins := content.Task{Type: content.TaskTrain, Skill: ref("skill:magic"), NPC: ref("npc:goblin"), Plugin: "a.b.Splasher",
+			Until: &content.TaskUntil{Objective: key("skill:magic>=33")}}
+		spec, v, err := Resolve(input(custom(goblins), content.ModeRegular, nil, nil), "task:0#0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if spec.Type != execspec.TypeTrain || !v.Executable || v.Supervised || !slices.Equal(v.Risks, []string{"combat"}) {
+			t.Fatalf("regular goblins = %+v %+v", spec.Train, v)
+		}
+		bank := input(route, content.ModeRegular, nil, nil)
+		if _, v, err = Resolve(bank, "step:t::b#0"); err != nil || !v.Executable {
+			t.Fatalf("regular bank = %+v %v", v, err)
+		}
+	})
 	t.Run("train on a monster fights: combat, HCIM supervised", func(t *testing.T) {
 		goblins := content.Task{Type: content.TaskTrain, Skill: ref("skill:magic"), NPC: ref("npc:goblin"), Plugin: "a.b.Splasher",
 			Until: &content.TaskUntil{Objective: key("skill:magic>=33")}}

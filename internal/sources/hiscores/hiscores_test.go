@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 func sample(t *testing.T, name string) []byte {
@@ -154,5 +156,16 @@ func TestDetect(t *testing.T) {
 		if got.Found && len(got.Snapshot.Skills) == 0 {
 			t.Fatalf("%s: no skills", rsn)
 		}
+	}
+}
+
+func TestEveryAccountModeHasATable(t *testing.T) {
+	for _, mode := range content.Modes {
+		if endpoints[mode] == "" {
+			t.Errorf("mode %s has no hiscores table", mode)
+		}
+	}
+	if endpoints["regular"] != normal {
+		t.Errorf("regular is on %s, want the normal table", endpoints["regular"])
 	}
 }

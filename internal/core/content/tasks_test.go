@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -96,6 +97,12 @@ func TestExecutionFixtureLoads(t *testing.T) {
 	main, _ := attack.VariantFor(ModeIronman)
 	if hc.ID != "hcim" || hc.Unsupervised(ModeHCIM) || !main.Unsupervised(ModeIronman) {
 		t.Errorf("variants: hcim %q unsupervised %v; ironman %q unsupervised %v", hc.ID, hc.Unsupervised(ModeHCIM), main.ID, main.Unsupervised(ModeIronman))
+	}
+	if !slices.Contains(Modes, ModeRegular) || !main.Unsupervised(ModeRegular) {
+		t.Errorf("regular: in Modes %v, unsupervised %v", slices.Contains(Modes, ModeRegular), main.Unsupervised(ModeRegular))
+	}
+	if _, ok := attack.VariantFor(ModeRegular); ok {
+		t.Error("no recipe variant declares regular yet")
 	}
 	axe, _ := c.Recipe(entities.MustParseObjectiveKey("item:1351x1"))
 	if v, _ := axe.VariantFor(ModeHCIM); !v.Unsupervised(ModeHCIM) {

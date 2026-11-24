@@ -484,3 +484,56 @@ func TestGraphRoute(t *testing.T) {
 	}
 }
 
+// An account without a route (docs/11 decision W10): the routes that read
+// the account's own route answer 409 "account has no route", the routes of
+// an explicit guide keep working, and PUT /api/account/guide sets or clears
+// the route.
+func TestAccountWithoutRoute(t *testing.T) {
+	fake, plans := &fakeProgress{noRoute: true}, &memPlans{noRoute: true}
+	g := &content.Guide{ID: "oziris-main", Title: "Oziris", Sections: []*content.Section{{ID: "s", Slug: "s", Steps: []*content.Step{{ID: "1", Text: "x"}}}}}
+	g.Index()
+	server := httptest.NewServer(New(Options{
+		Version: "test", Content: &content.Content{Guides: []*content.Guide{g}}, Progress: fake, Plans: plans, DevMode: true,
+		Logger: slog.New(slog.NewTextHandler(io.Discard, nil)),
+	}))
+	t.Cleanup(server.Close)
+	base := server.URL + "/api"
+
+	for _, tc := range []struct {
+		method, path, body string
+		want               int
+	}{
+		{"GET", "/route?account=acc-1", "", http.StatusConflict},
+		{"GET", "/plan/next?account=acc-1", "", http.StatusConflict},
+		{"PUT", "/plans/active?account=acc-1", `{"plan":""}`, http.StatusConflict},
+		{"GET", "/plans?account=acc-1", "", http.StatusOK},
+		{"GET", "/progress?account=acc-1", "", http.StatusOK},
+		{"GET", "/guides/oziris-main/board?account=acc-1", "", http.StatusOK},
+		{"PUT", "/account/guide?account=acc-1", `{}`, http.StatusBadRequest},
+		{"PUT", "/account/guide?account=acc-1", `{"guide_id":" "}`, http.StatusBadRequest},
+		{"PUT", "/account/guide?account=acc-1", `{"guide_id":""}`, http.StatusBadRequest},
+		{"PUT", "/account/guide?account=acc-1", `{"guide_id":1}`, http.StatusBadRequest},
+		{"PUT", "/account/guide?account=acc-1", `{"guide_id":"nope"}`, http.StatusNotFound},
+	} {
+		status, body := do(t, tc.method, base+tc.path, tc.body)
+		if status != tc.want {
+			t.Fatalf("%s %s = %d %v, want %d", tc.method, tc.path, status, body, tc.want)
+		}
+		if tc.want == http.StatusConflict && body["error"] != coreprogress.ErrNoRoute.Error() {
+			t.Fatalf("%s %s error = %v", tc.method, tc.path, body["error"])
+		}
+	}
+
+	if _, body := do(t, "GET", base+"/progress?account=acc-1", ""); body["active_guide"] != nil {
+		t.Fatalf("active_guide without a route = %v", body["active_guide"])
+	}
+	if _, body := do(t, "GET", base+"/plans?account=acc-1", ""); body["active"] != nil {
+		t.Fatalf("active plan without a route = %v", body["active"])
+	}
+	if status, _ := do(t, "PUT", base+"/account/guide?account=acc-1", `{"guide_id":"oziris-main"}`); status != http.StatusOK || fake.call != "board" || fake.step != "oziris-main" {
+		t.Fatalf("set route = %d %s %q", status, fake.call, fake.step)
+	}
+	if status, _ := do(t, "PUT", base+"/account/guide?account=acc-1", `{"guide_id":null}`); status != http.StatusOK || fake.step != "" {
+		t.Fatalf("clear route = %d %q", status, fake.step)
+	}
+}

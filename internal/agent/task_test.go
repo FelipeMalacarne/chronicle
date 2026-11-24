@@ -133,6 +133,7 @@ func TestValidateTaskRun(t *testing.T) {
 		travelParams("ironman", []string{"wilderness"}, false, mageBankTravel()),
 		travelParams("hcim", []string{"wilderness"}, true, mageBankTravel()),
 		travelParams("hcim", []string{"item_loss"}, false, lumbridge()),
+		travelParams("regular", []string{"wilderness"}, false, mageBankTravel()),
 	}
 	for i, p := range ok {
 		if _, err := ValidateParams(CmdTaskRun, raw(t, p)); err != nil {
@@ -154,7 +155,7 @@ func TestValidateTaskRun(t *testing.T) {
 		{"hcim in the wilderness alone", travelParams("hcim", []string{"wilderness"}, false, mageBankTravel()), "supervised"},
 		{"hcim and a recipe's combat alone", travelParams("hcim", []string{"combat"}, false, lumbridge()), "supervised"},
 		{"the wilderness undeclared", travelParams("ironman", nil, false, mageBankTravel()), "not declared"},
-		{"mode", mod(func(p *TaskRunParams) { p.Mode = "regular" }), "mode"},
+		{"mode", mod(func(p *TaskRunParams) { p.Mode = "main" }), "mode"},
 		{"risk", mod(func(p *TaskRunParams) { p.Risks = []string{"pking"} }), "risk"},
 		{"repeated risk", mod(func(p *TaskRunParams) { p.Risks = []string{"combat", "combat"} }), "repeated"},
 		{"key", mod(func(p *TaskRunParams) { p.Key = "1.1.3" }), "bad key"},

@@ -534,6 +534,10 @@ func TestAccountsPostgres(t *testing.T) {
 	if err != nil || board.Cursor == nil || !board.Active {
 		t.Fatalf("board after setup = %+v, %v", board.Cursor, err)
 	}
+	reg, created, err := repo.CreateAccount(ctx, "", AccountInput{RSN: "Regular One", Mode: "regular", GuideID: "g1", Layer: "classic"})
+	if err != nil || !created || reg.Mode != "regular" {
+		t.Fatalf("regular create = %+v %v, %v", reg, created, err)
+	}
 	same, created, err := repo.CreateAccount(ctx, "", AccountInput{RSN: "iron man", Mode: "ironman", GuideID: "g2", Layer: "enhanced"})
 	if err != nil || created || same.ID != acc.ID || same.Mode != "hcim" {
 		t.Fatalf("second create = %+v %v, %v", same, created, err)

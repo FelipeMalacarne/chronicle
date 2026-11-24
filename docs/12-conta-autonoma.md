@@ -219,7 +219,11 @@ plano, `plan.Executable`, `plan.Resolve` e o `task_run` do agent recusam qualque
 | Tarefa | Conteúdo | O que o servidor resolve (`execspec`) | Termina quando |
 |---|---|---|---|
 | `ge_buy` | `item`, `qty` | `geBuy: {item, itemName, qty, price}`. `qty` é o que falta, contado como na compra em loja, até o limite de 4 horas do GE. `price` é o último preço de compra imediata mais 5%, arredondado para cima. O inventário ao vivo precisa ter as moedas da oferta inteira | as posses da conta provam `item:<id>x<qty>` |
-| `ge_sell` | `item` | `geSell: {item, itemName, qty, price, coinsAtLeast}`. `qty` é todo o item que o inventário ao vivo tem, numa forma só (noted ou não). `price` é o último preço de venda imediata menos 5%, arredondado para baixo. `coinsAtLeast` são as moedas do inventário naquela hora mais o mínimo que a venda paga | `sold`: o inventário ao vivo, com baseline completa, não tem mais o item. O run da venda só é provado quando o inventário também tem `coinsAtLeast` moedas |
+| `ge_sell` | `item` | `geSell: {item, itemName, qty, price, coinsAtLeast}`. `qty` é todo o item que o inventário ao vivo tem, numa forma só (noted ou não). `price` é o último preço de venda imediata menos 5%, arredondado para baixo. `coinsAtLeast` são as moedas do inventário naquela hora mais o mínimo que a venda paga | `sold`: um run da tarefa provou a venda (seção 6.2). O item só ausente do inventário não prova nada |
+
+O `item` das duas tarefas é o id unnoted. O verificador de conteúdo recusa um id noted, porque o
+slot do GE e os preços da wiki usam o id unnoted. A venda aceita o item nas duas formas no
+inventário.
 
 O preço vale só se a negociação por trás dele tem menos de 24 horas (`ge.MaxAge`). O mínimo que
 uma venda paga é `qty × (price − imposto)`. O imposto do GE é 2% do preço de cada item, arredondado
@@ -233,19 +237,57 @@ mínimo vale para todos.
 O agent delega as duas tarefas ao `/ge` do Agent Server (`GrandExchangeHandler` do cliente
 fixado), como delega a quest ao Quest Helper (E19). O run:
 
-1. confere que nenhum slot do GE já tem oferta do item;
+1. confere que nenhum slot do GE já tem oferta do item e que nenhum outro slot tem oferta terminada
+   e não coletada. Uma venda também recusa qualquer outra oferta no GE. O `/ge/collect` é o
+   "Collect all" do GE e esvazia todos os slots terminados, então uma oferta de outro item poderia
+   trazer moedas para o inventário e fazer a prova da venda passar sem a venda ter enchido;
 2. manda `POST /ge/buy` ou `/ge/sell` com `{name, quantity, price}`. O Agent Server acha o item pelo
    nome exato, e o GE precisa estar aberto ou perto, então um `travel` antes leva a conta até lá;
 3. acompanha `GET /ge` até o slot chegar a `BOUGHT` ou `SOLD`;
 4. coleta no inventário (`/ge/collect` com `toBank: false`), para o inventário ao vivo mostrar o
    que chegou, e fecha o GE (`/ge/close`).
 
-Uma oferta que não enche no prazo (10 minutos por padrão), o cancelamento do dono e uma falha
-abortam a oferta e coletam o que encheu. O run terminar `done` quer dizer que a oferta encheu e foi
-coletada, nunca que a tarefa está feita. Quem prova é o ingest: `GET /api/microbot/task` avalia a
-tarefa nos fatos da conta e, numa venda, soma `rules.SaleProven` com as moedas que o run carrega
-(`RunTask.coinsAtLeast`). O Chronicle Link continua recusando `ge_buy` e `ge_sell`; a seção
-`delegated` do `task-wire.json` fixa isso dos dois lados.
+Uma oferta que não enche no prazo (10 minutos por padrão), o cancelamento do dono e qualquer falha
+depois que o pedido da oferta saiu deixam o GE sem a oferta do run. Isso vale também quando o
+`/ge/buy` ou `/ge/sell` responde erro: a oferta pode ter entrado mesmo assim (o `processOffer` falhou
+depois de confirmar, o pedido passou dos 60 segundos ou o dono cancelou no meio). O run lê `GET /ge`,
+aborta a oferta viva do item e coleta no inventário uma oferta já terminada. Só para quando o
+`/ge/close` dá certo e o GE não tem oferta do item. O `/ge/close` pega a mesma trava do Agent Server
+que a colocação da oferta, então um fechamento que dá certo prova que nenhuma colocação ainda roda lá.
+
+O `/ge/abort` do cliente fixado chama `Rs2GrandExchange.abortOffer(name, true)`, que coleta todos os
+slots terminados no **banco**. Depois de um abort, o que a oferta encheu e o que voltou dela (os
+itens de uma venda, as moedas de uma compra) estão no banco, não no inventário. A prova de uma
+compra continua valendo, porque as posses da conta contam o banco. A prova de uma venda não passa,
+porque as moedas precisam estar no inventário.
+
+O run terminar `done` quer dizer que a oferta encheu e foi coletada no inventário, nunca que a
+tarefa está feita. Quem prova é o ingest. `GET /api/microbot/task` avalia a tarefa nos fatos da
+conta. Uma compra termina quando as posses provam `item:<id>x<qty>`. Uma venda é provada quando o run
+terminou `done` e o inventário ao vivo, com baseline completa, não tem o item e tem pelo menos as
+moedas que o run carrega (`RunTask.coinsAtLeast`, `rules.SaleProven`).
+
+Essa prova é relativa às moedas de antes da venda e some quando a conta gasta as moedas. Por isso o
+servidor grava a prova no momento em que a vê (`sale_proofs`, migração 0030, uma linha por plano e
+chave de tarefa). O plano conta a venda como cumprida a partir daí (`plan.Input.SalesProven`):
+
+| Inventário ao vivo | Venda provada por um run | `sold` |
+|---|---|---|
+| tem o item | qualquer | `unmet`: há o que vender |
+| não tem o item | sim | `met` |
+| não tem o item | não | `unknown`: nada a vender e nenhuma venda provada |
+| não compartilhado ao vivo | sim | `met` |
+| não compartilhado ao vivo | não | `unknown` |
+
+O item no banco não é uma venda. Quando o item volta ao inventário, a tarefa fica `unmet` de novo.
+O servidor apaga a prova anterior da tarefa antes de começar um novo run dela, então a venda nova só
+fica cumprida pela prova dela, e o status do run (`GET /api/microbot/task`) sempre avalia o próprio
+run, nunca a prova de um run anterior.
+
+A prova só é gravada quando alguém lê `GET /api/microbot/task` enquanto as moedas ainda estão no
+inventário; o `chronicle task run --wait` lê até a prova chegar. Se a conta gasta as moedas antes
+dessa leitura, a venda fica `unknown` e o plano para nela. O Chronicle Link continua recusando
+`ge_buy` e `ge_sell`; a seção `delegated` do `task-wire.json` fixa isso dos dois lados.
 
 ### 6.3 Preços
 
@@ -524,6 +566,7 @@ o nível de combate recomendado e o loadout (seção 5.5).
 | `conductor_state (account_id, state, task_key, run_id, escalation_id, since)` | Em que estado o condutor está para cada conta (seção 12.5) | 12.5 |
 | `escalations (id, account_id, quest, varbit_value, step_class, step_text, status, …)` e `escalation_attempts (escalation_id, rung, model, actions, tokens, outcome)` | Cada passo travado e cada tentativa de cada degrau; é também a tabela da medição da seção 7.4 | 5.7, 7.4 |
 | `item_prices (item_id, high, high_at, low, low_at, buy_limit, members, source, fetched_at)` | O último preço de cada item, da API da wiki (`/latest` e `/mapping`); não é de nenhuma conta. Migração 0028 | 6.3 |
+| `sale_proofs (account_id, plan_id, task_key, run_uid, item_id, coins_at_least, coins_seen, proven_at)` | A venda no GE que o ingest provou, por plano e chave de tarefa: mantém o `ge_sell` cumprido depois que as moedas são gastas. Migração 0030 | 6.2 |
 
 O ingest tem a faceta `membership` (os dias restantes e a marca de membro, migração 0028) e ganha a
 faceta `ge` (as ofertas abertas e o que está para coletar), pelo mesmo contrato v1. As duas entram

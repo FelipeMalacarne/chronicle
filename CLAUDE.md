@@ -139,8 +139,8 @@ internal/store/       repositories (activity: the XP observations behind the lev
                       PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; rhythm: the series the rhythm reads; workers: sealed game sessions, workers'
                       desired state, client profiles; routines: triggers and the runs' history; recording: the
                       owner's read and delete of the demonstration recording, which only the ingest writes;
-                      plans: the goal and custom plans and the account's active plan; prices: item_prices
-                      and its refresh scheduler);
+                      plans: the goal and custom plans, the account's active plan and the proven GE sales;
+                      prices: item_prices and its refresh scheduler);
                       internal/store/db is sqlc OUTPUT
 internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
                       client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)
@@ -212,7 +212,9 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0025 minigame facet: counters read in a minigame's interface, the MTA's pizazz points,
                       0026 accounts.mode regular (docs/12),
                       0028 item_prices: the Grand Exchange prices of the OSRS Wiki; membership facet: days left
-                      and the member flag)
+                      and the member flag,
+                      0030 sale_proofs: Grand Exchange sales the ingest proved, per (plan, task key), which keep a
+                      ge_sell met once its coins are spent)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

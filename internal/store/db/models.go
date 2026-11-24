@@ -369,6 +369,18 @@ type RunEvent struct {
 	Text  string             `json:"text"`
 }
 
+// Grand Exchange sales the ingest proved (the item left the live inventory and the run's coins reached it), by plan and task key: the plan counts them met afterwards.
+type SaleProof struct {
+	AccountID    string             `json:"account_id"`
+	PlanID       string             `json:"plan_id"`
+	TaskKey      string             `json:"task_key"`
+	RunUid       string             `json:"run_uid"`
+	ItemID       int32              `json:"item_id"`
+	CoinsAtLeast int64              `json:"coins_at_least"`
+	CoinsSeen    int64              `json:"coins_seen"`
+	ProvenAt     pgtype.Timestamptz `json:"proven_at"`
+}
+
 // HTTP sessions (scs pgxstore layout). Cleaned up by the session manager.
 type Session struct {
 	Token  string             `json:"token"`

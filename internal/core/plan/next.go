@@ -51,7 +51,12 @@ type Input struct {
 	// Prices are the stored market prices Resolve prices a Grand Exchange
 	// task by, by item id: the caller loads the task's item.
 	Prices map[int]ge.Price
-	Now    time.Time
+	// SalesProven are the task keys of this plan whose ge_sell a run
+	// proved, with that run's uid (the server recorded the ingest's proof,
+	// rules.SaleProven): the sale stays met while the inventory does not
+	// hold the item again.
+	SalesProven map[string]string
+	Now         time.Time
 }
 
 // Ref names the plan of an answer.
@@ -356,7 +361,11 @@ func (in Input) view(t content.Task, item string, index int, sc scope) TaskView 
 	}
 	if u, ok := t.Ends(); ok {
 		v.Until = panel.UntilLabel(t, u, in.Registry)
-		v.State, v.Reason = panel.EvaluateUntil(t, u, sc.state, sc.segment, sc.guide, in.Holdings, in.Facts, in.Registry, now)
+		if u.State == content.UntilSold {
+			v.State, v.Reason = panel.SoldUntil(t, in.Holdings, in.Registry, in.SalesProven[v.Key] != "")
+		} else {
+			v.State, v.Reason = panel.EvaluateUntil(t, u, sc.state, sc.segment, sc.guide, in.Holdings, in.Facts, in.Registry, now)
+		}
 	} else {
 		v.State, v.Reason = rules.Unknown, "a tarefa não diz quando termina"
 	}

@@ -96,7 +96,12 @@ func TestResolveGE(t *testing.T) {
 		{"not enough coins", input(buy, content.ModeRegular, inv(map[int]int64{coins: 1000}), glassPrice()), "faltam moedas no inventário"},
 		{"inventory not live", input(buy, content.ModeRegular, rules.ItemHoldings{rules.ContainerInventory: {State: ingest.ItemRestored, Complete: true, Quantities: map[int]int64{coins: 1 << 30}}}, glassPrice()), "não é compartilhado ao vivo"},
 		{"bought already", input(buy, content.ModeRegular, rules.ItemHoldings{rules.ContainerBank: live(map[int]int64{glass: 1000})}, glassPrice()), "já está cumprida"},
-		{"nothing to sell", input(sell, content.ModeRegular, inv(map[int]int64{coins: 5}), glassPrice()), "já está cumprida"},
+		{"nothing to sell", input(sell, content.ModeRegular, inv(map[int]int64{coins: 5}), glassPrice()), "nada a vender"},
+		{"sold already", func() Input {
+			in := input(sell, content.ModeRegular, inv(map[int]int64{coins: 5}), glassPrice())
+			in.SalesProven = map[string]string{"task:0#0": "0123abcd"}
+			return in
+		}(), "já está cumprida"},
 		{"two forms", input(sell, content.ModeRegular, inv(map[int]int64{glass: 5, glassNoted: 100}), glassPrice()), "noted e unnoted"},
 		{"sell blind", input(sell, content.ModeRegular, nil, glassPrice()), "não é compartilhado ao vivo"},
 	} {
@@ -118,5 +123,54 @@ func TestCheckItemsGE(t *testing.T) {
 	}
 	if msgs := CheckItems(items, content.ModeGIM, c, reg); len(msgs) != 1 || !strings.Contains(msgs[0], "regular accounts only") {
 		t.Fatalf("gim: %v", msgs)
+	}
+}
+
+// TestNextGESale: a ge_sell is met only by a run's recorded proof, never by
+// the item merely missing from the inventory (in the bank, or never there),
+// and is to do again once the inventory holds the item.
+func TestNextGESale(t *testing.T) {
+	c, reg := load(t)
+	sell := content.Task{Type: content.TaskGESell, Item: ref("item:1775")}
+	inBank := rules.ItemHoldings{
+		rules.ContainerInventory: live(map[int]int64{coins: 5}),
+		rules.ContainerBank:      live(map[int]int64{glass: 1400}),
+	}
+	inInventory := rules.ItemHoldings{rules.ContainerInventory: live(map[int]int64{glassNoted: 1400})}
+	proven := map[string]string{"task:0#0": "0123abcd"}
+	for _, tc := range []struct {
+		name    string
+		h       rules.ItemHoldings
+		proven  map[string]string
+		status  string
+		state   rules.Verdict
+		reason  string
+		skipped int
+	}{
+		{"the item in the bank is no sale", inBank, nil, StatusTask, rules.Unknown, "nenhum run provou a venda", 0},
+		{"another task's proof does not count", inBank, map[string]string{"task:1#0": "0123abcd"}, StatusTask, rules.Unknown, "nenhum run provou a venda", 0},
+		{"a blind inventory proves nothing", nil, nil, StatusTask, rules.Unknown, "não compartilhado ao vivo", 0},
+		{"the item in the inventory is to sell", inInventory, nil, StatusTask, rules.Unmet, "", 0},
+		{"a proven sale is met", inBank, proven, StatusDone, "", "", 1},
+		{"a proven sale stays met without inventory", nil, proven, StatusDone, "", "", 1},
+		{"the item back in the inventory is to sell again", inInventory, proven, StatusTask, rules.Unmet, "", 0},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ps := rules.PlayerState{Items: tc.h, Catalog: reg}
+			got := Next(Input{
+				Plan:    Plan{ID: "pln_test0001", Kind: KindCustom, Items: []Item{{Kind: ItemTask, Task: &sell}}},
+				Content: c, Registry: reg, Holdings: tc.h, Now: now, SalesProven: tc.proven,
+				Facts: panel.Facts{Mode: content.ModeRegular, State: &ps},
+			})
+			if got.Status != tc.status || len(got.Skipped) != tc.skipped {
+				t.Fatalf("next = %s (skipped %d), want %s (skipped %d): %+v", got.Status, len(got.Skipped), tc.status, tc.skipped, got)
+			}
+			if tc.status != StatusTask {
+				return
+			}
+			if got.Task.State != tc.state || !strings.Contains(got.Task.Reason, tc.reason) {
+				t.Fatalf("task = %s %q, want %s %q", got.Task.State, got.Task.Reason, tc.state, tc.reason)
+			}
+		})
 	}
 }

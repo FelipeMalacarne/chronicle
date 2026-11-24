@@ -1,8 +1,8 @@
 # 11 — Workers do Microbot: contas, perfis e clientes headless no saradomin
 
-**Estado: rodada 1 implementada (2026-11-12) e ligada no saradomin, com o primeiro worker rodando
-(seção 14.4); o que foi feito e conferido está na seção 14. Perfis (F5), rotinas no servidor (F6), métricas (F7) e GPU continuam como
-proposta.**
+**Estado: implementado em rodadas desde 2026-11-12 e ligado no saradomin, com o primeiro worker rodando
+(seção 14.4). As seções 14 a 19 dizem o que cada rodada entregou e conferiu. O que falta conferir num
+worker de verdade fica na FEL-52, e a GPU na FEL-113.**
 Substitui a primeira versão do mesmo dia. A primeira versão definiu o desenho do cluster (imagens,
 RBAC, iGPU e medições), e isso continua valendo. A segunda versão parte de três respostas do dono:
 
@@ -14,10 +14,10 @@ RBAC, iGPU e medições), e isso continua valendo. A segunda versão parte de tr
    uma conta do zero até um money making, de um jeito reproduzível, para ter vários gold farmers.
    Rotas e objetivos vão ser revistos depois (seção 11).
 
-Registro: doc 01, decisão 34. Sequência: doc 04, seção 9, item 19. O protótipo da tela está no
-canvas, página 7 (`V6MicrobotWorkers1440`, `V6MicrobotWorkersEstados1440`). Ele ainda não tem os
-estados novos deste doc (conectar conta, perfil, desvio de config); esses estados precisam ser
-desenhados antes do código (regra 11 do CLAUDE.md).
+Registro: doc 01, decisão 34. Roadmap: Linear, projeto Chronicle
+(<https://linear.app/felipemalacarne/project/chronicle-1f382104f1b7>). As telas são as da v7 (seção
+10); o protótipo da página 7 do canvas (`V6MicrobotWorkers1440`, `V6MicrobotWorkersEstados1440`) ficou
+como histórico.
 
 ## 1. A ideia em uma frase
 
@@ -451,22 +451,24 @@ disco.
 
 | Fase | Entrega | Pronto quando | Onde |
 |---|---|---|---|
-| F0 | Link remoto: `MICROBOT_CONTROL=on` no saradomin, machine user do Zitadel para o agent do zaros, serviço no zaros (doc 08, fase 5) | o Cockpit do saradomin controla o cliente do zaros | gielinor, nix-config. O serviço do zaros está pronto no `nix-config` (PR #1 de lá), desligado até o machine user e o segredo existirem (doc 08, fase 5) |
+| F0 | Link remoto: `MICROBOT_CONTROL=on` no saradomin, machine user do Zitadel para o agent do zaros, serviço no zaros (doc 08, fase 5) | o Cockpit do saradomin controla o cliente do zaros | gielinor, nix-config (doc 08, fase 5) |
 | F1 | Hub por conta: hello com conta, kind, worker e a versão da ponte do Chronicle Link (o agent exige uma mínima e diz qual falta); rotas com `?account=`; mensagens `event` do agent; `microbot_audit.account_id`/`agent_id`; Automação › Workers com o zaros na lista | duas contas no mesmo servidor, cada uma com seu agent (o segundo pode ser um agent de teste no zaros) | chronicle |
 | F2 | Contas e sessões: migração (`regular`, rota opcional, `managed`, `game_sessions`), cofre, `chronicle accounts connect`, Automação da conta na Conta | uma conta sem rota conectada pela CLI; a sessão aparece na web e nunca volta pela API | chronicle |
 | F3 | Imagens e um worker aplicado à mão: as duas imagens e o CI delas, iGPU compartilhada, o PVC do cache, um Deployment escrito à mão que faz o bootstrap pelo link (sessão do cofre, `ipl_` do worker, perfil `minimal` fixo) | o dono entra no jogo pelo VNC do pod, o Chronicle Link dele alimenta o tracking; medir de novo com o perfil enxuto | chronicle (com `microbot/`), gielinor |
 | F4 | Gerenciado: reconciliador, cliente REST do k8s (W1), RBAC e admission policy, Iniciar, Parar e Reiniciar pela web e pela CLI, trava da seção 6.2 | Iniciar e Parar sem `kubectl`; um pod apagado à mão volta para a tela de login | chronicle, gielinor |
-| F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link). **Parte 1 feita** (2026-11-12, seção 15): tabelas, modelos, aplicar no boot, plugins do Hub, API e CLI. **Parte 2 no servidor feita** (2026-11-13, seção 17): desvio, "Salvar no perfil", aplicar, e o perfil no cliente anexado. Falta a tela (fatia V8 da v7) |
-| F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle. **Feita no servidor e no agent** (2026-11-13, seção 16); falta conferir num worker de verdade. As rotinas recorrentes vieram em seguida (seção 16.4), sem o loadout; a tela, na fatia V6 da web v7 |
-| F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle, gielinor. **Servidor feito** (2026-11-13, seção 18): "cabe mais N" pela quota, CPU e RAM por worker, login recusado na sessão; a tela veio na fatia V9 da web v7. **Reinício na versão nova feito** (2026-11-13, decisão do dono; seções 7.2 e 18.4): o worker desatualizado se reinicia sozinho na próxima pausa (sem run, sem VNC, deslogado ou no break), auditado como `reconciler`; falta conferir num worker de verdade |
+| F5 | Perfis no Postgres: tabelas da seção 4.3, aplicar no boot, plugins do Hub do perfil, desvio e "Salvar no perfil", modelos | uma segunda conta sobe com o mesmo modelo e fica com os mesmos plugins e configurações | chronicle (com o export dos valores no Chronicle Link); seções 15 e 17 |
+| F6 | Rotinas no servidor: seção 4.4, gatilhos e histórico saindo dos arquivos, auditoria das ações do executor | o gatilho do gato sobrevive a um restart do pod; o histórico aparece no banco | chronicle; seções 16 e 16.4 |
+| F7 | Capacidade e métricas: "cabe mais N", CPU e RAM por worker, aviso de sessão expirando, reinício na versão nova | por entrega | chronicle, gielinor; seções 18 e 18.4 |
+
+O que falta conferir de cada fase fica na FEL-52.
 
 Antes de cada fase com tela (F1, F2, F5, F6), o desenho entra no canvas e o dono aprova (regra 11).
 Desde 2026-11-12 as telas destas fases são as da v7 (canvas, página 8; `docs/ui/decisoes-canvas.md`,
 seção 7; decisão 36 do doc 01): a lista de workers é a Frota, os perfis da F5 aparecem em Plugins, as
 rotinas da F6 em Rotinas, na Fila e no Histórico, e a capacidade da F7 no resumo da Frota. A página 7
 fica como histórico.
-Desde a parte 1 da F5, a configuração dos plugins que está no perfil volta a cada boot; o que foi
-mudado direto no RuneLite pelo VNC e não entrou no perfil ainda se perde (é o desvio da parte 2).
+Desde a parte 1 da F5, a configuração dos plugins que está no perfil volta a cada boot. O que foi
+mudado direto no RuneLite pelo VNC e não entrou no perfil aparece como desvio (seção 17).
 
 ## 11. O que fica para a revisão de rotas e objetivos
 
@@ -704,34 +706,26 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
   - o restart do container refez o bootstrap e revogou o token anterior;
   - o SIGTERM saiu do jogo e parou o cliente.
 
-### 14.3 Não conferido e pendente
+### 14.3 Limitações e o que mudou depois
 
-- **A tela de login de verdade.** O sandbox recusa a porta 43594 da Jagex e intercepta o TLS.
-  Conferida no saradomin no mesmo dia (seção 14.4).
+O que falta conferir num worker de verdade fica na FEL-52.
+
+- **A tela de login de verdade** não roda no sandbox, que recusa a porta 43594 da Jagex e intercepta o
+  TLS. Foi conferida no saradomin (seção 14.4).
 - **O reconciliador contra o k3s de verdade:** pods reais, o token projetado e a TokenReview foram
-  conferidos no saradomin (seção 14.4). Falta ver o "não cabe" da quota e o que a NetworkPolicy recusa.
-- **O tour "Welcome to Microbot"** aparecia a cada boot, porque a home do pod é nova. Resolvido na
-  seção 15: o `mb-client --headless` passa `-Dmicrobot.tour=false`.
+  conferidos no saradomin (seção 14.4).
+- **O tour "Welcome to Microbot"** aparecia a cada boot, porque a home do pod é nova. O
+  `mb-client --headless` passa `-Dmicrobot.tour=false` (seção 15).
 - **`preferences.dat`** fica dentro do `jagexcache` compartilhado. São preferências do jogo e podem
   lembrar o nome do login antigo, que não é o da Jagex Account. Se incomodar, o PVC monta só os
   `main_file_cache.*` por `subPath`.
-- **`Hello.Bridge` fica vazio:** o hello sai antes de o cliente (e a ponte) subir no worker. Resolvido
-  em 2026-11-13 pelo `status`: a ponte ganhou `GET /bridge/version` (Chronicle Link 1.12.0) e o
-  agent lê a versão a cada `status` com o cliente rodando, no campo `bridge` (vazio sem ponte ou com
-  plugin anterior; doc 06, adendo de 2026-11-13). Com o repositório único, o plugin e o agent do
-  worker saem do mesmo commit; só o zaros pode ficar com um Chronicle Link mais velho que o agent, e
-  agora isso aparece no `status`.
-- A rota `/api/workers` entrou no teste de contrato (`TestContractPostgres`, 2026-11-12): um worker
-  rodando, um parado por erro numa imagem velha e um sem sessão, mais um agent anexado.
-- **Para ligar no saradomin, com o dono:**
-  1. Fazer o merge do gielinor antes do chronicle: o app precisa da SA.
-  2. Pôr o `CHRONICLE_VAULT_KEY` no SOPS.
-  3. Criar as roles `microbot:control` e `microbot:agent` no Zitadel.
-  4. Publicar a base do worker. Feito então com a `microbot-worker-base` e o `just worker-base-bump`;
-     hoje o CI publica a `chronicle-worker-base` na `main` quando ela falta (seção 7.2).
-  5. Deixar os pacotes do GHCR públicos.
-  6. `WORKERS=on` no overlay.
-  7. `accounts connect` no zaros e o primeiro Iniciar.
+- **`Hello.Bridge` fica vazio:** o hello sai antes de o cliente (e a ponte) subir no worker. Desde
+  2026-11-13 a ponte tem `GET /bridge/version` (Chronicle Link 1.12.0), e o agent lê a versão a cada
+  `status` com o cliente rodando, no campo `bridge` (vazio sem ponte ou com plugin anterior; doc 06,
+  adendo de 2026-11-13). Com o repositório único, o plugin e o agent do worker saem do mesmo commit;
+  só o zaros pode ficar com um Chronicle Link mais velho que o agent, e isso aparece no `status`.
+- A rota `/api/workers` está no teste de contrato (`TestContractPostgres`): um worker rodando, um
+  parado por erro numa imagem velha e um sem sessão, mais um agent anexado.
 
 ### 14.4 Primeiro worker no saradomin (2026-11-12)
 
@@ -843,15 +837,10 @@ no próximo Iniciar ou Reiniciar.
   religar mantém o erro).
 - `goose up/down/up` da 0013 e `just dbml`.
 
-### 15.3 Não conferido e pendente
+### 15.3 Pendências
 
-- **No jogo:** nada desta parte rodou ainda num worker de verdade. Conferir com o dono: um perfil
-  com o Blackjacker e a configuração dele, Reiniciar o worker e ver a configuração voltar e o tour
-  não aparecer.
-- **Parte 2:** a tela (fatia V8 da web v7, Plugins da frota), o desvio (o Chronicle Link exportar
-  os valores) e o "Salvar no perfil" (W9). O que o `V7Plugins1440` não mostrar disso vai para o
-  canvas antes (regra 11). A versão da ponte no `status` saiu antes, em 2026-11-13 (seção 14.3).
-- **Anexado (zaros):** o perfil ainda não se aplica; o zaros segue com a configuração no disco.
+O que falta conferir num worker de verdade fica na FEL-52. O desvio, o "Salvar no perfil" e o perfil no
+cliente anexado vieram na parte 2 (seção 17).
 
 ### 15.4 Plugins ligados voltam depois de um pod novo (2026-11-13)
 
@@ -892,8 +881,8 @@ essa opção.
   conta com push nos últimos 5 minutos (seção 6.2); se houver, não entra e o motivo vai para o
   `last_error`. Uma falha também vai para `last_error` e para `last_login_result`, sem nova tentativa.
 - **Ligar e desligar:** `PUT /api/workers/auto-login?account=` com `{"enabled": bool}` (auditado) e
-  `chronicle workers auto-login on|off`. A tela ainda não tem o interruptor: o canvas não o desenha
-  (regra 11), então fica para quando o design o incluir.
+  `chronicle workers auto-login on|off`. A tela ainda não tem o interruptor, porque o canvas não o
+  desenha (regra 11; FEL-119).
 - **Limite:** se o dono desloga pela tela do cliente (VNC), o servidor não sabe; o pod seguinte entra
   de novo. Para evitar, deslogue pelo painel.
 
@@ -974,13 +963,10 @@ no agent (doc 08, R1). Sem tela nova: a web lê as mesmas rotas e os mesmos form
   respondendo pelos arquivos dele.
 - `goose up/down/up` da 0014 e `just dbml`.
 
-### 16.3 Não conferido e pendente
+### 16.3 Pendências
 
-- **Num worker de verdade:** ligar o gatilho do gato, Reiniciar o pod e vê-lo voltar.
-- **O agent do zaros** só passa a usar isto com o `chronicle` atualizado lá (nix-config). Até lá ele
-  segue com os arquivos, e a importação acontece na primeira conexão do binário novo.
-- **Rotinas recorrentes:** feitas logo depois, na seção 16.4. A tela da v7 (Rotinas e a
-  Fila da Visão geral) veio na fatia V6 (`docs/ui/decisoes-canvas.md`, seção 7.13).
+O que falta conferir num worker de verdade fica na FEL-52. O agent do zaros importa os arquivos antigos
+de gatilhos e de histórico na primeira conexão de um `chronicle` com a F6.
 
 ### 16.4 Rotinas recorrentes (2026-11-13)
 
@@ -1042,8 +1028,7 @@ rotina que vence espera o break do Break Handler (doc 08, "A troca").
   um gatilho e uma recorrente no banco) e o DBML regenerado. A nova tentativa (2026-11-14): o
   `prevRun` lido no Postgres 17, e as rotas com um agent de antes dela (declara `recurring_get`,
   sem `recurring_retry`), que recebe a rotina com o `lastRun` e sem o `prevRun`.
-- **Não conferido:** nada no jogo nem num worker de verdade. Também faltam a tela (desenhar no
-  canvas antes) e a imagem nova do worker no saradomin.
+- **Não conferido** no jogo nem num worker de verdade: FEL-52.
 
 ## 17. F5, parte 2: desvio e "Salvar no perfil" (2026-11-13)
 
@@ -1083,13 +1068,12 @@ com o agent do zaros que ainda não foi atualizado.
   zera depois), chave fora do perfil recusada, sem agent dá 503, e o "Iniciar" de um anexado
   aplicando o perfil.
 
-### 17.3 Não conferido e pendente
+### 17.3 Limitações
 
-- **Num cliente de verdade:** mudar uma opção pelo VNC, ver o desvio, salvar e descartar.
 - **O que muda no RuneLite fora do perfil** não aparece: o desvio só olha as chaves que o perfil
   declara. Para ver tudo, o Chronicle Link teria de exportar todos os valores que não são segredo
-  (seção 4.3), o que fica para quando a tela pedir.
-- **A tela:** a fatia V8.
+  (seção 4.3).
+- O que falta conferir num cliente de verdade fica na FEL-52.
 
 ## 18. F7: capacidade e métricas (2026-11-13)
 
@@ -1145,17 +1129,15 @@ saradomin", CPU e RAM, "Renovar sessão") é da fatia da Frota.
 - As rotas: uso e capacidade na lista, nada com `WORKERS=off`; o login gravado (401 grava, 409 não,
   anexado não). `login_failed` no Postgres 17. O contrato `workers` regenerado e o `pnpm check`.
 
-### 18.3 Não conferido e pendente
+### 18.3 Limitações
 
-- **No cluster:** depende do merge do gielinor #16 e de um deploy. Conferir no saradomin a
-  `capacity.fits` da `/api/workers` (hoje daria 2) e o uso contra o `kubectl top pod -n chronicle`.
-- **O que uma sessão da Jagex expirada dá no login** nunca foi visto. Se não for um 401 do Agent
-  Server, o `login_failed` não acende; se for um login que só não termina, o motivo é "Login timed
-  out after 60s".
+O que falta conferir no cluster fica na FEL-52.
+
+- **Uma sessão da Jagex expirada** nunca foi vista no login. Se ela não der um 401 do Agent Server, o
+  `login_failed` não acende; se der um login que só não termina, o motivo é "Login timed out after
+  60s".
 - Logins por outros caminhos (troca de mundo, rotinas, a volta do jogo depois de uma queda) não
   gravam o resultado.
-- **Reinício na versão nova:** estava pendente da decisão do dono; decidido e feito em 2026-11-13
-  (seções 7.2 e 18.4).
 - **CPU e RAM do nó** (o "saradomin · CPU 3,1 / 4" do canvas) pediriam permissão de cluster em
   `nodes`. A web pode somar o uso dos workers e mostrar o teto da quota.
 
@@ -1212,13 +1194,8 @@ nova, mas só na pausa. A regra, o que nunca reinicia e a auditoria estão na se
 - `SetRunningImage` e a origem `server` no Postgres 17; a migração 0016 com up, down e up.
 - `go test ./...`, `golangci-lint`, `pnpm check`, `pnpm lint`, `pnpm test` e `pnpm build`.
 
-**Não conferido e pendente:**
+**Limitações.** O que falta conferir num worker de verdade fica na FEL-52.
 
-- **Num worker de verdade no saradomin:**
-  - um deploy com imagem nova e o worker reiniciando sozinho deslogado;
-  - um break de verdade do Break Handler (o `/bridge/break` nunca foi visto numa pausa real,
-    doc 01);
-  - um VNC aberto segurando o reinício.
 - **O worker volta na tela de login** (W3): reiniciado no break, não volta ao jogo quando o break
   acaba. O dono aceitou isso em 2026-11-13: acontece no máximo uma vez por imagem nova, e sem o break
   um worker que joga direto quase nunca atualizaria sozinho. O micro break do antiban, com o
@@ -1263,4 +1240,4 @@ precisa de uma imagem com o Chronicle Link 1.17 e de um servidor com esta mudan�
 **Conferido:** testes do agent (`TestBootstrapWritesTheBankPin`, sem PIN, PIN inválido, ponte que não
 responde), das rotas (`TestBankPinRoutes`), do Postgres (`TestBankPin`: selado, mantido por um
 connect novo, apagado, último login mantido) e do Chronicle Link (`BankPinBridgeTest`).
-**Não conferido:** num worker de verdade, o PIN digitado pelo `Rs2Bank` ao abrir o banco.
+**Não conferido** num worker de verdade, o PIN digitado pelo `Rs2Bank` ao abrir o banco: FEL-52.

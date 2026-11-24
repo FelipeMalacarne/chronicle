@@ -790,7 +790,8 @@ Claude Code, fora do MCP; o relatório conta só as respostas registradas.
 
 ### 9.2 Em aberto (dono)
 
-Nenhuma. O planejamento do modelo está fechado; a execução segue o doc 04, seção 9.
+Nenhuma. O planejamento do modelo está fechado; o que falta construir fica no Linear, no projeto
+Chronicle (<https://linear.app/felipemalacarne/project/chronicle-1f382104f1b7>).
 
 ### 9.3 Decisões da revisão crítica (2026-11-04)
 
@@ -809,6 +810,7 @@ Nenhuma. O planejamento do modelo está fechado; a execução segue o doc 04, se
 
 ## 10. Sequência
 
-A sequência do projeto, com os critérios de "pronto quando" de cada item, está só no doc 04, seção 9.
-Os itens deste modelo são o 2 (schema), o 3 (dados e catálogos), o 4 (ferramental de extração), o 5
-(piloto), o 6 (extração completa), o 7 (contrato com `data.quest`) e o 8 (progresso sobre objetivos).
+O roadmap fica no Linear, no projeto Chronicle (<https://linear.app/felipemalacarne/project/chronicle-1f382104f1b7>). Na numeração
+histórica da sequência (doc 04, seção 9), os itens deste modelo são o 2 (schema), o 3 (dados e
+catálogos), o 4 (ferramental de extração), o 5 (piloto), o 6 (extração completa), o 7 (contrato com
+`data.quest`) e o 8 (progresso sobre objetivos).

@@ -109,6 +109,25 @@ func TestSyncHiscoresMinutes(t *testing.T) {
 	}
 }
 
+func TestSyncPricesMinutes(t *testing.T) {
+	for _, tc := range []struct {
+		raw     string
+		want    int
+		wantErr bool
+	}{
+		{raw: "", want: 60},
+		{raw: "0", want: 0},
+		{raw: "15", want: 15},
+		{raw: "-1", wantErr: true},
+		{raw: "hourly", wantErr: true},
+	} {
+		c, err := FromLookup(lookup(map[string]string{"SYNC_PRICES_MINUTES": tc.raw}))
+		if (err != nil) != tc.wantErr || (!tc.wantErr && c.SyncPricesMinutes != tc.want) {
+			t.Errorf("%q = %d, %v", tc.raw, c.SyncPricesMinutes, err)
+		}
+	}
+}
+
 // The Microbot agent needs no token in dev; in oidc its machine-user token is
 // verified against the project id.
 func TestMicrobotControl(t *testing.T) {

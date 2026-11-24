@@ -16,6 +16,8 @@ import net.runelite.api.Player;
 import net.runelite.api.Quest;
 import net.runelite.api.Skill;
 import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.gameval.VarClientID;
+import net.runelite.api.gameval.VarPlayerID;
 import net.runelite.api.gameval.VarbitID;
 import net.runelite.client.config.RuneScapeProfileType;
 import net.runelite.client.plugins.microbot.util.bank.Rs2Bank;
@@ -53,6 +55,8 @@ final class StateCollector
 	private Instant bankEventAt;
 	/** Game ticks since login, a hop or a reconnect, capped at {@link #SETTLE_TICKS}. */
 	private int ticksLoggedIn;
+	/** Game ticks logged in, capped at {@link MembershipReading#SETTLE_TICKS}; the membership waits for it. */
+	private int membershipTicks;
 	/** Last real level seen per skill in this epoch, 0 while unknown. */
 	private final Map<Skill, Integer> realLevels = new EnumMap<>(Skill.class);
 
@@ -67,6 +71,7 @@ final class StateCollector
 		liveEpoch = "session-" + UUID.randomUUID();
 		bankEventAt = null;
 		ticksLoggedIn = 0;
+		membershipTicks = 0;
 		realLevels.clear();
 		quests.reset();
 		bank.reset();
@@ -94,6 +99,10 @@ final class StateCollector
 		{
 			// the tick after the load, as ChatCommandsPlugin: the title is set by then
 			collectionLog.onAdventureLogOwner(CollectionLogReader.readAdventureLogOwner(client));
+		}
+		if (membershipTicks < MembershipReading.SETTLE_TICKS)
+		{
+			membershipTicks++;
 		}
 		if (ticksLoggedIn < SETTLE_TICKS)
 		{
@@ -129,6 +138,7 @@ final class StateCollector
 		if (state != GameState.LOGGED_IN && state != GameState.LOADING)
 		{
 			ticksLoggedIn = 0;
+			membershipTicks = 0;
 		}
 		if (state == GameState.LOADING || state == GameState.HOPPING)
 		{
@@ -241,7 +251,11 @@ final class StateCollector
 		return new PlayerSnapshot(username, profile(RuneScapeProfileType.getCurrent(client)),
 			accountType(client.getVarbitValue(VarbitID.IRONMAN)), manifest.manifestVersion,
 			varb, varp, level, xp, boosted, quest, timers, position, pages, containers)
-			.withMinigame(minigame.forIngest(manifest));
+			.withMinigame(minigame.forIngest(manifest))
+			.withMembership(manifest.membershipEnabled()
+				? MembershipReading.read(client.getVarpValue(VarPlayerID.ACCOUNT_CREDIT),
+					client.getVarcIntValue(VarClientID.PLAYERMEMBER), membershipTicks, true)
+				: null);
 	}
 
 	private ContainerSnapshot captureBank(boolean allowed, List<Integer> only, Instant now)

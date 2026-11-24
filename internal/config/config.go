@@ -98,6 +98,11 @@ type Config struct {
 	// Env: SYNC_HISCORES_MINUTES. Default 30.
 	SyncHiscoresMinutes int
 
+	// SyncPricesMinutes is the cadence of the Grand Exchange prices refresh
+	// from the OSRS Wiki real-time prices API (docs/12 section 6); 0 disables
+	// it. Env: SYNC_PRICES_MINUTES. Default 60.
+	SyncPricesMinutes int
+
 	// MicrobotControl turns on the Microbot control module (docs/08): the
 	// agent link and every /api/microbot route. Off by default; with it off
 	// the planner behaves exactly as without the module.
@@ -133,6 +138,7 @@ const (
 	DefaultLogLevel   = "info"
 
 	DefaultSyncHiscoresMinutes = 30
+	DefaultSyncPricesMinutes   = 60
 )
 
 // Auth modes accepted in AUTH_MODE.
@@ -175,6 +181,11 @@ func FromLookup(lookup func(string) (string, bool)) (Config, error) {
 		return c, fmt.Errorf("config: SYNC_HISCORES_MINUTES must be a whole number of minutes, 0 or more")
 	}
 	c.SyncHiscoresMinutes = minutes
+	minutes, err = strconv.Atoi(get("SYNC_PRICES_MINUTES", strconv.Itoa(DefaultSyncPricesMinutes)))
+	if err != nil || minutes < 0 {
+		return c, fmt.Errorf("config: SYNC_PRICES_MINUTES must be a whole number of minutes, 0 or more")
+	}
+	c.SyncPricesMinutes = minutes
 	switch strings.ToLower(get("MICROBOT_CONTROL", "off")) {
 	case "on", "true", "1":
 		c.MicrobotControl = true

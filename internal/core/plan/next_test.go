@@ -136,7 +136,7 @@ func TestNext(t *testing.T) {
 		{
 			name: "route: a travel already met is skipped (idempotence)",
 			plan: route, cursor: "a", pos: at(3188, 3220),
-			want: expect{status: StatusTask, item: "step:t::a", task: "step:t::a#1", typ: "talk", state: rules.Unknown, skipped: []string{"step:t::a#0"}, notExec: "só roda travel, bank, buy, train e quest", risks: []string{}},
+			want: expect{status: StatusTask, item: "step:t::a", task: "step:t::a#1", typ: "talk", state: rules.Unknown, skipped: []string{"step:t::a#0"}, notExec: "só roda travel, bank, buy, train, quest, ge_buy e ge_sell", risks: []string{}},
 		},
 		{
 			name: "route: away from the area the travel is unmet",
@@ -181,7 +181,7 @@ func TestNext(t *testing.T) {
 		{
 			name: "route: manual waits for the owner's mark",
 			plan: route, cursor: "d",
-			want: expect{status: StatusTask, task: "step:t::d#0", typ: "manual", state: rules.Unmet, notExec: "só roda travel, bank, buy, train e quest", risks: []string{}},
+			want: expect{status: StatusTask, task: "step:t::d#0", typ: "manual", state: rules.Unmet, notExec: "só roda travel, bank, buy, train, quest, ge_buy e ge_sell", risks: []string{}},
 		},
 		{
 			name: "route: the owner's mark meets the manual task",
@@ -366,7 +366,7 @@ func TestCheckItems(t *testing.T) {
 		{Kind: ItemRecipe, Recipe: key("item:1351x1")},
 		{Kind: ItemTask, Task: &content.Task{Type: content.TaskBuy, Shop: ref("shop:bobs_brilliant_axes"), Item: ref("item:1351"), Qty: 2}},
 	}
-	if msgs := CheckItems(ok, c, reg); len(msgs) > 0 {
+	if msgs := CheckItems(ok, content.ModeIronman, c, reg); len(msgs) > 0 {
 		t.Fatalf("valid items refused: %v", msgs)
 	}
 	for _, tc := range []struct {
@@ -384,12 +384,12 @@ func TestCheckItems(t *testing.T) {
 		{Item{Kind: ItemTask, Task: &content.Task{Type: content.TaskTalk, NPC: ref("npc:hans"), Until: &content.TaskUntil{State: content.UntilGoalMet}}}, "goal_met"},
 		{Item{Kind: "chapter"}, "unknown item kind"},
 	} {
-		msgs := CheckItems([]Item{tc.item}, c, reg)
+		msgs := CheckItems([]Item{tc.item}, content.ModeIronman, c, reg)
 		if len(msgs) == 0 || !strings.Contains(strings.Join(msgs, "; "), tc.want) {
 			t.Errorf("%+v: %v, want %q", tc.item, msgs, tc.want)
 		}
 	}
-	if msgs := CheckItems(make([]Item, MaxItems+1), c, reg); len(msgs) != 1 {
+	if msgs := CheckItems(make([]Item, MaxItems+1), content.ModeIronman, c, reg); len(msgs) != 1 {
 		t.Errorf("too many items: %v", msgs)
 	}
 }

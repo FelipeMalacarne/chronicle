@@ -25,6 +25,10 @@ const (
 	// FacetMinigame: one fact per data.minigame key ("mta.telekinetic"),
 	// value {value}.
 	FacetMinigame = "minigame"
+	// FacetMembership: one fact, key MembershipKey, value {days, member}.
+	FacetMembership = "membership"
+	// MembershipKey is the key of the membership fact.
+	MembershipKey = "membership"
 )
 
 // CollectionLogPagePrefix starts the key of a collection log page fact.

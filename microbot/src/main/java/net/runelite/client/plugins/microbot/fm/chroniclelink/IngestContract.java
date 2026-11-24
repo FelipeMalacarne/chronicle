@@ -49,6 +49,8 @@ final class IngestContract
 		Boolean recording;
 		/** The server accepts {@code data.minigame} (planner 2026-11-16). */
 		Boolean minigame;
+		/** The server accepts {@code data.membership} (planner 2026-11-24). */
+		Boolean membership;
 		ItemSelection items;
 		@SerializedName("interval_seconds")
 		Integer intervalSeconds;
@@ -87,6 +89,11 @@ final class IngestContract
 		boolean minigameEnabled()
 		{
 			return minigame != null && minigame;
+		}
+
+		boolean membershipEnabled()
+		{
+			return membership != null && membership;
 		}
 
 		int intervalSecondsOrDefault()
@@ -166,6 +173,11 @@ final class IngestContract
 		 * value and a key absent stays.
 		 */
 		Map<String, Long> minigame;
+		/**
+		 * The days of membership left and whether the account is a member ({@link MembershipReading});
+		 * only when the manifest allows it and the login has settled. Replaces the planner's copy.
+		 */
+		Membership membership;
 		ItemContainers items;
 		/**
 		 * The demonstration events not acknowledged yet, oldest first; only with the owner's
@@ -256,6 +268,30 @@ final class IngestContract
 	}
 
 	/** A tile and the world. */
+	static final class Membership
+	{
+		int days;
+		boolean member;
+
+		Membership(int days, boolean member)
+		{
+			this.days = days;
+			this.member = member;
+		}
+
+		@Override
+		public boolean equals(Object o)
+		{
+			return o instanceof Membership && ((Membership) o).days == days && ((Membership) o).member == member;
+		}
+
+		@Override
+		public int hashCode()
+		{
+			return Objects.hash(days, member);
+		}
+	}
+
 	static final class Position
 	{
 		int world;

@@ -60,6 +60,7 @@ final class PushBuilder
 		data.position = current.position;
 		data.collectionLog = collectionLog(current.collectionLog, sentAt);
 		data.minigame = current.minigame == null || current.minigame.isEmpty() ? null : new TreeMap<>(current.minigame);
+		data.membership = current.membership;
 		data.recording = current.recording;
 		data.items = new IngestContract.ItemContainers();
 		data.items.bank = observation(current.container(ContainerKind.BANK), null, sentAt);
@@ -91,6 +92,10 @@ final class PushBuilder
 			: acked.minigame == null ? (current.minigame.isEmpty() ? null : new TreeMap<>(current.minigame))
 			: changed(acked.minigame, current.minigame);
 
+		// Membership is one value: a delta carries it when it is new or changed (once a day, or after the settle).
+		data.membership = current.membership == null || current.membership.equals(acked.membership)
+			? null : current.membership;
+
 		// The pending demonstration events go out as they are: the recorder drops the acknowledged.
 		data.recording = current.recording;
 
@@ -104,7 +109,7 @@ final class PushBuilder
 			|| !Objects.equals(acked.accountType, current.accountType);
 		boolean other = data.varb != null || data.varp != null || data.level != null || data.xp != null
 			|| data.boosted != null || data.quest != null || data.timers != null || data.collectionLog != null
-			|| data.minigame != null || data.items != null || data.recording != null || headerChanged;
+			|| data.minigame != null || data.membership != null || data.items != null || data.recording != null || headerChanged;
 		// The position rides along any push once it changed; alone it waits for a real move.
 		IngestContract.Position pos = current.position;
 		if (pos != null && pos.movedFrom(acked.position, other ? 1 : POSITION_TILES))

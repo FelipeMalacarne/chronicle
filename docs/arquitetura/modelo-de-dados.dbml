@@ -237,6 +237,29 @@ Table ingest_container_freshness {
   '''
 }
 
+Table item_prices {
+  item_id integer [pk]
+  high bigint
+  high_at timestamptz
+  low bigint
+  low_at timestamptz
+  buy_limit integer
+  members boolean
+  source text [not null]
+  fetched_at timestamptz [not null]
+
+  Note: '''
+  item_prices_buy_limit_check: CHECK ((buy_limit > 0))
+  item_prices_check: CHECK (((high IS NULL) = (high_at IS NULL)))
+  item_prices_check1: CHECK (((low IS NULL) = (low_at IS NULL)))
+  item_prices_check2: CHECK (((high IS NOT NULL) OR (low IS NOT NULL)))
+  item_prices_high_check: CHECK ((high > 0))
+  item_prices_item_id_check: CHECK ((item_id > 0))
+  item_prices_low_check: CHECK ((low > 0))
+  item_prices_source_check: CHECK ((source = 'wiki'::text))
+  '''
+}
+
 Table loadout_marks {
   account_id text [not null]
   guide_id text [not null, note: 'guide ids are content ids, not FKs']
@@ -386,7 +409,7 @@ Table observations {
 
   Note: '''
   Last observation of each source per fact; player_state is its merge (internal/core/facts).
-  observations_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text])))
+  observations_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text, 'membership'::text])))
   observations_source_check: CHECK ((source = ANY (ARRAY['hiscores'::text, 'wom'::text, 'wikisync'::text, 'plugin'::text, 'import'::text])))
   '''
 }
@@ -454,7 +477,7 @@ Table player_state {
 
   Note: '''
   Projection: the merge of observations per fact (internal/core/facts.Merge). Written only by the projection.
-  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text])))
+  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text, 'membership'::text])))
   '''
 }
 
@@ -642,7 +665,7 @@ Table snapshot_facts {
 
   Note: '''
   Normalized facts of one snapshot, with the shape of player_state (history for charts and diffs).
-  snapshot_facts_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text])))
+  snapshot_facts_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text, 'membership'::text])))
   '''
 }
 
@@ -964,6 +987,7 @@ TableGroup controle_microbot {
   run_events
 }
 
+// Tabelas sem grupo (adicione em GROUPS no gerador): item_prices
 // Views (fora do DBML): v_current_quests, v_current_skills
 
 // ===== PLANEJADO (doc 09) =====

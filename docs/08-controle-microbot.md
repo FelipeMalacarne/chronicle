@@ -417,7 +417,8 @@ aparelho do HWID agent (`~/.runelite/spoofed-*.properties`); quem move isso é o
   `bank_open`, `bank_close`, `bank_deposit`, `bank_withdraw`, `npc_interact`, `object_interact`,
   `ground_pickup`, `dialogue_continue` e `dialogue_select`. Nome ou id (nunca os dois), ação como o
   menu do jogo mostra, uma linha imprimível; coordenadas no intervalo do mundo. Fora: teclado e
-  widgets crus e o Grand Exchange (conta ironman).
+  widgets crus. O Grand Exchange não é ação avulsa: só as tarefas tipadas `ge_buy` e `ge_sell` de
+  uma conta `regular` chegam ao `/ge` do Agent Server, pelo `task_run` (doc 12, seção 6).
 - Web, no Cockpit com a conta logada: inventário em grade e equipamento no boneco (células e sprites
   da Conta), o painel Ação (clicar num item, NPC, objeto ou item do chão mostra o que dá para fazer:
   as ações do item, dropar e depositar com segundo clique, andar até, ações comuns do NPC ou objeto

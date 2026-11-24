@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
+	"github.com/FelipeMalacarne/chronicle/internal/core/ge"
 	"github.com/FelipeMalacarne/chronicle/internal/core/plan"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
@@ -25,7 +27,15 @@ import (
 // quest are delegated (to a plugin of the client, to the client's Quest
 // Helper): the server asks the account's agent first whether its client can
 // (the plugin installed; the Quest Helper on, idle and listing the quest)
-// and refuses with 409, before anything reaches the game.
+// and refuses with 409, before anything reaches the game. A ge_buy or
+// ge_sell (a regular account only, docs/12 section 6) is priced from the
+// stored wiki price of its item; the proof of a sale adds the coins the run
+// carries (rules.SaleProven).
+
+// PriceStore reads stored Grand Exchange prices (internal/store/prices).
+type PriceStore interface {
+	Get(ctx context.Context, ids ...int) (map[int]ge.Price, error)
+}
 
 // taskRequest is POST /api/microbot/task.
 type taskRequest struct {
@@ -73,6 +83,20 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 	case next.Task.Supervised && !req.Supervised:
 		refuse("HCIM com risco de morte: a tarefa só roda com o dono olhando (supervised, E9)")
 		return
+	}
+	if next.Task.Type == content.TaskGEBuy || next.Task.Type == content.TaskGESell {
+		id := 0
+		if it := next.Task.Task.Item; it != nil {
+			id, _ = it.Int()
+		}
+		if s.opts.Prices == nil || id < 1 {
+			refuse("o servidor não tem preços do Grand Exchange")
+			return
+		}
+		if in.Prices, err = s.opts.Prices.Get(r.Context(), id); err != nil {
+			writeError(w, http.StatusInternalServerError, "reading the item's price")
+			return
+		}
 	}
 	spec, view, err := plan.Resolve(in, next.Task.Key)
 	if err != nil {
@@ -277,6 +301,16 @@ func (s *Server) handleTaskStatus(w http.ResponseWriter, r *http.Request) {
 			break
 		}
 		out.Proof, out.Proven = &v, v.State == rules.Met
+		if st.Run.Task.Type == content.TaskGESell && out.Proven {
+			// The item left the inventory; the sale is proven when the
+			// coins it paid are there too.
+			id, _ := v.Task.Item.Int()
+			verdict, why := rules.SaleProven(in.Holdings, in.Registry, id, st.Run.Task.CoinsAtLeast)
+			out.Proven = verdict == rules.Met
+			if !out.Proven {
+				out.Reason = why
+			}
+		}
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, out)

@@ -19,9 +19,9 @@ documento onde houver conflito.
 | Estado do jogador | Snapshots brutos append-only + tabela `player_state` mesclada (uma linha por fato) que alimenta o motor. |
 | Motor | Função pura `(regras, PlayerState) → {veredito, evidência}` em `internal/core/rules`; status do passo derivado dos objetivos em `internal/core/progress`; reavaliação completa a cada snapshot. |
 | Grafo | Calculado no servidor em memória a partir de `content/` e dos catálogos (`progress.BuildGraph`), por foco; renderizado em colunas de cartões (1440) e árvore (640), em HTML, como o canvas v6 desenhou (seção 5). Nós são chaves de objetivo. |
-| Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06), com painel da rota e marcas a partir da 1.2.0. Hoje autentica com token `ipl_` por cliente; planejado (decisão 28 do doc 01): sem token em `AUTH_MODE=dev` (só de `127.0.0.1`) e device flow do Zitadel em `oidc`. |
+| Plugin | Protocolo clone do WikiSync: `GET /api/ingest/manifest` + `POST /api/ingest` com deltas; contrato v1 na seção 6.4. Plugin somente leitura no Microbot (doc 06), com painel da rota e marcas a partir da 1.2.0. Sem token em `AUTH_MODE=dev` (só de `127.0.0.1`) e device flow do Zitadel em `oidc` (decisão 28 do doc 01). |
 | Execução | Local-first na estação `zaros` com `AUTH_MODE=dev`; depois a mesma imagem no `saradomin` com Postgres e Zitadel existentes (seção 8). |
-| Auth | `AUTH_MODE=dev` (usuário fixo) no zaros; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs` no Postgres) feito para a web, falta o deploy no saradomin (seção 8). Plugin: hoje token `ipl_` por conta; planejado sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). CLI e `chronicle mcp`: nada em dev, device flow do Zitadel e access token JWT como bearer em `oidc` (seção 2.5). |
+| Auth | `AUTH_MODE=dev` (usuário fixo) no zaros; **OIDC via Zitadel** (PKCE, `coreos/go-oidc`, sessão `alexedwards/scs` no Postgres) na web, no saradomin (seção 8). Plugin: sem token em dev e Device Authorization Grant do Zitadel em `oidc`, com roles do projeto no JWT (seção 2.5). CLI e `chronicle mcp`: nada em dev, device flow do Zitadel e access token JWT como bearer em `oidc` (seção 2.5). |
 
 ## 1. Stack
 
@@ -232,8 +232,8 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
     ficam com o dev.
   - `GET /api/me` (dev e oidc): `{auth_mode, user: {id, username, email, display_name, role}, roles,
     accounts}`.
-  - Falta: tela de login/logout no canvas (hoje não há botão "Sair"; o logout existe só na API) e as
-    páginas de erro do login, que são HTML mínimo fora do design system.
+  - O "sair" da sidebar chama o `/auth/logout`. As páginas de erro do login são HTML mínimo, fora do
+    design system.
 - **Clientes nativos** (CLI, `chronicle mcp`; o plugin no item 15), feito em 2026-11-08:
   - `GET /api/auth/client` (público, todo modo): `{auth_mode: "dev"}`, ou em oidc `{auth_mode:
     "oidc", issuer, client_id, scopes}`. Sem `OIDC_NATIVE_CLIENT_ID` vem sem `client_id`, e o servidor
@@ -1020,8 +1020,8 @@ o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis
 
 - **Local-first**: `docker compose` com Postgres e o binário (`compose.yaml`), ou o mesmo Postgres com
   `air` e `pnpm dev` no host (`just dev`). Acesso em `localhost:8080` (dev: `localhost:5173`);
-  celular pela rede local ou Tailscale. `AUTH_MODE=dev`. Plugin com `serverUrl=http://localhost:8080` e,
-  até a auth planejada do plugin (seção 2.5), token `ipl_` gerado localmente; depois, só a URL. `pg_dump` manual ou via `just`.
+  celular pela rede local ou Tailscale. `AUTH_MODE=dev`. Plugin só com `serverUrl=http://localhost:8080`, sem
+  token (seção 2.5). `pg_dump` manual ou via `just`.
 - **saradomin** (decisão de 2026-11-03; montagem de 2026-11-11): o cluster k3s de casa, com os manifests
   do cluster no repositório `gielinor`. `https://chronicle.saradomin.ftm.dev.br`, só pela tailnet
   (Ingress do Traefik com o certificado curinga); banco `chronicle` no CloudNativePG compartilhado
@@ -1035,192 +1035,46 @@ o deploy no `saradomin` fica para depois, com a mesma imagem e outras variáveis
   deploy. Passos no doc 07, seção 3.3.
 - Nada no código distingue os dois ambientes além da configuração (doc 07).
 
-## 9. Estado em 2026-11-12 e sequência vigente
+## 9. Roadmap e numeração da sequência
 
-Feito e na `main` (commits `990acd1` e `7a59256`; plugin em `FelipeMalacarne/microbot-plugins`, commit
-`68fc1c6`):
+Desde 2026-11-24, o roadmap, o estado e os próximos passos ficam no Linear, no projeto Chronicle
+(<https://linear.app/felipemalacarne/project/chronicle-1f382104f1b7>). Os docs guardam a arquitetura,
+as estruturas de dados e as decisões técnicas.
 
-| Peça | Onde | Verificação |
+A sequência de construção numerou as entregas de 1 a 21, e outros docs citam esses números ("item 7
+da sequência", "item 14 do doc 04, seção 9"). A tabela diz o que cada número entregou e onde está a
+arquitetura dele.
+
+| # | Entrega | Arquitetura |
 |---|---|---|
-| Multi-guia: Oziris + BRUHsailer como rotas independentes, ids escopados por guia | `internal/core/content`, `internal/importer/bruhsailer`, `content/guides/*`, migration 0003 | `content validate` (802 passos), testes de importação byte a byte |
-| Segmentos `bank_leg`/`sequence`, ações de banco e loadouts com proveniência | `internal/core/content/derive` | testes de tabela |
-| Registry de entidades e menções por passo | `internal/core/entities`, `content/reference`, `entities.report.json` | testes, relatório por guia |
-| Contrato de ingest v1, tokens com escopo, `GET /api/ingest/manifest`, `POST /api/ingest`, frescor por container | `internal/core/ingest`, `internal/store/ingest`, migration 0002 | testes de integração no Postgres 17 |
-| Readiness: `item_owned`, prontidão do trecho, rotas `/readiness` (só `AUTH_MODE=dev`) | `internal/core/rules/items.go`, `internal/core/planning`, seção 6.4.1 | testes de tabela, integração e teste ponta a ponta com binário real |
-| API por guia `/api/guides/{guide}/...` | `internal/httpapi` | testes HTTP |
-| Web `/plan` e `/compare` sobre a API real, card da perna de banco | `web/src/lib/planner`, `web/src/routes/{plan,compare}` | `pnpm test`, `pnpm check`, build, renderização headless |
-| Plugin Microbot Ironman Planner 1.0.0 (somente leitura) | `microbot-plugins`: `fm/ironmanplanner` | 36 testes JUnit; **nunca rodou no jogo** |
-| Objetivos no conteúdo: `entities.ObjectiveKey`, tipos `unlock`/`location`, `ItemRequirement` (`item_id`/`any_of`/`family`, `noted`), `entityRef`/`objectiveKey`/`graphRef` no schema, sidecars de anotação (`annotations.schema.json`) lidos, verificados e compostos pelo loader; `complete_when`/`prerequisites` viram objetivos no `content.Load` | `internal/core/entities/objective.go`, `internal/core/content/{objectives,annotations}.go`, `content/schema/` | testes de tabela (chaves, conversão das 269 regras, citação dobrada, hash, composição, rejeições); `content validate` |
-| Posse e readiness sobre as variantes de item | `rules.OwnsFamily`/`OwnsAnyOf`, `planning.evaluateItem` | testes de tabela |
-| Ferramental de extração: `chronicle content mcp` (stdio, offline) com `status`, `next_batch`, `resolve_entity`, `propose_entity`, `revise_entity`, `submit`, `record_decision`, `list_decisions`, `report`; registry relido quando o catálogo muda no disco; checagem de ordem com XP de recompensa de quest; `.mcp.json`; skill `annotate-guide@2`; o loader exige `confirmed_by: owner` em toda inferência e decisões citadas existentes | `internal/core/annotate`, `internal/mcp`, `cmd/chronicle/content_mcp.go`, `.claude/skills/annotate-guide` | testes de tabela (resolução de nomes, requisitos de item, checagens do submit, ordem da rota com XP de quest, ida e volta pelo loader, hash desatualizado, `propose_entity`, `revise_entity`, releitura do registry, contagens do relatório); lote de exemplo do Oziris 1.1 pelo stdio |
-| Catálogos gerados: todos os itens do jogo com página na wiki (14.870 ids), XP de recompensa de 167 quests, varbits de referência (48 diaries + quest points); `locations.json` (57 locais) e `unlocks.json` (Player-owned house) povoados pela extração | `tools/extract_wiki_items.py` → `data/wiki/items.json`; `data/wiki/scripts/build_quests.py` → `data/wiki/quests.json`; `internal/core/entities/catalogbuild` | `catalogbuild -update` sem rede; o catálogo contém os 856 ids do anterior com o mesmo nome; nenhum ref já resolvido nos guias mudou de id |
-| Anotações do Oziris 1.1: 286 passos com objetivos, itens, ações de banco e local verificados; 11 decisões gerais do dono | `content/guides/oziris-main/annotations/` | `content validate`; `annotations.report.json` (doc 09, seção 6.6) |
+| 1 | Revisão do modelo de domínio e decisões fechadas | doc 09, seções 9.1 e 9.3 |
+| 2 | Schema de objetivos (`entities.ObjectiveKey`, `ItemRequirement`, tipos `unlock` e `location`, `entityRef`) e sidecars de anotação compostos pelo loader | doc 09, seções 3 e 4.2 |
+| 3 | Catálogos gerados da wiki: itens, XP de recompensa de quest, varbits de referência, `locations.json` e `unlocks.json` | doc 09, seção 7 |
+| 4 | Ferramental de extração: `internal/core/annotate`, `chronicle content mcp` e a skill `annotate-guide` | doc 09, seções 6 e 6.8 |
+| 5 | Piloto da extração (Oziris 1.1 e BRUHsailer 1.1) | doc 09, seção 6.6 |
+| 6 | Extração completa dos dois guias e ids posicionais do BRUHsailer | doc 09, seção 6; `content/guides/*/annotations.report.json` |
+| 7 | Contrato v1 com `data.quest`, varbits de diary e varp 101 no manifest, `snapshot_facts` (migration 0005) e o plugin 1.1.0 | seção 6.4; doc 06, adendo de 2026-11-04 sobre o item 7 |
+| 8 | Progresso sobre objetivos: migration 0004, `internal/core/progress`, `internal/store/progress`, marcas, cursor e board | seção 4.3; doc 09, seção 5 |
+| 9 | Web sobre objetivos (Agora, Rotas, Rota, Comparar) e metas (F9, partes A e B) | seção 2.5; doc 03, F9 |
+| 10 | Hiscores: adapter, `sync_runs`, scheduler e `POST /api/sync` | seções 6.1 e 6.2 |
+| 11 | Sessão web OIDC, CLI e `chronicle mcp`, tela de conta, grafo por foco e as fases 1 a 3 do controle do Microbot | seções 2.2, 2.5 e 5; doc 08 |
+| 12 | Tempo real: hub em memória por conta e `GET /api/events` (SSE) | seção 6.6 |
+| 13 | Plugin 1.1.1: captura por evento, com debounce | doc 06, adendo de 2026-11-05 |
+| 14 | Painel da rota no plugin e auth de dev sem token (migration 0006, `internal/core/panel`) | seção 2.5; doc 06, adendos de 2026-11-05 |
+| 15 | Auth do plugin em `oidc` pelo device flow (Chronicle Link 1.9.0) | seção 2.5; doc 06, adendo de 2026-11-11 |
+| 16 | Plugin 1.2.x: combat achievements, collection log, posição e "Aqui perto" | seção 6.4; doc 06, adendos de 2026-11-10 e 2026-11-13 |
+| 17 | Fase 0 do doc 10: restrições e locks (0007), observações por fonte (0008), log de marcas e `guides` (0009), `chronicle progress check`, fixtures de contrato e `undo.ts` na web | doc 10, seções 4 a 6 e 12 |
+| 18 | Deploy no saradomin, com o Zitadel | seção 8; doc 07, seção 3.3 |
+| 19 | Workers do Microbot, fases F0 a F7 | doc 11 |
+| 20 | Web v7, Frota, em fatias de V1 a V10 | `docs/ui/decisoes-canvas.md`, seção 7 |
+| 21 | Fases 1 a 5 do doc 10: entidades do mundo, tarefas, receitas, gravação, planos, executor, e `train` e `quest` por delegação | doc 10, seções 7 a 11 |
 
-Progresso sobre objetivos (item 8, branch `feat/progresso`): migration 0004 (objetivos, marcas, eventos
-de status, cursor; derruba `step_progress`, `step_progress_events` e `v_step_board`),
-`internal/core/progress` (avaliação da chave, veredito travado, status, cascata, cursor; testes de
-tabela), `internal/store/progress` (reavaliação na transação do ingest com `steps_changed`, marcas,
-cursor, board, indexação de `content_versions`/`content_steps` e dos aliases de `step.replaces` no
-boot; teste de integração no Postgres 17) e as rotas dev do board, das marcas e do cursor. Contas de
-teste: `just account-create`/`account-guide`. Com o servidor do item 7, quest, diary e `qp` também saem de
-`unknown` quando o plugin manda os fatos; unlock (sem `proof` no catálogo) e CA continuam `unknown`.
+Dois fatos de arquitetura que só esta seção registrava:
 
-Web v4 (item 9, branch `feat/progresso`): Agora, Rotas e Rota no tema Pergaminho, sobre o progresso
-real; a API devolve por passo a referência do autor, a posição, os nomes dos refs e o "também em"; os
-ícones do jogo vêm de `tools/fetch_wiki_icons.py` para `web/static/icons` (desde a v6, todo item
-obtível do catálogo; o bundle da SPA leva só as faixas de id e o mapa completo fica em
-`data/wiki/icons.json`).
-
-Hiscores (item 10, branch `feat/progresso`): adapter puro testado com as amostras do doc 02, sync
-com `sync_runs`, snapshot, fatos e reavaliação numa transação, recuo exponencial e scheduler no `serve`.
-
-Metas (F9, parte A): fixar um objetivo do Mundo, veredito, onde cada rota o conclui e o painel no
-Agora. A parte B (plano da meta) usa os requisitos de quest que `content/reference/quests.json` passou
-a trazer: `requires` (chaves de objetivo das quests diretas `@finished`, dos níveis de skill com
-`boostable` e `during_quest`, e de `qp`) e `combat_level`, gerados por `catalogbuild` a partir de
-`quest_reqs`, `skill_reqs` e `quest_points_required` de `data/wiki/quests.json`; acesso por
-`entities.Registry.Quest(id).Requires`.
-
-Contrato com quests (item 7, parte do servidor, branch `feat/item7-contrato`): `data.quest` e
-`manifest.quests` no contrato v1 (opcionais, plugin 1.0.0 continua aceito); manifest com os 48 varbits de
-diary, o varp 101 e os `proof` de unlocks; migration 0005 (`snapshot_facts`, faceta `diary`, dados
-copiados, Down que restaura as tabelas tipadas); normalizador gravando `quest` (nome canônico pelo
-registry), `diary` e o histórico em `snapshot_facts`; motor avaliando `varbit`/`varp`, `qp>=N` pelo varp
-101 e unlock com `proof`. Verificação: testes de tabela (contrato, resolução dos 216 nomes do RuneLite,
-diary, varbit/varp, objetivos) e `TestQuestAndDiaryFactsPostgres` com o conteúdo real do Oziris
-(`quest:x_marks_the_spot@finished` e `diary:ardougne:easy@complete` saem de `unknown` com evidência);
-goose up/down/up com dados. Plugin 1.1.0 feito e em uso no zaros (2026-11-05; item 7 abaixo).
-
-Cursor e chaves de item (2026-11-04, na `main`): o cursor passa dos passos bloqueados (`requires` em
-`unmet` ou requisito de catálogo da quest que o passo conclui; board com `blocked_by` e `counts.blocked`;
-cadeado na Rota) e as chaves `item:family/<slug>xN` e `item:any(<id>x<n>|…)` são avaliadas; o Oziris
-1.3.65 (segundo axe) e 1.4.43 (graceful pela família) foram reanotados com elas (decisões 22 e 23 do
-doc 01).
-
-Tempo real (item 12, 2026-11-05): `GET /api/events` (SSE, só `AUTH_MODE=dev`), hub
-em memória por conta em `internal/events`, publicação depois do commit no ingest, no sync do hiscores
-e nas escritas do dono; na web, releitura silenciosa por etiqueta dos recursos abertos e o toast de
-detecção (seção 6.6). Verificação: testes do hub com `-race`, teste HTTP do stream, eventos nos testes
-de integração de ingest, sync e progresso, `node --test` do view-model e o stream passando pelo proxy
-do Vite. Conferido ao vivo com o plugin no zaros (2026-11-08).
-
-Sessão web por OIDC (parte web do item 11, 2026-11-05, branch `feat/oidc-web`): `/auth/login`,
-`/auth/callback`, `/auth/logout`, `GET /api/me`, sessão scs no `pgxstore`, política por `sub` ou role
-do projeto, CSRF por cabeçalho, rotas por conta liberadas em `oidc` só para as contas do usuário e o
-vínculo das contas de dev no primeiro login (seção 2.5). Verificação: provedor OIDC falso em processo
-(`internal/auth/authtest`) no fluxo completo login → callback → sessão → `/api/me` → rota da conta →
-SSE → logout, em memória e no Postgres; recusas (state, nonce, cookie ausente, sub e role, conta de
-outro usuário, CSRF, sessão revogada pela política); `internal/store/identity` em schema descartável.
-Falta o deploy no saradomin (doc 07, seção 3.3), a tela de login/sair no canvas e a auth do plugin
-(item 15).
-
-Painel da rota no plugin e auth de dev sem token (item 14, 2026-11-05, branches
-`feat/painel-plugin` e `feat/painel-rota` do plugin): migration 0006 (registro por instalação em
-`plugin_ingest_tokens`), credencial do plugin no servidor (token `ipl_` ou, só em dev e pelo
-loopback, `X-Ironman-Installation`/`X-Ironman-Account`; `ResolveDevAccount` em
-`internal/core/ingest`), escopo `marks:write`, `route` na resposta do ingest (`Plan.Route`), a
-janela da rota em `internal/core/panel` e as rotas `/api/plugin/...` reaproveitando `Mark` e
-`RestoreMarks` (seção 2.5); plugin 1.2.0 com o painel lateral e a credencial plugável (doc 06).
-Verificação: testes de tabela (conta de dev, janela, rótulos, `Plan.Route`), testes HTTP (loopback
-aceito em dev, peer remoto recusado mesmo com `X-Forwarded-For`, nada sem token fora de dev,
-token inalterado, `marks:write`), `TestDevInstallationPostgres` e a rota da resposta em
-`TestProgressPostgresLifecycle`, goose up/down/up da 0006 com dados, `just dbml`; no plugin, 92
-testes JUnit e o jar. Em uso no jogo com o plugin 1.2.1 (2026-11-08).
-
-Web v6 (2026-11-05, branch `claude/epic-hypatia-xujppt`): as telas seguem a página v6 do canvas
-"Chronicle — Telas" (docs/ui/decisoes-canvas.md, seção 6). Casca Chronicle com a sidebar A e a barra
-de topo no estreito; Agora (Oziris e BRUHsailer, 1440 e 640, fonte falhou, Fixar outro); Rotas com as
-abas Oziris · BRUHsailer · Comparar (a lista de Rotas saiu); Mundo › Entidades e Mundo › Metas; Conta
-sobre `GET /api/account/state`; primeiro acesso; painel de entidade sobre `GET /api/world/entity`.
-Componentes em `web/src/lib/v6`. Verificação: testes HTTP das duas rotas novas,
-`TestQuestAndDiaryFactsPostgres` com o estado da conta, `node --test` dos módulos puros (Agora, Rota,
-Conta) e capturas em 1440 e 640 contra o servidor real com um Postgres local.
-
-Integração da fase 0 com a web v6 (2026-11-06): a branch da fase 0 foi rebaseada sobre a v6 e ficou
-com as telas da v6. O Agora e a Rota da v6 passaram a usar `undo.ts`: board, escritas e desfazer
-presos à conta e à rota, uma escrita por vez, o desfazer entra na pilha só depois que a escrita deu
-certo e manda `revokes` com o comando que desfaz. A reavaliação passou a dar veredito também aos
-requisitos boostable do catálogo (nunca bloqueiam o cursor), para o "Requer" do painel de entidade não
-mostrá-los como "não sabemos". `/rotas` espera o resumo da conta antes de abrir a rota ativa.
-
-CLI e MCP da conta (item 11, 2026-11-08): `internal/client` (cliente tipado da API, `config.json` e
-`credentials.json`, device flow e renovação do token), os comandos da seção 2.2 e o `chronicle mcp`;
-no servidor, `GET /api/auth/client`, `GET /api/route` e o bearer JWT da aplicação nativa nas rotas
-por conta em oidc (`OIDC_NATIVE_CLIENT_ID`; seção 2.5). Verificação: o device flow completo contra o
-issuer falso (`authtest`: device authorization, polling, refresh rotacionado gravado), testes HTTP do
-bearer na memória e no Postgres (antes do primeiro login web, conta de outro usuário, assinatura
-adulterada, vencido, outra audiência, sem role, token ruim com cookie válido, login desligado),
-testes da CLI contra uma API falsa (marcas enviadas, atribuição no `now`, erro de login) e `login`,
-`accounts`, `now`, `plan`, `state` e o MCP por stdio contra o `just dev`. Falta conferir contra o
-Zitadel real, junto do deploy (item 18).
-
-Grafo por foco (item 11, 2026-11-08): Mundo › Grafo pelos artboards V6Grafo1440 (colunas por
-profundidade, filtros, legenda, caminho crítico) e V6Grafo640 (árvore com recuo), "Focar aqui" no
-painel de entidade, `GET /api/graph` e `progress.BuildGraph` (seção 5). Verificação: testes de tabela
-do core com o catálogo real (colunas, feitos à parte, níveis agrupados, caminho crítico, destrava,
-profundidade fora do intervalo, quest sem requisitos disponível), teste HTTP da rota, `node --test` do
-view-model (`web/src/lib/progress/grafo.ts`) e capturas em 1440 e 640 contra o `just dev` com o
-Legends' Quest e o Heroes' Quest da conta do dono.
-
-Controle do Microbot, fase 1 (item 11, 2026-11-08; doc 08, seção "Estado"): `internal/microbot`
-(cliente do Agent Server), `internal/agent` (lista fechada, link por websocket de saída com token de
-máquina), `chronicle agent` (`just agent`), as rotas `/api/microbot/*` atrás de `MICROBOT_CONTROL=on`,
-auditoria em `microbot_audit` (migration 0010) e Automação › Cockpit na web (V6Microbot1440/640).
-Verificação: testes do cliente contra um Agent Server falso no socket Unix, do link de ponta a ponta
-com `-race`, das rotas (token do agent, auditoria, sem agent, papel em oidc, só loopback em dev,
-módulo desligado), `node --test` do view-model, e no zaros o agent subindo e parando o cliente
-headless pelo web.
-
-Ainda não existe: sessão (V6Sessao1440), recorrentes com prazo (proposta, decisão 31 do doc 01) e a
-fase 5 do controle do Microbot (serviço no zaros e token via sops). O histórico dos runs e os
-gatilhos estão no banco desde a F6 do doc 11 (2026-11-13, seção 16). As fases 2 (VNC ao vivo pelo agent, noVNC na web) e 3
-(plugins: Hub, scripts, configuração chave/valor) foram feitas em 2026-11-08, e as entregas 1 a 3 da
-fase 4 (relógios, fazer agora, gatilho do gato, ponto seguro) em 2026-11-09 e 10 (doc 08, seção
-"Estado"). O deploy no saradomin e o device flow do plugin são os itens 18 e 15 abaixo.
-
-Sequência vigente. É a única lista do projeto; o doc 09 e o doc 01 apontam para cá. A ordem dos itens
-2 a 9 foi decidida pelo dono (doc 09, decisão D7): extração completa antes do progresso persistido.
-
-| # | Entrega | Pronto quando |
-|---|---|---|
-| 1 | Doc 09 revisado e decisões fechadas | **feito** (2026-11-04; doc 09, seções 9.1 e 9.3) |
-| 2 | Schema: `objectives` (chave canônica, `entities.ObjectiveKey`), `ItemRequirement`, tipos `unlock`/`location` no registry, `$defs/ref` substituído por `entityRef`, schema dos sidecars; loader converte `complete_when` e compõe anotações; readiness e posse avaliam as variantes de item | **feito** (2026-11-04; detalhes da composição no doc 09, seção 4.2) |
-| 3 | Dados e catálogos: script em `tools/` extrai da wiki os itens citados pelos guias mais famílias para `data/wiki/items.json`; `catalogbuild` gera `content/reference/items.json`; `unlocks.json`, `locations.json` e `varbits.json` iniciais | **feito** (2026-11-04). Itens do Oziris sem resolução 96 → 62 e resolvidos 87 → 119; os ambíguos subiram de 11 para 13, porque nomes antes desconhecidos agora caem em vários ids (doc 09, seção 7) |
-| 4 | `internal/core/annotate` (lote, verificação, composição), `chronicle content mcp` com `propose_entity`, `.mcp.json`, `content validate` cobrindo os sidecars, skill `annotate-guide` | **feito** (2026-11-04; contrato das tools no doc 09, seção 6.8) |
-| 5 | Piloto da extração (Oziris 1.1, BRUHsailer 1.1) com o agente no Claude Code, dono acompanhando | critérios do doc 09, seção 6.6. **Oziris 1.1 feito** (2026-11-04): 99,3% aceitos no primeiro envio; 88 de 95 objetivos de regra reproduzidos (abaixo dos 95%, as 7 divergências explicadas no doc 09, seção 6.6); levou ao catálogo de itens completo, ao XP de quest na ordem e ao `revise_entity`. **BRUHsailer 1.1 feito** (2026-11-04): 17 de 18 aceitos no primeiro envio, 13 perguntas em 3 lotes; expôs o corte da linha "Items needed:" no importador e os itens inobteníveis resolvidos por nome, ambos corrigidos |
-| 6 | Extração completa dos dois guias; reimport do BRUHsailer com ids posicionais | relatório revisado pelo dono; `validate` verde. **Feito** (2026-11-05): Oziris 576 de 576 e BRUHsailer 226 de 226 (ids posicionais já no importador). O BRUHsailer 1.2 a 3.2 foi extraído com as inferências delegadas ao agente (decisão `agent-judgment-delegated` no `decisions.json`): 206 de 226 aceitos no primeiro envio, 69 entradas medium com essa decisão, para revisão do dono; nenhum conflito de ordem nem rejeição em aberto |
-| 7 | Contrato v1 com `data.quest` e varbits de referência no manifest; migration que colapsa `snapshot_*` em `snapshot_facts` e adiciona a faceta `diary`; normalizador gravando `quest` e `diary`; plugin 1.1.0 lendo `Quest.getState`; `mb-test` no jogo; revisão de integração entre os dois repositórios | teste de integração no Postgres com um `full` que contém quests; uma quest do Oziris sai de `unknown` com o plugin real; `just dbml` regenerado. **Servidor feito** (2026-11-04, `feat/item7-contrato`): contrato, manifest, migration 0005, normalizador, avaliação de quest/diary/`qp`, teste no Postgres com o Oziris real, `just dbml`. Plugin 1.1.0 **feito** (2026-11-05, `microbot-plugins`): lê `Quest.getState` e os vars do manifest. **Em uso no zaros** (2026-11-05): o primeiro `full` trouxe as 217 quests (todas resolvidas no catálogo), os 48 varbits de diary e o varp 101; 54 objetivos de quest e 2 de diary saíram de `unknown` como `met` com evidência, e os objetivos de item saíram de `unknown` depois de abrir o banco. **Feito** |
-| 8 | Progresso sobre objetivos: migration (tabelas do doc 09, derruba `step_progress`/`step_progress_events`/`v_step_board`, `content_steps` mínimo), `internal/core/progress`, API de marcas, cursor e board, reavaliação por snapshot, indexação de conteúdo e aliases no boot | `PATCH` de marca, cascata e reavaliação testados no Postgres; `steps_changed` correto; `just dbml` regenerado e bloco planejado esvaziado. **Feito** (2026-11-04, `feat/progresso`) |
-| 9 | Web sobre objetivos (telas v4: Agora, Rotas, Rota; `/compare` volta na v5 do canvas, artboard V5Comparar, revendo a decisão 3 da v4); metas (F9) | "também na rota X" e cobertura vindos da API; o mesmo objetivo feito nas duas rotas. **Feito** (2026-11-04): telas, metas parte A e parte B (plano da meta no Mundo, V4Meta: "N de M", gargalos de nível, ordem sugerida, onde cada rota chega; `GET /api/goals/{id}/plan`). `/compare` (Rotas › Comparar) sobre o progresso real: cursor e contagens de cada rota, objetivos que mais de uma rota conclui (só evidência cruza; marca à mão não) e quanto falta até o mesmo marco. Fora: grafo por foco, presets e estimativa de tempo; meta de item sem plano até haver requisitos de item no catálogo |
-| 10 | Hiscores: adapter, snapshots, scheduler, `POST /api/sync` | **marco: em uso no zaros**. **Feito** (2026-11-04): `internal/sources/hiscores`, `internal/store/syncrun`, botão Sincronizar e faixa de fonte no Agora; na `main` e em uso no zaros (scheduler a cada 30 min, `sync_runs` ok e unchanged na conta do dono) |
-| 11 | CLI `now/done/plan/state` e `chronicle mcp`; depois grafo e tela de conta; depois o controle do Microbot (doc 08, nasce desligado com `MICROBOT_CONTROL=off`). OIDC e saradomin passaram para o item 18 | por entrega. **Sessão web OIDC feita** (2026-11-05, `feat/oidc-web`; seção 2.5); **tela de conta feita** (Conta da v6); **CLI e `chronicle mcp` feitos** (2026-11-08): `internal/client`, `login/logout/accounts/use/now/done/skip/undo/plan/sync/state/mcp`, `GET /api/auth/client`, `GET /api/route` e bearer JWT da aplicação nativa nas rotas por conta em oidc (seções 2.2 e 2.5); conferido contra o `just dev`; **grafo feito** (2026-11-08): Mundo › Grafo e `GET /api/graph` (seção 5); **controle do Microbot, fase 1 feita** (2026-11-08): agent, cockpit, iniciar e parar o headless, login e logout, auditoria (doc 08); **VNC ao vivo (fase 2) e plugins (fase 3) feitos** (2026-11-08); rotinas (fase 4) depois das receitas |
-| 12 | Tempo real na web (decisão 25 do doc 01): hub em memória por conta, `GET /api/events` (SSE, só em `AUTH_MODE=dev` até a sessão OIDC), evento `progress` publicado depois de cada reavaliação gravada (plugin, hiscores, marcas e pins); a web refaz as consultas abertas e mostra o toast "detectado" | o Agora avança sozinho enquanto o dono joga, sem recarregar; testes do hub com `-race` e do stream. **Feito** (2026-11-05); conferido ao vivo com o plugin no zaros (2026-11-08) |
-| 13 | Plugin 1.1.1: captura por evento (decisão 26 do doc 01), debounce de 1 s e teto de 3 s; a leitura periódica fica como rede de segurança | item da quest chega ao servidor em ~1 s; testes com relógio falso. **Feito** (2026-11-05, `feat/push-por-evento`); em uso no jogo (2026-11-08) |
-| 14 | Painel da rota no plugin (1.2.0, decisão 27 do doc 01) e auth de dev sem token (decisão 28): rotas para o plugin (janela da rota a partir do cursor com bloqueados, objetivos e itens do trecho; marcas Feito/Pular/Desfazer); resposta do ingest com o cursor e os passos que mudaram; credencial plugável no plugin (nenhuma em dev, device flow em `oidc`) | o dono joga só com a tela do Microbot: o painel avança a cada push e as marcas feitas nele aparecem na web. **Feito** (2026-11-05: servidor `feat/painel-plugin`, plugin 1.2.0 `feat/painel-rota`); em uso no jogo com o plugin 1.2.1 (2026-11-08) |
-| 15 | Auth do plugin em `oidc`: a aplicação nativa da CLI no Zitadel, `GET /api/auth/client`, validação do JWT pela JWKS (já feita para a CLI), roles no lugar dos `scopes`, `plugin_ingest_tokens` como registro de instalações e o `ipl_` aposentado | **feito** (2026-11-11): JWT do device flow nas rotas do plugin (manifest, ingest e painel), roles → scopes, instalações por usuário em `plugin_ingest_tokens`; Chronicle Link 1.9.0 com Credential "Login" e Entrar/Sair no painel (doc 06, adendo de 2026-11-11). Falta conferir contra o Zitadel do saradomin no deploy (item 18) |
-| 16 | Plugin 1.2.x: posição e mundo (`data.position`, opt-in) com destaque na web dos passos pendentes no lugar (desenho no canvas antes), collection log e combat achievements (decisão 24 do doc 01) | por entrega. **Combat achievements e contador do collection log feitos** (2026-11-10, só servidor e catálogo, sem versão nova do plugin): o `proof` de cada task (bit `id%32` do varp `CA_TASK_COMPLETED_<id/32>`, lido do `VarPlayerID.java` pinado) entra no manifest com os contadores `CA_TOTAL_TASKS_COMPLETED_<TIER>` e `COLLECTION_COUNT`/`_MAX` (assunto `count:*` em `varbits.json`); `ca:<id>@done` passa a ter veredito; a Conta mostra os tiers e o log (V6ContaConquistas1440, página 4b). Conferido ao vivo: com o manifest novo o plugin em uso mandou os varps e a contagem pelos bits bateu com o total do jogo (3 easy, 3 medium); log 15 de 1.734. **Posição e passos no lugar feitos** (2026-11-10): `data.position` (Chronicle Link 1.8.0, opt-in "Send position"; faceta `position`, migration 0011), o ponto do mapa da wiki de 91 dos 105 locais em `content/reference/location_maps.json` (`tools/fetch_wiki_locations.py`; regiões e instâncias ficam de fora, nunca adivinhadas), `progress.Nearby` (passos abertos da rota principal a até 64 tiles) e `GET /api/guides/{guide}/nearby`, no painel "Aqui perto" do Agora (V6AgoraPerto1440, página 1c). **Log por item feito** (2026-11-13, Chronicle Link 1.12.0; doc 06, adendo de 2026-11-13): o plugin lê cada página que o jogador abre no jogo (título, aba e cada espaço com quantos obtidos, pelos mesmos ids do `ChatCommandsPlugin` do cliente pinado, nunca o log de outro jogador pelo adventure log) e manda em `data.collectionLog`; o servidor guarda uma página por fato (`collection_log`, chave `page:<título>`) e o `GET /api/account/state` devolve `collection_log_pages` com os itens obtidos e os que faltam por aba e página. Falta: conferir no jogo com o plugin 1.8 (posição) e com o 1.12 (abrir o log, a aba, a busca e o adventure log), e a Conta mostrar as páginas (desenho no canvas antes, regra 11) |
-| 17 | Fase 0 do doc 10 (endurecimento), em fatias: (a) restrições e locks no banco: trava do `met`, evidência não vazia, FKs de snapshot por conta, query do motor só para `implied`, ordem de locks credencial → conta → fatos, lock por conta no sync, `observed_at` limitado ao servidor (**feita** 2026-11-05: migration 0007, `TestIntegrityPostgres`, `TestSyncConcurrentRunsPostgres` e `TestPushAndSyncConcurrentPostgres`, que reproduz o deadlock 40P01 sem os locks); (b) web: undo com guia e conta, escritas serializadas, recursos por rota (**feita** 2026-11-05: `web/src/lib/progress/undo.ts` com testes, Agora e Rota; conferida no navegador trocando a rota ativa com um desfazer pendente); (c) `observations` por fonte e `player_state` como projeção da junção pura (**feita** 2026-11-05: migration 0008, que recupera do último snapshot do hiscores os fatos que o plugin tinha sobrescrito; `internal/core/facts` com testes de tabela e de independência da ordem; `TestFactsMergePostgres`); (d) log de comandos de marca, autor na evidência e tabela `guides` com FKs (**feita** 2026-11-05: migration 0009 com `guides` e `mark_commands`, que começa com uma semente das marcas existentes; `revokes` no desfazer da web e do painel; `VerifyMarks` repete o log e compara com `step_marks`, conferido no teste de ciclo de vida do progresso e no navegador); (e) `chronicle progress rebuild --check` (CI e comando; aviso no boot) (**feita** 2026-11-05 como `chronicle progress check` sobre `GET /api/progress/check`; boot avisa antes de reavaliar; o job `go` do CI ganhou Postgres 17 e os testes de integração do store, que antes eram pulados no CI, passam a rodar lá e terminam com a checagem); (f) contrato gerado com tygo e fixtures Zod (**fixtures feitas** 2026-11-05, sem Zod: `TestContractPostgres` sobe a API real sobre o conteúdo real e grava em `web/src/lib/api/contract/` uma resposta real por rota como `export const fixture = {…} satisfies <tipo da web>`; o `svelte-check` recusa campo faltando, `null` indevido, enum fora da união e campo desconhecido, e o teste Go recusa mudança de forma sem `-update`; a primeira rodada achou e corrigiu 16 divergências no `types.ts`. **Geração de tipos adiada** pelo dono em 2026-11-05, com OpenAPI como candidato no lugar do tygo, começando pelo contrato do plugin; doc 10, seção 12). **Fase 0 fechada** com isso | cada fatia com teste no Postgres; `rebuild --check` sem diferença no CI e no banco do zaros; teste de concorrência ingest + sync + marca |
-| 18 | Deploy no saradomin (doc 07, seção 3.3): imagem atrás do proxy, `AUTH_MODE=oidc` com o Zitadel, tela de login/sair (desenho no canvas antes) e o item 15. Por último, decidido pelo dono em 2026-11-08 | **feito** (2026-11-12): `https://chronicle.saradomin.ftm.dev.br` na tailnet, Argo CD seguindo `deploy/k8s/overlays/saradomin`, banco `chronicle` no CNPG com o dump do zaros restaurado, login web pelo Zitadel (o primeiro login ficou com a conta dev). O binário, a imagem e o ambiente passaram a se chamar `chronicle` e o repositório virou `FelipeMalacarne/chronicle`. Daqui em diante os dados de verdade ficam no saradomin; o Postgres do zaros é cópia de dev. Falta conferir o plugin com Credential "Login" contra o saradomin |
-| 19 | Workers do Microbot (doc 11, segunda versão): Hub por conta, contas sem rota, sessões cifradas pelo `accounts connect`, imagens `chronicle-worker-base` e `chronicle-worker`, pods criados pelo Chronicle, perfis e rotinas no Postgres. Fases F0 (link remoto do zaros), F1 (Hub por conta e lista de workers), F2 (contas e sessões), F3 (imagens e um worker à mão), F4 (gerenciado: reconciliador, RBAC), F5 (perfis), F6 (rotinas no servidor), F7 (capacidade). Desenho: canvas, página 7 (V6MicrobotWorkers1440, V6MicrobotWorkersEstados1440), a completar | **rodada 1 feita** (2026-11-12, doc 11, seção 14): Hub por conta, cofre e sessões, `accounts connect`, `agent --worker`, reconciliador, `/api/workers`, aba Workers, imagens e CI, RBAC, admissão e quota no gielinor; conferido de ponta a ponta sem cluster e a admissão num apiserver real. Depois, o `microbot-plugins` entrou neste repositório em `microbot/` (decisão 35 do doc 01): um flake, um CI, e a base do worker sai do mesmo commit, sem bump (doc 07, seções 3.3 e 5). Ligado no saradomin no mesmo dia, com o primeiro worker logado e rodando script (doc 11, seção 14.4). **F5, parte 1 feita** (2026-11-12, doc 11, seção 15): perfis do cliente no Postgres (migração 0013) com modelo, aplicados no boot do worker pelo Agent Server (W7), API, `chronicle profiles` e o tour do Microbot desligado no headless; falta conferir num worker de verdade. **F6 feita** (2026-11-13, doc 11, seção 16): gatilhos e histórico dos runs no Postgres (migração 0014), mensagens `event` do agent e `routines_sync` a cada conexão, auditoria do que o executor faz sozinho; falta conferir num worker de verdade. **Rotinas recorrentes feitas** (2026-11-13, doc 11, seção 16.4; doc 08, fase 4, entrega 4): o relógio do Time Tracking ou um intervalo dispara o run, em fila por prioridade (migração 0015, `/api/microbot/recurring`); a tela veio na fatia V6 do item 20; sem o loadout com banco; o vigia espera o break do Break Handler (doc 08, "A troca"). **F5, parte 2 feita** (2026-11-13, doc 11, seção 17): desvio do cliente, "Salvar no perfil" e aplicar; a tela é a V8. **F7 feita no servidor** (2026-11-13, doc 11, seção 18): "cabe mais N" pela quota, CPU e RAM por worker, login recusado; a tela é a V9; a leitura da quota e das métricas espera o RBAC do gielinor (PR #16). **Reinício na versão nova feito** (2026-11-13, decisão do dono; doc 11, seções 7.2 e 18.4): o worker numa imagem antiga se reinicia sozinho na nova na próxima pausa (sem run, sem VNC aberto, deslogado ou no break do Break Handler), pelo mesmo caminho do Reiniciar, auditado como `reconciler` (origem `server`, migração 0016). O serviço do agent no zaros (doc 08, fase 5) está pronto no nix-config, desligado até o machine user existir. GPU continua proposta, e nada da F5 à F7 foi conferido num worker de verdade |
-| 20 | Web v7, Frota (decisão 36 do doc 01; `docs/ui/decisoes-canvas.md`, seção 7; canvas, página 8): a casa do app é a Frota, com uma raia por conta; cada conta abre com cabeçalho e as abas Visão geral, Rota, Personagem, Cliente e Histórico; Atividade, Rotinas, Plugins e Mundo são da frota; Nova conta no lugar do primeiro acesso. Em fatias: V1 casca (Frota, cabeçalho e abas, Nova conta), V2 Rota, V3 Cliente, V4 Personagem e Visão geral, V5 ritmo (XP por hora, ganhos), V6 Rotinas e Fila, V7 Histórico e Atividade, V8 Plugins, V9 capacidade e lista compacta, V10 Mundo da frota e o resto em 640 px | por fatia (`decisoes-canvas.md`, seção 7.5). V1 a V4 só dependem da web; o valor observado no board, que a V2 pedia, está no servidor desde 2026-11-13 (`objectives[].observed`, dos fatos atuais da conta, só para objetivos com número e nunca com avaliação `unknown`); V5 pedia uma série por conta derivada dos snapshots, que está no servidor desde 2026-11-13 (`GET /api/account/rhythm` e `GET /api/rhythm`, `decisoes-canvas.md`, seção 7.4); V6 a V9 esperam as fases F5 a F7 do item 19. **Desenho feito e aprovado** (2026-11-12, 18 artboards). V1 feita (PR #16); V8, Plugins da frota, feita (2026-11-13, `decisoes-canvas.md`, seção 7.6); V9, capacidade no resumo e Frota compacta, feita (2026-11-13, seção 7.7); V10, Mundo da frota, feita (2026-11-13, seção 7.8), faltando as telas em 640 px que ainda não têm desenho; V7, Histórico e Atividade, feita (2026-11-13, seção 7.9); V2 a V4, Rota, Cliente, Personagem e Visão geral, feitas (2026-11-13, seções 7.10 a 7.12); V6, Rotinas e Fila, feita (2026-11-13, seção 7.13: as rotinas da frota em `/rotinas` e a Fila na Visão geral, sem atividade principal, horário e banco antes do run); V5, Ritmo, feita (2026-11-13, seção 7.14: a skill que treina, XP por hora, os itens da sessão e a pausa nas raias, a coluna Ritmo da compacta, XP e GP de hoje no resumo, Fazendo agora e Hoje na Visão geral, e o que subiu hoje no Personagem) |
-| 21 | Fases 1 a 5 do doc 10 (modelo de execução; seções 13 e 14, E1 a E10, E19 e E20 decididas): (1) entidades `npc`, `shop` e `object`, áreas em `location`, schema de `tasks[]` e de receitas, verificador; (2) gravação por demonstração e modo assistido no plugin; (3) executor de `travel`, `bank` e `buy`, `plans` e `plan_items`, comando de tarefa no agent; (4) `train` por delegação e rotinas com `wait_until` por chave de objetivo; (5) receitas de quest e a `quest` por delegação ao Quest Helper (E19), planos customizados na UI, vários clientes no agent. Começado pelo dono em 2026-11-13 | por fase (doc 10, seção 13). **Fase 1 feita** (2026-11-13; doc 09, seções 3.1, 4.2 e 7; doc 10, seções 7 e 8), em dois PRs. (a) Entidades e áreas (PR #44): catálogos `npcs.json` (5.435), `shops.json` (462, com estoque) e `objects.json` (5.898) gerados da wiki pelo `catalogbuild` (`tools/extract_wiki_world.py`), resolver por nome com ambiguidade reportada, e a área de cada local com mapa em `location_maps.json` (polígono, retângulo ou quadrado do mapa da wiki, senão a caixa de 21 por 21 tiles em volta do ponto). (b) Tarefas, receitas e verificador: `task.schema.json` (sete primitivas com término em chave de objetivo ou em `at_location`, `loadout_ready`, `goal_met`, `owner_mark`), `tasks[]` nos sidecars, `recipe.schema.json` com um arquivo por chave em `content/recipes/` (variantes por modo, riscos da lista fechada de E9), `Task.Check` e `CheckRecipe` no loader; `content validate` cobre e conta tarefas e receitas. Provado com fixtures em `internal/core/content/testdata/execution`; nenhuma tarefa ou receita real no conteúdo (regra 9). **Fase 2: código feito** (2026-11-13; doc 10, seções 7, 10, 11 e 13), em três PRs. (a) Gravação por demonstração (#46): opção "Record demonstration" no Chronicle Link 1.13.0, opt-in, que registra só o que o dono faz como eventos tipados (`internal/core/recording`), o campo `data.recording` do ingest (flag `recording` no manifest), `recorded_events` (migration 0017, o ingest é o único escritor) e as rotas `GET` e `DELETE /api/account/recording` (com `chronicle recording`). (b) Propostas (#47): `internal/core/recording/propose` transforma um trecho gravado em tarefas propostas para um passo, sem adivinhar ids ambíguos; a evidência das tarefas aceita eventos gravados, conferidos pelo `CheckRecorded`, sempre com `confirmed_by: owner`; o `content mcp` ganha `propose_tasks` e `submit_tasks`, e o `submit` aceita tarefas. (c) Modo assistido (#48): o painel do Chronicle Link 1.14.0 mostra as tarefas do passo atual com o término que o servidor avalia. **Falta o dono**: gravar um trecho do Oziris 1.1 e confirmar as tarefas propostas (doc 10, seção 13). **Fase 3 em código** (2026-11-13; doc 10, seções 9, 10 e 13): (a) planos: `plans` e `plan_items` (migration 0018, `accounts.active_plan_id`), `internal/core/plan` (a próxima tarefa do plano ativo, pulando o que já está cumprido) e `GET /api/plan/next` com `/api/plans`. (b) Comando de tarefa: `task_run` na lista fechada do agent com o `execspec.Task` (ids e tiles resolvidos pelo `plan.Resolve`), validado nos dois lados com a E9, rodando como um run (ponto seguro, trilha, timeout, cancelamento, auditoria; `routine_runs.task`, migration 0019), `POST` e `GET /api/microbot/task` (a prova do término pelo ingest) e `chronicle task`. (c) Executor no Chronicle Link 1.15.0: máquina de estados local sobre `Rs2Walker`, `Rs2Bank`/`Rs2Inventory` e `Rs2Shop`, iniciada só pelo agent pela ponte (`/bridge/task*`), com testes JUnit sobre um jogo falso; `chronicle plans` monta e segue um plano. **Falta o dono**: executar no jogo, olhando, um trecho de logística com o término provado pelo ingest (doc 10, seção 13). **Fase 4 em código** (2026-11-13; doc 10, seções 10, 13 e 14; doc 08), em dois PRs empilhados: (a) `wait_until` por chave de objetivo nos runs e nas rotinas do doc 08 (`RunParams.until`, a conta escrita pelo servidor), avaliado pelo servidor sobre os fatos da conta (`internal/rununtil`: a cada evento de progresso e a cada 30 s, só fato vivo), que manda o comando novo `run_until` (servidor → agent, auditado como origem `server`); o agent para o plugin, volta e religa o principal. (b) `train` por delegação: `plugin` e `config` na tarefa (regras de classe e de opção em `internal/core/clientcfg`), `execspec` e `plan.Resolve` com `train` (riscos `combat` e `wilderness`, E9), e o `task_run` de um `train` que confere o plugin no cliente, grava as opções, liga o plugin e o desliga quando o servidor prova o nível; `POST /api/microbot/task` recusa plugin ausente e agent antigo. Sem migration. **Falta o dono**: um treino até `skill:x>=N` no jogo sem intervenção (doc 10, seção 13). **Fase 5 em partes** (2026-11-13; doc 10, seções 10 e 13; doc 08). (a) Vários clientes no agent anexado: `MICROBOT_AGENT_CLIENTS` (`conta=home de dev`; pela ordem, displays `:99`, `:100`, … e VNC 5999, 6000, …), um executor e um lock por cliente (run, gatilhos, recorrentes, `task_run` e arquivos por conta), `clients` no hello e `account` nos comandos e eventos, cada cliente um agent à parte no Hub; o servidor anuncia o recurso no cabeçalho `Chronicle-Link-Features` e um servidor antigo recebe só o primeiro cliente; o `mb-client` grava o display e a porta no home e recusa porta ocupada. Sem migration (a tabela `clients` não foi criada). **Falta o dono**: ligar o segundo cliente no zaros. (b) `quest` por delegação ao Quest Helper do cliente (E19, decidida em 2026-11-14 com a E20, não importar nada do Quest Helper; código feito no mesmo dia): `quest` vira primitiva (`quest`, `safe`; término `quest:x@finished`; toda quest é risco `combat` e `hazard`, a não ser que a receita ou o plano diga `safe`), `execspec` e `plan.Resolve` com `quest` (requisitos do catálogo provados antes), o comando de leitura `quest_helper` e o `task_run` de uma `quest` no agent (grava "Obtain Missing Items" em `No`, fixo no `clientcfg`, seleciona a quest pelo `/quest-helper/start` do Agent Server, acompanha o `/status` e para com o `/stop` na prova do servidor, no timeout, no cancelamento, na falha ou com o bot parando sozinho); `POST /api/microbot/task` recusa com 409 o agent antigo, o cliente sem o Quest Helper ou com o bot ocupado e a quest que ele não lista. Sem migration. **Falta o dono**: uma quest curta e sem luta no jogo, olhando (doc 10, seção 13). As receitas de quest reais esperam a extração com o dono. (c) Planos customizados na UI: pedem o canvas |
-
-Os itens 3 e 7 não dependem do 2 e podem ser adiantados em paralelo sem mudar a ordem.
-
-Os itens 19 e 20 andam juntos: as fatias V1 a V4 do item 20 vêm antes das fases F5 a F7 do item 19,
-porque a tela de cada uma dessas fases (perfis, rotinas, capacidade) já é a da v7, e cada fase
-destrava a fatia que depende dela (F5 a V8, F6 a V6 e a V7, F7 a V9).
-
-Em paralelo com o item 6 (decisão 21 do doc 01, 2026-11-04): os itens 8, 9 e 10 andam numa sessão
-própria, num git worktree com branch própria, para o dono usar e testar o que já foi extraído. A
-extração não muda de ordem e continua na sessão de extração, Oziris primeiro. A divisão de arquivos
-evita conflito:
-
-- a extração mexe em `content/guides/*/annotations`, `content/reference`, `data/wiki/entity_aliases.json`
-  e no ferramental de extração (`internal/core/annotate`, `internal/core/entities`, importadores);
-- a outra sessão mexe em `web/`, `internal/httpapi`, `internal/store`, `db/migrations`,
-  `internal/core/progress` e no adapter de hiscores, e é a única que muda o schema do banco;
-- as duas editam este doc e o doc 09; quem chega depois faz rebase na `main` antes do merge. O
-  progresso lê os sidecars no boot, então cada seção extraída aparece lá sem trabalho extra.
-
-O item 7 continua depois, porque depende de rodar o plugin no jogo.
+- Os requisitos de quest do catálogo vêm de `content/reference/quests.json`. O `catalogbuild` gera
+  `requires` e `combat_level` a partir de `quest_reqs`, `skill_reqs` e `quest_points_required` de
+  `data/wiki/quests.json`. `requires` tem as chaves de objetivo das quests diretas (`@finished`), dos
+  níveis de skill (com `boostable` e `during_quest`) e de `qp`. O código lê esses requisitos por
+  `entities.Registry.Quest(id).Requires`, e o plano da meta usa o fechamento deles.
+- Os ícones do jogo vêm de `tools/fetch_wiki_icons.py` para `web/static/icons`: todo item obtível do
+  catálogo. O bundle da SPA leva só as faixas de id, e o mapa completo fica em `data/wiki/icons.json`.

@@ -493,8 +493,8 @@ nenhum plugin manda, passa a substituir só os fatos dele (chave = id do item), 
 O `GET /api/account/state` ganha `collection_log_pages`: por aba e título, os itens obtidos (com
 quantos), os que faltam, os totais e a fonte com a idade. Página nunca aberta não aparece, então os
 itens dela ficam desconhecidos, nunca "faltando". Os contadores do jogo (`collection_log`) continuam
-à parte, pelos varps. A tela Conta ainda não mostra as páginas: o desenho vai para o canvas antes
-(regra 11).
+à parte, pelos varps. A tela Conta ainda não mostra as páginas; o desenho vem antes no canvas
+(regra 11; FEL-54).
 
 Um plugin 1.11 ignora a flag nova. Um servidor anterior não a anuncia, e o 1.12 não manda o campo. A
 `manifest_version` muda, então os plugins em uso buscam o manifest de novo e mandam um `full`.
@@ -533,15 +533,7 @@ ponte não responde.
 - `TestCollectionLogAccountStatePostgres`, do push até a Conta.
 - `TestStatusReadsTheBridgeVersion` e `TestParseBreak` no agent.
 
-**Não conferido no jogo:**
-
-- abrir o log e ver as páginas chegarem;
-- a aba pela lista visível;
-- o que o cabeçalho mostra durante a busca do log (Search): se mostrar outro título, o plugin grava
-  uma página com esse nome;
-- a quantidade de um item obtido mais de uma vez;
-- o adventure log de outro jogador numa casa;
-- o `/bridge/break` com o Break Handler (e o V2) num break de verdade.
+**Não conferido no jogo:** FEL-53.
 
 ## Adendo de 2026-11-13: gravação por demonstração (Chronicle Link 1.13.0, fase 2 do doc 10)
 
@@ -601,9 +593,9 @@ vez. O dono lê com `GET /api/account/recording?account=&since=&until=&limit=` e
 `DELETE /api/account/recording?account=&recording=`, as duas atrás de `authed` + `accountParam`
 (regra 10); na CLI, `chronicle recording [--since 2h] [-o arquivo]` e `chronicle recording delete --yes`.
 
-**Privacidade, decisões conservadoras** (pendentes do dono): só o que o dono faz, nada de outros
-jogadores ou chat; opt-in, desligado por padrão; a gravação fica até o dono apagar (não há expiração
-automática, por falta de decisão). Ver o doc 10, seção 14 (E11 a E13).
+**Privacidade, decisões conservadoras** (confirmadas pelo dono em 2026-11-14): só o que o dono faz,
+nada de outros jogadores ou chat; opt-in, desligado por padrão; a gravação fica até o dono apagar (não
+há expiração automática). Ver o doc 10, seção 14 (E11 a E13).
 
 Um plugin 1.12 ignora a flag nova; um servidor anterior não a anuncia e o 1.13 não manda o campo. A
 `manifest_version` muda, então os plugins em uso buscam o manifest de novo e mandam um `full`.
@@ -615,9 +607,7 @@ pacote; no servidor, a tabela de validação de `recording`, o portão do manife
 `TestRecordingPostgres` (um evento por `(recording, seq)` com reenvio, o `raw` sem a gravação, leitura
 paginada e apagar) e as rotas (dev, oidc com CSRF no DELETE e fora dos dois).
 
-**Não conferido no jogo:** a escolha de diálogo pela tecla (o evento do script do ouvinte de teclas),
-as diferenças do banco e da loja com a interface real, o tile do objeto numa instância e o volume de
-eventos de uma sessão longa.
+**Não conferido no jogo:** FEL-106.
 
 ## Adendo de 2026-11-13: modo assistido no painel (Chronicle Link 1.14.0, fase 2 do doc 10)
 
@@ -645,8 +635,7 @@ motivo e se a tarefa veio de uma receita.
 **Verificação:** `TestAssistedModeTasks` e `TestAssistedModeWire` no servidor (este grava
 `route-tasks.json` nos recursos de teste do plugin), `RouteWindowTest` no plugin lendo o mesmo arquivo
 (156 testes JUnit) e o render sem tela do painel (`RoutePanelRenderTest`, variante `-tarefas`).
-**Não conferido no jogo**: a lista com as tarefas reais, que só existem depois da gravação e da
-confirmação do dono.
+**Não conferido no jogo:** FEL-106.
 
 ## Adendo de 2026-11-13: executor de tarefas (Chronicle Link 1.15.0, fase 3 do doc 10)
 
@@ -713,7 +702,7 @@ término: a posição na área exige **"Send position" ligado**; o banco e a com
     sem efeito, lotes da loja, sem estoque, compra sem efeito, sem lojista;
   - `TaskBridgeTest` cobre as rotas da ponte: começar, ler, uma por vez, cancelar, recusar, sem token,
     sem executor.
-- **Não conferido no jogo:** nada da máquina rodou no cliente (doc 10, seção 13, o que falta ao dono).
+- **Não conferido no jogo:** FEL-107.
 
 ## Adendo de 2026-11-16: contadores de minigame (Chronicle Link 1.16.0)
 
@@ -740,4 +729,4 @@ e o 1.16 não manda o campo.
 
 Verificação: testes JUnit (`MinigameTest`: o número do widget, a flag, o `full` e o `delta`; 177 no
 pacote) e, no servidor, `TestMinigameValidation`, `TestMinigameNeedsManifest`, `TestMinigamePostgres`
-e o fixture de contrato `account-state`. Falta conferir no jogo com o 1.16 instalado.
+e o fixture de contrato `account-state`. Não conferido no jogo: FEL-53.

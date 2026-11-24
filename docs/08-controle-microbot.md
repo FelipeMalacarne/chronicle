@@ -157,7 +157,8 @@ quem é o usuário; as camadas abaixo cobrem o resto.
   por plugin. V2: endpoint de descritores de config (`ConfigDescriptor`), de preferência como PR
   upstream no Agent Server, ou num plugin companheiro em `microbot/`.
 - **GPU no modo headless**: desligada. Uma saída headless do Hyprland com `wayvnc` daria GPU real,
-  mas depende da sessão gráfica aberta; fica como modo opcional futuro.
+  mas depende da sessão gráfica aberta; fica como modo opcional futuro (FEL-113 trata da GPU dos
+  workers).
 
 ## Fases
 
@@ -170,14 +171,12 @@ quem é o usuário; as camadas abaixo cobrem o resto.
 4. Rotinas: modelo, executor com lock, agendamento, histórico com screenshots.
 5. Agent remoto: serviço systemd no `nix-config`, machine user do Zitadel com o segredo via sops, `WhoIs` do Tailscale e
    ACL; junto com o deploy do planner no `saradomin`. Como o agent existe desde a fase 1, aqui muda
-   só configuração. **Serviço pronto, desligado** (2026-11-13, PR #1 do `nix-config`, com
-   `docs/chronicle-agent.md` de lá): o aspecto `chronicle-agent` roda o `chronicle agent` como
-   serviço de usuário com linger, a partir do checkout em `harnessDir`, com o cliente sempre
-   headless; o segredo do machine user vem do sops em `/run/secrets` e chega só como
-   `MICROBOT_AGENT_CLIENT_SECRET_FILE`. Para ligar, o dono cria o machine user com o papel
-   `microbot:agent`, põe o segredo em `secrets/chronicle-agent.yaml`, importa o aspecto no zaros
-   e deixa de rodar o `just agent` à mão (os passos estão no PR). O agent roda o branch que estiver
-   no checkout: apontar `harnessDir` para uma worktree só do `main` evita surpresa.
+   só configuração. O serviço é o aspecto `chronicle-agent` do `nix-config` (PR #1 de lá, com
+   `docs/chronicle-agent.md`): ele roda o `chronicle agent` como serviço de usuário com linger, a
+   partir do checkout em `harnessDir`, com o cliente sempre headless. O segredo do machine user vem do
+   sops em `/run/secrets` e chega só como `MICROBOT_AGENT_CLIENT_SECRET_FILE`. O agent roda o branch
+   que estiver no checkout, então `harnessDir` aponta para uma worktree só do `main`. Ligar o serviço
+   no zaros: FEL-52.
 
 ## Fase 4: rotinas com atividade principal e runs com relógio (desenho, 2026-11-09)
 
@@ -283,7 +282,7 @@ run_event        run_id, at, state, kind, detail (jsonb)    -- trilha, screensho
 4. **Automático e preparo**: o relógio dispara herb, tree e birdhouse quando a conta tiver os
    requisitos, várias recorrentes em fila por prioridade, e loadout com banco antes do run.
    O relógio, o intervalo e a fila por prioridade foram feitos em 2026-11-13 (ver Estado); o
-   loadout com banco ficou de fora.
+   loadout com banco ficou de fora (FEL-114).
 
 O ciclo do gato (resposta do dono, R3): o filhote fica com o KittenPlugin (paralela: alimentar e
 afagar até crescer); quando cresce, a troca é uma recorrente disparada pelo evento, que leva o gato
@@ -708,8 +707,8 @@ destino da viagem):
   `docs/ui/decisoes-canvas.md`, seção 7.13).
 - **Fora desta entrega:**
   - Loadout com banco antes do run (o PREPARO): pede decisões do dono sobre o que sacar, e a
-    verificação de cada plugin (se ele faz o próprio banco). Até lá, o plugin do run sai do banco
-    sozinho ou o inventário já está pronto.
+    verificação de cada plugin (se ele faz o próprio banco; FEL-114). Sem ele, o plugin do run sai do
+    banco sozinho ou o inventário já está pronto.
   - Requisitos da conta (Farming, Bone Voyage): o planner não confere; o dono liga a rotina quando a
     conta tiver. O relógio não vence para canteiro que nunca foi plantado.
   - Break próximo: feito depois, em "A troca", acima (o vigia espera o break).
@@ -729,8 +728,7 @@ destino da viagem):
   - store e rotas no Postgres 17, incluindo um agent da F6 que não recebe o campo novo e o oidc só
     com conta do dono;
   - `goose up/down/up` da 0015.
-- **Nada foi testado no jogo.** Falta ligar uma recorrente no zaros, com o dono olhando, quando a
-  conta tiver os requisitos.
+- **Não testado no jogo:** FEL-52.
 
 **Fase 3 do doc 10: o comando de tarefa** (2026-11-13; doc 10, seções 9, 10 e 13):
 
@@ -780,7 +778,7 @@ destino da viagem):
   - `GET /api/microbot/task` devolve o run atual ou o último e, se for de tarefa, a `proof`: a tarefa
     avaliada agora sobre os fatos da conta. `proven` só é verdadeiro quando o ingest prova o término.
   - O cancelamento é o `POST /api/microbot/run/cancel` de sempre.
-- **CLI** (sem botão na web, que pede o canvas antes):
+- **CLI** (a web não tem o botão; FEL-112):
   - `chronicle task` mostra a próxima tarefa;
   - `chronicle task run --yes [--supervised] [--wait 10m]` executa, acompanha a trilha e espera a
     prova do ingest;
@@ -791,7 +789,7 @@ destino da viagem):
     ações recusadas durante a tarefa;
   - as rotas no Postgres 17: o run auditado, o `done` sem prova e a prova depois da posição no ingest;
   - a CLI contra um servidor falso.
-- **Nada foi testado no jogo:** o executor no plugin é o Chronicle Link 1.15.0 (doc 06).
+- **O executor no plugin** é o Chronicle Link 1.15.0 (doc 06). Não testado no jogo: FEL-107.
 
 **Fase 4 do doc 10: `wait_until` por chave de objetivo** (2026-11-13; doc 10, seção 13):
 
@@ -841,7 +839,7 @@ destino da viagem):
 - **Rotinas:** o `until` vai no `run` dos gatilhos e das recorrentes, no banco e no
   `routines_sync`. Um agent que não declara `run_until` não recebe as rotinas com `until`: ele
   recusaria a lista inteira pelo campo desconhecido. A web mantém o `until` ao salvar de novo uma
-  rotina pela tela Rotinas, mas ainda não o mostra nem edita (pede o canvas antes).
+  rotina pela tela Rotinas, mas ainda não o mostra nem edita (FEL-112).
 - **Verificado:**
   - testes do agent com o jogo falso, todos com `-race`: a prova para o plugin, volta e religa; a
     prova antes do ponto seguro não toca em nada; o plugin que para sem prova falha depois da espera;
@@ -852,7 +850,7 @@ destino da viagem):
   - as rotas: a conta escrita pelo servidor, as recusas e o agent antigo (409);
   - de ponta a ponta no Postgres 17: um run até `skill:fishing>=76` continua com o ingest no 75 e
     termina `done`, com o plugin parado, quando o ingest manda 76.
-- **Nada foi testado no jogo.**
+- **Não testado no jogo:** FEL-108.
 
 **Fase 4 do doc 10: `train` por delegação** (2026-11-13; doc 10, seções 7, 10 e 13; decisão R2 deste
 doc: a tarefa aponta para uma classe de plugin com um preset):
@@ -895,8 +893,9 @@ doc: a tarefa aponta para uma classe de plugin com um preset):
   - de ponta a ponta no Postgres 17 (`TestTrainTaskPostgres`): um plano com um `train` até
     `skill:fishing>=76`, a recusa do plugin ausente e do agent antigo, o plugin ligado com as opções,
     o ingest no 75 sem efeito e no 76 com o plugin desligado, o run `done` e a prova do `GET`.
-- **Nada foi testado no jogo.** Os passos do dono estão no doc 10, seção 13.
-- **Sem tela:** o botão "Treinar" (ou "Executar") na web pede o canvas antes (CLAUDE.md, regra 11).
+- **Não testado no jogo:** FEL-108.
+- **Sem tela:** o botão "Treinar" (ou "Executar") na web vem depois do canvas (CLAUDE.md, regra 11;
+  FEL-112).
 
 **Fase 5 do doc 10: vários clientes no agent** (2026-11-13; doc 10, seções 10 e 13):
 
@@ -968,7 +967,7 @@ doc: a tarefa aponta para uma classe de plugin com um preset):
   - a configuração do `chronicle agent`;
   - as rotas reais (`/api/microbot/*?account=`) com um agent de dois clientes;
   - o `mb-client status` lendo o display e a porta gravados num home falso.
-- **Nada rodou com dois clientes de verdade.** Os passos do dono estão no doc 10, seção 13.
+- **Não rodou com dois clientes de verdade:** FEL-110.
 
 **Fase 5 do doc 10: `quest` por delegação** (2026-11-14; E19 e E20 decididas pelo dono no mesmo dia;
 doc 10, seções 7, 10, 13 e apêndice A):
@@ -1050,12 +1049,11 @@ doc 10, seções 7, 10, 13 e apêndice A):
     Shearer, as recusas do cliente antigo, da quest fora da lista e do agent antigo, a opção e a
     seleção, o ingest com a quest em andamento sem efeito e terminada com o helper parado, o run
     `done` e a prova do `GET`.
-- **Nada foi testado no jogo.** Os passos do dono estão no doc 10, seção 13 (fase 5, item 2).
-- **Sem tela:** o "Executar" da tarefa na web pede o canvas antes (CLAUDE.md, regra 11).
+- **Não testado no jogo:** FEL-109.
+- **Sem tela:** o "Executar" da tarefa na web vem depois do canvas (CLAUDE.md, regra 11; FEL-112).
 
-Fora das fases 1 a 3, ainda: rotinas (fase 4), o serviço systemd e
-o token via sops (fase 5) e a detecção de input humano: o Agent Server não diz se o dono está mexendo no
-jogo, então o cartão "Input humano" do artboard não existe na tela.
+Não há detecção de input humano: o Agent Server não diz se o dono está mexendo no jogo, então o
+cartão "Input humano" do artboard não existe na tela.
 
 ## Impacto nos outros docs
 

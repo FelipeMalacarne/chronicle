@@ -9,7 +9,9 @@ that drives the Microbot client and the worker base image's inputs live in `micr
 `microbot-plugins` repository until 2026-11-12, merged with its history; decision 35): read
 `microbot/AGENTS.md` before touching anything there; its rules and safety section apply.
 
-Current state and the active build sequence: `docs/04-arquitetura.md` section 9. The domain model is
+Roadmap, status and next steps live in Linear, team FEL, project "Chronicle"
+(https://linear.app/felipemalacarne/project/chronicle-1f382104f1b7); `docs/` holds only architecture,
+data structures and technical decisions (decided 2026-11-24). The domain model is
 built around objectives (`docs/09-modelo-de-dominio.md`, approved 2026-11-04; decisions in sections
 9.1 and 9.3); read it before touching progress, goals, the graph or the content schema. Open product
 decisions are tracked in `docs/01-sumario-executivo.md`.
@@ -351,9 +353,10 @@ display and VNC port in that order from `MB_HEADLESS_DISPLAY` (`:99`) and `MB_VN
 contrato de ingest) · 07 ambiente e ferramental · 08 controle do Microbot pelo planner (headless, VNC,
 plugins, rotinas) · 09 modelo de domínio (objetivos, entidades, progresso compartilhado, extração por
 agente; decisões em 9.1 e 9.3) · 10 modelo de execução (fatos por fonte, log de eventos,
-tarefas, receitas, planos; E1 a E10, E19 e E20 decididas, E11 a E18 e E21 em aberto; fases 0 e 1 feitas, código da 2 feito (gravação, propostas, modo assistido; falta a gravação e a confirmação do dono), 3 a 5 no item 21 do doc 04) · 11 workers do Microbot (proposta: um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; fases F0 a F7; decisões W1 a W10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
+tarefas, receitas, planos; decisões E1 a E21; princípio 6 revisto pela decisão 41 do doc 01) · 11 workers do Microbot (um worker por conta, no zaros ou num pod criado pelo Chronicle; sessões, perfis do cliente e rotinas no Postgres; decisões W1 a W10) · 12 conta autônoma (conta regular com modelos de metas e catálogo de métodos de dinheiro, quests executadas a partir do Quest Helper, modelo local só num passo travado; decisões C1 a C10) · `docs/ui/brief-ui-ux.md` (brief de UI/UX) · `docs/ui/decisoes-canvas.md` (decisões do canvas; v7, Frota, vigente na seção 7) ·
 `docs/ui/pergaminho.md` + `pergaminho.tokens.json` (design system).
-`docs/04` section 9 is the current status and sequence; 6.4 is the ingest contract and 6.4.1 readiness.
+Status and sequence are in the Linear project, not in the docs; `docs/04` section 9 only maps the old
+sequence item numbers that other docs cite. In `docs/04`, 6.4 is the ingest contract and 6.4.1 readiness.
 `docs/arquitetura/types.ts` mirrors the ingest contract and readiness types in Zod, as a reference only.
 `docs/arquitetura/modelo-de-dados.dbml` is the DB model in DBML: the part above the PLANNED marker is
 generated from the migrations (`just migrate-up && just dbml`, needs `psql`); after every new migration,

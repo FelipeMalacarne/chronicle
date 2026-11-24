@@ -253,8 +253,7 @@ Checagens: ids únicos e com prefixo da seção; skills canônicas e níveis 1�
 ## 9. Próximos passos sugeridos
 
 Superados em 2026-11-04. O top 30 e os bosses sem kc entram na extração por agente; locais canônicos
-viram o catálogo `location`; o grafo usa `data/wiki/quests.json` e chaves de objetivo. Tudo no doc 09 e no
-doc 04, seção 9.
+viram o catálogo `location`; o grafo usa `data/wiki/quests.json` e chaves de objetivo. Tudo no doc 09.
 
 ## 10. Mapeamento para o schema canônico (Go)
 

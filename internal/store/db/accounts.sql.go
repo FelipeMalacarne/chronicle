@@ -24,7 +24,7 @@ type CreateAccountParams struct {
 	Rsn           string      `json:"rsn"`
 	RsnNormalized string      `json:"rsn_normalized"`
 	Mode          string      `json:"mode"`
-	GuideID       string      `json:"guide_id"`
+	GuideID       pgtype.Text `json:"guide_id"`
 	Layer         string      `json:"layer"`
 	WomPlayerID   pgtype.Int8 `json:"wom_player_id"`
 }
@@ -331,10 +331,10 @@ RETURNING id, user_id, rsn, rsn_normalized, mode, guide_id, layer, wom_player_id
 `
 
 type UpdateAccountSettingsParams struct {
-	ID      string `json:"id"`
-	Mode    string `json:"mode"`
-	GuideID string `json:"guide_id"`
-	Layer   string `json:"layer"`
+	ID      string      `json:"id"`
+	Mode    string      `json:"mode"`
+	GuideID pgtype.Text `json:"guide_id"`
+	Layer   string      `json:"layer"`
 }
 
 func (q *Queries) UpdateAccountSettings(ctx context.Context, arg UpdateAccountSettingsParams) (Account, error) {

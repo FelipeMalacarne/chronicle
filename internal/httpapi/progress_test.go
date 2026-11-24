@@ -32,6 +32,8 @@ type fakeProgress struct {
 	loadout, loadoutNote string
 	// fleet are the account ids of the last FleetGoals.
 	fleet []string
+	// noRoute: acc-1 follows no route.
+	noRoute bool
 }
 
 func (f *fakeProgress) board(call, accountID, guideID string) (storeprogress.BoardView, error) {
@@ -52,6 +54,9 @@ func (f *fakeProgress) Board(_ context.Context, accountID, guideID string) (stor
 func (f *fakeProgress) ActiveGuide(_ context.Context, accountID string) (string, error) {
 	if accountID != "acc-1" {
 		return "", storeprogress.ErrAccountNotFound
+	}
+	if f.noRoute {
+		return "", coreprogress.ErrNoRoute
 	}
 	return "oziris-main", nil
 }
@@ -185,7 +190,7 @@ func (f *fakeProgress) AccountState(_ context.Context, accountID string) (storep
 		return storeprogress.AccountState{}, storeprogress.ErrAccountNotFound
 	}
 	return storeprogress.AccountState{
-		Account:    storeprogress.AccountView{ID: "acc-1", RSN: "Iron One", Mode: "ironman", GuideID: "oziris-main", Layer: "enhanced"},
+		Account:    storeprogress.AccountView{ID: "acc-1", RSN: "Iron One", Mode: "ironman", GuideID: new("oziris-main"), Layer: "enhanced"},
 		TotalLevel: 701,
 		Skills:     []storeprogress.SkillView{{Skill: "magic", Level: 41, XP: 41000, FactSource: storeprogress.FactSource{Source: "hiscores"}}},
 		Quests:     []storeprogress.QuestView{},
@@ -196,7 +201,7 @@ func (f *fakeProgress) AccountState(_ context.Context, accountID string) (storep
 
 func (f *fakeProgress) SetActiveGuide(_ context.Context, accountID, guideID string) error {
 	f.call, f.step = "active", guideID
-	if guideID != "oziris-main" {
+	if guideID != "oziris-main" && guideID != "" {
 		return storeprogress.ErrGuideNotFound
 	}
 	return nil
@@ -478,3 +483,4 @@ func TestGraphRoute(t *testing.T) {
 		}
 	}
 }
+

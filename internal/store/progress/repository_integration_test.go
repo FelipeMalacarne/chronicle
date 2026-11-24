@@ -570,6 +570,59 @@ func TestAccountsPostgres(t *testing.T) {
 	}
 }
 
+// TestAccountWithoutRoutePostgres: an account created without a guide
+// (docs/11 decision W10) is reevaluated and checked like any other, reads
+// the board of any guide (none active), answers ErrNoRoute for its own
+// route, and takes and drops a route.
+func TestAccountWithoutRoutePostgres(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	catalog, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := New(pool, loadContent(t), catalog)
+	acc, created, err := repo.CreateAccount(ctx, "", AccountInput{RSN: "Regular", Mode: "regular", Layer: "enhanced"})
+	if err != nil || !created || acc.GuideID != nil {
+		t.Fatalf("create without a guide = %+v %v, %v", acc, created, err)
+	}
+	if got := count(ctx, t, pool, `SELECT count(*) FROM accounts WHERE id = 'acc_regular' AND guide_id IS NULL`); got != 1 {
+		t.Fatalf("guide_id of the new account is not NULL (%d rows)", got)
+	}
+	if _, err = repo.ActiveGuide(ctx, acc.ID); !errors.Is(err, coreprogress.ErrNoRoute) {
+		t.Fatalf("active guide = %v", err)
+	}
+	board, err := repo.Board(ctx, acc.ID, "g1")
+	if err != nil || board.Active || board.Cursor == nil {
+		t.Fatalf("board of g1 without a route = active %v cursor %v, %v", board.Active, board.Cursor, err)
+	}
+	if _, err = repo.ReevaluateAll(ctx); err != nil {
+		t.Fatal(err)
+	}
+	assertConsistent(ctx, t, repo, acc.ID)
+
+	if err = repo.SetActiveGuide(ctx, acc.ID, "g1"); err != nil {
+		t.Fatal(err)
+	}
+	if guide, gerr := repo.ActiveGuide(ctx, acc.ID); gerr != nil || guide != "g1" {
+		t.Fatalf("after setting the route = %q, %v", guide, gerr)
+	}
+	if err = repo.SetActiveGuide(ctx, acc.ID, ""); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = repo.ActiveGuide(ctx, acc.ID); !errors.Is(err, coreprogress.ErrNoRoute) {
+		t.Fatalf("after clearing the route = %v", err)
+	}
+	st, err := repo.AccountState(ctx, acc.ID)
+	if err != nil || st.Account.GuideID != nil {
+		t.Fatalf("account state guide = %v, %v", st.Account.GuideID, err)
+	}
+	if err = repo.SetActiveGuide(ctx, acc.ID, "nope"); !errors.Is(err, ErrGuideNotFound) {
+		t.Fatalf("unknown guide = %v", err)
+	}
+	assertConsistent(ctx, t, repo, acc.ID)
+}
+
 func TestMarkBeforePostgres(t *testing.T) {
 	ctx := context.Background()
 	pool := testPool(ctx, t)

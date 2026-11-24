@@ -35,7 +35,7 @@ Table accounts {
   rsn text [not null, note: 'current name as shown on hiscores']
   rsn_normalized text [not null, note: 'lower-case, spaces -> \'_\' (lookup key)']
   mode text [not null]
-  guide_id text [not null, note: 'active guide (content/)']
+  guide_id text [note: 'The route the account follows (content/); NULL: the account has no route.']
   layer text [not null, default: `'enhanced'::text`]
   wom_player_id bigint [note: 'Wise Old Man id, when linked']
   name_history jsonb [not null, default: `'[]'::jsonb`, note: '[{rsn, from, to, detected_by}]']
@@ -43,7 +43,7 @@ Table accounts {
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
   managed boolean [not null, default: `false`, note: 'The account may run a managed worker; true only while a game_sessions row exists (kept by internal/store/workers).']
-  active_plan_id text [note: 'The plan the account follows (docs/10 section 9); NULL is the route of guide_id.']
+  active_plan_id text [note: 'The plan the account follows (docs/10 section 9); NULL is the route of guide_id, or nothing without a route.']
 
   indexes {
     (user_id, rsn_normalized) [unique]

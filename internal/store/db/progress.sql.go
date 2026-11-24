@@ -675,10 +675,10 @@ SELECT id, guide_id, layer, mode FROM accounts WHERE id = $1 FOR UPDATE
 `
 
 type LockAccountProgressRow struct {
-	ID      string `json:"id"`
-	GuideID string `json:"guide_id"`
-	Layer   string `json:"layer"`
-	Mode    string `json:"mode"`
+	ID      string      `json:"id"`
+	GuideID pgtype.Text `json:"guide_id"`
+	Layer   string      `json:"layer"`
+	Mode    string      `json:"mode"`
 }
 
 // Serializes reevaluations and owner writes of one account.
@@ -757,8 +757,8 @@ UPDATE accounts SET guide_id = $2, updated_at = now() WHERE id = $1
 `
 
 type SetAccountGuideParams struct {
-	ID      string `json:"id"`
-	GuideID string `json:"guide_id"`
+	ID      string      `json:"id"`
+	GuideID pgtype.Text `json:"guide_id"`
 }
 
 func (q *Queries) SetAccountGuide(ctx context.Context, arg SetAccountGuideParams) error {

@@ -71,6 +71,9 @@ func (r *Repository) persistNormalized(ctx context.Context, q *storedb.Queries, 
 	if err := persistMinigame(ctx, q, &rows, accountID, snapshotID, push); err != nil {
 		return err
 	}
+	if err := persistMembership(ctx, q, &rows, accountID, snapshotID, push); err != nil {
+		return err
+	}
 	if p := push.Data.Position; p != nil {
 		// The last position only: no snapshot_facts row, it is not history.
 		v := map[string]int{"world": p.World, "x": p.X, "y": p.Y, "plane": p.Plane, "region": p.Region()}
@@ -123,6 +126,9 @@ func touchedFacets(push coreingest.Push) []string {
 	}
 	if d.Minigame != nil {
 		out = append(out, coreingest.FacetMinigame)
+	}
+	if d.Membership != nil {
+		out = append(out, coreingest.FacetMembership)
 	}
 	if d.Levels != nil || d.XP != nil || d.Boosted != nil {
 		out = append(out, "skill")
@@ -203,6 +209,22 @@ func persistMinigame(ctx context.Context, q *storedb.Queries, rows *facts, accou
 		}
 		rows.add(snapshotID, coreingest.FacetMinigame, key, raw)
 	}
+	return nil
+}
+
+// persistMembership keeps data.membership as one fact. A push without it
+// leaves the fact as it was: the client reports it only once the login settled.
+func persistMembership(ctx context.Context, q *storedb.Queries, rows *facts, accountID, snapshotID string, push coreingest.Push) error {
+	m := push.Data.Membership
+	if m == nil {
+		return nil
+	}
+	raw, err := upsertFact(ctx, q, accountID, snapshotID, coreingest.FacetMembership, coreingest.MembershipKey,
+		map[string]any{"days": *m.Days, "member": *m.Member}, push.SentAt)
+	if err != nil {
+		return err
+	}
+	rows.add(snapshotID, coreingest.FacetMembership, coreingest.MembershipKey, raw)
 	return nil
 }
 

@@ -730,3 +730,28 @@ e o 1.16 não manda o campo.
 Verificação: testes JUnit (`MinigameTest`: o número do widget, a flag, o `full` e o `delta`; 177 no
 pacote) e, no servidor, `TestMinigameValidation`, `TestMinigameNeedsManifest`, `TestMinigamePostgres`
 e o fixture de contrato `account-state`. Não conferido no jogo: FEL-53.
+
+## Adendo de 2026-11-24: membership (Chronicle Link 1.18.0)
+
+O jogo guarda os dias de membership que restam no varp `ACCOUNT_CREDIT` (1780) e marca o membro no varc
+`PLAYERMEMBER`; um membro pode ter 0 dias, então a conta é membro quando um dos dois diz que é. O
+Chronicle Link lê os dois (`MembershipReading`) e os manda ao planner. Contrato v1, campo opcional com
+flag no manifest (spec no doc 04, seção 6.4):
+
+| Campo do push | Flag do manifest | Conteúdo |
+|---|---|---|
+| `data.membership` | `membership` | `{"days": 0..36500, "member": bool}` |
+
+Os dois valores chegam como 0 até o servidor do jogo os enviar depois do login, o que é igual a uma conta
+free-to-play. Por isso o plugin só informa a faceta depois de 10 ticks logado (cerca de 6 s, mais que a
+espera de 3 ticks das outras facetas) e com o personagem local presente; antes disso o campo some do push.
+O valor acima do limite do servidor é cortado no plugin. A faceta é um valor só: em `full` e em `delta`
+o que chega substitui o guardado, e um push sem o campo o deixa como estava. No `delta` o campo vai quando
+muda (os dias caem uma vez por dia) e nunca pede `full`.
+
+O servidor grava a faceta `membership` (migration 0028), chave `membership`, valor `{"days","member"}`. Um
+plugin 1.17 ignora a flag nova; um servidor anterior não a anuncia e o 1.18 não manda o campo.
+
+Verificação: testes JUnit (`MembershipTest`: a regra de espera, membro com 0 dias, o corte dos dias, a
+flag, o `full` e o `delta`) e, no servidor, `TestMembershipValidation`, `TestMembershipNeedsManifest` e
+`TestMembershipPostgres`. Falta conferir no jogo com o 1.18 instalado.

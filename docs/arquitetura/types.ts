@@ -70,6 +70,15 @@ const MinigameMap = z.record(
   z.number().int().min(0).max(1_000_000),
 ).refine(m => Object.keys(m).length <= 64, 'no máximo 64 contadores');
 
+/**
+ * Membership (doc 06, adendo de 2026-11-24): dias que restam e se a conta é membro (um membro pode ter 0
+ * dias; dias > 0 exige member). O plugin só informa depois de 10 ticks logado.
+ */
+const Membership = z.object({
+  days: z.number().int().min(0).max(36_500),
+  member: z.boolean(),
+}).strict().refine(m => m.days === 0 || m.member, 'dias > 0 exige member');
+
 /** Posição do personagem, opt-in no cliente; o servidor guarda só a última. */
 const Position = z.object({
   world: z.number().int().min(0).max(9999),
@@ -140,6 +149,7 @@ export const IngestManifest = z.object({
   collection_log: z.boolean().default(false),           // aceita data.collectionLog (2026-11-13)
   recording: z.boolean().default(false),                // aceita data.recording (gravação, doc 10 fase 2)
   minigame: z.boolean().default(false),                 // aceita data.minigame (2026-11-16)
+  membership: z.boolean().default(false),               // aceita data.membership (2026-11-24)
   items: IngestItemSelection,
   interval_seconds: z.number().int().min(5).default(10),
   resync: z.boolean().default(false),                    // próximo push deve ser full
@@ -208,6 +218,7 @@ const IngestPayloadBase = z.object({
     collectionLog: CollectionLogMap.optional(),            // só com manifest.collection_log
     recording: Recording.optional(),                       // só com manifest.recording e "Record demonstration"
     minigame: MinigameMap.optional(),                      // só com manifest.minigame
+    membership: Membership.optional(),                     // só com manifest.membership
     collectionLogSlots: z.string().optional(),             // base64 bitset, índice = manifest.collections (nenhum plugin manda)
     collectionLogItemCount: z.number().int().nonnegative().safe().optional(),
     items: IngestItemContainers.optional(),

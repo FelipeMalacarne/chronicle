@@ -100,7 +100,9 @@ func BuildDefinition(c *content.Content, reg *entities.Registry) Definition {
 		// The minigame counters (the Mage Training Arena's pizazz points),
 		// offered since 2026-11-16.
 		Minigame bool `json:"minigame"`
-	}{d.Varbits, d.Varps, d.Collections, d.OnlyItemIDs, reg != nil, true, true, true, true})
+		// The membership days, offered since 2026-11-24.
+		Membership bool `json:"membership"`
+	}{d.Varbits, d.Varps, d.Collections, d.OnlyItemIDs, reg != nil, true, true, true, true, true})
 	hash := sha256.Sum256(canonical)
 	d.Version = int64(binary.BigEndian.Uint32(hash[:4]) & math.MaxInt32)
 	if d.Version == 0 {
@@ -164,6 +166,7 @@ func (d Definition) manifest(scopes []coreingest.TokenScope, resync bool) corein
 		CollectionLog:   true,
 		Recording:       true,
 		Minigame:        true,
+		Membership:      true,
 		Items: coreingest.ItemSelection{
 			Bank:        has[coreingest.ScopeItemsBank],
 			Inventory:   has[coreingest.ScopeItemsInventory],

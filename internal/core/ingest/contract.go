@@ -49,6 +49,9 @@ type Manifest struct {
 	// minigame shows only in its interface, such as the Mage Training Arena's
 	// pizazz points (docs/06, adendo 2026-11-16).
 	Minigame bool `json:"minigame"`
+	// Membership tells the client the server accepts data.membership: the
+	// days of membership left (docs/06, adendo 2026-11-24).
+	Membership bool `json:"membership"`
 	// Recording tells the client the server accepts data.recording: the
 	// demonstration the owner records with "Record demonstration" on
 	// (docs/10 section 11, phase 2).
@@ -128,6 +131,11 @@ type PushData struct {
 	// value, in a full push and in a delta, and keys absent stay as they were:
 	// the client knows a value only once its interface has been on screen.
 	Minigame *IntMap `json:"minigame,omitempty"`
+	// Membership is what the client read after the login settled: the days of
+	// membership left and whether the account is a member. It is one value, so
+	// a full push and a delta both replace the stored fact; absent, the fact
+	// stays (the client reports it only once the game has sent it).
+	Membership *Membership `json:"membership,omitempty"`
 	// Recording is the demonstration the owner records (docs/10 section 11):
 	// the client's events not acknowledged yet, oldest first, in a full push
 	// and in a delta. Each (recording, seq) is stored once, so a push resent
@@ -187,6 +195,18 @@ const (
 	MaxMinigame      = 64
 	MaxMinigameValue = 1_000_000
 )
+
+// MaxMembershipDays bounds data.membership.days (a hundred years: a sanity
+// bound, the game's balance is far lower).
+const MaxMembershipDays = 36_500
+
+// Membership is the account's membership as the game shows it. Both fields are
+// required: a member may have 0 days left, and 0 days alone does not say
+// whether the account is a member.
+type Membership struct {
+	Days   *int64 `json:"days"`
+	Member *bool  `json:"member"`
+}
 
 // Position is a tile and the world the character is on.
 type Position struct {

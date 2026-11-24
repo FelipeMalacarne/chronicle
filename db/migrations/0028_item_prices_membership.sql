@@ -35,8 +35,9 @@ ALTER TABLE player_state ADD CONSTRAINT player_state_facet_check
   CHECK (facet IN ('skill','activity','quest','diary','diary_task','combat_achievement','collection_log','varbit','varp','item','timer','position','minigame','membership'));
 
 -- +goose Down
--- Refuse instead of deleting: the membership facts are the accounts' own
--- observations, and the prices would only come back with the next sync.
+-- Refuse instead of deleting the membership facts: they are the accounts'
+-- own observations. item_prices is a cache of the wiki and is dropped; the
+-- next sync after an up refills it.
 -- +goose StatementBegin
 DO $$
 BEGIN
@@ -44,9 +45,6 @@ BEGIN
      OR EXISTS (SELECT 1 FROM snapshot_facts WHERE facet = 'membership')
      OR EXISTS (SELECT 1 FROM player_state WHERE facet = 'membership') THEN
     RAISE EXCEPTION 'membership facts exist; remove them before rolling back 0028';
-  END IF;
-  IF EXISTS (SELECT 1 FROM item_prices) THEN
-    RAISE EXCEPTION 'item_prices has rows; empty it before rolling back 0028';
   END IF;
 END
 $$;

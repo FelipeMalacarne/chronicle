@@ -14,7 +14,7 @@ COMMENT ON COLUMN accounts.active_plan_id IS 'The plan the account follows (docs
 DO $$
 BEGIN
   IF EXISTS (SELECT 1 FROM accounts WHERE guide_id IS NULL) THEN
-    RAISE EXCEPTION 'accounts without a route exist; give them a guide or delete them before rolling back 0027';
+    RAISE EXCEPTION 'accounts without a route exist; give them a guide or delete them before rolling back 0029';
   END IF;
 END
 $$;

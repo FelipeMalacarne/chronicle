@@ -510,7 +510,7 @@ erDiagram
   quests e diaries).
 - **`player_state`**: uma linha por fato `(facet, key)` com `value` JSON, fonte e `observed_at`. Facetas:
   `skill`, `activity`, `quest`, `diary_task`, `combat_achievement`, `collection_log`, `varbit`, `varp`,
-  `item`, `timer` e `position` (migration 0011), `minigame` (migration 0025) e `diary` (tier completa, chave `area:tier`, valor `{"complete":bool}`, derivada dos varbits
+  `item`, `timer` e `position` (migration 0011), `minigame` (migration 0025), `membership` (migration 0028) e `diary` (tier completa, chave `area:tier`, valor `{"complete":bool}`, derivada dos varbits
   de referência; migration 0005). A chave de `quest` é o nome canônico da wiki do catálogo. Desde a migration 0008, `player_state` é uma projeção:
   cada fonte grava a própria última observação em **`observations`** `(facet, key, source)`, e
   `internal/core/facts.Merge` junta as fontes (o maior valor para o que só cresce: XP e nível, quest,
@@ -776,6 +776,14 @@ Detalhes do contrato (tipos Go em `internal/core/ingest/contract.go`; espelho Zo
   varbit 1505). Como o `collectionLog`: em `full` e em `delta`, cada chave presente substitui a guardada
   e as ausentes ficam, porque o plugin só conhece um contador depois de vê-lo na tela nesse login.
   Vira a faceta `minigame`, valor `{"value"}` (doc 06, adendo de 2026-11-16).
+  Desde 2026-11-24 (Chronicle Link 1.18.0, migration 0028), com o manifest anunciando `membership: true`:
+  `membership`, objeto `{"days", "member"}` com os dois campos obrigatórios: `days` inteiro de 0 a 36.500
+  (os dias de membership que restam, varp `ACCOUNT_CREDIT`) e `member` booleano (`days > 0` ou o varc
+  `PLAYERMEMBER`; um membro pode ter 0 dias, então `days > 0` com `member: false` é recusado). Em `full` e
+  em `delta`; é um valor só, então o que chega substitui o guardado, e um push sem o campo o deixa como
+  estava, porque o plugin só o manda depois de 10 ticks logado (os dois valores chegam como 0 até o
+  servidor do jogo enviá-los, igual a uma conta free-to-play). Vira a faceta `membership`, chave
+  `membership`, valor `{"days","member"}` (doc 06, adendo de 2026-11-24).
 - **Vars genéricos**: o plugin lê **todo** varbit/varp que o manifest listar (`client.getVarbitValue`,
   `client.getVarpValue`) e manda em `varb`/`varp`, sem saber o que significam. O servidor deriva os fatos:
   a faceta `diary` dos varbits `DIARY_<ÁREA>_<TIER>_COMPLETED`, `qp>=N` do varp 101 (`QUEST_POINTS`) e,

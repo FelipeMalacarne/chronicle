@@ -69,8 +69,10 @@ func NeedsSupervision(mode string, risks []string) bool {
 
 // Executable says whether the executor runs a task (docs/10 section 13:
 // travel, bank and buy on Chronicle Link, phase 3; train delegated to a
-// plugin, phase 4; quest delegated to the client's Quest Helper, E19), and
-// why not: the other types, a travel with a via (the executor has no
+// plugin, phase 4; quest delegated to the client's Quest Helper, E19;
+// ge_buy and ge_sell delegated to the Agent Server's Grand Exchange, docs/12
+// section 6), and why not: the other types, the Grand Exchange for an
+// account that is not regular, a travel with a via (the executor has no
 // teleport primitive yet: the web walker would pick its own way), a
 // destination without an area, a bank task for an Ultimate Ironman (no
 // bank) or without items to bank for, a train that names no plugin.
@@ -111,13 +113,21 @@ func Executable(t content.Task, bankItems bool, mode string, reg *entities.Regis
 			return false, "o trecho não tem setup para o banco montar"
 		}
 		return true, ""
+	case content.TaskGEBuy, content.TaskGESell:
+		if mode != content.ModeRegular {
+			return false, "o Grand Exchange é só do modo regular: um ironman não negocia"
+		}
+		if t.Item == nil {
+			return false, "a tarefa não tem item"
+		}
+		return true, ""
 	case content.TaskBuy:
 		if len(ShopKeepers(t, reg)) == 0 {
 			return false, "a loja não tem lojista com id de jogo no catálogo"
 		}
 		return true, ""
 	}
-	return false, "o executor só roda travel, bank, buy, train e quest"
+	return false, "o executor só roda travel, bank, buy, train, quest, ge_buy e ge_sell"
 }
 
 // ShopKeepers returns the game ids of the NPCs that own the shop of a buy

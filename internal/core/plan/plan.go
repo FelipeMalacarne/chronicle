@@ -133,12 +133,13 @@ func CheckTitle(title string) error {
 	return nil
 }
 
-// CheckItems verifies the items of a goal or custom plan against the
-// content: a step must be a step of its guide, a recipe must exist and a
-// standalone task must pass the task verifier as a recipe's would (no step:
-// no goal_met nor owner_mark, a bank task lists its items). It returns
-// every problem, prefixed with the item's position.
-func CheckItems(items []Item, c *content.Content, reg *entities.Registry) []string {
+// CheckItems verifies the items of a goal or custom plan of an account of
+// mode against the content: a step must be a step of its guide, a recipe
+// must exist and a standalone task must pass the task verifier as a recipe's
+// would, for that mode (no step: no goal_met nor owner_mark, a bank task
+// lists its items, the Grand Exchange only for a regular account). It
+// returns every problem, prefixed with the item's position.
+func CheckItems(items []Item, mode string, c *content.Content, reg *entities.Registry) []string {
 	var msgs []string
 	add := func(i int, format string, args ...any) {
 		msgs = append(msgs, fmt.Sprintf("items/%d: ", i)+fmt.Sprintf(format, args...))
@@ -184,7 +185,7 @@ func CheckItems(items []Item, c *content.Content, reg *entities.Registry) []stri
 				add(i, "a task item has task only")
 				continue
 			}
-			for _, msg := range it.Task.Check(reg, content.TaskContext{Recipe: true}) {
+			for _, msg := range it.Task.Check(reg, content.TaskContext{Recipe: true, Modes: []string{mode}}) {
 				add(i, "task: %s", msg)
 			}
 		default:

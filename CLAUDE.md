@@ -115,14 +115,18 @@ internal/core/        PURE domain (no DB/HTTP imports):
                       the ones already met, recipes inserted only for proven-unmet requirements; risks (E9,
                       the wilderness, a train that fights, a quest not confirmed safe) and what the executor
                       runs (travel, bank, buy, a train that names its plugin, a quest whose catalog
-                      requirements are proven); Resolve turns a task into the execspec the agent carries;
+                      requirements are proven, ge_buy and ge_sell for a regular account only); Resolve turns
+                      a task into the execspec the agent carries (a GE offer priced from item_prices);
                       QuestHelperName matches a quest to the name the client's Quest Helper lists
   execspec/           the typed task the executor runs: travel, bank, buy (Chronicle Link's machine, phase 3),
-                      train (delegated by the agent to a plugin, phase 4) and quest (delegated to the client's
-                      Quest Helper, E19): game ids, tiles, quantities, the plugin's class and settings, the
-                      quest's ref and helper name only, with its checks, the wilderness bounds and E9;
-                      shared by the server, the agent's task_run and (mirrored, pinned by task-wire.json)
-                      Chronicle Link, which keeps refusing train and quest
+                      train (delegated by the agent to a plugin, phase 4), quest (delegated to the client's
+                      Quest Helper, E19) and ge_buy/ge_sell (delegated to the Agent Server's /ge, regular
+                      accounts only, docs/12 section 6): game ids, tiles, quantities, prices, the plugin's
+                      class and settings, the quest's ref and helper name only, with its checks, the
+                      wilderness bounds and E9; shared by the server, the agent's task_run and (mirrored,
+                      pinned by task-wire.json) Chronicle Link, which keeps refusing train, quest and the GE
+  ge/                 the Grand Exchange of a regular account: an item's stored price, the offer price of a
+                      ge_buy/ge_sell (the wiki's last trade +/- a margin, at most a day old) and the GE tax
   clientcfg/          what the planner may name and set in the Microbot client (plugin classes, config
                       groups, keys and values; the protected ones; the pinned ones: the Quest Helper's
                       "Obtain Missing Items" is only ever NO): the agent, profiles, execspec and the
@@ -135,7 +139,8 @@ internal/store/       repositories (activity: the XP observations behind the lev
                       PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; rhythm: the series the rhythm reads; workers: sealed game sessions, workers'
                       desired state, client profiles; routines: triggers and the runs' history; recording: the
                       owner's read and delete of the demonstration recording, which only the ingest writes;
-                      plans: the goal and custom plans and the account's active plan);
+                      plans: the goal and custom plans and the account's active plan; prices: item_prices
+                      and its refresh scheduler);
                       internal/store/db is sqlc OUTPUT
 internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
                       client (bearer of the CLI and MCP); authtest: fake issuer for tests (incl. device flow)
@@ -143,7 +148,8 @@ internal/httpapi/     handlers: /api/guides/{guide}/..., /api/ingest, /auth/* an
                       (incl. /api/world/entity for the entity panel, /api/account/state for Conta,
                       /api/plan/next and /api/plans for the plans; /api/microbot/task runs the next one)
                       (dev without session, oidc behind it), dev-only token bootstrap
-internal/sources/     adapters of external sources: hiscores (fetch + pure normalize); planned: wom, wiki
+internal/sources/     adapters of external sources (fetch + pure normalize): hiscores, wikiprices (the OSRS Wiki
+                      real-time prices API, v2 /latest and /mapping); planned: wom
 internal/microbot/    typed client of the Microbot Agent Server and of Chronicle's control bridge (Chronicle Link plugin; Unix sockets of the
                       harness dev home, same token); agent only
 internal/vault/       AES-256-GCM of the accounts' game sessions (CHRONICLE_VAULT_KEY), pure
@@ -204,8 +210,10 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0023 objective_marks: the owner's marks on objectives, account-wide, not evidence,
                       0024 loadout_marks: the owner's marks on the items of a leg's loadout, per (guide, segment), not evidence,
                       0025 minigame facet: counters read in a minigame's interface, the MTA's pizazz points,
-                      0026 accounts.mode regular: an account that is not ironman,
-                      0027 accounts.guide_id nullable: an account without a route follows its active plan;
+                      0026 accounts.mode regular (docs/12),
+                      0028 item_prices: the Grand Exchange prices of the OSRS Wiki; membership facet: days left
+                      and the member flag,
+                      0029 accounts.guide_id nullable: an account without a route follows its active plan;
                       the routes that read its own route answer 409 "account has no route")
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
@@ -284,7 +292,7 @@ Read by the Go config (defaults in parentheses): `CHRONICLE_ADDR` (`:8080`), `DA
 `OIDC_REQUIRED_ROLE` (oidc needs one of the two; both set = both required), `OIDC_PROJECT_ID`, `OIDC_NATIVE_CLIENT_ID`
 (Zitadel native app of the device flow: its JWT access tokens are bearers on the account routes; empty = web
 session only), `SESSION_SECRET` (32+ chars in oidc),
-`CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler),
+`CONTENT_DIR` (`content`), `LOG_LEVEL` (`info`), `PUBLIC_BASE_URL`, `SYNC_HISCORES_MINUTES` (`30`; `0` disables the scheduler), `SYNC_PRICES_MINUTES` (`60`; `0` disables the Grand Exchange prices refresh from the OSRS Wiki, which also runs once at start),
 `MICROBOT_CONTROL` (`off`; `on` enables the Microbot control module, docs/08; in oidc it needs `OIDC_PROJECT_ID`, the
 audience of the agent's machine-user token). `chronicle agent` reads `CHRONICLE_URL`, `MICROBOT_AGENT_CLIENT_ID`,
 `MICROBOT_AGENT_CLIENT_SECRET` (or `_SECRET_FILE`; oidc only), `MICROBOT_HARNESS_DIR`, `MICROBOT_HOME`, `MB_VNC_PORT` and, to override the

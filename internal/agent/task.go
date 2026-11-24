@@ -53,8 +53,9 @@ type TaskRunParams struct {
 	// death risk runs only so).
 	Supervised bool `json:"supervised,omitempty"`
 	// TimeoutS bounds the plugin's machine (default 900 for a travel, 300
-	// otherwise; 30 to 3600); a train's plugin and a quest's Quest Helper
-	// (default 7200, 60 to 43200).
+	// otherwise; 30 to 3600), a Grand Exchange offer's fill (default 600, 30
+	// to 3600); a train's plugin and a quest's Quest Helper (default 7200,
+	// 60 to 43200).
 	TimeoutS int `json:"timeoutS,omitempty"`
 	// Account is the account whose facts prove a train's level or a
 	// quest's end (the server's word, as a wait_until's); required for both.
@@ -70,6 +71,9 @@ type RunTask struct {
 	Type       string `json:"type"`
 	Label      string `json:"label"`
 	Supervised bool   `json:"supervised,omitempty"`
+	// CoinsAtLeast is a ge_sell's execspec.GESell.CoinsAtLeast, carried so
+	// the server proves the sale on the run (rules.SaleProven).
+	CoinsAtLeast int64 `json:"coinsAtLeast,omitempty"`
 }
 
 var (
@@ -125,6 +129,9 @@ func validateTaskRun(raw json.RawMessage) (TaskRunParams, error) {
 	if err := p.Task.Check(); err != nil {
 		return p, err
 	}
+	if err := p.Task.CheckMode(p.Mode); err != nil {
+		return p, err
+	}
 	// The task's own risks (a travel into the wilderness, a quest not
 	// confirmed safe) are declared, whatever the server says.
 	for _, r := range p.Task.Risks() {
@@ -149,6 +156,8 @@ func checkRunTask(t RunTask) error {
 		return fmt.Errorf("task: unknown type %q", t.Type)
 	case strings.TrimSpace(t.Label) == "" || len(t.Label) > 200 || strings.IndexFunc(t.Label, func(r rune) bool { return !unicode.IsPrint(r) }) >= 0:
 		return errors.New("task: label of 1 to 200 printable characters, one line")
+	case t.CoinsAtLeast < 0 || t.CoinsAtLeast > execspec.MaxCoins || (t.CoinsAtLeast > 0 && t.Type != execspec.TypeGESell):
+		return errors.New("task: coinsAtLeast belongs to a ge_sell, at most the GE's coin stack")
 	}
 	return nil
 }
@@ -173,6 +182,15 @@ func (e *Executor) taskRun(raw json.RawMessage) (any, error) {
 		run.ClassName = tr.Plugin
 		run.Until = &RunUntil{Objective: tr.Until(), Account: p.Account}
 		drive = func(ctx context.Context) { e.driveTrain(ctx, p) }
+	}
+	if p.Task.GE() {
+		// Delegated to the Agent Server's Grand Exchange (docs/12 section
+		// 6): the run places the offer, follows it and collects it.
+		run.ClassName = AgentServerClass
+		if p.Task.GESell != nil {
+			run.Task.CoinsAtLeast = p.Task.GESell.CoinsAtLeast
+		}
+		drive = func(ctx context.Context) { e.driveGE(ctx, p) }
 	}
 	if q := p.Task.Quest; q != nil {
 		// Delegated to the client's Quest Helper (docs/10, E19): the run is

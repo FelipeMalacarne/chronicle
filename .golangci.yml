@@ -41,8 +41,10 @@ linters:
       locale: US
       # OSRS skill names keep the game's spelling; "dialogue" is the game's
       # word and the Microbot Agent Server's path (/dialogue); the other two
-      # are place names (Hallowed Sepulchre, Theatre of Blood).
+      # are place names (Hallowed Sepulchre, Theatre of Blood); "cancelled" is
+      # RuneLite's GrandExchangeOfferState (CANCELLED_BUY, CANCELLED_SELL).
       ignore-rules:
+        - cancelled
         - defence
         - dialogue
         - sepulchre

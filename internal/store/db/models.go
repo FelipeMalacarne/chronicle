@@ -159,6 +159,18 @@ type IngestContainerFreshness struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 }
 
+type ItemPrice struct {
+	ItemID    int32              `json:"item_id"`
+	High      pgtype.Int8        `json:"high"`
+	HighAt    pgtype.Timestamptz `json:"high_at"`
+	Low       pgtype.Int8        `json:"low"`
+	LowAt     pgtype.Timestamptz `json:"low_at"`
+	BuyLimit  pgtype.Int4        `json:"buy_limit"`
+	Members   pgtype.Bool        `json:"members"`
+	Source    string             `json:"source"`
+	FetchedAt pgtype.Timestamptz `json:"fetched_at"`
+}
+
 // The owner's marks on the items of a leg's loadout, per (guide, segment): they count as satisfied when readiness is computed, but are not evidence (holdings and player_state are untouched).
 type LoadoutMark struct {
 	AccountID string             `json:"account_id"`

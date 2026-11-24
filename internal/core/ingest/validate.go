@@ -129,6 +129,9 @@ func (p Push) Validate() error {
 	if p.Data.Minigame != nil {
 		validateMinigame(&errs, *p.Data.Minigame)
 	}
+	if p.Data.Membership != nil {
+		validateMembership(&errs, *p.Data.Membership)
+	}
 	if p.Data.CollectionLog != nil {
 		validateCollectionLog(&errs, *p.Data.CollectionLog, p.SentAt)
 	}
@@ -272,6 +275,9 @@ func (p Push) ValidateAgainst(m Manifest) error {
 	if p.Data.Minigame != nil && !m.Minigame {
 		errs = append(errs, "data.minigame is not enabled by the manifest")
 	}
+	if p.Data.Membership != nil && !m.Membership {
+		errs = append(errs, "data.membership is not enabled by the manifest")
+	}
 	if p.Data.Position != nil && !m.Position {
 		errs = append(errs, "data.position is not enabled by the manifest")
 	}
@@ -352,6 +358,17 @@ func validateTimers(errs *validationErrors, timers TimerMap) {
 		case len(t.Label) > 80:
 			*errs = append(*errs, fmt.Sprintf("data.timers[%q].label is longer than 80 bytes", k))
 		}
+	}
+}
+
+func validateMembership(errs *validationErrors, m Membership) {
+	switch {
+	case m.Days == nil || m.Member == nil:
+		*errs = append(*errs, "data.membership needs days and member")
+	case *m.Days < 0 || *m.Days > MaxMembershipDays:
+		*errs = append(*errs, fmt.Sprintf("data.membership.days must be between 0 and %d", MaxMembershipDays))
+	case *m.Days > 0 && !*m.Member:
+		*errs = append(*errs, "data.membership.member must be true while days is above 0")
 	}
 }
 

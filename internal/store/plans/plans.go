@@ -152,7 +152,7 @@ func (r *Repository) Get(ctx context.Context, account, id string) (plan.Plan, er
 
 // Create stores a goal or custom plan after verifying it: the title, the
 // goal (of this account) of a goal plan, and every item against the
-// content (plan.CheckItems). A route plan comes from the content and is
+// content for the account's mode (plan.CheckItems). A route plan comes from the content and is
 // never created.
 func (r *Repository) Create(ctx context.Context, account string, in NewPlan) (plan.Plan, error) {
 	var problems []string
@@ -173,7 +173,14 @@ func (r *Repository) Create(ctx context.Context, account string, in NewPlan) (pl
 	if err := plan.CheckTitle(in.Title); err != nil {
 		problems = append(problems, err.Error())
 	}
-	problems = append(problems, plan.CheckItems(in.Items, r.content, r.catalog)...)
+	mode, merr := storedb.New(r.pool).GetAccountMode(ctx, account)
+	switch {
+	case errors.Is(merr, pgx.ErrNoRows):
+		return plan.Plan{}, ErrAccountNotFound
+	case merr != nil:
+		return plan.Plan{}, fmt.Errorf("read account mode: %w", merr)
+	}
+	problems = append(problems, plan.CheckItems(in.Items, mode, r.content, r.catalog)...)
 	if len(problems) > 0 {
 		return plan.Plan{}, &InvalidError{Problems: problems}
 	}

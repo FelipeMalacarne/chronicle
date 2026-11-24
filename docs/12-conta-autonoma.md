@@ -42,7 +42,7 @@ verificáveis evita a tradução.
 
 - **Modo `regular`.** O doc 11 previu esse modo (seção 4.1, decisão W10). `accounts.mode` aceita
   `regular` desde a migração 0026, e o modo entra também nas variantes das receitas.
-- **Sem rota.** `accounts.guide_id` aceita nulo desde a migração 0027. A conta sem rota segue o plano
+- **Sem rota.** `accounts.guide_id` aceita nulo desde a migração 0029. A conta sem rota segue o plano
   `custom` ativo (`accounts.active_plan_id`); sem plano escolhido, não segue nada, e o que lê a rota
   da própria conta (a janela do `now`, o próximo item do plano) responde 409 `account has no route`
   em vez de inventar um guia. Os fatos, os boards de cada guia e os cursores continuam calculados;
@@ -53,8 +53,7 @@ verificáveis evita a tradução.
   qualquer momento (decisão 9 do doc 01). O desenho não pode depender de uma conta sobreviver.
 - **Membership por bond.** A conta começa F2P. O primeiro bond custa alguns milhões de GP, e o preço
   varia. Contas F2P novas têm o GE e o trade limitados até cumprir horas jogadas, quest points e
-  total level. Os números exatos precisam ser conferidos na OSRS Wiki antes de desenhar o GE tipado
-  (seção 6).
+  total level; os números e a fonte estão na seção 6.5.
 
 ## 4. A rota: metas da conta e um catálogo de métodos de dinheiro
 
@@ -115,9 +114,9 @@ Cada chave da construção e a meta de GP têm uma receita em `content/recipes/`
 |---|---|---|
 | quest | `quest`: a preparação e o executor de passo da seção 5 | Delegação ao Quest Helper (E19), sem executor próprio |
 | skill | `train`: um plugin com a configuração do método | Sim, nunca rodou em jogo |
-| item | compra no GE (seção 6) | Não; o GE está fora da lista fechada |
+| item | `ge_buy` (seção 6) | Sim, nunca rodou em jogo |
 | lugar | `travel`, ou um teleporte comprado | `travel` sim; teleporte não (E14) |
-| GP | `train` de um método de dinheiro, mais a venda no GE | Não |
+| GP | `train` de um método de dinheiro, mais `ge_sell` das saídas | `ge_sell` sim, nunca rodou em jogo; o catálogo de métodos não |
 
 ### 4.4 Requisitos
 
@@ -212,20 +211,94 @@ independentemente do que o Quest Helper mostre. Cada degrau custa mais que o ant
 
 ## 6. GE e dinheiro
 
-O Agent Server tem `GET /ge` e `POST /ge/buy`, `/ge/sell`, `/ge/collect`, `/ge/abort` e
-`/ge/close`. O Chronicle os deixou de fora porque a conta era ironman (comentário em
-`internal/agent/game.go`). A proposta:
+Uma conta `regular` negocia no Grand Exchange por duas tarefas tipadas, `ge_buy` e `ge_sell`. Uma
+conta ironman (`ironman`, `hcim`, `uim` ou `gim`) nunca as roda. O verificador de conteúdo só as
+aceita numa variante de receita cujos modos são `[regular]`, nunca num passo de guia. A criação de
+plano, `plan.Executable`, `plan.Resolve` e o `task_run` do agent recusam qualquer outro modo
+(`execspec.Task.CheckMode`).
 
-- tarefas tipadas `ge_buy` e `ge_sell` no `execspec`, aceitas só para contas `regular`;
-- preços pela API de preços em tempo real da OSRS Wiki, guardados como fatos com fonte e hora;
-- um fato novo com os dias de membership restantes, que a manutenção da seção 4.2 lê (a fonte no
-  cliente ainda precisa ser encontrada);
-- a meta de GP da seção 4.2, cumprida por métodos de dinheiro (`train` com o plugin do método, mais
-  a venda das saídas);
-- a compra e o resgate do bond pela regra da seção 4.2.
+### 6.1 As tarefas
 
-A métrica da conta é quantos dias ela se manteve sem o dono, com o GP por hora líquido de cada
-método.
+| Tarefa | Conteúdo | O que o servidor resolve (`execspec`) | Termina quando |
+|---|---|---|---|
+| `ge_buy` | `item`, `qty` | `geBuy: {item, itemName, qty, price}`. `qty` é o que falta, contado como na compra em loja, até o limite de 4 horas do GE. `price` é o último preço de compra imediata mais 5%, arredondado para cima. O inventário ao vivo precisa ter as moedas da oferta inteira | as posses da conta provam `item:<id>x<qty>` |
+| `ge_sell` | `item` | `geSell: {item, itemName, qty, price, coinsAtLeast}`. `qty` é todo o item que o inventário ao vivo tem, numa forma só (noted ou não). `price` é o último preço de venda imediata menos 5%, arredondado para baixo. `coinsAtLeast` são as moedas do inventário naquela hora mais o mínimo que a venda paga | `sold`: o inventário ao vivo, com baseline completa, não tem mais o item. O run da venda só é provado quando o inventário também tem `coinsAtLeast` moedas |
+
+O preço vale só se a negociação por trás dele tem menos de 24 horas (`ge.MaxAge`). O mínimo que
+uma venda paga é `qty × (price − imposto)`. O imposto do GE é 2% do preço de cada item, arredondado
+para baixo e limitado a 5M por item ([OSRS Wiki, Grand
+Exchange](https://oldschool.runescape.wiki/w/Grand_Exchange#Convenience_fee_and_item_sink)). Uma
+oferta de venda enche pelo preço pedido ou melhor, e um item isento só aumenta o que entra, então o
+mínimo vale para todos.
+
+### 6.2 Execução
+
+O agent delega as duas tarefas ao `/ge` do Agent Server (`GrandExchangeHandler` do cliente
+fixado), como delega a quest ao Quest Helper (E19). O run:
+
+1. confere que nenhum slot do GE já tem oferta do item;
+2. manda `POST /ge/buy` ou `/ge/sell` com `{name, quantity, price}`. O Agent Server acha o item pelo
+   nome exato, e o GE precisa estar aberto ou perto, então um `travel` antes leva a conta até lá;
+3. acompanha `GET /ge` até o slot chegar a `BOUGHT` ou `SOLD`;
+4. coleta no inventário (`/ge/collect` com `toBank: false`), para o inventário ao vivo mostrar o
+   que chegou, e fecha o GE (`/ge/close`).
+
+Uma oferta que não enche no prazo (10 minutos por padrão), o cancelamento do dono e uma falha
+abortam a oferta e coletam o que encheu. O run terminar `done` quer dizer que a oferta encheu e foi
+coletada, nunca que a tarefa está feita. Quem prova é o ingest: `GET /api/microbot/task` avalia a
+tarefa nos fatos da conta e, numa venda, soma `rules.SaleProven` com as moedas que o run carrega
+(`RunTask.coinsAtLeast`). O Chronicle Link continua recusando `ge_buy` e `ge_sell`; a seção
+`delegated` do `task-wire.json` fixa isso dos dois lados.
+
+### 6.3 Preços
+
+Os preços vêm da API de preços em tempo real da OSRS Wiki, versão 2
+(`https://prices.runescape.wiki/api/v2/osrs`, rotas `/latest` e `/mapping`). As regras de uso estão
+em [RuneScape:Real-time Prices](https://oldschool.runescape.wiki/w/RuneScape:Real-time_Prices): um
+`User-Agent` descritivo, e uma chamada sem `id` em vez de uma por item. `internal/sources/wikiprices`
+busca e normaliza. `internal/store/prices` guarda o resultado em `item_prices` (seção 12.3), com
+fonte e hora, e um lado do preço nunca volta para uma negociação mais antiga. O `chronicle serve`
+atualiza os preços ao subir e a cada `SYNC_PRICES_MINUTES` (60 por padrão; 0 desliga). Os preços
+podem passar de 32 bits, então são `bigint`.
+
+### 6.4 Membership
+
+O fato `membership` (doc 06, adendo de 2026-11-24) traz os dias de membership restantes e se a
+conta é membro. O cliente guarda os dias no varp 1780 (`VarPlayerID.ACCOUNT_CREDIT`) e a marca de
+membro no varc `PLAYERMEMBER`; um membro pode ter 0 dias de crédito. Os dois ficam em 0 até o
+servidor do jogo mandá-los, então o Chronicle Link só lê depois de dez ticks logado. A manutenção da
+seção 4.2 lê este fato.
+
+### 6.5 Restrições do GE para contas F2P novas
+
+Fonte: OSRS Wiki, [Account, "New account trade
+restrictions"](https://oldschool.runescape.wiki/w/Account#New_account_trade_restrictions), a mesma
+seção que a página [Grand Exchange](https://oldschool.runescape.wiki/w/Grand_Exchange) inclui. Lida
+em 2026-11-24. O catálogo de métodos confere estes requisitos:
+
+- **Três condições, todas.** Uma conta F2P nova tem restrições de troca até passar de 20 horas de
+  jogo logado, ter 10 quest points ou mais e chegar a total level 100. A wiki cita a notícia da
+  Jagex "Easter Event", de 2 de abril de 2020.
+- **Itens que a conta restrita não vende no GE.** São itens comuns de bots F2P: oak, willow e yew
+  logs; raw shrimps, shrimps, raw anchovies, anchovies, raw lobster e lobster; clay e soft clay;
+  copper, tin, iron, silver, gold, mithril, adamantite e runite ore, e coal; ashes; vial, vial of
+  water e jug of water; fishing bait, feather, eye of newt e wine of Zamorak; air, water, earth,
+  fire, mind e chaos runes; cowhide, leather e hard leather; red spiders' eggs; steel bar;
+  redberries. Um método F2P que vende uma dessas saídas só é elegível depois das três condições.
+- **Slots e itens.** Uma conta F2P tem 3 slots no GE e um membro tem 8; uma conta F2P só compra
+  itens F2P. Vender não depende de membership.
+- **Limite de compra.** Cada item tem um limite de compra a cada 4 horas ([Grand Exchange/Buying
+  limits](https://oldschool.runescape.wiki/w/Grand_Exchange/Buying_limits)). O `/mapping` traz esse
+  limite, `item_prices.buy_limit` o guarda e `ge_buy` não passa dele.
+- **Bond.** Cada slot compra ou vende um bond só ([Bond](https://oldschool.runescape.wiki/w/Bond)).
+  Um bond vale 14 dias de membership.
+
+O Chronicle prova os quest points e o total level pelos hiscores e pelo ingest. As horas de jogo não
+têm fonte no Chronicle, então o catálogo de métodos não consegue provar essa condição.
+
+A meta de GP da seção 4.2 junta essas peças: um método de dinheiro (`train` com o plugin do método),
+`ge_sell` das saídas e `ge_buy` do bond. A métrica da conta é quantos dias ela se manteve sem o
+dono, com o GP por hora líquido de cada método.
 
 ## 7. O supervisor local
 
@@ -352,7 +425,7 @@ passa por `chronicle content validate`; o que é de uma conta é **estado**, fic
  methods/          │   loader        │   decide a próxima ação     │  task_run  │
  recipes/          ├──────────────►  │   de cada conta gerenciada  ├──────────► Chronicle Link
  quest-overrides/  │                 └──┬──────────┬───────────────┘            ├─ travel, bank, buy
- reference/       ─┘                    │          │                            ├─ ge_buy, ge_sell (novo)
+ reference/       ─┘                    │          │                            ├─ ge_buy, ge_sell → /ge
                                         │          │ passo travado              ├─ train → plugin
                           plan.Next ◄───┘          ▼                            └─ quest → executor de
                           methods.Choose      escada (nova) ── Ollama (zaros)      passo (novo), lendo o
@@ -370,7 +443,7 @@ CLAUDE.md); o condutor só lê o estado, chama essas funções e grava o resulta
 
 Três tipos novos, cada um com schema em `content/schema/` e verificado pelo `content validate`. Os
 ids, as chaves e os números dos exemplos são ilustrativos. A chave `membership` ainda não existe
-entre as chaves de objetivo do doc 09 e entra com o fato de membership.
+entre as chaves de objetivo do doc 09; o fato que ela lê existe (seção 6.4).
 
 **Modelo de metas** (`content/goal-templates/<id>.json`, seção 4.1). Uma lista ordenada de chaves de
 objetivo. Os requisitos de cada chave não aparecem, porque o planejador os resolve.
@@ -446,7 +519,7 @@ o nível de combate recomendado e o loadout (seção 5.5).
 | Tabela ou coluna | O que guarda | Seção |
 |---|---|---|
 | `accounts.mode` aceita `regular` (migração 0026) | O modo da conta | 3 |
-| `accounts.guide_id` aceita nulo (migração 0027) | A conta sem rota, que segue o plano `custom` ativo | 3 |
+| `accounts.guide_id` aceita nulo (migração 0029) | A conta sem rota, que segue o plano `custom` ativo | 3 |
 | `accounts.supervision` (`copilot` ou `autonomous`) | Se o condutor pede aprovação | 8.2 |
 | `plans.template_id` | O modelo de metas de onde o plano `custom` saiu; os itens são cópias das chaves do modelo, mais os ajustes da conta | 4.1 |
 | `approvals (account_id, subject, approved_at)` | Uma aprovação por conta e por quest ou método (`quest:<ref>`, `method:<id>`) | 8.2 |
@@ -454,11 +527,11 @@ o nível de combate recomendado e o loadout (seção 5.5).
 | `play_sessions (account_id, started_at, ended_at, reason)` | As sessões que aconteceram; o teto diário é contado aqui | 8.1 |
 | `conductor_state (account_id, state, task_key, run_id, escalation_id, since)` | Em que estado o condutor está para cada conta (seção 12.5) | 12.5 |
 | `escalations (id, account_id, quest, varbit_value, step_class, step_text, status, …)` e `escalation_attempts (escalation_id, rung, model, actions, tokens, outcome)` | Cada passo travado e cada tentativa de cada degrau; é também a tabela da medição da seção 7.4 | 5.7, 7.4 |
-| `item_prices (item_id, high, low, at)` | O último preço de cada item, da API da wiki; não é de nenhuma conta | 6 |
+| `item_prices (item_id, high, high_at, low, low_at, buy_limit, members, source, fetched_at)` | O último preço de cada item, da API da wiki (`/latest` e `/mapping`); não é de nenhuma conta. Migração 0028 | 6.3 |
 
-O ingest ganha duas facetas, pelo mesmo contrato v1: `membership` (os dias restantes) e `ge` (as
-ofertas abertas e o que está para coletar). Elas entram em `observations` e `player_state` como
-qualquer fato.
+O ingest tem a faceta `membership` (os dias restantes e a marca de membro, migração 0028) e ganha a
+faceta `ge` (as ofertas abertas e o que está para coletar), pelo mesmo contrato v1. As duas entram
+em `observations` e `player_state` como qualquer fato.
 
 Nada disso guarda texto de guia, e nada disso é escrito pelo modelo de linguagem. A escada grava
 tentativas em `escalations`; um override só vira conteúdo pela verificação e pela confirmação do dono.

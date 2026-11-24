@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 // updatePluginFixture rewrites the plugin's fixture of the task wire:
@@ -63,6 +64,14 @@ func cooks() *Quest {
 	return &Quest{Quest: "quest:cooks_assistant", Name: "Cook's Assistant", Helper: "Cook's Assistant"}
 }
 
+func moltenGlass() *GEOffer {
+	return &GEOffer{Item: 1775, ItemName: "Molten glass", Qty: 1400, Price: 120}
+}
+
+func sellGlass() *GESell {
+	return &GESell{GEOffer: *moltenGlass(), CoinsAtLeast: 1000 + 1400*118}
+}
+
 func TestCheck(t *testing.T) {
 	for _, ok := range []Task{
 		{Type: TypeTravel, Travel: castle()},
@@ -72,6 +81,8 @@ func TestCheck(t *testing.T) {
 		{Type: TypeTrain, Train: fishing()},
 		{Type: TypeTrain, Train: &Train{Skill: "skill:attack", SkillName: "Attack", Level: 40, Plugin: "a.b.Fighter", Combat: true}},
 		{Type: TypeQuest, Quest: cooks()},
+		{Type: TypeGEBuy, GEBuy: moltenGlass()},
+		{Type: TypeGESell, GESell: sellGlass()},
 	} {
 		if err := ok.Check(); err != nil {
 			t.Errorf("%s refused: %v", ok.Type, err)
@@ -199,8 +210,10 @@ func TestWildernessProbes(t *testing.T) {
 }
 
 // TestPluginWire pins the executor's JSON on both sides: the start bodies
-// the agent posts to the bridge, the wilderness probes, and the types the
-// plugin must refuse too. Chronicle Link's TaskSpecTest reads the file.
+// the agent posts to the bridge, the wilderness probes, the types the
+// plugin must refuse too, and the tasks the agent delegates elsewhere
+// (valid here, refused by the plugin). Chronicle Link's TaskSpecTest reads
+// the file.
 func TestPluginWire(t *testing.T) {
 	type start struct {
 		ID   string `json:"id"`
@@ -210,6 +223,7 @@ func TestPluginWire(t *testing.T) {
 		Starts     []start `json:"starts"`
 		Wilderness any     `json:"wilderness"`
 		Refused    []Task  `json:"refused"`
+		Delegated  []Task  `json:"delegated"`
 	}{
 		Starts: []start{
 			{ID: "5f2a9c0d11e84b7a", Task: Task{Type: TypeTravel, Travel: castle()}},
@@ -218,7 +232,15 @@ func TestPluginWire(t *testing.T) {
 			{ID: "5f2a9c0d11e84b7d", Task: Task{Type: TypeBuy, Buy: buy()}},
 		},
 		Wilderness: probes,
-		Refused:    []Task{{Type: "talk"}, {Type: "train"}, {Type: TypeTravel}, {Type: TypeBank, Bank: &Bank{}}},
+		Refused: []Task{{Type: "talk"}, {Type: "train"}, {Type: TypeTravel}, {Type: TypeBank, Bank: &Bank{}},
+			{Type: TypeGEBuy}, {Type: TypeGESell}},
+		Delegated: []Task{{Type: TypeTrain, Train: fishing()}, {Type: TypeQuest, Quest: cooks()},
+			{Type: TypeGEBuy, GEBuy: moltenGlass()}, {Type: TypeGESell, GESell: sellGlass()}},
+	}
+	for _, d := range wire.Delegated {
+		if err := d.Check(); err != nil {
+			t.Fatalf("delegated %s: %v", d.Type, err)
+		}
 	}
 	for _, s := range wire.Starts {
 		if err := s.Task.Check(); err != nil {
@@ -250,5 +272,44 @@ func TestPluginWire(t *testing.T) {
 	}
 	if !bytes.Equal(want, buf.Bytes()) {
 		t.Fatalf("the executor's JSON changed: rewrite %s with -update and check the plugin's tests\n%s", path, buf.String())
+	}
+}
+
+// TestGE: an offer is bounded (an id, a quantity, a price whose total fits
+// one coin stack, the coins a sale's proof waits for) and the Grand Exchange
+// runs for a regular account only.
+func TestGE(t *testing.T) {
+	offer := func(f func(*GEOffer)) Task { o := moltenGlass(); f(o); return Task{Type: TypeGEBuy, GEBuy: o} }
+	sell := func(f func(*GESell)) Task { s := sellGlass(); f(s); return Task{Type: TypeGESell, GESell: s} }
+	for _, tc := range []struct {
+		name string
+		task Task
+		want string
+	}{
+		{"no item name", offer(func(o *GEOffer) { o.ItemName = "" }), "itemName is required"},
+		{"bad id", offer(func(o *GEOffer) { o.Item = 0 }), "bad item id"},
+		{"qty 0", offer(func(o *GEOffer) { o.Qty = 0 }), "qty 1 to"},
+		{"price 0", offer(func(o *GEOffer) { o.Price = 0 }), "price of at least 1"},
+		{"over one coin stack", offer(func(o *GEOffer) { o.Qty, o.Price = 2, MaxCoins/2+1 }), "at most 2147483647"},
+		{"sale without its proof", sell(func(s *GESell) { s.CoinsAtLeast = 0 }), "coinsAtLeast 1 to"},
+		{"buy with a sell", Task{Type: TypeGEBuy, GEBuy: moltenGlass(), GESell: sellGlass()}, "only geBuy"},
+		{"sell as a buy", Task{Type: TypeGESell, GEBuy: moltenGlass()}, "only geSell"},
+	} {
+		if err := tc.task.Check(); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+	for _, task := range []Task{{Type: TypeGEBuy, GEBuy: moltenGlass()}, {Type: TypeGESell, GESell: sellGlass()}} {
+		if err := task.CheckMode(content.ModeRegular); err != nil {
+			t.Errorf("%s regular: %v", task.Type, err)
+		}
+		for _, m := range []string{content.ModeIronman, content.ModeHCIM, content.ModeUIM, content.ModeGIM} {
+			if err := task.CheckMode(m); err == nil || !strings.Contains(err.Error(), "regular accounts only") {
+				t.Errorf("%s %s: %v", task.Type, m, err)
+			}
+		}
+	}
+	if err := (Task{Type: TypeBuy, Buy: buy()}).CheckMode(content.ModeIronman); err != nil {
+		t.Errorf("a shop buy is any mode's: %v", err)
 	}
 }

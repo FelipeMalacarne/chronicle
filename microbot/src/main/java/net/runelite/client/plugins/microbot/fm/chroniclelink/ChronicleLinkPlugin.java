@@ -103,7 +103,7 @@ import okhttp3.OkHttpClient;
 @Slf4j
 public class ChronicleLinkPlugin extends Plugin
 {
-	static final String VERSION = "1.17.1";
+	static final String VERSION = "1.18.1";
 	/** The dev harness client (bin/mb-client): the only one that serves Chronicle's control bridge. */
 	static final String HARNESS_PROPERTY = "microbot.dev.harness";
 	/** Name prefix of our own plugins in the plugin list. */

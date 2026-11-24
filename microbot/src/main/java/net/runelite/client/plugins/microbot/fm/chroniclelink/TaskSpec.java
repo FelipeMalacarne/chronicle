@@ -39,7 +39,11 @@ final class TaskSpec
 	private static final int MAX_NPCS = 32;
 	private static final int MAX_BUY = 10_000;
 	private static final int MAX_GAME_ID = 1 << 20;
-	private static final Set<String> NOT_YET = new HashSet<>(Arrays.asList("talk", "interact", "train", "manual", "quest"));
+	/**
+	 * Types this machine never runs: the ones not executed yet, and the ones the agent delegates elsewhere (a train
+	 * to its plugin, a quest to the Quest Helper, ge_buy and ge_sell to the Agent Server's Grand Exchange).
+	 */
+	private static final Set<String> NOT_YET = new HashSet<>(Arrays.asList("talk", "interact", "train", "manual", "quest", "ge_buy", "ge_sell"));
 
 	String type;
 	Travel travel;

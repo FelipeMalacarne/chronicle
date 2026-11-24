@@ -6,10 +6,10 @@
 // catalog by the server (internal/core/plan.Resolve); nothing here is text
 // to interpret. Pure: the agent and the server share the same checks, and
 // the plugin's TaskSpec mirrors the JSON, pinned by the wire fixtures both
-// test suites read. A train (phase 4) and a quest (E19) are the agent's
-// alone: they delegate to a plugin of the client (a train's plugin, the
-// client's Quest Helper) and never go to Chronicle Link, which keeps refusing
-// them.
+// test suites read. A train (phase 4), a quest (E19) and the Grand Exchange's
+// ge_buy and ge_sell (docs/12 section 6) are the agent's alone: they delegate
+// to the client (a train's plugin, the client's Quest Helper, the Agent
+// Server's /ge) and never go to Chronicle Link, which keeps refusing them.
 package execspec
 
 import (
@@ -28,18 +28,21 @@ import (
 
 // Types the executor runs (decision E5: the first primitives). Travel,
 // bank and buy run on Chronicle Link's machine (phase 3); train is
-// delegated by the agent to a plugin of the client (phase 4) and quest to
-// the client's Quest Helper (E19); neither goes to the bridge.
+// delegated by the agent to a plugin of the client (phase 4), quest to the
+// client's Quest Helper (E19) and ge_buy and ge_sell to the Agent Server's
+// Grand Exchange (docs/12 section 6); none of these goes to the bridge.
 const (
-	TypeTravel = "travel"
-	TypeBank   = "bank"
-	TypeBuy    = "buy"
-	TypeTrain  = "train"
-	TypeQuest  = "quest"
+	TypeTravel = content.TaskTravel
+	TypeBank   = content.TaskBank
+	TypeBuy    = content.TaskBuy
+	TypeTrain  = content.TaskTrain
+	TypeQuest  = content.TaskQuest
+	TypeGEBuy  = content.TaskGEBuy
+	TypeGESell = content.TaskGESell
 )
 
 // Types lists them.
-var Types = []string{TypeTravel, TypeBank, TypeBuy, TypeTrain, TypeQuest}
+var Types = []string{TypeTravel, TypeBank, TypeBuy, TypeTrain, TypeQuest, TypeGEBuy, TypeGESell}
 
 // QuestRisks are the risk kinds of a quest the owner did not confirm safe:
 // a quest can fight and can have hazards, so it is a death risk (E9: in
@@ -59,10 +62,12 @@ const (
 	MaxNPCs     = 32  // game ids of a shop's keepers
 	MaxQty      = 1_000_000_000
 	MaxBuy      = 10_000
-	MaxName     = 80
-	maxCoord    = 16_383
-	maxPlane    = 3
-	maxGameID   = 1 << 20
+	// MaxCoins is the most one offer may move: the GE's coin stack.
+	MaxCoins  = 2_147_483_647
+	MaxName   = 80
+	maxCoord  = 16_383
+	maxPlane  = 3
+	maxGameID = 1 << 20
 )
 
 // Task is one typed task: its type and the parameters of that type.
@@ -73,6 +78,10 @@ type Task struct {
 	Buy    *Buy    `json:"buy,omitempty"`
 	Train  *Train  `json:"train,omitempty"`
 	Quest  *Quest  `json:"quest,omitempty"`
+	// GEBuy buys Qty of the item; its termination is the content's
+	// item:<id>x<qty> (the account's holdings prove the item).
+	GEBuy  *GEOffer `json:"geBuy,omitempty"`
+	GESell *GESell  `json:"geSell,omitempty"`
 }
 
 // Tile is a world tile.
@@ -184,6 +193,30 @@ type Quest struct {
 // Until is the quest's termination, the objective key the server proves.
 func (q Quest) Until() string { return q.Quest + "@finished" }
 
+// GEOffer is one Grand Exchange offer (docs/12 section 6), placed through
+// the Agent Server's /ge/buy or /ge/sell and collected into the inventory.
+// The server resolves the item, the quantity and the price from the
+// account's facts and the stored market price (internal/core/ge); nothing
+// here is chosen in game.
+type GEOffer struct {
+	// Item is the game id (unnoted) and ItemName its name as the GE search
+	// lists it: the Agent Server takes the name, exactly.
+	Item     int    `json:"item"`
+	ItemName string `json:"itemName"`
+	Qty      int    `json:"qty"`
+	// Price is per item: the most a buy pays, the least a sale takes.
+	Price int64 `json:"price"`
+}
+
+// GESell sells Qty of the item, all the inventory held when the server
+// resolved it. Its termination is proven on the live inventory: the item
+// left it (the content's sold) and the coins reached CoinsAtLeast, what it
+// held then plus the least the sale pays after the GE tax.
+type GESell struct {
+	GEOffer
+	CoinsAtLeast int64 `json:"coinsAtLeast"`
+}
+
 var (
 	reRef   = regexp.MustCompile(`^(location|shop):[a-z0-9_.'-]{1,120}$`)
 	reSkill = regexp.MustCompile(`^skill:[a-z]{1,40}$`)
@@ -197,7 +230,7 @@ var (
 // with a clear error.
 func (t Task) Check() error {
 	set := 0
-	for _, p := range []bool{t.Travel != nil, t.Bank != nil, t.Buy != nil, t.Train != nil, t.Quest != nil} {
+	for _, p := range []bool{t.Travel != nil, t.Bank != nil, t.Buy != nil, t.Train != nil, t.Quest != nil, t.GEBuy != nil, t.GESell != nil} {
 		if p {
 			set++
 		}
@@ -228,8 +261,24 @@ func (t Task) Check() error {
 			return errors.New("task: a quest has only quest")
 		}
 		return t.Quest.check()
+	case TypeGEBuy:
+		if set != 1 || t.GEBuy == nil {
+			return errors.New("task: a ge_buy has only geBuy")
+		}
+		return t.GEBuy.check("ge_buy")
+	case TypeGESell:
+		if set != 1 || t.GESell == nil {
+			return errors.New("task: a ge_sell has only geSell")
+		}
+		if err := t.GESell.check("ge_sell"); err != nil {
+			return err
+		}
+		if t.GESell.CoinsAtLeast < 1 || t.GESell.CoinsAtLeast > MaxCoins {
+			return fmt.Errorf("ge_sell: coinsAtLeast 1 to %d", MaxCoins)
+		}
+		return nil
 	case content.TaskTalk, content.TaskInteract, content.TaskManual:
-		return fmt.Errorf("task: %s is not executed yet (the executor runs travel, bank, buy, train and quest)", t.Type)
+		return fmt.Errorf("task: %s is not executed yet (the executor runs travel, bank, buy, train, quest, ge_buy and ge_sell)", t.Type)
 	}
 	return fmt.Errorf("task: unknown type %q", t.Type)
 }
@@ -356,6 +405,34 @@ func (q *Quest) check() error {
 		return err
 	}
 	return checkName("quest: helper", q.Helper)
+}
+
+func (o *GEOffer) check(what string) error {
+	if err := checkName(what+": itemName", o.ItemName); err != nil {
+		return err
+	}
+	switch {
+	case o.Item <= 0 || o.Item >= maxGameID:
+		return fmt.Errorf("%s: bad item id", what)
+	case o.Qty < 1 || o.Qty > MaxQty:
+		return fmt.Errorf("%s: qty 1 to %d", what, MaxQty)
+	case o.Price < 1 || o.Price > MaxCoins/int64(o.Qty):
+		return fmt.Errorf("%s: price of at least 1, and qty times price at most %d", what, MaxCoins)
+	}
+	return nil
+}
+
+// GE reports whether the task trades on the Grand Exchange.
+func (t Task) GE() bool { return t.Type == TypeGEBuy || t.Type == TypeGESell }
+
+// CheckMode verifies that an account of mode may run the task: the Grand
+// Exchange is for regular accounts only (docs/12 section 3; an ironman never
+// trades).
+func (t Task) CheckMode(mode string) error {
+	if t.GE() && mode != content.ModeRegular {
+		return fmt.Errorf("task: %s is for regular accounts only, not %s", t.Type, mode)
+	}
+	return nil
 }
 
 // checkName refuses an empty, long or multi-line name.

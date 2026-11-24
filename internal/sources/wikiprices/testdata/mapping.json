@@ -1,0 +1,67 @@
+[
+ {
+  "examine": "Ammo suited for a boat's cannon or for a dwarf multicannon.",
+  "id": 2,
+  "members": true,
+  "lowalch": 2,
+  "limit": 11000,
+  "value": 5,
+  "highalch": 3,
+  "icon": "Steel cannonball.png",
+  "name": "Steel cannonball"
+ },
+ {
+  "examine": "The cannon is built on this.",
+  "id": 6,
+  "members": true,
+  "lowalch": 75000,
+  "limit": 70,
+  "value": 187500,
+  "highalch": 112500,
+  "icon": "Cannon base.png",
+  "name": "Cannon base"
+ },
+ {
+  "examine": "A vicious javelin.",
+  "id": 22636,
+  "members": true,
+  "lowalch": 1600,
+  "limit": 100,
+  "value": 4000,
+  "highalch": 2400,
+  "icon": "Morrigan's javelin.png",
+  "name": "Morrigan's javelin"
+ },
+ {
+  "examine": "A beautifully crafted pickaxe, shaped by ancient smiths.",
+  "id": 20014,
+  "members": true,
+  "lowalch": 39180,
+  "limit": 40,
+  "value": 97950,
+  "highalch": 58770,
+  "icon": "3rd Age pickaxe.png",
+  "name": "3rd Age pickaxe"
+ },
+ {
+  "highalch": 33000,
+  "members": true,
+  "name": "3rd Age felling axe",
+  "examine": "A beautifully crafted axe, shaped by ancient smiths.",
+  "id": 28226,
+  "value": 55000,
+  "icon": "3rd Age felling axe.png",
+  "lowalch": 22000
+ },
+ {
+  "examine": "Fabulously ancient mage protection enchanted in the 3rd Age.",
+  "id": 10344,
+  "members": true,
+  "lowalch": 20200,
+  "limit": 8,
+  "value": 50500,
+  "highalch": 30300,
+  "icon": "3rd Age amulet.png",
+  "name": "3rd Age amulet"
+ }
+]

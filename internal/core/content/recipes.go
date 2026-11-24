@@ -239,6 +239,7 @@ func CheckRecipe(r *Recipe, reg *entities.Registry) Errors {
 			add(vPtr+"/tasks", "a variant needs tasks")
 			continue
 		}
+		ctx.Modes = v.Modes
 		for ti, t := range v.Tasks {
 			for _, msg := range t.Check(reg, ctx) {
 				add(vPtr+taskPointer(ti), "%s", msg)

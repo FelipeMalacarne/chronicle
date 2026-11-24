@@ -26,7 +26,9 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   whether Bones to Peaches is unlocked. Since 1.17.0 the bridge's `/bridge/bank-pin` writes a managed
   worker's bank PIN into the active Microbot profile (`ConfigManager.setBankPin`, encrypted like the
   profile panel does): the client types the PIN only from there, and a pod's profile is new on every
-  boot (Chronicle's docs/11 section 19).
+  boot (Chronicle's docs/11 section 19). Since 1.18.0 it sends `data.membership` (`MembershipReading`):
+  the days of membership left and the member flag, only once ten ticks of the login have passed.
+  Its task executor refuses `ge_buy` and `ge_sell`: the agent delegates them to the Agent Server's `/ge`.
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).

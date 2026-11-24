@@ -24,6 +24,9 @@ DELETE FROM plans WHERE id = $1 AND account_id = $2;
 -- name: GetActivePlan :one
 SELECT active_plan_id, guide_id FROM accounts WHERE id = $1;
 
+-- name: GetAccountMode :one
+SELECT mode FROM accounts WHERE id = $1;
+
 -- name: SetActivePlan :execrows
 UPDATE accounts SET active_plan_id = sqlc.narg(plan_id), updated_at = now() WHERE id = @account_id;
 

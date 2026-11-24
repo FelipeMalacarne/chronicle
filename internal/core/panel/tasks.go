@@ -158,6 +158,15 @@ func EvaluateUntil(t content.Task, u content.TaskUntil, s progress.StepState, se
 			return rules.Met, ""
 		}
 		return rules.Unmet, ""
+	case content.UntilSold:
+		id, ok := 0, false
+		if t.Item != nil {
+			id, ok = t.Item.Int()
+		}
+		if !ok {
+			return rules.Unknown, "a tarefa não tem item"
+		}
+		return rules.Sold(h, reg, id)
 	}
 	return rules.Unknown, "término desconhecido"
 }
@@ -230,6 +239,10 @@ func TaskLabel(t content.Task, reg *entities.Registry) string {
 		return s
 	case content.TaskQuest:
 		return "Fazer a quest " + name(t.Quest) + " (Quest Helper)"
+	case content.TaskGEBuy:
+		return "Comprar " + counted(max(t.Qty, 1), name(t.Item)) + " no Grand Exchange"
+	case content.TaskGESell:
+		return "Vender " + name(t.Item) + " do inventário no Grand Exchange"
 	case content.TaskManual:
 		if note := strings.TrimSpace(t.Note); note != "" {
 			return note
@@ -270,6 +283,8 @@ func UntilLabel(t content.Task, u content.TaskUntil, reg *entities.Registry) str
 		return "objetivos do passo"
 	case content.UntilOwnerMark:
 		return "sua marca no passo"
+	case content.UntilSold:
+		return "o item saiu do inventário"
 	}
 	return u.State
 }

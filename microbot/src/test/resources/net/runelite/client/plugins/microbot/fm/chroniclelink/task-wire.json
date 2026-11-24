@@ -253,6 +253,57 @@
       "bank": {
         "items": null
       }
+    },
+    {
+      "type": "ge_buy"
+    },
+    {
+      "type": "ge_sell"
+    }
+  ],
+  "delegated": [
+    {
+      "type": "train",
+      "train": {
+        "skill": "skill:fishing",
+        "skillName": "Fishing",
+        "level": 76,
+        "plugin": "a.b.TickFisherPlugin",
+        "config": [
+          {
+            "group": "tickfisher",
+            "key": "mode",
+            "value": "BARBARIAN"
+          }
+        ]
+      }
+    },
+    {
+      "type": "quest",
+      "quest": {
+        "quest": "quest:cooks_assistant",
+        "name": "Cook's Assistant",
+        "helper": "Cook's Assistant"
+      }
+    },
+    {
+      "type": "ge_buy",
+      "geBuy": {
+        "item": 1775,
+        "itemName": "Molten glass",
+        "qty": 1400,
+        "price": 120
+      }
+    },
+    {
+      "type": "ge_sell",
+      "geSell": {
+        "item": 1775,
+        "itemName": "Molten glass",
+        "qty": 1400,
+        "price": 120,
+        "coinsAtLeast": 166200
+      }
     }
   ]
 }

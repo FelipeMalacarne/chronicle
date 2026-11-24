@@ -80,6 +80,9 @@ type Options struct {
 	// active one (GET /api/plan/next, /api/plans, docs/10 section 9); nil
 	// leaves them out.
 	Plans PlanStore
+	// Prices reads the stored Grand Exchange prices a ge_buy or ge_sell is
+	// priced by (internal/store/prices); nil refuses those tasks.
+	Prices PriceStore
 	// Static is the SPA filesystem rooted at the site (index.html at its root).
 	// nil disables the SPA and / returns 404.
 	Static fs.FS

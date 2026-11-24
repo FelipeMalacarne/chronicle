@@ -27,6 +27,8 @@ import (
 //	interact  Object, Action, Location?       until an objective or goal_met
 //	train     Skill, NPC? or Object?, Location?, Plugin?, Config?   until skill:<skill>>=N
 //	quest     Quest, Safe?                    until quest:<quest>@finished (the default)
+//	ge_buy    Item, Qty                       until item:<id>x<qty> (the default)
+//	ge_sell   Item                            until sold (the default)
 //	manual    Note?                           until owner_mark, goal_met or an objective
 //
 // Options (dialogue options) and Action (a menu option) are the game's own
@@ -37,7 +39,11 @@ import (
 // a plugin a train is the owner's to do. A quest is delegated to the Quest
 // Helper the Microbot client ships (docs/10, E19); every quest counts as a
 // death risk unless Safe says the owner confirmed it cannot kill, which only
-// a recipe or a plan (the owner's word) may say, never a step's text.
+// a recipe or a plan (the owner's word) may say, never a step's text. The
+// Grand Exchange's ge_buy and ge_sell (docs/12 section 6) are for regular
+// accounts only: they live in a recipe variant that serves only the regular
+// mode, never in a guide step; the server prices them from the stored market
+// price. A ge_sell sells all of the item the inventory holds.
 type Task struct {
 	Type     string            `json:"type"`
 	Location *entities.Ref     `json:"location,omitempty"`
@@ -81,10 +87,14 @@ const (
 	// TaskQuest is a whole quest, delegated to the Quest Helper of the
 	// Microbot client (E5: "quest later"; E19, docs/10 phase 5).
 	TaskQuest = "quest"
+	// TaskGEBuy and TaskGESell trade on the Grand Exchange, delegated to the
+	// Agent Server's /ge (docs/12 section 6): regular accounts only.
+	TaskGEBuy  = "ge_buy"
+	TaskGESell = "ge_sell"
 )
 
 // TaskTypes lists the task types the executor knows, in a stable order.
-var TaskTypes = []string{TaskTravel, TaskBank, TaskBuy, TaskTalk, TaskInteract, TaskTrain, TaskQuest, TaskManual}
+var TaskTypes = []string{TaskTravel, TaskBank, TaskBuy, TaskTalk, TaskInteract, TaskTrain, TaskQuest, TaskGEBuy, TaskGESell, TaskManual}
 
 // State predicates a task can end on.
 const (
@@ -97,28 +107,37 @@ const (
 	UntilGoalMet = "goal_met"
 	// UntilOwnerMark: the owner marks the step (manual tasks only).
 	UntilOwnerMark = "owner_mark"
+	// UntilSold: the live, complete inventory holds none of the ge_sell's
+	// item (the Grand Exchange took it). A run's proof adds the coins the
+	// sale paid (execspec.GESell.CoinsAtLeast).
+	UntilSold = "sold"
 )
 
 // TaskContext is what a task's termination and parameters can lean on: the
 // objectives its step or recipe completes (Goal), whether the step's segment
 // has a loadout a bank task without items is ready for, and whether the task
-// is part of a recipe (no step text, no step to mark).
+// is part of a recipe (no step text, no step to mark). Modes are the account
+// modes the task serves: a recipe variant's, nil for a guide step (every
+// mode).
 type TaskContext struct {
 	Goal    []entities.ObjectiveKey
 	Loadout bool
 	Recipe  bool
+	Modes   []string
 }
 
 // DefaultUntil is the termination a task type implies from its parameters
-// (travel, bank, buy and quest); ok is false for the types that must state
-// one.
+// (travel, bank, buy, quest, ge_buy and ge_sell); ok is false for the types
+// that must state one.
 func (t Task) DefaultUntil() (TaskUntil, bool) {
 	switch t.Type {
 	case TaskTravel:
 		return TaskUntil{State: UntilAtLocation}, true
 	case TaskBank:
 		return TaskUntil{State: UntilLoadoutReady}, true
-	case TaskBuy:
+	case TaskGESell:
+		return TaskUntil{State: UntilSold}, true
+	case TaskBuy, TaskGEBuy:
 		if t.Item == nil || t.Qty < 1 {
 			return TaskUntil{}, false
 		}
@@ -168,6 +187,8 @@ var taskParams = map[string][]string{
 	TaskInteract: {"object", "action", "location"},
 	TaskTrain:    {"skill", "npc", "object", "location", "plugin", "config"},
 	TaskQuest:    {"quest", "safe"},
+	TaskGEBuy:    {"item", "qty"},
+	TaskGESell:   {"item"},
 	TaskManual:   {"note"},
 }
 
@@ -294,6 +315,14 @@ func (t Task) Check(reg *entities.Registry, ctx TaskContext) []string {
 		if t.Safe && !ctx.Recipe {
 			add("quest: safe (no death risk) is the owner's word in a recipe or a plan, never a step's text")
 		}
+	case TaskGEBuy, TaskGESell:
+		ref("item", t.Item, true, entities.KindItem)
+		if t.Type == TaskGEBuy && t.Qty < 1 {
+			add("ge_buy needs qty >= 1")
+		}
+		if len(ctx.Modes) == 0 || slices.ContainsFunc(ctx.Modes, func(m string) bool { return m != ModeRegular }) {
+			add("%s is for regular accounts only: it goes in a recipe variant whose modes are [regular], never in a guide step", t.Type)
+		}
 	case TaskManual:
 		if ctx.Recipe && strings.TrimSpace(t.Note) == "" {
 			add("manual in a recipe needs a note: there is no step text to show the owner")
@@ -311,7 +340,7 @@ func (t Task) checkUntil(reg *entities.Registry, ctx TaskContext) []string {
 	}
 	u, ok := t.Ends()
 	switch {
-	case !ok && (t.Type == TaskBuy || t.Type == TaskTravel || t.Type == TaskBank || t.Type == TaskQuest):
+	case !ok && (t.Type == TaskBuy || t.Type == TaskTravel || t.Type == TaskBank || t.Type == TaskQuest || t.Type == TaskGEBuy):
 		return nil // the missing parameters are already reported
 	case !ok:
 		return []string{fmt.Sprintf("%s needs until", t.Type)}
@@ -328,10 +357,11 @@ func (t Task) checkUntil(reg *entities.Registry, ctx TaskContext) []string {
 	}
 	states := map[string][]string{
 		TaskTravel: {UntilAtLocation}, TaskBank: {UntilLoadoutReady}, TaskBuy: nil, TaskTrain: nil, TaskQuest: nil,
+		TaskGEBuy: nil, TaskGESell: {UntilSold},
 		TaskTalk: {UntilGoalMet}, TaskInteract: {UntilGoalMet}, TaskManual: {UntilGoalMet, UntilOwnerMark},
 	}[t.Type]
 	switch {
-	case u.State != "" && !slices.Contains([]string{UntilAtLocation, UntilLoadoutReady, UntilGoalMet, UntilOwnerMark}, u.State):
+	case u.State != "" && !slices.Contains([]string{UntilAtLocation, UntilLoadoutReady, UntilGoalMet, UntilOwnerMark, UntilSold}, u.State):
 		add("until: unknown state %q", u.State)
 	case u.State != "" && !slices.Contains(states, u.State):
 		add("until: %s cannot end on %s", t.Type, u.State)
@@ -516,6 +546,8 @@ func CheckRecorded(t Task, ev RecordedEvidence, reg *entities.Registry) []string
 		}
 	case TaskQuest:
 		add("a quest task is not proposed from a recording: it comes from its recipe or the step's text")
+	case TaskGEBuy, TaskGESell:
+		add("a %s task is not proposed from a recording: it belongs to a recipe of the regular mode", t.Type)
 	case TaskTrain:
 		switch {
 		case t.NPC != nil:

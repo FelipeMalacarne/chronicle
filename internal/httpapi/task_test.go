@@ -119,6 +119,13 @@ func TestTaskRoutesPostgres(t *testing.T) {
 	follow("acc_hc", `{"kind":"task","task":{"type":"travel","location":"location:mage_bank"}},
 		{"kind":"task","task":{"type":"talk","npc":"npc:hans","until":{"objective":"quest:cooks_assistant@started"}}}`)
 
+	// The Grand Exchange is a regular account's: an ironman's plan cannot hold it.
+	if status, body, raw := call(t, "POST", srv.URL+"/api/plans?account=acc_task",
+		`{"kind":"custom","title":"GE","items":[{"kind":"task","task":{"type":"ge_buy","item":"item:1775","qty":10}}]}`); status < 400 || status >= 500 ||
+		!strings.Contains(string(raw), "regular accounts only") {
+		t.Fatalf("ironman ge_buy plan = %d %v", status, body)
+	}
+
 	// Refusals that never reach an agent.
 	if status, _, _ := call(t, "POST", srv.URL+"/api/microbot/task", `{}`); status != http.StatusBadRequest {
 		t.Fatalf("no account = %d", status)

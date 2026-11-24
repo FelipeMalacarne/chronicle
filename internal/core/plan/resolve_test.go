@@ -207,7 +207,7 @@ func TestResolve(t *testing.T) {
 		{"quest with an unproven level", withQuests(input(custom(chompy), content.ModeIronman, nil, nil), map[string]string{},
 			map[string]rules.SkillState{"fletching": {Level: 5}}), "task:0#0", "não prova os requisitos"},
 		{"met", input(route, content.ModeIronman, nil, at(3188, 3220)), "step:t::a#0", "já está cumprida"},
-		{"talk", input(route, content.ModeIronman, nil, nil), "step:t::a#1", "só roda travel, bank, buy, train e quest"},
+		{"talk", input(route, content.ModeIronman, nil, nil), "step:t::a#1", "só roda travel, bank, buy, train, quest, ge_buy e ge_sell"},
 		{"uim bank", input(route, content.ModeUIM, nil, nil), "step:t::b#0", "Ultimate Ironman"},
 		{"via", input(custom(content.Task{Type: content.TaskTravel, Location: ref("location:lumbridge"), Via: ref("item:8007")}), content.ModeIronman, nil, nil), "task:0#0", "via"},
 		{"buy owned", input(route, content.ModeIronman, rules.ItemHoldings{"bank": live(map[int]int64{1351: 1})}, nil), "step:t::b#1", "já está cumprida"},

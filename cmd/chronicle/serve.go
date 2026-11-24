@@ -25,10 +25,12 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/events"
 	"github.com/FelipeMalacarne/chronicle/internal/httpapi"
 	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
+	"github.com/FelipeMalacarne/chronicle/internal/sources/wikiprices"
 	storeactivity "github.com/FelipeMalacarne/chronicle/internal/store/activity"
 	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
+	storeprices "github.com/FelipeMalacarne/chronicle/internal/store/prices"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 	storerecording "github.com/FelipeMalacarne/chronicle/internal/store/recording"
 	storerhythm "github.com/FelipeMalacarne/chronicle/internal/store/rhythm"
@@ -95,6 +97,7 @@ func runServe(parent context.Context) error {
 	var levelsService httpapi.LevelsStore
 	var recordingService httpapi.RecordingStore
 	var plansService httpapi.PlanStore
+	var priceService httpapi.PriceStore
 	var oidcOpts *httpapi.OIDCOptions
 	var microbotOpts *httpapi.MicrobotOptions
 	if !cfg.IsDev() && cfg.DatabaseURL == "" {
@@ -148,6 +151,16 @@ func runServe(parent context.Context) error {
 				go scheduler.Run(ctx)
 				logger.Info("sync: hiscores scheduler on", "minutes", cfg.SyncHiscoresMinutes)
 			}
+			pricesRepo := storeprices.New(pool)
+			priceService = pricesRepo
+			if cfg.SyncPricesMinutes > 0 {
+				priceScheduler := &storeprices.Scheduler{
+					Repo: pricesRepo, Source: wikiprices.New(),
+					Interval: time.Duration(cfg.SyncPricesMinutes) * time.Minute, Log: logger,
+				}
+				go priceScheduler.Run(ctx)
+				logger.Info("sync: item prices scheduler on", "minutes", cfg.SyncPricesMinutes)
+			}
 		}
 	} else {
 		logger.Info("no DATABASE_URL set; running without a database")
@@ -179,6 +192,7 @@ func runServe(parent context.Context) error {
 		Levels:         levelsService,
 		Recording:      recordingService,
 		Plans:          plansService,
+		Prices:         priceService,
 		Static:         static,
 		Logger:         logger,
 	})

@@ -8,6 +8,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/ge"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	"github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
@@ -47,7 +48,10 @@ type Input struct {
 	Holdings rules.ItemHoldings
 	// Facts are the account's mode, merged facts and last position.
 	Facts panel.Facts
-	Now   time.Time
+	// Prices are the stored market prices Resolve prices a Grand Exchange
+	// task by, by item id: the caller loads the task's item.
+	Prices map[int]ge.Price
+	Now    time.Time
 }
 
 // Ref names the plan of an answer.

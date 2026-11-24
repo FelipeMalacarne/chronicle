@@ -53,7 +53,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `go run ./cmd/chronicle content migrate` | regenerate `content/guides/oziris-main` from `data/guide/normalized` plus the owner's route fixes in `data/guide/route-patches.json` (docs/05 section 12) |
 | `go run ./cmd/chronicle content import-bruhsailer` | regenerate `content/guides/bruhsailer-main` from the pinned DOCX in `data/sources/bruhsailer` |
 | `just migrate-up` / `migrate-status` / `migrate-new <name>` | goose against `DATABASE_URL` |
-| `just account-create <rsn>` / `account-guide <id> <guide>` / `accounts` | dev accounts (id `acc_<rsn>`) and the active route, until the account screen exists |
+| `just account-create <rsn>` / `account-guide <id> <guide>` / `accounts` | dev accounts (id `acc_<rsn>`) and the active route (`none`: no route), until the account screen exists |
 | `just dbml` | regenerate `docs/arquitetura/modelo-de-dados.dbml` from the migrated `DATABASE_URL` |
 | `go test ./internal/core/entities/catalogbuild -update` | regenerate the derived catalogs in `content/reference` (offline): quests, items, diaries, CAs, vars, npcs, shops, objects, location maps |
 | `python3 tools/fetch_wiki_icons.py` | refresh `web/static/icons` and `web/src/lib/icons/manifest.json` from the OSRS Wiki: items, skills, quest point, and the cockpit's prayers and spells (`data/wiki/book_icons.json`, keyed by the Microbot client's enum names); cached under `~/.cache/ironman-planner/icons` |
@@ -203,7 +203,9 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0022 workers.running_settings: option values of the plugins that were on,
                       0023 objective_marks: the owner's marks on objectives, account-wide, not evidence,
                       0024 loadout_marks: the owner's marks on the items of a leg's loadout, per (guide, segment), not evidence,
-                      0025 minigame facet: counters read in a minigame's interface, the MTA's pizazz points)
+                      0025 minigame facet: counters read in a minigame's interface, the MTA's pizazz points,
+                      0027 accounts.guide_id nullable: an account without a route follows its active plan;
+                      the routes that read its own route answer 409 "account has no route")
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

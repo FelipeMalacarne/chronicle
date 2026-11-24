@@ -83,8 +83,9 @@ proposta.
 `accounts` hoje exige `mode IN ('ironman','hcim','uim','gim')` e `guide_id NOT NULL`. Muda assim:
 
 - `mode` ganha `regular`;
-- `guide_id` passa a aceitar nulo: a conta fica "sem rota", e o Agora e as Rotas mostram o estado
-  vazio em vez de quebrar (precisa de desenho no canvas);
+- `guide_id` passa a aceitar nulo (migração 0027): a conta fica "sem rota". Nada quebra; o
+  comportamento da API está na decisão W10 (seção 12). O estado vazio do Agora e das Rotas precisa
+  de desenho no canvas; sem ele, o Agora abre a primeira rota;
 - `managed BOOLEAN NOT NULL DEFAULT false`: a conta pode ter um worker gerenciado. Só pode ser `true`
   quando existe uma sessão.
 
@@ -496,7 +497,7 @@ E10). A revisão de rotas e objetivos que o dono quer fazer depois é o lugar di
 | W7 | Como aplicar a config do perfil: escrever o arquivo de perfil do RuneLite antes de o cliente subir, ou `/settings/plugin` depois | **Resolvida (2026-11-12, dono):** pelo `/settings/plugin`, com o cliente de pé e **antes** de ligar os plugins, que assim leem a config certa no start. Não depende do formato dos arquivos de perfil; um ajuste que precise valer antes de o cliente abrir volta a pedir o arquivo |
 | W8 | IP e escala de uma frota: proxy por worker, outro nó, outra casa | Adiar até haver mais de 3 contas; registrar o risco |
 | W9 | Desvio de config: salvar sozinho ou pelo botão | Pelo botão ("Salvar no perfil"); a parte 2 da F5 seguiu esta recomendação (seção 17) |
-| W10 | Conta sem rota: `guide_id` nulo e modo `regular` | Sim, na migração da F2 |
+| W10 | Conta sem rota: `guide_id` nulo e modo `regular` | **Resolvida (2026-11-24):** `regular` na migração 0026 e `guide_id` nulo na 0027. A conta sem rota segue o plano `custom` ou `goal` que escolheu (`active_plan_id`); sem plano escolhido, não segue nada. Reavaliação, boards de cada guia, cursores, sync e `chronicle progress check` funcionam igual, sem guia ativa e por isso sem cascata. O que lê a rota da própria conta responde 409 `account has no route`: a janela da rota (`/api/route`, `/api/plugin/route`, o `now` da CLI e do MCP), o próximo item quando nenhum plano foi escolhido (`/api/plan/next`, `/api/microbot/task`) e voltar para a rota (`PUT /api/plans/active`). `PUT /api/account/guide` com `guide_id: null` tira a rota; a criação (`POST /api/accounts`, `just account-create ... none`) aceita conta sem guia. A web recebe `guide_id`, `active_guide` e o plano `active` nulos |
 
 ## 13. Contratos da implementação (rodada 1, 2026-11-12)
 

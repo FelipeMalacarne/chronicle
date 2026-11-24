@@ -40,10 +40,13 @@ verificáveis evita a tradução.
 
 ## 3. A conta
 
-- **Modo `regular`.** O doc 11 previu esse modo (seção 4.1, decisão W10), mas ele ainda não existe:
-  `accounts.mode` aceita só `ironman`, `hcim`, `uim` e `gim` (`db/migrations/0001_init.sql`), e o
-  schema do guia tem o mesmo enum. É uma migração nova, e o modo `regular` entra também nas
-  variantes das receitas.
+- **Modo `regular`.** O doc 11 previu esse modo (seção 4.1, decisão W10). `accounts.mode` aceita
+  `regular` desde a migração 0026, e o modo entra também nas variantes das receitas.
+- **Sem rota.** `accounts.guide_id` aceita nulo desde a migração 0027. A conta sem rota segue o plano
+  `custom` ativo (`accounts.active_plan_id`); sem plano escolhido, não segue nada, e o que lê a rota
+  da própria conta (a janela do `now`, o próximo item do plano) responde 409 `account has no route`
+  em vez de inventar um guia. Os fatos, os boards de cada guia e os cursores continuam calculados;
+  nenhuma guia é a ativa, então a cascata de implícitos não roda (decisão W10 do doc 11).
 - **Várias contas, cada uma descartável.** Uma conta até o ciclo estar provado, depois 2 a 3
   (decisão C5). Os modelos de metas, o catálogo de métodos e os overrides de quest (seção 5.6) valem
   para todas as contas, então o custo de escrevê-los se divide entre elas. Cada conta pode ser banida a
@@ -442,7 +445,8 @@ o nível de combate recomendado e o loadout (seção 5.5).
 
 | Tabela ou coluna | O que guarda | Seção |
 |---|---|---|
-| `accounts.mode` aceita `regular` | O modo da conta | 3 |
+| `accounts.mode` aceita `regular` (migração 0026) | O modo da conta | 3 |
+| `accounts.guide_id` aceita nulo (migração 0027) | A conta sem rota, que segue o plano `custom` ativo | 3 |
 | `accounts.supervision` (`copilot` ou `autonomous`) | Se o condutor pede aprovação | 8.2 |
 | `plans.template_id` | O modelo de metas de onde o plano `custom` saiu; os itens são cópias das chaves do modelo, mais os ajustes da conta | 4.1 |
 | `approvals (account_id, subject, approved_at)` | Uma aprovação por conta e por quest ou método (`quest:<ref>`, `method:<id>`) | 8.2 |

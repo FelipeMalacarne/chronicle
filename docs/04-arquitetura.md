@@ -301,7 +301,7 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `GET /auth/login`, `GET /auth/callback`, `POST /auth/logout` | feita (oidc) | login web pelo Zitadel (acima) |
 | `GET /api/me` | feita (dev, oidc) | usuário, roles do projeto e contas dele |
 | `GET /api/auth/client` | feita | como um cliente nativo entra: modo, issuer, `client_id` e scopes do device flow (acima) |
-| `GET /api/route?account=&limit=` | feita (dev, oidc) | a janela da rota ativa do painel do plugin (`panel.Window`), por conta: o `now` da CLI e do MCP |
+| `GET /api/route?account=&limit=` | feita (dev, oidc) | a janela da rota ativa do painel do plugin (`panel.Window`), por conta: o `now` da CLI e do MCP; 409 `account has no route` numa conta sem rota (decisão W10 do doc 11), como o `/api/plugin/route` |
 | `POST /api/dev/ingest-token` | feita (só dev) | bootstrap de token sem UI |
 | `GET /api/guides/{guide}/readiness?account=&step=`, `GET /api/guides/{guide}/segments/{segment}/readiness?account=` | feita (dev, oidc) | readiness do trecho (seção 6.4.1) |
 | `GET /api/guides/{guide}/board?account=` | feita (dev, oidc) | status derivado e veredito por objetivo de cada passo, marcas, cursor, contagens, órfãos; frescor fica para o item 9 |
@@ -310,10 +310,10 @@ habilitadas, horas de stale por fonte, se o sync de banco está autorizado.
 | `POST /api/guides/{guide}/marks?account=` | feita (dev, oidc) | "marcar tudo antes deste": `before_step_id` marca `manual_done` todo passo da rota principal antes dele, visível e pendente sem marca ou presumido (`implied`); pulados ficam; `restore` (a lista `undo` da resposta) devolve a cada passo a marca anterior |
 | `PUT /api/guides/{guide}/cursor?account=` | feita (dev, oidc) | `{step_id}` fixa o passo atual (passo feito é recusado); `{step_id: null}` volta ao automático |
 | `GET /api/objectives?account=` | feita (dev, oidc) | vereditos compartilhados com evidência |
-| `GET /api/progress?account=` | feita (dev, oidc) | resumo das rotas: rota ativa, cursor (com a referência do autor), contagens por seção, cobertura, fontes |
+| `GET /api/progress?account=` | feita (dev, oidc) | resumo das rotas: rota ativa (`active_guide`, nulo numa conta sem rota), cursor (com a referência do autor), contagens por seção, cobertura, fontes |
 | `GET /api/guides/{guide}/events?account=&limit=` | feita (dev, oidc) | o que mudou: eventos de passo do guia e de objetivo da conta, com a fonte do snapshot |
-| `PUT /api/account/guide?account=` | feita (dev, oidc) | troca a rota ativa e reavalia na mesma transação |
-| `GET /api/setup/lookup?rsn=`, `POST /api/accounts` | feita (dev, oidc) | primeiro acesso (`/setup`, V4Setup): conta existente pelo RSN, ou modo detectado e níveis do hiscores; cria a conta e reavalia |
+| `PUT /api/account/guide?account=` | feita (dev, oidc) | troca a rota ativa (`guide_id`; `null` deixa a conta sem rota) e reavalia na mesma transação |
+| `GET /api/setup/lookup?rsn=`, `POST /api/accounts` | feita (dev, oidc) | primeiro acesso (`/setup`, V4Setup): conta existente pelo RSN, ou modo detectado e níveis do hiscores; cria a conta (com ou sem `guide_id`) e reavalia |
 | `POST /api/sync?account=` | feita (dev, oidc) | sync do hiscores agora; 429 com `retry_at` no debounce de 60 s ou no recuo |
 | `GET /api/sync/runs?account=&limit=` | feita (dev, oidc) | tentativas de sync (status, HTTP, erro, `steps_changed`, `next_allowed_at`) |
 | `GET /api/events?account=` | feita (dev, oidc) | tempo real (SSE): sinais de invalidação da conta depois de cada commit de progresso (seção 6.6) |

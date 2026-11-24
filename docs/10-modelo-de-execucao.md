@@ -330,7 +330,8 @@ atribuição de cada passo aparece na tela.
   CHECK de um ref só por item, e um gatilho recusa itens num plano `route`). `accounts.active_plan_id` é o
   plano que a conta segue; `NULL` é a rota de `accounts.guide_id`, então o plano de rota não precisa de
   linha: ele é o conteúdo e o cursor de hoje, sem cópia. Apagar o plano seguido (ou a meta dele) devolve a
-  conta à rota. Um passo que o guia renomeia (`step_id_aliases`) muda também nos planos.
+  conta à rota. Uma conta sem rota (`guide_id` nulo, decisão W10 do doc 11) não lista plano de rota, e
+  sem plano escolhido não segue nada: o próximo item responde 409 `account has no route`. Um passo que o guia renomeia (`step_id_aliases`) muda também nos planos.
 - **Próxima tarefa** (`internal/core/plan`, puro, com testes de tabela): no plano de rota, o passo do
   cursor; nos outros, o primeiro item não cumprido (passo feito ou pulado, receita com o objetivo `met`,
   tarefa avulsa com o término `met`). As tarefas de um passo são as do `Content.StepTasks` (as receitas do

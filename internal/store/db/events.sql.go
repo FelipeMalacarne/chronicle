@@ -155,12 +155,14 @@ func (q *Queries) ListJobEvents(ctx context.Context, arg ListJobEventsParams) ([
 
 const lockEventLogShared = `-- name: LockEventLogShared :exec
 
-SELECT pg_advisory_xact_lock_shared(7123001)
+SELECT pg_advisory_xact_lock_shared(7123001, hashtext(current_schema()))
 `
 
 // The durable event log and its consumers' cursors (migration 0031, docs/12
 // section 13.4). internal/store/eventlog is the only writer.
 // A writer holds it from its insert to its commit (internal/store/eventlog).
+// The key is (7123001, the schema's hash): advisory locks are database-wide,
+// and each schema has its own log (the tests' schemas share one database).
 func (q *Queries) LockEventLogShared(ctx context.Context) error {
 	_, err := q.db.Exec(ctx, lockEventLogShared)
 	return err
@@ -197,7 +199,7 @@ func (q *Queries) SetEventCursor(ctx context.Context, arg SetEventCursorParams) 
 }
 
 const tryLockEventLog = `-- name: TryLockEventLog :one
-SELECT pg_try_advisory_xact_lock(7123001)::boolean AS locked
+SELECT pg_try_advisory_xact_lock(7123001, hashtext(current_schema()))::boolean AS locked
 `
 
 // The reader takes it exclusively: no event is uncommitted while it holds it.

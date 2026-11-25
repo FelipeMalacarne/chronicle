@@ -32,7 +32,7 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.7.1): pick the Rewards Guardian's items, the overlay shows the pizazz
+- `fm/mtaarena/` — MTA Planner (v0.7.2): pick the Rewards Guardian's items, the overlay shows the pizazz
   points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
   and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step and
   `MtaRunner` runs it. Bones to Peaches comes first and is the only reward bought by itself ("Buy
@@ -51,7 +51,9 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   the wand below from the bank chest. The overlay shows the rewards covered, the next one's missing
   points and the points per minute in the room being played. Before each room `MtaPrep` sets up at the arena's bank chest:
   the staff and tome that cover the most of the spell's elemental runes (`MtaLoadout`, pure and
-  tested), the runes left to carry, and nothing else but the "Always keep" names. The rooms
+  tested), the runes left to carry, and nothing else but the "Always keep" names. The jewellery
+  Enchants' runes come from the plugin's own table (`MtaPrep.runes`, OSRS Wiki), for the setup and for
+  "can it still cast": the client's Rs2Spells leaves the earth runes out of Lvl-5 and Lvl-6. The rooms
   (`MtaRooms`) are ported from the Plugin Hub's Mage Training Arena plugin and lean on the RuneLite
   Mage Training Arena plugin's solvers (the runner turns it on); unlike the Hub's, the Telekinetic
   Theatre walks to the tile the RuneLite solver highlights (`MtaScene`, pure and tested: its

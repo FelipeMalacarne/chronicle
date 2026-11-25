@@ -445,3 +445,25 @@ func TestFactChangedIsPrunedPostgres(t *testing.T) {
 		t.Fatalf("after a week: fact.changed %d, the job's events %v", facts(), w.types(j.ID))
 	}
 }
+
+// An unreadable job (here a rule type the code no longer has) is skipped: the
+// cursor moves on and the account's other jobs are still proven.
+func TestUnreadableJobDoesNotStopTheTrackerPostgres(t *testing.T) {
+	w := setup(t)
+	ctx := context.Background()
+	w.level("fishing", 70)
+	j := w.create(job.KindTrain, `"skill:fishing>=76"`, 0)
+	if _, err := w.pool.Exec(ctx, `INSERT INTO jobs (id, account_id, kind, goal, stall_after_s, source)
+		VALUES ('job_00000000000000bb', $1, 'plugin', '{"type": "removed_rule"}', 1800, 'test')`, account); err != nil {
+		t.Fatal(err)
+	}
+	_ = w.run("0123abce", agent.RunRunning, j.ID, nil)
+	w.level("fishing", 76)
+	w.step()
+	if got := w.get(j.ID).State; got != job.Succeeded {
+		t.Fatalf("train job = %s, want succeeded", got)
+	}
+	if cur, err := w.log.Cursor(ctx, Consumer); err != nil || cur == 0 {
+		t.Fatalf("cursor = %d, %v: the tracker stopped on the unreadable job", cur, err)
+	}
+}

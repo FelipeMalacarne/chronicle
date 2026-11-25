@@ -12,6 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -410,12 +411,15 @@ func jobPayload(j job.Job, from string) map[string]any {
 	return p
 }
 
+// toJobs skips a row the code can no longer read (a goal whose rule type was
+// removed, say), so one such job never stops the others from being tracked.
 func toJobs(rows []storedb.Job) ([]job.Job, error) {
 	out := make([]job.Job, 0, len(rows))
 	for _, row := range rows {
 		j, err := toJob(row)
 		if err != nil {
-			return nil, err
+			slog.Warn("jobs: skipping an unreadable job", "account", row.AccountID, "err", err)
+			continue
 		}
 		out = append(out, j)
 	}

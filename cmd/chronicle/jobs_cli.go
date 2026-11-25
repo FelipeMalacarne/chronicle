@@ -173,7 +173,7 @@ job's goal, then turns it off. It acts in game on the account, so it needs --yes
 	}
 	f.add(cmd, false)
 	cmd.Flags().BoolVar(&yes, "yes", false, "confirm: the job acts in game")
-	cmd.Flags().BoolVar(&supervised, "supervised", false, "the owner is watching (an HCIM with a death risk runs only so)")
+	cmd.Flags().BoolVar(&supervised, "supervised", false, "the owner is watching (an HCIM runs a plugin job only so)")
 	cmd.Flags().DurationVar(&timeout, "timeout", 0, "bound the run (1m to 12h; the agent's default, 2h, when unset)")
 	return cmd
 }

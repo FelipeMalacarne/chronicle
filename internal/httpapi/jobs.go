@@ -45,8 +45,10 @@ func (s *Server) jobRoutes() {
 	account("GET /api/jobs", s.handleJobs)
 	account("GET /api/jobs/{id}", s.handleJob)
 	account("POST /api/jobs", s.handleCreateJob)
-	account("POST /api/jobs/{id}/cancel", s.handleCancelJob)
-	account("POST /api/jobs/{id}/run", s.handleRunJob)
+	// Cancel stops the job's run and run starts one: both act in game, so
+	// they also need Microbot control, like every other control route.
+	account("POST /api/jobs/{id}/cancel", s.microbotControl(s.handleCancelJob))
+	account("POST /api/jobs/{id}/run", s.microbotControl(s.handleRunJob))
 }
 
 // jobView is a job as the API shows it.

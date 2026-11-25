@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 	"github.com/FelipeMalacarne/chronicle/internal/core/job"
 	storejobs "github.com/FelipeMalacarne/chronicle/internal/store/jobs"
@@ -133,6 +134,12 @@ func (s *Server) handleRunJob(w http.ResponseWriter, r *http.Request) {
 	facts, err := s.opts.Progress.TaskFacts(r.Context(), account)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "reading the account's facts")
+		return
+	}
+	// A plugin's risks are unknown (any one may fight), so an HCIM runs a
+	// plugin job only with the owner watching (docs/10 E9).
+	if facts.Mode == content.ModeHCIM && !req.Supervised {
+		conflict("an HCIM runs a plugin job only with the owner watching (supervised, docs/10 E9)")
 		return
 	}
 	params, _ := json.Marshal(agent.TaskRunParams{

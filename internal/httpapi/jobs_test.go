@@ -14,6 +14,7 @@ import (
 	"github.com/alexedwards/scs/v2/memstore"
 
 	"github.com/FelipeMalacarne/chronicle/internal/auth"
+	"github.com/FelipeMalacarne/chronicle/internal/auth/authtest"
 	"github.com/FelipeMalacarne/chronicle/internal/core/job"
 	"github.com/FelipeMalacarne/chronicle/internal/store/eventlog"
 	storejobs "github.com/FelipeMalacarne/chronicle/internal/store/jobs"
@@ -174,7 +175,8 @@ func TestCreateJobRefusals(t *testing.T) {
 }
 
 // The job routes are account routes (rule 10): in oidc they need a session,
-// reach only the session user's accounts, and the writes need the CSRF header;
+// reach only the session user's accounts, and the writes need the CSRF header
+// (cancel, which acts in game, also the Microbot role);
 // outside dev mode and oidc they do not exist.
 func TestJobRoutesOIDC(t *testing.T) {
 	store := &memJobs{}
@@ -201,6 +203,10 @@ func TestJobRoutesOIDC(t *testing.T) {
 	if status, _ := e.do(c, "POST", "/api/jobs/"+id+"/cancel?account=acc-1", "", false); status != http.StatusForbidden {
 		t.Fatalf("cancel without CSRF = %d", status)
 	}
+	if status, _ := e.do(c, "POST", "/api/jobs/"+id+"/cancel?account=acc-1", "", true); status != http.StatusForbidden {
+		t.Fatalf("cancel without the %s role = %d", MicrobotRole, status)
+	}
+	e.login(c, "/", authtest.User{Subject: owner.Subject, Username: owner.Username, Roles: []string{"owner", MicrobotRole}})
 	if status, _ := e.do(c, "POST", "/api/jobs/"+id+"/cancel?account=acc-1", "", true); status != http.StatusOK {
 		t.Fatalf("cancel = %d", status)
 	}

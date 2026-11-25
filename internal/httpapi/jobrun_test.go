@@ -43,7 +43,8 @@ func TestPluginJobPostgres(t *testing.T) {
 		INSERT INTO users (id, subject, username) VALUES ('dev', 'dev', 'dev') ON CONFLICT DO NOTHING;
 		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer) VALUES
 		  ('acc_island', 'dev', 'Island', 'island', 'regular', 'oziris-main', 'enhanced'),
-		  ('acc_old', 'dev', 'Old', 'old', 'regular', 'oziris-main', 'enhanced');
+		  ('acc_old', 'dev', 'Old', 'old', 'regular', 'oziris-main', 'enhanced'),
+		  ('acc_hc', 'dev', 'Hc', 'hc', 'hcim', 'oziris-main', 'enhanced');
 	`); err != nil {
 		t.Fatal(err)
 	}
@@ -105,6 +106,25 @@ func TestPluginJobPostgres(t *testing.T) {
 	}
 	if status, _, _ = call(t, "POST", srv.URL+"/api/jobs/"+id+"/run?account=acc_old", ""); status != http.StatusNotFound {
 		t.Fatalf("another account's job = %d", status)
+	}
+
+	// Starting or canceling a job acts in game: Microbot control, which in
+	// dev answers only this machine.
+	for _, action := range []string{"run", "cancel"} {
+		req := httptest.NewRequest("POST", "/api/jobs/"+id+"/"+action+"?account=acc_island", nil)
+		req.RemoteAddr = "192.168.1.50:40000"
+		rec := httptest.NewRecorder()
+		srv.Config.Handler.ServeHTTP(rec, req)
+		if rec.Code != http.StatusForbidden {
+			t.Fatalf("%s from the LAN = %d", action, rec.Code)
+		}
+	}
+
+	// A plugin's risks are unknown: an HCIM runs one only supervised (E9).
+	_, hcJob, _ := call(t, "POST", srv.URL+"/api/jobs?account=acc_hc", tutorialJob)
+	status, refused, _ = call(t, "POST", srv.URL+"/api/jobs/"+hcJob["id"].(string)+"/run?account=acc_hc", "")
+	if status != http.StatusConflict || !strings.Contains(refused["error"].(string), "supervised") {
+		t.Fatalf("unsupervised HCIM = %d %v", status, refused)
 	}
 
 	token, err := ingest.CreateToken(ctx, "acc_island", "island", []coreingest.TokenScope{coreingest.ScopeItemsBank, coreingest.ScopeItemsInventory, coreingest.ScopeItemsEquipment})

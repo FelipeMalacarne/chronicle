@@ -12,6 +12,36 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const findQueuedTaskJob = `-- name: FindQueuedTaskJob :one
+SELECT j.id FROM jobs j
+WHERE j.account_id = $1 AND j.plan_id = $2 AND j.task_key = $3 AND j.kind = $4 AND j.state = 'queued'
+  AND NOT EXISTS (SELECT 1 FROM routine_runs r WHERE r.job_id = j.id)
+ORDER BY j.created_at DESC, j.id
+LIMIT 1
+`
+
+type FindQueuedTaskJobParams struct {
+	AccountID string      `json:"account_id"`
+	PlanID    pgtype.Text `json:"plan_id"`
+	TaskKey   pgtype.Text `json:"task_key"`
+	Kind      string      `json:"kind"`
+}
+
+// The job the server queued for a task run whose agent does not carry the job
+// id (it predates the job_id feature): the newest queued one of the task, with
+// no run yet.
+func (q *Queries) FindQueuedTaskJob(ctx context.Context, arg FindQueuedTaskJobParams) (string, error) {
+	row := q.db.QueryRow(ctx, findQueuedTaskJob,
+		arg.AccountID,
+		arg.PlanID,
+		arg.TaskKey,
+		arg.Kind,
+	)
+	var id string
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getJob = `-- name: GetJob :one
 SELECT id, account_id, kind, spec, goal, metric, progress, stall_after_s, state, reason, source, plan_id, task_key, deadline_at, created_at, started_at, finished_at FROM jobs WHERE id = $1 AND account_id = $2
 `
@@ -44,6 +74,17 @@ func (q *Queries) GetJob(ctx context.Context, arg GetJobParams) (Job, error) {
 		&i.FinishedAt,
 	)
 	return i, err
+}
+
+const getJobAccount = `-- name: GetJobAccount :one
+SELECT account_id FROM jobs WHERE id = $1
+`
+
+func (q *Queries) GetJobAccount(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRow(ctx, getJobAccount, id)
+	var account_id string
+	err := row.Scan(&account_id)
+	return account_id, err
 }
 
 const getJobForUpdate = `-- name: GetJobForUpdate :one
@@ -110,6 +151,17 @@ func (q *Queries) InsertJob(ctx context.Context, arg InsertJobParams) error {
 		arg.TaskKey,
 	)
 	return err
+}
+
+const lastRunStateOfJob = `-- name: LastRunStateOfJob :one
+SELECT state FROM routine_runs WHERE job_id = $1 ORDER BY started_at DESC, id DESC LIMIT 1
+`
+
+func (q *Queries) LastRunStateOfJob(ctx context.Context, jobID pgtype.Text) (string, error) {
+	row := q.db.QueryRow(ctx, lastRunStateOfJob, jobID)
+	var state string
+	err := row.Scan(&state)
+	return state, err
 }
 
 const latestPlanJobs = `-- name: LatestPlanJobs :many
@@ -334,6 +386,53 @@ func (q *Queries) ListJobs(ctx context.Context, arg ListJobsParams) ([]Job, erro
 	return items, nil
 }
 
+const listQueuedJobsWithActiveRun = `-- name: ListQueuedJobsWithActiveRun :many
+SELECT j.id, j.account_id, j.kind, j.spec, j.goal, j.metric, j.progress, j.stall_after_s, j.state, j.reason, j.source, j.plan_id, j.task_key, j.deadline_at, j.created_at, j.started_at, j.finished_at FROM jobs j
+WHERE j.state = 'queued'
+  AND EXISTS (SELECT 1 FROM routine_runs r WHERE r.job_id = j.id AND r.state NOT IN ('done', 'failed', 'canceled'))
+ORDER BY j.created_at, j.id
+`
+
+// A queued job whose run is going: run.started was missed (the safety tick
+// moves it to running).
+func (q *Queries) ListQueuedJobsWithActiveRun(ctx context.Context) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listQueuedJobsWithActiveRun)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Job{}
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.Kind,
+			&i.Spec,
+			&i.Goal,
+			&i.Metric,
+			&i.Progress,
+			&i.StallAfterS,
+			&i.State,
+			&i.Reason,
+			&i.Source,
+			&i.PlanID,
+			&i.TaskKey,
+			&i.DeadlineAt,
+			&i.CreatedAt,
+			&i.StartedAt,
+			&i.FinishedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listRunsToStopForSucceededJobs = `-- name: ListRunsToStopForSucceededJobs :many
 SELECT r.id AS run_uid, r.account_id, j.id AS job_id, j.goal
 FROM routine_runs r JOIN jobs j ON j.id = r.job_id
@@ -365,6 +464,54 @@ func (q *Queries) ListRunsToStopForSucceededJobs(ctx context.Context) ([]ListRun
 			&i.AccountID,
 			&i.JobID,
 			&i.Goal,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStalledJobsPastCutoff = `-- name: ListStalledJobsPastCutoff :many
+SELECT j.id, j.account_id, j.kind, j.spec, j.goal, j.metric, j.progress, j.stall_after_s, j.state, j.reason, j.source, j.plan_id, j.task_key, j.deadline_at, j.created_at, j.started_at, j.finished_at FROM jobs j
+WHERE j.state = 'stalled'
+  AND NOT EXISTS (SELECT 1 FROM routine_runs r WHERE r.job_id = j.id AND r.state NOT IN ('done', 'failed', 'canceled'))
+  AND COALESCE((SELECT max(COALESCE(r.finished_at, r.started_at)) FROM routine_runs r WHERE r.job_id = j.id), j.started_at, j.created_at) < $1
+ORDER BY j.created_at, j.id
+`
+
+// Stalled jobs with no run going whose last run ended before the cutoff (or
+// that never had one): nothing is left to prove them.
+func (q *Queries) ListStalledJobsPastCutoff(ctx context.Context, finishedAt pgtype.Timestamptz) ([]Job, error) {
+	rows, err := q.db.Query(ctx, listStalledJobsPastCutoff, finishedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []Job{}
+	for rows.Next() {
+		var i Job
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.Kind,
+			&i.Spec,
+			&i.Goal,
+			&i.Metric,
+			&i.Progress,
+			&i.StallAfterS,
+			&i.State,
+			&i.Reason,
+			&i.Source,
+			&i.PlanID,
+			&i.TaskKey,
+			&i.DeadlineAt,
+			&i.CreatedAt,
+			&i.StartedAt,
+			&i.FinishedAt,
 		); err != nil {
 			return nil, err
 		}

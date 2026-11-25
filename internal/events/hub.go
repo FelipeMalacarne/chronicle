@@ -63,9 +63,6 @@ var _ Publisher = (*Hub)(nil)
 // DefaultBuffer is the per-subscriber queue length.
 const DefaultBuffer = 16
 
-// allAccounts is the key of the subscriptions to every account (SubscribeAll).
-const allAccounts = "*"
-
 // Hub fans events out to the subscribers of each account. Publish never
 // blocks: a subscriber whose queue is full is dropped (its channel closes), so
 // a slow browser can never stall a reevaluation; its stream ends and the
@@ -73,6 +70,7 @@ const allAccounts = "*"
 type Hub struct {
 	mu     sync.Mutex
 	subs   map[string]map[*Subscription]struct{}
+	all    map[*Subscription]struct{} // SubscribeAll: kept apart, so no account id can reach it
 	guides []string
 	buffer int
 	now    func() time.Time
@@ -83,6 +81,7 @@ type Hub struct {
 func NewHub(guides []string) *Hub {
 	return &Hub{
 		subs:   map[string]map[*Subscription]struct{}{},
+		all:    map[*Subscription]struct{}{},
 		guides: append([]string(nil), guides...),
 		buffer: DefaultBuffer,
 		now:    time.Now,
@@ -96,12 +95,20 @@ type Subscription struct {
 	c       chan Event
 	hub     *Hub
 	account string
+	every   bool // SubscribeAll
 	closed  bool // guarded by hub.mu
 }
 
 // SubscribeAll opens a subscription to the events of every account, for the
 // consumers of the event log that wake on any change.
-func (h *Hub) SubscribeAll() *Subscription { return h.Subscribe(allAccounts) }
+func (h *Hub) SubscribeAll() *Subscription {
+	c := make(chan Event, h.buffer)
+	s := &Subscription{C: c, c: c, hub: h, every: true}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.all[s] = struct{}{}
+	return s
+}
 
 // Subscribe opens a subscription to the account's events.
 func (h *Hub) Subscribe(account string) *Subscription {
@@ -130,6 +137,10 @@ func (h *Hub) removeLocked(s *Subscription) {
 	}
 	s.closed = true
 	close(s.c)
+	if s.every {
+		delete(h.all, s)
+		return
+	}
 	if set := h.subs[s.account]; set != nil {
 		delete(set, s)
 		if len(set) == 0 {
@@ -149,8 +160,8 @@ func (h *Hub) Publish(e Event) {
 	}
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	for _, key := range []string{e.Account, allAccounts} {
-		for s := range h.subs[key] {
+	for _, set := range []map[*Subscription]struct{}{h.subs[e.Account], h.all} {
+		for s := range set {
 			select {
 			case s.c <- e:
 			default:

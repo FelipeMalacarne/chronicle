@@ -49,6 +49,8 @@ func (m *memStore) ImportTriggers(_ context.Context, account string, ts []agent.
 	return true, nil
 }
 
+func (m *memStore) JobAccount(context.Context, string) (string, error) { return "", nil }
+
 func (m *memStore) RecordRun(_ context.Context, _, _ string, run agent.Run) (bool, bool, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
@@ -65,6 +67,8 @@ type fakeHub struct {
 	calls []call
 	own   []agent.Trigger // what the agent's file holds (trigger_get)
 }
+
+func (h *fakeHub) Route(string) (agent.Info, error) { return agent.Info{}, agent.ErrNoAgent }
 
 func (h *fakeHub) CallAgent(_ context.Context, _, command string, params, into any) error {
 	h.calls = append(h.calls, call{command, params})

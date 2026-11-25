@@ -166,11 +166,11 @@ type createJobRequest struct {
 	Goal        job.Goal        `json:"goal"`
 	Metric      *job.Metric     `json:"metric,omitempty"`
 	StallAfterS int             `json:"stall_after_s,omitempty"`
-	Plan        string          `json:"plan,omitempty"`
-	TaskKey     string          `json:"task_key,omitempty"`
 }
 
-// handleCreateJob queues a job of the owner's. Running it is the conductor's
+// handleCreateJob queues a job of the owner's, never one of a plan's task (the
+// plan reads a ge_sell job's proof by its plan and task key; the server's task
+// run is the only one that sets them). Running it is the conductor's
 // work (and, for a plugin, the dispatch of the client's profile): this only
 // records the intent for the tracker to prove.
 func (s *Server) handleCreateJob(w http.ResponseWriter, r *http.Request) {
@@ -187,7 +187,6 @@ func (s *Server) handleCreateJob(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	j.Plan, j.TaskKey = req.Plan, req.TaskKey
 	created, err := s.opts.Jobs.Create(r.Context(), j)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "creating the job")
@@ -305,6 +304,14 @@ func (s *Server) createTaskJob(ctx context.Context, account, planID, taskKey str
 		return "", fmt.Errorf("creating the job: %w", err)
 	}
 	return created.ID, nil
+}
+
+// notDelivered reports whether a failed task_run certainly did not start a run:
+// the agent refused it, or there was no agent to take it. Any other error (a
+// timeout, a lost link) may have started it, and the run's report links the job.
+func notDelivered(err error) bool {
+	var refused *agent.CommandError
+	return errors.As(err, &refused) || errors.Is(err, agent.ErrNoAgent) || errors.Is(err, agent.ErrAmbiguousAgent)
 }
 
 // dropTaskJob cancels the job of a task run the agent did not start.

@@ -157,6 +157,7 @@ func TestCreateJobRefusals(t *testing.T) {
 		"bad metric":    `{"kind":"train","goal":"skill:mining>=15","metric":{"kind":"magic","target":1}}`,
 		"not json":      `{`,
 		"unknown field": `{"kind":"train","goal":"skill:mining>=15","state":"succeeded"}`,
+		"a plan task":   `{"kind":"ge_sell","goal":"skill:mining>=15","plan":"pln_abcdefgh","task_key":"task:0#0"}`,
 	} {
 		if status, _, _ := call(t, "POST", srv.URL+"/api/jobs?account=acc-1", body); status != http.StatusBadRequest {
 			t.Errorf("%s = %d", name, status)

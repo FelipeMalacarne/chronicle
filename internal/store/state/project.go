@@ -79,7 +79,7 @@ func Project(ctx context.Context, q *storedb.Queries, accountID string, facets .
 	if len(changed) == 0 {
 		return nil
 	}
-	_, err := eventlog.Append(ctx, q, accountID, eventlog.TypeFactChanged, "", map[string]any{"facts": changed, "truncated": truncated})
+	_, err := eventlog.Append(ctx, q, accountID, eventlog.TypeFactChanged, "", "", map[string]any{"facts": changed, "truncated": truncated})
 	return err
 }
 

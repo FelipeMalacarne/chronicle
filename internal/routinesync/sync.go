@@ -38,10 +38,13 @@ type Store interface {
 	Recurring(ctx context.Context, account string) ([]agent.Recurring, error)
 	ImportTriggers(ctx context.Context, account string, ts []agent.Trigger) (bool, error)
 	RecordRun(ctx context.Context, account, agentName string, run agent.Run) (newRun, finished bool, err error)
+	// JobAccount is the account of a job; "" when there is none.
+	JobAccount(ctx context.Context, jobID string) (string, error)
 }
 
 // Hub calls one connected agent (agent.Link).
 type Hub interface {
+	Route(account string) (agent.Info, error)
 	CallAgent(ctx context.Context, agentID, command string, params, into any) error
 }
 
@@ -118,23 +121,27 @@ func (s *Sync) importTriggers(ctx context.Context, info agent.Info) bool {
 // OnEvent stores a run an agent reported and audits what its executor did
 // by itself.
 func (s *Sync) OnEvent(info agent.Info, ev agent.Event) {
-	if ev.Run == nil || info.Account == "" {
+	if ev.Run == nil {
 		return
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 	run := *ev.Run
-	newRun, finished, err := s.Store.RecordRun(ctx, info.Account, cmp.Or(info.Worker, info.Host), run)
+	account := s.accountOf(ctx, info, run)
+	if account == "" {
+		return
+	}
+	newRun, finished, err := s.Store.RecordRun(ctx, account, cmp.Or(info.Worker, info.Host), run)
 	switch {
 	case errors.Is(err, storeroutines.ErrNotFound):
-		s.Log.Debug("routines: run of an unknown account", "account", info.Account)
+		s.Log.Debug("routines: run of an unknown account", "account", account)
 		return
 	case err != nil:
-		s.Log.Warn("routines: record run", "account", info.Account, "agent", info.ID, "run", run.ID, "err", err)
+		s.Log.Warn("routines: record run", "account", account, "agent", info.ID, "run", run.ID, "err", err)
 		return
 	}
 	if newRun || finished {
-		storejobs.Wake(s.Wake, info.Account)
+		storejobs.Wake(s.Wake, account)
 	}
 	var actor string
 	switch {
@@ -150,15 +157,44 @@ func (s *Sync) OnEvent(info agent.Info, ev agent.Event) {
 	}
 	params, _ := json.Marshal(map[string]any{"run": run.ID, "className": run.ClassName})
 	if newRun {
-		s.append(ctx, storemicrobot.Entry{Actor: actor, Origin: "agent", Action: agent.CmdRunStart, Params: params, OK: true, AccountID: info.Account, AgentID: info.ID})
+		s.append(ctx, storemicrobot.Entry{Actor: actor, Origin: "agent", Action: agent.CmdRunStart, Params: params, OK: true, AccountID: account, AgentID: info.ID})
 	}
 	if finished {
-		e := storemicrobot.Entry{Actor: actor, Origin: "agent", Action: "run_end", Params: params, OK: run.State == agent.RunDone, AccountID: info.Account, AgentID: info.ID}
+		e := storemicrobot.Entry{Actor: actor, Origin: "agent", Action: "run_end", Params: params, OK: run.State == agent.RunDone, AccountID: account, AgentID: info.ID}
 		if !e.OK {
 			e.Error = cmp.Or(run.Error, run.State)
 		}
 		s.append(ctx, e)
 	}
+}
+
+// accountOf is the account a reported run belongs to: the one the agent
+// declares. An agent that declares none (an attached one) is taken at the
+// run's word, which the server wrote itself when it started the run: the
+// account its wait_until names, or the one of the job it attempts, and only
+// when the server routes that account to this very agent (Link.route gives a
+// single undeclared agent any account).
+func (s *Sync) accountOf(ctx context.Context, info agent.Info, run agent.Run) string {
+	if info.Account != "" {
+		return info.Account
+	}
+	var named string
+	switch {
+	case run.Until != nil:
+		named = run.Until.Account
+	case run.Task != nil && run.Task.JobID != "":
+		var err error
+		if named, err = s.Store.JobAccount(ctx, run.Task.JobID); err != nil {
+			s.Log.Warn("routines: job of a run", "agent", info.ID, "run", run.ID, "err", err)
+		}
+	}
+	if named == "" {
+		return ""
+	}
+	if routed, err := s.Hub.Route(named); err != nil || routed.ID != info.ID {
+		return ""
+	}
+	return named
 }
 
 func (s *Sync) append(ctx context.Context, e storemicrobot.Entry) {

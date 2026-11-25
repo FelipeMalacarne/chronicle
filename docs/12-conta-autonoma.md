@@ -695,6 +695,7 @@ no máximo um ativo.
 | `running` | a regra do `goal` vira `met` num fato `live` | `succeeded` |
 | `running` | a métrica não muda por `stall_after` | `stalled` |
 | `running` | o run termina sem o `goal` provado | `stalled` |
+| `running` | o run de um `ge_sell` termina `failed` ou `canceled` | `failed` |
 | `stalled` | quem trata o travamento começa outro run | `running` |
 | `stalled` | a escada esgota os degraus (seção 5.7) | `failed` |
 | qualquer um ativo | o dono cancela | `canceled` |
@@ -772,15 +773,34 @@ O que a implementação decidiu onde as seções acima não diziam (`internal/co
   varbit com `min`/`eq`, ou o XP do nível de uma chave de skill. Um job sem métrica (quest, venda,
   deslocamento) só trava quando o run termina sem a meta provada, nunca por prazo.
 - **Estados.** Além da tabela da seção 13.3, `stalled` vai para `succeeded`: um run que termina antes
-  de o ingest mostrar a meta trava o job, e o fato que a prova pode chegar depois.
+  de o ingest mostrar a meta trava o job, e o fato que a prova pode chegar depois. `running` vai para
+  `failed` quando o run de um `ge_sell` termina `failed` ou `canceled`. Um `stalled` sem run ativo
+  cujo último run terminou há mais de 13 h (o `wait_until` mais longo, com folga) vai para `failed`
+  ("not proven within 13h0m0s of its last run"), no tick de segurança, e deixa de ser avaliado.
+- **A venda é do run.** Um `ge_sell` só vira `succeeded` com o último run do job `running`, `waiting`
+  ou `done`: prova no fim do run, ou depois enquanto aquele for o último run. Um run `failed` ou
+  `canceled` leva o job a `failed` e nada que o inventário mostre depois o prova (a venda abortada, o
+  vidro no banco, moedas sacadas para outra coisa).
 - **Eventos.** A transição para `running` grava `job.started` (a seção 13.4 não nomeava esse evento).
   O job tracker lê também `run.started`, que é o que tira o job de `queued` ou de `stalled`.
+  Cada evento do job ou de um run do job leva `events.job_id`, indexado, que é por onde o detalhe
+  `GET /api/jobs/{id}` os acha; os `fact.changed` com mais de 7 dias que todos os cursores passaram
+  são apagados pelo job tracker (no máximo uma vez por hora).
   `fact.changed` lista as chaves que mudaram por faceta (até 100 por faceta) e não sai para a posição e
   os timers, que mudam a cada push; o job tracker avalia as metas de posição a cada 30 s e quando o
   run termina. Depois do commit, quem grava acorda os consumidores pelo hub (`events.TypeLog`,
   `SubscribeAll`), que nunca chega ao SSE da web.
-- **Retomada.** O cursor `job_tracker` anda depois de cada lote, e os efeitos do lote vêm antes dele.
-  Um evento entregue de novo não muda nada, porque cada tratamento lê o estado de novo. O prazo de
+- **Retomada.** O cursor `job_tracker` anda depois de cada lote, e os efeitos do lote vêm antes dele;
+  um evento cujo tratamento falhou não é ultrapassado, e o próximo passe o lê de novo. Um evento
+  entregue de novo não muda nada, porque cada tratamento lê o estado de novo.
+- **Ordem do log.** O `id` vem da sequência na ordem dos `INSERT`, não na ordem dos commits, então um
+  leitor que anda por `id` poderia passar por um evento que commita tarde. Quem grava segura o lock
+  consultivo compartilhado do log (`pg_advisory_xact_lock_shared`) do `INSERT` até o commit, e o
+  leitor (`eventlog.After`) pega o mesmo lock exclusivo, com `try`, antes de ler: nunca lê com um
+  evento ainda sem commit. Um lock que os escritores não soltam em 1 s é `ErrBusy`, e o passe seguinte
+  tenta de novo. O `xmin` do snapshot não serve: ele é do cluster inteiro, e uma transação lenta de
+  outro banco travaria o tracker. O tick de segurança também começa o job `queued` cujo run está
+  ativo, caso o `run.started` tenha passado sem efeito. O prazo de
   travamento fica em `jobs.deadline_at` (a última mudança da métrica mais `stall_after`), então
   sobrevive a um reinício; o job tracker dorme até o menor prazo.
 - **`run_until`.** Quando um job fica `succeeded` com um run ainda ativo e a meta é uma chave de
@@ -789,8 +809,23 @@ O que a implementação decidiu onde as seções acima não diziam (`internal/co
   recorrente começa, vira um job `plugin` adotado quando o `routinesync` grava o run (fonte `owner` ou
   `routine`), para o mesmo caminho servir a todos.
 - **Run e job.** A tarefa tipada leva `jobId` até o agent (`TaskRunParams`, `RunTask`) e volta no
-  relatório do run, que `routines.RecordRun` liga a `routine_runs.job_id`. Não há restrição no banco de
-  um run ativo por job: o servidor cria um job por run.
+  relatório do run, que `routines.RecordRun` liga a `routine_runs.job_id`. O servidor só manda o
+  campo a um agent que declara a feature `job_id` no hello: o `decodeParams` do agent recusa campo
+  desconhecido. Para um agent sem a feature, o `RecordRun` liga o run ao job `queued` que o servidor
+  criou para a mesma tarefa (conta, plano, `task_key` e tipo) e que nenhum run tem ainda, e então não
+  adota um segundo job `plugin` para o run. Não há restrição no banco de um run ativo por job: o
+  servidor cria um job por run. Um `task_run` que falha por erro que pode ter começado o run (prazo,
+  link perdido) não cancela o job; só a recusa do agent, ou a falta de agent, o cancela. Os jobs do
+  `POST /api/jobs` nunca levam plano nem `task_key`: só o run de tarefa do servidor os escreve, e o
+  plano lê a prova da venda por eles. Os runs que já estavam em andamento no deploy da migração 0031
+  ficam sem `job_id`, uma vez só.
+- **Agent sem conta declarada.** Um agent anexado sem conta no hello tem o run tomado pela palavra do
+  próprio run: a conta do `until` (`wait_until`) ou a do job que a tarefa leva, e só quando o
+  `Link.Route` dessa conta devolve esse mesmo agent (o `route` entrega a conta pedida a um único agent
+  sem conta). Sem isso, o `run_until` e a prova da venda se perderiam para esse agent.
+- **`membership.low`.** Grava-se na primeira mudança que acha a assinatura em 7 dias ou menos, e não
+  outra vez em 8 dias: as mudanças seguintes e a reentrega não repetem. Uma renovação e uma nova
+  queda depois de 8 dias gravam de novo.
 - **Colunas a mais em `jobs`.** `plan_id` e `task_key` (o plano lê os `ge_sell` por elas), `deadline_at`
   e a fonte `routine`.
 - **Fora do escopo.** O despacho do tipo `plugin` (FEL-125), o condutor movido por eventos (FEL-126), a

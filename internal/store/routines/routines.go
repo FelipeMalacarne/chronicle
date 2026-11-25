@@ -196,13 +196,13 @@ func (r *Repository) RecordRun(ctx context.Context, account, agentName string, r
 		finished = run.Final() && (!found || !final(prev.State))
 		payload := map[string]any{"run": run.UID, "job": jobID.String, "class": run.ClassName}
 		if newRun {
-			if _, evErr := eventlog.Append(ctx, q, account, eventlog.TypeRunStarted, run.UID, payload); evErr != nil {
+			if _, evErr := eventlog.Append(ctx, q, account, eventlog.TypeRunStarted, run.UID, jobID.String, payload); evErr != nil {
 				return evErr
 			}
 		}
 		if finished {
 			payload["state"], payload["error"] = run.State, run.Error
-			if _, evErr := eventlog.Append(ctx, q, account, eventlog.TypeRunEnded, run.UID, payload); evErr != nil {
+			if _, evErr := eventlog.Append(ctx, q, account, eventlog.TypeRunEnded, run.UID, jobID.String, payload); evErr != nil {
 				return evErr
 			}
 		}
@@ -212,20 +212,31 @@ func (r *Repository) RecordRun(ctx context.Context, account, agentName string, r
 }
 
 // linkJob is the job a new run belongs to: the one its task names, when the
-// account has it, or else a job adopted from the run's wait_until (a trigger's
-// or a routine's run, the owner's "Fazer agora" with an objective), so that
-// every run that waits for the server's proof has a job the tracker follows
+// account has it; for an agent that does not carry the job id (it predates
+// the job_id feature) the one the server queued for the task, which no run
+// has yet; or else a job adopted from the run's wait_until (a trigger's or a
+// routine's run, the owner's "Fazer agora" with an objective), so that every
+// run that waits for the server's proof has a job the tracker follows
 // (docs/12 section 13). A run with neither has no job.
 func linkJob(ctx context.Context, q *storedb.Queries, account string, run agent.Run) (pgtype.Text, error) {
-	if run.Task != nil && run.Task.JobID != "" {
-		_, err := q.GetJob(ctx, storedb.GetJobParams{ID: run.Task.JobID, AccountID: account})
+	if t := run.Task; t != nil {
+		if t.JobID != "" {
+			_, err := q.GetJob(ctx, storedb.GetJobParams{ID: t.JobID, AccountID: account})
+			switch {
+			case err == nil:
+				return text(t.JobID), nil
+			case !errors.Is(err, pgx.ErrNoRows):
+				return pgtype.Text{}, fmt.Errorf("read job: %w", err)
+			}
+			return pgtype.Text{}, nil
+		}
+		id, err := q.FindQueuedTaskJob(ctx, storedb.FindQueuedTaskJobParams{AccountID: account, PlanID: text(t.Plan), TaskKey: text(t.Key), Kind: t.Type})
 		switch {
 		case err == nil:
-			return text(run.Task.JobID), nil
+			return text(id), nil
 		case !errors.Is(err, pgx.ErrNoRows):
-			return pgtype.Text{}, fmt.Errorf("read job: %w", err)
+			return pgtype.Text{}, fmt.Errorf("read the task's job: %w", err)
 		}
-		return pgtype.Text{}, nil
 	}
 	if run.Until == nil || run.Final() {
 		return pgtype.Text{}, nil
@@ -249,6 +260,15 @@ func linkJob(ctx context.Context, q *storedb.Queries, account string, run agent.
 		return pgtype.Text{}, err
 	}
 	return text(id), nil
+}
+
+// JobAccount is the account a job belongs to; "" when there is no such job.
+func (r *Repository) JobAccount(ctx context.Context, jobID string) (string, error) {
+	account, err := r.queries.GetJobAccount(ctx, jobID)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return "", fmt.Errorf("read job account: %w", err)
+	}
+	return account, nil
 }
 
 // Runs returns the account's last runs, newest first, with their trails.

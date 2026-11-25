@@ -107,7 +107,7 @@ func Insert(ctx context.Context, q *storedb.Queries, j job.Job) (string, error) 
 	if err != nil {
 		return "", fmt.Errorf("insert job: %w", err)
 	}
-	if _, err := eventlog.Append(ctx, q, j.Account, eventlog.TypeJobQueued, j.ID, jobPayload(j, "")); err != nil {
+	if _, err := eventlog.Append(ctx, q, j.Account, eventlog.TypeJobQueued, j.ID, j.ID, jobPayload(j, "")); err != nil {
 		return "", err
 	}
 	return j.ID, nil
@@ -176,6 +176,38 @@ func (r *Repository) Due(ctx context.Context, now time.Time) ([]job.Job, error) 
 		return nil, fmt.Errorf("list due jobs: %w", err)
 	}
 	return toJobs(rows)
+}
+
+// QueuedWithActiveRun returns the queued jobs whose run is going: the ones
+// whose run.started the tracker did not act on.
+func (r *Repository) QueuedWithActiveRun(ctx context.Context) ([]job.Job, error) {
+	rows, err := r.queries.ListQueuedJobsWithActiveRun(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("list queued jobs with a run: %w", err)
+	}
+	return toJobs(rows)
+}
+
+// StalledBefore returns the stalled jobs with no run going whose last run
+// ended before the cutoff.
+func (r *Repository) StalledBefore(ctx context.Context, cutoff time.Time) ([]job.Job, error) {
+	rows, err := r.queries.ListStalledJobsPastCutoff(ctx, pgtype.Timestamptz{Time: cutoff, Valid: true})
+	if err != nil {
+		return nil, fmt.Errorf("list stalled jobs: %w", err)
+	}
+	return toJobs(rows)
+}
+
+// LastRunState is the state of the job's newest run; false when it has none.
+func (r *Repository) LastRunState(ctx context.Context, id string) (string, bool, error) {
+	state, err := r.queries.LastRunStateOfJob(ctx, text(id))
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", false, nil
+	}
+	if err != nil {
+		return "", false, fmt.Errorf("read last run: %w", err)
+	}
+	return state, true, nil
 }
 
 // NextDeadline is when the first running job stalls; false when none can.
@@ -259,7 +291,7 @@ func (r *Repository) Stall(ctx context.Context, id, reason string) (job.Job, err
 	return r.move(ctx, id, change{to: job.Stalled, reason: reason, event: eventlog.TypeJobStalled})
 }
 
-// Fail moves a stalled job whose ladder ran out to failed.
+// Fail moves a running or stalled job to failed.
 func (r *Repository) Fail(ctx context.Context, id, reason string) (job.Job, error) {
 	return r.move(ctx, id, change{to: job.Failed, reason: reason, event: eventlog.TypeJobFailed})
 }
@@ -304,7 +336,7 @@ func (r *Repository) Progress(ctx context.Context, id string, p job.Progress, de
 			return fmt.Errorf("write progress: %w", werr)
 		}
 		account = row.AccountID
-		_, err = eventlog.Append(ctx, q, row.AccountID, eventlog.TypeJobProgressed, id, map[string]any{"job": id, "progress": p})
+		_, err = eventlog.Append(ctx, q, row.AccountID, eventlog.TypeJobProgressed, id, id, map[string]any{"job": id, "progress": p})
 		return err
 	})
 	if err != nil {
@@ -358,7 +390,7 @@ func (r *Repository) move(ctx context.Context, id string, c change) (job.Job, er
 		if out, err = toJob(moved); err != nil {
 			return err
 		}
-		_, err = eventlog.Append(ctx, q, row.AccountID, c.event, id, jobPayload(out, string(from)))
+		_, err = eventlog.Append(ctx, q, row.AccountID, c.event, id, id, jobPayload(out, string(from)))
 		return err
 	})
 	if err != nil {

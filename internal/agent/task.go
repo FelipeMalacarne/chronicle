@@ -43,6 +43,9 @@ type TaskRunParams struct {
 	// the server proves its termination by them.
 	Key  string `json:"key"`
 	Plan string `json:"plan"`
+	// JobID is the server's job (docs/12 section 13) this run attempts: the
+	// run carries it back in every report, so the server links the two.
+	JobID string `json:"jobId,omitempty"`
 	// Label is what the trail calls the task (PT-BR).
 	Label string `json:"label"`
 	// Mode is the account's mode and Risks the task's risk kinds (its
@@ -71,12 +74,15 @@ type RunTask struct {
 	Type       string `json:"type"`
 	Label      string `json:"label"`
 	Supervised bool   `json:"supervised,omitempty"`
+	// JobID is the job the run attempts (TaskRunParams.JobID).
+	JobID string `json:"jobId,omitempty"`
 	// CoinsAtLeast is a ge_sell's execspec.GESell.CoinsAtLeast, carried so
 	// the server proves the sale on the run (rules.SaleProven).
 	CoinsAtLeast int64 `json:"coinsAtLeast,omitempty"`
 }
 
 var (
+	reJobID    = regexp.MustCompile(`^job_[0-9a-f]{16}$`)
 	reTaskKey  = regexp.MustCompile(`^(step|recipe|task):[\x21-\x7e]{1,280}#[0-9]{1,4}$`)
 	rePlanID   = regexp.MustCompile(`^(route:[a-z0-9-]{1,64}|pln_[a-z0-9]{8,32})$`)
 	taskStates = []string{"running", "done", "failed", "canceled"}
@@ -97,7 +103,7 @@ func validateTaskRun(raw json.RawMessage) (TaskRunParams, error) {
 	if err := decodeParams(raw, &p); err != nil {
 		return p, err
 	}
-	if err := checkRunTask(RunTask{Key: p.Key, Plan: p.Plan, Type: p.Task.Type, Label: p.Label}); err != nil {
+	if err := checkRunTask(RunTask{Key: p.Key, Plan: p.Plan, Type: p.Task.Type, Label: p.Label, JobID: p.JobID}); err != nil {
 		return p, err
 	}
 	if !slices.Contains(content.Modes, p.Mode) {
@@ -152,6 +158,8 @@ func checkRunTask(t RunTask) error {
 		return errors.New("task: bad key")
 	case !rePlanID.MatchString(t.Plan):
 		return errors.New("task: bad plan")
+	case t.JobID != "" && !reJobID.MatchString(t.JobID):
+		return errors.New("task: bad job id")
 	case !slices.Contains(content.TaskTypes, t.Type):
 		return fmt.Errorf("task: unknown type %q", t.Type)
 	case strings.TrimSpace(t.Label) == "" || len(t.Label) > 200 || strings.IndexFunc(t.Label, func(r rune) bool { return !unicode.IsPrint(r) }) >= 0:
@@ -173,7 +181,7 @@ func (e *Executor) taskRun(raw json.RawMessage) (any, error) {
 	}
 	run := Run{
 		ClassName: ChronicleLinkClass,
-		Task:      &RunTask{Key: p.Key, Plan: p.Plan, Type: p.Task.Type, Label: p.Label, Supervised: p.Supervised},
+		Task:      &RunTask{Key: p.Key, Plan: p.Plan, Type: p.Task.Type, Label: p.Label, Supervised: p.Supervised, JobID: p.JobID},
 	}
 	drive := func(ctx context.Context) { e.driveTask(ctx, p) }
 	if tr := p.Task.Train; tr != nil {

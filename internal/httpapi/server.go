@@ -80,6 +80,11 @@ type Options struct {
 	// active one (GET /api/plan/next, /api/plans, docs/10 section 9); nil
 	// leaves them out.
 	Plans PlanStore
+	// Jobs stores the accounts' jobs and serves GET and POST /api/jobs (docs/12
+	// section 13); JobEvents adds their events to GET /api/jobs/{id}. A task
+	// run creates a job when Jobs is set, and a sale is proven by its job.
+	Jobs      JobStore
+	JobEvents JobEventStore
 	// Prices reads the stored Grand Exchange prices a ge_buy or ge_sell is
 	// priced by (internal/store/prices); nil refuses those tasks.
 	Prices PriceStore
@@ -217,6 +222,7 @@ func (s *Server) routes() {
 	s.mtaRoutes()
 	s.recordingRoutes()
 	s.planRoutes()
+	s.jobRoutes()
 	s.microbotRoutes()
 	s.workerRoutes()
 	s.profileRoutes()

@@ -24,11 +24,14 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/events"
 	"github.com/FelipeMalacarne/chronicle/internal/httpapi"
+	"github.com/FelipeMalacarne/chronicle/internal/jobtracker"
 	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
 	"github.com/FelipeMalacarne/chronicle/internal/sources/wikiprices"
 	storeactivity "github.com/FelipeMalacarne/chronicle/internal/store/activity"
+	storeeventlog "github.com/FelipeMalacarne/chronicle/internal/store/eventlog"
 	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
+	storejobs "github.com/FelipeMalacarne/chronicle/internal/store/jobs"
 	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
 	storeprices "github.com/FelipeMalacarne/chronicle/internal/store/prices"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
@@ -97,6 +100,8 @@ func runServe(parent context.Context) error {
 	var levelsService httpapi.LevelsStore
 	var recordingService httpapi.RecordingStore
 	var plansService httpapi.PlanStore
+	var jobsService httpapi.JobStore
+	var jobEventsService httpapi.JobEventStore
 	var priceService httpapi.PriceStore
 	var oidcOpts *httpapi.OIDCOptions
 	var microbotOpts *httpapi.MicrobotOptions
@@ -133,11 +138,19 @@ func runServe(parent context.Context) error {
 			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).
 				WithReevaluator(progressRepo).WithPublisher(hub).WithDevInstallations(cfg.IsDev())
 			ingestService, holdings, progressService = repo, repo, progressRepo
+			// The jobs (docs/12 section 13): the tracker follows the durable
+			// event log and is the only piece that proves a job; the control
+			// module gives it the agents' link.
+			jobsRepo := storejobs.New(pool).WithPublisher(hub)
+			logRepo := storeeventlog.New(pool)
+			jobsService, jobEventsService = jobsRepo, logRepo
+			tracker := &jobtracker.Tracker{Jobs: jobsRepo, Log: logRepo, Facts: progressRepo, Registry: catalog, Events: hub, Logr: logger}
 			if cfg.MicrobotControl {
-				if microbotOpts, err = newMicrobot(ctx, cfg, pool, repo, microbotDeps{facts: progressRepo, catalog: catalog, events: hub}, logger); err != nil {
+				if microbotOpts, err = newMicrobot(ctx, cfg, pool, repo, microbotDeps{tracker: tracker, events: hub}, logger); err != nil {
 					return err
 				}
 			}
+			go tracker.Run(ctx)
 			hiscoresClient := hiscores.New()
 			hiscoresDetector, accountService = hiscoresClient, progressRepo
 			syncRepo := syncrun.New(pool, hiscoresClient, progressRepo).WithPublisher(hub)
@@ -192,6 +205,8 @@ func runServe(parent context.Context) error {
 		Levels:         levelsService,
 		Recording:      recordingService,
 		Plans:          plansService,
+		Jobs:           jobsService,
+		JobEvents:      jobEventsService,
 		Prices:         priceService,
 		Static:         static,
 		Logger:         logger,

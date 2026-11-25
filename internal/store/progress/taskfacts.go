@@ -42,3 +42,22 @@ func (r *Repository) TaskFacts(ctx context.Context, accountID string) (panel.Fac
 	}
 	return out, nil
 }
+
+// Membership reads the account's membership fact (days left, member or not);
+// false when the client never reported it.
+func (r *Repository) Membership(ctx context.Context, accountID string) (days int, member, ok bool, err error) {
+	rows, err := r.queries.ListPlayerStateByFacet(ctx, storedb.ListPlayerStateByFacetParams{AccountID: accountID, Facet: coreingest.FacetMembership})
+	if err != nil {
+		return 0, false, false, fmt.Errorf("list membership: %w", err)
+	}
+	for _, row := range rows {
+		var v struct {
+			Days   int  `json:"days"`
+			Member bool `json:"member"`
+		}
+		if json.Unmarshal(row.Value, &v) == nil {
+			return v.Days, v.Member, true, nil
+		}
+	}
+	return 0, false, false, nil
+}

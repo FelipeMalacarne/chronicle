@@ -14,15 +14,15 @@ SET enabled = EXCLUDED.enabled, spec = EXCLUDED.spec, updated_at = now();
 SELECT * FROM routines WHERE account_id = $1 AND kind = 'trigger' AND event = $2;
 
 -- name: GetRoutineRunForUpdate :one
-SELECT account_id, state, trail_len FROM routine_runs WHERE id = $1 FOR UPDATE;
+SELECT account_id, state, trail_len, job_id FROM routine_runs WHERE id = $1 FOR UPDATE;
 
 -- name: UpsertRoutineRun :execrows
 -- A snapshot with fewer trail lines than the stored one is older: ignored.
 -- A run never moves to another account.
 INSERT INTO routine_runs (
   id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state,
-  started_at, finished_at, from_pos, result, error, trail_len, task
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+  started_at, finished_at, from_pos, result, error, trail_len, task, job_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 ON CONFLICT (id) DO UPDATE
 SET agent       = EXCLUDED.agent,
     state       = EXCLUDED.state,
@@ -41,6 +41,9 @@ ON CONFLICT (run_id, seq) DO NOTHING;
 
 -- name: ListRoutineRuns :many
 SELECT * FROM routine_runs WHERE account_id = $1 ORDER BY started_at DESC, id LIMIT $2;
+
+-- name: ListRoutineRunsByJob :many
+SELECT * FROM routine_runs WHERE job_id = $1 AND account_id = $2 ORDER BY started_at DESC, id;
 
 -- name: ListRunEvents :many
 SELECT * FROM run_events WHERE run_id = ANY(sqlc.arg(run_ids)::text[]) ORDER BY run_id, seq;

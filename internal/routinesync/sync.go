@@ -26,6 +26,8 @@ import (
 	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
+	storejobs "github.com/FelipeMalacarne/chronicle/internal/store/jobs"
 	storemicrobot "github.com/FelipeMalacarne/chronicle/internal/store/microbot"
 	storeroutines "github.com/FelipeMalacarne/chronicle/internal/store/routines"
 )
@@ -54,6 +56,9 @@ type Sync struct {
 	Hub   Hub
 	Audit Audit
 	Log   *slog.Logger
+	// Wake, when set, tells the event log's consumers that a run started or
+	// ended (RecordRun appended run.started or run.ended).
+	Wake events.Publisher
 }
 
 // OnConnect sends the account's routines to an agent that just linked.
@@ -127,6 +132,9 @@ func (s *Sync) OnEvent(info agent.Info, ev agent.Event) {
 	case err != nil:
 		s.Log.Warn("routines: record run", "account", info.Account, "agent", info.ID, "run", run.ID, "err", err)
 		return
+	}
+	if newRun || finished {
+		storejobs.Wake(s.Wake, info.Account)
 	}
 	var actor string
 	switch {

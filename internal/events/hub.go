@@ -24,6 +24,10 @@ const (
 	// TypeSync: a polling sync run finished (ok, unchanged, error or
 	// rate_limited); refetch the source status.
 	TypeSync = "sync"
+	// TypeLog: rows were appended to the durable events table (docs/12
+	// section 13.4); a consumer of that log reads from its cursor. It carries
+	// no state and never reaches a web stream.
+	TypeLog = "log"
 )
 
 // Event sources.
@@ -59,6 +63,9 @@ var _ Publisher = (*Hub)(nil)
 // DefaultBuffer is the per-subscriber queue length.
 const DefaultBuffer = 16
 
+// allAccounts is the key of the subscriptions to every account (SubscribeAll).
+const allAccounts = "*"
+
 // Hub fans events out to the subscribers of each account. Publish never
 // blocks: a subscriber whose queue is full is dropped (its channel closes), so
 // a slow browser can never stall a reevaluation; its stream ends and the
@@ -91,6 +98,10 @@ type Subscription struct {
 	account string
 	closed  bool // guarded by hub.mu
 }
+
+// SubscribeAll opens a subscription to the events of every account, for the
+// consumers of the event log that wake on any change.
+func (h *Hub) SubscribeAll() *Subscription { return h.Subscribe(allAccounts) }
 
 // Subscribe opens a subscription to the account's events.
 func (h *Hub) Subscribe(account string) *Subscription {
@@ -138,11 +149,13 @@ func (h *Hub) Publish(e Event) {
 	}
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	for s := range h.subs[e.Account] {
-		select {
-		case s.c <- e:
-		default:
-			h.removeLocked(s)
+	for _, key := range []string{e.Account, allAccounts} {
+		for s := range h.subs[key] {
+			select {
+			case s.c <- e:
+			default:
+				h.removeLocked(s)
+			}
 		}
 	}
 }

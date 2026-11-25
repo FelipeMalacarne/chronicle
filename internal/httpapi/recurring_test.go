@@ -278,6 +278,10 @@ func (m *memRoutines) Runs(_ context.Context, account string, _ int) ([]agent.Ru
 	return []agent.Run{}, nil
 }
 
+func (m *memRoutines) RunsOfJob(context.Context, string, string) ([]agent.Run, error) {
+	return []agent.Run{}, nil
+}
+
 func (m *memRoutines) Recurring(_ context.Context, account string) ([]agent.Recurring, error) {
 	m.seen(account)
 	return []agent.Recurring{}, nil

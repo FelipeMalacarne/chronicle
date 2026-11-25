@@ -40,21 +40,6 @@ func (q *Queries) DeletePlan(ctx context.Context, arg DeletePlanParams) (int64, 
 	return result.RowsAffected(), nil
 }
 
-const deleteSaleProof = `-- name: DeleteSaleProof :exec
-DELETE FROM sale_proofs WHERE account_id = $1 AND plan_id = $2 AND task_key = $3
-`
-
-type DeleteSaleProofParams struct {
-	AccountID string `json:"account_id"`
-	PlanID    string `json:"plan_id"`
-	TaskKey   string `json:"task_key"`
-}
-
-func (q *Queries) DeleteSaleProof(ctx context.Context, arg DeleteSaleProofParams) error {
-	_, err := q.db.Exec(ctx, deleteSaleProof, arg.AccountID, arg.PlanID, arg.TaskKey)
-	return err
-}
-
 const getAccountMode = `-- name: GetAccountMode :one
 SELECT mode FROM accounts WHERE id = $1
 `
@@ -251,40 +236,6 @@ func (q *Queries) ListPlans(ctx context.Context, accountID string) ([]Plan, erro
 	return items, nil
 }
 
-const listSaleProofs = `-- name: ListSaleProofs :many
-SELECT task_key, run_uid FROM sale_proofs WHERE account_id = $1 AND plan_id = $2 ORDER BY task_key
-`
-
-type ListSaleProofsParams struct {
-	AccountID string `json:"account_id"`
-	PlanID    string `json:"plan_id"`
-}
-
-type ListSaleProofsRow struct {
-	TaskKey string `json:"task_key"`
-	RunUid  string `json:"run_uid"`
-}
-
-func (q *Queries) ListSaleProofs(ctx context.Context, arg ListSaleProofsParams) ([]ListSaleProofsRow, error) {
-	rows, err := q.db.Query(ctx, listSaleProofs, arg.AccountID, arg.PlanID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	items := []ListSaleProofsRow{}
-	for rows.Next() {
-		var i ListSaleProofsRow
-		if err := rows.Scan(&i.TaskKey, &i.RunUid); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
-}
-
 const movePlanItemSteps = `-- name: MovePlanItemSteps :exec
 UPDATE plan_items SET step_id = $1::text
 WHERE kind = 'step' AND guide_id = $2::text AND step_id = $3::text
@@ -317,38 +268,4 @@ func (q *Queries) SetActivePlan(ctx context.Context, arg SetActivePlanParams) (i
 		return 0, err
 	}
 	return result.RowsAffected(), nil
-}
-
-const upsertSaleProof = `-- name: UpsertSaleProof :exec
-
-INSERT INTO sale_proofs (account_id, plan_id, task_key, run_uid, item_id, coins_at_least, coins_seen)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (account_id, plan_id, task_key) DO UPDATE
-SET run_uid = EXCLUDED.run_uid, item_id = EXCLUDED.item_id, coins_at_least = EXCLUDED.coins_at_least,
-    coins_seen = EXCLUDED.coins_seen, proven_at = now()
-WHERE sale_proofs.run_uid <> EXCLUDED.run_uid
-`
-
-type UpsertSaleProofParams struct {
-	AccountID    string `json:"account_id"`
-	PlanID       string `json:"plan_id"`
-	TaskKey      string `json:"task_key"`
-	RunUid       string `json:"run_uid"`
-	ItemID       int32  `json:"item_id"`
-	CoinsAtLeast int64  `json:"coins_at_least"`
-	CoinsSeen    int64  `json:"coins_seen"`
-}
-
-// Proven Grand Exchange sales (migration 0030, docs/12 section 6.2).
-func (q *Queries) UpsertSaleProof(ctx context.Context, arg UpsertSaleProofParams) error {
-	_, err := q.db.Exec(ctx, upsertSaleProof,
-		arg.AccountID,
-		arg.PlanID,
-		arg.TaskKey,
-		arg.RunUid,
-		arg.ItemID,
-		arg.CoinsAtLeast,
-		arg.CoinsSeen,
-	)
-	return err
 }

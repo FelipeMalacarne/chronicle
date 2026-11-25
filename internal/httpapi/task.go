@@ -16,7 +16,6 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/ge"
 	"github.com/FelipeMalacarne/chronicle/internal/core/plan"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
-	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
 )
 
 // The typed task of the active plan, run by the account's agent (docs/10
@@ -30,8 +29,10 @@ import (
 // (the plugin installed; the Quest Helper on, idle and listing the quest)
 // and refuses with 409, before anything reaches the game. A ge_buy or
 // ge_sell (a regular account only, docs/12 section 6) is priced from the
-// stored wiki price of its item; the proof of a sale adds the coins the run
-// carries (rules.SaleProven).
+// stored wiki price of its item. Each run attempts a job (docs/12 section 13):
+// the server creates it with the goal that proves the task, and the job
+// tracker ends it on the ingest; a sale is proven by its job, which the plan
+// reads (plan.Input.SalesProven).
 
 // PriceStore reads stored Grand Exchange prices (internal/store/prices).
 type PriceStore interface {
@@ -111,9 +112,10 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	slices.Sort(risks)
+	jobID := ""
 	build := func() (json.RawMessage, error) {
 		params, _ := json.Marshal(agent.TaskRunParams{
-			Key: view.Key, Plan: in.Plan.ID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
+			Key: view.Key, Plan: in.Plan.ID, JobID: jobID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
 			Supervised: req.Supervised, TimeoutS: req.TimeoutS, Account: account, Task: spec,
 		})
 		_, verr := agent.ValidateParams(agent.CmdTaskRun, params)
@@ -123,15 +125,6 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
-	}
-	if spec.GESell != nil {
-		// A new sale of the task: an earlier run's proof no longer speaks
-		// for it (docs/12 section 6.2). Dropped before the run starts, so
-		// the new run's own proof is never the one dropped.
-		if ferr := s.opts.Plans.ForgetSale(r.Context(), account, in.Plan.ID, view.Key); ferr != nil {
-			writeError(w, http.StatusInternalServerError, "forgetting the task's earlier sale")
-			return
-		}
 	}
 	link := s.opts.Microbot.Link
 	served, err := link.Route(account)
@@ -160,9 +153,20 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 			params, err = build()
 		}
 	}
+	if err == nil && s.opts.Jobs != nil {
+		// The run attempts a job (docs/12 section 13): the intent, with the
+		// goal the tracker proves on the ingest; the run carries its id.
+		jobID, err = s.createTaskJob(ctx, account, in.Plan.ID, view.Key, next.Task.Task, spec)
+		if err == nil {
+			params, err = build()
+		}
+	}
 	var data json.RawMessage
 	if err == nil {
 		err = link.CallAgent(ctx, served.ID, agent.CmdTaskRun, json.RawMessage(params), &data)
+	}
+	if err != nil && jobID != "" {
+		s.dropTaskJob(account, jobID, err)
 	}
 	s.auditMicrobot(r, account, served, agent.CmdTaskRun, params, err)
 	var (
@@ -184,7 +188,7 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 		s.writeMicrobotError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "result": data, "task": view})
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "result": data, "task": view, "job": jobID})
 }
 
 var errAgentTooOld = errors.New("the agent predates task_run: update chronicle on the game machine")
@@ -264,41 +268,6 @@ func (s *Server) questHelperName(ctx context.Context, served agent.Info, reg *en
 	return nil
 }
 
-// proveSale evaluates a ge_sell run's proof (docs/12 section 6.2): the run
-// ended done (the offer filled and was collected) and the live inventory
-// holds none of the item and the coins the run waited for
-// (rules.SaleProven). The proof is relative to the coins the inventory held
-// before the sale, so it is recorded the moment it is seen: the plan counts
-// the sale met from then on (plan.Input.SalesProven). v becomes the run's
-// verdict.
-func (s *Server) proveSale(ctx context.Context, account string, in plan.Input, run agent.Run, v *plan.TaskView) error {
-	id, ok := 0, false
-	if v.Task.Item != nil {
-		id, ok = v.Task.Item.Int()
-	}
-	if !ok {
-		return nil
-	}
-	verdict, why := rules.SaleProven(in.Holdings, in.Registry, id, run.Task.CoinsAtLeast)
-	switch {
-	case run.Task.CoinsAtLeast < 1 || run.UID == "":
-		verdict, why = rules.Unknown, "o run não diz as moedas que a venda paga (agent antigo?)"
-	case verdict == rules.Met && run.State != agent.RunDone:
-		verdict, why = rules.Unknown, "o run da venda não terminou com a oferta completa e coletada"
-	}
-	if verdict == rules.Met {
-		coins := in.Holdings.Count(rules.ContainerInventory, entities.CoinsID, entities.CompareExact, in.Registry)
-		if err := s.opts.Plans.ProveSale(ctx, account, storeplans.SaleProof{
-			Plan: run.Task.Plan, TaskKey: run.Task.Key, RunUID: run.UID, Item: id,
-			CoinsAtLeast: run.Task.CoinsAtLeast, CoinsSeen: coins,
-		}); err != nil {
-			return err
-		}
-	}
-	v.State, v.Reason = verdict, why
-	return nil
-}
-
 // taskStatus is GET /api/microbot/task: the agent's current or last run
 // and, for a task run, its termination on the account's facts now.
 type taskStatus struct {
@@ -344,14 +313,6 @@ func (s *Server) handleTaskStatus(w http.ResponseWriter, r *http.Request) {
 		if !found {
 			out.Reason = "a tarefa não está mais no plano"
 			break
-		}
-		if st.Run.Task.Type == content.TaskGESell && in.SalesProven[st.Run.Task.Key] != st.Run.UID {
-			// The plan's verdict may lean on an earlier run's proof: this
-			// run is proven by its own.
-			if err := s.proveSale(r.Context(), account, in, *st.Run, &v); err != nil {
-				writeError(w, http.StatusInternalServerError, "recording the sale's proof")
-				return
-			}
 		}
 		out.Proof, out.Proven = &v, v.State == rules.Met
 	}

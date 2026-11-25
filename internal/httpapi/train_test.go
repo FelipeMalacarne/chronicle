@@ -17,7 +17,6 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	"github.com/FelipeMalacarne/chronicle/internal/events"
-	"github.com/FelipeMalacarne/chronicle/internal/rununtil"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
@@ -56,14 +55,13 @@ func TestTrainTaskPostgres(t *testing.T) {
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
 	audit := &memAudit{}
 	link := &agent.Link{Log: quiet}
-	watcher := &rununtil.Watcher{Facts: progress, Registry: catalog, Hub: link, Events: hub, Audit: audit, Log: quiet, Interval: time.Hour}
+	jw := startJobs(t, pool, progress, catalog, link, audit, hub, quiet)
 	wctx, wcancel := context.WithCancel(ctx)
 	t.Cleanup(wcancel)
-	watcher.Start(wctx)
-	link.OnEvent = watcher.OnEvent
 	srv := httptest.NewServer(New(Options{
 		Version: "test", Content: cnt, Progress: progress, Holdings: ingest, Catalog: catalog, DevMode: true, Logger: quiet,
-		Plans: storeplans.New(pool, cnt, catalog), Microbot: &MicrobotOptions{Link: link, Audit: audit},
+		Plans: storeplans.New(pool, cnt, catalog), Jobs: jw.Jobs, JobEvents: jw.Events,
+		Microbot: &MicrobotOptions{Link: link, Audit: audit, Routines: jw.Routines},
 	}))
 	t.Cleanup(srv.Close)
 	game := newTrainingGame()

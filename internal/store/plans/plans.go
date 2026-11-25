@@ -251,57 +251,6 @@ func (r *Repository) Delete(ctx context.Context, account, id string) error {
 	return nil
 }
 
-// SaleProof is a Grand Exchange sale the ingest proved (migration 0030,
-// docs/12 section 6.2): the task of a plan, the run that sold, and the
-// coins the live inventory held against the least the run waited for.
-type SaleProof struct {
-	Plan         string
-	TaskKey      string
-	RunUID       string
-	Item         int
-	CoinsAtLeast int64
-	CoinsSeen    int64
-}
-
-// ProveSale records a proven sale; the same run's proof again keeps the
-// first record.
-func (r *Repository) ProveSale(ctx context.Context, account string, p SaleProof) error {
-	if p.CoinsSeen < p.CoinsAtLeast {
-		return fmt.Errorf("prove sale: %d coins seen, fewer than the %d the run waited for", p.CoinsSeen, p.CoinsAtLeast)
-	}
-	err := r.queries.UpsertSaleProof(ctx, storedb.UpsertSaleProofParams{
-		AccountID: account, PlanID: p.Plan, TaskKey: p.TaskKey, RunUid: p.RunUID,
-		ItemID: int32(p.Item), CoinsAtLeast: p.CoinsAtLeast, CoinsSeen: p.CoinsSeen,
-	})
-	if err != nil {
-		return fmt.Errorf("prove sale: %w", err)
-	}
-	return nil
-}
-
-// ForgetSale drops a task's proven sale: a new run of the task started, and
-// an earlier run's proof does not speak for it.
-func (r *Repository) ForgetSale(ctx context.Context, account, planID, taskKey string) error {
-	if err := r.queries.DeleteSaleProof(ctx, storedb.DeleteSaleProofParams{AccountID: account, PlanID: planID, TaskKey: taskKey}); err != nil {
-		return fmt.Errorf("forget sale: %w", err)
-	}
-	return nil
-}
-
-// ProvenSales returns the task keys of a plan whose sale was proven, with
-// the run that sold (plan.Input.SalesProven).
-func (r *Repository) ProvenSales(ctx context.Context, account, planID string) (map[string]string, error) {
-	rows, err := r.queries.ListSaleProofs(ctx, storedb.ListSaleProofsParams{AccountID: account, PlanID: planID})
-	if err != nil {
-		return nil, fmt.Errorf("read sale proofs: %w", err)
-	}
-	out := make(map[string]string, len(rows))
-	for _, row := range rows {
-		out[row.TaskKey] = row.RunUid
-	}
-	return out, nil
-}
-
 // SetActive makes the account follow a plan: a stored plan by id, or its
 // route (the route plan's id, or ""), which an account without a route
 // cannot follow (coreprogress.ErrNoRoute).

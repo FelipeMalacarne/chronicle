@@ -57,19 +57,25 @@ func (q *Queries) GetRecurringID(ctx context.Context, arg GetRecurringIDParams) 
 }
 
 const getRoutineRunForUpdate = `-- name: GetRoutineRunForUpdate :one
-SELECT account_id, state, trail_len FROM routine_runs WHERE id = $1 FOR UPDATE
+SELECT account_id, state, trail_len, job_id FROM routine_runs WHERE id = $1 FOR UPDATE
 `
 
 type GetRoutineRunForUpdateRow struct {
-	AccountID string `json:"account_id"`
-	State     string `json:"state"`
-	TrailLen  int32  `json:"trail_len"`
+	AccountID string      `json:"account_id"`
+	State     string      `json:"state"`
+	TrailLen  int32       `json:"trail_len"`
+	JobID     pgtype.Text `json:"job_id"`
 }
 
 func (q *Queries) GetRoutineRunForUpdate(ctx context.Context, id string) (GetRoutineRunForUpdateRow, error) {
 	row := q.db.QueryRow(ctx, getRoutineRunForUpdate, id)
 	var i GetRoutineRunForUpdateRow
-	err := row.Scan(&i.AccountID, &i.State, &i.TrailLen)
+	err := row.Scan(
+		&i.AccountID,
+		&i.State,
+		&i.TrailLen,
+		&i.JobID,
+	)
 	return i, err
 }
 
@@ -231,7 +237,7 @@ func (q *Queries) ListRecurring(ctx context.Context, accountID string) ([]ListRe
 }
 
 const listRoutineRuns = `-- name: ListRoutineRuns :many
-SELECT id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state, started_at, finished_at, from_pos, result, error, trail_len, updated_at, task FROM routine_runs WHERE account_id = $1 ORDER BY started_at DESC, id LIMIT $2
+SELECT id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state, started_at, finished_at, from_pos, result, error, trail_len, updated_at, task, job_id FROM routine_runs WHERE account_id = $1 ORDER BY started_at DESC, id LIMIT $2
 `
 
 type ListRoutineRunsParams struct {
@@ -266,6 +272,55 @@ func (q *Queries) ListRoutineRuns(ctx context.Context, arg ListRoutineRunsParams
 			&i.TrailLen,
 			&i.UpdatedAt,
 			&i.Task,
+			&i.JobID,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listRoutineRunsByJob = `-- name: ListRoutineRunsByJob :many
+SELECT id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state, started_at, finished_at, from_pos, result, error, trail_len, updated_at, task, job_id FROM routine_runs WHERE job_id = $1 AND account_id = $2 ORDER BY started_at DESC, id
+`
+
+type ListRoutineRunsByJobParams struct {
+	JobID     pgtype.Text `json:"job_id"`
+	AccountID string      `json:"account_id"`
+}
+
+func (q *Queries) ListRoutineRunsByJob(ctx context.Context, arg ListRoutineRunsByJobParams) ([]RoutineRun, error) {
+	rows, err := q.db.Query(ctx, listRoutineRunsByJob, arg.JobID, arg.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []RoutineRun{}
+	for rows.Next() {
+		var i RoutineRun
+		if err := rows.Scan(
+			&i.ID,
+			&i.AccountID,
+			&i.RoutineID,
+			&i.Agent,
+			&i.AgentRunID,
+			&i.ClassName,
+			&i.Stop,
+			&i.Trigger,
+			&i.State,
+			&i.StartedAt,
+			&i.FinishedAt,
+			&i.FromPos,
+			&i.Result,
+			&i.Error,
+			&i.TrailLen,
+			&i.UpdatedAt,
+			&i.Task,
+			&i.JobID,
 		); err != nil {
 			return nil, err
 		}
@@ -384,8 +439,8 @@ func (q *Queries) UpdateRecurring(ctx context.Context, arg UpdateRecurringParams
 const upsertRoutineRun = `-- name: UpsertRoutineRun :execrows
 INSERT INTO routine_runs (
   id, account_id, routine_id, agent, agent_run_id, class_name, stop, trigger, state,
-  started_at, finished_at, from_pos, result, error, trail_len, task
-) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+  started_at, finished_at, from_pos, result, error, trail_len, task, job_id
+) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
 ON CONFLICT (id) DO UPDATE
 SET agent       = EXCLUDED.agent,
     state       = EXCLUDED.state,
@@ -416,6 +471,7 @@ type UpsertRoutineRunParams struct {
 	Error      string             `json:"error"`
 	TrailLen   int32              `json:"trail_len"`
 	Task       json.RawMessage    `json:"task"`
+	JobID      pgtype.Text        `json:"job_id"`
 }
 
 // A snapshot with fewer trail lines than the stored one is older: ignored.
@@ -438,6 +494,7 @@ func (q *Queries) UpsertRoutineRun(ctx context.Context, arg UpsertRoutineRunPara
 		arg.Error,
 		arg.TrailLen,
 		arg.Task,
+		arg.JobID,
 	)
 	if err != nil {
 		return 0, err

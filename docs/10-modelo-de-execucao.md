@@ -429,8 +429,8 @@ atribuição de cada passo aparece na tela.
      rotina). Um run do doc 08 (o "Fazer agora", um gatilho, uma recorrente) ganha
      `until: {objective, account}` e termina quando o servidor prova a chave sobre os fatos da conta,
      nunca porque o plugin ou o agent dizem. O agent reporta o run com o `until` (mensagens `event`);
-     o vigia do servidor (`internal/rununtil`) avalia a chave a cada evento de progresso da conta e a
-     cada 30 s, só com fato vivo, e manda o comando novo `run_until` (servidor → agent, auditado como
+     o job tracker do servidor (`internal/jobtracker`, docs/12 seção 13; antes `internal/rununtil`)
+     avalia a chave a cada mudança de fato da conta e a cada 30 s, só com fato vivo, e manda o comando novo `run_until` (servidor → agent, auditado como
      origem `server`); o agent para o plugin, volta e religa o principal. Prova antes de o run agir
      termina sem agir (regra 2: idempotência); plugin que para sozinho espera a prova por 2 min e
      falha depois.

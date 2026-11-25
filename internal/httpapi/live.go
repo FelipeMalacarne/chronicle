@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/FelipeMalacarne/chronicle/internal/events"
 )
 
 // Live stream defaults (docs/04 section 6.6).
@@ -59,6 +61,9 @@ func (s *Server) handleLiveEvents(w http.ResponseWriter, r *http.Request) {
 		case e, open := <-sub.C:
 			if !open {
 				return // dropped as a slow consumer: the client reconnects and refetches
+			}
+			if e.Type == events.TypeLog {
+				continue // a wake for the event log's consumers, not a web signal
 			}
 			if err := writeSSE(w, rc, e.Type, e); err != nil {
 				return

@@ -104,6 +104,23 @@ type ContentVersion struct {
 	Summary json.RawMessage `json:"summary"`
 }
 
+// Durable, append-only log the server's consumers react to (docs/12 section 13.4); an event says "changed", the consumer reads the state.
+type Event struct {
+	ID        int64              `json:"id"`
+	AccountID string             `json:"account_id"`
+	Type      string             `json:"type"`
+	Subject   string             `json:"subject"`
+	Payload   json.RawMessage    `json:"payload"`
+	At        pgtype.Timestamptz `json:"at"`
+}
+
+// The last event each consumer handled; it resumes from there after a restart.
+type EventCursor struct {
+	Consumer  string             `json:"consumer"`
+	LastID    int64              `json:"last_id"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
 // Encrypted Jagex game session of an account (docs/11 section 4.2); leaves the server only through the link, to the agent of that account.
 type GameSession struct {
 	AccountID       string             `json:"account_id"`
@@ -169,6 +186,27 @@ type ItemPrice struct {
 	Members   pgtype.Bool        `json:"members"`
 	Source    string             `json:"source"`
 	FetchedAt pgtype.Timestamptz `json:"fetched_at"`
+}
+
+// What the account is made to do (docs/12 section 13): an intent with a state and a progress measured from the facts; each attempt is a run.
+type Job struct {
+	ID          string             `json:"id"`
+	AccountID   string             `json:"account_id"`
+	Kind        string             `json:"kind"`
+	Spec        json.RawMessage    `json:"spec"`
+	Goal        json.RawMessage    `json:"goal"`
+	Metric      json.RawMessage    `json:"metric"`
+	Progress    json.RawMessage    `json:"progress"`
+	StallAfterS int32              `json:"stall_after_s"`
+	State       string             `json:"state"`
+	Reason      string             `json:"reason"`
+	Source      string             `json:"source"`
+	PlanID      pgtype.Text        `json:"plan_id"`
+	TaskKey     pgtype.Text        `json:"task_key"`
+	DeadlineAt  pgtype.Timestamptz `json:"deadline_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	StartedAt   pgtype.Timestamptz `json:"started_at"`
+	FinishedAt  pgtype.Timestamptz `json:"finished_at"`
 }
 
 // The owner's marks on the items of a leg's loadout, per (guide, segment): they count as satisfied when readiness is computed, but are not evidence (holdings and player_state are untouched).
@@ -360,6 +398,8 @@ type RoutineRun struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 	// The typed task of a task run (agent.RunTask: plan, key, type, label); NULL for a plugin run.
 	Task json.RawMessage `json:"task"`
+	// The job this run attempts; NULL for the runs the owner starts by hand without an objective.
+	JobID pgtype.Text `json:"job_id"`
 }
 
 type RunEvent struct {
@@ -368,18 +408,6 @@ type RunEvent struct {
 	At    pgtype.Timestamptz `json:"at"`
 	State string             `json:"state"`
 	Text  string             `json:"text"`
-}
-
-// Grand Exchange sales the ingest proved (the item left the live inventory and the run's coins reached it), by plan and task key: the plan counts them met afterwards.
-type SaleProof struct {
-	AccountID    string             `json:"account_id"`
-	PlanID       string             `json:"plan_id"`
-	TaskKey      string             `json:"task_key"`
-	RunUid       string             `json:"run_uid"`
-	ItemID       int32              `json:"item_id"`
-	CoinsAtLeast int64              `json:"coins_at_least"`
-	CoinsSeen    int64              `json:"coins_seen"`
-	ProvenAt     pgtype.Timestamptz `json:"proven_at"`
 }
 
 // HTTP sessions (scs pgxstore layout). Cleaned up by the session manager.

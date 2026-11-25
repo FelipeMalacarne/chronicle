@@ -21,8 +21,9 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/core/job"
 	"github.com/FelipeMalacarne/chronicle/internal/events"
-	"github.com/FelipeMalacarne/chronicle/internal/rununtil"
+	"github.com/FelipeMalacarne/chronicle/internal/jobtracker"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
@@ -206,14 +207,12 @@ func TestRunUntilPostgres(t *testing.T) {
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
 	audit := &memAudit{}
 	link := &agent.Link{Log: quiet}
-	watcher := &rununtil.Watcher{Facts: progress, Registry: catalog, Hub: link, Events: hub, Audit: audit, Log: quiet, Interval: time.Hour}
 	wctx, wcancel := context.WithCancel(ctx)
 	t.Cleanup(wcancel)
-	watcher.Start(wctx)
-	link.OnEvent = watcher.OnEvent
+	jw := startJobs(t, pool, progress, catalog, link, audit, hub, quiet)
 	srv := httptest.NewServer(New(Options{
 		Version: "test", Content: cnt, Progress: progress, Holdings: ingest, Catalog: catalog, DevMode: true, Logger: quiet,
-		Microbot: &MicrobotOptions{Link: link, Audit: audit},
+		Jobs: jw.Jobs, JobEvents: jw.Events, Microbot: &MicrobotOptions{Link: link, Audit: audit, Routines: jw.Routines},
 	}))
 	t.Cleanup(srv.Close)
 	game := newTrainingGame()
@@ -296,7 +295,7 @@ func TestRunUntilPostgres(t *testing.T) {
 		audit.mu.Lock()
 		defer audit.mu.Unlock()
 		for _, e := range audit.entries {
-			if e.Action == agent.CmdRunUntil && e.Actor == rununtil.Actor && e.Origin == "server" && e.OK && e.AccountID == "acc_until" {
+			if e.Action == agent.CmdRunUntil && e.Actor == jobtracker.Actor && e.Origin == "server" && e.OK && e.AccountID == "acc_until" {
 				return true
 			}
 		}
@@ -309,10 +308,37 @@ func TestRunUntilPostgres(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	for deadline = time.Now().Add(5 * time.Second); len(watcher.Watching()) != 0; {
-		if time.Now().After(deadline) {
-			t.Fatalf("still watching %v", watcher.Watching())
+	// The run's job (adopted from its wait_until) went queued, running, succeeded.
+	var detail jobDetail
+	for deadline = time.Now().Add(5 * time.Second); ; time.Sleep(10 * time.Millisecond) {
+		_, _, raw := call(t, "GET", srv.URL+"/api/jobs?account=acc_until", "")
+		var list struct {
+			Jobs []jobView `json:"jobs"`
 		}
-		time.Sleep(10 * time.Millisecond)
+		if err := json.Unmarshal(raw, &list); err != nil {
+			t.Fatal(err)
+		}
+		if len(list.Jobs) == 1 && list.Jobs[0].State == job.Succeeded {
+			_, _, raw = call(t, "GET", srv.URL+"/api/jobs/"+list.Jobs[0].ID+"?account=acc_until", "")
+			if err := json.Unmarshal(raw, &detail); err != nil {
+				t.Fatal(err)
+			}
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("the adopted job never succeeded: %s", raw)
+		}
+	}
+	if detail.Job.Source != job.SourceOwner || detail.Job.Kind != job.KindPlugin || len(detail.Runs) != 1 {
+		t.Fatalf("job = %+v, runs %d", detail.Job, len(detail.Runs))
+	}
+	var types []string
+	for _, e := range detail.Events {
+		types = append(types, e.Type)
+	}
+	for _, want := range []string{"job.queued", "run.started", "job.started", "job.succeeded", "run.ended"} {
+		if !slices.Contains(types, want) {
+			t.Fatalf("events %v miss %s", types, want)
+		}
 	}
 }

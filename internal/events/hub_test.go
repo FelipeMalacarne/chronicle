@@ -142,3 +142,33 @@ func TestConcurrentPublishSubscribe(t *testing.T) {
 		t.Errorf("subscribers left = %d", got)
 	}
 }
+
+// SubscribeAll gets the events of every account, for the consumers of the
+// event log; a per-account subscription still gets only its own.
+func TestSubscribeAllGetsEveryAccount(t *testing.T) {
+	h := NewHub(nil)
+	all := h.SubscribeAll()
+	defer all.Close()
+	one := h.Subscribe("acc_a")
+	defer one.Close()
+	h.Publish(Event{Type: TypeLog, Account: "acc_a"})
+	h.Publish(Event{Type: TypeLog, Account: "acc_b"})
+	for _, want := range []string{"acc_a", "acc_b"} {
+		select {
+		case e := <-all.C:
+			if e.Account != want {
+				t.Fatalf("all got %q, want %q", e.Account, want)
+			}
+		default:
+			t.Fatalf("all missed %s", want)
+		}
+	}
+	if e := <-one.C; e.Account != "acc_a" {
+		t.Fatalf("the account's own got %q", e.Account)
+	}
+	select {
+	case e := <-one.C:
+		t.Fatalf("acc_a's subscription got %+v", e)
+	default:
+	}
+}

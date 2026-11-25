@@ -154,6 +154,37 @@ Table content_versions {
   '''
 }
 
+Table event_cursors {
+  consumer text [pk]
+  last_id bigint [not null, default: `0`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+  The last event each consumer handled; it resumes from there after a restart.
+  event_cursors_consumer_check: CHECK (((length(consumer) >= 1) AND (length(consumer) <= 64)))
+  event_cursors_last_id_check: CHECK ((last_id >= 0))
+  '''
+}
+
+Table events {
+  id bigint [pk, default: `nextval('events_id_seq'::regclass)`]
+  account_id text [not null]
+  type text [not null]
+  subject text [not null, default: `''::text`]
+  payload jsonb [not null, default: `'{}'::jsonb`]
+  at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, id) [name: 'events_account_idx']
+    `subject, id) WHERE (subject <> ''::text` [name: 'events_subject_idx']
+  }
+
+  Note: '''
+  Durable, append-only log the server's consumers react to (docs/12 section 13.4); an event says "changed", the consumer reads the state.
+  events_type_check: CHECK ((type ~ '^[a-z]+(\.[a-z]+)+$'::text))
+  '''
+}
+
 Table game_sessions {
   account_id text [pk]
   character_name text [not null]
@@ -257,6 +288,44 @@ Table item_prices {
   item_prices_item_id_check: CHECK ((item_id > 0))
   item_prices_low_check: CHECK ((low > 0))
   item_prices_source_check: CHECK ((source = 'wiki'::text))
+  '''
+}
+
+Table jobs {
+  id text [pk]
+  account_id text [not null]
+  kind text [not null]
+  spec jsonb [not null, default: `'{}'::jsonb`]
+  goal jsonb [not null]
+  metric jsonb
+  progress jsonb
+  stall_after_s integer [not null]
+  state text [not null, default: `'queued'::text`]
+  reason text [not null, default: `''::text`]
+  source text [not null]
+  plan_id text
+  task_key text
+  deadline_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  started_at timestamptz
+  finished_at timestamptz
+
+  indexes {
+    (account_id, created_at) [name: 'jobs_account_created_idx']
+    `account_id) WHERE (state = ANY (ARRAY['queued'::text, 'running'::text, 'stalled'::text])` [name: 'jobs_active_idx']
+    `deadline_at) WHERE (deadline_at IS NOT NULL` [name: 'jobs_deadline_idx']
+    `account_id, plan_id, task_key, created_at DESC) WHERE (task_key IS NOT NULL` [name: 'jobs_plan_task_idx']
+  }
+
+  Note: '''
+  What the account is made to do (docs/12 section 13): an intent with a state and a progress measured from the facts; each attempt is a run.
+  jobs_check: CHECK (((state = ANY (ARRAY['succeeded'::text, 'failed'::text, 'canceled'::text])) = (finished_at IS NOT NULL)))
+  jobs_check1: CHECK (((deadline_at IS NULL) OR (state = 'running'::text)))
+  jobs_id_check: CHECK ((id ~ '^job_[0-9a-f]{16}$'::text))
+  jobs_kind_check: CHECK ((kind = ANY (ARRAY['plugin'::text, 'train'::text, 'quest'::text, 'travel'::text, 'bank'::text, 'buy'::text, 'ge_buy'::text, 'ge_sell'::text])))
+  jobs_source_check: CHECK ((source = ANY (ARRAY['conductor'::text, 'owner'::text, 'routine'::text, 'test'::text])))
+  jobs_stall_after_s_check: CHECK (((stall_after_s >= 30) AND (stall_after_s <= 86400)))
+  jobs_state_check: CHECK ((state = ANY (ARRAY['queued'::text, 'running'::text, 'stalled'::text, 'succeeded'::text, 'failed'::text, 'canceled'::text])))
   '''
 }
 
@@ -566,9 +635,11 @@ Table routine_runs {
   trail_len integer [not null, default: `0`]
   updated_at timestamptz [not null, default: `now()`]
   task jsonb [note: 'The typed task of a task run (agent.RunTask: plan, key, type, label); NULL for a plugin run.']
+  job_id text [note: 'The job this run attempts; NULL for the runs the owner starts by hand without an objective.']
 
   indexes {
     (account_id, started_at) [name: 'routine_runs_account_started_idx']
+    `job_id) WHERE (job_id IS NOT NULL` [name: 'routine_runs_job_idx']
     (routine_id, started_at) [name: 'routine_runs_routine_started_idx']
   }
 
@@ -621,31 +692,6 @@ Table run_events {
 
   Note: '''
   run_events_seq_check: CHECK ((seq >= 0))
-  '''
-}
-
-Table sale_proofs {
-  account_id text [not null]
-  plan_id text [not null]
-  task_key text [not null]
-  run_uid text [not null]
-  item_id integer [not null]
-  coins_at_least bigint [not null]
-  coins_seen bigint [not null]
-  proven_at timestamptz [not null, default: `now()`]
-
-  indexes {
-    (account_id, plan_id, task_key) [pk]
-  }
-
-  Note: '''
-  Grand Exchange sales the ingest proved (the item left the live inventory and the run's coins reached it), by plan and task key: the plan counts them met afterwards.
-  sale_proofs_check: CHECK ((coins_seen >= coins_at_least))
-  sale_proofs_coins_at_least_check: CHECK ((coins_at_least > 0))
-  sale_proofs_item_id_check: CHECK ((item_id > 0))
-  sale_proofs_plan_id_check: CHECK (((length(plan_id) >= 1) AND (length(plan_id) <= 200)))
-  sale_proofs_run_uid_check: CHECK (((length(run_uid) >= 1) AND (length(run_uid) <= 64)))
-  sale_proofs_task_key_check: CHECK (((length(task_key) >= 1) AND (length(task_key) <= 300)))
   '''
 }
 
@@ -897,12 +943,14 @@ Ref client_profiles_parent_id_fkey: client_profiles.parent_id > client_profiles.
 Ref client_profiles_user_id_fkey: client_profiles.user_id > users.id [delete: cascade]
 Ref content_steps_content_version_id_fkey: content_steps.content_version_id > content_versions.id
 Ref content_steps_guide_fkey: content_steps.guide_id > guides.id
+Ref events_account_id_fkey: events.account_id > accounts.id [delete: cascade]
 Ref game_sessions_account_id_fkey: game_sessions.account_id > accounts.id [delete: cascade]
 Ref goals_account_id_fkey: goals.account_id > accounts.id [delete: cascade]
 Ref graph_cache_content_version_id_fkey: graph_cache.content_version_id > content_versions.id
 Ref ingest_container_freshness_account_id_fkey: ingest_container_freshness.account_id > accounts.id [delete: cascade]
 Ref ingest_container_freshness_snapshot_id_fkey: ingest_container_freshness.snapshot_id > snapshots.id
 Ref ingest_container_freshness_snapshot_same_account: ingest_container_freshness.(snapshot_id, account_id) > snapshots.(id, account_id)
+Ref jobs_account_id_fkey: jobs.account_id > accounts.id [delete: cascade]
 Ref loadout_marks_account_id_fkey: loadout_marks.account_id > accounts.id [delete: cascade]
 Ref mark_commands_account_id_fkey: mark_commands.account_id > accounts.id [delete: cascade]
 Ref mark_commands_guide_id_fkey: mark_commands.guide_id > guides.id
@@ -928,10 +976,10 @@ Ref recorded_events_snapshot_fk: recorded_events.(snapshot_id, account_id) > sna
 Ref route_cursor_account_id_fkey: route_cursor.account_id > accounts.id [delete: cascade]
 Ref route_cursor_guide_fkey: route_cursor.guide_id > guides.id
 Ref routine_runs_account_id_fkey: routine_runs.account_id > accounts.id [delete: cascade]
+Ref routine_runs_job_id_fkey: routine_runs.job_id > jobs.id [delete: set null]
 Ref routine_runs_routine_id_fkey: routine_runs.routine_id > routines.id [delete: set null]
 Ref routines_account_id_fkey: routines.account_id > accounts.id [delete: cascade]
 Ref run_events_run_id_fkey: run_events.run_id > routine_runs.id [delete: cascade]
-Ref sale_proofs_account_id_fkey: sale_proofs.account_id > accounts.id [delete: cascade]
 Ref settings_account_id_fkey: settings.account_id > accounts.id [delete: cascade]
 Ref snapshot_facts_snapshot_id_fkey: snapshot_facts.snapshot_id > snapshots.id [delete: cascade]
 Ref snapshot_item_containers_snapshot_id_fkey: snapshot_item_containers.snapshot_id > snapshots.id [delete: cascade]
@@ -997,7 +1045,12 @@ TableGroup metas_e_caches {
 TableGroup planos {
   plans
   plan_items
-  sale_proofs
+}
+
+TableGroup jobs_e_eventos {
+  jobs
+  events
+  event_cursors
 }
 
 TableGroup controle_microbot {

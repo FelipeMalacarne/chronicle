@@ -40,19 +40,3 @@ SELECT id, objective_key, label FROM goals WHERE id = $1 AND account_id = $2;
 -- A step id the guide renamed (step_id_aliases) moves in the plans too.
 UPDATE plan_items SET step_id = @new_step_id::text
 WHERE kind = 'step' AND guide_id = @guide_id::text AND step_id = @old_step_id::text;
-
--- Proven Grand Exchange sales (migration 0030, docs/12 section 6.2).
-
--- name: UpsertSaleProof :exec
-INSERT INTO sale_proofs (account_id, plan_id, task_key, run_uid, item_id, coins_at_least, coins_seen)
-VALUES ($1, $2, $3, $4, $5, $6, $7)
-ON CONFLICT (account_id, plan_id, task_key) DO UPDATE
-SET run_uid = EXCLUDED.run_uid, item_id = EXCLUDED.item_id, coins_at_least = EXCLUDED.coins_at_least,
-    coins_seen = EXCLUDED.coins_seen, proven_at = now()
-WHERE sale_proofs.run_uid <> EXCLUDED.run_uid;
-
--- name: ListSaleProofs :many
-SELECT task_key, run_uid FROM sale_proofs WHERE account_id = $1 AND plan_id = $2 ORDER BY task_key;
-
--- name: DeleteSaleProof :exec
-DELETE FROM sale_proofs WHERE account_id = $1 AND plan_id = $2 AND task_key = $3;

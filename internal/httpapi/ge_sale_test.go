@@ -19,6 +19,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/ge"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
+	"github.com/FelipeMalacarne/chronicle/internal/events"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
@@ -62,9 +63,9 @@ func (g *geStandingGame) JSON(ctx context.Context, method, path string, q url.Va
 }
 
 // TestGESaleProofPostgres: a sale is never met by the item missing from the
-// inventory; its run is proven only once the ingest shows the item gone and
-// the run's coins in the inventory, and that proof, recorded when seen,
-// keeps the sale met after the coins are spent.
+// inventory; its job is proven by the tracker only once the ingest shows the
+// item gone and the run's coins in the inventory, and that proof, the job
+// succeeded, keeps the sale met after the coins are spent.
 func TestGESaleProofPostgres(t *testing.T) {
 	ctx := context.Background()
 	pool := authTestPool(ctx, t)
@@ -87,15 +88,19 @@ func TestGESaleProofPostgres(t *testing.T) {
 	if _, err = progress.IndexContent(ctx, "test"); err != nil {
 		t.Fatal(err)
 	}
-	ingest := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).WithReevaluator(progress)
+	hub := events.NewHub(nil)
+	ingest := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).WithReevaluator(progress).WithPublisher(hub)
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
 	link := &agent.Link{Log: quiet}
+	audit := &memAudit{}
+	jw := startJobs(t, pool, progress, catalog, link, audit, hub, quiet)
 	now := time.Now()
 	limit := 10_000
 	srv := httptest.NewServer(New(Options{
 		Version: "test", Content: cnt, Progress: progress, Holdings: ingest, Catalog: catalog, DevMode: true, Logger: quiet,
-		Plans: storeplans.New(pool, cnt, catalog), Microbot: &MicrobotOptions{Link: link, Audit: &memAudit{}},
-		Prices: memPrices{1775: {ItemID: 1775, High: 140, HighAt: now, Low: 130, LowAt: now, Limit: &limit, Source: ge.SourceWiki, FetchedAt: now}},
+		Plans: storeplans.New(pool, cnt, catalog), Jobs: jw.Jobs, JobEvents: jw.Events,
+		Microbot: &MicrobotOptions{Link: link, Audit: audit, Routines: jw.Routines},
+		Prices:   memPrices{1775: {ItemID: 1775, High: 140, HighAt: now, Low: 130, LowAt: now, Limit: &limit, Source: ge.SourceWiki, FetchedAt: now}},
 	}))
 	t.Cleanup(srv.Close)
 	actx, cancel := context.WithCancel(ctx)
@@ -207,20 +212,29 @@ func TestGESaleProofPostgres(t *testing.T) {
 	// The glass left, the coins did not reach the inventory (an abort sends
 	// them to the bank): not proven.
 	inventory(coreingest.QuantityMap{"995": 1000})
-	if st = status(); st.Proven || !strings.Contains(st.Proof.Reason, "moedas da venda") {
+	time.Sleep(150 * time.Millisecond) // the tracker looks at the ingest's facts
+	if st = status(); st.Proven {
 		t.Fatalf("coins missing = %+v", st.Proof)
 	}
 	if s, state, _ := next(); s != "task" || state != "unknown" {
 		t.Fatalf("plan before the proof = %s %s", s, state)
 	}
 
-	// The coins arrived: proven, and recorded.
+	// The coins arrived: the tracker proves the sale's job on the live
+	// inventory, which the plan reads from then on.
 	inventory(coreingest.QuantityMap{"995": 13100})
-	if st = status(); !st.Proven || st.Proof.State != "met" {
-		t.Fatalf("coins arrived = %+v", st.Proof)
+	eventually(t, "the sale proven", func() bool { st = status(); return st.Proven })
+	if st.Proof.State != "met" || st.Run.Task.JobID == "" {
+		t.Fatalf("coins arrived = %+v, run task %+v", st.Proof, st.Run.Task)
+	}
+	// The sale is the job the run attempted, proven by the tracker.
+	if _, body, _ := call(t, "GET", srv.URL+"/api/jobs/"+st.Run.Task.JobID+"?account=acc_ge", ""); body["job"].(map[string]any)["state"] != "succeeded" ||
+		body["job"].(map[string]any)["kind"] != "ge_sell" || len(body["runs"].([]any)) != 1 {
+		t.Fatalf("the sale's job = %v", body)
 	}
 	// Spent afterwards, the sale stays met: the plan is done.
 	inventory(coreingest.QuantityMap{})
+	time.Sleep(150 * time.Millisecond)
 	if s, _, _ := next(); s != "done" {
 		t.Fatalf("after spending = %s", s)
 	}
@@ -243,6 +257,7 @@ func TestGESaleProofPostgres(t *testing.T) {
 		}
 	}
 	inventory(coreingest.QuantityMap{"995": 200})
+	time.Sleep(150 * time.Millisecond)
 	if st = status(); st.Proven {
 		t.Fatalf("second sale proven without its coins = %+v", st.Proof)
 	}
@@ -250,9 +265,7 @@ func TestGESaleProofPostgres(t *testing.T) {
 		t.Fatalf("plan after the second sale, before its proof = %s %s", s, state)
 	}
 	inventory(coreingest.QuantityMap{"995": 200 + 5*121})
-	if st = status(); !st.Proven {
-		t.Fatalf("second sale with its coins = %+v", st.Proof)
-	}
+	eventually(t, "the second sale proven", func() bool { st = status(); return st.Proven })
 	if s, _, _ := next(); s != "done" {
 		t.Fatalf("after the second proof = %s", s)
 	}

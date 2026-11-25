@@ -415,7 +415,7 @@ final class MtaRunner extends Script
 					return;
 			}
 		}
-		if (net.runelite.client.plugins.microbot.util.magic.Rs2Magic.canCast(spell))
+		if (MtaPrep.canCast(spell))
 		{
 			cannotCastSince = 0;
 		}

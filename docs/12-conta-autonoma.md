@@ -848,6 +848,12 @@ O que a implementação decidiu onde as seções acima não diziam (`internal/co
   job como estava. A varp 281 entra no manifest por `ingest.JobVarps`. O agent liga o plugin como num
   treino (`driveDelegated`), e o job tracker manda `run_until` com o rótulo quando prova a meta; o
   progresso final do job é a última leitura da métrica, mesmo quando a prova chega entre duas leituras.
+- **Diálogo no ponto seguro.** O ponto seguro de um job `plugin` não espera um diálogo que só tem
+  "Click here to continue": o agent o avança (`/dialogue/continue` do Agent Server, até 20 linhas) e
+  anota "avançando o diálogo" na trilha. Um diálogo com opções continua segurando o run, porque é uma
+  escolha que o plugin não fez. Os outros runs (gatilho, treino, quest, tarefa) esperam qualquer
+  diálogo, como antes. Decisão do dono de 2026-11-25 (FEL-130), depois de a caixa do tutorial segurar
+  dois runs na validação da Tutorial Island.
 - **Fora do escopo.** O condutor movido por eventos (FEL-126), a escada e o SSE da web com os eventos de
   job.
 

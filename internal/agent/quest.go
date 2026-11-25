@@ -237,7 +237,7 @@ func (e *Executor) driveQuest(ctx context.Context, p TaskRunParams) {
 		e.end(RunFailed, err.Error()+"; a quest parou onde estava", err.Error())
 	}
 	done := func() { e.end(RunDone, "nada a fazer: o ingest já prova "+until.Objective, "") }
-	if err := e.waitSafe(ctx); err != nil {
+	if err := e.waitSafe(ctx, false); err != nil {
 		if errors.Is(err, errUntilMet) {
 			done()
 			return

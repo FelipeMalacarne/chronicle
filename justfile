@@ -161,14 +161,14 @@ migrate-status:
 dbml:
     DATABASE_URL="{{database_url}}" python3 tools/schema_to_dbml.py
 
-# Create an account for AUTH_MODE=dev until the account screen exists (id: acc_<rsn>): just account-create "Iron Man"
+# Create an account for AUTH_MODE=dev until the account screen exists (id: acc_<rsn>; guide=none: no route): just account-create "Iron Man"
 account-create rsn mode="ironman" guide="oziris-main" layer="enhanced":
-    @test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
+    @test "{{guide}}" = none || test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
     psql "{{database_url}}" -v ON_ERROR_STOP=1 -v rsn="{{rsn}}" -v mode="{{mode}}" -v guide="{{guide}}" -v layer="{{layer}}" -f db/scripts/account_create.sql
 
-# Switch the active route of an account (applies from the next reevaluation): just account-guide acc_iron_man bruhsailer-main
+# Switch the active route of an account (applies from the next reevaluation; none: no route): just account-guide acc_iron_man bruhsailer-main
 account-guide id guide:
-    @test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
+    @test "{{guide}}" = none || test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
     psql "{{database_url}}" -v ON_ERROR_STOP=1 -v id="{{id}}" -v guide="{{guide}}" -f db/scripts/account_guide.sql
 
 # List accounts
@@ -210,14 +210,14 @@ down:
 logs service="app":
     {{compose}} logs -f {{service}}
 
-# Create an account in the stack (id: acc_<rsn>): just stack-account-create "Iron Man"
+# Create an account in the stack (id: acc_<rsn>): just stack-account-create "Iron Man" (guide=none: no route)
 stack-account-create rsn mode="ironman" guide="oziris-main" layer="enhanced":
-    @test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
+    @test "{{guide}}" = none || test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
     {{stack_psql}} -v rsn="{{rsn}}" -v mode="{{mode}}" -v guide="{{guide}}" -v layer="{{layer}}" < db/scripts/account_create.sql
 
-# Switch the active route of an account in the stack
+# Switch the active route of an account in the stack (none: no route)
 stack-account-guide id guide:
-    @test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
+    @test "{{guide}}" = none || test -f "content/guides/{{guide}}/guide.json" || { echo "unknown guide {{guide}}"; exit 1; }
     {{stack_psql}} -v id="{{id}}" -v guide="{{guide}}" < db/scripts/account_guide.sql
 
 # List the stack's accounts

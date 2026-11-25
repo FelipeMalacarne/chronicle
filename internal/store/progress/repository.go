@@ -188,7 +188,7 @@ func lockAccount(ctx context.Context, q *storedb.Queries, accountID string) (cor
 		}
 		return coreprogress.Account{}, fmt.Errorf("lock account: %w", err)
 	}
-	return coreprogress.Account{ActiveGuideID: row.GuideID, Layer: row.Layer, Mode: row.Mode}, nil
+	return coreprogress.Account{ActiveGuideID: row.GuideID.String, Layer: row.Layer, Mode: row.Mode}, nil
 }
 
 func loadObjectives(ctx context.Context, q *storedb.Queries, accountID string) (map[string]coreprogress.ObjectiveRecord, error) {

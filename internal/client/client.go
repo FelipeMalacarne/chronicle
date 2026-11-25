@@ -47,6 +47,12 @@ func (e *APIError) Error() string {
 	return fmt.Sprintf("%s %s: HTTP %d: %s", e.Method, e.Path, e.Status, e.Message)
 }
 
+// Is matches coreprogress.ErrNoRoute: the server's 409 for an account that
+// follows no route.
+func (e *APIError) Is(target error) bool {
+	return target == coreprogress.ErrNoRoute && e.Status == http.StatusConflict && e.Message == coreprogress.ErrNoRoute.Error()
+}
+
 // ManyAccountsError: the user has several accounts and none was chosen.
 type ManyAccountsError struct {
 	Accounts []Account
@@ -206,7 +212,8 @@ func (c *Client) AuthClient(ctx context.Context) (AuthClient, error) {
 	return out, err
 }
 
-// Account is an account of the user.
+// Account is an account of the user. GuideID is empty when the account
+// follows no route (the server sends null).
 type Account struct {
 	ID      string `json:"id"`
 	RSN     string `json:"rsn"`

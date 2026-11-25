@@ -19,24 +19,36 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	coreingest "github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	"github.com/FelipeMalacarne/chronicle/internal/core/plan"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
 	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 )
 
-// memPlans is PlanStore in memory: acc-1 follows its route.
-type memPlans struct{ created []storeplans.NewPlan }
+// memPlans is PlanStore in memory: acc-1 follows its route, or, with
+// noRoute, has neither a route nor a chosen plan.
+type memPlans struct {
+	created []storeplans.NewPlan
+	noRoute bool
+}
 
 func (m *memPlans) List(_ context.Context, account string) (storeplans.List, error) {
 	if account != "acc-1" {
 		return storeplans.List{}, storeplans.ErrAccountNotFound
 	}
-	return storeplans.List{Account: account, Active: plan.RouteID("oziris-main"), Plans: []plan.Plan{}}, nil
+	if m.noRoute {
+		return storeplans.List{Account: account, Plans: []plan.Plan{}}, nil
+	}
+	route := plan.RouteID("oziris-main")
+	return storeplans.List{Account: account, Active: &route, Plans: []plan.Plan{}}, nil
 }
 
 func (m *memPlans) Active(_ context.Context, account string) (plan.Plan, error) {
 	if account != "acc-1" {
 		return plan.Plan{}, storeplans.ErrAccountNotFound
+	}
+	if m.noRoute {
+		return plan.Plan{}, coreprogress.ErrNoRoute
 	}
 	return plan.Plan{ID: plan.RouteID("oziris-main"), Kind: plan.KindRoute, Guide: "oziris-main"}, nil
 }

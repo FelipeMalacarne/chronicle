@@ -17,6 +17,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/plan"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
@@ -119,7 +120,7 @@ func TestPlansPostgres(t *testing.T) {
 		t.Fatalf("set active = %+v, %v", active, err)
 	}
 	list, err := repo.List(ctx, "acc_a")
-	if err != nil || list.Active != created.ID || len(list.Plans) != 3 || list.Plans[0].ID != "route:t" || list.Plans[1].ID != created.ID {
+	if err != nil || list.Active == nil || *list.Active != created.ID || len(list.Plans) != 3 || list.Plans[0].ID != "route:t" || list.Plans[1].ID != created.ID {
 		t.Fatalf("list = %+v, %v", list, err)
 	}
 	if _, err = repo.SetActive(ctx, "acc_b", created.ID); !errors.Is(err, ErrPlanNotFound) {
@@ -153,6 +154,70 @@ func TestPlansPostgres(t *testing.T) {
 	var items int
 	if err := pool.QueryRow(ctx, `SELECT count(*) FROM plan_items`).Scan(&items); err != nil || items != 0 {
 		t.Errorf("items left = %d, %v", items, err)
+	}
+}
+
+// TestPlansWithoutRoute: an account without a route (docs/11 decision W10)
+// lists no route plan and follows nothing until it chooses a plan; then its
+// custom plan is the active one, and "back to the route" is refused.
+func TestPlansWithoutRoute(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	c, err := content.Load(filepath.Join("..", "..", "core", "content", "testdata", "execution", "content"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	reg, err := entities.Default()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = pool.Exec(ctx, `
+		INSERT INTO guides (id, title) VALUES ('t', 'Execution fixture');
+		INSERT INTO users (id, subject, username) VALUES ('u1', 's1', 'u1');
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, layer) VALUES ('acc_r', 'u1', 'R', 'r', 'regular', 'enhanced');
+	`); err != nil {
+		t.Fatal(err)
+	}
+	repo := New(pool, c, reg)
+
+	list, err := repo.List(ctx, "acc_r")
+	if err != nil || list.Active != nil || len(list.Plans) != 0 {
+		t.Fatalf("list = %+v, %v", list, err)
+	}
+	if _, err = repo.Active(ctx, "acc_r"); !errors.Is(err, coreprogress.ErrNoRoute) {
+		t.Fatalf("active without a route or a plan: %v", err)
+	}
+	if _, err = repo.Get(ctx, "acc_r", "route:t"); !errors.Is(err, ErrPlanNotFound) {
+		t.Errorf("a route plan of an account without a route: %v", err)
+	}
+	lumbridge := entities.MustParseRef("location:lumbridge")
+	created, err := repo.Create(ctx, "acc_r", NewPlan{Kind: plan.KindCustom, Title: "Regular", Items: []plan.Item{
+		{Kind: plan.ItemTask, Task: &content.Task{Type: content.TaskTravel, Location: &lumbridge}},
+	}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	active, err := repo.SetActive(ctx, "acc_r", created.ID)
+	if err != nil || active.ID != created.ID || active.Kind != plan.KindCustom {
+		t.Fatalf("follow the custom plan = %+v, %v", active, err)
+	}
+	if list, err = repo.List(ctx, "acc_r"); err != nil || list.Active == nil || *list.Active != created.ID || len(list.Plans) != 1 {
+		t.Fatalf("list = %+v, %v", list, err)
+	}
+	for _, id := range []string{"", "route:t"} {
+		if _, err = repo.SetActive(ctx, "acc_r", id); err == nil {
+			t.Errorf("SetActive(%q) without a route: accepted", id)
+		}
+	}
+	if _, err = repo.SetActive(ctx, "acc_r", ""); !errors.Is(err, coreprogress.ErrNoRoute) {
+		t.Errorf("back to the route: %v", err)
+	}
+	// Deleting the followed plan leaves the account following nothing.
+	if err = repo.Delete(ctx, "acc_r", created.ID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = repo.Active(ctx, "acc_r"); !errors.Is(err, coreprogress.ErrNoRoute) {
+		t.Fatalf("active after the plan went: %v", err)
 	}
 }
 

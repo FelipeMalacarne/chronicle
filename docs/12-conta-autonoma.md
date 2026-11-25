@@ -40,10 +40,13 @@ verificáveis evita a tradução.
 
 ## 3. A conta
 
-- **Modo `regular`.** O doc 11 previu esse modo (seção 4.1, decisão W10), mas ele ainda não existe:
-  `accounts.mode` aceita só `ironman`, `hcim`, `uim` e `gim` (`db/migrations/0001_init.sql`), e o
-  schema do guia tem o mesmo enum. É uma migração nova, e o modo `regular` entra também nas
-  variantes das receitas.
+- **Modo `regular`.** O doc 11 previu esse modo (seção 4.1, decisão W10). `accounts.mode` aceita
+  `regular` desde a migração 0026, e o modo entra também nas variantes das receitas.
+- **Sem rota.** `accounts.guide_id` aceita nulo desde a migração 0029. A conta sem rota segue o plano
+  `custom` ativo (`accounts.active_plan_id`); sem plano escolhido, não segue nada, e o que lê a rota
+  da própria conta (a janela do `now`, o próximo item do plano) responde 409 `account has no route`
+  em vez de inventar um guia. Os fatos, os boards de cada guia e os cursores continuam calculados;
+  nenhuma guia é a ativa, então a cascata de implícitos não roda (decisão W10 do doc 11).
 - **Várias contas, cada uma descartável.** Uma conta até o ciclo estar provado, depois 2 a 3
   (decisão C5). Os modelos de metas, o catálogo de métodos e os overrides de quest (seção 5.6) valem
   para todas as contas, então o custo de escrevê-los se divide entre elas. Cada conta pode ser banida a
@@ -448,6 +451,8 @@ regras de ordem são decisões e ficam aqui:
 | C8 | De onde vêm as metas de cada conta | **Resolvida (2026-11-24, dono):** de modelos de metas reutilizáveis, com ajustes por conta (seção 4.1) |
 | C9 | Como a conta distribui o tempo de jogo | **Resolvida (2026-11-24, dono):** sessões variáveis com pausas e teto diário, agendadas pelo Chronicle (seção 8.1) |
 | C10 | Quanto o dono acompanha | **Resolvida (2026-11-24, dono):** copiloto no começo, autônomo depois, por conta (seção 8.2) |
+| C11 | Plugins ligados e desligados, ou jobs | **Resolvida (2026-11-24, dono):** jobs com status e progresso, que executam e terminam, e um servidor movido a eventos (seção 13) |
+| C12 | A primeira validação de ponta a ponta | **Resolvida (2026-11-24, dono):** a Tutorial Island da `acc_appendonly`, feita pelo agente de desenvolvimento com o plugin do Hub (seção 13.7) |
 
 ## 12. Arquitetura e dados
 
@@ -557,7 +562,8 @@ o nível de combate recomendado e o loadout (seção 5.5).
 
 | Tabela ou coluna | O que guarda | Seção |
 |---|---|---|
-| `accounts.mode` aceita `regular` | O modo da conta | 3 |
+| `accounts.mode` aceita `regular` (migração 0026) | O modo da conta | 3 |
+| `accounts.guide_id` aceita nulo (migração 0029) | A conta sem rota, que segue o plano `custom` ativo | 3 |
 | `accounts.supervision` (`copilot` ou `autonomous`) | Se o condutor pede aprovação | 8.2 |
 | `plans.template_id` | O modelo de metas de onde o plano `custom` saiu; os itens são cópias das chaves do modelo, mais os ajustes da conta | 4.1 |
 | `approvals (account_id, subject, approved_at)` | Uma aprovação por conta e por quest ou método (`quest:<ref>`, `method:<id>`) | 8.2 |
@@ -615,7 +621,8 @@ Em `idle`, a próxima tarefa vem nesta ordem:
    faltam.
 
 O condutor despacha a tarefa pelo `task_run` que já existe, e o término continua sendo provado pelo
-servidor (`run_until`, doc 10). O condutor nunca marca nada como feito.
+servidor (`run_until`, doc 10). O condutor nunca marca nada como feito. A seção 13 revê esta seção:
+o condutor despacha jobs e muda de estado a cada evento da conta, e o término vem do job tracker.
 
 ### 12.6 Uma quest de ponta a ponta
 
@@ -634,3 +641,136 @@ servidor (`run_until`, doc 10). O condutor nunca marca nada como feito.
    destravada, e a sequência de comandos vira uma proposta de override para o dono confirmar.
 6. O condutor volta para `running`, e o executor continua. O servidor prova
    `quest:waterfall_quest@finished` e o condutor volta para `idle`.
+
+## 13. Jobs e eventos
+
+O dono decidiu em 2026-11-24 (C11) que a execução se organiza em **jobs**: unidades com status e
+progresso, que executam e terminam, e não plugins ligados e desligados. Decidiu também que as peças
+do servidor reagem a **eventos** em vez de consultar umas às outras. Esta seção é o desenho; as
+seções 6.2, 12.3 e 12.5 continuam valendo onde esta não as revê.
+
+### 13.1 O que já existe e o que falta
+
+O Chronicle já tem metade disso com outros nomes:
+
+- um **run** (`routine_runs`, doc 08) já tem estado (`running`, `done`, `failed`, `canceled`), início,
+  fim, trilha (`run_events`) e resultado; para o `train` e a `quest`, o agent liga o plugin no começo
+  e desliga no fim, então o plugin já é um detalhe do run;
+- o fim de um run com `until` já é provado pelo servidor a partir do ingest (`internal/rununtil`);
+- o ingest já é append-only (`observations`), e `player_state` é a projeção dele;
+- `internal/events` já entrega sinais de invalidação para a web (`/api/events`).
+
+Falta:
+
+1. **a intenção separada da tentativa.** "Sair da Tutorial Island" ou "Mining 15" é um job; cada vez
+   que o agent tenta, é um run. Um job travado ganha outro run e continua o mesmo job;
+2. **progresso medido**, tirado dos fatos, que também diz quando um job travou;
+3. **eventos duráveis no servidor.** Hoje o `rununtil` acompanha os fatos por conta própria, e a prova
+   de uma venda só é gravada quando alguém lê o status do run (FEL-123).
+
+### 13.2 Job
+
+Um job é uma linha em `jobs`. Ele tem:
+
+| Campo | O que é |
+|---|---|
+| `kind` | `plugin`, `train`, `quest`, `travel`, `bank`, `buy`, `ge_buy` ou `ge_sell`. `plugin` é o novo: liga um plugin do perfil do cliente (do Hub ou nosso) com a configuração dada e o desliga quando o job termina |
+| `spec` | a tarefa tipada do `execspec` que o agent executa, como hoje |
+| `goal` | a regra que prova o fim, avaliada pelo motor de regras sobre os fatos (doc 09). Exemplo: `{"type": "varp", "id": 281, "min": 1000}` para a Tutorial Island, `skill:mining>=15` para um treino |
+| `metric` | o número que mede o progresso e a meta dele: uma varp ou varbit, o XP até o nível, a contagem de um item, o varbit de uma quest |
+| `progress` | `{from, current, target, at}`: o valor da métrica quando o job começou, o último observado, a meta e quando mudou |
+| `stall_after` | quanto tempo sem progresso conta como travado; cada `kind` tem um padrão |
+| `state` | a máquina de estados da seção 13.3 |
+| `source` | quem criou o job: o condutor, o dono ou um teste |
+
+O run continua como está, com uma coluna nova: `routine_runs.job_id`. Um job tem zero ou mais runs, e
+no máximo um ativo.
+
+### 13.3 Estados do job
+
+| Estado | Sai quando | Vai para |
+|---|---|---|
+| `queued` | o condutor ou o dono despacha o job | `running` (um run começa) |
+| `running` | a regra do `goal` vira `met` num fato `live` | `succeeded` |
+| `running` | a métrica não muda por `stall_after` | `stalled` |
+| `running` | o run termina sem o `goal` provado | `stalled` |
+| `stalled` | quem trata o travamento começa outro run | `running` |
+| `stalled` | a escada esgota os degraus (seção 5.7) | `failed` |
+| qualquer um ativo | o dono cancela | `canceled` |
+
+Só o job tracker (seção 13.5) leva um job a `succeeded`, e só a partir de um fato do ingest. O fim de
+um run (`done`) diz só que o agent parou. Isso é a regra "término provado pelo ingest" do doc 10,
+agora garantida pela estrutura.
+
+### 13.4 Eventos
+
+Os eventos ficam numa tabela append-only:
+
+```
+events        id bigserial PK, account_id → accounts, type, subject (job, run ou sessão),
+              payload jsonb, at
+event_cursors consumer PK, last_id
+```
+
+- **Gravação.** Cada evento é gravado na mesma transação da mudança que o causa: a projeção de um
+  fato, o registro de um run reportado pelo agent, a transição de um job.
+- **Entrega.** Depois do commit, o hub em processo (`internal/events`) acorda os consumidores, como já
+  acorda a web. Um só `chronicle serve` é dono do banco, então não entra broker nem `LISTEN/NOTIFY`.
+- **Retomada.** Cada consumidor guarda o último id que tratou em `event_cursors`. Depois de um
+  reinício, ele lê a partir dali. Os consumidores são idempotentes, porque um evento pode ser
+  entregue de novo depois de uma queda entre o efeito e o cursor.
+- **Fonte da verdade.** Um evento diz "mudou"; quem consome lê o estado (fatos, job, run). Para os
+  fatos, `observations` e `player_state` continuam sendo a fonte, como diz o `internal/events`.
+
+Os tipos:
+
+| Tipo | Quem grava | Payload |
+|---|---|---|
+| `fact.changed` | a projeção do ingest | as facetas e chaves que mudaram |
+| `run.started`, `run.ended` | o registro dos runs (`internal/routinesync`) | o run, o job e o estado final |
+| `job.queued`, `job.progressed`, `job.stalled`, `job.succeeded`, `job.failed`, `job.canceled` | o job tracker e quem despacha | o job, o progresso e o motivo |
+| `session.started`, `session.break`, `session.ended` | o agendador de sessões (seção 8.1) | a sessão |
+| `membership.low` | o job tracker, a partir de `fact.changed` da faceta `membership` | os dias restantes |
+
+O travamento por tempo não tem fato que o dispare. O job tracker guarda o prazo de cada job em
+`running` e grava `job.stalled` quando o prazo vence sem `job.progressed`.
+
+### 13.5 Consumidores
+
+| Consumidor | Lê | Faz |
+|---|---|---|
+| **job tracker** | `fact.changed`, `run.ended` | Avalia `goal` e `metric` dos jobs ativos da conta, grava o progresso, `job.succeeded` e `job.stalled`. Absorve o `internal/rununtil`: o `run_until` ao agent sai daqui. Absorve a prova da venda: um `ge_sell` é `succeeded` quando o item saiu do inventário live e as moedas do run chegaram, e o plano lê o job, não mais `sale_proofs` (FEL-123) |
+| **condutor** (seção 12.5) | `job.succeeded`, `job.failed`, `session.*`, `membership.low`, aprovações | Passa a ser movido por eventos: em vez de consultar o estado num laço, decide a cada evento da conta e despacha o próximo job |
+| **escada** (seção 5.7) | `job.stalled` | Tenta destravar e começa outro run, ou leva o job a `failed` e abre a issue |
+| **web** | todos, por conta | Estende o SSE de `/api/events` com os eventos de job, para a Frota mostrar o progresso ao vivo |
+
+### 13.6 O que muda nos dados
+
+| Tabela ou coluna | O que guarda |
+|---|---|
+| `jobs (id, account_id, kind, spec, goal, metric, progress, stall_after, state, reason, source, created_at, started_at, finished_at)` | os jobs (seção 13.2) |
+| `routine_runs.job_id` | o job de cada run, nulo para os runs que o dono liga à mão |
+| `events`, `event_cursors` | o log e os cursores (seção 13.4) |
+| `conductor_state.job_id` | substitui `task_key` e `run_id` da seção 12.3 |
+
+`sale_proofs` (migração 0030) deixa de ser necessária quando o job tracker existir: a prova de uma
+venda passa a ser o job `succeeded`.
+
+### 13.7 A validação: a Tutorial Island da AppendOnly
+
+O dono escolheu em 2026-11-24 (C12) a Tutorial Island como a primeira validação de ponta a ponta,
+feita pelo agente de desenvolvimento, com a conta `acc_appendonly`. A ilha prova o que um treino não
+prova sozinho: um plugin do Hub dirigido por um job, uma métrica que não é XP e um fim sem nível.
+
+- **Job:** `kind: plugin`, o `TutorialIslandPlugin` do Microbot Hub pelo perfil do cliente,
+  `goal` `{"type": "varp", "id": 281, "min": 1000}`, `metric` a varp 281.
+- **Ingest:** a varp 281 entra no manifest do servidor. O Chronicle Link já manda as varps que o
+  manifest pede, sem mudar o plugin.
+- **O que é observado:**
+  - os estados do job e os eventos de cada transição;
+  - o progresso da varp 281 ao vivo na web;
+  - o fim provado pelo ingest e o plugin desligado depois;
+  - um travamento provocado, por exemplo pausando o plugin, que leva o job a `stalled`.
+- **Retomada:** a ilha não se repete, mas o job começa da varp atual. Um run interrompido no meio
+  não perde a validação, porque o próximo continua de onde a conta está.
+- **Login:** só com a conta deslogada do cliente do dono, para os dois não se derrubarem.

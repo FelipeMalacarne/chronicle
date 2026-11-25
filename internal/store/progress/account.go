@@ -7,6 +7,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
@@ -87,11 +88,12 @@ func (r *Repository) Events(ctx context.Context, accountID, guideID string, limi
 	return out, nil
 }
 
-// SetActiveGuide makes guideID the route the account follows and reevaluates
-// it in the same transaction. Objectives met from now on feed the cascade of
-// the new route only (docs/09 decision 9.1).
+// SetActiveGuide makes guideID the route the account follows, or leaves it
+// without a route when guideID is empty, and reevaluates it in the same
+// transaction. Objectives met from now on feed the cascade of the new route
+// only (docs/09 decision 9.1); without a route nothing cascades.
 func (r *Repository) SetActiveGuide(ctx context.Context, accountID, guideID string) error {
-	if _, ok := r.content.Guide(guideID); !ok {
+	if _, ok := r.content.Guide(guideID); guideID != "" && !ok {
 		return ErrGuideNotFound
 	}
 	changed := 0
@@ -100,7 +102,7 @@ func (r *Repository) SetActiveGuide(ctx context.Context, accountID, guideID stri
 		if _, err := lockAccount(ctx, q, accountID); err != nil {
 			return err
 		}
-		if err := q.SetAccountGuide(ctx, storedb.SetAccountGuideParams{ID: accountID, GuideID: guideID}); err != nil {
+		if err := q.SetAccountGuide(ctx, storedb.SetAccountGuideParams{ID: accountID, GuideID: text(guideID)}); err != nil {
 			return fmt.Errorf("set active guide: %w", err)
 		}
 		var err error
@@ -113,11 +115,15 @@ func (r *Repository) SetActiveGuide(ctx context.Context, accountID, guideID stri
 	return err
 }
 
-// ActiveGuide returns the guide the account follows (accounts.guide_id).
+// ActiveGuide returns the guide the account follows (accounts.guide_id), or
+// coreprogress.ErrNoRoute when it follows none.
 func (r *Repository) ActiveGuide(ctx context.Context, accountID string) (string, error) {
 	acc, err := getAccount(ctx, r.queries, accountID)
 	if err != nil {
 		return "", err
+	}
+	if acc.ActiveGuideID == "" {
+		return "", coreprogress.ErrNoRoute
 	}
 	return acc.ActiveGuideID, nil
 }

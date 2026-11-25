@@ -260,7 +260,7 @@ func getAccount(ctx context.Context, q *storedb.Queries, accountID string) (core
 		}
 		return coreprogress.Account{}, fmt.Errorf("get account: %w", err)
 	}
-	return coreprogress.Account{ActiveGuideID: acc.GuideID, Layer: acc.Layer, Mode: acc.Mode}, nil
+	return coreprogress.Account{ActiveGuideID: acc.GuideID.String, Layer: acc.Layer, Mode: acc.Mode}, nil
 }
 
 func (r *Repository) boardView(ctx context.Context, q *storedb.Queries, accountID string, in coreprogress.GuideInput, regressed map[string]bool) (BoardView, error) {

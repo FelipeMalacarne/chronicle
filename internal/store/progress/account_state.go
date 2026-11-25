@@ -160,7 +160,7 @@ func (r *Repository) AccountState(ctx context.Context, accountID string) (Accoun
 		return AccountState{}, err
 	}
 	out := AccountState{
-		Account: accountView(acc),
+		Account: NewAccountView(acc),
 		Skills:  []SkillView{}, Quests: []QuestView{}, Diaries: []DiaryView{}, Containers: []ContainerView{},
 		CombatAchievements: []CATierView{},
 	}

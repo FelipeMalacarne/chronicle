@@ -442,7 +442,8 @@ final class PanelText
 			case 404:
 				return "conta ou passo não encontrado";
 			case 409:
-				return "o passo já está feito";
+				// A read conflicts only when the account follows no route.
+				return write ? "o passo já está feito" : "a conta não segue rota";
 			case 422:
 				return "várias contas: preencha Conta";
 			default:

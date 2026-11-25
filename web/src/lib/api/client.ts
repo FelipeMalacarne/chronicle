@@ -237,8 +237,12 @@ export const progressApi = {
 	syncRuns: (account: string, limit = 5) =>
 		request<SyncRunsResponse>(`/sync/runs?account=${enc(account)}&limit=${limit}`),
 	setupLookup: (rsn: string) => request<SetupLookup>(`/setup/lookup?rsn=${enc(rsn)}`),
-	createAccount: (input: { rsn: string; mode: AccountMode; guide_id: string; layer: string }) =>
-		request<AccountView>('/accounts', json('POST', input)),
+	createAccount: (input: {
+		rsn: string;
+		mode: AccountMode;
+		guide_id: string | null;
+		layer: string;
+	}) => request<AccountView>('/accounts', json('POST', input)),
 	/** Os níveis da conta desde `since` (RFC 3339, até 7 dias atrás) e o avanço de cada skill. */
 	levels: (account: string, since: string, limit = 500) =>
 		request<AccountLevels>(
@@ -247,7 +251,8 @@ export const progressApi = {
 	/** Os níveis de todas as contas do usuário desde `since`, juntos (o Diário da Atividade). */
 	fleetLevels: (since: string, limit = 500) =>
 		request<FleetLevels>(`/levels?since=${enc(since)}&limit=${limit}`),
-	setActiveGuide: (account: string, guide: string) =>
+	/** `null` deixa a conta sem rota. */
+	setActiveGuide: (account: string, guide: string | null) =>
 		request<ProgressSummary>(
 			`/account/guide?account=${enc(account)}`,
 			json('PUT', { guide_id: guide })

@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -99,14 +100,31 @@ type routeSummary struct {
 }
 
 type progressResponse struct {
-	Account string                     `json:"account"`
-	Active  string                     `json:"active_guide"`
+	Account string `json:"account"`
+	// Active is the guide the account follows; nil without a route.
+	Active  *string                    `json:"active_guide"`
 	Routes  []routeSummary             `json:"routes"`
 	Sources []storeprogress.SourceView `json:"sources"`
 }
 
+// activeGuideRequest names the route to follow: a guide, or null to follow
+// none. The key is required, so an empty body never clears the route.
 type activeGuideRequest struct {
-	GuideID string `json:"guide_id"`
+	GuideID json.RawMessage `json:"guide_id"`
+}
+
+// guide returns the guide to follow, "" for null; false when the key is
+// missing or holds anything else.
+func (r activeGuideRequest) guide() (string, bool) {
+	var guide *string
+	if r.GuideID == nil || json.Unmarshal(r.GuideID, &guide) != nil {
+		return "", false
+	}
+	if guide == nil {
+		return "", true
+	}
+	id := strings.TrimSpace(*guide)
+	return id, id != ""
 }
 
 type markRequest struct {
@@ -370,7 +388,7 @@ func (s *Server) writeProgressSummary(w http.ResponseWriter, r *http.Request, ac
 			return
 		}
 		if board.Active {
-			out.Active = g.ID
+			out.Active = &g.ID
 		}
 		route := routeSummary{
 			Guide: g.ID, Title: g.Title, Version: g.Version, Source: g.Source, Steps: g.StepCount(), Segments: len(g.Segments()),
@@ -395,7 +413,12 @@ func (s *Server) handleActiveGuide(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
-	if err := s.opts.Progress.SetActiveGuide(r.Context(), account, strings.TrimSpace(req.GuideID)); err != nil {
+	guide, ok := req.guide()
+	if !ok {
+		writeError(w, http.StatusBadRequest, "guide_id must be a guide id, or null for no route")
+		return
+	}
+	if err := s.opts.Progress.SetActiveGuide(r.Context(), account, guide); err != nil {
 		s.writeProgressError(w, err)
 		return
 	}
@@ -455,6 +478,8 @@ func (s *Server) writeProgressError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusNotFound, "account not found")
 	case errors.Is(err, storeprogress.ErrGuideNotFound):
 		writeError(w, http.StatusNotFound, "guide not found")
+	case errors.Is(err, coreprogress.ErrNoRoute):
+		writeError(w, http.StatusConflict, coreprogress.ErrNoRoute.Error())
 	case errors.Is(err, coreprogress.ErrStepNotFound):
 		writeError(w, http.StatusNotFound, "step not found")
 	case errors.Is(err, coreprogress.ErrInvalidAction):

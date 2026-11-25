@@ -22,6 +22,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/plan"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
 )
 
@@ -62,11 +63,12 @@ type NewPlan struct {
 	Items []plan.Item `json:"items"`
 }
 
-// List is the account's plans: the route of its guide first, then the
-// stored ones in creation order, and the id of the one it follows.
+// List is the account's plans: the route of its guide first (when it has
+// one), then the stored ones in creation order, and the id of the one it
+// follows (nil: no route and no plan chosen).
 type List struct {
 	Account string      `json:"account"`
-	Active  string      `json:"active"`
+	Active  *string     `json:"active"`
 	Plans   []plan.Plan `json:"plans"`
 }
 
@@ -87,15 +89,20 @@ func (r *Repository) List(ctx context.Context, account string) (List, error) {
 	if err != nil {
 		return List{}, err
 	}
-	out := List{Account: account, Active: plan.RouteID(acc.GuideID), Plans: append([]plan.Plan{r.route(acc.GuideID)}, stored...)}
+	out := List{Account: account, Plans: stored}
+	if acc.GuideID.Valid {
+		route := r.route(acc.GuideID.String)
+		out.Plans, out.Active = append([]plan.Plan{route}, stored...), &route.ID
+	}
 	if acc.ActivePlanID.Valid {
-		out.Active = acc.ActivePlanID.String
+		out.Active = &acc.ActivePlanID.String
 	}
 	return out, nil
 }
 
 // Active returns the plan the account follows, with its items: the route
-// of its guide unless it chose another.
+// of its guide unless it chose another; coreprogress.ErrNoRoute when it
+// chose none and has no route.
 func (r *Repository) Active(ctx context.Context, account string) (plan.Plan, error) {
 	acc, err := r.queries.GetActivePlan(ctx, account)
 	if errors.Is(err, pgx.ErrNoRows) {
@@ -105,7 +112,10 @@ func (r *Repository) Active(ctx context.Context, account string) (plan.Plan, err
 		return plan.Plan{}, fmt.Errorf("read account: %w", err)
 	}
 	if !acc.ActivePlanID.Valid {
-		return r.route(acc.GuideID), nil
+		if !acc.GuideID.Valid {
+			return plan.Plan{}, coreprogress.ErrNoRoute
+		}
+		return r.route(acc.GuideID.String), nil
 	}
 	return r.Get(ctx, account, acc.ActivePlanID.String)
 }
@@ -121,7 +131,7 @@ func (r *Repository) Get(ctx context.Context, account, id string) (plan.Plan, er
 		if err != nil {
 			return plan.Plan{}, fmt.Errorf("read account: %w", err)
 		}
-		if guide != acc.GuideID {
+		if guide != acc.GuideID.String {
 			return plan.Plan{}, ErrPlanNotFound
 		}
 		return r.route(guide), nil
@@ -225,7 +235,7 @@ func (r *Repository) Create(ctx context.Context, account string, in NewPlan) (pl
 }
 
 // Delete removes a stored plan; an account that followed it goes back to
-// its route.
+// its route, or follows nothing when it has none.
 func (r *Repository) Delete(ctx context.Context, account, id string) error {
 	if _, ok := plan.RouteGuide(id); ok {
 		return &InvalidError{Problems: []string{"the route plan comes from the content; it is not deleted"}}
@@ -241,7 +251,8 @@ func (r *Repository) Delete(ctx context.Context, account, id string) error {
 }
 
 // SetActive makes the account follow a plan: a stored plan by id, or its
-// route (the route plan's id, or "").
+// route (the route plan's id, or ""), which an account without a route
+// cannot follow (coreprogress.ErrNoRoute).
 func (r *Repository) SetActive(ctx context.Context, account, id string) (plan.Plan, error) {
 	var target pgtype.Text
 	if _, route := plan.RouteGuide(id); !route && id != "" {
@@ -255,9 +266,12 @@ func (r *Repository) SetActive(ctx context.Context, account, id string) (plan.Pl
 		if err != nil {
 			return fmt.Errorf("read account: %w", err)
 		}
-		if guide, route := plan.RouteGuide(id); route && guide != acc.GuideID {
+		if guide, route := plan.RouteGuide(id); route && guide != acc.GuideID.String {
 			// Another guide's route is followed by switching the active guide.
 			return ErrPlanNotFound
+		}
+		if !target.Valid && !acc.GuideID.Valid {
+			return coreprogress.ErrNoRoute
 		}
 		if target.Valid {
 			if _, err := q.GetPlan(ctx, storedb.GetPlanParams{ID: id, AccountID: account}); errors.Is(err, pgx.ErrNoRows) {

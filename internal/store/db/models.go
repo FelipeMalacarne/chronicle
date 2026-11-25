@@ -12,21 +12,22 @@ import (
 
 // OSRS accounts tracked by a user. One user may track several accounts.
 type Account struct {
-	ID            string             `json:"id"`
-	UserID        string             `json:"user_id"`
-	Rsn           string             `json:"rsn"`
-	RsnNormalized string             `json:"rsn_normalized"`
-	Mode          string             `json:"mode"`
-	GuideID       string             `json:"guide_id"`
-	Layer         string             `json:"layer"`
-	WomPlayerID   pgtype.Int8        `json:"wom_player_id"`
-	NameHistory   json.RawMessage    `json:"name_history"`
-	Active        bool               `json:"active"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ID            string `json:"id"`
+	UserID        string `json:"user_id"`
+	Rsn           string `json:"rsn"`
+	RsnNormalized string `json:"rsn_normalized"`
+	Mode          string `json:"mode"`
+	// The route the account follows (content/); NULL: the account has no route.
+	GuideID     pgtype.Text        `json:"guide_id"`
+	Layer       string             `json:"layer"`
+	WomPlayerID pgtype.Int8        `json:"wom_player_id"`
+	NameHistory json.RawMessage    `json:"name_history"`
+	Active      bool               `json:"active"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	// The account may run a managed worker; true only while a game_sessions row exists (kept by internal/store/workers).
 	Managed bool `json:"managed"`
-	// The plan the account follows (docs/10 section 9); NULL is the route of guide_id.
+	// The plan the account follows (docs/10 section 9); NULL is the route of guide_id, or nothing without a route.
 	ActivePlanID pgtype.Text `json:"active_plan_id"`
 }
 

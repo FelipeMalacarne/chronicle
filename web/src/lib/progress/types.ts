@@ -138,7 +138,8 @@ export interface SourceView {
 
 export interface ProgressSummary {
 	account: string;
-	active_guide: string;
+	/** Rota que a conta segue; null quando ela não segue rota. */
+	active_guide: string | null;
 	routes: RouteSummary[];
 	sources: SourceView[];
 }
@@ -695,7 +696,8 @@ export interface AccountView {
 	id: string;
 	rsn: string;
 	mode: AccountMode;
-	guide_id: string;
+	/** Rota que a conta segue; null quando ela não segue rota. */
+	guide_id: string | null;
 	layer: 'classic' | 'enhanced';
 }
 
@@ -1090,7 +1092,8 @@ export interface Plan {
 
 export interface PlansResponse {
 	account: string;
-	active: string;
+	/** Plano que a conta segue; null sem rota e sem plano escolhido. */
+	active: string | null;
 	plans: Plan[];
 }
 

@@ -57,7 +57,7 @@ SELECT active_plan_id, guide_id FROM accounts WHERE id = $1
 
 type GetActivePlanRow struct {
 	ActivePlanID pgtype.Text `json:"active_plan_id"`
-	GuideID      string      `json:"guide_id"`
+	GuideID      pgtype.Text `json:"guide_id"`
 }
 
 func (q *Queries) GetActivePlan(ctx context.Context, id string) (GetActivePlanRow, error) {

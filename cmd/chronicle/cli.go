@@ -13,6 +13,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/appenv"
 	"github.com/FelipeMalacarne/chronicle/internal/client"
+	coreprogress "github.com/FelipeMalacarne/chronicle/internal/core/progress"
 )
 
 // clientFlags are the connection flags of every API client command. The
@@ -90,6 +91,8 @@ func explain(err error) error {
 		return errors.New("o login expirou: rode `chronicle login` de novo")
 	case errors.Is(err, client.ErrNoAccount):
 		return errors.New("nenhuma conta neste servidor: crie a conta pela web")
+	case errors.Is(err, coreprogress.ErrNoRoute):
+		return errors.New("a conta não segue rota: siga um plano com `chronicle plans use <id>`; `chronicle task` mostra a próxima tarefa dele")
 	case errors.As(err, &many):
 		ids := make([]string, len(many.Accounts))
 		for i, a := range many.Accounts {
@@ -225,7 +228,11 @@ func newAccountsCmd() *cobra.Command {
 				if a.ID == current {
 					mark = "*"
 				}
-				fmt.Fprintf(out, "%s %-24s %-14s %s\n", mark, a.ID, a.RSN, a.GuideID)
+				guide := a.GuideID
+				if guide == "" {
+					guide = "sem rota"
+				}
+				fmt.Fprintf(out, "%s %-24s %-14s %s\n", mark, a.ID, a.RSN, guide)
 			}
 			if len(me.Accounts) == 0 {
 				fmt.Fprintln(out, "Nenhuma conta: crie pela web.")

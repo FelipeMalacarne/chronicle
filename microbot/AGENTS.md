@@ -29,6 +29,11 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   boot (Chronicle's docs/11 section 19). Since 1.18.0 it sends `data.membership` (`MembershipReading`):
   the days of membership left and the member flag, only once ten ticks of the login have passed.
   Its task executor refuses `ge_buy` and `ge_sell` (the agent delegates them to the Agent Server's `/ge`) and `plugin` (a job's plugin, run by the agent).
+  Since 1.19.0 the bridge lists the client's modal message windows (`/bridge/client/messages`, the
+  `JOptionPane` of `Microbot.showMessage`) and closes them (`/bridge/client/messages/close`), which
+  also lifts `Microbot.pauseAllScripts` when it closed one (`ClientMessages`): Microbot opens one,
+  after pausing every script, when a script gives up reaching an NPC or object, and on a worker
+  nobody sees it. The agent ends a supervised run with its text (Chronicle's FEL-134).
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).

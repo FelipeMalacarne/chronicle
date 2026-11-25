@@ -520,6 +520,21 @@ na instância do plugin, então com ele só `active` é conhecido. O agent lê `
 (só quando a ponte respondeu a versão) e devolve `break: {active, in_s, left_s}`, ausente quando a
 ponte não responde.
 
+**Janelas de mensagem do cliente** (Chronicle Link 1.19.0, FEL-134). Quando um script desiste de
+alcançar um NPC ou objeto, o Microbot pausa todos os scripts (`Microbot.pauseAllScripts`) e abre um
+`JOptionPane` modal ("Your bot tried to interact with an NPC for 3 times but failed…"). A thread do
+script fica esperando o OK. Num worker ninguém vê essa janela, e o screenshot da API mostra só o
+canvas. A ponte ganha duas rotas, com as mesmas checagens das outras:
+
+- `GET /bridge/client/messages`: o texto das janelas abertas, `{"messages": [...]}`;
+- `POST /bridge/client/messages/close`: fecha as janelas e, quando fechou alguma, tira a pausa
+  `pauseAllScripts` que veio com ela. A pausa da barra do cliente (`ScriptPauseController`) é outra
+  e continua.
+
+A cada volta da supervisão de um run que delega a um plugin (job `plugin`, treino, quest), o agent
+lê as janelas. Se houver alguma, ele a fecha, anota o texto na trilha e termina o run `failed` com
+esse texto, em vez de esperar o teto do run. Uma ponte anterior à 1.19.0 responde 404 e nada muda.
+
 **Verificação:**
 
 - JUnit (`CollectionLogTest`, `AgentBridgeTest`): os ids iguais aos do `ChatCommandsPlugin`, título

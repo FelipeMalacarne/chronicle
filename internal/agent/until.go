@@ -232,10 +232,39 @@ func (e *Executor) pluginWork(className string, key entities.ObjectiveKey, befor
 	}
 }
 
+// clientMessage closes the message windows the client shows and returns
+// their text. Microbot opens one, after pausing every script, when a script
+// gives up reaching an NPC or an object; on a worker nobody sees it, and the
+// run would wait for its timeout (FEL-134). The bridge closes the window and
+// lifts that pause. A bridge before 1.19.0 has no such route: nothing to read.
+func (e *Executor) clientMessage(ctx context.Context) (string, bool) {
+	if e.Bridge == nil {
+		return "", false
+	}
+	raw, err := e.Bridge.JSON(ctx, http.MethodGet, "/bridge/client/messages", nil, nil, 10*time.Second)
+	if err != nil {
+		return "", false
+	}
+	var open struct {
+		Messages []string `json:"messages"`
+	}
+	if json.Unmarshal(raw, &open) != nil || len(open.Messages) == 0 {
+		return "", false
+	}
+	msg := clip(strings.Join(open.Messages, " | "), 300)
+	if _, err := e.Bridge.JSON(ctx, http.MethodPost, "/bridge/client/messages/close", nil, map[string]any{}, 10*time.Second); err != nil {
+		e.note(RunRunning, "o cliente mostrou uma mensagem e pausou os scripts: "+msg+" (a janela não fechou: "+err.Error()+")")
+	} else {
+		e.note(RunRunning, "o cliente mostrou uma mensagem e pausou os scripts: "+msg+" (janela fechada)")
+	}
+	return msg, true
+}
+
 // superviseUntil watches started work until the server proves the
 // objective. It fails when the work stops by itself and no proof comes
 // within the grace period, when it says it failed, when the client stops
-// answering, on the timeout and on a cancel; the caller stops the work
+// answering, when the client shows a message (clientMessage), on the timeout
+// and on a cancel; the caller stops the work
 // when it still runs.
 func (e *Executor) superviseUntil(ctx context.Context, w untilWork, until RunUntil, timeout time.Duration) (untilEnd, error) {
 	met := e.metSignal()
@@ -252,6 +281,9 @@ func (e *Executor) superviseUntil(ctx context.Context, w untilWork, until RunUnt
 				return untilProven, nil
 			}
 			return untilProvenAfterStop, nil
+		}
+		if msg, ok := e.clientMessage(ctx); ok {
+			return 0, fmt.Errorf("the client paused every script with a message: %s", msg)
 		}
 		if stoppedAt.IsZero() {
 			running, ok := w.running(ctx)

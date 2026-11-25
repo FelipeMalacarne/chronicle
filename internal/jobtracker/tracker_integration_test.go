@@ -330,6 +330,45 @@ func TestStallByDeadlinePostgres(t *testing.T) {
 	}
 }
 
+// A job stalled by its deadline whose run still goes is running again at the
+// metric's next change (FEL-133); once the run ended, a change leaves it
+// stalled, waiting for another run.
+func TestStalledJobResumesWhileItsRunGoesPostgres(t *testing.T) {
+	w := setup(t)
+	w.varp(281, 3)
+	j := w.create(job.KindPlugin, `{"type":"varp","id":281,"min":1000}`, time.Minute)
+	w.run("aa11bb22cc33dd44", agent.RunRunning, j.ID, nil)
+	w.step()
+	w.advance(61 * time.Second)
+	w.step()
+	if got := w.get(j.ID); got.State != job.Stalled {
+		t.Fatalf("after the deadline = %+v", got)
+	}
+
+	w.varp(281, 650)
+	w.step()
+	got := w.get(j.ID)
+	if got.State != job.Running || got.Deadline == nil || got.Progress == nil || got.Progress.Current != 650 {
+		t.Fatalf("after progress with the run going = %+v", got)
+	}
+	if n := count(w.types(j.ID), "job.started"); n != 2 {
+		t.Fatalf("job.started written %d times: %v", n, w.types(j.ID))
+	}
+
+	w.advance(61 * time.Second)
+	w.step()
+	w.run("aa11bb22cc33dd44", agent.RunFailed, j.ID, nil)
+	w.step()
+	if got = w.get(j.ID); got.State != job.Stalled {
+		t.Fatalf("after the run failed = %+v", got)
+	}
+	w.varp(281, 700)
+	w.step()
+	if got = w.get(j.ID); got.State != job.Stalled || got.Progress.Current != 650 {
+		t.Fatalf("a stalled job without a run moved = %+v", got)
+	}
+}
+
 // A run that ends before the goal is on the facts stalls the job; the fact
 // that proves it can still come after.
 func TestRunEndedBeforeTheProofPostgres(t *testing.T) {

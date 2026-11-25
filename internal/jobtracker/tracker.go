@@ -80,6 +80,7 @@ type Jobs interface {
 	QueuedWithActiveRun(ctx context.Context) ([]job.Job, error)
 	StalledBefore(ctx context.Context, cutoff time.Time) ([]job.Job, error)
 	LastRunState(ctx context.Context, id string) (state string, ok bool, err error)
+	ActiveRuns(ctx context.Context, id string) ([]string, error)
 }
 
 // Log is the event log (internal/store/eventlog).
@@ -411,7 +412,8 @@ func saleRunLives(runState string) bool {
 }
 
 // evaluate looks at the account's running and stalled jobs on its facts now:
-// a goal met on live facts ends the job, a changed metric is its progress.
+// a goal met on live facts ends the job, a changed metric is its progress (and
+// brings a stalled job whose run still goes back to running).
 func (t *Tracker) evaluate(ctx context.Context, account string) {
 	jobs, err := t.Jobs.Active(ctx, account)
 	if err != nil || !hasEvaluable(jobs) {
@@ -448,14 +450,37 @@ func (t *Tracker) evaluate(ctx context.Context, account string) {
 			}
 			continue
 		}
-		if j.State != job.Running || j.Metric == nil {
+		if j.Metric == nil {
 			continue
 		}
-		if p, changed := job.Observe(*j.Metric, j.Progress, *facts.State, now); changed {
-			if err := t.Jobs.Progress(ctx, j.ID, *p, j.DeadlineFrom(p.At)); err != nil && !errors.Is(err, storejobs.ErrState) {
-				t.log().Warn("jobs: progress", "job", j.ID, "err", err)
-			}
+		p, changed := job.Observe(*j.Metric, j.Progress, *facts.State, now)
+		if !changed {
+			continue
 		}
+		if j.State == job.Stalled {
+			t.resume(ctx, j, p)
+			continue
+		}
+		if err := t.Jobs.Progress(ctx, j.ID, *p, j.DeadlineFrom(p.At)); err != nil && !errors.Is(err, storejobs.ErrState) {
+			t.log().Warn("jobs: progress", "job", j.ID, "err", err)
+		}
+	}
+}
+
+// resume moves a stalled job back to running when its metric changed while a
+// run of it still goes: the stall was the deadline, not the run's end, and the
+// run kept working. A stalled job without a run waits for another run.
+func (t *Tracker) resume(ctx context.Context, j job.Job, p *job.Progress) {
+	runs, err := t.Jobs.ActiveRuns(ctx, j.ID)
+	if err != nil {
+		t.log().Warn("jobs: active runs", "job", j.ID, "err", err)
+		return
+	}
+	if len(runs) == 0 {
+		return
+	}
+	if _, err := t.Jobs.Start(ctx, j.ID, "progress while its run goes", p, j.DeadlineFrom(p.At)); err != nil && !errors.Is(err, storejobs.ErrState) {
+		t.log().Warn("jobs: resume", "job", j.ID, "err", err)
 	}
 }
 

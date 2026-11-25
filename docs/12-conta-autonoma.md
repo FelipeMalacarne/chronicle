@@ -266,13 +266,14 @@ porque as moedas precisam estar no inventário.
 
 O run terminar `done` quer dizer que a oferta encheu e foi coletada no inventário, nunca que a
 tarefa está feita. Quem prova é o ingest. `GET /api/microbot/task` avalia a tarefa nos fatos da
-conta. Uma compra termina quando as posses provam `item:<id>x<qty>`. Uma venda é provada quando o run
-terminou `done` e o inventário ao vivo, com baseline completa, não tem o item e tem pelo menos as
-moedas que o run carrega (`RunTask.coinsAtLeast`, `rules.SaleProven`).
+conta. Uma compra termina quando as posses provam `item:<id>x<qty>`. Uma venda é provada quando o
+inventário ao vivo, com baseline completa, não tem o item e tem pelo menos as moedas que o run
+carrega (`RunTask.coinsAtLeast`, a regra `job.SaleGoal`, que diz o mesmo que `rules.SaleProven`).
 
-Essa prova é relativa às moedas de antes da venda e some quando a conta gasta as moedas. Por isso o
-servidor grava a prova no momento em que a vê (`sale_proofs`, migração 0030, uma linha por plano e
-chave de tarefa). O plano conta a venda como cumprida a partir daí (`plan.Input.SalesProven`):
+Essa prova é relativa às moedas de antes da venda e some quando a conta gasta as moedas. Por isso a
+venda é um job `ge_sell` (seção 13): o job tracker o leva a `succeeded` no momento em que vê a prova
+e o job fica. O plano conta a venda como cumprida a partir daí (`plan.Input.SalesProven`, lido dos
+jobs, o mais novo de cada tarefa que não foi cancelado):
 
 | Inventário ao vivo | Venda provada por um run | `sold` |
 |---|---|---|
@@ -572,7 +573,7 @@ o nível de combate recomendado e o loadout (seção 5.5).
 | `conductor_state (account_id, state, task_key, run_id, escalation_id, since)` | Em que estado o condutor está para cada conta (seção 12.5) | 12.5 |
 | `escalations (id, account_id, quest, varbit_value, step_class, step_text, status, …)` e `escalation_attempts (escalation_id, rung, model, actions, tokens, outcome)` | Cada passo travado e cada tentativa de cada degrau; é também a tabela da medição da seção 7.4 | 5.7, 7.4 |
 | `item_prices (item_id, high, high_at, low, low_at, buy_limit, members, source, fetched_at)` | O último preço de cada item, da API da wiki (`/latest` e `/mapping`); não é de nenhuma conta. Migração 0028 | 6.3 |
-| `sale_proofs (account_id, plan_id, task_key, run_uid, item_id, coins_at_least, coins_seen, proven_at)` | A venda no GE que o ingest provou, por plano e chave de tarefa: mantém o `ge_sell` cumprido depois que as moedas são gastas. Migração 0030 | 6.2 |
+| `jobs`, `events`, `event_cursors`, `routine_runs.job_id` (migração 0031) | Os jobs, o log de eventos e os cursores dos consumidores (seção 13); a venda no GE provada é um job `ge_sell` `succeeded`, que trocou a tabela `sale_proofs` da 0030 | 13, 6.2 |
 
 O ingest tem a faceta `membership` (os dias restantes e a marca de membro, migração 0028) e ganha a
 faceta `ge` (as ofertas abertas e o que está para coletar), pelo mesmo contrato v1. As duas entram
@@ -656,7 +657,7 @@ O Chronicle já tem metade disso com outros nomes:
 - um **run** (`routine_runs`, doc 08) já tem estado (`running`, `done`, `failed`, `canceled`), início,
   fim, trilha (`run_events`) e resultado; para o `train` e a `quest`, o agent liga o plugin no começo
   e desliga no fim, então o plugin já é um detalhe do run;
-- o fim de um run com `until` já é provado pelo servidor a partir do ingest (`internal/rununtil`);
+- o fim de um run com `until` já era provado pelo servidor a partir do ingest (o antigo `internal/rununtil`, agora o job tracker);
 - o ingest já é append-only (`observations`), e `player_state` é a projeção dele;
 - `internal/events` já entrega sinais de invalidação para a web (`/api/events`).
 
@@ -665,7 +666,7 @@ Falta:
 1. **a intenção separada da tentativa.** "Sair da Tutorial Island" ou "Mining 15" é um job; cada vez
    que o agent tenta, é um run. Um job travado ganha outro run e continua o mesmo job;
 2. **progresso medido**, tirado dos fatos, que também diz quando um job travou;
-3. **eventos duráveis no servidor.** Hoje o `rununtil` acompanha os fatos por conta própria, e a prova
+3. **eventos duráveis no servidor.** O antigo `rununtil` acompanhava os fatos por conta própria, e a prova
    de uma venda só é gravada quando alguém lê o status do run (FEL-123).
 
 ### 13.2 Job
@@ -753,8 +754,47 @@ O travamento por tempo não tem fato que o dispare. O job tracker guarda o prazo
 | `events`, `event_cursors` | o log e os cursores (seção 13.4) |
 | `conductor_state.job_id` | substitui `task_key` e `run_id` da seção 12.3 |
 
-`sale_proofs` (migração 0030) deixa de ser necessária quando o job tracker existir: a prova de uma
-venda passa a ser o job `succeeded`.
+`sale_proofs` (migração 0030) foi trocada pelo job `succeeded` na migração 0031 (seção 13.8): a
+tabela cai e as provas que ela ainda tinha viram jobs `ge_sell` já cumpridos.
+
+### 13.8 Como ficou
+
+O que a implementação decidiu onde as seções acima não diziam (`internal/core/job`,
+`internal/store/jobs`, `internal/store/eventlog`, `internal/jobtracker`):
+
+- **Meta (`goal`).** Tem três formas em JSON: uma chave de objetivo (`"skill:mining>=15"`), uma regra
+  do motor (`{"type": "varp", "id": 281, "min": 1000}`) ou `{"task": {...}}`, a tarefa tipada cuja
+  terminação o painel avalia (posição numa área, loadout pronto). A venda no GE é a regra
+  `não item_owned(item, inventory) e item_owned(moedas >= coinsAtLeast, inventory)`, que prova só com
+  o inventário ao vivo e baseline completa. `succeeded` exige um `job.Proof`, que só uma avaliação
+  `met` sem fato restaurado (`stale`) produz; nenhum outro caminho do código leva um job a esse estado.
+- **Métrica.** `varp`, `varbit` ou `skill_xp`, tirada da meta quando o pedido não a traz: a varp ou
+  varbit com `min`/`eq`, ou o XP do nível de uma chave de skill. Um job sem métrica (quest, venda,
+  deslocamento) só trava quando o run termina sem a meta provada, nunca por prazo.
+- **Estados.** Além da tabela da seção 13.3, `stalled` vai para `succeeded`: um run que termina antes
+  de o ingest mostrar a meta trava o job, e o fato que a prova pode chegar depois.
+- **Eventos.** A transição para `running` grava `job.started` (a seção 13.4 não nomeava esse evento).
+  O job tracker lê também `run.started`, que é o que tira o job de `queued` ou de `stalled`.
+  `fact.changed` lista as chaves que mudaram por faceta (até 100 por faceta) e não sai para a posição e
+  os timers, que mudam a cada push; o job tracker avalia as metas de posição a cada 30 s e quando o
+  run termina. Depois do commit, quem grava acorda os consumidores pelo hub (`events.TypeLog`,
+  `SubscribeAll`), que nunca chega ao SSE da web.
+- **Retomada.** O cursor `job_tracker` anda depois de cada lote, e os efeitos do lote vêm antes dele.
+  Um evento entregue de novo não muda nada, porque cada tratamento lê o estado de novo. O prazo de
+  travamento fica em `jobs.deadline_at` (a última mudança da métrica mais `stall_after`), então
+  sobrevive a um reinício; o job tracker dorme até o menor prazo.
+- **`run_until`.** Quando um job fica `succeeded` com um run ainda ativo e a meta é uma chave de
+  objetivo, o job tracker manda `run_until` ao agent, uma vez por run e auditado com o ator
+  `job_tracker`. Um run que o dono começa por "Fazer agora" com `until`, ou que um gatilho ou uma
+  recorrente começa, vira um job `plugin` adotado quando o `routinesync` grava o run (fonte `owner` ou
+  `routine`), para o mesmo caminho servir a todos.
+- **Run e job.** A tarefa tipada leva `jobId` até o agent (`TaskRunParams`, `RunTask`) e volta no
+  relatório do run, que `routines.RecordRun` liga a `routine_runs.job_id`. Não há restrição no banco de
+  um run ativo por job: o servidor cria um job por run.
+- **Colunas a mais em `jobs`.** `plan_id` e `task_key` (o plano lê os `ge_sell` por elas), `deadline_at`
+  e a fonte `routine`.
+- **Fora do escopo.** O despacho do tipo `plugin` (FEL-125), o condutor movido por eventos (FEL-126), a
+  escada e o SSE da web com os eventos de job.
 
 ### 13.7 A validação: a Tutorial Island da AppendOnly
 

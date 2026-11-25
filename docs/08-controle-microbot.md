@@ -825,18 +825,18 @@ destino da viagem):
 
   Numa chave de skill, a trilha anota o nível que o cliente mostra a cada minuto, quando muda
   ("Fishing: nível 75 no cliente"): é progresso, nunca a prova.
-- **No servidor:** `internal/rununtil`. O agent já manda cada run pelo link (mensagens `event`, doc
-  11, seção 16), agora com o `until`. O vigia segue cada run com `until` que não terminou:
-  - avalia a chave sobre os fatos da conta (`progress.EvaluateObjective`, os mesmos do `GET
-    /api/microbot/task`) quando o run aparece, a cada evento de progresso da conta (ingest, sync do
-    hiscores, marca do dono) e a cada 30 s;
+- **No servidor:** o job tracker (`internal/jobtracker`, doc 12 seção 13; era o `internal/rununtil`).
+  O agent já manda cada run pelo link (mensagens `event`, doc 11, seção 16), agora com o `until`; o
+  `routinesync` grava o run e, quando ele espera uma chave sem job, adota um job para ele. O job
+  tracker segue o log de eventos:
+  - avalia a meta do job sobre os fatos da conta (`progress.EvaluateObjective`, os mesmos do `GET
+    /api/microbot/task`) quando o run começa, a cada mudança de fato da conta e a cada 30 s;
   - só conta `met` com fato vivo: um item provado só pelo espelho restaurado do banco não basta
     (CLAUDE.md, regra 8);
-  - `met`: manda `run_until` ao agent que serve a conta, auditado com a origem `server` e o ator
-    `wait_until`;
-  - para de seguir quando o run termina, quando o agent diz que não tem mais aquele run, ou passadas
-    13 h (o agent morreu de vez). Se o agent cai, a conexão nova manda o histórico de novo e o vigia
-    retoma.
+  - `met`: leva o job a `succeeded` e manda `run_until` ao agent que serve a conta, auditado com a
+    origem `server` e o ator `job_tracker`;
+  - o `run_until` só vai uma vez por run, e para quando o run termina ou o agent diz que não tem mais
+    aquele run. Se o agent cai, a conexão nova manda o histórico de novo e o job tracker retoma.
 - **Rotinas:** o `until` vai no `run` dos gatilhos e das recorrentes, no banco e no
   `routines_sync`. Um agent que não declara `run_until` não recebe as rotinas com `until`: ele
   recusaria a lista inteira pelo campo desconhecido. A web mantém o `until` ao salvar de novo uma

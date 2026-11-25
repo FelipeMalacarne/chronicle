@@ -74,6 +74,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `chronicle profiles list\|show\|put\|delete\|use\|account` | docs/11 section 15: the workers' client profiles (plugins and RuneLite settings, optionally on a model) over `/api/client-profiles` and `/api/accounts/client`; `show` prints the JSON `put -f` reads. A profile reaches a worker on its next start or restart, never a running client |
 | `chronicle recording [--since 2h] [-o file]` / `recording delete --yes` | docs/10 section 11: the demonstration Chronicle Link recorded with "Record demonstration" on (`GET /api/account/recording`), printed or written as the JSON the content MCP's `propose_tasks` reads; `delete` drops it on the server (all, or `--recording <id>`). Never delete the owner's recording unasked |
 | `chronicle plans` / `plans create -f plan.json` / `plans use <id\|route>` / `plans delete <id> --yes` | docs/10 section 9: the account's plans over `/api/plans` (the route, goal and custom plans; the custom plans' screen is phase 5, so a plan is a JSON file of items: a (guide, step), a recipe or a task) and the one it follows |
+| `chronicle jobs` / `jobs show <id>` / `jobs cancel <id>` | docs/12 section 13: the account's jobs over `/api/jobs` (state and measured progress; `show` adds the runs and events; `cancel` also stops the run when it is the agent's current one). A task run creates its job; the job tracker proves it from the ingest |
 | `chronicle task` / `task run --yes [--supervised] [--wait 10m]` / `task status` / `task cancel` | docs/10 phases 3 to 5: the next typed task of the account's active plan (`GET /api/plan/next`), its run by the account's agent (`POST /api/microbot/task`: the closed command `task_run`, executed by Chronicle Link's executor, a `train` delegated to the plugin it names and stopped when the server proves the level, `run_until`, or a `quest` delegated to the client's Quest Helper, E19, stopped when the server proves it finished), and the ingest's proof of its termination (`GET /api/microbot/task`). `run` acts in game on the account: never run it on the owner's account unasked |
 | `chronicle mta --want <ids> [--own <ids>] [--points t,g,e,a] [--magic N]` / `mta rewards` | Mage Training Arena calculator over `POST /api/mta/calculate` and `GET /api/mta/rewards` (stateless, wears the account routes' auth; `internal/core/mta`): what to buy, the pizazz points missing per room and the law/nature/cosmic runes; the account MCP has the same as `mta_calculate` and `mta_rewards`. Its screen is the Mage Training Arena card of Conta › Personagem (`web/src/lib/v6/MtaCard.svelte`), built at the owner's request before any canvas artboard exists: design it in the canvas next (rule 11); it fills the points from the `minigame` facet Chronicle Link reads in the arena (`mta.<room>`, `/api/account/state`) |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
@@ -103,6 +104,9 @@ internal/core/        PURE domain (no DB/HTTP imports):
                       propose/: a recorded stretch -> proposed tasks for a step (ids resolved by the catalogs,
                       ambiguity reported, never guessed)
   rules/              rule engine incl. item_owned over item holdings
+  job/                jobs (docs/12 section 13): the state machine, the goal (an objective key, a rule or a task)
+                      the rule engine evaluates, the metric and progress, stall_after by kind; Proof is the only
+                      thing that makes a job succeed
   planning/           next-leg readiness (ownership vs carried loadout vs bank instructions)
   progress/           objective verdicts (latched), derived step status, implied cascade, cursor
   mta/                Mage Training Arena calculator: chosen rewards + points held -> points missing per room and
@@ -139,7 +143,11 @@ internal/store/       repositories (activity: the XP observations behind the lev
                       PlayerState from player_state, and the projection observations -> player_state; syncrun: hiscores runs, backoff, scheduler; rhythm: the series the rhythm reads; workers: sealed game sessions, workers'
                       desired state, client profiles; routines: triggers and the runs' history; recording: the
                       owner's read and delete of the demonstration recording, which only the ingest writes;
-                      plans: the goal and custom plans, the account's active plan and the proven GE sales;
+                      plans: the goal and custom plans and the account's active plan;
+                      jobs: the jobs and their moves (Succeed takes a job.Proof), whose GE sales the plan reads;
+                      eventlog: the append-only event log and the consumers' cursors, written in the transaction
+                      of the change that causes each event (state.Project writes fact.changed, routines.RecordRun
+                      run.started and run.ended, jobs the job.* ones);
                       prices: item_prices and its refresh scheduler);
                       internal/store/db is sqlc OUTPUT
 internal/auth/        OIDC web login (PKCE flow, sealed state cookie, policy), JWT access tokens of the native
@@ -161,8 +169,11 @@ internal/workerctl/   reconciler of the managed workers (database -> cluster) an
 internal/routinesync/ the routines' server side (docs/11 section 16): on every agent connection the account's
                       triggers (routines_sync), and every run an agent reports (event frames) to the database
                       and the audit; serve only
-internal/rununtil/    a run's wait_until, server side (docs/10 phase 4): follows each reported run that waits for
-                      an objective key and sends run_until once the account's facts prove it; serve only
+internal/jobtracker/  the jobs' server side (docs/12 section 13): follows the durable event log from its cursor
+                      (fact.changed, run.started, run.ended), evaluates each active job's goal and metric on the
+                      account's facts, is the only piece that ends a job as succeeded (a live fact only), stalls
+                      by deadline, writes membership.low and sends the agent run_until for the runs whose job it
+                      proved (a run's wait_until, docs/10 phase 4); serve only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor (one per game
                       client: an attached agent may drive several, each with its own account, lock and run,
                       docs/10 phase 5) and outbound websocket, the server-side Link (each client its own
@@ -216,7 +227,9 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0029 accounts.guide_id nullable: an account without a route follows its active plan;
                       the routes that read its own route answer 409 "account has no route",
                       0030 sale_proofs: Grand Exchange sales the ingest proved, per (plan, task key), which keep a
-                      ge_sell met once its coins are spent)
+                      ge_sell met once its coins are spent,
+                      0031 jobs, events (append-only log), event_cursors and routine_runs.job_id; sale_proofs is
+                      dropped, a proven sale is a succeeded ge_sell job)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

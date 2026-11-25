@@ -61,7 +61,7 @@ func (s State) Final() bool { return s == Succeeded || s == Failed || s == Cance
 // fact that proves it can come after.
 var transitions = map[State][]State{
 	Queued:  {Running, Canceled},
-	Running: {Succeeded, Stalled, Canceled},
+	Running: {Succeeded, Stalled, Failed, Canceled},
 	Stalled: {Running, Succeeded, Failed, Canceled},
 }
 

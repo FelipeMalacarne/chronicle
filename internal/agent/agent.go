@@ -582,7 +582,9 @@ func (a *Agent) session(ctx context.Context) error {
 func (a *Agent) hello(resp *http.Response) (h Hello, linked []Client, tagged bool) {
 	h = a.Hello
 	h.Commands = Commands
-	h.Features = AgentFeatures
+	if h.Features == nil {
+		h.Features = AgentFeatures
+	}
 	h.Clients = nil
 	all := a.clients()
 	if len(a.Clients) == 0 {

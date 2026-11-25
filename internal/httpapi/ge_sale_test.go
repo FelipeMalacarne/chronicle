@@ -66,7 +66,16 @@ func (g *geStandingGame) JSON(ctx context.Context, method, path string, q url.Va
 // inventory; its job is proven by the tracker only once the ingest shows the
 // item gone and the run's coins in the inventory, and that proof, the job
 // succeeded, keeps the sale met after the coins are spent.
-func TestGESaleProofPostgres(t *testing.T) {
+func TestGESaleProofPostgres(t *testing.T) { geSaleProof(t, nil) }
+
+// An agent that predates the job_id feature refuses the job id in task_run, so
+// the server does not send it, and links the run it reports to the job it
+// queued for the task.
+func TestGESaleProofOldAgentPostgres(t *testing.T) {
+	geSaleProof(t, []string{agent.AgentFeatureRecurringRetry})
+}
+
+func geSaleProof(t *testing.T, features []string) {
 	ctx := context.Background()
 	pool := authTestPool(ctx, t)
 	cnt, err := content.Load(filepath.Join("..", "..", "content"))
@@ -105,7 +114,7 @@ func TestGESaleProofPostgres(t *testing.T) {
 	t.Cleanup(srv.Close)
 	actx, cancel := context.WithCancel(ctx)
 	t.Cleanup(cancel)
-	a := &agent.Agent{URL: srv.URL, Log: quiet, Hello: agent.Hello{Host: "zaros", Account: "acc_ge"}, VNCAddr: "127.0.0.1:1",
+	a := &agent.Agent{URL: srv.URL, Log: quiet, Hello: agent.Hello{Host: "zaros", Account: "acc_ge", Features: features}, VNCAddr: "127.0.0.1:1",
 		Executor: &agent.Executor{Game: &geStandingGame{}, Bridge: &doneBridge{}, Home: t.TempDir(), RunPoll: 5 * time.Millisecond}}
 	go func() { _ = a.Run(actx) }()
 	waitLinked(t, link, 1)
@@ -224,11 +233,17 @@ func TestGESaleProofPostgres(t *testing.T) {
 	// inventory, which the plan reads from then on.
 	inventory(coreingest.QuantityMap{"995": 13100})
 	eventually(t, "the sale proven", func() bool { st = status(); return st.Proven })
-	if st.Proof.State != "met" || st.Run.Task.JobID == "" {
+	if st.Proof.State != "met" || (features == nil) != (st.Run.Task.JobID != "") {
 		t.Fatalf("coins arrived = %+v, run task %+v", st.Proof, st.Run.Task)
 	}
-	// The sale is the job the run attempted, proven by the tracker.
-	if _, body, _ := call(t, "GET", srv.URL+"/api/jobs/"+st.Run.Task.JobID+"?account=acc_ge", ""); body["job"].(map[string]any)["state"] != "succeeded" ||
+	// The sale is the job the run attempted, proven by the tracker, and it is
+	// the only job: no second one was adopted for the run.
+	_, listed, _ := call(t, "GET", srv.URL+"/api/jobs?account=acc_ge", "")
+	jobs, _ := listed["jobs"].([]any)
+	if len(jobs) != 1 {
+		t.Fatalf("jobs = %v", listed)
+	}
+	if _, body, _ := call(t, "GET", srv.URL+"/api/jobs/"+jobs[0].(map[string]any)["id"].(string)+"?account=acc_ge", ""); body["job"].(map[string]any)["state"] != "succeeded" ||
 		body["job"].(map[string]any)["kind"] != "ge_sell" || len(body["runs"].([]any)) != 1 {
 		t.Fatalf("the sale's job = %v", body)
 	}

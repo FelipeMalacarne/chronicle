@@ -208,3 +208,25 @@ func TestStall(t *testing.T) {
 		}
 	}
 }
+
+func TestGoalUntil(t *testing.T) {
+	for _, c := range []struct {
+		goal string
+		want string
+		ok   bool
+	}{
+		{`"skill:mining>=15"`, "skill:mining>=15", true},
+		{`{"type":"varp","id":281,"min":1000}`, "varp:281>=1000", true},
+		{`{"type":"varbit","id":4,"min":2}`, "varbit:4>=2", true},
+		{`{"type":"varp","id":281,"eq":1000}`, "", false},
+		{`{"type":"varp","id":281,"bit":3,"min":1}`, "", false},
+	} {
+		g, err := ParseGoal([]byte(c.goal))
+		if err != nil {
+			t.Fatalf("%s: %v", c.goal, err)
+		}
+		if got, ok := g.Until(); got != c.want || ok != c.ok {
+			t.Errorf("%s: Until = %q, %v; want %q, %v", c.goal, got, ok, c.want, c.ok)
+		}
+	}
+}

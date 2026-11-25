@@ -1,8 +1,11 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"os"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -19,7 +22,7 @@ func newJobsCmd() *cobra.Command {
 	)
 	cmd := &cobra.Command{
 		Use:   "jobs",
-		Short: "The account's jobs: state and measured progress (show <id> for its runs and events, cancel <id>)",
+		Short: "The account's jobs: state and measured progress (show <id> for its runs and events, create -f, run <id>, cancel <id>)",
 		Args:  cobra.NoArgs,
 		RunE: runClient(func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()
@@ -40,7 +43,7 @@ func newJobsCmd() *cobra.Command {
 	}
 	f.add(cmd, true)
 	cmd.Flags().StringVar(&state, "state", "", "only jobs in this state (queued, running, stalled, succeeded, failed, canceled)")
-	cmd.AddCommand(newJobsShowCmd(), newJobsCancelCmd())
+	cmd.AddCommand(newJobsShowCmd(), newJobsCancelCmd(), newJobsCreateCmd(), newJobsRunCmd())
 	return cmd
 }
 
@@ -100,6 +103,78 @@ func newJobsCancelCmd() *cobra.Command {
 		}),
 	}
 	f.add(cmd, false)
+	return cmd
+}
+
+func newJobsCreateCmd() *cobra.Command {
+	var (
+		f    clientFlags
+		file string
+	)
+	cmd := &cobra.Command{
+		Use:   "create -f <job.json>",
+		Short: "Queue a job from its JSON (kind, spec, goal; POST /api/jobs); nothing runs until `jobs run`",
+		Args:  cobra.NoArgs,
+		RunE: runClient(func(cmd *cobra.Command, _ []string) error {
+			if file == "" {
+				return errors.New("-f <job.json> is required")
+			}
+			raw, err := os.ReadFile(file) //nolint:gosec // the owner's own file
+			if err != nil {
+				return err
+			}
+			ctx := cmd.Context()
+			c, err := f.connect(ctx)
+			if err != nil {
+				return err
+			}
+			j, err := c.CreateJob(ctx, raw)
+			if err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s: %s\n", j.ID, j.State)
+			return nil
+		}),
+	}
+	f.add(cmd, false)
+	cmd.Flags().StringVarP(&file, "file", "f", "", "the job, as JSON")
+	return cmd
+}
+
+func newJobsRunCmd() *cobra.Command {
+	var (
+		f          clientFlags
+		yes        bool
+		supervised bool
+		timeout    time.Duration
+	)
+	cmd := &cobra.Command{
+		Use:   "run <id> --yes",
+		Short: "Start a queued plugin job on the account's agent: it turns the plugin on in the game client",
+		Long: `Sends the job to the account's agent, which turns the job's plugin on in the
+game client with the job's settings and keeps it on until the ingest proves the
+job's goal, then turns it off. It acts in game on the account, so it needs --yes.`,
+		Args: cobra.ExactArgs(1),
+		RunE: runClient(func(cmd *cobra.Command, args []string) error {
+			if !yes {
+				return errors.New("o job age no jogo, na conta: confirme com --yes")
+			}
+			ctx := cmd.Context()
+			c, err := f.connect(ctx)
+			if err != nil {
+				return err
+			}
+			if err := c.RunJob(ctx, args[0], supervised, int(timeout/time.Second)); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s: enviado ao agent; acompanhe com `chronicle jobs show %s`\n", args[0], args[0])
+			return nil
+		}),
+	}
+	f.add(cmd, false)
+	cmd.Flags().BoolVar(&yes, "yes", false, "confirm: the job acts in game")
+	cmd.Flags().BoolVar(&supervised, "supervised", false, "the owner is watching (an HCIM with a death risk runs only so)")
+	cmd.Flags().DurationVar(&timeout, "timeout", 0, "bound the run (1m to 12h; the agent's default, 2h, when unset)")
 	return cmd
 }
 

@@ -11,6 +11,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	"github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
@@ -144,6 +145,27 @@ func (g Goal) ObjectiveKey() (entities.ObjectiveKey, bool) {
 		return entities.ObjectiveKey{}, false
 	}
 	return *g.key, true
+}
+
+// Until is the goal as a run waits for it (the agent's run_until): the
+// objective key, or a var label for a varp or varbit that must reach a
+// minimum. False for a goal the agent cannot wait on (a task's termination, a
+// rule of another shape).
+func (g Goal) Until() (string, bool) {
+	if g.key != nil {
+		return g.key.String(), true
+	}
+	switch v := g.rule.(type) {
+	case content.VarpRule:
+		if v.Min != nil && v.Eq == nil && v.Bit == nil {
+			return execspec.VarUntil(MetricVarp, v.ID, int64(*v.Min)), true
+		}
+	case content.VarbitRule:
+		if v.Min != nil && v.Eq == nil && v.Bit == nil {
+			return execspec.VarUntil(MetricVarbit, v.ID, int64(*v.Min)), true
+		}
+	}
+	return "", false
 }
 
 // Metric is the metric a goal implies: a skill's XP up to the level, a varp

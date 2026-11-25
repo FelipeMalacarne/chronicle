@@ -259,6 +259,9 @@
     },
     {
       "type": "ge_sell"
+    },
+    {
+      "type": "plugin"
     }
   ],
   "delegated": [
@@ -284,6 +287,21 @@
         "quest": "quest:cooks_assistant",
         "name": "Cook's Assistant",
         "helper": "Cook's Assistant"
+      }
+    },
+    {
+      "type": "plugin",
+      "plugin": {
+        "plugin": "net.runelite.client.plugins.microbot.tutorialisland.TutorialIslandPlugin",
+        "name": "Tutorial Island",
+        "config": [
+          {
+            "group": "MicroTutIsland",
+            "key": "toggleMusic",
+            "value": "false"
+          }
+        ],
+        "until": "varp:281>=1000"
       }
     },
     {

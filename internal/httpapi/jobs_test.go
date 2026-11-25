@@ -82,7 +82,7 @@ func (memJobEvents) OfJob(_ context.Context, account, id string, _ int) ([]event
 	return []eventlog.Event{{ID: 1, Account: account, Type: eventlog.TypeJobQueued, Subject: id, Payload: json.RawMessage(`{}`)}}, nil
 }
 
-const newJob = `{"kind":"plugin","goal":{"type":"varp","id":281,"min":1000}}`
+const newJob = `{"kind":"plugin","goal":{"type":"varp","id":281,"min":1000},"spec":{"type":"plugin","plugin":{"plugin":"net.runelite.client.plugins.microbot.tutorialisland.TutorialIslandPlugin"}}}`
 
 func jobsServer(t *testing.T) (*httptest.Server, *memJobs) {
 	t.Helper()

@@ -46,6 +46,7 @@ func (s *Server) jobRoutes() {
 	account("GET /api/jobs/{id}", s.handleJob)
 	account("POST /api/jobs", s.handleCreateJob)
 	account("POST /api/jobs/{id}/cancel", s.handleCancelJob)
+	account("POST /api/jobs/{id}/run", s.handleRunJob)
 }
 
 // jobView is a job as the API shows it.
@@ -170,9 +171,9 @@ type createJobRequest struct {
 
 // handleCreateJob queues a job of the owner's, never one of a plan's task (the
 // plan reads a ge_sell job's proof by its plan and task key; the server's task
-// run is the only one that sets them). Running it is the conductor's
-// work (and, for a plugin, the dispatch of the client's profile): this only
-// records the intent for the tracker to prove.
+// run is the only one that sets them). Running it is the conductor's work,
+// or the owner's POST /api/jobs/{id}/run for a plugin job: this only records
+// the intent for the tracker to prove.
 func (s *Server) handleCreateJob(w http.ResponseWriter, r *http.Request) {
 	account, ok := s.accountParam(w, r)
 	if !ok {
@@ -182,7 +183,15 @@ func (s *Server) handleCreateJob(w http.ResponseWriter, r *http.Request) {
 	if !decodeBody(w, r, &req) {
 		return
 	}
-	j, err := job.New(account, req.Kind, req.Spec, req.Goal, req.Metric, time.Duration(req.StallAfterS)*time.Second, job.SourceOwner)
+	spec := req.Spec
+	if req.Kind == job.KindPlugin {
+		var err error
+		if spec, err = pluginJobSpec(req.Spec, req.Goal); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+	}
+	j, err := job.New(account, req.Kind, spec, req.Goal, req.Metric, time.Duration(req.StallAfterS)*time.Second, job.SourceOwner)
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return

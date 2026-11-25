@@ -13,6 +13,7 @@ import (
 	"unicode"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 )
 
 // wait_until by an objective key (docs/10 phase 4; docs/08, runs and
@@ -70,22 +71,20 @@ var reAccountID = regexp.MustCompile(`^acc_[a-z0-9_-]{1,32}$`)
 // errUntilMet ends a run whose objective is met before it touched anything.
 var errUntilMet = errors.New("the objective is met")
 
-// check verifies a wait_until: a canonical objective key and a well-formed
-// account (when set).
+// check verifies a wait_until: a canonical objective key or a var label
+// (execspec.VarUntil) and a well-formed account (when set).
 func (u RunUntil) check() error {
-	k, err := entities.ParseObjectiveKey(u.Objective)
-	switch {
-	case err != nil:
-		return fmt.Errorf("until: %w", err)
-	case k.String() != u.Objective:
-		return fmt.Errorf("until: write the key as %s", k)
-	case u.Account != "" && !reAccountID.MatchString(u.Account):
+	if err := execspec.CheckUntil(u.Objective); err != nil {
+		return err
+	}
+	if u.Account != "" && !reAccountID.MatchString(u.Account) {
 		return errors.New("until: bad account")
 	}
 	return nil
 }
 
-// ObjectiveKey parses the run's key (checked by check).
+// ObjectiveKey parses the run's key (checked by check); a var label is not
+// one, and the skill-level trail then has nothing to note.
 func (u RunUntil) ObjectiveKey() (entities.ObjectiveKey, error) {
 	return entities.ParseObjectiveKey(u.Objective)
 }

@@ -6,6 +6,7 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -58,6 +59,11 @@ func buy() *Buy {
 func fishing() *Train {
 	return &Train{Skill: "skill:fishing", SkillName: "Fishing", Level: 76, Plugin: "a.b.TickFisherPlugin",
 		Config: []clientcfg.Setting{{Group: "tickfisher", Key: "mode", Value: "BARBARIAN"}}}
+}
+
+func tutorialIsland() *Plugin {
+	return &Plugin{Plugin: clientcfg.TutorialIslandClass, Name: "Tutorial Island", Until: VarUntil("varp", 281, 1000),
+		Config: []clientcfg.Setting{{Group: "MicroTutIsland", Key: "toggleMusic", Value: "false"}}}
 }
 
 func cooks() *Quest {
@@ -233,8 +239,8 @@ func TestPluginWire(t *testing.T) {
 		},
 		Wilderness: probes,
 		Refused: []Task{{Type: "talk"}, {Type: "train"}, {Type: TypeTravel}, {Type: TypeBank, Bank: &Bank{}},
-			{Type: TypeGEBuy}, {Type: TypeGESell}},
-		Delegated: []Task{{Type: TypeTrain, Train: fishing()}, {Type: TypeQuest, Quest: cooks()},
+			{Type: TypeGEBuy}, {Type: TypeGESell}, {Type: TypePlugin}},
+		Delegated: []Task{{Type: TypeTrain, Train: fishing()}, {Type: TypeQuest, Quest: cooks()}, {Type: TypePlugin, Plugin: tutorialIsland()},
 			{Type: TypeGEBuy, GEBuy: moltenGlass()}, {Type: TypeGESell, GESell: sellGlass()}},
 	}
 	for _, d := range wire.Delegated {
@@ -311,5 +317,49 @@ func TestGE(t *testing.T) {
 	}
 	if err := (Task{Type: TypeBuy, Buy: buy()}).CheckMode(content.ModeIronman); err != nil {
 		t.Errorf("a shop buy is any mode's: %v", err)
+	}
+}
+
+func TestPluginCheck(t *testing.T) {
+	if err := (Task{Type: TypePlugin, Plugin: tutorialIsland()}).Check(); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		name string
+		mod  func(*Plugin)
+		want string
+	}{
+		{"bare class", func(p *Plugin) { p.Plugin = "TutorialIslandPlugin" }, "fully qualified"},
+		{"chronicle link", func(p *Plugin) {
+			p.Plugin = "net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin"
+		}, "not controlled"},
+		{"no name", func(p *Plugin) { p.Name = "" }, "name is required"},
+		{"a secret", func(p *Plugin) { p.Config = []clientcfg.Setting{{Group: "x", Key: "password", Value: "1"}} }, "secret"},
+		{"a key the known plugin lacks", func(p *Plugin) { p.Config[0].Key = "ironman" }, "not a setting"},
+		{"a group the known plugin lacks", func(p *Plugin) { p.Config[0].Group = "other" }, "not a setting"},
+		{"a value the key does not take", func(p *Plugin) { p.Config[0].Value = "yes" }, "true, false"},
+		{"no until", func(p *Plugin) { p.Until = "" }, "until"},
+		{"a loose var label", func(p *Plugin) { p.Until = "varp:281>=01000" }, "until"},
+		{"a key written loosely", func(p *Plugin) { p.Until = "skill:mining>=015" }, "until"},
+	} {
+		p := tutorialIsland()
+		p.Config = slices.Clone(p.Config)
+		c.mod(p)
+		if err := (Task{Type: TypePlugin, Plugin: p}).Check(); err == nil || !strings.Contains(err.Error(), c.want) {
+			t.Errorf("%s: %v, want %q", c.name, err, c.want)
+		}
+	}
+	// A plugin the registry does not know takes any valid setting, and an
+	// objective key is an until too.
+	other := &Plugin{Plugin: "a.b.OtherPlugin", Name: "Other", Until: "skill:mining>=15",
+		Config: []clientcfg.Setting{{Group: "other", Key: "mode", Value: "FAST"}}}
+	if err := (Task{Type: TypePlugin, Plugin: other}).Check(); err != nil {
+		t.Errorf("an unknown plugin: %v", err)
+	}
+	if (Task{Type: TypePlugin, Plugin: tutorialIsland(), Train: fishing()}).Check() == nil {
+		t.Error("a plugin task with a train passes")
+	}
+	if err := (Task{Type: TypePlugin, Plugin: tutorialIsland()}).CheckMode("ironman"); err != nil {
+		t.Errorf("mode: %v", err)
 	}
 }

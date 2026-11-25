@@ -830,8 +830,22 @@ O que a implementação decidiu onde as seções acima não diziam (`internal/co
   queda depois de 8 dias gravam de novo.
 - **Colunas a mais em `jobs`.** `plan_id` e `task_key` (o plano lê os `ge_sell` por elas), `deadline_at`
   e a fonte `routine`.
-- **Fora do escopo.** O despacho do tipo `plugin` (FEL-125), o condutor movido por eventos (FEL-126), a
-  escada e o SSE da web com os eventos de job.
+- **Job `plugin`.** A `spec` é a tarefa `plugin` do `execspec` (`{"type":"plugin","plugin":{"plugin":<classe>,
+  "name":...,"config":[...],"until":...}}`). O `until` é a meta como o agent espera por ela: a chave de
+  objetivo ou um rótulo de var (`varp:281>=1000`), que só uma meta `varp` ou `varbit` com `min` produz
+  (`Goal.Until`); o servidor o preenche a partir da meta ao criar o job e recusa um `until` que não seja
+  o dela. O `clientcfg` restringe os plugins que nomeia (`KnownPlugins`): o `TutorialIslandPlugin` só
+  recebe os cinco `toggle*` do grupo `MicroTutIsland`, com `true` ou `false`; nenhuma chave nem o script
+  dele escolhe o modo ironman, então nada é fixado (`PinnedSettings`). Um plugin que o registro não nomeia
+  aceita qualquer configuração válida.
+- **Despacho.** `POST /api/jobs/{id}/run` (`chronicle jobs run <id> --yes`) põe um job `plugin` `queued` ou
+  `stalled` na conta: confere que o agent declara as features `plugin_task` e `job_id` e que o cliente tem
+  o plugin, e manda `task_run` com o `jobId`, sem chave nem plano. Uma recusa ou um agent ausente deixa o
+  job como estava. A varp 281 entra no manifest por `ingest.JobVarps`. O agent liga o plugin como num
+  treino (`driveDelegated`), e o job tracker manda `run_until` com o rótulo quando prova a meta; o
+  progresso final do job é a última leitura da métrica, mesmo quando a prova chega entre duas leituras.
+- **Fora do escopo.** O condutor movido por eventos (FEL-126), a escada e o SSE da web com os eventos de
+  job.
 
 ### 13.7 A validação: a Tutorial Island da AppendOnly
 

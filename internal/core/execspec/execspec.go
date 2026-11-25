@@ -26,6 +26,12 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 )
 
+// TypePlugin is a job's task (docs/12 section 13): turn a plugin of the
+// client's profile on with its settings and keep it on until the server
+// proves the job's goal. It is not a content task type: no guide step or
+// recipe has one, only a job of kind plugin starts it.
+const TypePlugin = "plugin"
+
 // Types the executor runs (decision E5: the first primitives). Travel,
 // bank and buy run on Chronicle Link's machine (phase 3); train is
 // delegated by the agent to a plugin of the client (phase 4), quest to the
@@ -82,6 +88,7 @@ type Task struct {
 	// item:<id>x<qty> (the account's holdings prove the item).
 	GEBuy  *GEOffer `json:"geBuy,omitempty"`
 	GESell *GESell  `json:"geSell,omitempty"`
+	Plugin *Plugin  `json:"plugin,omitempty"`
 }
 
 // Tile is a world tile.
@@ -217,6 +224,50 @@ type GESell struct {
 	CoinsAtLeast int64 `json:"coinsAtLeast"`
 }
 
+// Plugin delegates the whole job to a plugin of the client (a Microbot Hub
+// plugin or one of ours): the agent sets its settings, starts it and stops
+// it when the server proves Until from the ingest. The plugin decides how,
+// never when it is done.
+type Plugin struct {
+	// Plugin is the plugin's fully qualified class and Name what the trail
+	// calls it.
+	Plugin string `json:"plugin"`
+	Name   string `json:"name"`
+	// Config are the settings it starts with.
+	Config []clientcfg.Setting `json:"config,omitempty"`
+	// Until is the job's goal as the agent's run_until names it: an
+	// objective key or a var label (VarUntil).
+	Until string `json:"until"`
+}
+
+// VarUntil is the label of a goal on a varp or varbit reaching a minimum: the
+// string a run waits for ("varp:281>=1000"), which the server proves from
+// the account's facts as it does an objective key.
+func VarUntil(kind string, id int, atLeast int64) string {
+	return fmt.Sprintf("%s:%d>=%d", kind, id, atLeast)
+}
+
+var reVarUntil = regexp.MustCompile(`^(varp|varbit):(0|[1-9][0-9]{0,5})>=(0|[1-9][0-9]{0,9})$`)
+
+// IsVarUntil reports whether s is a var label (VarUntil).
+func IsVarUntil(s string) bool { return reVarUntil.MatchString(s) }
+
+// CheckUntil verifies what a run waits for: a var label or a canonical
+// objective key.
+func CheckUntil(s string) error {
+	if IsVarUntil(s) {
+		return nil
+	}
+	k, err := entities.ParseObjectiveKey(s)
+	if err != nil {
+		return fmt.Errorf("until: %w", err)
+	}
+	if k.String() != s {
+		return fmt.Errorf("until: write the key as %s", k)
+	}
+	return nil
+}
+
 var (
 	reRef   = regexp.MustCompile(`^(location|shop):[a-z0-9_.'-]{1,120}$`)
 	reSkill = regexp.MustCompile(`^skill:[a-z]{1,40}$`)
@@ -230,7 +281,7 @@ var (
 // with a clear error.
 func (t Task) Check() error {
 	set := 0
-	for _, p := range []bool{t.Travel != nil, t.Bank != nil, t.Buy != nil, t.Train != nil, t.Quest != nil, t.GEBuy != nil, t.GESell != nil} {
+	for _, p := range []bool{t.Travel != nil, t.Bank != nil, t.Buy != nil, t.Train != nil, t.Quest != nil, t.GEBuy != nil, t.GESell != nil, t.Plugin != nil} {
 		if p {
 			set++
 		}
@@ -261,6 +312,11 @@ func (t Task) Check() error {
 			return errors.New("task: a quest has only quest")
 		}
 		return t.Quest.check()
+	case TypePlugin:
+		if set != 1 || t.Plugin == nil {
+			return errors.New("task: a plugin has only plugin")
+		}
+		return t.Plugin.check()
 	case TypeGEBuy:
 		if set != 1 || t.GEBuy == nil {
 			return errors.New("task: a ge_buy has only geBuy")
@@ -278,7 +334,7 @@ func (t Task) Check() error {
 		}
 		return nil
 	case content.TaskTalk, content.TaskInteract, content.TaskManual:
-		return fmt.Errorf("task: %s is not executed yet (the executor runs travel, bank, buy, train, quest, ge_buy and ge_sell)", t.Type)
+		return fmt.Errorf("task: %s is not executed yet (the executor runs travel, bank, buy, train, quest, ge_buy, ge_sell and plugin)", t.Type)
 	}
 	return fmt.Errorf("task: unknown type %q", t.Type)
 }
@@ -393,6 +449,22 @@ func (t *Train) check() error {
 	}
 	if slices.Contains(CombatSkills, strings.TrimPrefix(t.Skill, "skill:")) && !t.Combat {
 		return fmt.Errorf("train: %s is trained by fighting, so combat must be set", t.Skill)
+	}
+	return nil
+}
+
+func (p *Plugin) check() error {
+	if err := clientcfg.CheckClass(p.Plugin); err != nil {
+		return fmt.Errorf("plugin: %w", err)
+	}
+	if err := checkName("plugin: name", p.Name); err != nil {
+		return err
+	}
+	if err := clientcfg.CheckPluginSettings(p.Plugin, p.Config); err != nil {
+		return fmt.Errorf("plugin: %w", err)
+	}
+	if err := CheckUntil(p.Until); err != nil {
+		return fmt.Errorf("plugin: %w", err)
 	}
 	return nil
 }

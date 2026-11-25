@@ -15,7 +15,7 @@ func TestBuildDefinitionAsksForReferenceVars(t *testing.T) {
 	}
 	without := BuildDefinition(nil, nil)
 	with := BuildDefinition(nil, reg)
-	if len(without.Varbits) != 0 || len(without.Varps) != 0 {
+	if len(without.Varbits) != 0 || !slices.Equal(without.Varps, JobVarps) {
 		t.Fatalf("without a catalog = %+v", without)
 	}
 	// Ardougne easy and Karamja elite diary tiers, and QUEST_POINTS.
@@ -24,12 +24,13 @@ func TestBuildDefinitionAsksForReferenceVars(t *testing.T) {
 			t.Errorf("varbits %v miss diary varbit %d", with.Varbits, id)
 		}
 	}
-	// QUEST_POINTS, COLLECTION_COUNT and _MAX, and the 21 CA_TASK_COMPLETED_<n>
-	// varps that hold the combat achievements (0, 12, 13 and 20 checked).
-	if len(with.Varps) != 24 || !slices.IsSorted(with.Varps) {
-		t.Errorf("varps = %v, want 24 sorted", with.Varps)
+	// QUEST_POINTS, COLLECTION_COUNT and _MAX, the 21 CA_TASK_COMPLETED_<n>
+	// varps that hold the combat achievements (0, 12, 13 and 20 checked) and
+	// 281, the Tutorial Island job's metric.
+	if len(with.Varps) != 25 || !slices.IsSorted(with.Varps) {
+		t.Errorf("varps = %v, want 25 sorted", with.Varps)
 	}
-	for _, id := range []int64{101, 2943, 2944, 3116, 3128, 3387, 5673} {
+	for _, id := range []int64{101, 281, 2943, 2944, 3116, 3128, 3387, 5673} {
 		if !slices.Contains(with.Varps, id) {
 			t.Errorf("varps %v miss %d", with.Varps, id)
 		}
@@ -43,6 +44,10 @@ func TestBuildDefinitionAsksForReferenceVars(t *testing.T) {
 	}
 	if again := BuildDefinition(nil, reg); again.Version != with.Version {
 		t.Errorf("version is not stable: %d then %d", with.Version, again.Version)
+	}
+
+	if m := without.manifest([]coreingest.TokenScope{coreingest.ScopeStateWrite}, false); !slices.Contains(m.Varps, 281) {
+		t.Errorf("the manifest the plugin reads misses varp 281: %v", m.Varps)
 	}
 
 	manifest := with.manifest([]coreingest.TokenScope{coreingest.ScopeStateWrite}, false)

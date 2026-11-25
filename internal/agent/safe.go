@@ -31,31 +31,68 @@ func (e *Executor) unsafe(ctx context.Context) string {
 	if name, ok := unsafeRegions[region(*st.Player.Position)]; ok {
 		return "em " + name
 	}
-	// /dialogue is the Agent Server's; an older one without it skips the check.
-	if raw, err := e.Game.JSON(ctx, http.MethodGet, "/dialogue", nil, nil, 10*time.Second); err == nil {
-		var d struct {
-			InDialogue bool `json:"inDialogue"`
-		}
-		if json.Unmarshal(raw, &d) == nil && d.InDialogue {
-			return "num diálogo"
-		}
+	if e.dialogue(ctx).InDialogue {
+		return whyDialogue
 	}
 	return ""
 }
 
+// whyDialogue is unsafe's reason for an open dialogue.
+const whyDialogue = "num diálogo"
+
+// maxContinues bounds the dialogue lines a run advances before it waits: a
+// dialogue that keeps a continue open past them is not one to click through.
+const maxContinues = 20
+
+// dialogue is the Agent Server's /dialogue; an older one without it reads as
+// no dialogue, which skips the check.
+type dialogue struct {
+	InDialogue  bool `json:"inDialogue"`
+	HasContinue bool `json:"hasContinue"`
+	HasOptions  bool `json:"hasOptions"`
+}
+
+func (e *Executor) dialogue(ctx context.Context) dialogue {
+	var d dialogue
+	if raw, err := e.Game.JSON(ctx, http.MethodGet, "/dialogue", nil, nil, 10*time.Second); err == nil {
+		_ = json.Unmarshal(raw, &d)
+	}
+	return d
+}
+
+// continueOnly reports a dialogue whose only way on is "Click here to
+// continue": no option to choose.
+func (d dialogue) continueOnly() bool { return d.InDialogue && d.HasContinue && !d.HasOptions }
+
 // waitSafe waits until the character is at a safe point, noting each new
-// reason it is not on the trail.
-func (e *Executor) waitSafe(ctx context.Context) error {
+// reason it is not on the trail. With continueDialogues (a plugin job's run,
+// FEL-130) it advances a dialogue that only has "continue" instead of waiting
+// for it; a dialogue with options still waits.
+func (e *Executor) waitSafe(ctx context.Context, continueDialogues bool) error {
 	limit := e.SafeWait
 	if limit <= 0 {
 		limit = runSafeWait
 	}
 	noted := ""
+	continued := 0
 	for deadline := time.Now().Add(limit); ; {
 		if e.untilMet() {
 			return errUntilMet
 		}
 		why := e.unsafe(ctx)
+		if why == whyDialogue && continueDialogues && continued < maxContinues && e.dialogue(ctx).continueOnly() {
+			if continued == 0 {
+				e.note(RunWaiting, "avançando o diálogo")
+			}
+			continued++
+			if _, err := e.Game.JSON(ctx, http.MethodPost, "/dialogue/continue", nil, map[string]any{}, 20*time.Second); err != nil {
+				return fmt.Errorf("dialogue: %w", err)
+			}
+			if !e.sleep(ctx) {
+				return ctx.Err()
+			}
+			continue
+		}
 		if why == "" {
 			if noted != "" {
 				e.note(RunWaiting, "ponto seguro")

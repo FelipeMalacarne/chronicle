@@ -36,6 +36,9 @@ type delegated struct {
 	// the run's last line and wilderness what an HCIM in the wilderness is
 	// told.
 	begin, stoppedAs, alongside, doneAs, wilderness string
+	// continueDialogues advances a dialogue that only has "continue" at the
+	// safe point instead of waiting for it (a job's plugin, FEL-130).
+	continueDialogues bool
 }
 
 // driveTrain is a train run's goroutine.
@@ -63,6 +66,9 @@ func (e *Executor) drivePlugin(ctx context.Context, p TaskRunParams) {
 		alongside:  "plugins ligados durante o plugin: ",
 		doneAs:     "feito: " + until.Objective + " provado pelo ingest",
 		wilderness: "an HCIM runs a plugin there only with the owner watching",
+		// The plugin owns the activity and the dialogue in it: a line to click
+		// through does not hold its start.
+		continueDialogues: true,
 	})
 }
 
@@ -79,7 +85,7 @@ func (e *Executor) driveDelegated(ctx context.Context, p TaskRunParams, d delega
 		e.end(RunFailed, err.Error()+"; "+d.stoppedAs, err.Error())
 	}
 	done := func() { e.end(RunDone, "nada a fazer: o ingest já prova "+until.Objective, "") }
-	if err := e.waitSafe(ctx); err != nil {
+	if err := e.waitSafe(ctx, d.continueDialogues); err != nil {
 		if errors.Is(err, errUntilMet) {
 			done()
 			return

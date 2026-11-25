@@ -51,6 +51,31 @@ func TestLateCommittedEventIsNotSkippedPostgres(t *testing.T) {
 	}
 }
 
+// A writer holding the log's lock makes the drain give up, but the safety
+// tick still proves the running jobs from the facts.
+func TestBusyLogStillEvaluatesPostgres(t *testing.T) {
+	w := setup(t)
+	ctx := context.Background()
+	w.level("fishing", 70)
+	j := w.create(job.KindTrain, `"skill:fishing>=76"`, 0)
+	_ = w.run("0123abcd", agent.RunRunning, j.ID, nil)
+	w.step()
+	w.level("fishing", 76)
+
+	tx, err := w.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = tx.Rollback(ctx) })
+	if _, err := eventlog.Append(ctx, w.q.WithTx(tx), account, eventlog.TypeRunStarted, "u2", "", map[string]any{"run": "u2"}); err != nil {
+		t.Fatal(err)
+	}
+	w.tracker.Step(ctx, true)
+	if got := w.get(j.ID); got.State != job.Succeeded {
+		t.Fatalf("state = %s (%s): the busy log stopped the safety tick", got.State, got.Reason)
+	}
+}
+
 // failingStart fails the first Start.
 type failingStart struct {
 	Jobs

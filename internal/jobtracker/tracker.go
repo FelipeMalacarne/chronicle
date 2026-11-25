@@ -210,9 +210,11 @@ func (t *Tracker) untilDeadline(ctx context.Context) time.Duration {
 // the active jobs of every account and does the housekeeping.
 func (t *Tracker) Step(ctx context.Context, all bool) {
 	dirty := map[string]bool{}
+	// A failed drain left the cursor before the event: the next pass reads it
+	// again. The rest of the pass reads the jobs and runs, not the log, so it
+	// still runs (a writer holding the log's lock must not stop the safety tick).
 	if err := t.drain(ctx, dirty); err != nil && ctx.Err() == nil {
 		t.log().Warn("jobs: events", "err", err)
-		return // the cursor did not move: the next pass reads them again
 	}
 	if all {
 		accounts, err := t.Jobs.ActiveAccounts(ctx)

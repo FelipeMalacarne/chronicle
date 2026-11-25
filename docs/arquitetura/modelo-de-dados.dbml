@@ -171,9 +171,9 @@ Table events {
   account_id text [not null]
   type text [not null]
   subject text [not null, default: `''::text`]
-  job_id text
   payload jsonb [not null, default: `'{}'::jsonb`]
   at timestamptz [not null, default: `now()`]
+  job_id text [note: 'The job the event is about (its own events and its runs\'), for the job\'s detail; NULL for the rest.']
 
   indexes {
     (account_id, id) [name: 'events_account_idx']

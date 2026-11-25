@@ -54,7 +54,7 @@ func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) (Inser
 }
 
 const lastEventOfType = `-- name: LastEventOfType :one
-SELECT id, account_id, type, subject, job_id, payload, at FROM events WHERE account_id = $1 AND type = $2 ORDER BY id DESC LIMIT 1
+SELECT id, account_id, type, subject, payload, at, job_id FROM events WHERE account_id = $1 AND type = $2 ORDER BY id DESC LIMIT 1
 `
 
 type LastEventOfTypeParams struct {
@@ -70,15 +70,15 @@ func (q *Queries) LastEventOfType(ctx context.Context, arg LastEventOfTypeParams
 		&i.AccountID,
 		&i.Type,
 		&i.Subject,
-		&i.JobID,
 		&i.Payload,
 		&i.At,
+		&i.JobID,
 	)
 	return i, err
 }
 
 const listEventsAfter = `-- name: ListEventsAfter :many
-SELECT id, account_id, type, subject, job_id, payload, at FROM events WHERE id > $1 ORDER BY id LIMIT $2
+SELECT id, account_id, type, subject, payload, at, job_id FROM events WHERE id > $1 ORDER BY id LIMIT $2
 `
 
 type ListEventsAfterParams struct {
@@ -100,9 +100,9 @@ func (q *Queries) ListEventsAfter(ctx context.Context, arg ListEventsAfterParams
 			&i.AccountID,
 			&i.Type,
 			&i.Subject,
-			&i.JobID,
 			&i.Payload,
 			&i.At,
+			&i.JobID,
 		); err != nil {
 			return nil, err
 		}
@@ -115,7 +115,7 @@ func (q *Queries) ListEventsAfter(ctx context.Context, arg ListEventsAfterParams
 }
 
 const listJobEvents = `-- name: ListJobEvents :many
-SELECT id, account_id, type, subject, job_id, payload, at FROM events WHERE account_id = $1 AND job_id = $2 ORDER BY id LIMIT $3
+SELECT id, account_id, type, subject, payload, at, job_id FROM events WHERE account_id = $1 AND job_id = $2 ORDER BY id LIMIT $3
 `
 
 type ListJobEventsParams struct {
@@ -139,9 +139,9 @@ func (q *Queries) ListJobEvents(ctx context.Context, arg ListJobEventsParams) ([
 			&i.AccountID,
 			&i.Type,
 			&i.Subject,
-			&i.JobID,
 			&i.Payload,
 			&i.At,
+			&i.JobID,
 		); err != nil {
 			return nil, err
 		}

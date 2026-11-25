@@ -756,7 +756,9 @@ O travamento por tempo não tem fato que o dispare. O job tracker guarda o prazo
 | `conductor_state.job_id` | substitui `task_key` e `run_id` da seção 12.3 |
 
 `sale_proofs` (migração 0030) foi trocada pelo job `succeeded` na migração 0031 (seção 13.8): a
-tabela cai e as provas que ela ainda tinha viram jobs `ge_sell` já cumpridos.
+tabela cai e as provas que ela ainda tinha viram jobs `ge_sell` já cumpridos. A 0031 gravou nesses
+jobs uma meta provisória que o código não lê; a listagem de jobs os pula, e o plano continua contando
+a venda pela `task_key`.
 
 ### 13.8 Como ficou
 
@@ -783,7 +785,7 @@ O que a implementação decidiu onde as seções acima não diziam (`internal/co
   vidro no banco, moedas sacadas para outra coisa).
 - **Eventos.** A transição para `running` grava `job.started` (a seção 13.4 não nomeava esse evento).
   O job tracker lê também `run.started`, que é o que tira o job de `queued` ou de `stalled`.
-  Cada evento do job ou de um run do job leva `events.job_id`, indexado, que é por onde o detalhe
+  Cada evento do job ou de um run do job leva `events.job_id` (migração 0032), indexado, que é por onde o detalhe
   `GET /api/jobs/{id}` os acha; os `fact.changed` com mais de 7 dias que todos os cursores passaram
   são apagados pelo job tracker (no máximo uma vez por hora).
   `fact.changed` lista as chaves que mudaram por faceta (até 100 por faceta) e não sai para a posição e

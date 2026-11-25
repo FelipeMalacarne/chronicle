@@ -54,16 +54,12 @@ CREATE TABLE events (
   type       TEXT NOT NULL CHECK (type ~ '^[a-z]+(\.[a-z]+)+$'),
   -- the job or run the event is about; '' for the account's facts
   subject    TEXT NOT NULL DEFAULT '',
-  -- the job the event is about (a job's own events and its runs'), for the
-  -- job's detail; NULL for the rest
-  job_id     TEXT,
   payload    JSONB NOT NULL DEFAULT '{}',
   at         TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX events_account_idx ON events (account_id, id);
-CREATE INDEX events_job_idx ON events (job_id, id) WHERE job_id IS NOT NULL;
-CREATE INDEX events_fact_changed_at_idx ON events (at) WHERE type = 'fact.changed';
-COMMENT ON TABLE events IS 'Durable, append-only log the server''s consumers react to (docs/12 section 13.4); an event says "changed", the consumer reads the state. Ids follow the inserts, not the commits: writers hold the shared advisory lock 7123001 from the insert to the commit and a reader takes it exclusively, so it never reads past an event still uncommitted.';
+CREATE INDEX events_subject_idx ON events (subject, id) WHERE subject <> '';
+COMMENT ON TABLE events IS 'Durable, append-only log the server''s consumers react to (docs/12 section 13.4); an event says "changed", the consumer reads the state.';
 
 -- +goose StatementBegin
 CREATE FUNCTION events_append_only() RETURNS trigger
@@ -85,15 +81,10 @@ CREATE TABLE event_cursors (
 COMMENT ON TABLE event_cursors IS 'The last event each consumer handled; it resumes from there after a restart.';
 
 -- The sale proofs (0030) are the job tracker's now: a proven sale is a ge_sell
--- job that succeeded. A proof still in the table becomes one, with the goal
--- internal/core/job.SaleGoal gives (the item left the inventory, the coins
--- are in it).
+-- job that succeeded. A proof still in the table becomes one.
 INSERT INTO jobs (id, account_id, kind, goal, stall_after_s, state, reason, source, plan_id, task_key, created_at, started_at, finished_at)
 SELECT 'job_' || substr(md5(account_id || plan_id || task_key || run_uid), 1, 16), account_id, 'ge_sell',
-       jsonb_build_object('all', jsonb_build_array(
-         jsonb_build_object('not', jsonb_build_object('type', 'item_owned', 'item_id', item_id, 'qty', 1, 'containers', jsonb_build_array('inventory'))),
-         jsonb_build_object('type', 'item_owned', 'item_id', 995, 'qty', coins_at_least, 'containers', jsonb_build_array('inventory')))),
-       900, 'succeeded', 'sale proven before jobs existed', 'owner', plan_id, task_key,
+       '{"migrated_from": "sale_proofs"}', 900, 'succeeded', 'sale proven before jobs existed', 'owner', plan_id, task_key,
        proven_at, proven_at, proven_at
 FROM sale_proofs;
 DROP TABLE sale_proofs;

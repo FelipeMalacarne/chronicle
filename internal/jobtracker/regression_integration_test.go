@@ -1,9 +1,7 @@
 package jobtracker
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
@@ -128,9 +126,10 @@ func applyMigration(ctx context.Context, t *testing.T, w *world, file string) {
 	}
 }
 
-// A sale proof 0030 holds becomes a ge_sell job a listing reads: its goal is
-// the sale's rule, not a placeholder.
-func TestSaleProofsMigrateToValidJobsPostgres(t *testing.T) {
+// A sale proof 0030 held became a ge_sell job in 0031 with a placeholder goal
+// the code cannot read (0031 is applied on saradomin, so it stays). Listing
+// skips that job instead of failing, and the plan still counts the sale.
+func TestSaleProofsMigratedBy0031StayProvenPostgres(t *testing.T) {
 	ctx := context.Background()
 	w := &world{t: t, pool: testPoolTo(ctx, t, 30)}
 	if _, err := w.pool.Exec(ctx, `
@@ -142,29 +141,15 @@ func TestSaleProofsMigrateToValidJobsPostgres(t *testing.T) {
 		t.Fatal(err)
 	}
 	applyMigration(ctx, t, w, "0031_jobs_events.sql")
+	applyMigration(ctx, t, w, "0032_events_job_id.sql")
 	jobs := storejobs.New(w.pool)
-	list, err := jobs.List(ctx, account, "", 50)
-	if err != nil || len(list) != 1 {
-		t.Fatalf("list = %+v, %v", list, err)
+	if list, err := jobs.List(ctx, account, "", 50); err != nil || len(list) != 0 {
+		t.Fatalf("list = %+v, %v: the unreadable job is skipped", list, err)
 	}
-	want, _ := job.SaleGoal(1775, 12100)
-	var a, b any
-	if err := json.Unmarshal(list[0].Goal.JSON(), &a); err != nil {
-		t.Fatal(err)
-	}
-	_ = json.Unmarshal(want.JSON(), &b)
-	if wa, _ := json.Marshal(a); !bytes.Equal(wa, mustJSON(b)) {
-		t.Fatalf("goal = %s, want %s", wa, mustJSON(b))
-	}
-	if list[0].Kind != job.KindGESell || list[0].State != job.Succeeded {
-		t.Fatalf("job = %+v", list[0])
-	}
-	if m, err := jobs.ProvenSales(ctx, account, "pln_abcdefgh"); err != nil || m["task:0#0"] != list[0].ID {
+	if m, err := jobs.ProvenSales(ctx, account, "pln_abcdefgh"); err != nil || m["task:0#0"] == "" {
 		t.Fatalf("proven = %v, %v", m, err)
 	}
 }
-
-func mustJSON(v any) []byte { raw, _ := json.Marshal(v); return raw }
 
 // fixedItems replaces the inventory of the facts the tracker reads.
 type fixedItems struct {

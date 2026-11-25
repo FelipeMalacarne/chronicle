@@ -110,12 +110,13 @@ type Event struct {
 	AccountID string             `json:"account_id"`
 	Type      string             `json:"type"`
 	Subject   string             `json:"subject"`
-	JobID     pgtype.Text        `json:"job_id"`
 	Payload   json.RawMessage    `json:"payload"`
 	At        pgtype.Timestamptz `json:"at"`
+	// The job the event is about (its own events and its runs'), for the job's detail; NULL for the rest.
+	JobID pgtype.Text `json:"job_id"`
 }
 
-// The last event each consumer handled, ; it resumes from there after a restart.
+// The last event each consumer handled; it resumes from there after a restart.
 type EventCursor struct {
 	Consumer  string             `json:"consumer"`
 	LastID    int64              `json:"last_id"`

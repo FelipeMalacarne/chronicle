@@ -622,7 +622,9 @@ destino da viagem):
   diálogo (`/dialogue` do Agent Server) e fora das regiões de minigame, raid e boss (a lista do plugin
   Discord do RuneLite, mais o Fishing Trawler afundando). Cada motivo novo vai para a trilha
   ("esperando: em Fishing Trawler"); sem ponto seguro em 60 min o run falha sem ter tocado em nada.
-  Não pega instância fora dessas regiões: o Agent Server não diz se a região é instanciada.
+  Não pega instância fora dessas regiões: o Agent Server não diz se a região é instanciada. A exceção
+  é o run de um job `plugin`, que avança um diálogo só de "continue" em vez de esperá-lo (doc 12,
+  seção 13.8; FEL-130).
 - Histórico: o agent grava os últimos 30 runs com a trilha em `~/.config/chronicle/agent-runs.json` a
   cada linha da trilha. Depois de reiniciar, o último run volta a ser o atual (o "Último" do Fazer
   agora) e a numeração continua; um run que o agent não terminou aparece como falhou ("o agent parou

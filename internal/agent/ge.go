@@ -234,7 +234,7 @@ func (e *Executor) driveGE(ctx context.Context, p TaskRunParams) {
 		}
 		e.end(RunFailed, err.Error()+"; "+outcome, err.Error())
 	}
-	if err := e.waitSafe(ctx); err != nil {
+	if err := e.waitSafe(ctx, false); err != nil {
 		fail(err)
 		return
 	}

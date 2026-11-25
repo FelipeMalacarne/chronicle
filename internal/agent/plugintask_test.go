@@ -2,6 +2,8 @@ package agent
 
 import (
 	"context"
+	"encoding/json"
+	"net/url"
 	"slices"
 	"strings"
 	"testing"
@@ -164,5 +166,73 @@ func TestPluginTaskTimeoutAndRefusals(t *testing.T) {
 func TestPluginTaskIsAnAgentFeature(t *testing.T) {
 	if !slices.Contains(AgentFeatures, AgentFeaturePlugin) {
 		t.Fatalf("the agent does not declare %q: %v", AgentFeaturePlugin, AgentFeatures)
+	}
+}
+
+// dialogueGame is a runGame with a dialogue open at the start: lines to click
+// through, or options to choose when options is set.
+type dialogueGame struct {
+	*runGame
+	lines   int
+	options bool
+}
+
+func (g *dialogueGame) JSON(ctx context.Context, method, path string, q url.Values, body any, t time.Duration) (json.RawMessage, error) {
+	switch method + " " + path {
+	case "GET /dialogue":
+		g.mu.Lock()
+		defer g.mu.Unlock()
+		open := g.options || g.lines > 0
+		b, _ := json.Marshal(map[string]any{"inDialogue": open, "hasContinue": open && !g.options, "hasOptions": g.options})
+		return b, nil
+	case "POST /dialogue/continue":
+		g.mu.Lock()
+		defer g.mu.Unlock()
+		g.lines--
+		g.requests = append(g.requests, "POST /dialogue/continue ")
+		return json.RawMessage(`{"success":true}`), nil
+	}
+	return g.runGame.JSON(ctx, method, path, q, body, t)
+}
+
+func newDialogueExecutor(lines int, options bool) (*Executor, *dialogueGame) {
+	e, g := newTutorialExecutor()
+	d := &dialogueGame{runGame: g, lines: lines, options: options}
+	e.Game = d
+	return e, d
+}
+
+// A job's plugin handles the dialogue it meets: the lines that only continue are clicked
+// through before the start instead of holding it (FEL-130).
+func TestPluginTaskContinuesADialogueBeforeTheStart(t *testing.T) {
+	e, g := newDialogueExecutor(3, false)
+	startTask(t, e, tutorialParams(nil))
+	waitTrail(t, e, "iniciado")
+	want := []string{"POST /dialogue/continue ", "POST /dialogue/continue ", "POST /dialogue/continue ", "POST /settings/plugin ", "POST /scripts/start " + tutorial}
+	if got := posts(g.runGame); !slices.Equal(got, want) {
+		t.Fatalf("actions = %v, want %v", got, want)
+	}
+	out, _ := e.Execute(context.Background(), CmdRunStatus, nil)
+	var trail []string
+	for _, ev := range out.(RunStatus).Run.Events {
+		trail = append(trail, ev.Text)
+	}
+	if !slices.Contains(trail, "avançando o diálogo") || slices.Contains(trail, "esperando: "+whyDialogue) {
+		t.Fatalf("trail = %q", trail)
+	}
+}
+
+// A dialogue with options is a choice the plugin did not make: the run waits,
+// and gives up at the safe point's limit without touching the game.
+func TestPluginTaskWaitsForADialogueWithOptions(t *testing.T) {
+	e, g := newDialogueExecutor(0, true)
+	e.SafeWait = 30 * time.Millisecond
+	startTask(t, e, tutorialParams(nil))
+	r := waitRun(t, e)
+	if r.State != RunFailed || !strings.Contains(r.Error, whyDialogue) {
+		t.Fatalf("run = %+v", r)
+	}
+	if got := posts(g.runGame); len(got) != 0 {
+		t.Fatalf("touched the game in a dialogue with options: %v", got)
 	}
 }

@@ -697,6 +697,7 @@ no máximo um ativo.
 | `running` | o run termina sem o `goal` provado | `stalled` |
 | `running` | o run de um `ge_sell` termina `failed` ou `canceled` | `failed` |
 | `stalled` | quem trata o travamento começa outro run | `running` |
+| `stalled` | a métrica muda com um run do job ainda ativo (o travamento foi o prazo, e o run continuou) | `running` |
 | `stalled` | a escada esgota os degraus (seção 5.7) | `failed` |
 | qualquer um ativo | o dono cancela | `canceled` |
 
@@ -784,7 +785,10 @@ O que a implementação decidiu onde as seções acima não diziam (`internal/co
   `canceled` leva o job a `failed` e nada que o inventário mostre depois o prova (a venda abortada, o
   vidro no banco, moedas sacadas para outra coisa).
 - **Eventos.** A transição para `running` grava `job.started` (a seção 13.4 não nomeava esse evento).
-  O job tracker lê também `run.started`, que é o que tira o job de `queued` ou de `stalled`.
+  O job tracker lê também `run.started`, que é o que tira o job de `queued` ou de `stalled`. Um
+  `stalled` com run ativo também volta a `running` quando a métrica muda, com `job.started` e o novo
+  progresso (decisão do dono de 2026-11-25, FEL-133). Sem run ativo, a mudança não o move: ele espera
+  outro run ou a prova da meta.
   Cada evento do job ou de um run do job leva `events.job_id` (migração 0032), indexado, que é por onde o detalhe
   `GET /api/jobs/{id}` os acha; os `fact.changed` com mais de 7 dias que todos os cursores passaram
   são apagados pelo job tracker (no máximo uma vez por hora).

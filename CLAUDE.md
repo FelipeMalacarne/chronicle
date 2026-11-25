@@ -229,7 +229,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0030 sale_proofs: Grand Exchange sales the ingest proved, per (plan, task key), which keep a
                       ge_sell met once its coins are spent,
                       0031 jobs, events (append-only log), event_cursors and routine_runs.job_id; sale_proofs is
-                      dropped, a proven sale is a succeeded ge_sell job)
+                      dropped, a proven sale is a succeeded ge_sell job,
+                      0032 events.job_id: the job an event is about, indexed for the job's detail)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows

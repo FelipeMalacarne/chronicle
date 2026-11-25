@@ -104,7 +104,7 @@ type ContentVersion struct {
 	Summary json.RawMessage `json:"summary"`
 }
 
-// Durable, append-only log the server's consumers react to (docs/12 section 13.4); an event says "changed", the consumer reads the state.
+// Durable, append-only log the server's consumers react to (docs/12 section 13.4); an event says "changed", the consumer reads the state. Ids follow the inserts, not the commits: writers hold the shared advisory lock 7123001 from the insert to the commit and a reader takes it exclusively, so it never reads past an event still uncommitted.
 type Event struct {
 	ID        int64              `json:"id"`
 	AccountID string             `json:"account_id"`
@@ -112,6 +112,8 @@ type Event struct {
 	Subject   string             `json:"subject"`
 	Payload   json.RawMessage    `json:"payload"`
 	At        pgtype.Timestamptz `json:"at"`
+	// The job the event is about (its own events and its runs'), for the job's detail; NULL for the rest.
+	JobID pgtype.Text `json:"job_id"`
 }
 
 // The last event each consumer handled; it resumes from there after a restart.

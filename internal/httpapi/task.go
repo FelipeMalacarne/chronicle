@@ -113,9 +113,16 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 	}
 	slices.Sort(risks)
 	jobID := ""
+	var served agent.Info
 	build := func() (json.RawMessage, error) {
+		// An agent without the job_id feature refuses the field; the server
+		// links its run to the job when it reports it (RecordRun).
+		sentJobID := ""
+		if served.Has(agent.AgentFeatureJobID) {
+			sentJobID = jobID
+		}
 		params, _ := json.Marshal(agent.TaskRunParams{
-			Key: view.Key, Plan: in.Plan.ID, JobID: jobID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
+			Key: view.Key, Plan: in.Plan.ID, JobID: sentJobID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
 			Supervised: req.Supervised, TimeoutS: req.TimeoutS, Account: account, Task: spec,
 		})
 		_, verr := agent.ValidateParams(agent.CmdTaskRun, params)
@@ -127,7 +134,7 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	link := s.opts.Microbot.Link
-	served, err := link.Route(account)
+	served, err = link.Route(account)
 	if err == nil && !served.Supports(agent.CmdTaskRun) {
 		err = errAgentTooOld
 	}
@@ -165,7 +172,7 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		err = link.CallAgent(ctx, served.ID, agent.CmdTaskRun, json.RawMessage(params), &data)
 	}
-	if err != nil && jobID != "" {
+	if err != nil && jobID != "" && notDelivered(err) {
 		s.dropTaskJob(account, jobID, err)
 	}
 	s.auditMicrobot(r, account, served, agent.CmdTaskRun, params, err)

@@ -62,3 +62,36 @@ ORDER BY r.started_at;
 
 -- name: ListActiveRunUIDsOfJob :many
 SELECT id FROM routine_runs WHERE job_id = $1 AND state NOT IN ('done', 'failed', 'canceled') ORDER BY started_at;
+
+-- name: ListQueuedJobsWithActiveRun :many
+-- A queued job whose run is going: run.started was missed (the safety tick
+-- moves it to running).
+SELECT j.* FROM jobs j
+WHERE j.state = 'queued'
+  AND EXISTS (SELECT 1 FROM routine_runs r WHERE r.job_id = j.id AND r.state NOT IN ('done', 'failed', 'canceled'))
+ORDER BY j.created_at, j.id;
+
+-- name: ListStalledJobsPastCutoff :many
+-- Stalled jobs with no run going whose last run ended before the cutoff (or
+-- that never had one): nothing is left to prove them.
+SELECT j.* FROM jobs j
+WHERE j.state = 'stalled'
+  AND NOT EXISTS (SELECT 1 FROM routine_runs r WHERE r.job_id = j.id AND r.state NOT IN ('done', 'failed', 'canceled'))
+  AND COALESCE((SELECT max(COALESCE(r.finished_at, r.started_at)) FROM routine_runs r WHERE r.job_id = j.id), j.started_at, j.created_at) < $1
+ORDER BY j.created_at, j.id;
+
+-- name: LastRunStateOfJob :one
+SELECT state FROM routine_runs WHERE job_id = $1 ORDER BY started_at DESC, id DESC LIMIT 1;
+
+-- name: FindQueuedTaskJob :one
+-- The job the server queued for a task run whose agent does not carry the job
+-- id (it predates the job_id feature): the newest queued one of the task, with
+-- no run yet.
+SELECT j.id FROM jobs j
+WHERE j.account_id = $1 AND j.plan_id = $2 AND j.task_key = $3 AND j.kind = $4 AND j.state = 'queued'
+  AND NOT EXISTS (SELECT 1 FROM routine_runs r WHERE r.job_id = j.id)
+ORDER BY j.created_at DESC, j.id
+LIMIT 1;
+
+-- name: GetJobAccount :one
+SELECT account_id FROM jobs WHERE id = $1;

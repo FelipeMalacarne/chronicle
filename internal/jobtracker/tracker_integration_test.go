@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -165,7 +166,11 @@ func (w *world) run(uid, state, jobID string, until *agent.RunUntil) agent.Run {
 	return r
 }
 
-func (w *world) step() { w.t.Helper(); w.tracker.Step(context.Background(), false) }
+func (w *world) step() {
+	w.t.Helper()
+	w.tracker.Step(context.Background(), false)
+	w.tracker.inflight.Wait()
+}
 
 func (w *world) get(id string) job.Job {
 	w.t.Helper()
@@ -466,6 +471,7 @@ func TestRunUntilToTheAgentPostgres(t *testing.T) {
 	w.run("00000000000000a1", agent.RunRunning, "", until)
 	w.step()
 	w.tracker.Step(ctx, true)
+	w.tracker.inflight.Wait()
 	if w.hub.count() != 1 {
 		t.Fatalf("sent again: %d", w.hub.count())
 	}
@@ -657,6 +663,8 @@ type fakeHub struct {
 	sent   []agent.RunUntilParams
 	calls  int
 	refuse bool
+	// block, when set, holds every call until it closes.
+	block chan struct{}
 }
 
 func (h *fakeHub) Route(acc string) (agent.Info, error) {
@@ -670,8 +678,14 @@ func (h *fakeHub) Route(acc string) (agent.Info, error) {
 
 func (h *fakeHub) CallAgent(_ context.Context, _, command string, params, _ any) error {
 	h.mu.Lock()
-	defer h.mu.Unlock()
+	block := h.block
 	h.calls++
+	h.mu.Unlock()
+	if block != nil {
+		<-block
+	}
+	h.mu.Lock()
+	defer h.mu.Unlock()
 	if command != agent.CmdRunUntil {
 		return agent.ErrUnknownCommand
 	}
@@ -697,6 +711,12 @@ func (a *fakeAudit) Append(_ context.Context, e storemicrobot.Entry) (storemicro
 
 // testPool applies the migrations in a throwaway schema of DATABASE_URL.
 func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
+	t.Helper()
+	return testPoolTo(ctx, t, 0)
+}
+
+// testPoolTo applies the migrations up to number upTo (0 is all of them).
+func testPoolTo(ctx context.Context, t *testing.T, upTo int) *pgxpool.Pool {
 	t.Helper()
 	databaseURL := strings.TrimSpace(os.Getenv("DATABASE_URL"))
 	if databaseURL == "" {
@@ -737,6 +757,9 @@ func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
 	}
 	sort.Strings(files)
 	for _, f := range files {
+		if n, _ := strconv.Atoi(filepath.Base(f)[:4]); upTo > 0 && n > upTo {
+			break
+		}
 		raw, err := os.ReadFile(f)
 		if err != nil {
 			t.Fatal(err)

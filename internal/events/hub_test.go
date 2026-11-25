@@ -172,3 +172,17 @@ func TestSubscribeAllGetsEveryAccount(t *testing.T) {
 	default:
 	}
 }
+
+// An account id of "*" (a dev request's ?account=*) is an ordinary account,
+// not the subscription to every account.
+func TestStarAccountIsNotEveryAccount(t *testing.T) {
+	h := NewHub(nil)
+	star := h.Subscribe("*")
+	defer star.Close()
+	h.Publish(Event{Type: TypeProgress, Account: "acc_a"})
+	select {
+	case e := <-star.C:
+		t.Fatalf("the * account got %+v of acc_a", e)
+	default:
+	}
+}

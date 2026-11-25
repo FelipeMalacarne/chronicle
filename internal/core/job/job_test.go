@@ -16,7 +16,7 @@ func TestTransitions(t *testing.T) {
 	all := []State{Queued, Running, Stalled, Succeeded, Failed, Canceled}
 	legal := map[[2]State]bool{
 		{Queued, Running}: true, {Queued, Canceled}: true,
-		{Running, Succeeded}: true, {Running, Stalled}: true, {Running, Canceled}: true,
+		{Running, Succeeded}: true, {Running, Stalled}: true, {Running, Failed}: true, {Running, Canceled}: true,
 		{Stalled, Running}: true, {Stalled, Succeeded}: true, {Stalled, Failed}: true, {Stalled, Canceled}: true,
 	}
 	for _, from := range all {

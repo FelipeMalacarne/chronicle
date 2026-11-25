@@ -9,7 +9,11 @@
 // has a deadline timer (a running job with a metric stalls when the metric
 // does not change for stall_after) and a safety tick that evaluates the active
 // jobs of every account, which covers the facts that are not logged as
-// changed (the position). When a job succeeds while its run still goes, the
+// changed (the position), starts a queued job whose run is going (a missed
+// run.started), fails a stalled job nothing can prove any more and prunes the
+// old fact.changed events. A ge_sell succeeds only on the facts of its own run
+// (one that did not end failed or canceled), which ends failed with it. When a
+// job succeeds while its run still goes, the
 // tracker sends the agent run_until, which stops the run; it is how the old
 // wait_until watcher (internal/rununtil) proves a train or a quest, now for
 // every job. It also writes membership.low from the membership fact.
@@ -23,6 +27,7 @@ import (
 	"encoding/json"
 	"errors"
 	"log/slog"
+	"sync"
 	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
@@ -48,6 +53,16 @@ const MembershipLowDays = 7
 const (
 	defaultInterval = 30 * time.Second
 	batchSize       = 200
+	// stalledCutoff is how long after its last run ended a stalled job still
+	// waits for the fact that proves it (the longest wait_until a run may
+	// take, with margin); then it fails.
+	stalledCutoff = 13 * time.Hour
+	// factChangedKeep is how long a fact.changed event stays in the log.
+	factChangedKeep = 7 * 24 * time.Hour
+	pruneEvery      = time.Hour
+	// membershipLowWindow is how long a membership.low event speaks for the
+	// membership period it was written in (the threshold is seven days).
+	membershipLowWindow = 8 * 24 * time.Hour
 )
 
 // Jobs is the jobs' store (internal/store/jobs).
@@ -56,11 +71,15 @@ type Jobs interface {
 	ActiveAccounts(ctx context.Context) ([]string, error)
 	Start(ctx context.Context, id, reason string, progress *job.Progress, deadline *time.Time) (job.Job, error)
 	Stall(ctx context.Context, id, reason string) (job.Job, error)
+	Fail(ctx context.Context, id, reason string) (job.Job, error)
 	Succeed(ctx context.Context, id string, proof job.Proof) (job.Job, error)
 	Progress(ctx context.Context, id string, p job.Progress, deadline *time.Time) error
 	Due(ctx context.Context, now time.Time) ([]job.Job, error)
 	NextDeadline(ctx context.Context) (time.Time, bool, error)
 	RunsToStop(ctx context.Context) ([]storejobs.RunToStop, error)
+	QueuedWithActiveRun(ctx context.Context) ([]job.Job, error)
+	StalledBefore(ctx context.Context, cutoff time.Time) ([]job.Job, error)
+	LastRunState(ctx context.Context, id string) (state string, ok bool, err error)
 }
 
 // Log is the event log (internal/store/eventlog).
@@ -69,6 +88,8 @@ type Log interface {
 	Cursor(ctx context.Context, consumer string) (int64, error)
 	SetCursor(ctx context.Context, consumer string, id int64) error
 	Write(ctx context.Context, account, typ, subject string, payload any) (eventlog.Event, error)
+	LastOf(ctx context.Context, account, typ string) (eventlog.Event, bool, error)
+	PruneFactChanged(ctx context.Context, before time.Time) (int64, error)
 }
 
 // Facts reads an account's facts (internal/store/progress).
@@ -106,9 +127,16 @@ type Tracker struct {
 	// Now is the clock; nil is time.Now.
 	Now func() time.Time
 
+	// mu guards sent and sending; the sends to the agents run beside the loop.
+	mu sync.Mutex
 	// sent holds the runs the agent was already told to stop, until their run
-	// is final: a report in between does not tell it again.
-	sent map[string]time.Time
+	// is final: a report in between does not tell it again. sending holds the
+	// runs a send is in flight for.
+	sent    map[string]time.Time
+	sending map[string]bool
+	// inflight waits for the sends in flight (tests, shutdown).
+	inflight sync.WaitGroup
+	prunedAt time.Time
 }
 
 func (t *Tracker) now() time.Time {
@@ -179,7 +207,7 @@ func (t *Tracker) untilDeadline(ctx context.Context) time.Duration {
 
 // Step is one pass: the events after the cursor, the jobs past their
 // deadline, and the runs whose job is proven. With all, it also evaluates
-// the active jobs of every account.
+// the active jobs of every account and does the housekeeping.
 func (t *Tracker) Step(ctx context.Context, all bool) {
 	dirty := map[string]bool{}
 	if err := t.drain(ctx, dirty); err != nil && ctx.Err() == nil {
@@ -194,16 +222,23 @@ func (t *Tracker) Step(ctx context.Context, all bool) {
 		for _, a := range accounts {
 			dirty[a] = true
 		}
+		t.startQueued(ctx, dirty)
 	}
 	t.stallDue(ctx, dirty)
 	for account := range dirty {
 		t.evaluate(ctx, account)
 	}
+	if all {
+		t.failAbandoned(ctx)
+		t.prune(ctx)
+	}
 	t.stopProvenRuns(ctx)
 }
 
 // drain handles the events after the cursor in batches and moves the cursor
-// after each. Accounts whose facts changed are left in dirty for the caller.
+// after each. An event whose handling failed stops the drain before the
+// cursor passes it: the next pass reads it again. Accounts whose facts
+// changed are left in dirty for the caller.
 func (t *Tracker) drain(ctx context.Context, dirty map[string]bool) error {
 	cursor, err := t.Log.Cursor(ctx, Consumer)
 	if err != nil {
@@ -253,19 +288,24 @@ func (t *Tracker) handle(ctx context.Context, ev eventlog.Event, dirty map[strin
 		}
 	case eventlog.TypeRunStarted:
 		if p.Job != "" {
-			t.runStarted(ctx, ev.Account, p.Job)
 			dirty[ev.Account] = true
+			return t.runStarted(ctx, ev.Account, p.Job)
 		}
 	case eventlog.TypeRunEnded:
+		t.mu.Lock()
 		delete(t.sent, ev.Subject)
+		t.mu.Unlock()
 		if p.Job != "" {
-			t.runEnded(ctx, ev.Account, p.Job, p.State)
+			return t.runEnded(ctx, ev.Account, p.Job, p.State)
 		}
 	}
 	return nil
 }
 
-// membership writes membership.low when the days left fell to the threshold.
+// membership writes membership.low when the days left are at the threshold
+// and no membership.low speaks for this period yet (one in the last
+// membershipLowWindow): the first change that finds the membership low writes
+// it, a later change or a redelivery does not.
 func (t *Tracker) membership(ctx context.Context, account string) error {
 	days, member, ok, err := t.Facts.Membership(ctx, account)
 	if err != nil {
@@ -274,54 +314,98 @@ func (t *Tracker) membership(ctx context.Context, account string) error {
 	if !ok || !member || days > MembershipLowDays {
 		return nil
 	}
+	last, found, err := t.Log.LastOf(ctx, account, eventlog.TypeMembershipLow)
+	if err != nil {
+		return err
+	}
+	if found && t.now().Sub(last.At) < membershipLowWindow {
+		return nil
+	}
 	_, err = t.Log.Write(ctx, account, eventlog.TypeMembershipLow, "", map[string]int{"days": days})
 	return err
 }
 
 // find is the account's active job with an id.
-func (t *Tracker) find(ctx context.Context, account, id string) (job.Job, bool) {
+func (t *Tracker) find(ctx context.Context, account, id string) (job.Job, bool, error) {
 	jobs, err := t.Jobs.Active(ctx, account)
 	if err != nil {
-		t.log().Warn("jobs: read", "account", account, "err", err)
-		return job.Job{}, false
+		return job.Job{}, false, err
 	}
 	for _, j := range jobs {
 		if j.ID == id {
-			return j, true
+			return j, true, nil
 		}
 	}
-	return job.Job{}, false
+	return job.Job{}, false, nil
 }
 
-// runStarted moves a queued job, or a stalled one given a new run, to running,
+// runStarted moves the job of a run that started to running.
+func (t *Tracker) runStarted(ctx context.Context, account, id string) error {
+	j, ok, err := t.find(ctx, account, id)
+	if err != nil || !ok {
+		return err
+	}
+	return t.start(ctx, j)
+}
+
+// start moves a queued job, or a stalled one given a new run, to running,
 // with the metric's value as the run begins.
-func (t *Tracker) runStarted(ctx context.Context, account, id string) {
-	j, ok := t.find(ctx, account, id)
-	if !ok || (j.State != job.Queued && j.State != job.Stalled) {
-		return
+func (t *Tracker) start(ctx context.Context, j job.Job) error {
+	if j.State != job.Queued && j.State != job.Stalled {
+		return nil
 	}
 	now := t.now()
 	var progress *job.Progress
-	if f, err := t.Facts.TaskFacts(ctx, account); err == nil && f.State != nil && j.Metric != nil {
+	if f, err := t.Facts.TaskFacts(ctx, j.Account); err == nil && f.State != nil && j.Metric != nil {
 		progress, _ = job.Observe(*j.Metric, nil, *f.State, now)
 	}
-	deadline := j.DeadlineFrom(now)
-	if _, err := t.Jobs.Start(ctx, id, "run started", progress, deadline); err != nil && !errors.Is(err, storejobs.ErrState) {
-		t.log().Warn("jobs: start", "job", id, "err", err)
+	if _, err := t.Jobs.Start(ctx, j.ID, "run started", progress, j.DeadlineFrom(now)); err != nil && !errors.Is(err, storejobs.ErrState) {
+		return err
+	}
+	return nil
+}
+
+// startQueued starts the queued jobs whose run is going, whose run.started
+// was not acted on (the safety tick).
+func (t *Tracker) startQueued(ctx context.Context, dirty map[string]bool) {
+	jobs, err := t.Jobs.QueuedWithActiveRun(ctx)
+	if err != nil {
+		t.log().Warn("jobs: queued with a run", "err", err)
+		return
+	}
+	for _, j := range jobs {
+		if err := t.start(ctx, j); err != nil {
+			t.log().Warn("jobs: start", "job", j.ID, "err", err)
+			continue
+		}
+		dirty[j.Account] = true
 	}
 }
 
-// runEnded stalls a running job whose run ended before its goal was proven
-// on the facts as they are now.
-func (t *Tracker) runEnded(ctx context.Context, account, id, state string) {
+// runEnded ends the job of a run that ended. A ge_sell whose run failed or
+// was canceled fails with it; any other job whose run ended before its goal
+// was proven on the facts as they are now stalls.
+func (t *Tracker) runEnded(ctx context.Context, account, id, state string) error {
 	t.evaluate(ctx, account)
-	j, ok := t.find(ctx, account, id)
-	if !ok || j.State != job.Running {
-		return
+	j, ok, err := t.find(ctx, account, id)
+	if err != nil || !ok || j.State == job.Queued {
+		return err
 	}
-	if _, err := t.Jobs.Stall(ctx, id, "run ended: "+cmp.Or(state, "unknown")); err != nil && !errors.Is(err, storejobs.ErrState) {
-		t.log().Warn("jobs: stall", "job", id, "err", err)
+	if j.Kind == job.KindGESell && !saleRunLives(state) {
+		_, err = t.Jobs.Fail(ctx, id, "run ended: "+cmp.Or(state, "unknown"))
+	} else if j.State == job.Running {
+		_, err = t.Jobs.Stall(ctx, id, "run ended: "+cmp.Or(state, "unknown"))
 	}
+	if errors.Is(err, storejobs.ErrState) {
+		return nil
+	}
+	return err
+}
+
+// saleRunLives reports whether a ge_sell's run, in this state, may still prove
+// the sale: a run that failed or was canceled never sold anything.
+func saleRunLives(runState string) bool {
+	return runState != agent.RunFailed && runState != agent.RunCanceled
 }
 
 // evaluate looks at the account's running and stalled jobs on its facts now:
@@ -348,6 +432,9 @@ func (t *Tracker) evaluate(ctx context.Context, account string) {
 		}
 		res := j.Goal.Evaluate(job.Env{Facts: facts, Registry: t.Registry, Now: now})
 		if proof, ok := res.Prove(); ok {
+			if !t.mayProve(ctx, j) {
+				continue
+			}
 			if _, err := t.Jobs.Succeed(ctx, j.ID, proof); err != nil && !errors.Is(err, storejobs.ErrState) {
 				t.log().Warn("jobs: succeed", "job", j.ID, "err", err)
 			}
@@ -361,6 +448,50 @@ func (t *Tracker) evaluate(ctx context.Context, account string) {
 				t.log().Warn("jobs: progress", "job", j.ID, "err", err)
 			}
 		}
+	}
+}
+
+// mayProve reports whether the facts may end the job. A ge_sell succeeds only
+// on its own run: the coins and the empty inventory of a sale that was
+// aborted, or of a run that failed, are not a sale.
+func (t *Tracker) mayProve(ctx context.Context, j job.Job) bool {
+	if j.Kind != job.KindGESell {
+		return true
+	}
+	state, ok, err := t.Jobs.LastRunState(ctx, j.ID)
+	if err != nil {
+		t.log().Warn("jobs: last run", "job", j.ID, "err", err)
+		return false
+	}
+	return ok && saleRunLives(state)
+}
+
+// failAbandoned fails the stalled jobs whose last run ended more than
+// stalledCutoff ago: no run is left to prove them, and a fact seen days later
+// is not the run's work.
+func (t *Tracker) failAbandoned(ctx context.Context) {
+	jobs, err := t.Jobs.StalledBefore(ctx, t.now().Add(-stalledCutoff))
+	if err != nil {
+		t.log().Warn("jobs: abandoned", "err", err)
+		return
+	}
+	for _, j := range jobs {
+		if _, err := t.Jobs.Fail(ctx, j.ID, "not proven within "+stalledCutoff.String()+" of its last run"); err != nil && !errors.Is(err, storejobs.ErrState) {
+			t.log().Warn("jobs: fail", "job", j.ID, "err", err)
+		}
+	}
+}
+
+// prune drops the fact.changed events older than factChangedKeep that the
+// cursors have passed, at most once per pruneEvery.
+func (t *Tracker) prune(ctx context.Context) {
+	now := t.now()
+	if now.Sub(t.prunedAt) < pruneEvery {
+		return
+	}
+	t.prunedAt = now
+	if _, err := t.Log.PruneFactChanged(ctx, now.Add(-factChangedKeep)); err != nil {
+		t.log().Warn("jobs: prune events", "err", err)
 	}
 }
 
@@ -411,28 +542,57 @@ func (t *Tracker) stopProvenRuns(ctx context.Context) {
 		t.log().Warn("jobs: runs to stop", "err", err)
 		return
 	}
-	if t.sent == nil {
-		t.sent = map[string]time.Time{}
-	}
 	live := map[string]bool{}
 	for _, r := range runs {
 		live[r.RunUID] = true
 	}
+	t.mu.Lock()
 	for uid := range t.sent {
 		if !live[uid] {
 			delete(t.sent, uid)
 		}
 	}
+	t.mu.Unlock()
 	for _, r := range runs {
 		key, ok := r.Goal.ObjectiveKey()
-		if !ok || !t.sent[r.RunUID].IsZero() {
+		if !ok {
 			continue // only an objective key is a wait_until the agent knows
 		}
-		t.sendRunUntil(ctx, r, key)
+		t.mu.Lock()
+		skip := !t.sent[r.RunUID].IsZero() || t.sending[r.RunUID]
+		if !skip {
+			if t.sending == nil {
+				t.sending = map[string]bool{}
+			}
+			t.sending[r.RunUID] = true
+		}
+		t.mu.Unlock()
+		if skip {
+			continue
+		}
+		// A slow agent must not hold the loop: one send per run in flight.
+		t.inflight.Add(1)
+		go func() {
+			defer t.inflight.Done()
+			t.sendRunUntil(ctx, r, key)
+		}()
 	}
 }
 
+// sendRunUntil tells the agent to stop a run and records the outcome.
 func (t *Tracker) sendRunUntil(ctx context.Context, r storejobs.RunToStop, key entities.ObjectiveKey) {
+	done := false // the agent was told, or has nothing left to be told
+	defer func() {
+		t.mu.Lock()
+		defer t.mu.Unlock()
+		delete(t.sending, r.RunUID)
+		if done {
+			if t.sent == nil {
+				t.sent = map[string]time.Time{}
+			}
+			t.sent[r.RunUID] = t.now()
+		}
+	}()
 	served, err := t.Hub.Route(r.Account)
 	if err != nil || !served.Supports(agent.CmdRunUntil) {
 		return // the agent links again and reports the run again
@@ -450,12 +610,12 @@ func (t *Tracker) sendRunUntil(ctx context.Context, r storejobs.RunToStop, key e
 	var refused *agent.CommandError
 	switch {
 	case err == nil:
-		t.sent[r.RunUID] = t.now()
+		done = true
 		t.log().Info("jobs: run stopped, goal proven", "account", r.Account, "job", r.JobID, "run", r.RunUID, "evidence", p.Evidence)
 	case errors.As(err, &refused):
 		// The agent has no such run waiting (it ended, or another replaced
 		// it): nothing left to tell it.
-		t.sent[r.RunUID] = t.now()
+		done = true
 	default:
 		t.log().Warn("jobs: run_until", "account", r.Account, "run", r.RunUID, "err", err)
 	}

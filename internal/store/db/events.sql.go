@@ -24,14 +24,14 @@ func (q *Queries) GetEventCursor(ctx context.Context, consumer string) (int64, e
 }
 
 const insertEvent = `-- name: InsertEvent :one
-
-INSERT INTO events (account_id, type, subject, payload) VALUES ($1, $2, $3, $4) RETURNING id, at
+INSERT INTO events (account_id, type, subject, job_id, payload) VALUES ($1, $2, $3, $4, $5) RETURNING id, at
 `
 
 type InsertEventParams struct {
 	AccountID string          `json:"account_id"`
 	Type      string          `json:"type"`
 	Subject   string          `json:"subject"`
+	JobID     pgtype.Text     `json:"job_id"`
 	Payload   json.RawMessage `json:"payload"`
 }
 
@@ -40,13 +40,12 @@ type InsertEventRow struct {
 	At pgtype.Timestamptz `json:"at"`
 }
 
-// The durable event log and its consumers' cursors (migration 0031, docs/12
-// section 13.4). internal/store/eventlog is the only writer.
 func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) (InsertEventRow, error) {
 	row := q.db.QueryRow(ctx, insertEvent,
 		arg.AccountID,
 		arg.Type,
 		arg.Subject,
+		arg.JobID,
 		arg.Payload,
 	)
 	var i InsertEventRow
@@ -54,8 +53,32 @@ func (q *Queries) InsertEvent(ctx context.Context, arg InsertEventParams) (Inser
 	return i, err
 }
 
+const lastEventOfType = `-- name: LastEventOfType :one
+SELECT id, account_id, type, subject, payload, at, job_id FROM events WHERE account_id = $1 AND type = $2 ORDER BY id DESC LIMIT 1
+`
+
+type LastEventOfTypeParams struct {
+	AccountID string `json:"account_id"`
+	Type      string `json:"type"`
+}
+
+func (q *Queries) LastEventOfType(ctx context.Context, arg LastEventOfTypeParams) (Event, error) {
+	row := q.db.QueryRow(ctx, lastEventOfType, arg.AccountID, arg.Type)
+	var i Event
+	err := row.Scan(
+		&i.ID,
+		&i.AccountID,
+		&i.Type,
+		&i.Subject,
+		&i.Payload,
+		&i.At,
+		&i.JobID,
+	)
+	return i, err
+}
+
 const listEventsAfter = `-- name: ListEventsAfter :many
-SELECT id, account_id, type, subject, payload, at FROM events WHERE id > $1 ORDER BY id LIMIT $2
+SELECT id, account_id, type, subject, payload, at, job_id FROM events WHERE id > $1 ORDER BY id LIMIT $2
 `
 
 type ListEventsAfterParams struct {
@@ -79,6 +102,7 @@ func (q *Queries) ListEventsAfter(ctx context.Context, arg ListEventsAfterParams
 			&i.Subject,
 			&i.Payload,
 			&i.At,
+			&i.JobID,
 		); err != nil {
 			return nil, err
 		}
@@ -91,18 +115,18 @@ func (q *Queries) ListEventsAfter(ctx context.Context, arg ListEventsAfterParams
 }
 
 const listJobEvents = `-- name: ListJobEvents :many
-SELECT id, account_id, type, subject, payload, at FROM events WHERE account_id = $1 AND (subject = $2::text OR payload->>'job' = $2::text) ORDER BY id LIMIT $3
+SELECT id, account_id, type, subject, payload, at, job_id FROM events WHERE account_id = $1 AND job_id = $2 ORDER BY id LIMIT $3
 `
 
 type ListJobEventsParams struct {
-	AccountID string `json:"account_id"`
-	JobID     string `json:"job_id"`
-	MaxRows   int32  `json:"max_rows"`
+	AccountID string      `json:"account_id"`
+	JobID     pgtype.Text `json:"job_id"`
+	Limit     int32       `json:"limit"`
 }
 
-// A job's own events and its runs' (their payload names the job).
+// A job's own events and its runs'.
 func (q *Queries) ListJobEvents(ctx context.Context, arg ListJobEventsParams) ([]Event, error) {
-	rows, err := q.db.Query(ctx, listJobEvents, arg.AccountID, arg.JobID, arg.MaxRows)
+	rows, err := q.db.Query(ctx, listJobEvents, arg.AccountID, arg.JobID, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +141,7 @@ func (q *Queries) ListJobEvents(ctx context.Context, arg ListJobEventsParams) ([
 			&i.Subject,
 			&i.Payload,
 			&i.At,
+			&i.JobID,
 		); err != nil {
 			return nil, err
 		}
@@ -126,6 +151,34 @@ func (q *Queries) ListJobEvents(ctx context.Context, arg ListJobEventsParams) ([
 		return nil, err
 	}
 	return items, nil
+}
+
+const lockEventLogShared = `-- name: LockEventLogShared :exec
+
+SELECT pg_advisory_xact_lock_shared(7123001)
+`
+
+// The durable event log and its consumers' cursors (migration 0031, docs/12
+// section 13.4). internal/store/eventlog is the only writer.
+// A writer holds it from its insert to its commit (internal/store/eventlog).
+func (q *Queries) LockEventLogShared(ctx context.Context) error {
+	_, err := q.db.Exec(ctx, lockEventLogShared)
+	return err
+}
+
+const pruneFactChangedEvents = `-- name: PruneFactChangedEvents :execrows
+DELETE FROM events e
+WHERE e.type = 'fact.changed' AND e.at < $1
+  AND NOT EXISTS (SELECT 1 FROM event_cursors c WHERE e.id > c.last_id)
+`
+
+// The fact.changed events older than the cutoff that every consumer has read.
+func (q *Queries) PruneFactChangedEvents(ctx context.Context, at pgtype.Timestamptz) (int64, error) {
+	result, err := q.db.Exec(ctx, pruneFactChangedEvents, at)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }
 
 const setEventCursor = `-- name: SetEventCursor :exec
@@ -141,4 +194,16 @@ type SetEventCursorParams struct {
 func (q *Queries) SetEventCursor(ctx context.Context, arg SetEventCursorParams) error {
 	_, err := q.db.Exec(ctx, setEventCursor, arg.Consumer, arg.LastID)
 	return err
+}
+
+const tryLockEventLog = `-- name: TryLockEventLog :one
+SELECT pg_try_advisory_xact_lock(7123001)::boolean AS locked
+`
+
+// The reader takes it exclusively: no event is uncommitted while it holds it.
+func (q *Queries) TryLockEventLog(ctx context.Context) (bool, error) {
+	row := q.db.QueryRow(ctx, tryLockEventLog)
+	var locked bool
+	err := row.Scan(&locked)
+	return locked, err
 }

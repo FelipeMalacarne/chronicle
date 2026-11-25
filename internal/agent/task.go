@@ -120,8 +120,8 @@ func validateTaskRun(raw json.RawMessage) (TaskRunParams, error) {
 	if p.Account != "" && !reAccountID.MatchString(p.Account) {
 		return p, errors.New("task: bad account")
 	}
-	if p.Task.Type == execspec.TypeTrain || p.Task.Type == execspec.TypeQuest {
-		// A train and a quest wait for the server's proof (the level, the
+	if p.Task.Type == execspec.TypeTrain || p.Task.Type == execspec.TypeQuest || p.Task.Type == execspec.TypePlugin {
+		// A train, a quest and a plugin wait for the server's proof (the level, the
 		// quest finished): hours, on the account's facts.
 		if p.Account == "" {
 			return p, fmt.Errorf("task: a %s needs the account whose facts prove its end", p.Task.Type)
@@ -154,13 +154,17 @@ func validateTaskRun(raw json.RawMessage) (TaskRunParams, error) {
 // checkRunTask verifies the task part of a run (the params and a report).
 func checkRunTask(t RunTask) error {
 	switch {
-	case !reTaskKey.MatchString(t.Key):
+	case t.Type == execspec.TypePlugin && (t.Key != "" || t.Plan != ""):
+		return errors.New("task: a plugin task is a job's, with no plan key")
+	case t.Type == execspec.TypePlugin && t.JobID == "":
+		return errors.New("task: a plugin task needs its job")
+	case t.Type != execspec.TypePlugin && !reTaskKey.MatchString(t.Key):
 		return errors.New("task: bad key")
-	case !rePlanID.MatchString(t.Plan):
+	case t.Type != execspec.TypePlugin && !rePlanID.MatchString(t.Plan):
 		return errors.New("task: bad plan")
 	case t.JobID != "" && !reJobID.MatchString(t.JobID):
 		return errors.New("task: bad job id")
-	case !slices.Contains(content.TaskTypes, t.Type):
+	case t.Type != execspec.TypePlugin && !slices.Contains(content.TaskTypes, t.Type):
 		return fmt.Errorf("task: unknown type %q", t.Type)
 	case strings.TrimSpace(t.Label) == "" || len(t.Label) > 200 || strings.IndexFunc(t.Label, func(r rune) bool { return !unicode.IsPrint(r) }) >= 0:
 		return errors.New("task: label of 1 to 200 printable characters, one line")
@@ -199,6 +203,13 @@ func (e *Executor) taskRun(raw json.RawMessage) (any, error) {
 			run.Task.CoinsAtLeast = p.Task.GESell.CoinsAtLeast
 		}
 		drive = func(ctx context.Context) { e.driveGE(ctx, p) }
+	}
+	if pl := p.Task.Plugin; pl != nil {
+		// Delegated to a plugin of the client by a job: the run is the
+		// plugin's, and ends on the server's proof of the job's goal.
+		run.ClassName = pl.Plugin
+		run.Until = &RunUntil{Objective: pl.Until, Account: p.Account}
+		drive = func(ctx context.Context) { e.drivePlugin(ctx, p) }
 	}
 	if q := p.Task.Quest; q != nil {
 		// Delegated to the client's Quest Helper (docs/10, E19): the run is

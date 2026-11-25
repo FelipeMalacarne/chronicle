@@ -19,6 +19,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/job"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
@@ -264,7 +265,7 @@ func TestJobLifecyclePostgres(t *testing.T) {
 	if _, err := w.jobs.Stall(ctx, j.ID, "late"); err == nil {
 		t.Fatal("a succeeded job stalled")
 	}
-	if _, err := w.jobs.Succeed(ctx, j.ID, job.Proof{}); err == nil {
+	if _, err := w.jobs.Succeed(ctx, j.ID, job.Proof{}, nil); err == nil {
 		t.Fatal("a job succeeded without a proof")
 	}
 	if _, err := w.jobs.Cancel(ctx, account, j.ID, "x"); err == nil {
@@ -479,6 +480,81 @@ func TestRunUntilToTheAgentPostgres(t *testing.T) {
 	w.step()
 	if len(w.tracker.sent) != 0 || w.hub.count() != 1 {
 		t.Fatalf("after the end: sent %v, calls %d", w.tracker.sent, w.hub.count())
+	}
+}
+
+// The Tutorial Island job (docs/12 section 13.7): a plugin job on varp 281,
+// whose run the agent reports with the job's id and the var label it waits
+// for. The job goes queued, running, progress on the varp, then succeeded at
+// 1000, and the agent is told to stop the run once, by that label.
+func TestPluginJobOnVarpPostgres(t *testing.T) {
+	w := setup(t)
+	ctx := context.Background()
+	w.hub.agents[account] = agent.Info{ID: "c1", Account: account, Commands: []string{agent.CmdRunUntil}}
+	w.varp(281, 20)
+	spec := json.RawMessage(`{"type":"plugin","plugin":{"plugin":"` + clientcfg.TutorialIslandClass + `","name":"Tutorial Island","until":"varp:281>=1000"}}`)
+	g, err := job.ParseGoal([]byte(`{"type":"varp","id":281,"min":1000}`))
+	if err != nil {
+		t.Fatal(err)
+	}
+	j, err := job.New(account, job.KindPlugin, spec, g, nil, 0, job.SourceOwner)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if j, err = w.jobs.Create(ctx, j); err != nil {
+		t.Fatal(err)
+	}
+
+	report := func(state string) {
+		r := agent.Run{
+			ID: "run-1", UID: "aa11bb22cc33dd44", ClassName: clientcfg.TutorialIslandClass, Stop: []string{}, State: state,
+			StartedAt: w.now(), Events: []agent.RunEvent{}, Until: &agent.RunUntil{Objective: "varp:281>=1000", Account: account},
+			Task: &agent.RunTask{Type: "plugin", Label: "Tutorial Island", JobID: j.ID},
+		}
+		if r.Final() {
+			end := w.now()
+			r.FinishedAt = &end
+		}
+		if _, _, err := w.runs.RecordRun(ctx, account, "zaros", r); err != nil {
+			t.Fatal(err)
+		}
+		w.step()
+	}
+	report(agent.RunRunning)
+	got := w.get(j.ID)
+	if got.State != job.Running || got.Progress == nil || got.Progress.From != 20 || got.Progress.Target != 1000 {
+		t.Fatalf("running = %+v progress %+v", got, got.Progress)
+	}
+
+	w.advance(time.Minute)
+	w.varp(281, 640)
+	w.step()
+	if got = w.get(j.ID); got.State != job.Running || got.Progress.Current != 640 {
+		t.Fatalf("progress = %+v, state %s", got.Progress, got.State)
+	}
+	if w.hub.count() != 0 {
+		t.Fatal("told the agent to stop before the proof")
+	}
+
+	w.varp(281, 1000)
+	w.step()
+	if got = w.get(j.ID); got.State != job.Succeeded || got.Progress.Current != 1000 {
+		t.Fatalf("job = %+v progress %+v", got, got.Progress)
+	}
+	if w.hub.count() != 1 {
+		t.Fatalf("run_until sent %d times", w.hub.count())
+	}
+	if p := w.hub.sent[0]; p.UID != "aa11bb22cc33dd44" || p.Objective != "varp:281>=1000" || p.Evidence != `observado {"value":1000}` {
+		t.Fatalf("sent %+v", p)
+	}
+	report(agent.RunRunning)
+	w.tracker.Step(ctx, true)
+	w.tracker.inflight.Wait()
+	if w.hub.count() != 1 {
+		t.Fatalf("run_until sent again: %d", w.hub.count())
+	}
+	if want := []string{"job.queued", "run.started", "job.started", "job.progressed", "job.succeeded"}; !slices.Equal(w.types(j.ID), want) {
+		t.Fatalf("events = %v, want %v", w.types(j.ID), want)
 	}
 }
 

@@ -205,7 +205,7 @@ var errAgentTooOld = errors.New("the agent predates task_run: update chronicle o
 type pluginMissingError struct{ class string }
 
 func (e *pluginMissingError) Error() string {
-	return "o plugin " + e.class + " não está instalado no cliente da conta (pelo perfil da conta, pelo modelo da frota ou pelo Hub): instale antes de treinar"
+	return "o plugin " + e.class + " não está instalado no cliente da conta (pelo perfil da conta, pelo modelo da frota ou pelo Hub): instale antes de rodar"
 }
 
 // pluginInstalled asks the account's agent for the client's plugins (the

@@ -97,9 +97,14 @@ const AgentFeatureRecurringRetry = "recurring_retry"
 // carries it in its reports, which an older agent refuses as an unknown field.
 const AgentFeatureJobID = "job_id"
 
+// AgentFeaturePlugin: the agent runs a task_run whose task is a plugin (a
+// job of kind plugin, docs/12 section 13) and takes a var label as a run's
+// until; an older agent refuses both as an unknown type or objective.
+const AgentFeaturePlugin = "plugin_task"
+
 // AgentFeatures is what this agent declares in its hello beyond its
 // commands: what it takes from the server that an older agent would refuse.
-var AgentFeatures = []string{AgentFeatureRecurringRetry, AgentFeatureJobID}
+var AgentFeatures = []string{AgentFeatureRecurringRetry, AgentFeatureJobID, AgentFeaturePlugin}
 
 // MaxClients bounds the game clients one agent drives.
 const MaxClients = 16

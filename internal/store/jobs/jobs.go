@@ -307,7 +307,8 @@ func (r *Repository) Cancel(ctx context.Context, account, id, reason string) (jo
 
 // Succeed ends a running or stalled job as proven. It takes the proof the
 // goal's evaluation gave (job.Result.Prove): nothing else makes a job succeed.
-func (r *Repository) Succeed(ctx context.Context, id string, proof job.Proof) (job.Job, error) {
+// progress, when set, is the metric's last reading, recorded with the move.
+func (r *Repository) Succeed(ctx context.Context, id string, proof job.Proof, progress *job.Progress) (job.Job, error) {
 	if !proof.Valid() {
 		return job.Job{}, ErrNoProof
 	}
@@ -315,7 +316,7 @@ func (r *Repository) Succeed(ctx context.Context, id string, proof job.Proof) (j
 	if e := proof.Evidence(); e != "" {
 		reason += " (" + e + ")"
 	}
-	return r.move(ctx, id, change{to: job.Succeeded, reason: reason, event: eventlog.TypeJobSucceeded})
+	return r.move(ctx, id, change{to: job.Succeeded, reason: reason, progress: progress, event: eventlog.TypeJobSucceeded})
 }
 
 // Progress records a running job's new progress and moves its deadline.

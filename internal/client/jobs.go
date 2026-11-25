@@ -81,3 +81,26 @@ func (c *Client) CancelJob(ctx context.Context, id string) (Job, error) {
 	err = c.do(ctx, http.MethodPost, "/api/jobs/"+url.PathEscape(id)+"/cancel", q, nil, &out)
 	return out.Job, err
 }
+
+// CreateJob queues a job from its request body (POST /api/jobs: kind, spec,
+// goal, and optionally metric and stall_after_s).
+func (c *Client) CreateJob(ctx context.Context, body json.RawMessage) (Job, error) {
+	var out Job
+	q, err := c.accountQuery(ctx)
+	if err != nil {
+		return out, err
+	}
+	err = c.do(ctx, http.MethodPost, "/api/jobs", q, body, &out)
+	return out, err
+}
+
+// RunJob starts a queued plugin job on the account's agent (POST
+// /api/jobs/{id}/run); timeoutS 0 takes the agent's default.
+func (c *Client) RunJob(ctx context.Context, id string, supervised bool, timeoutS int) error {
+	q, err := c.accountQuery(ctx)
+	if err != nil {
+		return err
+	}
+	body := map[string]any{"supervised": supervised, "timeoutS": timeoutS}
+	return c.do(ctx, http.MethodPost, "/api/jobs/"+url.PathEscape(id)+"/run", q, body, nil)
+}

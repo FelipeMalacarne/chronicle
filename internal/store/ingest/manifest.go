@@ -31,6 +31,11 @@ type Definition struct {
 	Catalog *entities.Registry
 }
 
+// JobVarps are the varps the jobs' goals and metrics read that no catalog or
+// guide rule names (docs/12 section 13.7): 281 is the Tutorial Island's
+// progress, which reaches 1000 when the player leaves the island.
+var JobVarps = []int64{281}
+
 // BuildDefinition derives the v1 manifest from the reference vars of the
 // catalog (content/reference/varbits.json: diary tiers, quest points and the
 // counts of the account screen; the proof of every unlock in unlocks.json and
@@ -75,6 +80,9 @@ func BuildDefinition(c *content.Content, reg *entities.Registry) Definition {
 				}
 			}
 		}
+	}
+	for _, id := range JobVarps {
+		varps[id] = struct{}{}
 	}
 	d := Definition{
 		Varbits:         sortedIDs(varbits),

@@ -41,9 +41,9 @@ final class TaskSpec
 	private static final int MAX_GAME_ID = 1 << 20;
 	/**
 	 * Types this machine never runs: the ones not executed yet, and the ones the agent delegates elsewhere (a train
-	 * to its plugin, a quest to the Quest Helper, ge_buy and ge_sell to the Agent Server's Grand Exchange).
+	 * to its plugin, a quest to the Quest Helper, ge_buy and ge_sell to the Agent Server's Grand Exchange, a job's plugin to its plugin).
 	 */
-	private static final Set<String> NOT_YET = new HashSet<>(Arrays.asList("talk", "interact", "train", "manual", "quest", "ge_buy", "ge_sell"));
+	private static final Set<String> NOT_YET = new HashSet<>(Arrays.asList("talk", "interact", "train", "manual", "quest", "ge_buy", "ge_sell", "plugin"));
 
 	String type;
 	Travel travel;

@@ -72,7 +72,7 @@ type Jobs interface {
 	Start(ctx context.Context, id, reason string, progress *job.Progress, deadline *time.Time) (job.Job, error)
 	Stall(ctx context.Context, id, reason string) (job.Job, error)
 	Fail(ctx context.Context, id, reason string) (job.Job, error)
-	Succeed(ctx context.Context, id string, proof job.Proof) (job.Job, error)
+	Succeed(ctx context.Context, id string, proof job.Proof, progress *job.Progress) (job.Job, error)
 	Progress(ctx context.Context, id string, p job.Progress, deadline *time.Time) error
 	Due(ctx context.Context, now time.Time) ([]job.Job, error)
 	NextDeadline(ctx context.Context) (time.Time, bool, error)
@@ -210,9 +210,11 @@ func (t *Tracker) untilDeadline(ctx context.Context) time.Duration {
 // the active jobs of every account and does the housekeeping.
 func (t *Tracker) Step(ctx context.Context, all bool) {
 	dirty := map[string]bool{}
+	// A failed drain left the cursor before the event: the next pass reads it
+	// again. The rest of the pass reads the jobs and runs, not the log, so it
+	// still runs (a writer holding the log's lock must not stop the safety tick).
 	if err := t.drain(ctx, dirty); err != nil && ctx.Err() == nil {
 		t.log().Warn("jobs: events", "err", err)
-		return // the cursor did not move: the next pass reads them again
 	}
 	if all {
 		accounts, err := t.Jobs.ActiveAccounts(ctx)
@@ -435,7 +437,13 @@ func (t *Tracker) evaluate(ctx context.Context, account string) {
 			if !t.mayProve(ctx, j) {
 				continue
 			}
-			if _, err := t.Jobs.Succeed(ctx, j.ID, proof); err != nil && !errors.Is(err, storejobs.ErrState) {
+			// The goal's last reading is the job's last progress, so a job
+			// proven between two readings does not end below its target.
+			var last *job.Progress
+			if j.Metric != nil {
+				last, _ = job.Observe(*j.Metric, j.Progress, *facts.State, now)
+			}
+			if _, err := t.Jobs.Succeed(ctx, j.ID, proof, last); err != nil && !errors.Is(err, storejobs.ErrState) {
 				t.log().Warn("jobs: succeed", "job", j.ID, "err", err)
 			}
 			continue
@@ -554,9 +562,9 @@ func (t *Tracker) stopProvenRuns(ctx context.Context) {
 	}
 	t.mu.Unlock()
 	for _, r := range runs {
-		key, ok := r.Goal.ObjectiveKey()
+		until, ok := r.Goal.Until()
 		if !ok {
-			continue // only an objective key is a wait_until the agent knows
+			continue // only an objective key or a var label is a wait_until the agent knows
 		}
 		t.mu.Lock()
 		skip := !t.sent[r.RunUID].IsZero() || t.sending[r.RunUID]
@@ -574,13 +582,13 @@ func (t *Tracker) stopProvenRuns(ctx context.Context) {
 		t.inflight.Add(1)
 		go func() {
 			defer t.inflight.Done()
-			t.sendRunUntil(ctx, r, key)
+			t.sendRunUntil(ctx, r, until)
 		}()
 	}
 }
 
 // sendRunUntil tells the agent to stop a run and records the outcome.
-func (t *Tracker) sendRunUntil(ctx context.Context, r storejobs.RunToStop, key entities.ObjectiveKey) {
+func (t *Tracker) sendRunUntil(ctx context.Context, r storejobs.RunToStop, until string) {
 	done := false // the agent was told, or has nothing left to be told
 	defer func() {
 		t.mu.Lock()
@@ -597,7 +605,7 @@ func (t *Tracker) sendRunUntil(ctx context.Context, r storejobs.RunToStop, key e
 	if err != nil || !served.Supports(agent.CmdRunUntil) {
 		return // the agent links again and reports the run again
 	}
-	p := agent.RunUntilParams{UID: r.RunUID, Objective: key.String()}
+	p := agent.RunUntilParams{UID: r.RunUID, Objective: until}
 	if f, ferr := t.Facts.TaskFacts(ctx, r.Account); ferr == nil {
 		p.Evidence = r.Goal.Evaluate(job.Env{Facts: f, Registry: t.Registry, Now: t.now()}).Evidence
 	}

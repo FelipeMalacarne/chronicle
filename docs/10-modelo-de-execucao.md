@@ -161,7 +161,7 @@ ou predicado de estado avaliável pelo motor.
 | `train` | `skill`, método (npc, spell, objeto), local | `skill:x>=N` | delega a um plugin ou primitiva própria |
 | `quest` | `quest`, `safe?` | `quest:x@finished` | delega ao Quest Helper que o cliente do Microbot traz (E19, apêndice A; "como implementado" abaixo) |
 | `ge_buy` | `item`, `qty` | `item:<id>xN` | delega ao `/ge` do Agent Server; só conta `regular` (doc 12, seção 6) |
-| `ge_sell` | `item` | `sold`: o inventário ao vivo não tem mais o item; o run soma as moedas | delega ao `/ge` do Agent Server; só conta `regular` (doc 12, seção 6) |
+| `ge_sell` | `item` | `sold`: um run da tarefa provou a venda pelo ingest (o item saiu do inventário ao vivo e as moedas do run chegaram); o item só ausente não basta | delega ao `/ge` do Agent Server; só conta `regular` (doc 12, seção 6) |
 | `manual` | texto citado | marca do dono ou objetivo do passo | nenhuma: o executor para e chama o dono |
 
 Regras:

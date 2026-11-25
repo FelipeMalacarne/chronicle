@@ -21,6 +21,12 @@ type PlanStore interface {
 	Create(ctx context.Context, account string, in storeplans.NewPlan) (plan.Plan, error)
 	Delete(ctx context.Context, account, id string) error
 	SetActive(ctx context.Context, account, id string) (plan.Plan, error)
+	// ProveSale records a Grand Exchange sale the ingest proved, ForgetSale
+	// drops it when a new run of the task starts, and ProvenSales reads a
+	// plan's (plan.Input.SalesProven).
+	ProveSale(ctx context.Context, account string, p storeplans.SaleProof) error
+	ForgetSale(ctx context.Context, account, planID, taskKey string) error
+	ProvenSales(ctx context.Context, account, planID string) (map[string]string, error)
 }
 
 // planRoutes are the plans of an account (docs/10 section 9): the next
@@ -99,8 +105,13 @@ func (s *Server) planInputFor(ctx context.Context, account string, p plan.Plan) 
 	if err != nil {
 		return plan.Input{}, err
 	}
+	sales, err := s.opts.Plans.ProvenSales(ctx, account, p.ID)
+	if err != nil {
+		return plan.Input{}, err
+	}
 	return plan.Input{
-		Plan: p, Content: s.opts.Content, Registry: s.opts.Catalog, Boards: boards, Holdings: h, Facts: facts, Now: time.Now(),
+		Plan: p, Content: s.opts.Content, Registry: s.opts.Catalog, Boards: boards, Holdings: h, Facts: facts,
+		SalesProven: sales, Now: time.Now(),
 	}, nil
 }
 

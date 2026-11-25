@@ -624,6 +624,31 @@ Table run_events {
   '''
 }
 
+Table sale_proofs {
+  account_id text [not null]
+  plan_id text [not null]
+  task_key text [not null]
+  run_uid text [not null]
+  item_id integer [not null]
+  coins_at_least bigint [not null]
+  coins_seen bigint [not null]
+  proven_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, plan_id, task_key) [pk]
+  }
+
+  Note: '''
+  Grand Exchange sales the ingest proved (the item left the live inventory and the run's coins reached it), by plan and task key: the plan counts them met afterwards.
+  sale_proofs_check: CHECK ((coins_seen >= coins_at_least))
+  sale_proofs_coins_at_least_check: CHECK ((coins_at_least > 0))
+  sale_proofs_item_id_check: CHECK ((item_id > 0))
+  sale_proofs_plan_id_check: CHECK (((length(plan_id) >= 1) AND (length(plan_id) <= 200)))
+  sale_proofs_run_uid_check: CHECK (((length(run_uid) >= 1) AND (length(run_uid) <= 64)))
+  sale_proofs_task_key_check: CHECK (((length(task_key) >= 1) AND (length(task_key) <= 300)))
+  '''
+}
+
 Table sessions {
   token text [pk]
   data bytea [not null]
@@ -906,6 +931,7 @@ Ref routine_runs_account_id_fkey: routine_runs.account_id > accounts.id [delete:
 Ref routine_runs_routine_id_fkey: routine_runs.routine_id > routines.id [delete: set null]
 Ref routines_account_id_fkey: routines.account_id > accounts.id [delete: cascade]
 Ref run_events_run_id_fkey: run_events.run_id > routine_runs.id [delete: cascade]
+Ref sale_proofs_account_id_fkey: sale_proofs.account_id > accounts.id [delete: cascade]
 Ref settings_account_id_fkey: settings.account_id > accounts.id [delete: cascade]
 Ref snapshot_facts_snapshot_id_fkey: snapshot_facts.snapshot_id > snapshots.id [delete: cascade]
 Ref snapshot_item_containers_snapshot_id_fkey: snapshot_item_containers.snapshot_id > snapshots.id [delete: cascade]
@@ -971,6 +997,7 @@ TableGroup metas_e_caches {
 TableGroup planos {
   plans
   plan_items
+  sale_proofs
 }
 
 TableGroup controle_microbot {

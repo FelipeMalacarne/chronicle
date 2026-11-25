@@ -16,6 +16,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/core/ge"
 	"github.com/FelipeMalacarne/chronicle/internal/core/plan"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
+	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
 )
 
 // The typed task of the active plan, run by the account's agent (docs/10
@@ -122,6 +123,15 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
+	}
+	if spec.GESell != nil {
+		// A new sale of the task: an earlier run's proof no longer speaks
+		// for it (docs/12 section 6.2). Dropped before the run starts, so
+		// the new run's own proof is never the one dropped.
+		if ferr := s.opts.Plans.ForgetSale(r.Context(), account, in.Plan.ID, view.Key); ferr != nil {
+			writeError(w, http.StatusInternalServerError, "forgetting the task's earlier sale")
+			return
+		}
 	}
 	link := s.opts.Microbot.Link
 	served, err := link.Route(account)
@@ -254,6 +264,41 @@ func (s *Server) questHelperName(ctx context.Context, served agent.Info, reg *en
 	return nil
 }
 
+// proveSale evaluates a ge_sell run's proof (docs/12 section 6.2): the run
+// ended done (the offer filled and was collected) and the live inventory
+// holds none of the item and the coins the run waited for
+// (rules.SaleProven). The proof is relative to the coins the inventory held
+// before the sale, so it is recorded the moment it is seen: the plan counts
+// the sale met from then on (plan.Input.SalesProven). v becomes the run's
+// verdict.
+func (s *Server) proveSale(ctx context.Context, account string, in plan.Input, run agent.Run, v *plan.TaskView) error {
+	id, ok := 0, false
+	if v.Task.Item != nil {
+		id, ok = v.Task.Item.Int()
+	}
+	if !ok {
+		return nil
+	}
+	verdict, why := rules.SaleProven(in.Holdings, in.Registry, id, run.Task.CoinsAtLeast)
+	switch {
+	case run.Task.CoinsAtLeast < 1 || run.UID == "":
+		verdict, why = rules.Unknown, "o run não diz as moedas que a venda paga (agent antigo?)"
+	case verdict == rules.Met && run.State != agent.RunDone:
+		verdict, why = rules.Unknown, "o run da venda não terminou com a oferta completa e coletada"
+	}
+	if verdict == rules.Met {
+		coins := in.Holdings.Count(rules.ContainerInventory, entities.CoinsID, entities.CompareExact, in.Registry)
+		if err := s.opts.Plans.ProveSale(ctx, account, storeplans.SaleProof{
+			Plan: run.Task.Plan, TaskKey: run.Task.Key, RunUID: run.UID, Item: id,
+			CoinsAtLeast: run.Task.CoinsAtLeast, CoinsSeen: coins,
+		}); err != nil {
+			return err
+		}
+	}
+	v.State, v.Reason = verdict, why
+	return nil
+}
+
 // taskStatus is GET /api/microbot/task: the agent's current or last run
 // and, for a task run, its termination on the account's facts now.
 type taskStatus struct {
@@ -300,17 +345,15 @@ func (s *Server) handleTaskStatus(w http.ResponseWriter, r *http.Request) {
 			out.Reason = "a tarefa não está mais no plano"
 			break
 		}
-		out.Proof, out.Proven = &v, v.State == rules.Met
-		if st.Run.Task.Type == content.TaskGESell && out.Proven {
-			// The item left the inventory; the sale is proven when the
-			// coins it paid are there too.
-			id, _ := v.Task.Item.Int()
-			verdict, why := rules.SaleProven(in.Holdings, in.Registry, id, st.Run.Task.CoinsAtLeast)
-			out.Proven = verdict == rules.Met
-			if !out.Proven {
-				out.Reason = why
+		if st.Run.Task.Type == content.TaskGESell && in.SalesProven[st.Run.Task.Key] != st.Run.UID {
+			// The plan's verdict may lean on an earlier run's proof: this
+			// run is proven by its own.
+			if err := s.proveSale(r.Context(), account, in, *st.Run, &v); err != nil {
+				writeError(w, http.StatusInternalServerError, "recording the sale's proof")
+				return
 			}
 		}
+		out.Proof, out.Proven = &v, v.State == rules.Met
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, out)

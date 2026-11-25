@@ -296,6 +296,8 @@ func TestTaskCheck(t *testing.T) {
 		{"ge_sell until sold", Task{Type: TaskGESell, Item: ref("item:1775"), Until: until(UntilSold)}, regular, ""},
 		{"ge_sell takes no qty", Task{Type: TaskGESell, Item: ref("item:1775"), Qty: 5}, regular, "ge_sell takes no qty"},
 		{"ge_sell until coins", Task{Type: TaskGESell, Item: ref("item:1775"), Until: until("item:995x1000")}, regular, "until must be omitted"},
+		{"ge_buy of a noted id", Task{Type: TaskGEBuy, Item: ref("item:1776"), Qty: 1}, regular, "item 1776 is a noted id: name the item itself (item:1775)"},
+		{"ge_sell of a noted id", Task{Type: TaskGESell, Item: ref("item:1776")}, regular, "noted id"},
 		{"ge_sell of a quest", Task{Type: TaskGESell, Item: ref("quest:cooks_assistant")}, regular, "is not of kind item"},
 		{"sold on a bank", Task{Type: TaskManual, Until: until(UntilSold)}, step, "manual cannot end on sold"},
 		{"unknown type", Task{Type: "teleport"}, step, "unknown task type"},

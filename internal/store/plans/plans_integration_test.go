@@ -301,3 +301,73 @@ func testPool(ctx context.Context, t *testing.T) *pgxpool.Pool {
 	}
 	return pool
 }
+
+// TestSaleProofsPostgres: a proven sale is recorded per (account, plan,
+// task key), read back by plan, kept at its first record for the same run,
+// moved to a later run's proof and forgotten when a new run starts; a proof
+// below the run's coins is refused.
+func TestSaleProofsPostgres(t *testing.T) {
+	ctx := context.Background()
+	pool := testPool(ctx, t)
+	if _, err := pool.Exec(ctx, `
+		INSERT INTO guides (id, title) VALUES ('t', 'Execution fixture');
+		INSERT INTO users (id, subject, username) VALUES ('u1', 's1', 'u1');
+		INSERT INTO accounts (id, user_id, rsn, rsn_normalized, mode, guide_id, layer) VALUES
+		  ('acc_a', 'u1', 'A', 'a', 'regular', 't', 'enhanced'),
+		  ('acc_b', 'u1', 'B', 'b', 'regular', 't', 'enhanced');
+	`); err != nil {
+		t.Fatal(err)
+	}
+	repo := New(pool, nil, nil)
+	proof := SaleProof{Plan: "pln_abcdefgh", TaskKey: "task:0#0", RunUID: "0123abcd", Item: 1775, CoinsAtLeast: 170_000, CoinsSeen: 170_500}
+	if err := repo.ProveSale(ctx, "acc_a", proof); err != nil {
+		t.Fatal(err)
+	}
+	first := func() (string, time.Time) {
+		var uid string
+		var at time.Time
+		if err := pool.QueryRow(ctx, `SELECT run_uid, proven_at FROM sale_proofs WHERE account_id = 'acc_a'`).Scan(&uid, &at); err != nil {
+			t.Fatal(err)
+		}
+		return uid, at
+	}
+	_, at := first()
+	if err := repo.ProveSale(ctx, "acc_a", proof); err != nil {
+		t.Fatal(err)
+	}
+	if uid, again := first(); uid != "0123abcd" || !again.Equal(at) {
+		t.Fatalf("the same run's proof moved: %s %v -> %v", uid, at, again)
+	}
+	later := proof
+	later.RunUID = "4567abcd"
+	if err := repo.ProveSale(ctx, "acc_a", later); err != nil {
+		t.Fatal(err)
+	}
+	if uid, _ := first(); uid != "4567abcd" {
+		t.Fatalf("a later run's proof = %s", uid)
+	}
+	short := proof
+	short.CoinsSeen = short.CoinsAtLeast - 1
+	if err := repo.ProveSale(ctx, "acc_a", short); err == nil {
+		t.Fatal("a proof below the run's coins was recorded")
+	}
+	for _, tc := range []struct {
+		account, plan string
+		want          map[string]string
+	}{
+		{"acc_a", "pln_abcdefgh", map[string]string{"task:0#0": "4567abcd"}},
+		{"acc_a", "pln_other000", map[string]string{}},
+		{"acc_b", "pln_abcdefgh", map[string]string{}},
+	} {
+		got, err := repo.ProvenSales(ctx, tc.account, tc.plan)
+		if err != nil || fmt.Sprint(got) != fmt.Sprint(tc.want) {
+			t.Errorf("%s %s = %v, %v; want %v", tc.account, tc.plan, got, err, tc.want)
+		}
+	}
+	if err := repo.ForgetSale(ctx, "acc_a", "pln_abcdefgh", "task:0#0"); err != nil {
+		t.Fatal(err)
+	}
+	if got, err := repo.ProvenSales(ctx, "acc_a", "pln_abcdefgh"); err != nil || len(got) != 0 {
+		t.Fatalf("after forgetting = %v, %v", got, err)
+	}
+}

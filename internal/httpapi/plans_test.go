@@ -71,6 +71,14 @@ func (m *memPlans) SetActive(ctx context.Context, account, _ string) (plan.Plan,
 	return m.Active(ctx, account)
 }
 
+func (m *memPlans) ProveSale(context.Context, string, storeplans.SaleProof) error { return nil }
+
+func (m *memPlans) ForgetSale(context.Context, string, string, string) error { return nil }
+
+func (m *memPlans) ProvenSales(context.Context, string, string) (map[string]string, error) {
+	return nil, nil
+}
+
 // In oidc the plan routes need a session, reach only the session user's
 // accounts, and the writes need the CSRF header (rule 10).
 func TestPlanRoutesOIDC(t *testing.T) {

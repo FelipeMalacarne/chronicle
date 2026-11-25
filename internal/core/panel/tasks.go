@@ -159,16 +159,24 @@ func EvaluateUntil(t content.Task, u content.TaskUntil, s progress.StepState, se
 		}
 		return rules.Unmet, ""
 	case content.UntilSold:
-		id, ok := 0, false
-		if t.Item != nil {
-			id, ok = t.Item.Int()
-		}
-		if !ok {
-			return rules.Unknown, "a tarefa não tem item"
-		}
-		return rules.Sold(h, reg, id)
+		// No run proved a sale here: a plan passes its runs' proofs
+		// (plan.Input.SalesProven).
+		return SoldUntil(t, h, reg, false)
 	}
 	return rules.Unknown, "término desconhecido"
+}
+
+// SoldUntil evaluates a ge_sell's sold termination (rules.Sold); proven
+// says a run of the task proved the sale.
+func SoldUntil(t content.Task, h rules.ItemHoldings, reg *entities.Registry, proven bool) (rules.Verdict, string) {
+	id, ok := 0, false
+	if t.Item != nil {
+		id, ok = t.Item.Int()
+	}
+	if !ok {
+		return rules.Unknown, "a tarefa não tem item"
+	}
+	return rules.Sold(h, reg, id, proven)
 }
 
 func firstReason(evs []rules.Evidence) string {
@@ -284,7 +292,7 @@ func UntilLabel(t content.Task, u content.TaskUntil, reg *entities.Registry) str
 	case content.UntilOwnerMark:
 		return "sua marca no passo"
 	case content.UntilSold:
-		return "o item saiu do inventário"
+		return "a venda provada pelo ingest"
 	}
 	return u.State
 }

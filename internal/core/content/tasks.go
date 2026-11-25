@@ -317,6 +317,15 @@ func (t Task) Check(reg *entities.Registry, ctx TaskContext) []string {
 		}
 	case TaskGEBuy, TaskGESell:
 		ref("item", t.Item, true, entities.KindItem)
+		// The GE trades the item, never its note: a slot holds the unnoted
+		// id, and the prices are by unnoted id; a sale takes both forms.
+		if t.Item != nil && reg != nil {
+			if id, ok := t.Item.Int(); ok {
+				if f, ok := reg.Item(id); ok && f.Noted {
+					add("%s: item %d is a noted id: name the item itself (item:%d)", t.Type, id, f.BaseID)
+				}
+			}
+		}
 		if t.Type == TaskGEBuy && t.Qty < 1 {
 			add("ge_buy needs qty >= 1")
 		}

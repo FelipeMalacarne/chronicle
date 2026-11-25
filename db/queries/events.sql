@@ -3,11 +3,13 @@
 
 -- name: LockEventLogShared :exec
 -- A writer holds it from its insert to its commit (internal/store/eventlog).
-SELECT pg_advisory_xact_lock_shared(7123001);
+-- The key is (7123001, the schema's hash): advisory locks are database-wide,
+-- and each schema has its own log (the tests' schemas share one database).
+SELECT pg_advisory_xact_lock_shared(7123001, hashtext(current_schema()));
 
 -- name: TryLockEventLog :one
 -- The reader takes it exclusively: no event is uncommitted while it holds it.
-SELECT pg_try_advisory_xact_lock(7123001)::boolean AS locked;
+SELECT pg_try_advisory_xact_lock(7123001, hashtext(current_schema()))::boolean AS locked;
 
 -- name: InsertEvent :one
 INSERT INTO events (account_id, type, subject, job_id, payload) VALUES ($1, $2, $3, $4, $5) RETURNING id, at;

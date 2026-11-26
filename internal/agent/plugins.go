@@ -109,6 +109,9 @@ func ValidateParams(command string, raw json.RawMessage) (any, error) {
 		// Server → managed agent only, from the workers' reconciler; it
 		// carries the game session and is never taken from a request.
 		return nil, errors.New("worker_bootstrap is never sent from the web")
+	case CmdWorkerRelease:
+		// Server → agent with slots only, from the workers' reconciler.
+		return nil, errors.New("worker_release is never sent from the web")
 	case CmdRoutinesSync:
 		// Server → agent only, from the database's routines on connecting.
 		return nil, errors.New("routines_sync is never sent from the web")

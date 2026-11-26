@@ -302,8 +302,20 @@ type Agent struct {
 	// triggers and recurring routines) and x11vnc. The server tags every
 	// command with the client's account (Message.Account).
 	Clients []Client
+	// Slots, when positive, makes this an agent with slots: it starts with no
+	// client, takes CmdWorkerBootstrap for any account into a free slot and
+	// frees it on CmdWorkerRelease (slots.go). Executor, Clients and
+	// Hello.Account stay unset.
+	Slots int
+	// NewSlot builds the client of account in slot (0 to Slots-1): its own
+	// dev home, executor in --worker mode, display and x11vnc port.
+	NewSlot func(slot int, account string) Client
+	// SlotBusy, when set, reports a slot whose X display another process
+	// holds (a client the agent lost track of): that slot is not taken.
+	SlotBusy func(slot int) bool
 
-	out outbox
+	out   outbox
+	slots slotSet
 }
 
 // Client is one game client of an agent: a harness instance (its own dev
@@ -317,9 +329,12 @@ type Client struct {
 	VNCAddr string
 }
 
-// clients are the game clients the agent drives: Clients, else the one of
-// Executor.
+// clients are the game clients the agent drives now: the ones in its slots,
+// else Clients, else the one of Executor.
 func (a *Agent) clients() []Client {
+	if a.Slots > 0 {
+		return a.slots.clients()
+	}
 	if len(a.Clients) > 0 {
 		return a.Clients
 	}
@@ -377,6 +392,19 @@ func (o *outbox) put(account string, r Run) {
 	}
 }
 
+// forget drops the queued runs of account's client.
+func (o *outbox) forget(account string) {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.order = slices.DeleteFunc(o.order, func(k outKey) bool {
+		if k.account != account {
+			return false
+		}
+		delete(o.pending, k)
+		return true
+	})
+}
+
 // take empties the queue of the runs whose account linked accepts, in the
 // order they were queued; the others stay for a link that serves them.
 func (o *outbox) take(linked func(account string) bool) []outRun {
@@ -401,13 +429,9 @@ func (o *outbox) take(linked func(account string) bool) []outRun {
 // they fire while the server is away.
 func (a *Agent) Run(ctx context.Context) error {
 	a.out.init()
+	a.slots.base = ctx
 	for _, c := range a.clients() {
-		if c.Executor.OnRun == nil {
-			account := c.Account
-			c.Executor.OnRun = func(r Run) { a.out.put(account, r) }
-		}
-		go c.Executor.Watch(ctx)
-		go c.Executor.WatchRecurring(ctx)
+		a.watch(ctx, c)
 	}
 	backoff := time.Second
 	for {
@@ -429,14 +453,22 @@ func (a *Agent) Run(ctx context.Context) error {
 	}
 }
 
-// sendEvents writes the queued runs of the linked clients as TypeEvent
+// watch starts c's triggers and recurring routines under ctx and queues its
+// runs for the server.
+func (a *Agent) watch(ctx context.Context, c Client) {
+	if c.Executor.OnRun == nil {
+		account := c.Account
+		c.Executor.OnRun = func(r Run) { a.out.put(account, r) }
+	}
+	go c.Executor.Watch(ctx)
+	go c.Executor.WatchRecurring(ctx)
+}
+
+// sendEvents writes the queued runs of the clients served as TypeEvent
 // frames until the session's ctx ends or a write fails; what did not go out
 // goes back to the queue for the next connection. tagged names each run's
 // client (Message.Account).
-func (a *Agent) sendEvents(ctx context.Context, write func(Message) error, linked []Client, tagged bool) {
-	served := func(account string) bool {
-		return slices.ContainsFunc(linked, func(c Client) bool { return c.Account == account })
-	}
+func (a *Agent) sendEvents(ctx context.Context, write func(Message) error, served func(account string) bool, tagged bool) {
 	for {
 		runs := a.out.take(served)
 		for i := range runs {
@@ -515,10 +547,20 @@ func (a *Agent) session(ctx context.Context) error {
 		return conn.Write(wctx, websocket.MessageText, b)
 	}
 	hello, linked, tagged := a.hello(resp)
+	slotted := hello.Slots > 0
 	if err := write(Message{Type: TypeHello, Hello: &hello}); err != nil {
 		return err
 	}
-	a.Log.Info("agent: linked", "server", a.URL, "clients", len(linked))
+	a.Log.Info("agent: linked", "server", a.URL, "clients", len(linked), "slots", hello.Slots)
+	// An agent with slots looks its clients up at command time: they change
+	// while the link holds.
+	served := func(account string) bool {
+		if slotted {
+			_, ok := a.slots.lookup(account)
+			return ok
+		}
+		return slices.ContainsFunc(linked, func(c Client) bool { return c.Account == account })
+	}
 	// The history goes out again on every connection, oldest first: what
 	// changed while the link was down reaches the server (it applies a run
 	// idempotently), then every change as it happens.
@@ -529,7 +571,7 @@ func (a *Agent) session(ctx context.Context) error {
 	}
 	sctx, stop := context.WithCancel(ctx)
 	defer stop()
-	go a.sendEvents(sctx, write, linked, tagged)
+	go a.sendEvents(sctx, write, served, tagged)
 	for {
 		_, raw, err := conn.Read(ctx)
 		if err != nil {
@@ -542,8 +584,22 @@ func (a *Agent) session(ctx context.Context) error {
 		}
 		go func(m Message) {
 			res := Message{Type: TypeResult, ID: m.ID}
-			c, cerr := clientFor(linked, tagged, m.Account)
+			var c Client
+			var cerr error
+			if slotted {
+				c, cerr = a.slots.client(m.Account)
+			} else {
+				c, cerr = clientFor(linked, tagged, m.Account)
+			}
 			switch {
+			case slotted && m.Account == "":
+				data, err := a.poolCommand(ctx, m, write)
+				if err != nil {
+					res.Error = err.Error()
+				} else {
+					res.OK = true
+					res.Data, _ = json.Marshal(data)
+				}
 			case !Known(m.Command):
 				res.Error = fmt.Sprintf("command %q is not in the agent's closed list", m.Command)
 			case cerr != nil:
@@ -574,7 +630,9 @@ func (a *Agent) session(ctx context.Context) error {
 }
 
 // hello is what the agent declares on a connection whose upgrade answer was
-// resp, and the clients the connection serves. An agent with several
+// resp, and the clients the connection serves. An agent with slots declares
+// them and the clients in them now, to a server that announces FeatureSlots
+// (which also announces FeatureClients). An agent with several
 // clients declares them all (tagged) to a server that announces
 // FeatureClients; an older server would take the commands and events of
 // every client as the first one's, so it gets the first client alone, and
@@ -585,6 +643,17 @@ func (a *Agent) hello(resp *http.Response) (h Hello, linked []Client, tagged boo
 	h.Features = AgentFeatures
 	h.Clients = nil
 	all := a.clients()
+	if a.Slots > 0 {
+		if resp == nil || !slices.Contains(strings.Split(resp.Header.Get(FeaturesHeader), ","), FeatureSlots) {
+			a.Log.Warn("agent: the server does not fill slots (older than this agent); linking with no clients", "slots", a.Slots)
+			return h, nil, false
+		}
+		h.Account, h.Slots = "", a.Slots
+		for _, c := range all {
+			h.Clients = append(h.Clients, ClientHello{Account: c.Account})
+		}
+		return h, all, true
+	}
 	if len(a.Clients) == 0 {
 		return h, all, false
 	}
@@ -607,6 +676,9 @@ func (a *Agent) hello(resp *http.Response) (h Hello, linked []Client, tagged boo
 // account names, else the only one linked (a command naming another account
 // is refused there too).
 func clientFor(linked []Client, tagged bool, account string) (Client, error) {
+	if len(linked) == 0 {
+		return Client{}, errors.New("this agent drives no client on this link")
+	}
 	if !tagged {
 		if account == "" || account == linked[0].Account {
 			return linked[0], nil

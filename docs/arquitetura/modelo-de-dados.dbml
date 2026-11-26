@@ -124,6 +124,20 @@ Table client_profiles {
   '''
 }
 
+Table conductor_state {
+  account_id text [pk]
+  state text [not null]
+  job_id text
+  reason text [not null, default: `''::text`]
+  since timestamptz [not null, default: `now()`]
+
+  Note: '''
+  The conductor's state per account (docs/12 section 12.5): off, idle, running (its job) or blocked (and why). No row is off.
+  conductor_state_check: CHECK (((state <> 'running'::text) OR (job_id IS NOT NULL)))
+  conductor_state_state_check: CHECK ((state = ANY (ARRAY['off'::text, 'idle'::text, 'running'::text, 'blocked'::text])))
+  '''
+}
+
 Table content_steps {
   step_id text [not null]
   guide_id text [not null]
@@ -943,6 +957,8 @@ Ref client_profile_plugins_profile_id_fkey: client_profile_plugins.profile_id > 
 Ref client_profile_settings_profile_id_fkey: client_profile_settings.profile_id > client_profiles.id [delete: cascade]
 Ref client_profiles_parent_id_fkey: client_profiles.parent_id > client_profiles.id [delete: restrict]
 Ref client_profiles_user_id_fkey: client_profiles.user_id > users.id [delete: cascade]
+Ref conductor_state_account_id_fkey: conductor_state.account_id > accounts.id [delete: cascade]
+Ref conductor_state_job_id_fkey: conductor_state.job_id > jobs.id [delete: set null]
 Ref content_steps_content_version_id_fkey: content_steps.content_version_id > content_versions.id
 Ref content_steps_guide_fkey: content_steps.guide_id > guides.id
 Ref events_account_id_fkey: events.account_id > accounts.id [delete: cascade]
@@ -1053,6 +1069,7 @@ TableGroup jobs_e_eventos {
   jobs
   events
   event_cursors
+  conductor_state
 }
 
 TableGroup controle_microbot {

@@ -51,6 +51,7 @@ func newRoot() *cobra.Command {
 		newTaskCmd(),
 		newPlansCmd(),
 		newJobsCmd(),
+		newConductorCmd(),
 		newMCPCmd(),
 		newProgressCmd(),
 		newAgentCmd(),

@@ -570,7 +570,7 @@ o nível de combate recomendado e o loadout (seção 5.5).
 | `approvals (account_id, subject, approved_at)` | Uma aprovação por conta e por quest ou método (`quest:<ref>`, `method:<id>`) | 8.2 |
 | `session_policies (account_id, …)` | As faixas de duração da sessão e das pausas e o teto diário | 8.1 |
 | `play_sessions (account_id, started_at, ended_at, reason)` | As sessões que aconteceram; o teto diário é contado aqui | 8.1 |
-| `conductor_state (account_id, state, task_key, run_id, escalation_id, since)` | Em que estado o condutor está para cada conta (seção 12.5) | 12.5 |
+| `conductor_state (account_id, state, job_id, reason, since)` (migração 0033) | Em que estado o condutor está para cada conta e o job que ele despachou (seção 12.5); `escalation_id` vem com a escada | 12.5 |
 | `escalations (id, account_id, quest, varbit_value, step_class, step_text, status, …)` e `escalation_attempts (escalation_id, rung, model, actions, tokens, outcome)` | Cada passo travado e cada tentativa de cada degrau; é também a tabela da medição da seção 7.4 | 5.7, 7.4 |
 | `item_prices (item_id, high, high_at, low, low_at, buy_limit, members, source, fetched_at)` | O último preço de cada item, da API da wiki (`/latest` e `/mapping`); não é de nenhuma conta. Migração 0028 | 6.3 |
 | `jobs`, `events`, `event_cursors`, `routine_runs.job_id` (migração 0031) | Os jobs, o log de eventos e os cursores dos consumidores (seção 13); a venda no GE provada é um job `ge_sell` `succeeded`, que trocou a tabela `sale_proofs` da 0030 | 13, 6.2 |
@@ -624,6 +624,7 @@ Em `idle`, a próxima tarefa vem nesta ordem:
 O condutor despacha a tarefa pelo `task_run` que já existe, e o término continua sendo provado pelo
 servidor (`run_until`, doc 10). O condutor nunca marca nada como feito. A seção 13 revê esta seção:
 o condutor despacha jobs e muda de estado a cada evento da conta, e o término vem do job tracker.
+A primeira fatia, com os estados `off`, `idle`, `running` e `blocked`, está na seção 13.8.
 
 ### 12.6 Uma quest de ponta a ponta
 
@@ -854,8 +855,29 @@ O que a implementação decidiu onde as seções acima não diziam (`internal/co
   escolha que o plugin não fez. Os outros runs (gatilho, treino, quest, tarefa) esperam qualquer
   diálogo, como antes. Decisão do dono de 2026-11-25 (FEL-130), depois de a caixa do tutorial segurar
   dois runs na validação da Tutorial Island.
-- **Fora do escopo.** O condutor movido por eventos (FEL-126), a escada e o SSE da web com os eventos de
-  job.
+- **O condutor, primeira fatia** (FEL-126, decisões do dono de 2026-11-25). Os estados são `off`,
+  `idle`, `running` e `blocked`, em `conductor_state` (migração 0033). Uma conta sem linha está `off`.
+  - **Ligar e desligar.** O dono liga e desliga por `POST /api/conductor` ou `chronicle conductor on
+    --yes|off`. Ligar leva a conta a `idle` de qualquer estado, e desligar não para o job que já roda.
+  - **Decisão.** `internal/core/conductor.Decide` é pura e testada por tabela. Em `idle`, sem job ativo
+    na conta, o condutor despacha. Em `running`, um `succeeded` volta a `idle` e despacha a próxima
+    tarefa; um `failed` ou `canceled` leva a `blocked` com o motivo; um `stalled` espera, porque pode
+    voltar a `running`.
+  - **Despacho.** O condutor nunca roda ao lado de um job do dono ou de uma rotina. O despacho é o
+    mesmo de `POST /api/microbot/task` (`dispatchTask`), sem supervisão, com o job de fonte
+    `conductor` e a auditoria do ator `conductor`, origem `server`.
+  - **Recusa e espera.** Uma recusa que pede o dono leva a `blocked`: o plano sem tarefa, um passo
+    manual, E9, o cliente sem o plugin. O plano esperando algo, ou o agent ausente, deixa a conta em
+    `idle` com o motivo, e o condutor pergunta de novo no máximo uma vez por minuto.
+  - **Laço.** `internal/conduct` roda no `chronicle serve` só com `MICROBOT_CONTROL=on`. Ele segue o log
+    pelo cursor `conductor` (`job.succeeded`, `job.failed`, `job.canceled`), acorda com o hub e tem um
+    tick de segurança de 30 s.
+  - **Idempotência.** Cada passo relê o estado e os jobs, e só move o estado a partir do que leu
+    (`MoveConductorState`): um reinício ou um evento entregue de novo não despacha outra vez, e o dono
+    desligando no meio vence.
+  - **O que vem depois.** Sessões, aprovações, escada e upkeep (FEL-104, FEL-105, FEL-101, FEL-94)
+    entram como novas linhas da tabela do `Decide`.
+- **Fora do escopo.** A escada e o SSE da web com os eventos de job.
 
 ### 13.7 A validação: a Tutorial Island da AppendOnly
 

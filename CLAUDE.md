@@ -75,6 +75,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `chronicle recording [--since 2h] [-o file]` / `recording delete --yes` | docs/10 section 11: the demonstration Chronicle Link recorded with "Record demonstration" on (`GET /api/account/recording`), printed or written as the JSON the content MCP's `propose_tasks` reads; `delete` drops it on the server (all, or `--recording <id>`). Never delete the owner's recording unasked |
 | `chronicle plans` / `plans create -f plan.json` / `plans use <id\|route>` / `plans delete <id> --yes` | docs/10 section 9: the account's plans over `/api/plans` (the route, goal and custom plans; the custom plans' screen is phase 5, so a plan is a JSON file of items: a (guide, step), a recipe or a task) and the one it follows |
 | `chronicle jobs` / `jobs show <id>` / `jobs cancel <id>` / `jobs create -f job.json` / `jobs run <id> --yes` | docs/12 section 13: the account's jobs over `/api/jobs` (state and measured progress; `show` adds the runs and events; `cancel` also stops the run when it is the agent's current one). A task run creates its job; the job tracker proves it from the ingest. `create` queues a job (a `plugin` job names the plugin class and settings, validated by `clientcfg`) and `run` starts a queued plugin job on the account's agent (`POST /api/jobs/{id}/run`: the agent turns the plugin on, the tracker ends it on the ingest's proof): `run` acts in game on the account, never run it on the owner's account unasked |
+| `chronicle conductor` / `conductor on --yes` / `conductor off` | docs/12 section 12.5: the account's conductor over `/api/conductor` (off, idle, running with its job, blocked and why). `on` lets it run the plan job by job in game on the account: never turn it on for the owner's account unasked |
 | `chronicle task` / `task run --yes [--supervised] [--wait 10m]` / `task status` / `task cancel` | docs/10 phases 3 to 5: the next typed task of the account's active plan (`GET /api/plan/next`), its run by the account's agent (`POST /api/microbot/task`: the closed command `task_run`, executed by Chronicle Link's executor, a `train` delegated to the plugin it names and stopped when the server proves the level, `run_until`, or a `quest` delegated to the client's Quest Helper, E19, stopped when the server proves it finished), and the ingest's proof of its termination (`GET /api/microbot/task`). `run` acts in game on the account: never run it on the owner's account unasked |
 | `chronicle mta --want <ids> [--own <ids>] [--points t,g,e,a] [--magic N]` / `mta rewards` | Mage Training Arena calculator over `POST /api/mta/calculate` and `GET /api/mta/rewards` (stateless, wears the account routes' auth; `internal/core/mta`): what to buy, the pizazz points missing per room and the law/nature/cosmic runes; the account MCP has the same as `mta_calculate` and `mta_rewards`. Its screen is the Mage Training Arena card of Conta › Personagem (`web/src/lib/v6/MtaCard.svelte`), built at the owner's request before any canvas artboard exists: design it in the canvas next (rule 11); it fills the points from the `minigame` facet Chronicle Link reads in the arena (`mta.<room>`, `/api/account/state`) |
 | `chronicle progress check --account <id>` | GET `/api/progress/check` of a running server (server and login like the CLI): marks vs the mark log, player_state vs the merge of observations, verdicts/statuses/cursors vs a reevaluation; exit 1 on any difference (docs/10 section 6). The boot runs it too and only warns |
@@ -109,6 +110,8 @@ internal/core/        PURE domain (no DB/HTTP imports):
                       thing that makes a job succeed
   planning/           next-leg readiness (ownership vs carried loadout vs bank instructions)
   progress/           objective verdicts (latched), derived step status, implied cascade, cursor
+  conductor/          the conductor's decision for one account (docs/12 section 12.5): Decide (off, idle, running,
+                      blocked: dispatch, wait or stop, from the state and its job) and Settle (after a dispatch)
   mta/                Mage Training Arena calculator: chosen rewards + points held -> points missing per room and
                       the law/nature/cosmic runes (table `mta.json`; the plugin `fm/mtaarena` mirrors it)
   rhythm/             an account's rhythm from its snapshots: skill trained, XP/h, session, today, GP
@@ -174,6 +177,11 @@ internal/jobtracker/  the jobs' server side (docs/12 section 13): follows the du
                       account's facts, is the only piece that ends a job as succeeded (a live fact only), stalls
                       by deadline, writes membership.low and sends the agent run_until for the runs whose job it
                       proved (a run's wait_until, docs/10 phase 4); serve only
+internal/conduct/     the conductor's server side (docs/12 section 12.5, first slice): for each account whose owner
+                      turned it on, dispatches the plan's next task as a job (the same path as POST
+                      /api/microbot/task) and the next one on job.succeeded; blocks on a failed or canceled job;
+                      follows the event log from its cursor, decides with internal/core/conductor; serve only,
+                      with MICROBOT_CONTROL=on
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor (one per game
                       client: an attached agent may drive several, each with its own account, lock and run,
                       docs/10 phase 5) and outbound websocket, the server-side Link (each client its own

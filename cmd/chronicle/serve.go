@@ -19,6 +19,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/auth"
 	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
+	"github.com/FelipeMalacarne/chronicle/internal/conduct"
 	"github.com/FelipeMalacarne/chronicle/internal/config"
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
@@ -28,6 +29,7 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
 	"github.com/FelipeMalacarne/chronicle/internal/sources/wikiprices"
 	storeactivity "github.com/FelipeMalacarne/chronicle/internal/store/activity"
+	storeconductor "github.com/FelipeMalacarne/chronicle/internal/store/conductor"
 	storeeventlog "github.com/FelipeMalacarne/chronicle/internal/store/eventlog"
 	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
@@ -102,6 +104,8 @@ func runServe(parent context.Context) error {
 	var plansService httpapi.PlanStore
 	var jobsService httpapi.JobStore
 	var jobEventsService httpapi.JobEventStore
+	var conductorService httpapi.ConductorStore
+	var conductorLoop *conduct.Conductor
 	var priceService httpapi.PriceStore
 	var oidcOpts *httpapi.OIDCOptions
 	var microbotOpts *httpapi.MicrobotOptions
@@ -151,6 +155,13 @@ func runServe(parent context.Context) error {
 				}
 			}
 			go tracker.Run(ctx)
+			if cfg.MicrobotControl {
+				// The conductor (docs/12 section 12.5) dispatches through the
+				// API's task path, so it starts once the API exists, below.
+				conductorRepo := storeconductor.New(pool).WithPublisher(hub)
+				conductorService = conductorRepo
+				conductorLoop = &conduct.Conductor{States: conductorRepo, Jobs: jobsRepo, Log: logRepo, Events: hub, Logr: logger}
+			}
 			hiscoresClient := hiscores.New()
 			hiscoresDetector, accountService = hiscoresClient, progressRepo
 			syncRepo := syncrun.New(pool, hiscoresClient, progressRepo).WithPublisher(hub)
@@ -207,10 +218,15 @@ func runServe(parent context.Context) error {
 		Plans:          plansService,
 		Jobs:           jobsService,
 		JobEvents:      jobEventsService,
+		Conductor:      conductorService,
 		Prices:         priceService,
 		Static:         static,
 		Logger:         logger,
 	})
+	if conductorLoop != nil {
+		conductorLoop.Dispatch = api
+		go conductorLoop.Run(ctx)
+	}
 	srv := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           api,

@@ -35,7 +35,7 @@ GROUPS = {
     ],
     "metas_e_caches": ["goals", "wiki_cache", "graph_cache"],
     "planos": ["plans", "plan_items"],
-    "jobs_e_eventos": ["jobs", "events", "event_cursors"],
+    "jobs_e_eventos": ["jobs", "events", "event_cursors", "conductor_state"],
     "controle_microbot": [
         "microbot_audit", "game_sessions", "workers",
         "client_profiles", "client_profile_plugins", "client_profile_settings", "account_client", "account_client_settings",

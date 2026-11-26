@@ -24,9 +24,9 @@ configMapGenerator:
       # to start with WORKERS=on. WORKER_IMAGE below is written by CI with each deploy.
       - WORKERS=on
       # CI sets this to the chronicle-worker image it just pushed (deploy/worker; docs/11 section 7.2).
-      - WORKER_IMAGE=ghcr.io/felipemalacarne/chronicle-worker:0dd17f6a9ccbbf07d4b329cf8fda2fe7c1bcb2e6
+      - WORKER_IMAGE=ghcr.io/felipemalacarne/chronicle-worker:cd8d9c2bb0e516b3490c3356393ece1e12eb9cc7
 images:
   - name: chronicle
     newName: ghcr.io/felipemalacarne/chronicle
     # CI sets this to the image it just pushed, on every push to main.
-    newTag: "0dd17f6a9ccbbf07d4b329cf8fda2fe7c1bcb2e6"
+    newTag: "cd8d9c2bb0e516b3490c3356393ece1e12eb9cc7"

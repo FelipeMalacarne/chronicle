@@ -340,3 +340,28 @@ func TestSlotIsNotReleasedWhileItsBootstrapIsInFlight(t *testing.T) {
 		t.Fatalf("released %v after the bootstrap", got)
 	}
 }
+
+// A slot freed in a pass is filled in the same pass, and two accounts that
+// wait for one free slot do not both get a bootstrap.
+func TestFreedSlotIsFilledInTheSamePass(t *testing.T) {
+	store := &fakeStore{desired: []Desired{
+		{Account: "acc_moved", Running: true},
+		{Account: "acc_b", Running: true, Placement: "zaros"},
+		{Account: "acc_c", Running: true, Placement: "zaros"},
+	}}
+	hub := &fakeHub{agents: []agent.Info{{ID: "pool", Host: "zaros", Kind: agent.KindAttached, Slots: 1, Used: 1, Connected: true}, slotClient("acc_moved")}}
+	r := newAttachedRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub)
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	waitIdle(t, r)
+	if got := hub.releases(); !slices.Equal(got, []string{"acc_moved"}) {
+		t.Fatalf("released %v", got)
+	}
+	if n := hub.bootN.Load(); n != 1 {
+		t.Fatalf("bootstraps for one freed slot: %d", n)
+	}
+	if store.errs["acc_c"] == "" {
+		t.Fatalf("the account left without a slot says nothing: %v", store.errs)
+	}
+}

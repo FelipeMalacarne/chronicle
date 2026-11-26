@@ -338,6 +338,11 @@ func (h *fakeHub) CallAgent(_ context.Context, id string, command string, params
 		acc := params.(agent.ReleaseParams).Account
 		h.released = append(h.released, acc)
 		h.agents = slices.DeleteFunc(h.agents, func(a agent.Info) bool { return a.Slot && a.Account == acc })
+		for i := range h.agents {
+			if h.agents[i].Slots > 0 && h.agents[i].Used > 0 {
+				h.agents[i].Used--
+			}
+		}
 		out = map[string]bool{"ok": true}
 	default:
 		return errors.New("unexpected " + command)

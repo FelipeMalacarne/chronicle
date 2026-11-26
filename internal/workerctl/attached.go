@@ -31,8 +31,8 @@ func ServingAgent(agents []agent.Info, account, placement string) (agent.Info, b
 	return agent.SlotClientOf(agents, placement, account)
 }
 
-// reconcileAttached fills the slot of every running worker placed on an
-// attached agent and frees the slots that no running worker is placed on. An
+// reconcileAttached frees the slots that no running worker is placed on and
+// fills the slot of every running worker placed on an attached agent. An
 // account whose agent is not linked waits for it: nothing is an error.
 func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []error {
 	agents := r.Hub.Agents()
@@ -43,27 +43,6 @@ func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []er
 		}
 	}
 	r.mu.Unlock()
-	for _, w := range want {
-		host := w.Host()
-		if !w.Running || host == "" {
-			continue
-		}
-		if _, ok := agent.SlotClientOf(agents, host, w.Account); ok {
-			continue
-		}
-		pool, ok := agent.PoolOf(agents, host)
-		if !ok {
-			continue
-		}
-		switch {
-		case r.PublicURL == "":
-			_ = r.Store.SetError(ctx, w.Account, "PUBLIC_BASE_URL is not set on the server")
-		case pool.Used >= pool.Slots:
-			_ = r.Store.SetError(ctx, w.Account, fmt.Sprintf("no free slot on %s (%d of %d in use)", host, pool.Used, pool.Slots))
-		default:
-			r.startBootstrap(ctx, pool, w.Account)
-		}
-	}
 	var errs []error
 	for _, c := range agents {
 		if !c.Slot {
@@ -82,6 +61,33 @@ func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []er
 		}
 		if err := r.release(ctx, c.Host, c.Account); err != nil {
 			errs = append(errs, err)
+		}
+	}
+	// The slots just freed are filled in this same pass: the agent says
+	// which clients it has before it answers a release.
+	agents = r.Hub.Agents()
+	taken := map[string]int{} // slots the bootstraps of this pass take, by host
+	for _, w := range want {
+		host := w.Host()
+		if !w.Running || host == "" {
+			continue
+		}
+		if _, ok := agent.SlotClientOf(agents, host, w.Account); ok {
+			continue
+		}
+		pool, ok := agent.PoolOf(agents, host)
+		if !ok {
+			continue
+		}
+		switch used := pool.Used + taken[host]; {
+		case r.PublicURL == "":
+			_ = r.Store.SetError(ctx, w.Account, "PUBLIC_BASE_URL is not set on the server")
+		case used >= pool.Slots:
+			_ = r.Store.SetError(ctx, w.Account, fmt.Sprintf("no free slot on %s (%d of %d in use)", host, used, pool.Slots))
+		default:
+			if r.startBootstrap(ctx, pool, w.Account) {
+				taken[host]++
+			}
 		}
 	}
 	return errs
@@ -103,13 +109,14 @@ type bootRetry struct {
 }
 
 // startBootstrap bootstraps account in a slot of pool in the background,
-// unless one is already in flight or a failed one is backing off: the
-// bootstrap starts the client and may take minutes.
-func (r *Reconciler) startBootstrap(ctx context.Context, pool agent.Info, account string) {
+// unless one is already in flight or a failed one is backing off, and
+// reports whether it started one: the bootstrap starts the client and may
+// take minutes.
+func (r *Reconciler) startBootstrap(ctx context.Context, pool agent.Info, account string) bool {
 	r.mu.Lock()
 	if r.booting[account] || r.now().Before(r.retry[account].next) {
 		r.mu.Unlock()
-		return
+		return false
 	}
 	if r.booting == nil {
 		r.booting = map[string]bool{}
@@ -140,6 +147,7 @@ func (r *Reconciler) startBootstrap(ctx context.Context, pool agent.Info, accoun
 		st.next = r.now().Add(min(attachedBackoff<<(st.failures-1), attachedBackoffMax))
 		r.retry[account] = st
 	}()
+	return true
 }
 
 // bootstrapAttached sends the account's bootstrap to pool, which puts it in a

@@ -438,6 +438,13 @@ func TestWorkerStartWithoutCluster(t *testing.T) {
 	if w := store.workers["acc_a"]; w.DesiredState != storeworkers.StateRunning || w.Image != "" {
 		t.Fatalf("after start: %+v", w)
 	}
+	// Nor can it be moved into a cluster this server does not run.
+	if status, got, _ := call(t, "PUT", srv.URL+"/api/workers/placement?account=acc_a", `{"placement":"cluster"}`); status != http.StatusConflict || !strings.Contains(got["error"].(string), "WORKERS=off") {
+		t.Fatalf("move into the cluster without one = %d %v", status, got)
+	}
+	if w := store.workers["acc_a"]; w.Placement != "zaros" {
+		t.Fatalf("the refused move changed the placement: %+v", w)
+	}
 	_, body, _ := call(t, "GET", srv.URL+"/api/workers", "")
 	if body["enabled"] != true || body["cluster"] != false {
 		t.Fatalf("list = %v", body)

@@ -198,6 +198,9 @@ type placementBody struct {
 // or the host of an attached agent with slots. A running worker moves: the
 // reconciler stops its client in the old place and starts it in the new one
 // (it never logs in, docs/11 section 6.2).
+// noPodsHere refuses the cluster on a server with WORKERS=off.
+const noPodsHere = "this server runs no pods (WORKERS=off): move the account to an attached agent's host"
+
 func (s *Server) handleWorkerPlacement(w http.ResponseWriter, r *http.Request) {
 	m := s.opts.Microbot
 	account, ok := s.accountParam(w, r)
@@ -206,6 +209,10 @@ func (s *Server) handleWorkerPlacement(w http.ResponseWriter, r *http.Request) {
 	}
 	var body placementBody
 	if !decodeBody(w, r, &body) {
+		return
+	}
+	if body.Placement == storeworkers.PlacementCluster && !m.Cluster {
+		s.workerRefused(w, r, "worker_placement", account, noPodsHere)
 		return
 	}
 	err := m.Sessions.SetPlacement(r.Context(), account, body.Placement)
@@ -243,9 +250,10 @@ func (s *Server) handleWorkerStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// One account in one place: the one the owner chose (placement).
+	// An account with no worker yet runs in the cluster, the column's default.
 	cur, gerr := m.Sessions.Get(r.Context(), account)
-	if gerr == nil && cur.Placement == storeworkers.PlacementCluster && !m.Cluster {
-		s.workerRefused(w, r, "worker_start", account, "this server runs no pods (WORKERS=off): move the account to an attached agent's host")
+	if (gerr != nil || cur.Placement == storeworkers.PlacementCluster) && !m.Cluster {
+		s.workerRefused(w, r, "worker_start", account, noPodsHere)
 		return
 	}
 	busy, err := m.Sessions.OtherClientSince(r.Context(), account, time.Now().Add(-otherClientWindow))

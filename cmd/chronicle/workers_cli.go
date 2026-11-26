@@ -424,7 +424,7 @@ func newWorkerMoveCmd() *cobra.Command {
 	var to string
 	cmd := &cobra.Command{
 		Use:   "move --to cluster|<host>",
-		Short: "Choose where the account's client runs: a pod on saradomin (cluster) or a slot of an attached agent's host (zaros); a running worker moves, never logging in again",
+		Short: "Choose where the account's client runs: a pod on saradomin (cluster) or a slot of an attached agent's host (zaros); a running worker moves (logs out there; logs in here only with auto login on)",
 		Args:  cobra.NoArgs,
 		RunE: runClient(func(cmd *cobra.Command, _ []string) error {
 			ctx := cmd.Context()

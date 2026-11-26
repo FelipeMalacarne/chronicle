@@ -194,13 +194,14 @@ type placementBody struct {
 	Placement string `json:"placement"`
 }
 
-// handleWorkerPlacement chooses where the account's client runs: "cluster"
-// or the host of an attached agent with slots. A running worker moves: the
-// reconciler stops its client in the old place and starts it in the new one
-// (it never logs in, docs/11 section 6.2).
 // noPodsHere refuses the cluster on a server with WORKERS=off.
 const noPodsHere = "this server runs no pods (WORKERS=off): move the account to an attached agent's host"
 
+// handleWorkerPlacement chooses where the account's client runs: "cluster"
+// or the host of an attached agent with slots. A running worker moves: the
+// reconciler stops its client in the old place (logging it out) and starts
+// it in the new one, which logs in again only with the account's auto login
+// on (docs/11 sections 6.2 and 15.5).
 func (s *Server) handleWorkerPlacement(w http.ResponseWriter, r *http.Request) {
 	m := s.opts.Microbot
 	account, ok := s.accountParam(w, r)

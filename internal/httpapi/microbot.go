@@ -13,6 +13,7 @@ import (
 	"github.com/coder/websocket"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/core/job"
 	storemicrobot "github.com/FelipeMalacarne/chronicle/internal/store/microbot"
 	storeworkers "github.com/FelipeMalacarne/chronicle/internal/store/workers"
 )
@@ -422,7 +423,27 @@ func truncateReason(s string) string {
 // agent declares) and the agent that served it (empty when none did); a
 // failed write is logged, not returned.
 func (s *Server) auditMicrobot(r *http.Request, account string, served agent.Info, command string, params json.RawMessage, err error) {
-	actor := sessionUser(r)
+	s.appendAudit(r.Context(), auditor{actor: sessionUser(r), origin: "web"}, account, served, command, params, err)
+}
+
+// auditor is who sent a control command: the owner from the web (origin
+// "web", actor the session's user) or a piece of the server (origin
+// "server": the conductor).
+type auditor struct {
+	actor, origin string
+}
+
+// source is the source of the jobs the auditor creates.
+func (a auditor) source() job.Source {
+	if a.origin == "server" && a.actor == ConductorActor {
+		return job.SourceConductor
+	}
+	return job.SourceOwner
+}
+
+// appendAudit records one control command and its result.
+func (s *Server) appendAudit(ctx context.Context, who auditor, account string, served agent.Info, command string, params json.RawMessage, err error) {
+	actor := who.actor
 	if actor == "" {
 		actor = "dev"
 	}
@@ -430,13 +451,13 @@ func (s *Server) auditMicrobot(r *http.Request, account string, served agent.Inf
 		account = served.Account
 	}
 	entry := storemicrobot.Entry{
-		Actor: actor, Origin: "web", Action: command, Params: params, OK: err == nil,
+		Actor: actor, Origin: who.origin, Action: command, Params: params, OK: err == nil,
 		AccountID: account, AgentID: served.ID,
 	}
 	if err != nil {
 		entry.Error = err.Error()
 	}
-	if _, aerr := s.opts.Microbot.Audit.Append(context.WithoutCancel(r.Context()), entry); aerr != nil {
+	if _, aerr := s.opts.Microbot.Audit.Append(context.WithoutCancel(ctx), entry); aerr != nil {
 		s.log.Error("microbot audit", "err", aerr)
 	}
 }

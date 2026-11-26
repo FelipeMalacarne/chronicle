@@ -85,6 +85,9 @@ type Options struct {
 	// run creates a job when Jobs is set, and a sale is proven by its job.
 	Jobs      JobStore
 	JobEvents JobEventStore
+	// Conductor stores the conductor's state per account and serves GET and
+	// POST /api/conductor (docs/12 section 12.5); nil leaves them out.
+	Conductor ConductorStore
 	// Prices reads the stored Grand Exchange prices a ge_buy or ge_sell is
 	// priced by (internal/store/prices); nil refuses those tasks.
 	Prices PriceStore
@@ -223,6 +226,7 @@ func (s *Server) routes() {
 	s.recordingRoutes()
 	s.planRoutes()
 	s.jobRoutes()
+	s.conductorRoutes()
 	s.microbotRoutes()
 	s.workerRoutes()
 	s.profileRoutes()

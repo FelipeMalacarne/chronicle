@@ -299,13 +299,13 @@ func mustJSON(v any) []byte {
 }
 
 // createTaskJob queues the job a task run attempts and returns its id.
-func (s *Server) createTaskJob(ctx context.Context, account, planID, taskKey string, task content.Task, spec execspec.Task) (string, error) {
+func (s *Server) createTaskJob(ctx context.Context, account, planID, taskKey string, task content.Task, spec execspec.Task, source job.Source) (string, error) {
 	goal, err := taskGoal(spec, task)
 	if err != nil {
 		return "", fmt.Errorf("goal of the task: %w", err)
 	}
 	raw, _ := json.Marshal(spec)
-	j, err := job.New(account, job.Kind(spec.Type), raw, goal, nil, 0, job.SourceOwner)
+	j, err := job.New(account, job.Kind(spec.Type), raw, goal, nil, 0, source)
 	if err != nil {
 		return "", err
 	}

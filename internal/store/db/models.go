@@ -82,6 +82,15 @@ type ClientProfileSetting struct {
 	Value       string `json:"value"`
 }
 
+// The conductor's state per account (docs/12 section 12.5): off, idle, running (its job) or blocked (and why). No row is off.
+type ConductorState struct {
+	AccountID string             `json:"account_id"`
+	State     string             `json:"state"`
+	JobID     pgtype.Text        `json:"job_id"`
+	Reason    string             `json:"reason"`
+	Since     pgtype.Timestamptz `json:"since"`
+}
+
 // Minimal index of the loaded steps for event joins and orphan detection; written at boot.
 type ContentStep struct {
 	StepID    string `json:"step_id"`

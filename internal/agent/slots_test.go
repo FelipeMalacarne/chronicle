@@ -29,8 +29,10 @@ type slotFarm struct {
 	slots map[string]int    // account → the slot NewSlot was last asked for
 	dirs  map[string]string // account → its fake client's directory
 	built int
-	// startDelay is how long each fake mb-client start takes ("" for none).
+	// startDelay is how long each fake mb-client start takes ("" for none);
+	// startFail makes it fail after that.
 	startDelay string
+	startFail  bool
 }
 
 func (f *slotFarm) newSlot(slot int, account string) Client {
@@ -41,9 +43,9 @@ func (f *slotFarm) newSlot(slot int, account string) Client {
 	f.slots[account], f.dirs[account] = slot, dir
 	game := &podGame{fakeGame: &fakeGame{}, marker: filepath.Join(dir, "running")}
 	script := fmt.Sprintf(`D=%q; case "$1" in
-start) sleep %s; echo start >> "$D/starts"; touch "$D/running";;
+start) sleep %s; [ %t = true ] && exit 1; echo start >> "$D/starts"; touch "$D/running";;
 stop) rm -f "$D/running"; echo stop >> "$D/stops";;
-esac`, dir, cmp.Or(f.startDelay, "0"))
+esac`, dir, cmp.Or(f.startDelay, "0"), f.startFail)
 	return Client{Account: account, Executor: &Executor{
 		Game: game, Home: filepath.Join(dir, "home"), ClientCmd: []string{"sh", "-c", script, "mb-client"},
 		Worker: &WorkerConfig{Account: account, HWIDStoreDir: filepath.Join(dir, "secrets"), ReadyWait: 5 * time.Second},
@@ -254,6 +256,55 @@ func TestSlotBootstrapAdoptsTheClientsOwnSlot(t *testing.T) {
 	}
 	if f.slot("acc_a") != 1 || f.slot("acc_b") != 0 {
 		t.Fatalf("slots a=%d b=%d, want 1 and 0", f.slot("acc_a"), f.slot("acc_b"))
+	}
+}
+
+// An agent that starts while clients of its slots still run (it restarted,
+// they did not) declares them in its first hello, in their own slots: the
+// server must not bootstrap them again, which would mint a token that
+// revokes the one their Chronicle Link runs with.
+func TestSlotAgentAdoptsTheClientsStillRunning(t *testing.T) {
+	link, url := hubServer(t)
+	f := &slotFarm{t: t, slots: map[string]int{}, dirs: map[string]string{}}
+	a := &Agent{
+		Log: quiet, Hello: Hello{Host: "zaros", Version: "test", Kind: KindAttached}, Slots: 2, NewSlot: f.newSlot,
+		Live:   func() []string { return []string{"acc_a"} },
+		SlotOf: func(account string) (int, bool) { return 1, account == "acc_a" },
+	}
+	startAgent(t, a, url, "zaros")
+	agents := waitAgents(t, link, 2)
+	if _, ok := SlotClientOf(agents, "zaros", "acc_a"); !ok {
+		t.Fatalf("the running client was not declared: %+v", agents)
+	}
+	if p := poolInfo(t, link); p.Used != 1 {
+		t.Fatalf("pool = %+v", p)
+	}
+	if f.slot("acc_a") != 1 || f.lines("acc_a", "starts") != 0 {
+		t.Fatalf("slot %d, starts %d: want its own slot and no start", f.slot("acc_a"), f.lines("acc_a", "starts"))
+	}
+}
+
+// A slot that changes after the link dropped and came back is told on the
+// new link: told on the dead one, the server would keep a client that is gone.
+func TestSlotChangeAfterAReconnectReachesTheNewLink(t *testing.T) {
+	link, url := hubServer(t)
+	f := &slotFarm{t: t, slots: map[string]int{}, dirs: map[string]string{}, startDelay: "3", startFail: true}
+	a := &Agent{Log: quiet, Hello: Hello{Host: "zaros", Version: "test", Kind: KindAttached}, Slots: 1, NewSlot: f.newSlot}
+	startAgent(t, a, url, "zaros")
+	waitAgents(t, link, 1)
+	go func() { _, _ = bootstrapSlot(t, link, "acc_a") }()
+	old := waitAgents(t, link, 2) // the slot is taken; the start runs
+	link.mu.Lock()
+	conn := link.agents[old[0].ID].ws.conn
+	link.mu.Unlock()
+	_ = conn.CloseNow()
+	// The new hello still declares the slot; then the start fails and frees it.
+	waitFor(t, func() bool {
+		agents := link.Agents()
+		return len(agents) == 1 && agents[0].ID != old[0].ID && agents[0].Used == 0
+	})
+	if _, err := link.Route("acc_a"); !errors.Is(err, ErrNoAgent) {
+		t.Fatalf("route after the failed start = %v", err)
 	}
 }
 

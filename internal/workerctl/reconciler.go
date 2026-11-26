@@ -174,8 +174,10 @@ type Reconciler struct {
 	// settingsAt is when each account's option values were last read: they
 	// cost a request per option, so a pass reads them every settingsEvery.
 	settingsAt map[string]time.Time
-	// booting are the accounts whose attached bootstrap is in flight.
+	// booting are the accounts whose attached bootstrap is in flight;
+	// retry, the ones whose last attached bootstraps failed.
 	booting map[string]bool
+	retry   map[string]bootRetry
 }
 
 // autoRestart is what the reconciler remembers of a worker's automatic

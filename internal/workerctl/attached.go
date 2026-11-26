@@ -36,6 +36,13 @@ func ServingAgent(agents []agent.Info, account, placement string) (agent.Info, b
 // account whose agent is not linked waits for it: nothing is an error.
 func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []error {
 	agents := r.Hub.Agents()
+	r.mu.Lock()
+	for account := range r.retry {
+		if !slices.ContainsFunc(want, func(w Desired) bool { return w.Account == account && w.Running && w.Host() != "" }) {
+			delete(r.retry, account)
+		}
+	}
+	r.mu.Unlock()
 	for _, w := range want {
 		host := w.Host()
 		if !w.Running || host == "" {
@@ -72,12 +79,27 @@ func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []er
 	return errs
 }
 
+// A failed attached bootstrap is tried again after attachedBackoff, doubling
+// up to attachedBackoffMax: each try starts a client on the owner's machine.
+// Stopping or moving the worker forgets the failures.
+const (
+	attachedBackoff    = time.Minute
+	attachedBackoffMax = 30 * time.Minute
+)
+
+// bootRetry is what the reconciler remembers of an account's failed attached
+// bootstraps.
+type bootRetry struct {
+	failures int
+	next     time.Time // no attempt before
+}
+
 // startBootstrap bootstraps account in a slot of pool in the background,
-// unless one is already in flight: the bootstrap starts the client and may
-// take minutes.
+// unless one is already in flight or a failed one is backing off: the
+// bootstrap starts the client and may take minutes.
 func (r *Reconciler) startBootstrap(ctx context.Context, pool agent.Info, account string) {
 	r.mu.Lock()
-	if r.booting[account] {
+	if r.booting[account] || r.now().Before(r.retry[account].next) {
 		r.mu.Unlock()
 		return
 	}
@@ -96,6 +118,19 @@ func (r *Reconciler) startBootstrap(ctx context.Context, pool agent.Info, accoun
 		defer cancel()
 		lastError, err := r.bootstrapAttached(ctx, pool, account)
 		r.recordBootstrap(ctx, account, pool.ID, lastError, false, err)
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		if err == nil {
+			delete(r.retry, account)
+			return
+		}
+		if r.retry == nil {
+			r.retry = map[string]bootRetry{}
+		}
+		st := r.retry[account]
+		st.failures++
+		st.next = r.now().Add(min(attachedBackoff<<(st.failures-1), attachedBackoffMax))
+		r.retry[account] = st
 	}()
 }
 

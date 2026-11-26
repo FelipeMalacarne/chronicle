@@ -272,3 +272,40 @@ func TestAutoLoginInASlot(t *testing.T) {
 		t.Fatalf("login %q, error %q, world %d", store.logins["acc_a"], store.errs["acc_a"], hub.world)
 	}
 }
+
+// A bootstrap that fails is not sent again on every pass: each one starts a
+// client on the owner's machine. It waits attachedBackoff, doubling, and a
+// stop forgets the failures.
+func TestFailedAttachedBootstrapBacksOff(t *testing.T) {
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true, Placement: "zaros"}}}
+	hub := &fakeHub{agents: []agent.Info{zarosPool(0)}, down: map[string]bool{"pool": true}}
+	r := newAttachedRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub)
+	now := time.Date(2026, 11, 26, 12, 0, 0, 0, time.UTC)
+	r.now = func() time.Time { return now }
+	pass := func() {
+		t.Helper()
+		if err := r.Once(context.Background()); err != nil {
+			t.Fatal(err)
+		}
+		waitIdle(t, r)
+	}
+	pass()
+	pass()
+	if n := hub.bootN.Load(); n != 1 {
+		t.Fatalf("bootstraps right after a failure: %d", n)
+	}
+	now = now.Add(attachedBackoff + time.Second)
+	pass()
+	now = now.Add(attachedBackoff + time.Second) // the second wait is twice as long
+	pass()
+	if n := hub.bootN.Load(); n != 2 {
+		t.Fatalf("bootstraps after one backoff: %d", n)
+	}
+	store.desired[0].Running = false
+	pass()
+	store.desired[0].Running = true
+	pass()
+	if n := hub.bootN.Load(); n != 3 {
+		t.Fatalf("a start after a stop still waited: %d bootstraps", n)
+	}
+}

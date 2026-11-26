@@ -44,9 +44,11 @@ type MicrobotOptions struct {
 	// state (CHRONICLE_VAULT_KEY set); nil leaves /api/workers and
 	// /api/accounts/session out.
 	Sessions WorkerStore
-	// Control runs the workers in the cluster (WORKERS=on); nil only stores
-	// sessions.
+	// Control runs the workers (the reconciler); nil only stores sessions.
 	Control WorkerControl
+	// Cluster: the reconciler runs pods in the cluster (WORKERS=on); off, a
+	// worker can only be placed on an attached agent.
+	Cluster bool
 	// Profiles stores the client profiles (docs/11 section 4.3); nil leaves
 	// /api/client-profiles and /api/accounts/client out.
 	Profiles ProfileStore
@@ -527,9 +529,9 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 			s.writeMicrobotError(w, err)
 			return
 		}
-		// The owner's logout of a managed worker: it is not logged in again
+		// The owner's logout of a worker's client: it is not logged in again
 		// after a new pod (docs/11 section 15.5).
-		if m := s.opts.Microbot; command == agent.CmdLogout && m.Sessions != nil && served.Kind == agent.KindManaged {
+		if m := s.opts.Microbot; command == agent.CmdLogout && m.Sessions != nil && servedByWorker(served) {
 			if lerr := m.Sessions.SetLoggedIn(r.Context(), account, false); lerr != nil && !errors.Is(lerr, storeworkers.ErrNotFound) {
 				s.log.Error("workers: clear logged in", "err", lerr)
 			}
@@ -551,7 +553,7 @@ func (s *Server) microbotAction(command string, timeout time.Duration) http.Hand
 // applies its own on boot. Nil when there is nothing to apply.
 func (s *Server) applyOnStart(r *http.Request, command, account string, served agent.Info) *applyAnswer {
 	m := s.opts.Microbot
-	if command != agent.CmdClientStart || m.Profiles == nil || served.Kind == agent.KindManaged {
+	if command != agent.CmdClientStart || m.Profiles == nil || servedByWorker(served) {
 		return nil
 	}
 	if account == "" {

@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -86,64 +87,72 @@ func TestAttachedAgentWithOneClient(t *testing.T) {
 	}
 }
 
-func TestAttachedAgentWithSeveralClients(t *testing.T) {
+func TestAttachedAgentWithSlots(t *testing.T) {
 	t.Setenv("MICROBOT_CLIENT_CMD", "mb-client")
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
-	userHome, _ := os.UserHomeDir()
-	env := map[string]string{"MICROBOT_AGENT_CLIENTS": "acc_main=~/.local/share/microbot-dev, acc_alt=/srv/mb/alt/"}
+	env := map[string]string{"MICROBOT_AGENT_SLOTS": "3", "MICROBOT_SLOTS_HOME": "/srv/mb/slots/", "MB_VNC_PORT": "6100", "MB_HEADLESS_DISPLAY": ":20"}
 	a, err := attachedAgent("http://localhost:8080", func(k string) string { return env[k] }, quiet)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if a.Executor != nil || len(a.Clients) != 2 || a.Hello.Account != "" {
+	if a.Slots != 3 || a.NewSlot == nil || a.Executor != nil || len(a.Clients) != 0 || a.Hello.Account != "" || a.Hello.Kind != agent.KindAttached {
 		t.Fatalf("agent = %+v", a)
 	}
-	for i, want := range []struct {
-		account, home, display, vnc string
-	}{
-		{"acc_main", filepath.Join(userHome, ".local/share/microbot-dev"), ":99", "5999"},
-		{"acc_alt", "/srv/mb/alt", ":100", "6000"},
-	} {
-		c := a.Clients[i]
-		e := c.Executor
-		env := []string{"MB_DEV_HOME=" + want.home, "MB_HEADLESS_DISPLAY=" + want.display, "MB_VNC_PORT=" + want.vnc}
-		if c.Account != want.account || e.Home != want.home || !slices.Equal(e.Env, env) || c.VNCAddr != "127.0.0.1:"+want.vnc {
-			t.Errorf("client %d = %+v, executor %+v", i, c, e)
-		}
-		if run := agent.DefaultRunFile(); run != "" && e.RunFile != strings.TrimSuffix(run, ".json")+"."+want.account+".json" {
-			t.Errorf("client %d runs in %s", i, e.RunFile)
-		}
-		if e.TriggerFile == agent.DefaultTriggerFile() || e.RecurringFile == agent.DefaultRecurringFile() {
-			t.Errorf("client %d shares the single client's files: %s %s", i, e.TriggerFile, e.RecurringFile)
-		}
+	c := a.NewSlot(1, "acc_alt")
+	e := c.Executor
+	home := "/srv/mb/slots/acc_alt"
+	wantEnv := []string{"MB_DEV_HOME=" + home, "MB_HEADLESS_DISPLAY=:21", "MB_VNC_PORT=6101", "MB_HWID_STORE_DIR=" + home + "/hwid"}
+	if c.Account != "acc_alt" || c.VNCAddr != "127.0.0.1:6101" || e.Home != home || !slices.Equal(e.Env, wantEnv) {
+		t.Fatalf("client = %+v, executor %+v", c, e)
 	}
-	env["MB_VNC_PORT"], env["MB_HEADLESS_DISPLAY"] = "6100", ":20"
-	if a, err = attachedAgent("", func(k string) string { return env[k] }, quiet); err != nil || a.Clients[1].VNCAddr != "127.0.0.1:6101" ||
-		a.Clients[1].Executor.Env[1] != "MB_HEADLESS_DISPLAY=:21" {
-		t.Fatalf("bases from the environment = %+v %v", a, err)
+	// A slot's client is a worker: its own account, its own HWID store.
+	if e.Worker == nil || e.Worker.Account != "acc_alt" || e.Worker.HWIDStoreDir != home+"/hwid" || e.AccountCmd != nil {
+		t.Fatalf("worker = %+v account cmd %v", e.Worker, e.AccountCmd)
 	}
+	if _, err := e.Execute(context.Background(), agent.CmdAccountUse, json.RawMessage(`{"index":1}`)); err == nil {
+		t.Fatal("a slot's client ran account_use")
+	}
+	if run := agent.DefaultRunFile(); run != "" && e.RunFile != strings.TrimSuffix(run, ".json")+".acc_alt.json" {
+		t.Errorf("the slot's runs go to %s", e.RunFile)
+	}
+	if e.TriggerFile == agent.DefaultTriggerFile() || e.RecurringFile == agent.DefaultRecurringFile() {
+		t.Errorf("the slot shares the single client's files: %s %s", e.TriggerFile, e.RecurringFile)
+	}
+	if other := a.NewSlot(0, "acc_main").Executor; other.Home == e.Home || other.Worker.HWIDStoreDir == e.Worker.HWIDStoreDir {
+		t.Error("two slots share a home or a HWID store")
+	}
+
 	env["MICROBOT_AGENT_ACCOUNT"] = "acc_main"
 	if _, err := attachedAgent("", func(k string) string { return env[k] }, quiet); err == nil {
-		t.Fatal("took MICROBOT_AGENT_CLIENTS and MICROBOT_AGENT_ACCOUNT together")
+		t.Fatal("took MICROBOT_AGENT_SLOTS and MICROBOT_AGENT_ACCOUNT together")
+	}
+	delete(env, "MICROBOT_AGENT_ACCOUNT")
+	for _, bad := range []string{"0", "-1", "two", strconv.Itoa(agent.MaxClients + 1)} {
+		env["MICROBOT_AGENT_SLOTS"] = bad
+		if _, err := attachedAgent("", func(k string) string { return env[k] }, quiet); err == nil {
+			t.Errorf("MICROBOT_AGENT_SLOTS=%q accepted", bad)
+		}
+	}
+	env["MICROBOT_AGENT_SLOTS"], env["MICROBOT_SLOTS_HOME"] = "2", "relative/slots"
+	if _, err := attachedAgent("", func(k string) string { return env[k] }, quiet); err == nil {
+		t.Error("a relative MICROBOT_SLOTS_HOME accepted")
 	}
 }
 
-func TestAgentClients(t *testing.T) {
-	if got, err := agentClients("  "); got != nil || err != nil {
-		t.Fatalf("empty = %v %v", got, err)
-	}
-	got, err := agentClients("acc_a=/a;acc_b=/b\nacc_c=/c")
-	if err != nil || len(got) != 3 || got[2] != (clientSpec{"acc_c", "/c"}) {
-		t.Fatalf("separators = %v %v", got, err)
-	}
-	for _, bad := range []string{
-		"acc_a", "acc_a=", "=/a", "main=/a", "acc_a=relative/home", "acc_a=/a,acc_a=/b", "acc_a=/a,acc_b=/a/",
-		strings.Repeat("acc_x=/x ", agent.MaxClients+1),
+func TestSlotsHomeDefaultsUnderTheUserHome(t *testing.T) {
+	userHome, _ := os.UserHomeDir()
+	for in, want := range map[string]string{
+		"":                filepath.Join(userHome, ".local/share/microbot-slots"),
+		"~/mb/slots":      filepath.Join(userHome, "mb/slots"),
+		"/var/lib/mb/../": "/var/lib",
 	} {
-		if _, err := agentClients(bad); err == nil {
-			t.Errorf("%q accepted", bad)
+		if got, err := slotsHome(in); err != nil || got != want {
+			t.Errorf("slotsHome(%q) = %q %v, want %q", in, got, err, want)
 		}
 	}
+}
+
+func TestPortsDisplaysAndFiles(t *testing.T) {
 	if _, err := basePort("80"); err == nil {
 		t.Error("MB_VNC_PORT 80 accepted")
 	}
@@ -188,5 +197,28 @@ func TestHarnessCmd(t *testing.T) {
 	t.Setenv("MICROBOT_CLIENT_CMD", "/usr/bin/mb-client --x")
 	if got := harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"); !slices.Equal(got, []string{"/usr/bin/mb-client", "--x"}) {
 		t.Fatalf("explicit: %v", got)
+	}
+}
+
+func TestLiveSlotReadsTheDisplayOfARunningClient(t *testing.T) {
+	home := t.TempDir()
+	if _, ok := liveSlot(home, 99); ok {
+		t.Fatal("a home with no client has a slot")
+	}
+	run := filepath.Join(home, "run")
+	if err := os.MkdirAll(run, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(run, "xvfb.display"), []byte(":101\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := liveSlot(home, 99); ok {
+		t.Fatal("a display file without a live Xvfb gave a slot")
+	}
+	if err := os.WriteFile(filepath.Join(run, "xvfb.pid"), []byte(strconv.Itoa(os.Getpid())), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if slot, ok := liveSlot(home, 99); !ok || slot != 2 {
+		t.Fatalf("slot = %d, %v; want 2", slot, ok)
 	}
 }

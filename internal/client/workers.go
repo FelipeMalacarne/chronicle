@@ -66,6 +66,7 @@ type Worker struct {
 	Desired   string       `json:"desired"`
 	World     int          `json:"world"`
 	Image     string       `json:"image"`
+	Placement string       `json:"placement"` // "cluster" or the host of an attached agent with slots
 	LastError string       `json:"last_error"`
 	AutoLogin bool         `json:"auto_login"`
 	Pod       *WorkerPod   `json:"pod"`
@@ -77,6 +78,7 @@ type Worker struct {
 // Workers is GET /api/workers.
 type Workers struct {
 	Enabled  bool            `json:"enabled"`
+	Cluster  bool            `json:"cluster"`
 	Image    string          `json:"image"`
 	Workers  []Worker        `json:"workers"`
 	Attached []WorkerAgent   `json:"attached"`
@@ -119,6 +121,14 @@ func (c *Client) WorkerAction(ctx context.Context, account, action string, world
 	}
 	var out json.RawMessage
 	return c.do(ctx, http.MethodPost, "/api/workers/"+action, url.Values{"account": {account}}, body, &out)
+}
+
+// SetPlacement is PUT /api/workers/placement: where the account's client
+// runs, "cluster" or the host of an attached agent with slots. A running
+// worker moves.
+func (c *Client) SetPlacement(ctx context.Context, account, placement string) error {
+	var out json.RawMessage
+	return c.do(ctx, http.MethodPut, "/api/workers/placement", url.Values{"account": {account}}, map[string]string{"placement": placement}, &out)
 }
 
 // SetAutoLogin turns the account's worker's automatic login after a new pod

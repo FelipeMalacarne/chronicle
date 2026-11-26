@@ -94,7 +94,7 @@ func TestContractPostgres(t *testing.T) {
 		Version: "test", Content: cnt, DefaultGuideID: "oziris-main", Ingest: ingest, Holdings: ingest,
 		Progress: progress, Sync: syncs, Accounts: progress, Catalog: catalog, DevMode: true, Logger: quiet,
 		Identity: storeidentity.New(pool), Rhythm: storerhythm.New(pool, catalog), Levels: storeactivity.New(pool),
-		Microbot: &MicrobotOptions{Link: link, Audit: &memAudit{}, Sessions: workers, Control: control, WorkerImage: contractWorkerImage},
+		Microbot: &MicrobotOptions{Link: link, Audit: &memAudit{}, Sessions: workers, Control: control, Cluster: true, WorkerImage: contractWorkerImage},
 		Plans:    storeplans.New(pool, cnt, catalog),
 	}))
 	defer srv.Close()
@@ -273,6 +273,7 @@ func contractWorkers(ctx context.Context, t *testing.T, pool *pgxpool.Pool, toke
 		repo.SetError(ctx, "acc_worker_b", "the session was refused"),
 		repo.PutSession(ctx, "acc_worker_c", "dev", agent.GameSession{Character: "Worker C", SessionID: "sid-c", CharacterID: "3"}),
 		repo.SetDesired(ctx, "acc_worker_c", storeworkers.StateStopped, 0, ""),
+		repo.SetPlacement(ctx, "acc_worker_c", "zaros"),
 		repo.DeleteSession(ctx, "acc_worker_c"),
 	} {
 		if step != nil {

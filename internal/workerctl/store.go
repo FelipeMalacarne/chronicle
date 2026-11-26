@@ -21,7 +21,7 @@ func (s RepoStore) Desired(ctx context.Context) ([]Desired, error) {
 	}
 	out := make([]Desired, 0, len(ws))
 	for _, w := range ws {
-		out = append(out, Desired{Account: w.AccountID, Running: w.DesiredState == storeworkers.StateRunning, World: w.World, Image: w.Image, AutoLogin: w.AutoLogin, WasLoggedIn: w.WasLoggedIn})
+		out = append(out, Desired{Account: w.AccountID, Running: w.DesiredState == storeworkers.StateRunning, World: w.World, Image: w.Image, Placement: w.Placement, AutoLogin: w.AutoLogin, WasLoggedIn: w.WasLoggedIn})
 	}
 	return out, nil
 }

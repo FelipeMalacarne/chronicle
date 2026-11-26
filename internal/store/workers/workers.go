@@ -16,6 +16,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
+	"regexp"
 	"strings"
 	"time"
 
@@ -35,6 +36,18 @@ const (
 	StateRunning = "running"
 	StateStopped = "stopped"
 )
+
+// PlacementCluster is the placement of a worker whose client runs in a pod on
+// saradomin; any other placement is the host name of an attached agent with
+// slots (workers.placement, migration 0034).
+const PlacementCluster = "cluster"
+
+var hostName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9.-]{0,62}$`)
+
+// ValidPlacement reports whether p is PlacementCluster or a host name.
+func ValidPlacement(p string) bool {
+	return p == PlacementCluster || hostName.MatchString(p)
+}
 
 // Errors returned to the transport.
 var (
@@ -98,12 +111,15 @@ const LoginOK = "ok"
 // worker row (zero values and a nil UpdatedAt while it was never started)
 // plus the account's rsn and session info.
 type Worker struct {
-	AccountID     string     `json:"account_id"`
-	UserID        string     `json:"user_id"`
-	RSN           string     `json:"rsn"`
-	DesiredState  string     `json:"desired_state"`
-	World         int        `json:"world"`
-	Image         string     `json:"image,omitempty"`
+	AccountID    string `json:"account_id"`
+	UserID       string `json:"user_id"`
+	RSN          string `json:"rsn"`
+	DesiredState string `json:"desired_state"`
+	World        int    `json:"world"`
+	Image        string `json:"image,omitempty"`
+	// Placement is where the client runs: PlacementCluster or an attached
+	// agent's host name.
+	Placement     string     `json:"placement"`
 	PluginTokenID string     `json:"plugin_token_id,omitempty"`
 	StartedAt     *time.Time `json:"started_at,omitempty"`
 	StoppedAt     *time.Time `json:"stopped_at,omitempty"`
@@ -368,6 +384,24 @@ func (r *Repository) SetDesired(ctx context.Context, account, state string, worl
 			AccountID: account, DesiredState: state, World: int32(world), Image: strings.TrimSpace(image), //nolint:gosec // bounded above
 		}); err != nil {
 			return fmt.Errorf("set desired state: %w", err)
+		}
+		return nil
+	})
+}
+
+// SetPlacement chooses where the account's client runs (PlacementCluster or
+// an attached agent's host name), creating the worker row stopped when there
+// is none. The reconciler moves a running client to it.
+func (r *Repository) SetPlacement(ctx context.Context, account, placement string) error {
+	if !ValidPlacement(placement) {
+		return fmt.Errorf("%w: placement %q", ErrInvalid, placement)
+	}
+	return r.inTx(ctx, func(q *storedb.Queries) error {
+		if _, err := lockAccount(ctx, q, account); err != nil {
+			return err
+		}
+		if err := q.SetWorkerPlacement(ctx, storedb.SetWorkerPlacementParams{AccountID: account, Placement: placement}); err != nil {
+			return fmt.Errorf("set placement: %w", err)
 		}
 		return nil
 	})
@@ -693,7 +727,7 @@ func sessionInfo(account, character, keyID string, pushedAt pgtype.Timestamptz, 
 func workerOf(row storedb.ListWorkersRow) Worker {
 	w := Worker{
 		AccountID: row.AccountID, UserID: row.UserID, RSN: row.Rsn,
-		DesiredState: row.DesiredState, World: int(row.World), Image: row.Image, PluginTokenID: row.PluginTokenID,
+		DesiredState: row.DesiredState, World: int(row.World), Image: row.Image, Placement: row.Placement, PluginTokenID: row.PluginTokenID,
 		StartedAt: timePtr(row.StartedAt), StoppedAt: timePtr(row.StoppedAt), UpdatedAt: timePtr(row.UpdatedAt),
 		LastError: row.LastError, AutoLogin: row.AutoLogin, WasLoggedIn: row.WasLoggedIn,
 	}

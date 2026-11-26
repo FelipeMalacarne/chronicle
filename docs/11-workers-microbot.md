@@ -1,8 +1,9 @@
 # 11 — Workers do Microbot: contas, perfis e clientes headless no saradomin
 
 **Estado: implementado em rodadas desde 2026-11-12 e ligado no saradomin, com o primeiro worker rodando
-(seção 14.4). As seções 14 a 19 dizem o que cada rodada entregou e conferiu. O que falta conferir num
-worker de verdade fica na FEL-52, e a GPU na FEL-113.**
+(seção 14.4). As seções 14 a 20 dizem o que cada rodada entregou e conferiu. Desde 2026-11-26 o
+dono escolhe onde cada conta roda, num pod ou numa vaga do agent do zaros (seção 20). O que falta
+conferir num worker de verdade fica na FEL-52, e a GPU na FEL-113.**
 Substitui a primeira versão do mesmo dia. A primeira versão definiu o desenho do cluster (imagens,
 RBAC, iGPU e medições), e isso continua valendo. A segunda versão parte de três respostas do dono:
 
@@ -22,8 +23,8 @@ como histórico.
 ## 1. A ideia em uma frase
 
 Cada **conta** do Chronicle pode ter um **worker**: um cliente Microbot headless controlado por um
-`chronicle agent`. O worker roda no zaros (anexado) ou num pod do saradomin (gerenciado) e sobe a
-partir de três dados do banco: a **sessão** da conta, o **perfil** do cliente e as **rotinas**. A
+`chronicle agent`. O worker roda numa vaga do agent do zaros (anexado) ou num pod do saradomin
+(gerenciado), no lugar que o dono escolhe para a conta, e sobe a partir de três dados do banco: a **sessão** da conta, o **perfil** do cliente e as **rotinas**. A
 web e a CLI mostram e controlam todos os workers por conta.
 
 ## 2. Vocabulário
@@ -37,8 +38,8 @@ Na primeira versão, "agent", "worker" e "cliente" se misturavam. Daqui em diant
 | **Perfil do cliente** | Plugins (do Hub e nossos, com versão), configuração dos plugins (grupo, chave, valor), perfil gráfico e mundo preferido. Um perfil pode servir de modelo para várias contas | Postgres |
 | **Rotina** | Gatilhos, "fazer agora", recorrentes e o histórico de runs (doc 08, fase 4) | Postgres (hoje está em arquivos do agent) |
 | **Worker** | Um cliente do jogo rodando para uma conta, num lugar | Processo ou pod |
-| **Agent** | O `chronicle agent` que controla um worker. Um agent para um worker, com uma conta por vez; desde a fase 5 do doc 10, o anexado pode controlar vários workers, um por conta (`MICROBOT_AGENT_CLIENTS`, seção 13.1) | Ao lado do cliente |
-| **Lugar** | `attached` (o zaros: o Chronicle controla o cliente, mas não o sobe nem o derruba) ou `managed` (um pod que o Chronicle cria e apaga) | Coluna do worker |
+| **Agent** | O `chronicle agent` que controla um worker. Num pod, um agent para um worker. O anexado do zaros tem **vagas** (`MICROBOT_AGENT_SLOTS`, seção 20): o servidor põe uma conta em cada vaga e a tira de lá. Entre 2026-11-13 e 2026-11-26 o anexado controlava uma lista fixa de contas (`MICROBOT_AGENT_CLIENTS`, fase 5 do doc 10), que as vagas substituíram | Ao lado do cliente |
+| **Lugar** | `cluster` (um pod do saradomin, que o Chronicle cria e apaga) ou o host de um agent com vagas (`zaros`: o Chronicle sobe e derruba o cliente numa vaga). O dono escolhe por conta (seção 20). O agent que declara a própria conta (`MICROBOT_AGENT_ACCOUNT`, o `just agent` do harness) fica fora disso: o Chronicle controla o cliente dele, mas não o sobe nem o derruba | Coluna `workers.placement` |
 
 Regra de endereçamento: **tudo é endereçado pela conta**, nunca pelo agent. As rotas
 `/api/microbot/*` ganham `?account=` e passam pelo par `Server.authed` + `Server.accountParam`
@@ -165,12 +166,15 @@ enquanto, o run identificado pelo `uid` que o agent dá a ele, e a trilha com es
 ### 4.5 Workers
 
 ```
-workers   id, account_id UNIQUE, placement (attached | managed), desired_state (running |
+workers   id, account_id UNIQUE, placement (cluster | host), desired_state (running |
           stopped), observed_state, image, agent_version, started_at, stopped_at, last_error
 ```
 
-- Uma conta tem um worker, e só uma conta pode estar ativa num lugar. O banco garante: `UNIQUE
-  (account_id)`, mais a trava do Hub (seção 6.2).
+- Uma conta tem um worker, e o worker roda num lugar só. O banco garante: `UNIQUE (account_id)`,
+  mais a trava da seção 6.2.
+- `placement` existe desde a migração 0034 (2026-11-26, seção 20): `cluster` (o padrão) ou o host de
+  um agent com vagas. O dono escolhe, e o reconciliador leva o cliente para lá. Até a 0034 a tabela
+  guardava só os workers gerenciados.
 - `microbot_audit` ganha `account_id` e `agent_id`.
 
 ### 4.6 O que não vai para o Postgres
@@ -217,7 +221,9 @@ Pela web (Automação › Workers, "Iniciar") ou pela CLI (`chronicle workers st
 
 1. **Trava** (seção 6.2).
 2. `desired_state = running`.
-3. O reconciliador cria `worker-<conta>`:
+3. O reconciliador sobe o cliente no lugar da conta (`workers.placement`). Num host, ele manda o
+   `worker_bootstrap` ao agent com vagas daquele host (seção 20). No `cluster`, ele cria
+   `worker-<conta>`:
    - Deployment com `replicas: 1` e **`strategy: Recreate`**: um RollingUpdate subiria o pod novo antes
      de derrubar o velho, e seriam dois clientes na mesma conta;
    - imagem `WORKER_IMAGE` do configMap;
@@ -229,13 +235,20 @@ Pela web (Automação › Workers, "Iniciar") ou pela CLI (`chronicle workers st
 
 ### 6.2 Uma conta num lugar só
 
-O servidor recusa o Iniciar quando:
+O lugar da conta é o que o dono escolheu (`workers.placement`, seção 20), e o reconciliador mantém
+o cliente só ali. O servidor recusa o Iniciar quando:
 
-- outro agent já serve a conta (o anexado informa a conta no hello e a cada `status`);
-- a conta tem worker em `running`;
+- o lugar é `cluster` e o servidor não sobe pods (`WORKERS=off`);
 - **o Chronicle Link de outra instalação mandou um push dessa conta nos últimos 5 minutos.** O dono
   está jogando no cliente de todo dia, e entrar no pod derrubaria ele. O ingest já registra a
   instalação de cada push (`plugin_ingest_tokens`).
+
+Mudar o lugar de um worker que roda é permitido (decisão do dono, 2026-11-26). O reconciliador tira
+o cliente do lugar antigo (apaga o pod, ou libera a vaga com logout e `mb-client stop`) e o sobe no
+novo.
+
+Até 2026-11-26 a trava era outra: o servidor recusava o Iniciar quando um agent anexado declarava a
+conta no hello. Não havia lugar guardado, e o anexado não era um lugar que o Chronicle controlasse.
 
 ### 6.3 Boot do worker
 
@@ -420,8 +433,9 @@ o referencia, então o RBAC não muda) e usa o `local-path`, como o do filebrows
 
 | Rota | O quê |
 |---|---|
-| `GET /api/workers` | Workers das contas do usuário: lugar, estado, versão, CPU e RAM, sessão, e quantos ainda cabem (seção 18) |
+| `GET /api/workers` | Workers das contas do usuário: lugar, estado, versão, CPU e RAM, sessão, e quantos ainda cabem (seção 18); `cluster` diz se o servidor sobe pods (seção 20) |
 | `POST /api/workers/{conta}/start` \| `stop` \| `restart` | Ciclo de vida, auditado |
+| `PUT /api/workers/placement?account=` | O lugar da conta, `cluster` ou o host de um agent com vagas; auditado (`worker_placement`); move um worker que roda (seção 20) |
 | `GET` \| `PUT /api/accounts/{id}/session` | Estado da sessão (sem o conteúdo) e conexão |
 | `PUT` \| `DELETE /api/accounts/session/bank-pin?account=` | O bank PIN do personagem, dentro da sessão cifrada (seção 19); nunca devolvido |
 | `GET /api/client-profiles`, `GET` \| `PUT` \| `DELETE /api/client-profiles/{nome}` | Perfis do usuário: modelo, plugins e configurações; o `PUT` troca o perfil inteiro (seção 15) |
@@ -430,7 +444,7 @@ o referencia, então o RBAC não muda) e usa o `local-path`, como o do filebrows
 | `GET /api/accounts/client/drift?account=`, `POST …/client/drift/save`, `POST …/client/apply` | O desvio do cliente em relação ao perfil, salvar os valores do cliente (na conta ou no perfil) e aplicar o perfil ao cliente (seção 17) |
 | `/api/microbot/*?account=` | O que existe hoje, endereçado pela conta |
 
-CLI: `chronicle accounts connect`, `chronicle accounts bank-pin`, `chronicle workers list|start|stop|restart`,
+CLI: `chronicle accounts connect`, `chronicle accounts bank-pin`, `chronicle workers list|start|stop|restart|move`,
 `chronicle profiles list|show|put|delete|use|account`. Nenhuma abre o banco (regra 1 do CLAUDE.md).
 
 ## 9. Segurança e riscos
@@ -526,17 +540,32 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
     websocket, e um agent só manda `clients` a um servidor que o anuncia;
   - um pod nunca manda `clients`.
 
+  Desde 2026-11-26 a lista vem das vagas (seção 20), e `MICROBOT_AGENT_CLIENTS` saiu do código.
+- Vagas (2026-11-26, seção 20):
+  - `Hello.slots` (1 a 16): o agent anexado declara quantas contas o servidor pode pôr nele, sem
+    conta própria; `Hello.clients` lista as contas das vagas ocupadas;
+  - o servidor manda `worker_bootstrap` e `worker_release` (`ReleaseParams`: a conta) ao próprio
+    agent, sem `account` na mensagem;
+  - frame novo `clients` (agent → servidor, sem pedido): os clientes que o agent tem agora, depois de
+    cada vaga ocupada ou liberada;
+  - o cabeçalho passa a `Chronicle-Link-Features: clients,slots`, e um agent com vagas liga sem
+    nenhum cliente a um servidor que não anuncia `slots`;
+  - o próprio agent nunca recebe comandos roteados por conta; cada cliente dele (`slot: true`) é
+    roteado pela conta, como qualquer cliente.
+
 ### 13.2 Variáveis
 
 | Onde | Variável | O quê |
 |---|---|---|
-| `serve` | `WORKERS` (`off`) | `on` liga o reconciliador e `/api/workers`; exige `MICROBOT_CONTROL=on` e `CHRONICLE_VAULT_KEY` |
+| `serve` | `WORKERS` (`off`) | `on` sobe workers em pods do cluster (só num pod); exige `MICROBOT_CONTROL=on` e `CHRONICLE_VAULT_KEY`. Desde 2026-11-26 o reconciliador e `/api/workers` rodam com a chave mesmo com `off`, e então só cuidam das vagas dos agents anexados (seção 20) |
+| `serve` | `PUBLIC_BASE_URL` | também a URL que o Chronicle Link de uma vaga usa, porque o zaros não alcança o Service do cluster (seção 20) |
 | `serve` | `CHRONICLE_VAULT_KEY` | 32 bytes em base64 (AES-256-GCM); o id da chave são os 8 primeiros hex do SHA-256 dela |
 | `serve` | `WORKER_IMAGE` | imagem `chronicle-worker` (o CI grava no overlay) |
 | `serve` | `WORKER_NAMESPACE` | padrão: o namespace do próprio pod (arquivo da SA) |
 | `serve` | `WORKER_SERVER_URL` | padrão `http://chronicle.<namespace>.svc` (o Service do app, porta 80) |
-| attached | `MICROBOT_AGENT_ACCOUNT` | conta que o agent do zaros declara no hello (opcional) |
-| attached | `MICROBOT_AGENT_CLIENTS` | no lugar da anterior e de `MICROBOT_HOME`: vários clientes, `conta=home de dev` separados por vírgula; pela ordem, displays `:99`, `:100`, … e VNC 5999, 6000, … (fase 5 do doc 10) |
+| attached | `MICROBOT_AGENT_ACCOUNT` | conta que o agent do zaros declara no hello (opcional; um cliente fixo, o `just agent` do harness) |
+| attached | `MICROBOT_AGENT_SLOTS` | no lugar da anterior e de `MICROBOT_HOME`: quantas contas o servidor pode pôr nesta máquina (1 a 16); a vaga i fica no display `MB_HEADLESS_DISPLAY`+i e no VNC `MB_VNC_PORT`+i (seção 20). Substitui `MICROBOT_AGENT_CLIENTS` (2026-11-13 a 2026-11-26) |
+| attached | `MICROBOT_SLOTS_HOME` | raiz dos homes das vagas, `<raiz>/<conta>` (padrão `~/.local/share/microbot-slots`) |
 | worker | `WORKER_ACCOUNT`, `CHRONICLE_URL`, `CHRONICLE_AGENT_TOKEN_FILE` | conta do pod, servidor, token projetado (relido a cada conexão) |
 | worker | `MB_DEV_HOME`, `MB_XMX`, `MB_HWID_STORE_DIR`, `MB_PREBUILT_PLUGINS` | opções do `mb-client` (seção 13.4) |
 | worker | `CHRONICLE_LINK_SERVER_URL`, `CHRONICLE_LINK_TOKEN` | o Chronicle Link usa estes no lugar da config quando presentes (credencial `ipl_`) |
@@ -595,6 +624,9 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
   `last_error`. Só os gerenciados; os anexados vivem no Hub.
 - `microbot_audit` ganha `account_id` e `agent_id` (texto, vazio nas linhas antigas); o
   `storemicrobot.Entry` já tem os campos.
+- Depois da rodada 1, a migração 0034 (2026-11-26, seção 20) acrescenta `workers.placement`
+  (`cluster` ou o host de um agent com vagas), e `workers` passa a guardar também os workers das
+  vagas.
 
 ## 14. Rodada 1: o que foi feito (2026-11-12)
 
@@ -1242,3 +1274,114 @@ precisa de uma imagem com o Chronicle Link 1.17 e de um servidor com esta mudan�
 responde), das rotas (`TestBankPinRoutes`), do Postgres (`TestBankPin`: selado, mantido por um
 connect novo, apagado, último login mantido) e do Chronicle Link (`BankPinBridgeTest`).
 **Não conferido** num worker de verdade, o PIN digitado pelo `Rs2Bank` ao abrir o banco: FEL-52.
+
+## 20. Lugar escolhido e vagas no zaros (2026-11-26)
+
+FEL-138. O dono escolhe, por conta, onde o cliente do jogo roda: num pod do saradomin (`cluster`) ou
+numa **vaga** do agent anexado do zaros. Registro: doc 01, decisão 42. As vagas substituem a lista
+fixa `MICROBOT_AGENT_CLIENTS` da fase 5 do doc 10 (2026-11-13), que saiu do código.
+
+### 20.1 Entregue
+
+- **Banco.** Migração 0034: `workers.placement`, `TEXT NOT NULL DEFAULT 'cluster'`, com `cluster` ou
+  um nome de host (o `os.Hostname()` do agent, `zaros`). Escolher o lugar de uma conta sem worker cria
+  a linha parada.
+- **API e CLI.**
+  - `PUT /api/workers/placement?account=` com `{placement}`, auditado como `worker_placement`. O
+    servidor responde 409 a `cluster` quando não tem `WORKERS=on`.
+  - `chronicle workers move --to cluster|<host>`. O `chronicle workers list` mostra o lugar.
+  - `GET /api/workers` ganha `placement` em cada worker e `cluster` no topo, ao lado do `enabled`:
+    `cluster` diz se o servidor sobe pods.
+- **Mudar de lugar com o worker rodando** é permitido (decisão do dono, 2026-11-26). O reconciliador
+  tira o cliente do lugar antigo: apaga o pod, ou libera a vaga (logout e `mb-client stop`). Depois
+  faz o bootstrap no lugar novo, e o cliente fica na tela de login (W3). Com o login automático
+  ligado (seção 15.5) e a conta logada antes, ele entra de novo, como depois de um pod novo.
+- **Uma conta num lugar só** (seção 6.2) lê o `placement`. O Iniciar não olha mais qual agent
+  anexado declara a conta no hello. A trava dos 5 minutos (push de outra instalação) continua.
+- **Reconciliador.**
+  - Roda sempre que o servidor tem `CHRONICLE_VAULT_KEY`, também com `WORKERS=off`. Sem
+    `WORKERS=on`, ele cuida só das contas postas num host.
+  - Ele libera as vagas das contas que não devem rodar ali e preenche as que faltam, as duas coisas
+    em segundo plano: um logout e um `mb-client stop` levam até 85 s e não seguram a passada.
+  - Uma vaga em liberação ainda conta como ocupada. A liberação pede uma passada quando termina, e
+    essa passada dá a vaga a outra conta.
+  - Ele nunca libera uma vaga cujo bootstrap ainda corre; uma passada seguinte a libera.
+  - O Reiniciar de uma conta numa vaga libera a vaga em segundo plano, e a passada seguinte faz o
+    bootstrap de novo.
+  - Um bootstrap numa vaga que falhou espera 1 min antes da próxima tentativa, e a espera dobra até
+    30 min. Parar ou mudar de lugar zera a espera.
+  - Com o agent cheio, ele grava em `last_error` "no free slot on <host> (n of m in use)".
+  - Um agent com vagas que liga pede uma passada na hora.
+  - O bootstrap de uma vaga leva `ServerURL = PUBLIC_BASE_URL`, porque o Chronicle Link no zaros não
+    alcança o Service de dentro do cluster. Sem `PUBLIC_BASE_URL`, a conta fica com esse erro em
+    `last_error`.
+  - O Parar libera a vaga e revoga o token `ipl_` do cliente.
+- **Agent com vagas** (`chronicle agent` com `MICROBOT_AGENT_SLOTS`, de 1 a 16).
+  - Sobe sem cliente e não declara conta. O hello leva `slots` e as contas das vagas ocupadas.
+  - O servidor manda `worker_bootstrap` ao próprio agent, sem conta na mensagem. O agent pega a vaga
+    livre de menor número. Quando um cliente daquela conta ainda roda, ele pega a vaga do display
+    desse cliente, lido de `<home>/run/xvfb.display`.
+  - Uma vaga cujo display já tem um X de outro processo (`/tmp/.X11-unix/X<n>`) conta como ocupada.
+  - Com a vaga ocupada, o agent anuncia os seus clientes no frame novo `clients` e faz o mesmo
+    bootstrap de um pod: a sessão no ambiente do cliente, as linhas do HWID, o perfil do sistema e
+    o bank PIN.
+  - Cada vaga i tem:
+    - o home `<MICROBOT_SLOTS_HOME>/<conta>` (padrão `~/.local/share/microbot-slots`);
+    - o display `MB_HEADLESS_DISPLAY`+i e o VNC `MB_VNC_PORT`+i;
+    - o próprio armazém de HWID, `<home>/hwid`, nunca o `~/.runelite` do launcher;
+    - os próprios arquivos de runs, gatilhos e recorrentes.
+  - `worker_release` (ao próprio agent) faz logout, para o cliente e libera a vaga. Repetido, não faz
+    nada.
+  - Um bootstrap e uma liberação da mesma vaga correm um depois do outro, nunca juntos.
+  - Um agent reiniciado com os clientes ainda rodando os adota ao subir, cada um na vaga do próprio
+    display, e os declara já no primeiro hello. O servidor não manda bootstrap para eles: um
+    bootstrap geraria um token `ipl_` novo, que revoga o que o Chronicle Link deles usa. Uma conta
+    parada enquanto o agent estava fora é liberada na passada seguinte.
+  - O frame `clients` sai sempre pelo link de pé. Uma vaga que muda depois de uma reconexão é
+    contada ao servidor novo, nunca à conexão morta.
+  - O SIGTERM do agent deixa os clientes das vagas rodando.
+  - `MICROBOT_AGENT_ACCOUNT` (um cliente fixo, o `just agent` do harness) continua e não combina com
+    `MICROBOT_AGENT_SLOTS`.
+  - Um agent com `MICROBOT_AGENT_CLIENTS` não sobe: a variável saiu, e sem ela o agent atenderia
+    qualquer conta como um cliente sem conta declarada.
+- **Link no servidor.**
+  - O cabeçalho passa a `Chronicle-Link-Features: clients,slots`. Um agent com vagas liga sem
+    nenhum cliente a um servidor que não anuncia `slots`.
+  - Um hello com `slots` precisa ser anexado, sem conta, com `slots` de 1 a 16.
+  - O próprio agent é um `Info` com `slots` e `used`, e nunca recebe comandos roteados por conta.
+    Cada cliente dele é um `Info` com `slot: true`, roteado pela conta como qualquer cliente.
+  - Um cliente numa vaga entra com a sessão guardada, não com a do launcher. Por isso o login dele
+    grava o resultado na sessão (`login_failed`, seção 18), como num pod.
+- **Web.** Só os tipos e o modelo puro (`web/src/lib/progress/workers.ts`): onde e estado por lugar
+  ("zaros · vaga", "esperando o agent do zaros") e `placementOptions`. O seletor "Rodar em:
+  saradomin | zaros" no cabeçalho da conta, que o dono escolheu, não foi feito: o canvas ainda não o
+  desenha (regra 11 do CLAUDE.md). O cartão Worker do `V7Conta1440` tem um `.seg` e "Mover para o
+  zaros", mas não esse seletor.
+- `.env.example`, `microbot/AGENTS.md` e o `mb-client` falam de `MICROBOT_AGENT_SLOTS`.
+
+### 20.2 Conferido
+
+- Testes do agent (`internal/agent/slots_test.go`), do reconciliador
+  (`internal/workerctl/attached_test.go`), das rotas (`internal/httpapi/workers_test.go`), da
+  configuração do `chronicle agent` e do modelo da web (`web/src/lib/progress/workers.test.ts`).
+- De ponta a ponta no zaros (2026-11-26), com um servidor de dev (`WORKERS=off`), um `chronicle
+  agent` com 2 vagas e um `mb-client` falso: um Agent Server de mentira no socket do home, sem jogo e
+  sem login.
+  - Duas contas em duas vagas, cada uma com display, VNC, HWID e sessão próprios e a URL pública.
+  - O perfil do sistema aplicado.
+  - Um `status` roteado pela conta.
+  - Uma terceira conta ficou com "no free slot".
+  - O Parar liberou a vaga e revogou o token.
+  - Uma mudança de lugar liberou a vaga, e a conta que esperava a ocupou.
+  - Um restart do servidor: o agent religou declarando os seus clientes.
+  - Um restart do agent: os clientes foram adotados nas próprias vagas, sem novo start.
+
+### 20.3 Limitações
+
+- **Nada rodou ainda com um cliente Microbot de verdade numa vaga.** Cada um usa cerca de 2,7 GB de
+  RSS, e isso decide quantas vagas cabem no zaros. Nem com o servidor do saradomin (oidc) nem com o
+  serviço de verdade do zaros.
+- **nix-config:** `my.chronicle.agent` precisa de uma opção de vagas e deixa de usar `account`
+  (FEL-140).
+- **A tela:** o seletor "Rodar em" no cabeçalho da conta espera o desenho no canvas (FEL-139).
+- **A lista fixa** `Agent.Clients` sobrou só nos testes e sai na FEL-141.

@@ -234,6 +234,17 @@ func TestAgentReportsRunsToTheServer(t *testing.T) {
 	}
 	uid := started.Run.UID
 	waitFor(t, func() bool { mu.Lock(); defer mu.Unlock(); r := runs[uid]; return r.Final() && len(r.Events) > 1 })
+	// The executor publishes a run before it writes the history: the test
+	// ends once the final run is on disk, so TempDir is not removed under
+	// that last write.
+	waitFor(t, func() bool {
+		var saved []Run
+		b, err := os.ReadFile(file) //nolint:gosec // the test's own file
+		if err != nil || json.Unmarshal(b, &saved) != nil {
+			return false
+		}
+		return slices.ContainsFunc(saved, func(r Run) bool { return r.UID == uid && r.Final() })
+	})
 }
 
 func waitFor(t *testing.T, ok func() bool) {

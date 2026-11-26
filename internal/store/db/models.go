@@ -558,7 +558,7 @@ type WikiCache struct {
 	Etag      pgtype.Text        `json:"etag"`
 }
 
-// Managed workers only (docs/11 section 4.5): what the reconciler should run per account. Attached agents live in the link hub, not here.
+// What the reconciler should run per account (docs/11 section 4.5): a pod on saradomin or a slot of an attached agent, per placement. Legacy attached agents that declare their own account live in the link hub, not here.
 type Worker struct {
 	AccountID     string             `json:"account_id"`
 	DesiredState  string             `json:"desired_state"`
@@ -577,4 +577,6 @@ type Worker struct {
 	WasLoggedIn bool `json:"was_logged_in"`
 	// Explicit option values of the plugins the client had on at the last complete read; written again by the next bootstrap (docs/11 section 15.6).
 	RunningSettings json.RawMessage `json:"running_settings"`
+	// 'cluster' (a pod on saradomin) or the host name of an attached agent with slots that runs the client.
+	Placement string `json:"placement"`
 }

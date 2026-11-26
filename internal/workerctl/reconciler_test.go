@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -252,6 +253,15 @@ type fakeHub struct {
 	// of hubClass; configErr fails the option reads.
 	config    map[string]string
 	configErr error
+	// bootN counts the bootstraps sent (even while gated); gate, when set,
+	// holds each one until it is closed; boots are the ids they went to and
+	// released the accounts freed by worker_release.
+	bootN atomic.Int32
+	gate  chan struct{}
+	// releaseGate, when set, holds each worker_release until it is closed.
+	releaseGate chan struct{}
+	boots       []string
+	released    []string
 }
 
 func (h *fakeHub) Agents() []agent.Info {
@@ -267,6 +277,15 @@ func (h *fakeHub) VNCOpen(account string) bool {
 }
 
 func (h *fakeHub) CallAgent(_ context.Context, id string, command string, params, into any) error {
+	if command == agent.CmdWorkerBootstrap {
+		h.bootN.Add(1)
+		if h.gate != nil {
+			<-h.gate
+		}
+	}
+	if command == agent.CmdWorkerRelease && h.releaseGate != nil {
+		<-h.releaseGate
+	}
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	h.calls = append(h.calls, command)
@@ -314,12 +333,36 @@ func (h *fakeHub) CallAgent(_ context.Context, id string, command string, params
 		out = h.plugins
 	case agent.CmdWorkerBootstrap:
 		h.boot = params.(agent.BootstrapParams)
+		h.boots = append(h.boots, id)
+		if pool, ok := h.byID(id); ok && pool.Slots > 0 {
+			// The agent announces the new client before it answers.
+			h.agents = append(h.agents, agent.Info{ID: "slot-" + h.boot.Account, Account: h.boot.Account, Host: pool.Host, Kind: agent.KindAttached, Slot: true, Connected: true})
+		}
 		out = agent.BootstrapResult{Started: true, Problems: h.problems}
+	case agent.CmdWorkerRelease:
+		acc := params.(agent.ReleaseParams).Account
+		h.released = append(h.released, acc)
+		h.agents = slices.DeleteFunc(h.agents, func(a agent.Info) bool { return a.Slot && a.Account == acc })
+		for i := range h.agents {
+			if h.agents[i].Slots > 0 && h.agents[i].Used > 0 {
+				h.agents[i].Used--
+			}
+		}
+		out = map[string]bool{"ok": true}
 	default:
 		return errors.New("unexpected " + command)
 	}
 	b, _ := json.Marshal(out)
 	return json.Unmarshal(b, into)
+}
+
+func (h *fakeHub) byID(id string) (agent.Info, bool) {
+	for _, a := range h.agents {
+		if a.ID == id {
+			return a, true
+		}
+	}
+	return agent.Info{}, false
 }
 
 func newRec(store *fakeStore, cl *fakeCluster, hub *fakeHub) *Reconciler {

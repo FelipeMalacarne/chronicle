@@ -148,7 +148,7 @@ vs ~18 ms headless, logged in).
 PipeWire muting and the xdotool window fit are skipped when those tools are missing.
 
 Several dev clients run side by side, one per dev home, each with its own `MB_DEV_HOME`,
-`MB_HEADLESS_DISPLAY` and `MB_VNC_PORT`: `chronicle agent` with `MICROBOT_AGENT_CLIENTS` sets them
+`MB_HEADLESS_DISPLAY` and `MB_VNC_PORT`: `chronicle agent` with `MICROBOT_AGENT_SLOTS` sets them
 (docs/10 phase 5, docs/08). A running Xvfb and x11vnc keep the display and port they started on,
 written in the home (`run/xvfb.display`, `run/vnc.port`): `start` and `status` read them back over
 the variables, and the agent opens the VNC on that port. Every harness tool takes the same

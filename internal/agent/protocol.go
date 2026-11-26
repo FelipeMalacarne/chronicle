@@ -36,6 +36,7 @@ var Commands = []string{
 	CmdEquipmentUse, CmdPrayerToggle, CmdSpellCast, CmdBankDepositX, CmdItemUseOn, CmdTimers,
 	CmdRunStart, CmdRunStatus, CmdRunHistory, CmdRunCancel, CmdTriggerGet, CmdTriggerSet,
 	CmdWorkerBootstrap, CmdRoutinesSync, CmdRecurringGet, CmdTaskRun, CmdRunUntil, CmdQuestHelper,
+	CmdWorkerRelease,
 }
 
 // Known reports whether name is in the closed list.
@@ -53,6 +54,11 @@ const (
 	// (docs/11 section 4.4). No answer; the server applies it idempotently,
 	// and the agent sends its history again on every connection.
 	TypeEvent = "event"
+	// TypeClients: agent → server, unasked: the game clients an agent with
+	// slots (Hello.Slots) runs now, in Message.Clients, sent after it took or
+	// released an account. The server links each new client and drops the
+	// ones gone.
+	TypeClients = "clients"
 )
 
 // Event is the payload of a TypeEvent frame.
@@ -77,6 +83,8 @@ type Message struct {
 	// (Hello.Clients): on a command, the client that runs it; on an event,
 	// the client it comes from. Empty on the link of an agent with one client.
 	Account string `json:"account,omitempty"`
+	// Clients are the clients of a TypeClients frame.
+	Clients []ClientHello `json:"clients,omitempty"`
 }
 
 // FeaturesHeader is the header of the server's answer to the agent's
@@ -87,6 +95,11 @@ const FeaturesHeader = "Chronicle-Link-Features"
 // FeatureClients: the server routes the clients of an agent that drives
 // several (Hello.Clients, Message.Account; docs/10 section 10).
 const FeatureClients = "clients"
+
+// FeatureSlots: the server fills the slots of an agent that declares them
+// (Hello.Slots): it sends CmdWorkerBootstrap and CmdWorkerRelease to the
+// agent itself and takes its TypeClients frames.
+const FeatureSlots = "slots"
 
 // AgentFeatureRecurringRetry: the agent retries a recurring routine's failed
 // run once (recurring.go) and takes Recurring.PrevRun in routines_sync, which
@@ -145,6 +158,12 @@ type Hello struct {
 	// that one. Sent only to a server that announces FeatureClients; empty
 	// on an agent with one client.
 	Clients []ClientHello `json:"clients,omitempty"`
+	// Slots, on an attached agent, is how many accounts the server may run
+	// on it at once (MICROBOT_AGENT_SLOTS): it declares no account of its
+	// own, Clients are the accounts in its slots now, and it takes
+	// CmdWorkerBootstrap for any account and CmdWorkerRelease. Sent only to
+	// a server that announces FeatureSlots.
+	Slots int `json:"slots,omitempty"`
 }
 
 // LoginParams are the parameters of CmdLogin: world 0 keeps the profile's.

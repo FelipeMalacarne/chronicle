@@ -303,10 +303,10 @@ func connectAccount(cmd *cobra.Command, c *client.Client, flag, character string
 
 func newWorkersCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "workers", Short: "The accounts' Microbot workers (docs/11)"}
-	cmd.AddCommand(newWorkersListCmd(), newWorkerAutoLoginCmd())
+	cmd.AddCommand(newWorkersListCmd(), newWorkerAutoLoginCmd(), newWorkerMoveCmd())
 	for _, action := range []struct{ name, short string }{
-		{"start", "Start the account's worker in the cluster (it stops at the login screen)"},
-		{"stop", "Stop the account's worker (logs out and deletes its pod)"},
+		{"start", "Start the account's worker where it is placed (it stops at the login screen)"},
+		{"stop", "Stop the account's worker (logs out and deletes its pod or frees its slot)"},
 		{"restart", "Restart the account's worker now on the server's current image (logs out; an outdated worker also restarts by itself at its next pause)"},
 	} {
 		cmd.AddCommand(newWorkerActionCmd(action.name, action.short))
@@ -342,10 +342,12 @@ func newWorkersListCmd() *cobra.Command {
 
 func printWorkers(out io.Writer, ws client.Workers) {
 	if !ws.Enabled {
-		fmt.Fprintln(out, "Workers desligados neste servidor (WORKERS=off): só as sessões ficam guardadas.")
+		fmt.Fprintln(out, "Workers desligados neste servidor: só as sessões ficam guardadas.")
+	} else if !ws.Cluster {
+		fmt.Fprintln(out, "Sem pods neste servidor (WORKERS=off): só os agents anexados rodam workers.")
 	}
 	for _, w := range ws.Workers {
-		state := w.Desired
+		state := w.Desired + " · " + w.Placement
 		if w.Pod != nil {
 			state += " · pod " + w.Pod.State
 			if w.Pod.Reason != "" {
@@ -414,6 +416,36 @@ func newWorkerAutoLoginCmd() *cobra.Command {
 		}),
 	}
 	f.add(cmd, false)
+	return cmd
+}
+
+func newWorkerMoveCmd() *cobra.Command {
+	var f clientFlags
+	var to string
+	cmd := &cobra.Command{
+		Use:   "move --to cluster|<host>",
+		Short: "Choose where the account's client runs: a pod on saradomin (cluster) or a slot of an attached agent's host (zaros); a running worker moves (logs out there; logs in here only with auto login on)",
+		Args:  cobra.NoArgs,
+		RunE: runClient(func(cmd *cobra.Command, _ []string) error {
+			ctx := cmd.Context()
+			c, err := f.connect(ctx)
+			if err != nil {
+				return err
+			}
+			account, err := c.Account(ctx)
+			if err != nil {
+				return err
+			}
+			if err := c.SetPlacement(ctx, account, to); err != nil {
+				return err
+			}
+			fmt.Fprintf(cmd.OutOrStdout(), "%s: roda em %s; acompanhe com `chronicle workers list`.\n", account, to)
+			return nil
+		}),
+	}
+	f.add(cmd, false)
+	cmd.Flags().StringVar(&to, "to", "", "cluster (a pod on saradomin) or the host name of an attached agent with slots")
+	_ = cmd.MarkFlagRequired("to")
 	return cmd
 }
 

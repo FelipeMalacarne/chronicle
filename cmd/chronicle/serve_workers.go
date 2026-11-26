@@ -32,8 +32,9 @@ type microbotDeps struct {
 }
 
 // newMicrobot builds the Microbot control module (docs/08) and, with a
-// vault key, the accounts' sessions; with WORKERS=on also the reconciler of
-// the managed workers in the cluster (docs/11), started on ctx.
+// vault key, the accounts' sessions and the reconciler of the workers
+// (docs/11), started on ctx: it fills the slots of the attached agents, and
+// with WORKERS=on also runs the pods in the cluster.
 func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ingest *storeingest.Repository, deps microbotDeps, logger *slog.Logger) (*httpapi.MicrobotOptions, error) {
 	link := &agent.Link{Log: logger}
 	audit := storemicrobot.New(pool)
@@ -65,17 +66,20 @@ func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ing
 	// against a dev server (loopback) gets its session the same way.
 	rec := &workerctl.Reconciler{
 		Store: workerctl.RepoStore{Repo: repo}, Hub: link, Audit: audit, Log: logger,
-		Image: cfg.WorkerImage, ServerURL: cfg.WorkerServerURL, Version: buildinfo.String(),
+		Image: cfg.WorkerImage, ServerURL: cfg.WorkerServerURL, PublicURL: cfg.PublicBaseURL, Version: buildinfo.String(),
 	}
 	link.OnConnect = func(info agent.Info) {
 		// The triggers first: the bootstrap starts the client and takes minutes.
 		sync.OnConnect(info)
 		rec.OnConnect(info)
 	}
+	opts.Control = rec
 	if !cfg.Workers {
 		if rec.ServerURL == "" {
 			rec.ServerURL = cfg.PublicBaseURL
 		}
+		go rec.Run(ctx)
+		logger.Warn("workers: reconciler ON for attached agents only (WORKERS=off, docs/11)", "public_url", rec.PublicURL)
 		return opts, nil
 	}
 	cluster, err := kube.InCluster(cfg.WorkerNamespace)
@@ -86,10 +90,9 @@ func newMicrobot(ctx context.Context, cfg config.Config, pool *pgxpool.Pool, ing
 		rec.ServerURL = "http://chronicle." + cluster.Namespace + ".svc"
 	}
 	rec.Cluster, rec.Namespace = cluster, cluster.Namespace
-	opts.Control = rec
-	opts.Workers = podVerifier{cluster}
+	opts.Workers, opts.Cluster = podVerifier{cluster}, true
 	go rec.Run(ctx)
-	logger.Warn("workers: reconciler ON (docs/11)", "namespace", cluster.Namespace, "image", cfg.WorkerImage, "server_url", rec.ServerURL)
+	logger.Warn("workers: reconciler ON, cluster and attached agents (docs/11)", "namespace", cluster.Namespace, "image", cfg.WorkerImage, "server_url", rec.ServerURL)
 	return opts, nil
 }
 

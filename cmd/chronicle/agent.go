@@ -13,7 +13,6 @@ import (
 	"strings"
 	"syscall"
 	"time"
-	"unicode"
 
 	"github.com/spf13/cobra"
 
@@ -41,9 +40,14 @@ import (
 //	                       and mb-account
 //	MB_VNC_PORT            the harness's x11vnc port (default 5999), always on loopback
 //	MICROBOT_AGENT_ACCOUNT the Chronicle account this agent declares (optional)
-//	MICROBOT_AGENT_CLIENTS instead of MICROBOT_AGENT_ACCOUNT and MICROBOT_HOME, several
-//	                       clients, each its own dev home and account (docs/10 section
-//	                       10): see agentClients
+//	MICROBOT_AGENT_SLOTS   instead of MICROBOT_AGENT_ACCOUNT and MICROBOT_HOME, how many
+//	                       accounts the server may run on this machine at once (1 to
+//	                       agent.MaxClients): the agent starts with no client and logs
+//	                       each account in with the session the server sends, like a
+//	                       worker pod (docs/11): see slotsAgent
+//	MICROBOT_SLOTS_HOME    the slots' dev homes, <it>/<account> (default
+//	                       ~/.local/share/microbot-slots)
+//	MB_HEADLESS_DISPLAY    the first slot's Xvfb display (default :99; the next slots follow)
 //
 // With --worker it is the agent of a worker pod (docs/11): see workerAgent.
 func newAgentCmd() *cobra.Command {
@@ -226,9 +230,10 @@ func fileExists(path string) bool {
 
 // attachedAgent builds the agent of the machine with the game (zaros) from
 // its environment: one client (MICROBOT_HOME, MICROBOT_AGENT_ACCOUNT,
-// MB_VNC_PORT) or several (MICROBOT_AGENT_CLIENTS, agentClients). The harness
-// tools come from MICROBOT_CLIENT_CMD, MICROBOT_ACCOUNT_CMD or
-// MICROBOT_HARNESS_DIR (harnessCmd); the caller sets the Token.
+// MB_VNC_PORT: the dev harness's `just agent`) or, with MICROBOT_AGENT_SLOTS,
+// an agent with slots (slotsAgent). The harness tools come from
+// MICROBOT_CLIENT_CMD, MICROBOT_ACCOUNT_CMD or MICROBOT_HARNESS_DIR
+// (harnessCmd); the caller sets the Token.
 func attachedAgent(url string, getenv func(string) string, log *slog.Logger) (*agent.Agent, error) {
 	host, _ := os.Hostname()
 	clientCmd, accountCmd := harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"), harnessCmd("MICROBOT_ACCOUNT_CMD", "mb-account")
@@ -237,102 +242,143 @@ func attachedAgent(url string, getenv func(string) string, log *slog.Logger) (*a
 		// Hello.Bridge stays empty: the bridge's version is in the status (Status.Bridge).
 		Hello: agent.Hello{Host: host, Version: buildinfo.String(), Kind: agent.KindAttached},
 	}
-	specs, err := agentClients(getenv("MICROBOT_AGENT_CLIENTS"))
-	if err != nil {
-		return nil, err
+	if strings.TrimSpace(getenv("MICROBOT_AGENT_CLIENTS")) != "" {
+		// Gone on 2026-11-26: started without it, the agent would serve every
+		// account as one undeclared client.
+		return nil, errors.New("MICROBOT_AGENT_CLIENTS is gone: set MICROBOT_AGENT_SLOTS, and the server fills the slots with the accounts placed on this host")
 	}
 	port, err := basePort(getenv("MB_VNC_PORT"))
 	if err != nil {
 		return nil, err
 	}
-	if len(specs) == 0 {
-		home := microbot.DefaultHome()
-		a.VNCAddr = net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
-		a.Hello.Account = strings.TrimSpace(getenv("MICROBOT_AGENT_ACCOUNT"))
-		a.Executor = &agent.Executor{
-			Game: &microbot.Client{Home: home}, Home: home,
-			Bridge:        &microbot.Client{Home: home, Socket: microbot.BridgeSocket},
-			TriggerFile:   agent.DefaultTriggerFile(),
-			RecurringFile: agent.DefaultRecurringFile(),
-			RunFile:       agent.DefaultRunFile(),
-			ClientCmd:     clientCmd, AccountCmd: accountCmd,
+	account := strings.TrimSpace(getenv("MICROBOT_AGENT_ACCOUNT"))
+	if slots := strings.TrimSpace(getenv("MICROBOT_AGENT_SLOTS")); slots != "" {
+		if account != "" {
+			return nil, errors.New("set MICROBOT_AGENT_SLOTS or MICROBOT_AGENT_ACCOUNT, not both: the server names each slot's account")
 		}
-		log.Info("agent: starting", "server", url, "microbot_home", home, "client_cmd", strings.Join(clientCmd, " "))
+		if err := slotsAgent(a, slots, port, clientCmd, getenv, log); err != nil {
+			return nil, err
+		}
 		return a, nil
 	}
-	if strings.TrimSpace(getenv("MICROBOT_AGENT_ACCOUNT")) != "" {
-		return nil, errors.New("set MICROBOT_AGENT_CLIENTS or MICROBOT_AGENT_ACCOUNT, not both: each client names its account")
+	home := microbot.DefaultHome()
+	a.VNCAddr = net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
+	a.Hello.Account = account
+	a.Executor = &agent.Executor{
+		Game: &microbot.Client{Home: home}, Home: home,
+		Bridge:        &microbot.Client{Home: home, Socket: microbot.BridgeSocket},
+		TriggerFile:   agent.DefaultTriggerFile(),
+		RecurringFile: agent.DefaultRecurringFile(),
+		RunFile:       agent.DefaultRunFile(),
+		ClientCmd:     clientCmd, AccountCmd: accountCmd,
 	}
-	display, err := baseDisplay(getenv("MB_HEADLESS_DISPLAY"))
-	if err != nil {
-		return nil, err
-	}
-	for i, s := range specs {
-		vnc := strconv.Itoa(port + i)
-		a.Clients = append(a.Clients, agent.Client{
-			Account: s.account, VNCAddr: net.JoinHostPort("127.0.0.1", vnc),
-			Executor: &agent.Executor{
-				Game: &microbot.Client{Home: s.home}, Home: s.home, Log: log.With("account", s.account),
-				Bridge: &microbot.Client{Home: s.home, Socket: microbot.BridgeSocket},
-				// Each client its own files: the runs, triggers and recurring
-				// routines are the account's.
-				TriggerFile:   clientFile(agent.DefaultTriggerFile(), s.account),
-				RecurringFile: clientFile(agent.DefaultRecurringFile(), s.account),
-				RunFile:       clientFile(agent.DefaultRunFile(), s.account),
-				ClientCmd:     clientCmd, AccountCmd: accountCmd,
-				Env: []string{"MB_DEV_HOME=" + s.home, "MB_HEADLESS_DISPLAY=:" + strconv.Itoa(display+i), "MB_VNC_PORT=" + vnc},
-			},
-		})
-		log.Info("agent: client", "account", s.account, "microbot_home", s.home, "display", ":"+strconv.Itoa(display+i), "vnc_port", vnc)
-	}
-	log.Info("agent: starting", "server", url, "clients", len(specs), "client_cmd", strings.Join(clientCmd, " "))
+	log.Info("agent: starting", "server", url, "microbot_home", home, "client_cmd", strings.Join(clientCmd, " "))
 	return a, nil
 }
 
-// clientSpec is one client of MICROBOT_AGENT_CLIENTS.
-type clientSpec struct{ account, home string }
+// slotsAgent makes a an agent with n slots (MICROBOT_AGENT_SLOTS): the server
+// fills them (worker_bootstrap) and frees them (worker_release), and the
+// agent declares no account of its own. A client is a worker's: its dev home
+// <MICROBOT_SLOTS_HOME>/<account> with its own HWID store (never the
+// launcher's ~/.runelite), account_use refused, and the display and x11vnc
+// port of its slot, from MB_HEADLESS_DISPLAY (:99) and MB_VNC_PORT (5999) up.
+func slotsAgent(a *agent.Agent, n string, port int, clientCmd []string, getenv func(string) string, log *slog.Logger) error {
+	slots, err := strconv.Atoi(n)
+	if err != nil || slots < 1 || slots > agent.MaxClients {
+		return fmt.Errorf("MICROBOT_AGENT_SLOTS: %q is not a number between 1 and %d", n, agent.MaxClients)
+	}
+	display, err := baseDisplay(getenv("MB_HEADLESS_DISPLAY"))
+	if err != nil {
+		return err
+	}
+	root, err := slotsHome(getenv("MICROBOT_SLOTS_HOME"))
+	if err != nil {
+		return err
+	}
+	a.Slots = slots
+	a.NewSlot = func(slot int, account string) agent.Client {
+		home := filepath.Join(root, account)
+		hwid := filepath.Join(home, "hwid")
+		vnc := strconv.Itoa(port + slot)
+		return agent.Client{
+			Account: account, VNCAddr: net.JoinHostPort("127.0.0.1", vnc),
+			Executor: &agent.Executor{
+				Game: &microbot.Client{Home: home}, Home: home, Log: log.With("account", account),
+				Bridge:    &microbot.Client{Home: home, Socket: microbot.BridgeSocket},
+				ClientCmd: clientCmd,
+				Worker:    &agent.WorkerConfig{Account: account, HWIDStoreDir: hwid},
+				// The runs, triggers and recurring routines are the account's.
+				TriggerFile:   clientFile(agent.DefaultTriggerFile(), account),
+				RecurringFile: clientFile(agent.DefaultRecurringFile(), account),
+				RunFile:       clientFile(agent.DefaultRunFile(), account),
+				Env: []string{
+					"MB_DEV_HOME=" + home, "MB_HEADLESS_DISPLAY=:" + strconv.Itoa(display+slot),
+					"MB_VNC_PORT=" + vnc, "MB_HWID_STORE_DIR=" + hwid,
+				},
+			},
+		}
+	}
+	// A display whose X socket exists belongs to a client this agent does not
+	// know (one from before it restarted, or another tool's).
+	a.SlotBusy = func(slot int) bool { return fileExists("/tmp/.X11-unix/X" + strconv.Itoa(display+slot)) }
+	a.SlotOf = func(account string) (int, bool) { return liveSlot(filepath.Join(root, account), display) }
+	a.Live = func() []string { return liveAccounts(root, display) }
+	log.Info("agent: starting with slots", "slots", slots, "slots_home", root, "display", ":"+strconv.Itoa(display), "vnc_port", port,
+		"client_cmd", strings.Join(clientCmd, " "))
+	return nil
+}
 
-// agentClients parses MICROBOT_AGENT_CLIENTS (docs/10 section 10): the game
-// clients of an agent that drives several, as "account=dev home" entries
-// separated by commas, semicolons or blanks, e.g.
-//
-//	acc_main=~/.local/share/microbot-dev,acc_alt=~/.local/share/microbot-dev-alt
-//
-// Each account (acc_<rsn>) and each dev home once, at most agent.MaxClients;
-// a home starting with ~/ is under the user's home, any other must be
-// absolute. In this order, the clients take the headless displays and VNC
-// ports from MB_HEADLESS_DISPLAY (:99) and MB_VNC_PORT (5999) up: the first
-// :99 and 5999, the second :100 and 6000. Empty: nil (one client).
-func agentClients(spec string) ([]clientSpec, error) {
-	fields := strings.FieldsFunc(spec, func(r rune) bool { return r == ',' || r == ';' || unicode.IsSpace(r) })
-	if len(fields) == 0 {
-		return nil, nil
+// liveSlot is the slot of the client still running in home: mb-client keeps
+// the display its Xvfb runs on in run/xvfb.display, beside the Xvfb's pid.
+func liveSlot(home string, display int) (int, bool) {
+	run := filepath.Join(home, "run")
+	b, err := os.ReadFile(filepath.Join(run, "xvfb.display")) //nolint:gosec // the slot's own dev home
+	if err != nil || !agent.PIDAlive(filepath.Join(run, "xvfb.pid")) {
+		return 0, false
 	}
-	if len(fields) > agent.MaxClients {
-		return nil, fmt.Errorf("MICROBOT_AGENT_CLIENTS: at most %d clients", agent.MaxClients)
+	n, err := strconv.Atoi(strings.TrimPrefix(strings.TrimSpace(string(b)), ":"))
+	if err != nil {
+		return 0, false
 	}
+	return n - display, true
+}
+
+// liveAccounts are the accounts whose clients still run under root, one dev
+// home per account (liveSlot).
+func liveAccounts(root string, display int) []string {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return nil
+	}
+	var out []string
+	for _, e := range entries {
+		if !e.IsDir() || !agent.ValidAccount(e.Name()) {
+			continue
+		}
+		if _, ok := liveSlot(filepath.Join(root, e.Name()), display); ok {
+			out = append(out, e.Name())
+		}
+	}
+	return out
+}
+
+// slotsHome is MICROBOT_SLOTS_HOME: absolute or under the user's home (~/),
+// default ~/.local/share/microbot-slots.
+func slotsHome(v string) (string, error) {
 	userHome, _ := os.UserHomeDir()
-	var out []clientSpec
-	accounts, homes := map[string]bool{}, map[string]bool{}
-	for _, f := range fields {
-		account, home, ok := strings.Cut(f, "=")
-		if !ok || !agent.ValidAccount(account) || home == "" {
-			return nil, fmt.Errorf("MICROBOT_AGENT_CLIENTS: %q is not account=dev home, with the account as acc_<rsn>", f)
+	if v = strings.TrimSpace(v); v == "" {
+		if userHome == "" {
+			return "", errors.New("MICROBOT_SLOTS_HOME: no home directory to default to")
 		}
-		if rest, ok := strings.CutPrefix(home, "~/"); ok && userHome != "" {
-			home = filepath.Join(userHome, rest)
-		}
-		if !filepath.IsAbs(home) {
-			return nil, fmt.Errorf("MICROBOT_AGENT_CLIENTS: the dev home of %s must be an absolute path (or ~/...)", account)
-		}
-		home = filepath.Clean(home)
-		if accounts[account] || homes[home] {
-			return nil, fmt.Errorf("MICROBOT_AGENT_CLIENTS: %s or its dev home appears twice", account)
-		}
-		accounts[account], homes[home] = true, true
-		out = append(out, clientSpec{account: account, home: home})
+		return filepath.Join(userHome, ".local", "share", "microbot-slots"), nil
 	}
-	return out, nil
+	if rest, ok := strings.CutPrefix(v, "~/"); ok && userHome != "" {
+		v = filepath.Join(userHome, rest)
+	}
+	if !filepath.IsAbs(v) {
+		return "", errors.New("MICROBOT_SLOTS_HOME must be an absolute path (or ~/...)")
+	}
+	return filepath.Clean(v), nil
 }
 
 // basePort is MB_VNC_PORT, the x11vnc port of the (first) client: 5999 when

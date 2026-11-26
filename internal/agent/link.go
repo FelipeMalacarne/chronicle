@@ -40,15 +40,18 @@ func (e *CommandError) Error() string { return e.Command + ": " + e.Message }
 
 // Link is the server end of the agents' links: the Hub of docs/11. Many
 // agents connect at once, each serving one game client or, an attached agent,
-// several (Hello.Clients, docs/10 section 10); requests are addressed by
+// several (Hello.Clients, docs/10 section 10) or, with slots (Hello.Slots),
+// a changing set filled by the server; requests are addressed by
 // account (docs/11 section 13.1) and the Hub picks the client. A new
 // connection of the same agent (same identity and same worker, or host)
 // replaces only that agent's previous one, with all its clients.
 type Link struct {
 	Log *slog.Logger
 	// OnConnect, when set, is called in its own goroutine after an agent's
-	// connection is registered, once per client it serves (the workers'
-	// reconciler sends the bootstrap to managed agents from it).
+	// connection is registered, once per client it serves, and for the pool
+	// of an agent with slots (Info.Slots > 0); again for each client such an
+	// agent adds later (the workers' reconciler sends the bootstrap to
+	// managed agents from it).
 	OnConnect func(Info)
 	// OnEvent, when set, gets the events an agent sends by itself
 	// (TypeEvent) with the Info of the client each comes from, in the order
@@ -73,8 +76,16 @@ type wsConn struct {
 	since time.Time
 	// tagged: the agent drives several clients (Hello.Clients), so every
 	// command names its client's account and every event comes with one.
-	tagged  bool
-	clients []*agentConn // in the hello's order
+	tagged bool
+	// base is the agent's hello, from which each client's is made.
+	base Hello
+	// slots is Hello.Slots: the connection is an agent with slots, whose
+	// own pool agentConn is not a client and whose clients come and go
+	// (TypeClients).
+	slots int
+	pool  *agentConn
+	// clients, under Link.mu, in the order the agent declared them.
+	clients []*agentConn
 	// pending are the commands waiting for their result, under Link.mu;
 	// nil once the connection ended.
 	pending map[string]chan Message
@@ -86,19 +97,27 @@ type agentConn struct {
 	id    string
 	ws    *wsConn
 	hello Hello // the agent's hello, with this client's account
-	idx   int   // its place in the hello's clients
+	idx   int   // its place in the hello's clients; -1 for the pool
+	// pool: the agent with slots itself (Hello.Slots), which serves no account.
+	pool bool
 }
 
+// info runs under Link.mu: the pool's Used follows the connection's clients.
 func (c *agentConn) info() Info {
 	kind := c.hello.Kind
 	if kind == "" {
 		kind = KindAttached
 	}
-	return Info{
+	info := Info{
 		Connected: true, ID: c.id, Since: c.ws.since, Host: c.hello.Host, Version: c.hello.Version,
 		Identity: c.ws.ident.Subject, Account: c.hello.Account, Kind: kind, Worker: c.hello.Worker, Bridge: c.hello.Bridge,
 		Commands: slices.Clone(c.hello.Commands), Features: slices.Clone(c.hello.Features),
+		Slot: c.ws.slots > 0 && !c.pool,
 	}
+	if c.pool {
+		info.Slots, info.Used = c.ws.slots, len(c.ws.clients)
+	}
+	return info
 }
 
 // Info is what the server knows about one connected agent: about one of its
@@ -127,6 +146,34 @@ type Info struct {
 	// Features are what the agent declared beyond its commands
 	// (AgentFeatures), for the same reason.
 	Features []string `json:"-"`
+	// Slots and Used are set on the Info of an agent with slots itself
+	// (Hello.Slots), which serves no account: how many accounts it may run
+	// and how many it runs now. Its clients have their own Infos, with Slot.
+	Slots int `json:"slots,omitempty"`
+	Used  int `json:"used,omitempty"`
+	// Slot: this client runs in a slot of its agent, filled by the server
+	// (CmdWorkerBootstrap), which also releases it.
+	Slot bool `json:"slot,omitempty"`
+}
+
+// PoolOf is the agent with slots linked from host (its own Info, Slots > 0).
+func PoolOf(agents []Info, host string) (Info, bool) {
+	for _, a := range agents {
+		if a.Slots > 0 && a.Host == host {
+			return a, true
+		}
+	}
+	return Info{}, false
+}
+
+// SlotClientOf is the client in a slot of host's agent that runs account.
+func SlotClientOf(agents []Info, host, account string) (Info, bool) {
+	for _, a := range agents {
+		if a.Slot && a.Host == host && a.Account == account {
+			return a, true
+		}
+	}
+	return Info{}, false
 }
 
 // Supports reports whether the agent declared command in its hello.
@@ -186,7 +233,8 @@ func (l *Link) Agent(account string) (Info, bool) {
 // 13.1: with no account, the only agent connected (ErrAmbiguousAgent when
 // there are more); with an account, the agent that declares it, else the
 // only agent that declares none, else ErrNoAgent. Each client of an agent
-// that drives several counts as an agent of its own.
+// that drives several counts as an agent of its own; the agent with slots
+// itself is never routed to (CallAgent addresses it).
 func (l *Link) Route(account string) (Info, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -199,19 +247,23 @@ func (l *Link) Route(account string) (Info, error) {
 
 // route runs under l.mu.
 func (l *Link) route(account string) (*agentConn, error) {
+	var served []*agentConn
+	for _, c := range l.agents {
+		if !c.pool {
+			served = append(served, c)
+		}
+	}
 	if account == "" {
-		switch len(l.agents) {
+		switch len(served) {
 		case 0:
 			return nil, ErrNoAgent
 		case 1:
-			for _, c := range l.agents {
-				return c, nil
-			}
+			return served[0], nil
 		}
 		return nil, ErrAmbiguousAgent
 	}
 	var declared, undeclared []*agentConn
-	for _, c := range l.agents {
+	for _, c := range served {
 		switch c.hello.Account {
 		case account:
 			declared = append(declared, c)
@@ -248,8 +300,8 @@ func agentKey(id Identity, h Hello) string {
 func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 	ident := IdentityOf(r.Context())
 	// What this link understands, before the hello: an agent with several
-	// clients declares them only to a server that routes them.
-	w.Header().Set(FeaturesHeader, FeatureClients)
+	// clients or with slots declares them only to a server that routes them.
+	w.Header().Set(FeaturesHeader, FeatureClients+","+FeatureSlots)
 	conn, err := websocket.Accept(w, r, nil)
 	if err != nil {
 		l.Log.Warn("agent link: accept", "err", err)
@@ -271,7 +323,7 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 		_ = conn.Close(websocket.StatusPolicyViolation, "unknown agent kind")
 		return
 	}
-	if ident.BoundAccount != "" && (h.Account != ident.BoundAccount || h.Kind != KindManaged || len(h.Clients) > 0) {
+	if ident.BoundAccount != "" && (h.Account != ident.BoundAccount || h.Kind != KindManaged || len(h.Clients) > 0 || h.Slots > 0) {
 		l.Log.Warn("agent link: refused a hello outside the identity's account", "identity", ident.Subject, "declared", h.Account, "kind", h.Kind)
 		_ = conn.Close(websocket.StatusPolicyViolation, "this identity serves only its own account, as a managed agent")
 		return
@@ -295,20 +347,23 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 	}
-	for _, c := range ws.clients {
+	for _, c := range ws.all() {
 		l.agents[c.id] = c
+	}
+	infos := make([]Info, 0, len(ws.clients)+1)
+	accounts := make([]string, 0, len(ws.clients))
+	for _, c := range ws.all() {
+		infos = append(infos, c.info())
+		if !c.pool {
+			accounts = append(accounts, c.hello.Account)
+		}
 	}
 	l.mu.Unlock()
 	for _, old := range replaced {
 		go func() { _ = old.conn.Close(websocket.StatusNormalClosure, "replaced by a new agent connection") }()
 	}
-	infos := make([]Info, len(ws.clients))
-	accounts := make([]string, len(ws.clients))
-	for i, c := range ws.clients {
-		infos[i], accounts[i] = c.info(), c.hello.Account
-	}
 	l.Log.Info("agent link: connected", "id", ws.id, "host", h.Host, "version", h.Version, "identity", ident.Subject,
-		"accounts", accounts, "kind", infos[0].Kind, "worker", h.Worker, "replaced", len(replaced))
+		"accounts", accounts, "slots", h.Slots, "kind", infos[0].Kind, "worker", h.Worker, "replaced", len(replaced))
 	if l.OnConnect != nil {
 		for _, info := range infos {
 			go l.OnConnect(info)
@@ -316,7 +371,7 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() {
 		l.mu.Lock()
-		for _, c := range ws.clients {
+		for _, c := range ws.all() {
 			if l.agents[c.id] == c {
 				delete(l.agents, c.id)
 			}
@@ -341,14 +396,20 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 		if json.Unmarshal(raw, &m) != nil {
 			continue
 		}
+		if m.Type == TypeClients {
+			if err := l.setClients(ws, m.Clients); err != nil {
+				l.Log.Warn("agent link: ignored a clients frame", "id", ws.id, "host", h.Host, "err", err)
+			}
+			continue
+		}
 		if m.Type == TypeEvent && m.Event != nil {
-			i := ws.eventClient(m.Account)
-			if i < 0 {
+			info, ok := l.eventClient(ws, m.Account)
+			if !ok {
 				l.Log.Warn("agent link: event of a client the agent did not declare, dropped", "id", ws.id, "account", m.Account)
 				continue
 			}
 			select {
-			case events <- linkEvent{info: infos[i], ev: *m.Event}:
+			case events <- linkEvent{info: info, ev: *m.Event}:
 			default:
 				// Full: dropped; the agent sends its history again on reconnecting.
 				l.Log.Warn("agent link: event queue full, dropped one", "id", ws.id)
@@ -370,18 +431,44 @@ func (l *Link) Serve(w http.ResponseWriter, r *http.Request) {
 
 // checkClients checks the clients a hello declares: only an attached agent
 // drives several, each on an account of its own, the first one's in Account.
+// An agent with slots declares no account of its own and, in Clients, the
+// ones it runs now.
 func checkClients(h Hello) error {
+	if h.Slots != 0 {
+		if h.Kind == KindManaged {
+			return errors.New("a managed agent has no slots")
+		}
+		if h.Account != "" {
+			return errors.New("an agent with slots declares no account of its own")
+		}
+		return checkClientSet(h.Clients, h.Slots)
+	}
 	if len(h.Clients) == 0 {
 		return nil
 	}
 	if h.Kind == KindManaged {
 		return errors.New("a managed agent drives one client")
 	}
-	if len(h.Clients) > MaxClients {
-		return fmt.Errorf("at most %d clients per agent", MaxClients)
+	if err := checkClientSet(h.Clients, MaxClients); err != nil {
+		return err
+	}
+	if h.Account != "" && h.Account != h.Clients[0].Account {
+		return errors.New("the hello's account is not its first client's")
+	}
+	return nil
+}
+
+// checkClientSet checks clients: at most limit, each on a valid account of
+// its own. limit is itself at most MaxClients.
+func checkClientSet(clients []ClientHello, limit int) error {
+	if limit < 1 || limit > MaxClients {
+		return fmt.Errorf("slots must be between 1 and %d", MaxClients)
+	}
+	if len(clients) > limit {
+		return fmt.Errorf("at most %d clients per agent", limit)
 	}
 	seen := map[string]bool{}
-	for _, c := range h.Clients {
+	for _, c := range clients {
 		if !ValidAccount(c.Account) {
 			return errors.New("a client without a valid account")
 		}
@@ -390,44 +477,110 @@ func checkClients(h Hello) error {
 		}
 		seen[c.Account] = true
 	}
-	if h.Account != "" && h.Account != h.Clients[0].Account {
-		return errors.New("the hello's account is not its first client's")
-	}
 	return nil
 }
 
 // newWSConn is the connection of an agent that sent hello h, with one
 // agentConn per client: the hello's own for an agent with one client (its
-// Info.ID is the connection's id), else one per Hello.Clients.
+// Info.ID is the connection's id), else one per Hello.Clients; an agent with
+// slots has its pool besides.
 func newWSConn(conn *websocket.Conn, ident Identity, h Hello) *wsConn {
 	ws := &wsConn{
 		id: newID(), key: agentKey(ident, h), conn: conn, ident: ident, since: time.Now(),
-		tagged: len(h.Clients) > 0, pending: map[string]chan Message{},
+		tagged: len(h.Clients) > 0 || h.Slots > 0, base: h, slots: h.Slots, pending: map[string]chan Message{},
 	}
 	if !ws.tagged {
 		ws.clients = []*agentConn{{id: ws.id, ws: ws, hello: h}}
 		return ws
 	}
+	if h.Slots > 0 {
+		ph := h
+		ph.Clients = nil
+		ws.pool = &agentConn{id: newID(), ws: ws, hello: ph, idx: -1, pool: true}
+	}
 	for i, cl := range h.Clients {
-		ch := h
-		ch.Account, ch.Clients = cl.Account, nil
-		ws.clients = append(ws.clients, &agentConn{id: newID(), ws: ws, hello: ch, idx: i})
+		ws.clients = append(ws.clients, ws.newClient(cl.Account, i))
 	}
 	return ws
 }
 
-// eventClient is the index of the client an event comes from: on a tagged
-// connection the one its account names (-1 for none), else the only one.
-func (ws *wsConn) eventClient(account string) int {
-	if !ws.tagged {
-		return 0
+// newClient is the agentConn of the client on account, from the agent's hello.
+func (ws *wsConn) newClient(account string, idx int) *agentConn {
+	ch := ws.base
+	ch.Account, ch.Clients, ch.Slots = account, nil, 0
+	return &agentConn{id: newID(), ws: ws, hello: ch, idx: idx}
+}
+
+// all are the agentConns of the connection: the pool, then the clients.
+// Under Link.mu.
+func (ws *wsConn) all() []*agentConn {
+	if ws.pool == nil {
+		return ws.clients
 	}
-	for i, c := range ws.clients {
+	return append([]*agentConn{ws.pool}, ws.clients...)
+}
+
+// eventClient is the Info of the client an event comes from: on a tagged
+// connection the one its account names among the clients it has now, else the
+// only one.
+func (l *Link) eventClient(ws *wsConn, account string) (Info, bool) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if !ws.tagged {
+		return ws.clients[0].info(), true
+	}
+	for _, c := range ws.clients {
 		if c.hello.Account == account {
-			return i
+			return c.info(), true
 		}
 	}
-	return -1
+	return Info{}, false
+}
+
+// setClients is a TypeClients frame: the connection's clients become
+// clients. Those still listed keep their agentConn (and ID), the new ones are
+// linked and announced to OnConnect, the missing ones are dropped.
+func (l *Link) setClients(ws *wsConn, clients []ClientHello) error {
+	if ws.slots == 0 {
+		return errors.New("this agent declared no slots")
+	}
+	if err := checkClientSet(clients, ws.slots); err != nil {
+		return err
+	}
+	l.mu.Lock()
+	if ws.pending == nil { // the connection ended meanwhile
+		l.mu.Unlock()
+		return nil
+	}
+	have := map[string]*agentConn{}
+	for _, c := range ws.clients {
+		have[c.hello.Account] = c
+	}
+	next := make([]*agentConn, 0, len(clients))
+	var added []Info
+	for i, cl := range clients {
+		c, ok := have[cl.Account]
+		if ok {
+			c.idx = i
+			delete(have, cl.Account)
+		} else {
+			c = ws.newClient(cl.Account, i)
+			l.agents[c.id] = c
+			added = append(added, c.info())
+		}
+		next = append(next, c)
+	}
+	for _, gone := range have {
+		delete(l.agents, gone.id)
+	}
+	ws.clients = next
+	l.mu.Unlock()
+	if l.OnConnect != nil {
+		for _, info := range added {
+			go l.OnConnect(info)
+		}
+	}
+	return nil
 }
 
 // linkEvent is an event and the client it comes from.

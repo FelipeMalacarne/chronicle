@@ -242,7 +242,7 @@ func TestSlotBootstrapAdoptsTheClientsOwnSlot(t *testing.T) {
 	a := &Agent{
 		Log: quiet, Hello: Hello{Host: "zaros", Version: "test", Kind: KindAttached}, Slots: 2, NewSlot: f.newSlot,
 		SlotBusy: func(slot int) bool { return slot == 1 },
-		SlotOf: func(account string) (int, bool) { return 1, account == "acc_a" },
+		SlotOf:   func(account string) (int, bool) { return 1, account == "acc_a" },
 	}
 	startAgent(t, a, url, "zaros")
 	waitAgents(t, link, 1)

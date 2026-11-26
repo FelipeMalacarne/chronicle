@@ -747,10 +747,17 @@ func (r *Reconciler) Capacity() (Capacity, bool) {
 // already runs (the link dropped, the pod did not), it gets the account's
 // session, a fresh Chronicle Link token, the world and the client profile.
 // The worker's last error becomes what of the profile the client refused
-// (or nothing); a relink with the client up leaves it as it was. Attached
-// agents are left alone: their slots are filled by the pass (attached.go).
+// (or nothing); a relink with the client up leaves it as it was. An agent
+// with slots asks for a pass, which fills them (attached.go); other attached
+// agents are left alone.
 func (r *Reconciler) OnConnect(info agent.Info) {
 	r.init()
+	if info.Slots > 0 {
+		// An agent with slots linked: its accounts go back in now, not at
+		// the next pass.
+		r.Kick()
+		return
+	}
 	if info.Kind != agent.KindManaged || info.Account == "" {
 		return
 	}

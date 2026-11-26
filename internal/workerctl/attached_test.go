@@ -365,3 +365,17 @@ func TestFreedSlotIsFilledInTheSamePass(t *testing.T) {
 		t.Fatalf("the account left without a slot says nothing: %v", store.errs)
 	}
 }
+
+// An agent with slots that links asks for a pass at once, so its accounts
+// go back in without waiting for the interval.
+func TestPoolThatLinksAsksForAPass(t *testing.T) {
+	r := newAttachedRec(&fakeStore{}, &fakeCluster{deps: map[string]kube.Deployment{}}, &fakeHub{})
+	r.OnConnect(slotClient("acc_a"))
+	if len(r.kick) != 0 {
+		t.Fatal("a slot client asked for a pass")
+	}
+	r.OnConnect(zarosPool(0))
+	if len(r.kick) != 1 {
+		t.Fatal("the pool did not ask for a pass")
+	}
+}

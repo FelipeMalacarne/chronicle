@@ -78,7 +78,7 @@ func (q *Queries) GetGameSessionInfo(ctx context.Context, accountID string) (Get
 }
 
 const getWorkerForUpdate = `-- name: GetWorkerForUpdate :one
-SELECT account_id, desired_state, world, image, plugin_token_id, started_at, stopped_at, updated_at, last_error, running_plugins, auto_login, was_logged_in, running_settings FROM workers WHERE account_id = $1 FOR UPDATE
+SELECT account_id, desired_state, world, image, plugin_token_id, started_at, stopped_at, updated_at, last_error, running_plugins, auto_login, was_logged_in, running_settings, placement FROM workers WHERE account_id = $1 FOR UPDATE
 `
 
 func (q *Queries) GetWorkerForUpdate(ctx context.Context, accountID string) (Worker, error) {
@@ -98,6 +98,7 @@ func (q *Queries) GetWorkerForUpdate(ctx context.Context, accountID string) (Wor
 		&i.AutoLogin,
 		&i.WasLoggedIn,
 		&i.RunningSettings,
+		&i.Placement,
 	)
 	return i, err
 }
@@ -130,6 +131,7 @@ SELECT a.id AS account_id, a.user_id, a.rsn, a.managed,
        COALESCE(w.desired_state, 'stopped')::text AS desired_state,
        COALESCE(w.world, 0)::integer AS world,
        COALESCE(w.image, '')::text AS image,
+       COALESCE(w.placement, 'cluster')::text AS placement,
        COALESCE(w.plugin_token_id, '')::text AS plugin_token_id,
        COALESCE(w.auto_login, false)::boolean AS auto_login,
        COALESCE(w.was_logged_in, false)::boolean AS was_logged_in,
@@ -165,6 +167,7 @@ type ListWorkersRow struct {
 	DesiredState    string             `json:"desired_state"`
 	World           int32              `json:"world"`
 	Image           string             `json:"image"`
+	Placement       string             `json:"placement"`
 	PluginTokenID   string             `json:"plugin_token_id"`
 	AutoLogin       bool               `json:"auto_login"`
 	WasLoggedIn     bool               `json:"was_logged_in"`
@@ -202,6 +205,7 @@ func (q *Queries) ListWorkers(ctx context.Context, arg ListWorkersParams) ([]Lis
 			&i.DesiredState,
 			&i.World,
 			&i.Image,
+			&i.Placement,
 			&i.PluginTokenID,
 			&i.AutoLogin,
 			&i.WasLoggedIn,
@@ -382,6 +386,25 @@ func (q *Queries) SetWorkerLoggedIn(ctx context.Context, arg SetWorkerLoggedInPa
 		return 0, err
 	}
 	return result.RowsAffected(), nil
+}
+
+const setWorkerPlacement = `-- name: SetWorkerPlacement :exec
+INSERT INTO workers (account_id, desired_state, placement, stopped_at)
+VALUES ($1, 'stopped', $2, now())
+ON CONFLICT (account_id) DO UPDATE
+SET placement = EXCLUDED.placement, updated_at = now()
+`
+
+type SetWorkerPlacementParams struct {
+	AccountID string `json:"account_id"`
+	Placement string `json:"placement"`
+}
+
+// Where the account's client runs; a worker row that does not exist yet is
+// created stopped (the placement is chosen before the first start).
+func (q *Queries) SetWorkerPlacement(ctx context.Context, arg SetWorkerPlacementParams) error {
+	_, err := q.db.Exec(ctx, setWorkerPlacement, arg.AccountID, arg.Placement)
+	return err
 }
 
 const setWorkerPluginToken = `-- name: SetWorkerPluginToken :exec

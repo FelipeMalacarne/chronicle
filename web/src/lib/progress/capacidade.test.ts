@@ -35,6 +35,7 @@ function row(account: string, p: Partial<WorkerRow> = {}): WorkerRow {
 		rsn: account,
 		session: null,
 		desired: 'running',
+		placement: 'cluster',
 		pod: null,
 		agent: null,
 		auto_login: false,
@@ -44,7 +45,7 @@ function row(account: string, p: Partial<WorkerRow> = {}): WorkerRow {
 }
 
 function view(p: Partial<WorkersView> = {}): WorkersView {
-	return { enabled: true, workers: [], attached: [], ...p };
+	return { enabled: true, cluster: true, workers: [], attached: [], ...p };
 }
 
 test('numbers in PT-BR: cores with one decimal, memory in GiB or MiB', () => {

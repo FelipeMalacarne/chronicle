@@ -1,9 +1,12 @@
 // Package workerctl runs the managed workers (docs/11): it makes the
 // Kubernetes Deployments match the desired state in the database, bootstraps
 // each worker's agent when it links, and restarts an outdated worker on the
-// new image at a pause (docs/11 section 7.2). It owns no state of its own: the
-// database says what should run, the cluster what does, and the hub who is
-// linked; it only remembers its automatic restarts, so as not to repeat them.
+// new image at a pause (docs/11 section 7.2). A worker's placement says where
+// its client runs: a pod, or a slot of an attached agent (attached.go), which
+// the reconciler fills with the same bootstrap and frees when the account is
+// stopped or moved. It owns no state of its own: the database says what
+// should run, the cluster and the hub what does; it only remembers its
+// automatic restarts, so as not to repeat them.
 package workerctl
 
 import (
@@ -32,6 +35,9 @@ type Desired struct {
 	// Image is the image the worker was started (or restarted) with; empty
 	// takes the reconciler's current one.
 	Image string
+	// Placement is where the client runs: storeworkers.PlacementCluster (or
+	// empty) a pod, otherwise the host of an attached agent with slots.
+	Placement string
 	// AutoLogin and WasLoggedIn: log in again after a new pod when the
 	// client was logged in (docs/11 section 15.5).
 	AutoLogin, WasLoggedIn bool
@@ -97,6 +103,9 @@ type Audit interface {
 	Append(ctx context.Context, e storemicrobot.Entry) (storemicrobot.Entry, error)
 }
 
+// errNoCluster: this server runs no pods (WORKERS=off).
+var errNoCluster = errors.New("this server runs no cluster workers (WORKERS=off)")
+
 // ErrNotRunning: the worker is not meant to run (stopped, or none), so there
 // is nothing to restart.
 var ErrNotRunning = errors.New("the worker is not running; start it instead")
@@ -116,9 +125,12 @@ const (
 	autoBackoffMax = time.Hour
 )
 
-// Reconciler keeps the cluster's workers equal to the database's.
+// Reconciler keeps the workers' clients, in the cluster and in the slots of
+// attached agents, equal to the database's.
 type Reconciler struct {
-	Store   Store
+	Store Store
+	// Cluster is nil when this server runs no pods (WORKERS=off): only the
+	// attached placements are managed.
 	Cluster Cluster
 	Hub     Hub
 	// Audit records the automatic restarts; nil records nothing.
@@ -130,6 +142,9 @@ type Reconciler struct {
 	// AgentURL is CHRONICLE_URL of the agent in the pod and ServerURL the
 	// Chronicle Link's; both are the in-cluster Service (WORKER_SERVER_URL).
 	ServerURL string
+	// PublicURL is the ServerURL of an attached bootstrap: the Chronicle Link
+	// of a client outside the cluster reaches the public address (PUBLIC_BASE_URL).
+	PublicURL string
 	// Version is the server's build, written on every Deployment.
 	Version string
 	// Interval between full passes (default 30 s); Kick runs one sooner.
@@ -159,6 +174,8 @@ type Reconciler struct {
 	// settingsAt is when each account's option values were last read: they
 	// cost a request per option, so a pass reads them every settingsEvery.
 	settingsAt map[string]time.Time
+	// booting are the accounts whose attached bootstrap is in flight.
+	booting map[string]bool
 }
 
 // autoRestart is what the reconciler remembers of a worker's automatic
@@ -224,9 +241,10 @@ func (r *Reconciler) Run(ctx context.Context) {
 	}
 }
 
-// Once is one pass: apply the Deployment of every running worker, delete the
-// rest of the worker Deployments (stopped, or of an account the database no
-// longer knows), refresh the pod view, and restart on the current image the
+// Once is one pass: apply the Deployment of every running cluster worker,
+// delete the rest of the worker Deployments (stopped, moved, or of an account
+// the database no longer knows), refresh the pod view, fill and free the
+// slots of the attached placements, and restart on the current image the
 // outdated workers that are paused (restartPaused).
 func (r *Reconciler) Once(ctx context.Context) error {
 	r.init()
@@ -246,11 +264,27 @@ func (r *Reconciler) reconcile(ctx context.Context) ([]Desired, error) {
 	if err != nil {
 		return nil, fmt.Errorf("desired workers: %w", err)
 	}
-	// Before any Deployment changes: a pod about to be replaced is read last.
+	// Before any client goes away: a pod about to be replaced is read last.
 	r.capture(ctx, want, false)
+	var errs []error
+	listed := true
+	if r.Cluster != nil {
+		listed, errs = r.reconcileCluster(ctx, want)
+	}
+	errs = append(errs, r.reconcileAttached(ctx, want)...)
+	if !listed {
+		want = nil
+	}
+	return want, errors.Join(errs...)
+}
+
+// reconcileCluster applies the Deployment of every running worker placed in
+// the cluster and deletes the others; listed is false when the Deployments
+// could not be read.
+func (r *Reconciler) reconcileCluster(ctx context.Context, want []Desired) (listed bool, errs []error) {
 	have, err := r.Cluster.ListDeployments(ctx, kube.WorkerSelector)
 	if err != nil {
-		return nil, fmt.Errorf("list worker deployments: %w", err)
+		return false, []error{fmt.Errorf("list worker deployments: %w", err)}
 	}
 	running := map[string]bool{}
 	deployed := map[string]string{} // name -> image of the worker container
@@ -259,9 +293,8 @@ func (r *Reconciler) reconcile(ctx context.Context) ([]Desired, error) {
 			deployed[d.Metadata.Name] = cs[0].Image
 		}
 	}
-	var errs []error
 	for _, w := range want {
-		if !w.Running {
+		if !w.Running || w.Host() != "" {
 			continue
 		}
 		running[kube.WorkerName(w.Account)] = true
@@ -304,7 +337,7 @@ func (r *Reconciler) reconcile(ctx context.Context) ([]Desired, error) {
 		}
 	}
 	r.refreshPods(ctx)
-	return want, errors.Join(errs...)
+	return true, errs
 }
 
 // refreshPods reads the Deployments again (the pass changed them) and their
@@ -407,6 +440,9 @@ func (r *Reconciler) noteRead(wasDown bool, what string, err error) bool {
 // apply writes the worker Deployment of the current pod template; a new
 // restartedAt rolls a new pod.
 func (r *Reconciler) apply(ctx context.Context, account, image, restartedAt string) error {
+	if r.Cluster == nil {
+		return errNoCluster
+	}
 	d := kube.WorkerDeployment(r.Namespace, kube.WorkerSpec{
 		Account: account, Image: image, ServerURL: r.ServerURL, Version: r.Version, RestartedAt: restartedAt,
 	})
@@ -438,10 +474,20 @@ func (r *Reconciler) Restart(ctx context.Context, account string) error {
 // restart`: the Deployment (Recreate) stops the pod, whose agent logs the
 // account out (docs/11 section 6.5), and makes a new one, which links and gets
 // a fresh bootstrap. The server's Role cannot delete pods (docs/11 section 7).
-// The owner's Reiniciar and the automatic restart at a pause both come here,
-// so they do the same. It returns the image the worker restarts on; a worker
-// that is not meant to run is never started (ErrNotRunning). Under r.pass.
+// A worker placed on an attached agent releases its slot instead (the next
+// pass bootstraps it again). The owner's Reiniciar and the automatic restart
+// at a pause both come here, so they do the same. It returns the image the
+// worker restarts on; a worker that is not meant to run is never started
+// (ErrNotRunning). Under r.pass.
 func (r *Reconciler) restart(ctx context.Context, account string) (string, error) {
+	w, err := r.running(ctx, account)
+	if err != nil {
+		return "", err
+	}
+	if host := w.Host(); host != "" {
+		r.capture(ctx, []Desired{w}, true)
+		return "", r.release(ctx, host, account)
+	}
 	if r.Image != "" {
 		moved, err := r.Store.SetRunningImage(ctx, account, r.Image)
 		if err != nil {
@@ -450,24 +496,32 @@ func (r *Reconciler) restart(ctx context.Context, account string) (string, error
 		if !moved {
 			return "", ErrNotRunning
 		}
+		if w, err = r.running(ctx, account); err != nil {
+			return "", err
+		}
 	}
+	image := cmp.Or(w.Image, r.Image)
+	if image == "" {
+		return "", errors.New("WORKER_IMAGE is not set on the server")
+	}
+	// The pod about to be replaced is read last (docs/11 sections 15.4 and 15.5).
+	r.capture(ctx, []Desired{w}, true)
+	return image, r.apply(ctx, account, image, r.now().UTC().Format(time.RFC3339))
+}
+
+// running is the account's worker when it is meant to run (ErrNotRunning
+// otherwise).
+func (r *Reconciler) running(ctx context.Context, account string) (Desired, error) {
 	want, err := r.Store.Desired(ctx)
 	if err != nil {
-		return "", err
+		return Desired{}, err
 	}
 	for _, w := range want {
-		if w.Account != account || !w.Running {
-			continue
+		if w.Account == account && w.Running {
+			return w, nil
 		}
-		image := cmp.Or(w.Image, r.Image)
-		if image == "" {
-			return "", errors.New("WORKER_IMAGE is not set on the server")
-		}
-		// The pod about to be replaced is read last (docs/11 sections 15.4 and 15.5).
-		r.capture(ctx, []Desired{w}, true)
-		return image, r.apply(ctx, account, image, r.now().UTC().Format(time.RFC3339))
 	}
-	return "", ErrNotRunning
+	return Desired{}, ErrNotRunning
 }
 
 // restartPaused is the automatic restart on a new image (docs/11 section 7.2,
@@ -477,7 +531,8 @@ func (r *Reconciler) restart(ctx context.Context, account string) (string, error
 // VNC, logged out or on a Break Handler break. At most once per worker and
 // image; a failed restart waits autoBackoff, doubling. A worker without a
 // linked managed agent, or whose agent does not answer, waits for a later
-// pass. The attached agent (zaros) has no image and is never restarted.
+// pass. A worker in a slot of an attached agent (zaros) has no image and is
+// never restarted this way.
 func (r *Reconciler) restartPaused(ctx context.Context, want []Desired) {
 	if r.Image == "" || r.Hub == nil {
 		return
@@ -487,7 +542,7 @@ func (r *Reconciler) restartPaused(ctx context.Context, want []Desired) {
 	now := r.now()
 	running := map[string]bool{}
 	for _, w := range want {
-		if !w.Running {
+		if !w.Running || w.Host() != "" {
 			continue
 		}
 		running[w.Account] = true
@@ -691,7 +746,7 @@ func (r *Reconciler) Capacity() (Capacity, bool) {
 // session, a fresh Chronicle Link token, the world and the client profile.
 // The worker's last error becomes what of the profile the client refused
 // (or nothing); a relink with the client up leaves it as it was. Attached
-// agents are left alone.
+// agents are left alone: their slots are filled by the pass (attached.go).
 func (r *Reconciler) OnConnect(info agent.Info) {
 	r.init()
 	if info.Kind != agent.KindManaged || info.Account == "" {
@@ -700,12 +755,17 @@ func (r *Reconciler) OnConnect(info agent.Info) {
 	ctx, cancel := context.WithTimeout(context.Background(), 6*time.Minute)
 	defer cancel()
 	lastError, keep, err := r.bootstrap(ctx, info)
+	r.recordBootstrap(ctx, info.Account, info.ID, lastError, keep, err)
+}
+
+// recordBootstrap keeps the outcome of a bootstrap as the worker's last error.
+func (r *Reconciler) recordBootstrap(ctx context.Context, account, agentID, lastError string, keep bool, err error) {
 	switch {
 	case err != nil:
-		r.Log.Warn("workers: bootstrap", "account", info.Account, "agent", info.ID, "err", err)
-		_ = r.Store.SetError(ctx, info.Account, "bootstrap: "+err.Error())
+		r.Log.Warn("workers: bootstrap", "account", account, "agent", agentID, "err", err)
+		_ = r.Store.SetError(ctx, account, "bootstrap: "+err.Error())
 	case !keep:
-		_ = r.Store.SetError(ctx, info.Account, lastError)
+		_ = r.Store.SetError(ctx, account, lastError)
 	}
 }
 
@@ -722,40 +782,62 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 		r.settle(info.ID, true)
 		return "", true, nil
 	}
-	want, err := r.Store.Desired(ctx)
+	plan, err := r.bootstrapPlan(ctx, info.Account, r.ServerURL)
 	if err != nil {
 		return "", false, err
 	}
-	world, desired := 0, false
-	var relogin bool
+	var res agent.BootstrapResult
+	if err := r.Hub.CallAgent(ctx, info.ID, agent.CmdWorkerBootstrap, plan.params, &res); err != nil {
+		return "", false, err
+	}
+	msg, err := r.bootstrapped(ctx, info, plan, res)
+	return msg, false, err
+}
+
+// bootstrapPlan is what a bootstrap carries and what follows it.
+type bootstrapPlan struct {
+	params  agent.BootstrapParams
+	world   int
+	relogin bool // log in again once the client is up (docs/11 section 15.5)
+}
+
+// bootstrapPlan reads the account's session, profile and world, and mints
+// its Chronicle Link token; serverURL is the address that Link reaches.
+func (r *Reconciler) bootstrapPlan(ctx context.Context, account, serverURL string) (bootstrapPlan, error) {
+	want, err := r.Store.Desired(ctx)
+	if err != nil {
+		return bootstrapPlan{}, err
+	}
+	var p bootstrapPlan
+	desired := false
 	for _, w := range want {
-		if w.Account == info.Account {
-			world, desired = w.World, w.Running
-			relogin = w.AutoLogin && w.WasLoggedIn
+		if w.Account == account {
+			p.world, desired = w.World, w.Running
+			p.relogin = w.AutoLogin && w.WasLoggedIn
 		}
 	}
 	if !desired {
-		return "", false, errors.New("the worker is not meant to run; the reconciler deletes it")
+		return bootstrapPlan{}, errors.New("the worker is not meant to run; the reconciler deletes it")
 	}
-	session, err := r.Store.Session(ctx, info.Account)
+	session, err := r.Store.Session(ctx, account)
 	if err != nil {
-		return "", false, fmt.Errorf("session: %w", err)
+		return bootstrapPlan{}, fmt.Errorf("session: %w", err)
 	}
-	profile, err := r.Store.Profile(ctx, info.Account)
+	profile, err := r.Store.Profile(ctx, account)
 	if err != nil {
-		return "", false, fmt.Errorf("client profile: %w", err)
+		return bootstrapPlan{}, fmt.Errorf("client profile: %w", err)
 	}
 	// The plugins the owner had on (docs/11 section 15.4) start after the
 	// profile's, so an entry of both starts once.
-	if on, rerr := r.Store.RunningPlugins(ctx, info.Account); rerr != nil {
-		r.Log.Warn("workers: running plugins", "account", info.Account, "err", rerr)
+	if on, rerr := r.Store.RunningPlugins(ctx, account); rerr != nil {
+		r.Log.Warn("workers: running plugins", "account", account, "err", rerr)
 	} else {
 		profile = agent.MergeProfiles(profile, agent.ClientProfile{Plugins: on})
 	}
 	// Their option values (docs/11 section 15.6) go over the profile's, but
 	// never past what the agent takes in one profile.
-	if set, rerr := r.Store.RunningSettings(ctx, info.Account); rerr != nil {
-		r.Log.Warn("workers: running settings", "account", info.Account, "err", rerr)
+	if set, rerr := r.Store.RunningSettings(ctx, account); rerr != nil {
+		r.Log.Warn("workers: running settings", "account", account, "err", rerr)
 	} else {
 		merged := agent.MergeProfiles(profile, agent.ClientProfile{Settings: set})
 		for len(merged.Settings) > agent.MaxProfileSettings && len(set) > 0 {
@@ -764,19 +846,21 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 		}
 		profile = merged
 	}
-	token, err := r.Store.MintPluginToken(ctx, info.Account)
+	token, err := r.Store.MintPluginToken(ctx, account)
 	if err != nil {
-		return "", false, fmt.Errorf("plugin token: %w", err)
+		return bootstrapPlan{}, fmt.Errorf("plugin token: %w", err)
 	}
-	params := agent.BootstrapParams{
-		Account: info.Account, Session: session, PluginToken: token, ServerURL: r.ServerURL, World: world, Profile: &profile,
+	p.params = agent.BootstrapParams{
+		Account: account, Session: session, PluginToken: token, ServerURL: serverURL, World: p.world, Profile: &profile,
 	}
-	var res agent.BootstrapResult
-	if err := r.Hub.CallAgent(ctx, info.ID, agent.CmdWorkerBootstrap, params, &res); err != nil {
-		return "", false, err
-	}
+	return p, nil
+}
+
+// bootstrapped handles the answer of a bootstrap for client info and returns
+// the worker's last error after it.
+func (r *Reconciler) bootstrapped(ctx context.Context, info agent.Info, p bootstrapPlan, res agent.BootstrapResult) (string, error) {
 	if !res.Started {
-		return "", false, errors.New("the client did not come up: " + truncate(res.Output, 300))
+		return "", errors.New("the client did not come up: " + truncate(res.Output, 300))
 	}
 	r.Log.Info("workers: bootstrapped", "account", info.Account, "agent", info.ID, "profile_problems", len(res.Problems))
 	// A client that refused part of its profile is not read back: what it
@@ -786,12 +870,12 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 	if len(res.Problems) > 0 {
 		msgs = append(msgs, "profile: "+strings.Join(res.Problems, "; "))
 	}
-	if relogin {
-		if msg := r.login(ctx, info, world); msg != "" {
+	if p.relogin {
+		if msg := r.login(ctx, info, p.world); msg != "" {
 			msgs = append(msgs, msg)
 		}
 	}
-	return head(strings.Join(msgs, "; "), 500), false, nil
+	return head(strings.Join(msgs, "; "), 500), nil
 }
 
 // login logs the worker in again after a new pod (docs/11 section 15.5) and
@@ -800,7 +884,7 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 // waits for the owner.
 func (r *Reconciler) login(ctx context.Context, info agent.Info, world int) string {
 	for _, a := range r.Hub.Agents() {
-		if a.Account == info.Account && a.Kind != agent.KindManaged {
+		if a.Account == info.Account && a.ID != info.ID && a.Kind != agent.KindManaged {
 			return "auto login: the account is active on the attached agent " + a.Host
 		}
 	}
@@ -844,7 +928,7 @@ func (r *Reconciler) capture(ctx context.Context, want []Desired, force bool) {
 	live := map[string]bool{}
 	for _, a := range r.Hub.Agents() {
 		live[a.ID] = true
-		if a.Kind == agent.KindManaged && a.Account != "" {
+		if (a.Kind == agent.KindManaged || a.Slot) && a.Account != "" {
 			agents[a.Account] = a
 		}
 	}

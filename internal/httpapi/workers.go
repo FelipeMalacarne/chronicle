@@ -20,6 +20,7 @@ type WorkerStore interface {
 	DeleteSession(ctx context.Context, account string) error
 	SetBankPin(ctx context.Context, account, pin string) error
 	SetDesired(ctx context.Context, account, state string, world int, image string) error
+	SetPlacement(ctx context.Context, account, placement string) error
 	Get(ctx context.Context, account string) (storeworkers.Worker, error)
 	List(ctx context.Context) ([]storeworkers.Worker, error)
 	ListForUser(ctx context.Context, userID string) ([]storeworkers.Worker, error)
@@ -29,8 +30,9 @@ type WorkerStore interface {
 	SetLoggedIn(ctx context.Context, account string, on bool) error
 }
 
-// WorkerControl is the cluster side (internal/workerctl.Reconciler); nil
-// when WORKERS=off, where sessions can still be stored.
+// WorkerControl is the reconciler (internal/workerctl.Reconciler), which runs
+// the clients in the cluster (WORKERS=on) and in the slots of attached
+// agents; nil without a vault key, where no worker runs.
 type WorkerControl interface {
 	Kick()
 	Pods() map[string]workerctl.PodInfo
@@ -56,6 +58,7 @@ func (s *Server) workerRoutes() {
 	control("POST /api/workers/stop", s.handleWorkerStop)
 	control("POST /api/workers/restart", s.handleWorkerRestart)
 	control("PUT /api/workers/auto-login", s.handleWorkerAutoLogin)
+	control("PUT /api/workers/placement", s.handleWorkerPlacement)
 	control("GET /api/accounts/session", s.handleSessionGet)
 	control("PUT /api/accounts/session", s.handleSessionPut)
 	control("DELETE /api/accounts/session", s.handleSessionDelete)
@@ -70,6 +73,7 @@ type workerView struct {
 	Desired   string                    `json:"desired"`
 	World     int                       `json:"world,omitempty"`
 	Image     string                    `json:"image,omitempty"`
+	Placement string                    `json:"placement"` // "cluster" (a pod) or the host of an attached agent with slots
 	StartedAt *time.Time                `json:"started_at,omitempty"`
 	StoppedAt *time.Time                `json:"stopped_at,omitempty"`
 	LastError string                    `json:"last_error,omitempty"`
@@ -80,7 +84,9 @@ type workerView struct {
 	// Usage is the pod's CPU and memory from the metrics API; absent with
 	// WORKERS=off, without a pod, or without metrics-server.
 	Usage *workerctl.Usage `json:"usage,omitempty"`
-	Agent *agent.Info      `json:"agent"`
+	// Agent serves the worker: its managed agent in the cluster, its client
+	// in a slot of the placement's host otherwise; nil until it links.
+	Agent *agent.Info `json:"agent"`
 	// Outdated: the pod runs another image than the server's WORKER_IMAGE.
 	// The reconciler restarts it on the new one at its next pause (docs/11
 	// section 7.2); Reiniciar does it now and logs the account out.
@@ -88,9 +94,11 @@ type workerView struct {
 }
 
 type workersAnswer struct {
-	// Enabled: the server runs workers (WORKERS=on); off, it only stores
-	// sessions.
+	// Enabled: the server runs workers, in the cluster or in the slots of
+	// attached agents; off, it only stores sessions. Cluster: it runs pods
+	// (WORKERS=on), so "cluster" is a placement it can honor.
 	Enabled bool   `json:"enabled"`
+	Cluster bool   `json:"cluster"`
 	Image   string `json:"image,omitempty"`
 	Version string `json:"version,omitempty"`
 	// Workers are the managed accounts; Attached the other agents the user
@@ -118,7 +126,7 @@ func (s *Server) handleWorkers(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "could not list the workers")
 		return
 	}
-	out := workersAnswer{Enabled: m.Control != nil, Image: m.WorkerImage, Version: s.opts.Version, Workers: []workerView{}, Attached: []agent.Info{}}
+	out := workersAnswer{Enabled: m.Control != nil, Cluster: m.Cluster, Image: m.WorkerImage, Version: s.opts.Version, Workers: []workerView{}, Attached: []agent.Info{}}
 	var (
 		pods  map[string]workerctl.PodInfo
 		usage map[string]workerctl.Usage
@@ -134,7 +142,7 @@ func (s *Server) handleWorkers(w http.ResponseWriter, r *http.Request) {
 	for _, wk := range list {
 		v := workerView{
 			Account: wk.AccountID, RSN: wk.RSN, Session: wk.Session, Desired: wk.DesiredState, World: wk.World,
-			Image: wk.Image, StartedAt: wk.StartedAt, StoppedAt: wk.StoppedAt, LastError: wk.LastError, AutoLogin: wk.AutoLogin,
+			Image: wk.Image, Placement: wk.Placement, StartedAt: wk.StartedAt, StoppedAt: wk.StoppedAt, LastError: wk.LastError, AutoLogin: wk.AutoLogin,
 		}
 		if p, ok := pods[wk.AccountID]; ok {
 			v.Pod = &p
@@ -143,11 +151,8 @@ func (s *Server) handleWorkers(w http.ResponseWriter, r *http.Request) {
 				v.Usage = &u
 			}
 		}
-		for i := range agents {
-			if agents[i].Account == wk.AccountID && agents[i].Kind == agent.KindManaged {
-				a := agents[i]
-				v.Agent = &a
-			}
+		if a, ok := workerctl.ServingAgent(agents, wk.AccountID, wk.Placement); ok {
+			v.Agent = &a
 		}
 		managed[wk.AccountID] = true
 		out.Workers = append(out.Workers, v)
@@ -185,6 +190,36 @@ func (s *Server) handleWorkerAutoLogin(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
 
+type placementBody struct {
+	Placement string `json:"placement"`
+}
+
+// handleWorkerPlacement chooses where the account's client runs: "cluster"
+// or the host of an attached agent with slots. A running worker moves: the
+// reconciler stops its client in the old place and starts it in the new one
+// (it never logs in, docs/11 section 6.2).
+func (s *Server) handleWorkerPlacement(w http.ResponseWriter, r *http.Request) {
+	m := s.opts.Microbot
+	account, ok := s.accountParam(w, r)
+	if !ok {
+		return
+	}
+	var body placementBody
+	if !decodeBody(w, r, &body) {
+		return
+	}
+	err := m.Sessions.SetPlacement(r.Context(), account, body.Placement)
+	s.auditWorker(r, "worker_placement", account, err)
+	if err != nil {
+		s.writeWorkerError(w, err)
+		return
+	}
+	if m.Control != nil {
+		m.Control.Kick()
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
+}
+
 type workerStartBody struct {
 	World int `json:"world,omitempty"`
 }
@@ -207,12 +242,11 @@ func (s *Server) handleWorkerStart(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "world must be between 301 and 999")
 		return
 	}
-	// One account in one place (docs/11 section 6.2).
-	for _, a := range m.Link.Agents() {
-		if a.Account == account && a.Kind != agent.KindManaged {
-			s.workerRefused(w, r, "worker_start", account, "the account is active on the attached agent "+a.Host+"; stop it there first")
-			return
-		}
+	// One account in one place: the one the owner chose (placement).
+	cur, gerr := m.Sessions.Get(r.Context(), account)
+	if gerr == nil && cur.Placement == storeworkers.PlacementCluster && !m.Cluster {
+		s.workerRefused(w, r, "worker_start", account, "this server runs no pods (WORKERS=off): move the account to an attached agent's host")
+		return
 	}
 	busy, err := m.Sessions.OtherClientSince(r.Context(), account, time.Now().Add(-otherClientWindow))
 	if err != nil {
@@ -225,8 +259,8 @@ func (s *Server) handleWorkerStart(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	image := ""
-	if cur, gerr := m.Sessions.Get(r.Context(), account); gerr != nil || cur.DesiredState != storeworkers.StateRunning {
-		image = m.WorkerImage // a fresh start takes the current image
+	if gerr != nil || (cur.DesiredState != storeworkers.StateRunning && cur.Placement == storeworkers.PlacementCluster) {
+		image = m.WorkerImage // a fresh start in a pod takes the current image
 	}
 	err = m.Sessions.SetDesired(r.Context(), account, storeworkers.StateRunning, body.World, image)
 	s.auditWorker(r, "worker_start", account, err)
@@ -393,15 +427,22 @@ func (s *Server) setBankPin(w http.ResponseWriter, r *http.Request, account, pin
 	writeJSON(w, http.StatusOK, info)
 }
 
-// recordWorkerLogin keeps the outcome of a login on a managed worker, which
-// logs in with the account's stored session (docs/11 section 5): LoginOK, or
-// the game's reason when the login did not get in (agent.LoginRefusal). The
-// session's login_failed flag comes from it. Other failures (no agent, a
-// login in progress, the cooldown) say nothing about the session and are not
-// recorded; an attached agent uses the launcher's session, not the stored one.
+// servedByWorker: the agent's client is a worker, which logs in with the
+// account's stored session: a managed agent's, or one in a slot of an
+// attached agent. An attached agent that declares its account uses the
+// launcher's session instead.
+func servedByWorker(a agent.Info) bool {
+	return a.Kind == agent.KindManaged || a.Slot
+}
+
+// recordWorkerLogin keeps the outcome of a login on a worker's client
+// (docs/11 section 5): LoginOK, or the game's reason when the login did not
+// get in (agent.LoginRefusal). The session's login_failed flag comes from it.
+// Other failures (no agent, a login in progress, the cooldown) say nothing
+// about the session and are not recorded.
 func (s *Server) recordWorkerLogin(r *http.Request, served agent.Info, err error) {
 	m := s.opts.Microbot
-	if m.Sessions == nil || served.Kind != agent.KindManaged || served.Account == "" {
+	if m.Sessions == nil || !servedByWorker(served) || served.Account == "" {
 		return
 	}
 	result := storeworkers.LoginOK

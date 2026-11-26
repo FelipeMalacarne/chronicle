@@ -1,4 +1,4 @@
-import type { AgentInfo, WorkerRow, WorkersView, WorkerUsage } from '../api/microbot.ts';
+import type { WorkerRow, WorkersView, WorkerUsage } from '../api/microbot.ts';
 
 /*
  * Automação › Workers (página 7 do canvas, docs/11): uma linha por conta, com onde roda, o estado
@@ -10,7 +10,7 @@ export type WorkerActionKind = 'start' | 'stop' | 'restart';
 export interface WorkerLine {
 	account: string;
 	rsn: string;
-	/** "saradomin · pod <tag>", "zaros · anexado" ou "nenhum". */
+	/** "saradomin · pod <tag>", "zaros · vaga" ou "nenhum". */
 	where: string;
 	/** As duas linhas de "Onde" na tabela: a máquina e, embaixo, como roda lá. */
 	host: string;
@@ -76,11 +76,10 @@ function when(iso?: string, now = Date.now()): string {
 
 export function workerLine(
 	row: WorkerRow,
-	view: Pick<WorkersView, 'enabled'>,
-	attached: AgentInfo[],
+	view: Pick<WorkersView, 'enabled' | 'cluster' | 'attached'>,
 	now = Date.now()
 ): WorkerLine {
-	const here = attached.find((a) => a.account === row.account);
+	const inCluster = row.placement === 'cluster';
 	const line: WorkerLine = {
 		account: row.account,
 		rsn: row.rsn,
@@ -93,7 +92,7 @@ export function workerLine(
 			: 'sem sessão',
 		sessionTone: row.session && !row.session.login_failed ? 'ok' : 'warn',
 		actions: [],
-		cockpit: !!row.agent || !!here,
+		cockpit: !!row.agent,
 		outdated: row.outdated,
 		usage: row.usage
 	};
@@ -111,24 +110,38 @@ export function workerLine(
 	}
 	if (row.session?.last_login_result)
 		line.session += ` · último login: ${row.session.last_login_result}`;
-	if (here) {
-		line.where = `${here.host ?? 'zaros'} · anexado`;
-		line.host = here.host ?? 'zaros';
-		line.runtime = 'anexado';
-	}
 	if (row.desired === 'running') {
-		line.where = `saradomin · pod ${imageTag(row.pod?.image ?? row.image)}`.trim();
-		line.host = 'saradomin';
-		line.runtime = `pod · ${imageTag(row.pod?.image ?? row.image)}`;
+		if (inCluster) {
+			line.where = `saradomin · pod ${imageTag(row.pod?.image ?? row.image)}`.trim();
+			line.host = 'saradomin';
+			line.runtime = `pod · ${imageTag(row.pod?.image ?? row.image)}`;
+		} else {
+			line.where = `${row.placement} · vaga`;
+			line.host = row.placement;
+			line.runtime = 'vaga';
+		}
 		const pod = row.pod ? POD_STATES[row.pod.state] : undefined;
-		if (!row.pod && row.agent) {
+		if (!inCluster) {
+			// O cliente sobe numa vaga do agent daquele host; sem o agent a conta espera por ele.
+			const pool = view.attached.some((a) => a.host === row.placement && (a.slots ?? 0) > 0);
+			if (row.agent) {
+				line.state = 'na tela de login ou no jogo · agent ligado';
+				line.tone = 'ok';
+			} else if (pool) {
+				line.state = 'subindo · abrindo o cliente';
+				line.tone = 'busy';
+			} else {
+				line.state = `esperando o agent do ${row.placement}`;
+				line.tone = 'busy';
+			}
+		} else if (!row.pod && row.agent) {
 			// Fora do cluster (um worker subido à mão contra este servidor) ou antes da primeira
 			// passada do reconciliador: o agent ligado é o que importa.
 			line.state = 'agent ligado';
 			line.tone = 'ok';
 		} else if (!row.pod) {
-			line.state = view.enabled ? 'pedido · esperando o reconciliador' : 'sem pod (WORKERS=off)';
-			line.tone = view.enabled ? 'busy' : 'idle';
+			line.state = view.cluster ? 'pedido · esperando o reconciliador' : 'sem pod (WORKERS=off)';
+			line.tone = view.cluster ? 'busy' : 'idle';
 		} else if (pod) {
 			line.state = pod.label;
 			line.tone = pod.tone;
@@ -142,7 +155,7 @@ export function workerLine(
 			line.tone = row.agent ? 'ok' : 'busy';
 		}
 		if (row.last_error) {
-			// An error after the pod came up is the client's (the bootstrap or a start failed): the
+			// An error after the client came up is its own (the bootstrap or a start failed): the
 			// agent being linked says nothing about the game, so the line must not read as fine.
 			line.detail = row.last_error;
 			if (row.agent) line.state = 'agent ligado · o cliente não subiu';
@@ -150,19 +163,19 @@ export function workerLine(
 		}
 		line.actions = !view.enabled ? [] : row.outdated ? ['restart', 'stop'] : ['stop', 'restart'];
 	} else {
-		if (here) line.state = 'ativa no zaros';
 		line.actions = ['start'];
-		if (!view.enabled) line.blocked = 'workers desligados neste servidor (WORKERS=off)';
+		if (!view.enabled) line.blocked = 'workers desligados neste servidor';
 		else if (!row.session)
 			line.blocked = 'conecte a conta: `chronicle accounts connect --character <nome>`';
-		else if (here) line.blocked = 'a conta está no agent do zaros; pare lá antes';
+		else if (inCluster && !view.cluster)
+			line.blocked = 'o saradomin não roda workers neste servidor';
 	}
 	return line;
 }
 
 export function workerLines(view: WorkersView | null, now = Date.now()): WorkerLine[] {
 	if (!view) return [];
-	return view.workers.map((w) => workerLine(w, view, view.attached, now));
+	return view.workers.map((w) => workerLine(w, view, now));
 }
 
 export const ACTION_LABEL: Record<WorkerActionKind, string> = {
@@ -232,8 +245,8 @@ export function workerFacts(
 				.join(' · '),
 			bad: st?.tone === 'warn'
 		});
-	} else if (line?.runtime === 'anexado') {
-		out.push({ k: 'Onde', v: `${line.host} · anexado` });
+	} else if (line?.runtime === 'vaga') {
+		out.push({ k: 'Onde', v: `${line.host} · vaga` });
 	} else if (line) {
 		out.push({ k: 'Estado', v: line.state, bad: line.tone === 'warn' });
 	}
@@ -266,5 +279,35 @@ export function workerFacts(
 			k: 'Plugin',
 			v: `Chronicle Link${plugin.bridge ? ` ${plugin.bridge}` : ''} · envio ${when(plugin.at, now)}`
 		});
+	return out;
+}
+
+export interface PlacementOption {
+	/** "cluster" ou o host de um agent com vagas. */
+	value: string;
+	label: string;
+	/** Vagas em uso do agent, "1/3 vagas". */
+	sub?: string;
+	disabled?: boolean;
+}
+
+/**
+ * Onde a conta pode rodar: o saradomin (fechado quando o servidor não sobe pods), um item por
+ * agent com vagas ligado e, se o lugar escolhido não está entre eles (o agent caiu), o próprio
+ * lugar, para o seletor não mentir.
+ */
+export function placementOptions(
+	view: Pick<WorkersView, 'cluster' | 'attached'>,
+	row: Pick<WorkerRow, 'placement'>
+): PlacementOption[] {
+	const out: PlacementOption[] = [
+		{ value: 'cluster', label: 'saradomin', disabled: !view.cluster }
+	];
+	for (const a of view.attached) {
+		if ((a.slots ?? 0) > 0 && a.host && !out.some((o) => o.value === a.host))
+			out.push({ value: a.host, label: a.host, sub: `${a.used ?? 0}/${a.slots} vagas` });
+	}
+	if (!out.some((o) => o.value === row.placement))
+		out.push({ value: row.placement, label: row.placement, sub: 'agent desligado' });
 	return out;
 }

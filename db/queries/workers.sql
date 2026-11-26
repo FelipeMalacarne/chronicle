@@ -70,6 +70,14 @@ SET desired_state = EXCLUDED.desired_state,
     was_logged_in = CASE WHEN EXCLUDED.desired_state = 'stopped' THEN false ELSE workers.was_logged_in END,
     updated_at    = now();
 
+-- name: SetWorkerPlacement :exec
+-- Where the account's client runs; a worker row that does not exist yet is
+-- created stopped (the placement is chosen before the first start).
+INSERT INTO workers (account_id, desired_state, placement, stopped_at)
+VALUES (sqlc.arg(account_id), 'stopped', sqlc.arg(placement), now())
+ON CONFLICT (account_id) DO UPDATE
+SET placement = EXCLUDED.placement, updated_at = now();
+
 -- name: SetRunningWorkerImage :execrows
 -- The image of a worker that is meant to run, for a restart on the server's
 -- current one (docs/11 section 7.2); a stopped worker is left as it is, so a
@@ -92,6 +100,7 @@ SELECT a.id AS account_id, a.user_id, a.rsn, a.managed,
        COALESCE(w.desired_state, 'stopped')::text AS desired_state,
        COALESCE(w.world, 0)::integer AS world,
        COALESCE(w.image, '')::text AS image,
+       COALESCE(w.placement, 'cluster')::text AS placement,
        COALESCE(w.plugin_token_id, '')::text AS plugin_token_id,
        COALESCE(w.auto_login, false)::boolean AS auto_login,
        COALESCE(w.was_logged_in, false)::boolean AS was_logged_in,

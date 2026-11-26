@@ -617,3 +617,42 @@ func TestBankPin(t *testing.T) {
 		t.Fatal("pin not cleared")
 	}
 }
+
+func TestPlacement(t *testing.T) {
+	ctx := context.Background()
+	_, repo := setup(ctx, t)
+	if err := repo.SetPlacement(ctx, "acc_missing", "zaros"); !errors.Is(err, ErrNotFound) {
+		t.Fatalf("placement on a missing account = %v", err)
+	}
+	for _, bad := range []string{"", "-zaros", "za ros", "zaros/x", strings.Repeat("a", 64)} {
+		if err := repo.SetPlacement(ctx, "acc_a", bad); !errors.Is(err, ErrInvalid) {
+			t.Fatalf("placement %q = %v, want ErrInvalid", bad, err)
+		}
+	}
+	if err := repo.PutSession(ctx, "acc_a", "u1", session); err != nil {
+		t.Fatal(err)
+	}
+	if w, _ := repo.Get(ctx, "acc_a"); w.Placement != PlacementCluster {
+		t.Fatalf("default placement = %q", w.Placement)
+	}
+	// Chosen before the first start: the row is created stopped.
+	if err := repo.SetPlacement(ctx, "acc_a", "zaros"); err != nil {
+		t.Fatal(err)
+	}
+	if w, _ := repo.Get(ctx, "acc_a"); w.Placement != "zaros" || w.DesiredState != StateStopped {
+		t.Fatalf("after choosing: %+v", w)
+	}
+	// A start and a move while running keep the choice and the state.
+	if err := repo.SetDesired(ctx, "acc_a", StateRunning, 0, "img"); err != nil {
+		t.Fatal(err)
+	}
+	if w, _ := repo.Get(ctx, "acc_a"); w.Placement != "zaros" || w.DesiredState != StateRunning {
+		t.Fatalf("after start: %+v", w)
+	}
+	if err := repo.SetPlacement(ctx, "acc_a", PlacementCluster); err != nil {
+		t.Fatal(err)
+	}
+	if w, _ := repo.Get(ctx, "acc_a"); w.Placement != PlacementCluster || w.DesiredState != StateRunning {
+		t.Fatalf("after moving: %+v", w)
+	}
+}

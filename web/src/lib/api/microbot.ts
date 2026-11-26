@@ -19,7 +19,7 @@ export interface AgentInfo {
 	id?: string;
 	/** Conta que o agent declara; vazia no agent sem conta. */
 	account?: string;
-	/** attached: o do zaros; managed: um pod do saradomin. */
+	/** attached: o do zaros (ou um cliente numa vaga dele); managed: um pod do saradomin. */
 	kind?: 'attached' | 'managed';
 	/** Nome do pod, nos gerenciados. */
 	worker?: string;
@@ -27,6 +27,11 @@ export interface AgentInfo {
 	since?: string;
 	host?: string;
 	version?: string;
+	/** No agent com vagas (ele mesmo, sem conta): quantas contas cabem e quantas rodam agora. */
+	slots?: number;
+	used?: number;
+	/** Um cliente numa vaga de um agent com vagas; `host` é o do agent. */
+	slot?: boolean;
 	/** Quem o servidor autenticou: "dev" (loopback) ou o subject do machine user do Zitadel. */
 	identity?: string;
 }
@@ -759,6 +764,8 @@ export interface WorkerRow {
 	desired: 'running' | 'stopped';
 	world?: number;
 	image?: string;
+	/** Onde o cliente roda: "cluster" (um pod no saradomin) ou o host de um agent com vagas. */
+	placement: string;
 	started_at?: string;
 	stopped_at?: string;
 	last_error?: string;
@@ -773,8 +780,10 @@ export interface WorkerRow {
 }
 
 export interface WorkersView {
-	/** WORKERS=on: o servidor sobe pods; desligado, só guarda as sessões. */
+	/** O servidor roda workers (nos pods e/ou nas vagas dos agents anexados); desligado, só guarda as sessões. */
 	enabled: boolean;
+	/** WORKERS=on: o servidor sobe pods, então "cluster" é um lugar que ele cumpre. */
+	cluster: boolean;
 	image?: string;
 	version?: string;
 	workers: WorkerRow[];
@@ -792,6 +801,14 @@ export const workersApi = {
 		call<{ ok: boolean }>(
 			`/workers/${action}?account=${encodeURIComponent(account)}`,
 			{ method: 'POST', body: JSON.stringify(world ? { world } : {}) },
+			'/api',
+			''
+		),
+	/** Escolhe onde a conta roda: "cluster" ou o host de um agent com vagas; um worker rodando se muda. */
+	placement: (account: string, placement: string) =>
+		call<{ ok: boolean }>(
+			`/workers/placement?account=${encodeURIComponent(account)}`,
+			{ method: 'PUT', body: JSON.stringify({ placement }) },
 			'/api',
 			''
 		),

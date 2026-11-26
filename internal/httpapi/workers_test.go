@@ -101,7 +101,7 @@ func (m *memWorkers) SetDesired(_ context.Context, account, state string, world 
 	if _, ok := m.sessions[account]; !ok && state == storeworkers.StateRunning {
 		return storeworkers.ErrNoSession
 	}
-	w := m.workers[account]
+	w := m.worker(account)
 	w.AccountID, w.DesiredState, w.World = account, state, world
 	if image != "" {
 		w.Image = image
@@ -110,14 +110,36 @@ func (m *memWorkers) SetDesired(_ context.Context, account, state string, world 
 	return nil
 }
 
+// worker is the account's worker row, or the default of a new one (placed in
+// the cluster). Under m.mu.
+func (m *memWorkers) worker(account string) storeworkers.Worker {
+	if w, ok := m.workers[account]; ok {
+		return w
+	}
+	return storeworkers.Worker{AccountID: account, DesiredState: storeworkers.StateStopped, Placement: storeworkers.PlacementCluster}
+}
+
+func (m *memWorkers) SetPlacement(_ context.Context, account, placement string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if !storeworkers.ValidPlacement(placement) {
+		return storeworkers.ErrInvalid
+	}
+	w := m.worker(account)
+	w.Placement = placement
+	m.workers[account] = w
+	return nil
+}
+
 func (m *memWorkers) Get(_ context.Context, account string) (storeworkers.Worker, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	w, ok := m.workers[account]
-	if !ok {
-		return storeworkers.Worker{}, storeworkers.ErrNotFound
+	if _, ok := m.sessions[account]; !ok {
+		if _, ok = m.workers[account]; !ok {
+			return storeworkers.Worker{}, storeworkers.ErrNotFound
+		}
 	}
-	return w, nil
+	return m.worker(account), nil
 }
 
 func (m *memWorkers) List(context.Context) ([]storeworkers.Worker, error) {
@@ -199,15 +221,18 @@ func (c *memControl) Restart(_ context.Context, account string) error {
 	return nil
 }
 
-func workersServer(t *testing.T, control WorkerControl) (*httptest.Server, *memWorkers, *memAudit, *agent.Link) {
+// workersServer serves the workers routes; with a control it runs pods too
+// (Cluster), which opts may change.
+func workersServer(t *testing.T, control WorkerControl, opts ...func(*MicrobotOptions)) (*httptest.Server, *memWorkers, *memAudit, *agent.Link) {
 	t.Helper()
 	store, audit := newMemWorkers(), &memAudit{}
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
 	link := &agent.Link{Log: quiet}
-	srv := httptest.NewServer(New(Options{
-		Version: "test", DevMode: true, Logger: quiet,
-		Microbot: &MicrobotOptions{Link: link, Audit: audit, Sessions: store, Control: control, WorkerImage: "ghcr.io/felipemalacarne/chronicle-worker:new"},
-	}))
+	mo := &MicrobotOptions{Link: link, Audit: audit, Sessions: store, Control: control, Cluster: control != nil, WorkerImage: "ghcr.io/felipemalacarne/chronicle-worker:new"}
+	for _, o := range opts {
+		o(mo)
+	}
+	srv := httptest.NewServer(New(Options{Version: "test", DevMode: true, Logger: quiet, Microbot: mo}))
 	t.Cleanup(srv.Close)
 	return srv, store, audit, link
 }
@@ -356,15 +381,66 @@ func TestWorkerLifecycleRoutes(t *testing.T) {
 		t.Fatalf("refused restart audit = %+v", e)
 	}
 
-	// The account is active on the attached agent (zaros): start refused.
+	// An attached agent that declares the account does not decide where it
+	// runs: the placement does, so the start is not refused.
 	startAgent(t, srv.URL, "", agent.Hello{Host: "zaros", Account: "acc_a"}, "z")
 	waitLinked(t, link, 1)
-	if status, got, _ := call(t, "POST", srv.URL+"/api/workers/start?account=acc_a", ""); status != http.StatusConflict || !strings.Contains(got["error"].(string), "attached agent") {
-		t.Fatalf("start while attached = %d %v", status, got)
+	if status, got, _ := call(t, "POST", srv.URL+"/api/workers/start?account=acc_a", ""); status != http.StatusOK {
+		t.Fatalf("start with an attached agent linked = %d %v", status, got)
 	}
 	_, body, _ = call(t, "GET", srv.URL+"/api/workers", "")
 	if att := body["attached"].([]any); len(att) != 1 || att[0].(map[string]any)["host"] != "zaros" {
 		t.Fatalf("attached = %v", body["attached"])
+	}
+}
+
+func TestWorkerPlacementRoute(t *testing.T) {
+	control := &memControl{}
+	srv, store, audit, _ := workersServer(t, control)
+	call(t, "PUT", srv.URL+"/api/accounts/session?account=acc_a", sessionBody)
+	for _, bad := range []string{`{"placement":""}`, `{"placement":"-zaros"}`, `{"placement":"a b"}`} {
+		if status, _, _ := call(t, "PUT", srv.URL+"/api/workers/placement?account=acc_a", bad); status != http.StatusBadRequest {
+			t.Fatalf("placement %s = %d", bad, status)
+		}
+	}
+	if status, _, raw := call(t, "PUT", srv.URL+"/api/workers/placement?account=acc_a", `{"placement":"zaros"}`); status != http.StatusOK {
+		t.Fatalf("placement = %d %s", status, raw)
+	}
+	if got := store.workers["acc_a"].Placement; got != "zaros" || control.kicks != 1 {
+		t.Fatalf("placement %q, kicks %d", got, control.kicks)
+	}
+	if e := audit.last(); e.Action != "worker_placement" || !e.OK || e.AccountID != "acc_a" {
+		t.Fatalf("audit = %+v", e)
+	}
+	_, body, raw := call(t, "GET", srv.URL+"/api/workers", "")
+	ws := body["workers"].([]any)
+	if len(ws) != 1 || ws[0].(map[string]any)["placement"] != "zaros" || body["cluster"] != true {
+		t.Fatalf("list = %s", raw)
+	}
+}
+
+// With WORKERS=off the server still runs the slots of attached agents: an
+// account placed on one starts, one placed in the cluster does not.
+func TestWorkerStartWithoutCluster(t *testing.T) {
+	control := &memControl{}
+	srv, store, audit, _ := workersServer(t, control, func(m *MicrobotOptions) { m.Cluster = false })
+	call(t, "PUT", srv.URL+"/api/accounts/session?account=acc_a", sessionBody)
+	if status, got, _ := call(t, "POST", srv.URL+"/api/workers/start?account=acc_a", ""); status != http.StatusConflict || !strings.Contains(got["error"].(string), "WORKERS=off") {
+		t.Fatalf("start in the cluster without one = %d %v", status, got)
+	}
+	if e := audit.last(); e.Action != "worker_start" || e.OK {
+		t.Fatalf("refusal not audited: %+v", e)
+	}
+	call(t, "PUT", srv.URL+"/api/workers/placement?account=acc_a", `{"placement":"zaros"}`)
+	if status, _, raw := call(t, "POST", srv.URL+"/api/workers/start?account=acc_a", ""); status != http.StatusOK {
+		t.Fatalf("start on an attached host = %d %s", status, raw)
+	}
+	if w := store.workers["acc_a"]; w.DesiredState != storeworkers.StateRunning || w.Image != "" {
+		t.Fatalf("after start: %+v", w)
+	}
+	_, body, _ := call(t, "GET", srv.URL+"/api/workers", "")
+	if body["enabled"] != true || body["cluster"] != false {
+		t.Fatalf("list = %v", body)
 	}
 }
 

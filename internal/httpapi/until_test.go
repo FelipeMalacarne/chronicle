@@ -308,8 +308,11 @@ func TestRunUntilPostgres(t *testing.T) {
 		}
 		time.Sleep(10 * time.Millisecond)
 	}
-	// The run's job (adopted from its wait_until) went queued, running, succeeded.
+	// The run's job (adopted from its wait_until) went queued, running,
+	// succeeded. run.ended comes with the agent's report of the run's end,
+	// which may reach the server after the proof: it is waited for too.
 	var detail jobDetail
+	var types []string
 	for deadline = time.Now().Add(5 * time.Second); ; time.Sleep(10 * time.Millisecond) {
 		_, _, raw := call(t, "GET", srv.URL+"/api/jobs?account=acc_until", "")
 		var list struct {
@@ -320,21 +323,24 @@ func TestRunUntilPostgres(t *testing.T) {
 		}
 		if len(list.Jobs) == 1 && list.Jobs[0].State == job.Succeeded {
 			_, _, raw = call(t, "GET", srv.URL+"/api/jobs/"+list.Jobs[0].ID+"?account=acc_until", "")
+			detail = jobDetail{}
 			if err := json.Unmarshal(raw, &detail); err != nil {
 				t.Fatal(err)
 			}
-			break
+			types = types[:0]
+			for _, e := range detail.Events {
+				types = append(types, e.Type)
+			}
+			if slices.Contains(types, "run.ended") {
+				break
+			}
 		}
 		if time.Now().After(deadline) {
-			t.Fatalf("the adopted job never succeeded: %s", raw)
+			t.Fatalf("the adopted job never succeeded with its run ended: %s (events %v)", raw, types)
 		}
 	}
 	if detail.Job.Source != job.SourceOwner || detail.Job.Kind != job.KindPlugin || len(detail.Runs) != 1 {
 		t.Fatalf("job = %+v, runs %d", detail.Job, len(detail.Runs))
-	}
-	var types []string
-	for _, e := range detail.Events {
-		types = append(types, e.Type)
 	}
 	for _, want := range []string{"job.queued", "run.started", "job.started", "job.succeeded", "run.ended"} {
 		if !slices.Contains(types, want) {

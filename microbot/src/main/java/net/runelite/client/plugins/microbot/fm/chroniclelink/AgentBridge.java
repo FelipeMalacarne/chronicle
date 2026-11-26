@@ -168,6 +168,23 @@ final class AgentBridge
 					sendJson(ex, 200, version());
 				}
 			},
+			new Handler(gson, "/bridge/client/messages")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					sendJson(ex, 200, Collections.singletonMap("messages", ClientMessages.open()));
+				}
+			},
+			new Handler(gson, "/bridge/client/messages/close")
+			{
+				@Override
+				protected void serve(HttpExchange ex) throws IOException
+				{
+					post(ex);
+					sendJson(ex, 200, Collections.singletonMap("closed", ClientMessages.close()));
+				}
+			},
 			new Handler(gson, "/bridge/break")
 			{
 				@Override

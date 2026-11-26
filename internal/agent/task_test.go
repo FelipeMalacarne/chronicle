@@ -41,9 +41,11 @@ type taskBridge struct {
 	events   []map[string]any
 	script   []taskStep
 	canceled []string
-	refuse   error // the start's answer
-	lost     bool  // answer another task's id
-	down     bool  // stop answering /bridge/task
+	refuse   error    // the start's answer
+	lost     bool     // answer another task's id
+	down     bool     // stop answering /bridge/task
+	messages []string // the client's message windows (FEL-134)
+	closes   int      // the closes asked
 }
 
 type taskStep struct {
@@ -88,6 +90,14 @@ func (b *taskBridge) JSON(_ context.Context, method, path string, _ url.Values, 
 			id = "0000000000000000"
 		}
 		out, _ := json.Marshal(map[string]any{"id": id, "type": "travel", "state": b.state, "reason": b.reason, "events": b.events})
+		return out, nil
+	case "GET /bridge/client/messages":
+		out, _ := json.Marshal(map[string]any{"messages": b.messages})
+		return out, nil
+	case "POST /bridge/client/messages/close":
+		out, _ := json.Marshal(map[string]any{"closed": b.messages})
+		b.messages = nil
+		b.closes++
 		return out, nil
 	case "POST /bridge/task/cancel":
 		m, _ := body.(map[string]any)

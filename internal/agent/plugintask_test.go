@@ -169,6 +169,35 @@ func TestPluginTaskIsAnAgentFeature(t *testing.T) {
 	}
 }
 
+// Microbot's message window, with every script paused, ends the run with its
+// text instead of the timeout: the agent closes it and stops the plugin
+// (FEL-134).
+func TestPluginTaskEndsOnAClientMessage(t *testing.T) {
+	e, g := newTutorialExecutor()
+	b := e.Bridge.(*taskBridge)
+	startTask(t, e, tutorialParams(nil))
+	waitTrail(t, e, "iniciado")
+	b.mu.Lock()
+	b.messages = []string{"Your bot tried to interact with an NPC for 3 times but failed."}
+	b.mu.Unlock()
+	r := waitRun(t, e)
+	if r.State != RunFailed || !strings.Contains(r.Error, "tried to interact with an NPC") {
+		t.Fatalf("run = %+v", r)
+	}
+	b.mu.Lock()
+	closes := b.closes
+	b.mu.Unlock()
+	g.mu.Lock()
+	on := g.active[tutorial]
+	g.mu.Unlock()
+	if closes != 1 || on {
+		t.Fatalf("closes %d, plugin on %v", closes, on)
+	}
+	if !slices.ContainsFunc(r.Events, func(ev RunEvent) bool { return strings.Contains(ev.Text, "(janela fechada)") }) {
+		t.Fatalf("trail = %+v", r.Events)
+	}
+}
+
 // dialogueGame is a runGame with a dialogue open at the start: lines to click
 // through, or options to choose when options is set.
 type dialogueGame struct {

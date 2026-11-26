@@ -51,11 +51,12 @@ type Input struct {
 	// Prices are the stored market prices Resolve prices a Grand Exchange
 	// task by, by item id: the caller loads the task's item.
 	Prices map[int]ge.Price
-	// SalesProven are the task keys of this plan whose ge_sell a run
-	// proved, with that run's uid (the server recorded the ingest's proof,
-	// rules.SaleProven): the sale stays met while the inventory does not
-	// hold the item again.
-	SalesProven map[string]string
+	// TasksProven are the task keys of this plan whose last job succeeded,
+	// with that job: the tracker proved the task on the ingest's live facts.
+	// A proven task stays met when its facts move on (a travel's position,
+	// FEL-136), except a ge_sell, which stays met while the inventory does
+	// not hold the item again.
+	TasksProven map[string]string
 	Now         time.Time
 }
 
@@ -362,9 +363,12 @@ func (in Input) view(t content.Task, item string, index int, sc scope) TaskView 
 	if u, ok := t.Ends(); ok {
 		v.Until = panel.UntilLabel(t, u, in.Registry)
 		if u.State == content.UntilSold {
-			v.State, v.Reason = panel.SoldUntil(t, in.Holdings, in.Registry, in.SalesProven[v.Key] != "")
+			v.State, v.Reason = panel.SoldUntil(t, in.Holdings, in.Registry, in.TasksProven[v.Key] != "")
 		} else {
 			v.State, v.Reason = panel.EvaluateUntil(t, u, sc.state, sc.segment, sc.guide, in.Holdings, in.Facts, in.Registry, now)
+			if job := in.TasksProven[v.Key]; job != "" && v.State != rules.Met {
+				v.State, v.Reason = rules.Met, "provada pelo job "+job
+			}
 		}
 	} else {
 		v.State, v.Reason = rules.Unknown, "a tarefa não diz quando termina"

@@ -671,7 +671,7 @@ func TestMembershipLowPostgres(t *testing.T) {
 
 // A sale is proven by its job: the newest job of a task that was not
 // canceled, when it succeeded.
-func TestProvenSalesPostgres(t *testing.T) {
+func TestProvenTasksPostgres(t *testing.T) {
 	w := setup(t)
 	ctx := context.Background()
 	sale := func() job.Job {
@@ -691,7 +691,7 @@ func TestProvenSalesPostgres(t *testing.T) {
 		return created
 	}
 	proven := func() map[string]string {
-		m, err := w.jobs.ProvenSales(ctx, account, "pln_abcdefgh")
+		m, err := w.jobs.ProvenTasks(ctx, account, "pln_abcdefgh")
 		if err != nil {
 			t.Fatal(err)
 		}

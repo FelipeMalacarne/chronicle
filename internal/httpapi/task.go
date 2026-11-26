@@ -31,8 +31,8 @@ import (
 // ge_sell (a regular account only, docs/12 section 6) is priced from the
 // stored wiki price of its item. Each run attempts a job (docs/12 section 13):
 // the server creates it with the goal that proves the task, and the job
-// tracker ends it on the ingest; a sale is proven by its job, which the plan
-// reads (plan.Input.SalesProven).
+// tracker ends it on the ingest; a task proven by its job stays done, which
+// the plan reads (plan.Input.TasksProven).
 
 // PriceStore reads stored Grand Exchange prices (internal/store/prices).
 type PriceStore interface {

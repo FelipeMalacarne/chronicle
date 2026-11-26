@@ -220,13 +220,13 @@ func (r *Repository) NextDeadline(ctx context.Context) (time.Time, bool, error) 
 	return at.Time, at.Valid, nil
 }
 
-// ProvenSales returns the task keys of a plan whose Grand Exchange sale was
-// proven, with the job that proved it (plan.Input.SalesProven): the newest
-// job of each task that was not canceled, when it succeeded.
-func (r *Repository) ProvenSales(ctx context.Context, account, planID string) (map[string]string, error) {
+// ProvenTasks returns the task keys of a plan whose job proved them, with
+// that job (plan.Input.TasksProven): the newest job of each task that was not
+// canceled, when it succeeded.
+func (r *Repository) ProvenTasks(ctx context.Context, account, planID string) (map[string]string, error) {
 	rows, err := r.queries.LatestPlanJobs(ctx, storedb.LatestPlanJobsParams{AccountID: account, PlanID: text(planID)})
 	if err != nil {
-		return nil, fmt.Errorf("read sale jobs: %w", err)
+		return nil, fmt.Errorf("read the plan's jobs: %w", err)
 	}
 	out := map[string]string{}
 	for _, row := range rows {

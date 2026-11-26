@@ -461,3 +461,33 @@ func TestShopKeepers(t *testing.T) {
 		t.Error("no shop, no keepers")
 	}
 }
+
+// A task its job proved stays done when its facts move on (FEL-136): a plan
+// that goes to Draynor and back ends, where by the position alone it would go
+// back and forth for good.
+func TestProvenTaskStaysDone(t *testing.T) {
+	c, reg := load(t)
+	plan := Plan{ID: "pln_test0001", Kind: KindCustom, Title: "Ida e volta", Items: []Item{
+		{Kind: ItemTask, Task: &content.Task{Type: content.TaskTravel, Location: ref("location:draynor_village")}},
+		{Kind: ItemTask, Task: &content.Task{Type: content.TaskTravel, Location: ref("location:lumbridge_castle")}},
+	}}
+	next := func(pos *panel.Position, proven map[string]string) Result {
+		ps := rules.PlayerState{Catalog: reg}
+		return Next(Input{
+			Plan: plan, Content: c, Registry: reg,
+			Facts: panel.Facts{Mode: content.ModeRegular, State: &ps, Position: pos}, TasksProven: proven, Now: now,
+		})
+	}
+	castle, draynor := at(3215, 3219), at(3103, 3265)
+
+	if got := next(castle, nil); got.Task == nil || got.Task.Key != "task:0#0" {
+		t.Fatalf("back at the castle without a proof, Draynor again: %+v", got)
+	}
+	if got := next(draynor, map[string]string{"task:0#0": "job_00000000000000a1"}); got.Task == nil || got.Task.Key != "task:1#0" {
+		t.Fatalf("at Draynor = %+v", got)
+	}
+	got := next(castle, map[string]string{"task:0#0": "job_00000000000000a1", "task:1#0": "job_00000000000000a2"})
+	if got.Status != StatusDone || len(got.Skipped) != 2 || got.Skipped[0].State != rules.Met || !strings.Contains(got.Skipped[0].Reason, "job_00000000000000a1") {
+		t.Fatalf("back at the castle with both proven = %+v", got)
+	}
+}

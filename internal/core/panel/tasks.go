@@ -160,7 +160,7 @@ func EvaluateUntil(t content.Task, u content.TaskUntil, s progress.StepState, se
 		return rules.Unmet, ""
 	case content.UntilSold:
 		// No run proved a sale here: a plan passes its runs' proofs
-		// (plan.Input.SalesProven).
+		// (plan.Input.TasksProven).
 		return SoldUntil(t, h, reg, false)
 	}
 	return rules.Unknown, "término desconhecido"

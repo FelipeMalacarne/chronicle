@@ -99,7 +99,7 @@ func TestResolveGE(t *testing.T) {
 		{"nothing to sell", input(sell, content.ModeRegular, inv(map[int]int64{coins: 5}), glassPrice()), "nada a vender"},
 		{"sold already", func() Input {
 			in := input(sell, content.ModeRegular, inv(map[int]int64{coins: 5}), glassPrice())
-			in.SalesProven = map[string]string{"task:0#0": "0123abcd"}
+			in.TasksProven = map[string]string{"task:0#0": "0123abcd"}
 			return in
 		}(), "já está cumprida"},
 		{"two forms", input(sell, content.ModeRegular, inv(map[int]int64{glass: 5, glassNoted: 100}), glassPrice()), "noted e unnoted"},
@@ -159,7 +159,7 @@ func TestNextGESale(t *testing.T) {
 			ps := rules.PlayerState{Items: tc.h, Catalog: reg}
 			got := Next(Input{
 				Plan:    Plan{ID: "pln_test0001", Kind: KindCustom, Items: []Item{{Kind: ItemTask, Task: &sell}}},
-				Content: c, Registry: reg, Holdings: tc.h, Now: now, SalesProven: tc.proven,
+				Content: c, Registry: reg, Holdings: tc.h, Now: now, TasksProven: tc.proven,
 				Facts: panel.Facts{Mode: content.ModeRegular, State: &ps},
 			})
 			if got.Status != tc.status || len(got.Skipped) != tc.skipped {

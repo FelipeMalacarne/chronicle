@@ -171,7 +171,7 @@ func TestSaleProofsMigratedBy0031StayProvenPostgres(t *testing.T) {
 	if list, err := jobs.List(ctx, account, "", 50); err != nil || len(list) != 0 {
 		t.Fatalf("list = %+v, %v: the unreadable job is skipped", list, err)
 	}
-	if m, err := jobs.ProvenSales(ctx, account, "pln_abcdefgh"); err != nil || m["task:0#0"] == "" {
+	if m, err := jobs.ProvenTasks(ctx, account, "pln_abcdefgh"); err != nil || m["task:0#0"] == "" {
 		t.Fatalf("proven = %v, %v", m, err)
 	}
 }
@@ -229,7 +229,7 @@ func TestSaleOfAFailedRunIsNotProvenLaterPostgres(t *testing.T) {
 		if got := w.get(j.ID); got.State != job.Failed {
 			t.Fatalf("%s: later = %+v", state, got)
 		}
-		if m, _ := w.jobs.ProvenSales(context.Background(), account, "pln_abcdefgh"); len(m) != 0 {
+		if m, _ := w.jobs.ProvenTasks(context.Background(), account, "pln_abcdefgh"); len(m) != 0 {
 			t.Fatalf("%s: proven = %v", state, m)
 		}
 	}

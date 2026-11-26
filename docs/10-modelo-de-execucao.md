@@ -339,7 +339,11 @@ atribuição de cada passo aparece na tela.
   tarefa avulsa com o término `met`). As tarefas de um passo são as do `Content.StepTasks` (as receitas do
   que ele conclui, pelo modo da conta, e as dele). Cada término é avaliado como no modo assistido; a
   primeira tarefa que não está `met` é a próxima, e as `met` antes dela vêm em `skipped` (regra 2:
-  idempotência). `unknown` nunca é pulado. O plano só insere o que sabe verificar (regra 3): para um
+  idempotência). `unknown` nunca é pulado. Uma tarefa cujo último job do plano (mesmo `task_key`)
+  terminou `succeeded` também conta como `met` ("provada pelo job …"), mesmo que os fatos tenham
+  mudado depois. Sem isso, um plano com dois `travel` andaria em círculo, porque só um destino está
+  cumprido de cada vez. A venda no GE mantém a regra dela (doc 12, seção 13.8). Decisão do dono de
+  2026-11-25, FEL-136. O plano só insere o que sabe verificar (regra 3): para um
   requisito do passo provado `unmet` (`blocked_by`), as tarefas da receita dele, marcadas com `for`; sem
   receita, o item fica com o dono (`manual`). Estados: `task`, `waiting` (tarefas cumpridas, o passo
   ainda não concluiu), `manual` (sem tarefa tipada) e `done`.

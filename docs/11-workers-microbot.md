@@ -1323,9 +1323,13 @@ fixa `MICROBOT_AGENT_CLIENTS` da fase 5 do doc 10 (2026-11-13), que saiu do cód
 - **Reconciliador.**
   - Roda sempre que o servidor tem `CHRONICLE_VAULT_KEY`, também com `WORKERS=off`. Sem
     `WORKERS=on`, ele cuida só das contas postas num host.
-  - Numa passada, ele primeiro libera as vagas das contas que não devem rodar ali e depois preenche.
-    Uma vaga liberada recebe outra conta na mesma passada.
+  - Ele libera as vagas das contas que não devem rodar ali e preenche as que faltam, as duas coisas
+    em segundo plano: um logout e um `mb-client stop` levam até 85 s e não seguram a passada.
+  - Uma vaga em liberação ainda conta como ocupada. A liberação pede uma passada quando termina, e
+    essa passada dá a vaga a outra conta.
   - Ele nunca libera uma vaga cujo bootstrap ainda corre; uma passada seguinte a libera.
+  - O Reiniciar de uma conta numa vaga libera a vaga em segundo plano, e a passada seguinte faz o
+    bootstrap de novo.
   - Um bootstrap numa vaga que falhou espera 1 min antes da próxima tentativa, e a espera dobra até
     30 min. Parar ou mudar de lugar zera a espera.
   - Com o agent cheio, ele grava em `last_error` "no free slot on <host> (n of m in use)".
@@ -1351,11 +1355,17 @@ fixa `MICROBOT_AGENT_CLIENTS` da fase 5 do doc 10 (2026-11-13), que saiu do cód
   - `worker_release` (ao próprio agent) faz logout, para o cliente e libera a vaga. Repetido, não faz
     nada.
   - Um bootstrap e uma liberação da mesma vaga correm um depois do outro, nunca juntos.
-  - Um agent reiniciado com os clientes ainda rodando os adota nas mesmas vagas, sem novo
-    `mb-client start`.
+  - Um agent reiniciado com os clientes ainda rodando os adota ao subir, cada um na vaga do próprio
+    display, e os declara já no primeiro hello. O servidor não manda bootstrap para eles: um
+    bootstrap geraria um token `ipl_` novo, que revoga o que o Chronicle Link deles usa. Uma conta
+    parada enquanto o agent estava fora é liberada na passada seguinte.
+  - O frame `clients` sai sempre pelo link de pé. Uma vaga que muda depois de uma reconexão é
+    contada ao servidor novo, nunca à conexão morta.
   - O SIGTERM do agent deixa os clientes das vagas rodando.
   - `MICROBOT_AGENT_ACCOUNT` (um cliente fixo, o `just agent` do harness) continua e não combina com
     `MICROBOT_AGENT_SLOTS`.
+  - Um agent com `MICROBOT_AGENT_CLIENTS` não sobe: a variável saiu, e sem ela o agent atenderia
+    qualquer conta como um cliente sem conta declarada.
 - **Link no servidor.**
   - O cabeçalho passa a `Chronicle-Link-Features: clients,slots`. Um agent com vagas liga sem
     nenhum cliente a um servidor que não anuncia `slots`.

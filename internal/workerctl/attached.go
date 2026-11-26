@@ -32,9 +32,11 @@ func ServingAgent(agents []agent.Info, account, placement string) (agent.Info, b
 }
 
 // reconcileAttached frees the slots that no running worker is placed on and
-// fills the slot of every running worker placed on an attached agent. An
+// fills the slot of every running worker placed on an attached agent, both in
+// the background: a release logs out and stops a client, a bootstrap starts
+// one, and either takes long enough to hold up the pass. An
 // account whose agent is not linked waits for it: nothing is an error.
-func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []error {
+func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) {
 	agents := r.Hub.Agents()
 	r.mu.Lock()
 	for account := range r.retry {
@@ -43,7 +45,6 @@ func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []er
 		}
 	}
 	r.mu.Unlock()
-	var errs []error
 	for _, c := range agents {
 		if !c.Slot {
 			continue
@@ -56,16 +57,12 @@ func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []er
 		r.mu.Lock()
 		booting := r.booting[c.Account]
 		r.mu.Unlock()
-		if booting {
-			continue
-		}
-		if err := r.release(ctx, c.Host, c.Account); err != nil {
-			errs = append(errs, err)
+		if !booting {
+			r.startRelease(ctx, c.Host, c.Account)
 		}
 	}
-	// The slots just freed are filled in this same pass: the agent says
-	// which clients it has before it answers a release.
-	agents = r.Hub.Agents()
+	// A slot being released still counts as used: the release asks for a
+	// pass when it ends, which fills it.
 	taken := map[string]int{} // slots the bootstraps of this pass take, by host
 	for _, w := range want {
 		host := w.Host()
@@ -90,7 +87,6 @@ func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []er
 			}
 		}
 	}
-	return errs
 }
 
 // A failed attached bootstrap is tried again after attachedBackoff, doubling
@@ -167,6 +163,38 @@ func (r *Reconciler) bootstrapAttached(ctx context.Context, pool agent.Info, acc
 		return "", errors.New("the client started but did not link to the server")
 	}
 	return r.bootstrapped(ctx, client, plan, res)
+}
+
+// releaseTimeout bounds an attached release: the agent's logout and
+// mb-client stop take up to 75 s, then it checks the client is gone.
+const releaseTimeout = 2 * time.Minute
+
+// startRelease releases account's slot on host in the background, unless a
+// release of it is already in flight, and asks for a pass once it is free.
+func (r *Reconciler) startRelease(ctx context.Context, host, account string) {
+	r.mu.Lock()
+	if r.releasing[account] {
+		r.mu.Unlock()
+		return
+	}
+	if r.releasing == nil {
+		r.releasing = map[string]bool{}
+	}
+	r.releasing[account] = true
+	r.mu.Unlock()
+	go func() {
+		rctx, cancel := context.WithTimeout(ctx, releaseTimeout)
+		defer cancel()
+		err := r.release(rctx, host, account)
+		r.mu.Lock()
+		delete(r.releasing, account)
+		r.mu.Unlock()
+		if err != nil {
+			r.Log.Warn("workers: release", "account", account, "host", host, "err", err)
+			return
+		}
+		r.Kick()
+	}()
 }
 
 // release frees the account's slot on host's agent (it logs the client out

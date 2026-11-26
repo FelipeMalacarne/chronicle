@@ -256,10 +256,12 @@ type fakeHub struct {
 	// bootN counts the bootstraps sent (even while gated); gate, when set,
 	// holds each one until it is closed; boots are the ids they went to and
 	// released the accounts freed by worker_release.
-	bootN    atomic.Int32
-	gate     chan struct{}
-	boots    []string
-	released []string
+	bootN atomic.Int32
+	gate  chan struct{}
+	// releaseGate, when set, holds each worker_release until it is closed.
+	releaseGate chan struct{}
+	boots       []string
+	released    []string
 }
 
 func (h *fakeHub) Agents() []agent.Info {
@@ -280,6 +282,9 @@ func (h *fakeHub) CallAgent(_ context.Context, id string, command string, params
 		if h.gate != nil {
 			<-h.gate
 		}
+	}
+	if command == agent.CmdWorkerRelease && h.releaseGate != nil {
+		<-h.releaseGate
 	}
 	h.mu.Lock()
 	defer h.mu.Unlock()

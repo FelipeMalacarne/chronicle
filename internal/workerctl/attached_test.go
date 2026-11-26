@@ -37,11 +37,15 @@ func waitFor(t *testing.T, what string, ok func() bool) {
 	t.Fatalf("timed out waiting for %s", what)
 }
 
-// waitIdle waits for every attached bootstrap in flight to end, which makes
-// what it wrote safe to read.
+// waitIdle waits for every attached bootstrap and release in flight to end,
+// which makes what they wrote safe to read.
 func waitIdle(t *testing.T, r *Reconciler) {
 	t.Helper()
-	waitFor(t, "the bootstraps to end", func() bool { r.mu.Lock(); defer r.mu.Unlock(); return len(r.booting) == 0 })
+	waitFor(t, "the bootstraps and releases to end", func() bool {
+		r.mu.Lock()
+		defer r.mu.Unlock()
+		return len(r.booting) == 0 && len(r.releasing) == 0
+	})
 }
 
 func (h *fakeHub) bootstraps() []string {
@@ -163,6 +167,7 @@ func TestSlotClientsOfOtherPlacementsAreReleased(t *testing.T) {
 	if err := r.Once(context.Background()); err != nil {
 		t.Fatal(err)
 	}
+	waitIdle(t, r)
 	released := hub.releases()
 	slices.Sort(released)
 	if want := []string{"acc_cluster", "acc_gone", "acc_moved", "acc_stopped"}; !slices.Equal(released, want) {
@@ -199,7 +204,7 @@ func TestMoveFromClusterToAttached(t *testing.T) {
 	}
 }
 
-// And back: the slot is released and the Deployment applied on the same pass.
+// And back: one pass releases the slot and applies the Deployment.
 func TestMoveFromAttachedToCluster(t *testing.T) {
 	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true}}}
 	cl := &fakeCluster{deps: map[string]kube.Deployment{}}
@@ -208,6 +213,7 @@ func TestMoveFromAttachedToCluster(t *testing.T) {
 	if err := r.Once(context.Background()); err != nil {
 		t.Fatal(err)
 	}
+	waitIdle(t, r)
 	if !slices.Equal(hub.releases(), []string{"acc_a"}) || !slices.Equal(cl.applied, []string{"worker-acc-a"}) {
 		t.Fatalf("released %v, applied %v", hub.releases(), cl.applied)
 	}
@@ -245,6 +251,7 @@ func TestRestartOfAttachedPlacementReleasesTheSlot(t *testing.T) {
 	if err := r.Restart(ctx, "acc_a"); err != nil {
 		t.Fatal(err)
 	}
+	waitIdle(t, r)
 	if !slices.Equal(hub.releases(), []string{"acc_a"}) {
 		t.Fatalf("released %v", hub.releases())
 	}
@@ -336,14 +343,16 @@ func TestSlotIsNotReleasedWhileItsBootstrapIsInFlight(t *testing.T) {
 	if err := r.Once(context.Background()); err != nil {
 		t.Fatal(err)
 	}
+	waitIdle(t, r)
 	if got := hub.releases(); !slices.Equal(got, []string{"acc_a"}) {
 		t.Fatalf("released %v after the bootstrap", got)
 	}
 }
 
-// A slot freed in a pass is filled in the same pass, and two accounts that
-// wait for one free slot do not both get a bootstrap.
-func TestFreedSlotIsFilledInTheSamePass(t *testing.T) {
+// A release does not hold up the pass, and the slot it frees is filled by
+// the pass it asks for once it ends; two accounts that wait for one free
+// slot do not both get a bootstrap.
+func TestFreedSlotIsFilledByThePassTheReleaseAsksFor(t *testing.T) {
 	store := &fakeStore{desired: []Desired{
 		{Account: "acc_moved", Running: true},
 		{Account: "acc_b", Running: true, Placement: "zaros"},
@@ -358,6 +367,13 @@ func TestFreedSlotIsFilledInTheSamePass(t *testing.T) {
 	if got := hub.releases(); !slices.Equal(got, []string{"acc_moved"}) {
 		t.Fatalf("released %v", got)
 	}
+	if len(r.kick) != 1 {
+		t.Fatal("the release did not ask for a pass")
+	}
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	waitIdle(t, r)
 	if n := hub.bootN.Load(); n != 1 {
 		t.Fatalf("bootstraps for one freed slot: %d", n)
 	}
@@ -377,5 +393,34 @@ func TestPoolThatLinksAsksForAPass(t *testing.T) {
 	r.OnConnect(zarosPool(0))
 	if len(r.kick) != 1 {
 		t.Fatal("the pool did not ask for a pass")
+	}
+}
+
+// A release, which logs out and stops a client for up to a minute or more,
+// does not hold up the pass, and is not sent twice while in flight.
+func TestReleaseDoesNotHoldUpThePass(t *testing.T) {
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Placement: "zaros"}}}
+	hub := &fakeHub{agents: []agent.Info{zarosPool(1), slotClient("acc_a")}, releaseGate: make(chan struct{})}
+	r := newAttachedRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub)
+	done := make(chan error, 2)
+	go func() {
+		for range 2 {
+			done <- r.Once(context.Background())
+		}
+	}()
+	for range 2 {
+		select {
+		case err := <-done:
+			if err != nil {
+				t.Fatal(err)
+			}
+		case <-time.After(2 * time.Second):
+			t.Fatal("the pass waited for the release")
+		}
+	}
+	close(hub.releaseGate)
+	waitIdle(t, r)
+	if got := hub.releases(); !slices.Equal(got, []string{"acc_a"}) {
+		t.Fatalf("released %v", got)
 	}
 }

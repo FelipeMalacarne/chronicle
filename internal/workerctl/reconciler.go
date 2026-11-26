@@ -174,10 +174,11 @@ type Reconciler struct {
 	// settingsAt is when each account's option values were last read: they
 	// cost a request per option, so a pass reads them every settingsEvery.
 	settingsAt map[string]time.Time
-	// booting are the accounts whose attached bootstrap is in flight;
-	// retry, the ones whose last attached bootstraps failed.
-	booting map[string]bool
-	retry   map[string]bootRetry
+	// booting and releasing are the accounts whose attached bootstrap or
+	// release is in flight; retry, the ones whose last attached bootstraps
+	// failed.
+	booting, releasing map[string]bool
+	retry              map[string]bootRetry
 }
 
 // autoRestart is what the reconciler remembers of a worker's automatic
@@ -273,7 +274,7 @@ func (r *Reconciler) reconcile(ctx context.Context) ([]Desired, error) {
 	if r.Cluster != nil {
 		listed, errs = r.reconcileCluster(ctx, want)
 	}
-	errs = append(errs, r.reconcileAttached(ctx, want)...)
+	r.reconcileAttached(ctx, want)
 	if !listed {
 		want = nil
 	}
@@ -488,7 +489,8 @@ func (r *Reconciler) restart(ctx context.Context, account string) (string, error
 	}
 	if host := w.Host(); host != "" {
 		r.capture(ctx, []Desired{w}, true)
-		return "", r.release(ctx, host, account)
+		r.startRelease(context.WithoutCancel(ctx), host, account)
+		return "", nil
 	}
 	if r.Image != "" {
 		moved, err := r.Store.SetRunningImage(ctx, account, r.Image)

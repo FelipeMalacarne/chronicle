@@ -28,8 +28,11 @@ type slotSet struct {
 	held map[string]*slotClient
 	// base is the agent's Run context: the clients' watchers outlive a link.
 	base context.Context
-	// sendMu keeps the TypeClients frames in the order of the sets they carry.
+	// sendMu keeps the TypeClients frames in the order of the sets they carry,
+	// after the hello that declared the set they change; send writes on the
+	// link up now (nil while it is down: the next hello carries the set).
 	sendMu sync.Mutex
+	send   func(Message) error
 }
 
 // slotClient is a client and the slot it holds.
@@ -128,26 +131,51 @@ func (a *Agent) drop(h *slotClient) {
 	a.out.forget(h.Account)
 }
 
-// announce sends the clients the agent has now.
-func (a *Agent) announce(write func(Message) error) {
+// announce sends the clients the agent has now, on the link up now: a slot
+// that changes after a reconnect is never told on the dead connection.
+func (a *Agent) announce() {
 	a.slots.sendMu.Lock()
 	defer a.slots.sendMu.Unlock()
+	if a.slots.send == nil {
+		return
+	}
 	var hellos []ClientHello
 	for _, c := range a.slots.clients() {
 		hellos = append(hellos, ClientHello{Account: c.Account})
 	}
-	if err := write(Message{Type: TypeClients, Clients: hellos}); err != nil {
+	if err := a.slots.send(Message{Type: TypeClients, Clients: hellos}); err != nil {
 		a.Log.Warn("agent: write clients", "err", err)
 	}
 }
 
+// adopt puts back in their slots the clients still running from before the
+// agent started (Live): the hello declares them, so the server neither
+// bootstraps them again (a fresh Chronicle Link token would revoke the one
+// they run with) nor forgets the ones it no longer wants, which it releases.
+func (a *Agent) adopt() {
+	if a.Live == nil {
+		return
+	}
+	for _, account := range a.Live() {
+		h, fresh, err := a.take(account)
+		if err != nil {
+			a.Log.Warn("agent: a running client could not be adopted", "account", account, "err", err)
+			continue
+		}
+		if fresh {
+			a.watch(h.ctx, h.Client)
+			a.Log.Info("agent: adopted a running client", "account", account, "slot", h.slot)
+		}
+	}
+}
+
 // poolCommand runs a command addressed to the agent itself.
-func (a *Agent) poolCommand(ctx context.Context, m Message, write func(Message) error) (any, error) {
+func (a *Agent) poolCommand(ctx context.Context, m Message) (any, error) {
 	switch m.Command {
 	case CmdWorkerBootstrap:
-		return a.slotBootstrap(ctx, m.Params, write)
+		return a.slotBootstrap(ctx, m.Params)
 	case CmdWorkerRelease:
-		return nil, a.slotRelease(ctx, m.Params, write)
+		return nil, a.slotRelease(ctx, m.Params)
 	}
 	return nil, fmt.Errorf("%s: this agent has no account of its own; it takes only %s and %s", m.Command, CmdWorkerBootstrap, CmdWorkerRelease)
 }
@@ -164,7 +192,7 @@ func stillRunning(ctx context.Context, e *Executor) bool {
 // one), tells the server, then runs the executor's own bootstrap, which
 // validates the session and adopts a client that is already running. A client
 // that fails to come up gives its slot back.
-func (a *Agent) slotBootstrap(ctx context.Context, raw json.RawMessage, write func(Message) error) (any, error) {
+func (a *Agent) slotBootstrap(ctx context.Context, raw json.RawMessage) (any, error) {
 	var p struct {
 		Account string `json:"account"`
 	}
@@ -177,7 +205,7 @@ func (a *Agent) slotBootstrap(ctx context.Context, raw json.RawMessage, write fu
 	}
 	if fresh {
 		a.watch(h.ctx, h.Client)
-		a.announce(write)
+		a.announce()
 		a.Log.Info("agent: slot taken", "account", p.Account, "slot", h.slot)
 	}
 	h.op.Lock()
@@ -185,7 +213,7 @@ func (a *Agent) slotBootstrap(ctx context.Context, raw json.RawMessage, write fu
 	res, err := h.Executor.Execute(ctx, CmdWorkerBootstrap, raw)
 	if err != nil && !stillRunning(ctx, h.Executor) {
 		a.drop(h)
-		a.announce(write)
+		a.announce()
 		a.Log.Info("agent: slot given back, the client did not come up", "account", p.Account, "slot", h.slot)
 	}
 	return res, err
@@ -195,13 +223,15 @@ func (a *Agent) slotBootstrap(ctx context.Context, raw json.RawMessage, write fu
 // release that fails with the client still running keeps the slot, so the
 // server can try again; one whose client is gone frees it, whatever the stop
 // said.
-func (a *Agent) slotRelease(ctx context.Context, raw json.RawMessage, write func(Message) error) error {
+func (a *Agent) slotRelease(ctx context.Context, raw json.RawMessage) error {
 	var p ReleaseParams
 	if err := json.Unmarshal(raw, &p); err != nil || !ValidAccount(p.Account) {
 		return errors.New("worker_release: params do not name a valid account")
 	}
 	h, ok := a.slots.lookup(p.Account)
 	if !ok {
+		// The server may hold a client the agent no longer has.
+		a.announce()
 		return nil
 	}
 	h.op.Lock()
@@ -215,7 +245,7 @@ func (a *Agent) slotRelease(ctx context.Context, raw json.RawMessage, write func
 		a.Log.Warn("agent: release: the stop failed but the client is gone", "account", p.Account, "err", err)
 	}
 	a.drop(h)
-	a.announce(write)
+	a.announce()
 	a.Log.Info("agent: slot released", "account", p.Account, "slot", h.slot)
 	return nil
 }

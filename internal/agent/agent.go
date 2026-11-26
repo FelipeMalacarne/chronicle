@@ -320,6 +320,9 @@ type Agent struct {
 	// agent restarted while its clients kept running): the account goes back
 	// in it, so its display is not handed to another account.
 	SlotOf func(account string) (int, bool)
+	// Live, when set, lists the accounts whose clients still run in this
+	// agent's slots from before it started (adopt).
+	Live func() []string
 
 	out   outbox
 	slots slotSet
@@ -437,8 +440,12 @@ func (o *outbox) take(linked func(account string) bool) []outRun {
 func (a *Agent) Run(ctx context.Context) error {
 	a.out.init()
 	a.slots.base = ctx
-	for _, c := range a.clients() {
-		a.watch(ctx, c)
+	if a.Slots > 0 {
+		a.adopt() // the slots' watchers start as each slot is taken
+	} else {
+		for _, c := range a.clients() {
+			a.watch(ctx, c)
+		}
 	}
 	backoff := time.Second
 	for {
@@ -553,11 +560,24 @@ func (a *Agent) session(ctx context.Context) error {
 		defer cancel()
 		return conn.Write(wctx, websocket.MessageText, b)
 	}
+	// The hello and the clients frames go out in order: a slot that changes
+	// meanwhile is told after the hello that declared the set before it.
+	a.slots.sendMu.Lock()
 	hello, linked, tagged := a.hello(resp)
 	slotted := hello.Slots > 0
 	if err := write(Message{Type: TypeHello, Hello: &hello}); err != nil {
+		a.slots.sendMu.Unlock()
 		return err
 	}
+	if slotted {
+		a.slots.send = write
+		defer func() {
+			a.slots.sendMu.Lock()
+			a.slots.send = nil
+			a.slots.sendMu.Unlock()
+		}()
+	}
+	a.slots.sendMu.Unlock()
 	a.Log.Info("agent: linked", "server", a.URL, "clients", len(linked), "slots", hello.Slots)
 	// An agent with slots looks its clients up at command time: they change
 	// while the link holds.
@@ -600,7 +620,7 @@ func (a *Agent) session(ctx context.Context) error {
 			}
 			switch {
 			case slotted && m.Account == "":
-				data, err := a.poolCommand(ctx, m, write)
+				data, err := a.poolCommand(ctx, m)
 				if err != nil {
 					res.Error = err.Error()
 				} else {

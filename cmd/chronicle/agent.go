@@ -242,6 +242,11 @@ func attachedAgent(url string, getenv func(string) string, log *slog.Logger) (*a
 		// Hello.Bridge stays empty: the bridge's version is in the status (Status.Bridge).
 		Hello: agent.Hello{Host: host, Version: buildinfo.String(), Kind: agent.KindAttached},
 	}
+	if strings.TrimSpace(getenv("MICROBOT_AGENT_CLIENTS")) != "" {
+		// Gone on 2026-11-26: started without it, the agent would serve every
+		// account as one undeclared client.
+		return nil, errors.New("MICROBOT_AGENT_CLIENTS is gone: set MICROBOT_AGENT_SLOTS, and the server fills the slots with the accounts placed on this host")
+	}
 	port, err := basePort(getenv("MB_VNC_PORT"))
 	if err != nil {
 		return nil, err
@@ -317,6 +322,7 @@ func slotsAgent(a *agent.Agent, n string, port int, clientCmd []string, getenv f
 	// know (one from before it restarted, or another tool's).
 	a.SlotBusy = func(slot int) bool { return fileExists("/tmp/.X11-unix/X" + strconv.Itoa(display+slot)) }
 	a.SlotOf = func(account string) (int, bool) { return liveSlot(filepath.Join(root, account), display) }
+	a.Live = func() []string { return liveAccounts(root, display) }
 	log.Info("agent: starting with slots", "slots", slots, "slots_home", root, "display", ":"+strconv.Itoa(display), "vnc_port", port,
 		"client_cmd", strings.Join(clientCmd, " "))
 	return nil
@@ -335,6 +341,25 @@ func liveSlot(home string, display int) (int, bool) {
 		return 0, false
 	}
 	return n - display, true
+}
+
+// liveAccounts are the accounts whose clients still run under root, one dev
+// home per account (liveSlot).
+func liveAccounts(root string, display int) []string {
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		return nil
+	}
+	var out []string
+	for _, e := range entries {
+		if !e.IsDir() || !agent.ValidAccount(e.Name()) {
+			continue
+		}
+		if _, ok := liveSlot(filepath.Join(root, e.Name()), display); ok {
+			out = append(out, e.Name())
+		}
+	}
+	return out
 }
 
 // slotsHome is MICROBOT_SLOTS_HOME: absolute or under the user's home (~/),

@@ -316,9 +316,25 @@ func slotsAgent(a *agent.Agent, n string, port int, clientCmd []string, getenv f
 	// A display whose X socket exists belongs to a client this agent does not
 	// know (one from before it restarted, or another tool's).
 	a.SlotBusy = func(slot int) bool { return fileExists("/tmp/.X11-unix/X" + strconv.Itoa(display+slot)) }
+	a.SlotOf = func(account string) (int, bool) { return liveSlot(filepath.Join(root, account), display) }
 	log.Info("agent: starting with slots", "slots", slots, "slots_home", root, "display", ":"+strconv.Itoa(display), "vnc_port", port,
 		"client_cmd", strings.Join(clientCmd, " "))
 	return nil
+}
+
+// liveSlot is the slot of the client still running in home: mb-client keeps
+// the display its Xvfb runs on in run/xvfb.display, beside the Xvfb's pid.
+func liveSlot(home string, display int) (int, bool) {
+	run := filepath.Join(home, "run")
+	b, err := os.ReadFile(filepath.Join(run, "xvfb.display")) //nolint:gosec // the slot's own dev home
+	if err != nil || !agent.PIDAlive(filepath.Join(run, "xvfb.pid")) {
+		return 0, false
+	}
+	n, err := strconv.Atoi(strings.TrimPrefix(strings.TrimSpace(string(b)), ":"))
+	if err != nil {
+		return 0, false
+	}
+	return n - display, true
 }
 
 // slotsHome is MICROBOT_SLOTS_HOME: absolute or under the user's home (~/),

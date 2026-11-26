@@ -199,3 +199,26 @@ func TestHarnessCmd(t *testing.T) {
 		t.Fatalf("explicit: %v", got)
 	}
 }
+
+func TestLiveSlotReadsTheDisplayOfARunningClient(t *testing.T) {
+	home := t.TempDir()
+	if _, ok := liveSlot(home, 99); ok {
+		t.Fatal("a home with no client has a slot")
+	}
+	run := filepath.Join(home, "run")
+	if err := os.MkdirAll(run, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(run, "xvfb.display"), []byte(":101\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := liveSlot(home, 99); ok {
+		t.Fatal("a display file without a live Xvfb gave a slot")
+	}
+	if err := os.WriteFile(filepath.Join(run, "xvfb.pid"), []byte(strconv.Itoa(os.Getpid())), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if slot, ok := liveSlot(home, 99); !ok || slot != 2 {
+		t.Fatalf("slot = %d, %v; want 2", slot, ok)
+	}
+}

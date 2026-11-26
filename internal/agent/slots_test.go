@@ -233,6 +233,30 @@ func TestSlotBootstrapSkipsABusyDisplay(t *testing.T) {
 	}
 }
 
+// An agent restarted while a client kept running puts its account back in the
+// slot of the display the client runs on, not in the lowest free one, whose
+// display would then go to the next account twice.
+func TestSlotBootstrapAdoptsTheClientsOwnSlot(t *testing.T) {
+	link, url := hubServer(t)
+	f := &slotFarm{t: t, slots: map[string]int{}, dirs: map[string]string{}}
+	a := &Agent{
+		Log: quiet, Hello: Hello{Host: "zaros", Version: "test", Kind: KindAttached}, Slots: 2, NewSlot: f.newSlot,
+		SlotBusy: func(slot int) bool { return slot == 1 },
+		SlotOf: func(account string) (int, bool) { return 1, account == "acc_a" },
+	}
+	startAgent(t, a, url, "zaros")
+	waitAgents(t, link, 1)
+	if _, err := bootstrapSlot(t, link, "acc_a"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := bootstrapSlot(t, link, "acc_b"); err != nil {
+		t.Fatal(err)
+	}
+	if f.slot("acc_a") != 1 || f.slot("acc_b") != 0 {
+		t.Fatalf("slots a=%d b=%d, want 1 and 0", f.slot("acc_a"), f.slot("acc_b"))
+	}
+}
+
 func TestSlotBootstrapThatFailsGivesTheSlotBack(t *testing.T) {
 	link, url := hubServer(t)
 	_, farm := startSlotAgent(t, url, 1)

@@ -269,6 +269,9 @@ func lastLines(s string, n int) string {
 	return strings.Join(lines, "\n")
 }
 
+// PIDAlive reports whether the process in the pid file runs.
+func PIDAlive(file string) bool { return pidAlive(file) }
+
 func pidAlive(file string) bool {
 	b, err := os.ReadFile(file)
 	if err != nil {
@@ -313,6 +316,10 @@ type Agent struct {
 	// SlotBusy, when set, reports a slot whose X display another process
 	// holds (a client the agent lost track of): that slot is not taken.
 	SlotBusy func(slot int) bool
+	// SlotOf, when set, is the slot a client of account still runs in (an
+	// agent restarted while its clients kept running): the account goes back
+	// in it, so its display is not handed to another account.
+	SlotOf func(account string) (int, bool)
 
 	out   outbox
 	slots slotSet

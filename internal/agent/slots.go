@@ -75,8 +75,9 @@ func (s *slotSet) client(account string) (Client, error) {
 	return h.Client, nil
 }
 
-// take is account's slot: the one it holds, else the lowest free one (no
-// client of this agent and, with SlotBusy, no one else on its display).
+// take is account's slot: the one it holds, else the one its client still
+// runs in (SlotOf), else the lowest free one (no client of this agent and,
+// with SlotBusy, no one else on its display).
 func (a *Agent) take(account string) (h *slotClient, fresh bool, err error) {
 	s := &a.slots
 	s.mu.Lock()
@@ -93,6 +94,12 @@ func (a *Agent) take(account string) (h *slotClient, fresh bool, err error) {
 		if used[i] || (a.SlotBusy != nil && a.SlotBusy(i)) {
 			unavailable++
 		} else if slot < 0 {
+			slot = i
+		}
+	}
+	if a.SlotOf != nil {
+		// A client the agent lost track of keeps its slot, busy display and all.
+		if i, ok := a.SlotOf(account); ok && i >= 0 && i < a.Slots && !used[i] {
 			slot = i
 		}
 	}

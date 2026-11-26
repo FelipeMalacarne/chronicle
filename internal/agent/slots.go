@@ -82,8 +82,8 @@ func (a *Agent) take(account string) (h *slotClient, fresh bool, err error) {
 	s := &a.slots
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	if h, ok := s.held[account]; ok {
-		return h, false, nil
+	if held, ok := s.held[account]; ok {
+		return held, false, nil
 	}
 	used := map[int]bool{}
 	for _, c := range s.held {

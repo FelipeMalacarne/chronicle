@@ -129,10 +129,10 @@ func (r *Reconciler) startBootstrap(ctx context.Context, pool agent.Info, accoun
 			delete(r.booting, account)
 			r.mu.Unlock()
 		}()
-		ctx, cancel := context.WithTimeout(ctx, 6*time.Minute)
+		bctx, cancel := context.WithTimeout(ctx, 6*time.Minute)
 		defer cancel()
-		lastError, err := r.bootstrapAttached(ctx, pool, account)
-		r.recordBootstrap(ctx, account, pool.ID, lastError, false, err)
+		lastError, err := r.bootstrapAttached(bctx, pool, account)
+		r.recordBootstrap(bctx, account, pool.ID, lastError, false, err)
 		r.mu.Lock()
 		defer r.mu.Unlock()
 		if err == nil {

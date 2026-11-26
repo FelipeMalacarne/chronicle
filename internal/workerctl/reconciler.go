@@ -796,8 +796,8 @@ func (r *Reconciler) bootstrap(ctx context.Context, info agent.Info) (string, bo
 		return "", false, err
 	}
 	var res agent.BootstrapResult
-	if err := r.Hub.CallAgent(ctx, info.ID, agent.CmdWorkerBootstrap, plan.params, &res); err != nil {
-		return "", false, err
+	if cerr := r.Hub.CallAgent(ctx, info.ID, agent.CmdWorkerBootstrap, plan.params, &res); cerr != nil {
+		return "", false, cerr
 	}
 	msg, err := r.bootstrapped(ctx, info, plan, res)
 	return msg, false, err

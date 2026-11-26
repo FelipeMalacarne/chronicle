@@ -221,7 +221,7 @@ func TestNoClusterManagesOnlyAttachedPlacements(t *testing.T) {
 	}}
 	hub := &fakeHub{agents: []agent.Info{zarosPool(0)}}
 	r := newAttachedRec(store, nil, hub)
-	r.Cluster = nil
+	r.Cluster = nil // newRec wraps the nil *fakeCluster in a non-nil interface
 	if err := r.Once(context.Background()); err != nil {
 		t.Fatal(err)
 	}

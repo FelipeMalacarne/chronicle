@@ -2,7 +2,14 @@ import { strict as assert } from 'node:assert';
 import { test } from 'node:test';
 
 import type { WorkerRow, WorkersView } from '../api/microbot.ts';
-import { actionLabel, imageTag, workerFacts, workerLine, workerLines } from './workers.ts';
+import {
+	actionLabel,
+	imageTag,
+	placementOptions,
+	workerFacts,
+	workerLine,
+	workerLines
+} from './workers.ts';
 
 const now = Date.parse('2026-11-12T18:00:00Z');
 
@@ -18,6 +25,7 @@ function row(p: Partial<WorkerRow>): WorkerRow {
 			pushed_by: 'u'
 		},
 		desired: 'stopped',
+		placement: 'cluster',
 		pod: null,
 		agent: null,
 		auto_login: false,
@@ -26,7 +34,11 @@ function row(p: Partial<WorkerRow>): WorkerRow {
 	};
 }
 
-const on: Pick<WorkersView, 'enabled'> = { enabled: true };
+const on: Pick<WorkersView, 'enabled' | 'cluster' | 'attached'> = {
+	enabled: true,
+	cluster: true,
+	attached: []
+};
 
 test('imageTag', () => {
 	assert.equal(
@@ -39,32 +51,108 @@ test('imageTag', () => {
 });
 
 test('stopped account with a session can start', () => {
-	const l = workerLine(row({}), on, [], now);
+	const l = workerLine(row({}), on, now);
 	assert.deepEqual(l.actions, ['start']);
 	assert.equal(l.blocked, undefined);
 	assert.equal(l.state, 'parado');
 	assert.match(l.session, /Iron A · há 60 min/);
 });
 
-test('start is closed without a session, with workers off, or while on zaros', () => {
-	assert.match(workerLine(row({ session: null }), on, [], now).blocked ?? '', /accounts connect/);
-	assert.match(workerLine(row({}), { enabled: false }, [], now).blocked ?? '', /WORKERS=off/);
-	const zaros = workerLine(
-		row({}),
-		on,
-		[{ connected: true, account: 'acc_a', kind: 'attached', host: 'zaros' }],
+test('start is closed without a session, with workers off, or without pods for the cluster', () => {
+	assert.match(workerLine(row({ session: null }), on, now).blocked ?? '', /accounts connect/);
+	assert.match(
+		workerLine(row({}), { ...on, enabled: false, cluster: false }, now).blocked ?? '',
+		/desligados/
+	);
+	assert.match(
+		workerLine(row({}), { ...on, cluster: false }, now).blocked ?? '',
+		/saradomin não roda workers/
+	);
+});
+
+// One account in one place is what the owner chose, not what an agent's hello says: an agent
+// declaring the account does not close Iniciar, and an attached placement starts without pods.
+test('an attached placement starts without pods and is not deduced from an agent', () => {
+	const noPods = { ...on, cluster: false };
+	const l = workerLine(row({ placement: 'zaros' }), noPods, now);
+	assert.deepEqual(l.actions, ['start']);
+	assert.equal(l.blocked, undefined);
+	assert.equal(l.state, 'parado');
+	const declared = {
+		...on,
+		attached: [{ connected: true, account: 'acc_a', kind: 'attached', host: 'zaros' } as const]
+	};
+	assert.equal(workerLine(row({}), declared, now).blocked, undefined);
+});
+
+test('a worker in a slot follows its agent and its client', () => {
+	const pool = { connected: true, kind: 'attached', host: 'zaros', slots: 3, used: 0 } as const;
+	const running = row({ desired: 'running', placement: 'zaros' });
+	const waiting = workerLine(running, on, now);
+	assert.equal(waiting.where, 'zaros · vaga');
+	assert.equal(waiting.host, 'zaros');
+	assert.equal(waiting.runtime, 'vaga');
+	assert.equal(waiting.state, 'esperando o agent do zaros');
+	assert.equal(waiting.cockpit, false);
+	assert.deepEqual(waiting.actions, ['stop', 'restart']);
+	const booting = workerLine(running, { ...on, attached: [pool] }, now);
+	assert.equal(booting.state, 'subindo · abrindo o cliente');
+	assert.equal(booting.tone, 'busy');
+	const linked = workerLine(
+		row({
+			desired: 'running',
+			placement: 'zaros',
+			agent: { connected: true, kind: 'attached', host: 'zaros', slot: true }
+		}),
+		{ ...on, attached: [pool] },
 		now
 	);
-	assert.match(zaros.blocked ?? '', /zaros/);
-	assert.equal(zaros.where, 'zaros · anexado');
-	assert.equal(zaros.cockpit, true);
+	assert.equal(linked.state, 'na tela de login ou no jogo · agent ligado');
+	assert.equal(linked.tone, 'ok');
+	assert.equal(linked.cockpit, true);
+	const full = workerLine(
+		row({
+			desired: 'running',
+			placement: 'zaros',
+			last_error: 'no free slot on zaros (3 of 3 in use)'
+		}),
+		{ ...on, attached: [{ ...pool, used: 3 }] },
+		now
+	);
+	assert.equal(full.tone, 'warn');
+	assert.equal(full.detail, 'no free slot on zaros (3 of 3 in use)');
+});
+
+test('placementOptions: the cluster, each agent with slots and the chosen place', () => {
+	const view = {
+		cluster: true,
+		attached: [
+			{ connected: true, kind: 'attached', host: 'zaros', slots: 3, used: 1 },
+			{ connected: true, kind: 'attached', host: 'zaros', account: 'acc_a', slot: true },
+			{ connected: true, kind: 'attached', host: 'desk', account: 'acc_z' }
+		]
+	} as const;
+	assert.deepEqual(
+		placementOptions({ ...view, attached: [...view.attached] }, { placement: 'cluster' }),
+		[
+			{ value: 'cluster', label: 'saradomin', disabled: false },
+			{ value: 'zaros', label: 'zaros', sub: '1/3 vagas' }
+		]
+	);
+	const off = placementOptions({ cluster: false, attached: [] }, { placement: 'zaros' });
+	assert.deepEqual(
+		off.map((o) => [o.value, o.disabled ?? false]),
+		[
+			['cluster', true],
+			['zaros', false]
+		]
+	);
 });
 
 test('running worker follows its pod and agent', () => {
 	const asked = workerLine(
 		row({ desired: 'running', image: 'ghcr.io/x/chronicle-worker:abc' }),
 		on,
-		[],
 		now
 	);
 	assert.equal(asked.tone, 'busy');
@@ -75,7 +163,6 @@ test('running worker follows its pod and agent', () => {
 			pod: { deployment: 'w', state: 'blocked', reason: 'exceeded quota', seen: '' }
 		}),
 		on,
-		[],
 		now
 	);
 	assert.equal(quota.tone, 'warn');
@@ -87,7 +174,6 @@ test('running worker follows its pod and agent', () => {
 			agent: { connected: true, kind: 'managed' }
 		}),
 		on,
-		[],
 		now
 	);
 	assert.equal(up.tone, 'ok');
@@ -100,7 +186,6 @@ test('running worker follows its pod and agent', () => {
 			last_error: 'bootstrap: session'
 		}),
 		on,
-		[],
 		now
 	);
 	assert.equal(failed.detail, 'bootstrap: session');
@@ -112,7 +197,6 @@ test('running worker follows its pod and agent', () => {
 			last_error: 'bootstrap: worker_bootstrap: mb-client start --headless: exit status 1'
 		}),
 		on,
-		[],
 		now
 	);
 	assert.equal(linkedButFailed.state, 'agent ligado · o cliente não subiu');
@@ -127,7 +211,6 @@ test('an outdated worker offers the restart first', () => {
 			pod: { deployment: 'w', state: 'running', seen: '' }
 		}),
 		on,
-		[],
 		now
 	);
 	assert.deepEqual(l.actions, ['restart', 'stop']);
@@ -141,8 +224,7 @@ test('workerLines of nothing', () => {
 test('with WORKERS=off a linked worker shows its agent and offers no lifecycle', () => {
 	const l = workerLine(
 		row({ desired: 'running', agent: { connected: true, kind: 'managed' } }),
-		{ enabled: false },
-		[],
+		{ ...on, enabled: false, cluster: false },
 		now
 	);
 	assert.equal(l.state, 'agent ligado');
@@ -166,14 +248,13 @@ test('the table cells: where and session in two lines, restart named by the vers
 			}
 		}),
 		on,
-		[],
 		now
 	);
 	assert.equal(pod.host, 'saradomin');
 	assert.equal(pod.runtime, 'pod · 87a8e21');
 	assert.equal(pod.sessionWhen, 'push há 60 min');
 	assert.equal(pod.sessionNote, 'último login ok');
-	const stopped = workerLine(row({ session: null }), on, [], now);
+	const stopped = workerLine(row({ session: null }), on, now);
 	assert.equal(stopped.host, 'nenhum');
 	assert.equal(stopped.sessionWhen, undefined);
 	assert.equal(actionLabel({ outdated: false }, 'restart'), 'Reiniciar');
@@ -196,7 +277,6 @@ test('a refused login marks the session and keeps the game reason', () => {
 			}
 		}),
 		on,
-		[],
 		now
 	);
 	assert.deepEqual(l.refused, {
@@ -205,7 +285,7 @@ test('a refused login marks the session and keeps the game reason', () => {
 		character: 'Iron A'
 	});
 	assert.equal(l.sessionTone, 'warn');
-	assert.equal(workerLine(row({}), on, [], now).refused, undefined);
+	assert.equal(workerLine(row({}), on, now).refused, undefined);
 });
 
 test('a pod the quota blocks has no room; usage rides along', () => {
@@ -216,7 +296,6 @@ test('a pod the quota blocks has no room; usage rides along', () => {
 			usage: { cpu_cores: 0.4, memory_bytes: 1, measured_at: '' }
 		}),
 		on,
-		[],
 		now
 	);
 	assert.equal(l.noRoom, true);
@@ -226,7 +305,6 @@ test('a pod the quota blocks has no room; usage rides along', () => {
 		workerLine(
 			row({ desired: 'running', pod: { deployment: 'd', state: 'pending', seen: '' } }),
 			on,
-			[],
 			now
 		).noRoom,
 		false
@@ -254,7 +332,7 @@ test('workerFacts: pod, version, usage, session and plugin, each only when known
 			last_login_result: 'ok'
 		}
 	});
-	const line = workerLine(r, on, [], now);
+	const line = workerLine(r, on, now);
 	assert.deepEqual(workerFacts(r, line, { at: '2026-11-12T17:59:48Z', bridge: '1.12' }, now), [
 		{ k: 'Pod', v: 'pod de pé · pedido há 2 h · sem reinícios', bad: false },
 		{ k: 'Versão', mono: 'f98dadb', v: 'atual' },
@@ -265,7 +343,7 @@ test('workerFacts: pod, version, usage, session and plugin, each only when known
 	const expired = row({
 		session: { ...r.session!, login_failed: true, last_login_result: 'Account locked' }
 	});
-	assert.deepEqual(workerFacts(expired, workerLine(expired, on, [], now), {}, now), [
+	assert.deepEqual(workerFacts(expired, workerLine(expired, on, now), {}, now), [
 		{ k: 'Estado', v: 'parado', bad: false },
 		{ k: 'Sessão', v: 'enviada há 3 d · último login recusado: Account locked', bad: true }
 	]);

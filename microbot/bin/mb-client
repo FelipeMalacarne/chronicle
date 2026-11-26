@@ -20,7 +20,7 @@
 #   MB_HEADLESS_DISPLAY, MB_HEADLESS_SIZE, MB_VNC_PORT, MB_START_TIMEOUT  see --headless and start
 # PipeWire muting and the xdotool window fit are skipped when their commands are missing.
 # Several clients run side by side, each with its own MB_DEV_HOME, MB_HEADLESS_DISPLAY and
-# MB_VNC_PORT (`chronicle agent` with MICROBOT_AGENT_CLIENTS sets them). A running instance's
+# MB_VNC_PORT (`chronicle agent` with MICROBOT_AGENT_SLOTS sets them). A running instance's
 # display and port are kept in its home (run/xvfb.display, run/vnc.port) and win over the variables.
 set -euo pipefail
 source "$(dirname "${BASH_SOURCE[0]}")/lib.sh"

@@ -127,6 +127,34 @@ type Info struct {
 	// Features are what the agent declared beyond its commands
 	// (AgentFeatures), for the same reason.
 	Features []string `json:"-"`
+	// Slots and Used are set on the Info of an agent with slots itself
+	// (Hello.Slots), which serves no account: how many accounts it may run
+	// and how many it runs now. Its clients have their own Infos, with Slot.
+	Slots int `json:"slots,omitempty"`
+	Used  int `json:"used,omitempty"`
+	// Slot: this client runs in a slot of its agent, filled by the server
+	// (CmdWorkerBootstrap), which also releases it.
+	Slot bool `json:"slot,omitempty"`
+}
+
+// PoolOf is the agent with slots linked from host (its own Info, Slots > 0).
+func PoolOf(agents []Info, host string) (Info, bool) {
+	for _, a := range agents {
+		if a.Slots > 0 && a.Host == host {
+			return a, true
+		}
+	}
+	return Info{}, false
+}
+
+// SlotClientOf is the client in a slot of host's agent that runs account.
+func SlotClientOf(agents []Info, host, account string) (Info, bool) {
+	for _, a := range agents {
+		if a.Slot && a.Host == host && a.Account == account {
+			return a, true
+		}
+	}
+	return Info{}, false
 }
 
 // Supports reports whether the agent declared command in its hello.

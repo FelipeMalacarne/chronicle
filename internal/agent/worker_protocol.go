@@ -18,10 +18,20 @@ const (
 
 // CmdWorkerBootstrap: server → managed agent, once per link (and again after
 // every reconnect while the client is not running): the account's game
-// session, the Chronicle Link credential and the world. Only an agent in
-// --worker mode executes it; the params carry secrets, so neither end logs
-// or audits them.
+// session, the Chronicle Link credential and the world. An agent with slots
+// (Hello.Slots) takes it too, addressed to the agent itself: it puts the
+// account in a free slot first. Only those two execute it; the params carry
+// secrets, so neither end logs or audits them.
 const CmdWorkerBootstrap = "worker_bootstrap"
+
+// CmdWorkerRelease: server → agent with slots, addressed to the agent
+// itself: log the account out, stop its client and free its slot.
+const CmdWorkerRelease = "worker_release"
+
+// ReleaseParams are the parameters of CmdWorkerRelease.
+type ReleaseParams struct {
+	Account string `json:"account"`
+}
 
 // GameSession is what the client needs to log in as one character without
 // the Jagex launcher (docs/11 section 4.2). It is the plaintext of

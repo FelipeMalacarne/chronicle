@@ -785,6 +785,11 @@ O que a implementação decidiu onde as seções acima não diziam (`internal/co
   ou `done`: prova no fim do run, ou depois enquanto aquele for o último run. Um run `failed` ou
   `canceled` leva o job a `failed` e nada que o inventário mostre depois o prova (a venda abortada, o
   vidro no banco, moedas sacadas para outra coisa).
+- **A tarefa provada fica feita.** O plano lê o último job de cada tarefa (`ProvenTasks`, o mais novo
+  não cancelado). Quando ele terminou `succeeded`, a tarefa conta como `met`, mesmo que os fatos mudem
+  depois, por exemplo um `travel` de que o personagem já saiu. A venda continua `met` só enquanto o
+  inventário não tiver o item de novo. Sem essa regra, o condutor andaria em círculo num plano com dois
+  destinos (FEL-136).
 - **Eventos.** A transição para `running` grava `job.started` (a seção 13.4 não nomeava esse evento).
   O job tracker lê também `run.started`, que é o que tira o job de `queued` ou de `stalled`. Um
   `stalled` com run ativo também volta a `running` quando a métrica muda, com `job.started` e o novo

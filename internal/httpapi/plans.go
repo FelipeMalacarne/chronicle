@@ -99,17 +99,17 @@ func (s *Server) planInputFor(ctx context.Context, account string, p plan.Plan) 
 	if err != nil {
 		return plan.Input{}, err
 	}
-	var sales map[string]string
+	var proven map[string]string
 	if s.opts.Jobs != nil {
-		// A sale is proven by its job (docs/12 section 13): the tracker ended
-		// it on the live inventory.
-		if sales, err = s.opts.Jobs.ProvenSales(ctx, account, p.ID); err != nil {
+		// A task is proven by its job (docs/12 section 13): the tracker ended
+		// it on the ingest's live facts.
+		if proven, err = s.opts.Jobs.ProvenTasks(ctx, account, p.ID); err != nil {
 			return plan.Input{}, err
 		}
 	}
 	return plan.Input{
 		Plan: p, Content: s.opts.Content, Registry: s.opts.Catalog, Boards: boards, Holdings: h, Facts: facts,
-		SalesProven: sales, Now: time.Now(),
+		TasksProven: proven, Now: time.Now(),
 	}, nil
 }
 

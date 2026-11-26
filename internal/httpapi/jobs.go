@@ -25,9 +25,9 @@ type JobStore interface {
 	List(ctx context.Context, account, state string, limit int) ([]job.Job, error)
 	Cancel(ctx context.Context, account, id, reason string) (job.Job, error)
 	ActiveRuns(ctx context.Context, id string) ([]string, error)
-	// ProvenSales reads a plan's proven Grand Exchange sales: the job that
-	// proved each (plan.Input.SalesProven).
-	ProvenSales(ctx context.Context, account, planID string) (map[string]string, error)
+	// ProvenTasks reads the tasks of a plan its jobs proved: the job that
+	// proved each (plan.Input.TasksProven).
+	ProvenTasks(ctx context.Context, account, planID string) (map[string]string, error)
 }
 
 // JobEventStore reads a job's events (internal/store/eventlog).

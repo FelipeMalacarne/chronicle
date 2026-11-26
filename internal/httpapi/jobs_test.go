@@ -73,7 +73,7 @@ func (m *memJobs) Cancel(_ context.Context, account, id, reason string) (job.Job
 
 func (m *memJobs) ActiveRuns(context.Context, string) ([]string, error) { return nil, nil }
 
-func (m *memJobs) ProvenSales(context.Context, string, string) (map[string]string, error) {
+func (m *memJobs) ProvenTasks(context.Context, string, string) (map[string]string, error) {
 	return nil, nil
 }
 

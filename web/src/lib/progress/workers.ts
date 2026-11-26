@@ -168,7 +168,7 @@ export function workerLine(
 		else if (!row.session)
 			line.blocked = 'conecte a conta: `chronicle accounts connect --character <nome>`';
 		else if (inCluster && !view.cluster)
-			line.blocked = 'o saradomin não roda workers neste servidor';
+			line.blocked = 'este servidor não sobe pods no saradomin; escolha outro lugar';
 	}
 	return line;
 }

@@ -66,7 +66,7 @@ test('start is closed without a session, with workers off, or without pods for t
 	);
 	assert.match(
 		workerLine(row({}), { ...on, cluster: false }, now).blocked ?? '',
-		/saradomin não roda workers/
+		/não sobe pods no saradomin/
 	);
 });
 

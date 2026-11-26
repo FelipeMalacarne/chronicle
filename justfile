@@ -58,7 +58,7 @@ dev: db-up
 # the dev client of the harness in microbot/ (MICROBOT_HARNESS_DIR, default this checkout). The
 # server needs MICROBOT_CONTROL=on.
 agent:
-    MICROBOT_HARNESS_DIR="${MICROBOT_HARNESS_DIR:-{{justfile_directory()}}}" go run ./cmd/chronicle agent
+    MICROBOT_HARNESS_DIR="${MICROBOT_HARNESS_DIR:-{{justfile_directory()}}}" go run ./cmd/chronicle agent dev
 
 # Vite dev server for the SPA alone (the API must already run on :8080)
 web-dev:

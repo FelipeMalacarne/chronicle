@@ -69,12 +69,12 @@ func TestWorkerAgentFromTheEnvironment(t *testing.T) {
 	}
 }
 
-func TestAttachedAgentWithOneClient(t *testing.T) {
+func TestDevAgentDrivesTheClientOpenedByHand(t *testing.T) {
 	t.Setenv("MICROBOT_CLIENT_CMD", "mb-client")
 	t.Setenv("MICROBOT_HOME", "/homes/main")
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
 	env := map[string]string{"MICROBOT_AGENT_ACCOUNT": "acc_main", "MB_VNC_PORT": "5901"}
-	a, err := attachedAgent("http://localhost:8080", func(k string) string { return env[k] }, quiet)
+	a, err := devAgent("http://localhost:8080", func(k string) string { return env[k] }, quiet)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -85,13 +85,46 @@ func TestAttachedAgentWithOneClient(t *testing.T) {
 	if e.Home != "/homes/main" || e.Env != nil || e.RunFile != agent.DefaultRunFile() || strings.Join(e.ClientCmd, " ") != "mb-client" {
 		t.Fatalf("executor = %+v", e)
 	}
+	if a.Slots != 0 || e.Worker != nil {
+		t.Fatalf("the dev agent has slots or a worker: %+v", a)
+	}
+	env["MICROBOT_AGENT_SLOTS"] = "2"
+	if _, err := devAgent("", func(k string) string { return env[k] }, quiet); err == nil {
+		t.Fatal("`chronicle agent dev` took MICROBOT_AGENT_SLOTS")
+	}
 }
 
-func TestAttachedAgentWithSlots(t *testing.T) {
+// With nothing set, `chronicle agent` runs one slot, on a display and a VNC
+// port clear of the dev client's :99 and 5999.
+func TestSlotAgentDefaultsToOneSlotClearOfTheDevClient(t *testing.T) {
+	t.Setenv("MICROBOT_CLIENT_CMD", "mb-client")
+	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
+	env := map[string]string{"MICROBOT_SLOTS_HOME": "/srv/slots"}
+	a, err := slotAgent("http://localhost:8080", func(k string) string { return env[k] }, quiet)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a.Slots != 1 || a.Executor != nil || a.Hello.Account != "" {
+		t.Fatalf("agent = %+v", a)
+	}
+	c := a.NewSlot(0, "acc_a")
+	if c.VNCAddr != "127.0.0.1:6110" || !slices.Contains(c.Executor.Env, "MB_HEADLESS_DISPLAY=:110") {
+		t.Fatalf("slot 0 = %s %v", c.VNCAddr, c.Executor.Env)
+	}
+	for k, v := range map[string]string{"MICROBOT_AGENT_ACCOUNT": "acc_main", "MICROBOT_AGENT_CLIENTS": "acc_a=/a"} {
+		env[k] = v
+		if _, err := slotAgent("", func(k string) string { return env[k] }, quiet); err == nil {
+			t.Errorf("`chronicle agent` took %s", k)
+		}
+		delete(env, k)
+	}
+}
+
+func TestSlotAgentWithSlots(t *testing.T) {
 	t.Setenv("MICROBOT_CLIENT_CMD", "mb-client")
 	quiet := slog.New(slog.NewTextHandler(io.Discard, nil))
 	env := map[string]string{"MICROBOT_AGENT_SLOTS": "3", "MICROBOT_SLOTS_HOME": "/srv/mb/slots/", "MB_VNC_PORT": "6100", "MB_HEADLESS_DISPLAY": ":20"}
-	a, err := attachedAgent("http://localhost:8080", func(k string) string { return env[k] }, quiet)
+	a, err := slotAgent("http://localhost:8080", func(k string) string { return env[k] }, quiet)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,19 +155,14 @@ func TestAttachedAgentWithSlots(t *testing.T) {
 		t.Error("two slots share a home or a HWID store")
 	}
 
-	env["MICROBOT_AGENT_ACCOUNT"] = "acc_main"
-	if _, err := attachedAgent("", func(k string) string { return env[k] }, quiet); err == nil {
-		t.Fatal("took MICROBOT_AGENT_SLOTS and MICROBOT_AGENT_ACCOUNT together")
-	}
-	delete(env, "MICROBOT_AGENT_ACCOUNT")
 	for _, bad := range []string{"0", "-1", "two", strconv.Itoa(agent.MaxClients + 1)} {
 		env["MICROBOT_AGENT_SLOTS"] = bad
-		if _, err := attachedAgent("", func(k string) string { return env[k] }, quiet); err == nil {
+		if _, err := slotAgent("", func(k string) string { return env[k] }, quiet); err == nil {
 			t.Errorf("MICROBOT_AGENT_SLOTS=%q accepted", bad)
 		}
 	}
 	env["MICROBOT_AGENT_SLOTS"], env["MICROBOT_SLOTS_HOME"] = "2", "relative/slots"
-	if _, err := attachedAgent("", func(k string) string { return env[k] }, quiet); err == nil {
+	if _, err := slotAgent("", func(k string) string { return env[k] }, quiet); err == nil {
 		t.Error("a relative MICROBOT_SLOTS_HOME accepted")
 	}
 }
@@ -153,10 +181,10 @@ func TestSlotsHomeDefaultsUnderTheUserHome(t *testing.T) {
 }
 
 func TestPortsDisplaysAndFiles(t *testing.T) {
-	if _, err := basePort("80"); err == nil {
+	if _, err := basePort("80", devVNCPort); err == nil {
 		t.Error("MB_VNC_PORT 80 accepted")
 	}
-	if _, err := baseDisplay("display"); err == nil {
+	if _, err := baseDisplay("display", slotDisplay); err == nil {
 		t.Error("MB_HEADLESS_DISPLAY display accepted")
 	}
 	if got := clientFile("/c/agent-runs.json", "acc_a"); got != "/c/agent-runs.acc_a.json" {

@@ -531,3 +531,22 @@ func TestLinkRefusesAMalformedSlotsHello(t *testing.T) {
 		t.Fatalf("agents = %+v", got)
 	}
 }
+
+// The agent with slots and the dev client's agent of one host, under one
+// machine user, link side by side: neither replaces the other.
+func TestSlotAgentAndDevAgentOfOneHostLinkSideBySide(t *testing.T) {
+	link, url := hubServer(t)
+	startSlotAgent(t, url, 1)
+	waitAgents(t, link, 1)
+	dev := &Agent{Log: quiet, Hello: Hello{Host: "zaros", Version: "test", Kind: KindAttached, Account: "acc_dev"}, Executor: &Executor{Game: &fakeGame{}}}
+	startAgent(t, dev, url, "zaros")
+	waitAgents(t, link, 2)
+	time.Sleep(200 * time.Millisecond) // a replaced link would be gone by now
+	agents := link.Agents()
+	if _, ok := PoolOf(agents, "zaros"); !ok || len(agents) != 2 {
+		t.Fatalf("agents = %+v", agents)
+	}
+	if info, err := link.Route("acc_dev"); err != nil || info.Slots != 0 || info.Slot {
+		t.Fatalf("route to the dev client = %+v %v", info, err)
+	}
+}

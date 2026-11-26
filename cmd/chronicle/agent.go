@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -23,71 +24,100 @@ import (
 	"github.com/FelipeMalacarne/chronicle/internal/microbot"
 )
 
-// newAgentCmd is `chronicle agent` (docs/08): it runs on the machine with the
-// game, links OUTBOUND to the planner server and executes only the closed
-// list of control commands against the Microbot dev client of the harness.
+// newAgentCmd is `chronicle agent` (docs/08, docs/11 section 20): it runs on
+// the machine with the game, links OUTBOUND to the planner server and runs
+// the accounts the server places on this host, each in a slot of its own: the
+// agent starts with no client and the server sends each account's session,
+// as to a worker pod. `chronicle agent dev` instead drives the one client the
+// owner opens with the harness (devAgent); --worker is the agent of a worker
+// pod (workerAgent).
 //
 //	CHRONICLE_URL            the planner server (default: config.json, then https://chronicle.saradomin.ftm.dev.br)
 //	MICROBOT_AGENT_CLIENT_ID, MICROBOT_AGENT_CLIENT_SECRET (or _SECRET_FILE)
 //	                       the Zitadel machine user (role microbot:agent) when the
 //	                       server runs AUTH_MODE=oidc; a dev server needs nothing and
 //	                       takes the link only from loopback
-//	MICROBOT_HOME          the harness dev home (default ~/.local/share/microbot-dev)
 //	MICROBOT_HARNESS_DIR   the chronicle checkout; mb-client (microbot/bin) runs through
 //	                       its `microbot` Nix dev shell (Xvfb, x11vnc and the JDK)
-//	MICROBOT_CLIENT_CMD, MICROBOT_ACCOUNT_CMD
-//	                       instead of the above, the commands that run mb-client
-//	                       and mb-account
-//	MB_VNC_PORT            the harness's x11vnc port (default 5999), always on loopback
-//	MICROBOT_AGENT_ACCOUNT the Chronicle account this agent declares (optional)
-//	MICROBOT_AGENT_SLOTS   instead of MICROBOT_AGENT_ACCOUNT and MICROBOT_HOME, how many
-//	                       accounts the server may run on this machine at once (1 to
-//	                       agent.MaxClients): the agent starts with no client and logs
-//	                       each account in with the session the server sends, like a
-//	                       worker pod (docs/11): see slotsAgent
+//	MICROBOT_CLIENT_CMD    instead of the above, the command that runs mb-client
+//	MICROBOT_AGENT_SLOTS   how many accounts the server may run here at once (default 1,
+//	                       at most agent.MaxClients): see slotsAgent
 //	MICROBOT_SLOTS_HOME    the slots' dev homes, <it>/<account> (default
 //	                       ~/.local/share/microbot-slots)
-//	MB_HEADLESS_DISPLAY    the first slot's Xvfb display (default :99; the next slots follow)
-//
-// With --worker it is the agent of a worker pod (docs/11): see workerAgent.
+//	MB_HEADLESS_DISPLAY, MB_VNC_PORT
+//	                       the first slot's Xvfb display and x11vnc port (default :110 and
+//	                       6110, clear of the dev client's :99 and 5999; the next slots follow)
 func newAgentCmd() *cobra.Command {
 	var url string
 	var worker bool
 	cmd := &cobra.Command{
 		Use:   "agent",
-		Short: "Link this machine's Microbot client to the planner server (docs/08)",
+		Short: "Run the accounts the planner places on this machine, one game client per slot (docs/11)",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, _ []string) error {
 			if worker {
 				return runWorker(cmd.Context(), url)
 			}
-			secret, err := agentSecret()
-			if err != nil {
-				return err
-			}
-			if url == "" {
-				store, serr := clientStore()
-				if serr != nil {
-					return serr
-				}
-				if url, _, serr = (&clientFlags{}).resolveURL(store); serr != nil {
-					return serr
-				}
-			}
-			log := slog.New(slog.NewTextHandler(os.Stderr, nil))
-			a, err := attachedAgent(url, os.Getenv, log)
-			if err != nil {
-				return err
-			}
-			a.Token = (&client.AgentAuth{URL: url, ClientID: os.Getenv("MICROBOT_AGENT_CLIENT_ID"), ClientSecret: secret}).Token
-			ctx, stop := signal.NotifyContext(cmd.Context(), os.Interrupt, syscall.SIGTERM)
-			defer stop()
-			return a.Run(ctx)
+			return runAttached(cmd.Context(), url, slotAgent)
 		},
 	}
 	cmd.Flags().StringVar(&url, "url", "", "planner server (default: CHRONICLE_URL, config, "+client.DefaultURL+")")
 	cmd.Flags().BoolVar(&worker, "worker", false, "run as the agent of a worker pod (docs/11): WORKER_ACCOUNT, CHRONICLE_AGENT_TOKEN_FILE")
+	cmd.AddCommand(newAgentDevCmd())
 	return cmd
+}
+
+// newAgentDevCmd is `chronicle agent dev` (docs/08): it drives the one client
+// the owner opens with the harness (`just agent`, the plugin-dev and
+// live-test skills), logged in with the launcher's session.
+//
+//	CHRONICLE_URL, MICROBOT_AGENT_CLIENT_ID, MICROBOT_AGENT_CLIENT_SECRET (or _SECRET_FILE),
+//	MICROBOT_HARNESS_DIR   as for `chronicle agent`
+//	MICROBOT_CLIENT_CMD, MICROBOT_ACCOUNT_CMD
+//	                       instead of MICROBOT_HARNESS_DIR, the commands that run mb-client
+//	                       and mb-account
+//	MICROBOT_HOME          the harness dev home (default ~/.local/share/microbot-dev)
+//	MB_VNC_PORT            the harness's x11vnc port (default 5999), always on loopback
+//	MICROBOT_AGENT_ACCOUNT the Chronicle account this agent declares (optional)
+func newAgentDevCmd() *cobra.Command {
+	var url string
+	cmd := &cobra.Command{
+		Use:   "dev",
+		Short: "Link the harness's one dev client, opened by hand, to the planner server (docs/08)",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return runAttached(cmd.Context(), url, devAgent)
+		},
+	}
+	cmd.Flags().StringVar(&url, "url", "", "planner server (default: CHRONICLE_URL, config, "+client.DefaultURL+")")
+	return cmd
+}
+
+// runAttached runs an agent of the machine with the game (built by build from
+// the environment) until SIGINT or SIGTERM, authenticated as the machine user.
+func runAttached(ctx context.Context, url string, build func(string, func(string) string, *slog.Logger) (*agent.Agent, error)) error {
+	secret, err := agentSecret()
+	if err != nil {
+		return err
+	}
+	if url == "" {
+		store, serr := clientStore()
+		if serr != nil {
+			return serr
+		}
+		if url, _, serr = (&clientFlags{}).resolveURL(store); serr != nil {
+			return serr
+		}
+	}
+	log := slog.New(slog.NewTextHandler(os.Stderr, nil))
+	a, err := build(url, os.Getenv, log)
+	if err != nil {
+		return err
+	}
+	a.Token = (&client.AgentAuth{URL: url, ClientID: os.Getenv("MICROBOT_AGENT_CLIENT_ID"), ClientSecret: secret}).Token
+	ctx, stop := signal.NotifyContext(ctx, os.Interrupt, syscall.SIGTERM)
+	defer stop()
+	return a.Run(ctx)
 }
 
 // workerShutdown bounds the worker's SIGTERM: logout, then mb-client stop (which waits up
@@ -228,42 +258,48 @@ func fileExists(path string) bool {
 	return err == nil
 }
 
-// attachedAgent builds the agent of the machine with the game (zaros) from
-// its environment: one client (MICROBOT_HOME, MICROBOT_AGENT_ACCOUNT,
-// MB_VNC_PORT: the dev harness's `just agent`) or, with MICROBOT_AGENT_SLOTS,
-// an agent with slots (slotsAgent). The harness tools come from
+// attachedHello is the hello of an agent of the machine with the game.
+func attachedHello() agent.Hello {
+	host, _ := os.Hostname()
+	// Hello.Bridge stays empty: the bridge's version is in the status (Status.Bridge).
+	return agent.Hello{Host: host, Version: buildinfo.String(), Kind: agent.KindAttached}
+}
+
+// slotAgent builds `chronicle agent` from its environment: an agent with
+// MICROBOT_AGENT_SLOTS slots (default 1), filled by the server (slotsAgent).
+func slotAgent(url string, getenv func(string) string, log *slog.Logger) (*agent.Agent, error) {
+	switch {
+	case strings.TrimSpace(getenv("MICROBOT_AGENT_ACCOUNT")) != "":
+		return nil, errors.New("MICROBOT_AGENT_ACCOUNT is for `chronicle agent dev` (the client you open by hand); `chronicle agent` runs the accounts the server places on this host")
+	case strings.TrimSpace(getenv("MICROBOT_AGENT_CLIENTS")) != "":
+		// Gone on 2026-11-26: the server fills the slots instead.
+		return nil, errors.New("MICROBOT_AGENT_CLIENTS is gone: `chronicle agent` runs the accounts the server places on this host (MICROBOT_AGENT_SLOTS, default 1)")
+	}
+	a := &agent.Agent{URL: url, Log: log, Hello: attachedHello()}
+	slots := cmp.Or(strings.TrimSpace(getenv("MICROBOT_AGENT_SLOTS")), "1")
+	if err := slotsAgent(a, slots, harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"), getenv, log); err != nil {
+		return nil, err
+	}
+	return a, nil
+}
+
+// devAgent builds `chronicle agent dev` from its environment: the one client
+// of the harness's dev home (MICROBOT_HOME, MB_VNC_PORT), which declares
+// MICROBOT_AGENT_ACCOUNT when set. The harness tools come from
 // MICROBOT_CLIENT_CMD, MICROBOT_ACCOUNT_CMD or MICROBOT_HARNESS_DIR
 // (harnessCmd); the caller sets the Token.
-func attachedAgent(url string, getenv func(string) string, log *slog.Logger) (*agent.Agent, error) {
-	host, _ := os.Hostname()
-	clientCmd, accountCmd := harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"), harnessCmd("MICROBOT_ACCOUNT_CMD", "mb-account")
-	a := &agent.Agent{
-		URL: url, Log: log,
-		// Hello.Bridge stays empty: the bridge's version is in the status (Status.Bridge).
-		Hello: agent.Hello{Host: host, Version: buildinfo.String(), Kind: agent.KindAttached},
+func devAgent(url string, getenv func(string) string, log *slog.Logger) (*agent.Agent, error) {
+	if strings.TrimSpace(getenv("MICROBOT_AGENT_SLOTS")) != "" {
+		return nil, errors.New("MICROBOT_AGENT_SLOTS is for `chronicle agent`; `chronicle agent dev` drives the one client you open by hand")
 	}
-	if strings.TrimSpace(getenv("MICROBOT_AGENT_CLIENTS")) != "" {
-		// Gone on 2026-11-26: started without it, the agent would serve every
-		// account as one undeclared client.
-		return nil, errors.New("MICROBOT_AGENT_CLIENTS is gone: set MICROBOT_AGENT_SLOTS, and the server fills the slots with the accounts placed on this host")
-	}
-	port, err := basePort(getenv("MB_VNC_PORT"))
+	port, err := basePort(getenv("MB_VNC_PORT"), devVNCPort)
 	if err != nil {
 		return nil, err
 	}
-	account := strings.TrimSpace(getenv("MICROBOT_AGENT_ACCOUNT"))
-	if slots := strings.TrimSpace(getenv("MICROBOT_AGENT_SLOTS")); slots != "" {
-		if account != "" {
-			return nil, errors.New("set MICROBOT_AGENT_SLOTS or MICROBOT_AGENT_ACCOUNT, not both: the server names each slot's account")
-		}
-		if err := slotsAgent(a, slots, port, clientCmd, getenv, log); err != nil {
-			return nil, err
-		}
-		return a, nil
-	}
+	clientCmd, accountCmd := harnessCmd("MICROBOT_CLIENT_CMD", "mb-client"), harnessCmd("MICROBOT_ACCOUNT_CMD", "mb-account")
 	home := microbot.DefaultHome()
-	a.VNCAddr = net.JoinHostPort("127.0.0.1", strconv.Itoa(port))
-	a.Hello.Account = account
+	a := &agent.Agent{URL: url, Log: log, Hello: attachedHello(), VNCAddr: net.JoinHostPort("127.0.0.1", strconv.Itoa(port))}
+	a.Hello.Account = strings.TrimSpace(getenv("MICROBOT_AGENT_ACCOUNT"))
 	a.Executor = &agent.Executor{
 		Game: &microbot.Client{Home: home}, Home: home,
 		Bridge:        &microbot.Client{Home: home, Socket: microbot.BridgeSocket},
@@ -272,7 +308,7 @@ func attachedAgent(url string, getenv func(string) string, log *slog.Logger) (*a
 		RunFile:       agent.DefaultRunFile(),
 		ClientCmd:     clientCmd, AccountCmd: accountCmd,
 	}
-	log.Info("agent: starting", "server", url, "microbot_home", home, "client_cmd", strings.Join(clientCmd, " "))
+	log.Info("agent: starting the dev client's agent", "server", url, "microbot_home", home, "client_cmd", strings.Join(clientCmd, " "))
 	return a, nil
 }
 
@@ -282,12 +318,16 @@ func attachedAgent(url string, getenv func(string) string, log *slog.Logger) (*a
 // <MICROBOT_SLOTS_HOME>/<account> with its own HWID store (never the
 // launcher's ~/.runelite), account_use refused, and the display and x11vnc
 // port of its slot, from MB_HEADLESS_DISPLAY (:99) and MB_VNC_PORT (5999) up.
-func slotsAgent(a *agent.Agent, n string, port int, clientCmd []string, getenv func(string) string, log *slog.Logger) error {
+func slotsAgent(a *agent.Agent, n string, clientCmd []string, getenv func(string) string, log *slog.Logger) error {
 	slots, err := strconv.Atoi(n)
 	if err != nil || slots < 1 || slots > agent.MaxClients {
 		return fmt.Errorf("MICROBOT_AGENT_SLOTS: %q is not a number between 1 and %d", n, agent.MaxClients)
 	}
-	display, err := baseDisplay(getenv("MB_HEADLESS_DISPLAY"))
+	port, err := basePort(getenv("MB_VNC_PORT"), slotVNCPort)
+	if err != nil {
+		return err
+	}
+	display, err := baseDisplay(getenv("MB_HEADLESS_DISPLAY"), slotDisplay)
 	if err != nil {
 		return err
 	}
@@ -381,11 +421,20 @@ func slotsHome(v string) (string, error) {
 	return filepath.Clean(v), nil
 }
 
-// basePort is MB_VNC_PORT, the x11vnc port of the (first) client: 5999 when
+// The first x11vnc port and Xvfb display: the dev client's are the
+// harness's defaults, and the slots start clear of them, so the client the
+// owner opens by hand never takes a slot's display.
+const (
+	devVNCPort  = 5999
+	slotVNCPort = 6110
+	slotDisplay = 110
+)
+
+// basePort is MB_VNC_PORT, the x11vnc port of the (first) client: def when
 // unset.
-func basePort(v string) (int, error) {
+func basePort(v string, def int) (int, error) {
 	if v = strings.TrimSpace(v); v == "" {
-		return 5999, nil
+		return def, nil
 	}
 	p, err := strconv.Atoi(v)
 	if err != nil || p < 1024 || p+agent.MaxClients > 65535 {
@@ -395,10 +444,10 @@ func basePort(v string) (int, error) {
 }
 
 // baseDisplay is the number of MB_HEADLESS_DISPLAY, the Xvfb display of the
-// first client: 99 when unset.
-func baseDisplay(v string) (int, error) {
+// first slot: def when unset.
+func baseDisplay(v string, def int) (int, error) {
 	if v = strings.TrimSpace(v); v == "" {
-		return 99, nil
+		return def, nil
 	}
 	n, err := strconv.Atoi(strings.TrimPrefix(v, ":"))
 	if err != nil || n < 1 || n > 9999 {

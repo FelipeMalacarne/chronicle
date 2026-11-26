@@ -283,14 +283,20 @@ func (l *Link) route(account string) (*agentConn, error) {
 }
 
 // agentKey is what makes two connections the same agent: who authenticated
-// it and which worker (or host) it runs on. A pod bound to an account is one
-// worker per account (a Deployment of one replica, Recreate), so its key is
-// the account: a new pod replaces the old pod's lingering link.
+// it, which worker (or host) it runs on and whether it has slots, so the agent
+// with slots and the dev client's agent of one host link side by side. A pod
+// bound to an account is one worker per account (a Deployment of one replica,
+// Recreate), so its key is the account: a new pod replaces the old pod's
+// lingering link.
 func agentKey(id Identity, h Hello) string {
 	if id.BoundAccount != "" {
 		return "bound\x00" + id.BoundAccount
 	}
-	return id.Subject + "\x00" + cmp.Or(h.Worker, h.Host)
+	key := id.Subject + "\x00" + cmp.Or(h.Worker, h.Host)
+	if h.Slots > 0 {
+		key += "\x00slots"
+	}
+	return key
 }
 
 // Serve upgrades an authenticated request to the agent's websocket and holds

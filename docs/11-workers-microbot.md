@@ -38,7 +38,7 @@ Na primeira versão, "agent", "worker" e "cliente" se misturavam. Daqui em diant
 | **Perfil do cliente** | Plugins (do Hub e nossos, com versão), configuração dos plugins (grupo, chave, valor), perfil gráfico e mundo preferido. Um perfil pode servir de modelo para várias contas | Postgres |
 | **Rotina** | Gatilhos, "fazer agora", recorrentes e o histórico de runs (doc 08, fase 4) | Postgres (hoje está em arquivos do agent) |
 | **Worker** | Um cliente do jogo rodando para uma conta, num lugar | Processo ou pod |
-| **Agent** | O `chronicle agent` que controla um worker. Num pod, um agent para um worker. O anexado do zaros tem **vagas** (`MICROBOT_AGENT_SLOTS`, seção 20): o servidor põe uma conta em cada vaga e a tira de lá. Entre 2026-11-13 e 2026-11-26 o anexado controlava uma lista fixa de contas (`MICROBOT_AGENT_CLIENTS`, fase 5 do doc 10), que as vagas substituíram | Ao lado do cliente |
+| **Agent** | O `chronicle agent` que controla um worker. Num pod, um agent para um worker. O anexado do zaros (`chronicle agent`) tem **vagas** (`MICROBOT_AGENT_SLOTS`, padrão 1, seção 20): o servidor põe uma conta em cada vaga e a tira de lá. O cliente de dev aberto à mão tem o seu próprio agent, `chronicle agent dev`. Entre 2026-11-13 e 2026-11-26 o anexado controlava uma lista fixa de contas (`MICROBOT_AGENT_CLIENTS`, fase 5 do doc 10), que as vagas substituíram | Ao lado do cliente |
 | **Lugar** | `cluster` (um pod do saradomin, que o Chronicle cria e apaga) ou o host de um agent com vagas (`zaros`: o Chronicle sobe e derruba o cliente numa vaga). O dono escolhe por conta (seção 20). O agent que declara a própria conta (`MICROBOT_AGENT_ACCOUNT`, o `just agent` do harness) fica fora disso: o Chronicle controla o cliente dele, mas não o sobe nem o derruba | Coluna `workers.placement` |
 
 Regra de endereçamento: **tudo é endereçado pela conta**, nunca pelo agent. As rotas
@@ -563,9 +563,9 @@ Em `internal/agent/protocol.go` e `internal/agent/worker_protocol.go`:
 | `serve` | `WORKER_IMAGE` | imagem `chronicle-worker` (o CI grava no overlay) |
 | `serve` | `WORKER_NAMESPACE` | padrão: o namespace do próprio pod (arquivo da SA) |
 | `serve` | `WORKER_SERVER_URL` | padrão `http://chronicle.<namespace>.svc` (o Service do app, porta 80) |
-| attached | `MICROBOT_AGENT_ACCOUNT` | conta que o agent do zaros declara no hello (opcional; um cliente fixo, o `just agent` do harness) |
-| attached | `MICROBOT_AGENT_SLOTS` | no lugar da anterior e de `MICROBOT_HOME`: quantas contas o servidor pode pôr nesta máquina (1 a 16); a vaga i fica no display `MB_HEADLESS_DISPLAY`+i e no VNC `MB_VNC_PORT`+i (seção 20). Substitui `MICROBOT_AGENT_CLIENTS` (2026-11-13 a 2026-11-26) |
-| attached | `MICROBOT_SLOTS_HOME` | raiz dos homes das vagas, `<raiz>/<conta>` (padrão `~/.local/share/microbot-slots`) |
+| `agent dev` | `MICROBOT_AGENT_ACCOUNT` | conta que o agent do cliente de dev declara no hello (opcional; o `just agent` do harness) |
+| `agent` | `MICROBOT_AGENT_SLOTS` | quantas contas o servidor pode pôr nesta máquina (1 a 16, padrão 1); a vaga i fica no display `MB_HEADLESS_DISPLAY` (`:110`)+i e no VNC `MB_VNC_PORT` (6110)+i, longe dos do cliente de dev (seção 20). Substitui `MICROBOT_AGENT_CLIENTS` (2026-11-13 a 2026-11-26) |
+| `agent` | `MICROBOT_SLOTS_HOME` | raiz dos homes das vagas, `<raiz>/<conta>` (padrão `~/.local/share/microbot-slots`) |
 | worker | `WORKER_ACCOUNT`, `CHRONICLE_URL`, `CHRONICLE_AGENT_TOKEN_FILE` | conta do pod, servidor, token projetado (relido a cada conexão) |
 | worker | `MB_DEV_HOME`, `MB_XMX`, `MB_HWID_STORE_DIR`, `MB_PREBUILT_PLUGINS` | opções do `mb-client` (seção 13.4) |
 | worker | `CHRONICLE_LINK_SERVER_URL`, `CHRONICLE_LINK_TOKEN` | o Chronicle Link usa estes no lugar da config quando presentes (credencial `ipl_`) |
@@ -1316,7 +1316,7 @@ fixa `MICROBOT_AGENT_CLIENTS` da fase 5 do doc 10 (2026-11-13), que saiu do cód
     alcança o Service de dentro do cluster. Sem `PUBLIC_BASE_URL`, a conta fica com esse erro em
     `last_error`.
   - O Parar libera a vaga e revoga o token `ipl_` do cliente.
-- **Agent com vagas** (`chronicle agent` com `MICROBOT_AGENT_SLOTS`, de 1 a 16).
+- **Agent com vagas** (`chronicle agent`, com `MICROBOT_AGENT_SLOTS` de 1 a 16; padrão 1 desde a FEL-142).
   - Sobe sem cliente e não declara conta. O hello leva `slots` e as contas das vagas ocupadas.
   - O servidor manda `worker_bootstrap` ao próprio agent, sem conta na mensagem. O agent pega a vaga
     livre de menor número. Quando um cliente daquela conta ainda roda, ele pega a vaga do display
@@ -1340,8 +1340,13 @@ fixa `MICROBOT_AGENT_CLIENTS` da fase 5 do doc 10 (2026-11-13), que saiu do cód
   - O frame `clients` sai sempre pelo link de pé. Uma vaga que muda depois de uma reconexão é
     contada ao servidor novo, nunca à conexão morta.
   - O SIGTERM do agent deixa os clientes das vagas rodando.
-  - `MICROBOT_AGENT_ACCOUNT` (um cliente fixo, o `just agent` do harness) continua e não combina com
-    `MICROBOT_AGENT_SLOTS`.
+  - **Dois comandos** (FEL-142, 2026-11-26). O `chronicle agent` só tem vagas, 1 por padrão, e é o
+    que o serviço do zaros roda: atualizar o `chronicle` liga as vagas sem configurar nada. O cliente
+    de dev aberto à mão tem o próprio comando, `chronicle agent dev` (o `just agent`), com
+    `MICROBOT_HOME` e `MICROBOT_AGENT_ACCOUNT`. Cada um recusa as variáveis do outro.
+  - As vagas começam no display `:110` e no VNC 6110, longe do `:99` e do 5999 do cliente de dev.
+  - O servidor separa os dois pela chave do agent (identidade, host e vagas): os dois ligam lado a
+    lado no zaros, com o mesmo machine user.
   - Um agent com `MICROBOT_AGENT_CLIENTS` não sobe: a variável saiu, e sem ela o agent atenderia
     qualquer conta como um cliente sem conta declarada.
 - **Link no servidor.**

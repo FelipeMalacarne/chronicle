@@ -905,7 +905,9 @@ doc: a tarefa aponta para uma classe de plugin com um preset):
 > **Mudou em 2026-11-26 (FEL-138).** A lista fixa `MICROBOT_AGENT_CLIENTS` saiu do código. No lugar
 > dela, o agent do zaros tem vagas (`MICROBOT_AGENT_SLOTS`): ele sobe sem cliente, e o servidor põe
 > em cada vaga uma conta que o dono mandou rodar no zaros, com a sessão guardada, como num pod.
-> Detalhes no doc 11, seção 20. Continuam valendo o executor e o lock por cliente, os arquivos por
+> Detalhes no doc 11, seção 20. Desde a FEL-142, o `chronicle agent` só tem vagas (1 por padrão), e
+> o cliente de dev aberto à mão tem o próprio comando, `chronicle agent dev` (o `just agent`).
+> Continuam valendo o executor e o lock por cliente, os arquivos por
 > conta, o display e a porta gravados no home pelo `mb-client` e o roteamento pela conta. O texto
 > abaixo é o registro de 2026-11-13.
 

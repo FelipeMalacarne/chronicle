@@ -17,7 +17,9 @@ Old Man, um plugin próprio no Microbot (RuneLite) e dados estruturados do OSRS 
   de controle no cliente de dev), outros plugins e o harness do cliente de dev (`microbot/AGENTS.md`).
 - **Modelo de domínio aprovado** (`docs/09-modelo-de-dominio.md`): o objetivo é a unidade rastreável,
   com progresso compartilhado entre rotas; a API de progresso é construída sobre ele.
-- **Estado detalhado e sequência vigente**: `docs/04-arquitetura.md`, seção 9. Decisões: `docs/01`.
+- **Roadmap e estado**: projeto Chronicle no Linear
+  (<https://linear.app/felipemalacarne/project/chronicle-1f382104f1b7>). Arquitetura e decisões ficam
+  em `docs/`, com o registro das decisões em `docs/01`.
 
 Roda primeiro na estação do dono (local-first, `docker compose`, `AUTH_MODE=dev`). O deploy no
 `saradomin` usa a mesma imagem com outras variáveis de ambiente.

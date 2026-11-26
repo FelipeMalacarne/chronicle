@@ -13,6 +13,7 @@ import (
 	"unicode"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 )
 
 // wait_until by an objective key (docs/10 phase 4; docs/08, runs and
@@ -70,22 +71,20 @@ var reAccountID = regexp.MustCompile(`^acc_[a-z0-9_-]{1,32}$`)
 // errUntilMet ends a run whose objective is met before it touched anything.
 var errUntilMet = errors.New("the objective is met")
 
-// check verifies a wait_until: a canonical objective key and a well-formed
-// account (when set).
+// check verifies a wait_until: a canonical objective key or a var label
+// (execspec.VarUntil) and a well-formed account (when set).
 func (u RunUntil) check() error {
-	k, err := entities.ParseObjectiveKey(u.Objective)
-	switch {
-	case err != nil:
-		return fmt.Errorf("until: %w", err)
-	case k.String() != u.Objective:
-		return fmt.Errorf("until: write the key as %s", k)
-	case u.Account != "" && !reAccountID.MatchString(u.Account):
+	if err := execspec.CheckUntil(u.Objective); err != nil {
+		return err
+	}
+	if u.Account != "" && !reAccountID.MatchString(u.Account) {
 		return errors.New("until: bad account")
 	}
 	return nil
 }
 
-// ObjectiveKey parses the run's key (checked by check).
+// ObjectiveKey parses the run's key (checked by check); a var label is not
+// one, and the skill-level trail then has nothing to note.
 func (u RunUntil) ObjectiveKey() (entities.ObjectiveKey, error) {
 	return entities.ParseObjectiveKey(u.Objective)
 }
@@ -233,10 +232,39 @@ func (e *Executor) pluginWork(className string, key entities.ObjectiveKey, befor
 	}
 }
 
+// clientMessage closes the message windows the client shows and returns
+// their text. Microbot opens one, after pausing every script, when a script
+// gives up reaching an NPC or an object; on a worker nobody sees it, and the
+// run would wait for its timeout (FEL-134). The bridge closes the window and
+// lifts that pause. A bridge before 1.19.0 has no such route: nothing to read.
+func (e *Executor) clientMessage(ctx context.Context) (string, bool) {
+	if e.Bridge == nil {
+		return "", false
+	}
+	raw, err := e.Bridge.JSON(ctx, http.MethodGet, "/bridge/client/messages", nil, nil, 10*time.Second)
+	if err != nil {
+		return "", false
+	}
+	var open struct {
+		Messages []string `json:"messages"`
+	}
+	if json.Unmarshal(raw, &open) != nil || len(open.Messages) == 0 {
+		return "", false
+	}
+	msg := clip(strings.Join(open.Messages, " | "), 300)
+	if _, err := e.Bridge.JSON(ctx, http.MethodPost, "/bridge/client/messages/close", nil, map[string]any{}, 10*time.Second); err != nil {
+		e.note(RunRunning, "o cliente mostrou uma mensagem e pausou os scripts: "+msg+" (a janela não fechou: "+err.Error()+")")
+	} else {
+		e.note(RunRunning, "o cliente mostrou uma mensagem e pausou os scripts: "+msg+" (janela fechada)")
+	}
+	return msg, true
+}
+
 // superviseUntil watches started work until the server proves the
 // objective. It fails when the work stops by itself and no proof comes
 // within the grace period, when it says it failed, when the client stops
-// answering, on the timeout and on a cancel; the caller stops the work
+// answering, when the client shows a message (clientMessage), on the timeout
+// and on a cancel; the caller stops the work
 // when it still runs.
 func (e *Executor) superviseUntil(ctx context.Context, w untilWork, until RunUntil, timeout time.Duration) (untilEnd, error) {
 	met := e.metSignal()
@@ -253,6 +281,9 @@ func (e *Executor) superviseUntil(ctx context.Context, w untilWork, until RunUnt
 				return untilProven, nil
 			}
 			return untilProvenAfterStop, nil
+		}
+		if msg, ok := e.clientMessage(ctx); ok {
+			return 0, fmt.Errorf("the client paused every script with a message: %s", msg)
 		}
 		if stoppedAt.IsZero() {
 			running, ok := w.running(ctx)

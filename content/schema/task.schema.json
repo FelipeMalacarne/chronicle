@@ -2,14 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://ironman-planner.local/schemas/task.schema.json",
   "title": "Chronicle Task",
-  "description": "Tarefa tipada do modelo de execução (doc 10, seção 7): um tipo da lista de primitivas do executor (E5: travel, bank, buy, talk, interact, train, manual; E19: quest), parâmetros só com refs do catálogo, números e ids, e uma condição de término (`until`) que é chave de objetivo ou predicado de estado avaliável pelo motor. Usada nos passos (`tasks[]` dos sidecars de anotação) e nas receitas (content/recipes). As definições de tipo não fecham as propriedades: quem usa `task` fecha com `unevaluatedProperties: false`, então uma propriedade de outro tipo (um `shop` numa `travel`) é recusada. O verificador (internal/core/content, Task.Check) confere refs existentes, a loja que vende o item, a área do local e o término avaliável.",
+  "description": "Tarefa tipada do modelo de execução (doc 10, seção 7): um tipo da lista de primitivas do executor (E5: travel, bank, buy, talk, interact, train, manual; E19: quest; doc 12, seção 6: ge_buy e ge_sell, só para contas regulares), parâmetros só com refs do catálogo, números e ids, e uma condição de término (`until`) que é chave de objetivo ou predicado de estado avaliável pelo motor. Usada nos passos (`tasks[]` dos sidecars de anotação) e nas receitas (content/recipes). As definições de tipo não fecham as propriedades: quem usa `task` fecha com `unevaluatedProperties: false`, então uma propriedade de outro tipo (um `shop` numa `travel`) é recusada. O verificador (internal/core/content, Task.Check) confere refs existentes, a loja que vende o item, a área do local e o término avaliável.",
   "$ref": "#/$defs/task",
   "$defs": {
     "task": {
       "type": "object",
       "required": ["type"],
       "properties": {
-        "type": { "enum": ["travel", "bank", "buy", "talk", "interact", "train", "quest", "manual"] }
+        "type": { "enum": ["travel", "bank", "buy", "talk", "interact", "train", "quest", "ge_buy", "ge_sell", "manual"] }
       },
       "allOf": [
         { "if": { "properties": { "type": { "const": "travel" } } }, "then": { "$ref": "#/$defs/travel" } },
@@ -19,6 +19,8 @@
         { "if": { "properties": { "type": { "const": "interact" } } }, "then": { "$ref": "#/$defs/interact" } },
         { "if": { "properties": { "type": { "const": "train" } } }, "then": { "$ref": "#/$defs/train" } },
         { "if": { "properties": { "type": { "const": "quest" } } }, "then": { "$ref": "#/$defs/quest" } },
+        { "if": { "properties": { "type": { "const": "ge_buy" } } }, "then": { "$ref": "#/$defs/ge_buy" } },
+        { "if": { "properties": { "type": { "const": "ge_sell" } } }, "then": { "$ref": "#/$defs/ge_sell" } },
         { "if": { "properties": { "type": { "const": "manual" } } }, "then": { "$ref": "#/$defs/manual" } }
       ]
     },
@@ -136,6 +138,27 @@
         "until": { "$ref": "#/$defs/untilObjective" }
       }
     },
+    "ge_buy": {
+      "type": "object",
+      "description": "Comprar no Grand Exchange por delegação ao Agent Server (`/ge/buy`, doc 12, seção 6). Só para contas regulares: vive numa variante de receita cujos modos são `[regular]`, nunca num passo de guia. O servidor compra o que falta de `qty` (até o limite de 4 horas do GE) pelo último preço de compra imediata da wiki mais a margem, pago com as moedas do inventário. Termina quando as posses da conta provam `item:<id>x<qty>` (o padrão).",
+      "required": ["type", "item", "qty"],
+      "properties": {
+        "type": { "const": "ge_buy" },
+        "item": { "$ref": "#/$defs/itemRef" },
+        "qty": { "type": "integer", "minimum": 1 },
+        "until": { "$ref": "#/$defs/untilObjective" }
+      }
+    },
+    "ge_sell": {
+      "type": "object",
+      "description": "Vender no Grand Exchange por delegação ao Agent Server (`/ge/sell`, doc 12, seção 6) todo o item que o inventário tem, numa forma só (noted ou não). Só para contas regulares, como `ge_buy`. O preço é o último de venda imediata da wiki menos a margem. Termina em `sold`: o inventário ao vivo não tem mais o item; a prova do run soma as moedas da venda no inventário.",
+      "required": ["type", "item"],
+      "properties": {
+        "type": { "const": "ge_sell" },
+        "item": { "$ref": "#/$defs/itemRef" },
+        "until": { "$ref": "#/$defs/untilState" }
+      }
+    },
     "manual": {
       "type": "object",
       "description": "O executor para e chama o dono. Num passo, o texto é a citação da evidência; numa receita, `note` diz ao dono o que fazer (texto para pessoa, nunca interpretado). Termina com a marca do dono (`owner_mark`), `goal_met` ou um objetivo.",
@@ -149,14 +172,14 @@
     "until": {
       "type": "object",
       "additionalProperties": false,
-      "description": "Término: uma chave de objetivo (avaliada pelo motor) ou um predicado de estado. `at_location`: posição dentro da área do local da tarefa; `loadout_ready`: o setup carregado atende ao loadout; `goal_met`: os objetivos `completes`/`starts` do passo, ou a chave da receita, estão `met`; `owner_mark`: a marca do dono no passo (só `manual`).",
+      "description": "Término: uma chave de objetivo (avaliada pelo motor) ou um predicado de estado. `at_location`: posição dentro da área do local da tarefa; `loadout_ready`: o setup carregado atende ao loadout; `goal_met`: os objetivos `completes`/`starts` do passo, ou a chave da receita, estão `met`; `owner_mark`: a marca do dono no passo (só `manual`); `sold`: o inventário ao vivo, com baseline completa, não tem mais o item (só `ge_sell`).",
       "oneOf": [
         { "required": ["objective"] },
         { "required": ["state"] }
       ],
       "properties": {
         "objective": { "$ref": "https://ironman-planner.local/schemas/guide.schema.json#/$defs/objectiveKey" },
-        "state": { "enum": ["at_location", "loadout_ready", "goal_met", "owner_mark"] }
+        "state": { "enum": ["at_location", "loadout_ready", "goal_met", "owner_mark", "sold"] }
       }
     },
     "untilState": {

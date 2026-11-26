@@ -6,10 +6,12 @@ import (
 	"flag"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 )
 
 // updatePluginFixture rewrites the plugin's fixture of the task wire:
@@ -59,8 +61,21 @@ func fishing() *Train {
 		Config: []clientcfg.Setting{{Group: "tickfisher", Key: "mode", Value: "BARBARIAN"}}}
 }
 
+func tutorialIsland() *Plugin {
+	return &Plugin{Plugin: clientcfg.TutorialIslandClass, Name: "Tutorial Island", Until: VarUntil("varp", 281, 1000),
+		Config: []clientcfg.Setting{{Group: "MicroTutIsland", Key: "toggleMusic", Value: "false"}}}
+}
+
 func cooks() *Quest {
 	return &Quest{Quest: "quest:cooks_assistant", Name: "Cook's Assistant", Helper: "Cook's Assistant"}
+}
+
+func moltenGlass() *GEOffer {
+	return &GEOffer{Item: 1775, ItemName: "Molten glass", Qty: 1400, Price: 120}
+}
+
+func sellGlass() *GESell {
+	return &GESell{GEOffer: *moltenGlass(), CoinsAtLeast: 1000 + 1400*118}
 }
 
 func TestCheck(t *testing.T) {
@@ -72,6 +87,8 @@ func TestCheck(t *testing.T) {
 		{Type: TypeTrain, Train: fishing()},
 		{Type: TypeTrain, Train: &Train{Skill: "skill:attack", SkillName: "Attack", Level: 40, Plugin: "a.b.Fighter", Combat: true}},
 		{Type: TypeQuest, Quest: cooks()},
+		{Type: TypeGEBuy, GEBuy: moltenGlass()},
+		{Type: TypeGESell, GESell: sellGlass()},
 	} {
 		if err := ok.Check(); err != nil {
 			t.Errorf("%s refused: %v", ok.Type, err)
@@ -169,6 +186,11 @@ func TestRisks(t *testing.T) {
 		NeedsSupervision("hcim", []string{"item_loss"}) || !NeedsSupervision("hcim", []string{"hazard"}) {
 		t.Error("E9: HCIM and a death risk, only")
 	}
+	for _, mode := range []string{"regular", "uim", "gim"} {
+		if NeedsSupervision(mode, []string{"combat", "wilderness", "hazard"}) {
+			t.Errorf("E9 is HCIM only, %s supervised", mode)
+		}
+	}
 	if !KnownRisk("combat") || KnownRisk("pking") {
 		t.Error("closed risk list")
 	}
@@ -194,8 +216,10 @@ func TestWildernessProbes(t *testing.T) {
 }
 
 // TestPluginWire pins the executor's JSON on both sides: the start bodies
-// the agent posts to the bridge, the wilderness probes, and the types the
-// plugin must refuse too. Chronicle Link's TaskSpecTest reads the file.
+// the agent posts to the bridge, the wilderness probes, the types the
+// plugin must refuse too, and the tasks the agent delegates elsewhere
+// (valid here, refused by the plugin). Chronicle Link's TaskSpecTest reads
+// the file.
 func TestPluginWire(t *testing.T) {
 	type start struct {
 		ID   string `json:"id"`
@@ -205,6 +229,7 @@ func TestPluginWire(t *testing.T) {
 		Starts     []start `json:"starts"`
 		Wilderness any     `json:"wilderness"`
 		Refused    []Task  `json:"refused"`
+		Delegated  []Task  `json:"delegated"`
 	}{
 		Starts: []start{
 			{ID: "5f2a9c0d11e84b7a", Task: Task{Type: TypeTravel, Travel: castle()}},
@@ -213,7 +238,15 @@ func TestPluginWire(t *testing.T) {
 			{ID: "5f2a9c0d11e84b7d", Task: Task{Type: TypeBuy, Buy: buy()}},
 		},
 		Wilderness: probes,
-		Refused:    []Task{{Type: "talk"}, {Type: "train"}, {Type: TypeTravel}, {Type: TypeBank, Bank: &Bank{}}},
+		Refused: []Task{{Type: "talk"}, {Type: "train"}, {Type: TypeTravel}, {Type: TypeBank, Bank: &Bank{}},
+			{Type: TypeGEBuy}, {Type: TypeGESell}, {Type: TypePlugin}},
+		Delegated: []Task{{Type: TypeTrain, Train: fishing()}, {Type: TypeQuest, Quest: cooks()}, {Type: TypePlugin, Plugin: tutorialIsland()},
+			{Type: TypeGEBuy, GEBuy: moltenGlass()}, {Type: TypeGESell, GESell: sellGlass()}},
+	}
+	for _, d := range wire.Delegated {
+		if err := d.Check(); err != nil {
+			t.Fatalf("delegated %s: %v", d.Type, err)
+		}
 	}
 	for _, s := range wire.Starts {
 		if err := s.Task.Check(); err != nil {
@@ -245,5 +278,88 @@ func TestPluginWire(t *testing.T) {
 	}
 	if !bytes.Equal(want, buf.Bytes()) {
 		t.Fatalf("the executor's JSON changed: rewrite %s with -update and check the plugin's tests\n%s", path, buf.String())
+	}
+}
+
+// TestGE: an offer is bounded (an id, a quantity, a price whose total fits
+// one coin stack, the coins a sale's proof waits for) and the Grand Exchange
+// runs for a regular account only.
+func TestGE(t *testing.T) {
+	offer := func(f func(*GEOffer)) Task { o := moltenGlass(); f(o); return Task{Type: TypeGEBuy, GEBuy: o} }
+	sell := func(f func(*GESell)) Task { s := sellGlass(); f(s); return Task{Type: TypeGESell, GESell: s} }
+	for _, tc := range []struct {
+		name string
+		task Task
+		want string
+	}{
+		{"no item name", offer(func(o *GEOffer) { o.ItemName = "" }), "itemName is required"},
+		{"bad id", offer(func(o *GEOffer) { o.Item = 0 }), "bad item id"},
+		{"qty 0", offer(func(o *GEOffer) { o.Qty = 0 }), "qty 1 to"},
+		{"price 0", offer(func(o *GEOffer) { o.Price = 0 }), "price of at least 1"},
+		{"over one coin stack", offer(func(o *GEOffer) { o.Qty, o.Price = 2, MaxCoins/2+1 }), "at most 2147483647"},
+		{"sale without its proof", sell(func(s *GESell) { s.CoinsAtLeast = 0 }), "coinsAtLeast 1 to"},
+		{"buy with a sell", Task{Type: TypeGEBuy, GEBuy: moltenGlass(), GESell: sellGlass()}, "only geBuy"},
+		{"sell as a buy", Task{Type: TypeGESell, GEBuy: moltenGlass()}, "only geSell"},
+	} {
+		if err := tc.task.Check(); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Errorf("%s: %v, want %q", tc.name, err, tc.want)
+		}
+	}
+	for _, task := range []Task{{Type: TypeGEBuy, GEBuy: moltenGlass()}, {Type: TypeGESell, GESell: sellGlass()}} {
+		if err := task.CheckMode(content.ModeRegular); err != nil {
+			t.Errorf("%s regular: %v", task.Type, err)
+		}
+		for _, m := range []string{content.ModeIronman, content.ModeHCIM, content.ModeUIM, content.ModeGIM} {
+			if err := task.CheckMode(m); err == nil || !strings.Contains(err.Error(), "regular accounts only") {
+				t.Errorf("%s %s: %v", task.Type, m, err)
+			}
+		}
+	}
+	if err := (Task{Type: TypeBuy, Buy: buy()}).CheckMode(content.ModeIronman); err != nil {
+		t.Errorf("a shop buy is any mode's: %v", err)
+	}
+}
+
+func TestPluginCheck(t *testing.T) {
+	if err := (Task{Type: TypePlugin, Plugin: tutorialIsland()}).Check(); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		name string
+		mod  func(*Plugin)
+		want string
+	}{
+		{"bare class", func(p *Plugin) { p.Plugin = "TutorialIslandPlugin" }, "fully qualified"},
+		{"chronicle link", func(p *Plugin) {
+			p.Plugin = "net.runelite.client.plugins.microbot.fm.chroniclelink.ChronicleLinkPlugin"
+		}, "not controlled"},
+		{"no name", func(p *Plugin) { p.Name = "" }, "name is required"},
+		{"a secret", func(p *Plugin) { p.Config = []clientcfg.Setting{{Group: "x", Key: "password", Value: "1"}} }, "secret"},
+		{"a key the known plugin lacks", func(p *Plugin) { p.Config[0].Key = "ironman" }, "not a setting"},
+		{"a group the known plugin lacks", func(p *Plugin) { p.Config[0].Group = "other" }, "not a setting"},
+		{"a value the key does not take", func(p *Plugin) { p.Config[0].Value = "yes" }, "true, false"},
+		{"no until", func(p *Plugin) { p.Until = "" }, "until"},
+		{"a loose var label", func(p *Plugin) { p.Until = "varp:281>=01000" }, "until"},
+		{"a key written loosely", func(p *Plugin) { p.Until = "skill:mining>=015" }, "until"},
+	} {
+		p := tutorialIsland()
+		p.Config = slices.Clone(p.Config)
+		c.mod(p)
+		if err := (Task{Type: TypePlugin, Plugin: p}).Check(); err == nil || !strings.Contains(err.Error(), c.want) {
+			t.Errorf("%s: %v, want %q", c.name, err, c.want)
+		}
+	}
+	// A plugin the registry does not know takes any valid setting, and an
+	// objective key is an until too.
+	other := &Plugin{Plugin: "a.b.OtherPlugin", Name: "Other", Until: "skill:mining>=15",
+		Config: []clientcfg.Setting{{Group: "other", Key: "mode", Value: "FAST"}}}
+	if err := (Task{Type: TypePlugin, Plugin: other}).Check(); err != nil {
+		t.Errorf("an unknown plugin: %v", err)
+	}
+	if (Task{Type: TypePlugin, Plugin: tutorialIsland(), Train: fishing()}).Check() == nil {
+		t.Error("a plugin task with a train passes")
+	}
+	if err := (Task{Type: TypePlugin, Plugin: tutorialIsland()}).CheckMode("ironman"); err != nil {
+		t.Errorf("mode: %v", err)
 	}
 }

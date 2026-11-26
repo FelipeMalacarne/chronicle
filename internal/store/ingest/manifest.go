@@ -31,6 +31,11 @@ type Definition struct {
 	Catalog *entities.Registry
 }
 
+// JobVarps are the varps the jobs' goals and metrics read that no catalog or
+// guide rule names (docs/12 section 13.7): 281 is the Tutorial Island's
+// progress, which reaches 1000 when the player leaves the island.
+var JobVarps = []int64{281}
+
 // BuildDefinition derives the v1 manifest from the reference vars of the
 // catalog (content/reference/varbits.json: diary tiers, quest points and the
 // counts of the account screen; the proof of every unlock in unlocks.json and
@@ -76,6 +81,9 @@ func BuildDefinition(c *content.Content, reg *entities.Registry) Definition {
 			}
 		}
 	}
+	for _, id := range JobVarps {
+		varps[id] = struct{}{}
+	}
 	d := Definition{
 		Varbits:         sortedIDs(varbits),
 		Varps:           sortedIDs(varps),
@@ -100,7 +108,9 @@ func BuildDefinition(c *content.Content, reg *entities.Registry) Definition {
 		// The minigame counters (the Mage Training Arena's pizazz points),
 		// offered since 2026-11-16.
 		Minigame bool `json:"minigame"`
-	}{d.Varbits, d.Varps, d.Collections, d.OnlyItemIDs, reg != nil, true, true, true, true})
+		// The membership days, offered since 2026-11-24.
+		Membership bool `json:"membership"`
+	}{d.Varbits, d.Varps, d.Collections, d.OnlyItemIDs, reg != nil, true, true, true, true, true})
 	hash := sha256.Sum256(canonical)
 	d.Version = int64(binary.BigEndian.Uint32(hash[:4]) & math.MaxInt32)
 	if d.Version == 0 {
@@ -164,6 +174,7 @@ func (d Definition) manifest(scopes []coreingest.TokenScope, resync bool) corein
 		CollectionLog:   true,
 		Recording:       true,
 		Minigame:        true,
+		Membership:      true,
 		Items: coreingest.ItemSelection{
 			Bank:        has[coreingest.ScopeItemsBank],
 			Inventory:   has[coreingest.ScopeItemsInventory],

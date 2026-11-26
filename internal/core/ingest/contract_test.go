@@ -661,3 +661,58 @@ func TestMinigameNeedsManifest(t *testing.T) {
 		t.Fatalf("wire shape: %s", encoded)
 	}
 }
+
+func membership(days int64, member bool) *Membership {
+	return &Membership{Days: &days, Member: &member}
+}
+
+func TestMembershipValidation(t *testing.T) {
+	cases := []struct {
+		name    string
+		value   *Membership
+		wantErr string
+	}{
+		{"member with days", membership(120, true), ""},
+		{"member with none left", membership(0, true), ""},
+		{"free to play", membership(0, false), ""},
+		{"the bound", membership(MaxMembershipDays, true), ""},
+		{"no fields", &Membership{}, "needs days and member"},
+		{"no member", &Membership{Days: membership(5, true).Days}, "needs days and member"},
+		{"negative", membership(-1, false), "must be between 0"},
+		{"too large", membership(MaxMembershipDays+1, true), "must be between 0"},
+		{"days without member", membership(30, false), "must be true while days"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			push := fullPush()
+			push.Data.Membership = tc.value
+			err := push.Validate()
+			if tc.wantErr == "" && err != nil {
+				t.Fatalf("Validate() = %v", err)
+			}
+			if tc.wantErr != "" && (err == nil || !strings.Contains(err.Error(), tc.wantErr)) {
+				t.Fatalf("Validate() = %v, want %q", err, tc.wantErr)
+			}
+		})
+	}
+}
+
+func TestMembershipNeedsManifest(t *testing.T) {
+	manifest := Manifest{
+		ContractVersion: ContractVersion, ManifestVersion: 7, TokenScopes: []TokenScope{ScopeStateWrite},
+		Varbits: []int64{}, Varps: []int64{}, Collections: []int64{}, IntervalSeconds: 10,
+	}
+	push := fullPush()
+	push.Data.Membership = membership(120, true)
+	if err := push.ValidateAgainst(manifest); err == nil || !strings.Contains(err.Error(), "data.membership is not enabled") {
+		t.Fatalf("ValidateAgainst() = %v, want the gate", err)
+	}
+	manifest.Membership = true
+	if err := push.ValidateAgainst(manifest); err != nil {
+		t.Fatalf("ValidateAgainst() with the flag = %v", err)
+	}
+	encoded, _ := json.Marshal(push.Data)
+	if !strings.Contains(string(encoded), `"membership":{"days":120,"member":true}`) {
+		t.Fatalf("wire shape: %s", encoded)
+	}
+}

@@ -12,21 +12,22 @@ import (
 
 // OSRS accounts tracked by a user. One user may track several accounts.
 type Account struct {
-	ID            string             `json:"id"`
-	UserID        string             `json:"user_id"`
-	Rsn           string             `json:"rsn"`
-	RsnNormalized string             `json:"rsn_normalized"`
-	Mode          string             `json:"mode"`
-	GuideID       string             `json:"guide_id"`
-	Layer         string             `json:"layer"`
-	WomPlayerID   pgtype.Int8        `json:"wom_player_id"`
-	NameHistory   json.RawMessage    `json:"name_history"`
-	Active        bool               `json:"active"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt     pgtype.Timestamptz `json:"updated_at"`
+	ID            string `json:"id"`
+	UserID        string `json:"user_id"`
+	Rsn           string `json:"rsn"`
+	RsnNormalized string `json:"rsn_normalized"`
+	Mode          string `json:"mode"`
+	// The route the account follows (content/); NULL: the account has no route.
+	GuideID     pgtype.Text        `json:"guide_id"`
+	Layer       string             `json:"layer"`
+	WomPlayerID pgtype.Int8        `json:"wom_player_id"`
+	NameHistory json.RawMessage    `json:"name_history"`
+	Active      bool               `json:"active"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	// The account may run a managed worker; true only while a game_sessions row exists (kept by internal/store/workers).
 	Managed bool `json:"managed"`
-	// The plan the account follows (docs/10 section 9); NULL is the route of guide_id.
+	// The plan the account follows (docs/10 section 9); NULL is the route of guide_id, or nothing without a route.
 	ActivePlanID pgtype.Text `json:"active_plan_id"`
 }
 
@@ -81,6 +82,15 @@ type ClientProfileSetting struct {
 	Value       string `json:"value"`
 }
 
+// The conductor's state per account (docs/12 section 12.5): off, idle, running (its job) or blocked (and why). No row is off.
+type ConductorState struct {
+	AccountID string             `json:"account_id"`
+	State     string             `json:"state"`
+	JobID     pgtype.Text        `json:"job_id"`
+	Reason    string             `json:"reason"`
+	Since     pgtype.Timestamptz `json:"since"`
+}
+
 // Minimal index of the loaded steps for event joins and orphan detection; written at boot.
 type ContentStep struct {
 	StepID    string `json:"step_id"`
@@ -101,6 +111,25 @@ type ContentVersion struct {
 	LoadedAt    pgtype.Timestamptz `json:"loaded_at"`
 	// {guide_id: {version, steps, objectives, annotated_steps}}
 	Summary json.RawMessage `json:"summary"`
+}
+
+// Durable, append-only log the server's consumers react to (docs/12 section 13.4); an event says "changed", the consumer reads the state. Ids follow the inserts, not the commits: writers hold the shared advisory lock 7123001 from the insert to the commit and a reader takes it exclusively, so it never reads past an event still uncommitted.
+type Event struct {
+	ID        int64              `json:"id"`
+	AccountID string             `json:"account_id"`
+	Type      string             `json:"type"`
+	Subject   string             `json:"subject"`
+	Payload   json.RawMessage    `json:"payload"`
+	At        pgtype.Timestamptz `json:"at"`
+	// The job the event is about (its own events and its runs'), for the job's detail; NULL for the rest.
+	JobID pgtype.Text `json:"job_id"`
+}
+
+// The last event each consumer handled; it resumes from there after a restart.
+type EventCursor struct {
+	Consumer  string             `json:"consumer"`
+	LastID    int64              `json:"last_id"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
 // Encrypted Jagex game session of an account (docs/11 section 4.2); leaves the server only through the link, to the agent of that account.
@@ -156,6 +185,39 @@ type IngestContainerFreshness struct {
 	LiveEpoch  pgtype.Text        `json:"live_epoch"`
 	SnapshotID string             `json:"snapshot_id"`
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ItemPrice struct {
+	ItemID    int32              `json:"item_id"`
+	High      pgtype.Int8        `json:"high"`
+	HighAt    pgtype.Timestamptz `json:"high_at"`
+	Low       pgtype.Int8        `json:"low"`
+	LowAt     pgtype.Timestamptz `json:"low_at"`
+	BuyLimit  pgtype.Int4        `json:"buy_limit"`
+	Members   pgtype.Bool        `json:"members"`
+	Source    string             `json:"source"`
+	FetchedAt pgtype.Timestamptz `json:"fetched_at"`
+}
+
+// What the account is made to do (docs/12 section 13): an intent with a state and a progress measured from the facts; each attempt is a run.
+type Job struct {
+	ID          string             `json:"id"`
+	AccountID   string             `json:"account_id"`
+	Kind        string             `json:"kind"`
+	Spec        json.RawMessage    `json:"spec"`
+	Goal        json.RawMessage    `json:"goal"`
+	Metric      json.RawMessage    `json:"metric"`
+	Progress    json.RawMessage    `json:"progress"`
+	StallAfterS int32              `json:"stall_after_s"`
+	State       string             `json:"state"`
+	Reason      string             `json:"reason"`
+	Source      string             `json:"source"`
+	PlanID      pgtype.Text        `json:"plan_id"`
+	TaskKey     pgtype.Text        `json:"task_key"`
+	DeadlineAt  pgtype.Timestamptz `json:"deadline_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	StartedAt   pgtype.Timestamptz `json:"started_at"`
+	FinishedAt  pgtype.Timestamptz `json:"finished_at"`
 }
 
 // The owner's marks on the items of a leg's loadout, per (guide, segment): they count as satisfied when readiness is computed, but are not evidence (holdings and player_state are untouched).
@@ -347,6 +409,8 @@ type RoutineRun struct {
 	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
 	// The typed task of a task run (agent.RunTask: plan, key, type, label); NULL for a plugin run.
 	Task json.RawMessage `json:"task"`
+	// The job this run attempts; NULL for the runs the owner starts by hand without an objective.
+	JobID pgtype.Text `json:"job_id"`
 }
 
 type RunEvent struct {

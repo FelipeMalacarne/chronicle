@@ -43,3 +43,34 @@ func TestRules(t *testing.T) {
 		}
 	}
 }
+
+func TestCheckPluginSettings(t *testing.T) {
+	ok := []Setting{{"MicroTutIsland", "toggleMusic", "false"}, {"microtutisland", "toggleRoofs", "true"}}
+	for _, c := range []struct {
+		name  string
+		class string
+		list  []Setting
+		want  string
+	}{
+		{"the tutorial's toggles", TutorialIslandClass, ok, ""},
+		{"none", TutorialIslandClass, nil, ""},
+		{"a key the plugin lacks", TutorialIslandClass, []Setting{{"MicroTutIsland", "ironman", "true"}}, "not a setting"},
+		{"another group", TutorialIslandClass, []Setting{{"other", "toggleMusic", "true"}}, "not a setting"},
+		{"a value off the toggle", TutorialIslandClass, []Setting{{"MicroTutIsland", "toggleMusic", "1"}}, "true, false"},
+		{"the general rules still apply", TutorialIslandClass, []Setting{{"runelite", "toggleMusic", "true"}}, "not edited"},
+		{"an unknown plugin takes any valid setting", "a.b.OtherPlugin", []Setting{{"other", "mode", "FAST"}}, ""},
+		{"and not a secret", "a.b.OtherPlugin", []Setting{{"other", "token", "x"}}, "secret"},
+	} {
+		err := CheckPluginSettings(c.class, c.list)
+		if (c.want == "") != (err == nil) || (err != nil && !strings.Contains(err.Error(), c.want)) {
+			t.Errorf("%s: %v, want %q", c.name, err, c.want)
+		}
+	}
+	// Whatever the tutorial plugin may be set to, none of it is a pinned or
+	// ironman setting: its keys are quality-of-life toggles only.
+	for k := range KnownPlugins[TutorialIslandClass].Keys {
+		if !strings.HasPrefix(k, "toggle") {
+			t.Errorf("the tutorial plugin may set %q, which is not a toggle", k)
+		}
+	}
+}

@@ -493,8 +493,8 @@ nenhum plugin manda, passa a substituir só os fatos dele (chave = id do item), 
 O `GET /api/account/state` ganha `collection_log_pages`: por aba e título, os itens obtidos (com
 quantos), os que faltam, os totais e a fonte com a idade. Página nunca aberta não aparece, então os
 itens dela ficam desconhecidos, nunca "faltando". Os contadores do jogo (`collection_log`) continuam
-à parte, pelos varps. A tela Conta ainda não mostra as páginas: o desenho vai para o canvas antes
-(regra 11).
+à parte, pelos varps. A tela Conta ainda não mostra as páginas; o desenho vem antes no canvas
+(regra 11; FEL-54).
 
 Um plugin 1.11 ignora a flag nova. Um servidor anterior não a anuncia, e o 1.12 não manda o campo. A
 `manifest_version` muda, então os plugins em uso buscam o manifest de novo e mandam um `full`.
@@ -520,6 +520,21 @@ na instância do plugin, então com ele só `active` é conhecido. O agent lê `
 (só quando a ponte respondeu a versão) e devolve `break: {active, in_s, left_s}`, ausente quando a
 ponte não responde.
 
+**Janelas de mensagem do cliente** (Chronicle Link 1.19.0, FEL-134). Quando um script desiste de
+alcançar um NPC ou objeto, o Microbot pausa todos os scripts (`Microbot.pauseAllScripts`) e abre um
+`JOptionPane` modal ("Your bot tried to interact with an NPC for 3 times but failed…"). A thread do
+script fica esperando o OK. Num worker ninguém vê essa janela, e o screenshot da API mostra só o
+canvas. A ponte ganha duas rotas, com as mesmas checagens das outras:
+
+- `GET /bridge/client/messages`: o texto das janelas abertas, `{"messages": [...]}`;
+- `POST /bridge/client/messages/close`: fecha as janelas e, quando fechou alguma, tira a pausa
+  `pauseAllScripts` que veio com ela. A pausa da barra do cliente (`ScriptPauseController`) é outra
+  e continua.
+
+A cada volta da supervisão de um run que delega a um plugin (job `plugin`, treino, quest), o agent
+lê as janelas. Se houver alguma, ele a fecha, anota o texto na trilha e termina o run `failed` com
+esse texto, em vez de esperar o teto do run. Uma ponte anterior à 1.19.0 responde 404 e nada muda.
+
 **Verificação:**
 
 - JUnit (`CollectionLogTest`, `AgentBridgeTest`): os ids iguais aos do `ChatCommandsPlugin`, título
@@ -533,15 +548,7 @@ ponte não responde.
 - `TestCollectionLogAccountStatePostgres`, do push até a Conta.
 - `TestStatusReadsTheBridgeVersion` e `TestParseBreak` no agent.
 
-**Não conferido no jogo:**
-
-- abrir o log e ver as páginas chegarem;
-- a aba pela lista visível;
-- o que o cabeçalho mostra durante a busca do log (Search): se mostrar outro título, o plugin grava
-  uma página com esse nome;
-- a quantidade de um item obtido mais de uma vez;
-- o adventure log de outro jogador numa casa;
-- o `/bridge/break` com o Break Handler (e o V2) num break de verdade.
+**Não conferido no jogo:** FEL-53.
 
 ## Adendo de 2026-11-13: gravação por demonstração (Chronicle Link 1.13.0, fase 2 do doc 10)
 
@@ -601,9 +608,9 @@ vez. O dono lê com `GET /api/account/recording?account=&since=&until=&limit=` e
 `DELETE /api/account/recording?account=&recording=`, as duas atrás de `authed` + `accountParam`
 (regra 10); na CLI, `chronicle recording [--since 2h] [-o arquivo]` e `chronicle recording delete --yes`.
 
-**Privacidade, decisões conservadoras** (pendentes do dono): só o que o dono faz, nada de outros
-jogadores ou chat; opt-in, desligado por padrão; a gravação fica até o dono apagar (não há expiração
-automática, por falta de decisão). Ver o doc 10, seção 14 (E11 a E13).
+**Privacidade, decisões conservadoras** (confirmadas pelo dono em 2026-11-14): só o que o dono faz,
+nada de outros jogadores ou chat; opt-in, desligado por padrão; a gravação fica até o dono apagar (não
+há expiração automática). Ver o doc 10, seção 14 (E11 a E13).
 
 Um plugin 1.12 ignora a flag nova; um servidor anterior não a anuncia e o 1.13 não manda o campo. A
 `manifest_version` muda, então os plugins em uso buscam o manifest de novo e mandam um `full`.
@@ -615,9 +622,7 @@ pacote; no servidor, a tabela de validação de `recording`, o portão do manife
 `TestRecordingPostgres` (um evento por `(recording, seq)` com reenvio, o `raw` sem a gravação, leitura
 paginada e apagar) e as rotas (dev, oidc com CSRF no DELETE e fora dos dois).
 
-**Não conferido no jogo:** a escolha de diálogo pela tecla (o evento do script do ouvinte de teclas),
-as diferenças do banco e da loja com a interface real, o tile do objeto numa instância e o volume de
-eventos de uma sessão longa.
+**Não conferido no jogo:** FEL-106.
 
 ## Adendo de 2026-11-13: modo assistido no painel (Chronicle Link 1.14.0, fase 2 do doc 10)
 
@@ -645,8 +650,7 @@ motivo e se a tarefa veio de uma receita.
 **Verificação:** `TestAssistedModeTasks` e `TestAssistedModeWire` no servidor (este grava
 `route-tasks.json` nos recursos de teste do plugin), `RouteWindowTest` no plugin lendo o mesmo arquivo
 (156 testes JUnit) e o render sem tela do painel (`RoutePanelRenderTest`, variante `-tarefas`).
-**Não conferido no jogo**: a lista com as tarefas reais, que só existem depois da gravação e da
-confirmação do dono.
+**Não conferido no jogo:** FEL-106.
 
 ## Adendo de 2026-11-13: executor de tarefas (Chronicle Link 1.15.0, fase 3 do doc 10)
 
@@ -713,7 +717,7 @@ término: a posição na área exige **"Send position" ligado**; o banco e a com
     sem efeito, lotes da loja, sem estoque, compra sem efeito, sem lojista;
   - `TaskBridgeTest` cobre as rotas da ponte: começar, ler, uma por vez, cancelar, recusar, sem token,
     sem executor.
-- **Não conferido no jogo:** nada da máquina rodou no cliente (doc 10, seção 13, o que falta ao dono).
+- **Não conferido no jogo:** FEL-107.
 
 ## Adendo de 2026-11-16: contadores de minigame (Chronicle Link 1.16.0)
 
@@ -740,4 +744,29 @@ e o 1.16 não manda o campo.
 
 Verificação: testes JUnit (`MinigameTest`: o número do widget, a flag, o `full` e o `delta`; 177 no
 pacote) e, no servidor, `TestMinigameValidation`, `TestMinigameNeedsManifest`, `TestMinigamePostgres`
-e o fixture de contrato `account-state`. Falta conferir no jogo com o 1.16 instalado.
+e o fixture de contrato `account-state`. Não conferido no jogo: FEL-53.
+
+## Adendo de 2026-11-24: membership (Chronicle Link 1.18.0)
+
+O jogo guarda os dias de membership que restam no varp `ACCOUNT_CREDIT` (1780) e marca o membro no varc
+`PLAYERMEMBER`; um membro pode ter 0 dias, então a conta é membro quando um dos dois diz que é. O
+Chronicle Link lê os dois (`MembershipReading`) e os manda ao planner. Contrato v1, campo opcional com
+flag no manifest (spec no doc 04, seção 6.4):
+
+| Campo do push | Flag do manifest | Conteúdo |
+|---|---|---|
+| `data.membership` | `membership` | `{"days": 0..36500, "member": bool}` |
+
+Os dois valores chegam como 0 até o servidor do jogo os enviar depois do login, o que é igual a uma conta
+free-to-play. Por isso o plugin só informa a faceta depois de 10 ticks logado (cerca de 6 s, mais que a
+espera de 3 ticks das outras facetas) e com o personagem local presente; antes disso o campo some do push.
+O valor acima do limite do servidor é cortado no plugin. A faceta é um valor só: em `full` e em `delta`
+o que chega substitui o guardado, e um push sem o campo o deixa como estava. No `delta` o campo vai quando
+muda (os dias caem uma vez por dia) e nunca pede `full`.
+
+O servidor grava a faceta `membership` (migration 0028), chave `membership`, valor `{"days","member"}`. Um
+plugin 1.17 ignora a flag nova; um servidor anterior não a anuncia e o 1.18 não manda o campo.
+
+Verificação: testes JUnit (`MembershipTest`: a regra de espera, membro com 0 dias, o corte dos dias, a
+flag, o `full` e o `delta`) e, no servidor, `TestMembershipValidation`, `TestMembershipNeedsManifest` e
+`TestMembershipPostgres`. Falta conferir no jogo com o 1.18 instalado.

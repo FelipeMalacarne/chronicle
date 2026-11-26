@@ -41,9 +41,11 @@ type taskBridge struct {
 	events   []map[string]any
 	script   []taskStep
 	canceled []string
-	refuse   error // the start's answer
-	lost     bool  // answer another task's id
-	down     bool  // stop answering /bridge/task
+	refuse   error    // the start's answer
+	lost     bool     // answer another task's id
+	down     bool     // stop answering /bridge/task
+	messages []string // the client's message windows (FEL-134)
+	closes   int      // the closes asked
 }
 
 type taskStep struct {
@@ -89,6 +91,14 @@ func (b *taskBridge) JSON(_ context.Context, method, path string, _ url.Values, 
 		}
 		out, _ := json.Marshal(map[string]any{"id": id, "type": "travel", "state": b.state, "reason": b.reason, "events": b.events})
 		return out, nil
+	case "GET /bridge/client/messages":
+		out, _ := json.Marshal(map[string]any{"messages": b.messages})
+		return out, nil
+	case "POST /bridge/client/messages/close":
+		out, _ := json.Marshal(map[string]any{"closed": b.messages})
+		b.messages = nil
+		b.closes++
+		return out, nil
 	case "POST /bridge/task/cancel":
 		m, _ := body.(map[string]any)
 		id, _ := m["id"].(string)
@@ -133,6 +143,7 @@ func TestValidateTaskRun(t *testing.T) {
 		travelParams("ironman", []string{"wilderness"}, false, mageBankTravel()),
 		travelParams("hcim", []string{"wilderness"}, true, mageBankTravel()),
 		travelParams("hcim", []string{"item_loss"}, false, lumbridge()),
+		travelParams("regular", []string{"wilderness"}, false, mageBankTravel()),
 	}
 	for i, p := range ok {
 		if _, err := ValidateParams(CmdTaskRun, raw(t, p)); err != nil {
@@ -154,7 +165,7 @@ func TestValidateTaskRun(t *testing.T) {
 		{"hcim in the wilderness alone", travelParams("hcim", []string{"wilderness"}, false, mageBankTravel()), "supervised"},
 		{"hcim and a recipe's combat alone", travelParams("hcim", []string{"combat"}, false, lumbridge()), "supervised"},
 		{"the wilderness undeclared", travelParams("ironman", nil, false, mageBankTravel()), "not declared"},
-		{"mode", mod(func(p *TaskRunParams) { p.Mode = "regular" }), "mode"},
+		{"mode", mod(func(p *TaskRunParams) { p.Mode = "main" }), "mode"},
 		{"risk", mod(func(p *TaskRunParams) { p.Risks = []string{"pking"} }), "risk"},
 		{"repeated risk", mod(func(p *TaskRunParams) { p.Risks = []string{"combat", "combat"} }), "repeated"},
 		{"key", mod(func(p *TaskRunParams) { p.Key = "1.1.3" }), "bad key"},

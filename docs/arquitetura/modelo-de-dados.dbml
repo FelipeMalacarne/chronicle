@@ -35,7 +35,7 @@ Table accounts {
   rsn text [not null, note: 'current name as shown on hiscores']
   rsn_normalized text [not null, note: 'lower-case, spaces -> \'_\' (lookup key)']
   mode text [not null]
-  guide_id text [not null, note: 'active guide (content/)']
+  guide_id text [note: 'The route the account follows (content/); NULL: the account has no route.']
   layer text [not null, default: `'enhanced'::text`]
   wom_player_id bigint [note: 'Wise Old Man id, when linked']
   name_history jsonb [not null, default: `'[]'::jsonb`, note: '[{rsn, from, to, detected_by}]']
@@ -43,7 +43,7 @@ Table accounts {
   created_at timestamptz [not null, default: `now()`]
   updated_at timestamptz [not null, default: `now()`]
   managed boolean [not null, default: `false`, note: 'The account may run a managed worker; true only while a game_sessions row exists (kept by internal/store/workers).']
-  active_plan_id text [note: 'The plan the account follows (docs/10 section 9); NULL is the route of guide_id.']
+  active_plan_id text [note: 'The plan the account follows (docs/10 section 9); NULL is the route of guide_id, or nothing without a route.']
 
   indexes {
     (user_id, rsn_normalized) [unique]
@@ -52,7 +52,7 @@ Table accounts {
   Note: '''
   OSRS accounts tracked by a user. One user may track several accounts.
   accounts_layer_check: CHECK ((layer = ANY (ARRAY['classic'::text, 'enhanced'::text])))
-  accounts_mode_check: CHECK ((mode = ANY (ARRAY['ironman'::text, 'hcim'::text, 'uim'::text, 'gim'::text])))
+  accounts_mode_check: CHECK ((mode = ANY (ARRAY['ironman'::text, 'hcim'::text, 'uim'::text, 'gim'::text, 'regular'::text])))
   '''
 }
 
@@ -124,6 +124,20 @@ Table client_profiles {
   '''
 }
 
+Table conductor_state {
+  account_id text [pk]
+  state text [not null]
+  job_id text
+  reason text [not null, default: `''::text`]
+  since timestamptz [not null, default: `now()`]
+
+  Note: '''
+  The conductor's state per account (docs/12 section 12.5): off, idle, running (its job) or blocked (and why). No row is off.
+  conductor_state_check: CHECK (((state <> 'running'::text) OR (job_id IS NOT NULL)))
+  conductor_state_state_check: CHECK ((state = ANY (ARRAY['off'::text, 'idle'::text, 'running'::text, 'blocked'::text])))
+  '''
+}
+
 Table content_steps {
   step_id text [not null]
   guide_id text [not null]
@@ -151,6 +165,39 @@ Table content_versions {
 
   Note: '''
   Every content bundle that was ever loaded by `ironman serve`.
+  '''
+}
+
+Table event_cursors {
+  consumer text [pk]
+  last_id bigint [not null, default: `0`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: '''
+  The last event each consumer handled; it resumes from there after a restart.
+  event_cursors_consumer_check: CHECK (((length(consumer) >= 1) AND (length(consumer) <= 64)))
+  event_cursors_last_id_check: CHECK ((last_id >= 0))
+  '''
+}
+
+Table events {
+  id bigint [pk, default: `nextval('events_id_seq'::regclass)`]
+  account_id text [not null]
+  type text [not null]
+  subject text [not null, default: `''::text`]
+  payload jsonb [not null, default: `'{}'::jsonb`]
+  at timestamptz [not null, default: `now()`]
+  job_id text [note: 'The job the event is about (its own events and its runs\'), for the job\'s detail; NULL for the rest.']
+
+  indexes {
+    (account_id, id) [name: 'events_account_idx']
+    `at) WHERE (type = 'fact.changed'::text` [name: 'events_fact_changed_at_idx']
+    `job_id, id) WHERE (job_id IS NOT NULL` [name: 'events_job_idx']
+  }
+
+  Note: '''
+  Durable, append-only log the server's consumers react to (docs/12 section 13.4); an event says "changed", the consumer reads the state. Ids follow the inserts, not the commits: writers hold the shared advisory lock 7123001 from the insert to the commit and a reader takes it exclusively, so it never reads past an event still uncommitted.
+  events_type_check: CHECK ((type ~ '^[a-z]+(\.[a-z]+)+$'::text))
   '''
 }
 
@@ -234,6 +281,67 @@ Table ingest_container_freshness {
   ingest_container_freshness_container_check: CHECK ((container = ANY (ARRAY['bank'::text, 'inventory'::text, 'equipment'::text])))
   ingest_container_freshness_shape: CHECK ((((state = 'unavailable'::text) AND (revision IS NULL) AND (live_epoch IS NULL)) OR ((state = 'restored'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (live_epoch IS NULL)) OR ((state = 'live'::text) AND (revision IS NOT NULL) AND (revision >= 0) AND (length(live_epoch) > 0))))
   ingest_container_freshness_state_check: CHECK ((state = ANY (ARRAY['unavailable'::text, 'restored'::text, 'live'::text])))
+  '''
+}
+
+Table item_prices {
+  item_id integer [pk]
+  high bigint
+  high_at timestamptz
+  low bigint
+  low_at timestamptz
+  buy_limit integer
+  members boolean
+  source text [not null]
+  fetched_at timestamptz [not null]
+
+  Note: '''
+  item_prices_buy_limit_check: CHECK ((buy_limit > 0))
+  item_prices_check: CHECK (((high IS NULL) = (high_at IS NULL)))
+  item_prices_check1: CHECK (((low IS NULL) = (low_at IS NULL)))
+  item_prices_check2: CHECK (((high IS NOT NULL) OR (low IS NOT NULL)))
+  item_prices_high_check: CHECK ((high > 0))
+  item_prices_item_id_check: CHECK ((item_id > 0))
+  item_prices_low_check: CHECK ((low > 0))
+  item_prices_source_check: CHECK ((source = 'wiki'::text))
+  '''
+}
+
+Table jobs {
+  id text [pk]
+  account_id text [not null]
+  kind text [not null]
+  spec jsonb [not null, default: `'{}'::jsonb`]
+  goal jsonb [not null]
+  metric jsonb
+  progress jsonb
+  stall_after_s integer [not null]
+  state text [not null, default: `'queued'::text`]
+  reason text [not null, default: `''::text`]
+  source text [not null]
+  plan_id text
+  task_key text
+  deadline_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+  started_at timestamptz
+  finished_at timestamptz
+
+  indexes {
+    (account_id, created_at) [name: 'jobs_account_created_idx']
+    `account_id) WHERE (state = ANY (ARRAY['queued'::text, 'running'::text, 'stalled'::text])` [name: 'jobs_active_idx']
+    `deadline_at) WHERE (deadline_at IS NOT NULL` [name: 'jobs_deadline_idx']
+    `account_id, plan_id, task_key, created_at DESC) WHERE (task_key IS NOT NULL` [name: 'jobs_plan_task_idx']
+  }
+
+  Note: '''
+  What the account is made to do (docs/12 section 13): an intent with a state and a progress measured from the facts; each attempt is a run.
+  jobs_check: CHECK (((state = ANY (ARRAY['succeeded'::text, 'failed'::text, 'canceled'::text])) = (finished_at IS NOT NULL)))
+  jobs_check1: CHECK (((deadline_at IS NULL) OR (state = 'running'::text)))
+  jobs_id_check: CHECK ((id ~ '^job_[0-9a-f]{16}$'::text))
+  jobs_kind_check: CHECK ((kind = ANY (ARRAY['plugin'::text, 'train'::text, 'quest'::text, 'travel'::text, 'bank'::text, 'buy'::text, 'ge_buy'::text, 'ge_sell'::text])))
+  jobs_source_check: CHECK ((source = ANY (ARRAY['conductor'::text, 'owner'::text, 'routine'::text, 'test'::text])))
+  jobs_stall_after_s_check: CHECK (((stall_after_s >= 30) AND (stall_after_s <= 86400)))
+  jobs_state_check: CHECK ((state = ANY (ARRAY['queued'::text, 'running'::text, 'stalled'::text, 'succeeded'::text, 'failed'::text, 'canceled'::text])))
   '''
 }
 
@@ -386,7 +494,7 @@ Table observations {
 
   Note: '''
   Last observation of each source per fact; player_state is its merge (internal/core/facts).
-  observations_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text])))
+  observations_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text, 'membership'::text])))
   observations_source_check: CHECK ((source = ANY (ARRAY['hiscores'::text, 'wom'::text, 'wikisync'::text, 'plugin'::text, 'import'::text])))
   '''
 }
@@ -454,7 +562,7 @@ Table player_state {
 
   Note: '''
   Projection: the merge of observations per fact (internal/core/facts.Merge). Written only by the projection.
-  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text])))
+  player_state_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text, 'membership'::text])))
   '''
 }
 
@@ -543,9 +651,11 @@ Table routine_runs {
   trail_len integer [not null, default: `0`]
   updated_at timestamptz [not null, default: `now()`]
   task jsonb [note: 'The typed task of a task run (agent.RunTask: plan, key, type, label); NULL for a plugin run.']
+  job_id text [note: 'The job this run attempts; NULL for the runs the owner starts by hand without an objective.']
 
   indexes {
     (account_id, started_at) [name: 'routine_runs_account_started_idx']
+    `job_id) WHERE (job_id IS NOT NULL` [name: 'routine_runs_job_idx']
     (routine_id, started_at) [name: 'routine_runs_routine_started_idx']
   }
 
@@ -642,7 +752,7 @@ Table snapshot_facts {
 
   Note: '''
   Normalized facts of one snapshot, with the shape of player_state (history for charts and diffs).
-  snapshot_facts_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text])))
+  snapshot_facts_facet_check: CHECK ((facet = ANY (ARRAY['skill'::text, 'activity'::text, 'quest'::text, 'diary'::text, 'diary_task'::text, 'combat_achievement'::text, 'collection_log'::text, 'varbit'::text, 'varp'::text, 'item'::text, 'timer'::text, 'position'::text, 'minigame'::text, 'membership'::text])))
   '''
 }
 
@@ -849,14 +959,18 @@ Ref client_profile_plugins_profile_id_fkey: client_profile_plugins.profile_id > 
 Ref client_profile_settings_profile_id_fkey: client_profile_settings.profile_id > client_profiles.id [delete: cascade]
 Ref client_profiles_parent_id_fkey: client_profiles.parent_id > client_profiles.id [delete: restrict]
 Ref client_profiles_user_id_fkey: client_profiles.user_id > users.id [delete: cascade]
+Ref conductor_state_account_id_fkey: conductor_state.account_id > accounts.id [delete: cascade]
+Ref conductor_state_job_id_fkey: conductor_state.job_id > jobs.id [delete: set null]
 Ref content_steps_content_version_id_fkey: content_steps.content_version_id > content_versions.id
 Ref content_steps_guide_fkey: content_steps.guide_id > guides.id
+Ref events_account_id_fkey: events.account_id > accounts.id [delete: cascade]
 Ref game_sessions_account_id_fkey: game_sessions.account_id > accounts.id [delete: cascade]
 Ref goals_account_id_fkey: goals.account_id > accounts.id [delete: cascade]
 Ref graph_cache_content_version_id_fkey: graph_cache.content_version_id > content_versions.id
 Ref ingest_container_freshness_account_id_fkey: ingest_container_freshness.account_id > accounts.id [delete: cascade]
 Ref ingest_container_freshness_snapshot_id_fkey: ingest_container_freshness.snapshot_id > snapshots.id
 Ref ingest_container_freshness_snapshot_same_account: ingest_container_freshness.(snapshot_id, account_id) > snapshots.(id, account_id)
+Ref jobs_account_id_fkey: jobs.account_id > accounts.id [delete: cascade]
 Ref loadout_marks_account_id_fkey: loadout_marks.account_id > accounts.id [delete: cascade]
 Ref mark_commands_account_id_fkey: mark_commands.account_id > accounts.id [delete: cascade]
 Ref mark_commands_guide_id_fkey: mark_commands.guide_id > guides.id
@@ -882,6 +996,7 @@ Ref recorded_events_snapshot_fk: recorded_events.(snapshot_id, account_id) > sna
 Ref route_cursor_account_id_fkey: route_cursor.account_id > accounts.id [delete: cascade]
 Ref route_cursor_guide_fkey: route_cursor.guide_id > guides.id
 Ref routine_runs_account_id_fkey: routine_runs.account_id > accounts.id [delete: cascade]
+Ref routine_runs_job_id_fkey: routine_runs.job_id > jobs.id [delete: set null]
 Ref routine_runs_routine_id_fkey: routine_runs.routine_id > routines.id [delete: set null]
 Ref routines_account_id_fkey: routines.account_id > accounts.id [delete: cascade]
 Ref run_events_run_id_fkey: run_events.run_id > routine_runs.id [delete: cascade]
@@ -952,6 +1067,13 @@ TableGroup planos {
   plan_items
 }
 
+TableGroup jobs_e_eventos {
+  jobs
+  events
+  event_cursors
+  conductor_state
+}
+
 TableGroup controle_microbot {
   microbot_audit
   game_sessions
@@ -966,6 +1088,7 @@ TableGroup controle_microbot {
   run_events
 }
 
+// Tabelas sem grupo (adicione em GROUPS no gerador): item_prices
 // Views (fora do DBML): v_current_quests, v_current_skills
 
 // ===== PLANEJADO (doc 09) =====

@@ -74,10 +74,13 @@ const (
 	ModeHCIM    = "hcim"
 	ModeUIM     = "uim"
 	ModeGIM     = "gim"
+	// ModeRegular is a non-ironman account (docs/12): like an ironman for
+	// everything but the Grand Exchange, which it may use.
+	ModeRegular = "regular"
 )
 
 // Modes lists the account modes.
-var Modes = []string{ModeIronman, ModeHCIM, ModeUIM, ModeGIM}
+var Modes = []string{ModeIronman, ModeHCIM, ModeUIM, ModeGIM, ModeRegular}
 
 // Deadly reports whether the risk can kill the character.
 func (r Risk) Deadly() bool { return r.Kind != RiskItemLoss }
@@ -236,6 +239,7 @@ func CheckRecipe(r *Recipe, reg *entities.Registry) Errors {
 			add(vPtr+"/tasks", "a variant needs tasks")
 			continue
 		}
+		ctx.Modes = v.Modes
 		for ti, t := range v.Tasks {
 			for _, msg := range t.Check(reg, ctx) {
 				add(vPtr+taskPointer(ti), "%s", msg)

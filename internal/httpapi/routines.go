@@ -16,6 +16,8 @@ type RoutineStore interface {
 	Triggers(ctx context.Context, account string) ([]agent.Trigger, error)
 	PutTrigger(ctx context.Context, account string, t agent.Trigger) ([]agent.Trigger, error)
 	Runs(ctx context.Context, account string, limit int) ([]agent.Run, error)
+	// RunsOfJob lists the runs that attempted a job (docs/12 section 13).
+	RunsOfJob(ctx context.Context, account, jobID string) ([]agent.Run, error)
 	// The recurring routines (docs/08 phase 4, delivery 4).
 	Recurring(ctx context.Context, account string) ([]agent.Recurring, error)
 	PutRecurring(ctx context.Context, account string, rc agent.Recurring) (string, []agent.Recurring, error)

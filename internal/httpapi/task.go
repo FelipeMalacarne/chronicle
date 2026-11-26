@@ -10,8 +10,10 @@ import (
 	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
+	"github.com/FelipeMalacarne/chronicle/internal/core/ge"
 	"github.com/FelipeMalacarne/chronicle/internal/core/plan"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
@@ -25,7 +27,17 @@ import (
 // quest are delegated (to a plugin of the client, to the client's Quest
 // Helper): the server asks the account's agent first whether its client can
 // (the plugin installed; the Quest Helper on, idle and listing the quest)
-// and refuses with 409, before anything reaches the game.
+// and refuses with 409, before anything reaches the game. A ge_buy or
+// ge_sell (a regular account only, docs/12 section 6) is priced from the
+// stored wiki price of its item. Each run attempts a job (docs/12 section 13):
+// the server creates it with the goal that proves the task, and the job
+// tracker ends it on the ingest; a task proven by its job stays done, which
+// the plan reads (plan.Input.TasksProven).
+
+// PriceStore reads stored Grand Exchange prices (internal/store/prices).
+type PriceStore interface {
+	Get(ctx context.Context, ids ...int) (map[int]ge.Price, error)
+}
 
 // taskRequest is POST /api/microbot/task.
 type taskRequest struct {
@@ -51,33 +63,85 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 	if r.ContentLength != 0 && !decodeBody(w, r, &req) {
 		return
 	}
-	in, err := s.planInput(r.Context(), account)
-	if err != nil {
+	d, err := s.dispatchTask(r.Context(), account, req, auditor{actor: sessionUser(r), origin: "web"})
+	var refused *taskRefusal
+	switch {
+	case errors.As(err, &refused):
+		writeJSON(w, http.StatusConflict, map[string]any{"error": refused.msg, "status": http.StatusConflict, "plan": refused.next})
+	case errors.Is(err, errAgentTooOld):
+		writeError(w, http.StatusConflict, err.Error())
+	case errors.Is(err, errTaskInvalid):
+		writeError(w, http.StatusBadRequest, err.Error())
+	case errors.Is(err, errReadingPlan):
 		s.writePlanError(w, err)
-		return
+	case errors.Is(err, errReadingPrice):
+		writeError(w, http.StatusInternalServerError, "reading the item's price")
+	case err != nil:
+		s.writeMicrobotError(w, err)
+	default:
+		writeJSON(w, http.StatusOK, map[string]any{"ok": true, "result": d.result, "task": d.view, "job": d.job})
+	}
+}
+
+// taskDispatch is a task the account's agent took.
+type taskDispatch struct {
+	result json.RawMessage
+	view   plan.TaskView
+	job    string
+}
+
+// taskRefusal is a task the server did not send: the plan has none to run,
+// it changed, or the client cannot run it. It carries the plan as it is.
+type taskRefusal struct {
+	msg  string
+	next plan.Result
+}
+
+func (e *taskRefusal) Error() string { return e.msg }
+
+var (
+	errTaskInvalid  = errors.New("task_run")
+	errReadingPlan  = errors.New("reading the plan")
+	errReadingPrice = errors.New("reading the item's price")
+)
+
+// dispatchTask starts the next task of the account's active plan on its agent
+// (POST /api/microbot/task, and the conductor, docs/12 section 12.5): the
+// plan's next task, resolved to game ids, with the account's mode and the
+// risks, E9 applied, the client asked first whether it can, and the job its
+// run attempts. The attempt goes to the audit as who, whatever its result.
+func (s *Server) dispatchTask(ctx context.Context, account string, req taskRequest, who auditor) (taskDispatch, error) {
+	in, err := s.planInput(ctx, account)
+	if err != nil {
+		return taskDispatch{}, fmt.Errorf("%w: %w", errReadingPlan, err)
 	}
 	next := plan.Next(in)
-	refuse := func(msg string) {
-		writeJSON(w, http.StatusConflict, map[string]any{"error": msg, "status": http.StatusConflict, "plan": next})
-	}
+	refuse := func(msg string) (taskDispatch, error) { return taskDispatch{}, &taskRefusal{msg: msg, next: next} }
 	switch {
 	case next.Status != plan.StatusTask || next.Task == nil:
-		refuse("o plano não tem tarefa a executar agora (" + next.Status + "): " + next.Reason)
-		return
+		return refuse("o plano não tem tarefa a executar agora (" + next.Status + "): " + next.Reason)
 	case req.Key != "" && req.Key != next.Task.Key:
-		refuse("a próxima tarefa do plano mudou: agora é " + next.Task.Key)
-		return
+		return refuse("a próxima tarefa do plano mudou: agora é " + next.Task.Key)
 	case !next.Task.Executable:
-		refuse(next.Task.NotExecutable)
-		return
+		return refuse(next.Task.NotExecutable)
 	case next.Task.Supervised && !req.Supervised:
-		refuse("HCIM com risco de morte: a tarefa só roda com o dono olhando (supervised, E9)")
-		return
+		return refuse("HCIM com risco de morte: a tarefa só roda com o dono olhando (supervised, E9)")
+	}
+	if next.Task.Type == content.TaskGEBuy || next.Task.Type == content.TaskGESell {
+		id := 0
+		if it := next.Task.Task.Item; it != nil {
+			id, _ = it.Int()
+		}
+		if s.opts.Prices == nil || id < 1 {
+			return refuse("o servidor não tem preços do Grand Exchange")
+		}
+		if in.Prices, err = s.opts.Prices.Get(ctx, id); err != nil {
+			return taskDispatch{}, fmt.Errorf("%w: %w", errReadingPrice, err)
+		}
 	}
 	spec, view, err := plan.Resolve(in, next.Task.Key)
 	if err != nil {
-		refuse(err.Error())
-		return
+		return refuse(err.Error())
 	}
 	risks := slices.Clone(view.Risks)
 	for _, k := range spec.Risks() {
@@ -86,25 +150,34 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	slices.Sort(risks)
+	jobID := ""
+	var served agent.Info
 	build := func() (json.RawMessage, error) {
+		// An agent without the job_id feature refuses the field; the server
+		// links its run to the job when it reports it (RecordRun).
+		sentJobID := ""
+		if served.Has(agent.AgentFeatureJobID) {
+			sentJobID = jobID
+		}
 		params, _ := json.Marshal(agent.TaskRunParams{
-			Key: view.Key, Plan: in.Plan.ID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
+			Key: view.Key, Plan: in.Plan.ID, JobID: sentJobID, Label: view.Label, Mode: in.Facts.Mode, Risks: risks,
 			Supervised: req.Supervised, TimeoutS: req.TimeoutS, Account: account, Task: spec,
 		})
-		_, verr := agent.ValidateParams(agent.CmdTaskRun, params)
-		return params, verr
+		if _, verr := agent.ValidateParams(agent.CmdTaskRun, params); verr != nil {
+			return params, fmt.Errorf("%w: %w", errTaskInvalid, verr)
+		}
+		return params, nil
 	}
 	params, err := build()
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
+		return taskDispatch{}, err
 	}
 	link := s.opts.Microbot.Link
-	served, err := link.Route(account)
+	served, err = link.Route(account)
 	if err == nil && !served.Supports(agent.CmdTaskRun) {
 		err = errAgentTooOld
 	}
-	ctx, cancel := context.WithTimeout(r.Context(), 30*time.Second)
+	ctx, cancel := context.WithTimeout(ctx, 30*time.Second)
 	defer cancel()
 	if err == nil && spec.Train != nil {
 		// A train is delegated: the agent must end it on the server's
@@ -126,31 +199,35 @@ func (s *Server) handleTaskRun(w http.ResponseWriter, r *http.Request) {
 			params, err = build()
 		}
 	}
+	if err == nil && s.opts.Jobs != nil {
+		// The run attempts a job (docs/12 section 13): the intent, with the
+		// goal the tracker proves on the ingest; the run carries its id.
+		jobID, err = s.createTaskJob(ctx, account, in.Plan.ID, view.Key, next.Task.Task, spec, who.source())
+		if err == nil {
+			params, err = build()
+		}
+	}
 	var data json.RawMessage
 	if err == nil {
 		err = link.CallAgent(ctx, served.ID, agent.CmdTaskRun, json.RawMessage(params), &data)
 	}
-	s.auditMicrobot(r, account, served, agent.CmdTaskRun, params, err)
+	if err != nil && jobID != "" && notDelivered(err) {
+		s.dropTaskJob(account, jobID, err)
+	}
+	s.appendAudit(ctx, who, account, served, agent.CmdTaskRun, params, err)
 	var (
 		missing     *pluginMissingError
 		unavailable *questUnavailableError
 	)
 	switch {
-	case errors.Is(err, errAgentTooOld):
-		writeError(w, http.StatusConflict, err.Error())
-		return
 	case errors.As(err, &missing):
-		refuse(missing.Error())
-		return
+		return refuse(missing.Error())
 	case errors.As(err, &unavailable):
-		refuse(unavailable.Error())
-		return
+		return refuse(unavailable.Error())
+	case err != nil:
+		return taskDispatch{}, err
 	}
-	if err != nil {
-		s.writeMicrobotError(w, err)
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]any{"ok": true, "result": data, "task": view})
+	return taskDispatch{result: data, view: view, job: jobID}, nil
 }
 
 var errAgentTooOld = errors.New("the agent predates task_run: update chronicle on the game machine")
@@ -160,7 +237,7 @@ var errAgentTooOld = errors.New("the agent predates task_run: update chronicle o
 type pluginMissingError struct{ class string }
 
 func (e *pluginMissingError) Error() string {
-	return "o plugin " + e.class + " não está instalado no cliente da conta (pelo perfil da conta, pelo modelo da frota ou pelo Hub): instale antes de treinar"
+	return "o plugin " + e.class + " não está instalado no cliente da conta (pelo perfil da conta, pelo modelo da frota ou pelo Hub): instale antes de rodar"
 }
 
 // pluginInstalled asks the account's agent for the client's plugins (the

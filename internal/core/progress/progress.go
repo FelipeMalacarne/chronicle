@@ -7,6 +7,7 @@
 package progress
 
 import (
+	"errors"
 	"slices"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
@@ -86,9 +87,14 @@ type StepRef struct {
 	StepID  string
 }
 
+// ErrNoRoute: the account follows no route (accounts.guide_id NULL, docs/11
+// decision W10), so there is no cursor, route window or route plan to read.
+var ErrNoRoute = errors.New("account has no route")
+
 // Account is what the engine needs to know about the account.
 type Account struct {
-	// ActiveGuideID is the route the owner follows (accounts.guide_id).
+	// ActiveGuideID is the route the owner follows (accounts.guide_id); empty
+	// when the account has none: no guide is then active, so no cascade runs.
 	ActiveGuideID string
 	Layer         string
 	Mode          string

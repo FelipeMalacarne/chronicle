@@ -224,7 +224,7 @@ func (r *Repository) Accounts(ctx context.Context, userID string) ([]storeprogre
 	}
 	out := make([]storeprogress.AccountView, 0, len(rows))
 	for _, a := range rows {
-		out = append(out, storeprogress.AccountView{ID: a.ID, RSN: a.Rsn, Mode: a.Mode, GuideID: a.GuideID, Layer: a.Layer})
+		out = append(out, storeprogress.NewAccountView(a))
 	}
 	return out, nil
 }

@@ -50,6 +50,8 @@ func newRoot() *cobra.Command {
 		newRecordingCmd(),
 		newTaskCmd(),
 		newPlansCmd(),
+		newJobsCmd(),
+		newConductorCmd(),
 		newMCPCmd(),
 		newProgressCmd(),
 		newAgentCmd(),

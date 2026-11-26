@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
+	"github.com/FelipeMalacarne/chronicle/internal/core/ge"
+	"github.com/FelipeMalacarne/chronicle/internal/core/ingest"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
 )
@@ -20,9 +23,12 @@ var ErrNotATask = errors.New("plan: the key names no task of the plan")
 // (docs/10 section 10: the server decides what): the destination's area
 // and a target tile inside it, the bank items as candidate game ids with
 // quantities, the shop's keepers and how many to buy now, a train's plugin,
-// a quest and its name. It refuses what the executor does not run, a task
-// already met (nothing to do), a quest whose requirements are not proven
-// and what the catalog cannot resolve; it never guesses an id.
+// a quest and its name, a Grand Exchange offer and its price. It refuses
+// what the executor does not run (the Grand Exchange for an account that is
+// not regular included), a task already met (nothing to do), a quest whose
+// requirements are not proven, an offer without a recent price or the
+// inventory to back it, and what the catalog cannot resolve; it never
+// guesses an id.
 func Resolve(in Input, key string) (execspec.Task, TaskView, error) {
 	s, ok := in.locate(key)
 	if !ok {
@@ -55,6 +61,10 @@ func Resolve(in Input, key string) (execspec.Task, TaskView, error) {
 		out, err = in.resolveTrain(s.t)
 	case content.TaskQuest:
 		out, err = in.resolveQuest(s.t)
+	case content.TaskGEBuy:
+		out, err = in.resolveGEBuy(s.t)
+	case content.TaskGESell:
+		out, err = in.resolveGESell(s.t)
 	default:
 		err = fmt.Errorf("o executor não roda %s", s.t.Type)
 	}
@@ -63,6 +73,9 @@ func Resolve(in Input, key string) (execspec.Task, TaskView, error) {
 	}
 	if err := out.Check(); err != nil {
 		return execspec.Task{}, v, fmt.Errorf("a tarefa resolvida não passa na checagem: %w", err)
+	}
+	if err := out.CheckMode(in.Facts.Mode); err != nil {
+		return execspec.Task{}, v, err
 	}
 	return out, v, nil
 }
@@ -249,6 +262,102 @@ func (in Input) resolveQuest(t content.Task) (execspec.Task, error) {
 	return execspec.Task{Type: execspec.TypeQuest, Quest: &execspec.Quest{
 		Quest: t.Quest.String(), Name: in.name(*t.Quest), Helper: q.Name, Safe: t.Safe,
 	}}, nil
+}
+
+// resolveGEBuy prices a Grand Exchange buy (docs/12 section 6): what is
+// missing of the quantity, as a shop buy counts it, capped at the GE's
+// 4-hour limit (the next run buys the rest), at the last instant-buy price
+// plus the margin (ge.BuyOffer). The GE pays from the inventory, so the live
+// inventory must hold the coins for the whole offer.
+func (in Input) resolveGEBuy(t content.Task) (execspec.Task, error) {
+	id, ok := t.Item.Int()
+	if !ok {
+		return execspec.Task{}, errors.New("o item da compra não é um id")
+	}
+	o := rules.Owns(in.Holdings, in.Registry, id, int64(t.Qty), nil)
+	qty := t.Qty - int(min(o.Held, int64(t.Qty)))
+	if qty < 1 {
+		return execspec.Task{}, errors.New("a conta já tem a quantidade; falta o ingest provar")
+	}
+	p, ok := in.Prices[id]
+	if !ok {
+		return execspec.Task{}, errors.New("o item não tem preço guardado (a sincronização de preços da wiki está ligada?)")
+	}
+	if p.Limit != nil && qty > *p.Limit {
+		qty = *p.Limit
+	}
+	price, err := ge.BuyOffer(p, in.now())
+	if err != nil {
+		return execspec.Task{}, err
+	}
+	inv := in.Holdings[rules.ContainerInventory]
+	if inv.State != ingest.ItemLive {
+		return execspec.Task{}, errors.New("o inventário não é compartilhado ao vivo: as moedas da compra não estão provadas")
+	}
+	cost := price * int64(qty)
+	if coins := in.Holdings.Count(rules.ContainerInventory, entities.CoinsID, entities.CompareExact, in.Registry); coins < cost {
+		return execspec.Task{}, fmt.Errorf("faltam moedas no inventário: a oferta custa %d e o inventário tem %d", cost, coins)
+	}
+	return execspec.Task{Type: execspec.TypeGEBuy, GEBuy: &execspec.GEOffer{
+		Item: id, ItemName: in.name(*t.Item), Qty: qty, Price: price,
+	}}, nil
+}
+
+// resolveGESell prices a Grand Exchange sale of all of the item the live
+// inventory holds (the GE sells from the inventory), in one form only (the
+// offer takes one stack: noted or not), at the last instant-sell price less
+// the margin (ge.SellOffer). The sale's proof is the item gone from the
+// inventory and the coins there reaching what they were plus the least the
+// sale pays (rules.SaleProven): CoinsAtLeast carries that number.
+func (in Input) resolveGESell(t content.Task) (execspec.Task, error) {
+	id, ok := t.Item.Int()
+	if !ok {
+		return execspec.Task{}, errors.New("o item da venda não é um id")
+	}
+	inv := in.Holdings[rules.ContainerInventory]
+	if !inv.ProvesAbsence() {
+		return execspec.Task{}, errors.New("o inventário não é compartilhado ao vivo: a venda não teria prova")
+	}
+	var qty int64
+	forms := 0
+	for held, n := range inv.Quantities {
+		if n > 0 && (held == id || in.Registry != nil && in.Registry.SameItem(held, id, entities.CompareIgnoreNoted)) {
+			qty += n
+			forms++
+		}
+	}
+	switch {
+	case qty == 0:
+		return execspec.Task{}, errors.New("o inventário não tem o item: nada a vender (um bank antes o traz)")
+	case forms > 1:
+		return execspec.Task{}, errors.New("o inventário tem o item noted e unnoted: a oferta vende uma pilha só, deposite uma")
+	case qty > execspec.MaxQty:
+		return execspec.Task{}, fmt.Errorf("o inventário tem mais de %d do item", execspec.MaxQty)
+	}
+	p, ok := in.Prices[id]
+	if !ok {
+		return execspec.Task{}, errors.New("o item não tem preço guardado (a sincronização de preços da wiki está ligada?)")
+	}
+	price, err := ge.SellOffer(p, in.now())
+	if err != nil {
+		return execspec.Task{}, err
+	}
+	if price > execspec.MaxCoins/qty {
+		return execspec.Task{}, errors.New("a venda passa do limite de moedas de uma oferta")
+	}
+	coins := in.Holdings.Count(rules.ContainerInventory, entities.CoinsID, entities.CompareExact, in.Registry)
+	return execspec.Task{Type: execspec.TypeGESell, GESell: &execspec.GESell{
+		GEOffer:      execspec.GEOffer{Item: id, ItemName: in.name(*t.Item), Qty: int(qty), Price: price},
+		CoinsAtLeast: min(coins+ge.LeastProceeds(price, qty), execspec.MaxCoins),
+	}}, nil
+}
+
+// now is the evaluation time.
+func (in Input) now() time.Time {
+	if in.Now.IsZero() {
+		return time.Now()
+	}
+	return in.Now
 }
 
 // QuestHelperName is the name the client's Quest Helper lists a quest by

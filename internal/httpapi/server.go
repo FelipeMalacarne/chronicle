@@ -80,6 +80,17 @@ type Options struct {
 	// active one (GET /api/plan/next, /api/plans, docs/10 section 9); nil
 	// leaves them out.
 	Plans PlanStore
+	// Jobs stores the accounts' jobs and serves GET and POST /api/jobs (docs/12
+	// section 13); JobEvents adds their events to GET /api/jobs/{id}. A task
+	// run creates a job when Jobs is set, and a sale is proven by its job.
+	Jobs      JobStore
+	JobEvents JobEventStore
+	// Conductor stores the conductor's state per account and serves GET and
+	// POST /api/conductor (docs/12 section 12.5); nil leaves them out.
+	Conductor ConductorStore
+	// Prices reads the stored Grand Exchange prices a ge_buy or ge_sell is
+	// priced by (internal/store/prices); nil refuses those tasks.
+	Prices PriceStore
 	// Static is the SPA filesystem rooted at the site (index.html at its root).
 	// nil disables the SPA and / returns 404.
 	Static fs.FS
@@ -214,6 +225,8 @@ func (s *Server) routes() {
 	s.mtaRoutes()
 	s.recordingRoutes()
 	s.planRoutes()
+	s.jobRoutes()
+	s.conductorRoutes()
 	s.microbotRoutes()
 	s.workerRoutes()
 	s.profileRoutes()

@@ -131,6 +131,29 @@ func TestExplainLoginRequired(t *testing.T) {
 	}
 }
 
+// An account without a route: `now` names the way out instead of the raw
+// 409, and `accounts` lists it as "sem rota".
+func TestAccountWithoutRoute(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch r.URL.Path {
+		case "/api/me":
+			_, _ = w.Write([]byte(`{"auth_mode":"dev","accounts":[{"id":"acc_r","rsn":"R","mode":"regular","guide_id":null,"layer":"enhanced"}]}`))
+		case "/api/route":
+			w.WriteHeader(http.StatusConflict)
+			_, _ = w.Write([]byte(`{"error":"account has no route","status":409}`))
+		default:
+			http.NotFound(w, r)
+		}
+	}))
+	defer srv.Close()
+	if _, err := runCLI(t, "now", "--url", srv.URL); err == nil || !strings.Contains(err.Error(), "não segue rota") {
+		t.Fatalf("now without a route = %v", err)
+	}
+	if out, err := runCLI(t, "accounts", "--url", srv.URL); err != nil || !strings.Contains(out, "sem rota") {
+		t.Fatalf("accounts = %q, %v", out, err)
+	}
+}
+
 func TestAccountStateParts(t *testing.T) {
 	var st client.AccountState
 	if err := json.Unmarshal([]byte(`{"account":{"id":"acc_x"},"skills":[{"skill":"agility","level":45}],

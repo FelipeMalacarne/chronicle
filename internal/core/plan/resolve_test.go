@@ -122,6 +122,21 @@ func TestResolve(t *testing.T) {
 			t.Fatalf("view = %+v", v)
 		}
 	})
+	t.Run("train on a regular account runs unsupervised even when it fights", func(t *testing.T) {
+		goblins := content.Task{Type: content.TaskTrain, Skill: ref("skill:magic"), NPC: ref("npc:goblin"), Plugin: "a.b.Splasher",
+			Until: &content.TaskUntil{Objective: key("skill:magic>=33")}}
+		spec, v, err := Resolve(input(custom(goblins), content.ModeRegular, nil, nil), "task:0#0")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if spec.Type != execspec.TypeTrain || !v.Executable || v.Supervised || !slices.Equal(v.Risks, []string{"combat"}) {
+			t.Fatalf("regular goblins = %+v %+v", spec.Train, v)
+		}
+		bank := input(route, content.ModeRegular, nil, nil)
+		if _, v, err = Resolve(bank, "step:t::b#0"); err != nil || !v.Executable {
+			t.Fatalf("regular bank = %+v %v", v, err)
+		}
+	})
 	t.Run("train on a monster fights: combat, HCIM supervised", func(t *testing.T) {
 		goblins := content.Task{Type: content.TaskTrain, Skill: ref("skill:magic"), NPC: ref("npc:goblin"), Plugin: "a.b.Splasher",
 			Until: &content.TaskUntil{Objective: key("skill:magic>=33")}}
@@ -192,7 +207,7 @@ func TestResolve(t *testing.T) {
 		{"quest with an unproven level", withQuests(input(custom(chompy), content.ModeIronman, nil, nil), map[string]string{},
 			map[string]rules.SkillState{"fletching": {Level: 5}}), "task:0#0", "não prova os requisitos"},
 		{"met", input(route, content.ModeIronman, nil, at(3188, 3220)), "step:t::a#0", "já está cumprida"},
-		{"talk", input(route, content.ModeIronman, nil, nil), "step:t::a#1", "só roda travel, bank, buy, train e quest"},
+		{"talk", input(route, content.ModeIronman, nil, nil), "step:t::a#1", "só roda travel, bank, buy, train, quest, ge_buy e ge_sell"},
 		{"uim bank", input(route, content.ModeUIM, nil, nil), "step:t::b#0", "Ultimate Ironman"},
 		{"via", input(custom(content.Task{Type: content.TaskTravel, Location: ref("location:lumbridge"), Via: ref("item:8007")}), content.ModeIronman, nil, nil), "task:0#0", "via"},
 		{"buy owned", input(route, content.ModeIronman, rules.ItemHoldings{"bank": live(map[int]int64{1351: 1})}, nil), "step:t::b#1", "já está cumprida"},

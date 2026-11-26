@@ -20,7 +20,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/FelipeMalacarne/chronicle/internal/agent"
+	"github.com/FelipeMalacarne/chronicle/internal/core/job"
 	storedb "github.com/FelipeMalacarne/chronicle/internal/store/db"
+	"github.com/FelipeMalacarne/chronicle/internal/store/eventlog"
+	storejobs "github.com/FelipeMalacarne/chronicle/internal/store/jobs"
 )
 
 // Errors returned to the callers.
@@ -149,6 +152,13 @@ func (r *Repository) RecordRun(ctx context.Context, account, agentName string, r
 				return fmt.Errorf("read recurring routine: %w", recErr)
 			}
 		}
+		jobID := prev.JobID
+		if !found {
+			var jerr error
+			if jobID, jerr = linkJob(ctx, q, account, run); jerr != nil {
+				return jerr
+			}
+		}
 		stop, _ := json.Marshal(nonNil(run.Stop))
 		var from, task json.RawMessage
 		if run.From != nil {
@@ -162,7 +172,7 @@ func (r *Repository) RecordRun(ctx context.Context, account, agentName string, r
 			ClassName: run.ClassName, Stop: stop, Trigger: run.Trigger, State: run.State,
 			StartedAt: timestamptz(&run.StartedAt), FinishedAt: timestamptz(run.FinishedAt),
 			FromPos: from, Result: run.Result, Error: run.Error, TrailLen: int32(len(run.Events)), //nolint:gosec // at most 500 (ValidateReport)
-			Task: task,
+			Task: task, JobID: jobID,
 		})
 		if upErr != nil {
 			return fmt.Errorf("write run: %w", accountMissing(upErr))
@@ -184,9 +194,81 @@ func (r *Repository) RecordRun(ctx context.Context, account, agentName string, r
 		}
 		newRun = !found
 		finished = run.Final() && (!found || !final(prev.State))
+		payload := map[string]any{"run": run.UID, "job": jobID.String, "class": run.ClassName}
+		if newRun {
+			if _, evErr := eventlog.Append(ctx, q, account, eventlog.TypeRunStarted, run.UID, jobID.String, payload); evErr != nil {
+				return evErr
+			}
+		}
+		if finished {
+			payload["state"], payload["error"] = run.State, run.Error
+			if _, evErr := eventlog.Append(ctx, q, account, eventlog.TypeRunEnded, run.UID, jobID.String, payload); evErr != nil {
+				return evErr
+			}
+		}
 		return nil
 	})
 	return newRun, finished, err
+}
+
+// linkJob is the job a new run belongs to: the one its task names, when the
+// account has it; for an agent that does not carry the job id (it predates
+// the job_id feature) the one the server queued for the task, which no run
+// has yet; or else a job adopted from the run's wait_until (a trigger's or a
+// routine's run, the owner's "Fazer agora" with an objective), so that every
+// run that waits for the server's proof has a job the tracker follows
+// (docs/12 section 13). A run with neither has no job.
+func linkJob(ctx context.Context, q *storedb.Queries, account string, run agent.Run) (pgtype.Text, error) {
+	if t := run.Task; t != nil {
+		if t.JobID != "" {
+			_, err := q.GetJob(ctx, storedb.GetJobParams{ID: t.JobID, AccountID: account})
+			switch {
+			case err == nil:
+				return text(t.JobID), nil
+			case !errors.Is(err, pgx.ErrNoRows):
+				return pgtype.Text{}, fmt.Errorf("read job: %w", err)
+			}
+			return pgtype.Text{}, nil
+		}
+		id, err := q.FindQueuedTaskJob(ctx, storedb.FindQueuedTaskJobParams{AccountID: account, PlanID: text(t.Plan), TaskKey: text(t.Key), Kind: t.Type})
+		switch {
+		case err == nil:
+			return text(id), nil
+		case !errors.Is(err, pgx.ErrNoRows):
+			return pgtype.Text{}, fmt.Errorf("read the task's job: %w", err)
+		}
+	}
+	if run.Until == nil || run.Final() {
+		return pgtype.Text{}, nil
+	}
+	goalJSON, _ := json.Marshal(run.Until.Objective)
+	goal, err := job.ParseGoal(goalJSON)
+	if err != nil {
+		return pgtype.Text{}, nil // the run's key is not one the server proves
+	}
+	source := job.SourceOwner
+	if run.Trigger != "" || run.Routine != "" {
+		source = job.SourceRoutine
+	}
+	spec, _ := json.Marshal(map[string]string{"className": run.ClassName})
+	j, err := job.New(account, job.KindPlugin, spec, goal, nil, 0, source)
+	if err != nil {
+		return pgtype.Text{}, fmt.Errorf("adopt run %s: %w", run.UID, err)
+	}
+	id, err := storejobs.Insert(ctx, q, j)
+	if err != nil {
+		return pgtype.Text{}, err
+	}
+	return text(id), nil
+}
+
+// JobAccount is the account a job belongs to; "" when there is no such job.
+func (r *Repository) JobAccount(ctx context.Context, jobID string) (string, error) {
+	account, err := r.queries.GetJobAccount(ctx, jobID)
+	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		return "", fmt.Errorf("read job account: %w", err)
+	}
+	return account, nil
 }
 
 // Runs returns the account's last runs, newest first, with their trails.
@@ -195,6 +277,20 @@ func (r *Repository) Runs(ctx context.Context, account string, limit int) ([]age
 	if err != nil {
 		return nil, fmt.Errorf("list runs: %w", err)
 	}
+	return r.withTrails(ctx, rows)
+}
+
+// RunsOfJob returns the runs that attempted a job, newest first, with their
+// trails.
+func (r *Repository) RunsOfJob(ctx context.Context, account, jobID string) ([]agent.Run, error) {
+	rows, err := r.queries.ListRoutineRunsByJob(ctx, storedb.ListRoutineRunsByJobParams{JobID: text(jobID), AccountID: account})
+	if err != nil {
+		return nil, fmt.Errorf("list job runs: %w", err)
+	}
+	return r.withTrails(ctx, rows)
+}
+
+func (r *Repository) withTrails(ctx context.Context, rows []storedb.RoutineRun) ([]agent.Run, error) {
 	ids := make([]string, len(rows))
 	for i, row := range rows {
 		ids[i] = row.ID

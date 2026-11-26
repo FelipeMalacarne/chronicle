@@ -19,16 +19,23 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/auth"
 	"github.com/FelipeMalacarne/chronicle/internal/buildinfo"
+	"github.com/FelipeMalacarne/chronicle/internal/conduct"
 	"github.com/FelipeMalacarne/chronicle/internal/config"
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
 	"github.com/FelipeMalacarne/chronicle/internal/events"
 	"github.com/FelipeMalacarne/chronicle/internal/httpapi"
+	"github.com/FelipeMalacarne/chronicle/internal/jobtracker"
 	"github.com/FelipeMalacarne/chronicle/internal/sources/hiscores"
+	"github.com/FelipeMalacarne/chronicle/internal/sources/wikiprices"
 	storeactivity "github.com/FelipeMalacarne/chronicle/internal/store/activity"
+	storeconductor "github.com/FelipeMalacarne/chronicle/internal/store/conductor"
+	storeeventlog "github.com/FelipeMalacarne/chronicle/internal/store/eventlog"
 	"github.com/FelipeMalacarne/chronicle/internal/store/identity"
 	storeingest "github.com/FelipeMalacarne/chronicle/internal/store/ingest"
+	storejobs "github.com/FelipeMalacarne/chronicle/internal/store/jobs"
 	storeplans "github.com/FelipeMalacarne/chronicle/internal/store/plans"
+	storeprices "github.com/FelipeMalacarne/chronicle/internal/store/prices"
 	storeprogress "github.com/FelipeMalacarne/chronicle/internal/store/progress"
 	storerecording "github.com/FelipeMalacarne/chronicle/internal/store/recording"
 	storerhythm "github.com/FelipeMalacarne/chronicle/internal/store/rhythm"
@@ -95,6 +102,11 @@ func runServe(parent context.Context) error {
 	var levelsService httpapi.LevelsStore
 	var recordingService httpapi.RecordingStore
 	var plansService httpapi.PlanStore
+	var jobsService httpapi.JobStore
+	var jobEventsService httpapi.JobEventStore
+	var conductorService httpapi.ConductorStore
+	var conductorLoop *conduct.Conductor
+	var priceService httpapi.PriceStore
 	var oidcOpts *httpapi.OIDCOptions
 	var microbotOpts *httpapi.MicrobotOptions
 	if !cfg.IsDev() && cfg.DatabaseURL == "" {
@@ -130,10 +142,25 @@ func runServe(parent context.Context) error {
 			repo := storeingest.New(pool, storeingest.BuildDefinition(cnt, catalog)).
 				WithReevaluator(progressRepo).WithPublisher(hub).WithDevInstallations(cfg.IsDev())
 			ingestService, holdings, progressService = repo, repo, progressRepo
+			// The jobs (docs/12 section 13): the tracker follows the durable
+			// event log and is the only piece that proves a job; the control
+			// module gives it the agents' link.
+			jobsRepo := storejobs.New(pool).WithPublisher(hub)
+			logRepo := storeeventlog.New(pool)
+			jobsService, jobEventsService = jobsRepo, logRepo
+			tracker := &jobtracker.Tracker{Jobs: jobsRepo, Log: logRepo, Facts: progressRepo, Registry: catalog, Events: hub, Logr: logger}
 			if cfg.MicrobotControl {
-				if microbotOpts, err = newMicrobot(ctx, cfg, pool, repo, microbotDeps{facts: progressRepo, catalog: catalog, events: hub}, logger); err != nil {
+				if microbotOpts, err = newMicrobot(ctx, cfg, pool, repo, microbotDeps{tracker: tracker, events: hub}, logger); err != nil {
 					return err
 				}
+			}
+			go tracker.Run(ctx)
+			if cfg.MicrobotControl {
+				// The conductor (docs/12 section 12.5) dispatches through the
+				// API's task path, so it starts once the API exists, below.
+				conductorRepo := storeconductor.New(pool).WithPublisher(hub)
+				conductorService = conductorRepo
+				conductorLoop = &conduct.Conductor{States: conductorRepo, Jobs: jobsRepo, Log: logRepo, Events: hub, Logr: logger}
 			}
 			hiscoresClient := hiscores.New()
 			hiscoresDetector, accountService = hiscoresClient, progressRepo
@@ -147,6 +174,16 @@ func runServe(parent context.Context) error {
 				}
 				go scheduler.Run(ctx)
 				logger.Info("sync: hiscores scheduler on", "minutes", cfg.SyncHiscoresMinutes)
+			}
+			pricesRepo := storeprices.New(pool)
+			priceService = pricesRepo
+			if cfg.SyncPricesMinutes > 0 {
+				priceScheduler := &storeprices.Scheduler{
+					Repo: pricesRepo, Source: wikiprices.New(),
+					Interval: time.Duration(cfg.SyncPricesMinutes) * time.Minute, Log: logger,
+				}
+				go priceScheduler.Run(ctx)
+				logger.Info("sync: item prices scheduler on", "minutes", cfg.SyncPricesMinutes)
 			}
 		}
 	} else {
@@ -179,9 +216,17 @@ func runServe(parent context.Context) error {
 		Levels:         levelsService,
 		Recording:      recordingService,
 		Plans:          plansService,
+		Jobs:           jobsService,
+		JobEvents:      jobEventsService,
+		Conductor:      conductorService,
+		Prices:         priceService,
 		Static:         static,
 		Logger:         logger,
 	})
+	if conductorLoop != nil {
+		conductorLoop.Dispatch = api
+		go conductorLoop.Run(ctx)
+	}
 	srv := &http.Server{
 		Addr:              cfg.Addr,
 		Handler:           api,

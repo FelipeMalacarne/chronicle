@@ -144,5 +144,7 @@ class PanelTextTest
 		assertEquals("sem URL", PanelText.connectionShort(none, T0));
 		assertEquals("há 2 h", PanelText.ago(T0, T0.plusSeconds(7300)));
 		assertEquals("várias contas: preencha Conta", PanelText.error(422, false));
+		assertEquals("a conta não segue rota", PanelText.error(409, false));
+		assertEquals("o passo já está feito", PanelText.error(409, true));
 	}
 }

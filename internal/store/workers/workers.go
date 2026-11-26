@@ -39,7 +39,7 @@ const (
 
 // PlacementCluster is the placement of a worker whose client runs in a pod on
 // saradomin; any other placement is the host name of an attached agent with
-// slots (workers.placement, migration 0026).
+// slots (workers.placement, migration 0034).
 const PlacementCluster = "cluster"
 
 var hostName = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9.-]{0,62}$`)

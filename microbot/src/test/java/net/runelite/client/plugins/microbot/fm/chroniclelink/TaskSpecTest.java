@@ -132,6 +132,18 @@ class TaskSpecTest
 		assertTrue(talk.getMessage().contains("not executed yet"));
 	}
 
+	/** What the agent delegates elsewhere (train, quest, the Grand Exchange) is valid for the planner, never run here. */
+	@Test
+	void whatTheAgentDelegatesIsRefusedHere()
+	{
+		Gson gson = new Gson();
+		for (JsonElement e : wire().getAsJsonArray("delegated"))
+		{
+			IllegalArgumentException refused = assertThrows(IllegalArgumentException.class, () -> TaskSpec.parse(gson, e), e.toString());
+			assertTrue(refused.getMessage().contains("not executed"), refused.getMessage());
+		}
+	}
+
 	@Test
 	void aTamperedTaskIsRefused()
 	{

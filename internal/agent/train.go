@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/FelipeMalacarne/chronicle/internal/core/clientcfg"
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/execspec"
 )
@@ -22,21 +23,69 @@ import (
 // Chronicle Link's machine, but Chronicle Link must answer: its tracking is
 // what the ingest proves the level from.
 
-// driveTrain is a train run's goroutine: the safe point and the checks,
-// the plugin's settings, the start, then the plugin supervised until the
-// proof, the timeout, a failure or the owner's cancel, which stop it.
+// delegated is a run that hands the work to a plugin of the client: a train,
+// or a job's plugin task. The agent sets the plugin's settings, starts it and
+// stops it when the server proves until.
+type delegated struct {
+	plugin string
+	config []clientcfg.Setting
+	until  RunUntil
+	// begin is the trail line when it starts (after the position), stoppedAs
+	// what the run says when it ends without the proof ("o treino parou onde
+	// estava"), alongside says what a main activity left on would do, doneAs
+	// the run's last line and wilderness what an HCIM in the wilderness is
+	// told.
+	begin, stoppedAs, alongside, doneAs, wilderness string
+	// continueDialogues advances a dialogue that only has "continue" at the
+	// safe point instead of waiting for it (a job's plugin, FEL-130).
+	continueDialogues bool
+}
+
+// driveTrain is a train run's goroutine.
 func (e *Executor) driveTrain(ctx context.Context, p TaskRunParams) {
 	tr := *p.Task.Train
 	until := RunUntil{Objective: tr.Until(), Account: p.Account}
+	e.driveDelegated(ctx, p, delegated{
+		plugin: tr.Plugin, config: tr.Config, until: until,
+		begin:      fmt.Sprintf("treinando %s até o ingest provar %s", tr.SkillName, until.Objective),
+		stoppedAs:  "o treino parou onde estava",
+		alongside:  "plugins ligados durante o treino: ",
+		doneAs:     "treino feito: " + until.Objective + " provado pelo ingest",
+		wilderness: "an HCIM trains there only with the owner watching",
+	})
+}
+
+// drivePlugin is a plugin job's run goroutine.
+func (e *Executor) drivePlugin(ctx context.Context, p TaskRunParams) {
+	pl := *p.Task.Plugin
+	until := RunUntil{Objective: pl.Until, Account: p.Account}
+	e.driveDelegated(ctx, p, delegated{
+		plugin: pl.Plugin, config: pl.Config, until: until,
+		begin:      fmt.Sprintf("ligando %s até o ingest provar %s", pl.Name, until.Objective),
+		stoppedAs:  "o plugin parou onde estava",
+		alongside:  "plugins ligados durante o plugin: ",
+		doneAs:     "feito: " + until.Objective + " provado pelo ingest",
+		wilderness: "an HCIM runs a plugin there only with the owner watching",
+		// The plugin owns the activity and the dialogue in it: a line to click
+		// through does not hold its start.
+		continueDialogues: true,
+	})
+}
+
+// driveDelegated is a delegated run's goroutine: the safe point and the
+// checks, the plugin's settings, the start, then the plugin supervised until
+// the proof, the timeout, a failure or the owner's cancel, which stop it.
+func (e *Executor) driveDelegated(ctx context.Context, p TaskRunParams, d delegated) {
+	until := d.until
 	fail := func(err error) {
 		if ctx.Err() != nil {
-			e.end(RunCanceled, "cancelado pelo dono; o treino parou onde estava", "")
+			e.end(RunCanceled, "cancelado pelo dono; "+d.stoppedAs, "")
 			return
 		}
-		e.end(RunFailed, err.Error()+"; o treino parou onde estava", err.Error())
+		e.end(RunFailed, err.Error()+"; "+d.stoppedAs, err.Error())
 	}
 	done := func() { e.end(RunDone, "nada a fazer: o ingest já prova "+until.Objective, "") }
-	if err := e.waitSafe(ctx); err != nil {
+	if err := e.waitSafe(ctx, d.continueDialogues); err != nil {
 		if errors.Is(err, errUntilMet) {
 			done()
 			return
@@ -55,7 +104,7 @@ func (e *Executor) driveTrain(ctx context.Context, p TaskRunParams) {
 	}
 	at := *st.Player.Position
 	if execspec.InWilderness(at.X, at.Y) && p.Mode == content.ModeHCIM && !p.Supervised {
-		fail(errors.New("the character is in the wilderness: an HCIM trains there only with the owner watching"))
+		fail(errors.New("the character is in the wilderness: " + d.wilderness))
 		return
 	}
 	if e.untilMet() {
@@ -68,25 +117,25 @@ func (e *Executor) driveTrain(ctx context.Context, p TaskRunParams) {
 		fail(errors.New("the Chronicle Link bridge did not answer: without its tracking the ingest cannot prove the level"))
 		return
 	}
-	present, active, ok := e.scriptState(ctx, tr.Plugin)
+	present, active, ok := e.scriptState(ctx, d.plugin)
 	switch {
 	case !ok:
 		fail(errors.New("the client did not list its plugins"))
 		return
 	case !present:
-		fail(fmt.Errorf("%s is not installed in the client (the account's profile, the fleet's model or the Hub)", tr.Plugin))
+		fail(fmt.Errorf("%s is not installed in the client (the account's profile, the fleet's model or the Hub)", d.plugin))
 		return
 	case active:
-		fail(fmt.Errorf("%s is already on: stop it first, the training run starts and stops it", simple(tr.Plugin)))
+		fail(fmt.Errorf("%s is already on: stop it first, the training run starts and stops it", simple(d.plugin)))
 		return
 	}
-	e.note(RunRunning, fmt.Sprintf("em %d, %d, %d; treinando %s até o ingest provar %s", at.X, at.Y, at.Plane, tr.SkillName, until.Objective))
+	e.note(RunRunning, fmt.Sprintf("em %d, %d, %d; %s", at.X, at.Y, at.Plane, d.begin))
 	if others := e.activeScripts(ctx); len(others) > 0 {
 		// Plugins keep passive loops all the time, so this only warns: a
 		// main activity left on would click alongside the training.
-		e.note(RunRunning, "plugins ligados durante o treino: "+strings.Join(others, ", ")+" (pare a atividade principal antes)")
+		e.note(RunRunning, d.alongside+strings.Join(others, ", ")+" (pare a atividade principal antes)")
 	}
-	for _, s := range tr.Config {
+	for _, s := range d.config {
 		body := map[string]any{"group": s.Group, "key": s.Key, "value": s.Value}
 		if _, err = e.Game.JSON(ctx, http.MethodPost, "/settings/plugin", nil, body, 10*time.Second); err != nil {
 			fail(fmt.Errorf("setting %s.%s: %w", s.Group, s.Key, err))
@@ -94,12 +143,12 @@ func (e *Executor) driveTrain(ctx context.Context, p TaskRunParams) {
 		}
 		e.note(RunRunning, fmt.Sprintf("configuração: %s.%s = %s", s.Group, s.Key, clip(s.Value, 80)))
 	}
-	before, _ := e.results(ctx, tr.Plugin)
-	if _, err = e.Game.JSON(ctx, http.MethodPost, "/scripts/start", nil, map[string]any{"className": tr.Plugin}, 30*time.Second); err != nil {
-		fail(fmt.Errorf("starting %s: %w", tr.Plugin, err))
+	before, _ := e.results(ctx, d.plugin)
+	if _, err = e.Game.JSON(ctx, http.MethodPost, "/scripts/start", nil, map[string]any{"className": d.plugin}, 30*time.Second); err != nil {
+		fail(fmt.Errorf("starting %s: %w", d.plugin, err))
 		return
 	}
-	e.note(RunRunning, fmt.Sprintf("iniciado: %s, até o ingest provar %s", simple(tr.Plugin), until.Objective))
+	e.note(RunRunning, fmt.Sprintf("iniciado: %s, até o ingest provar %s", simple(d.plugin), until.Objective))
 	timeout := untilTimeout
 	if p.TimeoutS > 0 {
 		timeout = time.Duration(p.TimeoutS) * time.Second
@@ -107,8 +156,8 @@ func (e *Executor) driveTrain(ctx context.Context, p TaskRunParams) {
 	if e.taskTimeout > 0 {
 		timeout = e.taskTimeout
 	}
-	if !e.runUntilProven(ctx, tr.Plugin, until, timeout, before, fail) {
+	if !e.runUntilProven(ctx, d.plugin, until, timeout, before, fail) {
 		return
 	}
-	e.end(RunDone, "treino feito: "+until.Objective+" provado pelo ingest", "")
+	e.end(RunDone, d.doneAs, "")
 }

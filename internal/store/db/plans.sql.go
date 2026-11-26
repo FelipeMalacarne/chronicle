@@ -40,13 +40,24 @@ func (q *Queries) DeletePlan(ctx context.Context, arg DeletePlanParams) (int64, 
 	return result.RowsAffected(), nil
 }
 
+const getAccountMode = `-- name: GetAccountMode :one
+SELECT mode FROM accounts WHERE id = $1
+`
+
+func (q *Queries) GetAccountMode(ctx context.Context, id string) (string, error) {
+	row := q.db.QueryRow(ctx, getAccountMode, id)
+	var mode string
+	err := row.Scan(&mode)
+	return mode, err
+}
+
 const getActivePlan = `-- name: GetActivePlan :one
 SELECT active_plan_id, guide_id FROM accounts WHERE id = $1
 `
 
 type GetActivePlanRow struct {
 	ActivePlanID pgtype.Text `json:"active_plan_id"`
-	GuideID      string      `json:"guide_id"`
+	GuideID      pgtype.Text `json:"guide_id"`
 }
 
 func (q *Queries) GetActivePlan(ctx context.Context, id string) (GetActivePlanRow, error) {

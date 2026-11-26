@@ -122,8 +122,9 @@ func (e *Executor) bridgeView(ctx context.Context, fail func(name, err string)) 
 }
 
 // Game actions: each one is a fixed Agent Server request from typed,
-// validated parameters, audited by the server. Raw keyboard, widgets and the
-// Grand Exchange (an ironman account) stay out.
+// validated parameters, audited by the server. Raw keyboard and widgets stay
+// out; the Grand Exchange is reached only by a regular account's typed
+// ge_buy and ge_sell (task_run, ge.go), never as a loose action.
 const (
 	CmdWalk             = "walk"            // webwalker to a tile, non-blocking
 	CmdInventoryUse     = "inventory_use"   // an item's action ("Eat", "Wield")

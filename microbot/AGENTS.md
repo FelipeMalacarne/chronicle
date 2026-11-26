@@ -26,11 +26,18 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   whether Bones to Peaches is unlocked. Since 1.17.0 the bridge's `/bridge/bank-pin` writes a managed
   worker's bank PIN into the active Microbot profile (`ConfigManager.setBankPin`, encrypted like the
   profile panel does): the client types the PIN only from there, and a pod's profile is new on every
-  boot (Chronicle's docs/11 section 19).
+  boot (Chronicle's docs/11 section 19). Since 1.18.0 it sends `data.membership` (`MembershipReading`):
+  the days of membership left and the member flag, only once ten ticks of the login have passed.
+  Its task executor refuses `ge_buy` and `ge_sell` (the agent delegates them to the Agent Server's `/ge`) and `plugin` (a job's plugin, run by the agent).
+  Since 1.19.0 the bridge lists the client's modal message windows (`/bridge/client/messages`, the
+  `JOptionPane` of `Microbot.showMessage`) and closes them (`/bridge/client/messages/close`), which
+  also lifts `Microbot.pauseAllScripts` when it closed one (`ClientMessages`): Microbot opens one,
+  after pausing every script, when a script gives up reaching an NPC or object, and on a worker
+  nobody sees it. The agent ends a supervised run with its text (Chronicle's FEL-134).
 - `fm/catswap/` — Cat Swap: one swap, then it stops itself (outcome in its script results):
   sells the grown cat to a West Ardougne Civilian, buys a kitten from Gertrude, lets it follow.
   Chronicle's routine executor runs it between the main activity and the return (docs/08).
-- `fm/mtaarena/` — MTA Planner (v0.7.1): pick the Rewards Guardian's items, the overlay shows the pizazz
+- `fm/mtaarena/` — MTA Planner (v0.7.2): pick the Rewards Guardian's items, the overlay shows the pizazz
   points still missing per room and the law/nature/cosmic runes that takes, against the runes carried
   and banked. With "Run the plan" on (off by default) it also clicks: `MtaPlanner` says the next step and
   `MtaRunner` runs it. Bones to Peaches comes first and is the only reward bought by itself ("Buy
@@ -49,7 +56,9 @@ or from the root with `gradle -p microbot` (`just plugins`, `just test-microbot`
   the wand below from the bank chest. The overlay shows the rewards covered, the next one's missing
   points and the points per minute in the room being played. Before each room `MtaPrep` sets up at the arena's bank chest:
   the staff and tome that cover the most of the spell's elemental runes (`MtaLoadout`, pure and
-  tested), the runes left to carry, and nothing else but the "Always keep" names. The rooms
+  tested), the runes left to carry, and nothing else but the "Always keep" names. The jewellery
+  Enchants' runes come from the plugin's own table (`MtaPrep.runes`, OSRS Wiki), for the setup and for
+  "can it still cast": the client's Rs2Spells leaves the earth runes out of Lvl-5 and Lvl-6. The rooms
   (`MtaRooms`) are ported from the Plugin Hub's Mage Training Arena plugin and lean on the RuneLite
   Mage Training Arena plugin's solvers (the runner turns it on); unlike the Hub's, the Telekinetic
   Theatre walks to the tile the RuneLite solver highlights (`MtaScene`, pure and tested: its

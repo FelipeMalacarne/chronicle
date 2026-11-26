@@ -142,3 +142,47 @@ func TestConcurrentPublishSubscribe(t *testing.T) {
 		t.Errorf("subscribers left = %d", got)
 	}
 }
+
+// SubscribeAll gets the events of every account, for the consumers of the
+// event log; a per-account subscription still gets only its own.
+func TestSubscribeAllGetsEveryAccount(t *testing.T) {
+	h := NewHub(nil)
+	all := h.SubscribeAll()
+	defer all.Close()
+	one := h.Subscribe("acc_a")
+	defer one.Close()
+	h.Publish(Event{Type: TypeLog, Account: "acc_a"})
+	h.Publish(Event{Type: TypeLog, Account: "acc_b"})
+	for _, want := range []string{"acc_a", "acc_b"} {
+		select {
+		case e := <-all.C:
+			if e.Account != want {
+				t.Fatalf("all got %q, want %q", e.Account, want)
+			}
+		default:
+			t.Fatalf("all missed %s", want)
+		}
+	}
+	if e := <-one.C; e.Account != "acc_a" {
+		t.Fatalf("the account's own got %q", e.Account)
+	}
+	select {
+	case e := <-one.C:
+		t.Fatalf("acc_a's subscription got %+v", e)
+	default:
+	}
+}
+
+// An account id of "*" (a dev request's ?account=*) is an ordinary account,
+// not the subscription to every account.
+func TestStarAccountIsNotEveryAccount(t *testing.T) {
+	h := NewHub(nil)
+	star := h.Subscribe("*")
+	defer star.Close()
+	h.Publish(Event{Type: TypeProgress, Account: "acc_a"})
+	select {
+	case e := <-star.C:
+		t.Fatalf("the * account got %+v of acc_a", e)
+	default:
+	}
+}

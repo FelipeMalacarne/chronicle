@@ -8,6 +8,7 @@ import (
 
 	"github.com/FelipeMalacarne/chronicle/internal/core/content"
 	"github.com/FelipeMalacarne/chronicle/internal/core/entities"
+	"github.com/FelipeMalacarne/chronicle/internal/core/ge"
 	"github.com/FelipeMalacarne/chronicle/internal/core/panel"
 	"github.com/FelipeMalacarne/chronicle/internal/core/progress"
 	"github.com/FelipeMalacarne/chronicle/internal/core/rules"
@@ -47,7 +48,16 @@ type Input struct {
 	Holdings rules.ItemHoldings
 	// Facts are the account's mode, merged facts and last position.
 	Facts panel.Facts
-	Now   time.Time
+	// Prices are the stored market prices Resolve prices a Grand Exchange
+	// task by, by item id: the caller loads the task's item.
+	Prices map[int]ge.Price
+	// TasksProven are the task keys of this plan whose last job succeeded,
+	// with that job: the tracker proved the task on the ingest's live facts.
+	// A proven task stays met when its facts move on (a travel's position,
+	// FEL-136), except a ge_sell, which stays met while the inventory does
+	// not hold the item again.
+	TasksProven map[string]string
+	Now         time.Time
 }
 
 // Ref names the plan of an answer.
@@ -352,7 +362,14 @@ func (in Input) view(t content.Task, item string, index int, sc scope) TaskView 
 	}
 	if u, ok := t.Ends(); ok {
 		v.Until = panel.UntilLabel(t, u, in.Registry)
-		v.State, v.Reason = panel.EvaluateUntil(t, u, sc.state, sc.segment, sc.guide, in.Holdings, in.Facts, in.Registry, now)
+		if u.State == content.UntilSold {
+			v.State, v.Reason = panel.SoldUntil(t, in.Holdings, in.Registry, in.TasksProven[v.Key] != "")
+		} else {
+			v.State, v.Reason = panel.EvaluateUntil(t, u, sc.state, sc.segment, sc.guide, in.Holdings, in.Facts, in.Registry, now)
+			if job := in.TasksProven[v.Key]; job != "" && v.State != rules.Met {
+				v.State, v.Reason = rules.Met, "provada pelo job "+job
+			}
+		}
 	} else {
 		v.State, v.Reason = rules.Unknown, "a tarefa não diz quando termina"
 	}

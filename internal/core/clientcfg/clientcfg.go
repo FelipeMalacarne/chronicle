@@ -152,6 +152,62 @@ func CheckPinned(group, key, value string) error {
 	return nil
 }
 
+// PluginSettings are the settings of a Hub plugin the planner names: the
+// config group, and the keys with the values each may take. A plugin listed
+// here accepts nothing else from a plugin job; a plugin not listed takes any
+// valid setting (CheckSettings).
+type PluginSettings struct {
+	Group string
+	// Keys maps each settable key to its allowed values (a boolean toggle is
+	// "true" or "false"). A key the plugin has that is not here is never set.
+	Keys map[string][]string
+}
+
+// TutorialIslandClass is the Microbot Hub's Tutorial Island plugin (docs/12
+// section 13.7). It plays the tutorial with a randomized look. Its config
+// holds only quality-of-life toggles and nothing in its script names the
+// ironman mode, so no key is pinned: the allowlist below is the guard.
+const TutorialIslandClass = "net.runelite.client.plugins.microbot.tutorialisland.TutorialIslandPlugin"
+
+var toggle = []string{"true", "false"}
+
+// KnownPlugins are the Hub plugins whose settings the planner restricts, by
+// class.
+var KnownPlugins = map[string]PluginSettings{
+	TutorialIslandClass: {
+		Group: "MicroTutIsland",
+		Keys: map[string][]string{
+			"toggleMusic":      toggle,
+			"toggleRoofs":      toggle,
+			"toggleLevelUp":    toggle,
+			"toggleShiftDrop":  toggle,
+			"toggleDevOverlay": toggle,
+		},
+	},
+}
+
+// CheckPluginSettings verifies the settings of a plugin job: the general
+// rules, then, for a known plugin, its own group, keys and values.
+func CheckPluginSettings(class string, list []Setting) error {
+	if err := CheckSettings(list); err != nil {
+		return err
+	}
+	known, ok := KnownPlugins[class]
+	if !ok {
+		return nil
+	}
+	for i, s := range list {
+		allowed, ok := known.Keys[s.Key]
+		switch {
+		case !strings.EqualFold(s.Group, known.Group) || !ok:
+			return fmt.Errorf("config/%d: %s.%s is not a setting of %s the planner sets", i, s.Group, s.Key, class)
+		case !slices.Contains(allowed, s.Value):
+			return fmt.Errorf("config/%d: %s.%s is one of %s", i, s.Group, s.Key, strings.Join(allowed, ", "))
+		}
+	}
+	return nil
+}
+
 // CheckSetting verifies one setting: its group, key and value, and the
 // pinned ones.
 func CheckSetting(s Setting) error {

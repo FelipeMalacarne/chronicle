@@ -24,6 +24,10 @@ const (
 	// TypeSync: a polling sync run finished (ok, unchanged, error or
 	// rate_limited); refetch the source status.
 	TypeSync = "sync"
+	// TypeLog: rows were appended to the durable events table (docs/12
+	// section 13.4); a consumer of that log reads from its cursor. It carries
+	// no state and never reaches a web stream.
+	TypeLog = "log"
 )
 
 // Event sources.
@@ -66,6 +70,7 @@ const DefaultBuffer = 16
 type Hub struct {
 	mu     sync.Mutex
 	subs   map[string]map[*Subscription]struct{}
+	all    map[*Subscription]struct{} // SubscribeAll: kept apart, so no account id can reach it
 	guides []string
 	buffer int
 	now    func() time.Time
@@ -76,6 +81,7 @@ type Hub struct {
 func NewHub(guides []string) *Hub {
 	return &Hub{
 		subs:   map[string]map[*Subscription]struct{}{},
+		all:    map[*Subscription]struct{}{},
 		guides: append([]string(nil), guides...),
 		buffer: DefaultBuffer,
 		now:    time.Now,
@@ -89,7 +95,19 @@ type Subscription struct {
 	c       chan Event
 	hub     *Hub
 	account string
+	every   bool // SubscribeAll
 	closed  bool // guarded by hub.mu
+}
+
+// SubscribeAll opens a subscription to the events of every account, for the
+// consumers of the event log that wake on any change.
+func (h *Hub) SubscribeAll() *Subscription {
+	c := make(chan Event, h.buffer)
+	s := &Subscription{C: c, c: c, hub: h, every: true}
+	h.mu.Lock()
+	defer h.mu.Unlock()
+	h.all[s] = struct{}{}
+	return s
 }
 
 // Subscribe opens a subscription to the account's events.
@@ -119,6 +137,10 @@ func (h *Hub) removeLocked(s *Subscription) {
 	}
 	s.closed = true
 	close(s.c)
+	if s.every {
+		delete(h.all, s)
+		return
+	}
 	if set := h.subs[s.account]; set != nil {
 		delete(set, s)
 		if len(set) == 0 {
@@ -138,11 +160,13 @@ func (h *Hub) Publish(e Event) {
 	}
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	for s := range h.subs[e.Account] {
-		select {
-		case s.c <- e:
-		default:
-			h.removeLocked(s)
+	for _, set := range []map[*Subscription]struct{}{h.subs[e.Account], h.all} {
+		for s := range set {
+			select {
+			case s.c <- e:
+			default:
+				h.removeLocked(s)
+			}
 		}
 	}
 }

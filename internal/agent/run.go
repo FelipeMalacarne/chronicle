@@ -346,7 +346,7 @@ func (e *Executor) drive(ctx context.Context, p RunParams) {
 	}
 	// Nothing moves before the character is at a safe point; a wait_until
 	// already proven ends the run there, having touched nothing.
-	if err := e.waitSafe(ctx); err != nil {
+	if err := e.waitSafe(ctx, false); err != nil {
 		if errors.Is(err, errUntilMet) {
 			e.end(RunDone, "nada a fazer: o objetivo já estava cumprido", "")
 			return

@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -96,6 +97,12 @@ func TestExecutionFixtureLoads(t *testing.T) {
 	main, _ := attack.VariantFor(ModeIronman)
 	if hc.ID != "hcim" || hc.Unsupervised(ModeHCIM) || !main.Unsupervised(ModeIronman) {
 		t.Errorf("variants: hcim %q unsupervised %v; ironman %q unsupervised %v", hc.ID, hc.Unsupervised(ModeHCIM), main.ID, main.Unsupervised(ModeIronman))
+	}
+	if !slices.Contains(Modes, ModeRegular) || !main.Unsupervised(ModeRegular) {
+		t.Errorf("regular: in Modes %v, unsupervised %v", slices.Contains(Modes, ModeRegular), main.Unsupervised(ModeRegular))
+	}
+	if _, ok := attack.VariantFor(ModeRegular); ok {
+		t.Error("no recipe variant declares regular yet")
 	}
 	axe, _ := c.Recipe(entities.MustParseObjectiveKey("item:1351x1"))
 	if v, _ := axe.VariantFor(ModeHCIM); !v.Unsupervised(ModeHCIM) {
@@ -215,6 +222,7 @@ func TestTaskCheck(t *testing.T) {
 	bare := TaskContext{}
 	recipe := TaskContext{Goal: []entities.ObjectiveKey{entities.MustParseObjectiveKey("item:1351x1")}, Recipe: true}
 	hammer := 2347
+	regular := TaskContext{Goal: []entities.ObjectiveKey{entities.MustParseObjectiveKey("item:1775x1000")}, Recipe: true, Modes: []string{ModeRegular}}
 	cases := []struct {
 		name string
 		task Task
@@ -277,6 +285,21 @@ func TestTaskCheck(t *testing.T) {
 		{"quest until goal_met", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant"), Until: until(UntilGoalMet)}, step, "until must be omitted"},
 		{"quest with a location", Task{Type: TaskQuest, Quest: ref("quest:cooks_assistant"), Location: ref("location:lumbridge")}, step, "quest takes no location"},
 		{"safe on a train", Task{Type: TaskTrain, Skill: ref("skill:magic"), Safe: true, Until: until("skill:magic>=13")}, recipe, "train takes no safe"},
+		{"ge_buy for regular", Task{Type: TaskGEBuy, Item: ref("item:1775"), Qty: 1000}, regular, ""},
+		{"ge_buy until its item", Task{Type: TaskGEBuy, Item: ref("item:1775"), Qty: 1000, Until: until("item:1775x1000")}, regular, ""},
+		{"ge_buy until another count", Task{Type: TaskGEBuy, Item: ref("item:1775"), Qty: 1000, Until: until("item:1775x5")}, regular, "until must be omitted"},
+		{"ge_buy qty 0", Task{Type: TaskGEBuy, Item: ref("item:1775")}, regular, "ge_buy needs qty >= 1"},
+		{"ge_buy in a guide step", Task{Type: TaskGEBuy, Item: ref("item:1775"), Qty: 1}, step, "regular accounts only"},
+		{"ge_buy for ironman and regular", Task{Type: TaskGEBuy, Item: ref("item:1775"), Qty: 1}, TaskContext{Recipe: true, Modes: []string{ModeIronman, ModeRegular}}, "regular accounts only"},
+		{"ge_buy of a shop", Task{Type: TaskGEBuy, Item: ref("item:1775"), Qty: 1, Shop: ref("shop:bobs_brilliant_axes")}, regular, "ge_buy takes no shop"},
+		{"ge_sell", Task{Type: TaskGESell, Item: ref("item:1775")}, regular, ""},
+		{"ge_sell until sold", Task{Type: TaskGESell, Item: ref("item:1775"), Until: until(UntilSold)}, regular, ""},
+		{"ge_sell takes no qty", Task{Type: TaskGESell, Item: ref("item:1775"), Qty: 5}, regular, "ge_sell takes no qty"},
+		{"ge_sell until coins", Task{Type: TaskGESell, Item: ref("item:1775"), Until: until("item:995x1000")}, regular, "until must be omitted"},
+		{"ge_buy of a noted id", Task{Type: TaskGEBuy, Item: ref("item:1776"), Qty: 1}, regular, "item 1776 is a noted id: name the item itself (item:1775)"},
+		{"ge_sell of a noted id", Task{Type: TaskGESell, Item: ref("item:1776")}, regular, "noted id"},
+		{"ge_sell of a quest", Task{Type: TaskGESell, Item: ref("quest:cooks_assistant")}, regular, "is not of kind item"},
+		{"sold on a bank", Task{Type: TaskManual, Until: until(UntilSold)}, step, "manual cannot end on sold"},
 		{"unknown type", Task{Type: "teleport"}, step, "unknown task type"},
 		{"a parameter of another type", Task{Type: TaskTravel, Location: ref("location:lumbridge"), Shop: ref("shop:bobs_brilliant_axes")}, bare, "travel takes no shop"},
 		{"until with both", Task{Type: TaskManual, Until: &TaskUntil{State: UntilOwnerMark, Objective: &goal[0]}}, step, "exactly one of objective and state"},
@@ -292,6 +315,38 @@ func TestTaskCheck(t *testing.T) {
 		case c.want != "" && !strings.Contains(got, c.want):
 			t.Errorf("%s: got %q, want %q", c.name, got, c.want)
 		}
+	}
+}
+
+// TestGERecipe: a regular-only variant may buy on the Grand Exchange and
+// end on the item it bought; the same task in a variant that also serves an
+// ironman is refused at load.
+func TestGERecipe(t *testing.T) {
+	write := func(t *testing.T, modes string) (*Content, error) {
+		dir := copyFixture(t)
+		recipe := `{"schema_version":1,"kind":"recipe","objective":"item:1775x1000",
+			"variants":[{"id":"ge","modes":` + modes + `,"tasks":[
+				{"type":"ge_sell","item":"item:1777"},
+				{"type":"ge_buy","item":"item:1775","qty":1000}]}],
+			"source":{"method":"manual","confidence":"high","confirmed_by":"owner"}}`
+		if err := os.WriteFile(filepath.Join(dir, RecipesSubdir, "item-1775x1000.json"), []byte(recipe), 0o644); err != nil {
+			t.Fatal(err)
+		}
+		return Load(dir)
+	}
+	c, err := write(t, `["regular"]`)
+	if err != nil {
+		t.Fatal(err)
+	}
+	r, ok := c.Recipe(entities.MustParseObjectiveKey("item:1775x1000"))
+	if !ok {
+		t.Fatal("not loaded")
+	}
+	if u, ok := r.Variants[0].Tasks[0].Ends(); !ok || u.State != UntilSold {
+		t.Fatalf("ge_sell ends %v", u)
+	}
+	if _, err := write(t, `["ironman","regular"]`); err == nil || !strings.Contains(err.Error(), "regular accounts only") {
+		t.Fatalf("mixed modes: %v", err)
 	}
 }
 

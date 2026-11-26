@@ -4,6 +4,7 @@ import static net.runelite.client.plugins.microbot.util.Global.sleepUntil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -18,6 +19,7 @@ import net.runelite.client.plugins.microbot.util.bank.enums.BankLocation;
 import net.runelite.client.plugins.microbot.util.equipment.Rs2Equipment;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2Inventory;
 import net.runelite.client.plugins.microbot.util.inventory.Rs2ItemModel;
+import net.runelite.client.plugins.microbot.util.magic.Rs2Magic;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Spells;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Staff;
 import net.runelite.client.plugins.microbot.util.magic.Rs2Tome;
@@ -38,6 +40,25 @@ final class MtaPrep
 		Rs2Spells.ENCHANT_RUBY_JEWELLERY, Rs2Spells.ENCHANT_DIAMOND_JEWELLERY,
 		Rs2Spells.ENCHANT_DRAGONSTONE_JEWELLERY, Rs2Spells.ENCHANT_ONYX_JEWELLERY,
 	};
+	/**
+	 * The jewellery Enchants' runes per cast (OSRS Wiki). The client's Rs2Spells leaves the earth runes
+	 * out of Lvl-5 and Lvl-6: a setup from it wore a water staff for Lvl-5 and carried no earth, and
+	 * its canCast said yes to a cast the game refuses, so the Chamber's points never moved.
+	 */
+	private static final Map<Rs2Spells, Map<Runes, Integer>> ENCHANT_RUNES = new EnumMap<>(Rs2Spells.class);
+
+	static
+	{
+		ENCHANT_RUNES.put(Rs2Spells.ENCHANT_SAPPHIRE_JEWELLERY, Map.of(Runes.WATER, 1, Runes.COSMIC, 1));
+		ENCHANT_RUNES.put(Rs2Spells.ENCHANT_EMERALD_JEWELLERY, Map.of(Runes.AIR, 3, Runes.COSMIC, 1));
+		ENCHANT_RUNES.put(Rs2Spells.ENCHANT_RUBY_JEWELLERY, Map.of(Runes.FIRE, 5, Runes.COSMIC, 1));
+		ENCHANT_RUNES.put(Rs2Spells.ENCHANT_DIAMOND_JEWELLERY, Map.of(Runes.EARTH, 10, Runes.COSMIC, 1));
+		ENCHANT_RUNES.put(Rs2Spells.ENCHANT_DRAGONSTONE_JEWELLERY,
+			Map.of(Runes.WATER, 15, Runes.EARTH, 15, Runes.COSMIC, 1));
+		ENCHANT_RUNES.put(Rs2Spells.ENCHANT_ONYX_JEWELLERY,
+			Map.of(Runes.EARTH, 20, Runes.FIRE, 20, Runes.COSMIC, 1));
+	}
+
 	/** The Magic levels of High Level Alchemy and Bones to Peaches (OSRS Wiki). */
 	private static final int HIGH_ALCH_MAGIC = 55;
 
@@ -108,9 +129,22 @@ final class MtaPrep
 		}
 	}
 
+	/** The runes one cast takes: the client's table, corrected for the jewellery Enchants. */
+	static Map<Runes, Integer> runes(Rs2Spells spell)
+	{
+		Map<Runes, Integer> fixed = ENCHANT_RUNES.get(spell);
+		return fixed != null ? fixed : spell.getRequiredRunes();
+	}
+
+	/** Rs2Magic.canCast over {@link #runes}: the level, the spellbook, and the runes carried or worn. */
+	static boolean canCast(Rs2Spells spell)
+	{
+		return spell.hasRequirements() && Rs2Magic.hasRequiredRunes(runes(spell));
+	}
+
 	Plan plan(MtaWorld.Room room, Rs2Spells spell)
 	{
-		Map<Runes, Integer> required = spell.getRequiredRunes();
+		Map<Runes, Integer> required = runes(spell);
 		Set<String> needed = new HashSet<>();
 		for (Runes r : required.keySet())
 		{

@@ -508,7 +508,12 @@ atribuição de cada passo aparece na tela.
   **Como implementado (fase 5, vários clientes no agent, 2026-11-13).** Detalhes no doc 08, "Fase 5
   do doc 10".
 
-  - **Configuração:** no agent anexado (zaros), `MICROBOT_AGENT_CLIENTS` no lugar de
+  Em 2026-11-26 (FEL-138) a configuração mudou: as vagas do agent (`MICROBOT_AGENT_SLOTS`, doc 11,
+  seção 20) substituíram a lista fixa `MICROBOT_AGENT_CLIENTS`. O servidor põe numa vaga cada conta
+  que o dono mandou rodar no zaros (`workers.placement`), com a sessão guardada. O resto desta lista
+  continua valendo, com a vaga no lugar da ordem da lista. A primeira entrada fica como registro.
+
+  - **Configuração (até 2026-11-26):** no agent anexado (zaros), `MICROBOT_AGENT_CLIENTS` no lugar de
     `MICROBOT_AGENT_ACCOUNT` e `MICROBOT_HOME`. É uma lista de `conta=home de dev`, separados por
     vírgula, ponto e vírgula ou espaço, por exemplo
     `acc_main=~/.local/share/microbot-dev,acc_alt=~/.local/share/microbot-dev-alt`.
@@ -542,7 +547,9 @@ atribuição de cada passo aparece na tela.
     - o cliente vive no hello, e o servidor sabe ao vivo qual conexão serve cada conta;
     - o perfil do Microbot já é por conta (`client_profiles` e `account_client`, doc 11, seção 15).
 
-    A tabela volta se o dono quiser lembrar onde uma conta roda enquanto o agent está fora.
+    A tabela volta se o dono quiser lembrar onde uma conta roda enquanto o agent está fora. Desde
+    2026-11-26 o lugar escolhido de cada conta fica em `workers.placement` (migração 0026, doc 11,
+    seção 20), e a tabela `clients` continua sem existir.
 - **Risco:** toda receita declara riscos; em HCIM, risco de morte bloqueia execução sem supervisão. O
   módulo continua desligado por padrão (`MICROBOT_CONTROL=off`) e o risco de banimento segue aceito
   conscientemente (doc 01, decisão 9).
@@ -761,7 +768,18 @@ O `wait_until` numa rotina também fica para o dono provar: um "Fazer agora" com
      - a VNC de cada cliente;
      - um servidor antigo, que só recebe o primeiro cliente;
      - as rotas reais da API.
-   - Nada rodou com dois clientes de verdade. Para usar, o dono:
+   - Nada rodou com dois clientes de verdade.
+   - **Para usar, desde 2026-11-26** (as vagas, doc 11, seção 20), o dono:
+     1. atualiza o `chronicle` do servidor e o do zaros;
+     2. liga o agent do zaros com `MICROBOT_AGENT_SLOTS` no lugar de `MICROBOT_AGENT_ACCOUNT` (no
+        nix-config, a opção de vagas ainda falta);
+     3. conecta cada conta (`chronicle accounts connect`), põe a conta no zaros
+        (`chronicle workers move --to zaros`) e a inicia (`chronicle workers start`);
+     4. confere na Frota e no Cockpit cada conta na sua vaga, com a sua VNC.
+
+     Não há home de dev para preparar à mão: cada vaga tem o seu, com o próprio armazém de HWID, e o
+     servidor manda a sessão, o perfil e o token do Chronicle Link. Até 2026-11-26, com a lista fixa,
+     os passos eram estes:
      1. prepara o home de dev do segundo cliente: escolhe o personagem com
         `MB_DEV_HOME=<home> mb-account use <n>`, instala o Chronicle Link com
         `MB_DEV_HOME=<home> mb-install chroniclelink` e, na primeira vez, configura nele o token de

@@ -87,6 +87,7 @@ API o wiki pede explicitamente para não usar em projetos de terceiros.
 | 38 | Marca manual por **objetivo**, da conta inteira: o dono marca um objetivo como já cumprido (`chronicle objective mark`), e ele vale em todo guia e passo. Sobrepõe os vereditos ao derivar status, bloqueios e cursor; não é evidência (não escreve `objective_progress`) e não dispara a cascata `implied` | resolvida (2026-11-13): os objetivos de item novos em passos antigos, com os itens já gastos, faziam os passos voltarem a `pending` e o cursor recuar; marcar o passo não resolvia, porque a marca é por guia | doc 09, seção 5 |
 | 39 | Marca manual por **item do trecho** (o cartão "Levar do banco"): o dono marca um item que falta como "já tenho" (`chronicle loadout mark` e `mark_loadout_item` no MCP; o cartão só mostra a marca e a desfaz), e a marca vale só naquele trecho de um guia: a mesma pá no trecho seguinte, ou no outro guia, não é marcada. Sobrepõe o veredito do item ao calcular o readiness (a contagem "Falta N de M" cai); não é evidência: não escreve inventário, banco, snapshots nem `player_state`, e o fato do plugin segue como estava | revista (2026-11-15): o botão "Já tenho" saiu do cartão "Levar do banco", que diz o que tirar do banco e não faz sentido marcar; na tela, "Já tenho" é a marca por objetivo (decisão 38) dos objetivos de item do passo atual. Era (2026-11-14): itens que o dono já tem, ou que o plugin não enxerga, apareciam como faltando e não havia como dizer o contrário; marcar o objetivo não alcança os itens do setup do trecho, que não são objetivos | doc 09, seção 5 |
 | 40 | Rotina recorrente que falha: **tenta de novo sozinha uma vez**, 15 min depois da falha, com as condições de sempre (ligada, um run por vez, ponto seguro, a pausa do Break Handler), sem esperar o relógio nem o intervalo. Se essa tentativa falhar também, a rotina fica segura até o dono liberá-la (salvá-la de novo, o "Liberar"), como antes. Um run que o dono **cancelou nunca tenta de novo**: a rotina fica segura. O último run da conta que falhou segura todas as rotinas, menos a dona dele (a primeira falha dela não bloqueia a própria tentativa, e as outras esperam essa tentativa); um run que falhou e não é de uma recorrente ("Fazer agora", gatilho, tarefa) segura todas até o dono salvar alguma, como antes. A rotina segura e a tentativa pendente, com a hora, aparecem em Precisa de você (Frota e Atividade), no aviso do topo de Rotinas e no estado da rotina | resolvida (2026-11-14), e feita no mesmo dia: o gesto para soltar uma rotina presa estava em aberto (até então, toda falha ou cancelamento segurava a rotina até o dono salvá-la de novo), e o artboard `V7Rotinas1440` já dizia "Se falhar: tenta de novo em 15 min e avisa em Precisa de você"; o Liberar continua, para a segunda falha e para o cancelamento | doc 08, Estado (travas das recorrentes); doc 11, seção 16.4; `docs/ui/decisoes-canvas.md`, seção 7.13 |
+| 41 | **Lugar** de cada conta, escolhido pelo dono: o cliente do jogo roda num pod do saradomin (`cluster`) ou numa vaga do agent do zaros (`workers.placement`). O agent do zaros tem vagas que o servidor preenche com a sessão guardada, como num pod, no lugar da lista fixa de contas (`MICROBOT_AGENT_CLIENTS`). Mudar o lugar de um worker que roda é permitido: o reconciliador tira o cliente do lugar antigo e o sobe no novo, na tela de login. Na tela, um seletor "Rodar em: saradomin \| zaros" no cabeçalho da conta | resolvida (2026-11-26, FEL-138) e feita no mesmo dia no servidor, no agent e na CLI; conferida no zaros com um cliente falso. Falta conferir com um cliente de verdade, no saradomin (oidc) e no serviço do zaros (a opção de vagas do nix-config). O seletor espera o desenho no canvas (regra 11) | doc 11, seção 20 |
 
 Decisões de design tomadas pela equipe e ainda válidas, sem decisão do dono: ids dos steps do
 ironman.guide preservados e progresso sem FK para conteúdo; snapshots brutos append-only mais
@@ -106,6 +107,8 @@ Além do tracking somente leitura (doc 06), o dono decidiu controlar o cliente M
 headless no zaros, VNC no navegador, plugins do Hub e rotinas agendadas. Módulo separado e desligado
 por padrão, com risco aceito conscientemente. Ver doc 08. Em 2026-11-12 o dono decidiu ter também
 workers headless no saradomin, um por conta, escolhidos no painel (decisão 34, doc 11).
+Em 2026-11-26 passou a escolher, por conta, se o cliente roda num pod ou numa vaga do zaros
+(decisão 41, doc 11, seção 20).
 
 ## Próximo passo
 
@@ -133,7 +136,9 @@ A sequência do doc 04, seção 9, está feita até o item 20 (2026-11-13), com 
   prova a chave pelo ingest e manda o `run_until` ao agent) e o `train` por delegação a um plugin do
   cliente, pelo `chronicle task run`. Ela termina com um treino no jogo, sem intervenção. Da fase 5,
   vários clientes no agent está pronto (2026-11-13): o agent do zaros controla um cliente por conta,
-  com `MICROBOT_AGENT_CLIENTS`, cada um com o seu executor, lock, home de dev, display e VNC. A `quest`
+  cada um com o seu executor, lock, home de dev, display e VNC. Desde 2026-11-26 (decisão 41) esses
+  clientes ficam em vagas (`MICROBOT_AGENT_SLOTS`) que o servidor preenche com as contas que o dono
+  pôs no zaros, no lugar da lista fixa `MICROBOT_AGENT_CLIENTS`. A `quest`
   por delegação ao Quest Helper do cliente (E19, decidida em 2026-11-14) também tem o código pronto: o
   agent grava "Obtain Missing Items" em `No`, seleciona a quest pelo Agent Server e a para quando o
   servidor prova `quest:x@finished` pelo ingest. As receitas de quest esperam a extração com o dono,
@@ -162,10 +167,13 @@ O próximo passo é do dono:
    exemplo Cook's Assistant ou Sheep Shearer), com os itens no inventário, montar um plano com a tarefa
    `quest` e rodar `chronicle task run --yes --wait 1h` olhando pelo VNC, até "Término provado pelo
    ingest" com o Quest Helper parado sozinho.
-5. **Ligar um segundo cliente no zaros, se quiser** (doc 10, seção 13, fase 5): preparar o home de
-   dev dele (`mb-account use` e `mb-install chroniclelink` com `MB_DEV_HOME`, e o token de ingest da
-   conta no Chronicle Link), atualizar o `chronicle` do servidor e da máquina do jogo e trocar
-   `MICROBOT_AGENT_ACCOUNT` por `MICROBOT_AGENT_CLIENTS` no agent.
+5. **Rodar contas em vagas do zaros, se quiser** (doc 11, seção 20): atualizar o `chronicle` do
+   servidor e do zaros, ligar o agent do zaros com `MICROBOT_AGENT_SLOTS` no lugar de
+   `MICROBOT_AGENT_ACCOUNT` (a opção de vagas no `my.chronicle.agent` do nix-config ainda falta),
+   conectar a conta (`chronicle accounts connect`), pô-la no zaros
+   (`chronicle workers move --to zaros`) e iniciá-la. Nada rodou ainda com um cliente de verdade numa
+   vaga. Até 2026-11-26 este passo era trocar `MICROBOT_AGENT_ACCOUNT` por `MICROBOT_AGENT_CLIENTS`
+   e preparar à mão o home de dev de cada cliente.
 6. **Conferir no jogo e no cluster:**
    - o collection log com o Chronicle Link 1.12;
    - o `/bridge/break` numa pausa de verdade do Break Handler;

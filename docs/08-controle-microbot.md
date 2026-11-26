@@ -900,6 +900,13 @@ doc: a tarefa aponta para uma classe de plugin com um preset):
 
 **Fase 5 do doc 10: vários clientes no agent** (2026-11-13; doc 10, seções 10 e 13):
 
+> **Mudou em 2026-11-26 (FEL-138).** A lista fixa `MICROBOT_AGENT_CLIENTS` saiu do código. No lugar
+> dela, o agent do zaros tem vagas (`MICROBOT_AGENT_SLOTS`): ele sobe sem cliente, e o servidor põe
+> em cada vaga uma conta que o dono mandou rodar no zaros, com a sessão guardada, como num pod.
+> Detalhes no doc 11, seção 20. Continuam valendo o executor e o lock por cliente, os arquivos por
+> conta, o display e a porta gravados no home pelo `mb-client` e o roteamento pela conta. O texto
+> abaixo é o registro de 2026-11-13.
+
 - **O que é:** um agent anexado (o do zaros) controla vários clientes do jogo, um por conta. Cada
   cliente é uma instância do harness com o seu home de dev, o seu display do Xvfb e o seu x11vnc. O
   agent tem um executor por cliente, e cada executor tem:
@@ -911,8 +918,8 @@ doc: a tarefa aponta para uma classe de plugin com um preset):
 
   Um cliente ocupado ou com erro não segura nem derruba o outro. Os workers gerenciados não mudam: um
   pod, um cliente.
-- **Configuração** (`chronicle agent`, `just agent`): `MICROBOT_AGENT_CLIENTS`, no lugar de
-  `MICROBOT_AGENT_ACCOUNT` e `MICROBOT_HOME`:
+- **Configuração** (até 2026-11-26; hoje são as vagas, doc 11, seção 20) (`chronicle agent`,
+  `just agent`): `MICROBOT_AGENT_CLIENTS`, no lugar de `MICROBOT_AGENT_ACCOUNT` e `MICROBOT_HOME`:
 
   ```
   MICROBOT_AGENT_CLIENTS="acc_main=~/.local/share/microbot-dev,acc_alt=~/.local/share/microbot-dev-alt"

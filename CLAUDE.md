@@ -67,7 +67,7 @@ installs), `microbot-client`, `hwid-agent`, `microbot-cli`, `packages.x86_64-lin
 | `chronicle health` | GET `/api/health` of a running server (container healthcheck; never opens the database) |
 | `chronicle login` / `now` / `done` / `plan` / `state` / `mcp` | API clients (docs/04 section 2.2): server from `--url`, `CHRONICLE_URL`, `~/.config/chronicle/config.json`, default `https://chronicle.saradomin.ftm.dev.br` (`CHRONICLE_URL=http://localhost:8080` for `just dev`); dev needs no login, oidc uses the Zitadel device flow; `CHRONICLE_TOKEN` overrides the stored login. `done`/`skip`/`undo` write the owner's marks: never run them on the owner's account unasked |
 | `DATABASE_URL=... go test ./internal/httpapi -run TestContract -update` | rewrite `web/src/lib/api/contract/`: one real API answer per route the web reads, as `export const fixture = {…} satisfies <web type>`; then `pnpm check`. Without `-update` the test fails when an answer changes shape |
-| `just agent` / `chronicle agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (server resolved like the CLI, default saradomin; `MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client (`MICROBOT_HARNESS_DIR`: this checkout by default in `just agent`; it runs `nix develop <dir>#microbot --command <dir>/microbot/bin/mb-client`), or against several, one dev home and account each (`MICROBOT_AGENT_CLIENTS`, docs/10 phase 5). Never log the client in for a test without the owner's agreement |
+| `just agent` / `chronicle agent` | Microbot control agent (docs/08) on the game machine: outbound link to the planner (server resolved like the CLI, default saradomin; `MICROBOT_CONTROL=on` there; no token against a dev server, which takes the link only from loopback; against oidc a Zitadel machine user with the `microbot:agent` role, `MICROBOT_AGENT_CLIENT_ID`/`_SECRET`), runs only the closed command list against the harness's dev client (`MICROBOT_HARNESS_DIR`: this checkout by default in `just agent`; it runs `nix develop <dir>#microbot --command <dir>/microbot/bin/mb-client`), or, with `MICROBOT_AGENT_SLOTS`, against up to that many clients the server starts in its slots, one account each, logged in with the stored session like a worker pod (docs/11 section 20). Never log the client in for a test without the owner's agreement |
 | `chronicle accounts connect --character <name>` / `accounts bank-pin` / `chronicle workers list\|start\|stop\|restart\|move` | docs/11: store an account's game session from the Microbot launcher (only that character's lines of the HWID stores; a character the launcher lists as "Not set" is `--index <n> --as <name in game>`, like `mb-account use --as`), the character's bank PIN inside that sealed session (stdin, no echo; the worker writes it into its client's Microbot profile through the Chronicle Link bridge, docs/11 section 19), and the workers' lifecycle over `/api/workers`; `move --to cluster|<host>` chooses where the client runs (a pod on saradomin, or a slot of the attached agent on that host, e.g. zaros; a running worker moves). `start` and `restart` never log in, but `stop` and `restart` log the account out: never run them on the owner's account unasked |
 | `chronicle profiles list\|show\|put\|delete\|use\|account` | docs/11 section 15: the workers' client profiles (plugins and RuneLite settings, optionally on a model) over `/api/client-profiles` and `/api/accounts/client`; `show` prints the JSON `put -f` reads. A profile reaches a worker on its next start or restart, never a running client |
 | `chronicle recording [--since 2h] [-o file]` / `recording delete --yes` | docs/10 section 11: the demonstration Chronicle Link recorded with "Record demonstration" on (`GET /api/account/recording`), printed or written as the JSON the content MCP's `propose_tasks` reads; `delete` drops it on the server (all, or `--recording <id>`). Never delete the owner's recording unasked |
@@ -148,16 +148,17 @@ internal/vault/       AES-256-GCM of the accounts' game sessions (CHRONICLE_VAUL
 internal/kube/        minimal Kubernetes REST client (Deployments by server-side apply, pods, TokenReview, and the
                       pods' metrics.k8s.io usage and the ResourceQuotas the capacity reads), the worker Deployment
                       of docs/11 section 13.3 and the worker pod token check
-internal/workerctl/   reconciler of the managed workers (database -> cluster) and the bootstrap of a linking
-                      worker agent (session, ipl_ token, world, client profile); serve only
+internal/workerctl/   reconciler of the workers (database -> each account's placement: a pod in the cluster or a slot
+                      of an attached agent, docs/11 section 20) and the bootstrap of a linking worker agent
+                      (session, ipl_ token, world, client profile); serve only
 internal/routinesync/ the routines' server side (docs/11 section 16): on every agent connection the account's
                       triggers (routines_sync), and every run an agent reports (event frames) to the database
                       and the audit; serve only
 internal/rununtil/    a run's wait_until, server side (docs/10 phase 4): follows each reported run that waits for
                       an objective key and sends run_until once the account's facts prove it; serve only
 internal/agent/       Microbot control link (docs/08): closed command list, the agent's executor (one per game
-                      client: an attached agent may drive several, each with its own account, lock and run,
-                      docs/10 phase 5) and outbound websocket, the server-side Link (each client its own
+                      client: an attached agent with slots drives several, each with its own account, lock and run,
+                      docs/11 section 20) and outbound websocket, the server-side Link (each client its own
                       Info, commands and events tagged with the account), the VNC tunnel (browser <-> server <-> agent <->
                       loopback x11vnc) and the plugin/script/config commands, whose params are validated
                       by ValidateParams on both sides; task_run (docs/10 phase 3) runs one typed task of the
@@ -201,7 +202,8 @@ db/migrations/        goose SQL for Postgres (0001 base schema, 0002 ingest fres
                       0022 workers.running_settings: option values of the plugins that were on,
                       0023 objective_marks: the owner's marks on objectives, account-wide, not evidence,
                       0024 loadout_marks: the owner's marks on the items of a leg's loadout, per (guide, segment), not evidence,
-                      0025 minigame facet: counters read in a minigame's interface, the MTA's pizazz points)
+                      0025 minigame facet: counters read in a minigame's interface, the MTA's pizazz points,
+                      0026 workers.placement: where the client runs, cluster or an attached agent's host)
 db/queries/           sqlc queries; sqlc.yaml at the root
 deploy/k8s/           Kubernetes manifests of the saradomin deploy (base + overlays/saradomin); CI pushes
                       the chronicle image to GHCR and writes its tag in the overlay, which Argo CD follows
@@ -284,10 +286,12 @@ session only), `SESSION_SECRET` (32+ chars in oidc),
 audience of the agent's machine-user token). `chronicle agent` reads `CHRONICLE_URL`, `MICROBOT_AGENT_CLIENT_ID`,
 `MICROBOT_AGENT_CLIENT_SECRET` (or `_SECRET_FILE`; oidc only), `MICROBOT_HARNESS_DIR`, `MICROBOT_HOME`, `MB_VNC_PORT` and, to override the
 harness tools it runs, `MICROBOT_CLIENT_CMD` and `MICROBOT_ACCOUNT_CMD`, and `MICROBOT_AGENT_ACCOUNT` (the account an
-attached agent declares); or, for several clients (docs/10 phase 5), `MICROBOT_AGENT_CLIENTS` instead of
-`MICROBOT_AGENT_ACCOUNT` and `MICROBOT_HOME`: `account=dev home` entries separated by commas, each client on its own
-display and VNC port in that order from `MB_HEADLESS_DISPLAY` (`:99`) and `MB_VNC_PORT` (`5999`) up. Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes base64; with `MICROBOT_CONTROL=on` it turns on
-`/api/accounts/session` and `/api/workers`), `WORKERS` (`off`; `on` runs the reconciler, in a pod only), `WORKER_IMAGE`,
+attached agent declares); or, for slots the server fills with accounts (docs/11 section 20), `MICROBOT_AGENT_SLOTS`
+(1 to 16) instead of `MICROBOT_AGENT_ACCOUNT` and `MICROBOT_HOME`, with `MICROBOT_SLOTS_HOME` (`~/.local/share/microbot-slots`,
+one dev home per account); slot i runs on display `MB_HEADLESS_DISPLAY` (`:99`) + i and VNC port `MB_VNC_PORT` (`5999`) + i.
+Workers (docs/11): `CHRONICLE_VAULT_KEY` (32 bytes base64; with `MICROBOT_CONTROL=on` it turns on
+`/api/accounts/session`, `/api/workers` and the reconciler, which fills the attached agents' slots even with `WORKERS=off`;
+their Chronicle Link reaches `PUBLIC_BASE_URL`), `WORKERS` (`off`; `on` also runs worker pods, in a pod only), `WORKER_IMAGE`,
 `WORKER_NAMESPACE`, `WORKER_SERVER_URL`; `chronicle agent --worker` reads `WORKER_ACCOUNT`, `CHRONICLE_URL`,
 `CHRONICLE_AGENT_TOKEN_FILE` and the harness's `MB_DEV_HOME`, `MB_XMX`, `MB_HWID_STORE_DIR`. `.env.example` documents each one;
 `compose.yaml` composes `DATABASE_URL` for the container from `POSTGRES_*`. Two modes:

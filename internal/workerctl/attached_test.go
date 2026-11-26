@@ -309,3 +309,34 @@ func TestFailedAttachedBootstrapBacksOff(t *testing.T) {
 		t.Fatalf("a start after a stop still waited: %d bootstraps", n)
 	}
 }
+
+// A worker stopped while its bootstrap is in flight is released by a later
+// pass, once the bootstrap ended: a stop sent during mb-client start could
+// land first and leave the client running.
+func TestSlotIsNotReleasedWhileItsBootstrapIsInFlight(t *testing.T) {
+	store := &fakeStore{desired: []Desired{{Account: "acc_a", Running: true, Placement: "zaros"}}}
+	hub := &fakeHub{agents: []agent.Info{zarosPool(0)}, gate: make(chan struct{})}
+	r := newAttachedRec(store, &fakeCluster{deps: map[string]kube.Deployment{}}, hub)
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	waitFor(t, "the bootstrap to start", func() bool { return hub.bootN.Load() == 1 })
+	hub.mu.Lock()
+	hub.agents = []agent.Info{zarosPool(1), slotClient("acc_a")}
+	hub.mu.Unlock()
+	store.desired[0].Running = false
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := hub.releases(); len(got) != 0 {
+		t.Fatalf("released during the bootstrap: %v", got)
+	}
+	close(hub.gate)
+	waitIdle(t, r)
+	if err := r.Once(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if got := hub.releases(); !slices.Equal(got, []string{"acc_a"}) {
+		t.Fatalf("released %v after the bootstrap", got)
+	}
+}

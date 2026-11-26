@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -28,6 +29,8 @@ type slotFarm struct {
 	slots map[string]int    // account → the slot NewSlot was last asked for
 	dirs  map[string]string // account → its fake client's directory
 	built int
+	// startDelay is how long each fake mb-client start takes ("" for none).
+	startDelay string
 }
 
 func (f *slotFarm) newSlot(slot int, account string) Client {
@@ -38,9 +41,9 @@ func (f *slotFarm) newSlot(slot int, account string) Client {
 	f.slots[account], f.dirs[account] = slot, dir
 	game := &podGame{fakeGame: &fakeGame{}, marker: filepath.Join(dir, "running")}
 	script := fmt.Sprintf(`D=%q; case "$1" in
-start) echo start >> "$D/starts"; touch "$D/running";;
+start) sleep %s; echo start >> "$D/starts"; touch "$D/running";;
 stop) rm -f "$D/running"; echo stop >> "$D/stops";;
-esac`, dir)
+esac`, dir, cmp.Or(f.startDelay, "0"))
 	return Client{Account: account, Executor: &Executor{
 		Game: game, Home: filepath.Join(dir, "home"), ClientCmd: []string{"sh", "-c", script, "mb-client"},
 		Worker: &WorkerConfig{Account: account, HWIDStoreDir: filepath.Join(dir, "secrets"), ReadyWait: 5 * time.Second},
@@ -283,6 +286,38 @@ func TestSlotReleaseStopsTheClientAndFreesTheSlot(t *testing.T) {
 	}
 	if _, err := bootstrapSlot(t, link, "acc_a"); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// A release that comes while the account's client is still starting waits
+// for the start: a stop that landed first would leave the client up with no
+// slot.
+func TestSlotReleaseDuringABootstrapWaitsForIt(t *testing.T) {
+	link, url := hubServer(t)
+	f := &slotFarm{t: t, slots: map[string]int{}, dirs: map[string]string{}, startDelay: "0.5"}
+	a := &Agent{Log: quiet, Hello: Hello{Host: "zaros", Version: "test", Kind: KindAttached}, Slots: 1, NewSlot: f.newSlot}
+	startAgent(t, a, url, "zaros")
+	waitAgents(t, link, 1)
+	booted := make(chan error, 1)
+	go func() {
+		_, err := bootstrapSlot(t, link, "acc_a")
+		booted <- err
+	}()
+	waitAgents(t, link, 2) // the slot is taken before the client starts
+	if err := releaseSlot(t, link, "acc_a"); err != nil {
+		t.Fatal(err)
+	}
+	if err := <-booted; err != nil {
+		t.Fatal(err)
+	}
+	f.mu.Lock()
+	dir := f.dirs["acc_a"]
+	f.mu.Unlock()
+	if _, err := os.Stat(filepath.Join(dir, "running")); err == nil {
+		t.Fatal("the client kept running after its release")
+	}
+	if p := poolInfo(t, link); p.Used != 0 {
+		t.Fatalf("pool = %+v", p)
 	}
 }
 

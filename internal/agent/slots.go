@@ -35,7 +35,10 @@ type slotSet struct {
 // slotClient is a client and the slot it holds.
 type slotClient struct {
 	Client
-	slot   int
+	slot int
+	// op serializes its bootstrap and its release: a stop that lands while
+	// mb-client start runs would leave the client up with no slot.
+	op     sync.Mutex
 	cancel context.CancelFunc // ends its watchers
 	ctx    context.Context
 }
@@ -170,6 +173,8 @@ func (a *Agent) slotBootstrap(ctx context.Context, raw json.RawMessage, write fu
 		a.announce(write)
 		a.Log.Info("agent: slot taken", "account", p.Account, "slot", h.slot)
 	}
+	h.op.Lock()
+	defer h.op.Unlock()
 	res, err := h.Executor.Execute(ctx, CmdWorkerBootstrap, raw)
 	if err != nil && !stillRunning(ctx, h.Executor) {
 		a.drop(h)
@@ -192,6 +197,8 @@ func (a *Agent) slotRelease(ctx context.Context, raw json.RawMessage, write func
 	if !ok {
 		return nil
 	}
+	h.op.Lock()
+	defer h.op.Unlock()
 	sctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), releaseTimeout)
 	defer cancel()
 	if err := h.Executor.Shutdown(sctx); err != nil {

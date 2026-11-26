@@ -72,6 +72,14 @@ func (r *Reconciler) reconcileAttached(ctx context.Context, want []Desired) []er
 		if slices.ContainsFunc(want, func(w Desired) bool { return w.Account == c.Account && w.Running && w.Host() == c.Host }) {
 			continue
 		}
+		// A client still booting is released by a later pass: a stop sent
+		// now could land before its mb-client start ends and leave it running.
+		r.mu.Lock()
+		booting := r.booting[c.Account]
+		r.mu.Unlock()
+		if booting {
+			continue
+		}
 		if err := r.release(ctx, c.Host, c.Account); err != nil {
 			errs = append(errs, err)
 		}
